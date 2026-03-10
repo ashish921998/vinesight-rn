@@ -1725,6 +1725,11 @@ export default function AIChatScreen() {
       });
 
       try {
+        const requestInputMode: AssistantInputMode =
+          source === 'voice' && !assistantInput && Boolean(voicePayload?.inputAudioBase64)
+            ? 'audio'
+            : 'text';
+        const shouldAttachVoiceAudio = requestInputMode === 'audio';
         let activeConversationId = conversationId;
         if (assistantFeatureFlags.memoryEnabled && !activeConversationId) {
           activeConversationId = await assistantMemoryService.createConversation({
@@ -1744,7 +1749,7 @@ export default function AIChatScreen() {
             farmId: contextFarm?.id ?? parsedFarmId ?? null,
             role: 'user',
             content: visibleUserContent || assistantInput,
-            inputMode: source === 'voice' ? 'audio' : 'text',
+            inputMode: requestInputMode,
           });
           if (isStaleConversationAction()) return;
         }
@@ -2187,6 +2192,7 @@ export default function AIChatScreen() {
                     language: languageCode,
                     rate: 1,
                     onStateChange: setIsAssistantSpeaking,
+                    allowDeviceFallback: false,
                   },
                 );
               }
@@ -2275,6 +2281,7 @@ export default function AIChatScreen() {
                   language: languageCode,
                   rate: 1,
                   onStateChange: setIsAssistantSpeaking,
+                  allowDeviceFallback: false,
                 },
               );
             }
@@ -2294,12 +2301,6 @@ export default function AIChatScreen() {
         const assistantRequestAbortController = new AbortController();
         activeAssistantRequestIdRef.current = assistantRequestId;
         activeAssistantAbortControllerRef.current = assistantRequestAbortController;
-        const requestInputMode: AssistantInputMode =
-          source === 'voice' && !assistantInput && Boolean(voicePayload?.inputAudioBase64)
-            ? 'audio'
-            : 'text';
-        const shouldAttachVoiceAudio = requestInputMode === 'audio';
-
         const response = await sendAssistantTurn(
           {
             conversationId: activeConversationId,

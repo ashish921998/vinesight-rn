@@ -831,6 +831,7 @@ export const hi = {
   safeToSpray: {
     title: 'Safe-to-spray चेकर',
     subtitle: 'लक्ष्य कटाई तिथि दर्ज करें और सुरक्षित स्प्रे देखें।',
+    searchLabel: 'मिक्स, कीट या उत्पाद खोजें',
     searchPlaceholder: 'मिक्स, कीट या उत्पाद खोजें',
     targetDate: 'लक्ष्य कटाई तिथि',
     saveSeasonTarget: 'सीज़न में लक्ष्य तिथि सहेजें',

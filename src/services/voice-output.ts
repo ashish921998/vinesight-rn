@@ -173,12 +173,11 @@ class VoiceOutputService {
             options.onError?.();
           },
         });
-      } else if (text && options.allowDeviceFallback === false) {
-        options.onStateChange?.(false);
-        options.onError?.();
       } else {
         options.onStateChange?.(false);
-        options.onError?.();
+        if (text) {
+          options.onError?.();
+        }
       }
     } catch {
       if (replacedAudioUri && !replacedAudioUriDeleted) {
@@ -207,7 +206,9 @@ class VoiceOutputService {
         });
       } else {
         options.onStateChange?.(false);
-        options.onError?.();
+        if (text) {
+          options.onError?.();
+        }
       }
     }
   }
@@ -264,12 +265,11 @@ class VoiceOutputService {
           options?.onError?.();
         },
       });
-    } else if (this.lastMessageText && !this.lastAllowDeviceFallback) {
-      options?.onStateChange?.(false);
-      options?.onError?.();
     } else {
       options?.onStateChange?.(false);
-      options?.onError?.();
+      if (this.lastMessageText) {
+        options?.onError?.();
+      }
     }
   }
 

@@ -851,6 +851,7 @@ export const mr = {
   safeToSpray: {
     title: 'Safe-to-spray तपासणी',
     subtitle: 'लक्ष्य $t(glossary.harvest) दिनांक टाका आणि सुरक्षित स्प्रे पाहा.',
+    searchLabel: 'मिक्स, कीड किंवा उत्पादन शोधा',
     searchPlaceholder: 'मिक्स, कीड किंवा उत्पादन शोधा',
     targetDate: 'लक्ष्य $t(glossary.harvest) दिनांक',
     saveSeasonTarget: 'हा दिनांक हंगामासाठी जतन करा',

@@ -848,6 +848,7 @@ export const en = {
   safeToSpray: {
     title: 'Safe-to-Spray Checker',
     subtitle: 'Enter target harvest date to check safe spray windows.',
+    searchLabel: 'Search mix, pest, or product',
     searchPlaceholder: 'Search mix, pest, or product',
     targetDate: 'Target harvest date',
     saveSeasonTarget: 'Save target date to season',

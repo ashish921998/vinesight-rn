@@ -117,6 +117,15 @@ const getAuthErrorMessage = (
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const maskPhoneForLogs = (phone: string | null | undefined): string | null => {
+  if (!phone) return null;
+  const visibleDigits = 4;
+  const masked = phone.replace(/\d(?=\d{4})/g, '*');
+  return masked.length > visibleDigits
+    ? masked
+    : `${'*'.repeat(Math.max(0, masked.length - 2))}${masked.slice(-2)}`;
+};
+
 const isDuplicateEmailError = (error: unknown): boolean => {
   const message = getErrorMessage(error, '').toLowerCase();
   return (
@@ -813,6 +822,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isLoading: false,
         pendingOTPEmail: null,
         pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,
@@ -891,6 +902,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isLoading: false,
         pendingOTPEmail: null,
         pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,
@@ -1228,7 +1241,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   // Resend phone OTP
-  resendPhoneOTP: async (mode: PhoneAuthMode = 'signin', phone?: string) => {
+  resendPhoneOTP: async (mode?: PhoneAuthMode, phone?: string) => {
     const { pendingOTPPhone, pendingOTPPhoneName, pendingOTPPhoneMode, signInWithPhone } = get();
     const resendPhone = phone?.trim() || pendingOTPPhone;
     if (!resendPhone) {
@@ -1237,7 +1250,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     }
     await signInWithPhone(
       resendPhone,
-      mode || pendingOTPPhoneMode || 'signin',
+      pendingOTPPhoneMode ?? mode ?? 'signin',
       pendingOTPPhoneName || undefined,
     );
   },
@@ -1544,10 +1557,11 @@ export const initAuthListener = () => {
       telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
       telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
       if (__DEV__) {
+        const maskedPendingOTPPhone = maskPhoneForLogs(currentState.pendingOTPPhone);
         console.log('[auth] Auth state changed - SIGNED_IN', {
           user_id: session.user.id,
           has_name: hasName,
-          pending_otp_phone: currentState.pendingOTPPhone,
+          pending_otp_phone: maskedPendingOTPPhone,
           looks_like_new_phone_user: looksLikeNewPhoneUser,
           metadata_present: Boolean(session.user.user_metadata),
         });
