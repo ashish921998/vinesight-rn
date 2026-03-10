@@ -315,13 +315,13 @@ const upsertProfileNameFromAuthUserBestEffort = async (
   } catch (error: unknown) {
     telemetry.capture('profile_name_upsert_failed', {
       user_id: user?.id ?? null,
-      preferred_full_name: preferredFullName?.trim() || null,
+      has_preferred_full_name: Boolean(preferredFullName?.trim()),
       error: getErrorMessage(error, 'profile name upsert failed'),
     });
     if (__DEV__) {
       console.warn('Best-effort profile name upsert failed:', {
         userId: user?.id ?? null,
-        preferredFullName: preferredFullName?.trim() || null,
+        hasPreferredFullName: Boolean(preferredFullName?.trim()),
         error,
       });
     }

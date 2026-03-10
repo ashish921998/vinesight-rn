@@ -686,8 +686,8 @@ function VoiceModeModal({
           ? t('ai.chat.tapToSpeak')
           : t('ai.voice.microphoneOff', { defaultValue: 'Microphone off' });
 
-  const primaryActionLabel = t('ai.chat.stop');
-  const primaryActionSymbol = 'stop.fill';
+  const primaryActionLabel = t('ai.chat.close');
+  const primaryActionSymbol = 'xmark';
   const primaryActionA11y = t('ai.chat.close');
   const idleMicBackground = m3.surface.surfaceContainerLowest;
   const idleMicBorder = colorWithOpacity(m3.colorScheme.outline, 0.3);
@@ -3131,10 +3131,8 @@ export default function AIChatScreen() {
                   <Pressable
                     onPress={() => handleDeleteConversation(conversationId)}
                     accessibilityRole="button"
-                    accessibilityLabel={
-                      conversationId ? 'Delete conversation' : 'Delete current conversation'
-                    }
-                    accessibilityHint="Deletes the current conversation from history"
+                    accessibilityLabel={t('ai.chat.deleteChat')}
+                    accessibilityHint={t('ai.chat.deleteChatHint')}
                     style={{ padding: spacing[1] }}
                   >
                     <UiSymbol name="trash" size={18} color={m3.colorScheme.onBackground} />
@@ -3147,8 +3145,8 @@ export default function AIChatScreen() {
                     void refreshConversationHistory();
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel="Open conversation history"
-                  accessibilityHint="Opens your saved conversations"
+                  accessibilityLabel={t('ai.chat.history')}
+                  accessibilityHint={t('ai.chat.openHistoryHint')}
                   style={{ padding: spacing[1] }}
                 >
                   <UiSymbol name="sidebar.left" size={20} color={m3.colorScheme.onBackground} />
@@ -4058,6 +4056,9 @@ export default function AIChatScreen() {
                                 event.stopPropagation();
                                 handleDeleteConversation(summary.id);
                               }}
+                              accessibilityRole="button"
+                              accessibilityLabel={t('ai.chat.deleteChat')}
+                              accessibilityHint={t('ai.chat.deleteChatHint')}
                               hitSlop={8}
                               style={{ padding: spacing[1] }}
                             >

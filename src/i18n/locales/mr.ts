@@ -1646,9 +1646,11 @@ export const mr = {
       newConversation: 'नवीन संवाद',
       noPreviousChats: 'आतापर्यंत कोणतेही जुने चॅट नाहीत.',
       deleteChat: 'चॅट हटवा',
+      deleteChatHint: 'हा संवाद इतिहासातून हटवतो.',
       deleteChatConfirm:
         'तुम्हाला खात्री आहे की तुम्ही हा चॅट हटवू इच्छिता? हे पूर्ववत करता येणार नाही.',
       deleteChatFailed: 'चॅट हटवता आला नाही. कृपया पुन्हा प्रयत्न करा.',
+      openHistoryHint: 'तुमचे जतन केलेले संवाद उघडतो.',
       stop: 'थांबवा',
       replay: 'पुन्हा वाजवा',
       replayVoiceA11y: 'सहाय्यकाचा आवाज पुन्हा वाजवा',
