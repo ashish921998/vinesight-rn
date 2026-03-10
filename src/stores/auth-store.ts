@@ -833,25 +833,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
       telemetry.reset();
       await clearQueryCache('sign out success path');
-    } catch {
-      useAuthStore.setState({
-        user: null,
-        session: null,
-        isAuthenticated: false,
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Sign out error:', error);
+      }
+
+      set({
         isLoading: false,
-        pendingOTPEmail: null,
-        pendingOTPPhone: null,
-        pendingOTPPhoneName: null,
-        pendingOTPPhoneMode: null,
-        otpSentSuccessfully: false,
-        pendingOTPType: 'email',
-        needsProfileCompletion: false,
-        phoneLinkingPending: false,
-        phoneLinkingNumber: null,
-        phoneLinkingLoading: false,
+        errorMessage: getAuthErrorMessage(error, 'Failed to sign out'),
       });
-      telemetry.reset();
-      await clearQueryCache('sign out recovery path');
     }
   },
   // Delete account
@@ -922,6 +912,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
       telemetry.reset();
     } catch (error) {
+      telemetry.capture('account_deletion_failed', {
+        message: getErrorMessage(error, 'Failed to delete account'),
+      });
       if (__DEV__) {
         console.error('Delete account error:', error);
       }
@@ -1158,6 +1151,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     }
 
     const wasAuthenticated = get().isAuthenticated;
+    const pendingSignupName = get().pendingOTPPhoneName;
     set({ errorMessage: null, isLoading: true });
     telemetry.capture('auth_phone_otp_verify_started');
 
@@ -1197,9 +1191,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const isNewUser = !hasCompletedProfileName(data.user);
 
       if (isNewUser) {
-        const pendingSignupName = get().pendingOTPPhoneName;
         await upsertProfileNameFromAuthUserBestEffort(data.user, pendingSignupName || undefined);
-        telemetry.capture('user_signed_up', { method: 'phone' });
+        telemetry.capture('user_signed_up', { method: 'phone', signupName: pendingSignupName });
         set({
           user: data.user,
           session: data.session,

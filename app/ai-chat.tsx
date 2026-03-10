@@ -2193,6 +2193,7 @@ export default function AIChatScreen() {
                     rate: 1,
                     onStateChange: setIsAssistantSpeaking,
                     allowDeviceFallback: false,
+                    onError: () => setVoiceModeNotice(t('ai.voice.replyVoiceUnavailable')),
                   },
                 );
               }
@@ -2282,6 +2283,7 @@ export default function AIChatScreen() {
                   rate: 1,
                   onStateChange: setIsAssistantSpeaking,
                   allowDeviceFallback: false,
+                  onError: () => setVoiceModeNotice(t('ai.voice.replyVoiceUnavailable')),
                 },
               );
             }
