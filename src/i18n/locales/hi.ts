@@ -831,6 +831,8 @@ export const hi = {
   safeToSpray: {
     title: 'Safe-to-spray चेकर',
     subtitle: 'लक्ष्य कटाई तिथि दर्ज करें और सुरक्षित स्प्रे देखें।',
+    searchLabel: 'मिक्स, कीट या उत्पाद खोजें',
+    searchPlaceholder: 'मिक्स, कीट या उत्पाद खोजें',
     targetDate: 'लक्ष्य कटाई तिथि',
     saveSeasonTarget: 'सीज़न में लक्ष्य तिथि सहेजें',
     blocking: 'गवर्निंग PHI: {{days}} दिन ({{component}})',
@@ -1370,6 +1372,8 @@ export const hi = {
     invalidPhone: 'कृपया देश कोड के साथ एक वैध फ़ोन नंबर दर्ज करें',
     countryCode: 'देश कोड',
     searchCountry: 'देश खोजें...',
+    namePlaceholder: 'आपका नाम',
+    nameRequired: 'कृपया अपना नाम दर्ज करें',
     a11y: {
       selectCountryCode: 'देश कोड चुनें',
       phoneInput: 'फ़ोन नंबर इनपुट',
@@ -1586,6 +1590,8 @@ export const hi = {
       recordingTooShortDetailBody:
         'ऑडियो बहुत छोटा था {{reason}} के कारण। बोलें दबाएँ, कम से कम 1 सेकंड रुकें, फिर रोकें दबाएँ।',
       voiceMessage: 'वॉइस मैसेज',
+      microphoneOff: 'माइक्रोफ़ोन बंद',
+      replyVoiceUnavailable: 'इस जवाब के लिए आवाज़ उपलब्ध नहीं है।',
       sttNotReadyTitle: 'सर्वर STT तैयार नहीं',
       sttNotReadyBody:
         'माइक्रोफ़ोन रिकॉर्डिंग शुरू नहीं हो सकी, इसलिए सर्वर स्पीच-टू-टेक्स्ट का उपयोग नहीं हो सकता।',
@@ -1614,6 +1620,11 @@ export const hi = {
       newChat: 'नई चैट',
       newConversation: 'नई बातचीत',
       noPreviousChats: 'अभी तक कोई पिछली चैट नहीं है।',
+      deleteChat: 'चैट हटाएँ',
+      deleteChatHint: 'इस बातचीत को इतिहास से हटाता है।',
+      deleteChatConfirm: 'क्या आप वाकई इस चैट को हटाना चाहते हैं? यह पूर्ववत नहीं किया जा सकता।',
+      deleteChatFailed: 'चैट हटाने में विफल। कृपया दोबारा प्रयास करें।',
+      openHistoryHint: 'आपकी सहेजी गई बातचीत खोलता है।',
       stop: 'रोकें',
       replay: 'फिर चलाएँ',
       replayVoiceA11y: 'सहायक की आवाज़ फिर चलाएँ',

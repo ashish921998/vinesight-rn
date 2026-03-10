@@ -12,6 +12,7 @@ interface PlaybackOptions {
   onDone?: () => void;
   onStopped?: () => void;
   onError?: () => void;
+  allowDeviceFallback?: boolean;
 }
 
 interface PlaybackStatusUpdate {
@@ -36,6 +37,8 @@ class VoiceOutputService {
   private lastLanguage: SupportedLanguageCode = 'en';
 
   private lastAudioUri: string | null = null;
+
+  private lastAllowDeviceFallback: boolean = true;
 
   private async playAudioUri(fileUri: string, options: PlaybackOptions): Promise<boolean> {
     if (!fileUri) return false;
@@ -114,8 +117,14 @@ class VoiceOutputService {
     let replacedAudioUriDeleted = false;
     this.lastLanguage = options.language;
     this.lastMessageText = text || null;
+    this.lastAllowDeviceFallback = options.allowDeviceFallback !== false;
 
     if (!audio?.base64 && this.lastAudioUri) {
+      try {
+        await this.stop();
+      } catch {
+        // Intentionally empty
+      }
       const staleAudioUri = this.lastAudioUri;
       this.lastAudioUri = null;
       FileSystem.deleteAsync(staleAudioUri).catch((error) => {
@@ -146,33 +155,7 @@ class VoiceOutputService {
         if (played) return;
       }
 
-      if (text) {
-        options.onStateChange?.(true);
-        Speech.speak(text, {
-          language: resolveLocale(options.language),
-          rate: options.rate ?? 0.9,
-          onDone: () => {
-            options.onStateChange?.(false);
-            options.onDone?.();
-          },
-          onStopped: () => {
-            options.onStateChange?.(false);
-            options.onStopped?.();
-          },
-          onError: () => {
-            options.onStateChange?.(false);
-            options.onError?.();
-          },
-        });
-      }
-    } catch {
-      if (replacedAudioUri && !replacedAudioUriDeleted) {
-        FileSystem.deleteAsync(replacedAudioUri).catch((error) => {
-          if (__DEV__)
-            console.warn('Failed to delete replaced audio file after write failure:', error);
-        });
-      }
-      if (text) {
+      if (text && options.allowDeviceFallback !== false) {
         options.onStateChange?.(true);
         Speech.speak(text, {
           language: resolveLocale(options.language),
@@ -192,6 +175,40 @@ class VoiceOutputService {
         });
       } else {
         options.onStateChange?.(false);
+        if (text) {
+          options.onError?.();
+        }
+      }
+    } catch {
+      if (replacedAudioUri && !replacedAudioUriDeleted) {
+        FileSystem.deleteAsync(replacedAudioUri).catch((error) => {
+          if (__DEV__)
+            console.warn('Failed to delete replaced audio file after write failure:', error);
+        });
+      }
+      if (text && options.allowDeviceFallback !== false) {
+        options.onStateChange?.(true);
+        Speech.speak(text, {
+          language: resolveLocale(options.language),
+          rate: options.rate ?? 0.9,
+          onDone: () => {
+            options.onStateChange?.(false);
+            options.onDone?.();
+          },
+          onStopped: () => {
+            options.onStateChange?.(false);
+            options.onStopped?.();
+          },
+          onError: () => {
+            options.onStateChange?.(false);
+            options.onError?.();
+          },
+        });
+      } else {
+        options.onStateChange?.(false);
+        if (text) {
+          options.onError?.();
+        }
       }
     }
   }
@@ -220,12 +237,17 @@ class VoiceOutputService {
     const audioUri = this.lastAudioUri;
     this.lastAudioUri = null;
     if (audioUri) {
+      try {
+        await this.stop();
+      } catch {
+        // Intentionally empty
+      }
       FileSystem.deleteAsync(audioUri).catch((error) => {
         if (__DEV__) console.warn('Failed to delete audio file:', error);
       });
     }
 
-    if (this.lastMessageText) {
+    if (this.lastMessageText && this.lastAllowDeviceFallback) {
       options?.onStateChange?.(true);
       Speech.speak(this.lastMessageText, {
         language: resolveLocale(this.lastLanguage),
@@ -243,6 +265,11 @@ class VoiceOutputService {
           options?.onError?.();
         },
       });
+    } else {
+      options?.onStateChange?.(false);
+      if (this.lastMessageText) {
+        options?.onError?.();
+      }
     }
   }
 

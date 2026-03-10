@@ -117,6 +117,15 @@ const getAuthErrorMessage = (
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const maskPhoneForLogs = (phone: string | null | undefined): string | null => {
+  if (!phone) return null;
+  const visibleDigits = 4;
+  const masked = phone.replace(/\d(?=\d{4})/g, '*');
+  return masked.length > visibleDigits
+    ? masked
+    : `${'*'.repeat(Math.max(0, masked.length - 2))}${masked.slice(-2)}`;
+};
+
 const isDuplicateEmailError = (error: unknown): boolean => {
   const message = getErrorMessage(error, '').toLowerCase();
   return (
@@ -139,6 +148,8 @@ interface AuthState {
   // OTP state
   pendingOTPEmail: string | null;
   pendingOTPPhone: string | null;
+  pendingOTPPhoneName: string | null;
+  pendingOTPPhoneMode: PhoneAuthMode | null;
   otpSentSuccessfully: boolean;
   pendingOTPType: EmailOTPType;
   needsProfileCompletion: boolean;
@@ -171,7 +182,7 @@ interface AuthActions {
   cancelOTPFlow: () => void;
 
   // Phone OTP methods
-  signInWithPhone: (phone: string, mode?: PhoneAuthMode) => Promise<void>;
+  signInWithPhone: (phone: string, mode?: PhoneAuthMode, name?: string) => Promise<void>;
   verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
   resendPhoneOTP: (mode?: PhoneAuthMode, phone?: string) => Promise<void>;
   cancelPhoneOTPFlow: () => void;
@@ -304,13 +315,13 @@ const upsertProfileNameFromAuthUserBestEffort = async (
   } catch (error: unknown) {
     telemetry.capture('profile_name_upsert_failed', {
       user_id: user?.id ?? null,
-      preferred_full_name: preferredFullName?.trim() || null,
+      has_preferred_full_name: Boolean(preferredFullName?.trim()),
       error: getErrorMessage(error, 'profile name upsert failed'),
     });
     if (__DEV__) {
       console.warn('Best-effort profile name upsert failed:', {
         userId: user?.id ?? null,
-        preferredFullName: preferredFullName?.trim() || null,
+        hasPreferredFullName: Boolean(preferredFullName?.trim()),
         error,
       });
     }
@@ -338,6 +349,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   errorMessage: null,
   pendingOTPEmail: null,
   pendingOTPPhone: null,
+  pendingOTPPhoneName: null,
+  pendingOTPPhoneMode: null,
   otpSentSuccessfully: false,
   pendingOTPType: 'email',
   needsProfileCompletion: false,
@@ -809,6 +822,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isLoading: false,
         pendingOTPEmail: null,
         pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,
@@ -818,43 +833,24 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
       telemetry.reset();
       await clearQueryCache('sign out success path');
-
-      // Force clear any cached sessions from storage
-      try {
-        await supabase.auth.getSession();
-      } catch (_e) {
-        // Ignore errors when clearing cache
-      }
-    } catch (error: unknown) {
+    } catch (error) {
       if (__DEV__) {
         console.error('Sign out error:', error);
       }
 
-      setSentryUser(null);
-
-      // Even if sign out fails, clear the local state to allow user to try again
       set({
-        user: null,
-        session: null,
-        isAuthenticated: false,
         isLoading: false,
-        pendingOTPEmail: null,
-        pendingOTPPhone: null,
-        otpSentSuccessfully: false,
-        pendingOTPType: 'email',
-        needsProfileCompletion: false,
-        phoneLinkingPending: false,
-        phoneLinkingNumber: null,
-        phoneLinkingLoading: false,
+        errorMessage: getAuthErrorMessage(error, 'Failed to sign out'),
       });
-      telemetry.reset();
-      await clearQueryCache('sign out recovery path');
     }
   },
-
   // Delete account
   deleteAccount: async (deleteReason: string) => {
     set({ errorMessage: null, isLoading: true });
+
+    const currentUser = get().user;
+    const userId = currentUser?.id;
+    const userEmail = currentUser?.email;
 
     try {
       telemetry.capture('account_deletion_requested', {
@@ -866,9 +862,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
 
       // Log deletion request (actual deletion happens via server-side process)
-      const userId = get().user?.id;
       if (userId) {
-        const userEmail = get().user?.email;
         const maskEmail = (email: string) => {
           const [localPart, domain] = email.split('@');
           if (localPart.length <= 2) {
@@ -886,7 +880,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
 
       // Sign out after request is logged
-      await supabase.auth.signOut({ scope: 'global' });
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) throw error;
 
       setSentryUser(null);
 
@@ -898,6 +893,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isLoading: false,
         pendingOTPEmail: null,
         pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,
@@ -906,7 +903,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingLoading: false,
       });
       await clearQueryCache('delete account');
-
       telemetry.capture('account_deletion_succeeded');
       try {
         await telemetry.flush();
@@ -916,13 +912,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         }
       }
       telemetry.reset();
-
-      if (__DEV__) {
-        console.log('Account deletion request logged successfully');
-      }
-    } catch (error: unknown) {
+    } catch (error) {
       telemetry.capture('account_deletion_failed', {
-        message: getAuthErrorMessage(error, 'Failed to delete account', 'delete_account'),
+        message: getErrorMessage(error, 'Failed to delete account'),
       });
       if (__DEV__) {
         console.error('Delete account error:', error);
@@ -1068,6 +1060,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     set({
       pendingOTPEmail: null,
       pendingOTPPhone: null,
+      pendingOTPPhoneName: null,
+      pendingOTPPhoneMode: null,
       otpSentSuccessfully: false,
       pendingOTPType: 'email',
       errorMessage: null,
@@ -1075,7 +1069,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   // Sign in with phone (send OTP via SMS)
-  signInWithPhone: async (phone: string, mode: PhoneAuthMode = 'signin') => {
+  signInWithPhone: async (phone: string, mode: PhoneAuthMode = 'signin', name?: string) => {
     const trimmedPhone = phone.trim();
     const maskedPhone = trimmedPhone.replace(/\d(?=\d{4})/g, '*');
 
@@ -1095,19 +1089,35 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phone: maskedPhone,
         mode,
         shouldCreateUser: mode === 'signup',
+        hasName: Boolean(name?.trim()),
       });
     }
 
     try {
+      const options: { shouldCreateUser: boolean; data?: { full_name?: string } } = {
+        shouldCreateUser: mode === 'signup',
+      };
+      if (mode === 'signup' && name && name.trim()) {
+        options.data = { full_name: name.trim() };
+        if (__DEV__) {
+          console.log('[auth] signInWithPhone - Capturing name for signup:', {
+            hasName: true,
+            phone: maskedPhone,
+          });
+        }
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
         phone: trimmedPhone,
-        options: { shouldCreateUser: mode === 'signup' },
+        options,
       });
       if (error) throw error;
 
       telemetry.capture('auth_phone_otp_send_succeeded', { mode });
       set({
         pendingOTPPhone: trimmedPhone,
+        pendingOTPPhoneName: mode === 'signup' && name?.trim() ? name.trim() : null,
+        pendingOTPPhoneMode: mode,
         otpSentSuccessfully: true,
         isLoading: false,
       });
@@ -1142,6 +1152,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     }
 
     const wasAuthenticated = get().isAuthenticated;
+    const pendingSignupName = get().pendingOTPPhoneName;
+    const pendingPhoneMode = get().pendingOTPPhoneMode;
     set({ errorMessage: null, isLoading: true });
     telemetry.capture('auth_phone_otp_verify_started');
 
@@ -1159,36 +1171,54 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         telemetry.identify(data.user.id, {
           email_domain: getEmailDomain(data.user.email),
         });
+        if (__DEV__) {
+          console.log('[auth] verifyPhoneOTP - User metadata:', {
+            user_id: data.user.id,
+            metadata_present: Boolean(data.user.user_metadata),
+            has_full_name: Boolean(data.user.user_metadata?.full_name),
+            has_name_parts: Boolean(
+              data.user.user_metadata?.first_name && data.user.user_metadata?.last_name,
+            ),
+            was_authenticated: wasAuthenticated,
+          });
+        }
       }
       telemetry.capture('auth_phone_otp_verify_succeeded');
 
-      // Note: isNewUser is determined by metadata presence (full_name or first_name/last_name),
-      // not by whether the user has ever signed in via phone before. This heuristic may:
-      // - Re-prompt returning phone users whose metadata was cleared (by admin/migration)
-      // - Not prompt users who previously authenticated via email OTP and have email in metadata
-      // This is an intentional design trade-off for simplicity.
-      const isNewUser = !hasCompletedProfileName(data.user);
+      const isSignup = pendingPhoneMode === 'signup';
+      const needsProfileCompletion = !hasCompletedProfileName(data.user);
 
-      if (isNewUser) {
-        telemetry.capture('user_signed_up', { method: 'phone' });
+      if (isSignup && data.user) {
+        await upsertProfileNameFromAuthUserBestEffort(data.user, pendingSignupName || undefined);
+        telemetry.capture('user_signed_up', {
+          method: 'phone',
+          has_signup_name: Boolean(pendingSignupName),
+        });
         set({
           user: data.user,
           session: data.session,
           isAuthenticated: true,
           pendingOTPPhone: null,
+          pendingOTPPhoneName: null,
+          pendingOTPPhoneMode: null,
           otpSentSuccessfully: false,
-          needsProfileCompletion: true,
+          needsProfileCompletion,
           isLoading: false,
         });
       } else {
-        telemetry.capture('user_logged_in', { method: 'phone' });
+        if (data.user) {
+          await upsertProfileNameFromAuthUserBestEffort(data.user);
+          telemetry.capture('user_logged_in', { method: 'phone' });
+        }
         set({
           user: data.user,
           session: data.session,
-          isAuthenticated: true,
+          isAuthenticated: Boolean(data.user),
           pendingOTPPhone: null,
+          pendingOTPPhoneName: null,
+          pendingOTPPhoneMode: null,
           otpSentSuccessfully: false,
-          needsProfileCompletion: false,
+          needsProfileCompletion,
           isLoading: false,
         });
       }
@@ -1207,20 +1237,26 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   // Resend phone OTP
-  resendPhoneOTP: async (mode: PhoneAuthMode = 'signin', phone?: string) => {
-    const { pendingOTPPhone, signInWithPhone } = get();
+  resendPhoneOTP: async (mode?: PhoneAuthMode, phone?: string) => {
+    const { pendingOTPPhone, pendingOTPPhoneName, pendingOTPPhoneMode, signInWithPhone } = get();
     const resendPhone = phone?.trim() || pendingOTPPhone;
     if (!resendPhone) {
       set({ errorMessage: 'Phone number is missing. Please enter it again.' });
       return;
     }
-    await signInWithPhone(resendPhone, mode);
+    await signInWithPhone(
+      resendPhone,
+      pendingOTPPhoneMode ?? mode ?? 'signin',
+      pendingOTPPhoneName || undefined,
+    );
   },
 
   // Cancel phone OTP flow
   cancelPhoneOTPFlow: () => {
     set({
       pendingOTPPhone: null,
+      pendingOTPPhoneName: null,
+      pendingOTPPhoneMode: null,
       otpSentSuccessfully: false,
       errorMessage: null,
     });
@@ -1512,9 +1548,20 @@ export const initAuthListener = () => {
       const currentState = useAuthStore.getState();
       const looksLikeNewPhoneUser =
         Boolean(currentState.pendingOTPPhone) && !hasCompletedProfileName(session.user);
+      const hasName = hasCompletedProfileName(session.user);
       setSentryUser(session.user);
       telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
       telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
+      if (__DEV__) {
+        const maskedPendingOTPPhone = maskPhoneForLogs(currentState.pendingOTPPhone);
+        console.log('[auth] Auth state changed - SIGNED_IN', {
+          user_id: session.user.id,
+          has_name: hasName,
+          pending_otp_phone: maskedPendingOTPPhone,
+          looks_like_new_phone_user: looksLikeNewPhoneUser,
+          metadata_present: Boolean(session.user.user_metadata),
+        });
+      }
       useAuthStore.setState((state) => ({
         ...state,
         user: session.user,
@@ -1523,6 +1570,8 @@ export const initAuthListener = () => {
         isLoading: false,
         pendingOTPEmail: null,
         pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
         otpSentSuccessfully: false,
         needsProfileCompletion: state.needsProfileCompletion || looksLikeNewPhoneUser,
       }));
@@ -1540,6 +1589,8 @@ export const initAuthListener = () => {
         isLoading: false,
         pendingOTPEmail: null,
         pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,

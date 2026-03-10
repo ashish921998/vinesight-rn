@@ -1,14 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, View, Text, Pressable, Platform, Modal } from 'react-native';
+import { ScrollView, View, Text, Pressable, Platform, Modal, TextInput } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { borderRadius, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import {
+  useChemicalCatalog,
   useFarms,
   useFarmSeasonStatus,
   useSafeToSprayMatrix,
@@ -23,7 +25,9 @@ export default function SpraySafeCheckerScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [iosPickerDraftDate, setIosPickerDraftDate] = useState<Date>(new Date());
   const [targetDateOverride, setTargetDateOverride] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const { data: farms = [] } = useFarms();
+  const { data: catalogMixes = [], isLoading: isCatalogLoading } = useChemicalCatalog();
   const initialFarmId = params.farmId ? Number.parseInt(params.farmId, 10) : null;
   const activeFarmId = Number.isFinite(initialFarmId ?? NaN)
     ? initialFarmId
@@ -48,6 +52,31 @@ export default function SpraySafeCheckerScreen() {
     targetHarvestDate: targetDate,
   });
 
+  const catalogMixById = useMemo(
+    () => new Map(catalogMixes.map((mix) => [mix.id, mix])),
+    [catalogMixes],
+  );
+
+  const filteredStatuses = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    const statuses = matrixQuery.data ?? [];
+    if (!normalized) return statuses;
+
+    return statuses.filter((item) => {
+      if (item.mixName.toLowerCase().includes(normalized)) return true;
+
+      const mix = catalogMixById.get(item.mixId);
+      if (!mix) return false;
+      if ((mix.target_problem ?? '').toLowerCase().includes(normalized)) return true;
+
+      return mix.components.some(
+        (component) =>
+          component.product_name.toLowerCase().includes(normalized) ||
+          (component.active_ingredient ?? '').toLowerCase().includes(normalized),
+      );
+    });
+  }, [catalogMixById, matrixQuery.data, query]);
+
   const statusColors = useMemo(
     () => ({
       green: { bg: colorWithOpacity('#2E7D32', 0.12), fg: '#2E7D32' },
@@ -64,6 +93,7 @@ export default function SpraySafeCheckerScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
+      keyboardShouldPersistTaps="handled"
       contentContainerStyle={{
         paddingHorizontal: spacing[4],
         paddingTop: Math.max(insets.top + spacing[2], spacing[4]),
@@ -79,6 +109,51 @@ export default function SpraySafeCheckerScreen() {
             'Enter target harvest date to see which catalog sprays are safe to apply today.',
         })}
       </Text>
+
+      <View style={{ marginTop: spacing[3] }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderRadius: borderRadius.xl,
+            paddingHorizontal: spacing[3],
+            paddingVertical: spacing[2],
+            borderWidth: 1,
+            borderColor: m3.colorScheme.outlineVariant,
+          }}
+        >
+          <UiSymbol name="magnifyingglass" size={18} color={m3.colorScheme.onSurfaceVariant} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder={t('safeToSpray.searchPlaceholder', {
+              defaultValue: 'Search mix, pest, or product',
+            })}
+            accessibilityLabel={t('safeToSpray.searchLabel', {
+              defaultValue: 'Search mix, pest, or product',
+            })}
+            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            style={{
+              flex: 1,
+              marginLeft: spacing[2],
+              color: m3.colorScheme.onSurface,
+            }}
+          />
+          {query !== '' ? (
+            <Pressable
+              onPress={() => setQuery('')}
+              accessibilityLabel={t('common.clearSearch', { defaultValue: 'Clear search' })}
+            >
+              <UiSymbol
+                name="xmark.circle.fill"
+                size={18}
+                color={m3.colorScheme.onSurfaceVariant}
+              />
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
 
       <View style={{ marginTop: spacing[4], marginBottom: spacing[3] }}>
         <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginBottom: spacing[2] }}>
@@ -220,12 +295,21 @@ export default function SpraySafeCheckerScreen() {
         </Pressable>
       ) : null}
 
-      {matrixQuery.isLoading ? (
+      {matrixQuery.isLoading || isCatalogLoading ? (
         <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
           {t('common.loading', { defaultValue: 'Loading…' })}
         </Text>
+      ) : filteredStatuses.length === 0 && query.trim() ? (
+        <View style={{ marginTop: spacing[2] }}>
+          <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
+            {t('common.noResultsFound', { defaultValue: 'No results found' })}
+          </Text>
+          <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
+            {t('common.tryDifferentSearchTerm', { defaultValue: 'Try a different search term' })}
+          </Text>
+        </View>
       ) : (
-        (matrixQuery.data ?? []).map((item) => {
+        filteredStatuses.map((item) => {
           const style = statusColors[item.status];
           return (
             <View

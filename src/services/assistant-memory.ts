@@ -318,6 +318,38 @@ class AssistantMemoryService {
     }
   }
 
+  async deleteConversation(conversationId: string): Promise<boolean> {
+    if (!assistantFeatureFlags.memoryEnabled) return false;
+    const trimmedId = conversationId?.trim();
+    if (!trimmedId) return false;
+
+    try {
+      const userId = await getUserId();
+      if (!userId) return false;
+
+      const { error, count } = await supabase
+        .from('assistant_conversations')
+        .delete({ count: 'exact' })
+        .eq('id', trimmedId)
+        .eq('user_id', userId);
+
+      if (error) {
+        if (__DEV__) console.warn('Assistant conversation delete failed:', error.message);
+        return false;
+      }
+
+      if (count !== 1) {
+        if (__DEV__) console.warn('Assistant conversation delete count mismatch:', count);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      if (__DEV__) console.warn('Assistant conversation delete failed:', error);
+      return false;
+    }
+  }
+
   async exportUserData(): Promise<AssistantUserDataExport | null> {
     if (!assistantFeatureFlags.memoryEnabled) return null;
 

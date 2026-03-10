@@ -79,6 +79,7 @@ export default function PhoneLoginScreen() {
   const requestedMode: PhoneAuthMode = mode === 'signin' ? 'signin' : 'signup';
 
   const [phoneAuthMode, setPhoneAuthMode] = useState<PhoneAuthMode>(requestedMode);
+  const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
@@ -86,6 +87,7 @@ export default function PhoneLoginScreen() {
   const lastNavigatedPhoneRef = useRef<string | null>(null);
   const lastRequestedOtpModeRef = useRef<PhoneAuthMode>(requestedMode);
   const [localPhoneError, setLocalPhoneError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
   const [isPhoneHintAvailable, setIsPhoneHintAvailable] = useState(false);
 
   useEffect(() => {
@@ -170,11 +172,23 @@ export default function PhoneLoginScreen() {
       setLocalPhoneError(t('authPhone.invalidPhone'));
       return;
     }
+    if (isSignUp && name.trim().length < 2) {
+      setNameError(t('authPhone.nameRequired', { defaultValue: 'Please enter your name' }));
+      return;
+    }
     const submitMode = phoneAuthMode;
     lastRequestedOtpModeRef.current = submitMode;
     clearError();
     setLocalPhoneError(null);
-    await signInWithPhone(fullPhoneNumber, submitMode);
+    setNameError(null);
+    if (__DEV__) {
+      console.log('[phone-login] handleSendCode - Sending OTP', {
+        mode: submitMode,
+        isSignUp,
+        hasName: isSignUp ? name.trim().length > 0 : undefined,
+      });
+    }
+    await signInWithPhone(fullPhoneNumber, submitMode, isSignUp ? name.trim() : undefined);
   };
 
   const handleUseMyNumber = async () => {
@@ -213,7 +227,11 @@ export default function PhoneLoginScreen() {
     if (isLoading) return;
     clearError();
     setLocalPhoneError(null);
+    setNameError(null);
     setPhoneAuthMode(nextMode);
+    if (nextMode === 'signin') {
+      setName('');
+    }
   };
 
   const isSignUp = phoneAuthMode === 'signup';
@@ -490,7 +508,7 @@ export default function PhoneLoginScreen() {
               {isSignUp
                 ? t('authPhone.signupSubtitle', {
                     defaultValue:
-                      'Create your account with your mobile number and we will send a verification code.',
+                      'Enter your name and mobile number to create your account. We will send a verification code.',
                   })
                 : t('authPhone.signinSubtitle', {
                     defaultValue:
@@ -548,6 +566,35 @@ export default function PhoneLoginScreen() {
                 })}
               </View>
 
+              {/* Name Input - Only for signup mode */}
+              {isSignUp && (
+                <Input
+                  placeholder={t('authPhone.namePlaceholder', { defaultValue: 'Your name' })}
+                  value={name}
+                  onChangeText={(value) => {
+                    setName(value);
+                    if (value.trim().length >= 2) {
+                      setNameError(null);
+                    } else if (value.trim().length > 0) {
+                      setNameError(
+                        t('authPhone.nameRequired', { defaultValue: 'Please enter your name' }),
+                      );
+                    }
+                  }}
+                  onBlur={() => {
+                    if (isSignUp && name.trim().length > 0 && name.trim().length < 2) {
+                      setNameError(
+                        t('authPhone.nameRequired', { defaultValue: 'Please enter your name' }),
+                      );
+                    }
+                  }}
+                  leftIcon="person.fill"
+                  autoCapitalize="words"
+                  textContentType="name"
+                  containerStyle={{ marginBottom: spacing[4] }}
+                />
+              )}
+
               {/* Country Code Picker */}
               <Pressable
                 onPress={() => setShowCountryPicker(true)}
@@ -601,14 +648,14 @@ export default function PhoneLoginScreen() {
               )}
 
               {/* Error Message */}
-              {(errorMessage || localPhoneError) && (
+              {(errorMessage || localPhoneError || nameError) && (
                 <View style={errorContainerStyle}>
                   <UiSymbol
                     name="exclamationmark.circle.fill"
                     size={18}
                     color={m3.colorScheme.error}
                   />
-                  <Text style={errorTextStyle}>{localPhoneError ?? errorMessage}</Text>
+                  <Text style={errorTextStyle}>{nameError ?? localPhoneError ?? errorMessage}</Text>
                 </View>
               )}
 
@@ -623,7 +670,9 @@ export default function PhoneLoginScreen() {
                 }
                 onPress={handleSendCode}
                 isLoading={isLoading}
-                disabled={!phoneNumber || !normalizedPhoneNumber}
+                disabled={
+                  !phoneNumber || !normalizedPhoneNumber || (isSignUp && name.trim().length < 2)
+                }
                 style={{ marginTop: spacing[4] }}
               />
             </View>
