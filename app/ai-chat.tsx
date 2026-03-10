@@ -54,6 +54,7 @@ import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import { assistantMemoryService } from '@/services/assistant-memory';
 import type { AssistantConversationSummary } from '@/services/assistant-memory';
 import { voiceOutputService } from '@/services/voice-output';
+import { appendCitationsToMessage } from '@/services/rag-citations';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate, formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
@@ -786,7 +787,7 @@ function VoiceModeModal({
                     }}
                   >
                     <Markdown style={voiceModeMarkdown} mergeStyle={true}>
-                      {message.content}
+                      {appendCitationsToMessage(message.content, message.citations ?? [])}
                     </Markdown>
                   </View>
                 );
@@ -1201,6 +1202,7 @@ export default function AIChatScreen() {
     setConversationId(null);
     setMessages([]);
     setSuggestions([]);
+    setFailedRequest(null);
   }, [cancelInFlightAssistantRequest]);
 
   const startNewConversation = useCallback(() => {
@@ -1329,7 +1331,10 @@ export default function AIChatScreen() {
           clearDraftTimeoutRef.current = null;
         }
 
-        const latestConversation = summaries[0];
+        const farmFilteredSummaries = contextFarm
+          ? summaries.filter((s) => s.farmId === contextFarm.id)
+          : summaries;
+        const latestConversation = farmFilteredSummaries[0];
         if (latestConversation) {
           const history = await assistantMemoryService.loadRecentMessages(
             latestConversation.id,
@@ -1370,7 +1375,7 @@ export default function AIChatScreen() {
     DEFAULT_SUGGESTIONS,
     beginConversationAsyncAction,
     cancelInFlightAssistantRequest,
-    contextFarm?.id,
+    contextFarm,
     isConversationAsyncTokenCurrent,
     languageCode,
     parsedFarmId,
@@ -1643,7 +1648,7 @@ export default function AIChatScreen() {
       voicePayload?: VoiceAudioPayload | null,
       options?: { overrideAttachments?: ChatAttachment[] },
     ) => {
-      const rawMessageText = text || inputText.trim();
+      const rawMessageText = text ?? inputText.trim();
       const messageText =
         source === 'voice' && rawMessageText === t('ai.voice.voiceMessage')
           ? pendingVoiceTranscriptRef.current.trim() ||
@@ -2837,15 +2842,24 @@ export default function AIChatScreen() {
       } catch {
         /* no-op */
       }
-      void stopVoiceRecording({ discard: true });
-      setVoiceInputState('idle');
+      if (assistantFeatureFlags.serverVoiceEnabled && activeVoiceRecordingRef.current) {
+        void finalizeVoiceCaptureAndSend();
+      } else {
+        void stopVoiceRecording({ discard: true });
+        setVoiceInputState('idle');
+      }
     }
     setIsVoiceModeVisible(false);
     setIsVoiceModeMicEnabled(false);
     setVoiceModeError(null);
     setVoiceModeNotice(null);
     setLiveVoiceTranscript('');
-  }, [cancelInFlightAssistantRequest, isVoiceListening, stopVoiceRecording]);
+  }, [
+    cancelInFlightAssistantRequest,
+    isVoiceListening,
+    stopVoiceRecording,
+    finalizeVoiceCaptureAndSend,
+  ]);
 
   const handleVoiceModePrimaryAction = useCallback(() => {
     closeVoiceMode();
@@ -2863,8 +2877,12 @@ export default function AIChatScreen() {
         } catch {
           /* no-op */
         }
-        void stopVoiceRecording({ discard: true });
-        setVoiceInputState('idle');
+        if (assistantFeatureFlags.serverVoiceEnabled) {
+          void finalizeVoiceCaptureAndSend();
+        } else {
+          void stopVoiceRecording({ discard: true });
+          setVoiceInputState('idle');
+        }
       }
       return;
     }
@@ -2881,6 +2899,7 @@ export default function AIChatScreen() {
     isVoiceListening,
     isVoiceModeMicEnabled,
     startVoiceInput,
+    finalizeVoiceCaptureAndSend,
     stopVoiceRecording,
     voiceInputState,
   ]);
@@ -3261,7 +3280,7 @@ export default function AIChatScreen() {
                 >
                   {message.role === 'assistant' ? (
                     <Markdown style={markdown} mergeStyle={true}>
-                      {message.content}
+                      {appendCitationsToMessage(message.content, message.citations ?? [])}
                     </Markdown>
                   ) : (
                     <Text style={{ fontSize: fontSize.base, color: m3.colorScheme.onPrimary }}>

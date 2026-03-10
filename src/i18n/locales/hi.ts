@@ -1371,6 +1371,8 @@ export const hi = {
     invalidPhone: 'कृपया देश कोड के साथ एक वैध फ़ोन नंबर दर्ज करें',
     countryCode: 'देश कोड',
     searchCountry: 'देश खोजें...',
+    namePlaceholder: 'आपका नाम',
+    nameRequired: 'कृपया अपना नाम दर्ज करें',
     a11y: {
       selectCountryCode: 'देश कोड चुनें',
       phoneInput: 'फ़ोन नंबर इनपुट',

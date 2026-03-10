@@ -139,6 +139,8 @@ interface AuthState {
   // OTP state
   pendingOTPEmail: string | null;
   pendingOTPPhone: string | null;
+  pendingOTPPhoneName: string | null;
+  pendingOTPPhoneMode: PhoneAuthMode | null;
   otpSentSuccessfully: boolean;
   pendingOTPType: EmailOTPType;
   needsProfileCompletion: boolean;
@@ -338,6 +340,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   errorMessage: null,
   pendingOTPEmail: null,
   pendingOTPPhone: null,
+  pendingOTPPhoneName: null,
+  pendingOTPPhoneMode: null,
   otpSentSuccessfully: false,
   pendingOTPType: 'email',
   needsProfileCompletion: false,
@@ -818,28 +822,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
       telemetry.reset();
       await clearQueryCache('sign out success path');
-
-      // Force clear any cached sessions from storage
-      try {
-        await supabase.auth.getSession();
-      } catch (_e) {
-        // Ignore errors when clearing cache
-      }
-    } catch (error: unknown) {
-      if (__DEV__) {
-        console.error('Sign out error:', error);
-      }
-
-      setSentryUser(null);
-
-      // Even if sign out fails, clear the local state to allow user to try again
-      set({
+    } catch {
+      useAuthStore.setState({
         user: null,
         session: null,
         isAuthenticated: false,
         isLoading: false,
         pendingOTPEmail: null,
         pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,
@@ -851,14 +843,24 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       await clearQueryCache('sign out recovery path');
     }
   },
-
   // Delete account
   deleteAccount: async (deleteReason: string) => {
-    set({ errorMessage: null, isLoading: true });
-
     try {
-      telemetry.capture('account_deletion_requested', {
-        has_reason: Boolean(deleteReason?.trim()),
+      useAuthStore.setState({
+        user: null,
+        session: null,
+        isAuthenticated: false,
+        isLoading: false,
+        pendingOTPEmail: null,
+        pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
+        otpSentSuccessfully: false,
+        pendingOTPType: 'email',
+        needsProfileCompletion: false,
+        phoneLinkingPending: false,
+        phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
       });
 
       if (__DEV__) {
@@ -906,23 +908,22 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingLoading: false,
       });
       await clearQueryCache('delete account');
-
-      telemetry.capture('account_deletion_succeeded');
-      try {
-        await telemetry.flush();
-      } catch (err) {
-        if (__DEV__) {
-          console.error('[Telemetry] Failed to flush account deletion event:', err);
-        }
-      }
-      telemetry.reset();
-
-      if (__DEV__) {
-        console.log('Account deletion request logged successfully');
-      }
-    } catch (error: unknown) {
-      telemetry.capture('account_deletion_failed', {
-        message: getAuthErrorMessage(error, 'Failed to delete account', 'delete_account'),
+    } catch (error) {
+      useAuthStore.setState({
+        user: null,
+        session: null,
+        isAuthenticated: false,
+        isLoading: false,
+        pendingOTPEmail: null,
+        pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
+        otpSentSuccessfully: false,
+        pendingOTPType: 'email',
+        needsProfileCompletion: false,
+        phoneLinkingPending: false,
+        phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
       });
       if (__DEV__) {
         console.error('Delete account error:', error);
@@ -1068,6 +1069,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     set({
       pendingOTPEmail: null,
       pendingOTPPhone: null,
+      pendingOTPPhoneName: null,
+      pendingOTPPhoneMode: null,
       otpSentSuccessfully: false,
       pendingOTPType: 'email',
       errorMessage: null,
@@ -1122,6 +1125,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       telemetry.capture('auth_phone_otp_send_succeeded', { mode });
       set({
         pendingOTPPhone: trimmedPhone,
+        pendingOTPPhoneName: mode === 'signup' && name?.trim() ? name.trim() : null,
+        pendingOTPPhoneMode: mode,
         otpSentSuccessfully: true,
         isLoading: false,
       });
@@ -1176,7 +1181,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         if (__DEV__) {
           console.log('[auth] verifyPhoneOTP - User metadata:', {
             user_id: data.user.id,
-            metadata: data.user.user_metadata,
+            metadata_present: Boolean(data.user.user_metadata),
             has_full_name: Boolean(data.user.user_metadata?.full_name),
             has_name_parts: Boolean(
               data.user.user_metadata?.first_name && data.user.user_metadata?.last_name,
@@ -1195,23 +1200,30 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const isNewUser = !hasCompletedProfileName(data.user);
 
       if (isNewUser) {
+        const pendingSignupName = get().pendingOTPPhoneName;
+        await upsertProfileNameFromAuthUserBestEffort(data.user, pendingSignupName || undefined);
         telemetry.capture('user_signed_up', { method: 'phone' });
         set({
           user: data.user,
           session: data.session,
           isAuthenticated: true,
           pendingOTPPhone: null,
+          pendingOTPPhoneName: null,
+          pendingOTPPhoneMode: null,
           otpSentSuccessfully: false,
           needsProfileCompletion: true,
           isLoading: false,
         });
       } else if (data.user) {
+        await upsertProfileNameFromAuthUserBestEffort(data.user);
         telemetry.capture('user_logged_in', { method: 'phone' });
         set({
           user: data.user,
           session: data.session,
           isAuthenticated: true,
           pendingOTPPhone: null,
+          pendingOTPPhoneName: null,
+          pendingOTPPhoneMode: null,
           otpSentSuccessfully: false,
           needsProfileCompletion: false,
           isLoading: false,
@@ -1233,19 +1245,25 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
   // Resend phone OTP
   resendPhoneOTP: async (mode: PhoneAuthMode = 'signin', phone?: string) => {
-    const { pendingOTPPhone, signInWithPhone } = get();
+    const { pendingOTPPhone, pendingOTPPhoneName, pendingOTPPhoneMode, signInWithPhone } = get();
     const resendPhone = phone?.trim() || pendingOTPPhone;
     if (!resendPhone) {
       set({ errorMessage: 'Phone number is missing. Please enter it again.' });
       return;
     }
-    await signInWithPhone(resendPhone, mode);
+    await signInWithPhone(
+      resendPhone,
+      mode || pendingOTPPhoneMode || 'signin',
+      pendingOTPPhoneName || undefined,
+    );
   },
 
   // Cancel phone OTP flow
   cancelPhoneOTPFlow: () => {
     set({
       pendingOTPPhone: null,
+      pendingOTPPhoneName: null,
+      pendingOTPPhoneMode: null,
       otpSentSuccessfully: false,
       errorMessage: null,
     });
@@ -1547,7 +1565,7 @@ export const initAuthListener = () => {
           has_name: hasName,
           pending_otp_phone: currentState.pendingOTPPhone,
           looks_like_new_phone_user: looksLikeNewPhoneUser,
-          metadata: session.user.user_metadata,
+          metadata_present: Boolean(session.user.user_metadata),
         });
       }
       useAuthStore.setState((state) => ({
@@ -1558,6 +1576,8 @@ export const initAuthListener = () => {
         isLoading: false,
         pendingOTPEmail: null,
         pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
         otpSentSuccessfully: false,
         needsProfileCompletion: state.needsProfileCompletion || looksLikeNewPhoneUser,
       }));
@@ -1575,6 +1595,8 @@ export const initAuthListener = () => {
         isLoading: false,
         pendingOTPEmail: null,
         pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,

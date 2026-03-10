@@ -1392,6 +1392,8 @@ export const mr = {
     invalidPhone: 'कृपया देश कोडसह वैध फोन नंबर प्रविष्ट करा',
     countryCode: 'देश कोड',
     searchCountry: 'देश शोधा...',
+    namePlaceholder: 'तुमचे नाव',
+    nameRequired: 'कृपया तुमचे नाव प्रविष्ट करा',
     a11y: {
       selectCountryCode: 'देश कोड निवडा',
       phoneInput: 'फोन नंबर इनपुट',

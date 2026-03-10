@@ -120,6 +120,11 @@ class VoiceOutputService {
     this.lastAllowDeviceFallback = options.allowDeviceFallback !== false;
 
     if (!audio?.base64 && this.lastAudioUri) {
+      try {
+        await this.stop();
+      } catch {
+        // Intentionally empty
+      }
       const staleAudioUri = this.lastAudioUri;
       this.lastAudioUri = null;
       FileSystem.deleteAsync(staleAudioUri).catch((error) => {
@@ -169,6 +174,9 @@ class VoiceOutputService {
           },
         });
       } else if (text && options.allowDeviceFallback === false) {
+        options.onStateChange?.(false);
+        options.onError?.();
+      } else {
         options.onStateChange?.(false);
         options.onError?.();
       }
@@ -228,6 +236,11 @@ class VoiceOutputService {
     const audioUri = this.lastAudioUri;
     this.lastAudioUri = null;
     if (audioUri) {
+      try {
+        await this.stop();
+      } catch {
+        // Intentionally empty
+      }
       FileSystem.deleteAsync(audioUri).catch((error) => {
         if (__DEV__) console.warn('Failed to delete audio file:', error);
       });
@@ -252,6 +265,9 @@ class VoiceOutputService {
         },
       });
     } else if (this.lastMessageText && !this.lastAllowDeviceFallback) {
+      options?.onStateChange?.(false);
+      options?.onError?.();
+    } else {
       options?.onStateChange?.(false);
       options?.onError?.();
     }

@@ -1388,6 +1388,8 @@ export const en = {
     phoneHintUnsupported: 'Could not fill this number automatically. Please enter it manually.',
     countryCode: 'Country Code',
     searchCountry: 'Search country...',
+    namePlaceholder: 'Your name',
+    nameRequired: 'Please enter your name',
     a11y: {
       selectCountryCode: 'Select country code',
       phoneInput: 'Phone number input',

@@ -130,6 +130,9 @@ export default function SpraySafeCheckerScreen() {
             placeholder={t('safeToSpray.searchPlaceholder', {
               defaultValue: 'Search mix, pest, or product',
             })}
+            accessibilityLabel={t('safeToSpray.searchLabel', {
+              defaultValue: 'Search mix, pest, or product',
+            })}
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
             style={{
               flex: 1,
