@@ -880,7 +880,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
 
       // Sign out after request is logged
-      await supabase.auth.signOut({ scope: 'global' });
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) throw error;
 
       setSentryUser(null);
 
@@ -1184,9 +1185,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
       telemetry.capture('auth_phone_otp_verify_succeeded');
 
-      const isNewUser = pendingPhoneMode === 'signup' || !hasCompletedProfileName(data.user);
+      const isSignup = pendingPhoneMode === 'signup';
+      const needsProfileCompletion = !hasCompletedProfileName(data.user);
 
-      if (isNewUser) {
+      if (isSignup) {
         await upsertProfileNameFromAuthUserBestEffort(data.user, pendingSignupName || undefined);
         telemetry.capture('user_signed_up', {
           method: 'phone',
@@ -1200,7 +1202,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           pendingOTPPhoneName: null,
           pendingOTPPhoneMode: null,
           otpSentSuccessfully: false,
-          needsProfileCompletion: true,
+          needsProfileCompletion,
           isLoading: false,
         });
       } else if (data.user) {
@@ -1214,7 +1216,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           pendingOTPPhoneName: null,
           pendingOTPPhoneMode: null,
           otpSentSuccessfully: false,
-          needsProfileCompletion: false,
+          needsProfileCompletion,
           isLoading: false,
         });
       }

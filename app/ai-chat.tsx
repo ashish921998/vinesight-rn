@@ -2784,7 +2784,13 @@ export default function AIChatScreen() {
             setVoiceInputState('listening');
             return;
           }
-          void stopVoiceRecording({ discard: true });
+          try {
+            await stopVoiceRecording({ discard: true });
+          } catch (_stopError) {
+            if (__DEV__) {
+              console.warn('Failed to discard voice recording after permission denial');
+            }
+          }
           setVoiceInputState('idle');
           setIsVoiceModeMicEnabled(false);
           setVoiceModeError(t('ai.voice.permissionBody'));
