@@ -845,22 +845,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
   // Delete account
   deleteAccount: async (deleteReason: string) => {
+    set({ errorMessage: null, isLoading: true });
+
+    const currentUser = get().user;
+    const userId = currentUser?.id;
+    const userEmail = currentUser?.email;
+
     try {
-      useAuthStore.setState({
-        user: null,
-        session: null,
-        isAuthenticated: false,
-        isLoading: false,
-        pendingOTPEmail: null,
-        pendingOTPPhone: null,
-        pendingOTPPhoneName: null,
-        pendingOTPPhoneMode: null,
-        otpSentSuccessfully: false,
-        pendingOTPType: 'email',
-        needsProfileCompletion: false,
-        phoneLinkingPending: false,
-        phoneLinkingNumber: null,
-        phoneLinkingLoading: false,
+      telemetry.capture('account_deletion_requested', {
+        has_reason: Boolean(deleteReason?.trim()),
       });
 
       if (__DEV__) {
@@ -868,9 +861,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
 
       // Log deletion request (actual deletion happens via server-side process)
-      const userId = get().user?.id;
       if (userId) {
-        const userEmail = get().user?.email;
         const maskEmail = (email: string) => {
           const [localPart, domain] = email.split('@');
           if (localPart.length <= 2) {
@@ -908,23 +899,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingLoading: false,
       });
       await clearQueryCache('delete account');
+      telemetry.capture('account_deletion_succeeded');
+      try {
+        await telemetry.flush();
+      } catch (err) {
+        if (__DEV__) {
+          console.error('[Telemetry] Failed to flush account deletion event:', err);
+        }
+      }
+      telemetry.reset();
     } catch (error) {
-      useAuthStore.setState({
-        user: null,
-        session: null,
-        isAuthenticated: false,
-        isLoading: false,
-        pendingOTPEmail: null,
-        pendingOTPPhone: null,
-        pendingOTPPhoneName: null,
-        pendingOTPPhoneMode: null,
-        otpSentSuccessfully: false,
-        pendingOTPType: 'email',
-        needsProfileCompletion: false,
-        phoneLinkingPending: false,
-        phoneLinkingNumber: null,
-        phoneLinkingLoading: false,
-      });
       if (__DEV__) {
         console.error('Delete account error:', error);
       }
