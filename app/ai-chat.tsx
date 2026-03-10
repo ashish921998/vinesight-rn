@@ -1111,6 +1111,13 @@ export default function AIChatScreen() {
   const speechLocale = useMemo(() => resolveSpeechLocale(i18n.language), [i18n.language]);
   const isVoiceListening = voiceInputState === 'starting' || voiceInputState === 'listening';
   const languageCode = useMemo(() => resolveLanguageCode(i18n.language), [i18n.language]);
+  const visibleConversationSummaries = useMemo(
+    () =>
+      contextFarm
+        ? conversationSummaries.filter((summary) => summary.farmId === contextFarm.id)
+        : conversationSummaries,
+    [contextFarm, conversationSummaries],
+  );
   const cancelInFlightAssistantRequest = useCallback(() => {
     const requestId = activeAssistantRequestIdRef.current;
     const abortController = activeAssistantAbortControllerRef.current;
@@ -1688,14 +1695,16 @@ export default function AIChatScreen() {
         setVoiceInputState('idle');
       }
 
+      const persistedUserContent =
+        visibleUserContent ||
+        pendingVoiceTranscriptRef.current.trim() ||
+        liveVoiceTranscript.trim() ||
+        (source === 'voice' ? t('ai.voice.voiceMessage') : '');
+
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
         role: 'user',
-        content:
-          visibleUserContent ||
-          pendingVoiceTranscriptRef.current.trim() ||
-          liveVoiceTranscript.trim() ||
-          (source === 'voice' ? t('ai.voice.voiceMessage') : ''),
+        content: persistedUserContent,
         timestamp: new Date(),
       };
 
@@ -1748,7 +1757,7 @@ export default function AIChatScreen() {
             conversationId: activeConversationId,
             farmId: contextFarm?.id ?? parsedFarmId ?? null,
             role: 'user',
-            content: visibleUserContent || assistantInput,
+            content: persistedUserContent,
             inputMode: requestInputMode,
           });
           if (isStaleConversationAction()) return;
@@ -2848,8 +2857,16 @@ export default function AIChatScreen() {
       if (assistantFeatureFlags.serverVoiceEnabled && activeVoiceRecordingRef.current) {
         void finalizeVoiceCaptureAndSend();
       } else {
-        void stopVoiceRecording({ discard: true });
-        setVoiceInputState('idle');
+        const finalTranscript =
+          finalVoiceTranscriptRef.current.trim() ||
+          pendingVoiceTranscriptRef.current.trim() ||
+          liveVoiceTranscript.trim();
+        if (finalTranscript && !hasSubmittedVoiceQueryRef.current) {
+          void submitVoiceTranscript(finalTranscript);
+        } else {
+          void stopVoiceRecording({ discard: true });
+          setVoiceInputState('idle');
+        }
       }
     }
     setIsVoiceModeVisible(false);
@@ -2859,9 +2876,11 @@ export default function AIChatScreen() {
     setLiveVoiceTranscript('');
   }, [
     cancelInFlightAssistantRequest,
+    liveVoiceTranscript,
     isVoiceListening,
     stopVoiceRecording,
     finalizeVoiceCaptureAndSend,
+    submitVoiceTranscript,
   ]);
 
   const handleVoiceModePrimaryAction = useCallback(() => {
@@ -2883,8 +2902,16 @@ export default function AIChatScreen() {
         if (assistantFeatureFlags.serverVoiceEnabled) {
           void finalizeVoiceCaptureAndSend();
         } else {
-          void stopVoiceRecording({ discard: true });
-          setVoiceInputState('idle');
+          const finalTranscript =
+            finalVoiceTranscriptRef.current.trim() ||
+            pendingVoiceTranscriptRef.current.trim() ||
+            liveVoiceTranscript.trim();
+          if (finalTranscript && !hasSubmittedVoiceQueryRef.current) {
+            void submitVoiceTranscript(finalTranscript);
+          } else {
+            void stopVoiceRecording({ discard: true });
+            setVoiceInputState('idle');
+          }
         }
       }
       return;
@@ -2901,9 +2928,11 @@ export default function AIChatScreen() {
     isLoading,
     isVoiceListening,
     isVoiceModeMicEnabled,
+    liveVoiceTranscript,
     startVoiceInput,
     finalizeVoiceCaptureAndSend,
     stopVoiceRecording,
+    submitVoiceTranscript,
     voiceInputState,
   ]);
 
@@ -3101,6 +3130,11 @@ export default function AIChatScreen() {
                 {conversationId ? (
                   <Pressable
                     onPress={() => handleDeleteConversation(conversationId)}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      conversationId ? 'Delete conversation' : 'Delete current conversation'
+                    }
+                    accessibilityHint="Deletes the current conversation from history"
                     style={{ padding: spacing[1] }}
                   >
                     <UiSymbol name="trash" size={18} color={m3.colorScheme.onBackground} />
@@ -3112,6 +3146,9 @@ export default function AIChatScreen() {
                     setIsHistoryVisible(true);
                     void refreshConversationHistory();
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open conversation history"
+                  accessibilityHint="Opens your saved conversations"
                   style={{ padding: spacing[1] }}
                 >
                   <UiSymbol name="sidebar.left" size={20} color={m3.colorScheme.onBackground} />
@@ -3977,7 +4014,7 @@ export default function AIChatScreen() {
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ gap: spacing[2] }}
                   >
-                    {conversationSummaries.map((summary) => {
+                    {visibleConversationSummaries.map((summary) => {
                       const isActive = summary.id === conversationId;
                       const preview = (summary.lastMessage ?? '').trim();
                       return (
@@ -4039,7 +4076,7 @@ export default function AIChatScreen() {
                         </Pressable>
                       );
                     })}
-                    {conversationSummaries.length === 0 && (
+                    {visibleConversationSummaries.length === 0 && (
                       <Text
                         style={{
                           color: colors.surface[600],

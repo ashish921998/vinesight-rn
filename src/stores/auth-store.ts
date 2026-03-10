@@ -1152,6 +1152,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
     const wasAuthenticated = get().isAuthenticated;
     const pendingSignupName = get().pendingOTPPhoneName;
+    const pendingPhoneMode = get().pendingOTPPhoneMode;
     set({ errorMessage: null, isLoading: true });
     telemetry.capture('auth_phone_otp_verify_started');
 
@@ -1183,16 +1184,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
       telemetry.capture('auth_phone_otp_verify_succeeded');
 
-      // Note: isNewUser is determined by metadata presence (full_name or first_name/last_name),
-      // not by whether the user has ever signed in via phone before. This heuristic may:
-      // - Re-prompt returning phone users whose metadata was cleared (by admin/migration)
-      // - Not prompt users who previously authenticated via email OTP and have email in metadata
-      // This is an intentional design trade-off for simplicity.
-      const isNewUser = !hasCompletedProfileName(data.user);
+      const isNewUser = pendingPhoneMode === 'signup' || !hasCompletedProfileName(data.user);
 
       if (isNewUser) {
         await upsertProfileNameFromAuthUserBestEffort(data.user, pendingSignupName || undefined);
-        telemetry.capture('user_signed_up', { method: 'phone', signupName: pendingSignupName });
+        telemetry.capture('user_signed_up', {
+          method: 'phone',
+          hasSignupName: Boolean(pendingSignupName),
+        });
         set({
           user: data.user,
           session: data.session,
