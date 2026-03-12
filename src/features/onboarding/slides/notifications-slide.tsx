@@ -13,14 +13,6 @@ interface NotificationsSlideProps {
   onFinish: (notificationsEnabled: boolean) => void | Promise<void>;
 }
 
-const NOTIFICATION_STATS = [
-  { icon: 'xmark.seal.fill' as const, i18nKey: 'onboarding.notifications.stats.lateSpray' },
-  {
-    icon: 'drop.triangle.fill' as const,
-    i18nKey: 'onboarding.notifications.stats.missedIrrigation',
-  },
-  { icon: 'person.fill.xmark' as const, i18nKey: 'onboarding.notifications.stats.unclearLabour' },
-] as const;
 const NOTIFICATION_ACCENT_COLOR = '#408059';
 
 export function NotificationsSlide({ isActive, onFinish }: NotificationsSlideProps) {
@@ -34,21 +26,6 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
       backgroundColor: colorWithOpacity(NOTIFICATION_ACCENT_COLOR, isDark ? 0.15 : 0.08),
     }),
     [isDark],
-  );
-
-  const statRowStyle = useMemo(
-    () => ({
-      backgroundColor: isDark
-        ? colorWithOpacity(m3.surface.surfaceContainerHigh, 0.6)
-        : colorWithOpacity(m3.colorScheme.surfaceVariant, 0.7),
-      borderColor: colorWithOpacity(m3.colorScheme.outline, 0.12),
-    }),
-    [
-      isDark,
-      m3.colorScheme.outline,
-      m3.colorScheme.surfaceVariant,
-      m3.surface.surfaceContainerHigh,
-    ],
   );
 
   const handleEnable = useCallback(async () => {
@@ -83,6 +60,11 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
     }
   }, [isRequesting, onFinish]);
 
+  const handleSkip = useCallback(() => {
+    triggerHapticMedium();
+    onFinish(false);
+  }, [onFinish]);
+
   return (
     <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
       <View
@@ -107,55 +89,6 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
         </Animated.View>
 
         <Animated.View
-          entering={isActive ? FadeInDown.delay(150).duration(500) : undefined}
-          style={styles.header}
-        >
-          <Text style={[styles.eyebrow, { color: m3.colorScheme.primary }]}>
-            {t('onboarding.notifications.eyebrow')}
-          </Text>
-          <Text style={[styles.title, { color: m3.colorScheme.onSurface }]}>
-            {t('onboarding.notifications.slideTitle')}
-          </Text>
-          <Text style={[styles.subtitle, { color: m3.colorScheme.onSurfaceVariant }]}>
-            {t('onboarding.notifications.slideSubtitle')}
-          </Text>
-        </Animated.View>
-
-        <Animated.View
-          entering={isActive ? FadeInDown.delay(350).duration(500) : undefined}
-          style={styles.statsContainer}
-        >
-          {NOTIFICATION_STATS.map((stat) => (
-            <View key={stat.i18nKey} style={[styles.statRow, statRowStyle]}>
-              <View
-                style={[
-                  styles.statIcon,
-                  { backgroundColor: colorWithOpacity(NOTIFICATION_ACCENT_COLOR, 0.1) },
-                ]}
-              >
-                <SymbolIcon name={stat.icon} size={18} color={NOTIFICATION_ACCENT_COLOR} />
-              </View>
-              <Text style={[styles.statText, { color: m3.colorScheme.onSurface }]}>
-                {t(stat.i18nKey)}
-              </Text>
-            </View>
-          ))}
-        </Animated.View>
-
-        <Animated.View
-          entering={isActive ? FadeInDown.delay(470).duration(500) : undefined}
-          style={[
-            styles.assuranceBar,
-            { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08) },
-          ]}
-        >
-          <SymbolIcon name="checkmark.shield.fill" size={18} color={m3.colorScheme.primary} />
-          <Text style={[styles.assuranceText, { color: m3.colorScheme.onSurface }]}>
-            {t('onboarding.notifications.assurance')}
-          </Text>
-        </Animated.View>
-
-        <Animated.View
           entering={isActive ? FadeInDown.delay(550).duration(500) : undefined}
           style={styles.ctaContainer}
         >
@@ -176,6 +109,15 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
               {isRequesting
                 ? t('onboarding.notifications.checkingPermissions')
                 : t('onboarding.notifications.enableAlerts')}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={handleSkip}
+            disabled={isRequesting}
+            style={({ pressed }) => [styles.skipButton, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Text style={[styles.skipText, { color: m3.colorScheme.onSurfaceVariant }]}>
+              {t('common.skip')}
             </Text>
           </Pressable>
         </Animated.View>
@@ -209,62 +151,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  header: {
-    gap: spacing[2],
-  },
-  eyebrow: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  title: {
-    fontSize: fontSize['3xl'],
-    fontWeight: fontWeight.bold,
-    lineHeight: 36,
-  },
-  subtitle: {
-    fontSize: fontSize.base,
-    lineHeight: 22,
-  },
-  statsContainer: {
-    gap: spacing[3],
-  },
-  statRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[4],
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-  },
-  statIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statText: {
-    flex: 1,
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    lineHeight: 20,
-  },
-  assuranceBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    borderRadius: borderRadius.xl,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-  },
-  assuranceText: {
-    flex: 1,
-    fontSize: fontSize.sm,
-    lineHeight: 20,
-  },
   ctaContainer: {
     gap: spacing[3],
   },
@@ -281,5 +167,13 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
+  },
+  skipButton: {
+    paddingVertical: spacing[3],
+    alignItems: 'center',
+  },
+  skipText: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.medium,
   },
 });

@@ -159,6 +159,7 @@ export default function PhoneLoginScreen() {
     () => getLocalPhoneDigitLimit(selectedCountry.dialCode),
     [selectedCountry.dialCode],
   );
+  const phoneError = localPhoneError ?? errorMessage;
 
   useEffect(() => {
     if (isAuthenticated && needsProfileCompletion) {
@@ -322,15 +323,14 @@ export default function PhoneLoginScreen() {
     alignItems: 'stretch',
     minHeight: 56,
     borderRadius: borderRadius.xl,
-    borderWidth: 1,
-    borderColor: localPhoneError ? m3.colorScheme.error : m3.colorScheme.outlineVariant,
+    borderWidth: 2,
+    borderColor: phoneError ? m3.colorScheme.error : m3.colorScheme.outlineVariant,
     backgroundColor: m3.surface.surfaceContainerHigh,
     overflow: 'hidden',
   };
 
   const phoneInputRowFocusedStyle: ViewStyle = {
-    borderWidth: 2,
-    borderColor: localPhoneError ? m3.colorScheme.error : m3.colorScheme.primary,
+    borderColor: phoneError ? m3.colorScheme.error : m3.colorScheme.primary,
   };
 
   const phoneNumberInputWrapperStyle: ViewStyle = {
@@ -597,16 +597,20 @@ export default function PhoneLoginScreen() {
                 testID="phone-input-row"
               >
                 <Pressable
+                  disabled={isLoading}
                   onPress={() => setShowCountryPicker(true)}
                   style={({ pressed }) => [
                     countryPickerButtonStyle,
                     {
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
+                      backgroundColor:
+                        !isLoading && pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      opacity: isLoading ? 0.6 : 1,
                     },
                   ]}
                   accessibilityRole="button"
+                  accessibilityState={{ disabled: isLoading }}
                   accessibilityLabel={t('authPhone.selectCountryA11y')}
                   testID="phone-country-trigger"
                 >
@@ -637,6 +641,7 @@ export default function PhoneLoginScreen() {
                     autoCapitalize="none"
                     textContentType="telephoneNumber"
                     autoComplete="tel"
+                    editable={!isLoading}
                     style={phoneNumberInputStyle}
                     onFocus={() => setIsPhoneInputFocused(true)}
                     onBlur={() => setIsPhoneInputFocused(false)}
@@ -644,14 +649,14 @@ export default function PhoneLoginScreen() {
                 </View>
               </View>
               {/* Error Message */}
-              {(errorMessage || localPhoneError) && (
+              {phoneError && (
                 <View style={errorContainerStyle}>
                   <UiSymbol
                     name="exclamationmark.circle.fill"
                     size={18}
                     color={m3.colorScheme.error}
                   />
-                  <Text style={errorTextStyle}>{localPhoneError ?? errorMessage}</Text>
+                  <Text style={errorTextStyle}>{phoneError}</Text>
                 </View>
               )}
 

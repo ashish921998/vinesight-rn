@@ -691,7 +691,7 @@ function VoiceModeModal({
       : isVoiceRecording
         ? t('ai.voice.recording', { defaultValue: 'Recording...' })
         : voiceConversationMode === 'auto'
-          ? t('ai.voice.listening', { defaultValue: 'Listening...' })
+          ? t('ai.voice.readyToListen', { defaultValue: 'Ready to listen...' })
           : isVoiceModeMicEnabled
             ? t('ai.chat.tapToSpeak')
             : t('ai.voice.microphoneOff', { defaultValue: 'Microphone off' });
@@ -1440,9 +1440,11 @@ export default function AIChatScreen() {
     }
 
     // Prevent starting if already processing
-    if (isProcessingVoiceRef.current || voiceInputState !== 'idle') {
+    if (isProcessingVoiceRef.current || voiceInputStateRef.current !== 'idle') {
       return false;
     }
+
+    isProcessingVoiceRef.current = true;
 
     try {
       const permission = await requestRecordingPermissionsAsync();
@@ -1463,6 +1465,7 @@ export default function AIChatScreen() {
       await voiceRecorder.prepareToRecordAsync();
       voiceRecorder.record();
       voiceRecordingStartTimeRef.current = Date.now();
+      voiceInputStateRef.current = 'recording';
       setVoiceInputState('recording');
       setVoiceModeError(null);
       setVoiceModeNotice(null);
@@ -1486,8 +1489,10 @@ export default function AIChatScreen() {
         // no-op
       }
       return false;
+    } finally {
+      isProcessingVoiceRef.current = false;
     }
-  }, [t, voiceRecorder, voiceInputState]);
+  }, [t, voiceRecorder]);
 
   /**
    * Stop recording and capture the audio payload.

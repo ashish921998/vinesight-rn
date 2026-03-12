@@ -1596,6 +1596,7 @@ export const en = {
     voice: {
       starting: 'Starting microphone...',
       listening: 'Listening...',
+      readyToListen: 'Ready to listen...',
       startA11y: 'Start voice input',
       stopA11y: 'Stop voice input',
       permissionTitle: 'Microphone Permission Required',

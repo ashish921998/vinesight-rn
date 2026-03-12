@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Platform } from 'react-native';
 import PhoneLoginScreen from '../app/(auth)/phone-login';
 import { matchPhoneNumberHintToCountry } from '@/utils/phone';
@@ -226,10 +226,24 @@ describe('PhoneLoginScreen automatic phone hint', () => {
   });
 
   it('leaves the field unchanged when the user starts typing before the hint resolves', async () => {
+    let resolvePhoneHint: ((value: string | null) => void) | null = null;
+    mockRequestPhoneNumberHint.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolvePhoneHint = resolve;
+        }),
+    );
+
     render(<PhoneLoginScreen />);
+
+    await waitFor(() => expect(mockRequestPhoneNumberHint).toHaveBeenCalled());
 
     const input = screen.getByPlaceholderText('Phone number');
     fireEvent.changeText(input, '9999999999');
+
+    await act(async () => {
+      resolvePhoneHint?.('+919422724937');
+    });
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('9999999999')).toBeTruthy();

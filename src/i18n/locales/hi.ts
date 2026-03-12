@@ -1577,6 +1577,7 @@ export const hi = {
     voice: {
       starting: 'माइक्रोफ़ोन शुरू हो रहा है...',
       listening: 'सुन रहा है...',
+      readyToListen: 'सुनने के लिए तैयार...',
       startA11y: 'वॉइस इनपुट शुरू करें',
       stopA11y: 'वॉइस इनपुट रोकें',
       permissionTitle: 'माइक्रोफ़ोन अनुमति आवश्यक',

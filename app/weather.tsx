@@ -262,7 +262,10 @@ export default function WeatherScreen() {
     Number.isFinite(selectedFarm?.latitude) && Number.isFinite(selectedFarm?.longitude);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }} edges={['top']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
+      edges={['left', 'right']}
+    >
       <Stack.Screen options={{ title: t('tools.items.weatherIrrigation') }} />
       <ScrollView
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}

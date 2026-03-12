@@ -106,20 +106,19 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   };
 
   const actionsContainerStyle: ViewStyle = {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
     marginLeft: spacing[3],
     gap: spacing[2],
   };
 
-  const actionChipStyle: ViewStyle = {
-    flexDirection: 'row',
+  const actionButtonStyle: ViewStyle = {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
-    borderRadius: borderRadius.full,
+    justifyContent: 'center',
     overflow: 'hidden',
-    gap: spacing[1],
   };
 
   const renderCardContent = (pressed: boolean) => (
@@ -157,55 +156,45 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
           {onEdit && (
             <Pressable
               onPress={onEdit}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={t('workers.workerCard.editA11y', { name: worker.name })}
               style={({ pressed: actionPressed }) => [
-                actionChipStyle,
-                {
-                  backgroundColor: actionPressed
-                    ? colorWithOpacity(m3.colorScheme.primary, 0.18)
-                    : colorWithOpacity(m3.colorScheme.primary, 0.1),
-                },
+                actionButtonStyle,
+                { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12) },
+                actionPressed
+                  ? {
+                      backgroundColor: colorWithOpacity(
+                        m3.colorScheme.primary,
+                        0.12 + m3.stateLayerOpacity.pressed,
+                      ),
+                    }
+                  : null,
               ]}
             >
-              <CardSymbol name="pencil" size={13} color={m3.colorScheme.primary} />
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.colorScheme.primary,
-                }}
-              >
-                {t('workers.edit')}
-              </Text>
+              <CardSymbol name="pencil" size={18} color={m3.colorScheme.primary} />
             </Pressable>
           )}
           {onDelete && (
             <Pressable
               onPress={onDelete}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={t('workers.workerCard.deleteA11y', { name: worker.name })}
               style={({ pressed: actionPressed }) => [
-                actionChipStyle,
-                {
-                  backgroundColor: actionPressed
-                    ? colorWithOpacity(m3.colorScheme.error, 0.18)
-                    : colorWithOpacity(m3.colorScheme.error, 0.1),
-                },
+                actionButtonStyle,
+                { backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12) },
+                actionPressed
+                  ? {
+                      backgroundColor: colorWithOpacity(
+                        m3.colorScheme.error,
+                        0.12 + m3.stateLayerOpacity.pressed,
+                      ),
+                    }
+                  : null,
               ]}
             >
-              <CardSymbol name="trash" size={13} color={m3.colorScheme.error} />
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.colorScheme.error,
-                }}
-              >
-                {t('workers.delete')}
-              </Text>
+              <CardSymbol name="trash" size={18} color={m3.colorScheme.error} />
             </Pressable>
           )}
         </View>
