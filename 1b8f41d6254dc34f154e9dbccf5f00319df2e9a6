@@ -1,0 +1,23 @@
+app/ai-chat.tsx
+  756ab37e44104da3 1690,1696
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "1b8f41d6254dc34f154e9dbccf5f00319df2e9a6",
+  "prompts": {
+    "756ab37e44104da3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ce2e7-c355-70f2-bde6-807d6cf42f4e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
