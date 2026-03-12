@@ -1,0 +1,29 @@
+app/(auth)/otp-verification.tsx
+  b9d5eccf9ea2f526 63,140-147,153-154,156,174
+app/ai-chat.tsx
+  b9d5eccf9ea2f526 981-990,1004,2419-2421
+src/hooks/use-voice-recording.ts
+  b9d5eccf9ea2f526 58-59,318-329,351-352
+app/(auth)/phone-login.tsx
+  b9d5eccf9ea2f526 192,219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "6eabb4ab7d0047c77fc996415aa95160609a9708",
+  "prompts": {
+    "b9d5eccf9ea2f526": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ce443-4f30-7cd3-b158-e8159b266a13",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 52,
+      "total_deletions": 20,
+      "accepted_lines": 51,
+      "overriden_lines": 0
+    }
+  }
+}
