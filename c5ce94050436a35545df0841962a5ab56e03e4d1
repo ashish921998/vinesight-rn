@@ -1,0 +1,40 @@
+app/ai-chat.tsx
+  fc510e5f20ce3655 51,981-1008,2361,2368-2370,2398
+  1f476018e9daf0f0 2329,2437
+src/hooks/use-voice-recording.ts
+  1f476018e9daf0f0 1,216-225,307-311,413-416,454,464
+  fc510e5f20ce3655 2-215,226-306,312-412,417-453,455-463,465-502
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "c5ce94050436a35545df0841962a5ab56e03e4d1",
+  "prompts": {
+    "1f476018e9daf0f0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ce34d-a8bf-7f02-9738-1c0f1152bf79",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 149,
+      "accepted_lines": 26,
+      "overriden_lines": 0
+    },
+    "fc510e5f20ce3655": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31cce1473ffestcOGv9GOLbbBv",
+        "model": "opencode/minimax-m2.5-free"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 556,
+      "total_deletions": 391,
+      "accepted_lines": 514,
+      "overriden_lines": 0
+    }
+  }
+}
