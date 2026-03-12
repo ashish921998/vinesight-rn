@@ -1096,6 +1096,7 @@ export default function AIChatScreen() {
   const voiceModeStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearDraftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const voiceRecordingStartTimeRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
   const isProcessingVoiceRef = useRef(false);
   const voiceInputStateRef = useRef<VoiceInputState>(voiceInputState);
   const voiceConversationModeRef = useRef<VoiceConversationMode>(voiceConversationMode);
@@ -1166,6 +1167,17 @@ export default function AIChatScreen() {
   useEffect(() => {
     isLoadingRef.current = isLoading;
   }, [isLoading]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (voiceModeStartTimeoutRef.current) {
+        clearTimeout(voiceModeStartTimeoutRef.current);
+        voiceModeStartTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const refreshConversationHistory = useCallback(async () => {
     if (!assistantFeatureFlags.memoryEnabled) return;
@@ -2765,11 +2777,21 @@ export default function AIChatScreen() {
         voiceModeStartTimeoutRef.current = null;
       }
 
+      if (!isMountedRef.current) {
+        return;
+      }
+
       setVoiceModeError(null);
       setVoiceModeNotice(null);
       voiceModeStartTimeoutRef.current = setTimeout(async () => {
         voiceModeStartTimeoutRef.current = null;
+        if (!isMountedRef.current) {
+          return;
+        }
         const started = await startVoiceRecording();
+        if (!isMountedRef.current) {
+          return;
+        }
         if (!started) {
           setIsVoiceModeMicEnabled(false);
           setVoiceInputState('idle');
