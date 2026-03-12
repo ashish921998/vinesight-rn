@@ -126,14 +126,8 @@ export function OnboardingScreen() {
     if (currentPageIndex < FIRST_FARM_PAGE_INDEX) {
       telemetry.capture('onboarding_jump_to_farm_step');
       jumpToPage(FIRST_FARM_PAGE_INDEX);
-      return;
     }
-
-    if (currentPageIndex === NOTIFICATIONS_PAGE_INDEX) {
-      telemetry.capture('onboarding_skipped', { step: 'notifications' });
-      void finishOnboarding(false);
-    }
-  }, [currentPageIndex, finishOnboarding, jumpToPage]);
+  }, [currentPageIndex, jumpToPage]);
 
   const handleFarmResolved = useCallback(
     (farmId: number | null) => {
@@ -175,7 +169,7 @@ export function OnboardingScreen() {
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: m3.colorScheme.onSurface }]}>VineSight</Text>
         </View>
-        {currentPageIndex !== FIRST_FARM_PAGE_INDEX ? (
+        {currentPageIndex < FIRST_FARM_PAGE_INDEX ? (
           <View style={styles.skipContainer}>
             <OnboardingButton label="Skip" onPress={handleSkip} variant="ghost" />
           </View>

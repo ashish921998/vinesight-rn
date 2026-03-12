@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Platform } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
@@ -120,41 +120,22 @@ export default function WorkerAnalyticsDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
+      edges={['left', 'right']}
+    >
+      <Stack.Screen options={{ title: worker.name }} />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: spacing[8] + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
         <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
-          <Pressable
-            onPress={() => router.back()}
-            style={{
-              alignSelf: 'flex-start',
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: spacing[2],
-            }}
-          >
-            <UiSymbol name="chevron.left" size={18} color={m3.colorScheme.primary} />
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.semibold,
-                color: m3.colorScheme.primary,
-                marginLeft: spacing[1],
-              }}
-            >
-              {t('common.back')}
-            </Text>
-          </Pressable>
-
           <Text
             style={{
               fontSize: fontSize.xl,
               fontWeight: fontWeight.bold,
               color: m3.colorScheme.onSurface,
-              marginTop: spacing[2],
             }}
           >
             {worker.name}

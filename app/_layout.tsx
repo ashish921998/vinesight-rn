@@ -144,7 +144,7 @@ export default Sentry.wrap(function RootLayout() {
   }, [pathname, segments]);
 
   const language = useLanguageStore((s) => s.language);
-  const setLanguage = useLanguageStore((s) => s.setLanguage);
+  const setDetectedLanguage = useLanguageStore((s) => s.setDetectedLanguage);
   const languageHydrated = useLanguageStore((s) => s.hasHydrated);
 
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
@@ -298,11 +298,11 @@ export default Sentry.wrap(function RootLayout() {
 
     const effective = language ?? getDeviceLanguage();
     if (!language) {
-      setLanguage(effective);
+      setDetectedLanguage(effective);
       prevLanguageRef.current = effective;
     }
     setAppLanguage(effective);
-  }, [language, languageHydrated, setLanguage]);
+  }, [language, languageHydrated, setDetectedLanguage]);
 
   useEffect(() => {
     if (!languageHydrated || !notificationsHydrated) return;
@@ -674,55 +674,100 @@ export default Sentry.wrap(function RootLayout() {
                 screenOptions={{
                   headerShown: false,
                   contentStyle: { backgroundColor: m3.colorScheme.background },
+                  headerStyle: {
+                    backgroundColor: m3.colorScheme.surface,
+                  },
+                  headerTitleStyle: {
+                    color: m3.colorScheme.onSurface,
+                    fontWeight: '600',
+                    fontSize: 18,
+                  },
+                  headerTintColor: m3.colorScheme.primary,
+                  headerShadowVisible: false,
                 }}
               >
                 <Stack.Screen name="index" />
+                <Stack.Screen
+                  name="language-selection"
+                  options={{ headerShown: false, gestureEnabled: false }}
+                />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="ai-chat" options={{ headerShown: true }} />
-                <Stack.Screen name="add-activity" options={{ presentation: 'fullScreenModal' }} />
-                <Stack.Screen name="add-entry" options={{ presentation: 'fullScreenModal' }} />
-                <Stack.Screen name="add-task" options={{ presentation: 'fullScreenModal' }} />
-                <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />
+                <Stack.Screen
+                  name="add-activity"
+                  options={{ presentation: 'fullScreenModal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="add-entry"
+                  options={{ presentation: 'fullScreenModal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="add-task"
+                  options={{ presentation: 'fullScreenModal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="add-worker"
+                  options={{ presentation: 'modal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="add-soil-profile"
+                  options={{ presentation: 'modal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="add-stock"
+                  options={{ presentation: 'modal', headerShown: false }}
+                />
                 <Stack.Screen
                   name="add-warehouse-item"
                   options={{ presentation: 'modal', headerShown: false }}
                 />
-                <Stack.Screen name="add-lab-test" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="water-level" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="log-entry/add" options={{ presentation: 'fullScreenModal' }} />
+                <Stack.Screen
+                  name="add-lab-test"
+                  options={{ presentation: 'modal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="water-level"
+                  options={{ presentation: 'modal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="log-entry/add"
+                  options={{ presentation: 'fullScreenModal', headerShown: false }}
+                />
                 <Stack.Screen
                   name="log-entry/edit/[id]"
-                  options={{ presentation: 'fullScreenModal' }}
+                  options={{ presentation: 'fullScreenModal', headerShown: false }}
                 />
                 <Stack.Screen
                   name="edit-activity/[id]"
-                  options={{ presentation: 'fullScreenModal' }}
+                  options={{ presentation: 'fullScreenModal', headerShown: false }}
                 />
-                <Stack.Screen name="add-note" />
-                <Stack.Screen name="analytics" />
-                <Stack.Screen name="auth/callback" />
-                <Stack.Screen name="calculator" />
-                <Stack.Screen name="farm/add" />
-                <Stack.Screen name="farm/[id]" />
-                <Stack.Screen name="farm/[id]/edit" />
-                <Stack.Screen name="fertilizer-plans" />
-                <Stack.Screen name="lab-tests" />
-                <Stack.Screen name="logs" />
-                <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
-                <Stack.Screen name="petiole-trends" />
-                <Stack.Screen name="reports" />
-                <Stack.Screen name="soil-profiling" />
-                <Stack.Screen name="soil-trends" />
-                <Stack.Screen name="spray-safe-checker" />
-                <Stack.Screen name="tasks" />
-                <Stack.Screen name="warehouse" />
-                <Stack.Screen name="weather" />
-                <Stack.Screen name="widget-configuration" />
-                <Stack.Screen name="widgets-showcase" />
-                <Stack.Screen name="worker-analytics/[id]" />
+                <Stack.Screen name="add-note" options={{ headerShown: false }} />
+                <Stack.Screen name="analytics" options={{ headerShown: true }} />
+                <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+                <Stack.Screen name="calculator" options={{ headerShown: false }} />
+                <Stack.Screen name="farm/add" options={{ headerShown: false }} />
+                <Stack.Screen name="farm/[id]" options={{ headerShown: true }} />
+                <Stack.Screen name="farm/[id]/edit" options={{ headerShown: false }} />
+                <Stack.Screen name="fertilizer-plans" options={{ headerShown: true }} />
+                <Stack.Screen name="lab-tests" options={{ headerShown: true }} />
+                <Stack.Screen name="logs" options={{ headerShown: true }} />
+                <Stack.Screen
+                  name="onboarding"
+                  options={{ headerShown: false, gestureEnabled: false }}
+                />
+                <Stack.Screen name="petiole-trends" options={{ headerShown: true }} />
+                <Stack.Screen name="reports" options={{ headerShown: true }} />
+                <Stack.Screen name="soil-profiling" options={{ headerShown: true }} />
+                <Stack.Screen name="soil-trends" options={{ headerShown: true }} />
+                <Stack.Screen name="spray-catalog" options={{ headerShown: true }} />
+                <Stack.Screen name="spray-safe-checker" options={{ headerShown: true }} />
+                <Stack.Screen name="tasks" options={{ headerShown: true }} />
+                <Stack.Screen name="warehouse" options={{ headerShown: true }} />
+                <Stack.Screen name="weather" options={{ headerShown: true }} />
+                <Stack.Screen name="widget-configuration" options={{ headerShown: true }} />
+                <Stack.Screen name="widgets-showcase" options={{ headerShown: true }} />
+                <Stack.Screen name="worker-analytics/[id]" options={{ headerShown: true }} />
               </Stack>
               <GuidedTourController />
             </I18nextProvider>

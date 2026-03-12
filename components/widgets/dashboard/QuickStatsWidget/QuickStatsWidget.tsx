@@ -38,7 +38,7 @@ const STATS: StatItem[] = [
     trendValue: '-5%',
   },
   {
-    icon: 'cash-outline',
+    icon: 'cash',
     labelKey: 'widgets.quickStats.stats.seasonExpenses',
     value: '₹2.4L',
     trend: 'up',

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
 import type { TFunction } from 'i18next';
@@ -263,6 +263,7 @@ export default function WeatherScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }} edges={['top']}>
+      <Stack.Screen options={{ title: t('tools.items.weatherIrrigation') }} />
       <ScrollView
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}
         style={{ backgroundColor: m3.colorScheme.background }}

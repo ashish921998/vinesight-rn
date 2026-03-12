@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { Platform } from 'react-native';
+import * as ReactNative from 'react-native';
 import PhoneLoginScreen from '../app/(auth)/phone-login';
 import { matchPhoneNumberHintToCountry } from '@/utils/phone';
 
@@ -115,47 +116,32 @@ jest.mock('@/components/ui/symbol', () => ({
   Symbol: () => null,
 }));
 
-jest.mock('@/components/ui', () => {
-  return {
-    Input: ({
-      leftIcon: _leftIcon,
-      rightIcon: _rightIcon,
-      containerStyle,
-      ...props
-    }: {
-      leftIcon?: React.ReactNode;
-      rightIcon?: React.ReactNode;
-      containerStyle?: object;
-      [key: string]: unknown;
-    }) => (
-      <View style={containerStyle}>
-        <TextInput {...props} />
-      </View>
-    ),
-    Button: ({
-      title,
-      onPress,
-      testID,
-      accessibilityLabel,
-      disabled,
-    }: {
-      title: string;
-      onPress?: () => void;
-      testID?: string;
-      accessibilityLabel?: string;
-      disabled?: boolean;
-    }) => (
-      <Pressable
+jest.mock('@/components/ui', () => ({
+  Button: ({
+    title,
+    onPress,
+    testID,
+    accessibilityLabel,
+    disabled,
+  }: {
+    title: string;
+    onPress?: () => void;
+    testID?: string;
+    accessibilityLabel?: string;
+    disabled?: boolean;
+  }) => {
+    return (
+      <ReactNative.Pressable
         onPress={onPress}
         testID={testID}
         accessibilityLabel={accessibilityLabel ?? title}
         disabled={disabled}
       >
-        <Text>{title}</Text>
-      </Pressable>
-    ),
-  };
-});
+        <ReactNative.Text>{title}</ReactNative.Text>
+      </ReactNative.Pressable>
+    );
+  },
+}));
 
 describe('matchPhoneNumberHintToCountry', () => {
   const countries = [
@@ -228,7 +214,7 @@ describe('PhoneLoginScreen phone hint CTA', () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue('9422724937')).toBeTruthy();
     });
-    expect(screen.getByText('India')).toBeTruthy();
+    expect(screen.getByText('+91')).toBeTruthy();
     expect(mockAuthState.clearError).toHaveBeenCalled();
   });
 
@@ -252,6 +238,36 @@ describe('PhoneLoginScreen phone hint CTA', () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('9999999999')).toBeTruthy();
+    });
+  });
+
+  it('renders the country selector and phone number input in one horizontal row', async () => {
+    render(<PhoneLoginScreen />);
+
+    await waitFor(() => expect(screen.getByTestId('phone-input-row')).toBeTruthy());
+    expect(screen.getByTestId('phone-country-trigger')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Phone number')).toBeTruthy();
+  });
+
+  it('updates the visible dial code after selecting a different country', async () => {
+    render(<PhoneLoginScreen />);
+
+    fireEvent.press(screen.getByTestId('phone-country-trigger'));
+    fireEvent.press(screen.getByText('United Kingdom'));
+
+    await waitFor(() => {
+      expect(screen.getByText('+44')).toBeTruthy();
+    });
+  });
+
+  it('trims the local number to the selected country digit limit', async () => {
+    render(<PhoneLoginScreen />);
+
+    const input = screen.getByPlaceholderText('Phone number');
+    fireEvent.changeText(input, '01234567890123');
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('1234567890')).toBeTruthy();
     });
   });
 });

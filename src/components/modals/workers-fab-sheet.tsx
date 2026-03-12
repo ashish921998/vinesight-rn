@@ -39,6 +39,7 @@ export function WorkersFabSheet({
   const insets = useSafeAreaInsets();
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [pendingAction, setPendingAction] = useState<Action['id'] | null>(null);
 
   const slideAnimRef = useRef(new Animated.Value(SHEET_INITIAL_OFFSET));
   const backdropAnimRef = useRef(new Animated.Value(0));
@@ -87,6 +88,25 @@ export function WorkersFabSheet({
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (modalVisible || pendingAction === null) return;
+
+    if (pendingAction === 'add_worker') {
+      onAddWorker();
+    } else if (pendingAction === 'settle_payment') {
+      onSettlePayment();
+    } else if (pendingAction === 'add_temp_worker') {
+      onAddTempWorker();
+    }
+
+    setPendingAction(null);
+  }, [modalVisible, onAddTempWorker, onAddWorker, onSettlePayment, pendingAction]);
+
+  const handleActionPress = (actionId: Action['id']) => {
+    setPendingAction(actionId);
+    onClose();
+  };
+
   const actions: Action[] = [
     {
       id: 'add_worker',
@@ -96,8 +116,7 @@ export function WorkersFabSheet({
       color: m3.colorScheme.primary,
       bgColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
       onPress: () => {
-        onClose();
-        setTimeout(onAddWorker, 240);
+        handleActionPress('add_worker');
       },
     },
     {
@@ -108,8 +127,7 @@ export function WorkersFabSheet({
       color: m3.colorScheme.secondary || m3.colorScheme.primary,
       bgColor: colorWithOpacity(m3.colorScheme.secondary || m3.colorScheme.primary, 0.1),
       onPress: () => {
-        onClose();
-        setTimeout(onSettlePayment, 240);
+        handleActionPress('settle_payment');
       },
     },
     {
@@ -120,8 +138,7 @@ export function WorkersFabSheet({
       color: m3.colorScheme.warning,
       bgColor: colorWithOpacity(m3.colorScheme.warning, 0.1),
       onPress: () => {
-        onClose();
-        setTimeout(onAddTempWorker, 240);
+        handleActionPress('add_temp_worker');
       },
     },
   ];

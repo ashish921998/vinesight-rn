@@ -83,12 +83,6 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
     }
   }, [isRequesting, onFinish]);
 
-  const handleSkip = useCallback(() => {
-    if (isRequesting) return;
-    triggerHapticMedium();
-    void onFinish(false);
-  }, [isRequesting, onFinish]);
-
   return (
     <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
       <View
@@ -182,17 +176,6 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
               {isRequesting
                 ? t('onboarding.notifications.checkingPermissions')
                 : t('onboarding.notifications.enableAlerts')}
-            </Text>
-          </Pressable>
-
-          <Pressable onPress={handleSkip} disabled={isRequesting} style={styles.skipButton}>
-            <Text
-              style={[
-                styles.skipText,
-                { color: m3.colorScheme.onSurfaceVariant, opacity: isRequesting ? 0.5 : 1 },
-              ]}
-            >
-              {t('onboarding.notifications.skipAlerts')}
             </Text>
           </Pressable>
         </Animated.View>
@@ -298,13 +281,5 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-  },
-  skipButton: {
-    alignItems: 'center',
-    paddingVertical: spacing[3],
-  },
-  skipText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
   },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, BackHandler } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   View,
@@ -139,6 +139,16 @@ export function FormModal({
     color: isSaveDisabled || isLoading ? colors.surface[500] : colors.white,
   };
 
+  useEffect(() => {
+    if (presentation === 'modal' && visible && Platform.OS === 'android') {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        onClose();
+        return true;
+      });
+      return () => backHandler.remove();
+    }
+  }, [presentation, visible, onClose]);
+
   const content = (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -157,9 +167,15 @@ export function FormModal({
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel={t('common.close')}
-            style={{ width: 40, alignItems: 'flex-end' }}
+            style={{
+              width: 44,
+              height: 44,
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              paddingRight: 4,
+            }}
           >
-            <IconSymbol name="xmark.circle.fill" size={26} color={closeIconColor} />
+            <IconSymbol name="xmark.circle.fill" size={28} color={closeIconColor} />
           </Pressable>
         </View>
       </View>
@@ -342,6 +358,16 @@ export function FullScreenForm({
     color: isSaveDisabled || isLoading ? colors.surface[500] : colors.white,
   };
 
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        onClose();
+        return true;
+      });
+      return () => backHandler.remove();
+    }
+  }, [onClose]);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface[100] }}>
       <View style={headerStyle}>
@@ -357,9 +383,15 @@ export function FullScreenForm({
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel={t('common.close')}
-            style={{ width: 40, alignItems: 'flex-end' }}
+            style={{
+              width: 44,
+              height: 44,
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              paddingRight: 4,
+            }}
           >
-            <IconSymbol name="xmark.circle.fill" size={26} color={closeIconColor} />
+            <IconSymbol name="xmark.circle.fill" size={28} color={closeIconColor} />
           </Pressable>
         </View>
       </View>

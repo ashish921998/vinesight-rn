@@ -330,6 +330,9 @@ export function GuidedTourController() {
     telemetry.capture('tour_skipped', { skippedAtStep: step });
     skipTour(step);
     resetFormState({ clearOverlay: true });
+    if (!isDashboardRoute(segments)) {
+      router.replace('/(tabs)');
+    }
   };
 
   const handleStart = () => {
