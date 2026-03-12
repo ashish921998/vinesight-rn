@@ -1,0 +1,44 @@
+src/features/onboarding/slides/notifications-slide.tsx
+  75fd741f1fda846b 63-65,67-73
+src/i18n/locales/en.ts
+  75fd741f1fda846b 1599-1600
+app/ai-chat.tsx
+  756ab37e44104da3 2761-2762,2767,2777-2781,2795,2800-2801,2819,2838
+  75fd741f1fda846b 1787,2442-2453,2763-2766,2768-2776,2815,2818
+app/weather.tsx
+  756ab37e44104da3 4-5,70
+  75fd741f1fda846b 84-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "3b70b19edf55902818a528b45d5a38962446aa38",
+  "prompts": {
+    "756ab37e44104da3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ce2e7-c355-70f2-bde6-807d6cf42f4e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 30,
+      "total_deletions": 23,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    },
+    "75fd741f1fda846b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31cfde3c2ffeYzYLBaqjKQmmto",
+        "model": "opencode/minimax-m2.5-free"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 51,
+      "total_deletions": 8,
+      "accepted_lines": 46,
+      "overriden_lines": 0
+    }
+  }
+}
