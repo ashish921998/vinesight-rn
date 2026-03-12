@@ -1687,13 +1687,13 @@ export default function AIChatScreen() {
    * Discard the current voice recording without sending.
    */
   const discardVoiceRecording = useCallback(async () => {
-    if (voiceInputState === 'recording') {
+    if (voiceInputStateRef.current === 'recording') {
       await stopVoiceRecordingAndCapture({ discard: true });
     }
     setVoiceInputState('idle');
     setLiveVoiceTranscript('');
     setVoiceModeError(null);
-  }, [voiceInputState, stopVoiceRecordingAndCapture]);
+  }, [stopVoiceRecordingAndCapture]);
 
   /**
    * Handle TTS completion - auto-start recording in conversation mode.
