@@ -690,11 +690,11 @@ function VoiceModeModal({
       ? t('ai.chat.thinking')
       : isVoiceRecording
         ? t('ai.voice.recording', { defaultValue: 'Recording...' })
-        : voiceConversationMode === 'auto'
-          ? t('ai.voice.readyToListen', { defaultValue: 'Ready to listen...' })
-          : isVoiceModeMicEnabled
-            ? t('ai.chat.tapToSpeak')
-            : t('ai.voice.microphoneOff', { defaultValue: 'Microphone off' });
+        : !isVoiceModeMicEnabled
+          ? t('ai.voice.microphoneOff', { defaultValue: 'Microphone off' })
+          : voiceConversationMode === 'auto'
+            ? t('ai.voice.readyToListen', { defaultValue: 'Ready to listen...' })
+            : t('ai.chat.tapToSpeak');
 
   const primaryActionLabel = t('ai.chat.close');
   const primaryActionSymbol = 'xmark';
@@ -2433,6 +2433,9 @@ export default function AIChatScreen() {
           }
         }
 
+        const shouldPersistAssistantTurnClient =
+          !assistantFeatureFlags.serverVoiceEnabled || response.providerUsed === 'openai-proxy';
+
         if (response.sttTranscript && source === 'voice') {
           setMessages((prev) =>
             prev.map((msg) =>
@@ -2442,7 +2445,7 @@ export default function AIChatScreen() {
           // Persist the user turn with the actual transcript now that we have it
           const persistedConversationId =
             response.message.conversationId ?? activeConversationId ?? null;
-          if (persistedConversationId) {
+          if (persistedConversationId && shouldPersistAssistantTurnClient) {
             await assistantMemoryService.persistTurn({
               conversationId: persistedConversationId,
               farmId: contextFarm?.id ?? parsedFarmId ?? null,
@@ -2491,9 +2494,6 @@ export default function AIChatScreen() {
           tts_skipped_reason: response.ttsSkippedReason ?? null,
           provider_fallback_reason: response.providerFallbackReason ?? null,
         });
-
-        const shouldPersistAssistantTurnClient =
-          !assistantFeatureFlags.serverVoiceEnabled || response.providerUsed === 'openai-proxy';
 
         if (resolvedConversationId && shouldPersistAssistantTurnClient) {
           void assistantMemoryService.persistTurn({
