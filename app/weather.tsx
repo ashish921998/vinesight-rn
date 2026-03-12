@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
 import type { TFunction } from 'i18next';
@@ -66,6 +67,7 @@ function getDayName(dateString: string, t: TFunction): string {
 
 export default function WeatherScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoadingAuth = useAuthStore((state) => state.isLoading);
   const colors = useThemeColors();
@@ -79,6 +81,12 @@ export default function WeatherScreen() {
   const [showFarmPicker, setShowFarmPicker] = useState(false);
   const [showGrowthPicker, setShowGrowthPicker] = useState(false);
   const [showSoilPicker, setShowSoilPicker] = useState(false);
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      title: t('tools.items.weatherIrrigation'),
+    });
+  }, [navigation, t]);
   const authRedirectPath = useMemo(
     () => (farmIdParam ? `/weather?farmId=${encodeURIComponent(farmIdParam)}` : '/weather'),
     [farmIdParam],
@@ -266,7 +274,6 @@ export default function WeatherScreen() {
       style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
       edges={['left', 'right']}
     >
-      <Stack.Screen options={{ title: t('tools.items.weatherIrrigation') }} />
       <ScrollView
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}
         style={{ backgroundColor: m3.colorScheme.background }}

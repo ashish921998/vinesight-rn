@@ -1784,7 +1784,7 @@ export default function AIChatScreen() {
         }
 
         let userTurnPersistedClient = false;
-        if (activeConversationId) {
+        if (activeConversationId && source !== 'voice') {
           userTurnPersistedClient = await assistantMemoryService.persistTurn({
             conversationId: activeConversationId,
             farmId: contextFarm?.id ?? parsedFarmId ?? null,
@@ -2439,6 +2439,18 @@ export default function AIChatScreen() {
               msg.id === newMessage.id ? { ...msg, content: response.sttTranscript! } : msg,
             ),
           );
+          // Persist the user turn with the actual transcript now that we have it
+          const persistedConversationId =
+            response.message.conversationId ?? activeConversationId ?? null;
+          if (persistedConversationId) {
+            await assistantMemoryService.persistTurn({
+              conversationId: persistedConversationId,
+              farmId: contextFarm?.id ?? parsedFarmId ?? null,
+              role: 'user',
+              content: response.sttTranscript,
+              inputMode: 'audio',
+            });
+          }
         }
 
         setMessages((prev) => [...prev, assistantMessage]);
@@ -2746,6 +2758,27 @@ export default function AIChatScreen() {
     void closeVoiceMode();
   }, [closeVoiceMode]);
 
+  const scheduleAutoVoiceModeRestart = useCallback(
+    (delayMs: number) => {
+      if (voiceModeStartTimeoutRef.current) {
+        clearTimeout(voiceModeStartTimeoutRef.current);
+        voiceModeStartTimeoutRef.current = null;
+      }
+
+      setVoiceModeError(null);
+      setVoiceModeNotice(null);
+      voiceModeStartTimeoutRef.current = setTimeout(async () => {
+        voiceModeStartTimeoutRef.current = null;
+        const started = await startVoiceRecording();
+        if (!started) {
+          setIsVoiceModeMicEnabled(false);
+          setVoiceInputState('idle');
+        }
+      }, delayMs);
+    },
+    [startVoiceRecording],
+  );
+
   /**
    * Handle mic button toggle in voice mode.
    * In auto mode: tap interrupts AI speaking, tap again stops recording.
@@ -2759,15 +2792,13 @@ export default function AIChatScreen() {
 
       if (voiceModeStartTimeoutRef.current) {
         clearTimeout(voiceModeStartTimeoutRef.current);
+        voiceModeStartTimeoutRef.current = null;
       }
 
       // Start recording after brief pause
-      voiceModeStartTimeoutRef.current = setTimeout(() => {
-        voiceModeStartTimeoutRef.current = null;
-        if (isVoiceModeVisibleRef.current && voiceInputStateRef.current === 'idle') {
-          void startVoiceRecording();
-        }
-      }, 100);
+      if (isVoiceModeVisibleRef.current && voiceInputStateRef.current === 'idle') {
+        scheduleAutoVoiceModeRestart(100);
+      }
       return;
     }
 
@@ -2781,9 +2812,11 @@ export default function AIChatScreen() {
           await sendVoiceAudioToServer(payload);
         }
       } else if (voiceInputState === 'idle') {
-        // Not recording - disable mic (manual mode)
+        // Not recording - disable mic (manual mode) or restart (auto mode)
         if (voiceConversationMode === 'manual') {
           setIsVoiceModeMicEnabled(false);
+        } else if (voiceConversationMode === 'auto') {
+          scheduleAutoVoiceModeRestart(300);
         }
       }
       // If processing, ignore
@@ -2802,6 +2835,7 @@ export default function AIChatScreen() {
     voiceConversationMode,
     isLoading,
     isAssistantSpeaking,
+    scheduleAutoVoiceModeRestart,
     startVoiceRecording,
     stopVoiceRecordingAndCapture,
     sendVoiceAudioToServer,

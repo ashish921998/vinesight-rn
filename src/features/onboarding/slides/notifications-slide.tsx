@@ -60,10 +60,17 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
     }
   }, [isRequesting, onFinish]);
 
-  const handleSkip = useCallback(() => {
+  const handleSkip = useCallback(async () => {
+    if (isRequesting) return;
+    setIsRequesting(true);
     triggerHapticMedium();
-    onFinish(false);
-  }, [onFinish]);
+
+    try {
+      await onFinish(false);
+    } finally {
+      setIsRequesting(false);
+    }
+  }, [isRequesting, onFinish]);
 
   return (
     <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
