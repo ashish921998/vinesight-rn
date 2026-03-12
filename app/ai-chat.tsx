@@ -1097,6 +1097,11 @@ export default function AIChatScreen() {
   const clearDraftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const voiceRecordingStartTimeRef = useRef<number | null>(null);
   const isProcessingVoiceRef = useRef(false);
+  const voiceInputStateRef = useRef<VoiceInputState>(voiceInputState);
+  const voiceConversationModeRef = useRef<VoiceConversationMode>(voiceConversationMode);
+  const isAssistantSpeakingRef = useRef(isAssistantSpeaking);
+  const isVoiceModeVisibleRef = useRef(isVoiceModeVisible);
+  const isLoadingRef = useRef(isLoading);
   const voiceRecorder = useAudioRecorder(VOICE_RECORDING_OPTIONS);
   const sendMessageRef = useRef<
     | ((
@@ -1141,6 +1146,26 @@ export default function AIChatScreen() {
   const isConversationAsyncTokenCurrent = useCallback((token: number) => {
     return conversationAsyncTokenRef.current === token;
   }, []);
+
+  useEffect(() => {
+    voiceInputStateRef.current = voiceInputState;
+  }, [voiceInputState]);
+
+  useEffect(() => {
+    voiceConversationModeRef.current = voiceConversationMode;
+  }, [voiceConversationMode]);
+
+  useEffect(() => {
+    isAssistantSpeakingRef.current = isAssistantSpeaking;
+  }, [isAssistantSpeaking]);
+
+  useEffect(() => {
+    isVoiceModeVisibleRef.current = isVoiceModeVisible;
+  }, [isVoiceModeVisible]);
+
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
 
   const refreshConversationHistory = useCallback(async () => {
     if (!assistantFeatureFlags.memoryEnabled) return;
@@ -1643,33 +1668,32 @@ export default function AIChatScreen() {
    */
   const handleTTSComplete = useCallback(() => {
     if (
-      !isVoiceModeVisible ||
-      voiceConversationMode !== 'auto' ||
-      voiceInputState !== 'idle' ||
-      isLoading
+      !isVoiceModeVisibleRef.current ||
+      voiceConversationModeRef.current !== 'auto' ||
+      voiceInputStateRef.current !== 'idle' ||
+      isLoadingRef.current
     ) {
       return;
     }
+
+    if (voiceModeStartTimeoutRef.current) {
+      clearTimeout(voiceModeStartTimeoutRef.current);
+    }
+
     // Small delay for natural conversation feel
-    setTimeout(() => {
+    voiceModeStartTimeoutRef.current = setTimeout(() => {
+      voiceModeStartTimeoutRef.current = null;
       if (
-        isVoiceModeVisible &&
-        voiceConversationMode === 'auto' &&
-        voiceInputState === 'idle' &&
-        !isLoading &&
-        !isAssistantSpeaking
+        isVoiceModeVisibleRef.current &&
+        voiceConversationModeRef.current === 'auto' &&
+        voiceInputStateRef.current === 'idle' &&
+        !isLoadingRef.current &&
+        !isAssistantSpeakingRef.current
       ) {
         void startVoiceRecording();
       }
     }, 500);
-  }, [
-    isVoiceModeVisible,
-    voiceConversationMode,
-    voiceInputState,
-    isLoading,
-    isAssistantSpeaking,
-    startVoiceRecording,
-  ]);
+  }, [startVoiceRecording]);
 
   const handleSendMessage = useCallback(
     async (
@@ -2727,9 +2751,15 @@ export default function AIChatScreen() {
     if (isAssistantSpeaking) {
       void voiceOutputService.stop();
       setIsAssistantSpeaking(false);
+
+      if (voiceModeStartTimeoutRef.current) {
+        clearTimeout(voiceModeStartTimeoutRef.current);
+      }
+
       // Start recording after brief pause
-      setTimeout(() => {
-        if (isVoiceModeVisible && voiceInputState === 'idle') {
+      voiceModeStartTimeoutRef.current = setTimeout(() => {
+        voiceModeStartTimeoutRef.current = null;
+        if (isVoiceModeVisibleRef.current && voiceInputStateRef.current === 'idle') {
           void startVoiceRecording();
         }
       }, 100);
@@ -2767,7 +2797,6 @@ export default function AIChatScreen() {
     voiceConversationMode,
     isLoading,
     isAssistantSpeaking,
-    isVoiceModeVisible,
     startVoiceRecording,
     stopVoiceRecordingAndCapture,
     sendVoiceAudioToServer,

@@ -90,6 +90,7 @@ export default function PhoneLoginScreen() {
   const [localPhoneError, setLocalPhoneError] = useState<string | null>(null);
 
   const [isPhoneHintAvailable, setIsPhoneHintAvailable] = useState(false);
+  const hasRequestedPhoneHintRef = useRef(false);
 
   useEffect(() => {
     WebBrowser.maybeCompleteAuthSession();
@@ -186,26 +187,40 @@ export default function PhoneLoginScreen() {
     await signInWithPhone(fullPhoneNumber, submitMode);
   };
 
-  const handleUseMyNumber = async () => {
-    setLocalPhoneError(null);
-    clearError();
-
-    const phoneNumberHint = await requestPhoneNumberHint();
-    if (!phoneNumberHint) return;
-
-    const matchedPhone = matchPhoneNumberHintToCountry(phoneNumberHint, COUNTRIES);
-    if (!matchedPhone) {
-      setLocalPhoneError(
-        t('authPhone.phoneHintUnsupported', {
-          defaultValue: 'Could not fill this number automatically. Please enter it manually.',
-        }),
-      );
+  useEffect(() => {
+    if (
+      Platform.OS !== 'android' ||
+      !isPhoneHintAvailable ||
+      hasRequestedPhoneHintRef.current ||
+      phoneNumber.length > 0
+    ) {
       return;
     }
 
-    setSelectedCountry(matchedPhone.country);
-    setPhoneNumber(matchedPhone.localNumber);
-  };
+    hasRequestedPhoneHintRef.current = true;
+
+    const autofillPhoneNumber = async () => {
+      const phoneNumberHint = await requestPhoneNumberHint();
+      if (!phoneNumberHint) return;
+
+      const matchedPhone = matchPhoneNumberHintToCountry(phoneNumberHint, COUNTRIES);
+      if (!matchedPhone) {
+        setLocalPhoneError(
+          t('authPhone.phoneHintUnsupported', {
+            defaultValue: 'Could not fill this number automatically. Please enter it manually.',
+          }),
+        );
+        return;
+      }
+
+      clearError();
+      setLocalPhoneError(null);
+      setSelectedCountry(matchedPhone.country);
+      setPhoneNumber((current) => (current.length > 0 ? current : matchedPhone.localNumber));
+    };
+
+    void autofillPhoneNumber();
+  }, [clearError, isPhoneHintAvailable, phoneNumber.length, t]);
 
   const handleSelectCountry = (country: Country) => {
     setSelectedCountry(country);
@@ -611,7 +626,10 @@ export default function PhoneLoginScreen() {
                     placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
                     value={phoneNumber}
                     onChangeText={(value) => {
-                      setLocalPhoneError(null);
+                      if (localPhoneError || errorMessage) {
+                        clearError();
+                        setLocalPhoneError(null);
+                      }
                       setPhoneNumber(limitLocalPhoneDigits(selectedCountry.dialCode, value));
                     }}
                     keyboardType="phone-pad"
@@ -625,22 +643,6 @@ export default function PhoneLoginScreen() {
                   />
                 </View>
               </View>
-
-              {Platform.OS === 'android' && isPhoneHintAvailable && (
-                <Button
-                  title={t('authPhone.useMyNumber', { defaultValue: 'Use my number' })}
-                  variant="ghost"
-                  size="sm"
-                  fullWidth={false}
-                  onPress={handleUseMyNumber}
-                  disabled={isLoading}
-                  testID="phone-hint-button"
-                  accessibilityLabel={t('authPhone.useMyNumberA11y', {
-                    defaultValue: 'Choose a phone number from this device',
-                  })}
-                />
-              )}
-
               {/* Error Message */}
               {(errorMessage || localPhoneError) && (
                 <View style={errorContainerStyle}>
