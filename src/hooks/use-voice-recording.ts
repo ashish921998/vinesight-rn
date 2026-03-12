@@ -55,6 +55,8 @@ function inferAudioMimeType(uri: string): string {
   switch (ext) {
     case 'wav':
       return 'audio/wav';
+    case 'aac':
+      return 'audio/aac';
     case 'm4a':
       return 'audio/mp4';
     case 'mp3':
@@ -304,7 +306,6 @@ export function useVoiceRecording({
     voiceRecorder,
     resetRecordingAudioMode,
     shouldAbortRecordingStart,
-    __DEV__,
     setLiveVoiceTranscript,
     setVoiceInputState,
     setVoiceModeError,
@@ -313,7 +314,19 @@ export function useVoiceRecording({
 
   const stopVoiceRecordingAndCapture = useCallback(
     async (options?: { discard?: boolean }): Promise<VoiceAudioPayload | null> => {
-      if (isProcessingVoiceRef.current && !options?.discard) {
+      // Always guard: if something else is processing (e.g. startVoiceRecording mid-flight),
+      // wait for it to finish before stopping — even on discard — to avoid stopping the
+      // recorder before it has fully started.
+      if (isProcessingVoiceRef.current) {
+        return null;
+      }
+
+      // Only stop if there is actually something to stop.
+      if (voiceInputStateRef.current !== 'recording') {
+        if (options?.discard) {
+          setVoiceInputState('idle');
+          setLiveVoiceTranscript('');
+        }
         return null;
       }
 
@@ -334,14 +347,16 @@ export function useVoiceRecording({
         }
 
         const status = voiceRecorder.getStatus();
-        let uri = voiceRecorder.uri ?? status.url;
+        // voiceRecorder.uri is the canonical source in expo-audio (new API).
+        // status.durationMillis is the timer from the recorder status.
+        let uri = voiceRecorder.uri;
         let durationMs =
           typeof status.durationMillis === 'number' ? status.durationMillis : recordingDuration;
 
         for (let attempt = 0; attempt < 10 && !uri; attempt++) {
           await sleep(100);
           const newStatus = voiceRecorder.getStatus();
-          uri = voiceRecorder.uri ?? newStatus.url;
+          uri = voiceRecorder.uri;
           if (!durationMs && typeof newStatus.durationMillis === 'number') {
             durationMs = newStatus.durationMillis;
           }
@@ -407,11 +422,11 @@ export function useVoiceRecording({
         }
       }
     },
-    [t, voiceRecorder, __DEV__, setLiveVoiceTranscript, setVoiceInputState, setVoiceModeError],
+    [t, voiceRecorder, setLiveVoiceTranscript, setVoiceInputState, setVoiceModeError],
   );
 
   const sendVoiceAudioToServer = useCallback(
-    async (voicePayload: VoiceAudioPayload) => {
+    (voicePayload: VoiceAudioPayload) => {
       const validation = validateVoiceAudioPayload(voicePayload);
 
       if (!validation.ok) {
@@ -444,15 +459,7 @@ export function useVoiceRecording({
 
       sendMessage('', 'voice', voicePayload);
     },
-    [
-      t,
-      telemetry,
-      sendMessage,
-      __DEV__,
-      setLiveVoiceTranscript,
-      setVoiceInputState,
-      setVoiceModeError,
-    ],
+    [t, telemetry, sendMessage, setLiveVoiceTranscript, setVoiceInputState, setVoiceModeError],
   );
 
   const discardVoiceRecording = useCallback(async () => {

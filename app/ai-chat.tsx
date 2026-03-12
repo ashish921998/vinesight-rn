@@ -978,6 +978,16 @@ export default function AIChatScreen() {
   const activeAssistantRequestIdRef = useRef<string | null>(null);
   const activeAssistantAbortControllerRef = useRef<AbortController | null>(null);
   const conversationAsyncTokenRef = useRef(0);
+  const sendMessageForVoice = useCallback(
+    (text: string, source: 'text' | 'voice', voicePayload?: VoiceAudioPayload | null) => {
+      const sendMessage = sendMessageRef.current;
+      if (!sendMessage) {
+        return;
+      }
+      void sendMessage(text, source, voicePayload);
+    },
+    [],
+  );
 
   const {
     startVoiceRecording,
@@ -991,9 +1001,7 @@ export default function AIChatScreen() {
     telemetry: {
       capture: (eventName, properties) => telemetry.capture(eventName, properties as never),
     },
-    sendMessage: (text, source, voicePayload) => {
-      void handleSendMessage(text, source, voicePayload);
-    },
+    sendMessage: sendMessageForVoice,
     isVoiceModeVisible,
     voiceConversationMode,
     isAssistantSpeaking,
@@ -2408,7 +2416,9 @@ export default function AIChatScreen() {
         setVoiceInputState('processing');
         const payload = await stopVoiceRecordingAndCapture();
         if (payload) {
-          await sendVoiceAudioToServer(payload);
+          sendVoiceAudioToServer(payload);
+        } else {
+          setVoiceInputState('idle');
         }
       } else if (voiceInputState === 'idle') {
         // Not recording - disable mic (manual mode) or restart (auto mode)

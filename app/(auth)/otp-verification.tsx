@@ -60,6 +60,7 @@ export default function OTPVerificationScreen() {
   const lastOtpSentSuccessRef = useRef(otpSentSuccessfully);
   const verificationTriggeredRef = useRef(false);
   const smsRetrieverAttemptRef = useRef(0);
+  const smsRetrieverTransitionRef = useRef<Promise<void>>(Promise.resolve());
 
   // Redirect when authenticated
   useEffect(() => {
@@ -136,12 +137,23 @@ export default function OTPVerificationScreen() {
     let isCancelled = false;
     smsRetrieverAttemptRef.current += 1;
     const attemptId = smsRetrieverAttemptRef.current;
+    const queueSmsRetrieverOperation = <T,>(operation: () => Promise<T>): Promise<T> => {
+      const nextOperation = smsRetrieverTransitionRef.current.then(operation, operation);
+      smsRetrieverTransitionRef.current = nextOperation.then(
+        () => undefined,
+        () => undefined,
+      );
+      return nextOperation;
+    };
 
     const startListener = async () => {
       const isSupported = await isAndroidSmsRetrieverSupported();
       if (!isSupported || isCancelled) return;
 
-      const detectedCode = await startAndroidSmsRetriever();
+      await queueSmsRetrieverOperation(() => stopAndroidSmsRetriever());
+      if (isCancelled || smsRetrieverAttemptRef.current !== attemptId) return;
+
+      const detectedCode = await queueSmsRetrieverOperation(() => startAndroidSmsRetriever());
       if (
         isCancelled ||
         smsRetrieverAttemptRef.current !== attemptId ||
@@ -159,7 +171,7 @@ export default function OTPVerificationScreen() {
 
     return () => {
       isCancelled = true;
-      void stopAndroidSmsRetriever();
+      void queueSmsRetrieverOperation(() => stopAndroidSmsRetriever());
     };
   }, [isPhoneOTP, isLoading, otpSentSuccessfully]);
 

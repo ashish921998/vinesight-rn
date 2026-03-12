@@ -189,12 +189,7 @@ export default function PhoneLoginScreen() {
   };
 
   useEffect(() => {
-    if (
-      Platform.OS !== 'android' ||
-      !isPhoneHintAvailable ||
-      hasRequestedPhoneHintRef.current ||
-      phoneNumber.length > 0
-    ) {
+    if (Platform.OS !== 'android' || !isPhoneHintAvailable || hasRequestedPhoneHintRef.current) {
       return;
     }
 
@@ -221,7 +216,7 @@ export default function PhoneLoginScreen() {
     };
 
     void autofillPhoneNumber();
-  }, [clearError, isPhoneHintAvailable, phoneNumber.length, t]);
+  }, [clearError, isPhoneHintAvailable, t]);
 
   const handleSelectCountry = (country: Country) => {
     setSelectedCountry(country);
