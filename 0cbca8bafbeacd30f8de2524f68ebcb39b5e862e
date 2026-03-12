@@ -1,0 +1,69 @@
+src/features/onboarding/slides/notifications-slide.tsx
+  85ef6e66b3a89316 63-67,114-120,171-178
+app/weather.tsx
+  85ef6e66b3a89316 267
+src/components/cards/worker-card.tsx
+  5f86232167f4bf8a 109-110,115-118,120,159,163-169,172,175,181,185-191,194,197
+app/(auth)/phone-login.tsx
+  d1bf7abbad8f23aa 162,327,333,600,605,608
+  85ef6e66b3a89316 326
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "0cbca8bafbeacd30f8de2524f68ebcb39b5e862e",
+  "prompts": {
+    "5f86232167f4bf8a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31d354322ffei58GK44k1BPcql",
+        "model": "opencode/minimax-m2.5-free"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 27,
+      "overriden_lines": 0
+    },
+    "756ab37e44104da3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ce2e7-c355-70f2-bde6-807d6cf42f4e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 79,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "85ef6e66b3a89316": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31d221909ffe3j3CG4oT1kwbQu",
+        "model": "opencode/minimax-m2.5-free"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 35,
+      "total_deletions": 59,
+      "accepted_lines": 27,
+      "overriden_lines": 0
+    },
+    "d1bf7abbad8f23aa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ce2d7-b3e1-77e1-a843-3cae54497828",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 5,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
