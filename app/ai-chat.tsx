@@ -1456,6 +1456,23 @@ export default function AIChatScreen() {
       return false;
     }
 
+    const resetRecordingAudioMode = async () => {
+      try {
+        await setAudioModeAsync({
+          allowsRecording: false,
+          playsInSilentMode: true,
+          interruptionMode: 'duckOthers',
+          shouldRouteThroughEarpiece: false,
+          shouldPlayInBackground: false,
+        });
+      } catch {
+        // no-op
+      }
+    };
+
+    const shouldAbortRecordingStart = () =>
+      !isVoiceModeVisibleRef.current || voiceInputStateRef.current !== 'idle';
+
     isProcessingVoiceRef.current = true;
 
     try {
@@ -1474,7 +1491,16 @@ export default function AIChatScreen() {
         shouldPlayInBackground: false,
       });
 
+      if (shouldAbortRecordingStart()) {
+        await resetRecordingAudioMode();
+        return false;
+      }
+
       await voiceRecorder.prepareToRecordAsync();
+      if (shouldAbortRecordingStart()) {
+        await resetRecordingAudioMode();
+        return false;
+      }
       voiceRecorder.record();
       voiceRecordingStartTimeRef.current = Date.now();
       voiceInputStateRef.current = 'recording';
@@ -1489,17 +1515,7 @@ export default function AIChatScreen() {
         console.warn('Voice recording start failed:', error);
       }
       setVoiceModeError(t('ai.voice.unavailableBody'));
-      try {
-        await setAudioModeAsync({
-          allowsRecording: false,
-          playsInSilentMode: true,
-          interruptionMode: 'duckOthers',
-          shouldRouteThroughEarpiece: false,
-          shouldPlayInBackground: false,
-        });
-      } catch {
-        // no-op
-      }
+      await resetRecordingAudioMode();
       return false;
     } finally {
       isProcessingVoiceRef.current = false;
@@ -2714,7 +2730,7 @@ export default function AIChatScreen() {
    * Open the voice mode modal and start recording.
    * In auto mode, the conversation flows hands-free.
    */
-  const openVoiceMode = useCallback(() => {
+  const openVoiceMode = useCallback(async () => {
     if (Platform.OS === 'web') {
       Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
         { text: t('common.ok') },
@@ -2725,6 +2741,12 @@ export default function AIChatScreen() {
       clearTimeout(voiceModeStartTimeoutRef.current);
       voiceModeStartTimeoutRef.current = null;
     }
+    try {
+      await voiceOutputService.stop();
+    } catch {
+      // no-op
+    }
+    setIsAssistantSpeaking(false);
     setIsVoiceModeVisible(true);
     setIsVoiceModeMicEnabled(true);
     setVoiceConversationMode('auto'); // Hands-free conversation mode
