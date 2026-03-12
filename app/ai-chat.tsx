@@ -9,21 +9,11 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  Linking,
   Modal,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
-import {
-  AudioQuality,
-  IOSOutputFormat,
-  RecordingPresets,
-  requestRecordingPermissionsAsync,
-  setAudioModeAsync,
-  useAudioRecorder,
-} from 'expo-audio';
-import type { RecordingOptions } from 'expo-audio';
 // Speech recognition is now handled server-side
 // import { SpeechRecognitionModule } from '@/services/speech-recognition';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -58,6 +48,7 @@ import { voiceOutputService } from '@/services/voice-output';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate, formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
+import { useVoiceRecording } from '@/hooks/use-voice-recording';
 import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -108,46 +99,6 @@ interface AssistantTurnDiagnostics {
 
 const SHOW_LOCAL_DIAGNOSTICS = false;
 const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024;
-const MIN_VOICE_AUDIO_DURATION_MS = 800;
-const MIN_VOICE_AUDIO_BASE64_LENGTH = 800;
-const MIN_VOICE_AUDIO_ESTIMATED_BYTES = 600;
-
-/**
- * Voice recording options optimized for STT providers.
- * - iOS: WAV format (16kHz, mono) - best for Sarvam/OpenAI STT
- * - Android: We try to get the best format available
- * - Web: WebM with Opus codec
- *
- * Note: Android AAC works with OpenAI Whisper but Sarvam prefers WAV.
- * The server will fallback to OpenAI STT if Sarvam rejects the format.
- */
-const VOICE_RECORDING_OPTIONS: RecordingOptions = {
-  ...RecordingPresets.HIGH_QUALITY,
-  extension: '.wav',
-  sampleRate: 16000,
-  numberOfChannels: 1,
-  bitRate: 64000,
-  android: {
-    // Android MediaRecorder doesn't support WAV directly in all versions
-    // Use AAC which is widely supported and works with OpenAI Whisper
-    extension: '.aac',
-    outputFormat: 'aac_adts',
-    audioEncoder: 'aac',
-  },
-  ios: {
-    // iOS supports WAV with linear PCM - best quality for STT
-    extension: '.wav',
-    outputFormat: IOSOutputFormat.LINEARPCM,
-    audioQuality: AudioQuality.HIGH,
-    linearPCMBitDepth: 16,
-    linearPCMIsBigEndian: false,
-    linearPCMIsFloat: false,
-  },
-  web: {
-    mimeType: 'audio/webm',
-    bitsPerSecond: 128000,
-  },
-};
 const ALLOWED_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/jpg',
@@ -283,18 +234,6 @@ function formatAttachmentSummary(attachments: ChatAttachment[]): string {
   return `Attached files:\n${lines.join('\n')}`;
 }
 
-function inferAudioMimeType(uri: string): string {
-  const extension = getFileExtension(uri);
-  if (extension === 'wav') return 'audio/wav';
-  if (extension === 'aac') return 'audio/aac';
-  if (extension === 'caf') return 'audio/x-caf';
-  if (extension === '3gp') return 'audio/3gpp';
-  if (extension === 'amr') return 'audio/amr';
-  if (extension === 'm4a') return 'audio/x-m4a';
-  if (extension === 'mp4') return 'audio/mp4';
-  return 'audio/mpeg';
-}
-
 function estimateBase64Bytes(base64Payload: string | null | undefined): number | null {
   if (!base64Payload) return null;
   const normalized = base64Payload.trim();
@@ -315,66 +254,6 @@ function resolveAttachmentFileSizeBytes(
   return typeof totalBytes === 'number' && Number.isFinite(totalBytes) ? totalBytes : undefined;
 }
 
-function validateVoiceAudioPayload(payload: VoiceAudioPayload | null): {
-  ok: boolean;
-  reason?: string;
-  estimatedBytes?: number | null;
-} {
-  if (!payload?.inputAudioBase64?.trim()) {
-    return { ok: false, reason: 'empty_audio_payload', estimatedBytes: null };
-  }
-
-  const estimatedBytes = estimateBase64Bytes(payload.inputAudioBase64);
-  const durationMs = payload.durationMs ?? null;
-  const hasSufficientBase64 = payload.inputAudioBase64.length >= MIN_VOICE_AUDIO_BASE64_LENGTH;
-  const hasSufficientBytes =
-    estimatedBytes !== null &&
-    Number.isFinite(estimatedBytes) &&
-    estimatedBytes >= MIN_VOICE_AUDIO_ESTIMATED_BYTES;
-
-  // Some devices report an obviously wrong duration after stop() even when the audio payload
-  // itself is healthy. Treat short duration as a hard failure only when the payload is also tiny.
-  if (
-    durationMs !== null &&
-    durationMs > 0 &&
-    durationMs < MIN_VOICE_AUDIO_DURATION_MS &&
-    !hasSufficientBase64 &&
-    !hasSufficientBytes
-  ) {
-    return { ok: false, reason: 'audio_duration_too_short', estimatedBytes };
-  }
-
-  if (!hasSufficientBase64) {
-    return { ok: false, reason: 'audio_base64_too_short', estimatedBytes };
-  }
-
-  if (!hasSufficientBytes) {
-    return { ok: false, reason: 'audio_bytes_too_small', estimatedBytes };
-  }
-
-  return { ok: true, estimatedBytes };
-}
-
-function formatVoicePayloadDebug(params: {
-  reason?: string;
-  durationMs?: number | null;
-  base64Length?: number | null;
-  estimatedBytes?: number | null;
-  captureError?: string | null;
-}): string {
-  return [
-    `reason=${params.reason ?? 'unknown'}`,
-    `duration_ms=${params.durationMs ?? 'null'}`,
-    `base64_len=${params.base64Length ?? 0}`,
-    `estimated_bytes=${params.estimatedBytes ?? 'null'}`,
-    `capture_error=${params.captureError ?? 'null'}`,
-  ].join(' ');
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function isAllowedDocumentMimeType(
   mimeType: string | undefined,
   name: string,
@@ -393,18 +272,6 @@ function formatDiagnosticValue(value: string | number | null | undefined): strin
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   const normalized = String(value).trim();
   return normalized.length > 0 ? normalized : '-';
-}
-
-function promptOpenSettings(title: string, message: string, t: (key: string) => string) {
-  Alert.alert(title, message, [
-    { text: t('common.cancel'), style: 'cancel' },
-    {
-      text: t('common.ok'),
-      onPress: () => {
-        Linking.openSettings().catch(() => null);
-      },
-    },
-  ]);
 }
 
 const FARM_DATA_QUERY_PATTERNS = [
@@ -1093,17 +960,12 @@ export default function AIChatScreen() {
   >([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const voiceModeScrollViewRef = useRef<ScrollView>(null);
-  const voiceModeStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearDraftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const voiceRecordingStartTimeRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
-  const isProcessingVoiceRef = useRef(false);
-  const voiceInputStateRef = useRef<VoiceInputState>(voiceInputState);
   const voiceConversationModeRef = useRef<VoiceConversationMode>(voiceConversationMode);
   const isAssistantSpeakingRef = useRef(isAssistantSpeaking);
   const isVoiceModeVisibleRef = useRef(isVoiceModeVisible);
   const isLoadingRef = useRef(isLoading);
-  const voiceRecorder = useAudioRecorder(VOICE_RECORDING_OPTIONS);
   const sendMessageRef = useRef<
     | ((
         text?: string,
@@ -1116,7 +978,34 @@ export default function AIChatScreen() {
   const activeAssistantRequestIdRef = useRef<string | null>(null);
   const activeAssistantAbortControllerRef = useRef<AbortController | null>(null);
   const conversationAsyncTokenRef = useRef(0);
-  const isVoiceRecording = voiceInputState === 'recording';
+
+  const {
+    startVoiceRecording,
+    stopVoiceRecordingAndCapture,
+    sendVoiceAudioToServer,
+    discardVoiceRecording,
+    handleTTSComplete,
+    isRecording: isVoiceRecording,
+  } = useVoiceRecording({
+    t,
+    telemetry: {
+      capture: (eventName, properties) => telemetry.capture(eventName, properties as never),
+    },
+    sendMessage: (text, source, voicePayload) => {
+      void handleSendMessage(text, source, voicePayload);
+    },
+    isVoiceModeVisible,
+    voiceConversationMode,
+    isAssistantSpeaking,
+    isLoading,
+    __DEV__,
+    voiceInputState,
+    setVoiceInputState,
+    setVoiceModeError,
+    setVoiceModeNotice,
+    setLiveVoiceTranscript,
+  });
+
   const languageCode = useMemo(() => resolveLanguageCode(i18n.language), [i18n.language]);
   const visibleConversationSummaries = useMemo(
     () =>
@@ -1149,10 +1038,6 @@ export default function AIChatScreen() {
   }, []);
 
   useEffect(() => {
-    voiceInputStateRef.current = voiceInputState;
-  }, [voiceInputState]);
-
-  useEffect(() => {
     voiceConversationModeRef.current = voiceConversationMode;
   }, [voiceConversationMode]);
 
@@ -1172,10 +1057,6 @@ export default function AIChatScreen() {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      if (voiceModeStartTimeoutRef.current) {
-        clearTimeout(voiceModeStartTimeoutRef.current);
-        voiceModeStartTimeoutRef.current = null;
-      }
     };
   }, []);
 
@@ -1432,301 +1313,6 @@ export default function AIChatScreen() {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
   };
-
-  // ============================================================
-  // MARK: - Simplified Voice Recording Flow
-  // ============================================================
-
-  /**
-   * Start recording audio for voice input.
-   * This is a clean implementation that:
-   * 1. Requests permissions
-   * 2. Sets up audio mode
-   * 3. Prepares and starts recording
-   * 4. Updates state to show recording indicator
-   */
-  const startVoiceRecording = useCallback(async (): Promise<boolean> => {
-    if (Platform.OS === 'web') {
-      setVoiceModeError(t('ai.voice.unavailableBody'));
-      return false;
-    }
-
-    // Prevent starting if already processing
-    if (isProcessingVoiceRef.current || voiceInputStateRef.current !== 'idle') {
-      return false;
-    }
-
-    const resetRecordingAudioMode = async () => {
-      try {
-        await setAudioModeAsync({
-          allowsRecording: false,
-          playsInSilentMode: true,
-          interruptionMode: 'duckOthers',
-          shouldRouteThroughEarpiece: false,
-          shouldPlayInBackground: false,
-        });
-      } catch {
-        // no-op
-      }
-    };
-
-    const shouldAbortRecordingStart = () =>
-      !isVoiceModeVisibleRef.current || voiceInputStateRef.current !== 'idle';
-
-    isProcessingVoiceRef.current = true;
-
-    try {
-      const permission = await requestRecordingPermissionsAsync();
-      if (!permission.granted) {
-        setVoiceModeError(t('ai.voice.permissionBody'));
-        promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
-        return false;
-      }
-
-      await setAudioModeAsync({
-        allowsRecording: true,
-        playsInSilentMode: true,
-        interruptionMode: 'duckOthers',
-        shouldRouteThroughEarpiece: false,
-        shouldPlayInBackground: false,
-      });
-
-      if (shouldAbortRecordingStart()) {
-        await resetRecordingAudioMode();
-        return false;
-      }
-
-      await voiceRecorder.prepareToRecordAsync();
-      if (shouldAbortRecordingStart()) {
-        await resetRecordingAudioMode();
-        return false;
-      }
-      voiceRecorder.record();
-      voiceRecordingStartTimeRef.current = Date.now();
-      voiceInputStateRef.current = 'recording';
-      setVoiceInputState('recording');
-      setVoiceModeError(null);
-      setVoiceModeNotice(null);
-      setLiveVoiceTranscript('');
-
-      return true;
-    } catch (error) {
-      if (__DEV__) {
-        console.warn('Voice recording start failed:', error);
-      }
-      setVoiceModeError(t('ai.voice.unavailableBody'));
-      await resetRecordingAudioMode();
-      return false;
-    } finally {
-      isProcessingVoiceRef.current = false;
-    }
-  }, [t, voiceRecorder]);
-
-  /**
-   * Stop recording and capture the audio payload.
-   * Returns the base64 encoded audio and metadata.
-   */
-  const stopVoiceRecordingAndCapture = useCallback(
-    async (options?: { discard?: boolean }): Promise<VoiceAudioPayload | null> => {
-      if (isProcessingVoiceRef.current && !options?.discard) {
-        return null;
-      }
-
-      isProcessingVoiceRef.current = true;
-
-      try {
-        const startTime = voiceRecordingStartTimeRef.current;
-        const recordingDuration = startTime ? Date.now() - startTime : 0;
-
-        // Stop the recording
-        await voiceRecorder.stop();
-
-        // Clear the start time immediately
-        voiceRecordingStartTimeRef.current = null;
-
-        // If discarding, reset state and return early
-        if (options?.discard) {
-          setVoiceInputState('idle');
-          setLiveVoiceTranscript('');
-          return null;
-        }
-
-        // Get the recording URI
-        const status = voiceRecorder.getStatus();
-        let uri = voiceRecorder.uri ?? status.url;
-        let durationMs =
-          typeof status.durationMillis === 'number' ? status.durationMillis : recordingDuration;
-
-        // Wait for URI to be available (some devices need a moment)
-        for (let attempt = 0; attempt < 10 && !uri; attempt++) {
-          await sleep(100);
-          const newStatus = voiceRecorder.getStatus();
-          uri = voiceRecorder.uri ?? newStatus.url;
-          if (!durationMs && typeof newStatus.durationMillis === 'number') {
-            durationMs = newStatus.durationMillis;
-          }
-        }
-
-        if (!uri) {
-          setVoiceModeError(t('ai.voice.recordingTooShortBody'));
-          setVoiceInputState('idle');
-          return null;
-        }
-
-        // Wait for file to be fully written
-        for (let attempt = 0; attempt < 15; attempt++) {
-          const info = await FileSystem.getInfoAsync(uri);
-          if (info.exists && typeof info.size === 'number' && info.size > 0) {
-            break;
-          }
-          await sleep(100);
-        }
-
-        // Read the audio file as base64
-        const inputAudioBase64 = await FileSystem.readAsStringAsync(uri, {
-          encoding: 'base64',
-        });
-
-        if (!inputAudioBase64.trim()) {
-          setVoiceModeError(t('ai.voice.recordingTooShortBody'));
-          setVoiceInputState('idle');
-          return null;
-        }
-
-        const audioFormat = inferAudioMimeType(uri);
-
-        if (__DEV__) {
-          const estimatedBytes = estimateBase64Bytes(inputAudioBase64);
-          console.log(
-            `[Voice capture] format=${audioFormat} durationMs=${durationMs} base64len=${inputAudioBase64.length} estimatedBytes=${estimatedBytes}`,
-          );
-        }
-
-        return {
-          inputAudioBase64,
-          audioFormat,
-          durationMs,
-        };
-      } catch (error) {
-        if (__DEV__) {
-          console.warn('Voice recording stop failed:', error);
-        }
-        setVoiceModeError(t('ai.voice.unavailableBody'));
-        setVoiceInputState('idle');
-        return null;
-      } finally {
-        isProcessingVoiceRef.current = false;
-        // Reset audio mode to allow playback
-        try {
-          await setAudioModeAsync({
-            allowsRecording: false,
-            playsInSilentMode: true,
-            interruptionMode: 'duckOthers',
-            shouldRouteThroughEarpiece: false,
-            shouldPlayInBackground: false,
-          });
-        } catch {
-          // no-op
-        }
-      }
-    },
-    [t, voiceRecorder],
-  );
-
-  /**
-   * Send the recorded voice audio to the server for STT and AI processing.
-   * This is the main entry point for voice-based queries.
-   */
-  const sendVoiceAudioToServer = useCallback(
-    async (voicePayload: VoiceAudioPayload) => {
-      const validation = validateVoiceAudioPayload(voicePayload);
-
-      if (!validation.ok) {
-        if (__DEV__) {
-          console.warn(
-            '[Voice payload rejected]',
-            formatVoicePayloadDebug({
-              reason: validation.reason,
-              durationMs: voicePayload.durationMs,
-              base64Length: voicePayload.inputAudioBase64.length,
-              estimatedBytes: validation.estimatedBytes,
-            }),
-          );
-        }
-
-        telemetry.capture('voice_payload_rejected', {
-          reason: validation.reason ?? 'unknown',
-          duration_ms: voicePayload.durationMs ?? null,
-          base64_length: voicePayload.inputAudioBase64.length,
-          estimated_bytes: validation.estimatedBytes ?? null,
-        });
-
-        setVoiceModeError(t('ai.voice.recordingTooShortBody'));
-        setVoiceInputState('idle');
-        return;
-      }
-
-      setVoiceInputState('processing');
-      setLiveVoiceTranscript(t('ai.voice.processing', { defaultValue: 'Processing...' }));
-
-      // Send to server - the server will:
-      // 1. Transcribe the audio (STT)
-      // 2. Process with LLM
-      // 3. Generate TTS response
-      // 4. Return transcript, AI response, and audio
-      void sendMessageRef.current?.(
-        '', // No text - server will get transcript from audio
-        'voice',
-        voicePayload,
-      );
-    },
-    [t],
-  );
-
-  /**
-   * Discard the current voice recording without sending.
-   */
-  const discardVoiceRecording = useCallback(async () => {
-    if (voiceInputStateRef.current === 'recording') {
-      await stopVoiceRecordingAndCapture({ discard: true });
-    }
-    setVoiceInputState('idle');
-    setLiveVoiceTranscript('');
-    setVoiceModeError(null);
-  }, [stopVoiceRecordingAndCapture]);
-
-  /**
-   * Handle TTS completion - auto-start recording in conversation mode.
-   * This enables hands-free back-and-forth like ChatGPT/Claude voice mode.
-   */
-  const handleTTSComplete = useCallback(() => {
-    if (
-      !isVoiceModeVisibleRef.current ||
-      voiceConversationModeRef.current !== 'auto' ||
-      voiceInputStateRef.current !== 'idle' ||
-      isLoadingRef.current
-    ) {
-      return;
-    }
-
-    if (voiceModeStartTimeoutRef.current) {
-      clearTimeout(voiceModeStartTimeoutRef.current);
-    }
-
-    // Small delay for natural conversation feel
-    voiceModeStartTimeoutRef.current = setTimeout(() => {
-      voiceModeStartTimeoutRef.current = null;
-      if (
-        isVoiceModeVisibleRef.current &&
-        voiceConversationModeRef.current === 'auto' &&
-        voiceInputStateRef.current === 'idle' &&
-        !isLoadingRef.current &&
-        !isAssistantSpeakingRef.current
-      ) {
-        void startVoiceRecording();
-      }
-    }, 500);
-  }, [startVoiceRecording]);
 
   const handleSendMessage = useCallback(
     async (
@@ -2704,23 +2290,12 @@ export default function AIChatScreen() {
   useEffect(() => {
     return () => {
       const cleanup = async () => {
-        if (voiceModeStartTimeoutRef.current) {
-          clearTimeout(voiceModeStartTimeoutRef.current);
-          voiceModeStartTimeoutRef.current = null;
-        }
         cancelInFlightAssistantRequest();
-        if (voiceRecordingStartTimeRef.current) {
-          try {
-            await voiceRecorder.stop();
-          } catch {
-            /* no-op */
-          }
-        }
         await voiceOutputService.stop();
       };
       void cleanup();
     };
-  }, [cancelInFlightAssistantRequest, voiceRecorder]);
+  }, [cancelInFlightAssistantRequest]);
 
   // ============================================================
   // MARK: - Voice Mode UI Handlers
@@ -2737,10 +2312,6 @@ export default function AIChatScreen() {
       ]);
       return;
     }
-    if (voiceModeStartTimeoutRef.current) {
-      clearTimeout(voiceModeStartTimeoutRef.current);
-      voiceModeStartTimeoutRef.current = null;
-    }
     try {
       await voiceOutputService.stop();
     } catch {
@@ -2755,9 +2326,7 @@ export default function AIChatScreen() {
     setLiveVoiceTranscript('');
     setVoiceInputState('idle');
 
-    // Start recording after modal opens
-    voiceModeStartTimeoutRef.current = setTimeout(() => {
-      voiceModeStartTimeoutRef.current = null;
+    setTimeout(() => {
       void startVoiceRecording();
     }, 300);
   }, [t, startVoiceRecording]);
@@ -2766,10 +2335,6 @@ export default function AIChatScreen() {
    * Close voice mode and discard any in-progress recording.
    */
   const closeVoiceMode = useCallback(async () => {
-    if (voiceModeStartTimeoutRef.current) {
-      clearTimeout(voiceModeStartTimeoutRef.current);
-      voiceModeStartTimeoutRef.current = null;
-    }
     cancelInFlightAssistantRequest();
     void voiceOutputService.stop();
     setIsAssistantSpeaking(false);
@@ -2793,32 +2358,27 @@ export default function AIChatScreen() {
   }, [closeVoiceMode]);
 
   const scheduleAutoVoiceModeRestart = useCallback(
-    (delayMs: number) => {
-      if (voiceModeStartTimeoutRef.current) {
-        clearTimeout(voiceModeStartTimeoutRef.current);
-        voiceModeStartTimeoutRef.current = null;
-      }
-
+    async (delayMs: number) => {
       if (!isMountedRef.current) {
         return;
       }
 
       setVoiceModeError(null);
       setVoiceModeNotice(null);
-      voiceModeStartTimeoutRef.current = setTimeout(async () => {
-        voiceModeStartTimeoutRef.current = null;
-        if (!isMountedRef.current) {
-          return;
-        }
-        const started = await startVoiceRecording();
-        if (!isMountedRef.current) {
-          return;
-        }
-        if (!started) {
-          setIsVoiceModeMicEnabled(false);
-          setVoiceInputState('idle');
-        }
-      }, delayMs);
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+      if (!isMountedRef.current) {
+        return;
+      }
+      const started = await startVoiceRecording();
+      if (!isMountedRef.current) {
+        return;
+      }
+      if (!started) {
+        setIsVoiceModeMicEnabled(false);
+        setVoiceInputState('idle');
+      }
     },
     [startVoiceRecording],
   );
@@ -2834,13 +2394,8 @@ export default function AIChatScreen() {
       void voiceOutputService.stop();
       setIsAssistantSpeaking(false);
 
-      if (voiceModeStartTimeoutRef.current) {
-        clearTimeout(voiceModeStartTimeoutRef.current);
-        voiceModeStartTimeoutRef.current = null;
-      }
-
       // Start recording after brief pause
-      if (isVoiceModeVisibleRef.current && voiceInputStateRef.current === 'idle') {
+      if (isVoiceModeVisible && voiceInputState === 'idle') {
         scheduleAutoVoiceModeRestart(100);
       }
       return;
@@ -2879,6 +2434,7 @@ export default function AIChatScreen() {
     voiceConversationMode,
     isLoading,
     isAssistantSpeaking,
+    isVoiceModeVisible,
     scheduleAutoVoiceModeRestart,
     startVoiceRecording,
     stopVoiceRecordingAndCapture,
