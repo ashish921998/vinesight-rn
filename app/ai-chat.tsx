@@ -2536,7 +2536,11 @@ export default function AIChatScreen() {
       setVoiceModeError(null);
       setVoiceModeNotice(null);
       if (!isLoading && !isAssistantSpeaking && voiceInputState === 'idle') {
-        await startVoiceRecording();
+        const ok = await startVoiceRecording();
+        if (!ok) {
+          setIsVoiceModeMicEnabled(false);
+          setVoiceInputState('idle');
+        }
       }
     }
   }, [
