@@ -1,0 +1,25 @@
+app/ai-chat.tsx
+  2fdbb2174caaeb83 1354-1378,1907,1981,2369,2424-2430
+app/index.tsx
+  2fdbb2174caaeb83 3,22-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "1c0db62387a8a4590ad1730624fc8cdbd1b3ca4f",
+  "prompts": {
+    "2fdbb2174caaeb83": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c24e229b-37ab-4be9-8a1c-9e59fe484083",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 48,
+      "total_deletions": 47,
+      "accepted_lines": 42,
+      "overriden_lines": 0
+    }
+  }
+}
