@@ -47,7 +47,7 @@ import type { AssistantConversationSummary } from '@/services/assistant-memory';
 import { voiceOutputService } from '@/services/voice-output';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate, formatTime } from '@/i18n/format';
-import { telemetry } from '@/services/telemetry';
+import { telemetry, type TelemetryProperties } from '@/services/telemetry';
 import { useVoiceRecording, type VoiceAudioPayload } from '@/hooks/use-voice-recording';
 
 /** Constant placeholder for voice messages awaiting transcript. */
@@ -1003,6 +1003,15 @@ export default function AIChatScreen() {
     (text: string, source: 'text' | 'voice', voicePayload?: VoiceAudioPayload | null) => {
       const sendMessage = sendMessageRef.current;
       if (!sendMessage) {
+        if (__DEV__) {
+          console.warn(
+            '[Voice] sendMessageRef.current is null, voice send dropped',
+            'text:',
+            text,
+            'source:',
+            source,
+          );
+        }
         return;
       }
       void sendMessage(text, source, voicePayload);
@@ -1020,7 +1029,8 @@ export default function AIChatScreen() {
   } = useVoiceRecording({
     t,
     telemetry: {
-      capture: (eventName, properties) => telemetry.capture(eventName, properties as never),
+      capture: (eventName, properties) =>
+        telemetry.capture(eventName, properties as TelemetryProperties),
     },
     sendMessage: sendMessageForVoice,
     isVoiceModeVisible,
@@ -2125,6 +2135,7 @@ export default function AIChatScreen() {
 
             if (didReplaceById) return next;
 
+            // Fallback: find last pending voice message by content (last resort if ID match failed)
             for (let index = next.length - 1; index >= 0; index -= 1) {
               const message = next[index];
               if (
@@ -2132,6 +2143,17 @@ export default function AIChatScreen() {
                 message.inputMode === 'audio' &&
                 message.content === VOICE_MESSAGE_PENDING
               ) {
+                if (__DEV__) {
+                  console.debug(
+                    '[Voice] Fallback content match for transcript replacement',
+                    'index:',
+                    index,
+                    'messageId:',
+                    message.id,
+                    'transcript:',
+                    resolvedTranscript,
+                  );
+                }
                 next[index] = { ...message, content: resolvedTranscript };
                 break;
               }
