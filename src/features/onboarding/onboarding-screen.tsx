@@ -105,7 +105,8 @@ export function OnboardingScreen() {
       telemetry.capture('onboarding_completed', { notifications_enabled: notificationsEnabled });
       if (typeof createdFarmId === 'number') {
         useGuidedTourStore.getState().startTourAtStep('add_log', { farmId: createdFarmId });
-        router.replace(`/farm/${createdFarmId}`);
+        router.replace('/(tabs)');
+        router.push(`/farm/${createdFarmId}`);
         return;
       }
       router.replace('/(tabs)');

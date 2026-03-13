@@ -180,6 +180,17 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'arrow.right': 'arrow-forward',
   'arrow.up': 'arrow-up',
   'arrow.down': 'arrow-down',
+
+  // Icons missing from previous mapping
+  'list.bullet.rectangle.portrait': 'list-outline',
+  'list.bullet.rectangle.portrait.fill': 'list',
+  'waveform.and.mic': 'mic-outline',
+  'checkmark.seal': 'ribbon-outline',
+  'checkmark.seal.fill': 'ribbon',
+  'apple.logo': 'logo-apple',
+  'arrow.triangle.branch': 'git-branch-outline',
+  'drop.circle': 'water-outline',
+  'drop.circle.fill': 'water',
 };
 
 export function SymbolComponent({
