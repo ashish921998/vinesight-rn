@@ -981,10 +981,8 @@ export default function AIChatScreen() {
   const voiceModeScrollViewRef = useRef<ScrollView>(null);
   const clearDraftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
-  const voiceConversationModeRef = useRef<VoiceConversationMode>(voiceConversationMode);
   const isAssistantSpeakingRef = useRef(isAssistantSpeaking);
   const isVoiceModeVisibleRef = useRef(isVoiceModeVisible);
-  const isLoadingRef = useRef(isLoading);
   const autoVoiceModeRestartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendMessageRef = useRef<
     | ((
@@ -1085,20 +1083,12 @@ export default function AIChatScreen() {
   }, []);
 
   useEffect(() => {
-    voiceConversationModeRef.current = voiceConversationMode;
-  }, [voiceConversationMode]);
-
-  useEffect(() => {
     isAssistantSpeakingRef.current = isAssistantSpeaking;
   }, [isAssistantSpeaking]);
 
   useEffect(() => {
     isVoiceModeVisibleRef.current = isVoiceModeVisible;
   }, [isVoiceModeVisible]);
-
-  useEffect(() => {
-    isLoadingRef.current = isLoading;
-  }, [isLoading]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -2566,6 +2556,9 @@ export default function AIChatScreen() {
         // Stop recording and send to server
         setVoiceInputState('processing');
         const payload = await stopVoiceRecordingAndCapture();
+        if (!isMountedRef.current) {
+          return;
+        }
         if (payload) {
           sendVoiceAudioToServer(payload);
         } else {
@@ -2587,6 +2580,9 @@ export default function AIChatScreen() {
       setVoiceModeNotice(null);
       if (!isLoading && !isAssistantSpeaking && voiceInputState === 'idle') {
         const ok = await startVoiceRecording();
+        if (!isMountedRef.current) {
+          return;
+        }
         if (!ok) {
           setIsVoiceModeMicEnabled(false);
           setVoiceInputState('idle');
