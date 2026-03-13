@@ -1351,6 +1351,31 @@ export default function AIChatScreen() {
     }, 100);
   };
 
+  const playAssistantVoice = useCallback(
+    (content: string, conversationId: string | null | undefined) => {
+      void voiceOutputService.playAssistantTurn(
+        {
+          message: {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content,
+            timestamp: new Date(),
+            conversationId: conversationId ?? undefined,
+          },
+        },
+        {
+          language: languageCode,
+          rate: 1,
+          onStateChange: setIsAssistantSpeaking,
+          onDone: handleTTSComplete,
+          allowDeviceFallback: false,
+          onError: () => setVoiceModeNotice(t('ai.voice.replyVoiceUnavailable')),
+        },
+      );
+    },
+    [languageCode, setIsAssistantSpeaking, handleTTSComplete, setVoiceModeNotice, t],
+  );
+
   const handleSendMessage = useCallback(
     async (
       text?: string,
@@ -1879,25 +1904,7 @@ export default function AIChatScreen() {
               }
 
               if (source === 'voice') {
-                void voiceOutputService.playAssistantTurn(
-                  {
-                    message: {
-                      id: Date.now().toString(),
-                      role: 'assistant',
-                      content,
-                      timestamp: new Date(),
-                      conversationId: activeConversationId ?? undefined,
-                    },
-                  },
-                  {
-                    language: languageCode,
-                    rate: 1,
-                    onStateChange: setIsAssistantSpeaking,
-                    onDone: handleTTSComplete,
-                    allowDeviceFallback: false,
-                    onError: () => setVoiceModeNotice(t('ai.voice.replyVoiceUnavailable')),
-                  },
-                );
+                playAssistantVoice(content, activeConversationId);
               }
 
               scrollToBottom();
@@ -1971,25 +1978,7 @@ export default function AIChatScreen() {
             }
 
             if (source === 'voice') {
-              void voiceOutputService.playAssistantTurn(
-                {
-                  message: {
-                    id: Date.now().toString(),
-                    role: 'assistant',
-                    content,
-                    timestamp: new Date(),
-                    conversationId: activeConversationId ?? undefined,
-                  },
-                },
-                {
-                  language: languageCode,
-                  rate: 1,
-                  onStateChange: setIsAssistantSpeaking,
-                  onDone: handleTTSComplete,
-                  allowDeviceFallback: false,
-                  onError: () => setVoiceModeNotice(t('ai.voice.replyVoiceUnavailable')),
-                },
-              );
+              playAssistantVoice(content, activeConversationId);
             }
 
             scrollToBottom();
@@ -2377,6 +2366,7 @@ export default function AIChatScreen() {
       refreshConversationHistory,
       handleTTSComplete,
       voicePlaceholder,
+      playAssistantVoice,
     ],
   );
 
@@ -2431,7 +2421,13 @@ export default function AIChatScreen() {
       if (!isMountedRef.current) {
         return;
       }
-      void startVoiceRecording();
+      void startVoiceRecording().then((started) => {
+        if (!isMountedRef.current) return;
+        if (!started) {
+          setIsVoiceModeMicEnabled(false);
+          setVoiceInputState('idle');
+        }
+      });
     }, 300);
   }, [t, startVoiceRecording, cancelScheduledVoiceStart]);
 

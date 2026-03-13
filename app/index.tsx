@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
+import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore, useLanguageStore } from '@/stores';
 import { useOnboardingStore } from '@/stores/onboarding-store';
 import { useProfile } from '@/hooks';
@@ -18,9 +19,13 @@ export default function Index() {
   const { isAuthenticated, isLoading, needsProfileCompletion, hasSeenOnboarding } = useAuthStore();
   const onboardingHydrated = useOnboardingStore((s) => s.hasHydrated);
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
-  const languageHydrated = useLanguageStore((s) => s.hasHydrated);
-  const hasSelectedLanguage = useLanguageStore((s) => s.hasSelectedLanguage);
-  const language = useLanguageStore((s) => s.language);
+  const { languageHydrated, hasSelectedLanguage, language } = useLanguageStore(
+    useShallow((s) => ({
+      languageHydrated: s.hasHydrated,
+      hasSelectedLanguage: s.hasSelectedLanguage,
+      language: s.language,
+    })),
+  );
   const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
   const configStatus = getConfigurationStatus();
   const colors = useThemeColors();
