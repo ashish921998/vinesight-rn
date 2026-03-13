@@ -2088,7 +2088,8 @@ export default function AIChatScreen() {
 
         if (__DEV__ && source === 'voice') {
           console.log('[Voice STT debug]', {
-            sttTranscript: response.sttTranscript,
+            hasTranscript: Boolean(response.sttTranscript),
+            transcriptLength: response.sttTranscript?.length ?? 0,
             sttProvider: response.sttProviderUsed,
             provider: response.providerUsed,
             hasAudio: Boolean(response.message.audio),
@@ -2322,16 +2323,15 @@ export default function AIChatScreen() {
         }
         Alert.alert(t('common.error'), message, [{ text: t('common.ok') }]);
       } finally {
+        // Always reset voice state to prevent stuck 'processing' state when
+        // request becomes stale (e.g., user navigates away mid-request).
+        if (source === 'voice') {
+          setVoiceInputState('idle');
+        }
         if (!isStaleConversationAction()) {
           activeAssistantRequestIdRef.current = null;
           activeAssistantAbortControllerRef.current = null;
           setIsLoading(false);
-          // Reset voice input state so handleTTSComplete can proceed to start
-          // the next recording in auto mode. Without this reset the state stays
-          // stuck at 'processing' and the hands-free loop is broken.
-          if (source === 'voice') {
-            setVoiceInputState('idle');
-          }
           if (assistantFeatureFlags.memoryEnabled) {
             void refreshConversationHistory();
           }
@@ -2438,7 +2438,13 @@ export default function AIChatScreen() {
   const closeVoiceMode = useCallback(async () => {
     cancelScheduledVoiceStart();
     cancelInFlightAssistantRequest();
-    void voiceOutputService.stop();
+    try {
+      await voiceOutputService.stop();
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Failed to stop voice output:', error);
+      }
+    }
     setIsAssistantSpeaking(false);
     setIsVoiceModeVisible(false);
     setIsVoiceModeMicEnabled(false);
