@@ -15,7 +15,6 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 // Speech recognition is now handled server-side
-// import { SpeechRecognitionModule } from '@/services/speech-recognition';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,15 +48,15 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate, formatTime } from '@/i18n/format';
 import { telemetry, type TelemetryProperties } from '@/services/telemetry';
 import { useVoiceRecording, type VoiceAudioPayload } from '@/hooks/use-voice-recording';
-
-/** Constant placeholder for voice messages awaiting transcript. */
-const VOICE_MESSAGE_PENDING = '__VOICE_MESSAGE_PENDING__';
 import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import type { AssistantAnswer, QueryIntent } from '@/types/voice-assistant';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import type { VoiceLogDraft, VoiceLogMissingField } from '@/types/voice-log';
+
+/** Constant placeholder for voice messages awaiting transcript. */
+const VOICE_MESSAGE_PENDING = '__VOICE_MESSAGE_PENDING__';
 
 type VoiceInputState = 'idle' | 'recording' | 'processing';
 type VoiceConversationMode = 'auto' | 'manual';
