@@ -14,8 +14,23 @@ const MIN_VOICE_AUDIO_DURATION_MS = 800;
 const MIN_VOICE_AUDIO_BASE64_LENGTH = 800;
 const MIN_VOICE_AUDIO_ESTIMATED_BYTES = 600;
 
+// Silence detection - Adaptive thresholds for better cross-device reliability
+// Using dBFS (decibels relative to full scale) where 0 = max volume, -160 = silence
+const SPEECH_THRESHOLD_DB = -32; // level above which we consider user is speaking (higher = louder required)
+const SILENCE_THRESHOLD_DB = -42; // level below which we consider silence (lower = more tolerant of quiet)
+const SILENCE_DURATION_MS = 1800; // how long silence must last before auto-stopping (1.8s feels natural)
+const SILENCE_POLL_INTERVAL_MS = 100; // sample metering more frequently for smoother detection
+const MIN_SPEECH_DURATION_MS = 800; // minimum speech before auto-stop allowed (slightly lower for responsiveness)
+const AMBIENT_NOISE_CALIBRATION_MS = 500; // time to sample ambient noise at start
+const MAX_RECORDING_DURATION_MS = 60000; // hard limit to prevent endless recording
+
+// Fallback timeouts for devices where metering doesn't work reliably
+const METERING_TIMEOUT_MS = 3000; // if no valid metering for 3s, fall back to time-based auto-stop
+const FALLBACK_AUTO_STOP_MS = 10000; // time-based auto-stop when metering unavailable (10s)
+
 const VOICE_RECORDING_OPTIONS: RecordingOptions = {
   ...RecordingPresets.HIGH_QUALITY,
+  isMeteringEnabled: true,
   extension: '.wav',
   sampleRate: 16000,
   numberOfChannels: 1,
@@ -202,28 +217,50 @@ export function useVoiceRecording({
   const isVoiceModeVisibleRef = useRef(isVoiceModeVisible);
   const isLoadingRef = useRef(isLoading);
   const voiceModeStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDiscardRef = useRef(false);
+  const silenceDetectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const silenceDetectionStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const silenceStartTimeRef = useRef<number | null>(null);
+  const hasDetectedSpeechRef = useRef(false);
+  const autoStopInProgressRef = useRef(false);
+  const stopVoiceRecordingAndCaptureRef = useRef<() => Promise<VoiceAudioPayload | null>>(() =>
+    Promise.resolve(null),
+  );
+  const sendVoiceAudioToServerRef = useRef<(payload: VoiceAudioPayload) => void>(() => {});
+  // Fallback timers for devices where metering doesn't work
+  const maxDurationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noMeteringFallbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasReceivedValidMeteringRef = useRef(false);
+
+  // Shared helper to clear all voice recording timers
+  const clearAllVoiceTimers = useCallback(() => {
+    if (silenceDetectionIntervalRef.current) {
+      clearInterval(silenceDetectionIntervalRef.current);
+      silenceDetectionIntervalRef.current = null;
+    }
+    if (silenceDetectionStartTimeoutRef.current) {
+      clearTimeout(silenceDetectionStartTimeoutRef.current);
+      silenceDetectionStartTimeoutRef.current = null;
+    }
+    if (maxDurationTimeoutRef.current) {
+      clearTimeout(maxDurationTimeoutRef.current);
+      maxDurationTimeoutRef.current = null;
+    }
+    if (noMeteringFallbackTimeoutRef.current) {
+      clearTimeout(noMeteringFallbackTimeoutRef.current);
+      noMeteringFallbackTimeoutRef.current = null;
+    }
+    if (voiceModeStartTimeoutRef.current) {
+      clearTimeout(voiceModeStartTimeoutRef.current);
+      voiceModeStartTimeoutRef.current = null;
+    }
+  }, []);
 
   voiceInputStateRef.current = voiceInputState;
   voiceConversationModeRef.current = voiceConversationMode;
   isAssistantSpeakingRef.current = isAssistantSpeaking;
   isVoiceModeVisibleRef.current = isVoiceModeVisible;
   isLoadingRef.current = isLoading;
-
-  useEffect(() => {
-    return () => {
-      if (voiceModeStartTimeoutRef.current) {
-        clearTimeout(voiceModeStartTimeoutRef.current);
-        voiceModeStartTimeoutRef.current = null;
-      }
-
-      if (voiceRecordingStartTimeRef.current !== null) {
-        void voiceRecorder.stop().catch(() => {
-          // no-op
-        });
-        voiceRecordingStartTimeRef.current = null;
-      }
-    };
-  }, [voiceRecorder]);
 
   const resetRecordingAudioMode = useCallback(async () => {
     try {
@@ -236,6 +273,29 @@ export function useVoiceRecording({
       });
     } catch {
       // no-op
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearAllVoiceTimers();
+
+      if (voiceRecordingStartTimeRef.current !== null) {
+        void voiceRecorder.stop().catch(() => {
+          // no-op
+        });
+        voiceRecordingStartTimeRef.current = null;
+      }
+
+      void resetRecordingAudioMode().catch(() => {
+        // no-op
+      });
+    };
+  }, [voiceRecorder, resetRecordingAudioMode, clearAllVoiceTimers]);
+
+  const waitForVoiceProcessingToFinish = useCallback(async () => {
+    for (let attempt = 0; attempt < 40 && isProcessingVoiceRef.current; attempt++) {
+      await sleep(25);
     }
   }, []);
 
@@ -284,11 +344,212 @@ export function useVoiceRecording({
       }
       voiceRecorder.record();
       voiceRecordingStartTimeRef.current = Date.now();
+
+      if (pendingDiscardRef.current) {
+        pendingDiscardRef.current = false;
+        await voiceRecorder.stop().catch(() => {
+          // no-op
+        });
+        voiceRecordingStartTimeRef.current = null;
+        voiceInputStateRef.current = 'idle';
+        setVoiceInputState('idle');
+        setLiveVoiceTranscript('');
+        await resetRecordingAudioMode();
+        return false;
+      }
+
       voiceInputStateRef.current = 'recording';
       setVoiceInputState('recording');
       setVoiceModeError(null);
       setVoiceModeNotice(null);
       setLiveVoiceTranscript('');
+
+      // Start silence detection in auto mode
+      if (voiceConversationModeRef.current === 'auto') {
+        silenceStartTimeRef.current = null;
+        hasDetectedSpeechRef.current = false;
+        autoStopInProgressRef.current = false;
+        hasReceivedValidMeteringRef.current = false;
+
+        if (silenceDetectionIntervalRef.current) {
+          clearInterval(silenceDetectionIntervalRef.current);
+          silenceDetectionIntervalRef.current = null;
+        }
+
+        if (silenceDetectionStartTimeoutRef.current) {
+          clearTimeout(silenceDetectionStartTimeoutRef.current);
+          silenceDetectionStartTimeoutRef.current = null;
+        }
+
+        if (maxDurationTimeoutRef.current) {
+          clearTimeout(maxDurationTimeoutRef.current);
+          maxDurationTimeoutRef.current = null;
+        }
+
+        if (noMeteringFallbackTimeoutRef.current) {
+          clearTimeout(noMeteringFallbackTimeoutRef.current);
+          noMeteringFallbackTimeoutRef.current = null;
+        }
+
+        // Independent max-duration safety timer - always fires regardless of metering
+        maxDurationTimeoutRef.current = setTimeout(() => {
+          if (voiceInputStateRef.current !== 'recording' || autoStopInProgressRef.current) {
+            return;
+          }
+          // Clear all other timers first to prevent races
+          if (silenceDetectionIntervalRef.current) {
+            clearInterval(silenceDetectionIntervalRef.current);
+            silenceDetectionIntervalRef.current = null;
+          }
+          if (noMeteringFallbackTimeoutRef.current) {
+            clearTimeout(noMeteringFallbackTimeoutRef.current);
+            noMeteringFallbackTimeoutRef.current = null;
+          }
+          autoStopInProgressRef.current = true;
+          if (__DEV__) {
+            console.log('[Voice] Max duration reached, auto-stopping');
+          }
+          setVoiceInputState('processing');
+          void stopVoiceRecordingAndCaptureRef.current().then((payload) => {
+            if (payload) {
+              sendVoiceAudioToServerRef.current(payload);
+            } else {
+              setVoiceInputState('idle');
+            }
+            autoStopInProgressRef.current = false;
+          });
+        }, MAX_RECORDING_DURATION_MS);
+
+        // Fallback timer for devices where metering doesn't work
+        // If no valid metering received for METERING_TIMEOUT_MS, use time-based auto-stop
+        noMeteringFallbackTimeoutRef.current = setTimeout(() => {
+          if (
+            voiceInputStateRef.current !== 'recording' ||
+            autoStopInProgressRef.current ||
+            hasReceivedValidMeteringRef.current
+          ) {
+            return;
+          }
+          // Metering not working - schedule time-based auto-stop after FALLBACK_AUTO_STOP_MS
+          if (__DEV__) {
+            console.log('[Voice] No metering available, using time-based fallback');
+          }
+          // Clear the outer timeout reference before setting the inner one
+          noMeteringFallbackTimeoutRef.current = null;
+          noMeteringFallbackTimeoutRef.current = setTimeout(() => {
+            if (voiceInputStateRef.current !== 'recording' || autoStopInProgressRef.current) {
+              return;
+            }
+            // Clear other timers first to prevent races
+            if (silenceDetectionIntervalRef.current) {
+              clearInterval(silenceDetectionIntervalRef.current);
+              silenceDetectionIntervalRef.current = null;
+            }
+            if (maxDurationTimeoutRef.current) {
+              clearTimeout(maxDurationTimeoutRef.current);
+              maxDurationTimeoutRef.current = null;
+            }
+            autoStopInProgressRef.current = true;
+            if (__DEV__) {
+              console.log('[Voice] Fallback auto-stop triggered');
+            }
+            setVoiceInputState('processing');
+            void stopVoiceRecordingAndCaptureRef.current().then((payload) => {
+              if (payload) {
+                sendVoiceAudioToServerRef.current(payload);
+              } else {
+                setVoiceInputState('idle');
+              }
+              autoStopInProgressRef.current = false;
+            });
+          }, FALLBACK_AUTO_STOP_MS);
+        }, METERING_TIMEOUT_MS);
+
+        silenceDetectionStartTimeoutRef.current = setTimeout(() => {
+          silenceDetectionStartTimeoutRef.current = null;
+          silenceDetectionIntervalRef.current = setInterval(() => {
+            if (
+              voiceInputStateRef.current !== 'recording' ||
+              autoStopInProgressRef.current ||
+              !voiceRecordingStartTimeRef.current
+            ) {
+              return;
+            }
+
+            const recordingElapsed = Date.now() - voiceRecordingStartTimeRef.current;
+            const status = voiceRecorder.getStatus();
+            const metering = status.metering;
+
+            // Track whether we ever receive valid metering
+            // Note: -160 is a VALID metering value meaning "silence" (very quiet)
+            // Only undefined means metering is not working at all
+            if (metering !== undefined) {
+              hasReceivedValidMeteringRef.current = true;
+            } else {
+              // No metering available - skip silence detection for this poll
+              // The fallback timer will handle auto-stop if metering never works
+              return;
+            }
+
+            // Detect speech: level must exceed SPEECH_THRESHOLD_DB to count as "user spoke"
+            // This prevents ambient noise from falsely triggering speech detection
+            if (metering > SPEECH_THRESHOLD_DB) {
+              hasDetectedSpeechRef.current = true;
+              silenceStartTimeRef.current = null;
+              return;
+            }
+
+            // Don't auto-stop until user has spoken for minimum duration
+            if (!hasDetectedSpeechRef.current || recordingElapsed < MIN_SPEECH_DURATION_MS) {
+              return;
+            }
+
+            // Silence detection: level must drop below SILENCE_THRESHOLD_DB (not just SPEECH_THRESHOLD)
+            // This creates hysteresis - prevents flickering when level is near threshold
+            if (metering > SILENCE_THRESHOLD_DB) {
+              // Level is between silence and speech thresholds - reset silence timer
+              // This handles trailing speech or breathing sounds
+              silenceStartTimeRef.current = null;
+              return;
+            }
+
+            // Below SILENCE_THRESHOLD_DB – track silence duration
+            if (silenceStartTimeRef.current === null) {
+              silenceStartTimeRef.current = Date.now();
+            }
+
+            const silenceDuration = Date.now() - silenceStartTimeRef.current;
+            if (silenceDuration >= SILENCE_DURATION_MS) {
+              // Silence detected – clear interval FIRST to prevent race with next poll
+              if (silenceDetectionIntervalRef.current) {
+                clearInterval(silenceDetectionIntervalRef.current);
+                silenceDetectionIntervalRef.current = null;
+              }
+              autoStopInProgressRef.current = true;
+              if (maxDurationTimeoutRef.current) {
+                clearTimeout(maxDurationTimeoutRef.current);
+                maxDurationTimeoutRef.current = null;
+              }
+              if (noMeteringFallbackTimeoutRef.current) {
+                clearTimeout(noMeteringFallbackTimeoutRef.current);
+                noMeteringFallbackTimeoutRef.current = null;
+              }
+              if (__DEV__) {
+                console.log('[Voice] Silence detected, auto-stopping');
+              }
+              setVoiceInputState('processing');
+              void stopVoiceRecordingAndCaptureRef.current().then((payload) => {
+                if (payload) {
+                  sendVoiceAudioToServerRef.current(payload);
+                } else {
+                  setVoiceInputState('idle');
+                }
+                autoStopInProgressRef.current = false;
+              });
+            }
+          }, SILENCE_POLL_INTERVAL_MS);
+        }, AMBIENT_NOISE_CALIBRATION_MS);
+      }
 
       return true;
     } catch (error) {
@@ -302,6 +563,7 @@ export function useVoiceRecording({
       isProcessingVoiceRef.current = false;
     }
   }, [
+    __DEV__,
     t,
     voiceRecorder,
     resetRecordingAudioMode,
@@ -314,16 +576,25 @@ export function useVoiceRecording({
 
   const stopVoiceRecordingAndCapture = useCallback(
     async (options?: { discard?: boolean }): Promise<VoiceAudioPayload | null> => {
-      // Always guard: if something else is processing (e.g. startVoiceRecording mid-flight),
-      // wait for it to finish before stopping — even on discard — to avoid stopping the
-      // recorder before it has fully started.
+      // Stop all timers as soon as recording is stopping
+      clearAllVoiceTimers();
+
       if (isProcessingVoiceRef.current) {
-        return null;
+        if (options?.discard) {
+          pendingDiscardRef.current = true;
+          setVoiceInputState('idle');
+          setLiveVoiceTranscript('');
+        }
+        await waitForVoiceProcessingToFinish();
+        if (isProcessingVoiceRef.current) {
+          return null;
+        }
       }
 
       // Only stop if there is actually something to stop.
       if (voiceInputStateRef.current !== 'recording') {
         if (options?.discard) {
+          pendingDiscardRef.current = false;
           setVoiceInputState('idle');
           setLiveVoiceTranscript('');
         }
@@ -341,6 +612,8 @@ export function useVoiceRecording({
         voiceRecordingStartTimeRef.current = null;
 
         if (options?.discard) {
+          pendingDiscardRef.current = false;
+          voiceInputStateRef.current = 'idle';
           setVoiceInputState('idle');
           setLiveVoiceTranscript('');
           return null;
@@ -409,20 +682,20 @@ export function useVoiceRecording({
         return null;
       } finally {
         isProcessingVoiceRef.current = false;
-        try {
-          await setAudioModeAsync({
-            allowsRecording: false,
-            playsInSilentMode: true,
-            interruptionMode: 'duckOthers',
-            shouldRouteThroughEarpiece: false,
-            shouldPlayInBackground: false,
-          });
-        } catch {
-          // no-op
-        }
+        await resetRecordingAudioMode();
       }
     },
-    [t, voiceRecorder, setLiveVoiceTranscript, setVoiceInputState, setVoiceModeError],
+    [
+      __DEV__,
+      clearAllVoiceTimers,
+      t,
+      voiceRecorder,
+      resetRecordingAudioMode,
+      setLiveVoiceTranscript,
+      setVoiceInputState,
+      setVoiceModeError,
+      waitForVoiceProcessingToFinish,
+    ],
   );
 
   const sendVoiceAudioToServer = useCallback(
@@ -459,17 +732,46 @@ export function useVoiceRecording({
 
       sendMessage('', 'voice', voicePayload);
     },
-    [t, telemetry, sendMessage, setLiveVoiceTranscript, setVoiceInputState, setVoiceModeError],
+    [
+      __DEV__,
+      t,
+      telemetry,
+      sendMessage,
+      setLiveVoiceTranscript,
+      setVoiceInputState,
+      setVoiceModeError,
+    ],
   );
 
+  // Keep stable refs current for use by silence detection interval
+  stopVoiceRecordingAndCaptureRef.current = stopVoiceRecordingAndCapture;
+  sendVoiceAudioToServerRef.current = sendVoiceAudioToServer;
+
   const discardVoiceRecording = useCallback(async () => {
+    // Stop all timers
+    clearAllVoiceTimers();
+    pendingDiscardRef.current = true;
+
+    if (isProcessingVoiceRef.current) {
+      await waitForVoiceProcessingToFinish();
+    }
+
     if (voiceInputStateRef.current === 'recording') {
       await stopVoiceRecordingAndCapture({ discard: true });
     }
+    pendingDiscardRef.current = false;
+    voiceInputStateRef.current = 'idle';
     setVoiceInputState('idle');
     setLiveVoiceTranscript('');
     setVoiceModeError(null);
-  }, [stopVoiceRecordingAndCapture, setLiveVoiceTranscript, setVoiceInputState, setVoiceModeError]);
+  }, [
+    clearAllVoiceTimers,
+    stopVoiceRecordingAndCapture,
+    setLiveVoiceTranscript,
+    setVoiceInputState,
+    setVoiceModeError,
+    waitForVoiceProcessingToFinish,
+  ]);
 
   const handleTTSComplete = useCallback(() => {
     if (

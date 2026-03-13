@@ -75,8 +75,9 @@ export default function LanguageSelectionScreen() {
             />
           </View>
           <Text style={[styles.title, { color: m3.colorScheme.onSurface }]}>VineSight</Text>
+          {/* Show the prompt in all supported languages since the user hasn't chosen yet */}
           <Text style={[styles.subtitle, { color: m3.colorScheme.onSurfaceVariant }]}>
-            Choose your language
+            {'Choose your language / भाषा चुनें / भाषा निवडा'}
           </Text>
         </View>
 
@@ -138,6 +139,7 @@ export default function LanguageSelectionScreen() {
             },
           ]}
         >
+          {/* Show Continue in all supported languages before a selection is made */}
           <Text
             style={[
               styles.continueText,
@@ -148,7 +150,13 @@ export default function LanguageSelectionScreen() {
               },
             ]}
           >
-            Continue
+            {selected
+              ? selected === 'hi'
+                ? 'जारी रखें'
+                : selected === 'mr'
+                  ? 'पुढे चला'
+                  : 'Continue'
+              : 'Continue / जारी रखें / पुढे चला'}
           </Text>
         </Pressable>
       </View>

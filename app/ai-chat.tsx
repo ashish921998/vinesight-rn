@@ -538,6 +538,7 @@ function VoiceModeModal({
   );
 
   const hasTranscript = liveVoiceTranscript.trim().length > 0;
+  const voicePlaceholder = t('ai.voice.voiceMessage', { defaultValue: 'Voice message' });
   const assistantMessageIndices = useMemo(
     () =>
       messages.reduce<number[]>((acc, message, index) => {
@@ -687,15 +688,36 @@ function VoiceModeModal({
                       borderColor: colorWithOpacity(m3.colorScheme.outline, 0.18),
                     }}
                   >
-                    <Text
-                      style={{
-                        color: m3.colorScheme.onSurface,
-                        fontSize: fontSize.xl,
-                        lineHeight: 30,
-                      }}
-                    >
-                      {message.content}
-                    </Text>
+                    {message.inputMode === 'audio' && message.content === voicePlaceholder ? (
+                      // No transcript yet — show a mic indicator instead of raw placeholder text
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                        <UiSymbol
+                          name="waveform"
+                          size={16}
+                          color={colorWithOpacity(m3.colorScheme.onSurface, 0.55)}
+                        />
+                        <Text
+                          style={{
+                            color: colorWithOpacity(m3.colorScheme.onSurface, 0.55),
+                            fontSize: fontSize.xl,
+                            lineHeight: 30,
+                            fontStyle: 'italic',
+                          }}
+                        >
+                          {voicePlaceholder}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text
+                        style={{
+                          color: m3.colorScheme.onSurface,
+                          fontSize: fontSize.xl,
+                          lineHeight: 30,
+                        }}
+                      >
+                        {message.content}
+                      </Text>
+                    )}
                   </View>
                 </View>
               );
@@ -909,6 +931,7 @@ export default function AIChatScreen() {
   const m3 = useM3();
   const markdown = useMemo(() => markdownStyles(colors), [colors]);
   const { t, i18n } = useTranslation();
+  const voicePlaceholder = t('ai.voice.voiceMessage', { defaultValue: 'Voice message' });
   const router = useRouter();
   const setAddEntry = useModalStore((s) => s.setAddEntry);
   const insets = useSafeAreaInsets();
@@ -966,6 +989,7 @@ export default function AIChatScreen() {
   const isAssistantSpeakingRef = useRef(isAssistantSpeaking);
   const isVoiceModeVisibleRef = useRef(isVoiceModeVisible);
   const isLoadingRef = useRef(isLoading);
+  const autoVoiceModeRestartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendMessageRef = useRef<
     | ((
         text?: string,
@@ -1045,6 +1069,13 @@ export default function AIChatScreen() {
     return conversationAsyncTokenRef.current === token;
   }, []);
 
+  const cancelScheduledVoiceStart = useCallback(() => {
+    if (autoVoiceModeRestartTimeoutRef.current) {
+      clearTimeout(autoVoiceModeRestartTimeoutRef.current);
+      autoVoiceModeRestartTimeoutRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     voiceConversationModeRef.current = voiceConversationMode;
   }, [voiceConversationMode]);
@@ -1065,6 +1096,10 @@ export default function AIChatScreen() {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      if (autoVoiceModeRestartTimeoutRef.current) {
+        clearTimeout(autoVoiceModeRestartTimeoutRef.current);
+        autoVoiceModeRestartTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -1344,7 +1379,9 @@ export default function AIChatScreen() {
         setIsAssistantSpeaking(false);
       }
       const attachmentSummary = formatAttachmentSummary(currentAttachments);
-      const messageText = rawMessageText;
+      const voicePlaceholderText = t('ai.voice.voiceMessage', { defaultValue: 'Voice message' });
+      const messageText =
+        canSendAudioOnly && !rawMessageText.trim() ? voicePlaceholderText : rawMessageText;
       const assistantInput = messageText.trim();
       const voiceUploadBytes =
         source === 'voice' ? estimateBase64Bytes(voicePayload?.inputAudioBase64 ?? null) : null;
@@ -1355,13 +1392,13 @@ export default function AIChatScreen() {
 
       // For voice input with audio payload, the server will return the transcript
       const persistedUserContent =
-        visibleUserContent ||
-        (source === 'voice' ? t('ai.voice.voiceMessage', { defaultValue: 'Voice message' }) : '');
+        visibleUserContent || (source === 'voice' ? voicePlaceholderText : '');
 
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
         role: 'user',
         content: persistedUserContent,
+        inputMode: source === 'voice' ? 'audio' : 'text',
         timestamp: new Date(),
       };
 
@@ -1417,10 +1454,16 @@ export default function AIChatScreen() {
           if (isStaleConversationAction()) return;
         }
 
+        // For audio-only voice input, the placeholder text ('Voice message') should NOT be
+        // sent to the server as real user input. The server must run STT on the audio to
+        // get the actual transcript. Send empty string so the server uses the audio.
+        const isAudioOnlyVoice = shouldAttachVoiceAudio && !rawMessageText.trim();
+        const serverUserMessage = isAudioOnlyVoice ? '' : assistantInput;
+
         const deterministicTranscript = contextFarm?.name
           ? `${assistantInput} for farm ${contextFarm.name}`
           : assistantInput;
-        let llmFallbackInput = assistantInput;
+        let llmFallbackInput = serverUserMessage;
 
         const deterministicIntent = classifyIntent(deterministicTranscript, candidateFarms);
         let didAttemptRouting = false;
@@ -1438,6 +1481,7 @@ export default function AIChatScreen() {
         };
 
         if (
+          !isAudioOnlyVoice &&
           !assistantFeatureFlags.routeOnServerEnabled &&
           currentAttachments.length === 0 &&
           messageText.trim()
@@ -1873,6 +1917,7 @@ export default function AIChatScreen() {
         }
 
         if (
+          !isAudioOnlyVoice &&
           !didAttemptRouting &&
           !assistantFeatureFlags.routeOnServerEnabled &&
           currentAttachments.length === 0 &&
@@ -2018,9 +2063,7 @@ export default function AIChatScreen() {
           conversationId: resolvedConversationId ?? undefined,
         };
 
-        const serverVoiceLogAction = assistantFeatureFlags.routeOnServerEnabled
-          ? (response.voiceLogAction ?? null)
-          : null;
+        const serverVoiceLogAction = response.voiceLogAction ?? null;
         const serverReadyDraft =
           serverVoiceLogAction?.kind === 'ready' && serverVoiceLogAction.draft
             ? serverVoiceLogAction.draft
@@ -2034,36 +2077,82 @@ export default function AIChatScreen() {
             setRouteClarificationPending(false);
             setPendingAmbiguousTranscript(null);
           }
+        }
 
-          if (serverVoiceLogAction?.kind === 'cancelled') {
-            setVoiceLogDraft(null);
-            setVoiceLogExpectedField(null);
-            setVoiceLogClarifyAttempts(0);
-            hideClearedDraftNotice();
-          } else if (serverVoiceLogAction?.kind === 'clarify' && serverVoiceLogAction.draft) {
-            hideClearedDraftNotice();
-            setVoiceLogDraft(serverVoiceLogAction.draft);
-            setVoiceLogExpectedField(
-              serverVoiceLogAction.expectedField ?? serverVoiceLogAction.missingFields?.[0] ?? null,
-            );
-            setVoiceLogClarifyAttempts(serverVoiceLogAction.clarifyAttempts ?? 0);
-          } else if (serverVoiceLogAction?.kind === 'ready') {
-            setVoiceLogDraft(null);
-            setVoiceLogExpectedField(null);
-            setVoiceLogClarifyAttempts(0);
-            hideClearedDraftNotice();
-          }
+        if (serverVoiceLogAction?.kind === 'cancelled') {
+          setVoiceLogDraft(null);
+          setVoiceLogExpectedField(null);
+          setVoiceLogClarifyAttempts(0);
+          hideClearedDraftNotice();
+        } else if (serverVoiceLogAction?.kind === 'clarify' && serverVoiceLogAction.draft) {
+          hideClearedDraftNotice();
+          setVoiceLogDraft(serverVoiceLogAction.draft);
+          setVoiceLogExpectedField(
+            serverVoiceLogAction.expectedField ?? serverVoiceLogAction.missingFields?.[0] ?? null,
+          );
+          setVoiceLogClarifyAttempts(serverVoiceLogAction.clarifyAttempts ?? 0);
+        } else if (serverVoiceLogAction?.kind === 'ready') {
+          setVoiceLogDraft(null);
+          setVoiceLogExpectedField(null);
+          setVoiceLogClarifyAttempts(0);
+          hideClearedDraftNotice();
         }
 
         const shouldPersistAssistantTurnClient =
           !assistantFeatureFlags.serverVoiceEnabled || response.providerUsed === 'openai-proxy';
 
-        if (response.sttTranscript && source === 'voice') {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === newMessage.id ? { ...msg, content: response.sttTranscript! } : msg,
-            ),
-          );
+        if (__DEV__ && source === 'voice') {
+          console.log('[Voice STT debug]', {
+            sttTranscript: response.sttTranscript,
+            sttProvider: response.sttProviderUsed,
+            provider: response.providerUsed,
+            hasAudio: Boolean(response.message.audio),
+            routeDecision: response.routeDecision,
+          });
+        }
+
+        // Replace the placeholder user bubble with the actual transcript.
+        // Keep this defensive because different gateway versions may shape the
+        // STT payload differently.
+        const transcriptCandidates = [
+          response.sttTranscript,
+          (response.message.audioMeta as { sttTranscript?: string | null } | undefined)
+            ?.sttTranscript,
+          (response as { stt_transcript?: string | null }).stt_transcript,
+          (response as { transcript?: string | null }).transcript,
+        ];
+        const resolvedTranscript =
+          transcriptCandidates
+            .map((candidate) => candidate?.trim() ?? '')
+            .find((candidate) => candidate.length > 0) ?? null;
+
+        if (resolvedTranscript && source === 'voice') {
+          setMessages((prev) => {
+            let didReplaceById = false;
+            const next = prev.map((msg) => {
+              if (msg.id === newMessage.id) {
+                didReplaceById = true;
+                return { ...msg, content: resolvedTranscript };
+              }
+              return msg;
+            });
+
+            if (didReplaceById) return next;
+
+            for (let index = next.length - 1; index >= 0; index -= 1) {
+              const message = next[index];
+              if (
+                message.role === 'user' &&
+                message.inputMode === 'audio' &&
+                message.content === voicePlaceholder
+              ) {
+                next[index] = { ...message, content: resolvedTranscript };
+                break;
+              }
+            }
+
+            return next;
+          });
           // Persist the user turn with the actual transcript now that we have it
           const persistedConversationId =
             response.message.conversationId ?? activeConversationId ?? null;
@@ -2072,7 +2161,7 @@ export default function AIChatScreen() {
               conversationId: persistedConversationId,
               farmId: contextFarm?.id ?? parsedFarmId ?? null,
               role: 'user',
-              content: response.sttTranscript,
+              content: resolvedTranscript,
               inputMode: 'audio',
             });
           }
@@ -2147,7 +2236,7 @@ export default function AIChatScreen() {
           }
         }
 
-        if (assistantFeatureFlags.routeOnServerEnabled && serverReadyDraft) {
+        if (serverReadyDraft) {
           const voicePrefill = buildVoiceLogFormPrefill(serverReadyDraft);
           setAddEntry({
             tabs: ['log'],
@@ -2252,6 +2341,12 @@ export default function AIChatScreen() {
           activeAssistantRequestIdRef.current = null;
           activeAssistantAbortControllerRef.current = null;
           setIsLoading(false);
+          // Reset voice input state so handleTTSComplete can proceed to start
+          // the next recording in auto mode. Without this reset the state stays
+          // stuck at 'processing' and the hands-free loop is broken.
+          if (source === 'voice') {
+            setVoiceInputState('idle');
+          }
           if (assistantFeatureFlags.memoryEnabled) {
             void refreshConversationHistory();
           }
@@ -2287,6 +2382,7 @@ export default function AIChatScreen() {
       discardVoiceRecording,
       refreshConversationHistory,
       handleTTSComplete,
+      voicePlaceholder,
     ],
   );
 
@@ -2298,12 +2394,13 @@ export default function AIChatScreen() {
   useEffect(() => {
     return () => {
       const cleanup = async () => {
+        cancelScheduledVoiceStart();
         cancelInFlightAssistantRequest();
         await voiceOutputService.stop();
       };
       void cleanup();
     };
-  }, [cancelInFlightAssistantRequest]);
+  }, [cancelInFlightAssistantRequest, cancelScheduledVoiceStart]);
 
   // ============================================================
   // MARK: - Voice Mode UI Handlers
@@ -2334,29 +2431,35 @@ export default function AIChatScreen() {
     setLiveVoiceTranscript('');
     setVoiceInputState('idle');
 
-    setTimeout(() => {
+    cancelScheduledVoiceStart();
+    autoVoiceModeRestartTimeoutRef.current = setTimeout(() => {
+      autoVoiceModeRestartTimeoutRef.current = null;
+      if (!isMountedRef.current) {
+        return;
+      }
       void startVoiceRecording();
     }, 300);
-  }, [t, startVoiceRecording]);
+  }, [t, startVoiceRecording, cancelScheduledVoiceStart]);
 
   /**
    * Close voice mode and discard any in-progress recording.
    */
   const closeVoiceMode = useCallback(async () => {
+    cancelScheduledVoiceStart();
     cancelInFlightAssistantRequest();
     void voiceOutputService.stop();
     setIsAssistantSpeaking(false);
+    setIsVoiceModeVisible(false);
+    setIsVoiceModeMicEnabled(false);
+    setVoiceConversationMode('auto');
 
     // Discard any in-progress recording - DO NOT submit
     await discardVoiceRecording();
 
-    setIsVoiceModeVisible(false);
-    setIsVoiceModeMicEnabled(false);
-    setVoiceConversationMode('auto');
     setVoiceModeError(null);
     setVoiceModeNotice(null);
     setLiveVoiceTranscript('');
-  }, [cancelInFlightAssistantRequest, discardVoiceRecording]);
+  }, [cancelInFlightAssistantRequest, cancelScheduledVoiceStart, discardVoiceRecording]);
 
   /**
    * Handle close button in voice mode modal.
@@ -2366,29 +2469,33 @@ export default function AIChatScreen() {
   }, [closeVoiceMode]);
 
   const scheduleAutoVoiceModeRestart = useCallback(
-    async (delayMs: number) => {
+    (delayMs: number) => {
       if (!isMountedRef.current) {
         return;
       }
+
+      // Cancel any pending restart before scheduling a new one to prevent
+      // two concurrent restarts from racing when the user taps repeatedly.
+      cancelScheduledVoiceStart();
 
       setVoiceModeError(null);
       setVoiceModeNotice(null);
 
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-
-      if (!isMountedRef.current) {
-        return;
-      }
-      const started = await startVoiceRecording();
-      if (!isMountedRef.current) {
-        return;
-      }
-      if (!started) {
-        setIsVoiceModeMicEnabled(false);
-        setVoiceInputState('idle');
-      }
+      autoVoiceModeRestartTimeoutRef.current = setTimeout(() => {
+        autoVoiceModeRestartTimeoutRef.current = null;
+        if (!isMountedRef.current) {
+          return;
+        }
+        void startVoiceRecording().then((started) => {
+          if (!isMountedRef.current) return;
+          if (!started) {
+            setIsVoiceModeMicEnabled(false);
+            setVoiceInputState('idle');
+          }
+        });
+      }, delayMs);
     },
-    [startVoiceRecording],
+    [startVoiceRecording, cancelScheduledVoiceStart],
   );
 
   /**
@@ -2399,7 +2506,11 @@ export default function AIChatScreen() {
   const handleVoiceModeMicToggle = useCallback(async () => {
     // INTERRUPTION: If AI is speaking, stop it and start listening
     if (isAssistantSpeaking) {
-      void voiceOutputService.stop();
+      try {
+        await voiceOutputService.stop();
+      } catch {
+        // no-op
+      }
       setIsAssistantSpeaking(false);
 
       // Start recording after brief pause
@@ -2815,8 +2926,29 @@ export default function AIChatScreen() {
                 >
                   {message.role === 'assistant' ? (
                     <Markdown style={markdown} mergeStyle={true}>
+                      {/* Citations omitted intentionally in voice mode: server voice responses
+                          don't include citation metadata, and the voice UX is not suited for
+                          inline citation rendering. */}
                       {message.content}
                     </Markdown>
+                  ) : message.inputMode === 'audio' && message.content === voicePlaceholder ? (
+                    // No transcript yet — show a styled mic indicator instead of raw placeholder
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                      <UiSymbol
+                        name="waveform"
+                        size={14}
+                        color={colorWithOpacity(m3.colorScheme.onPrimary, 0.7)}
+                      />
+                      <Text
+                        style={{
+                          fontSize: fontSize.base,
+                          color: colorWithOpacity(m3.colorScheme.onPrimary, 0.7),
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        {voicePlaceholder}
+                      </Text>
+                    </View>
                   ) : (
                     <Text style={{ fontSize: fontSize.base, color: m3.colorScheme.onPrimary }}>
                       {message.content}

@@ -59,12 +59,13 @@ export const useLanguageStore = create<LanguageState & LanguageActions>()(
       name: LANGUAGE_STORAGE_KEY,
       version: 2,
       migrate: (persistedState, version) => {
-        const state = persistedState as Record<string, unknown>;
+        const state = persistedState as Partial<LanguageState>;
         if (version < 2) {
           // Existing users who already picked a language should skip the selection screen
           state.hasSelectedLanguage = state.language != null;
         }
-        return state as unknown as LanguageState & LanguageActions;
+        // Return only state fields; Zustand merges actions separately.
+        return state;
       },
       storage: createJSONStorage(() => languageStorage),
       onRehydrateStorage: () => () => {

@@ -132,28 +132,55 @@ export default function OTPVerificationScreen() {
 
   useEffect(() => {
     if (!isPhoneOTP) return;
-    if (isLoading) return;
+
+    const stopSmsRetrieverNow = (invalidateAttempt = true): Promise<void> => {
+      if (invalidateAttempt) {
+        // Invalidate any in-flight start attempt immediately so stale
+        // completions are ignored even if the native start promise resolves
+        // later.
+        smsRetrieverAttemptRef.current += 1;
+      }
+      const stopPromise = stopAndroidSmsRetriever();
+      smsRetrieverTransitionRef.current = stopPromise.then(
+        () => undefined,
+        () => undefined,
+      );
+      return stopPromise;
+    };
+
+    const queueSmsRetrieverStart = (): Promise<string | null> => {
+      const nextStart = smsRetrieverTransitionRef.current.then(
+        () => startAndroidSmsRetriever(),
+        () => startAndroidSmsRetriever(),
+      );
+      smsRetrieverTransitionRef.current = nextStart.then(
+        () => undefined,
+        () => undefined,
+      );
+      return nextStart;
+    };
+
+    // When verification is in flight, stop any active listener so a late SMS
+    // can't overwrite the code or trigger a focus/state change mid-request.
+    if (isLoading) {
+      void stopSmsRetrieverNow();
+      return () => {
+        void stopSmsRetrieverNow();
+      };
+    }
 
     let isCancelled = false;
     smsRetrieverAttemptRef.current += 1;
     const attemptId = smsRetrieverAttemptRef.current;
-    const queueSmsRetrieverOperation = <T,>(operation: () => Promise<T>): Promise<T> => {
-      const nextOperation = smsRetrieverTransitionRef.current.then(operation, operation);
-      smsRetrieverTransitionRef.current = nextOperation.then(
-        () => undefined,
-        () => undefined,
-      );
-      return nextOperation;
-    };
 
     const startListener = async () => {
       const isSupported = await isAndroidSmsRetrieverSupported();
       if (!isSupported || isCancelled) return;
 
-      await queueSmsRetrieverOperation(() => stopAndroidSmsRetriever());
+      await stopSmsRetrieverNow(false);
       if (isCancelled || smsRetrieverAttemptRef.current !== attemptId) return;
 
-      const detectedCode = await queueSmsRetrieverOperation(() => startAndroidSmsRetriever());
+      const detectedCode = await queueSmsRetrieverStart();
       if (
         isCancelled ||
         smsRetrieverAttemptRef.current !== attemptId ||
@@ -171,7 +198,7 @@ export default function OTPVerificationScreen() {
 
     return () => {
       isCancelled = true;
-      void queueSmsRetrieverOperation(() => stopAndroidSmsRetriever());
+      void stopSmsRetrieverNow();
     };
   }, [isPhoneOTP, isLoading, otpSentSuccessfully]);
 
@@ -188,8 +215,6 @@ export default function OTPVerificationScreen() {
   const handleBack = () => {
     if (isPhoneOTP) {
       void stopAndroidSmsRetriever();
-    }
-    if (isPhoneOTP) {
       cancelPhoneOTPFlow();
       router.replace({
         pathname: '/(auth)/phone-login',

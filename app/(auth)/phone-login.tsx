@@ -91,6 +91,14 @@ export default function PhoneLoginScreen() {
 
   const [isPhoneHintAvailable, setIsPhoneHintAvailable] = useState(false);
   const hasRequestedPhoneHintRef = useRef(false);
+  const phoneNumberRef = useRef(phoneNumber);
+  const selectedCountryRef = useRef(selectedCountry);
+  const hasUserSelectedCountryRef = useRef(false);
+
+  useEffect(() => {
+    phoneNumberRef.current = phoneNumber;
+    selectedCountryRef.current = selectedCountry;
+  }, [phoneNumber, selectedCountry]);
 
   useEffect(() => {
     WebBrowser.maybeCompleteAuthSession();
@@ -196,8 +204,26 @@ export default function PhoneLoginScreen() {
     hasRequestedPhoneHintRef.current = true;
 
     const autofillPhoneNumber = async () => {
+      const hasUserTypedDigits = /\d/.test(phoneNumberRef.current);
+      const hasUserChosenCountry =
+        hasUserSelectedCountryRef.current ||
+        selectedCountryRef.current.code !== DEFAULT_COUNTRY.code;
+
+      if (hasUserTypedDigits || hasUserChosenCountry) {
+        return;
+      }
+
       const phoneNumberHint = await requestPhoneNumberHint();
       if (!phoneNumberHint) return;
+
+      const hasUserTypedDigitsAfterPrompt = /\d/.test(phoneNumberRef.current);
+      const hasUserChosenCountryAfterPrompt =
+        hasUserSelectedCountryRef.current ||
+        selectedCountryRef.current.code !== DEFAULT_COUNTRY.code;
+
+      if (hasUserTypedDigitsAfterPrompt || hasUserChosenCountryAfterPrompt) {
+        return;
+      }
 
       const matchedPhone = matchPhoneNumberHintToCountry(phoneNumberHint, COUNTRIES);
       if (!matchedPhone) {
@@ -212,13 +238,14 @@ export default function PhoneLoginScreen() {
       clearError();
       setLocalPhoneError(null);
       setSelectedCountry(matchedPhone.country);
-      setPhoneNumber((current) => (current.length > 0 ? current : matchedPhone.localNumber));
+      setPhoneNumber(matchedPhone.localNumber);
     };
 
     void autofillPhoneNumber();
   }, [clearError, isPhoneHintAvailable, t]);
 
   const handleSelectCountry = (country: Country) => {
+    hasUserSelectedCountryRef.current = true;
     setSelectedCountry(country);
     setPhoneNumber((current) => limitLocalPhoneDigits(country.dialCode, current));
     setShowCountryPicker(false);
