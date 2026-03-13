@@ -1006,8 +1006,10 @@ export default function AIChatScreen() {
         if (__DEV__) {
           console.warn(
             '[Voice] sendMessageRef.current is null, voice send dropped',
-            'text:',
-            text,
+            'hasText:',
+            Boolean(text),
+            'textLength:',
+            text?.length ?? 0,
             'source:',
             source,
           );
@@ -1366,6 +1368,10 @@ export default function AIChatScreen() {
 
   const playAssistantVoice = useCallback(
     (content: string, conversationId: string | null | undefined) => {
+      // Guard: don't play TTS if voice mode is no longer active
+      if (!isVoiceModeVisibleRef.current) {
+        return;
+      }
       void voiceOutputService.playAssistantTurn(
         {
           message: {
@@ -2150,8 +2156,8 @@ export default function AIChatScreen() {
                     index,
                     'messageId:',
                     message.id,
-                    'transcript:',
-                    resolvedTranscript,
+                    'transcriptLength:',
+                    resolvedTranscript?.length ?? 0,
                   );
                 }
                 next[index] = { ...message, content: resolvedTranscript };
@@ -2230,17 +2236,21 @@ export default function AIChatScreen() {
           });
 
           if (assistantFeatureFlags.memoryEnabled && assistantMessage.content.trim()) {
-            void assistantMemoryService.writeMemoryFact({
-              conversationId: resolvedConversationId,
-              farmId: contextFarm?.id ?? parsedFarmId ?? null,
-              memoryType: 'summary',
-              content: `${assistantInput.slice(0, 120)} -> ${assistantMessage.content.slice(0, 200)}`,
-              metadata: {
-                trace_id: response.traceId ?? null,
-                source: 'ai_chat_screen',
-              },
-              importance: 0.4,
-            });
+            // For audio-only turns, assistantInput is empty; use resolvedTranscript instead
+            const userInputForMemory = assistantInput.trim() || resolvedTranscript?.trim() || null;
+            if (userInputForMemory) {
+              void assistantMemoryService.writeMemoryFact({
+                conversationId: resolvedConversationId,
+                farmId: contextFarm?.id ?? parsedFarmId ?? null,
+                memoryType: 'summary',
+                content: `${userInputForMemory.slice(0, 120)} -> ${assistantMessage.content.slice(0, 200)}`,
+                metadata: {
+                  trace_id: response.traceId ?? null,
+                  source: 'ai_chat_screen',
+                },
+                importance: 0.4,
+              });
+            }
           }
         }
 
@@ -2280,26 +2290,29 @@ export default function AIChatScreen() {
         }
 
         if (!serverReadyDraft && source === 'voice') {
-          void voiceOutputService.playAssistantTurn(response, {
-            language: languageCode,
-            rate: 1,
-            onStateChange: setIsAssistantSpeaking,
-            onDone: handleTTSComplete,
-            allowDeviceFallback: false,
-            onError: () => {
-              setVoiceModeNotice(t('ai.voice.replyVoiceUnavailable'));
-              if (__DEV__) {
-                console.warn(
-                  'Assistant voice playback skipped because provider audio was unavailable',
-                  {
-                    provider: response.providerUsed ?? null,
-                    ttsSkippedReason: response.ttsSkippedReason ?? null,
-                    fallbackReason: response.providerFallbackReason ?? null,
-                  },
-                );
-              }
-            },
-          });
+          // Guard: don't play TTS if voice mode is no longer active
+          if (isVoiceModeVisibleRef.current) {
+            void voiceOutputService.playAssistantTurn(response, {
+              language: languageCode,
+              rate: 1,
+              onStateChange: setIsAssistantSpeaking,
+              onDone: handleTTSComplete,
+              allowDeviceFallback: false,
+              onError: () => {
+                setVoiceModeNotice(t('ai.voice.replyVoiceUnavailable'));
+                if (__DEV__) {
+                  console.warn(
+                    'Assistant voice playback skipped because provider audio was unavailable',
+                    {
+                      provider: response.providerUsed ?? null,
+                      ttsSkippedReason: response.ttsSkippedReason ?? null,
+                      fallbackReason: response.providerFallbackReason ?? null,
+                    },
+                  );
+                }
+              },
+            });
+          }
         }
 
         scrollToBottom();
@@ -2316,7 +2329,11 @@ export default function AIChatScreen() {
           error.code === AssistantGatewayErrorCode.AUDIO_VALIDATION_FAILED;
         if (source === 'voice') {
           setIsVoiceModeMicEnabled(false);
-          void discardVoiceRecording();
+          discardVoiceRecording().catch((err) => {
+            if (__DEV__) {
+              console.warn('[Voice] Failed to discard recording:', err);
+            }
+          });
           setVoiceModeError(
             invalidVoicePayload
               ? t('ai.voice.recordingTooShortBody')
@@ -2502,7 +2519,13 @@ export default function AIChatScreen() {
     setVoiceInputState('idle');
 
     // Discard any in-progress recording - DO NOT submit
-    await discardVoiceRecording();
+    try {
+      await discardVoiceRecording();
+    } catch (err) {
+      if (__DEV__) {
+        console.warn('[Voice] Failed to discard recording during close:', err);
+      }
+    }
 
     setVoiceModeError(null);
     setVoiceModeNotice(null);
