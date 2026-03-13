@@ -5,12 +5,11 @@
 
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { LabTestDetailsModal } from '@/components/screens/lab-test-details-modal';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useFarm } from '../src/hooks';
 import {
   useSoilTests,
@@ -47,7 +46,6 @@ export default function LabTestsScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
   const parsedFarmId = farmId ? parseInt(farmId, 10) : 0;
   const farmIdNum = Number.isNaN(parsedFarmId) ? 0 : parsedFarmId;
@@ -473,100 +471,61 @@ export default function LabTestsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-      {/* Header */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: spacing[4],
-          paddingTop: spacing[3] + insets.top,
-          paddingBottom: spacing[3],
-          borderBottomWidth: 1,
-          borderBottomColor: colors.surface[200],
-          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+      <Stack.Screen
+        options={{
+          title: t('labTests.list.title'),
+          headerRight: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+              <Pressable
+                onPress={() => {
+                  if (selectedTab === 'soil') {
+                    router.push(`/soil-trends?farmId=${farmId}`);
+                  } else {
+                    router.push(`/petiole-trends?farmId=${farmId}`);
+                  }
+                }}
+                style={{
+                  backgroundColor: m3.colorScheme.primary,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  borderRadius: borderRadius.full,
+                }}
+              >
+                <Text
+                  style={{
+                    color: m3.colorScheme.onPrimary,
+                    fontWeight: fontWeight.semibold,
+                    fontSize: fontSize.sm,
+                  }}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('labTests.list.viewTrends')}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: '/add-lab-test',
+                    params: {
+                      farmId: farmIdNum.toString(),
+                      testType: selectedTab,
+                    },
+                  })
+                }
+                style={{
+                  backgroundColor: m3.colorScheme.primary,
+                  padding: spacing[2],
+                  borderRadius: borderRadius.full,
+                  marginRight: spacing[2],
+                }}
+              >
+                <IconSymbol name="plus" size={24} color={m3.colorScheme.onPrimary} />
+              </Pressable>
+            </View>
+          ),
         }}
-      >
-        <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <IconSymbol name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
-        </Pressable>
-        <IconSymbol
-          name={getTestTypeIcon(selectedTab)}
-          size={24}
-          color={selectedTab === 'soil' ? colors.labTest.soil : colors.labTest.petiole}
-        />
-        <View style={{ marginLeft: spacing[2], flex: 1 }}>
-          <Text
-            style={{
-              fontSize: fontSize.xl,
-              fontWeight: fontWeight.bold,
-              color: m3.colorScheme.onSurface,
-            }}
-            textBreakStrategy="highQuality"
-            lineBreakStrategyIOS="standard"
-          >
-            {t('labTests.list.title')}
-          </Text>
-          {farm && (
-            <Text
-              style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
-              textBreakStrategy="highQuality"
-              lineBreakStrategyIOS="standard"
-            >
-              {farm.name}
-            </Text>
-          )}
-        </View>
-        <Pressable
-          onPress={() => {
-            if (selectedTab === 'soil') {
-              router.push(`/soil-trends?farmId=${farmId}`);
-            } else {
-              router.push(`/petiole-trends?farmId=${farmId}`);
-            }
-          }}
-          style={{
-            backgroundColor: m3.colorScheme.primary,
-            paddingHorizontal: spacing[3],
-            paddingVertical: spacing[2],
-            borderRadius: borderRadius.full,
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginRight: spacing[2],
-          }}
-        >
-          <IconSymbol name="arrow.up.right" size={16} color={m3.colorScheme.onPrimary} />
-          <Text
-            style={{
-              color: m3.colorScheme.onPrimary,
-              fontWeight: fontWeight.semibold,
-              marginLeft: spacing[1],
-              fontSize: fontSize.sm,
-            }}
-            textBreakStrategy="highQuality"
-            lineBreakStrategyIOS="standard"
-          >
-            {t('labTests.list.viewTrends')}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() =>
-            router.push({
-              pathname: '/add-lab-test',
-              params: {
-                farmId: farmIdNum.toString(),
-                testType: selectedTab,
-              },
-            })
-          }
-          style={{
-            backgroundColor: m3.colorScheme.primary,
-            padding: spacing[2],
-            borderRadius: borderRadius.full,
-          }}
-        >
-          <IconSymbol name="plus" size={24} color={m3.colorScheme.onPrimary} />
-        </Pressable>
-      </View>
+      />
 
       {/* Tabs */}
       <View
@@ -649,6 +608,26 @@ export default function LabTestsScreen() {
           style={{ flex: 1, paddingHorizontal: spacing[4], paddingTop: spacing[4] }}
           showsVerticalScrollIndicator={false}
         >
+          {farm ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
+              <IconSymbol
+                name={getTestTypeIcon(selectedTab)}
+                size={18}
+                color={selectedTab === 'soil' ? colors.labTest.soil : colors.labTest.petiole}
+              />
+              <Text
+                style={{
+                  marginLeft: spacing[2],
+                  fontSize: fontSize.sm,
+                  color: m3.colorScheme.onSurfaceVariant,
+                }}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {farm.name}
+              </Text>
+            </View>
+          ) : null}
           {selectedTab === 'soil'
             ? soilTests && soilTests.length > 0
               ? soilTests.map((test) => renderTestCard(test, 'soil'))

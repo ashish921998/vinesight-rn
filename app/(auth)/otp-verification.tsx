@@ -9,6 +9,11 @@ import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
+import {
+  isAndroidSmsRetrieverSupported,
+  startAndroidSmsRetriever,
+  stopAndroidSmsRetriever,
+} from '@/services/android-sms-retriever';
 
 const RESEND_COOLDOWN = 60; // seconds
 
@@ -35,6 +40,7 @@ export default function OTPVerificationScreen() {
   const identifier = isPhoneOTP ? phone : email;
   const [otpCode, setOtpCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN);
+  const [otpFocusKey, setOtpFocusKey] = useState(0);
 
   const {
     isLoading,
@@ -53,6 +59,8 @@ export default function OTPVerificationScreen() {
 
   const lastOtpSentSuccessRef = useRef(otpSentSuccessfully);
   const verificationTriggeredRef = useRef(false);
+  const smsRetrieverAttemptRef = useRef(0);
+  const smsRetrieverTransitionRef = useRef<Promise<void>>(Promise.resolve());
 
   // Redirect when authenticated
   useEffect(() => {
@@ -79,10 +87,19 @@ export default function OTPVerificationScreen() {
   useEffect(() => {
     if (otpSentSuccessfully && !lastOtpSentSuccessRef.current) {
       setResendCooldown(RESEND_COOLDOWN);
+      setOtpFocusKey((current) => current + 1);
     }
     lastOtpSentSuccessRef.current = otpSentSuccessfully;
   }, [otpSentSuccessfully]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!errorMessage) return;
+    const timeoutId = setTimeout(() => {
+      setOtpFocusKey((current) => current + 1);
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [errorMessage]);
 
   const handleVerify = useCallback(async () => {
     if (!identifier || otpCode.length !== 6) return;
@@ -113,6 +130,78 @@ export default function OTPVerificationScreen() {
     }
   }, [otpCode, identifier, isLoading]);
 
+  useEffect(() => {
+    if (!isPhoneOTP) return;
+
+    const stopSmsRetrieverNow = (invalidateAttempt = true): Promise<void> => {
+      if (invalidateAttempt) {
+        // Invalidate any in-flight start attempt immediately so stale
+        // completions are ignored even if the native start promise resolves
+        // later.
+        smsRetrieverAttemptRef.current += 1;
+      }
+      const stopPromise = stopAndroidSmsRetriever();
+      smsRetrieverTransitionRef.current = stopPromise.then(
+        () => undefined,
+        () => undefined,
+      );
+      return stopPromise;
+    };
+
+    const queueSmsRetrieverStart = (): Promise<string | null> => {
+      const nextStart = smsRetrieverTransitionRef.current.then(
+        () => startAndroidSmsRetriever(),
+        () => startAndroidSmsRetriever(),
+      );
+      smsRetrieverTransitionRef.current = nextStart.then(
+        () => undefined,
+        () => undefined,
+      );
+      return nextStart;
+    };
+
+    // When verification is in flight, stop any active listener so a late SMS
+    // can't overwrite the code or trigger a focus/state change mid-request.
+    if (isLoading) {
+      void stopSmsRetrieverNow();
+      return () => {
+        void stopSmsRetrieverNow();
+      };
+    }
+
+    let isCancelled = false;
+    smsRetrieverAttemptRef.current += 1;
+    const attemptId = smsRetrieverAttemptRef.current;
+
+    const startListener = async () => {
+      const isSupported = await isAndroidSmsRetrieverSupported();
+      if (!isSupported || isCancelled) return;
+
+      await stopSmsRetrieverNow(false);
+      if (isCancelled || smsRetrieverAttemptRef.current !== attemptId) return;
+
+      const detectedCode = await queueSmsRetrieverStart();
+      if (
+        isCancelled ||
+        smsRetrieverAttemptRef.current !== attemptId ||
+        !detectedCode ||
+        !/^\d{6}$/.test(detectedCode)
+      ) {
+        return;
+      }
+
+      setOtpCode(detectedCode);
+      setOtpFocusKey((current) => current + 1);
+    };
+
+    void startListener();
+
+    return () => {
+      isCancelled = true;
+      void stopSmsRetrieverNow();
+    };
+  }, [isPhoneOTP, isLoading, otpSentSuccessfully]);
+
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     if (isPhoneOTP) {
@@ -120,10 +209,12 @@ export default function OTPVerificationScreen() {
     } else {
       await resendOTP();
     }
+    setOtpFocusKey((current) => current + 1);
   };
 
   const handleBack = () => {
     if (isPhoneOTP) {
+      void stopAndroidSmsRetriever();
       cancelPhoneOTPFlow();
       router.replace({
         pathname: '/(auth)/phone-login',
@@ -274,6 +365,7 @@ export default function OTPVerificationScreen() {
           onChange={setOtpCode}
           error={errorMessage || undefined}
           autoFocus
+          focusKey={otpFocusKey}
         />
       </View>
 

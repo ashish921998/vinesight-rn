@@ -2755,6 +2755,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse({
       assistant_text: assistantText,
+      stt_transcript: sttProviderUsed ? transcript : null,
       assistant_audio_b64: audioBase64,
       assistant_audio_mime_type: audioMimeType,
       audio_provider_used: audioProviderUsed,

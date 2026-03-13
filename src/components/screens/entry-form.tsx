@@ -3274,7 +3274,7 @@ export function EntryForm({
             backgroundColor: colors.surface[100],
             paddingHorizontal: spacing[4],
             paddingTop: spacing[4],
-            paddingBottom: Platform.OS === 'ios' ? Math.max(spacing[4], insets.bottom) : spacing[4],
+            paddingBottom: Math.max(spacing[4], insets.bottom),
             borderTopWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
           }}

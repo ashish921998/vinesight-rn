@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { borderRadius, fontWeight, spacing } from '@/styles/theme';
@@ -265,6 +265,9 @@ export default function SprayCatalogScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}>
+      <Stack.Screen
+        options={{ title: t('sprayCatalog.title', { defaultValue: 'Spray Catalog' }) }}
+      />
       <FlatList
         data={isLoading ? [] : filteredMixes}
         keyExtractor={(mix) => String(mix.id)}

@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   Pressable,
+  BackHandler,
   RefreshControl,
   ActivityIndicator,
   Alert,
@@ -235,6 +236,26 @@ export default function FarmDetailScreen() {
   const seasonSuccessTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const showFab = isAndroid;
   const bottomBarHeight = showFab ? 0 : 72 + insets.bottom;
+
+  const handleBackNavigation = React.useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+      return true;
+    }
+    router.replace('/(tabs)/farms');
+    return true;
+  }, [router]);
+
+  useEffect(() => {
+    if (!isAndroid || !isFocused) return;
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () =>
+      handleBackNavigation(),
+    );
+
+    return () => subscription.remove();
+  }, [handleBackNavigation, isFocused]);
+
   const workboardActions = useMemo<WorkboardAction[]>(() => {
     const actions: WorkboardAction[] = [
       {
@@ -1247,7 +1268,7 @@ export default function FarmDetailScreen() {
           {t('farmDetails.notFound.title')}
         </Text>
         <View style={{ marginTop: spacing[4], width: '100%', maxWidth: 320 }}>
-          <Button title={t('common.goBack')} variant="outline" onPress={() => router.back()} />
+          <Button title={t('common.goBack')} variant="outline" onPress={handleBackNavigation} />
         </View>
       </View>
     );
@@ -1260,6 +1281,17 @@ export default function FarmDetailScreen() {
           title: farm.name,
           headerStyle: { backgroundColor: m3.colorScheme.surface },
           headerTintColor: m3.colorScheme.onSurface,
+          headerLeft: () => (
+            <Pressable
+              onPress={handleBackNavigation}
+              style={{ marginLeft: spacing[1], padding: spacing[1] }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.goBack')}
+            >
+              <UiSymbol name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
+            </Pressable>
+          ),
           headerRight: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Pressable

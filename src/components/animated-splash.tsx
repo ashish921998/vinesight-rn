@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors, spacing, size, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import appLogoLight from '../../assets/icons/ios-light.png';
 
 interface SplashProps {
   onComplete?: () => void;
@@ -96,18 +97,17 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
                 marginBottom: spacing[8],
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: colors.surface[200],
-                borderRadius: borderRadius['3xl'],
-                width: size['4xl'],
-                height: size['4xl'],
               },
             ]}
           >
             <Image
-              // eslint-disable-next-line @typescript-eslint/no-require-imports
-              source={require('../../assets/icons/ios-light.png')}
-              style={{ width: size['3xl'], height: size['3xl'] }}
-              resizeMode="contain"
+              source={appLogoLight}
+              style={{
+                width: size['4xl'],
+                height: size['4xl'],
+                borderRadius: borderRadius['3xl'],
+              }}
+              resizeMode="cover"
             />
           </Animated.View>
 

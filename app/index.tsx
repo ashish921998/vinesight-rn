@@ -1,6 +1,7 @@
 import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
-import { useAuthStore } from '@/stores';
+import { useShallow } from 'zustand/react/shallow';
+import { useAuthStore, useLanguageStore } from '@/stores';
 import { useOnboardingStore } from '@/stores/onboarding-store';
 import { useProfile } from '@/hooks';
 import { getConfigurationStatus } from '@/lib/supabase';
@@ -18,14 +19,27 @@ export default function Index() {
   const { isAuthenticated, isLoading, needsProfileCompletion, hasSeenOnboarding } = useAuthStore();
   const onboardingHydrated = useOnboardingStore((s) => s.hasHydrated);
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
+  const { languageHydrated, hasSelectedLanguage, language } = useLanguageStore(
+    useShallow((s) => ({
+      languageHydrated: s.hasHydrated,
+      hasSelectedLanguage: s.hasSelectedLanguage,
+      language: s.language,
+    })),
+  );
   const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
   const configStatus = getConfigurationStatus();
   const colors = useThemeColors();
   const m3 = useM3();
 
-  // Show animated splash screen while checking auth
-  if (isLoading) {
+  // Show animated splash screen while checking auth or language store
+  if (isLoading || !languageHydrated) {
     return <AnimatedSplash duration={2500} />;
+  }
+
+  // Language selection before anything else (first-time users)
+  // Also check for auto-detected language to avoid redirecting users who already have a language set
+  if (!hasSelectedLanguage && !language) {
+    return <Redirect href="/language-selection" />;
   }
 
   if (!configStatus.isConfigured) {

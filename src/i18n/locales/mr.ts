@@ -1602,6 +1602,9 @@ export const mr = {
     voice: {
       starting: 'मायक्रोफोन सुरू होत आहे...',
       listening: 'ऐकत आहे...',
+      recording: 'रेकॉर्ड होत आहे...',
+      processing: 'प्रक्रिया सुरू आहे...',
+      readyToListen: 'ऐकण्यासाठी तयार...',
       startA11y: 'व्हॉइस इनपुट सुरू करा',
       stopA11y: 'व्हॉइस इनपुट थांबवा',
       permissionTitle: 'मायक्रोफोन परवानगी आवश्यक',

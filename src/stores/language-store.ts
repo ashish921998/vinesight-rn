@@ -7,11 +7,13 @@ import type { SupportedLanguageCode } from '@/i18n/languages';
 
 interface LanguageState {
   language: SupportedLanguageCode | null;
+  hasSelectedLanguage: boolean;
   hasHydrated: boolean;
 }
 
 interface LanguageActions {
   setLanguage: (language: SupportedLanguageCode) => void;
+  setDetectedLanguage: (language: SupportedLanguageCode) => void;
   clearLanguage: () => void;
   _setHasHydrated: (value: boolean) => void;
 }
@@ -45,15 +47,26 @@ export const useLanguageStore = create<LanguageState & LanguageActions>()(
   persist(
     (set) => ({
       language: null,
+      hasSelectedLanguage: false,
       hasHydrated: false,
 
-      setLanguage: (language) => set({ language }),
-      clearLanguage: () => set({ language: null }),
+      setLanguage: (language) => set({ language, hasSelectedLanguage: true }),
+      setDetectedLanguage: (language) => set({ language }),
+      clearLanguage: () => set({ language: null, hasSelectedLanguage: false }),
       _setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: LANGUAGE_STORAGE_KEY,
-      version: 1,
+      version: 2,
+      migrate: (persistedState, version) => {
+        const state = persistedState as Partial<LanguageState>;
+        if (version < 2) {
+          // Existing users who already picked a language should skip the selection screen
+          state.hasSelectedLanguage = state.language != null;
+        }
+        // Return only state fields; Zustand merges actions separately.
+        return state;
+      },
       storage: createJSONStorage(() => languageStorage),
       onRehydrateStorage: () => () => {
         useLanguageStore.setState({ hasHydrated: true });
