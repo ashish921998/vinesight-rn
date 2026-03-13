@@ -2382,7 +2382,13 @@ export default function AIChatScreen() {
       const cleanup = async () => {
         cancelScheduledVoiceStart();
         cancelInFlightAssistantRequest();
-        await voiceOutputService.stop();
+        try {
+          await voiceOutputService.stop();
+        } catch (error) {
+          if (__DEV__) {
+            console.warn('Failed to stop voice output during cleanup:', error);
+          }
+        }
       };
       void cleanup();
     };
@@ -2393,79 +2399,9 @@ export default function AIChatScreen() {
   // ============================================================
 
   /**
-   * Open the voice mode modal and start recording.
-   * In auto mode, the conversation flows hands-free.
+   * Schedule a delayed voice recording start with mounted guard and failure cleanup.
+   * Extracted to avoid duplication between openVoiceMode and handleVoiceModeMicToggle.
    */
-  const openVoiceMode = useCallback(async () => {
-    if (Platform.OS === 'web') {
-      Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
-        { text: t('common.ok') },
-      ]);
-      return;
-    }
-    try {
-      await voiceOutputService.stop();
-    } catch {
-      // no-op
-    }
-    setIsAssistantSpeaking(false);
-    setIsVoiceModeVisible(true);
-    setIsVoiceModeMicEnabled(true);
-    setVoiceConversationMode('auto'); // Hands-free conversation mode
-    setVoiceModeError(null);
-    setVoiceModeNotice(null);
-    setLiveVoiceTranscript('');
-    setVoiceInputState('idle');
-
-    cancelScheduledVoiceStart();
-    autoVoiceModeRestartTimeoutRef.current = setTimeout(() => {
-      autoVoiceModeRestartTimeoutRef.current = null;
-      if (!isMountedRef.current) {
-        return;
-      }
-      void startVoiceRecording().then((started) => {
-        if (!isMountedRef.current) return;
-        if (!started) {
-          setIsVoiceModeMicEnabled(false);
-          setVoiceInputState('idle');
-        }
-      });
-    }, 300);
-  }, [t, startVoiceRecording, cancelScheduledVoiceStart]);
-
-  /**
-   * Close voice mode and discard any in-progress recording.
-   */
-  const closeVoiceMode = useCallback(async () => {
-    cancelScheduledVoiceStart();
-    cancelInFlightAssistantRequest();
-    try {
-      await voiceOutputService.stop();
-    } catch (error) {
-      if (__DEV__) {
-        console.warn('Failed to stop voice output:', error);
-      }
-    }
-    setIsAssistantSpeaking(false);
-    setIsVoiceModeVisible(false);
-    setIsVoiceModeMicEnabled(false);
-    setVoiceConversationMode('auto');
-
-    // Discard any in-progress recording - DO NOT submit
-    await discardVoiceRecording();
-
-    setVoiceModeError(null);
-    setVoiceModeNotice(null);
-    setLiveVoiceTranscript('');
-  }, [cancelInFlightAssistantRequest, cancelScheduledVoiceStart, discardVoiceRecording]);
-
-  /**
-   * Handle close button in voice mode modal.
-   */
-  const handleVoiceModePrimaryAction = useCallback(() => {
-    void closeVoiceMode();
-  }, [closeVoiceMode]);
-
   const scheduleAutoVoiceModeRestart = useCallback(
     (delayMs: number) => {
       if (!isMountedRef.current) {
@@ -2495,6 +2431,68 @@ export default function AIChatScreen() {
     },
     [startVoiceRecording, cancelScheduledVoiceStart],
   );
+
+  /**
+   * Open the voice mode modal and start recording.
+   * In auto mode, the conversation flows hands-free.
+   */
+  const openVoiceMode = useCallback(async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
+        { text: t('common.ok') },
+      ]);
+      return;
+    }
+    try {
+      await voiceOutputService.stop();
+    } catch {
+      // no-op
+    }
+    setIsAssistantSpeaking(false);
+    setIsVoiceModeVisible(true);
+    setIsVoiceModeMicEnabled(true);
+    setVoiceConversationMode('auto'); // Hands-free conversation mode
+    setVoiceModeError(null);
+    setVoiceModeNotice(null);
+    setLiveVoiceTranscript('');
+    setVoiceInputState('idle');
+
+    scheduleAutoVoiceModeRestart(300);
+  }, [t, scheduleAutoVoiceModeRestart]);
+
+  /**
+   * Close voice mode and discard any in-progress recording.
+   */
+  const closeVoiceMode = useCallback(async () => {
+    cancelScheduledVoiceStart();
+    cancelInFlightAssistantRequest();
+    try {
+      await voiceOutputService.stop();
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Failed to stop voice output:', error);
+      }
+    }
+    setIsAssistantSpeaking(false);
+    setIsVoiceModeVisible(false);
+    setIsVoiceModeMicEnabled(false);
+    setVoiceConversationMode('auto');
+    setVoiceInputState('idle');
+
+    // Discard any in-progress recording - DO NOT submit
+    await discardVoiceRecording();
+
+    setVoiceModeError(null);
+    setVoiceModeNotice(null);
+    setLiveVoiceTranscript('');
+  }, [cancelInFlightAssistantRequest, cancelScheduledVoiceStart, discardVoiceRecording]);
+
+  /**
+   * Handle close button in voice mode modal.
+   */
+  const handleVoiceModePrimaryAction = useCallback(() => {
+    void closeVoiceMode();
+  }, [closeVoiceMode]);
 
   /**
    * Handle mic button toggle in voice mode.
