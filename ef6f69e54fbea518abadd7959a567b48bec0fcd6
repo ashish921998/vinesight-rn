@@ -1,0 +1,27 @@
+src/features/onboarding/onboarding-screen.tsx
+  d88d496ac67aa71d 108-109
+src/components/ui/symbol.tsx
+  d88d496ac67aa71d 183-193
+src/components/screens/entry-form.tsx
+  d88d496ac67aa71d 3277
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "ef6f69e54fbea518abadd7959a567b48bec0fcd6",
+  "prompts": {
+    "d88d496ac67aa71d": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "87e58c5b-2c08-4352-ae9b-568d41412995",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 2,
+      "accepted_lines": 14,
+      "overriden_lines": 0
+    }
+  }
+}
