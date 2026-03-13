@@ -2323,15 +2323,16 @@ export default function AIChatScreen() {
         }
         Alert.alert(t('common.error'), message, [{ text: t('common.ok') }]);
       } finally {
-        // Always reset voice state to prevent stuck 'processing' state when
-        // request becomes stale (e.g., user navigates away mid-request).
-        if (source === 'voice') {
-          setVoiceInputState('idle');
-        }
         if (!isStaleConversationAction()) {
           activeAssistantRequestIdRef.current = null;
           activeAssistantAbortControllerRef.current = null;
           setIsLoading(false);
+          // Reset voice state only for current request to avoid race condition
+          // where a stale request's finally block resets UI while newer request
+          // is still processing.
+          if (source === 'voice') {
+            setVoiceInputState('idle');
+          }
           if (assistantFeatureFlags.memoryEnabled) {
             void refreshConversationHistory();
           }
