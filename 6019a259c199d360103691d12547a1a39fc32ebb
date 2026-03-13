@@ -1,0 +1,23 @@
+app/ai-chat.tsx
+  94010b0d0943bab3 1009-1012,1371-1374,2159-2160,2239-2241,2246,2253,2293-2295,2315,2332-2336,2522,2524-2528
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "6019a259c199d360103691d12547a1a39fc32ebb",
+  "prompts": {
+    "94010b0d0943bab3": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "311879ba-5aac-4677-a338-f38adc8ade2c",
+        "model": "glm-5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 60,
+      "total_deletions": 37,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    }
+  }
+}
