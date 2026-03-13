@@ -48,7 +48,7 @@ import { voiceOutputService } from '@/services/voice-output';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate, formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
-import { useVoiceRecording } from '@/hooks/use-voice-recording';
+import { useVoiceRecording, type VoiceAudioPayload } from '@/hooks/use-voice-recording';
 import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -65,12 +65,6 @@ interface ChatAttachment {
   mimeType?: string;
   size?: number;
   kind: 'image' | 'document';
-}
-
-interface VoiceAudioPayload {
-  inputAudioBase64: string;
-  audioFormat: string;
-  durationMs?: number | null;
 }
 
 interface FailedChatRequest {

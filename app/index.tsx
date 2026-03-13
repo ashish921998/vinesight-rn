@@ -20,6 +20,7 @@ export default function Index() {
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const languageHydrated = useLanguageStore((s) => s.hasHydrated);
   const hasSelectedLanguage = useLanguageStore((s) => s.hasSelectedLanguage);
+  const language = useLanguageStore((s) => s.language);
   const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
   const configStatus = getConfigurationStatus();
   const colors = useThemeColors();
@@ -31,7 +32,8 @@ export default function Index() {
   }
 
   // Language selection before anything else (first-time users)
-  if (!hasSelectedLanguage) {
+  // Also check for auto-detected language to avoid redirecting users who already have a language set
+  if (!hasSelectedLanguage && !language) {
     return <Redirect href="/language-selection" />;
   }
 

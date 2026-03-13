@@ -12,10 +12,10 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import appLogoDark from '../assets/icons/ios-dark.png';
 import appLogoLight from '../assets/icons/ios-light.png';
 
-const NATIVE_LABELS: Record<SupportedLanguageCode, string> = {
-  en: 'English',
-  mr: 'मराठी',
-  hi: 'हिंदी',
+const CONTINUE_LABELS: Record<SupportedLanguageCode, string> = {
+  hi: 'जारी रखें',
+  mr: 'पुढे चला',
+  en: 'Continue',
 };
 
 const ENGLISH_LABELS: Record<SupportedLanguageCode, string> = {
@@ -88,6 +88,11 @@ export default function LanguageSelectionScreen() {
               <Pressable
                 key={lang.code}
                 onPress={() => setSelected(lang.code)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+                accessibilityLabel={`${lang.label}${isSelected ? ', selected' : ''}`}
+                testID={`language-card-${lang.code}`}
                 style={[
                   styles.card,
                   {
@@ -105,7 +110,7 @@ export default function LanguageSelectionScreen() {
               >
                 <View style={styles.cardText}>
                   <Text style={[styles.nativeLabel, { color: m3.colorScheme.onSurface }]}>
-                    {NATIVE_LABELS[lang.code]}
+                    {lang.label}
                   </Text>
                   {lang.code !== 'en' && (
                     <Text style={[styles.englishLabel, { color: m3.colorScheme.onSurfaceVariant }]}>
@@ -150,13 +155,7 @@ export default function LanguageSelectionScreen() {
               },
             ]}
           >
-            {selected
-              ? selected === 'hi'
-                ? 'जारी रखें'
-                : selected === 'mr'
-                  ? 'पुढे चला'
-                  : 'Continue'
-              : 'Continue / जारी रखें / पुढे चला'}
+            {selected ? CONTINUE_LABELS[selected] : 'Continue / जारी रखें / पुढे चला'}
           </Text>
         </Pressable>
       </View>

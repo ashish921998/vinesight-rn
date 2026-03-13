@@ -202,6 +202,7 @@ export default function PhoneLoginScreen() {
     }
 
     hasRequestedPhoneHintRef.current = true;
+    let cancelled = false;
 
     const autofillPhoneNumber = async () => {
       const hasUserTypedDigits = /\d/.test(phoneNumberRef.current);
@@ -214,7 +215,7 @@ export default function PhoneLoginScreen() {
       }
 
       const phoneNumberHint = await requestPhoneNumberHint();
-      if (!phoneNumberHint) return;
+      if (!phoneNumberHint || cancelled) return;
 
       const hasUserTypedDigitsAfterPrompt = /\d/.test(phoneNumberRef.current);
       const hasUserChosenCountryAfterPrompt =
@@ -226,15 +227,18 @@ export default function PhoneLoginScreen() {
       }
 
       const matchedPhone = matchPhoneNumberHintToCountry(phoneNumberHint, COUNTRIES);
-      if (!matchedPhone) {
-        setLocalPhoneError(
-          t('authPhone.phoneHintUnsupported', {
-            defaultValue: 'Could not fill this number automatically. Please enter it manually.',
-          }),
-        );
+      if (!matchedPhone || cancelled) {
+        if (!cancelled) {
+          setLocalPhoneError(
+            t('authPhone.phoneHintUnsupported', {
+              defaultValue: 'Could not fill this number automatically. Please enter it manually.',
+            }),
+          );
+        }
         return;
       }
 
+      if (cancelled) return;
       clearError();
       setLocalPhoneError(null);
       setSelectedCountry(matchedPhone.country);
@@ -242,6 +246,9 @@ export default function PhoneLoginScreen() {
     };
 
     void autofillPhoneNumber();
+    return () => {
+      cancelled = true;
+    };
   }, [clearError, isPhoneHintAvailable, t]);
 
   const handleSelectCountry = (country: Country) => {
