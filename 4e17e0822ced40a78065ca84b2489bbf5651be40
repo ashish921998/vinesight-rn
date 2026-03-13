@@ -1,0 +1,29 @@
+app/(auth)/phone-login.tsx
+  a3bda98fb5cbc34e 205,218,230-231,237,241,249-251
+app/language-selection.tsx
+  a3bda98fb5cbc34e 15-18,91-95,113,158
+app/index.tsx
+  a3bda98fb5cbc34e 23,35-36
+app/ai-chat.tsx
+  a3bda98fb5cbc34e 51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "4e17e0822ced40a78065ca84b2489bbf5651be40",
+  "prompts": {
+    "a3bda98fb5cbc34e": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7a28877a-a902-46a8-bb7e-716300ba3c90",
+        "model": "glm-5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 32,
+      "total_deletions": 30,
+      "accepted_lines": 26,
+      "overriden_lines": 0
+    }
+  }
+}
