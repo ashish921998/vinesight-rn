@@ -49,6 +49,9 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate, formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
 import { useVoiceRecording, type VoiceAudioPayload } from '@/hooks/use-voice-recording';
+
+/** Constant placeholder for voice messages awaiting transcript. */
+const VOICE_MESSAGE_PENDING = '__VOICE_MESSAGE_PENDING__';
 import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -682,7 +685,7 @@ function VoiceModeModal({
                       borderColor: colorWithOpacity(m3.colorScheme.outline, 0.18),
                     }}
                   >
-                    {message.inputMode === 'audio' && message.content === voicePlaceholder ? (
+                    {message.inputMode === 'audio' && message.content === VOICE_MESSAGE_PENDING ? (
                       // No transcript yet — show a mic indicator instead of raw placeholder text
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                         <UiSymbol
@@ -1398,10 +1401,8 @@ export default function AIChatScreen() {
         setIsAssistantSpeaking(false);
       }
       const attachmentSummary = formatAttachmentSummary(currentAttachments);
-      const voicePlaceholderText = t('ai.voice.voiceMessage', { defaultValue: 'Voice message' });
-      const messageText =
-        canSendAudioOnly && !rawMessageText.trim() ? voicePlaceholderText : rawMessageText;
-      const assistantInput = messageText.trim();
+      const messageText = rawMessageText.trim();
+      const assistantInput = messageText;
       const voiceUploadBytes =
         source === 'voice' ? estimateBase64Bytes(voicePayload?.inputAudioBase64 ?? null) : null;
       const visibleUserContent = [messageText, attachmentSummary]
@@ -1409,9 +1410,10 @@ export default function AIChatScreen() {
         .join('\n\n')
         .trim();
 
-      // For voice input with audio payload, the server will return the transcript
+      // For voice input with audio payload, the server will return the transcript.
+      // Use a constant placeholder so language changes don't break transcript replacement.
       const persistedUserContent =
-        visibleUserContent || (source === 'voice' ? voicePlaceholderText : '');
+        visibleUserContent || (source === 'voice' ? VOICE_MESSAGE_PENDING : '');
 
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
@@ -2127,7 +2129,7 @@ export default function AIChatScreen() {
               if (
                 message.role === 'user' &&
                 message.inputMode === 'audio' &&
-                message.content === voicePlaceholder
+                message.content === VOICE_MESSAGE_PENDING
               ) {
                 next[index] = { ...message, content: resolvedTranscript };
                 break;
@@ -2365,7 +2367,6 @@ export default function AIChatScreen() {
       discardVoiceRecording,
       refreshConversationHistory,
       handleTTSComplete,
-      voicePlaceholder,
       playAssistantVoice,
     ],
   );
@@ -2925,7 +2926,7 @@ export default function AIChatScreen() {
                           inline citation rendering. */}
                       {message.content}
                     </Markdown>
-                  ) : message.inputMode === 'audio' && message.content === voicePlaceholder ? (
+                  ) : message.inputMode === 'audio' && message.content === VOICE_MESSAGE_PENDING ? (
                     // No transcript yet — show a styled mic indicator instead of raw placeholder
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                       <UiSymbol
