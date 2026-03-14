@@ -13,14 +13,33 @@ export {
   type ToolCall,
 } from './memory.ts';
 
-// Farm Data
+// Farm Data - all data type queries
 export {
+  buildWeatherContextBlock,
   detectActivity,
+  detectQueryType,
+  fetchFarmDetails,
   fetchUserFarms,
+  fetchWeatherData,
   isLikelyHistoryIntent,
+  isWeatherDependentQuery,
+  isWeatherQuery,
   parseExplicitDate,
+  queryDailyNotes,
+  queryExpenseRecords,
   queryFarmRecords,
+  queryFertigationRecords,
+  queryHarvestRecords,
+  queryIrrigationRecords,
+  queryPetioleTestRecords,
+  querySoilTestRecords,
+  querySprayRecords,
+  queryTaskReminders,
+  queryWarehouseItems,
+  queryWorkers,
+  type FarmDataQueryResult,
   type FarmRecordRow,
+  type WeatherData,
 } from './farm-data.ts';
 
 // RAG
@@ -31,4 +50,11 @@ export {
   assembleContext,
   buildAttachmentContextBlocks,
   buildFarmContextBlock,
+  buildFarmRecordsContextBlock,
+  getContextSummary,
+  hasContextContent,
+  type AssemblerInput,
+  type AssemblerResult,
+  type Attachment,
+  type FarmContext,
 } from './assembler.ts';
