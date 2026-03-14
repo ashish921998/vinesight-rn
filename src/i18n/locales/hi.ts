@@ -1277,6 +1277,10 @@ export const hi = {
       noFarmSelected: 'कोई खेत नहीं चुना गया। व्यक्तिगत सलाह के लिए कोई खेत चुनें।',
       addFarmButton: 'खेत जोड़ें',
     },
+    safety: {
+      blockedLabel: 'सुरक्षा सूचना',
+      blockedA11y: 'सुरक्षा चेतावनी: इस उत्तर की सुरक्षा समीक्षा की गई है',
+    },
     attachments: {
       removeA11y: 'अनुलग्नक हटाएं',
       thumbnailA11y: 'संलग्न छवि',

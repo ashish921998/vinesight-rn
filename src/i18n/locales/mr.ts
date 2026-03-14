@@ -1300,6 +1300,10 @@ export const mr = {
         'कोणताही $t(glossary.farm) निवडलेला नाही. वैयक्तिक सल्ल्यासाठी $t(glossary.farm) निवडा.',
       addFarmButton: '$t(glossary.farm) जोडा',
     },
+    safety: {
+      blockedLabel: 'सुरक्षा सूचना',
+      blockedA11y: 'सुरक्षा इशारा: या प्रतिसादाची सुरक्षा तपासणी झाली आहे',
+    },
     attachments: {
       removeA11y: 'संलग्नक काढा',
       thumbnailA11y: 'संलग्न प्रतिमा',

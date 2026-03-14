@@ -8,7 +8,7 @@
  * - loadConversation loads messages from memory service
  * - Error state when sendAssistantTurn throws
  * - retryLastMessage re-sends the last user message
- * - Does not send when isLoading is true
+ * - Request cancellation: new message cancels pending in-flight request (VAL-CROSS-011)
  * - Does not send empty messages
  */
 
@@ -17,18 +17,32 @@ import { useAssistant, DEFAULT_SUGGESTIONS } from '@/hooks/use-assistant';
 import {
   sendAssistantTurn,
   cancelAllPendingAssistantTurnRequests,
+  cancelPendingAssistantTurnRequest,
 } from '@/services/assistant-gateway';
 import { assistantMemoryService } from '@/services/assistant-memory';
 
 jest.mock('@/services/assistant-gateway', () => ({
   sendAssistantTurn: jest.fn(),
   cancelAllPendingAssistantTurnRequests: jest.fn(),
+  cancelPendingAssistantTurnRequest: jest.fn(),
   AssistantGatewayError: class AssistantGatewayError extends Error {
     code: string;
     constructor(code: string, message: string) {
       super(message);
       this.code = code;
     }
+  },
+  AssistantGatewayErrorCode: {
+    CANCELED: 'CANCELED',
+    NETWORK_ERROR: 'NETWORK_ERROR',
+    TIMEOUT: 'TIMEOUT',
+    SERVER_ERROR: 'SERVER_ERROR',
+    INVALID_REQUEST: 'INVALID_REQUEST',
+    INVALID_RESPONSE: 'INVALID_RESPONSE',
+    AUDIO_VALIDATION_FAILED: 'AUDIO_VALIDATION_FAILED',
+    AUTHENTICATION_FAILED: 'AUTHENTICATION_FAILED',
+    RATE_LIMITED: 'RATE_LIMITED',
+    UNKNOWN: 'UNKNOWN',
   },
 }));
 
@@ -44,6 +58,7 @@ const mockLoadRecentMessages = assistantMemoryService.loadRecentMessages as jest
 
 const mockSendAssistantTurn = sendAssistantTurn as jest.Mock;
 const mockCancelAll = cancelAllPendingAssistantTurnRequests as jest.Mock;
+const mockCancelPending = cancelPendingAssistantTurnRequest as jest.Mock;
 
 const makeResponse = (overrides = {}) => ({
   message: {
@@ -425,5 +440,106 @@ describe('useAssistant i18n keys', () => {
     DEFAULT_SUGGESTIONS.forEach((key: string) => {
       expect(key.startsWith('ai.')).toBe(true);
     });
+  });
+});
+
+describe('useAssistant request cancellation (VAL-CROSS-011)', () => {
+  // Helper to get the AssistantGatewayError mock class
+  const getMockError = (code: string, message: string): Error & { code: string } => {
+    const { AssistantGatewayError } = jest.requireMock('@/services/assistant-gateway') as {
+      AssistantGatewayError: new (code: string, message: string) => Error & { code: string };
+    };
+    return new AssistantGatewayError(code, message);
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('does not show error when sendAssistantTurn throws CANCELED (simulates cancellation)', async () => {
+    // When the backend reports CANCELED (e.g., because the request was aborted),
+    // the hook should silently discard the error and not show it to the user.
+    mockSendAssistantTurn.mockRejectedValueOnce(getMockError('CANCELED', 'Request was canceled'));
+
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+
+    await act(async () => {
+      await result.current.sendMessage('Some message');
+    });
+
+    // CANCELED error must not be surfaced to the user
+    expect(result.current.error).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('sends next message successfully after a CANCELED error', async () => {
+    // First message is cancelled; second message should succeed normally.
+    mockSendAssistantTurn
+      .mockRejectedValueOnce(getMockError('CANCELED', 'Request was canceled'))
+      .mockResolvedValueOnce(makeResponse());
+
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+
+    // First send — simulated cancellation
+    await act(async () => {
+      await result.current.sendMessage('First message');
+    });
+    expect(result.current.error).toBeNull();
+
+    // Second send — should succeed normally
+    await act(async () => {
+      await result.current.sendMessage('Second message');
+    });
+
+    expect(mockSendAssistantTurn).toHaveBeenCalledTimes(2);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+    expect(result.current.messages[result.current.messages.length - 1].role).toBe('assistant');
+  });
+
+  it('clears isLoading after cancelled request followed by successful request', async () => {
+    mockSendAssistantTurn
+      .mockRejectedValueOnce(getMockError('CANCELED', 'Canceled'))
+      .mockResolvedValueOnce(makeResponse());
+
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+
+    await act(async () => {
+      await result.current.sendMessage('Message 1');
+    });
+
+    await act(async () => {
+      await result.current.sendMessage('Message 2');
+    });
+
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('calls cancelPendingAssistantTurnRequest when new message sent while first is in-flight', async () => {
+    // Use a controlled promise to keep the first request pending while second starts
+    let resolveFirstRequest!: (v: unknown) => void;
+    const firstPendingPromise = new Promise((resolve) => {
+      resolveFirstRequest = resolve;
+    });
+    mockSendAssistantTurn
+      .mockReturnValueOnce(firstPendingPromise)
+      .mockResolvedValueOnce(makeResponse());
+
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+
+    // Wrap in act: fire first message (doesn't resolve) then fire second
+    await act(async () => {
+      // Fire first without awaiting — it stays pending
+      const firstSendPromise = result.current.sendMessage('First message');
+      // Now fire second, which should cancel the first
+      await result.current.sendMessage('Second message');
+      // Resolve first to clean up
+      resolveFirstRequest(makeResponse());
+      await firstSendPromise;
+    });
+
+    // cancelPendingAssistantTurnRequest should have been called once (for the first request)
+    expect(mockCancelPending).toHaveBeenCalledTimes(1);
+    expect(result.current.isLoading).toBe(false);
   });
 });

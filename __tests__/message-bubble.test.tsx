@@ -28,6 +28,9 @@ jest.mock('@/styles/use-theme', () => ({
         onSurfaceVariant: '#6b7280',
         surfaceVariant: '#f3f4f6',
         outlineVariant: '#e5e7eb',
+        errorContainer: '#fde8e8',
+        onErrorContainer: '#7f1d1d',
+        error: '#dc2626',
       },
       surface: {
         surfaceContainer: '#e5e7eb',
@@ -124,6 +127,71 @@ describe('MessageBubble', () => {
     const { getByTestId } = render(<MessageBubble message={message} />);
     // Should render without errors when m3.surface tokens are present
     expect(getByTestId('markdown-content')).toBeTruthy();
+  });
+});
+
+describe('MessageBubble safety warning (VAL-CROSS-012)', () => {
+  it('renders safety warning badge when message is blocked', () => {
+    const message = makeMessage({
+      role: 'assistant',
+      content: 'I cannot advise on this.',
+      safety: { blocked: true, riskLevel: 'high', reasons: ['unsafe_content'] },
+    });
+    const { getByTestId } = render(<MessageBubble message={message} />);
+    expect(getByTestId('safety-warning-badge')).toBeTruthy();
+  });
+
+  it('shows safety label text in safety badge', () => {
+    const message = makeMessage({
+      role: 'assistant',
+      content: 'Safety blocked message.',
+      safety: { blocked: true, riskLevel: 'high', reasons: [] },
+    });
+    const { getByText } = render(<MessageBubble message={message} />);
+    // i18n mock returns the key for 'assistant.safety.blockedLabel'
+    expect(getByText(/assistant.safety.blockedLabel/)).toBeTruthy();
+  });
+
+  it('does not render safety badge when message is not blocked', () => {
+    const message = makeMessage({
+      role: 'assistant',
+      content: 'Normal response.',
+      safety: { blocked: false, riskLevel: 'low', reasons: [] },
+    });
+    const { queryByTestId } = render(<MessageBubble message={message} />);
+    expect(queryByTestId('safety-warning-badge')).toBeNull();
+  });
+
+  it('does not render safety badge when safety is null', () => {
+    const message = makeMessage({
+      role: 'assistant',
+      content: 'No safety meta.',
+      safety: null,
+    });
+    const { queryByTestId } = render(<MessageBubble message={message} />);
+    expect(queryByTestId('safety-warning-badge')).toBeNull();
+  });
+
+  it('does not render safety badge for user messages even if safety is set', () => {
+    const message = makeMessage({
+      role: 'user',
+      content: 'User message.',
+      safety: { blocked: true, riskLevel: 'high', reasons: [] },
+    });
+    const { queryByTestId } = render(<MessageBubble message={message} />);
+    expect(queryByTestId('safety-warning-badge')).toBeNull();
+  });
+
+  it('uses safety a11y label when message is blocked', () => {
+    const message = makeMessage({
+      role: 'assistant',
+      content: 'Blocked content.',
+      safety: { blocked: true, riskLevel: 'high', reasons: [] },
+    });
+    const { UNSAFE_getByProps } = render(<MessageBubble message={message} />);
+    const accessible = UNSAFE_getByProps({ accessible: true });
+    // Should use the safety a11y label
+    expect(accessible.props.accessibilityLabel).toContain('assistant.safety.blockedA11y');
   });
 });
 

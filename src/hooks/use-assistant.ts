@@ -16,7 +16,9 @@ import { useState, useCallback, useRef } from 'react';
 import {
   sendAssistantTurn,
   cancelAllPendingAssistantTurnRequests,
+  cancelPendingAssistantTurnRequest,
   AssistantGatewayError,
+  AssistantGatewayErrorCode,
 } from '@/services/assistant-gateway';
 import { assistantMemoryService } from '@/services/assistant-memory';
 import type { AIMessageAttachmentInput, AssistantVoiceLogAction, ChatMessage } from '@/types/ai';
@@ -80,11 +82,24 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
 
   const lastUserMessageRef = useRef<string>('');
   const lastAttachmentsRef = useRef<AIMessageAttachmentInput[]>([]);
+  // Tracks the ID of the currently in-flight sendMessage request.
+  // Used to cancel superseded requests when a new message is sent mid-flight.
+  const currentRequestIdRef = useRef<string | null>(null);
 
   const sendMessage = useCallback(
     async (text?: string) => {
       const messageText = (text ?? inputText).trim();
-      if (!messageText || isLoading) return;
+      if (!messageText) return;
+
+      // Generate a unique ID for this request
+      const requestId = `chat-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+
+      // Cancel any existing in-flight request (VAL-CROSS-011: request cancellation)
+      if (currentRequestIdRef.current) {
+        cancelPendingAssistantTurnRequest(currentRequestIdRef.current);
+      }
+      // Register this request as the current one
+      currentRequestIdRef.current = requestId;
 
       lastUserMessageRef.current = messageText;
       setInputText('');
@@ -97,7 +112,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
       setAttachments([]);
 
       const userMessage: ChatMessage = {
-        id: `user-${Date.now()}`,
+        id: `user-${requestId}`,
         role: 'user',
         content: messageText,
         timestamp: new Date(),
@@ -119,13 +134,14 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
             attachments: pendingAttachments.length > 0 ? pendingAttachments : undefined,
             clientPersistedUserTurn: true,
           },
-          {
-            requestId: `chat-${Date.now()}`,
-          },
+          { requestId },
         );
 
-        const newConversationId =
-          response.message.conversationId ?? response.message.conversationId;
+        // If superseded by a newer request, discard this response
+        if (currentRequestIdRef.current !== requestId) return;
+        currentRequestIdRef.current = null;
+
+        const newConversationId = response.message.conversationId;
         if (newConversationId && !conversationId) {
           setConversationId(newConversationId);
         }
@@ -138,16 +154,31 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
           setVoiceLogAction(response.voiceLogAction);
         }
       } catch (err) {
+        // If superseded by a newer request, silently ignore this error
+        if (currentRequestIdRef.current !== requestId) return;
+        currentRequestIdRef.current = null;
+
+        // Silently ignore cancellation errors (triggered by a newer message)
+        if (
+          err instanceof AssistantGatewayError &&
+          err.code === AssistantGatewayErrorCode.CANCELED
+        ) {
+          return;
+        }
+
         const normalizedError =
           err instanceof AssistantGatewayError || err instanceof Error
             ? err
             : new Error(String(err));
         setError(normalizedError);
       } finally {
-        setIsLoading(false);
+        // Only clear loading state when no newer request is in flight
+        if (currentRequestIdRef.current === null) {
+          setIsLoading(false);
+        }
       }
     },
-    [inputText, isLoading, conversationId, options, attachments],
+    [inputText, conversationId, options, attachments],
   );
 
   const retryLastMessage = useCallback(async () => {
@@ -213,6 +244,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
 
   const startNewConversation = useCallback(() => {
     cancelAllPendingAssistantTurnRequests();
+    currentRequestIdRef.current = null;
     setMessages([]);
     setConversationId(null);
     setIsLoading(false);
@@ -240,6 +272,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
 
   const loadConversation = useCallback(async (conversationId: string) => {
     cancelAllPendingAssistantTurnRequests();
+    currentRequestIdRef.current = null;
     setMessages([]);
     setConversationId(conversationId);
     setIsLoading(true);

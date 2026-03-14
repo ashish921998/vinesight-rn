@@ -129,13 +129,26 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
     ? t('assistant.chat.userMessageA11y', { content: message.content })
     : t('assistant.chat.assistantMessageA11y', { content: message.content.slice(0, 100) });
 
+  const isSafetyBlocked = !isUser && message.safety?.blocked === true;
+
   return (
     <View
       style={[styles.container, isUser ? styles.containerRight : styles.containerLeft]}
       accessible
-      accessibilityLabel={a11yLabel}
+      accessibilityLabel={isSafetyBlocked ? t('assistant.safety.blockedA11y') : a11yLabel}
       accessibilityRole="text"
     >
+      {/* Safety warning badge — shown above blocked assistant messages */}
+      {isSafetyBlocked && (
+        <View
+          style={[styles.safetyBadge, { backgroundColor: m3.colorScheme.errorContainer }]}
+          testID="safety-warning-badge"
+        >
+          <Text style={[styles.safetyBadgeText, { color: m3.colorScheme.onErrorContainer }]}>
+            ⚠️ {t('assistant.safety.blockedLabel')}
+          </Text>
+        </View>
+      )}
       <View style={bubbleStyle}>
         {isUser ? (
           <Text
@@ -220,6 +233,19 @@ const styles = StyleSheet.create({
   },
   timestampRight: {
     alignSelf: 'flex-end',
+  },
+  safetyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: 8,
+    marginBottom: 4,
+    alignSelf: 'flex-start',
+  },
+  safetyBadgeText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
   },
 });
 

@@ -1296,6 +1296,10 @@ export const en = {
       noFarmSelected: 'No farm selected. Select a farm for personalized advice.',
       addFarmButton: 'Add Farm',
     },
+    safety: {
+      blockedLabel: 'Safety Notice',
+      blockedA11y: 'Safety warning: this response has been reviewed for safety',
+    },
     attachments: {
       removeA11y: 'Remove attachment',
       thumbnailA11y: 'Attached image',
