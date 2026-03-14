@@ -1,0 +1,102 @@
+.factory/validation/backend-refactor/scrutiny/synthesis.round2.json
+  13a3e9bf29e4e43f 1-161
+.factory/validation/backend-refactor/scrutiny/synthesis.json
+  13a3e9bf29e4e43f 3,8,39,44,49,54,59,64,69,79,84,89,94,99,104,109,114,120-121,127-128,132-134,139-140,150-151,154
+.factory/validation/backend-refactor/scrutiny/reviews/be-modular-structure.json
+  b1318ab2d2a40eca 3-4,9,13,15,21,27,33,40-41,44-45
+.factory/validation/backend-refactor/scrutiny/reviews/be-context-assembly.json
+  1792c49c5a006dec 3,9,15,19,21,25,27,31-33,39-43,45,50-54,57
+.factory/library/architecture.md
+  13a3e9bf29e4e43f 78-79
+.factory/validation/backend-refactor/scrutiny/reviews/be-llm-provider.json
+  0eae2bebf991be16 3,9,15,21,27,34-35,39-40,44
+.factory/validation/backend-refactor/scrutiny/reviews/be-stt-provider-upgrade.json
+  dd4bf4ebc78035cc 3,9,15,21,24-25,27,33,40-41,45
+.factory/validation/backend-refactor/scrutiny/reviews/be-routing-and-handlers.json
+  edfd47912a3afba1 3,9,15,21,25,27,33-36,39-40,44-45,49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "7da0836ab71f02a0cb3c488d4c20a036509bba8b",
+  "prompts": {
+    "0eae2bebf991be16": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d963d07b-0c5e-45ee-82ea-953fc24b0678",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 10,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    },
+    "13a3e9bf29e4e43f": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3cb9f5ba-7204-468f-ac29-e003c4470835",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 193,
+      "total_deletions": 36,
+      "accepted_lines": 192,
+      "overriden_lines": 0
+    },
+    "1792c49c5a006dec": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "ca457cad-af29-4c1c-b448-9887557d5394",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 10,
+      "accepted_lines": 26,
+      "overriden_lines": 0
+    },
+    "b1318ab2d2a40eca": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3b2808ca-2636-4ce3-b062-6bfeff683950",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 17,
+      "accepted_lines": 12,
+      "overriden_lines": 0
+    },
+    "dd4bf4ebc78035cc": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "ee96fb3e-c03e-4b58-b8ff-c46e14fd3a25",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 11,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    },
+    "edfd47912a3afba1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "436a165a-8483-46b1-b565-db14e465c89b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 11,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}
