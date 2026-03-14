@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ComponentProps } from 'react';
+import { Pressable } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
@@ -11,6 +12,7 @@ import { useAuthStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useThemeTokens } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { spacing } from '@/styles/theme';
 import { isAndroid } from '@/hooks';
 
 export default function TabLayout() {
@@ -39,6 +41,22 @@ export default function TabLayout() {
   );
 
   const sf = (name: string) => name as SFSymbol;
+
+  // Settings button rendered in Dashboard header right position
+  const renderSettingsHeaderButton = () => (
+    <Pressable
+      onPress={() => router.push('/(tabs)/settings')}
+      accessibilityRole="button"
+      accessibilityLabel={t('assistant.settingsButtonA11y')}
+      style={{ marginRight: spacing[4] }}
+    >
+      <SymbolIcon name="gearshape" size={24} color={m3.colorScheme.onSurface} />
+    </Pressable>
+  );
+
+  // Spread this variable into NativeTabs options to avoid TS excess-property error
+  // (headerRight is not in NativeTabOptions typings but is supported at runtime)
+  const dashboardHeaderRight = { headerRight: renderSettingsHeaderButton };
 
   const renderTabIcon = (
     sfDefault: SFSymbol,
@@ -136,6 +154,7 @@ export default function TabLayout() {
             options={{
               title: t('tabs.dashboard'),
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('square.grid.2x2', focused),
+              headerRight: renderSettingsHeaderButton,
             }}
           />
           <Tabs.Screen
@@ -161,10 +180,16 @@ export default function TabLayout() {
             }}
           />
           <Tabs.Screen
+            name="assistant"
+            options={{
+              title: t('tabs.aiAssistant'),
+              tabBarIcon: ({ focused }) => renderAndroidTabIcon('sparkles', focused),
+            }}
+          />
+          <Tabs.Screen
             name="settings"
             options={{
-              title: t('tabs.settings'),
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('gearshape', focused),
+              href: null,
             }}
           />
           <Tabs.Screen
@@ -202,7 +227,7 @@ export default function TabLayout() {
       >
         <NativeTabs.Trigger
           name="index"
-          options={{ ...defaultHeaderOptions, title: t('tabs.dashboard') }}
+          options={{ ...defaultHeaderOptions, ...dashboardHeaderRight, title: t('tabs.dashboard') }}
         >
           {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'), 'grid-outline', 'grid')}
           <Label>{t('tabs.dashboard')}</Label>
@@ -241,7 +266,15 @@ export default function TabLayout() {
           <Label>{t('tabs.tools')}</Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger
+          name="assistant"
+          options={{ ...defaultHeaderOptions, title: t('tabs.aiAssistant') }}
+        >
+          {renderTabIcon(sf('sparkles'), sf('sparkles.fill'), 'sparkles-outline', 'sparkles')}
+          <Label>{t('tabs.aiAssistant')}</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger
           name="settings"
+          hidden
           options={{ ...defaultHeaderOptions, title: t('tabs.settings') }}
         >
           {renderTabIcon(sf('gearshape'), sf('gearshape.fill'), 'settings-outline', 'settings')}

@@ -1236,8 +1236,13 @@ export const en = {
     tools: 'Tools',
     settings: 'Settings',
     farms: 'Farms',
+    aiAssistant: 'AI Assistant',
   },
 
+  assistant: {
+    placeholder: 'Coming soon — your AI farming assistant',
+    settingsButtonA11y: 'Open settings',
+  },
   onboarding: {
     language: {
       title: 'Choose language',

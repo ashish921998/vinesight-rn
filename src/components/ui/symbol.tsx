@@ -171,6 +171,10 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   eye: 'eye-outline',
   'eye.slash': 'eye-off-outline',
 
+  // AI Assistant
+  sparkles: 'sparkles-outline',
+  'sparkles.fill': 'sparkles',
+
   // Additional common mappings
   'chevron.up.chevron.down': 'swap-vertical',
   'arrow.left': 'arrow-back',

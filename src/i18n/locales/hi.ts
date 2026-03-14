@@ -1218,6 +1218,11 @@ export const hi = {
     tools: 'उपकरण',
     settings: 'सेटिंग्स',
     farms: 'खेत',
+    aiAssistant: 'AI सहायक',
+  },
+  assistant: {
+    placeholder: 'जल्द आ रहा है — आपका AI कृषि सहायक',
+    settingsButtonA11y: 'सेटिंग्स खोलें',
   },
 
   onboarding: {

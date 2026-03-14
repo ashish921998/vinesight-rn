@@ -1239,6 +1239,11 @@ export const mr = {
     tools: 'साधने',
     settings: 'सेटिंग्ज',
     farms: '$t(glossary.farm)',
+    aiAssistant: 'AI सहाय्यक',
+  },
+  assistant: {
+    placeholder: 'लवकरच येत आहे — तुमचा AI शेती सहाय्यक',
+    settingsButtonA11y: 'सेटिंग्ज उघडा',
   },
 
   onboarding: {
