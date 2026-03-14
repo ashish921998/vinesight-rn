@@ -1,0 +1,33 @@
+supabase/functions/ai-gateway/providers/llm.ts
+  9c05576cc754ba46 28-30,52-54,57-58,72,76
+supabase/functions/ai-gateway/utils/audio.ts
+  9c05576cc754ba46 124-125
+supabase/functions/ai-gateway/providers/tts.ts
+  9c05576cc754ba46 95,103-105,115,184,186-191,194
+supabase/functions/ai-gateway/handlers/request-processor.ts
+  9c05576cc754ba46 9,68,111,113-114,124,126-127,133,135-136,144,150-151,179,184-185,192,194-195,206,214,220-221
+supabase/functions/ai-gateway/handlers/main.ts
+  9c05576cc754ba46 4,8,10,145-146,152-154,159,217,224-225,231-234,237-240,242-243,245-246,249,251,254,256-262,264-265,269-270,274,278-279,281-287,300,326
+supabase/functions/ai-gateway/utils/circuit-breaker.ts
+  9c05576cc754ba46 71-73,78-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "35e53bcf80875fac2b9acad32b1249f2087d258b",
+  "prompts": {
+    "9c05576cc754ba46": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "634bb421-c276-4dc0-aaa2-184f8424c335",
+        "model": "glm-5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 161,
+      "total_deletions": 194,
+      "accepted_lines": 151,
+      "overriden_lines": 0
+    }
+  }
+}
