@@ -7,12 +7,14 @@
  * - Message list with auto-scroll
  * - Suggestion chips after assistant responds
  * - Input bar at bottom
+ * - Sidebar toggle button in header
+ * - ConversationSidebar drawer for history
  * Uses useAssistant hook for state management.
  * Connects to assistant-gateway.ts for API calls.
  * M3 themed, i18n for all strings.
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   KeyboardAvoidingView,
@@ -31,6 +33,7 @@ import { useAssistant } from '@/hooks/use-assistant';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
 import { SuggestionChips } from './SuggestionChips';
+import { ConversationSidebar } from './ConversationSidebar';
 
 const DEFAULT_SUGGESTIONS = [
   'ai.defaultSuggestions.waterNeed',
@@ -44,6 +47,8 @@ export function ChatScreen() {
   const { t } = useTranslation();
   const language = useLanguageStore((s) => s.language) ?? 'en';
 
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+
   const {
     messages,
     isLoading,
@@ -52,6 +57,7 @@ export function ChatScreen() {
     suggestions,
     sendMessage,
     startNewConversation,
+    loadConversation,
   } = useAssistant({ language });
 
   const handleSend = useCallback(() => {
@@ -64,6 +70,25 @@ export function ChatScreen() {
     },
     [sendMessage],
   );
+
+  const handleOpenSidebar = useCallback(() => {
+    setSidebarVisible(true);
+  }, []);
+
+  const handleCloseSidebar = useCallback(() => {
+    setSidebarVisible(false);
+  }, []);
+
+  const handleSelectConversation = useCallback(
+    (conversationId: string) => {
+      void loadConversation(conversationId);
+    },
+    [loadConversation],
+  );
+
+  const handleNewChatFromSidebar = useCallback(() => {
+    startNewConversation();
+  }, [startNewConversation]);
 
   // Use suggestions from last response, or default suggestions for welcome state
   const hasMessages = messages.length > 0;
@@ -92,6 +117,17 @@ export function ChatScreen() {
             },
           ]}
         >
+          {/* Sidebar toggle button */}
+          <TouchableOpacity
+            style={styles.headerIconButton}
+            onPress={handleOpenSidebar}
+            accessibilityLabel={t('ai.chat.openHistoryHint')}
+            accessibilityRole="button"
+            testID="sidebar-toggle-button"
+          >
+            <SymbolIcon name="line.3.horizontal" size={22} color={m3.colorScheme.onSurface} />
+          </TouchableOpacity>
+
           <Text
             style={[
               styles.headerTitle,
@@ -103,8 +139,10 @@ export function ChatScreen() {
           >
             {t('tabs.aiAssistant')}
           </Text>
+
+          {/* New chat button */}
           <TouchableOpacity
-            style={styles.newChatButton}
+            style={styles.headerIconButton}
             onPress={startNewConversation}
             accessibilityLabel={t('ai.chat.newConversation')}
             accessibilityRole="button"
@@ -148,6 +186,14 @@ export function ChatScreen() {
           isLoading={isLoading}
         />
       </KeyboardAvoidingView>
+
+      {/* Conversation history sidebar */}
+      <ConversationSidebar
+        visible={sidebarVisible}
+        onClose={handleCloseSidebar}
+        onSelectConversation={handleSelectConversation}
+        onNewChat={handleNewChatFromSidebar}
+      />
     </SafeAreaView>
   );
 }
@@ -162,15 +208,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: spacing[1],
   },
   headerTitle: {
     flex: 1,
+    textAlign: 'center',
   },
-  newChatButton: {
+  headerIconButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',

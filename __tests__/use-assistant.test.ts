@@ -5,6 +5,7 @@
  * - sendMessage adds user message, sets loading, then adds response
  * - sendMessage uses inputText when no text argument provided
  * - startNewConversation resets state
+ * - loadConversation loads messages from memory service
  * - Error state when sendAssistantTurn throws
  * - retryLastMessage re-sends the last user message
  * - Does not send when isLoading is true
@@ -17,6 +18,7 @@ import {
   sendAssistantTurn,
   cancelAllPendingAssistantTurnRequests,
 } from '@/services/assistant-gateway';
+import { assistantMemoryService } from '@/services/assistant-memory';
 
 jest.mock('@/services/assistant-gateway', () => ({
   sendAssistantTurn: jest.fn(),
@@ -29,6 +31,16 @@ jest.mock('@/services/assistant-gateway', () => ({
     }
   },
 }));
+
+jest.mock('@/services/assistant-memory', () => ({
+  assistantMemoryService: {
+    loadRecentMessages: jest.fn(),
+    listConversations: jest.fn(),
+    deleteConversation: jest.fn(),
+  },
+}));
+
+const mockLoadRecentMessages = assistantMemoryService.loadRecentMessages as jest.Mock;
 
 const mockSendAssistantTurn = sendAssistantTurn as jest.Mock;
 const mockCancelAll = cancelAllPendingAssistantTurnRequests as jest.Mock;
@@ -239,6 +251,86 @@ describe('useAssistant', () => {
       expect.objectContaining({ userMessage: 'Retry this' }),
       expect.anything(),
     );
+  });
+});
+
+describe('useAssistant loadConversation', () => {
+  const storedMessages = [
+    {
+      id: 'turn-1',
+      role: 'user' as const,
+      content: 'Prior question',
+      timestamp: new Date('2026-03-01T10:00:00Z'),
+      conversationId: 'old-conv',
+      inputMode: 'text' as const,
+    },
+    {
+      id: 'turn-2',
+      role: 'assistant' as const,
+      content: 'Prior answer',
+      timestamp: new Date('2026-03-01T10:00:05Z'),
+      conversationId: 'old-conv',
+      inputMode: 'text' as const,
+    },
+  ];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockLoadRecentMessages.mockResolvedValue(storedMessages);
+  });
+
+  it('sets conversationId and loads messages', async () => {
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+    await act(async () => {
+      await result.current.loadConversation('old-conv');
+    });
+    expect(result.current.conversationId).toBe('old-conv');
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.messages[0].content).toBe('Prior question');
+    expect(result.current.messages[1].content).toBe('Prior answer');
+  });
+
+  it('clears previous messages before loading', async () => {
+    mockSendAssistantTurn.mockResolvedValue({
+      message: {
+        id: 'a-1',
+        role: 'assistant' as const,
+        content: 'Answer',
+        timestamp: new Date(),
+        conversationId: 'new-conv',
+      },
+      suggestions: [],
+    });
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+    await act(async () => {
+      await result.current.sendMessage('First message');
+    });
+    expect(result.current.messages).toHaveLength(2);
+
+    await act(async () => {
+      await result.current.loadConversation('old-conv');
+    });
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.messages[0].content).toBe('Prior question');
+  });
+
+  it('sets isLoading false after successful load', async () => {
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+    await act(async () => {
+      await result.current.loadConversation('old-conv');
+    });
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('sets error and isLoading false on failure', async () => {
+    mockLoadRecentMessages.mockRejectedValue(new Error('Network error'));
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+    await act(async () => {
+      await result.current.loadConversation('bad-conv');
+    });
+    expect(result.current.error).toBeTruthy();
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.conversationId).toBe('bad-conv');
   });
 });
 

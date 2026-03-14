@@ -16,6 +16,7 @@ import {
   cancelAllPendingAssistantTurnRequests,
   AssistantGatewayError,
 } from '@/services/assistant-gateway';
+import { assistantMemoryService } from '@/services/assistant-memory';
 import type { ChatMessage } from '@/types/ai';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 
@@ -44,6 +45,7 @@ export interface UseAssistantReturn {
   setInputText: (text: string) => void;
   sendMessage: (text?: string) => Promise<void>;
   startNewConversation: () => void;
+  loadConversation: (conversationId: string) => Promise<void>;
   retryLastMessage: () => Promise<void>;
 }
 
@@ -139,6 +141,28 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     lastUserMessageRef.current = '';
   }, []);
 
+  const loadConversation = useCallback(async (conversationId: string) => {
+    cancelAllPendingAssistantTurnRequests();
+    setMessages([]);
+    setConversationId(conversationId);
+    setIsLoading(true);
+    setInputText('');
+    setSuggestions([]);
+    setError(null);
+    lastUserMessageRef.current = '';
+
+    try {
+      const loaded = await assistantMemoryService.loadRecentMessages(conversationId);
+      setMessages(loaded);
+    } catch (err) {
+      const normalizedError =
+        err instanceof AssistantGatewayError || err instanceof Error ? err : new Error(String(err));
+      setError(normalizedError);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     messages,
     conversationId,
@@ -149,6 +173,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     setInputText,
     sendMessage,
     startNewConversation,
+    loadConversation,
     retryLastMessage,
   };
 }

@@ -68,6 +68,16 @@ jest.mock('react-i18next', () => ({
       const translations: Record<string, string> = {
         'tabs.aiAssistant': 'AI Assistant',
         'ai.chat.newConversation': 'New conversation',
+        'ai.chat.openHistoryHint': 'Opens your saved conversations.',
+        'ai.chat.history': 'Chat history',
+        'ai.chat.newChat': 'New chat',
+        'ai.chat.noPreviousChats': 'No previous chats yet.',
+        'ai.chat.deleteChat': 'Delete chat',
+        'ai.chat.deleteChatConfirm': 'Are you sure you want to delete this chat?',
+        'ai.chat.deleteChatFailed': 'Failed to delete chat.',
+        'ai.chat.close': 'Close',
+        'common.cancel': 'Cancel',
+        'common.delete': 'Delete',
         'assistant.chat.welcomeTitle': 'How can I help?',
         'assistant.chat.welcomeSubtitle': 'Ask about your crops, irrigation, diseases, and more.',
         'assistant.chat.sendA11y': 'Send message',
@@ -98,6 +108,17 @@ jest.mock('react-native-markdown-display', () => {
   };
 });
 
+jest.mock('@/i18n/format', () => ({
+  formatDate: () => '15-03-2026',
+}));
+
+jest.mock('@/services/assistant-memory', () => ({
+  assistantMemoryService: {
+    listConversations: jest.fn().mockResolvedValue([]),
+    deleteConversation: jest.fn().mockResolvedValue(true),
+  },
+}));
+
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
   SafeAreaView: ({ children }: { children: React.ReactNode }) => {
@@ -119,6 +140,7 @@ describe('ChatScreen', () => {
       setInputText: mockSetInputText,
       sendMessage: mockSendMessage,
       startNewConversation: mockStartNewConversation,
+      loadConversation: jest.fn(),
       retryLastMessage: jest.fn(),
     };
   });
@@ -180,6 +202,17 @@ describe('ChatScreen', () => {
     const { getByText } = render(<ChatScreen />);
     expect(getByText('AI Assistant')).toBeTruthy();
   });
+
+  it('renders sidebar toggle button', () => {
+    const { getByTestId } = render(<ChatScreen />);
+    expect(getByTestId('sidebar-toggle-button')).toBeTruthy();
+  });
+
+  it('sidebar toggle button has correct accessibility label', () => {
+    const { getByTestId } = render(<ChatScreen />);
+    const btn = getByTestId('sidebar-toggle-button');
+    expect(btn.props.accessibilityLabel).toBe('Opens your saved conversations.');
+  });
 });
 
 describe('ChatScreen with messages', () => {
@@ -214,6 +247,7 @@ describe('ChatScreen with messages', () => {
       setInputText: mockSetInputText,
       sendMessage: mockSendMessage,
       startNewConversation: mockStartNewConversation,
+      loadConversation: jest.fn(),
       retryLastMessage: jest.fn(),
     };
   });
