@@ -1,0 +1,70 @@
+.factory/validation/voice-mode/scrutiny/reviews/vm-tts-playback-and-loop.json
+  08a223b2da4de514 1-28
+.factory/validation/voice-mode/scrutiny/reviews/vm-recording-and-stt.json
+  d9993d461595d84c 1-33
+.factory/validation/voice-mode/scrutiny/reviews/cross-area-integration.json
+  8483cc37cc565759 1-46
+.factory/validation/voice-mode/scrutiny/synthesis.json
+  fec307af26964087 1-81
+.factory/library/architecture.md
+  fec307af26964087 41-43,46-51,118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "f32dfca757743a33c6bceb447ef0ffd80ec3efba",
+  "prompts": {
+    "08a223b2da4de514": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7b7885aa-340a-4ac2-b95b-99c455da6ac8",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 0,
+      "accepted_lines": 28,
+      "overriden_lines": 0
+    },
+    "8483cc37cc565759": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "815e0cfc-fe06-4206-b721-416b1a2308b0",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 46,
+      "total_deletions": 0,
+      "accepted_lines": 46,
+      "overriden_lines": 0
+    },
+    "d9993d461595d84c": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "6c88fe0a-037d-41ed-8830-7b84467f9aa3",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 33,
+      "total_deletions": 0,
+      "accepted_lines": 33,
+      "overriden_lines": 0
+    },
+    "fec307af26964087": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "702051bf-f94d-4c28-8bc9-5f2677744bcf",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 91,
+      "total_deletions": 1,
+      "accepted_lines": 91,
+      "overriden_lines": 0
+    }
+  }
+}
