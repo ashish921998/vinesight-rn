@@ -1,0 +1,35 @@
+src/i18n/locales/hi.ts
+  3bd1aef03ef098bf 1221,1223-1225
+src/components/ui/symbol.tsx
+  3bd1aef03ef098bf 174-177
+src/i18n/locales/mr.ts
+  3bd1aef03ef098bf 1242,1244-1246
+src/i18n/locales/en.ts
+  3bd1aef03ef098bf 1239,1242-1245
+app/(tabs)/assistant.tsx
+  3bd1aef03ef098bf 1-45
+__tests__/ui-tab-navigation.test.ts
+  3bd1aef03ef098bf 1-111
+app/(tabs)/_layout.tsx
+  3bd1aef03ef098bf 2,15,45-60,157,183-188,192,230,269-274,277
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "89b3d3abf8731d3dfaaae13835b3083c43223fff",
+  "prompts": {
+    "3bd1aef03ef098bf": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "89555630-3fb6-437a-823d-b701a55beb4a",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 249,
+      "total_deletions": 41,
+      "accepted_lines": 211,
+      "overriden_lines": 0
+    }
+  }
+}
