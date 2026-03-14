@@ -1,0 +1,35 @@
+src/hooks/use-assistant.ts
+  252c7026680efb42 19,21,85-87,94-102,115,137,140-142,157-168,175-176,178,247,275
+src/i18n/locales/en.ts
+  252c7026680efb42 1299-1302
+src/i18n/locales/hi.ts
+  252c7026680efb42 1280-1283
+__tests__/message-bubble.test.tsx
+  252c7026680efb42 31-33,133-197
+__tests__/use-assistant.test.ts
+  252c7026680efb42 11,20,27,35-45,61,445-545
+src/components/assistant/MessageBubble.tsx
+  252c7026680efb42 132-133,138,141-151,245-249
+src/i18n/locales/mr.ts
+  252c7026680efb42 1303-1306
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "49b3bf74c14f73d4bc8b517c41f6519ef3ab95c7",
+  "prompts": {
+    "252c7026680efb42": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "92f9b482-79e4-4db3-b583-3b2aeccda605",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 331,
+      "total_deletions": 64,
+      "accepted_lines": 274,
+      "overriden_lines": 0
+    }
+  }
+}
