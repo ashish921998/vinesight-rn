@@ -6,6 +6,7 @@
 import {
   estimateBase64Bytes,
   isLikelyInvalidAudioError,
+  jsonResponse,
   MAX_AUDIO_BASE64_LENGTH,
   MAX_AUDIO_SIZE_MB,
   MAX_TEXT_LENGTH,
@@ -64,10 +65,7 @@ export async function setupRequest(
   } catch {
     return {
       setup: null,
-      response: {
-        status: 400,
-        body: { error: 'Invalid JSON request body' },
-      } as unknown as Response,
+      response: jsonResponse({ error: 'Invalid JSON request body' }, 400),
     };
   }
 
@@ -110,10 +108,10 @@ export async function processStt(
     } else if (!audioBase64) {
       return {
         result: null,
-        response: {
-          status: 400,
-          body: { error: 'Audio input mode requires input_audio_b64 or input_text' },
-        } as unknown as Response,
+        response: jsonResponse(
+          { error: 'Audio input mode requires input_audio_b64 or input_text' },
+          400,
+        ),
       };
     } else {
       const normalizedAudioBase64 = normalizeBase64Input(audioBase64);
@@ -123,19 +121,19 @@ export async function processStt(
       if (normalizedAudioBase64.length < MIN_AUDIO_BASE64_LENGTH) {
         return {
           result: null,
-          response: {
-            status: 400,
-            body: { error: 'INVALID_AUDIO', message: 'Audio recording is too short.' },
-          } as unknown as Response,
+          response: jsonResponse(
+            { error: 'INVALID_AUDIO', message: 'Audio recording is too short.' },
+            400,
+          ),
         };
       }
       if (estimatedAudioBytes < MIN_AUDIO_ESTIMATED_BYTES) {
         return {
           result: null,
-          response: {
-            status: 400,
-            body: { error: 'INVALID_AUDIO', message: 'Audio data is too small.' },
-          } as unknown as Response,
+          response: jsonResponse(
+            { error: 'INVALID_AUDIO', message: 'Audio data is too small.' },
+            400,
+          ),
         };
       }
 
@@ -143,14 +141,14 @@ export async function processStt(
       if (normalizedAudioBase64.length > MAX_AUDIO_BASE64_LENGTH) {
         return {
           result: null,
-          response: {
-            status: 400,
-            body: {
+          response: jsonResponse(
+            {
               error: 'AUDIO_TOO_LARGE',
               message: `Audio exceeds maximum size of ${MAX_AUDIO_SIZE_MB}MB.`,
               max_size_mb: MAX_AUDIO_SIZE_MB,
             },
-          } as unknown as Response,
+            400,
+          ),
         };
       }
 
@@ -178,23 +176,23 @@ export async function processStt(
         if (errorMessage.includes('stt_empty_transcript')) {
           return {
             result: null,
-            response: {
-              status: 400,
-              body: {
+            response: jsonResponse(
+              {
                 error: 'EMPTY_TRANSCRIPT',
                 message: 'Speech transcription returned no text. Please try again.',
               },
-            } as unknown as Response,
+              400,
+            ),
           };
         }
 
         if (isLikelyInvalidAudioError(errorMessage)) {
           return {
             result: null,
-            response: {
-              status: 400,
-              body: { error: 'INVALID_AUDIO_FORMAT', message: 'Audio could not be processed.' },
-            } as unknown as Response,
+            response: jsonResponse(
+              { error: 'INVALID_AUDIO_FORMAT', message: 'Audio could not be processed.' },
+              400,
+            ),
           };
         }
         throw error;
@@ -205,10 +203,7 @@ export async function processStt(
   if (!transcript) {
     return {
       result: null,
-      response: {
-        status: 400,
-        body: { error: 'Input transcript is empty' },
-      } as unknown as Response,
+      response: jsonResponse({ error: 'Input transcript is empty' }, 400),
     };
   }
 
@@ -216,14 +211,14 @@ export async function processStt(
   if (transcript.length > MAX_TEXT_LENGTH) {
     return {
       result: null,
-      response: {
-        status: 400,
-        body: {
+      response: jsonResponse(
+        {
           error: 'TEXT_TOO_LONG',
           message: `Input text exceeds maximum length of ${MAX_TEXT_LENGTH} characters.`,
           max_length: MAX_TEXT_LENGTH,
         },
-      } as unknown as Response,
+        400,
+      ),
     };
   }
 

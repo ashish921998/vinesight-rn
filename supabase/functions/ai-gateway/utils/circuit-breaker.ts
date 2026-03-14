@@ -68,12 +68,16 @@ export function recordProviderFailure(provider: string): void {
 
 /**
  * Record a success for a provider (may reset the circuit breaker)
+ * CRITICAL: Reset failure count to 0 on success to track CONSECUTIVE failures,
+ * not cumulative failures. The circuit breaker should only trip after
+ * 5 consecutive failures.
  */
 export function recordProviderSuccess(provider: string): void {
   const state = circuitBreakers.get(provider);
   if (!state) return;
-  state.failures = Math.max(0, state.failures - 1);
-  if (state.failures === 0) state.isOpen = false;
+  // Reset consecutive failure count to 0 on any success
+  state.failures = 0;
+  state.isOpen = false;
   circuitBreakers.set(provider, state);
 }
 

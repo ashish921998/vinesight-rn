@@ -25,6 +25,9 @@ export interface ChatCompletionResult {
 
 /**
  * Call OpenAI chat completion API
+ * IMPORTANT: Farm/memory/RAG context blocks are placed in the system message,
+ * NOT in the user message. This ensures the context is always available
+ * to the model regardless of message length constraints.
  */
 export async function chatCompletion(input: {
   prompt: string;
@@ -46,8 +49,12 @@ export async function chatCompletion(input: {
   const safetyInstruction =
     'You are a vineyard assistant. Give concise, practical guidance. For spray/fertigation recommendations, use short headings for: Condition, Confidence, Dosage Range, Safety/PPE, Re-entry Interval, Uncertainty, and Escalation Trigger. If evidence is insufficient, ask clarifying questions instead of guessing dosage.';
 
-  const contextPrompt =
+  // Build system message with context blocks (farm, memory, RAG context)
+  // This is the correct placement - context should be in system message, not user message
+  const contextSection =
     input.contextBlocks.length > 0 ? `\n\nContext:\n${input.contextBlocks.join('\n\n')}` : '';
+
+  const systemMessage = `${languageInstruction} ${safetyInstruction}${contextSection}`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -62,11 +69,11 @@ export async function chatCompletion(input: {
       messages: [
         {
           role: 'system',
-          content: `${languageInstruction} ${safetyInstruction}`,
+          content: systemMessage,
         },
         {
           role: 'user',
-          content: `${input.prompt}${contextPrompt}`,
+          content: input.prompt,
         },
       ],
     }),

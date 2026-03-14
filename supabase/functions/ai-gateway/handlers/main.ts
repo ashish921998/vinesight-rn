@@ -1,21 +1,13 @@
 /**
  * Main Request Handler
  * Orchestrates the complete AI gateway request flow.
+ * Dispatches to dedicated handler modules based on route decision.
  */
 
 import {
-  buildRouteClarificationCancelled,
-  buildRouteClarificationPrompt,
-  buildRouteClarificationRetry,
-  buildVoiceLogCancelledMessage,
-  buildVoiceLogClarificationMessage,
-  buildVoiceLogClarifyExhaustedMessage,
-  buildVoiceLogFormPrefill,
-  buildVoiceLogOpeningFormMessage,
+  buildDeterministicQueryIntent,
   decideChatRoute,
-  isRouteClarificationCancelResponse,
-  resolveRouteClarificationResponse,
-  resolveVoiceLogTurn,
+  extractActivityIntent,
   shouldAttemptVoiceLogExtraction,
   type ActivityLogExtractionResult,
   type HybridChatRoute,
@@ -26,7 +18,6 @@ import {
 import {
   calculateCost,
   cleanExpiredCircuitBreakers,
-  estimateTokens,
   generateTraceId,
   jsonResponse,
   resolveAuthenticatedUserId,
@@ -35,21 +26,9 @@ import {
   writeConversationTurn,
 } from '../utils/index.ts';
 
-import {
-  chatCompletionWithTimeout,
-  generateEmbedding,
-  generateSpeech,
-  getAdvisoryModel,
-} from '../providers/index.ts';
+import { generateSpeech, getAdvisoryModel } from '../providers/index.ts';
 
-import {
-  buildAttachmentContextBlocks,
-  detectActivity,
-  searchMemoryContext,
-  searchRagContext,
-  writeMemory,
-  type ToolCall,
-} from '../context/index.ts';
+import { detectActivity, writeMemory, type Citation, type ToolCall } from '../context/index.ts';
 
 import {
   buildBlockedAdviceMessage,
@@ -58,9 +37,11 @@ import {
   type SafetyFlags,
 } from '../safety/index.ts';
 
-import { buildDeterministicQueryIntent, extractActivityIntent } from '../routing/index.ts';
-
 import { processStt, setupConversation } from './request-processor.ts';
+import { handleAdvisory } from './advisory.ts';
+import { handleFarmQuery } from './farm-query.ts';
+import { handleVoiceLog } from './voice-log.ts';
+import { handleClarify, buildClarificationPrompt } from './clarify.ts';
 
 import type {
   AssistantGatewayRequest,
@@ -101,7 +82,9 @@ export async function handleRequest(req: Request): Promise<Response> {
     const embeddingTokenCounter = { value: 0 };
     let llmInputTokens = 0;
     let llmOutputTokens = 0;
-    let preflightSafetyFlags: SafetyFlags | null = null;
+
+    // Track STT timing
+    let sttLatencyMs: number | null = null;
 
     await trackTelemetry({
       event_name: 'ai_gateway_request_started',
@@ -113,6 +96,7 @@ export async function handleRequest(req: Request): Promise<Response> {
     });
 
     // STT
+    const sttStart = Date.now();
     const sttResult = await processStt(body, locale, providerFallbackEnabled, toolCalls);
     if (sttResult.response) return sttResult.response;
     const {
@@ -122,6 +106,9 @@ export async function handleRequest(req: Request): Promise<Response> {
       sttConfidence,
       providerFallbackReason,
     } = sttResult.result!;
+    if (sttProviderUsed) {
+      sttLatencyMs = Date.now() - sttStart;
+    }
 
     // Conversation setup
     const convSetup = await setupConversation(
@@ -147,31 +134,29 @@ export async function handleRequest(req: Request): Promise<Response> {
     let effectiveTranscript = transcript;
     let forcedRoute: 'voice_log' | 'farm_query' | null = null;
     let assistantText = '';
-    let citations: ReturnType<typeof searchMemoryContext> extends Promise<infer R>
-      ? R['citations']
-      : never = [];
+    let citations: Citation[] = [];
+    let safetyFlags: SafetyFlags | null = null;
+    let blocked = false;
 
-    // Handle route clarification
+    // Handle route clarification using clarify handler
     if (nextRouteState.route_clarification_pending) {
-      const clarifiedRoute = resolveRouteClarificationResponse(transcript);
-      if (!clarifiedRoute) {
-        if (isRouteClarificationCancelResponse(transcript)) {
-          nextRouteState.route_clarification_pending = false;
-          routeStateDirty = true;
-          routeDecision = 'clarify_route';
-          assistantText = buildRouteClarificationCancelled(locale);
-        } else {
-          routeDecision = 'clarify_route';
-          assistantText = buildRouteClarificationRetry(locale);
-        }
-      } else {
-        forcedRoute = clarifiedRoute;
-        routeDecision = clarifiedRoute;
+      const clarifyResult = handleClarify({ transcript, locale });
+      if (clarifyResult.resolvedRoute) {
+        forcedRoute = clarifyResult.resolvedRoute;
+        routeDecision = clarifyResult.resolvedRoute;
         nextRouteState.route_clarification_pending = false;
         if (nextRouteState.pending_ambiguous_transcript) {
           effectiveTranscript = nextRouteState.pending_ambiguous_transcript;
         }
         routeStateDirty = true;
+      } else if (clarifyResult.cancelled) {
+        nextRouteState.route_clarification_pending = false;
+        routeStateDirty = true;
+        routeDecision = 'clarify_route';
+        assistantText = clarifyResult.assistantText;
+      } else {
+        routeDecision = 'clarify_route';
+        assistantText = clarifyResult.assistantText;
       }
     }
 
@@ -221,58 +206,72 @@ export async function handleRequest(req: Request): Promise<Response> {
         output: { route_decision: routeDecision },
       });
 
-      // Handle routes
+      // Dispatch to handler modules based on route decision
       if (routeDecision === 'clarify_route') {
         nextRouteState.route_clarification_pending = true;
         nextRouteState.pending_ambiguous_transcript = effectiveTranscript;
         routeStateDirty = true;
-        assistantText = buildRouteClarificationPrompt(locale);
+        assistantText = buildClarificationPrompt(locale);
       } else if (routeDecision === 'voice_log') {
-        const logTurn = resolveVoiceLogTurn({
+        // Use voice-log handler
+        const voiceLogResult = handleVoiceLog({
           transcript: effectiveTranscript,
           farms: farmsForRouting,
           contextFarm: contextFarmForRouting,
           activeDraft: nextRouteState.voice_log_draft as VoiceLogDraft,
-          originContext: farmId !== null ? 'farm' : 'dashboard',
-          llmExtraction,
           expectedField: nextRouteState.voice_log_expected_field as VoiceLogMissingField,
+          clarifyAttempts: nextRouteState.voice_log_clarify_attempts,
+          llmExtraction,
+          locale,
+          originContext: farmId !== null ? 'farm' : 'dashboard',
         });
-
-        if (logTurn.kind === 'cancelled') {
-          nextRouteState.voice_log_draft = null;
-          routeStateDirty = true;
-          assistantText = buildVoiceLogCancelledMessage(locale);
-          voiceLogAction = { kind: 'cancelled' };
-        } else if (logTurn.kind === 'clarify') {
-          const nextAttempts = nextRouteState.voice_log_clarify_attempts + 1;
-          if (nextAttempts >= 3) {
-            assistantText = buildVoiceLogClarifyExhaustedMessage(locale);
-            voiceLogAction = {
-              kind: 'ready',
-              draft: logTurn.draft,
-              prefill: buildVoiceLogFormPrefill(logTurn.draft),
-            };
-          } else {
-            nextRouteState.voice_log_draft = logTurn.draft as unknown as Record<string, unknown>;
-            nextRouteState.voice_log_clarify_attempts = nextAttempts;
-            assistantText = buildVoiceLogClarificationMessage(locale, logTurn.missingFields);
-            voiceLogAction = {
-              kind: 'clarify',
-              draft: logTurn.draft,
-              missing_fields: logTurn.missingFields,
-            };
-          }
-          routeStateDirty = true;
-        } else if (logTurn.kind === 'ready') {
-          nextRouteState.voice_log_draft = null;
-          routeStateDirty = true;
-          assistantText = buildVoiceLogOpeningFormMessage(locale, logTurn.draft);
-          voiceLogAction = {
-            kind: 'ready',
-            draft: logTurn.draft,
-            prefill: buildVoiceLogFormPrefill(logTurn.draft),
-          };
+        assistantText = voiceLogResult.assistantText;
+        voiceLogAction = voiceLogResult.voiceLogAction;
+        routeStateDirty = voiceLogResult.routeStateDirty;
+        if (voiceLogResult.nextDraft !== undefined) {
+          nextRouteState.voice_log_draft = voiceLogResult.nextDraft as unknown as Record<
+            string,
+            unknown
+          >;
         }
+        if (voiceLogResult.nextExpectedField !== undefined) {
+          nextRouteState.voice_log_expected_field = voiceLogResult.nextExpectedField;
+        }
+        if (voiceLogResult.nextClarifyAttempts !== undefined) {
+          nextRouteState.voice_log_clarify_attempts = voiceLogResult.nextClarifyAttempts;
+        }
+      } else if (routeDecision === 'farm_query') {
+        // Use farm-query handler
+        const farmQueryResult = await handleFarmQuery({
+          transcript: effectiveTranscript,
+          userId,
+          farmId,
+          locale,
+          toolCalls,
+        });
+        assistantText = farmQueryResult.assistantText;
+        citations = farmQueryResult.citations;
+        routeDecision = 'farm_query';
+      } else if (routeDecision === 'advisory' || routeDecision === 'fallback_llm') {
+        // Use advisory handler
+        const advisoryResult = await handleAdvisory({
+          transcript: effectiveTranscript,
+          farmContext: body?.farm_context ?? null,
+          attachments: body?.attachments,
+          userId,
+          farmId,
+          locale,
+          memoryEnabled: body?.client_capabilities?.memory_enabled !== false,
+          ragEnabled: body?.client_capabilities?.rag_enabled !== false,
+          embeddingTokenCounter,
+          toolCalls,
+        });
+        assistantText = advisoryResult.assistantText;
+        citations = advisoryResult.citations;
+        safetyFlags = advisoryResult.safetyFlags;
+        llmInputTokens = advisoryResult.inputTokens;
+        llmOutputTokens = advisoryResult.outputTokens;
+        blocked = advisoryResult.blocked;
       }
     }
 
@@ -283,91 +282,32 @@ export async function handleRequest(req: Request): Promise<Response> {
       );
     }
 
-    // Advisory fallback
-    if (!assistantText) {
-      const memoryEnabled = body?.client_capabilities?.memory_enabled !== false;
-      const ragEnabled = body?.client_capabilities?.rag_enabled !== false;
-      let sharedQueryEmbedding: number[] | null | undefined = undefined;
-
-      if ((memoryEnabled || ragEnabled) && effectiveTranscript.trim()) {
-        embeddingTokenCounter.value += estimateTokens(effectiveTranscript);
-        sharedQueryEmbedding = await generateEmbedding(effectiveTranscript);
-      }
-
-      const [memoryContext, ragContext] = await Promise.all([
-        searchMemoryContext({
-          query: effectiveTranscript,
-          userId,
-          farmId,
-          enabled: memoryEnabled,
-          embedding: sharedQueryEmbedding,
-          embeddingTokenCounter,
-          toolCalls,
-        }),
-        searchRagContext({
-          query: effectiveTranscript,
-          locale,
-          enabled: ragEnabled,
-          embedding: sharedQueryEmbedding,
-          embeddingTokenCounter,
-          toolCalls,
-        }),
-      ]);
-
-      citations = [...memoryContext.citations, ...ragContext.citations];
-      const strictGuardrailsPreflight = isSprayOrFertigationTopic(effectiveTranscript);
-
-      if (strictGuardrailsPreflight && citations.length === 0) {
-        assistantText = buildBlockedAdviceMessage(locale, true);
-        preflightSafetyFlags = {
-          blocked: true,
-          risk_level: 'critical',
-          reasons: ['Spray/fertigation advice requires verified sources'],
-          escalation_suggested: true,
-        };
-      } else {
-        const farmContextBlock = body?.farm_context
-          ? `Farm context: ${JSON.stringify(body.farm_context)}`
-          : '';
-        const attachmentContextBlocks = buildAttachmentContextBlocks(body?.attachments);
-        const chatResult = await chatCompletionWithTimeout({
-          prompt: effectiveTranscript,
-          locale,
-          contextBlocks: [
-            farmContextBlock,
-            ...attachmentContextBlocks,
-            ...memoryContext.contextBlocks,
-            ...ragContext.contextBlocks,
-          ].filter(Boolean),
-        });
-        assistantText = chatResult.text;
-        llmInputTokens = chatResult.inputTokens;
-        llmOutputTokens = chatResult.outputTokens;
-      }
-    }
-
-    // Safety
-    const safetyFlags: SafetyFlags =
-      preflightSafetyFlags ??
-      buildSafetyFlags({
+    // Build safety flags if not already set by advisory handler
+    if (!safetyFlags) {
+      safetyFlags = buildSafetyFlags({
         adviceText: assistantText,
         transcript: effectiveTranscript,
         routeDecision,
         citationCount: citations.length,
       });
+    }
     toolCalls.push({ tool: 'safety.check_advice', status: 'ok', output: safetyFlags });
-    if (safetyFlags.blocked)
+    if (safetyFlags.blocked && !blocked) {
       assistantText = buildBlockedAdviceMessage(
         locale,
         isSprayOrFertigationTopic(effectiveTranscript),
       );
+    }
 
     // TTS
     let audioBase64: string | null = null;
     let audioMimeType: string | null = null;
     let audioProviderUsed: string | null = null;
+    let ttsGenerationMs: number | null = null;
+    let ttsSkippedReason: string | null = null;
 
     if (body?.client_capabilities?.can_play_audio !== false) {
+      const ttsStart = Date.now();
       const ttsResult = await generateSpeech({
         text: assistantText,
         locale,
@@ -378,7 +318,12 @@ export async function handleRequest(req: Request): Promise<Response> {
         audioBase64 = ttsResult.base64;
         audioMimeType = ttsResult.mimeType;
         audioProviderUsed = ttsResult.provider;
+        ttsGenerationMs = Date.now() - ttsStart;
+      } else {
+        ttsSkippedReason = 'tts_failed';
       }
+    } else {
+      ttsSkippedReason = 'can_play_audio_false';
     }
 
     // Memory write
@@ -428,6 +373,9 @@ export async function handleRequest(req: Request): Promise<Response> {
       audio_provider_used: audioProviderUsed,
       stt_provider_used: sttProviderUsed,
       stt_confidence: sttConfidence,
+      stt_latency_ms: sttLatencyMs,
+      tts_generation_ms: ttsGenerationMs,
+      tts_skipped_reason: ttsSkippedReason,
       cost_breakdown: costBreakdown,
       route_decision: routeDecision,
       voice_log_action: voiceLogAction,

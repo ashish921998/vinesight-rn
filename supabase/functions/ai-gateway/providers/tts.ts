@@ -92,12 +92,16 @@ async function callSarvamTtsInternal(
 
 /**
  * Call OpenAI TTS API
+ * Applies 2,500-char truncation for consistency with Sarvam TTS.
  */
 async function callOpenAiTtsInternal(
   text: string,
   signal?: AbortSignal,
 ): Promise<{ base64: string; mimeType: string }> {
   if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured');
+
+  // Apply 2,500-char truncation (same as Sarvam for consistency)
+  const truncatedText = text.slice(0, SARVAM_TTS_MAX_CHARS);
 
   const response = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
@@ -108,7 +112,7 @@ async function callOpenAiTtsInternal(
     body: JSON.stringify({
       model: 'gpt-4o-mini-tts',
       voice: 'alloy',
-      input: text,
+      input: truncatedText,
       response_format: 'mp3',
     }),
     signal,
@@ -177,10 +181,17 @@ export async function generateSpeech(input: {
       fallbackReason = 'sarvam_tts_failed';
     }
   } else if (USE_SARVAM_FOR_VOICE) {
+    // Circuit breaker is open for Sarvam
     fallbackReason = 'sarvam_tts_circuit_open';
+    // CRITICAL: If providerFallbackEnabled is false, return null (text-only)
+    // Do NOT fall through to OpenAI when circuit is open and fallback is disabled
+    if (!providerFallbackEnabled) {
+      console.warn('Sarvam TTS circuit breaker open with fallback disabled, returning text-only');
+      return null;
+    }
   }
 
-  // OpenAI fallback
+  // OpenAI fallback (only reached if providerFallbackEnabled is true or Sarvam is disabled)
   try {
     const result = await withAbortTimeout(
       (signal) => callOpenAiTtsInternal(text, signal),
@@ -195,10 +206,6 @@ export async function generateSpeech(input: {
     };
   } catch (error) {
     recordProviderFailure('openai_tts');
-    if (!providerFallbackEnabled) {
-      console.warn('Both TTS providers failed with fallback disabled', error);
-      return null;
-    }
     console.warn('Both TTS providers failed, skipping audio', error);
     return null;
   }
