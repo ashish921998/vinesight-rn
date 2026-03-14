@@ -1,0 +1,23 @@
+.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/AGENTS.md
+  65316e11ccb712a3 79-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "20396565e593b024bff4fba67f70f0e220658a43",
+  "prompts": {
+    "65316e11ccb712a3": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3b1a7cfb-d88a-401b-9d72-9169dc74b157",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 19,
+      "total_deletions": 2,
+      "accepted_lines": 19,
+      "overriden_lines": 0
+    }
+  }
+}
