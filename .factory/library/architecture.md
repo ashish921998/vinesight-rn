@@ -75,6 +75,8 @@ supabase/functions/ai-gateway/
 
 Current repo state still only partially meets that target: `context/farm-data.ts`, `routing/router.ts`, and legacy `voice-routing.ts` remain >500 lines, and the live request flow still keeps significant routing/handler logic inside `handlers/main.ts`.
 
+Current automated coverage also does **not** include a backend test that exercises the live `ai-gateway` dispatch path in `handlers/main.ts`; existing green routing-related tests mostly cover client-side helpers or response mapping, so unreachable backend routes can survive while Jest still passes.
+
 ### Data Flow: Text Chat
 ```
 User types message

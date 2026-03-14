@@ -1,0 +1,161 @@
+{
+  "milestone": "backend-refactor",
+  "round": 2,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "npx jest --maxWorkers=4 --testPathIgnorePatterns='phi-service|phone-auth-store|phone-number-hint|farm-safe-harvest-card|entry-form.integration|fertigation-form|location-picker|WeatherWidget|VineyardHealthWidget|QuickStatsWidget'",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "npm run lint",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 6,
+    "passed": 0,
+    "failed": 6,
+    "failedFeatures": [
+      "be-modular-structure",
+      "be-stt-provider-upgrade",
+      "be-tts-provider",
+      "be-llm-provider",
+      "be-context-assembly",
+      "be-routing-and-handlers"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "be-modular-structure",
+      "severity": "blocking",
+      "description": "STT validation and error paths in `supabase/functions/ai-gateway/handlers/request-processor.ts` still return plain objects cast as `Response`, so invalid JSON/audio branches do not produce real HTTP responses."
+    },
+    {
+      "featureId": "be-modular-structure",
+      "severity": "blocking",
+      "description": "The live ai-gateway response in `handlers/main.ts` still omits compatibility fields `stt_latency_ms`, `tts_generation_ms`, and `tts_skipped_reason`, so the pre-refactor response contract is still broken."
+    },
+    {
+      "featureId": "be-modular-structure",
+      "severity": "blocking",
+      "description": "VAL-BE-030 still fails because `context/farm-data.ts`, `routing/router.ts`, and legacy `voice-routing.ts` remain over 500 lines."
+    },
+    {
+      "featureId": "be-modular-structure",
+      "severity": "blocking",
+      "description": "The extracted handler modules are still not the live request path: `handlers/main.ts` keeps substantial routing logic inline and still lacks a real `farm_query` dispatch branch."
+    },
+    {
+      "featureId": "be-stt-provider-upgrade",
+      "severity": "blocking",
+      "description": "`MAX_AUDIO_BASE64_LENGTH` in `utils/audio.ts` is still too low for some exact-10MB payloads, so valid boundary-size uploads can still be rejected as `AUDIO_TOO_LARGE`."
+    },
+    {
+      "featureId": "be-stt-provider-upgrade",
+      "severity": "blocking",
+      "description": "The shared circuit breaker still counts cumulative failures because success only decrements the failure counter instead of resetting it, so Sarvam STT can still open after non-consecutive failures."
+    },
+    {
+      "featureId": "be-stt-provider-upgrade",
+      "severity": "blocking",
+      "description": "OpenAI STT empty transcripts still bubble up as generic errors instead of HTTP 400 `EMPTY_TRANSCRIPT` because the OpenAI path does not emit the `stt_empty_transcript` sentinel expected by `processStt()`."
+    },
+    {
+      "featureId": "be-tts-provider",
+      "severity": "blocking",
+      "description": "When the Sarvam TTS circuit is open, `generateSpeech()` still falls through to OpenAI even when `providerFallbackEnabled` is false."
+    },
+    {
+      "featureId": "be-tts-provider",
+      "severity": "blocking",
+      "description": "The TTS-specific tests still never import or execute `generateSpeech()`, so VAL-BE-014/015/016/017 remain unverified by real module tests."
+    },
+    {
+      "featureId": "be-llm-provider",
+      "severity": "blocking",
+      "description": "The feature-specific LLM tests still do not import or execute `chatCompletion()` or `extractIntent()`, so GPT-4o-mini advisory and JSON-mode extraction behavior remain unverified."
+    },
+    {
+      "featureId": "be-llm-provider",
+      "severity": "blocking",
+      "description": "The embeddings tests still do not import or execute `generateEmbedding()` or the real memory/RAG call sites, so the shared-embedding behavior is still not behaviorally verified."
+    },
+    {
+      "featureId": "be-context-assembly",
+      "severity": "blocking",
+      "description": "Attendance access in `context/farm-data.ts` still only activates for literal `YYYY-MM-DD` dates, so prompts like “today” still bypass `worker_attendance` queries."
+    },
+    {
+      "featureId": "be-context-assembly",
+      "severity": "blocking",
+      "description": "The attendance query is still not tenant-scoped when `farmId` is omitted, so it can read other tenants’ attendance rows for the same date."
+    },
+    {
+      "featureId": "be-context-assembly",
+      "severity": "blocking",
+      "description": "Weather enrichment still trusts arbitrary `farmId` values and still falls back to hard-coded Nashik coordinates when a farm has no location, instead of skipping unauthorized or irrelevant weather context."
+    },
+    {
+      "featureId": "be-routing-and-handlers",
+      "severity": "blocking",
+      "description": "`decideChatRoute()` can still return `farm_query`, but `handlers/main.ts` never dispatches to `handleFarmQuery()`, so deterministic farm-query handling remains unreachable."
+    },
+    {
+      "featureId": "be-routing-and-handlers",
+      "severity": "blocking",
+      "description": "Legacy `supabase/functions/ai-gateway/voice-routing.ts` still exists alongside the new routing files, so the routing refactor is still duplicated and monolithic rather than fully replaced."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Updated `.factory/library/architecture.md` to describe the ai-gateway module layout as the refactor target and to note that `context/farm-data.ts`, `routing/router.ts`, `voice-routing.ts`, and inline `handlers/main.ts` logic still mean the backend is only partially modularized.",
+      "sourceFeature": "be-modular-structure"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "backend-worker skill",
+      "suggestion": "Require backend tests to import and execute the real exported module under test. Constant-only or helper-only tests should not satisfy the tests-first requirement, and data-access features should include tenant-scope and error-path coverage.",
+      "evidence": "Round-2 reviews for be-modular-structure, be-stt-provider-upgrade, be-tts-provider, and be-llm-provider all found placeholder Jest files that never exercised the provider/edge-function modules they claimed to validate.",
+      "isSystemic": true
+    },
+    {
+      "target": "backend-worker skill",
+      "suggestion": "Derive verification commands from `.factory/services.yaml` instead of prescribing `npm test -- --grep ...`, and update generated feature verification steps to match the repo’s real Jest invocation.",
+      "evidence": "Round-2 reviews for be-tts-provider, be-llm-provider, and be-routing-and-handlers again found the skill/feature metadata pointing workers to `npm test -- --grep ...` even though `.factory/services.yaml` defines the canonical test command as raw Jest with ignore patterns.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md / backend-worker skill",
+      "suggestion": "Explicitly forbid piping validator commands through `head`, `tail`, or similar helpers so workers preserve true validator exit codes.",
+      "evidence": "The be-routing-and-handlers review found the worker transcript again using `npm test -- --grep ... 2>&1 | head -100`, repeating the exit-code masking problem already flagged in round 1.",
+      "isSystemic": true
+    },
+    {
+      "target": "backend-worker skill",
+      "suggestion": "Require `skillFeedback.followedProcedure` to be false whenever tests-first, file-size, or other documented procedure rules were violated.",
+      "evidence": "Round-2 reviews for be-modular-structure and be-routing-and-handlers still found handoffs marking `followedProcedure: true` despite empty `tests.added` arrays and >500-line modules.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Multiple reviews separately reported placeholder backend tests that never execute real modules.",
+      "reason": "duplicate"
+    },
+    {
+      "observation": "Multiple reviews separately reported `npm test -- --grep ...` mismatches with `.factory/services.yaml`.",
+      "reason": "duplicate"
+    }
+  ],
+  "previousRound": ".factory/validation/backend-refactor/scrutiny/synthesis.round1.json"
+}
