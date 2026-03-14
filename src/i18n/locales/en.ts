@@ -1242,6 +1242,14 @@ export const en = {
   assistant: {
     placeholder: 'Coming soon — your AI farming assistant',
     settingsButtonA11y: 'Open settings',
+    chat: {
+      welcomeTitle: 'How can I help?',
+      welcomeSubtitle: 'Ask about your crops, irrigation, diseases, and more.',
+      sendA11y: 'Send message',
+      suggestionChipA11y: 'Send suggestion: {{text}}',
+      userMessageA11y: 'You said: {{content}}',
+      assistantMessageA11y: 'AI said: {{content}}',
+    },
   },
   onboarding: {
     language: {

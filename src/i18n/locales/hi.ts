@@ -1223,6 +1223,14 @@ export const hi = {
   assistant: {
     placeholder: 'जल्द आ रहा है — आपका AI कृषि सहायक',
     settingsButtonA11y: 'सेटिंग्स खोलें',
+    chat: {
+      welcomeTitle: 'मैं कैसे मदद कर सकता हूँ?',
+      welcomeSubtitle: 'अपनी फसल, सिंचाई, बीमारियों और अन्य के बारे में पूछें।',
+      sendA11y: 'संदेश भेजें',
+      suggestionChipA11y: 'सुझाव भेजें: {{text}}',
+      userMessageA11y: 'आपने कहा: {{content}}',
+      assistantMessageA11y: 'AI ने कहा: {{content}}',
+    },
   },
 
   onboarding: {

@@ -1244,6 +1244,14 @@ export const mr = {
   assistant: {
     placeholder: 'लवकरच येत आहे — तुमचा AI शेती सहाय्यक',
     settingsButtonA11y: 'सेटिंग्ज उघडा',
+    chat: {
+      welcomeTitle: 'मी कसे मदत करू?',
+      welcomeSubtitle: 'तुमचे पीक, सिंचन, रोग आणि इतरांबद्दल विचारा.',
+      sendA11y: 'संदेश पाठवा',
+      suggestionChipA11y: 'सूचना पाठवा: {{text}}',
+      userMessageA11y: 'तुम्ही म्हणालात: {{content}}',
+      assistantMessageA11y: 'AI म्हणाले: {{content}}',
+    },
   },
 
   onboarding: {
