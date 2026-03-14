@@ -1,0 +1,53 @@
+src/i18n/locales/mr.ts
+  7f42ca7678b82a46 1247-1254
+src/i18n/locales/en.ts
+  7f42ca7678b82a46 1245-1252
+__tests__/chat-screen.test.tsx
+  7f42ca7678b82a46 1-235
+src/components/assistant/InputBar.tsx
+  7f42ca7678b82a46 1-183
+app/(tabs)/assistant.tsx
+  7f42ca7678b82a46 2,5
+src/components/assistant/SuggestionChips.tsx
+  7f42ca7678b82a46 1-108
+__tests__/suggestion-chips.test.tsx
+  7f42ca7678b82a46 1-120
+src/components/assistant/ChatScreen.tsx
+  7f42ca7678b82a46 1-182
+src/components/assistant/MessageList.tsx
+  7f42ca7678b82a46 1-136
+src/i18n/locales/hi.ts
+  7f42ca7678b82a46 1226-1233
+__tests__/use-assistant.test.ts
+  7f42ca7678b82a46 1-253
+src/components/assistant/MessageBubble.tsx
+  7f42ca7678b82a46 1-251
+src/hooks/use-assistant.ts
+  7f42ca7678b82a46 1-155
+__tests__/message-bubble.test.tsx
+  7f42ca7678b82a46 1-126
+__tests__/input-bar.test.tsx
+  7f42ca7678b82a46 1-169
+__tests__/chat-screen-i18n.test.ts
+  7f42ca7678b82a46 1-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "8a21b7b769159d219432c36c00e268d7531041ff",
+  "prompts": {
+    "7f42ca7678b82a46": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "2bbb1030-75a3-4c5b-9048-abcf4c49bd25",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 2259,
+      "total_deletions": 211,
+      "accepted_lines": 2089,
+      "overriden_lines": 0
+    }
+  }
+}
