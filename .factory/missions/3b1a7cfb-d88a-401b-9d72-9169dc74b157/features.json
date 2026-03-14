@@ -1,6 +1,63 @@
 {
   "features": [
     {
+      "id": "be-fix-wiring-and-correctness",
+      "description": "SCRUTINY FIX: Address all critical wiring and correctness issues found during backend-refactor scrutiny. Read the full scrutiny synthesis at .factory/validation/backend-refactor/scrutiny/synthesis.json and the individual review reports in .factory/validation/backend-refactor/scrutiny/reviews/ for complete details.\n\nCRITICAL FIXES:\n1. Wire handler modules into live request flow: In handlers/main.ts (or request-processor.ts), ensure the route dispatch switch includes cases for 'advisory' (→ handlers/advisory.ts), 'farm_query' (→ handlers/farm-query.ts), 'voice_log' (→ handlers/voice-log.ts), 'clarify_route' (→ handlers/clarify.ts), 'fallback_llm' (→ advisory handler). Currently farm_query falls through to advisory.\n2. Fix fake HTTP Responses: In handlers/request-processor.ts, replace all `{ status: 400, body: ... } as unknown as Response` with proper `new Response(JSON.stringify(...), { status: 400, headers: ... })` instances.\n3. Restore dropped response fields: Add back stt_latency_ms, tts_generation_ms, tts_skipped_reason to the response payload in handlers/main.ts.\n4. Fix 10MB boundary math in STT: Change MAX_AUDIO_BASE64_LENGTH to use Math.ceil(10 * 1024 * 1024 * 4 / 3) instead of Math.floor to avoid rejecting valid boundary-sized uploads.\n5. Fix circuit breaker consecutive failure counting: In utils/circuit-breaker.ts, reset failure count to 0 on any successful call. Currently it counts cumulative rather than consecutive failures.\n6. Fix TTS providerFallbackEnabled bypass: In providers/tts.ts, when the Sarvam circuit breaker is open AND providerFallbackEnabled is false, return null (text-only) instead of falling through to OpenAI.\n7. Fix LLM context placement: In providers/llm.ts chatCompletion(), move farm/memory/RAG context blocks into the system message, not the user message.\n8. Remove voice-routing.ts (1,364-line monolith that was accidentally restored by git stash). Delete supabase/functions/ai-gateway/voice-routing.ts.\n9. Apply 2,500-char truncation to OpenAI TTS fallback path as well (not just Sarvam).",
+      "skillName": "backend-worker",
+      "milestone": "backend-refactor",
+      "preconditions": [
+        "All 6 backend-refactor implementation features are complete",
+        "Scrutiny synthesis exists at .factory/validation/backend-refactor/scrutiny/synthesis.json"
+      ],
+      "expectedBehavior": [
+        "All 5 route types dispatch to their dedicated handler modules",
+        "farm_query route goes to handlers/farm-query.ts (not advisory)",
+        "Error responses are real HTTP Response objects",
+        "Response includes stt_latency_ms, tts_generation_ms, tts_skipped_reason",
+        "10MB boundary uploads are accepted correctly",
+        "Circuit breaker resets on success (consecutive, not cumulative)",
+        "TTS respects providerFallbackEnabled when circuit open",
+        "LLM context in system message, not user message",
+        "voice-routing.ts deleted",
+        "OpenAI TTS fallback applies 2,500-char truncation"
+      ],
+      "verificationSteps": [
+        "npm run typecheck passes",
+        "npm test passes (552+ tests)",
+        "npm run lint passes",
+        "voice-routing.ts does not exist",
+        "grep 'as unknown as Response' in handlers/ returns 0 matches"
+      ],
+      "fulfills": [],
+      "status": "pending"
+    },
+    {
+      "id": "be-fix-security-and-tests",
+      "description": "SCRUTINY FIX: Address security/tenant-scoping issues and replace tautological tests. Read the full scrutiny synthesis at .factory/validation/backend-refactor/scrutiny/synthesis.json for details.\n\nSECURITY FIXES:\n1. Tenant-scope worker attendance: In context/farm-data.ts, when querying worker_attendance, ALWAYS filter by the authenticated user's worker IDs (join through workers table where user_id matches). Never return attendance for workers belonging to other users.\n2. Farm ownership validation for weather: In context/farm-data.ts fetchFarmDetails(), verify that the requested farm belongs to the authenticated user before returning coordinates. If coordinates are missing, SKIP weather enrichment entirely — do NOT fall back to hardcoded Nashik coordinates.\n3. Expand date parsing for attendance: Support natural dates like 'today', 'yesterday', 'kal' (Hindi), 'काल' (Marathi), 'आज' (today) in attendance queries, not just literal YYYY-MM-DD.\n\nFILE SIZE FIXES:\n4. Split routing/router.ts (1,406 lines) into focused modules: routing/intent-patterns.ts (pattern definitions), routing/voice-log-routing.ts (voice log state machine), routing/farm-query-routing.ts (farm query classification). The main router.ts should just orchestrate, staying under 500 lines.\n5. Split context/farm-data.ts (1,664 lines) into sub-modules: context/farm-records.ts (activity record queries), context/farm-workers.ts (worker/attendance queries), context/farm-weather.ts (weather integration), context/farm-details.ts (farm info lookup). Main farm-data.ts orchestrates, under 500 lines.\n\nTEST FIXES:\n6. Rewrite tests for STT, TTS, and LLM providers to actually import and call the real module functions with mocked dependencies. Tests must: import transcribeAudio/generateSpeech/chatCompletion/extractIntent/generateEmbedding, mock fetch/OpenAI/Sarvam calls, and assert real behavior (not local literals).\n7. Merge farm-record citations into the returned citations array in assembleContext().",
+      "skillName": "backend-worker",
+      "milestone": "backend-refactor",
+      "preconditions": ["be-fix-wiring-and-correctness is complete"],
+      "expectedBehavior": [
+        "Worker attendance queries are tenant-scoped to authenticated user's workers",
+        "Farm details validated for ownership before weather fetch",
+        "No hardcoded Nashik fallback for missing coordinates",
+        "Natural date parsing works for attendance (today/yesterday/kal/काल/आज)",
+        "routing/router.ts is under 500 lines (split into sub-modules)",
+        "context/farm-data.ts is under 500 lines (split into sub-modules)",
+        "Provider tests import and test real functions with mocked deps",
+        "Farm-record citations merged into returned citations array"
+      ],
+      "verificationSteps": [
+        "npm run typecheck passes",
+        "npm test passes",
+        "npm run lint passes",
+        "No file in supabase/functions/ai-gateway/ exceeds 500 lines (check with wc -l)",
+        "Tests for providers import the actual module functions"
+      ],
+      "fulfills": [],
+      "status": "pending"
+    },
+    {
       "id": "be-modular-structure",
       "description": "Refactor the monolithic supabase/functions/ai-gateway/index.ts (2800 lines) into a modular structure. Create the directory layout: handlers/ (advisory, farm-query, voice-log, clarify), providers/ (stt, tts, llm, embeddings), context/ (assembler, farm-data, memory), routing/ (intent, router), safety/ (checker), utils/ (circuit-breaker, cost-tracker, telemetry). Create a new index.ts entry point (<200 lines) that routes requests to handlers. Move shared utilities (circuit breaker, cost tracking, telemetry, CORS) to utils/. The old monolithic index.ts should be replaced entirely. Each new module must be <500 lines with clean TypeScript interfaces between modules. Keep the existing response format contract so the client still works during transition.",
       "skillName": "backend-worker",
