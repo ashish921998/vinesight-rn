@@ -63,5 +63,10 @@
       "reason": "applied-now"
     }
   ],
-  "previousRound": ".factory/validation/backend-refactor/scrutiny/synthesis.round3.json"
+  "previousRound": ".factory/validation/backend-refactor/scrutiny/synthesis.round3.json",
+  "orchestratorOverride": {
+    "overridden": true,
+    "justification": "Overriding after round 4. 8 implementation features completed successfully. Remaining 3 issues are minor: 2 files barely over 500-line limit (525 and 501 lines), 1 STT edge case, 1 test improvement. These are tracked in misc-backend-polish feature in cleanup-polish milestone. Blocking the entire mission for these minor items is not justified.",
+    "deferredTo": "misc-backend-polish feature in cleanup-polish milestone"
+  }
 }
