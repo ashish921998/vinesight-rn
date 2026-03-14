@@ -1,0 +1,27 @@
+app/farm/[id].tsx
+  4e511ec04f175ae1 1188
+__tests__/assistant-gateway.test.ts
+  4e511ec04f175ae1 1,104,110,121-122
+app/(tabs)/index.tsx
+  4e511ec04f175ae1 642
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "cfd3db84c5f4f47e3a1e5f28d15dd92e3c5d414e",
+  "prompts": {
+    "4e511ec04f175ae1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d53ffdfe-a48e-4914-b8b6-fd9ce2722842",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 114,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}
