@@ -1,0 +1,45 @@
+{
+  "featureId": "be-llm-provider",
+  "reviewedAt": "2026-03-14T17:10:12Z",
+  "commitId": "7455b1d",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The runtime provider modules already exist and do use GPT-4o-mini plus shared embedding reuse, but this feature run did not actually implement the extraction work described in features.json. Commit 7455b1d only adds tests, and those tests are largely tautological—they never import or execute the provider functions they claim to verify—so the feature was marked complete without real implementation or meaningful validation. There is also still a spec mismatch in advisory prompt construction: context blocks are appended to the user message instead of the system prompt required by the feature description.",
+    "issues": [
+      {
+        "file": "__tests__/llm-provider.test.ts",
+        "line": 137,
+        "severity": "blocking",
+        "description": "The new LLM provider tests never import or call `chatCompletion()` or `extractIntent()`; they only assert local literals/helper output (for example `const expectedModel = 'gpt-4o-mini'`). Since commit 7455b1d changes only tests, this feature run provides no real verification for VAL-BE-010/011 or JSON-mode extraction behavior."
+      },
+      {
+        "file": "__tests__/embeddings-provider.test.ts",
+        "line": 112,
+        "severity": "blocking",
+        "description": "The embeddings tests also never import or execute `generateEmbedding()` or the memory/RAG call sites. They assert constants and local mock structures instead, so the claimed single-embedding reuse optimization and OpenAI embedding behavior are not actually validated by this feature commit."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/providers/llm.ts",
+        "line": 49,
+        "severity": "non_blocking",
+        "description": "The feature description requires farm, memory, RAG, and attachment context to be injected into the advisory system prompt, but `chatCompletion()` appends `contextBlocks` to the user message (`content: `${input.prompt}${contextPrompt}``) while the system message only contains language and safety instructions."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill's TDD guidance is too loose for Edge Function work: it says to create tests and cover expected behavior, but it does not explicitly require importing/executing the real module under test. That gap allowed this feature to add 1,482 lines of tautological tests and still report `followedProcedure: true`.",
+      "evidence": ".factory/skills/backend-worker/SKILL.md:34-36 says to write failing tests covering expected behavior; __tests__/llm-provider.test.ts and __tests__/embeddings-provider.test.ts contain no imports or provider invocations; /Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/handoffs/2026-03-14T16-39-24-918Z__be-llm-provider__7f50f09b-c4ae-466a-955c-403cd75db223.json:10-11 says the worker only verified existing modules and added tests."
+    },
+    {
+      "area": "conventions",
+      "observation": "Mission conventions say 'Tests first', but they do not state that new tests must exercise the real implementation rather than asserting local constants. Adding that expectation to AGENTS.md would reduce false-positive feature completions like this one.",
+      "evidence": "/Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/AGENTS.md:30 says 'Tests first'; __tests__/llm-provider.test.ts:137-165 and __tests__/embeddings-provider.test.ts:112-159 are representative examples of non-behavioral assertions."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail. Commit 7455b1d adds only tests, and those tests do not exercise the LLM or embeddings providers they claim to cover, so this feature run neither implemented nor meaningfully verified the assigned extraction work. The underlying runtime code already contains GPT-4o-mini usage and shared embedding reuse from earlier work, but advisory context still is not placed in the system prompt as specified."
+}

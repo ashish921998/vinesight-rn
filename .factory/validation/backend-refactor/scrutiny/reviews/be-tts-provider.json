@@ -1,0 +1,45 @@
+{
+  "featureId": "be-tts-provider",
+  "reviewedAt": "2026-03-14T17:12:08Z",
+  "commitId": "0a59204",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The runtime TTS provider module already exists and largely matches the Sarvam/OpenAI design, but this feature run did not actually implement the extraction work described in features.json. Commit 0a59204 only adds tests, and those tests are tautological\u2014they never import or execute `generateSpeech()`\u2014so the feature was marked complete without meaningful verification. There is also a real fallback bug in the provider: when the Sarvam circuit breaker is open, `generateSpeech()` still routes to OpenAI even if `providerFallbackEnabled` is false.",
+    "issues": [
+      {
+        "file": "__tests__/tts-provider.test.ts",
+        "line": 137,
+        "severity": "blocking",
+        "description": "The new TTS tests never import or call `generateSpeech()` or the provider module at all; they only assert local literals and hand-rolled state (for example `const expectedModel = 'bulbul:v3'`, `const fallbackEnabled = true`, and `expect(callCount).toBe(2)`). Since commit 0a59204 changes only this test file, the feature run neither implements nor meaningfully verifies VAL-BE-014/015/016/017."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/providers/tts.ts",
+        "line": 179,
+        "severity": "blocking",
+        "description": "When `checkCircuitBreaker('sarvam_tts')` returns false, the code sets `fallbackReason = 'sarvam_tts_circuit_open'` and then unconditionally enters the OpenAI path at lines 183-195. That bypasses the `providerFallbackEnabled` guard, so requests with `client_capabilities.provider_fallback_enabled = false` still produce OpenAI audio whenever the Sarvam circuit is open."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/providers/tts.ts",
+        "line": 111,
+        "severity": "non_blocking",
+        "description": "Only the Sarvam request truncates TTS input to 2500 chars (`text.slice(0, SARVAM_TTS_MAX_CHARS)` at line 66). The OpenAI fallback sends the full `text` at line 111, so long responses exceed the feature's stated 2500-character TTS input limit whenever fallback is used."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill's TDD guidance is too loose for backend provider work: it tells workers to write tests first and cover behavior, but it does not explicitly require importing/executing the real module under test. This feature added a large tautological test file and still reported `followedProcedure: true`.",
+      "evidence": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/skills/backend-worker/SKILL.md:34-38 says to write failing tests that cover expected behavior; /Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/worker-transcripts.jsonl (session dfd6b377-f3ab-46ae-a730-c85057aa2281, skeleton lines 174-207 and 410-412) shows the worker ran typecheck before creating tests and then reported `followedProcedure: true`; __tests__/tts-provider.test.ts contains no provider imports or `generateSpeech()` invocations."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Mission shared state is inconsistent about TTS speaker secret names. The feature description still points workers at `SARVAM_TTS_EN_SPEAKER` / `HI` / `MR`, while the code and `.env.example` use `ASSISTANT_SARVAM_TTS_*`, and `.factory/library/environment.md` does not document the actual speaker secret names at all.",
+      "evidence": "/Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/features.json:66 references `SARVAM_TTS_EN_SPEAKER`, `SARVAM_TTS_HI_SPEAKER`, and `SARVAM_TTS_MR_SPEAKER`; /Users/ashishhuddar/Desktop/vinesight-rn/.env.example:27-30 and supabase/functions/ai-gateway/providers/tts.ts:19-24 use `ASSISTANT_SARVAM_TTS_*`; /Users/ashishhuddar/Desktop/vinesight-rn/.factory/library/environment.md:19-45 omits those speaker secret names entirely."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail. Commit 0a59204 adds only tautological tests that do not exercise the TTS provider, and the runtime provider still has a blocking bug where the circuit-open path ignores `providerFallbackEnabled` and falls through to OpenAI anyway."
+}

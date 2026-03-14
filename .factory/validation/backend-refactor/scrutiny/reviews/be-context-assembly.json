@@ -1,0 +1,51 @@
+{
+  "featureId": "be-context-assembly",
+  "reviewedAt": "2026-03-14T17:13:09Z",
+  "commitId": "1b7b36385a4c217204d4d42314ddbf7253c9afe2",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature adds the requested context modules and broad data-source coverage, but it does not fully satisfy the farm-data and weather assertions. Worker attendance is not reliably accessible from normal prompts, attendance reads are not tenant-scoped, and weather context can be populated from an arbitrary farm ID or from hard-coded Nashik coordinates when the selected farm has no location.",
+    "issues": [
+      {
+        "file": "supabase/functions/ai-gateway/context/farm-data.ts",
+        "line": 168,
+        "severity": "blocking",
+        "description": "`parseExplicitDate()` only recognizes literal `YYYY-MM-DD` dates, and `queryWorkers()` only reads `worker_attendance` when that parser returns a value. Natural queries like 'worker attendance today' or Hindi/Marathi equivalents therefore fall through to the generic active-worker summary instead of actually querying attendance, so `worker_attendance` is not meaningfully accessible as required by VAL-BE-009."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/context/farm-data.ts",
+        "line": 927,
+        "severity": "blocking",
+        "description": "The attendance lookup filters only by `date` and an optional `farm_ids` contains check. When `farmId` is omitted, this query can read every tenant's attendance rows for that day because it never constrains the result set by the authenticated user's worker IDs or farm ownership. That breaks the feature's user-scoped/farm-scoped requirement and VAL-BE-025."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/context/farm-data.ts",
+        "line": 1653,
+        "severity": "blocking",
+        "description": "`fetchFarmDetails()` trusts any `farmId` and only filters by `id`, with no ownership check. If the request supplies an unknown or unauthorized farm, `fetchWeatherData()` then falls back to hard-coded Nashik coordinates at lines 1341-1342 instead of skipping weather enrichment. That can inject irrelevant or cross-tenant weather context into advisory prompts, which violates the feature's user-scoped query requirement and undermines VAL-BE-031's 'relevant weather context' assertion."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/context/assembler.ts",
+        "line": 292,
+        "severity": "non_blocking",
+        "description": "`assembleContext()` keeps farm-record citations inside `farmRecordsContext` (lines 239-244) but never merges them into the returned `citations` array. Downstream consumers such as `handlers/advisory.ts` only see memory/RAG/weather citations, so farm-backed context can look uncited and trigger overly conservative behavior even when farm data was successfully loaded."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker guidance should more explicitly require tenant-scoping and null-context tests for data-access modules. This feature added many helper-oriented tests, but none exercised `queryWorkers()`, `fetchFarmDetails()`, or `fetchWeatherData()` failure/ownership paths, which allowed blocking multi-tenant and weather-context bugs to ship undetected.",
+      "evidence": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/skills/backend-worker/SKILL.md:33-38 requires happy-path/error/edge-case tests for Supabase Edge Function modules; /Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/handoffs/2026-03-14T16-49-59-793Z__be-context-assembly__17d902c1-cf22-4003-ae1f-e69539393d90.json:10-11 and :41-108 describe only detection/helper coverage; grep over /Users/ashishhuddar/Desktop/vinesight-rn/__tests__/farm-data-module.test.ts found no references to `queryWorkers`, `fetchFarmDetails`, or `fetchWeatherData`."
+    },
+    {
+      "area": "skills",
+      "observation": "The worker marked `followedProcedure: true` even though the implementation violated the existing file-size rule by expanding `context/farm-data.ts` to 1664 lines. This looks like a handoff-accuracy issue for scrutiny triage rather than a missing shared-state rule.",
+      "evidence": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/skills/backend-worker/SKILL.md:42 says each module file must be < 500 lines; /Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/AGENTS.md:23 says no single file should exceed 500 lines; /Users/ashishhuddar/Desktop/vinesight-rn/supabase/functions/ai-gateway/context/farm-data.ts is 1664 lines; /Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/handoffs/2026-03-14T16-49-59-793Z__be-context-assembly__17d902c1-cf22-4003-ae1f-e69539393d90.json:184 reports `followedProcedure: true`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail. The feature adds broad context assembly, but worker-attendance queries are not reliably accessible or tenant-scoped, and weather enrichment can use unauthorized or fallback Nashik coordinates, so the farm-data and weather assertions are not fully met."
+}

@@ -1,0 +1,45 @@
+{
+  "featureId": "be-routing-and-handlers",
+  "reviewedAt": "2026-03-14T17:12:29Z",
+  "commitId": "3a435bd",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Fail. The refactor added new routing/voice-log code and text-length validation, but the edge-function entrypoint never executes the farm-query handler and still keeps voice-log state management partially duplicated in main.ts, so the feature does not fully deliver the promised modular routing/handlers behavior.",
+    "issues": [
+      {
+        "file": "supabase/functions/ai-gateway/handlers/main.ts",
+        "line": 225,
+        "severity": "blocking",
+        "description": "`decideChatRoute()` can return `farm_query`, but `handleRequest()` only branches for `clarify_route` and `voice_log` before falling into the advisory fallback at line 287. That means history/aggregation requests never invoke `handlers/farm-query.ts`; even clarified \"2) Show past records\" replies still go through the advisory LLM path instead of deterministic farm data queries."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/handlers/main.ts",
+        "line": 238,
+        "severity": "non_blocking",
+        "description": "`main.ts` reimplements the voice-log state machine instead of using `handleVoiceLog()`, and it never persists `voice_log_expected_field` or resets `voice_log_clarify_attempts`/`voice_log_expected_field` on ready/cancelled paths. After one partially clarified log, stale clarification state can leak into later turns and shorten future clarification flows."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/routing/router.ts",
+        "line": 1,
+        "severity": "non_blocking",
+        "description": "The replacement router is still a 1406-line file (`wc -l`), which violates the documented `<500` line module limit in `AGENTS.md` and `backend-worker/SKILL.md`. The feature removed `voice-routing.ts`, but it replaced it with another large monolith rather than the promised cleanly split modules."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `backend-worker` skill's TDD procedure was not followed, but the handoff still reports `followedProcedure: true`. The worker rewrote `routing/router.ts` before adding any tests, later acknowledged that the passing `voice-log-assistant.test.ts` coverage was for the client-side service rather than the Supabase Edge Function modules, and still completed the feature with no backend tests added.",
+      "evidence": "`backend-worker/SKILL.md:34-35` says to write tests first and create test files in `__tests__/`. The transcript skeleton shows the first code edit was rewriting `supabase/functions/ai-gateway/routing/router.ts`, then later states that the existing tests are for the client-side `src/services/voice-log-assistant.ts`. The handoff file reports `tests.added: []`, `tests.updated: []`, cites `__tests__/voice-log-assistant.test.ts` as coverage, and still sets `skillFeedback.followedProcedure` to true."
+    },
+    {
+      "area": "skills",
+      "observation": "Skill/procedure compliance should probably be checked against the documented module-size rule. The worker marked the feature as following procedure even though the new `routing/router.ts` is 1406 lines.",
+      "evidence": "`backend-worker/SKILL.md:42` says each module file must be `< 500 lines`, and mission `AGENTS.md:23` repeats that no single file should exceed 500 lines. `wc -l supabase/functions/ai-gateway/routing/router.ts` reports 1406 lines, while the handoff claims the server-side code is now 'modular and clean' and marks `followedProcedure: true`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail. The feature removed `voice-routing.ts` and added new routing/voice-log code plus text-length validation, but `handlers/main.ts` never executes the `farm_query` path, so deterministic farm query handling is still missing in the live edge-function flow. I also noted stale voice-log state management and inaccurate skill-feedback/testing claims in the shared-state observations."
+}

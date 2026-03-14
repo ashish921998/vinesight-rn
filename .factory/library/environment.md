@@ -21,6 +21,11 @@ Set in `.env` (already configured):
 Set via Supabase dashboard or CLI — NOT in .env:
 - `OPENAI_API_KEY` — OpenAI API access
 - `SARVAM_API_KEY` — Sarvam AI API access (STT, TTS)
+- `ASSISTANT_SARVAM_TTS_MODEL` — Optional override for the Sarvam TTS model (defaults to `bulbul:v3`)
+- `ASSISTANT_SARVAM_TTS_EN_SPEAKER` — English Sarvam speaker (defaults to `shubh`)
+- `ASSISTANT_SARVAM_TTS_HI_SPEAKER` — Hindi Sarvam speaker (defaults to `shubh`)
+- `ASSISTANT_SARVAM_TTS_MR_SPEAKER` — Marathi Sarvam speaker (defaults to `shubh`)
+- `ASSISTANT_SARVAM_TTS_PACE` — Optional Sarvam TTS pace override (defaults to `1`)
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — Auto-provided by Supabase runtime
 
 ## Sarvam AI Configuration
