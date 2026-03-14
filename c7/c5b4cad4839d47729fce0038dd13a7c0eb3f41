@@ -1,0 +1,41 @@
+src/i18n/locales/en.ts
+  843239df514bf69b 1303-1310
+src/i18n/locales/hi.ts
+  843239df514bf69b 1284-1291
+src/i18n/locales/mr.ts
+  843239df514bf69b 1307-1314
+__tests__/animated-orb.test.tsx
+  843239df514bf69b 1-139
+__tests__/voice-mode-modal.test.tsx
+  843239df514bf69b 1-274
+__tests__/chat-screen.test.tsx
+  843239df514bf69b 18-32
+src/components/assistant/ChatScreen.tsx
+  843239df514bf69b 48-49,67-69,211-232,439,456-464
+src/components/assistant/VoiceMode/VoiceThread.tsx
+  843239df514bf69b 1-161
+src/components/assistant/VoiceMode/VoiceModeModal.tsx
+  843239df514bf69b 1-352
+src/components/assistant/VoiceMode/AnimatedOrb.tsx
+  843239df514bf69b 1-458
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "c7c5b4cad4839d47729fce0038dd13a7c0eb3f41",
+  "prompts": {
+    "843239df514bf69b": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "e96e5d48-851b-4162-a430-cdc39ece54d4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 1568,
+      "total_deletions": 43,
+      "accepted_lines": 1528,
+      "overriden_lines": 0
+    }
+  }
+}
