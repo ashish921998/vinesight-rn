@@ -1,45 +1,51 @@
 {
   "featureId": "be-modular-structure",
-  "reviewedAt": "2026-03-14T17:12:06Z",
+  "reviewedAt": "2026-03-14T17:27:56Z",
   "commitId": "a493955e8461c9670185ce675e19acf67763a725",
   "transcriptSkeletonReviewed": true,
   "diffReviewed": true,
   "status": "fail",
   "codeReview": {
-    "summary": "The commit does create the requested directory skeleton and a thin entrypoint, but it does not satisfy the modular-structure contract or preserve the old gateway behavior. Routing still depends on a 1,364-line `voice-routing.ts`, the new handler modules are not wired into the live request path, the response payload drops fields that existed before the refactor, and STT validation paths return plain objects cast as `Response` instead of real HTTP responses.",
+    "summary": "Round-2 re-review still fails. The prior fake-Response bug and response-contract regression are both still present in the live gateway. The original `voice-routing.ts` dependency appears to have been removed, but the modular-structure contract is still unmet because the current ai-gateway tree contains new 1406-line/1664-line monoliths and the extracted handler modules are still not on the live request path.",
     "issues": [
       {
         "file": "supabase/functions/ai-gateway/handlers/request-processor.ts",
-        "line": 110,
+        "line": 65,
         "severity": "blocking",
-        "description": "`processStt()` returns plain objects like `{ status: 400, body: ... } as unknown as Response` on its validation/error paths (for example lines 110-113, 122-125, 131-134, 160-163, and 174-177). `handleRequest()` returns `sttResult.response` directly, so invalid audio or empty-input requests will not produce a real `Response` instance at runtime. These branches need `jsonResponse(...)` or `new Response(...)` instead of a type cast."
+        "description": "`setupRequest()` and `processStt()` still return plain objects cast as `Response` on invalid JSON and validation/error paths (`handlers/request-processor.ts:65-71`, `111-116`, `126-153`, `181-197`, `208-226`). `handleRequest()` returns `sttResult.response` directly at `handlers/main.ts:116-117`, so these branches still do not produce real HTTP `Response` instances at runtime."
       },
       {
         "file": "supabase/functions/ai-gateway/handlers/main.ts",
         "line": 424,
         "severity": "blocking",
-        "description": "The refactored response body no longer includes `stt_latency_ms`, `tts_generation_ms`, or `tts_skipped_reason`. Those fields were present in the pre-refactor contract (`supabase/functions/ai-gateway/index.ts` in the parent commit at lines 2763-2765), and the feature description explicitly required preserving the existing response format so the client keeps working during the transition."
+        "description": "The live response payload still omits `stt_latency_ms`, `tts_generation_ms`, and `tts_skipped_reason`. `handlers/main.ts:424-446` returns none of those fields, while the client still reads them in `src/services/assistant-gateway.ts:765-795` and the contract test fixture still expects them in `__tests__/assistant-gateway.test.ts:32-94`. That breaks the feature requirement to preserve the pre-refactor response format during the transition."
       },
       {
-        "file": "supabase/functions/ai-gateway/voice-routing.ts",
+        "file": "supabase/functions/ai-gateway/context/farm-data.ts",
         "line": 1,
         "severity": "blocking",
-        "description": "The gateway is still anchored to a 1,364-line routing monolith, so VAL-BE-030's 'no single file exceeds 500 lines' assertion is not met. `handlers/main.ts` still imports core route/voice-log behavior from `../voice-routing.ts` (lines 6-24) and keeps route handling inline (lines 154-310), while `handleAdvisory`, `handleFarmQuery`, `handleVoiceLog`, and `handleClarify` are only defined/re-exported and never referenced anywhere else in the committed tree."
+        "description": "The modular-size contract is still broken in the current repo state. The ai-gateway tree now contains `context/farm-data.ts` at 1664 lines, `routing/router.ts` at 1406 lines, and a leftover `voice-routing.ts` at 1364 lines, so VAL-BE-030's 'no single file exceeds 500 lines' verification still fails even after the later refactor commits."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/handlers/main.ts",
+        "line": 225,
+        "severity": "blocking",
+        "description": "The extracted handler modules still are not the live execution path. `handlers/main.ts:225-344` handles clarify/voice-log/advisory flow inline, there is no `routeDecision === 'farm_query'` dispatch branch in that file, and `handleAdvisory`, `handleFarmQuery`, `handleVoiceLog`, and `handleClarify` only appear in their own module files plus `handlers/index.ts`. The feature explicitly required the new entrypoint to route requests to handler modules, which is still not happening."
       }
     ]
   },
   "sharedStateObservations": [
     {
       "area": "skills",
-      "observation": "The backend-worker skill and mission conventions both say to write failing tests first, but this refactor handoff reports `followedProcedure: true` while adding no tests at all. Shared guidance should either require focused regression coverage for refactors like this or explicitly document when existing-suite-only validation is acceptable.",
-      "evidence": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/skills/backend-worker/SKILL.md:34-38 require creating test files and failing tests first; /Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/AGENTS.md:30 says 'Tests first'; /Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/handoffs/2026-03-14T16-19-11-095Z__be-modular-structure__a0261c2e-ffff-4534-9351-57d8f998d9c5.json:42-49 shows `tests.added` is empty but `followedProcedure` is true."
+      "observation": "The backend-worker skill still does not give repo-specific guidance for testing Deno edge-function modules from Jest, and the original handoff still marked `followedProcedure: true` despite adding no tests. The result is a pattern of tests that copy helper logic into Jest files instead of exercising the real modules, which makes modular refactors look better-covered than they are.",
+      "evidence": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/skills/backend-worker/SKILL.md:34-38 requires creating failing tests for new modules; /Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/handoffs/2026-03-14T16-19-11-095Z__be-modular-structure__a0261c2e-ffff-4534-9351-57d8f998d9c5.json:42-49 shows `tests.added` was empty while `followedProcedure` remained true; current tests such as `__tests__/context-assembler.test.ts:8-37` and `__tests__/farm-data-module.test.ts:11-22` define local helper implementations instead of importing the edge-function modules they are meant to validate."
     },
     {
-      "area": "services",
-      "observation": "The mission has a canonical Jest command in `.factory/services.yaml`, but the worker ran `npm test 2>&1 | tail -30` and later `npm test 2>&1 | tail -10` from the transcript skeleton. That pattern hides Jest's real exit status unless `pipefail` is set, so shared guidance should steer workers to the services.yaml command and explicitly forbid piping validators through `tail`/`head`.",
-      "evidence": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/services.yaml:5 defines the supported `test` command; the transcript skeleton for worker session a0261c2e-ffff-4534-9351-57d8f998d9c5 contains `Execute` calls with `npm test 2>&1 | tail -30` and `npm test 2>&1 | tail -10`."
+      "area": "knowledge",
+      "observation": "The shared architecture doc presents the backend refactor as a cleanly modularized layout, but it does not reflect that `routing/router.ts`, `context/farm-data.ts`, and `voice-routing.ts` are currently multi-thousand-line files. Future workers consulting `.factory/library/architecture.md` could wrongly assume VAL-BE-030 is already satisfied.",
+      "evidence": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/library/architecture.md:44-69 documents the target ai-gateway module layout; current line counts in `supabase/functions/ai-gateway/` are `context/farm-data.ts` 1664, `routing/router.ts` 1406, and `voice-routing.ts` 1364."
     }
   ],
   "addressesFailureFrom": null,
-  "summary": "Fail. The refactor created the requested folders and a thin `index.ts`, but it still leaves a 1,364-line `voice-routing.ts`, drops previously shipped response fields, and returns fake `Response` objects on STT validation failures, so the modular-structure and backward-compatibility requirements are not met."
+  "summary": "Fail. Two prior blocking findings remain unresolved (`request-processor.ts` still returns fake `Response` objects and `handlers/main.ts` still drops response fields), and the modular-structure contract is still not met because oversized ai-gateway files remain and the extracted handler modules are not actually wired into the live request flow."
 }

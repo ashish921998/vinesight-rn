@@ -42,9 +42,12 @@ app/(tabs)/assistant.tsx  →  AI tab (entry point)
 ```
 
 ### Backend (Supabase Edge Functions)
+
+Target modular layout introduced during the backend refactor:
+
 ```
 supabase/functions/ai-gateway/
-  ├── index.ts              (entry point, request router, <200 lines)
+  ├── index.ts              (entry point, request router target: <200 lines)
   ├── handlers/
   │   ├── advisory.ts       (LLM advisory flow)
   │   ├── farm-query.ts     (farm data query handler)
@@ -69,6 +72,8 @@ supabase/functions/ai-gateway/
       ├── cost-tracker.ts
       └── telemetry.ts
 ```
+
+Current repo state still only partially meets that target: `context/farm-data.ts`, `routing/router.ts`, and legacy `voice-routing.ts` remain >500 lines, and the live request flow still keeps significant routing/handler logic inside `handlers/main.ts`.
 
 ### Data Flow: Text Chat
 ```

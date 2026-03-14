@@ -1,45 +1,46 @@
 {
   "featureId": "be-stt-provider-upgrade",
-  "reviewedAt": "2026-03-14T17:11:38.913741+00:00",
+  "reviewedAt": "2026-03-14T17:26:25.186928+00:00",
   "commitId": "eced77b",
   "transcriptSkeletonReviewed": true,
   "diffReviewed": true,
   "status": "fail",
   "codeReview": {
-    "summary": "The Saaras v3 migration is mostly wired up correctly, but the feature does not fully satisfy its contract. The new max-size guard rejects some valid 10MB payloads, and the preserved circuit-breaker logic still counts cumulative failures instead of the 5 consecutive Sarvam failures required by VAL-BE-004. The added STT tests are also largely placeholder assertions, so these regressions were not meaningfully exercised.",
+    "summary": "Fail. The two previously reported blockers are still present in the current repo state: the 10MB audio guard is still three base64 characters too strict for some exactly-at-limit uploads, and the shared circuit-breaker logic still counts cumulative failures because success only decrements the counter instead of resetting it. I also found a new contract-level gap: OpenAI empty transcripts are not normalized to the `stt_empty_transcript` sentinel, so fallback/direct OpenAI paths can still escape as generic server errors instead of HTTP 400 `EMPTY_TRANSCRIPT`. The added STT test file remains mostly placeholder assertions/comments and still does not exercise the real provider or request-processor behavior.",
     "issues": [
       {
         "file": "supabase/functions/ai-gateway/utils/audio.ts",
         "line": 124,
         "severity": "blocking",
-        "description": "`MAX_AUDIO_BASE64_LENGTH` is computed as `floor(10MB * 4 / 3)` and `processStt()` rejects any payload whose raw base64 length exceeds that value. A valid 10MB binary encodes to 13,981,016 base64 characters, but the configured threshold is 13,981,013, so some exactly-at-limit uploads are incorrectly rejected as `AUDIO_TOO_LARGE`. That violates the `>10MB` boundary required by VAL-BE-032."
+        "description": "`MAX_AUDIO_BASE64_LENGTH` is still computed as `floor(10MB * 4 / 3)`. A valid 10MB payload encodes to `4 * ceil(10,485,760 / 3) = 13,981,016` base64 characters, but the configured limit is `13,981,013`, so some exactly-10MB uploads are still rejected as `AUDIO_TOO_LARGE`. That means the prior VAL-BE-032 boundary bug remains unresolved."
       },
       {
         "file": "supabase/functions/ai-gateway/utils/circuit-breaker.ts",
         "line": 75,
         "severity": "blocking",
-        "description": "The breaker never resets the Sarvam failure count after a successful STT call; it only decrements by one. That means the breaker can open after five total failures spread across intermittent successes, rather than five consecutive Sarvam failures as required by VAL-BE-004."
+        "description": "`recordProviderSuccess()` still decrements `failures` by one instead of resetting the counter after a successful Sarvam STT call. The STT breaker can therefore open after five total failures spread across intermittent successes, rather than the required five consecutive Sarvam failures. The prior VAL-BE-004 blocker is still unresolved."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/providers/stt.ts",
+        "line": 194,
+        "severity": "blocking",
+        "description": "`callOpenAiSttInternal()` throws `OpenAI STT returned empty transcript`, but `processStt()` only converts errors containing `stt_empty_transcript` into HTTP 400 `EMPTY_TRANSCRIPT`. When OpenAI is used directly or as Sarvam fallback and returns blank text, the request still bubbles up as a generic error instead of satisfying the feature requirement to return HTTP 400 for empty STT transcripts."
       },
       {
         "file": "__tests__/stt-provider.test.ts",
         "line": 139,
         "severity": "non_blocking",
-        "description": "The new STT test file does not import or call `transcribeAudio()` at all, and several key cases (fallback, empty transcript, request shape) are left as comments or tautological assertions. The handoff claims comprehensive STT coverage, but this file would not catch either blocking issue above."
+        "description": "The STT test file still never imports or executes `transcribeAudio()`/`processStt()`. Many cases are placeholder assertions or comments (for example, the Saaras model, fallback, and multipart request tests), so the suite still would not catch the blocking regressions above."
       }
     ]
   },
   "sharedStateObservations": [
     {
       "area": "skills",
-      "observation": "The `backend-worker` skill's testing guidance does not match this repo's reality. It tells workers to run `npm test -- --grep ...`, but `.factory/services.yaml` configures raw Jest, and the transcript shows the worker using `--testPathPattern` instead. The skill should be updated to recommend a repo-compatible filter command.",
-      "evidence": "`.factory/skills/backend-worker/SKILL.md:51` prescribes `npm test -- --grep '<relevant pattern>'`, while `.factory/services.yaml:5` defines the test runner as `npx jest ...`; in the transcript skeleton for worker session `5a43e2c7-4e20-4c9b-ae4e-f63c12de3b8d`, the worker used `npm test -- --testPathPattern \"stt\"`."
-    },
-    {
-      "area": "skills",
-      "observation": "The current backend-worker skill/handoff flow is too loose to catch placeholder tests. The worker marked `skillFeedback.followedProcedure=true`, but the added STT tests never imported the module under test and mostly asserted local literals/comments. The skill should require asserting actual module behavior, not just creating a test file.",
-      "evidence": "`backend-worker/SKILL.md:34-38` says tests should cover happy/error/edge/fallback behavior with mocked providers, but `__tests__/stt-provider.test.ts:139-275` contains placeholder cases without importing `transcribeAudio()`. The handoff at `.../handoffs/2026-03-14T16-30-08-733Z__be-stt-provider-upgrade__5a43e2c7-4e20-4c9b-ae4e-f63c12de3b8d.json` still records `skillFeedback.followedProcedure: true`."
+      "observation": "The `backend-worker` skill still lets workers report tests-first compliance even when the added test file never imports the module under test and only asserts local literals/comments. That mismatch is still allowing placeholder backend tests to pass handoff review.",
+      "evidence": "`.factory/skills/backend-worker/SKILL.md:31-34` requires happy-path/error/edge/fallback tests with mocked providers, but `__tests__/stt-provider.test.ts:132-320` contains placeholder assertions/comments without importing `transcribeAudio()` or `processStt()`. The handoff at `/Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/handoffs/2026-03-14T16-30-08-733Z__be-stt-provider-upgrade__5a43e2c7-4e20-4c9b-ae4e-f63c12de3b8d.json` still records `skillFeedback.followedProcedure: true`."
     }
   ],
-  "addressesFailureFrom": null,
-  "summary": "Fail. The STT provider was upgraded to Saaras v3, but two contract-level defects remain: the 10MB boundary check rejects some valid exactly-10MB uploads, and the circuit breaker still opens on cumulative rather than consecutive Sarvam failures. The added STT tests are also mostly placeholders, so they did not provide reliable verification for these paths."
+  "addressesFailureFrom": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/validation/backend-refactor/scrutiny/reviews/be-stt-provider-upgrade.json",
+  "summary": "Fail. The two prior blocking findings are still unresolved in the current repo state (exact-10MB audio rejection and cumulative rather than consecutive Sarvam failure counting), and there is also a new blocking gap where OpenAI empty transcripts still do not map to HTTP 400 `EMPTY_TRANSCRIPT`. The STT tests remain largely placeholder coverage, so they still do not verify the contract-critical behavior."
 }

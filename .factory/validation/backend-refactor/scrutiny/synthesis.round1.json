@@ -1,0 +1,145 @@
+{
+  "milestone": "backend-refactor",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "npx jest --maxWorkers=4 --testPathIgnorePatterns='phi-service|phone-auth-store|phone-number-hint|farm-safe-harvest-card|entry-form.integration|fertigation-form|location-picker|WeatherWidget|VineyardHealthWidget|QuickStatsWidget|TaskSummaryWidget'",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "npm run lint",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 6,
+    "passed": 0,
+    "failed": 6,
+    "failedFeatures": [
+      "be-modular-structure",
+      "be-stt-provider-upgrade",
+      "be-tts-provider",
+      "be-llm-provider",
+      "be-context-assembly",
+      "be-routing-and-handlers"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "be-modular-structure",
+      "severity": "blocking",
+      "description": "STT validation paths in `handlers/request-processor.ts` return plain objects cast as `Response`, so invalid-audio and empty-input branches do not produce real HTTP responses."
+    },
+    {
+      "featureId": "be-modular-structure",
+      "severity": "blocking",
+      "description": "The live gateway path still depends on `voice-routing.ts` (1364 lines), and the newly introduced handler modules are not wired into the request flow, so the modular-structure contract and <500-line rule are not met."
+    },
+    {
+      "featureId": "be-modular-structure",
+      "severity": "blocking",
+      "description": "The refactored response body dropped previously shipped fields (`stt_latency_ms`, `tts_generation_ms`, `tts_skipped_reason`), violating the response-format compatibility requirement."
+    },
+    {
+      "featureId": "be-stt-provider-upgrade",
+      "severity": "blocking",
+      "description": "`MAX_AUDIO_BASE64_LENGTH` is too low for exact 10MB payloads, so some valid boundary-size uploads are incorrectly rejected as `AUDIO_TOO_LARGE`."
+    },
+    {
+      "featureId": "be-stt-provider-upgrade",
+      "severity": "blocking",
+      "description": "The Sarvam STT circuit breaker opens after cumulative failures instead of the required 5 consecutive failures because success does not reset the failure count."
+    },
+    {
+      "featureId": "be-tts-provider",
+      "severity": "blocking",
+      "description": "When the Sarvam TTS circuit breaker is open, `generateSpeech()` still falls through to OpenAI even when `providerFallbackEnabled` is false."
+    },
+    {
+      "featureId": "be-tts-provider",
+      "severity": "blocking",
+      "description": "The completed feature commit only added tautological tests that never import or execute `generateSpeech()`, so the extraction work and required behavior were not meaningfully verified."
+    },
+    {
+      "featureId": "be-llm-provider",
+      "severity": "blocking",
+      "description": "The completed feature commit only added non-behavioral tests that never import or execute `chatCompletion()`, `extractIntent()`, or `generateEmbedding()`, so the assigned provider work was not meaningfully implemented or verified in that feature run."
+    },
+    {
+      "featureId": "be-context-assembly",
+      "severity": "blocking",
+      "description": "`worker_attendance` is only queried when the prompt contains a literal `YYYY-MM-DD` date, so normal attendance requests such as 'today' do not reliably access attendance data."
+    },
+    {
+      "featureId": "be-context-assembly",
+      "severity": "blocking",
+      "description": "The attendance query is not tenant-scoped when `farmId` is omitted, allowing reads across other tenants' attendance rows for the same date."
+    },
+    {
+      "featureId": "be-context-assembly",
+      "severity": "blocking",
+      "description": "Weather enrichment can use an arbitrary/unauthorized `farmId`, and missing coordinates fall back to hard-coded Nashik weather instead of skipping irrelevant weather context."
+    },
+    {
+      "featureId": "be-routing-and-handlers",
+      "severity": "blocking",
+      "description": "`decideChatRoute()` can return `farm_query`, but `handlers/main.ts` never dispatches that route to `handlers/farm-query.ts`; farm queries fall through to the advisory path instead of deterministic handling."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Documented the actual Supabase function secrets for Sarvam TTS speaker selection (`ASSISTANT_SARVAM_TTS_MODEL`, `ASSISTANT_SARVAM_TTS_EN_SPEAKER`, `ASSISTANT_SARVAM_TTS_HI_SPEAKER`, `ASSISTANT_SARVAM_TTS_MR_SPEAKER`, `ASSISTANT_SARVAM_TTS_PACE`) in `.factory/library/environment.md`.",
+      "sourceFeature": "be-tts-provider"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "backend-worker skill",
+      "suggestion": "Require new tests to import and execute the real module under test. Tautological assertions or helper-only tests should not satisfy the tests-first requirement, and data-access work should include tenant-scope and failure-path coverage.",
+      "evidence": "Reviews for be-stt-provider-upgrade, be-tts-provider, be-llm-provider, be-context-assembly, and be-routing-and-handlers all found tests that either never imported the provider/handler modules or missed critical multi-tenant/error paths.",
+      "isSystemic": true
+    },
+    {
+      "target": "backend-worker skill",
+      "suggestion": "Replace the repo-incompatible `npm test -- --grep ...` guidance with commands derived from `.factory/services.yaml` (for this repo, raw Jest plus repo-compatible filters such as `--testPathPatterns` or explicit test paths).",
+      "evidence": "The be-stt-provider-upgrade review found the skill prescribing `--grep` even though this repo's canonical test command is `npx jest ...` from `.factory/services.yaml`.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md / backend-worker skill",
+      "suggestion": "Explicitly forbid piping validator commands through `tail`, `head`, or similar helpers. Workers should run the exact `.factory/services.yaml` command directly so validator exit codes are preserved.",
+      "evidence": "The be-modular-structure transcript used `npm test 2>&1 | tail ...`, which can mask failing Jest exit codes.",
+      "isSystemic": true
+    },
+    {
+      "target": "backend-worker skill",
+      "suggestion": "Require `skillFeedback.followedProcedure` to be false whenever documented procedure rules are violated (for example: no tests added despite tests-first claims, or module files exceeding the 500-line limit).",
+      "evidence": "Reviews for be-modular-structure, be-context-assembly, and be-routing-and-handlers found `followedProcedure: true` even though no new tests were added or files exceeded the documented 500-line limit.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Repeated observations that workers marked `followedProcedure: true` despite not following tests-first guidance.",
+      "reason": "duplicate"
+    },
+    {
+      "observation": "The context-assembly review note that the oversize `farm-data.ts` finding is mainly a handoff-accuracy problem rather than a new shared-state rule.",
+      "reason": "duplicate"
+    },
+    {
+      "observation": "The repo already documents the canonical test command in `.factory/services.yaml`.",
+      "reason": "already-documented"
+    }
+  ],
+  "previousRound": null
+}
