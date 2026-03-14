@@ -22,7 +22,7 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message, isLoading = false }: MessageBubbleProps) {
-  const { m3, isDark } = useThemeTokens();
+  const { m3 } = useThemeTokens();
   const { t } = useTranslation();
   const isUser = message.role === 'user';
 
@@ -67,7 +67,7 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
         color: textColor,
       },
       code_inline: {
-        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)',
+        backgroundColor: m3.surface.surfaceContainerHigh,
         color: textColor,
         borderRadius: 4,
         paddingHorizontal: 4,
@@ -75,7 +75,7 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
         fontSize: 13,
       },
       fence: {
-        backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+        backgroundColor: m3.surface.surfaceContainer,
         borderRadius: 8,
         padding: spacing[3],
         marginVertical: spacing[1],
@@ -117,7 +117,12 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
         marginBottom: spacing[1],
       },
     }),
-    [textColor, isDark, m3.colorScheme.primary],
+    [
+      textColor,
+      m3.colorScheme.primary,
+      m3.surface.surfaceContainerHigh,
+      m3.surface.surfaceContainer,
+    ],
   );
 
   const a11yLabel = isUser

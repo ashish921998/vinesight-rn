@@ -1296,6 +1296,8 @@ export const mr = {
     noFarm: {
       banner:
         'कोणताही $t(glossary.farm) जोडलेला नाही. वैयक्तिक सल्ल्यासाठी $t(glossary.farm) जोडा.',
+      noFarmSelected:
+        'कोणताही $t(glossary.farm) निवडलेला नाही. वैयक्तिक सल्ल्यासाठी $t(glossary.farm) निवडा.',
       addFarmButton: '$t(glossary.farm) जोडा',
     },
     attachments: {

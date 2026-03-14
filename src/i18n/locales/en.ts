@@ -1293,6 +1293,7 @@ export const en = {
     },
     noFarm: {
       banner: 'No farms added. Add a farm for personalized advice.',
+      noFarmSelected: 'No farm selected. Select a farm for personalized advice.',
       addFarmButton: 'Add Farm',
     },
     attachments: {

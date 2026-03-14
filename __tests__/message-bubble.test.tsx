@@ -29,6 +29,10 @@ jest.mock('@/styles/use-theme', () => ({
         surfaceVariant: '#f3f4f6',
         outlineVariant: '#e5e7eb',
       },
+      surface: {
+        surfaceContainer: '#e5e7eb',
+        surfaceContainerHigh: '#d1d5db',
+      },
       typography: {
         bodyMedium: { fontSize: 14 },
       },
@@ -108,6 +112,18 @@ describe('MessageBubble', () => {
     const { UNSAFE_getByProps } = render(<MessageBubble message={message} />);
     const accessible = UNSAFE_getByProps({ accessible: true });
     expect(accessible.props.accessibilityLabel).toContain('Test content');
+  });
+
+  it('renders assistant message with markdown (uses M3 theme tokens for code backgrounds)', () => {
+    // Verifies the component does not crash when m3.surface tokens are present
+    // (no hardcoded RGBA in markdownStyles — component uses surfaceContainerHigh / surfaceContainer)
+    const message = makeMessage({
+      role: 'assistant',
+      content: '`inline code` and\n```\nblock\n```',
+    });
+    const { getByTestId } = render(<MessageBubble message={message} />);
+    // Should render without errors when m3.surface tokens are present
+    expect(getByTestId('markdown-content')).toBeTruthy();
   });
 });
 

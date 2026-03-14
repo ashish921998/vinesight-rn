@@ -38,6 +38,7 @@ import { useFarms } from '@/hooks/use-farms';
 import { spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useAssistant } from '@/hooks/use-assistant';
+import type { AssistantFarmContext } from '@/hooks/use-assistant';
 import type { AIMessageAttachmentInput } from '@/types/ai';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
@@ -62,6 +63,23 @@ export function ChatScreen() {
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
+  // Auto-select the first farm from the list as the active farm for assistant context
+  const activeFarm = useMemo(() => farms?.[0] ?? null, [farms]);
+
+  // Build farm context from the active farm to include in assistant requests.
+  // daysSincePruning is omitted here — it requires Date.now() which is impure in useMemo;
+  // the backend computes it from date_of_pruning when needed.
+  const farmContext = useMemo((): AssistantFarmContext | undefined => {
+    if (!activeFarm) return undefined;
+    return {
+      farmId: activeFarm.id ?? null,
+      farmName: activeFarm.name,
+      cropVariety: activeFarm.crop_variety,
+      area: activeFarm.area,
+      region: activeFarm.region,
+    };
+  }, [activeFarm]);
+
   const {
     messages,
     isLoading,
@@ -79,7 +97,7 @@ export function ChatScreen() {
     dismissVoiceLogAction,
     addAttachment,
     removeAttachment,
-  } = useAssistant({ language });
+  } = useAssistant({ language, farmContext });
 
   const handleSend = useCallback(() => {
     void sendMessage();
@@ -185,8 +203,9 @@ export function ChatScreen() {
     dismissVoiceLogAction();
   }, [dismissVoiceLogAction]);
 
-  // No-farm detection
+  // No-farm detection — distinguish between no farms existing vs no farm selected
   const hasNoFarms = farms !== undefined && farms.length === 0;
+  const hasNoFarmSelected = farms !== undefined && farms.length > 0 && activeFarm === null;
 
   // Use suggestions from last response, or default suggestions for welcome state
   const hasMessages = messages.length > 0;
@@ -249,7 +268,7 @@ export function ChatScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* No-farm banner */}
+        {/* No-farm banner — shown when user has no farms at all */}
         {hasNoFarms && (
           <View
             style={[
@@ -272,6 +291,33 @@ export function ChatScreen() {
               ]}
             >
               {t('assistant.noFarm.banner')}
+            </Text>
+          </View>
+        )}
+
+        {/* No-farm-selected banner — shown when farms exist but none is active */}
+        {hasNoFarmSelected && (
+          <View
+            style={[
+              styles.noFarmBanner,
+              {
+                backgroundColor: m3.colorScheme.secondaryContainer,
+                borderBottomColor: m3.colorScheme.outlineVariant,
+              },
+            ]}
+            testID="no-farm-selected-banner"
+          >
+            <SymbolIcon name="info.circle" size={16} color={m3.colorScheme.onSecondaryContainer} />
+            <Text
+              style={[
+                styles.noFarmBannerText,
+                {
+                  color: m3.colorScheme.onSecondaryContainer,
+                  ...m3.typography.labelSmall,
+                },
+              ]}
+            >
+              {t('assistant.noFarm.noFarmSelected')}
             </Text>
           </View>
         )}

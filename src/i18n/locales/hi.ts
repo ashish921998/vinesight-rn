@@ -1274,6 +1274,7 @@ export const hi = {
     },
     noFarm: {
       banner: 'कोई खेत नहीं जोड़ा गया। व्यक्तिगत सलाह के लिए खेत जोड़ें।',
+      noFarmSelected: 'कोई खेत नहीं चुना गया। व्यक्तिगत सलाह के लिए कोई खेत चुनें।',
       addFarmButton: 'खेत जोड़ें',
     },
     attachments: {

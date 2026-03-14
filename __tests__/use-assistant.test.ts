@@ -252,6 +252,89 @@ describe('useAssistant', () => {
       expect.anything(),
     );
   });
+
+  it('retryLastMessage does not add a duplicate user message bubble', async () => {
+    mockSendAssistantTurn
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockResolvedValueOnce(makeResponse());
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+
+    await act(async () => {
+      await result.current.sendMessage('Retry this');
+    });
+
+    // After failure: 1 user bubble, error set
+    expect(result.current.messages).toHaveLength(1);
+    expect(result.current.messages[0].role).toBe('user');
+    expect(result.current.error).toBeTruthy();
+
+    await act(async () => {
+      await result.current.retryLastMessage();
+    });
+
+    // After retry success: 2 messages (user + assistant), NOT 3
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.messages[0].role).toBe('user');
+    expect(result.current.messages[1].role).toBe('assistant');
+  });
+
+  it('retryLastMessage preserves attachments from the original send', async () => {
+    mockSendAssistantTurn
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockResolvedValueOnce(makeResponse());
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+
+    // Add an attachment before sending
+    act(() => {
+      result.current.addAttachment({
+        kind: 'image',
+        name: 'photo.jpg',
+        mimeType: 'image/jpeg',
+        dataUrl: 'data:image/jpeg;base64,abc',
+      });
+    });
+
+    await act(async () => {
+      await result.current.sendMessage('With attachment');
+    });
+
+    expect(result.current.error).toBeTruthy();
+
+    await act(async () => {
+      await result.current.retryLastMessage();
+    });
+
+    // The retry call should include the stored attachment
+    expect(mockSendAssistantTurn).toHaveBeenCalledTimes(2);
+    expect(mockSendAssistantTurn).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        userMessage: 'With attachment',
+        attachments: [expect.objectContaining({ kind: 'image', name: 'photo.jpg' })],
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('includes farmContext in API request when provided', async () => {
+    mockSendAssistantTurn.mockResolvedValue(makeResponse());
+    const farmContext = {
+      farmId: 1,
+      farmName: 'My Farm',
+      cropVariety: 'Shiraz',
+      area: 5,
+      region: 'Nashik',
+    };
+    const { result } = renderHook(() => useAssistant({ language: 'en', farmContext }));
+
+    await act(async () => {
+      await result.current.sendMessage('Hello');
+    });
+
+    expect(mockSendAssistantTurn).toHaveBeenCalledWith(
+      expect.objectContaining({ farmContext }),
+      expect.anything(),
+    );
+  });
 });
 
 describe('useAssistant loadConversation', () => {

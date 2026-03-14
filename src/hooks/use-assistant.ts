@@ -75,6 +75,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
   const [attachments, setAttachments] = useState<AIMessageAttachmentInput[]>([]);
 
   const lastUserMessageRef = useRef<string>('');
+  const lastAttachmentsRef = useRef<AIMessageAttachmentInput[]>([]);
 
   const sendMessage = useCallback(
     async (text?: string) => {
@@ -87,6 +88,8 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
 
       // Capture attachments snapshot and clear them for next message
       const pendingAttachments = attachments.slice();
+      // Store for potential retry
+      lastAttachmentsRef.current = pendingAttachments;
       setAttachments([]);
 
       const userMessage: ChatMessage = {
@@ -145,10 +148,48 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
 
   const retryLastMessage = useCallback(async () => {
     const lastMessage = lastUserMessageRef.current;
-    if (!lastMessage) return;
+    const lastAttachments = lastAttachmentsRef.current;
+    if (!lastMessage || isLoading) return;
     setError(null);
-    await sendMessage(lastMessage);
-  }, [sendMessage]);
+    setIsLoading(true);
+
+    // Do NOT add a new user bubble — the existing one is already in the messages list.
+    // Replay the exact same request (text + stored attachments).
+    try {
+      const response = await sendAssistantTurn(
+        {
+          conversationId,
+          userMessage: lastMessage,
+          language: options.language,
+          inputMode: 'text',
+          farmContext: options.farmContext,
+          attachments: lastAttachments.length > 0 ? lastAttachments : undefined,
+          clientPersistedUserTurn: true,
+        },
+        {
+          requestId: `chat-retry-${Date.now()}`,
+        },
+      );
+
+      const newConversationId = response.message.conversationId;
+      if (newConversationId && !conversationId) {
+        setConversationId(newConversationId);
+      }
+
+      setMessages((prev) => [...prev, response.message]);
+      setSuggestions(response.suggestions ?? []);
+
+      if (response.voiceLogAction != null) {
+        setVoiceLogAction(response.voiceLogAction);
+      }
+    } catch (err) {
+      const normalizedError =
+        err instanceof AssistantGatewayError || err instanceof Error ? err : new Error(String(err));
+      setError(normalizedError);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLoading, conversationId, options]);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -177,6 +218,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     setVoiceLogAction(null);
     setAttachments([]);
     lastUserMessageRef.current = '';
+    lastAttachmentsRef.current = [];
   }, []);
 
   const loadConversation = useCallback(async (conversationId: string) => {
@@ -190,6 +232,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     setVoiceLogAction(null);
     setAttachments([]);
     lastUserMessageRef.current = '';
+    lastAttachmentsRef.current = [];
 
     try {
       const loaded = await assistantMemoryService.loadRecentMessages(conversationId);

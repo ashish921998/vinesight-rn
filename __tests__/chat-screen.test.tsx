@@ -26,9 +26,13 @@ const mockSetAddEntry = jest.fn();
 
 // Variables prefixed with `mock` are allowed in jest.mock() factory
 let mockCurrentAssistantState: Record<string, unknown> = {};
+const mockUseAssistantCapture = jest.fn();
 
 jest.mock('@/hooks/use-assistant', () => ({
-  useAssistant: () => mockCurrentAssistantState,
+  useAssistant: (options: unknown) => {
+    mockUseAssistantCapture(options);
+    return mockCurrentAssistantState;
+  },
   DEFAULT_SUGGESTIONS: ['ai.defaultSuggestions.waterNeed', 'ai.defaultSuggestions.diseases'],
 }));
 
@@ -105,6 +109,7 @@ jest.mock('react-i18next', () => ({
         'assistant.error.a11y.retryButton': 'Retry last request',
         'assistant.error.a11y.dismissButton': 'Dismiss error',
         'assistant.noFarm.banner': 'No farms added.',
+        'assistant.noFarm.noFarmSelected': 'No farm selected.',
         'assistant.attachments.removeA11y': 'Remove attachment',
         'assistant.attachments.thumbnailA11y': 'Attached image',
         'ai.attach.imageTooLarge': 'Image too large',
@@ -160,8 +165,10 @@ jest.mock('@/stores/modal-store', () => ({
   }),
 }));
 
+// Allow tests to override farms data
+let mockFarmsData: unknown[] | undefined = [];
 jest.mock('@/hooks/use-farms', () => ({
-  useFarms: () => ({ data: [], isLoading: false }),
+  useFarms: () => ({ data: mockFarmsData, isLoading: false }),
 }));
 
 jest.mock('expo-image-picker', () => ({
@@ -172,6 +179,7 @@ jest.mock('expo-image-picker', () => ({
 describe('ChatScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFarmsData = [];
     mockCurrentAssistantState = {
       messages: [],
       conversationId: null,
@@ -319,5 +327,77 @@ describe('ChatScreen with messages', () => {
   it('does not show welcome state when messages exist', () => {
     const { queryByText } = render(<ChatScreen />);
     expect(queryByText('How can I help?')).toBeNull();
+  });
+});
+
+describe('ChatScreen farm context', () => {
+  const mockFarm = {
+    id: 1,
+    name: 'My Test Farm',
+    crop_variety: 'Shiraz',
+    area: 5,
+    region: 'Nashik',
+    crop: 'grapes',
+    planting_date: '2022-01-01',
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockFarmsData = [];
+    mockCurrentAssistantState = {
+      messages: [],
+      conversationId: null,
+      isLoading: false,
+      inputText: '',
+      suggestions: [],
+      error: null,
+      voiceLogAction: null,
+      attachments: [],
+      setInputText: mockSetInputText,
+      sendMessage: mockSendMessage,
+      startNewConversation: mockStartNewConversation,
+      loadConversation: jest.fn(),
+      retryLastMessage: mockRetryLastMessage,
+      clearError: mockClearError,
+      dismissVoiceLogAction: mockDismissVoiceLogAction,
+      addAttachment: jest.fn(),
+      removeAttachment: jest.fn(),
+    };
+  });
+
+  it('shows no-farm banner when farms array is empty', () => {
+    mockFarmsData = [];
+    const { getByTestId } = render(<ChatScreen />);
+    expect(getByTestId('no-farm-banner')).toBeTruthy();
+  });
+
+  it('does not show no-farm banner when a farm is present', () => {
+    mockFarmsData = [mockFarm];
+    const { queryByTestId } = render(<ChatScreen />);
+    expect(queryByTestId('no-farm-banner')).toBeNull();
+  });
+
+  it('passes farm context to useAssistant when a farm is available', () => {
+    mockFarmsData = [mockFarm];
+    render(<ChatScreen />);
+    expect(mockUseAssistantCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        farmContext: expect.objectContaining({
+          farmId: 1,
+          farmName: 'My Test Farm',
+          cropVariety: 'Shiraz',
+          area: 5,
+          region: 'Nashik',
+        }),
+      }),
+    );
+  });
+
+  it('passes undefined farmContext to useAssistant when no farms exist', () => {
+    mockFarmsData = [];
+    render(<ChatScreen />);
+    expect(mockUseAssistantCapture).toHaveBeenCalledWith(
+      expect.objectContaining({ farmContext: undefined }),
+    );
   });
 });
