@@ -253,24 +253,29 @@ export async function assembleContext(input: AssemblerInput): Promise<AssemblerR
   let weatherCitation: Citation | null = null;
 
   if (isWeatherDependentQuery(transcript)) {
-    // Get farm location for weather
-    const farmDetails = await fetchFarmDetails(farmId);
-    const weatherResult = await fetchWeatherData({
-      latitude: farmDetails?.latitude ?? null,
-      longitude: farmDetails?.longitude ?? null,
-      locale,
-      toolCalls,
-    });
+    // SECURITY: Validate farm ownership before fetching weather.
+    // fetchFarmDetails now requires userId to prevent returning another user's farm coordinates.
+    const farmDetails = await fetchFarmDetails(farmId, userId);
+    // Only fetch weather when the farm has non-null coordinates.
+    // If coordinates are missing we skip weather enrichment entirely — no hardcoded fallback.
+    if (farmDetails && farmDetails.latitude !== null && farmDetails.longitude !== null) {
+      const weatherResult = await fetchWeatherData({
+        latitude: farmDetails.latitude,
+        longitude: farmDetails.longitude,
+        locale,
+        toolCalls,
+      });
 
-    if (weatherResult.data) {
-      weatherData = {
-        temperature: weatherResult.data.temperature,
-        humidity: weatherResult.data.humidity,
-        condition: weatherResult.data.condition,
-        precipitation: weatherResult.data.precipitation,
-        et0: weatherResult.data.et0,
-      };
-      weatherCitation = weatherResult.citation;
+      if (weatherResult.data) {
+        weatherData = {
+          temperature: weatherResult.data.temperature,
+          humidity: weatherResult.data.humidity,
+          condition: weatherResult.data.condition,
+          precipitation: weatherResult.data.precipitation,
+          et0: weatherResult.data.et0,
+        };
+        weatherCitation = weatherResult.citation;
+      }
     }
   }
 
@@ -290,6 +295,8 @@ export async function assembleContext(input: AssemblerInput): Promise<AssemblerR
   ].filter(Boolean);
 
   const citations: Citation[] = [
+    // Farm-record citations (from queryFarmRecords) must be included first
+    ...(farmRecordsContext?.citations ?? []),
     ...memoryResult.citations,
     ...ragResult.citations,
     ...(weatherCitation ? [weatherCitation] : []),
