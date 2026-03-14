@@ -13,6 +13,7 @@ import Markdown from 'react-native-markdown-display';
 import { useTranslation } from 'react-i18next';
 import { useThemeTokens } from '@/styles/use-theme';
 import { spacing } from '@/styles/theme';
+import { CitationFooter } from './CitationFooter';
 import type { ChatMessage } from '@/types/ai';
 
 interface MessageBubbleProps {
@@ -142,7 +143,12 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
             {message.content}
           </Text>
         ) : (
-          <Markdown style={markdownStyles}>{message.content}</Markdown>
+          <>
+            <Markdown style={markdownStyles}>{message.content}</Markdown>
+            {!isLoading && message.citations && message.citations.length > 0 && (
+              <CitationFooter citations={message.citations} />
+            )}
+          </>
         )}
         {isLoading && (
           <View style={styles.loadingRow}>

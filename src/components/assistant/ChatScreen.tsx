@@ -6,7 +6,10 @@
  * - Empty/welcome state when no messages
  * - Message list with auto-scroll
  * - Suggestion chips after assistant responds
- * - Input bar at bottom
+ * - Input bar at bottom (with attachment support)
+ * - Error banner with Retry/Dismiss on failure
+ * - ActivityConfirmCard for voice log confirmations
+ * - No-farm banner when user has no farms
  * - Sidebar toggle button in header
  * - ConversationSidebar drawer for history
  * Uses useAssistant hook for state management.
@@ -21,19 +24,26 @@ import {
   Platform,
   TouchableOpacity,
   Text,
+  Alert,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { useThemeTokens } from '@/styles/use-theme';
 import { useLanguageStore } from '@/stores/language-store';
+import { useModalStore } from '@/stores/modal-store';
+import { useFarms } from '@/hooks/use-farms';
 import { spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useAssistant } from '@/hooks/use-assistant';
+import type { AIMessageAttachmentInput } from '@/types/ai';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
 import { SuggestionChips } from './SuggestionChips';
 import { ConversationSidebar } from './ConversationSidebar';
+import { ActivityConfirmCard } from './ActivityConfirmCard';
 
 const DEFAULT_SUGGESTIONS = [
   'ai.defaultSuggestions.waterNeed',
@@ -46,6 +56,9 @@ export function ChatScreen() {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
   const language = useLanguageStore((s) => s.language) ?? 'en';
+  const router = useRouter();
+  const { setAddEntry } = useModalStore();
+  const { data: farms } = useFarms();
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
@@ -55,9 +68,17 @@ export function ChatScreen() {
     inputText,
     setInputText,
     suggestions,
+    error,
+    voiceLogAction,
+    attachments,
     sendMessage,
     startNewConversation,
     loadConversation,
+    retryLastMessage,
+    clearError,
+    dismissVoiceLogAction,
+    addAttachment,
+    removeAttachment,
   } = useAssistant({ language });
 
   const handleSend = useCallback(() => {
@@ -89,6 +110,83 @@ export function ChatScreen() {
   const handleNewChatFromSidebar = useCallback(() => {
     startNewConversation();
   }, [startNewConversation]);
+
+  const handleRetry = useCallback(() => {
+    void retryLastMessage();
+  }, [retryLastMessage]);
+
+  // Handle image picker for attachments
+  const handleAttachPress = useCallback(async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: false,
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (result.canceled || result.assets.length === 0) return;
+
+    const asset = result.assets[0];
+    if (!asset) return;
+
+    const mimeType = asset.mimeType ?? 'image/jpeg';
+
+    // Validate size: base64 should be under ~10MB decoded
+    if (asset.base64 && asset.base64.length > 13_000_000) {
+      Alert.alert(t('ai.attach.imageTooLarge'));
+      return;
+    }
+
+    const attachment: AIMessageAttachmentInput = {
+      kind: 'image',
+      name: asset.fileName ?? 'image.jpg',
+      mimeType,
+      dataUrl: asset.uri,
+      // Send as base64 in request
+      ...(asset.base64 ? { dataUrl: `data:${mimeType};base64,${asset.base64}` } : {}),
+    };
+
+    addAttachment(attachment);
+  }, [addAttachment, t]);
+
+  // Handle voice log confirmation
+  const handleVoiceLogConfirm = useCallback(() => {
+    if (!voiceLogAction?.draft) return;
+    const { draft } = voiceLogAction;
+    const prefill = voiceLogAction.prefill ?? undefined;
+
+    setAddEntry({
+      tabs: ['log'],
+      initialTab: 'log',
+      initialFarmId: draft.farmId,
+      initialLogType: draft.type,
+      initialIrrigationDurationHours:
+        draft.type === 'irrigation' ? draft.irrigation.durationHours : null,
+      initialLogDate: draft.date,
+      voiceLogPrefill: prefill,
+      entrySource: 'voice_ai',
+    });
+
+    dismissVoiceLogAction();
+
+    router.push({
+      pathname: '/add-entry',
+      params: {
+        ...(draft.farmId != null ? { farmId: String(draft.farmId) } : {}),
+        initialTab: 'log',
+        tabs: 'log',
+        initialLogType: draft.type,
+        initialLogDate: draft.date,
+      },
+    });
+  }, [voiceLogAction, setAddEntry, dismissVoiceLogAction, router]);
+
+  const handleVoiceLogCancel = useCallback(() => {
+    dismissVoiceLogAction();
+  }, [dismissVoiceLogAction]);
+
+  // No-farm detection
+  const hasNoFarms = farms !== undefined && farms.length === 0;
 
   // Use suggestions from last response, or default suggestions for welcome state
   const hasMessages = messages.length > 0;
@@ -151,10 +249,98 @@ export function ChatScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* No-farm banner */}
+        {hasNoFarms && (
+          <View
+            style={[
+              styles.noFarmBanner,
+              {
+                backgroundColor: m3.colorScheme.secondaryContainer,
+                borderBottomColor: m3.colorScheme.outlineVariant,
+              },
+            ]}
+            testID="no-farm-banner"
+          >
+            <SymbolIcon name="info.circle" size={16} color={m3.colorScheme.onSecondaryContainer} />
+            <Text
+              style={[
+                styles.noFarmBannerText,
+                {
+                  color: m3.colorScheme.onSecondaryContainer,
+                  ...m3.typography.labelSmall,
+                },
+              ]}
+            >
+              {t('assistant.noFarm.banner')}
+            </Text>
+          </View>
+        )}
+
+        {/* Error banner */}
+        {error != null && (
+          <View
+            style={[
+              styles.errorBanner,
+              {
+                backgroundColor: m3.colorScheme.errorContainer,
+                borderBottomColor: m3.colorScheme.outlineVariant,
+              },
+            ]}
+            testID="error-banner"
+          >
+            <Text
+              style={[
+                styles.errorBannerText,
+                {
+                  color: m3.colorScheme.onErrorContainer,
+                  ...m3.typography.labelSmall,
+                },
+              ]}
+            >
+              {t('assistant.error.failedRequest')}
+            </Text>
+            <View style={styles.errorBannerActions}>
+              <TouchableOpacity
+                onPress={handleRetry}
+                style={[styles.errorBannerButton, { backgroundColor: m3.colorScheme.error }]}
+                accessibilityLabel={t('assistant.error.a11y.retryButton')}
+                accessibilityRole="button"
+                testID="error-retry-button"
+              >
+                <Text style={[styles.errorBannerButtonText, { color: m3.colorScheme.onError }]}>
+                  {t('assistant.error.retryButton')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={clearError}
+                style={styles.errorBannerButton}
+                accessibilityLabel={t('assistant.error.a11y.dismissButton')}
+                accessibilityRole="button"
+                testID="error-dismiss-button"
+              >
+                <Text
+                  style={[styles.errorBannerButtonText, { color: m3.colorScheme.onErrorContainer }]}
+                >
+                  {t('assistant.error.dismissButton')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Message area */}
         <View style={styles.messageArea}>
           <MessageList messages={messages} isLoading={isLoading} />
         </View>
+
+        {/* Voice log confirmation card */}
+        {voiceLogAction != null && voiceLogAction.kind === 'ready' && (
+          <ActivityConfirmCard
+            voiceLogAction={voiceLogAction}
+            onConfirm={handleVoiceLogConfirm}
+            onCancel={handleVoiceLogCancel}
+          />
+        )}
 
         {/* Suggestion chips — shown after assistant responds OR as welcome defaults */}
         {!hasMessages && (
@@ -181,9 +367,11 @@ export function ChatScreen() {
             // Voice mode will be implemented in vm-voice-mode-core feature
           }}
           onAttachPress={() => {
-            // Attachment picker will be implemented in ui-citations-errors-confirmations feature
+            void handleAttachPress();
           }}
           isLoading={isLoading}
+          attachments={attachments}
+          onRemoveAttachment={removeAttachment}
         />
       </KeyboardAvoidingView>
 
@@ -225,5 +413,39 @@ const styles = StyleSheet.create({
   },
   messageArea: {
     flex: 1,
+  },
+  noFarmBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: spacing[2],
+  },
+  noFarmBannerText: {
+    flex: 1,
+  },
+  errorBanner: {
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: spacing[2],
+  },
+  errorBannerText: {
+    flex: 1,
+  },
+  errorBannerActions: {
+    flexDirection: 'row',
+    gap: spacing[2],
+    justifyContent: 'flex-end',
+  },
+  errorBannerButton: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: 6,
+  },
+  errorBannerButtonText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
   },
 });

@@ -19,6 +19,10 @@ import { ChatScreen } from '@/components/assistant/ChatScreen';
 const mockSendMessage = jest.fn();
 const mockStartNewConversation = jest.fn();
 const mockSetInputText = jest.fn();
+const mockRetryLastMessage = jest.fn();
+const mockClearError = jest.fn();
+const mockDismissVoiceLogAction = jest.fn();
+const mockSetAddEntry = jest.fn();
 
 // Variables prefixed with `mock` are allowed in jest.mock() factory
 let mockCurrentAssistantState: Record<string, unknown> = {};
@@ -44,6 +48,11 @@ jest.mock('@/styles/use-theme', () => ({
         outlineVariant: '#e5e7eb',
         secondaryContainer: '#f0f5f2',
         onSecondaryContainer: '#1f412b',
+        errorContainer: '#fde8e8',
+        onErrorContainer: '#7f1d1d',
+        error: '#dc2626',
+        onError: '#ffffff',
+        outline: '#9ca3af',
       },
       surface: {
         surfaceContainer: '#e5e7eb',
@@ -53,6 +62,8 @@ jest.mock('@/styles/use-theme', () => ({
         titleMedium: { fontSize: 16, fontWeight: '600' },
         headlineSmall: { fontSize: 24, fontWeight: '700' },
         bodyMedium: { fontSize: 14 },
+        labelSmall: { fontSize: 11 },
+        labelLarge: { fontSize: 14 },
       },
     },
   }),
@@ -88,6 +99,15 @@ jest.mock('react-i18next', () => ({
         'ai.defaultSuggestions.waterNeed': 'How much water do I need?',
         'ai.defaultSuggestions.diseases': 'Check for common diseases',
         'assistant.chat.suggestionChipA11y': params?.text ? `Send suggestion: ${params.text}` : key,
+        'assistant.error.failedRequest': 'Something went wrong.',
+        'assistant.error.retryButton': 'Retry',
+        'assistant.error.dismissButton': 'Dismiss',
+        'assistant.error.a11y.retryButton': 'Retry last request',
+        'assistant.error.a11y.dismissButton': 'Dismiss error',
+        'assistant.noFarm.banner': 'No farms added.',
+        'assistant.attachments.removeA11y': 'Remove attachment',
+        'assistant.attachments.thumbnailA11y': 'Attached image',
+        'ai.attach.imageTooLarge': 'Image too large',
       };
       return translations[key] ?? key;
     },
@@ -127,6 +147,28 @@ jest.mock('react-native-safe-area-context', () => ({
   },
 }));
 
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    back: jest.fn(),
+  }),
+}));
+
+jest.mock('@/stores/modal-store', () => ({
+  useModalStore: () => ({
+    setAddEntry: mockSetAddEntry,
+  }),
+}));
+
+jest.mock('@/hooks/use-farms', () => ({
+  useFarms: () => ({ data: [], isLoading: false }),
+}));
+
+jest.mock('expo-image-picker', () => ({
+  launchImageLibraryAsync: jest.fn().mockResolvedValue({ canceled: true, assets: [] }),
+  MediaTypeOptions: { Images: 'Images' },
+}));
+
 describe('ChatScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -137,11 +179,17 @@ describe('ChatScreen', () => {
       inputText: '',
       suggestions: [],
       error: null,
+      voiceLogAction: null,
+      attachments: [],
       setInputText: mockSetInputText,
       sendMessage: mockSendMessage,
       startNewConversation: mockStartNewConversation,
       loadConversation: jest.fn(),
-      retryLastMessage: jest.fn(),
+      retryLastMessage: mockRetryLastMessage,
+      clearError: mockClearError,
+      dismissVoiceLogAction: mockDismissVoiceLogAction,
+      addAttachment: jest.fn(),
+      removeAttachment: jest.fn(),
     };
   });
 
@@ -244,11 +292,17 @@ describe('ChatScreen with messages', () => {
       inputText: '',
       suggestions: mockSuggestions,
       error: null,
+      voiceLogAction: null,
+      attachments: [],
       setInputText: mockSetInputText,
       sendMessage: mockSendMessage,
       startNewConversation: mockStartNewConversation,
       loadConversation: jest.fn(),
-      retryLastMessage: jest.fn(),
+      retryLastMessage: mockRetryLastMessage,
+      clearError: mockClearError,
+      dismissVoiceLogAction: mockDismissVoiceLogAction,
+      addAttachment: jest.fn(),
+      removeAttachment: jest.fn(),
     };
   });
 

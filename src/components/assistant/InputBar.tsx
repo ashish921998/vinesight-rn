@@ -5,6 +5,7 @@
  * - Send button (paper-plane) when text is entered
  * - Mic button when input is empty
  * - Attachment button (always visible)
+ * - Attachment thumbnails row shown above input when images attached
  * - Loading state disables send and shows spinner
  * - M3 themed — no hardcoded colors
  */
@@ -12,9 +13,11 @@
 import React, { useRef } from 'react';
 import {
   View,
+  Image,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
   StyleSheet,
   Platform,
 } from 'react-native';
@@ -22,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { useThemeTokens } from '@/styles/use-theme';
 import { spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import type { AIMessageAttachmentInput } from '@/types/ai';
 
 const INPUT_MAX_HEIGHT = 120;
 const INPUT_MIN_HEIGHT = 44;
@@ -34,6 +38,8 @@ interface InputBarProps {
   onAttachPress: () => void;
   isLoading?: boolean;
   disabled?: boolean;
+  attachments?: AIMessageAttachmentInput[];
+  onRemoveAttachment?: (index: number) => void;
 }
 
 export function InputBar({
@@ -44,6 +50,8 @@ export function InputBar({
   onAttachPress,
   isLoading = false,
   disabled = false,
+  attachments = [],
+  onRemoveAttachment,
 }: InputBarProps) {
   const { m3, isDark } = useThemeTokens();
   const { t } = useTranslation();
@@ -66,96 +74,162 @@ export function InputBar({
         },
       ]}
     >
-      {/* Attachment button */}
-      <TouchableOpacity
-        style={styles.iconButton}
-        onPress={onAttachPress}
-        disabled={isLoading || disabled}
-        accessibilityLabel={t('ai.chat.attachFileA11y')}
-        accessibilityRole="button"
-      >
-        <SymbolIcon
-          name="paperclip"
-          size={22}
-          color={isLoading || disabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onSurface}
-        />
-      </TouchableOpacity>
-
-      {/* Text input */}
-      <TextInput
-        ref={inputRef}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={t('ai.input.placeholder')}
-        placeholderTextColor={m3.colorScheme.onSurfaceVariant}
-        multiline
-        style={[
-          styles.textInput,
-          {
-            backgroundColor: inputBg ?? m3.colorScheme.surface,
-            color: m3.colorScheme.onSurface,
-            borderColor: m3.colorScheme.outlineVariant,
-            ...Platform.select({
-              ios: {
-                maxHeight: INPUT_MAX_HEIGHT,
-                minHeight: INPUT_MIN_HEIGHT,
-              },
-              android: {
-                maxHeight: INPUT_MAX_HEIGHT,
-                minHeight: INPUT_MIN_HEIGHT,
-              },
-            }),
-          },
-        ]}
-        editable={!isLoading && !disabled}
-        returnKeyType="default"
-        blurOnSubmit={false}
-        scrollEnabled
-        textAlignVertical="center"
-        accessibilityLabel={t('ai.input.placeholder')}
-      />
-
-      {/* Send / Mic button */}
-      {isLoading ? (
-        <View style={styles.iconButton} accessibilityLabel={t('ai.chat.thinking')}>
-          <ActivityIndicator size="small" color={m3.colorScheme.primary} />
-        </View>
-      ) : hasText ? (
-        <TouchableOpacity
-          style={[styles.sendButton, { backgroundColor: m3.colorScheme.primary }]}
-          onPress={onSend}
-          disabled={!canSend}
-          accessibilityLabel={t('assistant.chat.sendA11y')}
-          accessibilityRole="button"
+      {/* Attachment thumbnails row */}
+      {attachments.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.thumbnailsScroll}
+          contentContainerStyle={styles.thumbnailsContent}
         >
-          <SymbolIcon name="paperplane.fill" size={18} color={m3.colorScheme.onPrimary} />
-        </TouchableOpacity>
-      ) : (
+          {attachments.map((attachment, index) => (
+            <View key={index} style={styles.thumbnailWrapper}>
+              {attachment.dataUrl != null ? (
+                <Image
+                  source={{ uri: attachment.dataUrl }}
+                  style={[styles.thumbnail, { borderColor: m3.colorScheme.outlineVariant }]}
+                  accessibilityLabel={t('assistant.attachments.thumbnailA11y')}
+                />
+              ) : null}
+              <TouchableOpacity
+                style={[styles.thumbnailRemoveBtn, { backgroundColor: m3.colorScheme.error }]}
+                onPress={() => onRemoveAttachment?.(index)}
+                accessibilityLabel={t('assistant.attachments.removeA11y')}
+                accessibilityRole="button"
+              >
+                <SymbolIcon name="xmark" size={10} color={m3.colorScheme.onError} />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      )}
+      {/* Input row: attachment button + text field + send/mic */}
+      <View style={styles.inputRow}>
+        {/* Attachment button */}
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={onVoicePress}
-          disabled={disabled}
-          accessibilityLabel={t('ai.chat.openVoiceModeA11y')}
+          onPress={onAttachPress}
+          disabled={isLoading || disabled}
+          accessibilityLabel={t('ai.chat.attachFileA11y')}
           accessibilityRole="button"
         >
           <SymbolIcon
-            name="mic.fill"
+            name="paperclip"
             size={22}
-            color={disabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.primary}
+            color={
+              isLoading || disabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onSurface
+            }
           />
         </TouchableOpacity>
-      )}
+
+        {/* Text input */}
+        <TextInput
+          ref={inputRef}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={t('ai.input.placeholder')}
+          placeholderTextColor={m3.colorScheme.onSurfaceVariant}
+          multiline
+          style={[
+            styles.textInput,
+            {
+              backgroundColor: inputBg ?? m3.colorScheme.surface,
+              color: m3.colorScheme.onSurface,
+              borderColor: m3.colorScheme.outlineVariant,
+              ...Platform.select({
+                ios: {
+                  maxHeight: INPUT_MAX_HEIGHT,
+                  minHeight: INPUT_MIN_HEIGHT,
+                },
+                android: {
+                  maxHeight: INPUT_MAX_HEIGHT,
+                  minHeight: INPUT_MIN_HEIGHT,
+                },
+              }),
+            },
+          ]}
+          editable={!isLoading && !disabled}
+          returnKeyType="default"
+          blurOnSubmit={false}
+          scrollEnabled
+          textAlignVertical="center"
+          accessibilityLabel={t('ai.input.placeholder')}
+        />
+
+        {/* Send / Mic button */}
+        {isLoading ? (
+          <View style={styles.iconButton} accessibilityLabel={t('ai.chat.thinking')}>
+            <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+          </View>
+        ) : hasText ? (
+          <TouchableOpacity
+            style={[styles.sendButton, { backgroundColor: m3.colorScheme.primary }]}
+            onPress={onSend}
+            disabled={!canSend}
+            accessibilityLabel={t('assistant.chat.sendA11y')}
+            accessibilityRole="button"
+          >
+            <SymbolIcon name="paperplane.fill" size={18} color={m3.colorScheme.onPrimary} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={onVoicePress}
+            disabled={disabled}
+            accessibilityLabel={t('ai.chat.openVoiceModeA11y')}
+            accessibilityRole="button"
+          >
+            <SymbolIcon
+              name="mic.fill"
+              size={22}
+              color={disabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.primary}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   outerContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: 'column',
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderTopWidth: StyleSheet.hairlineWidth,
+    gap: spacing[2],
+  },
+  thumbnailsScroll: {
+    maxHeight: 80,
+  },
+  thumbnailsContent: {
+    gap: spacing[2],
+    paddingVertical: spacing[1],
+  },
+  thumbnailWrapper: {
+    position: 'relative',
+    width: 60,
+    height: 60,
+  },
+  thumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  thumbnailRemoveBtn: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
     gap: spacing[2],
   },
   iconButton: {

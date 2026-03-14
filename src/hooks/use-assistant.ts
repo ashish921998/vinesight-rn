@@ -7,6 +7,8 @@
  * - inputText
  * - suggestions
  * - error
+ * - voiceLogAction (from backend response)
+ * - attachments (image attachments to send)
  * Sends messages via assistant-gateway service.
  */
 
@@ -17,7 +19,7 @@ import {
   AssistantGatewayError,
 } from '@/services/assistant-gateway';
 import { assistantMemoryService } from '@/services/assistant-memory';
-import type { ChatMessage } from '@/types/ai';
+import type { AIMessageAttachmentInput, AssistantVoiceLogAction, ChatMessage } from '@/types/ai';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 
 export interface AssistantFarmContext {
@@ -42,11 +44,17 @@ export interface UseAssistantReturn {
   inputText: string;
   suggestions: string[];
   error: AssistantGatewayError | Error | null;
+  voiceLogAction: AssistantVoiceLogAction | null;
+  attachments: AIMessageAttachmentInput[];
   setInputText: (text: string) => void;
   sendMessage: (text?: string) => Promise<void>;
   startNewConversation: () => void;
   loadConversation: (conversationId: string) => Promise<void>;
   retryLastMessage: () => Promise<void>;
+  clearError: () => void;
+  dismissVoiceLogAction: () => void;
+  addAttachment: (attachment: AIMessageAttachmentInput) => void;
+  removeAttachment: (index: number) => void;
 }
 
 const DEFAULT_SUGGESTIONS = [
@@ -63,6 +71,8 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
   const [inputText, setInputText] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [error, setError] = useState<AssistantGatewayError | Error | null>(null);
+  const [voiceLogAction, setVoiceLogAction] = useState<AssistantVoiceLogAction | null>(null);
+  const [attachments, setAttachments] = useState<AIMessageAttachmentInput[]>([]);
 
   const lastUserMessageRef = useRef<string>('');
 
@@ -74,6 +84,10 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
       lastUserMessageRef.current = messageText;
       setInputText('');
       setError(null);
+
+      // Capture attachments snapshot and clear them for next message
+      const pendingAttachments = attachments.slice();
+      setAttachments([]);
 
       const userMessage: ChatMessage = {
         id: `user-${Date.now()}`,
@@ -95,6 +109,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
             language: options.language,
             inputMode: 'text',
             farmContext: options.farmContext,
+            attachments: pendingAttachments.length > 0 ? pendingAttachments : undefined,
             clientPersistedUserTurn: true,
           },
           {
@@ -110,6 +125,11 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
 
         setMessages((prev) => [...prev, response.message]);
         setSuggestions(response.suggestions ?? []);
+
+        // Extract voiceLogAction if present and ready
+        if (response.voiceLogAction != null) {
+          setVoiceLogAction(response.voiceLogAction);
+        }
       } catch (err) {
         const normalizedError =
           err instanceof AssistantGatewayError || err instanceof Error
@@ -120,7 +140,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
         setIsLoading(false);
       }
     },
-    [inputText, isLoading, conversationId, options],
+    [inputText, isLoading, conversationId, options, attachments],
   );
 
   const retryLastMessage = useCallback(async () => {
@@ -130,6 +150,22 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     await sendMessage(lastMessage);
   }, [sendMessage]);
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  const dismissVoiceLogAction = useCallback(() => {
+    setVoiceLogAction(null);
+  }, []);
+
+  const addAttachment = useCallback((attachment: AIMessageAttachmentInput) => {
+    setAttachments((prev) => [...prev, attachment]);
+  }, []);
+
+  const removeAttachment = useCallback((index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   const startNewConversation = useCallback(() => {
     cancelAllPendingAssistantTurnRequests();
     setMessages([]);
@@ -138,6 +174,8 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     setInputText('');
     setSuggestions([]);
     setError(null);
+    setVoiceLogAction(null);
+    setAttachments([]);
     lastUserMessageRef.current = '';
   }, []);
 
@@ -149,6 +187,8 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     setInputText('');
     setSuggestions([]);
     setError(null);
+    setVoiceLogAction(null);
+    setAttachments([]);
     lastUserMessageRef.current = '';
 
     try {
@@ -170,11 +210,17 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     inputText,
     suggestions,
     error,
+    voiceLogAction,
+    attachments,
     setInputText,
     sendMessage,
     startNewConversation,
     loadConversation,
     retryLastMessage,
+    clearError,
+    dismissVoiceLogAction,
+    addAttachment,
+    removeAttachment,
   };
 }
 

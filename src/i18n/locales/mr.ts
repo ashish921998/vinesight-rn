@@ -1252,6 +1252,56 @@ export const mr = {
       userMessageA11y: 'तुम्ही म्हणालात: {{content}}',
       assistantMessageA11y: 'AI म्हणाले: {{content}}',
     },
+    citations: {
+      sourcesLabel: 'स्रोत',
+      confidencePct: '{{value}}%',
+    },
+    activityConfirm: {
+      title: 'क्रिया नोंदवा',
+      typeIrrigation: '$t(glossary.irrigation)',
+      typeSpray: '$t(glossary.spray)',
+      typeHarvest: '$t(glossary.harvest)',
+      typeExpense: '$t(glossary.expense)',
+      typeFertigation: 'फर्टिगेशन',
+      durationLabel: 'कालावधी',
+      durationValue: '{{value}} तास',
+      chemicalsLabel: 'रसायने',
+      waterVolumeLabel: 'पाणी',
+      waterVolumeValue: '{{value}} लि',
+      quantityLabel: 'प्रमाण',
+      quantityValue: '{{value}} किग्रा',
+      gradeLabel: 'दर्जा',
+      costLabel: '$t(glossary.expense)',
+      costValue: '₹{{value}}',
+      expenseTypeLabel: 'प्रकार',
+      fertilizersLabel: '$t(glossary.fertilizer)',
+      farmLabel: '$t(glossary.farm)',
+      dateLabel: 'तारीख',
+      confirmButton: 'पुष्टी करा',
+      cancelButton: 'रद्द करा',
+      a11y: {
+        confirmButton: 'क्रिया नोंद पुष्टी करा',
+        cancelButton: 'क्रिया नोंद रद्द करा',
+      },
+    },
+    error: {
+      failedRequest: 'काहीतरी चुकले. कृपया पुन्हा प्रयत्न करा.',
+      retryButton: 'पुन्हा प्रयत्न करा',
+      dismissButton: 'बंद करा',
+      a11y: {
+        retryButton: 'शेवटची विनंती पुन्हा पाठवा',
+        dismissButton: 'त्रुटी बंद करा',
+      },
+    },
+    noFarm: {
+      banner:
+        'कोणताही $t(glossary.farm) जोडलेला नाही. वैयक्तिक सल्ल्यासाठी $t(glossary.farm) जोडा.',
+      addFarmButton: '$t(glossary.farm) जोडा',
+    },
+    attachments: {
+      removeA11y: 'संलग्नक काढा',
+      thumbnailA11y: 'संलग्न प्रतिमा',
+    },
   },
 
   onboarding: {
