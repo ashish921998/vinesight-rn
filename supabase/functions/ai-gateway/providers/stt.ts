@@ -191,7 +191,7 @@ async function callOpenAiSttInternal(
 
   const transcript = data?.text;
   if (typeof transcript !== 'string' || !transcript.trim()) {
-    throw new Error('OpenAI STT returned empty transcript');
+    throw new Error('stt_empty_transcript');
   }
 
   return { transcript: transcript.trim(), confidence: null };

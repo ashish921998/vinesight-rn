@@ -5,7 +5,8 @@
  *
  * Sub-modules:
  *  - farm-details.ts       — types, Supabase client, activity detection, date parsing, farm lookup
- *  - farm-records.ts       — irrigation, spray, fertigation, expense, harvest queries
+ *  - farm-records.ts          — irrigation, spray, fertigation queries
+ *  - farm-financial-records.ts — expense and harvest queries
  *  - farm-extra-records.ts — warehouse, tasks, soil/petiole tests, daily notes
  *  - farm-workers.ts       — worker + attendance queries (always tenant-scoped)
  *  - farm-weather.ts       — Open-Meteo weather fetching and context block builder
@@ -41,12 +42,12 @@ export {
 // ============================================================
 
 export {
-  queryExpenseRecords,
   queryFertigationRecords,
-  queryHarvestRecords,
   queryIrrigationRecords,
   querySprayRecords,
 } from './farm-records.ts';
+
+export { queryExpenseRecords, queryHarvestRecords } from './farm-financial-records.ts';
 
 // ============================================================
 // MARK: - Extra Record Re-exports
@@ -85,12 +86,11 @@ import {
   type ToolCall,
 } from './farm-details.ts';
 import {
-  queryExpenseRecords,
   queryFertigationRecords,
-  queryHarvestRecords,
   queryIrrigationRecords,
   querySprayRecords,
 } from './farm-records.ts';
+import { queryExpenseRecords, queryHarvestRecords } from './farm-financial-records.ts';
 import {
   queryDailyNotes,
   queryPetioleTestRecords,
