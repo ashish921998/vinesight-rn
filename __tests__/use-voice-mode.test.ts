@@ -13,6 +13,13 @@
  * - onConversationIdChange called with new conversation ID
  * - clearVoiceModeError returns to idle from error state
  * - Mic permission denied shows permission_denied error
+ * TTS playback & loop (vm-tts-playback-and-loop):
+ * - When response has audio, voiceOutputService.playAssistantTurn is called
+ * - When TTS onDone fires, auto-listen starts (voiceState → listening)
+ * - When TTS onError fires, voiceState → idle
+ * - Orb tap during speaking stops TTS and starts recording
+ * - handleClose stops TTS playback
+ * - No TTS call when response has no audio (graceful TTS failure → idle)
  */
 
 import { renderHook, act } from '@testing-library/react-native';
@@ -80,6 +87,31 @@ jest.mock('@/services/assistant-gateway', () => ({
   },
 }));
 
+// ── voiceOutputService mock ────────────────────────────────────────────────────
+// Captures playback callbacks so tests can trigger them manually.
+let capturedPlaybackCallbacks: {
+  onDone?: () => void;
+  onStopped?: () => void;
+  onError?: () => void;
+} = {};
+
+const mockPlayAssistantTurn = jest.fn().mockImplementation((_response, options) => {
+  capturedPlaybackCallbacks = {
+    onDone: options?.onDone,
+    onStopped: options?.onStopped,
+    onError: options?.onError,
+  };
+  return Promise.resolve();
+});
+const mockVoiceOutputStop = jest.fn().mockResolvedValue(undefined);
+
+jest.mock('@/services/voice-output', () => ({
+  voiceOutputService: {
+    playAssistantTurn: (...args: unknown[]) => mockPlayAssistantTurn(...args),
+    stop: (...args: unknown[]) => mockVoiceOutputStop(...args),
+  },
+}));
+
 const mockSendAssistantTurn = sendAssistantTurn as jest.Mock;
 
 // ── Sample data ────────────────────────────────────────────────────────────────
@@ -118,9 +150,24 @@ describe('useVoiceMode', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     capturedOnComplete = undefined;
+    capturedPlaybackCallbacks = {};
     mockRecorderState = { isRecording: false, durationMillis: 0, error: null };
     mockStartRecording.mockResolvedValue(true);
     mockSendAssistantTurn.mockResolvedValue(ASSISTANT_RESPONSE);
+    mockPlayAssistantTurn.mockImplementation(
+      (
+        _response: unknown,
+        options: { onDone?: () => void; onStopped?: () => void; onError?: () => void },
+      ) => {
+        capturedPlaybackCallbacks = {
+          onDone: options?.onDone,
+          onStopped: options?.onStopped,
+          onError: options?.onError,
+        };
+        return Promise.resolve();
+      },
+    );
+    mockVoiceOutputStop.mockResolvedValue(undefined);
   });
 
   // ── Open / Close ──────────────────────────────────────────────────────────
@@ -462,5 +509,277 @@ describe('useVoiceMode', () => {
     });
 
     expect(result.current.voiceMessages).toHaveLength(0);
+  });
+
+  // ── TTS playback & loop (vm-tts-playback-and-loop) ────────────────────────
+
+  it('playAssistantTurn called when backend response contains audio', async () => {
+    mockSendAssistantTurn.mockResolvedValueOnce({
+      ...ASSISTANT_RESPONSE,
+      message: {
+        ...ASSISTANT_RESPONSE.message,
+        audio: { base64: 'audio_base64_data=', mimeType: 'audio/mpeg' },
+      },
+    });
+
+    const { result } = renderHook(() => useVoiceMode(defaultOptions));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    expect(mockPlayAssistantTurn).toHaveBeenCalledTimes(1);
+    expect(result.current.voiceState).toBe('speaking');
+  });
+
+  it('playAssistantTurn uses correct language from options', async () => {
+    mockSendAssistantTurn.mockResolvedValueOnce({
+      ...ASSISTANT_RESPONSE,
+      message: {
+        ...ASSISTANT_RESPONSE.message,
+        audio: { base64: 'audio_base64=', mimeType: 'audio/mpeg' },
+      },
+    });
+
+    const { result } = renderHook(() => useVoiceMode({ ...defaultOptions, language: 'hi' }));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    expect(mockPlayAssistantTurn).toHaveBeenCalledTimes(1);
+    const [, playOptions] = mockPlayAssistantTurn.mock.calls[0];
+    expect(playOptions.language).toBe('hi');
+  });
+
+  it('auto-listens after TTS completes (onDone triggers listening state)', async () => {
+    mockSendAssistantTurn.mockResolvedValueOnce({
+      ...ASSISTANT_RESPONSE,
+      message: {
+        ...ASSISTANT_RESPONSE.message,
+        audio: { base64: 'audio_data=', mimeType: 'audio/mpeg' },
+      },
+    });
+
+    const { result } = renderHook(() => useVoiceMode(defaultOptions));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    expect(result.current.voiceState).toBe('speaking');
+
+    // Simulate TTS completing naturally
+    await act(async () => {
+      capturedPlaybackCallbacks.onDone?.();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    // Should have started recording and transitioned to listening
+    expect(mockStartRecording).toHaveBeenCalledTimes(2); // first for user turn, second for auto-listen
+    expect(result.current.voiceState).toBe('listening');
+  });
+
+  it('auto-listen transitions to idle when startRecording fails after TTS', async () => {
+    mockSendAssistantTurn.mockResolvedValueOnce({
+      ...ASSISTANT_RESPONSE,
+      message: {
+        ...ASSISTANT_RESPONSE.message,
+        audio: { base64: 'audio_data=', mimeType: 'audio/mpeg' },
+      },
+    });
+    // First startRecording succeeds (user turn), second fails (auto-listen)
+    mockStartRecording.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+
+    const { result } = renderHook(() => useVoiceMode(defaultOptions));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    // Simulate TTS completing
+    await act(async () => {
+      capturedPlaybackCallbacks.onDone?.();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    expect(result.current.voiceState).toBe('idle');
+  });
+
+  it('transitions to idle when TTS error (onError fires)', async () => {
+    mockSendAssistantTurn.mockResolvedValueOnce({
+      ...ASSISTANT_RESPONSE,
+      message: {
+        ...ASSISTANT_RESPONSE.message,
+        audio: { base64: 'audio_data=', mimeType: 'audio/mpeg' },
+      },
+    });
+
+    const { result } = renderHook(() => useVoiceMode(defaultOptions));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    expect(result.current.voiceState).toBe('speaking');
+
+    // Simulate TTS error
+    act(() => {
+      capturedPlaybackCallbacks.onError?.();
+    });
+
+    expect(result.current.voiceState).toBe('idle');
+  });
+
+  it('no TTS call and transitions to idle when response has no audio (graceful TTS failure)', async () => {
+    // ASSISTANT_RESPONSE has no audio by default
+    const { result } = renderHook(() => useVoiceMode(defaultOptions));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    expect(mockPlayAssistantTurn).not.toHaveBeenCalled();
+    expect(result.current.voiceState).toBe('idle');
+  });
+
+  it('orb tap during speaking stops TTS and starts recording', async () => {
+    mockSendAssistantTurn.mockResolvedValueOnce({
+      ...ASSISTANT_RESPONSE,
+      message: {
+        ...ASSISTANT_RESPONSE.message,
+        audio: { base64: 'audio_data=', mimeType: 'audio/mpeg' },
+      },
+    });
+
+    const { result } = renderHook(() => useVoiceMode(defaultOptions));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    expect(result.current.voiceState).toBe('speaking');
+
+    // Tap orb to interrupt TTS
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    expect(mockVoiceOutputStop).toHaveBeenCalled();
+    expect(mockStartRecording).toHaveBeenCalledTimes(2);
+    expect(result.current.voiceState).toBe('listening');
+  });
+
+  it('handleClose stops TTS playback', async () => {
+    mockSendAssistantTurn.mockResolvedValueOnce({
+      ...ASSISTANT_RESPONSE,
+      message: {
+        ...ASSISTANT_RESPONSE.message,
+        audio: { base64: 'audio_data=', mimeType: 'audio/mpeg' },
+      },
+    });
+
+    const { result } = renderHook(() => useVoiceMode(defaultOptions));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    expect(result.current.voiceState).toBe('speaking');
+
+    act(() => {
+      result.current.handleClose();
+    });
+
+    expect(mockVoiceOutputStop).toHaveBeenCalled();
+    expect(result.current.isVoiceModeVisible).toBe(false);
+    expect(result.current.voiceState).toBe('idle');
+  });
+
+  it('TTS onDone does not auto-listen after voice mode closes', async () => {
+    mockSendAssistantTurn.mockResolvedValueOnce({
+      ...ASSISTANT_RESPONSE,
+      message: {
+        ...ASSISTANT_RESPONSE.message,
+        audio: { base64: 'audio_data=', mimeType: 'audio/mpeg' },
+      },
+    });
+
+    const { result } = renderHook(() => useVoiceMode(defaultOptions));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    // Close voice mode while speaking
+    act(() => {
+      result.current.handleClose();
+    });
+
+    const startRecordingCallCount = mockStartRecording.mock.calls.length;
+
+    // TTS onDone fires after close — should be a no-op
+    await act(async () => {
+      capturedPlaybackCallbacks.onDone?.();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    // startRecording should NOT have been called again
+    expect(mockStartRecording).toHaveBeenCalledTimes(startRecordingCallCount);
   });
 });

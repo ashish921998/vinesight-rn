@@ -22,6 +22,7 @@ import {
   AssistantGatewayError,
   AssistantGatewayErrorCode,
 } from '@/services/assistant-gateway';
+import { voiceOutputService } from '@/services/voice-output';
 import { useVoiceRecorder } from './use-voice-recorder';
 import type { RecordingResultData } from './use-voice-recorder';
 import type { VoiceModeState } from '@/components/assistant/VoiceMode/AnimatedOrb';
@@ -113,6 +114,11 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
   // Tracks whether voice mode is still open when an async response arrives
   const isOpenRef = useRef(false);
 
+  // Stable ref to the latest startRecording so handleRecordingComplete's TTS
+  // onDone callback can trigger auto-listen without a stale closure.
+  // Initialised to a no-op; updated after useVoiceRecorder is called.
+  const startRecordingRef = useRef<() => Promise<boolean>>(async () => false);
+
   // ─── Recording complete handler ──────────────────────────────────────────
 
   const handleRecordingComplete = useCallback(async (result: RecordingResultData) => {
@@ -187,10 +193,40 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
 
       setBackendError(null);
 
-      // Transition to speaking if audio is available (TTS handled by next feature)
+      // Transition state and handle TTS playback
       if (response.message.audio?.base64 || response.message.audio?.url) {
+        // Audio present → enter speaking state and play via voiceOutputService
         setVoiceState('speaking');
+        void voiceOutputService.playAssistantTurn(response, {
+          language: optionsRef.current.language,
+          onDone: () => {
+            // Natural end of TTS playback → auto-listen for next question
+            if (!isOpenRef.current) return;
+            void (async () => {
+              const started = await startRecordingRef.current();
+              if (started) {
+                setVoiceState('listening');
+              } else {
+                setVoiceState('idle');
+              }
+            })();
+          },
+          onStopped: () => {
+            // TTS stopped externally (e.g., Speech.speak stop signal).
+            // The orb-tap interruption flow (handleOrbPress) already manages
+            // its own state transition, so only revert to idle if still speaking.
+            if (!isOpenRef.current) return;
+            setVoiceState((prev) => (prev === 'speaking' ? 'idle' : prev));
+          },
+          onError: () => {
+            // TTS error — display text already added to thread; return to idle
+            if (!isOpenRef.current) return;
+            setVoiceState('idle');
+          },
+        });
       } else {
+        // No audio returned (TTS failed / skipped) — text is already displayed
+        // in the thread; transition to idle so user can tap to speak again.
         setVoiceState('idle');
       }
     } catch (err) {
@@ -211,6 +247,11 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
     error: recorderError,
     clearError: clearRecorderError,
   } = useVoiceRecorder(handleRecordingComplete);
+
+  // Keep startRecordingRef up-to-date so TTS onDone can trigger auto-listen
+  useEffect(() => {
+    startRecordingRef.current = startRecording;
+  }, [startRecording]);
 
   // ─── Derive combined error ────────────────────────────────────────────────
 
@@ -256,8 +297,8 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       stopRecording();
       // voiceState transitions to 'processing' in handleRecordingComplete
     } else if (voiceState === 'speaking') {
-      // Interrupt speaking (actual playback interruption handled by TTS feature)
-      // Transition directly to listening
+      // Interrupt speaking — stop TTS immediately then start listening
+      void voiceOutputService.stop();
       void (async () => {
         const started = await startRecording();
         if (started) {
@@ -274,6 +315,9 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
 
   const handleClose = useCallback(() => {
     isOpenRef.current = false;
+
+    // Stop any active TTS playback
+    void voiceOutputService.stop();
 
     // Stop recording if active
     if (isRecording) {
