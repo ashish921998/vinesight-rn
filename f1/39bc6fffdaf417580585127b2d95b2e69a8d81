@@ -1,0 +1,25 @@
+src/hooks/use-voice-mode.ts
+  590189b727f1d9c1 25,117-121,196,198,200-226,228-229,251-255,300-301,319-321
+__tests__/use-voice-mode.test.ts
+  590189b727f1d9c1 16-22,90-114,153,157-165,513-783
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "f139bc6fffdaf417580585127b2d95b2e69a8d81",
+  "prompts": {
+    "590189b727f1d9c1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1f07afe1-a194-4f98-82b0-1ce29b6f3843",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 365,
+      "total_deletions": 3,
+      "accepted_lines": 365,
+      "overriden_lines": 0
+    }
+  }
+}
