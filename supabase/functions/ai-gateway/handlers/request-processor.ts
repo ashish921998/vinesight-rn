@@ -8,6 +8,7 @@ import {
   isLikelyInvalidAudioError,
   MAX_AUDIO_BASE64_LENGTH,
   MAX_AUDIO_SIZE_MB,
+  MAX_TEXT_LENGTH,
   MIN_AUDIO_BASE64_LENGTH,
   MIN_AUDIO_ESTIMATED_BYTES,
   normalizeBase64Input,
@@ -207,6 +208,21 @@ export async function processStt(
       response: {
         status: 400,
         body: { error: 'Input transcript is empty' },
+      } as unknown as Response,
+    };
+  }
+
+  // Validate text length (max 5000 chars)
+  if (transcript.length > MAX_TEXT_LENGTH) {
+    return {
+      result: null,
+      response: {
+        status: 400,
+        body: {
+          error: 'TEXT_TOO_LONG',
+          message: `Input text exceeds maximum length of ${MAX_TEXT_LENGTH} characters.`,
+          max_length: MAX_TEXT_LENGTH,
+        },
       } as unknown as Response,
     };
   }
