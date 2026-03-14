@@ -46,7 +46,7 @@ import { SuggestionChips } from './SuggestionChips';
 import { ConversationSidebar } from './ConversationSidebar';
 import { ActivityConfirmCard } from './ActivityConfirmCard';
 import { VoiceModeModal } from './VoiceMode/VoiceModeModal';
-import type { VoiceModeState, VoiceModeMessage } from './VoiceMode/VoiceModeModal';
+import { useVoiceMode } from '@/hooks/use-voice-mode';
 
 const DEFAULT_SUGGESTIONS = [
   'ai.defaultSuggestions.waterNeed',
@@ -64,9 +64,6 @@ export function ChatScreen() {
   const { data: farms } = useFarms();
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [voiceModeVisible, setVoiceModeVisible] = useState(false);
-  const [voiceState, setVoiceState] = useState<VoiceModeState>('idle');
-  const [voiceMessages, setVoiceMessages] = useState<VoiceModeMessage[]>([]);
 
   // Auto-select the first farm from the list as the active farm for assistant context
   const activeFarm = useMemo(() => farms?.[0] ?? null, [farms]);
@@ -87,6 +84,7 @@ export function ChatScreen() {
 
   const {
     messages,
+    conversationId,
     isLoading,
     inputText,
     setInputText,
@@ -102,7 +100,24 @@ export function ChatScreen() {
     dismissVoiceLogAction,
     addAttachment,
     removeAttachment,
+    addMessage,
+    syncConversationId,
   } = useAssistant({ language, farmContext });
+
+  const {
+    voiceState,
+    voiceMessages,
+    isVoiceModeVisible,
+    openVoiceMode,
+    handleOrbPress,
+    handleClose: handleCloseVoiceMode,
+  } = useVoiceMode({
+    conversationId,
+    language,
+    farmContext,
+    onNewMessage: addMessage,
+    onConversationIdChange: syncConversationId,
+  });
 
   const handleSend = useCallback(() => {
     void sendMessage();
@@ -209,26 +224,8 @@ export function ChatScreen() {
   }, [dismissVoiceLogAction]);
 
   const handleOpenVoiceMode = useCallback(() => {
-    setVoiceState('idle');
-    setVoiceMessages([]);
-    setVoiceModeVisible(true);
-  }, []);
-
-  const handleCloseVoiceMode = useCallback(() => {
-    setVoiceModeVisible(false);
-    setVoiceState('idle');
-  }, []);
-
-  // Orb press handler — state machine: idle→listening, listening→processing (no-op for now)
-  // Full recording/STT integration is handled in vm-recording-and-stt feature.
-  const handleOrbPress = useCallback(() => {
-    setVoiceState((prev) => {
-      if (prev === 'idle' || prev === 'error') return 'listening';
-      if (prev === 'listening') return 'processing';
-      if (prev === 'speaking') return 'listening';
-      return 'idle';
-    });
-  }, []);
+    openVoiceMode();
+  }, [openVoiceMode]);
 
   // No-farm detection — distinguish between no farms existing vs no farm selected
   const hasNoFarms = farms !== undefined && farms.length === 0;
@@ -456,7 +453,7 @@ export function ChatScreen() {
 
       {/* Voice mode modal */}
       <VoiceModeModal
-        visible={voiceModeVisible}
+        visible={isVoiceModeVisible}
         voiceState={voiceState}
         messages={voiceMessages}
         onOrbPress={handleOrbPress}

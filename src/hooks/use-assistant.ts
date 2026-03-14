@@ -55,6 +55,10 @@ export interface UseAssistantReturn {
   dismissVoiceLogAction: () => void;
   addAttachment: (attachment: AIMessageAttachmentInput) => void;
   removeAttachment: (index: number) => void;
+  /** Add a message directly (used by voice mode to persist voice turns to main chat) */
+  addMessage: (message: ChatMessage) => void;
+  /** Sync conversation ID from voice mode when it creates a new conversation */
+  syncConversationId: (id: string) => void;
 }
 
 const DEFAULT_SUGGESTIONS = [
@@ -221,6 +225,19 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     lastAttachmentsRef.current = [];
   }, []);
 
+  const addMessage = useCallback((message: ChatMessage) => {
+    setMessages((prev) => [...prev, message]);
+  }, []);
+
+  const syncConversationId = useCallback(
+    (id: string) => {
+      if (!conversationId) {
+        setConversationId(id);
+      }
+    },
+    [conversationId],
+  );
+
   const loadConversation = useCallback(async (conversationId: string) => {
     cancelAllPendingAssistantTurnRequests();
     setMessages([]);
@@ -264,6 +281,8 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     dismissVoiceLogAction,
     addAttachment,
     removeAttachment,
+    addMessage,
+    syncConversationId,
   };
 }
 

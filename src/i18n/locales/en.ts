@@ -1307,6 +1307,14 @@ export const en = {
       errorRetry: 'Tap to retry',
       orbIdleA11y: 'Tap to start speaking',
       orbSpeakingA11y: 'Tap to interrupt',
+      micPermissionDenied:
+        'Microphone access is required for voice mode. Please enable it in Settings.',
+      micPermissionDeniedShort: 'Microphone permission denied. Check Settings.',
+      maxDurationReached: 'Maximum recording duration reached.',
+      sttError: 'Speech recognition failed. Tap to retry.',
+      networkError: 'Network error. Check connection and tap to retry.',
+      recordingTooShort: 'Recording was too short. Tap and speak for at least 1 second.',
+      voiceMessagePlaceholder: 'Voice message',
     },
   },
   onboarding: {

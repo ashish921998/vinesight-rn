@@ -51,6 +51,20 @@ jest.mock('@/hooks/use-assistant', () => ({
   DEFAULT_SUGGESTIONS: ['ai.defaultSuggestions.waterNeed', 'ai.defaultSuggestions.diseases'],
 }));
 
+// Mock useVoiceMode to prevent expo-audio transitive import in tests
+jest.mock('@/hooks/use-voice-mode', () => ({
+  useVoiceMode: () => ({
+    voiceState: 'idle',
+    voiceMessages: [],
+    isVoiceModeVisible: false,
+    openVoiceMode: jest.fn(),
+    handleOrbPress: jest.fn(),
+    handleClose: jest.fn(),
+    voiceModeError: null,
+    clearVoiceModeError: jest.fn(),
+  }),
+}));
+
 jest.mock('@/styles/use-theme', () => ({
   useThemeTokens: () => ({
     isDark: false,
@@ -213,6 +227,8 @@ describe('ChatScreen', () => {
       dismissVoiceLogAction: mockDismissVoiceLogAction,
       addAttachment: jest.fn(),
       removeAttachment: jest.fn(),
+      addMessage: jest.fn(),
+      syncConversationId: jest.fn(),
     };
   });
 
@@ -326,6 +342,8 @@ describe('ChatScreen with messages', () => {
       dismissVoiceLogAction: mockDismissVoiceLogAction,
       addAttachment: jest.fn(),
       removeAttachment: jest.fn(),
+      addMessage: jest.fn(),
+      syncConversationId: jest.fn(),
     };
   });
 
@@ -377,6 +395,8 @@ describe('ChatScreen farm context', () => {
       dismissVoiceLogAction: mockDismissVoiceLogAction,
       addAttachment: jest.fn(),
       removeAttachment: jest.fn(),
+      addMessage: jest.fn(),
+      syncConversationId: jest.fn(),
     };
   });
 

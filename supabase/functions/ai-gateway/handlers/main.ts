@@ -368,6 +368,7 @@ export async function handleRequest(req: Request): Promise<Response> {
 
     return jsonResponse({
       assistant_text: assistantText,
+      user_transcript: effectiveInputMode === 'audio' ? transcript : null,
       assistant_audio_b64: audioBase64,
       assistant_audio_mime_type: audioMimeType,
       audio_provider_used: audioProviderUsed,
