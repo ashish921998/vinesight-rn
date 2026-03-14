@@ -383,6 +383,28 @@ describe('useVoiceMode', () => {
     expect(assistantCall?.[0].content).toBe('The wheat crop needs watering today.');
   });
 
+  it('user transcript is emitted before assistant message in main chat (correct turn order)', async () => {
+    const onNewMessage = jest.fn();
+    const { result } = renderHook(() => useVoiceMode({ ...defaultOptions, onNewMessage }));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    // Expect 2 calls: user transcript first, then assistant
+    expect(onNewMessage).toHaveBeenCalledTimes(2);
+    expect(onNewMessage.mock.calls[0][0].role).toBe('user');
+    expect(onNewMessage.mock.calls[0][0].content).toBe('How is my wheat doing?');
+    expect(onNewMessage.mock.calls[1][0].role).toBe('assistant');
+    expect(onNewMessage.mock.calls[1][0].content).toBe('The wheat crop needs watering today.');
+  });
+
   it('onConversationIdChange called when backend returns new conversation ID', async () => {
     const onConversationIdChange = jest.fn();
     const { result } = renderHook(() =>

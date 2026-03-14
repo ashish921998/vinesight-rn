@@ -175,10 +175,8 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
 
       setVoiceMessages((prev) => [...prev, userVoiceMsg, assistantVoiceMsg]);
 
-      // Also surface assistant message in the main chat thread
-      onNewMessage?.(response.message);
-
-      // Surface a synthetic user message in the main chat thread (transcript-based)
+      // Surface a synthetic user message FIRST, then the assistant reply.
+      // This ensures correct turn order (user → assistant) in the main chat thread.
       if (response.userTranscript) {
         const userChatMessage: ChatMessage = {
           id: userVoiceMsg.id,
@@ -190,6 +188,9 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
         };
         onNewMessage?.(userChatMessage);
       }
+
+      // Then surface assistant message in the main chat thread
+      onNewMessage?.(response.message);
 
       setBackendError(null);
 

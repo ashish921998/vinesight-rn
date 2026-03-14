@@ -111,6 +111,8 @@ export function ChatScreen() {
     openVoiceMode,
     handleOrbPress,
     handleClose: handleCloseVoiceMode,
+    voiceModeError,
+    clearVoiceModeError,
   } = useVoiceMode({
     conversationId,
     language,
@@ -458,6 +460,8 @@ export function ChatScreen() {
         messages={voiceMessages}
         onOrbPress={handleOrbPress}
         onClose={handleCloseVoiceMode}
+        voiceModeError={voiceModeError}
+        onClearError={clearVoiceModeError}
       />
     </SafeAreaView>
   );

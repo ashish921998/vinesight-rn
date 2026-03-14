@@ -20,6 +20,7 @@ import { VoiceModeModal } from '@/components/assistant/VoiceMode/VoiceModeModal'
 import { VoiceThread } from '@/components/assistant/VoiceMode/VoiceThread';
 import type { VoiceModeState } from '@/components/assistant/VoiceMode/AnimatedOrb';
 import type { VoiceModeMessage } from '@/components/assistant/VoiceMode/VoiceThread';
+import type { VoiceModeError } from '@/hooks/use-voice-mode';
 
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
@@ -90,6 +91,10 @@ jest.mock('react-i18next', () => ({
         'assistant.voiceMode.orbIdleA11y': 'Tap to start speaking',
         'assistant.voiceMode.orbSpeakingA11y': 'Tap to interrupt',
         'ai.voice.stopA11y': 'Stop voice input',
+        'assistant.voiceMode.micPermissionDenied':
+          'Microphone access is required for voice mode. Please enable it in Settings.',
+        'assistant.voiceMode.sttError': 'Speech recognition failed. Tap to retry.',
+        'assistant.voiceMode.networkError': 'Network error. Check connection and tap to retry.',
       };
       return map[key] ?? key;
     },
@@ -205,6 +210,63 @@ describe('VoiceModeModal', () => {
       const { getByTestId } = render(<VoiceModeModal {...defaultProps} voiceState={state} />);
       expect(getByTestId('voice-mode-container')).toBeTruthy();
     });
+  });
+
+  // ── Distinct error messages ───────────────────────────────────────────────
+
+  it('shows permission_denied error message guiding user to Settings', () => {
+    const voiceModeError: VoiceModeError = {
+      kind: 'permission_denied',
+      message: 'Permission denied',
+    };
+    const { getByTestId } = render(
+      <VoiceModeModal {...defaultProps} voiceState="error" voiceModeError={voiceModeError} />,
+    );
+    expect(getByTestId('voice-mode-status-label').props.children).toBe(
+      'Microphone access is required for voice mode. Please enable it in Settings.',
+    );
+  });
+
+  it('shows stt_failed error message with retry option', () => {
+    const voiceModeError: VoiceModeError = { kind: 'stt_failed', message: 'STT failed' };
+    const { getByTestId } = render(
+      <VoiceModeModal {...defaultProps} voiceState="error" voiceModeError={voiceModeError} />,
+    );
+    expect(getByTestId('voice-mode-status-label').props.children).toBe(
+      'Speech recognition failed. Tap to retry.',
+    );
+  });
+
+  it('shows network_error error message with retry option', () => {
+    const voiceModeError: VoiceModeError = { kind: 'network_error', message: 'Network error' };
+    const { getByTestId } = render(
+      <VoiceModeModal {...defaultProps} voiceState="error" voiceModeError={voiceModeError} />,
+    );
+    expect(getByTestId('voice-mode-status-label').props.children).toBe(
+      'Network error. Check connection and tap to retry.',
+    );
+  });
+
+  it('shows generic error label when voiceModeError is null in error state', () => {
+    const { getByTestId } = render(
+      <VoiceModeModal {...defaultProps} voiceState="error" voiceModeError={null} />,
+    );
+    expect(getByTestId('voice-mode-status-label').props.children).toBe(
+      'Something went wrong. Tap to retry.',
+    );
+  });
+
+  it('shows recording_failed error as stt error message', () => {
+    const voiceModeError: VoiceModeError = {
+      kind: 'recording_failed',
+      message: 'Recording failed',
+    };
+    const { getByTestId } = render(
+      <VoiceModeModal {...defaultProps} voiceState="error" voiceModeError={voiceModeError} />,
+    );
+    expect(getByTestId('voice-mode-status-label').props.children).toBe(
+      'Speech recognition failed. Tap to retry.',
+    );
   });
 });
 

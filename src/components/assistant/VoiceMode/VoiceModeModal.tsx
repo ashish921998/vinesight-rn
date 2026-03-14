@@ -38,6 +38,7 @@ import { AnimatedOrb } from './AnimatedOrb';
 import { VoiceThread } from './VoiceThread';
 import type { VoiceModeState } from './AnimatedOrb';
 import type { VoiceModeMessage } from './VoiceThread';
+import type { VoiceModeError } from '@/hooks/use-voice-mode';
 
 // Re-export types for external consumers
 export type { VoiceModeState } from './AnimatedOrb';
@@ -53,6 +54,10 @@ interface VoiceModeModalProps {
   onOrbPress: () => void;
   /** Callback to close the modal */
   onClose: () => void;
+  /** Combined error from recording or backend — used to show distinct error messages */
+  voiceModeError?: VoiceModeError | null;
+  /** Callback to clear the current error */
+  onClearError?: () => void;
 }
 
 const SWIPE_DOWN_THRESHOLD = 80;
@@ -63,6 +68,8 @@ export function VoiceModeModal({
   messages,
   onOrbPress,
   onClose,
+  voiceModeError,
+  onClearError: _onClearError,
 }: VoiceModeModalProps) {
   const { m3, isDark } = useThemeTokens();
   const { t } = useTranslation();
@@ -152,7 +159,7 @@ export function VoiceModeModal({
     onOrbPress();
   }, [onOrbPress]);
 
-  // Status label based on voice state
+  // Status label based on voice state — shows distinct error messages per error kind
   const getStatusLabel = (): string => {
     switch (voiceState) {
       case 'idle':
@@ -163,8 +170,21 @@ export function VoiceModeModal({
         return t('ai.chat.thinking');
       case 'speaking':
         return t('ai.chat.assistantSpeaking');
-      case 'error':
+      case 'error': {
+        // Distinct messages per error kind
+        if (voiceModeError?.kind === 'permission_denied') {
+          // Guide user to open Settings to grant microphone access
+          return t('assistant.voiceMode.micPermissionDenied');
+        }
+        if (voiceModeError?.kind === 'stt_failed' || voiceModeError?.kind === 'recording_failed') {
+          return t('assistant.voiceMode.sttError');
+        }
+        if (voiceModeError?.kind === 'network_error' || voiceModeError?.kind === 'timeout') {
+          return t('assistant.voiceMode.networkError');
+        }
+        // Fallback generic error
         return t('assistant.voiceMode.errorLabel');
+      }
       default:
         return t('ai.chat.tapToSpeak');
     }
@@ -213,11 +233,12 @@ export function VoiceModeModal({
             transform: [{ translateY }],
           },
         ]}
-        {...panResponder.panHandlers}
         testID="voice-mode-container"
       >
-        {/* Header row: swipe indicator + title + close button */}
-        <View style={styles.header}>
+        {/* Header row: swipe indicator + title + close button.
+            Pan handlers are attached here (not the full container) so that
+            VoiceThread can scroll freely without triggering modal dismiss. */}
+        <View style={styles.header} {...panResponder.panHandlers}>
           {/* Drag handle */}
           <View style={styles.dragHandleRow}>
             <View style={[styles.dragHandle, { backgroundColor: m3.colorScheme.outlineVariant }]} />
