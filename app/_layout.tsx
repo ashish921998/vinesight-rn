@@ -679,7 +679,6 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="ai-chat" options={{ headerShown: true }} />
                 <Stack.Screen name="add-activity" options={{ presentation: 'fullScreenModal' }} />
                 <Stack.Screen name="add-entry" options={{ presentation: 'fullScreenModal' }} />
                 <Stack.Screen name="add-task" options={{ presentation: 'fullScreenModal' }} />

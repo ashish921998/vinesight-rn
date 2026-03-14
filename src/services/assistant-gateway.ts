@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { aiService } from '@/services/ai-service';
 import { assistantFeatureFlags, assistantModelConfig } from '@/constants/assistant-flags';
 import { normalizeAssistantCitations } from '@/services/rag-citations';
 import { telemetry } from '@/services/telemetry';
@@ -395,14 +394,6 @@ function parseInvokeError(
   );
 }
 
-function shouldFallbackToLegacy(error: AssistantGatewayError): boolean {
-  return (
-    error.code === AssistantGatewayErrorCode.NETWORK_ERROR ||
-    error.code === AssistantGatewayErrorCode.TIMEOUT ||
-    error.code === AssistantGatewayErrorCode.SERVER_ERROR
-  );
-}
-
 export function cancelPendingAssistantTurnRequest(requestId: string): boolean {
   const request = pendingGatewayRequests.get(requestId);
   if (!request) return false;
@@ -532,61 +523,10 @@ function buildAudioPayload(response: AssistantGatewayResponse): AssistantAudio |
   };
 }
 
-async function fallbackToLegacyAssistant(
-  input: SendAssistantTurnInput,
-): Promise<AssistantTurnResponse> {
-  const legacy = await aiService.sendMessage(
-    input.userMessage,
-    input.conversationHistory ?? [],
-    input.farmContext
-      ? {
-          farmName: input.farmContext.farmName,
-          cropVariety: input.farmContext.cropVariety,
-          area: input.farmContext.area,
-          region: input.farmContext.region,
-          growthStage: input.farmContext.growthStage,
-          daysSincePruning: input.farmContext.daysSincePruning,
-        }
-      : undefined,
-    input.language,
-    input.attachments ?? [],
-  );
-
-  return {
-    message: {
-      ...legacy.message,
-      inputMode: input.inputMode ?? 'text',
-      conversationId: input.conversationId ?? undefined,
-    },
-    suggestions: legacy.suggestions,
-    providerUsed: 'openai-proxy',
-    modelUsed: assistantModelConfig.advisoryModel,
-  };
-}
-
 export async function sendAssistantTurn(
   input: SendAssistantTurnInput,
   options?: SendAssistantTurnOptions,
 ): Promise<AssistantTurnResponse> {
-  if (!assistantFeatureFlags.serverVoiceEnabled) {
-    const requestedInputMode = input.inputMode ?? 'text';
-    const hasAudioPayload =
-      requestedInputMode === 'audio' &&
-      typeof input.inputAudioBase64 === 'string' &&
-      input.inputAudioBase64.trim().length > 0;
-    const normalizedInput = input.userMessage.trim();
-    if (hasAudioPayload && !normalizedInput) {
-      throw new AssistantGatewayError(
-        AssistantGatewayErrorCode.INVALID_REQUEST,
-        'Audio-only requests require the server voice gateway',
-        {
-          inputMode: requestedInputMode,
-        },
-      );
-    }
-    return fallbackToLegacyAssistant(input);
-  }
-
   const requestId =
     options?.requestId ?? `ai-gateway-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const requestStart = Date.now();
@@ -823,18 +763,6 @@ export async function sendAssistantTurn(
       error_message: `code:${parsedError.code}`,
       duration_ms: Date.now() - requestStart,
     });
-
-    if (
-      assistantFeatureFlags.providerFallbackEnabled &&
-      shouldFallbackToLegacy(parsedError) &&
-      input.userMessage?.trim()
-    ) {
-      telemetry.capture('assistant_gateway_fallback_triggered', {
-        request_id: requestId,
-        reason: parsedError.code,
-      });
-      return fallbackToLegacyAssistant(input);
-    }
 
     throw parsedError;
   } finally {

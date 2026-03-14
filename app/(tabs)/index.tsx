@@ -639,7 +639,7 @@ export default function DashboardScreen() {
           {/* Add Entry handled via route */}
         </View>
       </ScrollView>
-      <FloatingAssistantButton onPress={() => router.push('/ai-chat')} />
+      <FloatingAssistantButton onPress={() => router.push('/(tabs)/assistant')} />
     </>
   );
 }
