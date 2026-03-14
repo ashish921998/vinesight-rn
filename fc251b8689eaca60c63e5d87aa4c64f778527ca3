@@ -1,0 +1,33 @@
+__tests__/conversation-sidebar.test.tsx
+  86dad35906b02a11 1-301
+src/components/assistant/ChatScreen.tsx
+  86dad35906b02a11 10-11,17,36,50-51,60,74-86,88-91,120-130,142-143,145,189-196,214,218,220
+__tests__/chat-screen.test.tsx
+  86dad35906b02a11 71-80,111-121,143,205-215,250
+__tests__/use-assistant.test.ts
+  86dad35906b02a11 8,21,35-43,257-336
+src/components/assistant/ConversationSidebar.tsx
+  86dad35906b02a11 1-433
+src/hooks/use-assistant.ts
+  86dad35906b02a11 19,48,144-165
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "fc251b8689eaca60c63e5d87aa4c64f778527ca3",
+  "prompts": {
+    "86dad35906b02a11": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f68ae63d-9adb-4f78-bd64-50e6c6fc8fcf",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 1037,
+      "total_deletions": 93,
+      "accepted_lines": 948,
+      "overriden_lines": 0
+    }
+  }
+}
