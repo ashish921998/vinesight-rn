@@ -1,0 +1,51 @@
+{
+  "featureId": "ui-citations-errors-confirmations",
+  "reviewedAt": "2026-03-14T20:19:12Z",
+  "commitId": "b6eafc6",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature adds the requested UI pieces, locales, and component tests, but it does not fully satisfy the contract: the redesigned chat screen never carries an active farm context, retry loses image attachments, and the ai-gateway path still treats attached images as generic text-only context so the assistant cannot actually reason about image content.",
+    "issues": [
+      {
+        "file": "src/components/assistant/ChatScreen.tsx",
+        "line": 82,
+        "severity": "blocking",
+        "description": "`useAssistant` is invoked with only `{ language }`, so every request is sent without `farmContext`; the only no-farm handling is `hasNoFarms = farms.length === 0` at lines 189-275. That does not implement the feature's \"no farm selected\" behavior: users who do have farms but are not in an active farm context get no guidance, and farm-specific queries are still sent with `farm_context: null` instead of the selected farm."
+      },
+      {
+        "file": "src/hooks/use-assistant.ts",
+        "line": 89,
+        "severity": "blocking",
+        "description": "`sendMessage()` snapshots `attachments` and immediately clears them, but `retryLastMessage()` only stores/replays `lastUserMessageRef` (lines 77, 146-150). A failed request with image attachments is therefore retried without the original attachments, violating the contract that Retry must resend the same payload."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/context/assembler.ts",
+        "line": 103,
+        "severity": "blocking",
+        "description": "The new UI sends image data, but the ai-gateway path reduces any image attachment to the text `image attached by user`; `handlers/advisory.ts` then calls `chatCompletionWithTimeout()` with only `contextBlocks` text. The model never receives the actual image bytes/URL, so VAL-UI-026's requirement that the assistant can reference image content in responses is still unmet."
+      },
+      {
+        "file": "__tests__/chat-screen.test.tsx",
+        "line": 196,
+        "severity": "non_blocking",
+        "description": "The updated ChatScreen test file still only covers generic rendering/welcome-state cases (tests at lines 196-319). There are no assertions for the new error banner actions, no-farm banner, attachment picker/send flow, or confirm/cancel navigation, so the main feature paths that regressed here are effectively untested."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "`frontend-worker` tells workers to inspect the new assistant components/services, but it does not tell them to compare behavior against the legacy `app/ai-chat.tsx` flow when porting assistant features. That legacy screen still contains the farm-context routing and attachment handling patterns that were lost here.",
+      "evidence": ".factory/skills/frontend-worker/SKILL.md:29-34 only points to `src/components/assistant/` and `assistant-gateway.ts`; compare with `app/ai-chat.tsx:1038-1051, 1766-1768, 2309` where farm context and attachment preparation are preserved, versus `src/components/assistant/ChatScreen.tsx:61-82, 189-275`."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The shared architecture notes describe the redesigned assistant surface at a high level, but they do not capture that the assistant must preserve selected-farm context or that image attachments require multimodal forwarding rather than a text-only context note. That knowledge currently lives only in legacy code paths.",
+      "evidence": ".factory/library/architecture.md:22-29 and 93-98 describe ChatScreen/InputBar and the text-chat flow without mentioning farm-scoped routing or multimodal image handling; the missing behavior is only apparent when comparing with `app/ai-chat.tsx:1038-1051, 2309` and `supabase/functions/ai-gateway/context/assembler.ts:103-104`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed. The feature ships the new citation/error/confirmation UI, but contract coverage is incomplete because active-farm context was dropped from the redesigned screen, retry does not preserve image attachments, and attached images are never forwarded to the model in a way that allows image-aware responses."
+}

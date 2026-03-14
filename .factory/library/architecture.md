@@ -100,6 +100,9 @@ User types message
   → MessageBubble renders Markdown with citations
 ```
 
+- Assistant requests should preserve the currently selected farm context when a farm is active. "No farms exist" and "no active farm is selected" are different UI states and should be handled separately.
+- Image attachments only support image-aware responses when the backend forwards actual multimodal content (bytes, file handle, or URL). Replacing an attachment with a text placeholder like `image attached by user` is not sufficient for model reasoning.
+
 ### Data Flow: Voice Mode
 ```
 User taps orb
@@ -130,3 +133,5 @@ Bottom Tabs: Dashboard | Explore | Workers | Tools | AI Assistant
                                                         ↑ replaces Settings
 Dashboard header → profile/settings icon → navigates to /settings
 ```
+
+- Expo Router NativeTabs currently omits `headerRight` from `NativeTabOptions` typings in this repo's setup. The working pattern is to spread a separately typed object into the trigger options instead of trying to assign `headerRight` directly on the typed options object.
