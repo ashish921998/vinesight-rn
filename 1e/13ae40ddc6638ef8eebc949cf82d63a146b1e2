@@ -1,0 +1,35 @@
+supabase/functions/ai-gateway/providers/stt.ts
+  2625eda2b021683e 194
+__tests__/stt-provider.test.ts
+  2625eda2b021683e 3-7,10-90,93-98,101-105,107-108,112,115-121,123-126,128-131,149,153-154,158-178,182-195,199-213,217-228,232-238,242-261,266-289,293-312,314-315,320-346,349-363,368-391,395-412,417-420,423-434,440-442,445-456,462-483,487-507,512-520,524-531,535-542,546-559,563-569
+supabase/functions/ai-gateway/context/farm-records.ts
+  2625eda2b021683e 3-4
+supabase/functions/ai-gateway/routing/voice-log-routing.ts
+  2625eda2b021683e 3-4,30-36
+supabase/functions/ai-gateway/context/farm-financial-records.ts
+  2625eda2b021683e 1-270
+supabase/functions/ai-gateway/context/farm-data.ts
+  2625eda2b021683e 8-9,50-51
+supabase/functions/ai-gateway/routing/voice-log-draft.ts
+  2625eda2b021683e 1-276
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "1e13ae40ddc6638ef8eebc949cf82d63a146b1e2",
+  "prompts": {
+    "2625eda2b021683e": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "093ae6ea-46ea-4bbc-8b16-87bdc319b053",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 1065,
+      "total_deletions": 797,
+      "accepted_lines": 1059,
+      "overriden_lines": 0
+    }
+  }
+}
