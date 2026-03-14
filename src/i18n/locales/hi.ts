@@ -49,6 +49,9 @@ export const hi = {
       avg: 'औसत',
       min: 'न्यूनतम',
       max: 'अधिकतम',
+      readyToAdd: 'जोड़ने के लिए तैयार',
+      enterQuantityAndSelectGrade: 'मात्रा दर्ज करें और ग्रेड चुनें',
+      summary: 'सारांश',
     },
     noResultsFound: 'कोई परिणाम नहीं मिला',
     tryDifferentSearchTerm: 'कोई अन्य खोज शब्द आज़माएं',
@@ -732,6 +735,14 @@ export const hi = {
       Maintenance: 'रखरखाव',
       Other: 'अन्य',
     },
+    remarks: {
+      label: 'टिप्पणियां',
+      placeholder: 'इस खर्च के बारे में नोट्स जोड़ें (वैकल्पिक)',
+      hint: 'वैकल्पिक - खर्च का वर्णन करें',
+    },
+    validation: {
+      selectCategoryAndEnterAmount: 'श्रेणी चुनें और राशि दर्ज करें',
+    },
   },
 
   harvestForm: {
@@ -747,6 +758,12 @@ export const hi = {
     buyerLabel: 'खरीदार',
     buyerPlaceholder: 'खरीदार का नाम दर्ज करें (वैकल्पिक)',
     buyerHint: 'वैकल्पिक - किसने कटाई खरीदी',
+    grades: {
+      exportQuality: 'निर्यात गुणवत्ता',
+      premium: 'प्रीमियम',
+      standard: 'मानक',
+      reject: 'अस्वीकृत',
+    },
   },
 
   analytics: {
@@ -1453,6 +1470,10 @@ export const hi = {
     backToLoginLink: 'ईमेल साइन इन',
     backToLoginA11y: 'ईमेल साइन इन पर वापस जाएं',
     invalidPhone: 'कृपया देश कोड के साथ एक वैध फ़ोन नंबर दर्ज करें',
+    useMyNumber: 'मेरा नंबर उपयोग करें',
+    useMyNumberA11y: 'इस डिवाइस से एक फ़ोन नंबर चुनें',
+    phoneHintUnsupported:
+      'यह नंबर स्वचालित रूप से नहीं भरा जा सका। कृपया इसे मैन्युअल रूप से दर्ज करें।',
     countryCode: 'देश कोड',
     searchCountry: 'देश खोजें...',
     namePlaceholder: 'आपका नाम',
@@ -1693,13 +1714,11 @@ export const hi = {
     },
     chat: {
       assistantSpeaking: 'सहायक बोल रहा है...',
-      retry: 'फिर से प्रयास करें',
       history: 'चैट इतिहास',
       voiceMode: 'वॉइस मोड',
       thinking: 'सोच रहा है...',
       tapToSpeak: 'बोलने के लिए टैप करें',
       transcriptPlaceholder: 'आपकी आवाज़ यहाँ दिखाई देगी...',
-      failedRequest: 'पिछला अनुरोध विफल हुआ।',
       newChat: 'नई चैट',
       newConversation: 'नई बातचीत',
       noPreviousChats: 'अभी तक कोई पिछली चैट नहीं है।',
@@ -1708,17 +1727,9 @@ export const hi = {
       deleteChatConfirm: 'क्या आप वाकई इस चैट को हटाना चाहते हैं? यह पूर्ववत नहीं किया जा सकता।',
       deleteChatFailed: 'चैट हटाने में विफल। कृपया दोबारा प्रयास करें।',
       openHistoryHint: 'आपकी सहेजी गई बातचीत खोलता है।',
-      stop: 'रोकें',
-      replay: 'फिर चलाएँ',
-      replayVoiceA11y: 'सहायक की आवाज़ फिर चलाएँ',
-      stopVoiceA11y: 'सहायक की आवाज़ रोकें',
-      toggleVoiceSpeedA11y: 'वॉइस गति बदलें',
       attachFileA11y: 'फ़ाइल जोड़ें',
       openVoiceModeA11y: 'वॉइस मोड खोलें',
       close: 'बंद करें',
-      continuousOn: 'सतत चालू',
-      continuousOff: 'सतत बंद',
-      speak: 'बोलें',
     },
     conversationBootstrapFailed: 'नई बातचीत शुरू नहीं हो सकी। कृपया दोबारा प्रयास करें।',
     logging: {
@@ -2683,69 +2694,6 @@ export const hi = {
     },
   },
 
-  farmAssistant: {
-    title: '$t(glossary.farm) सहायक',
-    askAboutFarmData: 'अपने $t(glossary.farm) के डेटा के बारे में पूछें...',
-    listening: 'सुन रहे हैं...',
-    tryAsking: 'ऐसे पूछें',
-    lookingUpRecords: 'आपके रिकॉर्ड खोजे जा रहे हैं...',
-    yourQuestion: 'आपका प्रश्न',
-    askAnotherQuestion: 'एक और प्रश्न पूछें',
-    tryAgain: 'पुनः प्रयास करें',
-    showingRecords: '{{total}} में से {{shown}} रिकॉर्ड दिखाए जा रहे हैं',
-    categories: {
-      spray: '$t(glossary.spray)',
-      irrigation: '$t(glossary.irrigation)',
-      fertigation: '$t(glossary.fertigation)',
-      expense: '$t(glossary.expense)',
-    },
-    suggestedQuestions: {
-      sprayLastMonth: 'पिछले महीने कौन सा $t(glossary.spray) किया?',
-      totalIrrigationSeason: 'इस सीज़न की कुल $t(glossary.irrigation)?',
-      lastFertilizer: 'आखिरी $t(glossary.fertigation) कब दिया?',
-      spendThisMonth: 'इस महीने कितना $t(glossary.expense) हुआ?',
-    },
-    clarification: {
-      whatToKnow: 'आप किस बारे में जानना चाहेंगे?',
-      forWhichPeriod: 'किस समयावधि के लिए?',
-      sprayHistory: '$t(glossary.spray) इतिहास',
-      irrigationHistory: '$t(glossary.irrigation) इतिहास',
-      fertilizerHistory: '$t(glossary.fertilizer) इतिहास',
-      expenseSummary: '$t(glossary.expense) सारांश',
-      thisWeek: 'इस सप्ताह',
-      thisMonth: 'इस महीने',
-      thisSeason: 'इस सीज़न',
-      lastMonth: 'पिछला महीना',
-    },
-    errors: {
-      unsupportedCategory:
-        'मैं केवल $t(glossary.spray), $t(glossary.irrigation), $t(glossary.fertigation) और $t(glossary.expense) इतिहास में सहायता कर सकता हूं।',
-      tooManyQueries: 'बहुत अधिक अनुरोध। कृपया कुछ देर प्रतीक्षा करें।',
-      somethingWentWrong: 'कुछ गड़बड़ हो गई। कृपया पुनः प्रयास करें।',
-      unsupportedMessages: {
-        sprayRecommendation:
-          'मैं $t(glossary.spray) की सिफारिश नहीं कर सकता, लेकिन आपकी आखिरी $t(glossary.spray) दिखा सकता हूं।',
-        recordCreation: 'मैं रिकॉर्ड बना नहीं सकता, लेकिन आपकी हाल की हिस्ट्री दिखा सकता हूं।',
-        recommendation:
-          'मैं सिफारिश नहीं दे सकता, लेकिन आपकी $t(glossary.farm) हिस्ट्री दिखा सकता हूं।',
-        cropHealth:
-          'मैं $t(glossary.spray), $t(glossary.irrigation), $t(glossary.fertigation) और $t(glossary.expense) हिस्ट्री में मदद कर सकता हूं।',
-      },
-      unsupportedSuggestions: {
-        showLastSpray: 'मेरी आखिरी $t(glossary.spray) दिखाएं',
-        showRecentHistory: 'हाल की हिस्ट्री दिखाएं',
-        showRecentActivity: 'हाल की गतिविधि दिखाएं',
-        askSprayLastMonth: 'पिछले महीने कौन सा $t(glossary.spray) किया?',
-      },
-    },
-    a11y: {
-      openAssistant: '$t(glossary.farm) सहायक से पूछें',
-      closeAssistant: '$t(glossary.farm) सहायक बंद करें',
-      stopListening: 'सुनना बंद करें',
-      submitQuery: 'प्रश्न भेजें',
-      selectOption: 'विकल्प चुनें: {{option}}',
-    },
-  },
   guidedTour: {
     welcome: {
       title: 'Vinesight में आपका स्वागत है',
