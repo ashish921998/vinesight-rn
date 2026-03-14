@@ -104,10 +104,16 @@ export function detectAudioFormatFromBase64(base64Audio: string): AudioFormatInf
 }
 
 /**
- * Check if MIME type is unsupported by Sarvam (MP4/M4A/CAF containers)
+ * Check if MIME type is unsupported by Sarvam
+ *
+ * Note: Saaras v3 supports M4A, MP4, CAF, and all major audio formats.
+ * This function now returns false for all formats since Saaras v3 handles them.
+ * Kept for backward compatibility but effectively deprecated.
  */
-export function isSarvamUnsupportedContainer(mimeType: string): boolean {
-  return /\b(mp4|m4a|x-m4a|caf|x-caf)\b/i.test(mimeType);
+export function isSarvamUnsupportedContainer(_mimeType: string): boolean {
+  // Saaras v3 supports M4A, MP4, CAF, and all major audio formats
+  // No format bypass needed anymore
+  return false;
 }
 
 /**

@@ -6,6 +6,8 @@
 import {
   estimateBase64Bytes,
   isLikelyInvalidAudioError,
+  MAX_AUDIO_BASE64_LENGTH,
+  MAX_AUDIO_SIZE_MB,
   MIN_AUDIO_BASE64_LENGTH,
   MIN_AUDIO_ESTIMATED_BYTES,
   normalizeBase64Input,
@@ -116,6 +118,7 @@ export async function processStt(
       const normalizedAudioBase64 = normalizeBase64Input(audioBase64);
       const estimatedAudioBytes = estimateBase64Bytes(normalizedAudioBase64);
 
+      // Minimum audio size validation
       if (normalizedAudioBase64.length < MIN_AUDIO_BASE64_LENGTH) {
         return {
           result: null,
@@ -131,6 +134,21 @@ export async function processStt(
           response: {
             status: 400,
             body: { error: 'INVALID_AUDIO', message: 'Audio data is too small.' },
+          } as unknown as Response,
+        };
+      }
+
+      // Maximum audio size validation (10MB)
+      if (normalizedAudioBase64.length > MAX_AUDIO_BASE64_LENGTH) {
+        return {
+          result: null,
+          response: {
+            status: 400,
+            body: {
+              error: 'AUDIO_TOO_LARGE',
+              message: `Audio exceeds maximum size of ${MAX_AUDIO_SIZE_MB}MB.`,
+              max_size_mb: MAX_AUDIO_SIZE_MB,
+            },
           } as unknown as Response,
         };
       }
@@ -154,6 +172,21 @@ export async function processStt(
         });
       } catch (error) {
         const errorMessage = stringifyUnknown(error);
+
+        // Handle empty transcript from STT
+        if (errorMessage.includes('stt_empty_transcript')) {
+          return {
+            result: null,
+            response: {
+              status: 400,
+              body: {
+                error: 'EMPTY_TRANSCRIPT',
+                message: 'Speech transcription returned no text. Please try again.',
+              },
+            } as unknown as Response,
+          };
+        }
+
         if (isLikelyInvalidAudioError(errorMessage)) {
           return {
             result: null,
