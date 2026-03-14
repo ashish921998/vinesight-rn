@@ -1,33 +1,31 @@
 /**
  * Voice Log Handler Module
  * Handles simplified activity logging flow (extract → clarify → ready).
+ * Returns prefill data for client confirmation - does NOT write to DB.
  */
 
-// Types re-exported from voice-routing
+import {
+  buildVoiceLogCancelledMessage,
+  buildVoiceLogClarificationMessage,
+  buildVoiceLogClarifyExhaustedMessage,
+  buildVoiceLogFormPrefill,
+  buildVoiceLogOpeningFormMessage,
+  resolveVoiceLogTurn,
+  type ActivityLogExtractionResult,
+  type Farm,
+  type VoiceLogDraft,
+  type VoiceLogMissingField,
+  type VoiceLogOriginContext,
+  type VoiceLogTurnResult,
+} from '../routing/index.ts';
 
-// Types re-exported from voice-routing
-export interface VoiceLogDraft {
-  type: 'irrigation' | 'spray' | 'harvest' | 'expense' | 'fertigation';
-  farmId: number | null;
-  farmName: string | null;
-  date: string;
-  irrigation: { durationHours: number | null };
-  spray: {
-    waterVolume: number | null;
-    chemicals: Array<{ name: string; quantity: number | null; unit: string | null }>;
-  };
-  harvest: {
-    quantity: number | null;
-    grade: string | null;
-    price: number | null;
-    buyer: string | null;
-  };
-  expense: { cost: number | null; expenseType: string | null; remarks: string | null };
-  fertigation: {
-    waterVolume: number | null;
-    fertilizers: Array<{ name: string; quantity: number | null; unit: string | null }>;
-  };
-}
+// Re-export types for convenience
+export type {
+  VoiceLogDraft,
+  VoiceLogActivityType,
+  VoiceLogMissingField,
+  VoiceLogOriginContext,
+} from '../routing/index.ts';
 
 export interface VoiceLogActionPayload {
   kind: 'none' | 'cancelled' | 'clarify' | 'ready';
@@ -39,33 +37,121 @@ export interface VoiceLogActionPayload {
   clarify_exhausted?: boolean;
 }
 
-export interface VoiceLogHandlerResult {
-  assistantText: string;
-  voiceLogAction: VoiceLogActionPayload | null;
-  routeStateDirty: boolean;
-}
-
-/**
- * Handle voice log flow
- * This handler is a thin wrapper around the voice-routing module.
- * The actual logic is in voice-routing.ts for backward compatibility.
- */
-export function handleVoiceLog(_input: {
+export interface VoiceLogHandlerInput {
   transcript: string;
   farms: Array<{ id: number; name: string }>;
   contextFarm: { id: number; name: string } | null;
   activeDraft: VoiceLogDraft | null;
-  expectedField: string | null;
+  expectedField: VoiceLogMissingField | null;
   clarifyAttempts: number;
-  llmExtraction: unknown;
+  llmExtraction: ActivityLogExtractionResult | null;
   locale: 'en' | 'hi' | 'mr';
-  originContext: 'dashboard' | 'farm';
-}): VoiceLogHandlerResult {
-  // This is a placeholder - actual logic is in voice-routing.ts
-  // The main entry point will call resolveVoiceLogTurn from voice-routing directly
+  originContext: VoiceLogOriginContext;
+}
+
+export interface VoiceLogHandlerResult {
+  assistantText: string;
+  voiceLogAction: VoiceLogActionPayload | null;
+  routeStateDirty: boolean;
+  nextDraft?: VoiceLogDraft | null;
+  nextExpectedField?: VoiceLogMissingField | null;
+  nextClarifyAttempts?: number;
+}
+
+/**
+ * Handle voice log flow
+ * Processes user input for activity logging, returns prefill data for client confirmation.
+ * Does NOT write to database - that's done by the client after user confirms.
+ */
+export function handleVoiceLog(input: VoiceLogHandlerInput): VoiceLogHandlerResult {
+  const {
+    transcript,
+    farms,
+    contextFarm,
+    activeDraft,
+    expectedField,
+    clarifyAttempts,
+    llmExtraction,
+    locale,
+    originContext,
+  } = input;
+
+  // Use the routing module to resolve the turn
+  const turnResult: VoiceLogTurnResult = resolveVoiceLogTurn({
+    transcript,
+    farms: farms as Farm[],
+    contextFarm: contextFarm as Farm | null,
+    activeDraft,
+    originContext,
+    llmExtraction,
+    expectedField,
+  });
+
+  // Handle each turn result kind
+  if (turnResult.kind === 'none') {
+    return {
+      assistantText: '',
+      voiceLogAction: null,
+      routeStateDirty: false,
+    };
+  }
+
+  if (turnResult.kind === 'cancelled') {
+    return {
+      assistantText: buildVoiceLogCancelledMessage(locale),
+      voiceLogAction: { kind: 'cancelled' },
+      routeStateDirty: true,
+      nextDraft: null,
+      nextExpectedField: null,
+      nextClarifyAttempts: 0,
+    };
+  }
+
+  if (turnResult.kind === 'clarify') {
+    const nextAttempts = clarifyAttempts + 1;
+
+    // Check if we've exhausted clarification attempts
+    if (nextAttempts >= 3) {
+      return {
+        assistantText: buildVoiceLogClarifyExhaustedMessage(locale),
+        voiceLogAction: {
+          kind: 'ready',
+          draft: turnResult.draft,
+          prefill: buildVoiceLogFormPrefill(turnResult.draft),
+        },
+        routeStateDirty: true,
+        nextDraft: null,
+        nextExpectedField: null,
+        nextClarifyAttempts: 0,
+      };
+    }
+
+    // Continue clarification
+    return {
+      assistantText: buildVoiceLogClarificationMessage(locale, turnResult.missingFields),
+      voiceLogAction: {
+        kind: 'clarify',
+        draft: turnResult.draft,
+        missing_fields: turnResult.missingFields,
+      },
+      routeStateDirty: true,
+      nextDraft: turnResult.draft,
+      nextExpectedField: turnResult.missingFields[0] ?? null,
+      nextClarifyAttempts: nextAttempts,
+    };
+  }
+
+  // turnResult.kind === 'ready'
   return {
-    assistantText: '',
-    voiceLogAction: null,
-    routeStateDirty: false,
+    assistantText: buildVoiceLogOpeningFormMessage(locale, turnResult.draft),
+    voiceLogAction: {
+      kind: 'ready',
+      draft: turnResult.draft,
+      prefill: buildVoiceLogFormPrefill(turnResult.draft),
+    },
+    routeStateDirty: true,
+    nextDraft: null,
+    nextExpectedField: null,
+    nextClarifyAttempts: 0,
   };
 }

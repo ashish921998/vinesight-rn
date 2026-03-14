@@ -28,6 +28,7 @@ export {
   handleVoiceLog,
   type VoiceLogActionPayload,
   type VoiceLogDraft,
+  type VoiceLogHandlerInput,
   type VoiceLogHandlerResult,
 } from './voice-log.ts';
 

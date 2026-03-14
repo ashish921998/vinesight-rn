@@ -21,7 +21,7 @@ import {
   type HybridChatRoute,
   type VoiceLogDraft,
   type VoiceLogMissingField,
-} from '../voice-routing.ts';
+} from '../routing/index.ts';
 
 import {
   calculateCost,

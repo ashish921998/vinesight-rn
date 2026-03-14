@@ -11,7 +11,7 @@ export {
   type ActivityLogExtractionResult,
 } from './intent.ts';
 
-// Router (re-exports from voice-routing.ts)
+// Router - clean modular implementation
 export {
   buildRouteClarificationCancelled,
   buildRouteClarificationPrompt,
@@ -30,6 +30,7 @@ export {
   shouldAttemptVoiceLogExtraction,
   type Farm,
   type HybridChatRoute,
+  type QueryIntent,
   type VoiceLogActivityType,
   type VoiceLogChemicalItem,
   type VoiceLogDraft,

@@ -23,7 +23,7 @@ import { transcribeAudio } from '../providers/index.ts';
 
 import { fetchUserFarms, type ToolCall } from '../context/index.ts';
 import type { AssistantGatewayRequest, AssistantRouteState } from '../types.ts';
-import type { VoiceLogDraft, VoiceLogMissingField } from '../voice-routing.ts';
+import type { VoiceLogDraft, VoiceLogMissingField } from '../routing/index.ts';
 
 export interface RequestSetup {
   body: AssistantGatewayRequest;
