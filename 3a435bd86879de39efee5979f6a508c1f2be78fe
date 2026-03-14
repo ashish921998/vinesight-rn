@@ -1,0 +1,23 @@
+supabase/functions/ai-gateway/handlers/request-processor.ts
+  fa8e617498a4ab56 11,215-229
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "3a435bd86879de39efee5979f6a508c1f2be78fe",
+  "prompts": {
+    "fa8e617498a4ab56": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "46c93a73-de99-43f1-af4d-ad682b57ecf3",
+        "model": "glm-5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 0,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}
