@@ -1,0 +1,539 @@
+{
+  "features": [
+    {
+      "id": "be-modular-structure",
+      "description": "Refactor the monolithic supabase/functions/ai-gateway/index.ts (2800 lines) into a modular structure. Create the directory layout: handlers/ (advisory, farm-query, voice-log, clarify), providers/ (stt, tts, llm, embeddings), context/ (assembler, farm-data, memory), routing/ (intent, router), safety/ (checker), utils/ (circuit-breaker, cost-tracker, telemetry). Create a new index.ts entry point (<200 lines) that routes requests to handlers. Move shared utilities (circuit breaker, cost tracking, telemetry, CORS) to utils/. The old monolithic index.ts should be replaced entirely. Each new module must be <500 lines with clean TypeScript interfaces between modules. Keep the existing response format contract so the client still works during transition.",
+      "skillName": "backend-worker",
+      "milestone": "backend-refactor",
+      "preconditions": [
+        "Current ai-gateway/index.ts exists at supabase/functions/ai-gateway/index.ts",
+        "Supabase Edge Functions use Deno runtime"
+      ],
+      "expectedBehavior": [
+        "New directory structure created: handlers/, providers/, context/, routing/, safety/, utils/",
+        "index.ts is <200 lines - only handles request routing, auth, CORS",
+        "Each module file is <500 lines",
+        "All existing functionality preserved (STT, TTS, LLM, routing, memory, safety, cost tracking)",
+        "Clean TypeScript interfaces between modules",
+        "Existing tests still pass"
+      ],
+      "verificationSteps": [
+        "npm run typecheck passes with 0 errors",
+        "npm test passes (baseline: 298 passing)",
+        "No single file in supabase/functions/ai-gateway/ exceeds 500 lines",
+        "index.ts is under 200 lines"
+      ],
+      "fulfills": ["VAL-BE-030"],
+      "status": "pending"
+    },
+    {
+      "id": "be-stt-provider-upgrade",
+      "description": "Extract and upgrade the STT provider module. Create supabase/functions/ai-gateway/providers/stt.ts with a transcribeAudio() function. Upgrade from Sarvam Saarika v2.5 to Saaras v3 model. Key changes: (1) Change model parameter from 'saarika:v2.5' to 'saaras:v3', (2) Support auto language detection by accepting language_code='unknown', (3) Keep the OpenAI Whisper fallback, (4) Keep the circuit breaker pattern (5 failures → open for 60s), (5) Keep audio validation (minimum size check, format detection), (6) With Saaras v3, M4A format IS now supported - remove the M4A/MP4 bypass that skipped Sarvam. The Sarvam API uses header 'api-subscription-key' (not Authorization). Endpoint: POST https://api.sarvam.ai/speech-to-text (multipart form with 'file', 'model', 'language_code' fields). Also create audio max size validation (reject >10MB). Also handle empty transcript from STT (return HTTP 400).",
+      "skillName": "backend-worker",
+      "milestone": "backend-refactor",
+      "preconditions": [
+        "be-modular-structure is complete (module directory exists)",
+        "SARVAM_API_KEY is set as Supabase function secret"
+      ],
+      "expectedBehavior": [
+        "providers/stt.ts exports transcribeAudio() function",
+        "Uses Sarvam Saaras v3 model as primary STT",
+        "Supports language_code='unknown' for auto-detection of 23 languages",
+        "Falls back to OpenAI Whisper on Sarvam failure when fallback enabled",
+        "Circuit breaker opens after 5 consecutive Sarvam failures",
+        "Rejects audio below minimum size with INVALID_AUDIO error",
+        "Rejects audio above 10MB with appropriate error",
+        "Returns HTTP 400 for empty transcript after STT",
+        "M4A format no longer bypasses Sarvam (Saaras v3 supports it)"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'stt' shows tests passing",
+        "npm run typecheck passes"
+      ],
+      "fulfills": [
+        "VAL-BE-001",
+        "VAL-BE-002",
+        "VAL-BE-003",
+        "VAL-BE-004",
+        "VAL-BE-005",
+        "VAL-BE-032",
+        "VAL-BE-033"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "be-tts-provider",
+      "description": "Extract the TTS provider module. Create supabase/functions/ai-gateway/providers/tts.ts with a generateSpeech() function. Use Sarvam Bulbul v3 as primary TTS. Key details: (1) Sarvam TTS endpoint: POST https://api.sarvam.ai/text-to-speech (JSON body: text, target_language_code, speaker, model='bulbul:v3', pace), (2) Auth: api-subscription-key header, (3) Locale-specific speakers: use env vars SARVAM_TTS_EN_SPEAKER, SARVAM_TTS_HI_SPEAKER, SARVAM_TTS_MR_SPEAKER (default 'shubh'), (4) Truncate text at 2500 chars for TTS input (full text in response), (5) OpenAI gpt-4o-mini-tts fallback (voice: alloy), (6) Circuit breaker for Sarvam TTS failures, (7) Skip TTS entirely when can_play_audio=false, (8) Graceful degradation when both providers fail (return text only, no error).",
+      "skillName": "backend-worker",
+      "milestone": "backend-refactor",
+      "preconditions": ["be-modular-structure is complete"],
+      "expectedBehavior": [
+        "providers/tts.ts exports generateSpeech() function",
+        "Uses Sarvam Bulbul v3 as primary TTS",
+        "Locale-specific speaker selection (en/hi/mr)",
+        "Truncates input at 2500 chars, returns full text in response",
+        "Falls back to OpenAI TTS on Sarvam failure",
+        "Returns text-only response when both fail (no error to client)",
+        "Skips TTS when can_play_audio is false"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'tts' shows tests passing",
+        "npm run typecheck passes"
+      ],
+      "fulfills": ["VAL-BE-014", "VAL-BE-015", "VAL-BE-016", "VAL-BE-017"],
+      "status": "pending"
+    },
+    {
+      "id": "be-llm-provider",
+      "description": "Extract the LLM provider module. Create supabase/functions/ai-gateway/providers/llm.ts with functions for: (1) chatCompletion() - GPT-4o-mini advisory responses with system prompt including farm context, memory, RAG, language instruction, (2) extractIntent() - GPT-4o-mini JSON mode for intent extraction from user transcript. The system prompt must include language-correct instructions (respond in Hindi/Marathi/English based on locale). For advisory: inject farm context, memory context, RAG context, and attachment content into the system prompt. Also create providers/embeddings.ts for text-embedding-3-small (1536 dim) used by memory and RAG search. Ensure single embedding generation is reused for both memory and RAG search (optimization).",
+      "skillName": "backend-worker",
+      "milestone": "backend-refactor",
+      "preconditions": ["be-modular-structure is complete"],
+      "expectedBehavior": [
+        "providers/llm.ts exports chatCompletion() and extractIntent()",
+        "Uses GPT-4o-mini as configured model",
+        "System prompt includes language instruction based on locale",
+        "providers/embeddings.ts exports generateEmbedding()",
+        "Single embedding reused for memory + RAG search"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'llm\\|embedding' shows tests passing",
+        "npm run typecheck passes"
+      ],
+      "fulfills": ["VAL-BE-010", "VAL-BE-011"],
+      "status": "pending"
+    },
+    {
+      "id": "be-context-assembly",
+      "description": "Create the comprehensive context assembly module. Create supabase/functions/ai-gateway/context/assembler.ts that builds the full LLM context from multiple sources. Create context/farm-data.ts for querying ALL farm data types from Supabase. Create context/memory.ts for memory search and write operations. The farm-data module must support querying: irrigation_records, spray_records, fertigation_records, expense_records, harvest_records, warehouse_items, workers + worker_attendance, task_reminders, soil_test_records, petiole_test_records, daily_notes. Also integrate weather data retrieval for weather-dependent advisory queries. The assembler combines: farm context (from request), farm records (queried), memory context (vector search), RAG context (vector search), attachment content, and weather data into a structured context object for the LLM. All queries must be farm-scoped (filter by farm_id when provided) and user-scoped (filter by user_id for ownership).",
+      "skillName": "backend-worker",
+      "milestone": "backend-refactor",
+      "preconditions": [
+        "be-modular-structure is complete",
+        "be-llm-provider is complete (for embeddings)"
+      ],
+      "expectedBehavior": [
+        "context/assembler.ts orchestrates all context sources",
+        "context/farm-data.ts can query ALL farm data types",
+        "context/memory.ts handles memory search (pgvector) and write (with embedding)",
+        "Weather data accessible for advisory queries",
+        "All queries are farm-scoped and user-scoped",
+        "Memory facts extracted and stored with 180-day expiry",
+        "Single embedding used for both memory and RAG search"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'context\\|farm-data\\|memory' shows tests passing",
+        "npm run typecheck passes"
+      ],
+      "fulfills": [
+        "VAL-BE-006",
+        "VAL-BE-007",
+        "VAL-BE-008",
+        "VAL-BE-009",
+        "VAL-BE-018",
+        "VAL-BE-019",
+        "VAL-BE-024",
+        "VAL-BE-025",
+        "VAL-BE-031"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "be-routing-and-handlers",
+      "description": "Create the routing and handler modules. Create routing/intent.ts for LLM-based intent extraction (uses extractIntent from llm provider). Create routing/router.ts for decideChatRoute() that determines: advisory, voice_log, farm_query, clarify_route, fallback_llm. Create handlers/advisory.ts for the LLM advisory flow (context assembly → LLM → safety check). Create handlers/farm-query.ts for deterministic farm data queries with aggregation. Create handlers/voice-log.ts for simplified activity logging (extract → clarify → ready with prefill, NOT writing to DB). Create handlers/clarify.ts for route ambiguity resolution. The voice-log handler must support all 5 activity types (irrigation, spray, harvest, expense, fertigation), handle cancellation, and return prefill data (not write to DB). The old voice-routing.ts with duplicated client-side logic should be replaced by these clean modules. Also create safety/checker.ts for spray/fertigation safety guardrails. Routing must handle Hindi, Marathi, and English intents. Also handle conversation_id creation (when null, create new conversation and return ID).",
+      "skillName": "backend-worker",
+      "milestone": "backend-refactor",
+      "preconditions": [
+        "be-modular-structure is complete",
+        "be-llm-provider is complete",
+        "be-context-assembly is complete"
+      ],
+      "expectedBehavior": [
+        "routing/intent.ts extracts intent via LLM",
+        "routing/router.ts decides route from intent",
+        "handlers/advisory.ts handles advisory flow end-to-end",
+        "handlers/farm-query.ts handles farm data queries with aggregation",
+        "handlers/voice-log.ts handles simplified activity logging (5 types)",
+        "Activity logging returns prefill (does NOT write to DB)",
+        "Cancellation clears voice log draft",
+        "handlers/clarify.ts handles route ambiguity",
+        "safety/checker.ts validates spray/fertigation advice",
+        "Hindi and Marathi intents route correctly",
+        "Conversation creation when conversation_id is null",
+        "Auth validation (401 for missing token, 403 for mismatch)",
+        "Text input validation (400 for empty, 400 for >5000 chars)"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'routing\\|handler\\|advisory\\|farm-query\\|voice-log\\|safety' shows tests passing",
+        "npm run typecheck passes",
+        "npm run lint passes"
+      ],
+      "fulfills": [
+        "VAL-BE-012",
+        "VAL-BE-013",
+        "VAL-BE-020",
+        "VAL-BE-021",
+        "VAL-BE-022",
+        "VAL-BE-023",
+        "VAL-BE-026",
+        "VAL-BE-027",
+        "VAL-BE-028",
+        "VAL-BE-029",
+        "VAL-BE-034"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "ui-tab-navigation",
+      "description": "Modify the bottom tab navigation to replace the Settings tab with AI Assistant. Update app/(tabs)/_layout.tsx: (1) Change the 5th tab from 'settings' to 'assistant' (or new AI screen name), (2) Use an AI/sparkles icon for the tab (SF Symbol: sparkles/sparkles.fill on iOS, Ionicons: sparkles-outline/sparkles on Android), (3) Add i18n key 'tabs.aiAssistant' in all 3 locales, (4) Create a new file app/(tabs)/assistant.tsx as the AI tab screen (can be a placeholder that renders a simple view for now). Also add a profile/settings button to the Dashboard header: update app/(tabs)/index.tsx to render a gear/person icon button in the header right position that navigates to settings. Create or update the settings route so it's accessible as a non-tab screen. The Settings screen content should remain unchanged - just its entry point changes from tab to header button. Ensure the 'farms' tab remains hidden (href: null). Test on both Android (Tabs component) and iOS (NativeTabs component) code paths.",
+      "skillName": "frontend-worker",
+      "milestone": "assistant-ui",
+      "preconditions": [
+        "Current tab layout has 5 tabs: Dashboard, Explore, Workers, Tools, Settings"
+      ],
+      "expectedBehavior": [
+        "Bottom tabs show: Dashboard, Explore, Workers, Tools, AI Assistant",
+        "Settings tab is NOT in tab bar",
+        "AI Assistant tab has sparkles icon and correct i18n label",
+        "Dashboard header has a profile/settings button",
+        "Tapping profile button navigates to settings screen",
+        "Settings screen still fully functional",
+        "Works on both iOS (NativeTabs) and Android (Tabs) code paths",
+        "i18n keys added for tabs.aiAssistant in en, hi, mr"
+      ],
+      "verificationSteps": ["npm run typecheck passes", "npm test passes", "npm run lint passes"],
+      "fulfills": ["VAL-UI-001", "VAL-UI-002", "VAL-UI-003", "VAL-CROSS-005"],
+      "status": "pending"
+    },
+    {
+      "id": "ui-chat-screen-core",
+      "description": "Build the core AI chat screen components. Create src/components/assistant/ChatScreen.tsx as the main container (<500 lines). Create MessageList.tsx (scrollable message list with auto-scroll to bottom, keyboard dismiss on drag). Create MessageBubble.tsx (user right-aligned bubble, assistant left-aligned with Markdown rendering via react-native-markdown-display, themed with M3 tokens). Create InputBar.tsx (multi-line TextInput, send button when text entered, mic button when empty, attachment button, loading state disables send, maxHeight 120 for input expansion). Create SuggestionChips.tsx (horizontal scroll of suggestion chips, tapping sends as message). The ChatScreen should use a custom hook (src/hooks/use-assistant.ts) for state management. The hook should manage: messages array, conversationId, isLoading, inputText, sending messages via assistant-gateway service. Connect to the existing assistant-gateway.ts service for API calls. Render the empty/welcome state when no messages. Support dark and light theme. All strings via i18n (add keys to en, hi, mr). Wire this screen into app/(tabs)/assistant.tsx.",
+      "skillName": "frontend-worker",
+      "milestone": "assistant-ui",
+      "preconditions": [
+        "ui-tab-navigation is complete (assistant tab exists)",
+        "be-modular-structure is complete (backend accepts requests)"
+      ],
+      "expectedBehavior": [
+        "ChatScreen renders in the AI tab",
+        "Messages display with correct alignment (user right, assistant left)",
+        "Markdown rendering works for assistant messages",
+        "Send button appears when text entered, mic button when empty",
+        "Input expands up to maxHeight 120, then scrolls internally",
+        "Suggestion chips display and send on tap",
+        "Loading indicator shows during request",
+        "Empty/welcome state shows for new conversations",
+        "Auto-scroll to latest message",
+        "Keyboard avoidance keeps input visible",
+        "Dark and light theme correct",
+        "i18n strings in all 3 locales"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'ChatScreen\\|MessageBubble\\|InputBar' shows tests passing",
+        "npm run typecheck passes",
+        "npm run lint passes"
+      ],
+      "fulfills": [
+        "VAL-UI-007",
+        "VAL-UI-008",
+        "VAL-UI-010",
+        "VAL-UI-014",
+        "VAL-UI-015",
+        "VAL-UI-017",
+        "VAL-UI-018",
+        "VAL-UI-021",
+        "VAL-UI-022",
+        "VAL-UI-023"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "ui-conversation-sidebar",
+      "description": "Build the conversation history sidebar. Create src/components/assistant/ConversationSidebar.tsx as a slide-in drawer/modal. It should: (1) Open via a sidebar toggle button in the chat screen header, (2) List past conversations from assistant-memory service (loadConversationSummaries), each showing preview text and date, (3) Support scrolling for many conversations, (4) Tapping a conversation loads its messages into the chat, (5) 'New Chat' button at top creates a new conversation, (6) Delete option on each conversation with confirmation dialog, (7) Loading state (spinner while fetching), (8) Empty state when no conversations. Also update ChatScreen to integrate the sidebar. Wire up the new conversation flow: tapping New Chat clears messages, generates new conversationId, shows welcome state. All strings via i18n. Theme-aware.",
+      "skillName": "frontend-worker",
+      "milestone": "assistant-ui",
+      "preconditions": ["ui-chat-screen-core is complete"],
+      "expectedBehavior": [
+        "Sidebar toggle button visible in chat screen header",
+        "Sidebar opens as slide-in drawer listing past conversations",
+        "Each conversation shows preview text and formatted date",
+        "Tapping a conversation loads its messages",
+        "New Chat button creates new conversation and shows welcome state",
+        "Delete with confirmation removes conversation",
+        "Loading spinner while fetching conversations",
+        "Empty state with no-conversations message",
+        "Theme-aware (dark/light)",
+        "i18n strings in all 3 locales"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'ConversationSidebar' shows tests passing",
+        "npm run typecheck passes",
+        "npm run lint passes"
+      ],
+      "fulfills": ["VAL-UI-004", "VAL-UI-005", "VAL-UI-006", "VAL-UI-024"],
+      "status": "pending"
+    },
+    {
+      "id": "ui-citations-errors-confirmations",
+      "description": "Build citation display, error handling, activity confirmation cards, and remaining UI features. Create src/components/assistant/CitationFooter.tsx for displaying RAG citations on assistant messages (using existing rag-citations service). Create src/components/assistant/ActivityConfirmCard.tsx for voice log confirmation: shows activity type, extracted fields (type-specific: irrigation duration, spray chemicals/volume, harvest quantity/grade, expense cost/type, fertigation fertilizers/volume), Confirm and Cancel buttons. Confirm navigates to /add-entry with prefill params. Cancel dismisses the card. Add error handling: failed-request banner with Retry and Dismiss buttons (retry re-sends same payload, dismiss clears error). Add no-farm-selected graceful degradation: detect when no farm is active and show guidance for farm-specific queries. Add image attachment support: attachment button triggers expo-image-picker, selected images show as thumbnails above input, sent as base64 in request. Update all i18n keys in en, hi, mr.",
+      "skillName": "frontend-worker",
+      "milestone": "assistant-ui",
+      "preconditions": [
+        "ui-chat-screen-core is complete",
+        "be-routing-and-handlers is complete (backend returns citations, voice_log_action)"
+      ],
+      "expectedBehavior": [
+        "Citations display on assistant messages with RAG source references",
+        "Activity confirmation card shows correct type-specific fields for all 5 types",
+        "Confirm navigates to /add-entry with prefilled params",
+        "Cancel dismisses card without navigation",
+        "Failed-request banner with Retry and Dismiss",
+        "Retry re-sends the same payload successfully",
+        "No-farm-selected shows guidance message",
+        "Image attachment via expo-image-picker works",
+        "All new i18n keys in en, hi, mr"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'Citation\\|ActivityConfirm\\|error' shows tests passing",
+        "npm run typecheck passes",
+        "npm run lint passes"
+      ],
+      "fulfills": [
+        "VAL-UI-009",
+        "VAL-UI-011",
+        "VAL-UI-012",
+        "VAL-UI-013",
+        "VAL-UI-016",
+        "VAL-UI-019",
+        "VAL-UI-020",
+        "VAL-UI-025",
+        "VAL-UI-026",
+        "VAL-CROSS-014"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "vm-voice-mode-core",
+      "description": "Build the core voice mode modal. Create src/components/assistant/VoiceMode/VoiceModeModal.tsx as a full-screen modal overlay. Create AnimatedOrb.tsx using react-native-reanimated for the animated orb with 4 states: idle (subtle pulse), listening (expanding pulse), processing (thinking rotation/pulse), speaking (waveform/rhythmic pulse). Create VoiceThread.tsx for displaying the voice conversation thread (user transcripts and AI responses as text). The modal should: (1) Open from the mic button in InputBar, (2) Show idle orb with 'Tap to speak' prompt, (3) Close button (X) accessible in all states, (4) Swipe down to dismiss, (5) Android back button dismisses, (6) Theme-aware (light/dark), (7) Haptic feedback on orb tap via expo-haptics. Use a state machine pattern for voice mode states: idle → listening → processing → speaking → idle (loop) or → listening (auto-listen). The voice thread should be scrollable and persist messages to the same conversation. Add i18n keys for all labels.",
+      "skillName": "frontend-worker",
+      "milestone": "voice-mode",
+      "preconditions": [
+        "ui-chat-screen-core is complete (InputBar with mic button exists)",
+        "be-stt-provider-upgrade is complete (backend accepts audio)"
+      ],
+      "expectedBehavior": [
+        "Full-screen voice mode modal opens from mic button",
+        "Animated orb with 4 distinct state animations",
+        "Idle: subtle pulse with 'Tap to speak'",
+        "Listening: expanding pulse",
+        "Processing: thinking animation",
+        "Speaking: waveform/rhythmic",
+        "Close button dismisses from any state",
+        "Swipe down dismisses",
+        "Android back button dismisses",
+        "Haptic feedback on orb tap",
+        "Conversation thread visible and scrollable",
+        "Theme-aware rendering",
+        "i18n strings in all 3 locales"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'VoiceMode\\|AnimatedOrb' shows tests passing",
+        "npm run typecheck passes",
+        "npm run lint passes"
+      ],
+      "fulfills": [
+        "VAL-VM-001",
+        "VAL-VM-002",
+        "VAL-VM-007",
+        "VAL-VM-013",
+        "VAL-VM-014",
+        "VAL-VM-019",
+        "VAL-VM-023",
+        "VAL-VM-024",
+        "VAL-VM-025"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "vm-recording-and-stt",
+      "description": "Implement the voice recording and STT flow in voice mode. Use expo-audio for recording (useAudioRecorder hook). On iOS: record WAV 16kHz mono. On Android: record in AAC format. When user taps orb in idle state: (1) Start recording, (2) Transition to listening state with pulsing orb. Implement speech end detection: use a silence timeout (e.g., 2 seconds of silence detected via audio level monitoring) to auto-stop recording. Also support manual stop (tap orb during recording). On stop: (1) Read audio file as base64, (2) Send to backend via assistant-gateway (input_mode: 'audio', with audio base64 and conversation context), (3) Transition to processing state. Backend returns transcript via Sarvam Saaras v3 (auto language detection). Display transcript in VoiceThread. Handle errors: STT failure shows error with retry option, network failure shows network error. Implement maximum recording duration (60 seconds) with auto-stop. Ensure mic permission check before starting (show informative error if denied).",
+      "skillName": "frontend-worker",
+      "milestone": "voice-mode",
+      "preconditions": [
+        "vm-voice-mode-core is complete (modal and orb exist)",
+        "be-stt-provider-upgrade is complete (backend STT works)"
+      ],
+      "expectedBehavior": [
+        "Tap orb starts recording with correct format per platform",
+        "Orb transitions to listening state during recording",
+        "Silence detection auto-stops recording after ~2s",
+        "Manual tap stops recording",
+        "Audio sent to backend as base64",
+        "Backend returns transcript via Sarvam Saaras v3 auto-detect",
+        "Transcript displayed in voice thread",
+        "STT failure shows error with retry",
+        "Network failure shows network error",
+        "Max 60 second recording with auto-stop",
+        "Mic permission check before recording",
+        "iOS produces WAV, Android produces compatible format"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'recording\\|voice' shows tests passing",
+        "npm run typecheck passes",
+        "npm run lint passes"
+      ],
+      "fulfills": [
+        "VAL-VM-003",
+        "VAL-VM-004",
+        "VAL-VM-005",
+        "VAL-VM-006",
+        "VAL-VM-008",
+        "VAL-VM-009",
+        "VAL-VM-016",
+        "VAL-VM-017",
+        "VAL-VM-018",
+        "VAL-VM-021",
+        "VAL-VM-022",
+        "VAL-VM-026"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "vm-tts-playback-and-loop",
+      "description": "Implement TTS playback and the continuous conversation loop in voice mode. When the backend returns a response with assistant_audio_b64: (1) Transition orb to speaking state (waveform animation), (2) Play audio via voice-output service (existing: base64 → cache file → expo-audio player), (3) Display assistant text response in VoiceThread. After playback completes: transition to listening state automatically (auto-listen for next question). Implement interruption: if user taps orb during speaking, stop playback immediately and transition to listening. Ensure messages from voice mode persist to the same conversation (use same conversationId). When voice mode closes, messages should appear in the text chat MessageList. Handle TTS errors gracefully: if no audio returned (TTS failed), still display text and transition to idle (user can tap to speak again). Ensure Sarvam Bulbul v3 native voices are used (locale-specific).",
+      "skillName": "frontend-worker",
+      "milestone": "voice-mode",
+      "preconditions": [
+        "vm-recording-and-stt is complete (recording and STT work)",
+        "be-tts-provider is complete (backend returns audio)"
+      ],
+      "expectedBehavior": [
+        "Speaking state with waveform animation during playback",
+        "Audio plays through device speaker via expo-audio",
+        "Text response displayed in VoiceThread alongside audio",
+        "Auto-listen after playback (continuous conversation loop)",
+        "Interruption: tap during speaking stops audio, starts listening",
+        "Messages persist to same conversation",
+        "Closing voice mode shows messages in text chat",
+        "TTS failure still displays text, returns to idle",
+        "Native Sarvam voices used per locale"
+      ],
+      "verificationSteps": [
+        "npm test -- --grep 'tts\\|playback\\|voice' shows tests passing",
+        "npm run typecheck passes",
+        "npm run lint passes"
+      ],
+      "fulfills": ["VAL-VM-010", "VAL-VM-011", "VAL-VM-012", "VAL-VM-015", "VAL-VM-020"],
+      "status": "pending"
+    },
+    {
+      "id": "cross-area-integration",
+      "description": "Wire up all cross-area flows and ensure end-to-end integration. This feature connects the frontend to the refactored backend and verifies all flows work together. Tasks: (1) Ensure text chat sends to refactored ai-gateway and renders responses with Markdown + citations, (2) Ensure voice mode sends audio to ai-gateway and receives transcript + audio response, (3) Ensure activity logging flow works end-to-end: voice → extraction → confirmation card → add-entry navigation, (4) Ensure conversation persistence works: messages saved → app reopen → sidebar shows conversation → tap loads history, (5) Ensure language consistency: Hindi/Marathi locale → STT in that language → LLM responds in that language → TTS speaks in that language, (6) Ensure farm context switch mid-conversation uses new farm's data, (7) Ensure dark mode works across chat screen, voice mode, sidebar, (8) Ensure first-time user experience works (empty state → new conversation), (9) Ensure request cancellation works (new message cancels pending), (10) Ensure safety warnings render correctly in all languages. Update assistant-gateway.ts client to work with any response format changes from the refactored backend.",
+      "skillName": "frontend-worker",
+      "milestone": "voice-mode",
+      "preconditions": [
+        "All backend-refactor features complete",
+        "All assistant-ui features complete",
+        "vm-tts-playback-and-loop is complete"
+      ],
+      "expectedBehavior": [
+        "Text chat end-to-end works with refactored backend",
+        "Voice mode end-to-end works with STT + TTS",
+        "Activity logging end-to-end with confirmation flow",
+        "Conversation persistence and resume from sidebar",
+        "Hindi and Marathi language consistency throughout pipeline",
+        "Farm context switch updates subsequent responses",
+        "Dark mode consistent across all AI screens",
+        "First-time user empty state works",
+        "Request cancellation prevents duplicate responses",
+        "Safety warnings display correctly in all languages"
+      ],
+      "verificationSteps": [
+        "npm run typecheck passes",
+        "npm test passes (baseline maintained)",
+        "npm run lint passes"
+      ],
+      "fulfills": [
+        "VAL-CROSS-001",
+        "VAL-CROSS-002",
+        "VAL-CROSS-003",
+        "VAL-CROSS-004",
+        "VAL-CROSS-006",
+        "VAL-CROSS-007",
+        "VAL-CROSS-008",
+        "VAL-CROSS-009",
+        "VAL-CROSS-010",
+        "VAL-CROSS-011",
+        "VAL-CROSS-012",
+        "VAL-CROSS-013"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "cl-remove-legacy-files",
+      "description": "Remove all legacy AI assistant files and update references. Delete: (1) app/ai-chat.tsx (152KB monolith), (2) src/services/farm-assistant-service.ts (28KB deterministic engine), (3) src/services/voice-log-assistant.ts (30KB client-side routing), (4) src/services/ai-service.ts (19KB legacy proxy), (5) src/stores/farm-assistant-store.ts (legacy store), (6) src/hooks/use-farm-assistant.ts (legacy hook), (7) src/constants/voice-patterns.ts (regex patterns), (8) supabase/functions/ai-gateway/voice-routing.ts (44KB duplicated routing - now replaced by modular handlers). Update: (a) Remove Stack.Screen for 'ai-chat' from app/_layout.tsx, (b) Remove barrel exports from src/stores/index.ts and src/hooks/index.ts, (c) Update any router.push('/ai-chat') to navigate to new assistant tab (in app/(tabs)/index.tsx and app/farm/[id].tsx), (d) Remove ai-service import from assistant-gateway.ts and remove the legacy fallback path. Also remove legacy test files: __tests__/farm-assistant-service.test.ts, __tests__/voice-log-assistant.test.ts, __tests__/farm-assistant-integration.test.ts. Update any remaining test references to /ai-chat.",
+      "skillName": "cleanup-worker",
+      "milestone": "cleanup-polish",
+      "preconditions": [
+        "All assistant-ui and voice-mode features are complete (new UI fully functional)",
+        "cross-area-integration is complete"
+      ],
+      "expectedBehavior": [
+        "All 8 legacy files deleted",
+        "No route references to ai-chat remain",
+        "Barrel exports cleaned up",
+        "Navigation links updated to new assistant route",
+        "assistant-gateway.ts no longer imports ai-service",
+        "Legacy test files deleted",
+        "No dead imports in surviving code"
+      ],
+      "verificationSteps": [
+        "grep -rn 'ai-chat' app/ returns 0 matches",
+        "grep -rn 'farm-assistant-service|voice-log-assistant|ai-service|farm-assistant-store|voice-patterns' src/ returns 0 matches",
+        "npm run typecheck passes with 0 errors",
+        "npm test passes (baseline maintained)",
+        "npm run lint passes with 0 errors"
+      ],
+      "fulfills": [
+        "VAL-CL-001",
+        "VAL-CL-002",
+        "VAL-CL-003",
+        "VAL-CL-004",
+        "VAL-CL-005",
+        "VAL-CL-006",
+        "VAL-CL-007",
+        "VAL-CL-008",
+        "VAL-CL-009",
+        "VAL-CL-010",
+        "VAL-CL-011",
+        "VAL-CL-012",
+        "VAL-CL-013",
+        "VAL-CL-016"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "cl-i18n-cleanup",
+      "description": "Clean up i18n dictionaries: remove orphaned keys and verify new keys exist in all locales. Tasks: (1) Remove the 'farmAssistant' key namespace from all 3 locale files (en.ts, hi.ts, mr.ts) - this powered the legacy bottom-sheet farm assistant modal, (2) Audit all 'ai.chat.*' keys - remove those used ONLY by the deleted ai-chat.tsx (verify with grep against surviving code), retain keys reused by new assistant, (3) Verify all new i18n keys introduced by the redesigned assistant exist in ALL 3 locale files (en, hi, mr) - no missing translations, (4) For any Hindi or Marathi translations that are missing or placeholder, add proper translations. Run dev-checks if available to verify key parity.",
+      "skillName": "cleanup-worker",
+      "milestone": "cleanup-polish",
+      "preconditions": ["cl-remove-legacy-files is complete (legacy code removed)"],
+      "expectedBehavior": [
+        "farmAssistant namespace removed from all 3 locales",
+        "Orphaned ai.chat.* keys removed",
+        "All new assistant keys present in en, hi, mr",
+        "No missing translations for new features",
+        "Key parity across all 3 locales"
+      ],
+      "verificationSteps": [
+        "grep 'farmAssistant' src/i18n/locales/*.ts returns 0 matches",
+        "For each remaining ai.chat.* key, grep in surviving code finds at least 1 reference",
+        "npm run typecheck passes",
+        "npm test passes",
+        "npm run lint passes"
+      ],
+      "fulfills": ["VAL-CL-014", "VAL-CL-015"],
+      "status": "pending"
+    }
+  ]
+}
