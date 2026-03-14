@@ -1,0 +1,45 @@
+src/hooks/use-assistant.ts
+  ef7e04b8b02e68a8 10-11,22,47-48,54-57,74-75,88-91,112,128-132,143,153-168,177-178,190-191,213-214,220-223
+__tests__/activity-confirm-card.test.tsx
+  ef7e04b8b02e68a8 1-284
+src/components/assistant/CitationFooter.tsx
+  ef7e04b8b02e68a8 1-158
+src/components/assistant/InputBar.tsx
+  ef7e04b8b02e68a8 8,16,20,28,41-42,53-54,77-83,85-108,111-113,117,119,125,128-137,161-162,179-183,187-189,204-234
+src/i18n/locales/mr.ts
+  ef7e04b8b02e68a8 1255-1303
+src/i18n/locales/en.ts
+  ef7e04b8b02e68a8 1253-1301
+src/i18n/locales/hi.ts
+  ef7e04b8b02e68a8 1234-1282
+src/components/assistant/MessageBubble.tsx
+  ef7e04b8b02e68a8 16,146-151
+__tests__/citation-footer.test.tsx
+  ef7e04b8b02e68a8 1-137
+src/components/assistant/ActivityConfirmCard.tsx
+  ef7e04b8b02e68a8 1-370
+src/components/assistant/ChatScreen.tsx
+  ef7e04b8b02e68a8 9-12,27,32-33,36-37,41,46,59-61,71-73,77-81,114-190,252-330,336-344,432-450
+__tests__/chat-screen.test.tsx
+  ef7e04b8b02e68a8 22-25,51-55,65-66,102-110,150-171,182-183,188-192,295-296,301-305
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "b6eafc6f4a2f4ec0bd6e84d9d87e0ee4bda34ca9",
+  "prompts": {
+    "ef7e04b8b02e68a8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1b6d1c20-feb8-42d4-a8c2-cae9c9d59a8b",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 1620,
+      "total_deletions": 90,
+      "accepted_lines": 1567,
+      "overriden_lines": 0
+    }
+  }
+}
