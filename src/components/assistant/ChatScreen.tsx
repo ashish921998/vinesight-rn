@@ -45,6 +45,8 @@ import { InputBar } from './InputBar';
 import { SuggestionChips } from './SuggestionChips';
 import { ConversationSidebar } from './ConversationSidebar';
 import { ActivityConfirmCard } from './ActivityConfirmCard';
+import { VoiceModeModal } from './VoiceMode/VoiceModeModal';
+import type { VoiceModeState, VoiceModeMessage } from './VoiceMode/VoiceModeModal';
 
 const DEFAULT_SUGGESTIONS = [
   'ai.defaultSuggestions.waterNeed',
@@ -62,6 +64,9 @@ export function ChatScreen() {
   const { data: farms } = useFarms();
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [voiceModeVisible, setVoiceModeVisible] = useState(false);
+  const [voiceState, setVoiceState] = useState<VoiceModeState>('idle');
+  const [voiceMessages, setVoiceMessages] = useState<VoiceModeMessage[]>([]);
 
   // Auto-select the first farm from the list as the active farm for assistant context
   const activeFarm = useMemo(() => farms?.[0] ?? null, [farms]);
@@ -202,6 +207,28 @@ export function ChatScreen() {
   const handleVoiceLogCancel = useCallback(() => {
     dismissVoiceLogAction();
   }, [dismissVoiceLogAction]);
+
+  const handleOpenVoiceMode = useCallback(() => {
+    setVoiceState('idle');
+    setVoiceMessages([]);
+    setVoiceModeVisible(true);
+  }, []);
+
+  const handleCloseVoiceMode = useCallback(() => {
+    setVoiceModeVisible(false);
+    setVoiceState('idle');
+  }, []);
+
+  // Orb press handler — state machine: idle→listening, listening→processing (no-op for now)
+  // Full recording/STT integration is handled in vm-recording-and-stt feature.
+  const handleOrbPress = useCallback(() => {
+    setVoiceState((prev) => {
+      if (prev === 'idle' || prev === 'error') return 'listening';
+      if (prev === 'listening') return 'processing';
+      if (prev === 'speaking') return 'listening';
+      return 'idle';
+    });
+  }, []);
 
   // No-farm detection — distinguish between no farms existing vs no farm selected
   const hasNoFarms = farms !== undefined && farms.length === 0;
@@ -409,9 +436,7 @@ export function ChatScreen() {
           value={inputText}
           onChangeText={setInputText}
           onSend={handleSend}
-          onVoicePress={() => {
-            // Voice mode will be implemented in vm-voice-mode-core feature
-          }}
+          onVoicePress={handleOpenVoiceMode}
           onAttachPress={() => {
             void handleAttachPress();
           }}
@@ -427,6 +452,15 @@ export function ChatScreen() {
         onClose={handleCloseSidebar}
         onSelectConversation={handleSelectConversation}
         onNewChat={handleNewChatFromSidebar}
+      />
+
+      {/* Voice mode modal */}
+      <VoiceModeModal
+        visible={voiceModeVisible}
+        voiceState={voiceState}
+        messages={voiceMessages}
+        onOrbPress={handleOrbPress}
+        onClose={handleCloseVoiceMode}
       />
     </SafeAreaView>
   );

@@ -1281,6 +1281,14 @@ export const hi = {
       removeA11y: 'अनुलग्नक हटाएं',
       thumbnailA11y: 'संलग्न छवि',
     },
+    voiceMode: {
+      closeA11y: 'वॉइस मोड बंद करें',
+      swipeDownHint: 'बंद करने के लिए नीचे स्वाइप करें',
+      errorLabel: 'कुछ गलत हुआ। पुनः प्रयास के लिए टैप करें।',
+      errorRetry: 'पुनः प्रयास के लिए टैप करें',
+      orbIdleA11y: 'बोलने के लिए टैप करें',
+      orbSpeakingA11y: 'रोकने के लिए टैप करें',
+    },
   },
 
   onboarding: {

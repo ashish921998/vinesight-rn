@@ -1300,6 +1300,14 @@ export const en = {
       removeA11y: 'Remove attachment',
       thumbnailA11y: 'Attached image',
     },
+    voiceMode: {
+      closeA11y: 'Close voice mode',
+      swipeDownHint: 'Swipe down to close',
+      errorLabel: 'Something went wrong. Tap to retry.',
+      errorRetry: 'Tap to retry',
+      orbIdleA11y: 'Tap to start speaking',
+      orbSpeakingA11y: 'Tap to interrupt',
+    },
   },
   onboarding: {
     language: {

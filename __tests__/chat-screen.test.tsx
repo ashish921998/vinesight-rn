@@ -15,6 +15,21 @@ import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import { ChatScreen } from '@/components/assistant/ChatScreen';
 
+// Mock haptics to avoid AsyncStorage import chain in tests
+jest.mock('@/utils/haptics', () => ({
+  triggerHaptic: jest.fn(),
+  triggerHapticMedium: jest.fn(),
+  triggerHapticSuccess: jest.fn(),
+  triggerHapticWarning: jest.fn(),
+  triggerHapticError: jest.fn(),
+}));
+
+// Mock react-native-reanimated (used by VoiceModeModal's AnimatedOrb)
+jest.mock('react-native-reanimated', () => {
+  const Reanimated = require('react-native-reanimated/mock');
+  return Reanimated;
+});
+
 // Mock the assistant hook to control behavior
 const mockSendMessage = jest.fn();
 const mockStartNewConversation = jest.fn();

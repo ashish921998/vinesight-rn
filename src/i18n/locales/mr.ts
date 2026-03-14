@@ -1304,6 +1304,14 @@ export const mr = {
       removeA11y: 'संलग्नक काढा',
       thumbnailA11y: 'संलग्न प्रतिमा',
     },
+    voiceMode: {
+      closeA11y: 'व्हॉइस मोड बंद करा',
+      swipeDownHint: 'बंद करण्यासाठी खाली स्वाइप करा',
+      errorLabel: 'काहीतरी चुकले. पुन्हा प्रयत्नासाठी टॅप करा.',
+      errorRetry: 'पुन्हा प्रयत्नासाठी टॅप करा',
+      orbIdleA11y: 'बोलण्यासाठी टॅप करा',
+      orbSpeakingA11y: 'थांबवण्यासाठी टॅप करा',
+    },
   },
 
   onboarding: {
