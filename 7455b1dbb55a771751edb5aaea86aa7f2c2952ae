@@ -1,0 +1,25 @@
+__tests__/llm-provider.test.ts
+  16dba6a46c36d257 1-852
+__tests__/embeddings-provider.test.ts
+  16dba6a46c36d257 1-628
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "7455b1dbb55a771751edb5aaea86aa7f2c2952ae",
+  "prompts": {
+    "16dba6a46c36d257": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7f50f09b-c4ae-466a-955c-403cd75db223",
+        "model": "glm-5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 1520,
+      "total_deletions": 40,
+      "accepted_lines": 1480,
+      "overriden_lines": 0
+    }
+  }
+}
