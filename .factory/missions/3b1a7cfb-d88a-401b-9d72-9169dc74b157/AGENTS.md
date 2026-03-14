@@ -76,5 +76,22 @@
 
 ## Known Pre-Existing Issues (Do Not Fix)
 
-- 7 Jest test failures related to AsyncStorage mocking in theme-store tests — pre-existing, unrelated to AI assistant
+The following 11 test suites / 7 test failures are PRE-EXISTING (verified at commit 0f7a224 before any mission changes). They are NOT caused by this mission and must NOT block validation:
+
+- `__tests__/phi-service.test.ts` — computePhiForMix() date calculation mismatch
+- `__tests__/phone-auth-store.test.ts` — auth error string and resend behavior mismatch
+- `__tests__/phone-number-hint.test.tsx` — jest.mock() out-of-scope variable (View)
+- `__tests__/farm-safe-harvest-card.test.tsx` — AsyncStorage is null
+- `__tests__/entry-form.integration.test.tsx` — AsyncStorage is null
+- `__tests__/fertigation-form.test.tsx` — AsyncStorage is null
+- `__tests__/location-picker.test.tsx` — AsyncStorage is null
+- `components/widgets/dashboard/WeatherWidget/WeatherWidget.test.tsx` — AsyncStorage is null
+- `components/widgets/dashboard/VineyardHealthWidget/VineyardHealthWidget.test.tsx` — AsyncStorage is null
+- `components/widgets/dashboard/QuickStatsWidget/QuickStatsWidget.test.tsx` — AsyncStorage is null
+- `components/widgets/dashboard/TaskSummaryWidget/TaskSummaryWidget.test.tsx` — AsyncStorage is null
+
+**Baseline: 43 test suites total, 11 fail, 32 pass. 597 tests total, 7 fail, 590 pass.**
+
+Validators: test pass criteria is that NO NEW failures are introduced beyond the 11 pre-existing failing suites. If the number of failing suites increases or new test files fail, that is a regression.
+
 - `expo-speech-recognition` may not work in Expo Go (only dev client) — this is expected
