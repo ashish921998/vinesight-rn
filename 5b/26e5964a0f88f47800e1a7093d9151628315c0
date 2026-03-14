@@ -1,0 +1,31 @@
+__tests__/voice-mode-modal.test.tsx
+  383674779a9f39de 23,94-97,214-270
+src/hooks/use-voice-mode.ts
+  383674779a9f39de 178-179,192-193
+src/components/assistant/VoiceMode/VoiceModeModal.tsx
+  383674779a9f39de 41,57-60,71-72,162,173-185,187
+__tests__/use-voice-mode.test.ts
+  383674779a9f39de 386-407
+src/components/assistant/ChatScreen.tsx
+  383674779a9f39de 114-115,463-464
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "5b26e5964a0f88f47800e1a7093d9151628315c0",
+  "prompts": {
+    "383674779a9f39de": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "8005cc0d-76f5-4528-ab92-1d8049a84809",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 125,
+      "total_deletions": 9,
+      "accepted_lines": 125,
+      "overriden_lines": 0
+    }
+  }
+}
