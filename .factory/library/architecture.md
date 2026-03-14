@@ -43,7 +43,7 @@ app/(tabs)/assistant.tsx  →  AI tab (entry point)
 
 ### Backend (Supabase Edge Functions)
 
-Target modular layout introduced during the backend refactor:
+Current modular layout introduced during the backend refactor:
 
 ```
 supabase/functions/ai-gateway/
@@ -60,11 +60,19 @@ supabase/functions/ai-gateway/
   │   └── embeddings.ts     (OpenAI text-embedding-3-small)
   ├── context/
   │   ├── assembler.ts      (context assembly: farm + memory + RAG + weather)
-  │   ├── farm-data.ts      (comprehensive farm data queries)
+  │   ├── farm-data.ts      (top-level farm context orchestrator)
+  │   ├── farm-details.ts   (farm ownership + metadata lookup)
+  │   ├── farm-records.ts   (core farm activity record queries)
+  │   ├── farm-extra-records.ts (additional farm record queries)
+  │   ├── farm-workers.ts   (workers + attendance queries)
+  │   ├── farm-weather.ts   (weather enrichment)
   │   └── memory.ts         (memory search + write)
   ├── routing/
   │   ├── intent.ts         (LLM-based intent extraction)
-  │   └── router.ts         (route decision logic)
+  │   ├── router.ts         (top-level route orchestration)
+  │   ├── farm-query-routing.ts
+  │   ├── voice-log-routing.ts
+  │   └── intent-patterns.ts
   ├── safety/
   │   └── checker.ts        (spray/fertigation safety guardrails)
   └── utils/
@@ -73,9 +81,14 @@ supabase/functions/ai-gateway/
       └── telemetry.ts
 ```
 
-Current repo state still only partially meets that target: `context/farm-data.ts`, `routing/router.ts`, and legacy `voice-routing.ts` remain >500 lines, and the live request flow still keeps significant routing/handler logic inside `handlers/main.ts`.
+Current repo state is much closer to that target after the scrutiny fix rounds:
 
-Current automated coverage also does **not** include a backend test that exercises the live `ai-gateway` dispatch path in `handlers/main.ts`; existing green routing-related tests mostly cover client-side helpers or response mapping, so unreachable backend routes can survive while Jest still passes.
+- Legacy `supabase/functions/ai-gateway/voice-routing.ts` has been removed.
+- The live request path in `handlers/main.ts` now imports and dispatches `handleFarmQuery()` for `farm_query` routes.
+- `handlers/main.ts` is currently 399 lines, `context/farm-data.ts` is 237 lines, and `routing/router.ts` is 75 lines.
+- Remaining over-limit backend modules still violating the mission's `<500 lines` rule are `context/farm-records.ts` (525 lines) and `routing/voice-log-routing.ts` (501 lines).
+
+Automated coverage still does **not** include a backend test that exercises the live `ai-gateway` dispatch path in `handlers/main.ts`; existing green routing-related tests mostly cover client-side helpers or response mapping. The current `__tests__/stt-provider.test.ts` suite also still does not import `transcribeAudio()` or `processStt()`, so the real STT empty-transcript path can regress while Jest still passes.
 
 ### Data Flow: Text Chat
 ```

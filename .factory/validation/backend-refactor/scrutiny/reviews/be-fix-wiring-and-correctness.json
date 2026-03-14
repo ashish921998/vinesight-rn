@@ -1,0 +1,34 @@
+{
+  "featureId": "be-fix-wiring-and-correctness",
+  "reviewedAt": "2026-03-14T18:35:44Z",
+  "commitId": "35e53bc",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Reviewing the fix handoff/commit (35e53bc), the prior failed reports, and current HEAD shows that most targeted scrutiny failures are now resolved: handler dispatch is live, fake Response casts are gone, compatibility response fields are back, TTS/LLM fixes are in place, voice-routing.ts is deleted, the oversized router/farm-data files have since been split below the 500-line limit, and the current TTS/LLM/embeddings tests now execute the real provider modules. However, one prior blocking STT correctness failure still remains on current HEAD: blank OpenAI STT results still do not normalize to the required HTTP 400 EMPTY_TRANSCRIPT response, so this re-review cannot pass.",
+    "issues": [
+      {
+        "file": "supabase/functions/ai-gateway/providers/stt.ts",
+        "line": 194,
+        "severity": "blocking",
+        "description": "The prior be-stt-provider-upgrade empty-transcript blocker is still unresolved. `callOpenAiSttInternal()` still throws `OpenAI STT returned empty transcript` at `providers/stt.ts:194` instead of the `stt_empty_transcript` sentinel. `processStt()` only converts errors containing `stt_empty_transcript` into HTTP 400 `EMPTY_TRANSCRIPT` at `handlers/request-processor.ts:176-184`, so a blank OpenAI STT response still falls through to the top-level 500 handler at `handlers/main.ts:395-397` instead of returning the required 400 contract response."
+      },
+      {
+        "file": "__tests__/stt-provider.test.ts",
+        "line": 135,
+        "severity": "non_blocking",
+        "description": "The STT-specific coverage gap noted in the earlier review still remains. This file still relies on placeholder/local-state assertions such as `const expectedModel = 'saaras:v3'` at `__tests__/stt-provider.test.ts:135-136` and simulated circuit-breaker state at `103-105` / `195-203`, but it still does not import or execute the real `transcribeAudio()` or `processStt()` implementation. The unresolved empty-OpenAI-transcript bug would therefore still evade targeted Jest coverage."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "`.factory/library/architecture.md` is now stale for the ai-gateway backend shape after the post-fix module split work. It still says `context/farm-data.ts`, `routing/router.ts`, and legacy `voice-routing.ts` remain oversized/current, which no longer matches current HEAD.",
+      "evidence": "`.factory/library/architecture.md:76` still says those files remain >500 lines and that `voice-routing.ts` exists; current HEAD has `context/farm-data.ts` at 237 lines, `routing/router.ts` at 75 lines (`wc -l`), and `supabase/functions/ai-gateway/voice-routing.ts` is absent."
+    }
+  ],
+  "addressesFailureFrom": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/validation/backend-refactor/scrutiny/synthesis.json",
+  "summary": "Fail. Current HEAD resolves nearly all of the fix feature's targeted wiring/correctness problems and the related prior scrutiny findings, but blank OpenAI STT results still miss the required HTTP 400 EMPTY_TRANSCRIPT path. I also recorded one stale shared-state/library observation."
+}
