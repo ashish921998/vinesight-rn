@@ -1,0 +1,55 @@
+supabase/functions/ai-gateway/routing/farm-query-routing.ts
+  672973f0f3bf898d 1-280
+jest.config.js
+  672973f0f3bf898d 3
+supabase/functions/ai-gateway/routing/types.ts
+  672973f0f3bf898d 1-103
+supabase/functions/ai-gateway/routing/intent-patterns.ts
+  672973f0f3bf898d 1-452
+supabase/functions/ai-gateway/context/farm-extra-records.ts
+  672973f0f3bf898d 1-192
+supabase/functions/ai-gateway/context/farm-weather.ts
+  672973f0f3bf898d 1-131
+supabase/functions/ai-gateway/context/farm-workers.ts
+  672973f0f3bf898d 1-135
+supabase/functions/ai-gateway/context/farm-records.ts
+  672973f0f3bf898d 1-252
+supabase/functions/ai-gateway/context/farm-details.ts
+  672973f0f3bf898d 1-241
+supabase/functions/ai-gateway/context/index.ts
+  672973f0f3bf898d 54-55
+__tests__/llm-provider.test.ts
+  672973f0f3bf898d 3,6-78,80,85-89,92,111-113,115,117,130,132,134-137,142-143,148-151,156-158,163,165,170-171,175,177-178,184,186-187,192-193,195,198,201-202,205,208,211-212,215,220-222,226-227,230-232,238,240-242,245,248-249,252,255-259,262-264,269-271,276-278,281,284-285,288-291,295
+supabase/functions/ai-gateway/context/farm-data.ts
+  672973f0f3bf898d 2-4,6-11,15,18-24,27,30-37,40,43-49,52,55-61,64,67,69-71,73,75-77,79-101,104,108-109
+__tests__/embeddings-provider.test.ts
+  672973f0f3bf898d 3,6-7,9-18,21-22,26-30,42-43,56-57,60-62,65-69,73,76-77,81,84,89-90,93-94,98-100,105-108,112-114,119-120,123-124,127,131-133,137-141,144,149-151,155-156
+supabase/functions/ai-gateway/routing/router.ts
+  672973f0f3bf898d 2-75
+__tests__/tts-provider.test.ts
+  672973f0f3bf898d 3-7,10-70,72-76,79-83,86-87,90-91,93-94,97-98,101-106,108-110,117,130,133,135,137-151,155-173,176-190,193-205,208-220,223-230,234-245,247-262,265-280,284-286,288-299,301,303,306-318,322-324,326-330
+supabase/functions/ai-gateway/routing/voice-log-routing.ts
+  672973f0f3bf898d 1-494
+supabase/functions/ai-gateway/context/assembler.ts
+  672973f0f3bf898d 256-264,278,298-299
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "91b0a2f063815862934b21e6876f1124355ddfaf",
+  "prompts": {
+    "672973f0f3bf898d": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "95c2f682-fe87-426c-afd6-b2a0b9e45389",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 3268,
+      "total_deletions": 5018,
+      "accepted_lines": 3103,
+      "overriden_lines": 0
+    }
+  }
+}
