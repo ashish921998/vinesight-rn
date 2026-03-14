@@ -38,8 +38,16 @@ app/(tabs)/assistant.tsx  →  AI tab (entry point)
   │   ├── voice-output.ts         (TTS playback via expo-audio)
   │   └── speech-recognition.ts   (expo-speech-recognition wrapper)
   └── src/hooks/
-      └── use-assistant.ts        (main hook orchestrating chat + voice state)
+      ├── use-assistant.ts        (text chat state, retries, attachments, conversation sync)
+      ├── use-voice-mode.ts       (voice mode state machine, STT/TTS loop, voice thread)
+      └── use-voice-recorder.ts   (expo-audio recording + base64 file reads)
 ```
+
+Current voice mode ownership in the client is split across dedicated hooks rather than living inside `use-assistant.ts`:
+
+- `use-assistant.ts` manages the main text chat thread, sidebar interactions, retries, attachments, and `voiceLogAction` cards.
+- `use-voice-mode.ts` manages the full-screen voice modal state machine, transcript/assistant thread, backend audio round-trips, and TTS playback loop.
+- `use-voice-recorder.ts` owns recording lifecycle details and reads captured audio as base64 via `expo-file-system/legacy`.
 
 ### Backend (Supabase Edge Functions)
 
@@ -107,6 +115,7 @@ User types message
 ```
 User taps orb
   → expo-audio starts recording
+  → use-voice-recorder reads captured audio via expo-file-system/legacy
   → User stops (manual or auto-detect)
   → Audio base64 sent to ai-gateway
   → ai-gateway: auth → STT (Sarvam v3) → routing → context → LLM → TTS (Sarvam v3) → memory

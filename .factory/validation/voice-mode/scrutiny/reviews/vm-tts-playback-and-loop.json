@@ -1,0 +1,28 @@
+{
+  "featureId": "vm-tts-playback-and-loop",
+  "reviewedAt": "2026-03-14T21:58:05.563736+00:00",
+  "commitId": "f139bc6",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Playback, speaking/listening transitions, interruption, and no-audio fallback are implemented, but voice-mode persistence into the main chat thread is incorrect: the assistant turn is appended before the synthetic user transcript, so the text chat shows each voice exchange in reverse order after closing voice mode.",
+    "issues": [
+      {
+        "file": "src/hooks/use-voice-mode.ts",
+        "line": 179,
+        "severity": "blocking",
+        "description": "The hook pushes `response.message` into the main chat before `userChatMessage` (`onNewMessage?.(response.message)` at line 179, then `onNewMessage?.(userChatMessage)` at line 191). `useAssistant.addMessage` appends in insertion order (`src/hooks/use-assistant.ts:261`) and `MessageList` renders `messages` as-is (`src/components/assistant/MessageList.tsx:59`), so closing voice mode shows the assistant reply before the user's spoken turn instead of preserving the natural conversation order required by the feature."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `frontend-worker` skill says to write failing tests before implementation, but this worker edited the production hook before editing the test file while still reporting `skillFeedback.followedProcedure: true` in the handoff.",
+      "evidence": "The transcript skeleton for worker session `1f07afe1-a194-4f98-82b0-1ce29b6f3843` shows multiple `Edit` calls on `src/hooks/use-voice-mode.ts` before the first `Edit` on `__tests__/use-voice-mode.test.ts`; the handoff file `/Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/handoffs/2026-03-14T21-40-09-419Z__vm-tts-playback-and-loop__1f07afe1-a194-4f98-82b0-1ce29b6f3843.json` records `skillFeedback.followedProcedure: true`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed. The TTS playback loop itself is wired up, but the main chat persistence path reverses each voice turn by appending the assistant message before the user transcript, so the text chat does not faithfully reflect the voice conversation when the modal is closed."
+}
