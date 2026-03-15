@@ -1,0 +1,27 @@
+src/i18n/locales/mr.ts
+  a9c73c0e2e3689b7 1323
+src/services/assistant-gateway.ts
+  a9c73c0e2e3689b7 107
+src/i18n/locales/hi.ts
+  a9c73c0e2e3689b7 1317
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "dad3034caa546da60a34cf5cd45c22fedbf17949",
+  "prompts": {
+    "a9c73c0e2e3689b7": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "ee8bf7e5-9804-404c-931c-8c1b409aa8a5",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 2,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
