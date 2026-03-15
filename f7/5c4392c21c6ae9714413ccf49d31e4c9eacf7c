@@ -1,0 +1,49 @@
+src/i18n/locales/en.ts
+  c7b673f8091d29a5 1252-1268,1276,1322-1329
+src/components/assistant/VoiceMode/VoiceModeModal.tsx
+  c7b673f8091d29a5 169,173,175,192,207,259
+src/components/assistant/MessageBubble.tsx
+  c7b673f8091d29a5 176,185,263,283
+src/components/assistant/InputBar.tsx
+  c7b673f8091d29a5 113,130,156,161,179
+src/components/assistant/ConversationSidebar.tsx
+  c7b673f8091d29a5 138,152,156,211,251,280,286,304,317,334,345
+src/components/assistant/ActivityConfirmCard.tsx
+  c7b673f8091d29a5 45,52,76,88-89,162,176,182,196,204,216,225,237,244,318-322
+__tests__/activity-confirm-card.test.tsx
+  c7b673f8091d29a5 44,48,161
+__tests__/conversation-sidebar.test.tsx
+  c7b673f8091d29a5 73-81
+src/components/assistant/VoiceMode/VoiceThread.tsx
+  c7b673f8091d29a5 58
+__tests__/chat-screen.test.tsx
+  c7b673f8091d29a5 114-122,128-131,144
+src/components/assistant/ChatScreen.tsx
+  c7b673f8091d29a5 200,205,219,274,279-282,291-292,299,362,385
+__tests__/input-bar.test.tsx
+  c7b673f8091d29a5 120,135
+src/i18n/locales/hi.ts
+  c7b673f8091d29a5 1250-1266,1274,1320-1327
+src/i18n/locales/mr.ts
+  c7b673f8091d29a5 1245,1254-1271,1279,1327-1334
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "f75c4392c21c6ae9714413ccf49d31e4c9eacf7c",
+  "prompts": {
+    "c7b673f8091d29a5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cefed-151c-7f93-9fe8-4f59efe8c398",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 178,
+      "total_deletions": 87,
+      "accepted_lines": 170,
+      "overriden_lines": 0
+    }
+  }
+}
