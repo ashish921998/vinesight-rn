@@ -9,6 +9,7 @@ import {
   buildVoiceLogClarificationMessage,
   buildVoiceLogClarifyExhaustedMessage,
   buildVoiceLogFormPrefill,
+  buildVoiceLogNoFarmsMessage,
   buildVoiceLogOpeningFormMessage,
   getVoiceLogMissingFields,
   resolveVoiceLogTurn,
@@ -123,6 +124,19 @@ export function handleVoiceLog(input: VoiceLogHandlerInput): VoiceLogHandlerResu
           draft: turnResult.draft,
           prefill: buildVoiceLogFormPrefill(turnResult.draft),
         },
+        routeStateDirty: true,
+        nextDraft: null,
+        nextExpectedField: null,
+        nextClarifyAttempts: 0,
+      };
+    }
+
+    // Check if user needs to select a farm but has no farms available
+    const needsFarm = turnResult.missingFields.includes('farm');
+    if (needsFarm && farms.length === 0) {
+      return {
+        assistantText: buildVoiceLogNoFarmsMessage(locale),
+        voiceLogAction: { kind: 'none' },
         routeStateDirty: true,
         nextDraft: null,
         nextExpectedField: null,

@@ -1,7 +1,7 @@
 /**
  * VoiceModeModal Component
  * Full-screen voice mode overlay with:
- * - Animated orb (4 states: idle / listening / processing / speaking)
+ * - Animated orb (5 states: idle / listening / processing / speaking / error)
  * - Scrollable voice conversation thread
  * - Close button (X) accessible in all states
  * - Swipe down to dismiss (PanResponder)
@@ -10,6 +10,8 @@
  * - Haptic feedback on orb tap (expo-haptics)
  *
  * State machine: idle → listening → processing → speaking → idle (loop)
+ *                ↑                                        ↓
+ *                └────────── error (on failure) ←─────────┘
  *
  * Note: actual audio recording / STT / TTS are wired up by the
  * vm-recording-and-stt and vm-tts-playback-and-loop features.
@@ -79,8 +81,6 @@ export function VoiceModeModal({
   // Using useMemo so the Animated.Value is stable across renders without
   // needing to access .current during the render phase.
   const translateY = useMemo(() => new RNAnimated.Value(0), []);
-  const dragStartY = useRef(0);
-  const isDragging = useRef(false);
 
   // Keep latest onClose callback in a ref to avoid stale closure in PanResponder/BackHandler
   const onCloseRef = useRef(onClose);
@@ -126,16 +126,14 @@ export function VoiceModeModal({
           // Only capture downward swipes
           return gestureState.dy > 5 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
         },
-        onPanResponderGrant: (_, gestureState) => {
-          isDragging.current = true;
-          dragStartY.current = gestureState.y0;
+        onPanResponderGrant: () => {
+          // Start tracking drag
         },
         onPanResponderMove: (_, gestureState) => {
           const dy = Math.max(0, gestureState.dy);
           translateY.setValue(dy);
         },
         onPanResponderRelease: (_, gestureState) => {
-          isDragging.current = false;
           if (gestureState.dy > SWIPE_DOWN_THRESHOLD || gestureState.vy > 0.8) {
             // Swipe fast or far enough → dismiss
             RNAnimated.timing(translateY, {
@@ -151,7 +149,6 @@ export function VoiceModeModal({
           }
         },
         onPanResponderTerminate: () => {
-          isDragging.current = false;
           handleDismiss();
         },
       }),
@@ -160,10 +157,12 @@ export function VoiceModeModal({
   );
 
   const handleOrbPress = useCallback(() => {
+    // Clear error state before retrying
+    if (_onClearError) _onClearError();
     // Haptic feedback on orb tap
     triggerHapticMedium();
     onOrbPress();
-  }, [onOrbPress]);
+  }, [_onClearError, onOrbPress]);
 
   // Status label based on voice state — shows distinct error messages per error kind
   const getStatusLabel = (): string => {

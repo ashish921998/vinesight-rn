@@ -70,6 +70,8 @@ export function ConversationSidebar({
   useEffect(() => {
     if (!visible) return;
     let cancelled = false;
+    // Clear stale data at request start
+    setConversations([]);
     setIsLoading(true);
     assistantMemoryService
       .listConversations(farmId != null ? { farmId } : undefined)
@@ -80,7 +82,10 @@ export function ConversationSidebar({
         }
       })
       .catch(() => {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          setConversations([]);
+          setIsLoading(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -137,10 +142,15 @@ export function ConversationSidebar({
           text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
-            const success = await assistantMemoryService.deleteConversation(conversation.id);
-            if (success) {
-              setConversations((prev) => prev.filter((c) => c.id !== conversation.id));
-            } else {
+            try {
+              const success = await assistantMemoryService.deleteConversation(conversation.id);
+              if (success) {
+                setConversations((prev) => prev.filter((c) => c.id !== conversation.id));
+              } else {
+                Alert.alert(t('ai.chat.deleteChatFailed'));
+              }
+            } catch (error) {
+              console.error('Failed to delete conversation:', error);
               Alert.alert(t('ai.chat.deleteChatFailed'));
             }
           },

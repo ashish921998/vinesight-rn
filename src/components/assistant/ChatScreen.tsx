@@ -50,6 +50,9 @@ import { ActivityConfirmCard } from './ActivityConfirmCard';
 import { VoiceModeModal } from './VoiceMode/VoiceModeModal';
 import { useVoiceMode } from '@/hooks/use-voice-mode';
 
+/** Maximum size for inline text content (100KB) */
+const MAX_INLINE_TEXT_BYTES = 100_000;
+
 interface ChatScreenProps {
   initialFarmId?: string;
 }
@@ -71,13 +74,14 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
-  // Use the farm matching initialFarmId if provided, otherwise fall back to first farm
+  // Use the farm matching initialFarmId if provided, otherwise return null
+  // No implicit fallback to first farm - explicit user selection required
   const activeFarm = useMemo(() => {
     if (initialFarmId && farms) {
       const match = farms.find((f) => String(f.id) === initialFarmId);
       if (match) return match;
     }
-    return farms?.[0] ?? null;
+    return null;
   }, [farms, initialFarmId]);
 
   // Build farm context from the active farm to include in assistant requests.
@@ -187,12 +191,16 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
       return;
     }
 
+    if (!asset.base64) {
+      Alert.alert(t('ai.attach.imageReadError') ?? 'Could not read image data');
+      return;
+    }
+
     const attachment: AIMessageAttachmentInput = {
       kind: 'image',
       name: asset.fileName ?? 'image.jpg',
       mimeType,
-      dataUrl: asset.uri,
-      ...(asset.base64 ? { dataUrl: `data:${mimeType};base64,${asset.base64}` } : {}),
+      dataUrl: `data:${mimeType};base64,${asset.base64}`,
     };
 
     addAttachment(attachment);
@@ -210,11 +218,20 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     if (!asset) return;
 
     let textContent: string | undefined;
-    if (asset.mimeType?.startsWith('text/')) {
+    // Guard against large assets - only read small text files inline
+    if (
+      asset.mimeType?.startsWith('text/') &&
+      asset.size !== undefined &&
+      asset.size <= MAX_INLINE_TEXT_BYTES
+    ) {
       try {
         textContent = await FileSystem.readAsStringAsync(asset.uri, {
           encoding: 'utf8',
         });
+        // Enforce max length if needed
+        if (textContent.length > MAX_INLINE_TEXT_BYTES) {
+          textContent = textContent.slice(0, MAX_INLINE_TEXT_BYTES);
+        }
       } catch {
         // Fall through - attach without text content
       }

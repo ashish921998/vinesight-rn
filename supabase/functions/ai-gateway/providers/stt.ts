@@ -263,8 +263,8 @@ export async function transcribeAudio(input: {
       fallbackReason,
     };
   } catch (error) {
-    if (!fallbackReason && providerFallbackEnabled && USE_SARVAM_FOR_VOICE) {
-      recordProviderFailure('openai_stt');
+    recordProviderFailure('openai_stt');
+    if (fallbackReason) {
       throw new Error(`Both STT providers failed: ${stringifyUnknown(error)}`);
     }
     throw error;

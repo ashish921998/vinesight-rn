@@ -693,12 +693,30 @@ export default Sentry.wrap(function RootLayout() {
                 />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="add-activity" options={{ presentation: 'fullScreenModal' }} />
-                <Stack.Screen name="add-entry" options={{ presentation: 'fullScreenModal' }} />
-                <Stack.Screen name="add-task" options={{ presentation: 'fullScreenModal' }} />
-                <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />
+                <Stack.Screen
+                  name="add-activity"
+                  options={{ presentation: 'fullScreenModal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="add-entry"
+                  options={{ presentation: 'fullScreenModal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="add-task"
+                  options={{ presentation: 'fullScreenModal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="add-worker"
+                  options={{ presentation: 'modal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="add-soil-profile"
+                  options={{ presentation: 'modal', headerShown: false }}
+                />
+                <Stack.Screen
+                  name="add-stock"
+                  options={{ presentation: 'modal', headerShown: false }}
+                />
                 <Stack.Screen
                   name="add-warehouse-item"
                   options={{ presentation: 'modal', headerShown: false }}
