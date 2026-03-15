@@ -1242,7 +1242,7 @@ export const mr = {
     aiAssistant: 'AI सहाय्यक',
   },
   assistant: {
-    placeholder: 'लवकरच येत आहे — तुमचा AI शेती सहाय्यक',
+    placeholder: 'तुमचा AI शेती सहाय्यक',
     settingsButtonA11y: 'सेटिंग्ज उघडा',
     chat: {
       welcomeTitle: 'मी कसे मदत करू?',
@@ -1262,7 +1262,7 @@ export const mr = {
       typeSpray: '$t(glossary.spray)',
       typeHarvest: '$t(glossary.harvest)',
       typeExpense: '$t(glossary.expense)',
-      typeFertigation: 'फर्टिगेशन',
+      typeFertigation: '$t(glossary.fertigation)',
       durationLabel: 'कालावधी',
       durationValue: '{{value}} तास',
       chemicalsLabel: 'रसायने',

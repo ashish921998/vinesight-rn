@@ -497,6 +497,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
       {/* Conversation history sidebar */}
       <ConversationSidebar
         visible={sidebarVisible}
+        farmId={activeFarm?.id ?? null}
         onClose={handleCloseSidebar}
         onSelectConversation={handleSelectConversation}
         onNewChat={handleNewChatFromSidebar}

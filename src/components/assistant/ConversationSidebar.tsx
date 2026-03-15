@@ -40,6 +40,7 @@ const ANIMATION_DURATION = 220;
 
 export interface ConversationSidebarProps {
   visible: boolean;
+  farmId?: number | null;
   onClose: () => void;
   onSelectConversation: (conversationId: string) => void;
   onNewChat: () => void;
@@ -47,6 +48,7 @@ export interface ConversationSidebarProps {
 
 export function ConversationSidebar({
   visible,
+  farmId,
   onClose,
   onSelectConversation,
   onNewChat,
@@ -70,7 +72,7 @@ export function ConversationSidebar({
     let cancelled = false;
     setIsLoading(true);
     assistantMemoryService
-      .listConversations()
+      .listConversations(farmId != null ? { farmId } : undefined)
       .then((data) => {
         if (!cancelled) {
           setConversations(data);
@@ -83,7 +85,7 @@ export function ConversationSidebar({
     return () => {
       cancelled = true;
     };
-  }, [visible]);
+  }, [visible, farmId]);
 
   // Slide-in / slide-out animation
   useEffect(() => {

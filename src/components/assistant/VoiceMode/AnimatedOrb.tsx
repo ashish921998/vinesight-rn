@@ -312,16 +312,7 @@ function ProcessingDot({ index, color }: { index: number; color: string }) {
   const dotScale = useSharedValue(1);
 
   useEffect(() => {
-    dotScale.value = withRepeat(
-      withSequence(
-        withTiming(1.5, { duration: 350, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1.0, { duration: 350, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      false,
-    );
-    // We approximate stagger by using a delay based on index
-    // (Reanimated withDelay is available; using withSequence with initial timing for offset)
+    // Stagger by using a delay based on index
     const baseDelay = index * 180;
     dotScale.value = withRepeat(
       withSequence(

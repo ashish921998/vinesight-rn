@@ -237,10 +237,15 @@ function isVoiceLogDraft(value: unknown): value is VoiceLogDraft {
     typeof v.type === 'string' &&
     (v.farmId === null || typeof v.farmId === 'number') &&
     typeof v.date === 'string' &&
+    v.irrigation !== null &&
     typeof v.irrigation === 'object' &&
+    v.spray !== null &&
     typeof v.spray === 'object' &&
+    v.harvest !== null &&
     typeof v.harvest === 'object' &&
+    v.expense !== null &&
     typeof v.expense === 'object' &&
+    v.fertigation !== null &&
     typeof v.fertigation === 'object'
   );
 }

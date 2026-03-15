@@ -82,6 +82,12 @@ export function VoiceModeModal({
   const dragStartY = useRef(0);
   const isDragging = useRef(false);
 
+  // Keep latest onClose callback in a ref to avoid stale closure in PanResponder/BackHandler
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   // Reset translateY when modal becomes visible
   useEffect(() => {
     if (visible) {
@@ -94,12 +100,12 @@ export function VoiceModeModal({
     if (!visible) return undefined;
 
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      onClose();
+      onCloseRef.current();
       return true; // Prevent default back navigation
     });
 
     return () => sub.remove();
-  }, [visible, onClose]);
+  }, [visible]);
 
   const handleDismiss = useCallback(() => {
     RNAnimated.spring(translateY, {
@@ -137,7 +143,7 @@ export function VoiceModeModal({
               duration: 200,
               useNativeDriver: true,
             }).start(() => {
-              onClose();
+              onCloseRef.current();
             });
           } else {
             // Snap back
@@ -191,7 +197,7 @@ export function VoiceModeModal({
   };
 
   // Background color — slightly different in dark/light
-  const bgColor = isDark ? m3.colorScheme.surface : m3.colorScheme.surface;
+  const bgColor = isDark ? m3.surface.surfaceContainerLow : m3.colorScheme.surface;
 
   // Orb accessibility label
   const orbA11y = (): string => {

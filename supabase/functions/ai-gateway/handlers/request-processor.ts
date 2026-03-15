@@ -262,7 +262,7 @@ export async function setupConversation(
       role: 'user',
       content: transcript,
       inputMode: effectiveInputMode,
-      traceId,
+      traceId: _traceId,
     });
   }
 
