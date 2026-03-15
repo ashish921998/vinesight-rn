@@ -57,4 +57,5 @@ export {
   type AssemblerResult,
   type Attachment,
   type FarmContext,
+  type ImageAttachment,
 } from './assembler.ts';

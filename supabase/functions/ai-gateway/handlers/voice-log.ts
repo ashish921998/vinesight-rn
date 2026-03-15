@@ -10,6 +10,7 @@ import {
   buildVoiceLogClarifyExhaustedMessage,
   buildVoiceLogFormPrefill,
   buildVoiceLogOpeningFormMessage,
+  getVoiceLogMissingFields,
   resolveVoiceLogTurn,
   type ActivityLogExtractionResult,
   type Farm,
@@ -108,7 +109,10 @@ export function handleVoiceLog(input: VoiceLogHandlerInput): VoiceLogHandlerResu
   }
 
   if (turnResult.kind === 'clarify') {
-    const nextAttempts = clarifyAttempts + 1;
+    // Reset counter if user made progress (fewer missing fields than before)
+    const prevMissingCount = activeDraft ? getVoiceLogMissingFields(activeDraft).length : Infinity;
+    const madeProgress = turnResult.missingFields.length < prevMissingCount;
+    const nextAttempts = madeProgress ? 0 : clarifyAttempts + 1;
 
     // Check if we've exhausted clarification attempts
     if (nextAttempts >= 3) {

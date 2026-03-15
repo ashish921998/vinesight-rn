@@ -65,8 +65,15 @@ export interface AssemblerInput {
   toolCalls: ToolCall[];
 }
 
+export interface ImageAttachment {
+  dataUrl: string;
+  mimeType: string;
+  name: string;
+}
+
 export interface AssemblerResult {
   contextBlocks: string[];
+  imageAttachments: ImageAttachment[];
   citations: Citation[];
   sharedEmbedding: number[] | null;
   farmRecordsContext: FarmDataQueryResult | null;
@@ -84,29 +91,42 @@ export interface AssemblerResult {
 // ============================================================
 
 /**
- * Build attachment context blocks from user attachments
+ * Build attachment context blocks from user attachments.
+ * Text/document attachments become context blocks.
+ * Image attachments are returned separately for multimodal LLM input.
  */
-export function buildAttachmentContextBlocks(attachments: Attachment[] | undefined): string[] {
-  if (!Array.isArray(attachments) || attachments.length === 0) return [];
+export function buildAttachmentContextBlocks(attachments: Attachment[] | undefined): {
+  textBlocks: string[];
+  images: ImageAttachment[];
+} {
+  if (!Array.isArray(attachments) || attachments.length === 0) {
+    return { textBlocks: [], images: [] };
+  }
 
-  return attachments
-    .map((attachment, index) => {
-      if (!attachment) return null;
-      const name =
-        typeof attachment.name === 'string' ? attachment.name : `attachment-${index + 1}`;
-      const mimeType = typeof attachment.mimeType === 'string' ? attachment.mimeType : 'unknown';
+  const textBlocks: string[] = [];
+  const images: ImageAttachment[] = [];
 
-      if (typeof attachment.textContent === 'string' && attachment.textContent.trim()) {
-        return `Attachment ${index + 1} (${name}, ${mimeType}) text:\n${attachment.textContent.trim()}`;
-      }
+  attachments.forEach((attachment, index) => {
+    if (!attachment) return;
+    const name = typeof attachment.name === 'string' ? attachment.name : `attachment-${index + 1}`;
+    const mimeType = typeof attachment.mimeType === 'string' ? attachment.mimeType : 'unknown';
 
-      if (typeof attachment.dataUrl === 'string' && attachment.dataUrl.trim()) {
-        return `Attachment ${index + 1} (${name}, ${mimeType}) image attached by user.`;
-      }
+    if (typeof attachment.textContent === 'string' && attachment.textContent.trim()) {
+      textBlocks.push(
+        `Attachment ${index + 1} (${name}, ${mimeType}) text:\n${attachment.textContent.trim()}`,
+      );
+      return;
+    }
 
-      return `Attachment ${index + 1} (${name}, ${mimeType}) attached by user.`;
-    })
-    .filter((block): block is string => Boolean(block));
+    if (typeof attachment.dataUrl === 'string' && attachment.dataUrl.trim()) {
+      images.push({ dataUrl: attachment.dataUrl, mimeType, name });
+      return;
+    }
+
+    textBlocks.push(`Attachment ${index + 1} (${name}, ${mimeType}) attached by user.`);
+  });
+
+  return { textBlocks, images };
 }
 
 /**
@@ -281,7 +301,8 @@ export async function assembleContext(input: AssemblerInput): Promise<AssemblerR
 
   // Build context blocks
   const farmContextBlock = buildFarmContextBlock(farmContext);
-  const attachmentContextBlocks = buildAttachmentContextBlocks(attachments);
+  const { textBlocks: attachmentTextBlocks, images: imageAttachments } =
+    buildAttachmentContextBlocks(attachments);
   const farmRecordsBlock = buildFarmRecordsContextBlock(farmRecordsContext);
   const weatherBlock = weatherData ? buildWeatherContextBlock(weatherData as WeatherData) : '';
 
@@ -289,7 +310,7 @@ export async function assembleContext(input: AssemblerInput): Promise<AssemblerR
     farmContextBlock,
     farmRecordsBlock,
     weatherBlock,
-    ...attachmentContextBlocks,
+    ...attachmentTextBlocks,
     ...memoryResult.contextBlocks,
     ...ragResult.contextBlocks,
   ].filter(Boolean);
@@ -304,6 +325,7 @@ export async function assembleContext(input: AssemblerInput): Promise<AssemblerR
 
   return {
     contextBlocks,
+    imageAttachments,
     citations,
     sharedEmbedding,
     farmRecordsContext,

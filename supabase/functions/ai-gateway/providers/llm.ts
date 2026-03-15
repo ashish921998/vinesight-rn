@@ -10,6 +10,7 @@ import {
   toRecord,
   withAbortTimeout,
 } from '../utils/index.ts';
+import type { ImageAttachment } from '../context/assembler.ts';
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')?.trim() ?? '';
 
@@ -33,6 +34,7 @@ export async function chatCompletion(input: {
   prompt: string;
   locale: 'en' | 'hi' | 'mr';
   contextBlocks: string[];
+  imageAttachments?: ImageAttachment[];
   signal?: AbortSignal;
 }): Promise<ChatCompletionResult> {
   if (!OPENAI_API_KEY) {
@@ -56,6 +58,22 @@ export async function chatCompletion(input: {
 
   const systemMessage = `${languageInstruction} ${safetyInstruction}${contextSection}`;
 
+  // Build user message: multimodal (text + images) when images are present
+  const images = input.imageAttachments ?? [];
+  const userMessage: Record<string, unknown> =
+    images.length > 0
+      ? {
+          role: 'user',
+          content: [
+            { type: 'text', text: input.prompt },
+            ...images.map((img) => ({
+              type: 'image_url',
+              image_url: { url: img.dataUrl, detail: 'low' as const },
+            })),
+          ],
+        }
+      : { role: 'user', content: input.prompt };
+
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -71,10 +89,7 @@ export async function chatCompletion(input: {
           role: 'system',
           content: systemMessage,
         },
-        {
-          role: 'user',
-          content: input.prompt,
-        },
+        userMessage,
       ],
     }),
     signal: input.signal,
@@ -184,6 +199,7 @@ export async function chatCompletionWithTimeout(input: {
   prompt: string;
   locale: 'en' | 'hi' | 'mr';
   contextBlocks: string[];
+  imageAttachments?: ImageAttachment[];
 }): Promise<ChatCompletionResult> {
   return withAbortTimeout(
     (signal) => chatCompletion({ ...input, signal }),

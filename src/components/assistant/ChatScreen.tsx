@@ -31,6 +31,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { useThemeTokens } from '@/styles/use-theme';
 import { useLanguageStore } from '@/stores/language-store';
 import { useModalStore } from '@/stores/modal-store';
@@ -48,6 +50,10 @@ import { ActivityConfirmCard } from './ActivityConfirmCard';
 import { VoiceModeModal } from './VoiceMode/VoiceModeModal';
 import { useVoiceMode } from '@/hooks/use-voice-mode';
 
+interface ChatScreenProps {
+  initialFarmId?: string;
+}
+
 const DEFAULT_SUGGESTIONS = [
   'ai.defaultSuggestions.waterNeed',
   'ai.defaultSuggestions.diseases',
@@ -55,7 +61,7 @@ const DEFAULT_SUGGESTIONS = [
   'ai.defaultSuggestions.pruning',
 ] as const;
 
-export function ChatScreen() {
+export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
   const language = useLanguageStore((s) => s.language) ?? 'en';
@@ -65,8 +71,14 @@ export function ChatScreen() {
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
-  // Auto-select the first farm from the list as the active farm for assistant context
-  const activeFarm = useMemo(() => farms?.[0] ?? null, [farms]);
+  // Use the farm matching initialFarmId if provided, otherwise fall back to first farm
+  const activeFarm = useMemo(() => {
+    if (initialFarmId && farms) {
+      const match = farms.find((f) => String(f.id) === initialFarmId);
+      if (match) return match;
+    }
+    return farms?.[0] ?? null;
+  }, [farms, initialFarmId]);
 
   // Build farm context from the active farm to include in assistant requests.
   // daysSincePruning is omitted here — it requires Date.now() which is impure in useMemo;
@@ -155,8 +167,7 @@ export function ChatScreen() {
     void retryLastMessage();
   }, [retryLastMessage]);
 
-  // Handle image picker for attachments
-  const handleAttachPress = useCallback(async () => {
+  const handlePickImage = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: false,
@@ -171,7 +182,6 @@ export function ChatScreen() {
 
     const mimeType = asset.mimeType ?? 'image/jpeg';
 
-    // Validate size: base64 should be under ~10MB decoded
     if (asset.base64 && asset.base64.length > 13_000_000) {
       Alert.alert(t('ai.attach.imageTooLarge'));
       return;
@@ -182,12 +192,51 @@ export function ChatScreen() {
       name: asset.fileName ?? 'image.jpg',
       mimeType,
       dataUrl: asset.uri,
-      // Send as base64 in request
       ...(asset.base64 ? { dataUrl: `data:${mimeType};base64,${asset.base64}` } : {}),
     };
 
     addAttachment(attachment);
   }, [addAttachment, t]);
+
+  const handlePickDocument = useCallback(async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'text/plain', 'text/csv'],
+      copyToCacheDirectory: true,
+    });
+
+    if (result.canceled || result.assets.length === 0) return;
+
+    const asset = result.assets[0];
+    if (!asset) return;
+
+    let textContent: string | undefined;
+    if (asset.mimeType?.startsWith('text/')) {
+      try {
+        textContent = await FileSystem.readAsStringAsync(asset.uri, {
+          encoding: 'utf8',
+        });
+      } catch {
+        // Fall through - attach without text content
+      }
+    }
+
+    const attachment: AIMessageAttachmentInput = {
+      kind: 'document',
+      name: asset.name ?? 'document',
+      mimeType: asset.mimeType ?? 'application/octet-stream',
+      ...(textContent ? { textContent } : { sourceUri: asset.uri }),
+    };
+
+    addAttachment(attachment);
+  }, [addAttachment]);
+
+  const handleAttachPress = useCallback(() => {
+    Alert.alert(t('ai.attach.title'), t('ai.attach.choosePrompt'), [
+      { text: t('ai.attach.image'), onPress: () => void handlePickImage() },
+      { text: t('ai.attach.file'), onPress: () => void handlePickDocument() },
+      { text: t('ai.chat.close'), style: 'cancel' },
+    ]);
+  }, [handlePickImage, handlePickDocument, t]);
 
   // Handle voice log confirmation
   const handleVoiceLogConfirm = useCallback(() => {

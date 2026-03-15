@@ -60,7 +60,7 @@ export async function handleAdvisory(input: AdvisoryHandlerInput): Promise<Advis
   } = input;
 
   // Assemble context
-  const { contextBlocks, citations } = await assembleContext({
+  const { contextBlocks, imageAttachments, citations } = await assembleContext({
     transcript,
     farmContext,
     attachments,
@@ -95,6 +95,7 @@ export async function handleAdvisory(input: AdvisoryHandlerInput): Promise<Advis
       prompt: transcript,
       locale,
       contextBlocks,
+      imageAttachments,
     });
     assistantText = chatResult.text;
     const inputTokens = chatResult.inputTokens;
