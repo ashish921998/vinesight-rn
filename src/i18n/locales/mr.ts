@@ -1272,7 +1272,7 @@ export const mr = {
       quantityValue: '{{value}} किग्रा',
       gradeLabel: 'दर्जा',
       costLabel: '$t(glossary.expense)',
-      costValue: '₹{{value}}',
+      costValue: '{{currency}}{{value}}',
       expenseTypeLabel: 'प्रकार',
       fertilizersLabel: '$t(glossary.fertilizer)',
       farmLabel: '$t(glossary.farm)',

@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   sendAssistantTurn,
+  cancelPendingAssistantTurnRequest,
   AssistantGatewayError,
   AssistantGatewayErrorCode,
 } from '@/services/assistant-gateway';
@@ -39,6 +40,7 @@ export type VoiceModeErrorKind =
   | 'stt_failed'
   | 'network_error'
   | 'timeout'
+  | 'gateway_error'
   | 'unknown';
 
 export interface VoiceModeError {
@@ -84,16 +86,16 @@ export interface UseVoiceModeReturn {
 
 function classifyGatewayError(err: unknown): VoiceModeError {
   if (err instanceof AssistantGatewayError) {
-    if (
-      err.code === AssistantGatewayErrorCode.NETWORK_ERROR ||
-      err.code === AssistantGatewayErrorCode.TIMEOUT
-    ) {
+    if (err.code === AssistantGatewayErrorCode.NETWORK_ERROR) {
       return { kind: 'network_error', message: err.message };
+    }
+    if (err.code === AssistantGatewayErrorCode.TIMEOUT) {
+      return { kind: 'timeout', message: err.message };
     }
     if (err.code === AssistantGatewayErrorCode.AUDIO_VALIDATION_FAILED) {
       return { kind: 'stt_failed', message: err.message };
     }
-    return { kind: 'stt_failed', message: err.message };
+    return { kind: 'gateway_error', message: err.message };
   }
   if (err instanceof Error) {
     return { kind: 'unknown', message: err.message };
@@ -123,6 +125,9 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
   // Initialised to a no-op; updated after useVoiceRecorder is called.
   const startRecordingRef = useRef<() => Promise<boolean>>(async () => false);
 
+  // Tracks the in-flight voice request ID for cancellation
+  const voiceRequestIdRef = useRef<string | null>(null);
+
   // ─── Recording complete handler ──────────────────────────────────────────
 
   const handleRecordingComplete = useCallback(async (result: RecordingResultData) => {
@@ -133,6 +138,14 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
 
     const { conversationId, language, farmContext, onNewMessage, onConversationIdChange } =
       optionsRef.current;
+
+    const requestId = `voice-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+
+    // Cancel any previous in-flight voice request
+    if (voiceRequestIdRef.current) {
+      cancelPendingAssistantTurnRequest(voiceRequestIdRef.current);
+    }
+    voiceRequestIdRef.current = requestId;
 
     try {
       const response = await sendAssistantTurn(
@@ -148,11 +161,12 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
           clientCanPlayAudio: true,
           clientPersistedUserTurn: false,
         },
-        { requestId: `voice-${Date.now()}` },
+        { requestId },
       );
 
-      // Still open after await?
-      if (!isOpenRef.current) return;
+      // Discard if superseded or voice mode closed
+      if (!isOpenRef.current || voiceRequestIdRef.current !== requestId) return;
+      voiceRequestIdRef.current = null;
 
       // Propagate new conversation ID
       const newConversationId = response.message.conversationId;
@@ -240,7 +254,13 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
         setVoiceState('idle');
       }
     } catch (err) {
-      if (!isOpenRef.current) return;
+      if (!isOpenRef.current || voiceRequestIdRef.current !== requestId) return;
+      voiceRequestIdRef.current = null;
+
+      // Silently ignore cancellation
+      if (err instanceof AssistantGatewayError && err.code === AssistantGatewayErrorCode.CANCELED) {
+        return;
+      }
 
       const classified = classifyGatewayError(err);
       setBackendError(classified);
@@ -307,13 +327,21 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       stopRecording();
       // voiceState transitions to 'processing' in handleRecordingComplete
     } else if (voiceState === 'speaking') {
-      // Interrupt speaking — stop TTS immediately then start listening
-      void voiceOutputService.stop();
+      // Interrupt speaking — await TTS stop, then start listening
       void (async () => {
-        const started = await startRecording();
-        if (started) {
-          setVoiceState('listening');
-        } else {
+        try {
+          await voiceOutputService.stop();
+        } catch {
+          // Ignore TTS stop errors
+        }
+        try {
+          const started = await startRecording();
+          if (started) {
+            setVoiceState('listening');
+          } else {
+            setVoiceState('idle');
+          }
+        } catch {
           setVoiceState('idle');
         }
       })();
@@ -325,6 +353,12 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
 
   const handleClose = useCallback(() => {
     isOpenRef.current = false;
+
+    // Cancel any in-flight voice request
+    if (voiceRequestIdRef.current) {
+      cancelPendingAssistantTurnRequest(voiceRequestIdRef.current);
+      voiceRequestIdRef.current = null;
+    }
 
     // Stop any active TTS playback
     void voiceOutputService.stop();

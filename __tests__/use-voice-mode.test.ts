@@ -65,6 +65,7 @@ jest.mock('@/hooks/use-voice-recorder', () => ({
 
 jest.mock('@/services/assistant-gateway', () => ({
   sendAssistantTurn: jest.fn(),
+  cancelPendingAssistantTurnRequest: jest.fn(),
   AssistantGatewayError: class AssistantGatewayError extends Error {
     code: string;
     constructor(code: string, message: string) {

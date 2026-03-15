@@ -73,16 +73,19 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const { data: farms } = useFarms();
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  // Tracks the effective farmId — can be overridden when loading a conversation
+  const [overrideFarmId, setOverrideFarmId] = useState<string | null>(null);
+  const effectiveFarmId = overrideFarmId ?? initialFarmId;
 
-  // Use the farm matching initialFarmId if provided, otherwise return null
+  // Use the farm matching effectiveFarmId if provided, otherwise return null
   // No implicit fallback to first farm - explicit user selection required
   const activeFarm = useMemo(() => {
-    if (initialFarmId && farms) {
-      const match = farms.find((f) => String(f.id) === initialFarmId);
+    if (effectiveFarmId && farms) {
+      const match = farms.find((f) => String(f.id) === effectiveFarmId);
       if (match) return match;
     }
     return null;
-  }, [farms, initialFarmId]);
+  }, [farms, effectiveFarmId]);
 
   // Build farm context from the active farm to include in assistant requests.
   // daysSincePruning is omitted here — it requires Date.now() which is impure in useMemo;
@@ -159,13 +162,17 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   }, []);
 
   const handleSelectConversation = useCallback(
-    (conversationId: string, _farmId?: number | null) => {
+    (conversationId: string, conversationFarmId?: number | null) => {
+      if (conversationFarmId != null) {
+        setOverrideFarmId(String(conversationFarmId));
+      }
       void loadConversation(conversationId);
     },
     [loadConversation],
   );
 
   const handleNewChatFromSidebar = useCallback(() => {
+    setOverrideFarmId(null);
     startNewConversation();
   }, [startNewConversation]);
 

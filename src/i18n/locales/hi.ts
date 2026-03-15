@@ -1268,7 +1268,7 @@ export const hi = {
       quantityValue: '{{value}} किग्रा',
       gradeLabel: 'ग्रेड',
       costLabel: 'लागत',
-      costValue: '₹{{value}}',
+      costValue: '{{currency}}{{value}}',
       expenseTypeLabel: 'प्रकार',
       fertilizersLabel: 'उर्वरक',
       farmLabel: 'खेत',

@@ -216,6 +216,7 @@ function ActivityFields({ draft }: ActivityFieldsProps) {
             <FieldRow
               label={t('assistant.activityConfirm.costLabel')}
               value={t('assistant.activityConfirm.costValue', {
+                currency: '₹',
                 value: draft.expense.cost,
               })}
             />

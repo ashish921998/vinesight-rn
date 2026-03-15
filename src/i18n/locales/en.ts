@@ -1270,7 +1270,7 @@ export const en = {
       quantityValue: '{{value}} kg',
       gradeLabel: 'Grade',
       costLabel: 'Cost',
-      costValue: '₹{{value}}',
+      costValue: '{{currency}}{{value}}',
       expenseTypeLabel: 'Type',
       fertilizersLabel: 'Fertilizers',
       farmLabel: 'Farm',

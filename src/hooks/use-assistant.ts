@@ -187,11 +187,17 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     const lastMessage = lastUserMessageRef.current;
     const lastAttachments = lastAttachmentsRef.current;
     if (!lastMessage || isLoading) return;
+
+    const requestId = `chat-retry-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+
+    if (currentRequestIdRef.current) {
+      cancelPendingAssistantTurnRequest(currentRequestIdRef.current);
+    }
+    currentRequestIdRef.current = requestId;
+
     setError(null);
     setIsLoading(true);
 
-    // Do NOT add a new user bubble — the existing one is already in the messages list.
-    // Replay the exact same request (text + stored attachments).
     try {
       const response = await sendAssistantTurn(
         {
@@ -203,10 +209,11 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
           attachments: lastAttachments.length > 0 ? lastAttachments : undefined,
           clientPersistedUserTurn: true,
         },
-        {
-          requestId: `chat-retry-${Date.now()}`,
-        },
+        { requestId },
       );
+
+      if (currentRequestIdRef.current !== requestId) return;
+      currentRequestIdRef.current = null;
 
       const newConversationId = response.message.conversationId;
       if (newConversationId && !conversationId) {
@@ -220,11 +227,20 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
         setVoiceLogAction(response.voiceLogAction);
       }
     } catch (err) {
+      if (currentRequestIdRef.current !== requestId) return;
+      currentRequestIdRef.current = null;
+
+      if (err instanceof AssistantGatewayError && err.code === AssistantGatewayErrorCode.CANCELED) {
+        return;
+      }
+
       const normalizedError =
         err instanceof AssistantGatewayError || err instanceof Error ? err : new Error(String(err));
       setError(normalizedError);
     } finally {
-      setIsLoading(false);
+      if (currentRequestIdRef.current === null) {
+        setIsLoading(false);
+      }
     }
   }, [isLoading, conversationId, options]);
 
