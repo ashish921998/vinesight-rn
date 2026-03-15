@@ -1,0 +1,45 @@
+__tests__/chat-screen.test.tsx
+  5978d79b72ce3c12 417
+src/components/assistant/ChatScreen.tsx
+  5978d79b72ce3c12 35,60,175,208-211,215,240-242,254-258
+src/i18n/locales/hi.ts
+  5978d79b72ce3c12 1715-1716,1730
+supabase/functions/ai-gateway/handlers/main.ts
+  5978d79b72ce3c12 24,72,229-234,242-249,252
+src/components/assistant/VoiceMode/VoiceModeModal.tsx
+  5978d79b72ce3c12 160,163
+src/i18n/locales/en.ts
+  5978d79b72ce3c12 1713-1714,1728
+src/components/assistant/ConversationSidebar.tsx
+  5978d79b72ce3c12 62,75,82,88,326-336
+src/i18n/locales/mr.ts
+  5978d79b72ce3c12 1724-1725,1739
+src/components/assistant/SuggestionChips.tsx
+  5978d79b72ce3c12 15
+src/hooks/use-voice-recorder.ts
+  5978d79b72ce3c12 291
+jest.config.js
+  5978d79b72ce3c12 9
+supabase/functions/ai-gateway/providers/tts.ts
+  5978d79b72ce3c12 195-198,205
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "53e246e1a275436ed96e63037208b9b362c14489",
+  "prompts": {
+    "5978d79b72ce3c12": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "2d06e47c-7026-4fbc-a7e9-044b6e5b3c2f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 135,
+      "total_deletions": 89,
+      "accepted_lines": 68,
+      "overriden_lines": 0
+    }
+  }
+}
