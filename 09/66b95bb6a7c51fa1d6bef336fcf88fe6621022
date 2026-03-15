@@ -1,0 +1,51 @@
+src/components/assistant/ConversationSidebar.tsx
+  2f9d8d7eaca51745 43,51,75,88
+src/services/assistant-gateway.ts
+  2f9d8d7eaca51745 240,242,244
+src/components/assistant/VoiceMode/VoiceModeModal.tsx
+  2f9d8d7eaca51745 85-90,103,146,200
+src/components/assistant/VoiceMode/AnimatedOrb.tsx
+  2f9d8d7eaca51745 315
+supabase/functions/ai-gateway/context/memory.ts
+  2f9d8d7eaca51745 7-8,261,265-267
+src/components/assistant/ChatScreen.tsx
+  2f9d8d7eaca51745 500
+src/i18n/locales/mr.ts
+  2f9d8d7eaca51745 1245
+  ede27cb435e65a1b 1265
+supabase/functions/ai-gateway/handlers/request-processor.ts
+  2f9d8d7eaca51745 265
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "0966b95bb6a7c51fa1d6bef336fcf88fe6621022",
+  "prompts": {
+    "2f9d8d7eaca51745": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d9a25fd7-827d-4493-a0b1-c219d6e737c0",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 33,
+      "total_deletions": 28,
+      "accepted_lines": 28,
+      "overriden_lines": 0
+    },
+    "ede27cb435e65a1b": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "987b8f53-b3d6-45f5-ae78-137cafd89e6d",
+        "model": "glm-5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
