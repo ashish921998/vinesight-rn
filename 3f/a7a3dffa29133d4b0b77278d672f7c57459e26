@@ -1,0 +1,37 @@
+__tests__/use-voice-mode.test.ts
+  5978d79b72ce3c12 68
+src/i18n/locales/en.ts
+  5978d79b72ce3c12 1273
+src/i18n/locales/hi.ts
+  5978d79b72ce3c12 1271
+src/i18n/locales/mr.ts
+  5978d79b72ce3c12 1275
+src/hooks/use-assistant.ts
+  5978d79b72ce3c12 190-197,212,215-217,230-236
+src/components/assistant/ActivityConfirmCard.tsx
+  5978d79b72ce3c12 219
+src/hooks/use-voice-mode.ts
+  5978d79b72ce3c12 22,43,92-94,98,128-130,142-149,167-169,257-263,333,335-340,344,360-362
+src/components/assistant/ChatScreen.tsx
+  5978d79b72ce3c12 76-78,80,83-84,88,165-168,175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "3fa7a3dffa29133d4b0b77278d672f7c57459e26",
+  "prompts": {
+    "5978d79b72ce3c12": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "2d06e47c-7026-4fbc-a7e9-044b6e5b3c2f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 94,
+      "total_deletions": 29,
+      "accepted_lines": 88,
+      "overriden_lines": 0
+    }
+  }
+}
