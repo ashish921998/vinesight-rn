@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useAuthStore } from '@/stores';
-import { Button, Input } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
 import { spacing, borderRadius, fontSize, fontWeight, size } from '@/styles/theme';
@@ -79,16 +79,26 @@ export default function PhoneLoginScreen() {
   const requestedMode: PhoneAuthMode = mode === 'signin' ? 'signin' : 'signup';
 
   const [phoneAuthMode, setPhoneAuthMode] = useState<PhoneAuthMode>(requestedMode);
-  const [name, setName] = useState('');
+
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
+  const [isPhoneInputFocused, setIsPhoneInputFocused] = useState(false);
   const lastNavigatedPhoneRef = useRef<string | null>(null);
   const lastRequestedOtpModeRef = useRef<PhoneAuthMode>(requestedMode);
   const [localPhoneError, setLocalPhoneError] = useState<string | null>(null);
-  const [nameError, setNameError] = useState<string | null>(null);
+
   const [isPhoneHintAvailable, setIsPhoneHintAvailable] = useState(false);
+  const hasRequestedPhoneHintRef = useRef(false);
+  const phoneNumberRef = useRef(phoneNumber);
+  const selectedCountryRef = useRef(selectedCountry);
+  const hasUserSelectedCountryRef = useRef(false);
+
+  useEffect(() => {
+    phoneNumberRef.current = phoneNumber;
+    selectedCountryRef.current = selectedCountry;
+  }, [phoneNumber, selectedCountry]);
 
   useEffect(() => {
     WebBrowser.maybeCompleteAuthSession();
@@ -157,6 +167,7 @@ export default function PhoneLoginScreen() {
     () => getLocalPhoneDigitLimit(selectedCountry.dialCode),
     [selectedCountry.dialCode],
   );
+  const phoneError = localPhoneError ?? errorMessage;
 
   useEffect(() => {
     if (isAuthenticated && needsProfileCompletion) {
@@ -172,47 +183,76 @@ export default function PhoneLoginScreen() {
       setLocalPhoneError(t('authPhone.invalidPhone'));
       return;
     }
-    if (isSignUp && name.trim().length < 2) {
-      setNameError(t('authPhone.nameRequired', { defaultValue: 'Please enter your name' }));
-      return;
-    }
     const submitMode = phoneAuthMode;
     lastRequestedOtpModeRef.current = submitMode;
     clearError();
     setLocalPhoneError(null);
-    setNameError(null);
     if (__DEV__) {
       console.log('[phone-login] handleSendCode - Sending OTP', {
         mode: submitMode,
         isSignUp,
-        hasName: isSignUp ? name.trim().length > 0 : undefined,
       });
     }
-    await signInWithPhone(fullPhoneNumber, submitMode, isSignUp ? name.trim() : undefined);
+    await signInWithPhone(fullPhoneNumber, submitMode);
   };
 
-  const handleUseMyNumber = async () => {
-    setLocalPhoneError(null);
-    clearError();
-
-    const phoneNumberHint = await requestPhoneNumberHint();
-    if (!phoneNumberHint) return;
-
-    const matchedPhone = matchPhoneNumberHintToCountry(phoneNumberHint, COUNTRIES);
-    if (!matchedPhone) {
-      setLocalPhoneError(
-        t('authPhone.phoneHintUnsupported', {
-          defaultValue: 'Could not fill this number automatically. Please enter it manually.',
-        }),
-      );
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !isPhoneHintAvailable || hasRequestedPhoneHintRef.current) {
       return;
     }
 
-    setSelectedCountry(matchedPhone.country);
-    setPhoneNumber(matchedPhone.localNumber);
-  };
+    hasRequestedPhoneHintRef.current = true;
+    let cancelled = false;
+
+    const autofillPhoneNumber = async () => {
+      const hasUserTypedDigits = /\d/.test(phoneNumberRef.current);
+      const hasUserChosenCountry =
+        hasUserSelectedCountryRef.current ||
+        selectedCountryRef.current.code !== DEFAULT_COUNTRY.code;
+
+      if (hasUserTypedDigits || hasUserChosenCountry) {
+        return;
+      }
+
+      const phoneNumberHint = await requestPhoneNumberHint();
+      if (!phoneNumberHint || cancelled) return;
+
+      const hasUserTypedDigitsAfterPrompt = /\d/.test(phoneNumberRef.current);
+      const hasUserChosenCountryAfterPrompt =
+        hasUserSelectedCountryRef.current ||
+        selectedCountryRef.current.code !== DEFAULT_COUNTRY.code;
+
+      if (hasUserTypedDigitsAfterPrompt || hasUserChosenCountryAfterPrompt) {
+        return;
+      }
+
+      const matchedPhone = matchPhoneNumberHintToCountry(phoneNumberHint, COUNTRIES);
+      if (!matchedPhone || cancelled) {
+        if (!cancelled) {
+          setLocalPhoneError(
+            t('authPhone.phoneHintUnsupported', {
+              defaultValue: 'Could not fill this number automatically. Please enter it manually.',
+            }),
+          );
+        }
+        return;
+      }
+
+      if (cancelled) return;
+      clearError();
+      setLocalPhoneError(null);
+      setSelectedCountry(matchedPhone.country);
+      setPhoneNumber(matchedPhone.localNumber);
+    };
+
+    void autofillPhoneNumber();
+    return () => {
+      cancelled = true;
+    };
+  }, [clearError, isPhoneHintAvailable, t]);
 
   const handleSelectCountry = (country: Country) => {
+    hasUserSelectedCountryRef.current = true;
     setSelectedCountry(country);
     setPhoneNumber((current) => limitLocalPhoneDigits(country.dialCode, current));
     setShowCountryPicker(false);
@@ -227,11 +267,7 @@ export default function PhoneLoginScreen() {
     if (isLoading) return;
     clearError();
     setLocalPhoneError(null);
-    setNameError(null);
     setPhoneAuthMode(nextMode);
-    if (nextMode === 'signin') {
-      setName('');
-    }
   };
 
   const isSignUp = phoneAuthMode === 'signup';
@@ -299,26 +335,45 @@ export default function PhoneLoginScreen() {
   const countryPickerButtonStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-    borderColor: m3.colorScheme.outlineVariant,
-    backgroundColor: m3.surface.surfaceContainerHigh,
+    minHeight: 56,
   };
 
   const countryDialCodeStyle: TextStyle = {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
     color: m3.colorScheme.onSurface,
-    marginLeft: spacing[2],
   };
 
-  const countryNameStyle: TextStyle = {
-    fontSize: fontSize.sm,
-    color: m3.colorScheme.onSurfaceVariant,
-    marginLeft: spacing[2],
+  const phoneInputRowStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    minHeight: 56,
+    borderRadius: borderRadius.xl,
+    borderWidth: 2,
+    borderColor: phoneError ? m3.colorScheme.error : m3.colorScheme.outlineVariant,
+    backgroundColor: m3.surface.surfaceContainerHigh,
+    overflow: 'hidden',
+  };
+
+  const phoneInputRowFocusedStyle: ViewStyle = {
+    borderColor: phoneError ? m3.colorScheme.error : m3.colorScheme.primary,
+  };
+
+  const phoneNumberInputWrapperStyle: ViewStyle = {
     flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: spacing[4],
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: m3.colorScheme.outlineVariant,
+  };
+
+  const phoneNumberInputStyle: TextStyle = {
+    fontSize: fontSize.base,
+    color: m3.colorScheme.onSurface,
+    paddingVertical: spacing[3],
   };
 
   const errorContainerStyle: ViewStyle = {
@@ -508,7 +563,7 @@ export default function PhoneLoginScreen() {
               {isSignUp
                 ? t('authPhone.signupSubtitle', {
                     defaultValue:
-                      'Enter your name and mobile number to create your account. We will send a verification code.',
+                      'Enter your mobile number to create your account. We will send a verification code.',
                   })
                 : t('authPhone.signinSubtitle', {
                     defaultValue:
@@ -566,96 +621,71 @@ export default function PhoneLoginScreen() {
                 })}
               </View>
 
-              {/* Name Input - Only for signup mode */}
-              {isSignUp && (
-                <Input
-                  placeholder={t('authPhone.namePlaceholder', { defaultValue: 'Your name' })}
-                  value={name}
-                  onChangeText={(value) => {
-                    setName(value);
-                    if (value.trim().length >= 2) {
-                      setNameError(null);
-                    } else if (value.trim().length > 0) {
-                      setNameError(
-                        t('authPhone.nameRequired', { defaultValue: 'Please enter your name' }),
-                      );
-                    }
-                  }}
-                  onBlur={() => {
-                    if (isSignUp && name.trim().length > 0 && name.trim().length < 2) {
-                      setNameError(
-                        t('authPhone.nameRequired', { defaultValue: 'Please enter your name' }),
-                      );
-                    }
-                  }}
-                  leftIcon="person.fill"
-                  autoCapitalize="words"
-                  textContentType="name"
-                  containerStyle={{ marginBottom: spacing[4] }}
-                />
-              )}
-
-              {/* Country Code Picker */}
-              <Pressable
-                onPress={() => setShowCountryPicker(true)}
-                style={({ pressed }) => [
-                  countryPickerButtonStyle,
-                  {
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                      : m3.surface.surfaceContainerHigh,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={t('authPhone.selectCountryA11y')}
+              <View
+                style={[phoneInputRowStyle, isPhoneInputFocused ? phoneInputRowFocusedStyle : null]}
+                testID="phone-input-row"
               >
-                <UiSymbol name="globe" size={20} color={m3.colorScheme.onSurfaceVariant} />
-                <Text style={countryDialCodeStyle}>{selectedCountry.dialCode}</Text>
-                <Text style={countryNameStyle}>{selectedCountry.name}</Text>
-                <UiSymbol name="chevron.down" size={14} color={m3.colorScheme.onSurfaceVariant} />
-              </Pressable>
-
-              {/* Phone Number Input */}
-              <Input
-                placeholder={t('authPhone.phoneNumber')}
-                value={phoneNumber}
-                onChangeText={(value) => {
-                  setLocalPhoneError(null);
-                  setPhoneNumber(limitLocalPhoneDigits(selectedCountry.dialCode, value));
-                }}
-                leftIcon="phone.fill"
-                keyboardType="phone-pad"
-                maxLength={localPhoneDigitLimit}
-                autoCapitalize="none"
-                textContentType="telephoneNumber"
-                autoComplete="tel"
-                containerStyle={{ marginBottom: spacing[2] }}
-              />
-
-              {Platform.OS === 'android' && isPhoneHintAvailable && (
-                <Button
-                  title={t('authPhone.useMyNumber', { defaultValue: 'Use my number' })}
-                  variant="ghost"
-                  size="sm"
-                  fullWidth={false}
-                  onPress={handleUseMyNumber}
+                <Pressable
                   disabled={isLoading}
-                  testID="phone-hint-button"
-                  accessibilityLabel={t('authPhone.useMyNumberA11y', {
-                    defaultValue: 'Choose a phone number from this device',
-                  })}
-                />
-              )}
+                  onPress={() => setShowCountryPicker(true)}
+                  style={({ pressed }) => [
+                    countryPickerButtonStyle,
+                    {
+                      backgroundColor:
+                        !isLoading && pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      opacity: isLoading ? 0.6 : 1,
+                    },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: isLoading }}
+                  accessibilityLabel={t('authPhone.selectCountryA11y')}
+                  testID="phone-country-trigger"
+                >
+                  <Text style={countryDialCodeStyle}>{selectedCountry.dialCode}</Text>
+                  <View style={{ marginLeft: spacing[2] }}>
+                    <UiSymbol
+                      name="chevron.down"
+                      size={14}
+                      color={m3.colorScheme.onSurfaceVariant}
+                    />
+                  </View>
+                </Pressable>
 
+                <View style={phoneNumberInputWrapperStyle}>
+                  <TextInput
+                    placeholder={t('authPhone.phoneNumber')}
+                    placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                    value={phoneNumber}
+                    onChangeText={(value) => {
+                      if (localPhoneError || errorMessage) {
+                        clearError();
+                        setLocalPhoneError(null);
+                      }
+                      setPhoneNumber(limitLocalPhoneDigits(selectedCountry.dialCode, value));
+                    }}
+                    keyboardType="phone-pad"
+                    maxLength={localPhoneDigitLimit}
+                    autoCapitalize="none"
+                    textContentType="telephoneNumber"
+                    autoComplete="tel"
+                    editable={!isLoading}
+                    style={phoneNumberInputStyle}
+                    onFocus={() => setIsPhoneInputFocused(true)}
+                    onBlur={() => setIsPhoneInputFocused(false)}
+                  />
+                </View>
+              </View>
               {/* Error Message */}
-              {(errorMessage || localPhoneError || nameError) && (
+              {phoneError && (
                 <View style={errorContainerStyle}>
                   <UiSymbol
                     name="exclamationmark.circle.fill"
                     size={18}
                     color={m3.colorScheme.error}
                   />
-                  <Text style={errorTextStyle}>{nameError ?? localPhoneError ?? errorMessage}</Text>
+                  <Text style={errorTextStyle}>{phoneError}</Text>
                 </View>
               )}
 
@@ -670,9 +700,7 @@ export default function PhoneLoginScreen() {
                 }
                 onPress={handleSendCode}
                 isLoading={isLoading}
-                disabled={
-                  !phoneNumber || !normalizedPhoneNumber || (isSignUp && name.trim().length < 2)
-                }
+                disabled={!phoneNumber || !normalizedPhoneNumber}
                 style={{ marginTop: spacing[4] }}
               />
             </View>

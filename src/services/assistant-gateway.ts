@@ -104,6 +104,7 @@ interface AssistantGatewayResponse {
   assistant_text: string;
   /** STT transcript of user's audio input (only present for audio input_mode) */
   user_transcript?: string | null;
+  stt_transcript?: string | null;
   assistant_audio_b64?: string | null;
   assistant_audio_url?: string | null;
   assistant_audio_mime_type?: string | null;
@@ -720,6 +721,7 @@ export async function sendAssistantTurn(
       traceId: response.trace_id,
       routeDecision: response.route_decision ?? null,
       voiceLogAction: toVoiceLogAction(response.voice_log_action),
+      sttTranscript: response.stt_transcript?.trim() || null,
       sttProviderUsed: response.stt_provider_used ?? null,
       sttConfidence:
         typeof response.stt_confidence === 'number' && Number.isFinite(response.stt_confidence)

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Redirect } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { ScrollView, View, Text, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TestWidget } from '@widgets/foundation/TestWidget';
@@ -75,60 +75,63 @@ export default function WidgetsShowcaseScreen() {
   }
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
-      contentContainerStyle={{
-        paddingHorizontal: spacing[4],
-        paddingTop: spacing[4],
-        paddingBottom: Math.max(insets.bottom + spacing[10], spacing[12]),
-      }}
-      contentInsetAdjustmentBehavior="automatic"
-    >
-      <View style={{ marginBottom: spacing[4] }}>
-        <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
-          Widget Showcase
-        </Text>
-        <Text
-          style={{
-            ...m3.typography.bodyMedium,
-            color: m3.colorScheme.onSurfaceVariant,
-            marginTop: spacing[1],
-          }}
-        >
-          Validate shared widget rendering on {Platform.OS}.
-        </Text>
-      </View>
-
-      <View style={{ gap: spacing[3] }}>
-        <WeatherWidget
-          testID="showcase-weather"
-          currentWeather={SHOWCASE_WEATHER}
-          forecast={SHOWCASE_FORECAST}
-        />
-        <VineyardHealthWidget testID="showcase-health" />
-        <TaskSummaryWidget testID="showcase-tasks" />
-        <QuickStatsWidget testID="showcase-stats" />
-      </View>
-
-      <View style={{ marginTop: spacing[6] }}>
-        <Text
-          style={{
-            ...m3.typography.titleMedium,
-            color: m3.colorScheme.onSurfaceVariant,
-            marginBottom: spacing[3],
-          }}
-        >
-          Scaffolding
-        </Text>
-        <View style={{ gap: spacing[3] }}>
-          <ScaffoldingCard title="TestWidget">
-            <TestWidget testID="showcase-test-widget" />
-          </ScaffoldingCard>
-          <ScaffoldingCard title="WidgetTemplate">
-            <WidgetTemplate />
-          </ScaffoldingCard>
+    <>
+      <Stack.Screen options={{ title: 'Widget Showcase' }} />
+      <ScrollView
+        style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
+        contentContainerStyle={{
+          paddingHorizontal: spacing[4],
+          paddingTop: spacing[4],
+          paddingBottom: Math.max(insets.bottom + spacing[10], spacing[12]),
+        }}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        <View style={{ marginBottom: spacing[4] }}>
+          <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
+            Widget Showcase
+          </Text>
+          <Text
+            style={{
+              ...m3.typography.bodyMedium,
+              color: m3.colorScheme.onSurfaceVariant,
+              marginTop: spacing[1],
+            }}
+          >
+            Validate shared widget rendering on {Platform.OS}.
+          </Text>
         </View>
-      </View>
-    </ScrollView>
+
+        <View style={{ gap: spacing[3] }}>
+          <WeatherWidget
+            testID="showcase-weather"
+            currentWeather={SHOWCASE_WEATHER}
+            forecast={SHOWCASE_FORECAST}
+          />
+          <VineyardHealthWidget testID="showcase-health" />
+          <TaskSummaryWidget testID="showcase-tasks" />
+          <QuickStatsWidget testID="showcase-stats" />
+        </View>
+
+        <View style={{ marginTop: spacing[6] }}>
+          <Text
+            style={{
+              ...m3.typography.titleMedium,
+              color: m3.colorScheme.onSurfaceVariant,
+              marginBottom: spacing[3],
+            }}
+          >
+            Scaffolding
+          </Text>
+          <View style={{ gap: spacing[3] }}>
+            <ScaffoldingCard title="TestWidget">
+              <TestWidget testID="showcase-test-widget" />
+            </ScaffoldingCard>
+            <ScaffoldingCard title="WidgetTemplate">
+              <WidgetTemplate />
+            </ScaffoldingCard>
+          </View>
+        </View>
+      </ScrollView>
+    </>
   );
 }

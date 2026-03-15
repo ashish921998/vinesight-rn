@@ -5,11 +5,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Symbol } from '@/components/ui/symbol';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFarm } from '../src/hooks';
 import {
@@ -35,7 +34,6 @@ export default function SoilProfilingScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
   const farmIdNum = farmId ? parseInt(farmId, 10) : 0;
 
@@ -533,57 +531,36 @@ export default function SoilProfilingScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+      <Stack.Screen
+        options={{
+          title: t('soilProfiling.title'),
+          headerRight: () => (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/add-soil-profile',
+                  params: { farmId: farmIdNum.toString() },
+                })
+              }
+              style={{ padding: spacing[2], marginRight: spacing[2] }}
+            >
+              <Symbol name="add-circle" size={28} color={m3.colorScheme.primary} />
+            </Pressable>
+          ),
+        }}
+      />
       <LinearGradient
         colors={[colorWithOpacity(m3.colorScheme.primary, 0.08), 'transparent']}
         style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
       />
-      {/* Header */}
-      <View
-        style={{
-          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
-          borderBottomWidth: 0.5,
-          borderBottomColor: colorWithOpacity(m3.colorScheme.onSurface, 0.12),
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: spacing[4],
-          paddingTop: spacing[3] + insets.top,
-          paddingBottom: spacing[3],
-        }}
-      >
-        <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <Symbol name="chevron.left" size={24} color={m3.colorScheme.primary} />
-        </Pressable>
-        <Symbol name="layers" size={24} color={m3.colorScheme.primary} />
-        <View style={{ marginLeft: spacing[2], flex: 1 }}>
-          <Text
-            style={{
-              fontSize: fontSize.xl,
-              fontWeight: fontWeight.bold,
-              color: m3.colorScheme.onSurface,
-            }}
-          >
-            {t('soilProfiling.title')}
-          </Text>
-          {farm && (
-            <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>{farm.name}</Text>
-          )}
-        </View>
-        <Pressable
-          onPress={() =>
-            router.push({ pathname: '/add-soil-profile', params: { farmId: farmIdNum.toString() } })
-          }
-          style={{ padding: spacing[2] }}
-        >
-          <Symbol name="add-circle" size={28} color={m3.colorScheme.primary} />
-        </Pressable>
-      </View>
 
       {/* Tabs */}
       <View
         style={{
           flexDirection: 'row',
           paddingHorizontal: spacing[4],
-          paddingVertical: spacing[2],
+          paddingTop: spacing[3],
+          paddingBottom: spacing[2],
           backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
         }}
       >
@@ -651,6 +628,20 @@ export default function SoilProfilingScreen() {
           style={{ flex: 1, paddingHorizontal: spacing[4], paddingTop: spacing[4] }}
           showsVerticalScrollIndicator={false}
         >
+          {farm ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
+              <Symbol name="layers" size={18} color={m3.colorScheme.primary} />
+              <Text
+                style={{
+                  marginLeft: spacing[2],
+                  fontSize: fontSize.sm,
+                  color: colors.surface[500],
+                }}
+              >
+                {farm.name}
+              </Text>
+            </View>
+          ) : null}
           {profiles && profiles.length > 0 ? profiles.map(renderProfileCard) : renderEmptyState()}
           <View style={{ height: spacing[8] }} />
         </ScrollView>

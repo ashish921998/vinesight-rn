@@ -1,6 +1,6 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import PhoneLoginScreen from '../app/(auth)/phone-login';
 import { matchPhoneNumberHintToCountry } from '@/utils/phone';
 
@@ -49,8 +49,6 @@ jest.mock('react-i18next', () => ({
       const translations: Record<string, string> = {
         'authPhone.phoneNumber': 'Phone number',
         'authPhone.invalidPhone': 'Please enter a valid phone number with country code',
-        'authPhone.useMyNumber': 'Use my number',
-        'authPhone.useMyNumberA11y': 'Choose a phone number from this device',
         'authPhone.phoneHintUnsupported':
           'Could not fill this number automatically. Please enter it manually.',
         'authPhone.signinTitle': 'Phone Sign In',
@@ -116,22 +114,9 @@ jest.mock('@/components/ui/symbol', () => ({
 }));
 
 jest.mock('@/components/ui', () => {
+  const RN = jest.requireActual('react-native');
+
   return {
-    Input: ({
-      leftIcon: _leftIcon,
-      rightIcon: _rightIcon,
-      containerStyle,
-      ...props
-    }: {
-      leftIcon?: React.ReactNode;
-      rightIcon?: React.ReactNode;
-      containerStyle?: object;
-      [key: string]: unknown;
-    }) => (
-      <View style={containerStyle}>
-        <TextInput {...props} />
-      </View>
-    ),
     Button: ({
       title,
       onPress,
@@ -145,14 +130,14 @@ jest.mock('@/components/ui', () => {
       accessibilityLabel?: string;
       disabled?: boolean;
     }) => (
-      <Pressable
+      <RN.Pressable
         onPress={onPress}
         testID={testID}
         accessibilityLabel={accessibilityLabel ?? title}
         disabled={disabled}
       >
-        <Text>{title}</Text>
-      </Pressable>
+        <RN.Text>{title}</RN.Text>
+      </RN.Pressable>
     ),
   };
 });
@@ -191,7 +176,7 @@ describe('matchPhoneNumberHintToCountry', () => {
   });
 });
 
-describe('PhoneLoginScreen phone hint CTA', () => {
+describe('PhoneLoginScreen automatic phone hint', () => {
   const originalPlatform = Platform.OS;
 
   beforeEach(() => {
@@ -216,42 +201,83 @@ describe('PhoneLoginScreen phone hint CTA', () => {
     Object.defineProperty(Platform, 'OS', { configurable: true, value: originalPlatform });
   });
 
-  it('shows the Android CTA and fills country plus local number after a successful hint', async () => {
+  it('requests the Android hint automatically and fills country plus local number after success', async () => {
     mockRequestPhoneNumberHint.mockResolvedValue('+919422724937');
 
     render(<PhoneLoginScreen />);
 
-    await waitFor(() => expect(screen.getByTestId('phone-hint-button')).toBeTruthy());
-
-    fireEvent.press(screen.getByTestId('phone-hint-button'));
+    await waitFor(() => expect(mockRequestPhoneNumberHint).toHaveBeenCalled());
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('9422724937')).toBeTruthy();
     });
-    expect(screen.getByText('India')).toBeTruthy();
+    expect(screen.getByText('+91')).toBeTruthy();
     expect(mockAuthState.clearError).toHaveBeenCalled();
+    expect(screen.queryByTestId('phone-hint-button')).toBeNull();
   });
 
-  it('does not render the CTA on iOS', async () => {
+  it('does not request the hint on iOS', async () => {
     Object.defineProperty(Platform, 'OS', { configurable: true, value: 'ios' });
 
     render(<PhoneLoginScreen />);
 
     await waitFor(() => expect(mockMaybeCompleteAuthSession).toHaveBeenCalled());
-    expect(screen.queryByTestId('phone-hint-button')).toBeNull();
+    expect(mockRequestPhoneNumberHint).not.toHaveBeenCalled();
   });
 
-  it('leaves the field unchanged when the chooser is cancelled', async () => {
+  it('leaves the field unchanged when the user starts typing before the hint resolves', async () => {
+    let resolvePhoneHint: ((value: string | null) => void) | null = null;
+    mockRequestPhoneNumberHint.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolvePhoneHint = resolve;
+        }),
+    );
+
     render(<PhoneLoginScreen />);
 
-    await waitFor(() => expect(screen.getByTestId('phone-hint-button')).toBeTruthy());
+    await waitFor(() => expect(mockRequestPhoneNumberHint).toHaveBeenCalled());
 
     const input = screen.getByPlaceholderText('Phone number');
     fireEvent.changeText(input, '9999999999');
-    fireEvent.press(screen.getByTestId('phone-hint-button'));
+
+    await act(async () => {
+      resolvePhoneHint?.('+919422724937');
+    });
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('9999999999')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('phone-hint-button')).toBeNull();
+  });
+
+  it('renders the country selector and phone number input in one horizontal row', async () => {
+    render(<PhoneLoginScreen />);
+
+    await waitFor(() => expect(screen.getByTestId('phone-input-row')).toBeTruthy());
+    expect(screen.getByTestId('phone-country-trigger')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Phone number')).toBeTruthy();
+  });
+
+  it('updates the visible dial code after selecting a different country', async () => {
+    render(<PhoneLoginScreen />);
+
+    fireEvent.press(screen.getByTestId('phone-country-trigger'));
+    fireEvent.press(screen.getByText('United Kingdom'));
+
+    await waitFor(() => {
+      expect(screen.getByText('+44')).toBeTruthy();
+    });
+  });
+
+  it('trims the local number to the selected country digit limit', async () => {
+    render(<PhoneLoginScreen />);
+
+    const input = screen.getByPlaceholderText('Phone number');
+    fireEvent.changeText(input, '01234567890123');
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('1234567890')).toBeTruthy();
     });
   });
 });

@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
-import { Stack, useLocalSearchParams, router } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
@@ -74,40 +74,24 @@ export default function SoilTrendsScreen() {
   }
 
   return (
-    <SafeScreen backgroundColor={m3.colorScheme.background}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <SafeScreen backgroundColor={m3.colorScheme.background} edges={['left', 'right']}>
+      <Stack.Screen options={{ title: t('trends.screens.soil') }} />
 
-      {/* Custom Header */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: spacing[4],
-          paddingVertical: spacing[3],
-          borderBottomWidth: 1,
-          borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-          backgroundColor: colors.surface[100],
-        }}
-      >
-        <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <IconSymbol name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
-        </Pressable>
-        <IconSymbol
-          name={resolveSymbolIconName(ICON_REGISTRY.soilTest)}
-          size={24}
-          color={colors.labTest.soil}
-        />
-        <View style={{ marginLeft: spacing[2], flex: 1 }}>
+      <View style={{ paddingHorizontal: spacing[4], paddingTop: spacing[3] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <IconSymbol
+            name={resolveSymbolIconName(ICON_REGISTRY.soilTest)}
+            size={20}
+            color={colors.labTest.soil}
+          />
           <Text
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.bold,
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
               color: m3.colorScheme.onSurface,
+              marginLeft: spacing[2],
             }}
           >
-            {t('trends.screens.soil')}
-          </Text>
-          <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
             {farm?.name || t('tasks.unknownFarm')}
           </Text>
         </View>

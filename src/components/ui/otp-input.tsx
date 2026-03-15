@@ -18,13 +18,31 @@ interface OTPInputProps {
   onChange: (value: string) => void;
   autoFocus?: boolean;
   error?: string;
+  focusKey?: string | number;
 }
 
-export function OTPInput({ length = 6, value, onChange, autoFocus = true, error }: OTPInputProps) {
+export function OTPInput({
+  length = 6,
+  value,
+  onChange,
+  autoFocus = true,
+  error,
+  focusKey,
+}: OTPInputProps) {
   const m3 = useM3();
   const inputRef = useRef<TextInput>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [cursorAnim] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    if (!autoFocus) return;
+
+    const timeoutId = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [autoFocus, focusKey]);
 
   // Cursor blinking animation
   useEffect(() => {
@@ -132,6 +150,7 @@ export function OTPInput({ length = 6, value, onChange, autoFocus = true, error 
         keyboardType="number-pad"
         textContentType="oneTimeCode"
         autoComplete="sms-otp"
+        importantForAutofill="yes"
         maxLength={length}
         autoFocus={autoFocus}
         onFocus={() => setIsFocused(true)}

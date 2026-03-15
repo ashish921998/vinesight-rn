@@ -111,6 +111,7 @@ export interface AssistantTurnResponse {
   traceId?: string;
   routeDecision?: AssistantRouteDecision | null;
   voiceLogAction?: AssistantVoiceLogAction | null;
+  sttTranscript?: string | null;
   sttProviderUsed?: string | null;
   sttConfidence?: number | null;
   sttLatencyMs?: number | null;
