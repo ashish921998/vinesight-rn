@@ -41,9 +41,11 @@ jest.mock('@/styles/use-theme', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
+    i18n: { language: 'en-US' },
     t: (key: string, params?: Record<string, unknown>) => {
       const translations: Record<string, string> = {
         'assistant.activityConfirm.title': 'Log Activity',
+        'assistant.activityConfirm.titleWithType': `Log Activity — ${String(params?.type ?? '')}`,
         'assistant.activityConfirm.typeIrrigation': 'Irrigation',
         'assistant.activityConfirm.typeSpray': 'Spray',
         'assistant.activityConfirm.typeHarvest': 'Harvest',
@@ -156,7 +158,7 @@ describe('ActivityConfirmCard', () => {
       />,
     );
     expect(getByText('Test Farm')).toBeTruthy();
-    expect(getByText('2026-03-15')).toBeTruthy();
+    expect(getByText(new Date('2026-03-15').toLocaleDateString('en-US'))).toBeTruthy();
   });
 
   // ── Irrigation type ──────────────────────────────────────────

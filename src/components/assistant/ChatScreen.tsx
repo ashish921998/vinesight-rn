@@ -197,12 +197,12 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
       const mimeType = asset.mimeType ?? 'image/jpeg';
 
       if (asset.base64 && asset.base64.length > 13_000_000) {
-        Alert.alert(t('ai.attach.imageTooLarge'));
+        Alert.alert(t('assistant.attachments.imageTooLarge'));
         return;
       }
 
       if (!asset.base64) {
-        Alert.alert(t('ai.attach.imageReadError'));
+        Alert.alert(t('assistant.attachments.imageReadError'));
         return;
       }
 
@@ -216,7 +216,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
       addAttachment(attachment);
     } catch (error) {
       console.error('Image picker failed:', error);
-      Alert.alert(t('ai.attach.imageReadError'));
+      Alert.alert(t('assistant.attachments.imageReadError'));
     }
   }, [addAttachment, t]);
 
@@ -271,15 +271,15 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
       addAttachment(attachment);
     } catch (error) {
       console.error('Document picker failed:', error);
-      Alert.alert(t('ai.attach.fileReadError'));
+      Alert.alert(t('assistant.attachments.fileReadError'));
     }
   }, [addAttachment, t]);
 
   const handleAttachPress = useCallback(() => {
-    Alert.alert(t('ai.attach.title'), t('ai.attach.choosePrompt'), [
-      { text: t('ai.attach.image'), onPress: () => void handlePickImage() },
-      { text: t('ai.attach.file'), onPress: () => void handlePickDocument() },
-      { text: t('ai.chat.close'), style: 'cancel' },
+    Alert.alert(t('assistant.attachments.title'), t('assistant.attachments.choosePrompt'), [
+      { text: t('assistant.attachments.image'), onPress: () => void handlePickImage() },
+      { text: t('assistant.attachments.file'), onPress: () => void handlePickDocument() },
+      { text: t('assistant.chat.close'), style: 'cancel' },
     ]);
   }, [handlePickImage, handlePickDocument, t]);
 
@@ -288,14 +288,15 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     if (!voiceLogAction?.draft) return;
     const { draft } = voiceLogAction;
     const prefill = voiceLogAction.prefill ?? undefined;
+    const initialIrrigationDurationHours =
+      draft.type === 'irrigation' ? (draft.irrigation?.durationHours ?? null) : null;
 
     setAddEntry({
       tabs: ['log'],
       initialTab: 'log',
       initialFarmId: draft.farmId,
       initialLogType: draft.type,
-      initialIrrigationDurationHours:
-        draft.type === 'irrigation' ? draft.irrigation.durationHours : null,
+      initialIrrigationDurationHours,
       initialLogDate: draft.date,
       voiceLogPrefill: prefill,
       entrySource: 'voice_ai',
@@ -358,7 +359,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
           <TouchableOpacity
             style={styles.headerIconButton}
             onPress={handleOpenSidebar}
-            accessibilityLabel={t('ai.chat.openHistoryHint')}
+            accessibilityLabel={t('assistant.chat.openHistoryHint')}
             accessibilityRole="button"
             testID="sidebar-toggle-button"
           >
@@ -381,7 +382,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
           <TouchableOpacity
             style={styles.headerIconButton}
             onPress={startNewConversation}
-            accessibilityLabel={t('ai.chat.newConversation')}
+            accessibilityLabel={t('assistant.chat.newConversation')}
             accessibilityRole="button"
           >
             <SymbolIcon name="square.and.pencil" size={22} color={m3.colorScheme.primary} />

@@ -173,7 +173,7 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
             <ActivityIndicator
               size="small"
               color={m3.colorScheme.primary}
-              accessibilityLabel={t('ai.chat.thinking')}
+              accessibilityLabel={t('assistant.chat.thinking')}
             />
             <Text
               style={{
@@ -182,7 +182,7 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
                 marginLeft: spacing[2],
               }}
             >
-              {t('ai.chat.thinking')}
+              {t('assistant.chat.thinking')}
             </Text>
           </View>
         )}
@@ -260,7 +260,7 @@ export function LoadingBubble() {
     <View
       style={[styles.container, styles.containerLeft]}
       accessible
-      accessibilityLabel={t('ai.chat.thinking')}
+      accessibilityLabel={t('assistant.chat.thinking')}
     >
       <View
         style={{
@@ -280,7 +280,7 @@ export function LoadingBubble() {
             fontSize: 14,
           }}
         >
-          {t('ai.chat.thinking')}
+          {t('assistant.chat.thinking')}
         </Text>
       </View>
     </View>

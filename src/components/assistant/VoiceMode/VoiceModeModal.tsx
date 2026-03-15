@@ -166,13 +166,13 @@ export function VoiceModeModal({
   const getStatusLabel = (): string => {
     switch (voiceState) {
       case 'idle':
-        return t('ai.chat.tapToSpeak');
+        return t('assistant.chat.tapToSpeak');
       case 'listening':
         return t('ai.voice.listening');
       case 'processing':
-        return t('ai.chat.thinking');
+        return t('assistant.chat.thinking');
       case 'speaking':
-        return t('ai.chat.assistantSpeaking');
+        return t('assistant.chat.assistantSpeaking');
       case 'error': {
         // Distinct messages per error kind
         if (voiceModeError?.kind === 'permission_denied') {
@@ -189,7 +189,7 @@ export function VoiceModeModal({
         return t('assistant.voiceMode.errorLabel');
       }
       default:
-        return t('ai.chat.tapToSpeak');
+        return t('assistant.chat.tapToSpeak');
     }
   };
 
@@ -204,7 +204,7 @@ export function VoiceModeModal({
       case 'listening':
         return t('ai.voice.stopA11y');
       case 'processing':
-        return t('ai.chat.thinking');
+        return t('assistant.chat.thinking');
       case 'speaking':
         return t('assistant.voiceMode.orbSpeakingA11y');
       case 'error':
@@ -256,7 +256,7 @@ export function VoiceModeModal({
                 },
               ]}
             >
-              {t('ai.chat.voiceMode')}
+              {t('assistant.chat.voiceMode')}
             </Text>
             <TouchableOpacity
               style={styles.closeButton}

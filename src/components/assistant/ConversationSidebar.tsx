@@ -135,7 +135,7 @@ export function ConversationSidebar({
 
   const handleDeleteConversation = useCallback(
     (conversation: AssistantConversationSummary) => {
-      Alert.alert(t('ai.chat.deleteChat'), t('ai.chat.deleteChatConfirm'), [
+      Alert.alert(t('assistant.chat.deleteChat'), t('assistant.chat.deleteChatConfirm'), [
         {
           text: t('common.cancel'),
           style: 'cancel',
@@ -149,11 +149,11 @@ export function ConversationSidebar({
               if (success) {
                 setConversations((prev) => prev.filter((c) => c.id !== conversation.id));
               } else {
-                Alert.alert(t('ai.chat.deleteChatFailed'));
+                Alert.alert(t('assistant.chat.deleteChatFailed'));
               }
             } catch (error) {
               console.error('Failed to delete conversation:', error);
-              Alert.alert(t('ai.chat.deleteChatFailed'));
+              Alert.alert(t('assistant.chat.deleteChatFailed'));
             }
           },
         },
@@ -208,7 +208,7 @@ export function ConversationSidebar({
           <TouchableOpacity
             style={styles.deleteButton}
             onPress={() => handleDeleteConversation(item)}
-            accessibilityLabel={t('ai.chat.deleteChatHint')}
+            accessibilityLabel={t('assistant.chat.deleteChatHint')}
             accessibilityRole="button"
             hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           >
@@ -248,7 +248,7 @@ export function ConversationSidebar({
             testID="sidebar-backdrop"
             style={styles.backdropPressable}
             onPress={onClose}
-            accessibilityLabel={t('ai.chat.close')}
+            accessibilityLabel={t('assistant.chat.close')}
             accessibilityRole="button"
           />
         </Animated.View>
@@ -277,13 +277,13 @@ export function ConversationSidebar({
                 { color: m3.colorScheme.onSurface, ...m3.typography.titleMedium },
               ]}
             >
-              {t('ai.chat.history')}
+              {t('assistant.chat.history')}
             </Text>
             <TouchableOpacity
               testID="sidebar-close-button"
               style={styles.closeButton}
               onPress={onClose}
-              accessibilityLabel={t('ai.chat.close')}
+              accessibilityLabel={t('assistant.chat.close')}
               accessibilityRole="button"
             >
               <SymbolIcon name="xmark" size={18} color={m3.colorScheme.onSurface} />
@@ -301,7 +301,7 @@ export function ConversationSidebar({
             ]}
             onPress={handleNewChat}
             accessibilityRole="button"
-            accessibilityLabel={t('ai.chat.newChat')}
+            accessibilityLabel={t('assistant.chat.newChat')}
           >
             <SymbolIcon
               name="square.and.pencil"
@@ -314,7 +314,7 @@ export function ConversationSidebar({
                 { color: m3.colorScheme.onPrimaryContainer, ...m3.typography.bodyMedium },
               ]}
             >
-              {t('ai.chat.newChat')}
+              {t('assistant.chat.newChat')}
             </Text>
           </TouchableOpacity>
 
@@ -331,7 +331,7 @@ export function ConversationSidebar({
                   { color: m3.colorScheme.error, ...m3.typography.bodyMedium },
                 ]}
               >
-                {t('ai.chat.loadHistoryFailed')}
+                {t('assistant.chat.loadHistoryFailed')}
               </Text>
             </View>
           ) : conversations.length === 0 ? (
@@ -342,7 +342,7 @@ export function ConversationSidebar({
                   { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium },
                 ]}
               >
-                {t('ai.chat.noPreviousChats')}
+                {t('assistant.chat.noPreviousChats')}
               </Text>
             </View>
           ) : (

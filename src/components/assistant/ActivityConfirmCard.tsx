@@ -42,13 +42,14 @@ export function ActivityConfirmCard({
   onCancel,
 }: ActivityConfirmCardProps) {
   const { m3 } = useThemeTokens();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const { draft } = voiceLogAction;
   if (!draft) return null;
 
   const iconName = ACTIVITY_ICONS[draft.type] ?? 'checkmark.circle.fill';
   const typeLabel = getTypeLabel(draft.type, t);
+  const formattedDate = formatDraftDate(draft.date, i18n.language);
 
   return (
     <View
@@ -72,7 +73,7 @@ export function ActivityConfirmCard({
             },
           ]}
         >
-          {t('assistant.activityConfirm.title')} — {typeLabel}
+          {t('assistant.activityConfirm.titleWithType', { type: typeLabel })}
         </Text>
       </View>
 
@@ -84,8 +85,8 @@ export function ActivityConfirmCard({
         {draft.farmName != null && (
           <FieldRow label={t('assistant.activityConfirm.farmLabel')} value={draft.farmName} />
         )}
-        {draft.date && (
-          <FieldRow label={t('assistant.activityConfirm.dateLabel')} value={draft.date} />
+        {formattedDate && (
+          <FieldRow label={t('assistant.activityConfirm.dateLabel')} value={formattedDate} />
         )}
       </View>
 
@@ -158,7 +159,7 @@ function ActivityFields({ draft }: ActivityFieldsProps) {
     case 'irrigation':
       return (
         <>
-          {draft.irrigation.durationHours != null && (
+          {draft.irrigation?.durationHours != null && (
             <FieldRow
               label={t('assistant.activityConfirm.durationLabel')}
               value={t('assistant.activityConfirm.durationValue', {
@@ -172,13 +173,13 @@ function ActivityFields({ draft }: ActivityFieldsProps) {
     case 'spray':
       return (
         <>
-          {draft.spray.chemicals.length > 0 && (
+          {Array.isArray(draft.spray?.chemicals) && draft.spray.chemicals.length > 0 && (
             <FieldRow
               label={t('assistant.activityConfirm.chemicalsLabel')}
               value={draft.spray.chemicals.map((c) => c.name).join(', ')}
             />
           )}
-          {draft.spray.waterVolume != null && (
+          {draft.spray?.waterVolume != null && (
             <FieldRow
               label={t('assistant.activityConfirm.waterVolumeLabel')}
               value={t('assistant.activityConfirm.waterVolumeValue', {
@@ -192,7 +193,7 @@ function ActivityFields({ draft }: ActivityFieldsProps) {
     case 'harvest':
       return (
         <>
-          {draft.harvest.quantity != null && (
+          {draft.harvest?.quantity != null && (
             <FieldRow
               label={t('assistant.activityConfirm.quantityLabel')}
               value={t('assistant.activityConfirm.quantityValue', {
@@ -200,7 +201,7 @@ function ActivityFields({ draft }: ActivityFieldsProps) {
               })}
             />
           )}
-          {draft.harvest.grade != null && (
+          {draft.harvest?.grade != null && (
             <FieldRow
               label={t('assistant.activityConfirm.gradeLabel')}
               value={draft.harvest.grade}
@@ -212,7 +213,7 @@ function ActivityFields({ draft }: ActivityFieldsProps) {
     case 'expense':
       return (
         <>
-          {draft.expense.cost != null && (
+          {draft.expense?.cost != null && (
             <FieldRow
               label={t('assistant.activityConfirm.costLabel')}
               value={t('assistant.activityConfirm.costValue', {
@@ -221,7 +222,7 @@ function ActivityFields({ draft }: ActivityFieldsProps) {
               })}
             />
           )}
-          {draft.expense.expenseType != null && (
+          {draft.expense?.expenseType != null && (
             <FieldRow
               label={t('assistant.activityConfirm.expenseTypeLabel')}
               value={draft.expense.expenseType}
@@ -233,13 +234,14 @@ function ActivityFields({ draft }: ActivityFieldsProps) {
     case 'fertigation':
       return (
         <>
-          {draft.fertigation.fertilizers.length > 0 && (
-            <FieldRow
-              label={t('assistant.activityConfirm.fertilizersLabel')}
-              value={draft.fertigation.fertilizers.map((f) => f.name).join(', ')}
-            />
-          )}
-          {draft.fertigation.waterVolume != null && (
+          {Array.isArray(draft.fertigation?.fertilizers) &&
+            draft.fertigation.fertilizers.length > 0 && (
+              <FieldRow
+                label={t('assistant.activityConfirm.fertilizersLabel')}
+                value={draft.fertigation.fertilizers.map((f) => f.name).join(', ')}
+              />
+            )}
+          {draft.fertigation?.waterVolume != null && (
             <FieldRow
               label={t('assistant.activityConfirm.waterVolumeLabel')}
               value={t('assistant.activityConfirm.waterVolumeValue', {
@@ -311,6 +313,13 @@ function getTypeLabel(type: VoiceLogActivityType, t: (key: string) => string): s
     default:
       return type;
   }
+}
+
+function formatDraftDate(date: string | null | undefined, locale: string): string | null {
+  if (!date) return null;
+  const parsedDate = new Date(date);
+  if (Number.isNaN(parsedDate.getTime())) return date;
+  return parsedDate.toLocaleDateString(locale);
 }
 
 // ── Styles ─────────────────────────────────────────────────────

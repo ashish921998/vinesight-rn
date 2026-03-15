@@ -55,7 +55,7 @@ export function VoiceThread({ messages, testID }: VoiceThreadProps) {
             },
           ]}
         >
-          {t('ai.chat.transcriptPlaceholder')}
+          {t('assistant.chat.transcriptPlaceholder')}
         </Text>
       </View>
     );

@@ -117,7 +117,7 @@ describe('InputBar', () => {
     const buttons = getAllByRole('button');
     const attachButton = buttons.find((btn) => {
       const label = btn.props.accessibilityLabel;
-      return label === 'ai.chat.attachFileA11y';
+      return label === 'assistant.attachments.attachFileA11y';
     });
     expect(attachButton).toBeTruthy();
     if (attachButton) fireEvent.press(attachButton);
@@ -132,7 +132,7 @@ describe('InputBar', () => {
     const buttons = getAllByRole('button');
     const micButton = buttons.find((btn) => {
       const label = btn.props.accessibilityLabel;
-      return label === 'ai.chat.openVoiceModeA11y';
+      return label === 'assistant.chat.openVoiceModeA11y';
     });
     expect(micButton).toBeTruthy();
     if (micButton) fireEvent.press(micButton);

@@ -110,7 +110,7 @@ export function InputBar({
           style={styles.iconButton}
           onPress={onAttachPress}
           disabled={isLoading || disabled}
-          accessibilityLabel={t('ai.chat.attachFileA11y')}
+          accessibilityLabel={t('assistant.attachments.attachFileA11y')}
           accessibilityRole="button"
         >
           <SymbolIcon
@@ -127,7 +127,7 @@ export function InputBar({
           ref={inputRef}
           value={value}
           onChangeText={onChangeText}
-          placeholder={t('ai.input.placeholder')}
+          placeholder={t('assistant.placeholder')}
           placeholderTextColor={m3.colorScheme.onSurfaceVariant}
           multiline
           style={[
@@ -153,12 +153,12 @@ export function InputBar({
           blurOnSubmit={false}
           scrollEnabled
           textAlignVertical="center"
-          accessibilityLabel={t('ai.input.placeholder')}
+          accessibilityLabel={t('assistant.placeholder')}
         />
 
         {/* Send / Mic button */}
         {isLoading ? (
-          <View style={styles.iconButton} accessibilityLabel={t('ai.chat.thinking')}>
+          <View style={styles.iconButton} accessibilityLabel={t('assistant.chat.thinking')}>
             <ActivityIndicator size="small" color={m3.colorScheme.primary} />
           </View>
         ) : hasText ? (
@@ -176,7 +176,7 @@ export function InputBar({
             style={styles.iconButton}
             onPress={onVoicePress}
             disabled={disabled}
-            accessibilityLabel={t('ai.chat.openVoiceModeA11y')}
+            accessibilityLabel={t('assistant.chat.openVoiceModeA11y')}
             accessibilityRole="button"
           >
             <SymbolIcon
