@@ -1,0 +1,62 @@
+supabase/functions/ai-gateway/context/rag.ts
+  15464203071258ac 7
+app/_layout.tsx
+  15464203071258ac 698,702,706,710,714,718
+supabase/functions/ai-gateway/handlers/voice-log.ts
+  2f9d8d7eaca51745 12,134-146
+src/components/assistant/ConversationSidebar.tsx
+  15464203071258ac 73-74,85-86,88,145,149-153
+supabase/functions/ai-gateway/providers/stt.ts
+  c2ae674ea1ce738a 267
+src/components/assistant/VoiceMode/VoiceModeModal.tsx
+  15464203071258ac 4,13-14,130,160-161,165
+src/components/assistant/ChatScreen.tsx
+  c2ae674ea1ce738a 194-198,203
+  15464203071258ac 53-55,77-78,221,223-225,231-234
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "dde7b7d313bdb397695d658acff39b26525b8765",
+  "prompts": {
+    "15464203071258ac": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "aaadf8c1-f75b-48c7-b030-58a59bc9d8c7",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 67,
+      "total_deletions": 27,
+      "accepted_lines": 38,
+      "overriden_lines": 0
+    },
+    "2f9d8d7eaca51745": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d9a25fd7-827d-4493-a0b1-c219d6e737c0",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 0,
+      "accepted_lines": 14,
+      "overriden_lines": 0
+    },
+    "c2ae674ea1ce738a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "77d39d9f-1107-42e7-b628-51a19e3378ed",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 4,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}
