@@ -21,6 +21,7 @@ import {
   generateTraceId,
   jsonResponse,
   resolveAuthenticatedUserId,
+  resolveLocale,
   trackTelemetry,
   writeConversationRouteState,
   writeConversationTurn,
@@ -68,7 +69,7 @@ export async function handleRequest(req: Request): Promise<Response> {
     }
 
     const authenticatedUserId = await resolveAuthenticatedUserId(req);
-    const locale = body?.locale ?? 'en';
+    const locale = resolveLocale(body?.locale);
     const providerFallbackEnabled = body?.client_capabilities?.provider_fallback_enabled !== false;
 
     if (!authenticatedUserId) {
@@ -225,22 +226,31 @@ export async function handleRequest(req: Request): Promise<Response> {
           locale,
           originContext: farmId !== null ? 'farm' : 'dashboard',
         });
-        assistantText = voiceLogResult.assistantText;
-        voiceLogAction = voiceLogResult.voiceLogAction;
-        routeStateDirty = voiceLogResult.routeStateDirty;
-        if (voiceLogResult.nextDraft !== undefined) {
-          nextRouteState.voice_log_draft = voiceLogResult.nextDraft as unknown as Record<
-            string,
-            unknown
-          >;
+
+        // When voice-log resolves to 'none' (no action), fall through to advisory
+        // so the user gets a meaningful response instead of an empty assistant_text.
+        if (!voiceLogResult.assistantText) {
+          routeDecision = 'fallback_llm';
+        } else {
+          assistantText = voiceLogResult.assistantText;
+          voiceLogAction = voiceLogResult.voiceLogAction;
+          routeStateDirty = voiceLogResult.routeStateDirty;
+          if (voiceLogResult.nextDraft !== undefined) {
+            nextRouteState.voice_log_draft = voiceLogResult.nextDraft as unknown as Record<
+              string,
+              unknown
+            >;
+          }
+          if (voiceLogResult.nextExpectedField !== undefined) {
+            nextRouteState.voice_log_expected_field = voiceLogResult.nextExpectedField;
+          }
+          if (voiceLogResult.nextClarifyAttempts !== undefined) {
+            nextRouteState.voice_log_clarify_attempts = voiceLogResult.nextClarifyAttempts;
+          }
         }
-        if (voiceLogResult.nextExpectedField !== undefined) {
-          nextRouteState.voice_log_expected_field = voiceLogResult.nextExpectedField;
-        }
-        if (voiceLogResult.nextClarifyAttempts !== undefined) {
-          nextRouteState.voice_log_clarify_attempts = voiceLogResult.nextClarifyAttempts;
-        }
-      } else if (routeDecision === 'farm_query') {
+      }
+
+      if (routeDecision === 'farm_query') {
         // Use farm-query handler
         const farmQueryResult = await handleFarmQuery({
           transcript: effectiveTranscript,

@@ -414,7 +414,7 @@ describe('ChatScreen farm context', () => {
 
   it('passes farm context to useAssistant when a farm is available', () => {
     mockFarmsData = [mockFarm];
-    render(<ChatScreen />);
+    render(<ChatScreen initialFarmId="1" />);
     expect(mockUseAssistantCapture).toHaveBeenCalledWith(
       expect.objectContaining({
         farmContext: expect.objectContaining({

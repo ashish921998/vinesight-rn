@@ -32,7 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useThemeTokens } from '@/styles/use-theme';
 import { useLanguageStore } from '@/stores/language-store';
 import { useModalStore } from '@/stores/modal-store';
@@ -57,12 +57,12 @@ interface ChatScreenProps {
   initialFarmId?: string;
 }
 
-const DEFAULT_SUGGESTIONS = [
+const DEFAULT_SUGGESTIONS: readonly string[] = [
   'ai.defaultSuggestions.waterNeed',
   'ai.defaultSuggestions.diseases',
   'ai.defaultSuggestions.fertilizer',
   'ai.defaultSuggestions.pruning',
-] as const;
+];
 
 export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const { m3 } = useThemeTokens();
@@ -172,80 +172,90 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   }, [retryLastMessage]);
 
   const handlePickImage = useCallback(async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: false,
-      quality: 0.7,
-      base64: true,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: false,
+        quality: 0.7,
+        base64: true,
+      });
 
-    if (result.canceled || result.assets.length === 0) return;
+      if (result.canceled || result.assets.length === 0) return;
 
-    const asset = result.assets[0];
-    if (!asset) return;
+      const asset = result.assets[0];
+      if (!asset) return;
 
-    const mimeType = asset.mimeType ?? 'image/jpeg';
+      const mimeType = asset.mimeType ?? 'image/jpeg';
 
-    if (asset.base64 && asset.base64.length > 13_000_000) {
-      Alert.alert(t('ai.attach.imageTooLarge'));
-      return;
+      if (asset.base64 && asset.base64.length > 13_000_000) {
+        Alert.alert(t('ai.attach.imageTooLarge'));
+        return;
+      }
+
+      if (!asset.base64) {
+        Alert.alert(t('ai.attach.imageReadError'));
+        return;
+      }
+
+      const attachment: AIMessageAttachmentInput = {
+        kind: 'image',
+        name: asset.fileName ?? 'image.jpg',
+        mimeType,
+        dataUrl: `data:${mimeType};base64,${asset.base64}`,
+      };
+
+      addAttachment(attachment);
+    } catch (error) {
+      console.error('Image picker failed:', error);
+      Alert.alert(t('ai.attach.imageReadError'));
     }
-
-    if (!asset.base64) {
-      Alert.alert(t('ai.attach.imageReadError') ?? 'Could not read image data');
-      return;
-    }
-
-    const attachment: AIMessageAttachmentInput = {
-      kind: 'image',
-      name: asset.fileName ?? 'image.jpg',
-      mimeType,
-      dataUrl: `data:${mimeType};base64,${asset.base64}`,
-    };
-
-    addAttachment(attachment);
   }, [addAttachment, t]);
 
   const handlePickDocument = useCallback(async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', 'text/plain', 'text/csv'],
-      copyToCacheDirectory: true,
-    });
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'text/plain', 'text/csv'],
+        copyToCacheDirectory: true,
+      });
 
-    if (result.canceled || result.assets.length === 0) return;
+      if (result.canceled || result.assets.length === 0) return;
 
-    const asset = result.assets[0];
-    if (!asset) return;
+      const asset = result.assets[0];
+      if (!asset) return;
 
-    let textContent: string | undefined;
-    // Guard against large assets - only read small text files inline
-    if (
-      asset.mimeType?.startsWith('text/') &&
-      asset.size !== undefined &&
-      asset.size <= MAX_INLINE_TEXT_BYTES
-    ) {
-      try {
-        textContent = await FileSystem.readAsStringAsync(asset.uri, {
-          encoding: 'utf8',
-        });
-        // Enforce max length if needed
-        if (textContent.length > MAX_INLINE_TEXT_BYTES) {
-          textContent = textContent.slice(0, MAX_INLINE_TEXT_BYTES);
+      let textContent: string | undefined;
+      // Guard against large assets - only read small text files inline
+      if (
+        asset.mimeType?.startsWith('text/') &&
+        asset.size !== undefined &&
+        asset.size <= MAX_INLINE_TEXT_BYTES
+      ) {
+        try {
+          textContent = await FileSystem.readAsStringAsync(asset.uri, {
+            encoding: 'utf8',
+          });
+          // Enforce max length if needed
+          if (textContent.length > MAX_INLINE_TEXT_BYTES) {
+            textContent = textContent.slice(0, MAX_INLINE_TEXT_BYTES);
+          }
+        } catch {
+          // Fall through - attach without text content
         }
-      } catch {
-        // Fall through - attach without text content
       }
+
+      const attachment: AIMessageAttachmentInput = {
+        kind: 'document',
+        name: asset.name ?? 'document',
+        mimeType: asset.mimeType ?? 'application/octet-stream',
+        ...(textContent ? { textContent } : { sourceUri: asset.uri }),
+      };
+
+      addAttachment(attachment);
+    } catch (error) {
+      console.error('Document picker failed:', error);
+      Alert.alert(t('ai.attach.fileReadError'));
     }
-
-    const attachment: AIMessageAttachmentInput = {
-      kind: 'document',
-      name: asset.name ?? 'document',
-      mimeType: asset.mimeType ?? 'application/octet-stream',
-      ...(textContent ? { textContent } : { sourceUri: asset.uri }),
-    };
-
-    addAttachment(attachment);
-  }, [addAttachment]);
+  }, [addAttachment, t]);
 
   const handleAttachPress = useCallback(() => {
     Alert.alert(t('ai.attach.title'), t('ai.attach.choosePrompt'), [
@@ -303,7 +313,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const hasMessages = messages.length > 0;
   const activeSuggestions = useMemo(() => {
     if (hasMessages && suggestions.length > 0) return suggestions;
-    if (!hasMessages) return DEFAULT_SUGGESTIONS as unknown as string[];
+    if (!hasMessages) return DEFAULT_SUGGESTIONS;
     return [];
   }, [hasMessages, suggestions]);
 

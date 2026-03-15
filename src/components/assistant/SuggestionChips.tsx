@@ -12,7 +12,7 @@ import { useThemeTokens } from '@/styles/use-theme';
 import { spacing } from '@/styles/theme';
 
 interface SuggestionChipsProps {
-  suggestions: string[];
+  suggestions: readonly string[];
   onSendSuggestion: (text: string) => void;
   disabled?: boolean;
 }

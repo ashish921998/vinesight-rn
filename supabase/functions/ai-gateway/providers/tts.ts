@@ -192,12 +192,17 @@ export async function generateSpeech(input: {
   }
 
   // OpenAI fallback (only reached if providerFallbackEnabled is true or Sarvam is disabled)
+  if (!checkCircuitBreaker('openai_tts')) {
+    console.warn('OpenAI TTS circuit breaker open, skipping audio');
+    return null;
+  }
   try {
     const result = await withAbortTimeout(
       (signal) => callOpenAiTtsInternal(text, signal),
       TTS_TIMEOUT_MS,
       `OpenAI TTS timed out after ${TTS_TIMEOUT_MS}ms`,
     );
+    recordProviderSuccess('openai_tts');
     return {
       base64: result.base64,
       mimeType: result.mimeType,

@@ -1721,6 +1721,8 @@ export const mr = {
       imageTooLarge: 'इमेज 10MB मर्यादेपेक्षा मोठी आहे. कृपया लहान फाइल निवडा.',
       unsupportedImageType: 'असमर्थित इमेज प्रकार. JPG, PNG, WEBP किंवा HEIC वापरा.',
       imageUnavailable: 'निवडलेली इमेज आता उपलब्ध नाही.',
+      imageReadError: 'इमेज डेटा वाचता आला नाही. कृपया पुन्हा प्रयत्न करा.',
+      fileReadError: 'दस्तऐवज वाचता आला नाही. कृपया पुन्हा प्रयत्न करा.',
       fileTooLarge: 'फाइल 10MB मर्यादेपेक्षा मोठी आहे. कृपया लहान फाइल निवडा.',
       unsupportedFileType: 'असमर्थित फाइल प्रकार. PDF, TXT, CSV, JSON, XML किंवा Markdown वापरा.',
     },
@@ -1734,6 +1736,7 @@ export const mr = {
       newChat: 'नवीन चॅट',
       newConversation: 'नवीन संवाद',
       noPreviousChats: 'आतापर्यंत कोणतेही जुने चॅट नाहीत.',
+      loadHistoryFailed: 'चॅट इतिहास लोड होऊ शकला नाही.',
       deleteChat: 'चॅट हटवा',
       deleteChatHint: 'हा संवाद इतिहासातून हटवतो.',
       deleteChatConfirm:

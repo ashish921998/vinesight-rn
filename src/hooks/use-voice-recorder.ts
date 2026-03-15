@@ -288,7 +288,7 @@ export function useVoiceRecorder(
     // ── Prepare + start ────────────────────────────────────────────────────
     try {
       await recorder.prepareToRecordAsync();
-      // forDuration auto-stops recording after MAX_RECORDING_DURATION_SECONDS
+      autoStopReasonRef.current = 'maxDuration';
       recorder.record({ forDuration: MAX_RECORDING_DURATION_SECONDS });
       return true;
     } catch (startErr) {

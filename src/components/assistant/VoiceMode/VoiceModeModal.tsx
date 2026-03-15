@@ -157,12 +157,10 @@ export function VoiceModeModal({
   );
 
   const handleOrbPress = useCallback(() => {
-    // Clear error state before retrying
-    if (_onClearError) _onClearError();
-    // Haptic feedback on orb tap
+    if (voiceState === 'error' && _onClearError) _onClearError();
     triggerHapticMedium();
     onOrbPress();
-  }, [_onClearError, onOrbPress]);
+  }, [voiceState, _onClearError, onOrbPress]);
 
   // Status label based on voice state — shows distinct error messages per error kind
   const getStatusLabel = (): string => {

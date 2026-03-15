@@ -59,6 +59,7 @@ export function ConversationSidebar({
 
   const [conversations, setConversations] = useState<AssistantConversationSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const slideAnimRef = useRef(new Animated.Value(-SIDEBAR_WIDTH));
   const backdropAnimRef = useRef(new Animated.Value(0));
@@ -70,20 +71,21 @@ export function ConversationSidebar({
   useEffect(() => {
     if (!visible) return;
     let cancelled = false;
-    // Clear stale data at request start
     setConversations([]);
+    setLoadError(false);
     setIsLoading(true);
     assistantMemoryService
       .listConversations(farmId != null ? { farmId } : undefined)
       .then((data) => {
         if (!cancelled) {
           setConversations(data);
+          setLoadError(false);
           setIsLoading(false);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setConversations([]);
+          setLoadError(true);
           setIsLoading(false);
         }
       });
@@ -320,6 +322,17 @@ export function ConversationSidebar({
           {isLoading ? (
             <View style={styles.centerContainer} testID="conversations-loading">
               <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+            </View>
+          ) : loadError ? (
+            <View style={styles.centerContainer} testID="conversations-load-error">
+              <Text
+                style={[
+                  styles.emptyText,
+                  { color: m3.colorScheme.error, ...m3.typography.bodyMedium },
+                ]}
+              >
+                {t('ai.chat.loadHistoryFailed')}
+              </Text>
             </View>
           ) : conversations.length === 0 ? (
             <View style={styles.centerContainer}>

@@ -6,6 +6,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@widgets/shared$': '<rootDir>/components/widgets/shared',
     '^@widgets/(.*)$': '<rootDir>/components/widgets/$1',
+    '^expo-file-system/legacy$': 'expo-file-system',
   },
   collectCoverageFrom: [
     'components/widgets/**/*.{ts,tsx}',
