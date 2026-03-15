@@ -78,11 +78,11 @@ export function VoiceThread({ messages, testID }: VoiceThreadProps) {
 
 interface VoiceMessageBubbleProps {
   message: VoiceModeMessage;
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
   m3: ReturnType<typeof useThemeTokens>['m3'];
 }
 
-function VoiceMessageBubble({ message, m3 }: VoiceMessageBubbleProps) {
+function VoiceMessageBubble({ message, t, m3 }: VoiceMessageBubbleProps) {
   const isUser = message.role === 'user';
 
   const bubbleBg = isUser
@@ -96,7 +96,11 @@ function VoiceMessageBubble({ message, m3 }: VoiceMessageBubbleProps) {
     <View
       style={[styles.messageRow, isUser ? styles.messageRowUser : styles.messageRowAssistant]}
       accessibilityRole="text"
-      accessibilityLabel={isUser ? `You said: ${message.text}` : `AI said: ${message.text}`}
+      accessibilityLabel={
+        isUser
+          ? t('assistant.chat.userMessageA11y', { content: message.text })
+          : t('assistant.chat.assistantMessageA11y', { content: message.text })
+      }
     >
       <View
         style={[

@@ -317,7 +317,10 @@ function getTypeLabel(type: VoiceLogActivityType, t: (key: string) => string): s
 
 function formatDraftDate(date: string | null | undefined, locale: string): string | null {
   if (!date) return null;
-  const parsedDate = new Date(date);
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const parsedDate = dateOnlyMatch
+    ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
+    : new Date(date);
   if (Number.isNaN(parsedDate.getTime())) return date;
   return parsedDate.toLocaleDateString(locale);
 }

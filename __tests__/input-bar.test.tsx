@@ -15,9 +15,11 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { InputBar } from '@/components/assistant/InputBar';
 
+let mockIsDark = false;
+
 jest.mock('@/styles/use-theme', () => ({
   useThemeTokens: () => ({
-    isDark: false,
+    isDark: mockIsDark,
     m3: {
       colorScheme: {
         primary: '#408059',
@@ -67,6 +69,7 @@ describe('InputBar', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsDark = false;
   });
 
   it('renders mic button when input is empty', () => {
@@ -151,8 +154,7 @@ describe('InputBar', () => {
   });
 
   it('renders in dark theme without crashing', () => {
-    // The module-level mock uses isDark: false. This test verifies rendering is stable.
-    // Dark theme is verified visually during device testing.
+    mockIsDark = true;
     const { UNSAFE_getAllByType } = render(<InputBar {...defaultProps} value="" />);
     const { TouchableOpacity } = require('react-native');
     expect(UNSAFE_getAllByType(TouchableOpacity).length).toBeGreaterThan(0);

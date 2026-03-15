@@ -42,6 +42,7 @@ const mockSetAddEntry = jest.fn();
 // Variables prefixed with `mock` are allowed in jest.mock() factory
 let mockCurrentAssistantState: Record<string, unknown> = {};
 const mockUseAssistantCapture = jest.fn();
+const mockSidebarProps: { current: Record<string, unknown> | null } = { current: null };
 
 jest.mock('@/hooks/use-assistant', () => ({
   useAssistant: (options: unknown) => {
@@ -49,6 +50,23 @@ jest.mock('@/hooks/use-assistant', () => ({
     return mockCurrentAssistantState;
   },
   DEFAULT_SUGGESTIONS: ['ai.defaultSuggestions.waterNeed', 'ai.defaultSuggestions.diseases'],
+}));
+
+jest.mock('@/components/assistant/ConversationSidebar', () => ({
+  ConversationSidebar: (props: Record<string, unknown>) => {
+    mockSidebarProps.current = props;
+    const { View, TouchableOpacity, Text } = require('react-native');
+    return (
+      <View testID="mock-conversation-sidebar">
+        <TouchableOpacity
+          testID="mock-select-general-conversation"
+          onPress={() => props.onSelectConversation('conv-general', null)}
+        >
+          <Text>select-general</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  },
 }));
 
 // Mock useVoiceMode to prevent expo-audio transitive import in tests
@@ -164,6 +182,7 @@ jest.mock('react-native-markdown-display', () => {
 
 jest.mock('@/i18n/format', () => ({
   formatDate: () => '15-03-2026',
+  formatTime: () => '10:00',
 }));
 
 jest.mock('@/services/assistant-memory', () => ({
@@ -432,6 +451,25 @@ describe('ChatScreen farm context', () => {
     mockFarmsData = [];
     render(<ChatScreen />);
     expect(mockUseAssistantCapture).toHaveBeenCalledWith(
+      expect.objectContaining({ farmContext: undefined }),
+    );
+  });
+
+  it('clears farmContext when switching to a general conversation', async () => {
+    mockFarmsData = [mockFarm];
+    const { getByTestId } = render(<ChatScreen initialFarmId="1" />);
+
+    expect(mockUseAssistantCapture).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        farmContext: expect.objectContaining({ farmId: 1 }),
+      }),
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('mock-select-general-conversation'));
+    });
+
+    expect(mockUseAssistantCapture).toHaveBeenLastCalledWith(
       expect.objectContaining({ farmContext: undefined }),
     );
   });

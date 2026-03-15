@@ -1327,6 +1327,7 @@ export const en = {
       imageReadError: 'Could not read image data. Please try again.',
       fileReadError: 'Could not read the document. Please try again.',
       attachFileA11y: 'Attach file',
+      documentA11y: 'Attached document',
       removeA11y: 'Remove attachment',
       thumbnailA11y: 'Attached image',
     },

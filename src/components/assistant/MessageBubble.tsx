@@ -11,6 +11,7 @@ import React, { useMemo } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { useTranslation } from 'react-i18next';
+import { formatTime } from '@/i18n/format';
 import { useThemeTokens } from '@/styles/use-theme';
 import { spacing } from '@/styles/theme';
 import { CitationFooter } from './CitationFooter';
@@ -198,14 +199,6 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
       </Text>
     </View>
   );
-}
-
-function formatTime(date: Date): string {
-  try {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } catch {
-    return '';
-  }
 }
 
 const styles = StyleSheet.create({

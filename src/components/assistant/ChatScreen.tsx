@@ -64,6 +64,13 @@ const DEFAULT_SUGGESTIONS: readonly string[] = [
   'ai.defaultSuggestions.pruning',
 ];
 
+function getSafeErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+  return 'unknown_error';
+}
+
 export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
@@ -74,8 +81,9 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
   // Tracks the effective farmId — can be overridden when loading a conversation
-  const [overrideFarmId, setOverrideFarmId] = useState<string | null>(null);
-  const effectiveFarmId = overrideFarmId ?? initialFarmId;
+  const [overrideFarmId, setOverrideFarmId] = useState<string | null | undefined>(undefined);
+  const effectiveFarmId =
+    overrideFarmId === undefined ? initialFarmId : (overrideFarmId ?? undefined);
 
   // Use the farm matching effectiveFarmId if provided, otherwise return null
   // No implicit fallback to first farm - explicit user selection required
@@ -161,20 +169,18 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     setSidebarVisible(false);
   }, []);
 
+  const handleStartNewConversation = useCallback(() => {
+    setOverrideFarmId(null);
+    startNewConversation();
+  }, [startNewConversation]);
+
   const handleSelectConversation = useCallback(
     (conversationId: string, conversationFarmId?: number | null) => {
-      if (conversationFarmId != null) {
-        setOverrideFarmId(String(conversationFarmId));
-      }
+      setOverrideFarmId(conversationFarmId != null ? String(conversationFarmId) : null);
       void loadConversation(conversationId);
     },
     [loadConversation],
   );
-
-  const handleNewChatFromSidebar = useCallback(() => {
-    setOverrideFarmId(null);
-    startNewConversation();
-  }, [startNewConversation]);
 
   const handleRetry = useCallback(() => {
     void retryLastMessage();
@@ -215,7 +221,9 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
 
       addAttachment(attachment);
     } catch (error) {
-      console.error('Image picker failed:', error);
+      if (__DEV__) {
+        console.warn('Image picker failed:', getSafeErrorMessage(error));
+      }
       Alert.alert(t('assistant.attachments.imageReadError'));
     }
   }, [addAttachment, t]);
@@ -261,16 +269,26 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
         }
       }
 
+      if (!textContent) {
+        textContent = [
+          `Document attached: ${asset.name ?? 'document'}`,
+          `MIME type: ${asset.mimeType ?? 'application/octet-stream'}`,
+          'Full document text could not be extracted on device.',
+        ].join('\n');
+      }
+
       const attachment: AIMessageAttachmentInput = {
         kind: 'document',
         name: asset.name ?? 'document',
         mimeType: asset.mimeType ?? 'application/octet-stream',
-        ...(textContent ? { textContent } : { sourceUri: asset.uri }),
+        textContent,
       };
 
       addAttachment(attachment);
     } catch (error) {
-      console.error('Document picker failed:', error);
+      if (__DEV__) {
+        console.warn('Document picker failed:', getSafeErrorMessage(error));
+      }
       Alert.alert(t('assistant.attachments.fileReadError'));
     }
   }, [addAttachment, t]);
@@ -381,7 +399,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
           {/* New chat button */}
           <TouchableOpacity
             style={styles.headerIconButton}
-            onPress={startNewConversation}
+            onPress={handleStartNewConversation}
             accessibilityLabel={t('assistant.chat.newConversation')}
             accessibilityRole="button"
           >
@@ -546,7 +564,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
         farmId={activeFarm?.id ?? null}
         onClose={handleCloseSidebar}
         onSelectConversation={handleSelectConversation}
-        onNewChat={handleNewChatFromSidebar}
+        onNewChat={handleStartNewConversation}
       />
 
       {/* Voice mode modal */}

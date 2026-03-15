@@ -158,7 +158,7 @@ describe('ActivityConfirmCard', () => {
       />,
     );
     expect(getByText('Test Farm')).toBeTruthy();
-    expect(getByText(new Date('2026-03-15').toLocaleDateString('en-US'))).toBeTruthy();
+    expect(getByText(new Date(2026, 2, 15).toLocaleDateString('en-US'))).toBeTruthy();
   });
 
   // ── Irrigation type ──────────────────────────────────────────

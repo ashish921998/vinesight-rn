@@ -22,6 +22,7 @@ import { ConversationSidebar } from '@/components/assistant/ConversationSidebar'
 
 const mockListConversations = jest.fn();
 const mockDeleteConversation = jest.fn();
+let mockLanguage = 'en';
 
 jest.mock('@/services/assistant-memory', () => ({
   assistantMemoryService: {
@@ -69,21 +70,39 @@ jest.mock('@/styles/use-theme', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => {
-      const translations: Record<string, string> = {
-        'assistant.chat.history': 'Chat history',
-        'assistant.chat.newChat': 'New chat',
-        'assistant.chat.noPreviousChats': 'No previous chats yet.',
-        'assistant.chat.deleteChat': 'Delete chat',
-        'assistant.chat.deleteChatHint': 'Deletes this conversation from history.',
-        'assistant.chat.deleteChatConfirm': 'Are you sure you want to delete this chat?',
-        'assistant.chat.deleteChatFailed': 'Failed to delete chat. Please try again.',
-        'assistant.chat.openHistoryHint': 'Opens your saved conversations.',
-        'assistant.chat.close': 'Close',
-        'common.cancel': 'Cancel',
-        'common.delete': 'Delete',
-        'common.loading': 'Loading…',
+      const translations: Record<string, Record<string, string>> = {
+        en: {
+          'assistant.chat.history': 'Chat history',
+          'assistant.chat.newChat': 'New chat',
+          'assistant.chat.noPreviousChats': 'No previous chats yet.',
+          'assistant.chat.deleteChat': 'Delete chat',
+          'assistant.chat.deleteChatHint': 'Deletes this conversation from history.',
+          'assistant.chat.deleteChatConfirm': 'Are you sure you want to delete this chat?',
+          'assistant.chat.deleteChatFailed': 'Failed to delete chat. Please try again.',
+          'assistant.chat.openHistoryHint': 'Opens your saved conversations.',
+          'assistant.chat.close': 'Close',
+          'common.cancel': 'Cancel',
+          'common.delete': 'Delete',
+          'common.loading': 'Loading…',
+        },
+        hi: {
+          'assistant.chat.history': 'चैट इतिहास',
+          'assistant.chat.newChat': 'नई चैट',
+          'assistant.chat.noPreviousChats': 'अभी तक कोई पिछली चैट नहीं है।',
+          'assistant.chat.deleteChat': 'चैट हटाएँ',
+          'assistant.chat.deleteChatHint': 'इस बातचीत को इतिहास से हटाता है।',
+          'assistant.chat.deleteChatConfirm':
+            'क्या आप वाकई इस चैट को हटाना चाहते हैं? यह पूर्ववत नहीं किया जा सकता।',
+          'assistant.chat.deleteChatFailed': 'चैट हटाने में विफल। कृपया दोबारा प्रयास करें।',
+          'assistant.chat.openHistoryHint': 'आपकी सहेजी गई बातचीत खोलता है।',
+          'assistant.chat.close': 'बंद करें',
+          'common.cancel': 'रद्द करें',
+          'common.delete': 'हटाएँ',
+          'common.loading': 'लोड हो रहा है…',
+        },
       };
-      return translations[key] ?? key;
+      const languageTranslations = translations[mockLanguage] ?? translations.en;
+      return languageTranslations[key] ?? key;
     },
   }),
 }));
@@ -287,6 +306,11 @@ describe('ConversationSidebar with Hindi i18n', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockListConversations.mockResolvedValue([]);
+    mockLanguage = 'hi';
+  });
+
+  afterEach(() => {
+    mockLanguage = 'en';
   });
 
   it('uses i18n for history title', async () => {
@@ -299,8 +323,7 @@ describe('ConversationSidebar with Hindi i18n', () => {
       />,
     );
     await waitFor(() => {
-      // Key is returned as-is by mock: 'Chat history'
-      expect(getByText('Chat history')).toBeTruthy();
+      expect(getByText('चैट इतिहास')).toBeTruthy();
     });
   });
 });

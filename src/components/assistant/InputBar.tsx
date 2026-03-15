@@ -14,6 +14,7 @@ import React, { useRef } from 'react';
 import {
   View,
   Image,
+  Text,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
@@ -90,15 +91,45 @@ export function InputBar({
                   style={[styles.thumbnail, { borderColor: m3.colorScheme.outlineVariant }]}
                   accessibilityLabel={t('assistant.attachments.thumbnailA11y')}
                 />
-              ) : null}
-              <TouchableOpacity
-                style={[styles.thumbnailRemoveBtn, { backgroundColor: m3.colorScheme.error }]}
-                onPress={() => onRemoveAttachment?.(index)}
-                accessibilityLabel={t('assistant.attachments.removeA11y')}
-                accessibilityRole="button"
-              >
-                <SymbolIcon name="xmark" size={10} color={m3.colorScheme.onError} />
-              </TouchableOpacity>
+              ) : (
+                <View
+                  style={[
+                    styles.thumbnail,
+                    styles.documentThumbnail,
+                    { borderColor: m3.colorScheme.outlineVariant },
+                  ]}
+                  accessible
+                  accessibilityLabel={`${t('assistant.attachments.documentA11y')}: ${attachment.name}`}
+                >
+                  <SymbolIcon
+                    name="doc.text.fill"
+                    size={16}
+                    color={m3.colorScheme.onSurfaceVariant}
+                  />
+                  <Text
+                    style={[styles.documentText, { color: m3.colorScheme.onSurfaceVariant }]}
+                    numberOfLines={2}
+                  >
+                    {attachment.name}
+                  </Text>
+                </View>
+              )}
+              {onRemoveAttachment ? (
+                <TouchableOpacity
+                  style={[styles.thumbnailRemoveBtn, { backgroundColor: m3.colorScheme.error }]}
+                  onPress={() => onRemoveAttachment(index)}
+                  accessibilityLabel={t('assistant.attachments.removeA11y')}
+                  accessibilityRole="button"
+                >
+                  <SymbolIcon name="xmark" size={10} color={m3.colorScheme.onError} />
+                </TouchableOpacity>
+              ) : (
+                <View
+                  style={styles.thumbnailRemoveBtn}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                />
+              )}
             </View>
           ))}
         </ScrollView>
@@ -216,6 +247,16 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  documentThumbnail: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing[1],
+    gap: spacing[1],
+  },
+  documentText: {
+    fontSize: 9,
+    textAlign: 'center',
   },
   thumbnailRemoveBtn: {
     position: 'absolute',

@@ -1332,6 +1332,7 @@ export const mr = {
       imageReadError: 'इमेज डेटा वाचता आला नाही. कृपया पुन्हा प्रयत्न करा.',
       fileReadError: 'दस्तऐवज वाचता आला नाही. कृपया पुन्हा प्रयत्न करा.',
       attachFileA11y: 'फाइल जोडा',
+      documentA11y: 'संलग्न दस्तऐवज',
       removeA11y: 'संलग्नक काढा',
       thumbnailA11y: 'संलग्न प्रतिमा',
     },
