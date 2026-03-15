@@ -1240,7 +1240,7 @@ export const en = {
   },
 
   assistant: {
-    placeholder: 'Coming soon — your AI farming assistant',
+    placeholder: 'Your AI farming assistant — ask about crops, soil, and schedules',
     settingsButtonA11y: 'Open settings',
     chat: {
       welcomeTitle: 'How can I help?',

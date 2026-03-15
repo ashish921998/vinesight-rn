@@ -1238,7 +1238,7 @@ export const hi = {
     aiAssistant: 'AI सहायक',
   },
   assistant: {
-    placeholder: 'जल्द आ रहा है — आपका AI कृषि सहायक',
+    placeholder: 'आपका AI कृषि सहायक — फसल, मिट्टी और शेड्यूल के बारे में पूछें',
     settingsButtonA11y: 'सेटिंग्स खोलें',
     chat: {
       welcomeTitle: 'मैं कैसे मदद कर सकता हूँ?',

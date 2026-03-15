@@ -118,6 +118,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     removeAttachment,
     addMessage,
     syncConversationId,
+    setVoiceLogAction,
   } = useAssistant({ language, farmContext });
 
   const {
@@ -135,6 +136,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     farmContext,
     onNewMessage: addMessage,
     onConversationIdChange: syncConversationId,
+    onVoiceLogAction: setVoiceLogAction,
   });
 
   const handleSend = useCallback(() => {
@@ -157,7 +159,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   }, []);
 
   const handleSelectConversation = useCallback(
-    (conversationId: string) => {
+    (conversationId: string, _farmId?: number | null) => {
       void loadConversation(conversationId);
     },
     [loadConversation],
@@ -214,7 +216,16 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const handlePickDocument = useCallback(async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'text/plain', 'text/csv'],
+        type: [
+          'application/pdf',
+          'text/plain',
+          'text/csv',
+          'application/json',
+          'application/xml',
+          'text/xml',
+          'text/markdown',
+          'text/x-markdown',
+        ],
         copyToCacheDirectory: true,
       });
 

@@ -42,7 +42,7 @@ export interface ConversationSidebarProps {
   visible: boolean;
   farmId?: number | null;
   onClose: () => void;
-  onSelectConversation: (conversationId: string) => void;
+  onSelectConversation: (conversationId: string, farmId?: number | null) => void;
   onNewChat: () => void;
 }
 
@@ -163,8 +163,8 @@ export function ConversationSidebar({
   );
 
   const handleSelectConversation = useCallback(
-    (conversationId: string) => {
-      onSelectConversation(conversationId);
+    (conversationId: string, conversationFarmId?: number | null) => {
+      onSelectConversation(conversationId, conversationFarmId);
       onClose();
     },
     [onSelectConversation, onClose],
@@ -182,7 +182,7 @@ export function ConversationSidebar({
       return (
         <TouchableOpacity
           style={[styles.conversationItem, { borderBottomColor: m3.colorScheme.outlineVariant }]}
-          onPress={() => handleSelectConversation(item.id)}
+          onPress={() => handleSelectConversation(item.id, item.farmId)}
           accessibilityRole="button"
           accessibilityLabel={preview || item.id}
         >

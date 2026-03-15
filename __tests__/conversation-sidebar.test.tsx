@@ -197,7 +197,7 @@ describe('ConversationSidebar', () => {
       expect(getByText('How much irrigation should I do today?')).toBeTruthy();
     });
     fireEvent.press(getByText('How much irrigation should I do today?'));
-    expect(defaultProps.onSelectConversation).toHaveBeenCalledWith('conv-1');
+    expect(defaultProps.onSelectConversation).toHaveBeenCalledWith('conv-1', null);
   });
 
   it('shows New Chat button', async () => {

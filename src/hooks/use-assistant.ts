@@ -61,6 +61,8 @@ export interface UseAssistantReturn {
   addMessage: (message: ChatMessage) => void;
   /** Sync conversation ID from voice mode when it creates a new conversation */
   syncConversationId: (id: string) => void;
+  /** Set voice log action (used by voice mode to propagate activity log actions) */
+  setVoiceLogAction: (action: AssistantVoiceLogAction | null) => void;
 }
 
 const DEFAULT_SUGGESTIONS = [
@@ -316,6 +318,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     removeAttachment,
     addMessage,
     syncConversationId,
+    setVoiceLogAction,
   };
 }
 

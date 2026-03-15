@@ -424,6 +424,51 @@ describe('useVoiceMode', () => {
     expect(onConversationIdChange).toHaveBeenCalledWith('conv-xyz');
   });
 
+  it('onVoiceLogAction is called when backend response includes voiceLogAction', async () => {
+    const voiceLogAction = {
+      kind: 'ready' as const,
+      draft: { type: 'irrigation', farmId: 1, date: '2026-03-16' },
+      prefill: { farmId: 1 },
+    };
+    mockSendAssistantTurn.mockResolvedValueOnce({
+      ...ASSISTANT_RESPONSE,
+      voiceLogAction,
+    });
+
+    const onVoiceLogAction = jest.fn();
+    const { result } = renderHook(() => useVoiceMode({ ...defaultOptions, onVoiceLogAction }));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    expect(onVoiceLogAction).toHaveBeenCalledTimes(1);
+    expect(onVoiceLogAction).toHaveBeenCalledWith(voiceLogAction);
+  });
+
+  it('onVoiceLogAction is not called when backend response has no voiceLogAction', async () => {
+    const onVoiceLogAction = jest.fn();
+    const { result } = renderHook(() => useVoiceMode({ ...defaultOptions, onVoiceLogAction }));
+    act(() => result.current.openVoiceMode());
+
+    await act(async () => {
+      result.current.handleOrbPress();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    await act(async () => {
+      await capturedOnComplete?.(RECORDING_RESULT);
+    });
+
+    expect(onVoiceLogAction).not.toHaveBeenCalled();
+  });
+
   // ── Error handling ────────────────────────────────────────────────────────
 
   it('STT failure shows stt_failed error and transitions to error state', async () => {

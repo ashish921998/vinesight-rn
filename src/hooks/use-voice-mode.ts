@@ -27,7 +27,7 @@ import { useVoiceRecorder } from './use-voice-recorder';
 import type { RecordingResultData } from './use-voice-recorder';
 import type { VoiceModeState } from '@/components/assistant/VoiceMode/AnimatedOrb';
 import type { VoiceModeMessage } from '@/components/assistant/VoiceMode/VoiceThread';
-import type { ChatMessage } from '@/types/ai';
+import type { AssistantVoiceLogAction, ChatMessage } from '@/types/ai';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import type { AssistantFarmContext } from './use-assistant';
 
@@ -60,6 +60,10 @@ export interface UseVoiceModeOptions {
    * Called when voice mode creates / updates the conversation ID.
    */
   onConversationIdChange?: (id: string) => void;
+  /**
+   * Called when a voice turn produces a voiceLogAction (activity log flow).
+   */
+  onVoiceLogAction?: (action: AssistantVoiceLogAction) => void;
 }
 
 export interface UseVoiceModeReturn {
@@ -191,6 +195,11 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
 
       // Then surface assistant message in the main chat thread
       onNewMessage?.(response.message);
+
+      // Propagate voice log action to parent (activity log confirmation flow)
+      if (response.voiceLogAction) {
+        optionsRef.current.onVoiceLogAction?.(response.voiceLogAction);
+      }
 
       setBackendError(null);
 

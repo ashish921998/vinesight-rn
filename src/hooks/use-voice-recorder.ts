@@ -304,6 +304,8 @@ export function useVoiceRecorder(
 
     // Reset silence timer before stopping
     silenceStartTimeRef.current = null;
+    // Mark as manual stop (overrides the pre-set 'maxDuration')
+    autoStopReasonRef.current = undefined;
 
     void recorder.stop();
     // Result is delivered asynchronously via onRecordingComplete callback
