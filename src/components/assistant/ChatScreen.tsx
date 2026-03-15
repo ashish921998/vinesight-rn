@@ -71,6 +71,30 @@ function getSafeErrorMessage(error: unknown): string {
   return 'unknown_error';
 }
 
+function supportsInlineDocumentRead(mimeType?: string): boolean {
+  if (!mimeType) return false;
+  const normalizedMimeType = mimeType.toLowerCase();
+  return (
+    normalizedMimeType.startsWith('text/') ||
+    normalizedMimeType === 'application/json' ||
+    normalizedMimeType === 'application/xml' ||
+    normalizedMimeType.endsWith('+json') ||
+    normalizedMimeType.endsWith('+xml')
+  );
+}
+
+function normalizeInlineDocumentText(rawText: string, mimeType?: string): string {
+  const normalizedMimeType = mimeType?.toLowerCase() ?? '';
+  if (normalizedMimeType === 'application/json' || normalizedMimeType.endsWith('+json')) {
+    try {
+      return JSON.stringify(JSON.parse(rawText), null, 2);
+    } catch {
+      return rawText;
+    }
+  }
+  return rawText;
+}
+
 export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
@@ -252,14 +276,15 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
       let textContent: string | undefined;
       // Guard against large assets - only read small text files inline
       if (
-        asset.mimeType?.startsWith('text/') &&
+        supportsInlineDocumentRead(asset.mimeType) &&
         asset.size !== undefined &&
         asset.size <= MAX_INLINE_TEXT_BYTES
       ) {
         try {
-          textContent = await FileSystem.readAsStringAsync(asset.uri, {
+          const rawText = await FileSystem.readAsStringAsync(asset.uri, {
             encoding: 'utf8',
           });
+          textContent = normalizeInlineDocumentText(rawText, asset.mimeType);
           // Enforce max length if needed
           if (textContent.length > MAX_INLINE_TEXT_BYTES) {
             textContent = textContent.slice(0, MAX_INLINE_TEXT_BYTES);

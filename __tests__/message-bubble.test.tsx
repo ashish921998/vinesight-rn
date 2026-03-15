@@ -14,6 +14,10 @@ import { render } from '@testing-library/react-native';
 import { MessageBubble, LoadingBubble } from '@/components/assistant/MessageBubble';
 import type { ChatMessage } from '@/types/ai';
 
+jest.mock('@/i18n/format', () => ({
+  formatTime: () => '10:00',
+}));
+
 jest.mock('@/styles/use-theme', () => ({
   useThemeTokens: () => ({
     isDark: false,
@@ -112,9 +116,14 @@ describe('MessageBubble', () => {
 
   it('has accessibility label for user message', () => {
     const message = makeMessage({ role: 'user', content: 'Test content' });
-    const { UNSAFE_getByProps } = render(<MessageBubble message={message} />);
-    const accessible = UNSAFE_getByProps({ accessible: true });
-    expect(accessible.props.accessibilityLabel).toContain('Test content');
+    const { getByLabelText } = render(<MessageBubble message={message} />);
+    expect(getByLabelText(/Test content/)).toBeTruthy();
+  });
+
+  it('does not render unsupported message roles', () => {
+    const message = makeMessage({ role: 'system' as ChatMessage['role'] });
+    const { queryByText } = render(<MessageBubble message={message} />);
+    expect(queryByText('Hello from AI')).toBeNull();
   });
 
   it('renders assistant message with markdown (uses M3 theme tokens for code backgrounds)', () => {
@@ -188,10 +197,8 @@ describe('MessageBubble safety warning (VAL-CROSS-012)', () => {
       content: 'Blocked content.',
       safety: { blocked: true, riskLevel: 'high', reasons: [] },
     });
-    const { UNSAFE_getByProps } = render(<MessageBubble message={message} />);
-    const accessible = UNSAFE_getByProps({ accessible: true });
-    // Should use the safety a11y label
-    expect(accessible.props.accessibilityLabel).toContain('assistant.safety.blockedA11y');
+    const { getByLabelText } = render(<MessageBubble message={message} />);
+    expect(getByLabelText(/assistant\.safety\.blockedA11y/)).toBeTruthy();
   });
 });
 

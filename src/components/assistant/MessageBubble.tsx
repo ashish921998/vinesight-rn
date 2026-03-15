@@ -25,6 +25,7 @@ interface MessageBubbleProps {
 export function MessageBubble({ message, isLoading = false }: MessageBubbleProps) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
+  const isSupportedRole = message.role === 'user' || message.role === 'assistant';
   const isUser = message.role === 'user';
 
   const bubbleStyle = useMemo(
@@ -132,13 +133,12 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
 
   const isSafetyBlocked = !isUser && message.safety?.blocked === true;
 
+  if (!isSupportedRole) {
+    return null;
+  }
+
   return (
-    <View
-      style={[styles.container, isUser ? styles.containerRight : styles.containerLeft]}
-      accessible
-      accessibilityLabel={isSafetyBlocked ? t('assistant.safety.blockedA11y') : a11yLabel}
-      accessibilityRole="text"
-    >
+    <View style={[styles.container, isUser ? styles.containerRight : styles.containerLeft]}>
       {/* Safety warning badge — shown above blocked assistant messages */}
       {isSafetyBlocked && (
         <View
@@ -153,6 +153,8 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
       <View style={bubbleStyle}>
         {isUser ? (
           <Text
+            accessibilityRole="text"
+            accessibilityLabel={a11yLabel}
             style={{
               color: textColor,
               fontSize: 15,
@@ -163,7 +165,15 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
           </Text>
         ) : (
           <>
-            <Markdown style={markdownStyles}>{message.content}</Markdown>
+            <View
+              accessible
+              accessibilityRole="text"
+              accessibilityLabel={
+                isSafetyBlocked ? `${t('assistant.safety.blockedA11y')} ${a11yLabel}` : a11yLabel
+              }
+            >
+              <Markdown style={markdownStyles}>{message.content}</Markdown>
+            </View>
             {!isLoading && message.citations && message.citations.length > 0 && (
               <CitationFooter citations={message.citations} />
             )}

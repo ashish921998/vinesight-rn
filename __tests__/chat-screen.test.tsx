@@ -39,10 +39,14 @@ const mockClearError = jest.fn();
 const mockDismissVoiceLogAction = jest.fn();
 const mockSetAddEntry = jest.fn();
 
+type MockConversationSidebarProps = {
+  onSelectConversation?: (conversationId: string, conversationFarmId?: number | null) => void;
+} & Record<string, unknown>;
+
 // Variables prefixed with `mock` are allowed in jest.mock() factory
 let mockCurrentAssistantState: Record<string, unknown> = {};
 const mockUseAssistantCapture = jest.fn();
-const mockSidebarProps: { current: Record<string, unknown> | null } = { current: null };
+const mockSidebarProps: { current: MockConversationSidebarProps | null } = { current: null };
 
 jest.mock('@/hooks/use-assistant', () => ({
   useAssistant: (options: unknown) => {
@@ -53,14 +57,14 @@ jest.mock('@/hooks/use-assistant', () => ({
 }));
 
 jest.mock('@/components/assistant/ConversationSidebar', () => ({
-  ConversationSidebar: (props: Record<string, unknown>) => {
+  ConversationSidebar: (props: MockConversationSidebarProps) => {
     mockSidebarProps.current = props;
     const { View, TouchableOpacity, Text } = require('react-native');
     return (
       <View testID="mock-conversation-sidebar">
         <TouchableOpacity
           testID="mock-select-general-conversation"
-          onPress={() => props.onSelectConversation('conv-general', null)}
+          onPress={() => props.onSelectConversation?.('conv-general', null)}
         >
           <Text>select-general</Text>
         </TouchableOpacity>

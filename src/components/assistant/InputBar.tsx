@@ -60,6 +60,7 @@ export function InputBar({
 
   const hasText = value.trim().length > 0;
   const canSend = hasText && !isLoading && !disabled;
+  const canRemoveAttachment = onRemoveAttachment != null && !isLoading && !disabled;
 
   const containerBg = isDark ? m3.surface.surfaceContainer : m3.surface.surfaceContainerHigh;
 
@@ -116,10 +117,20 @@ export function InputBar({
               )}
               {onRemoveAttachment ? (
                 <TouchableOpacity
-                  style={[styles.thumbnailRemoveBtn, { backgroundColor: m3.colorScheme.error }]}
-                  onPress={() => onRemoveAttachment(index)}
+                  style={[
+                    styles.thumbnailRemoveBtn,
+                    { backgroundColor: m3.colorScheme.error },
+                    !canRemoveAttachment && styles.thumbnailRemoveBtnDisabled,
+                  ]}
+                  onPress={() => {
+                    if (canRemoveAttachment) {
+                      onRemoveAttachment(index);
+                    }
+                  }}
+                  disabled={!canRemoveAttachment}
                   accessibilityLabel={t('assistant.attachments.removeA11y')}
                   accessibilityRole="button"
+                  accessibilityState={{ disabled: !canRemoveAttachment }}
                 >
                   <SymbolIcon name="xmark" size={10} color={m3.colorScheme.onError} />
                 </TouchableOpacity>
@@ -267,6 +278,9 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  thumbnailRemoveBtnDisabled: {
+    opacity: 0.5,
   },
   inputRow: {
     flexDirection: 'row',
