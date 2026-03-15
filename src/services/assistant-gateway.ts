@@ -104,6 +104,7 @@ interface AssistantGatewayResponse {
   assistant_text: string;
   /** STT transcript of user's audio input (only present for audio input_mode) */
   user_transcript?: string | null;
+  /** Raw STT engine output - may include metadata/confidence if returned by the STT provider */
   stt_transcript?: string | null;
   assistant_audio_b64?: string | null;
   assistant_audio_url?: string | null;
