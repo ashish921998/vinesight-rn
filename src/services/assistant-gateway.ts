@@ -1,405 +1,38 @@
 import { supabase } from '@/lib/supabase';
-import { assistantFeatureFlags, assistantModelConfig } from '@/constants/assistant-flags';
+import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import { normalizeAssistantCitations } from '@/services/rag-citations';
 import { telemetry } from '@/services/telemetry';
-import type {
-  AIMessageAttachmentInput,
-  AssistantAudio,
-  AssistantInputMode,
-  AssistantRouteDecision,
-  AssistantSafetyMeta,
-  AssistantToolEvent,
-  AssistantTurnResponse,
-  AssistantVoiceLogAction,
-  ChatMessage,
-} from '@/types/ai';
-import type { VoiceLogDraft, VoiceLogFormPrefill } from '@/types/voice-log';
-import type { SupportedLanguageCode } from '@/i18n/languages';
+import type { AssistantInputMode, AssistantTurnResponse } from '@/types/ai';
+import {
+  AssistantGatewayError,
+  AssistantGatewayErrorCode,
+  type AssistantGatewayRequest,
+  type AssistantGatewayResponse,
+  type PendingGatewayRequest,
+  type SendAssistantTurnInput,
+  type SendAssistantTurnOptions,
+} from '@/services/assistant-gateway-types';
+import {
+  buildAudioPayload,
+  getDefaultAssistantModel,
+  normalizeBase64Payload,
+  parseInvokeError,
+  toSafetyMeta,
+  toVoiceLogAction,
+  validateAudioPayload,
+} from '@/services/assistant-gateway-utils';
 
 const REQUEST_TIMEOUT_MS = 45_000;
-const MAX_AUDIO_SIZE_BYTES = 10 * 1024 * 1024;
-const MAX_AUDIO_BASE64_LENGTH = Math.ceil((MAX_AUDIO_SIZE_BYTES * 4) / 3);
-
-export enum AssistantGatewayErrorCode {
-  NETWORK_ERROR = 'NETWORK_ERROR',
-  TIMEOUT = 'TIMEOUT',
-  SERVER_ERROR = 'SERVER_ERROR',
-  INVALID_REQUEST = 'INVALID_REQUEST',
-  INVALID_RESPONSE = 'INVALID_RESPONSE',
-  AUDIO_VALIDATION_FAILED = 'AUDIO_VALIDATION_FAILED',
-  AUTHENTICATION_FAILED = 'AUTHENTICATION_FAILED',
-  RATE_LIMITED = 'RATE_LIMITED',
-  CANCELED = 'CANCELED',
-  UNKNOWN = 'UNKNOWN',
-}
-
-export class AssistantGatewayError extends Error {
-  code: AssistantGatewayErrorCode;
-  details?: Record<string, unknown>;
-  originalError?: Error;
-
-  constructor(
-    code: AssistantGatewayErrorCode,
-    message: string,
-    details?: Record<string, unknown>,
-    originalError?: Error,
-  ) {
-    super(message);
-    this.name = 'AssistantGatewayError';
-    this.code = code;
-    this.details = details;
-    this.originalError = originalError;
-  }
-}
-
-export interface SendAssistantTurnProgress {
-  phase: 'preparing' | 'sending' | 'processing' | 'complete';
-  percentage: number;
-}
-
-export interface SendAssistantTurnOptions {
-  requestId?: string;
-  onProgress?: (progress: SendAssistantTurnProgress) => void;
-  signal?: AbortSignal;
-  timeoutMs?: number;
-}
-
-interface PendingGatewayRequest {
-  id: string;
-  controller: AbortController;
-  startedAt: number;
-}
 
 const pendingGatewayRequests = new Map<string, PendingGatewayRequest>();
 
-interface AssistantGatewayRequest {
-  conversation_id: string | null;
-  user_id: string | null;
-  farm_context: {
-    farm_id?: number | null;
-    farm_name?: string | null;
-    crop_variety?: string | null;
-    area?: number | null;
-    region?: string | null;
-    growth_stage?: string | null;
-    days_since_pruning?: number | null;
-  } | null;
-  locale: SupportedLanguageCode;
-  input_mode: AssistantInputMode;
-  input_text?: string | null;
-  input_audio_b64?: string | null;
-  audio_format?: string | null;
-  audio_duration?: number | null;
-  attachments?: AIMessageAttachmentInput[];
-  client_capabilities?: {
-    can_play_audio?: boolean;
-    provider_fallback_enabled?: boolean;
-    rag_enabled?: boolean;
-    memory_enabled?: boolean;
-    client_persisted_user_turn?: boolean;
-  };
-}
-
-interface AssistantGatewayResponse {
-  assistant_text: string;
-  /** STT transcript of user's audio input (only present for audio input_mode) */
-  user_transcript?: string | null;
-  /** Raw STT engine output - may include metadata/confidence if returned by the STT provider */
-  stt_transcript?: string | null;
-  assistant_audio_b64?: string | null;
-  assistant_audio_url?: string | null;
-  assistant_audio_mime_type?: string | null;
-  audio_provider_used?: string | null;
-  model_used?: string | null;
-  tool_calls?: AssistantToolEvent[];
-  tool_results?: Array<Record<string, unknown>>;
-  memory_writes?: Array<Record<string, unknown>>;
-  citations?: unknown[];
-  safety_flags?: {
-    blocked?: boolean;
-    risk_level?: 'low' | 'medium' | 'high' | 'critical';
-    reasons?: string[];
-    escalation_suggested?: boolean;
-  };
-  trace_id?: string;
-  latency_ms?: number;
-  conversation_id?: string;
-  turn_id?: string;
-  suggestions?: string[];
-  route_decision?: AssistantRouteDecision | null;
-  voice_log_action?: {
-    kind?: 'none' | 'cancelled' | 'clarify' | 'ready';
-    draft?: Record<string, unknown> | null;
-    prefill?: Record<string, unknown> | null;
-    missing_fields?: string[];
-    expected_field?: string | null;
-    clarify_attempts?: number;
-    clarify_exhausted?: boolean;
-  } | null;
-  stt_provider_used?: string | null;
-  stt_confidence?: number | null;
-  stt_latency_ms?: number | null;
-  tts_generation_ms?: number | null;
-  tts_skipped_reason?: string | null;
-  provider_fallback_reason?: string | null;
-}
-
-function toDebugString(value: unknown, maxLength = 1200): string {
-  try {
-    const raw =
-      typeof value === 'string'
-        ? value
-        : value === null || value === undefined
-          ? ''
-          : JSON.stringify(value);
-    if (!raw) return '';
-    return raw.length > maxLength ? `${raw.slice(0, maxLength)}…` : raw;
-  } catch {
-    return '';
-  }
-}
-
-function toErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message || 'Unknown assistant gateway error';
-  }
-
-  if (typeof error === 'string') {
-    return error;
-  }
-
-  if (error && typeof error === 'object') {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === 'string' && message.trim().length > 0) {
-      return message;
-    }
-    const serialized = toDebugString(error, 300);
-    if (serialized) return serialized;
-  }
-
-  return String(error);
-}
-
-function normalizeBase64Payload(value: string): string {
-  return value.replace(/^data:[^;]+;base64,/i, '').trim();
-}
-
-function normalizeBase64Padding(value: string): string {
-  const normalized = value.trim();
-  const paddingLength = (4 - (normalized.length % 4)) % 4;
-  return normalized + '='.repeat(paddingLength);
-}
-
-function estimateBase64Bytes(base64Payload: string): number {
-  const normalized = base64Payload.trim();
-  const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
-  return Math.max(0, Math.floor((normalized.length * 3) / 4) - padding);
-}
-
-function validateAudioPayload(
-  base64Audio: string,
-): { valid: true; bytes: number } | { valid: false; error: string } {
-  const normalized = normalizeBase64Payload(base64Audio);
-  if (!normalized) {
-    return { valid: false, error: 'Audio payload is empty' };
-  }
-
-  if (normalized.length > MAX_AUDIO_BASE64_LENGTH) {
-    const sizeMb = estimateBase64Bytes(normalized) / (1024 * 1024);
-    return {
-      valid: false,
-      error: `Audio payload too large (${sizeMb.toFixed(2)}MB > 10MB)`,
-    };
-  }
-
-  const padded = normalizeBase64Padding(normalized);
-  const base64Regex = /^[A-Za-z0-9+/]+={0,2}$/;
-  if (!base64Regex.test(padded)) {
-    return { valid: false, error: 'Invalid base64 format' };
-  }
-
-  const atobFn = typeof globalThis.atob === 'function' ? globalThis.atob.bind(globalThis) : null;
-  if (atobFn) {
-    try {
-      atobFn(padded);
-    } catch {
-      return { valid: false, error: 'Invalid base64 data' };
-    }
-  }
-
-  return { valid: true, bytes: estimateBase64Bytes(normalized) };
-}
-
-function isVoiceLogDraft(value: unknown): value is VoiceLogDraft {
-  if (!value || typeof value !== 'object') return false;
-  const v = value as Record<string, unknown>;
-  return (
-    typeof v.type === 'string' &&
-    (v.farmId === null || typeof v.farmId === 'number') &&
-    typeof v.date === 'string' &&
-    v.irrigation !== null &&
-    typeof v.irrigation === 'object' &&
-    v.spray !== null &&
-    typeof v.spray === 'object' &&
-    v.harvest !== null &&
-    typeof v.harvest === 'object' &&
-    v.expense !== null &&
-    typeof v.expense === 'object' &&
-    v.fertigation !== null &&
-    typeof v.fertigation === 'object'
-  );
-}
-
-function isVoiceLogFormPrefill(value: unknown): value is VoiceLogFormPrefill {
-  if (!value || typeof value !== 'object') return false;
-  const v = value as Record<string, unknown>;
-  return typeof v.type === 'string' && typeof v.date === 'string';
-}
-
-function parseInvokeError(
-  error: unknown,
-  context: string,
-  extras?: Record<string, unknown>,
-): AssistantGatewayError {
-  if (error instanceof AssistantGatewayError) return error;
-
-  const baseError = error instanceof Error ? error : new Error(toErrorMessage(error));
-  const rawMessage = baseError.message || 'Unknown assistant gateway error';
-  const normalizedMessage = rawMessage.toLowerCase();
-  const details: Record<string, unknown> = {
-    context,
-    rawMessage,
-    ...(extras ?? {}),
-  };
-
-  const errObj = error as Record<string, unknown>;
-  const status =
-    typeof errObj.status === 'number'
-      ? errObj.status
-      : typeof errObj.statusCode === 'number'
-        ? errObj.statusCode
-        : null;
-  const response = errObj.response as Record<string, unknown> | null;
-  const responseStatus = typeof response?.status === 'number' ? response.status : null;
-
-  if (normalizedMessage.includes('abort')) {
-    return new AssistantGatewayError(
-      AssistantGatewayErrorCode.CANCELED,
-      'Request was canceled',
-      details,
-      baseError,
-    );
-  }
-
-  if (normalizedMessage.includes('timeout')) {
-    return new AssistantGatewayError(
-      AssistantGatewayErrorCode.TIMEOUT,
-      'Request timed out',
-      details,
-      baseError,
-    );
-  }
-
-  if (
-    normalizedMessage.includes('network request failed') ||
-    normalizedMessage.includes('econnreset') ||
-    normalizedMessage.includes('enotfound') ||
-    normalizedMessage.includes('econnrefused') ||
-    normalizedMessage.includes('failed to fetch')
-  ) {
-    return new AssistantGatewayError(
-      AssistantGatewayErrorCode.NETWORK_ERROR,
-      'Network request failed',
-      details,
-      baseError,
-    );
-  }
-
-  if (status === 401 || status === 403 || responseStatus === 401 || responseStatus === 403) {
-    return new AssistantGatewayError(
-      AssistantGatewayErrorCode.AUTHENTICATION_FAILED,
-      'Authentication failed',
-      details,
-      baseError,
-    );
-  }
-
-  if (status === 429 || responseStatus === 429) {
-    return new AssistantGatewayError(
-      AssistantGatewayErrorCode.RATE_LIMITED,
-      'Rate limited',
-      details,
-      baseError,
-    );
-  }
-
-  if (
-    (status !== null && status >= 500 && status < 600) ||
-    (responseStatus !== null && responseStatus >= 500 && responseStatus < 600)
-  ) {
-    return new AssistantGatewayError(
-      AssistantGatewayErrorCode.SERVER_ERROR,
-      'Server error',
-      details,
-      baseError,
-    );
-  }
-
-  if ((status === 400 || responseStatus === 400) && normalizedMessage.includes('audio')) {
-    return new AssistantGatewayError(
-      AssistantGatewayErrorCode.AUDIO_VALIDATION_FAILED,
-      'Audio recording is too short or invalid. Please try again and speak longer.',
-      details,
-      baseError,
-    );
-  }
-
-  if (
-    normalizedMessage.includes('invalid_audio') ||
-    normalizedMessage.includes('invalid audio') ||
-    normalizedMessage.includes('audio recording is too short') ||
-    normalizedMessage.includes('audio data is too small') ||
-    (normalizedMessage.includes('status=400') && normalizedMessage.includes('audio'))
-  ) {
-    return new AssistantGatewayError(
-      AssistantGatewayErrorCode.AUDIO_VALIDATION_FAILED,
-      'Audio recording is too short or invalid. Please try again and speak longer.',
-      details,
-      baseError,
-    );
-  }
-
-  if (
-    normalizedMessage.includes('status=5') ||
-    normalizedMessage.includes('function not found') ||
-    normalizedMessage.includes('edge function not found') ||
-    normalizedMessage.includes('failed to send a request to the edge function') ||
-    normalizedMessage.includes('failed to execute the function')
-  ) {
-    return new AssistantGatewayError(
-      AssistantGatewayErrorCode.SERVER_ERROR,
-      'Server error',
-      details,
-      baseError,
-    );
-  }
-
-  if (normalizedMessage.includes('missing assistant response text')) {
-    return new AssistantGatewayError(
-      AssistantGatewayErrorCode.INVALID_RESPONSE,
-      'Assistant response was empty',
-      details,
-      baseError,
-    );
-  }
-
-  return new AssistantGatewayError(
-    AssistantGatewayErrorCode.UNKNOWN,
-    rawMessage,
-    details,
-    baseError,
-  );
-}
+export {
+  AssistantGatewayError,
+  AssistantGatewayErrorCode,
+  type SendAssistantTurnInput,
+  type SendAssistantTurnOptions,
+  type SendAssistantTurnProgress,
+} from '@/services/assistant-gateway-types';
 
 export function cancelPendingAssistantTurnRequest(requestId: string): boolean {
   const request = pendingGatewayRequests.get(requestId);
@@ -426,64 +59,6 @@ export function cancelAllPendingAssistantTurnRequests(): number {
   return cancelled;
 }
 
-function toSafetyMeta(input: AssistantGatewayResponse['safety_flags']): AssistantSafetyMeta | null {
-  if (!input) return null;
-  return {
-    blocked: input.blocked === true,
-    riskLevel: input.risk_level ?? 'low',
-    reasons: Array.isArray(input.reasons) ? input.reasons : [],
-    escalationSuggested: input.escalation_suggested === true,
-  };
-}
-
-function toVoiceLogAction(
-  input: AssistantGatewayResponse['voice_log_action'],
-): AssistantVoiceLogAction | null {
-  if (!input || !input.kind) return null;
-
-  const expectedFieldRaw = typeof input.expected_field === 'string' ? input.expected_field : null;
-  const expectedField =
-    expectedFieldRaw === 'farm' ||
-    expectedFieldRaw === 'duration' ||
-    expectedFieldRaw === 'waterVolume' ||
-    expectedFieldRaw === 'chemicals' ||
-    expectedFieldRaw === 'quantity' ||
-    expectedFieldRaw === 'grade' ||
-    expectedFieldRaw === 'cost' ||
-    expectedFieldRaw === 'expenseType' ||
-    expectedFieldRaw === 'fertilizers'
-      ? expectedFieldRaw
-      : null;
-
-  const missingFields = Array.isArray(input.missing_fields)
-    ? input.missing_fields.filter(
-        (field): field is NonNullable<AssistantVoiceLogAction['expectedField']> =>
-          field === 'farm' ||
-          field === 'duration' ||
-          field === 'waterVolume' ||
-          field === 'chemicals' ||
-          field === 'quantity' ||
-          field === 'grade' ||
-          field === 'cost' ||
-          field === 'expenseType' ||
-          field === 'fertilizers',
-      )
-    : undefined;
-
-  return {
-    kind: input.kind,
-    draft: isVoiceLogDraft(input.draft) ? input.draft : null,
-    prefill: isVoiceLogFormPrefill(input.prefill) ? input.prefill : null,
-    missingFields,
-    expectedField,
-    clarifyAttempts:
-      typeof input.clarify_attempts === 'number' && Number.isFinite(input.clarify_attempts)
-        ? input.clarify_attempts
-        : undefined,
-    clarifyExhausted: input.clarify_exhausted === true,
-  };
-}
-
 async function resolveUserId(): Promise<string | null> {
   try {
     const {
@@ -493,41 +68,6 @@ async function resolveUserId(): Promise<string | null> {
   } catch {
     return null;
   }
-}
-
-export interface SendAssistantTurnInput {
-  conversationId?: string | null;
-  userMessage: string;
-  language: SupportedLanguageCode;
-  inputMode?: AssistantInputMode;
-  clientCanPlayAudio?: boolean;
-  inputAudioBase64?: string | null;
-  audioFormat?: string | null;
-  audioDuration?: number | null;
-  attachments?: AIMessageAttachmentInput[];
-  conversationHistory?: ChatMessage[];
-  clientPersistedUserTurn?: boolean;
-  farmContext?: {
-    farmId?: number | null;
-    farmName?: string;
-    cropVariety?: string;
-    area?: number;
-    region?: string;
-    growthStage?: string;
-    daysSincePruning?: number;
-  };
-}
-
-function buildAudioPayload(response: AssistantGatewayResponse): AssistantAudio | null {
-  const hasAudio = Boolean(response.assistant_audio_b64 || response.assistant_audio_url);
-  if (!hasAudio) return null;
-
-  return {
-    provider: response.audio_provider_used ?? undefined,
-    mimeType: response.assistant_audio_mime_type ?? 'audio/mpeg',
-    base64: response.assistant_audio_b64 ?? null,
-    url: response.assistant_audio_url ?? null,
-  };
 }
 
 export async function sendAssistantTurn(
@@ -720,7 +260,7 @@ export async function sendAssistantTurn(
       },
       suggestions: Array.isArray(response.suggestions) ? response.suggestions : undefined,
       providerUsed: response.audio_provider_used ?? 'ai-gateway',
-      modelUsed: response.model_used ?? assistantModelConfig.advisoryModel,
+      modelUsed: response.model_used ?? getDefaultAssistantModel(),
       latencyMs: response.latency_ms ?? elapsed,
       toolCalls: response.tool_calls,
       memoryWrites: response.memory_writes,

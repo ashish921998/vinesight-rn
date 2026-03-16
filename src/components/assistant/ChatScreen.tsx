@@ -95,6 +95,26 @@ function normalizeInlineDocumentText(rawText: string, mimeType?: string): string
   return rawText;
 }
 
+function ensureUtf8ByteLimit(text: string, maxBytes: number): string {
+  const encoder = new TextEncoder();
+  if (encoder.encode(text).length <= maxBytes) {
+    return text;
+  }
+
+  let low = 0;
+  let high = text.length;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (encoder.encode(text.slice(0, mid)).length <= maxBytes) {
+      low = mid;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  return text.slice(0, low);
+}
+
 export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
@@ -104,10 +124,20 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const { data: farms } = useFarms();
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  // Tracks the effective farmId — can be overridden when loading a conversation
-  const [overrideFarmId, setOverrideFarmId] = useState<string | null | undefined>(undefined);
+  // Tracks the effective farmId override and the prop value it was derived from.
+  const [farmSelectionState, setFarmSelectionState] = useState<{
+    overrideFarmId: string | null | undefined;
+    sourceInitialFarmId?: string;
+  }>({
+    overrideFarmId: undefined,
+    sourceInitialFarmId: initialFarmId,
+  });
+  const syncedOverrideFarmId =
+    farmSelectionState.sourceInitialFarmId === initialFarmId
+      ? farmSelectionState.overrideFarmId
+      : undefined;
   const effectiveFarmId =
-    overrideFarmId === undefined ? initialFarmId : (overrideFarmId ?? undefined);
+    syncedOverrideFarmId === undefined ? initialFarmId : (syncedOverrideFarmId ?? undefined);
 
   // Use the farm matching effectiveFarmId if provided, otherwise return null
   // No implicit fallback to first farm - explicit user selection required
@@ -194,16 +224,22 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   }, []);
 
   const handleStartNewConversation = useCallback(() => {
-    setOverrideFarmId(null);
+    setFarmSelectionState({
+      overrideFarmId: null,
+      sourceInitialFarmId: initialFarmId,
+    });
     startNewConversation();
-  }, [startNewConversation]);
+  }, [initialFarmId, startNewConversation]);
 
   const handleSelectConversation = useCallback(
     (conversationId: string, conversationFarmId?: number | null) => {
-      setOverrideFarmId(conversationFarmId != null ? String(conversationFarmId) : null);
+      setFarmSelectionState({
+        overrideFarmId: conversationFarmId != null ? String(conversationFarmId) : null,
+        sourceInitialFarmId: initialFarmId,
+      });
       void loadConversation(conversationId);
     },
-    [loadConversation],
+    [initialFarmId, loadConversation],
   );
 
   const handleRetry = useCallback(() => {
@@ -297,9 +333,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
           });
           textContent = normalizeInlineDocumentText(rawText, asset.mimeType);
           // Enforce max length if needed
-          if (textContent.length > MAX_INLINE_TEXT_BYTES) {
-            textContent = textContent.slice(0, MAX_INLINE_TEXT_BYTES);
-          }
+          textContent = ensureUtf8ByteLimit(textContent, MAX_INLINE_TEXT_BYTES);
         } catch {
           // Fall through - attach without text content
         }

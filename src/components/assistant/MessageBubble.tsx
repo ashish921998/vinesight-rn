@@ -7,7 +7,7 @@
  * - M3 themed colors — no hardcoded values
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { useTranslation } from 'react-i18next';
@@ -25,117 +25,106 @@ interface MessageBubbleProps {
 export function MessageBubble({ message, isLoading = false }: MessageBubbleProps) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
-  const isSupportedRole = message.role === 'user' || message.role === 'assistant';
+
+  if (message.role !== 'user' && message.role !== 'assistant') {
+    return null;
+  }
+
   const isUser = message.role === 'user';
 
-  const bubbleStyle = useMemo(
-    () => ({
-      backgroundColor: isUser ? m3.colorScheme.primaryContainer : m3.colorScheme.surfaceVariant,
-      borderRadius: 16,
-      borderBottomRightRadius: isUser ? 4 : 16,
-      borderBottomLeftRadius: isUser ? 16 : 4,
-      padding: spacing[3],
-      maxWidth: '80%' as const,
-    }),
-    [isUser, m3.colorScheme.primaryContainer, m3.colorScheme.surfaceVariant],
-  );
+  const bubbleStyle = {
+    backgroundColor: isUser ? m3.colorScheme.primaryContainer : m3.colorScheme.surfaceVariant,
+    borderRadius: 16,
+    borderBottomRightRadius: isUser ? 4 : 16,
+    borderBottomLeftRadius: isUser ? 16 : 4,
+    padding: spacing[3],
+    maxWidth: '80%' as const,
+  };
 
   const textColor = isUser ? m3.colorScheme.onPrimaryContainer : m3.colorScheme.onSurfaceVariant;
 
   // Use plain objects for react-native-markdown-display styles (not StyleSheet.create)
   // to avoid the react-native/no-unused-styles lint false positives
-  const markdownStyles = useMemo(
-    () => ({
-      body: {
-        color: textColor,
-        fontSize: 15,
-        lineHeight: 22,
-      },
-      strong: {
-        color: textColor,
-        fontWeight: '700' as const,
-      },
-      em: {
-        color: textColor,
-        fontStyle: 'italic' as const,
-      },
-      bullet_list: {
-        color: textColor,
-      },
-      ordered_list: {
-        color: textColor,
-      },
-      list_item: {
-        color: textColor,
-      },
-      code_inline: {
-        backgroundColor: m3.surface.surfaceContainerHigh,
-        color: textColor,
-        borderRadius: 4,
-        paddingHorizontal: 4,
-        fontFamily: 'monospace',
-        fontSize: 13,
-      },
-      fence: {
-        backgroundColor: m3.surface.surfaceContainer,
-        borderRadius: 8,
-        padding: spacing[3],
-        marginVertical: spacing[1],
-      },
-      code_block: {
-        color: textColor,
-        fontFamily: 'monospace',
-        fontSize: 13,
-      },
-      blockquote: {
-        borderLeftWidth: 3,
-        borderLeftColor: m3.colorScheme.primary,
-        paddingLeft: spacing[3],
-        marginVertical: spacing[1],
-      },
-      paragraph: {
-        color: textColor,
-        fontSize: 15,
-        lineHeight: 22,
-        marginTop: 0,
-        marginBottom: spacing[1],
-      },
-      heading1: {
-        color: textColor,
-        fontSize: 20,
-        fontWeight: '700' as const,
-        marginBottom: spacing[2],
-      },
-      heading2: {
-        color: textColor,
-        fontSize: 18,
-        fontWeight: '600' as const,
-        marginBottom: spacing[2],
-      },
-      heading3: {
-        color: textColor,
-        fontSize: 16,
-        fontWeight: '600' as const,
-        marginBottom: spacing[1],
-      },
-    }),
-    [
-      textColor,
-      m3.colorScheme.primary,
-      m3.surface.surfaceContainerHigh,
-      m3.surface.surfaceContainer,
-    ],
-  );
+  const markdownStyles = {
+    body: {
+      color: textColor,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    strong: {
+      color: textColor,
+      fontWeight: '700' as const,
+    },
+    em: {
+      color: textColor,
+      fontStyle: 'italic' as const,
+    },
+    bullet_list: {
+      color: textColor,
+    },
+    ordered_list: {
+      color: textColor,
+    },
+    list_item: {
+      color: textColor,
+    },
+    code_inline: {
+      backgroundColor: m3.surface.surfaceContainerHigh,
+      color: textColor,
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      fontFamily: 'monospace',
+      fontSize: 13,
+    },
+    fence: {
+      backgroundColor: m3.surface.surfaceContainer,
+      borderRadius: 8,
+      padding: spacing[3],
+      marginVertical: spacing[1],
+    },
+    code_block: {
+      color: textColor,
+      fontFamily: 'monospace',
+      fontSize: 13,
+    },
+    blockquote: {
+      borderLeftWidth: 3,
+      borderLeftColor: m3.colorScheme.primary,
+      paddingLeft: spacing[3],
+      marginVertical: spacing[1],
+    },
+    paragraph: {
+      color: textColor,
+      fontSize: 15,
+      lineHeight: 22,
+      marginTop: 0,
+      marginBottom: spacing[1],
+    },
+    heading1: {
+      color: textColor,
+      fontSize: 20,
+      fontWeight: '700' as const,
+      marginBottom: spacing[2],
+    },
+    heading2: {
+      color: textColor,
+      fontSize: 18,
+      fontWeight: '600' as const,
+      marginBottom: spacing[2],
+    },
+    heading3: {
+      color: textColor,
+      fontSize: 16,
+      fontWeight: '600' as const,
+      marginBottom: spacing[1],
+    },
+  };
 
   const a11yLabel = isUser
     ? t('assistant.chat.userMessageA11y', { content: message.content })
     : t('assistant.chat.assistantMessageA11y', { content: message.content.slice(0, 100) });
 
   const isSafetyBlocked = !isUser && message.safety?.blocked === true;
-
-  if (!isSupportedRole) {
-    return null;
-  }
 
   return (
     <View style={[styles.container, isUser ? styles.containerRight : styles.containerLeft]}>

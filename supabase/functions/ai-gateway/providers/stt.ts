@@ -250,12 +250,20 @@ export async function transcribeAudio(input: {
   }
 
   // OpenAI fallback or primary
+  if (!checkCircuitBreaker('openai_stt')) {
+    console.warn('OpenAI STT circuit breaker open, cannot transcribe audio');
+    if (fallbackReason) {
+      throw new Error('Both STT providers circuit-open or failed');
+    }
+    throw new Error('OpenAI STT circuit breaker is open');
+  }
   try {
     const result = await withAbortTimeout(
       (signal) => callOpenAiSttInternal(base64Audio, mimeType, signal),
       STT_TIMEOUT_MS,
       `OpenAI STT timed out after ${STT_TIMEOUT_MS}ms`,
     );
+    recordProviderSuccess('openai_stt');
     return {
       transcript: result.transcript,
       confidence: result.confidence,
