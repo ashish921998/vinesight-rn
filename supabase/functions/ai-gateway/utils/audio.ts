@@ -122,7 +122,7 @@ export function isSarvamUnsupportedContainer(_mimeType: string): boolean {
 export const MAX_AUDIO_SIZE_MB = 10;
 export const MAX_TEXT_LENGTH = 5000;
 // Use Math.ceil to ensure we accept valid boundary-sized uploads (exact 10MB)
-export const MAX_AUDIO_BASE64_LENGTH = Math.ceil((MAX_AUDIO_SIZE_MB * 1024 * 1024 * 4) / 3);
+export const MAX_AUDIO_BASE64_LENGTH = Math.ceil((MAX_AUDIO_SIZE_MB * 1024 * 1024) / 3) * 4;
 export const MIN_AUDIO_BASE64_LENGTH = 1000;
 export const MIN_AUDIO_ESTIMATED_BYTES = 700;
 

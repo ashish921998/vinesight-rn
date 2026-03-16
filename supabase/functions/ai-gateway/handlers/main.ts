@@ -149,9 +149,11 @@ export async function handleRequest(req: Request): Promise<Response> {
         if (nextRouteState.pending_ambiguous_transcript) {
           effectiveTranscript = nextRouteState.pending_ambiguous_transcript;
         }
+        nextRouteState.pending_ambiguous_transcript = null;
         routeStateDirty = true;
       } else if (clarifyResult.cancelled) {
         nextRouteState.route_clarification_pending = false;
+        nextRouteState.pending_ambiguous_transcript = null;
         routeStateDirty = true;
         routeDecision = 'clarify_route';
         assistantText = clarifyResult.assistantText;
