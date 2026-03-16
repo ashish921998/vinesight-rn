@@ -284,7 +284,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
 
   const syncConversationId = useCallback(
     (id: string) => {
-      if (!conversationId) {
+      if (id && id !== conversationId) {
         setConversationId(id);
       }
     },

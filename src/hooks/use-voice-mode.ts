@@ -173,7 +173,7 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
 
       // Propagate new conversation ID
       const newConversationId = response.message.conversationId;
-      if (newConversationId && !conversationId) {
+      if (newConversationId && newConversationId !== conversationId) {
         onConversationIdChange?.(newConversationId);
       }
 

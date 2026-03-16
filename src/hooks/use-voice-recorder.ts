@@ -329,6 +329,8 @@ export function useVoiceRecorder(
     try {
       await recorder.prepareToRecordAsync();
       recorder.record({ forDuration: MAX_RECORDING_DURATION_SECONDS });
+      // Pre-set to 'maxDuration'; overridden to 'silence' by silence detection or to
+      // undefined by manual stopRecording() before the duration actually expires.
       autoStopReasonRef.current = 'maxDuration';
       return true;
     } catch (startErr) {
