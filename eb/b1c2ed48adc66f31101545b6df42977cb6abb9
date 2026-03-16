@@ -1,0 +1,29 @@
+src/hooks/use-voice-mode.ts
+  c7b673f8091d29a5 332,350,362,366,389,427
+src/hooks/use-assistant.ts
+  c7b673f8091d29a5 89,264-266,268,295-296,310,313,318,320
+supabase/functions/ai-gateway/handlers/main.ts
+  c7b673f8091d29a5 234-239
+src/hooks/use-voice-recorder.ts
+  c7b673f8091d29a5 149,151-153,224-241
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "ebb1c2ed48adc66f31101545b6df42977cb6abb9",
+  "prompts": {
+    "c7b673f8091d29a5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cefed-151c-7f93-9fe8-4f59efe8c398",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 49,
+      "total_deletions": 14,
+      "accepted_lines": 48,
+      "overriden_lines": 0
+    }
+  }
+}
