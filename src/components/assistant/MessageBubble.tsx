@@ -179,7 +179,7 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
             )}
           </>
         )}
-        {isLoading && (
+        {!isUser && isLoading && (
           <View style={styles.loadingRow}>
             <ActivityIndicator
               size="small"

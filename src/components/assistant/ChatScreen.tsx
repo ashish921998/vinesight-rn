@@ -274,11 +274,22 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
       if (!asset) return;
 
       let textContent: string | undefined;
+      let resolvedAssetSize = asset.size;
+      if (resolvedAssetSize === undefined && supportsInlineDocumentRead(asset.mimeType)) {
+        try {
+          const info = await FileSystem.getInfoAsync(asset.uri);
+          if (info.exists && typeof info.size === 'number') {
+            resolvedAssetSize = info.size;
+          }
+        } catch {
+          // Fall through - unresolved size keeps the asset out of inline read
+        }
+      }
       // Guard against large assets - only read small text files inline
       if (
         supportsInlineDocumentRead(asset.mimeType) &&
-        asset.size !== undefined &&
-        asset.size <= MAX_INLINE_TEXT_BYTES
+        resolvedAssetSize !== undefined &&
+        resolvedAssetSize <= MAX_INLINE_TEXT_BYTES
       ) {
         try {
           const rawText = await FileSystem.readAsStringAsync(asset.uri, {

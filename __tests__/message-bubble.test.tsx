@@ -101,6 +101,13 @@ describe('MessageBubble', () => {
     expect(UNSAFE_queryByType(ActivityIndicator)).toBeNull();
   });
 
+  it('does not render loading indicator for user messages', () => {
+    const message = makeMessage({ role: 'user', content: 'Still typing' });
+    const { UNSAFE_queryByType } = render(<MessageBubble message={message} isLoading={true} />);
+    const { ActivityIndicator } = require('react-native');
+    expect(UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+  });
+
   it('renders user message without Markdown component', () => {
     const message = makeMessage({ role: 'user', content: 'Plain text user' });
     const { queryByTestId } = render(<MessageBubble message={message} />);
