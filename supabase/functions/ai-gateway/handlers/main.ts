@@ -393,7 +393,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       provider_fallback_reason: providerFallbackReason,
       model_used: getAdvisoryModel(),
       tool_calls: toolCalls.map((t) => ({ tool: t.tool, status: t.status })),
-      tool_results: toolCalls.map((t) => ({ tool: t.tool, status: t.status })),
+      tool_results: toolCalls.map((t) => ({ tool: t.tool, status: t.status, output: t.output })),
       memory_writes: memoryWrites,
       citations,
       safety_flags: safetyFlags,

@@ -125,6 +125,8 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
   // Initialised to a no-op; updated after useVoiceRecorder is called.
   const startRecordingRef = useRef<() => Promise<boolean>>(async () => false);
   const stopRecordingRef = useRef<() => void>(() => undefined);
+  const clearRecorderErrorRef = useRef<() => void>(() => undefined);
+  const isRecordingRef = useRef(false);
 
   // Tracks the in-flight voice request ID for cancellation
   const voiceRequestIdRef = useRef<string | null>(null);
@@ -288,6 +290,33 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
   useEffect(() => {
     stopRecordingRef.current = stopRecording;
   }, [stopRecording]);
+
+  useEffect(() => {
+    clearRecorderErrorRef.current = clearRecorderError;
+  }, [clearRecorderError]);
+
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
+
+  useEffect(() => {
+    return () => {
+      isOpenRef.current = false;
+
+      if (voiceRequestIdRef.current) {
+        cancelPendingAssistantTurnRequest(voiceRequestIdRef.current);
+        voiceRequestIdRef.current = null;
+      }
+
+      void voiceOutputService.stop();
+
+      if (isRecordingRef.current) {
+        stopRecordingRef.current();
+      }
+
+      clearRecorderErrorRef.current();
+    };
+  }, []);
 
   // ─── Derive combined error ────────────────────────────────────────────────
 

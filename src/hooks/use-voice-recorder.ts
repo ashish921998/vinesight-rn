@@ -304,8 +304,8 @@ export function useVoiceRecorder(
     // ── Prepare + start ────────────────────────────────────────────────────
     try {
       await recorder.prepareToRecordAsync();
-      autoStopReasonRef.current = 'maxDuration';
       recorder.record({ forDuration: MAX_RECORDING_DURATION_SECONDS });
+      autoStopReasonRef.current = 'maxDuration';
       return true;
     } catch (startErr) {
       setError({ kind: 'recording_failed', message: String(startErr) });

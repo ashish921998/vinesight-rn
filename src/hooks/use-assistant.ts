@@ -144,7 +144,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
         currentRequestIdRef.current = null;
 
         const newConversationId = response.message.conversationId;
-        if (newConversationId && !conversationId) {
+        if (newConversationId && newConversationId !== conversationId) {
           setConversationId(newConversationId);
         }
 
@@ -216,7 +216,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
       currentRequestIdRef.current = null;
 
       const newConversationId = response.message.conversationId;
-      if (newConversationId && !conversationId) {
+      if (newConversationId && newConversationId !== conversationId) {
         setConversationId(newConversationId);
       }
 
