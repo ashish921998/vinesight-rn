@@ -329,6 +329,7 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
     }
     return backendError;
   })();
+  const effectiveVoiceState: VoiceModeState = recorderError !== null ? 'error' : voiceState;
 
   // ─── openVoiceMode ────────────────────────────────────────────────────────
 
@@ -346,7 +347,7 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
     setBackendError(null);
     clearRecorderError();
 
-    if (voiceState === 'idle' || voiceState === 'error') {
+    if (effectiveVoiceState === 'idle' || effectiveVoiceState === 'error') {
       // Start recording
       void (async () => {
         const started = await startRecording();
@@ -358,11 +359,11 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
         // startRecording sets recorderError on failure.
         setVoiceState(started ? 'listening' : 'error');
       })();
-    } else if (voiceState === 'listening') {
+    } else if (effectiveVoiceState === 'listening') {
       // Manual stop — result comes via handleRecordingComplete callback
       stopRecording();
       // voiceState transitions to 'processing' in handleRecordingComplete
-    } else if (voiceState === 'speaking') {
+    } else if (effectiveVoiceState === 'speaking') {
       // Interrupt speaking — await TTS stop, then start listening
       void (async () => {
         try {
@@ -385,7 +386,7 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       })();
     }
     // Processing state: orb is disabled in VoiceModeModal — this branch is never reached
-  }, [voiceState, startRecording, stopRecording, clearRecorderError]);
+  }, [effectiveVoiceState, startRecording, stopRecording, clearRecorderError]);
 
   // ─── handleClose ─────────────────────────────────────────────────────────
 
@@ -423,7 +424,7 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
   }, [voiceState, clearRecorderError]);
 
   return {
-    voiceState,
+    voiceState: effectiveVoiceState,
     voiceMessages,
     isVoiceModeVisible,
     openVoiceMode,

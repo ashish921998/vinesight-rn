@@ -231,6 +231,12 @@ export async function handleRequest(req: Request): Promise<Response> {
         // so the user gets a meaningful response instead of an empty assistant_text.
         if (!voiceLogResult.assistantText) {
           routeDecision = 'fallback_llm';
+          if (nextRouteState.voice_log_draft) {
+            nextRouteState.voice_log_draft = null;
+            nextRouteState.voice_log_expected_field = null;
+            nextRouteState.voice_log_clarify_attempts = 0;
+            routeStateDirty = true;
+          }
         } else {
           assistantText = voiceLogResult.assistantText;
           voiceLogAction = voiceLogResult.voiceLogAction;

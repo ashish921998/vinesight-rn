@@ -146,6 +146,11 @@ export function useVoiceRecorder(
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
   // Poll recorder state frequently for responsive silence detection
   const recorderState = useAudioRecorderState(recorder, METERING_POLL_INTERVAL_MS);
+  const isRecordingRef = useRef(false);
+
+  useEffect(() => {
+    isRecordingRef.current = recorderState.isRecording;
+  }, [recorderState.isRecording]);
 
   // ── Internal: read file and fire callback ─────────────────────────────────
 
@@ -215,6 +220,25 @@ export function useVoiceRecorder(
   useEffect(() => {
     handleFinishedRef.current = handleRecordingFinished;
   }, [handleRecordingFinished]);
+
+  useEffect(() => {
+    return () => {
+      silenceStartTimeRef.current = null;
+      autoStopReasonRef.current = undefined;
+
+      if (isRecordingRef.current || isStopRequestedRef.current) {
+        isStopRequestedRef.current = true;
+        void recorder.stop();
+      }
+
+      void setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+        shouldPlayInBackground: false,
+        shouldRouteThroughEarpiece: false,
+      }).catch(() => undefined);
+    };
+  }, [recorder]);
 
   useEffect(() => {
     const isRecordingNow = recorderState.isRecording;

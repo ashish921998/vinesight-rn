@@ -15,7 +15,6 @@
 import { useState, useCallback, useRef } from 'react';
 import {
   sendAssistantTurn,
-  cancelAllPendingAssistantTurnRequests,
   cancelPendingAssistantTurnRequest,
   AssistantGatewayError,
   AssistantGatewayErrorCode,
@@ -87,6 +86,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
   // Tracks the ID of the currently in-flight sendMessage request.
   // Used to cancel superseded requests when a new message is sent mid-flight.
   const currentRequestIdRef = useRef<string | null>(null);
+  const loadConversationRequestRef = useRef(0);
 
   const sendMessage = useCallback(
     async (text?: string) => {
@@ -261,8 +261,11 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
   }, []);
 
   const startNewConversation = useCallback(() => {
-    cancelAllPendingAssistantTurnRequests();
+    if (currentRequestIdRef.current) {
+      cancelPendingAssistantTurnRequest(currentRequestIdRef.current);
+    }
     currentRequestIdRef.current = null;
+    loadConversationRequestRef.current += 1;
     setMessages([]);
     setConversationId(null);
     setIsLoading(false);
@@ -289,8 +292,8 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
   );
 
   const loadConversation = useCallback(async (conversationId: string) => {
-    cancelAllPendingAssistantTurnRequests();
-    currentRequestIdRef.current = null;
+    const loadRequestId = loadConversationRequestRef.current + 1;
+    loadConversationRequestRef.current = loadRequestId;
     setMessages([]);
     setConversationId(conversationId);
     setIsLoading(true);
@@ -304,13 +307,17 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
 
     try {
       const loaded = await assistantMemoryService.loadRecentMessages(conversationId);
+      if (loadConversationRequestRef.current !== loadRequestId) return;
       setMessages(loaded);
     } catch (err) {
+      if (loadConversationRequestRef.current !== loadRequestId) return;
       const normalizedError =
         err instanceof AssistantGatewayError || err instanceof Error ? err : new Error(String(err));
       setError(normalizedError);
     } finally {
-      setIsLoading(false);
+      if (loadConversationRequestRef.current === loadRequestId) {
+        setIsLoading(false);
+      }
     }
   }, []);
 

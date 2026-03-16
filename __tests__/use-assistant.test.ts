@@ -14,16 +14,11 @@
 
 import { renderHook, act } from '@testing-library/react-native';
 import { useAssistant, DEFAULT_SUGGESTIONS } from '@/hooks/use-assistant';
-import {
-  sendAssistantTurn,
-  cancelAllPendingAssistantTurnRequests,
-  cancelPendingAssistantTurnRequest,
-} from '@/services/assistant-gateway';
+import { sendAssistantTurn, cancelPendingAssistantTurnRequest } from '@/services/assistant-gateway';
 import { assistantMemoryService } from '@/services/assistant-memory';
 
 jest.mock('@/services/assistant-gateway', () => ({
   sendAssistantTurn: jest.fn(),
-  cancelAllPendingAssistantTurnRequests: jest.fn(),
   cancelPendingAssistantTurnRequest: jest.fn(),
   AssistantGatewayError: class AssistantGatewayError extends Error {
     code: string;
@@ -57,7 +52,6 @@ jest.mock('@/services/assistant-memory', () => ({
 const mockLoadRecentMessages = assistantMemoryService.loadRecentMessages as jest.Mock;
 
 const mockSendAssistantTurn = sendAssistantTurn as jest.Mock;
-const mockCancelAll = cancelAllPendingAssistantTurnRequests as jest.Mock;
 const mockCancelPending = cancelPendingAssistantTurnRequest as jest.Mock;
 
 const makeResponse = (overrides = {}) => ({
@@ -241,7 +235,7 @@ describe('useAssistant', () => {
     expect(result.current.inputText).toBe('');
     expect(result.current.suggestions).toEqual([]);
     expect(result.current.error).toBeNull();
-    expect(mockCancelAll).toHaveBeenCalled();
+    expect(mockCancelPending).not.toHaveBeenCalled();
   });
 
   it('retryLastMessage re-sends the last user message', async () => {
