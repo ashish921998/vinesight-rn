@@ -329,6 +329,7 @@ export function useVoiceRecorder(
     try {
       await recorder.prepareToRecordAsync();
       recorder.record({ forDuration: MAX_RECORDING_DURATION_SECONDS });
+      isRecordingRef.current = true;
       // Pre-set to 'maxDuration'; overridden to 'silence' by silence detection or to
       // undefined by manual stopRecording() before the duration actually expires.
       autoStopReasonRef.current = 'maxDuration';
@@ -342,17 +343,18 @@ export function useVoiceRecorder(
   // ── Public: stopRecording ─────────────────────────────────────────────────
 
   const stopRecording = useCallback((): void => {
-    if (!recorderState.isRecording || isStopRequestedRef.current) return;
+    if (!isRecordingRef.current || isStopRequestedRef.current) return;
 
     // Reset silence timer before stopping
     silenceStartTimeRef.current = null;
     // Mark as manual stop (overrides the pre-set 'maxDuration')
     autoStopReasonRef.current = undefined;
     isStopRequestedRef.current = true;
+    isRecordingRef.current = false;
 
     void recorder.stop();
     // Result is delivered asynchronously via onRecordingComplete callback
-  }, [recorder, recorderState.isRecording]);
+  }, [recorder]);
 
   const clearError = useCallback((): void => {
     setError(null);

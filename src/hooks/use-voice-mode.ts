@@ -402,26 +402,24 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
     // Stop any active TTS playback
     void voiceOutputService.stop();
 
-    // Stop recording if active
-    if (isRecording) {
-      stopRecording();
-    }
+    // stopRecording is idempotent and uses recorder-owned state
+    stopRecording();
 
     setIsVoiceModeVisible(false);
     setVoiceState('idle');
     setBackendError(null);
     clearRecorderError();
-  }, [isRecording, stopRecording, clearRecorderError]);
+  }, [stopRecording, clearRecorderError]);
 
   // ─── clearVoiceModeError ─────────────────────────────────────────────────
 
   const clearVoiceModeError = useCallback(() => {
     setBackendError(null);
     clearRecorderError();
-    if (voiceState === 'error') {
+    if (effectiveVoiceState === 'error') {
       setVoiceState('idle');
     }
-  }, [voiceState, clearRecorderError]);
+  }, [effectiveVoiceState, clearRecorderError]);
 
   return {
     voiceState: effectiveVoiceState,
