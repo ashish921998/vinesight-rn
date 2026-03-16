@@ -334,6 +334,7 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
         } catch {
           // Ignore TTS stop errors
         }
+        if (!isOpenRef.current) return;
         try {
           const started = await startRecording();
           if (started) {

@@ -152,6 +152,17 @@ export function useVoiceRecorder(
     isProcessingStopRef.current = true;
 
     try {
+      try {
+        await setAudioModeAsync({
+          allowsRecording: false,
+          playsInSilentMode: true,
+          shouldRouteThroughEarpiece: false,
+          shouldPlayInBackground: false,
+        });
+      } catch {
+        // Non-critical
+      }
+
       const uri = recorder.uri;
       if (!uri) {
         setError({ kind: 'recording_failed', message: 'No recording URI available after stop' });
