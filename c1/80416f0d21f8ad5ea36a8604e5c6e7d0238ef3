@@ -1,0 +1,29 @@
+src/components/assistant/ChatScreen.tsx
+  c7b673f8091d29a5 277-287,291-292
+src/utils/haptics.ts
+  c7b673f8091d29a5 8,12,16,20,24
+src/components/assistant/MessageBubble.tsx
+  c7b673f8091d29a5 182
+__tests__/message-bubble.test.tsx
+  c7b673f8091d29a5 104-110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "c180416f0d21f8ad5ea36a8604e5c6e7d0238ef3",
+  "prompts": {
+    "c7b673f8091d29a5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cefed-151c-7f93-9fe8-4f59efe8c398",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 26,
+      "total_deletions": 20,
+      "accepted_lines": 26,
+      "overriden_lines": 0
+    }
+  }
+}
