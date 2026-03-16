@@ -300,8 +300,8 @@ export async function handleRequest(req: Request): Promise<Response> {
         routeDecision,
         citationCount: citations.length,
       });
+      toolCalls.push({ tool: 'safety.check_advice', status: 'ok', output: safetyFlags });
     }
-    toolCalls.push({ tool: 'safety.check_advice', status: 'ok', output: safetyFlags });
     if (safetyFlags.blocked && !blocked) {
       assistantText = buildBlockedAdviceMessage(
         locale,

@@ -218,8 +218,10 @@ export async function assembleContext(input: AssemblerInput): Promise<AssemblerR
   // Generate shared embedding for memory and RAG search (optimization)
   let sharedEmbedding: number[] | null = null;
   if ((memoryEnabled || ragEnabled) && transcript.trim()) {
-    embeddingTokenCounter.value += estimateTokens(transcript);
     sharedEmbedding = await generateEmbedding(transcript);
+    if (sharedEmbedding !== null) {
+      embeddingTokenCounter.value += estimateTokens(transcript);
+    }
   }
 
   // Search memory context

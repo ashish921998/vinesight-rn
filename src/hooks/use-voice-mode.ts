@@ -124,6 +124,7 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
   // onDone callback can trigger auto-listen without a stale closure.
   // Initialised to a no-op; updated after useVoiceRecorder is called.
   const startRecordingRef = useRef<() => Promise<boolean>>(async () => false);
+  const stopRecordingRef = useRef<() => void>(() => undefined);
 
   // Tracks the in-flight voice request ID for cancellation
   const voiceRequestIdRef = useRef<string | null>(null);
@@ -228,11 +229,12 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
             if (!isOpenRef.current) return;
             void (async () => {
               const started = await startRecordingRef.current();
-              if (started) {
-                setVoiceState('listening');
-              } else {
+              if (started && !isOpenRef.current) {
+                stopRecordingRef.current();
                 setVoiceState('idle');
+                return;
               }
+              setVoiceState(started ? 'listening' : 'idle');
             })();
           },
           onStopped: () => {
@@ -283,6 +285,10 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
     startRecordingRef.current = startRecording;
   }, [startRecording]);
 
+  useEffect(() => {
+    stopRecordingRef.current = stopRecording;
+  }, [stopRecording]);
+
   // ─── Derive combined error ────────────────────────────────────────────────
 
   const voiceModeError: VoiceModeError | null = (() => {
@@ -315,12 +321,13 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       // Start recording
       void (async () => {
         const started = await startRecording();
-        if (started) {
-          setVoiceState('listening');
-        } else {
-          // startRecording sets recorderError — transition to error state
-          setVoiceState('error');
+        if (started && !isOpenRef.current) {
+          stopRecordingRef.current();
+          setVoiceState('idle');
+          return;
         }
+        // startRecording sets recorderError on failure.
+        setVoiceState(started ? 'listening' : 'error');
       })();
     } else if (voiceState === 'listening') {
       // Manual stop — result comes via handleRecordingComplete callback
@@ -337,11 +344,12 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
         if (!isOpenRef.current) return;
         try {
           const started = await startRecording();
-          if (started) {
-            setVoiceState('listening');
-          } else {
+          if (started && !isOpenRef.current) {
+            stopRecordingRef.current();
             setVoiceState('idle');
+            return;
           }
+          setVoiceState(started ? 'listening' : 'idle');
         } catch {
           setVoiceState('idle');
         }

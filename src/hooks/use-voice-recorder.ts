@@ -130,8 +130,10 @@ export function useVoiceRecorder(
 
   // Silence detection: tracks when continuous silence started
   const silenceStartTimeRef = useRef<number | null>(null);
-  // Prevents re-entrant stop calls
+  // Prevents duplicate result processing once recording has fully stopped
   const isProcessingStopRef = useRef(false);
+  // Prevents re-entrant stop calls while a stop request is already in flight
+  const isStopRequestedRef = useRef(false);
   // Set just before calling recorder.stop() so handleRecordingFinished knows the reason
   const autoStopReasonRef = useRef<'silence' | 'maxDuration' | undefined>(undefined);
   // True when recording has been active this session (guards the stop-detection effect)
@@ -150,6 +152,7 @@ export function useVoiceRecorder(
   const handleRecordingFinished = useCallback(async () => {
     if (isProcessingStopRef.current) return;
     isProcessingStopRef.current = true;
+    isStopRequestedRef.current = false;
 
     try {
       try {
@@ -233,7 +236,7 @@ export function useVoiceRecorder(
   // ── Effect: silence detection ─────────────────────────────────────────────
 
   useEffect(() => {
-    if (!recorderState.isRecording || isProcessingStopRef.current) return;
+    if (!recorderState.isRecording || isStopRequestedRef.current) return;
 
     const metering = recorderState.metering;
     if (metering === undefined || metering === null) return;
@@ -247,6 +250,7 @@ export function useVoiceRecorder(
         // Silence timeout — auto-stop
         silenceStartTimeRef.current = null;
         autoStopReasonRef.current = 'silence';
+        isStopRequestedRef.current = true;
         void recorder.stop();
       }
     } else {
@@ -261,6 +265,7 @@ export function useVoiceRecorder(
     setError(null);
     silenceStartTimeRef.current = null;
     isProcessingStopRef.current = false;
+    isStopRequestedRef.current = false;
     autoStopReasonRef.current = undefined;
     lastDurationMillisRef.current = 0;
 
@@ -311,12 +316,13 @@ export function useVoiceRecorder(
   // ── Public: stopRecording ─────────────────────────────────────────────────
 
   const stopRecording = useCallback((): void => {
-    if (!recorderState.isRecording || isProcessingStopRef.current) return;
+    if (!recorderState.isRecording || isStopRequestedRef.current) return;
 
     // Reset silence timer before stopping
     silenceStartTimeRef.current = null;
     // Mark as manual stop (overrides the pre-set 'maxDuration')
     autoStopReasonRef.current = undefined;
+    isStopRequestedRef.current = true;
 
     void recorder.stop();
     // Result is delivered asynchronously via onRecordingComplete callback
