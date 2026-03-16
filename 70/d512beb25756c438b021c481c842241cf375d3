@@ -1,0 +1,23 @@
+src/hooks/use-voice-mode.ts
+  c7b673f8091d29a5 127,232-233,235,237,288-291,324-327,329-330,347-348,350,352
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "70d512beb25756c438b021c481c842241cf375d3",
+  "prompts": {
+    "c7b673f8091d29a5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cefed-151c-7f93-9fe8-4f59efe8c398",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 19,
+      "total_deletions": 11,
+      "accepted_lines": 19,
+      "overriden_lines": 0
+    }
+  }
+}
