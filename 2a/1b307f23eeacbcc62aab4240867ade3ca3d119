@@ -1,0 +1,42 @@
+src/components/assistant/ChatScreen.tsx
+  f402c66a4f330c44 434
+supabase/functions/ai-gateway/handlers/main.ts
+  f402c66a4f330c44 129-137
+src/components/assistant/InputBar.tsx
+  f402c66a4f330c44 287
+src/i18n/locales/mr.ts
+  7921c98296f6d74f 124,854-855,1249,2585
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "2a1b307f23eeacbcc62aab4240867ade3ca3d119",
+  "prompts": {
+    "7921c98296f6d74f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_305d7653fffeP7XZxpGCWX9Qpr",
+        "model": "openai/gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 4,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "f402c66a4f330c44": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3059b4871ffegJBgzCjbi0Bb7x",
+        "model": "zai-coding-plan/glm-4.7"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 5,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    }
+  }
+}
