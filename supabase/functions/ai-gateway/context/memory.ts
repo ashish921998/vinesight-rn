@@ -76,10 +76,10 @@ export async function searchMemoryContext(input: {
   if (input.embedding !== undefined) {
     embedding = input.embedding;
   } else {
-    if (input.embeddingTokenCounter) {
+    embedding = await generateEmbedding(input.query);
+    if (embedding && input.embeddingTokenCounter) {
       input.embeddingTokenCounter.value += estimateTokens(input.query);
     }
-    embedding = await generateEmbedding(input.query);
   }
   if (!embedding) {
     input.toolCalls.push({

@@ -309,8 +309,10 @@ export async function handleRequest(req: Request): Promise<Response> {
       );
     }
 
-    // Build safety flags if not already set by advisory handler
-    if (!safetyFlags) {
+    // Only advisory/fallback LLM responses should go through the advisory safety checker.
+    // Clarification, voice-log, and deterministic farm-query responses are control-flow text,
+    // not agronomy advice, and can be falsely blocked by spray/fertigation guardrails.
+    if (!safetyFlags && (routeDecision === 'advisory' || routeDecision === 'fallback_llm')) {
       safetyFlags = buildSafetyFlags({
         adviceText: assistantText,
         transcript: effectiveTranscript,
@@ -318,6 +320,13 @@ export async function handleRequest(req: Request): Promise<Response> {
         citationCount: citations.length,
       });
       toolCalls.push({ tool: 'safety.check_advice', status: 'ok', output: safetyFlags });
+    } else if (!safetyFlags) {
+      safetyFlags = {
+        blocked: false,
+        risk_level: 'low',
+        reasons: [],
+        escalation_suggested: false,
+      };
     }
     if (safetyFlags.blocked && !blocked) {
       assistantText = buildBlockedAdviceMessage(
