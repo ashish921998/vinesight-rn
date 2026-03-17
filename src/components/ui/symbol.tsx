@@ -20,6 +20,8 @@ const SYMBOL_TO_MATERIAL_ICON: Record<string, keyof typeof MaterialCommunityIcon
   'house.fill': 'barn',
   spraycan: 'spray-bottle',
   'spraycan.fill': 'spray-bottle',
+  brain: 'brain',
+  'brain.fill': 'brain',
 };
 
 // Map SF Symbol names to Ionicons as fallback
@@ -173,6 +175,10 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   // Eye icons for password visibility toggle
   eye: 'eye-outline',
   'eye.slash': 'eye-off-outline',
+
+  // AI Assistant
+  sparkles: 'sparkles-outline',
+  'sparkles.fill': 'sparkles',
 
   // Additional common mappings
   'chevron.up.chevron.down': 'swap-vertical',

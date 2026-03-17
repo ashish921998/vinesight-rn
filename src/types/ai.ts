@@ -118,4 +118,6 @@ export interface AssistantTurnResponse {
   ttsGenerationMs?: number | null;
   ttsSkippedReason?: string | null;
   providerFallbackReason?: string | null;
+  /** Transcript of the user's audio input (only present for audio input_mode) */
+  userTranscript?: string | null;
 }

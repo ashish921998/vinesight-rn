@@ -113,6 +113,18 @@ class VoiceOutputService {
   ): Promise<void> {
     const text = response.message.content?.trim();
     const audio = response.message.audio;
+    if (__DEV__) {
+      console.log('[voice-output] playAssistantTurn entry:', {
+        hasText: Boolean(text),
+        textLength: text?.length ?? 0,
+        hasAudio: Boolean(audio),
+        hasBase64: Boolean(audio?.base64),
+        base64Length: audio?.base64?.length ?? 0,
+        mimeType: audio?.mimeType ?? null,
+        provider: audio?.provider ?? null,
+        allowDeviceFallback: options.allowDeviceFallback !== false,
+      });
+    }
     let replacedAudioUri: string | null = null;
     let replacedAudioUriDeleted = false;
     this.lastLanguage = options.language;
@@ -152,9 +164,12 @@ class VoiceOutputService {
         }
 
         const played = await this.playAudioUri(fileUri, options);
+        if (__DEV__)
+          console.log('[voice-output] playAudioUri result:', played, 'fileUri:', fileUri);
         if (played) return;
       }
 
+      if (__DEV__) console.log('[voice-output] Falling back to Speech.speak (device TTS)');
       if (text && options.allowDeviceFallback !== false) {
         options.onStateChange?.(true);
         Speech.speak(text, {

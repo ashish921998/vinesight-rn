@@ -1,0 +1,46 @@
+{
+  "featureId": "be-modular-structure",
+  "reviewedAt": "2026-03-14T17:37:44Z",
+  "commitId": "3fa9a204c09c448f6d28fea96320eaabfea7a07e",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Current HEAD still fails the modular-structure contract. The live STT validation/error path still returns fake `Response` objects, the ai-gateway response still omits client-consumed timing fields, oversized files still violate the 500-line limit, and the extracted handler modules are still not the live request flow.",
+    "issues": [
+      {
+        "file": "supabase/functions/ai-gateway/handlers/request-processor.ts",
+        "line": 112,
+        "severity": "blocking",
+        "description": "`processStt()` still returns plain objects cast as `Response` on live validation/error branches (`handlers/request-processor.ts:112-226`). `handleRequest()` returns `sttResult.response` directly at `handlers/main.ts:116-117`, so invalid-audio, empty-transcript, and text-too-long paths still do not produce real HTTP `Response` instances at runtime."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/handlers/main.ts",
+        "line": 424,
+        "severity": "blocking",
+        "description": "The live response payload still omits `stt_latency_ms`, `tts_generation_ms`, and `tts_skipped_reason`. `handlers/main.ts:424-446` returns none of those fields, while the client still reads them in `src/services/assistant-gateway.ts:766-795` and the response-mapping test fixture still expects them in `__tests__/assistant-gateway.test.ts:76-79`. That still breaks the feature requirement to preserve the response contract during the refactor."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/context/farm-data.ts",
+        "line": 1,
+        "severity": "blocking",
+        "description": "The file-size requirement still fails at HEAD. Current line counts in `supabase/functions/ai-gateway/` are `context/farm-data.ts` 1664 lines, `routing/router.ts` 1406 lines, and legacy `voice-routing.ts` 1364 lines, so VAL-BE-030 / the feature's 'no single file exceeds 500 lines' requirement is still unmet."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/handlers/main.ts",
+        "line": 225,
+        "severity": "blocking",
+        "description": "The specialized handler modules are still not the live request path. `handlers/main.ts:225-305` handles clarify and voice-log logic inline, there is no `routeDecision === 'farm_query'` branch in `handlers/main.ts`, and `handleAdvisory`, `handleFarmQuery`, `handleVoiceLog`, and `handleClarify` only appear in their own module files plus `handlers/index.ts`. The refactored entry flow still does not route requests through the extracted handler modules, and `farm_query` decisions fall through into the generic advisory path."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill still describes TDD for edge-function modules, but it does not address this repo's Jest/Deno boundary, and the original handoff still reported `followedProcedure: true` with no tests added. That mismatch is still allowing refactors to be 'covered' by cloned helper logic in Jest files instead of imports from the real edge-function modules.",
+      "evidence": "`.factory/skills/backend-worker/SKILL.md:34-38` requires failing tests for new modules; the original handoff shows `tests.added` empty and `followedProcedure: true` in `/Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/handoffs/2026-03-14T16-19-11-095Z__be-modular-structure__a0261c2e-ffff-4534-9351-57d8f998d9c5.json:42-49`; current tests such as `__tests__/context-assembler.test.ts:8-70` and `__tests__/farm-data-module.test.ts:11-46` still define local helper implementations instead of importing the gateway modules."
+    }
+  ],
+  "addressesFailureFrom": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/validation/backend-refactor/scrutiny/reviews/be-modular-structure.json",
+  "summary": "Fail. Current HEAD still does not satisfy be-modular-structure: live STT error paths return fake `Response` objects, the gateway response still drops client-consumed timing fields, oversized ai-gateway files remain, and the extracted handler modules are still not wired into the live request flow."
+}

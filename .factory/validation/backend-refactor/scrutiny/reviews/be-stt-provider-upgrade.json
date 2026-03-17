@@ -1,0 +1,46 @@
+{
+  "featureId": "be-stt-provider-upgrade",
+  "reviewedAt": "2026-03-14T17:38:25.122966+00:00",
+  "commitId": "eced77b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Fail. Reviewing current HEAD (3fa9a20) shows the prior blockers are still present in the live audio path (`handlers/main.ts:116` -> `handlers/request-processor.ts:90`): the 10MB guard still rejects some exact-boundary uploads, the Sarvam STT circuit breaker still preserves failure count across successes instead of requiring five consecutive failures, and empty transcripts are only normalized for the Sarvam sentinel, so blank OpenAI fallback/direct responses still miss the required HTTP 400 `EMPTY_TRANSCRIPT` behavior. The STT test file also remains largely placeholder coverage rather than exercising `transcribeAudio()` or `processStt()`.",
+    "issues": [
+      {
+        "file": "supabase/functions/ai-gateway/utils/audio.ts",
+        "line": 124,
+        "severity": "blocking",
+        "description": "`MAX_AUDIO_BASE64_LENGTH` is still `floor((10MB * 4) / 3)`, which evaluates to 13,981,013. A valid 10MB payload encodes to `4 * ceil(10,485,760 / 3) = 13,981,016` base64 characters, so `handlers/request-processor.ts:143` still rejects some exactly-10MB uploads as `AUDIO_TOO_LARGE`. The 10MB boundary bug remains unresolved."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/utils/circuit-breaker.ts",
+        "line": 75,
+        "severity": "blocking",
+        "description": "`recordProviderSuccess()` still decrements `failures` by one instead of resetting it to zero. That means the breaker opens after failures-minus-successes reaches five, not after five consecutive Sarvam STT failures as required. For example, a sequence like `FF S FF S FFF` still trips the breaker even though no five-failure streak occurred."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/handlers/request-processor.ts",
+        "line": 178,
+        "severity": "blocking",
+        "description": "The live request path only converts errors containing `stt_empty_transcript` into HTTP 400 `EMPTY_TRANSCRIPT`, but `providers/stt.ts:194` still throws `OpenAI STT returned empty transcript`. When OpenAI is reached directly or as the Sarvam fallback and returns blank text, the error still escapes as a generic failure instead of the required 400 contract response."
+      },
+      {
+        "file": "__tests__/stt-provider.test.ts",
+        "line": 139,
+        "severity": "non_blocking",
+        "description": "The STT test file still does not import or execute `transcribeAudio()` or `processStt()`. Placeholder/comment-only cases remain at `139-151`, `251-265`, `279-280`, `316-318`, and `336`, so the suite still would not catch the blocking regressions above."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `backend-worker` skill guidance still is not preventing placeholder backend tests from being accepted as full TDD coverage in handoffs.",
+      "evidence": "`.factory/skills/backend-worker/SKILL.md:34-38` requires tests covering happy path, error cases, edge cases, fallback behavior, and mocked APIs, but `__tests__/stt-provider.test.ts:139-151`, `251-265`, `279-280`, and `316-318` are placeholder/comment-only cases that never execute `transcribeAudio()` or `processStt()`. The handoff `/Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/handoffs/2026-03-14T16-30-08-733Z__be-stt-provider-upgrade__5a43e2c7-4e20-4c9b-ae4e-f63c12de3b8d.json:10-11,90` still claims comprehensive STT tests and marks `skillFeedback.followedProcedure: true`."
+    }
+  ],
+  "addressesFailureFrom": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/validation/backend-refactor/scrutiny/reviews/be-stt-provider-upgrade.json",
+  "summary": "Fail. Current HEAD still rejects some exactly-10MB uploads, still opens the Sarvam STT breaker based on a decayed cumulative failure count instead of five consecutive failures, and still lets blank OpenAI transcripts miss the required HTTP 400 `EMPTY_TRANSCRIPT` path. The review report was updated at the requested output path."
+}

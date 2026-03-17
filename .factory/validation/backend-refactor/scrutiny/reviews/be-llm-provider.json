@@ -1,0 +1,45 @@
+{
+  "featureId": "be-llm-provider",
+  "reviewedAt": "2026-03-14T17:38:02Z",
+  "commitId": "7455b1d",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Current HEAD still contains the real provider exports and call sites: `providers/llm.ts` exports `chatCompletion()`/`extractIntent()`, `providers/embeddings.ts` exports `generateEmbedding()`, `routing/intent.ts` still calls `extractIntentWithTimeout()`, and `handlers/main.ts` still generates one `sharedQueryEmbedding` that it passes to both memory and RAG search. However, the prior blocking scrutiny finding is still unresolved. The only feature-specific tests remain tautological constant/object assertions that do not import or execute the provider modules or the live shared-embedding path, and `git log` for the relevant files still shows only the original provider/test commits (`a493955`, `7455b1d`) with no later fix. The advisory provider also still places context blocks in the user message rather than the system prompt required by the feature description.",
+    "issues": [
+      {
+        "file": "__tests__/llm-provider.test.ts",
+        "line": 137,
+        "severity": "blocking",
+        "description": "The prior blocking issue remains unresolved. This suite still never imports or executes `chatCompletion()`, `extractIntent()`, or their timeout wrappers from `supabase/functions/ai-gateway/providers/llm.ts`; representative assertions at lines 137-145, 349-361, and 547-548 only compare local literals or hand-built objects. Repo-wide search across `__tests__` found no `chatCompletion(`, `extractIntent(`, `chatCompletionWithTimeout(`, or `extractIntentWithTimeout(` call, so GPT-4o-mini advisory behavior, locale-specific system prompting, and JSON-mode extraction are still not meaningfully verified."
+      },
+      {
+        "file": "__tests__/embeddings-provider.test.ts",
+        "line": 112,
+        "severity": "blocking",
+        "description": "The prior blocking issue remains unresolved here as well. This suite still never imports or executes `generateEmbedding()` or the live shared-embedding call path; representative assertions at lines 112-114 and 349-380 only compare constants or a hand-built `sharedEmbedding` array. Repo-wide search across `__tests__` found no `generateEmbedding(` or `sharedQueryEmbedding`, so the real provider behavior and the single-embedding reuse implemented in `supabase/functions/ai-gateway/handlers/main.ts:290-311` / `context/{memory,rag}.ts` are still not behaviorally verified."
+      },
+      {
+        "file": "supabase/functions/ai-gateway/providers/llm.ts",
+        "line": 49,
+        "severity": "non_blocking",
+        "description": "The advisory provider still appends `contextBlocks` to the user message (`role: 'user'` at lines 68-69) while the system message at lines 64-65 contains only language and safety instructions. The feature description explicitly required farm, memory, RAG, and attachment context to be injected into the advisory system prompt."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill still leaves a procedural gap between 'write failing tests' and 'execute the implementation under test'. That gap allowed this feature to ship 1,482 lines of constant-only tests while the worker still reported `followedProcedure: true` and claimed the providers were behaviorally verified.",
+      "evidence": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/skills/backend-worker/SKILL.md:34-38 requires failing tests but never says those tests must import/invoke the real module; the transcript skeleton for worker session 7f50f09b-c4ae-466a-955c-403cd75db223 shows the worker created `__tests__/llm-provider.test.ts` and `__tests__/embeddings-provider.test.ts` after reading the providers; the handoff at /Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/handoffs/2026-03-14T16-39-24-918Z__be-llm-provider__7f50f09b-c4ae-466a-955c-403cd75db223.json:10-11,94 says the tests verified provider behavior and marks `followedProcedure: true`, but the current test files still only contain local assertions at __tests__/llm-provider.test.ts:137-145 and __tests__/embeddings-provider.test.ts:112-114,349-380."
+    },
+    {
+      "area": "services",
+      "observation": "Shared guidance is still inconsistent about how backend tests should be run in this repo. The feature metadata and backend-worker skill prescribe `npm test -- --grep ...`, but `.factory/services.yaml` defines the canonical test command as raw Jest with repo-specific ignore patterns.",
+      "evidence": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/skills/backend-worker/SKILL.md:50-52 says `npm test -- --grep '<relevant pattern>'`; /Users/ashishhuddar/.factory/missions/3b1a7cfb-d88a-401b-9d72-9169dc74b157/features.json:578-580 gives `npm test -- --grep 'llm\\|embedding'`; /Users/ashishhuddar/Desktop/vinesight-rn/.factory/services.yaml:1-6 defines `test: npx jest --maxWorkers=4 --testPathIgnorePatterns=...`."
+    }
+  ],
+  "addressesFailureFrom": "/Users/ashishhuddar/Desktop/vinesight-rn/.factory/validation/backend-refactor/scrutiny/reviews/be-llm-provider.json",
+  "summary": "Fail. Current HEAD still exports the LLM and embeddings providers and still reuses one query embedding for memory + RAG, but the prior blocking scrutiny issue is unchanged: the feature-specific tests remain tautological and do not execute `llm.ts`, `embeddings.ts`, or the live shared-embedding path. The advisory provider also still puts context into the user message instead of the system prompt required by the feature spec."
+}

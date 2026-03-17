@@ -1,5 +1,4 @@
-import { sendAssistantTurn } from '@/services/assistant-gateway';
-import { aiService } from '@/services/ai-service';
+import { sendAssistantTurn, AssistantGatewayErrorCode } from '@/services/assistant-gateway';
 
 const mockInvoke = jest.fn();
 const mockGetSession = jest.fn();
@@ -12,12 +11,6 @@ jest.mock('@/lib/supabase', () => ({
     auth: {
       getSession: (...args: unknown[]) => mockGetSession(...args),
     },
-  },
-}));
-
-jest.mock('@/services/ai-service', () => ({
-  aiService: {
-    sendMessage: jest.fn(),
   },
 }));
 
@@ -108,38 +101,25 @@ describe('assistant-gateway', () => {
     expect(response.ttsGenerationMs).toBe(560);
   });
 
-  it('falls back to legacy ai service when ai-gateway fails', async () => {
+  it('throws a server error when ai-gateway fails (no legacy fallback)', async () => {
     mockInvoke.mockResolvedValue({
       data: null,
       error: { message: 'Function not found' },
     });
 
-    (aiService.sendMessage as jest.Mock).mockResolvedValue({
-      message: {
-        id: 'legacy-1',
-        role: 'assistant',
-        content: 'Legacy fallback response',
-        timestamp: new Date('2026-02-13T00:00:00Z'),
-      },
-      suggestions: ['Try this week history'],
-    });
-
-    const response = await sendAssistantTurn({
-      conversationId: null,
-      userMessage: 'What should I do for powdery mildew?',
-      language: 'en',
-      inputMode: 'text',
-      conversationHistory: [],
-      attachments: [],
-      farmContext: {
-        farmId: 22,
-      },
-    });
-
-    expect(aiService.sendMessage).toHaveBeenCalledTimes(1);
-    expect(response.message.content).toBe('Legacy fallback response');
-    expect(response.suggestions).toEqual(['Try this week history']);
-    expect(response.providerUsed).toBe('openai-proxy');
+    await expect(
+      sendAssistantTurn({
+        conversationId: null,
+        userMessage: 'What should I do for powdery mildew?',
+        language: 'en',
+        inputMode: 'text',
+        conversationHistory: [],
+        attachments: [],
+        farmContext: {
+          farmId: 22,
+        },
+      }),
+    ).rejects.toMatchObject({ code: AssistantGatewayErrorCode.SERVER_ERROR });
   });
 
   it('downgrades audio input mode to text when raw audio payload is missing', async () => {

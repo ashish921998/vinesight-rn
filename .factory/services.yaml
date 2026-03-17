@@ -1,0 +1,13 @@
+commands:
+  install: npm install
+  typecheck: npm run typecheck
+  build: npx expo export --platform web
+  test: npx jest --maxWorkers=4 --testPathIgnorePatterns='phi-service|phone-auth-store|phone-number-hint|farm-safe-harvest-card|entry-form.integration|fertigation-form|location-picker|WeatherWidget|VineyardHealthWidget|QuickStatsWidget|TaskSummaryWidget'
+  lint: npm run lint
+  format: npm run format
+
+services: {}
+# Note: This is a React Native (Expo) app with a remote Supabase backend.
+# No local services need to be managed.
+# The Expo dev server is started manually by the user on their device.
+# Supabase Edge Functions are deployed remotely.

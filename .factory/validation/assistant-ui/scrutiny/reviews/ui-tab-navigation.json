@@ -1,0 +1,44 @@
+{
+  "featureId": "ui-tab-navigation",
+  "reviewedAt": "2026-03-14T20:18:26Z",
+  "commitId": "89b3d3a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The tab/header wiring, i18n additions, and hidden settings route were implemented, but the reviewed commit does not fully satisfy the validation scope it claims: the new assistant route is only a placeholder screen, not the chat screen required by VAL-UI-003. The added tests are also limited to static key/icon assertions and do not exercise the navigation behavior changed in app/(tabs)/_layout.tsx.",
+    "issues": [
+      {
+        "file": "app/(tabs)/assistant.tsx",
+        "line": 1,
+        "severity": "blocking",
+        "description": "The feature's fulfills list includes VAL-UI-003, but this commit's new assistant route only renders a static placeholder view instead of the AI chat screen required by that assertion. features.json explicitly records VAL-UI-003 for ui-tab-navigation (features.json:684-688), while the later ui-chat-screen-core feature is the one that actually says it will wire ChatScreen into app/(tabs)/assistant.tsx (features.json:699-706)."
+      },
+      {
+        "file": "__tests__/ui-tab-navigation.test.ts",
+        "line": 15,
+        "severity": "non_blocking",
+        "description": "The added test coverage only checks locale keys and raw Ionicons glyph-map entries; it never renders the tab layout or verifies the changed behaviors in app/(tabs)/_layout.tsx (assistant tab registration, hidden settings tab, or dashboard settings-button navigation). A wiring regression in the actual navigation code could still pass this suite."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The feature-to-validation mapping is ahead of the implementation: ui-tab-navigation allows a placeholder assistant screen in its description, but it is marked as fulfilling VAL-UI-003 ('AI Assistant tab navigates to chat screen'). That assertion really belongs with the later ui-chat-screen-core feature that wires ChatScreen into app/(tabs)/assistant.tsx.",
+      "evidence": "Mission features.json:664 says app/(tabs)/assistant.tsx can be 'a placeholder that renders a simple view for now'; features.json:684-688 still assigns VAL-UI-003 to ui-tab-navigation; features.json:699-706 says ui-chat-screen-core will 'Wire this screen into app/(tabs)/assistant.tsx'."
+    },
+    {
+      "area": "skills",
+      "observation": "The frontend-worker skill's strict TDD step does not match how simple navigation/i18n wiring work is actually being executed in this repo. The worker implemented the screen/layout changes first and only later created __tests__/ui-tab-navigation.test.ts, and the handoff itself asks for the skill to be relaxed for this kind of feature.",
+      "evidence": "worker-transcripts.jsonl entry for session 89555630-3fb6-437a-823d-b701a55beb4a shows Create app/(tabs)/assistant.tsx before Create __tests__/ui-tab-navigation.test.ts; handoff 2026-03-14T18-59-07-277Z__ui-tab-navigation__89555630-3fb6-437a-823d-b701a55beb4a.json:86-89 records followedProcedure=true but suggests changing the TDD guidance for navigation/i18n smoke tests."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The NativeTabs headerRight typing quirk is now a repo-specific navigation pattern but is not captured in shared docs. The worker had to discover that NativeTabOptions omits headerRight and work around it by spreading a separate object into the trigger options.",
+      "evidence": "app/(tabs)/_layout.tsx:57-59 documents the workaround inline ('headerRight is not in NativeTabOptions typings'); the handoff.discoveredIssues section calls out the same expo-router/unstable-native-tabs typing gap."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed. The navigation refactor itself is mostly sound, but the reviewed commit overclaims fulfillment by marking VAL-UI-003 complete while only shipping a placeholder assistant screen, and its tests do not cover the actual tab/header behavior that changed."
+}
