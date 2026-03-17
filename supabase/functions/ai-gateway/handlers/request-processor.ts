@@ -16,7 +16,6 @@ import {
   normalizeInputText,
   readConversationRouteState,
   resolveConversationId,
-  resolveLocale,
   stringifyUnknown,
   writeConversationTurn,
 } from '../utils/index.ts';
@@ -26,14 +25,6 @@ import { transcribeAudio } from '../providers/index.ts';
 import { fetchUserFarms, type ToolCall } from '../context/index.ts';
 import type { AssistantGatewayRequest, AssistantRouteState } from '../types.ts';
 import type { VoiceLogDraft, VoiceLogMissingField } from '../routing/index.ts';
-
-export interface RequestSetup {
-  body: AssistantGatewayRequest;
-  authenticatedUserId: string;
-  locale: 'en' | 'hi' | 'mr';
-  providerFallbackEnabled: boolean;
-  clientPersistedUserTurn: boolean;
-}
 
 export interface SttResult {
   transcript: string;
@@ -50,36 +41,6 @@ export interface ConversationSetup {
   farmsForRouting: Array<{ id: number; name: string }>;
   contextFarmForRouting: { id: number; name: string } | null;
   routeState: AssistantRouteState;
-}
-
-/**
- * Validate and setup request
- */
-export async function setupRequest(
-  req: Request,
-  _traceId: string,
-): Promise<{ setup: RequestSetup | null; response: Response | null }> {
-  let body: AssistantGatewayRequest;
-  try {
-    body = (await req.json()) as AssistantGatewayRequest;
-  } catch {
-    return {
-      setup: null,
-      response: jsonResponse({ error: 'Invalid JSON request body' }, 400),
-    };
-  }
-
-  // Auth is handled in main.ts - return body for now
-  return {
-    setup: {
-      body,
-      authenticatedUserId: '',
-      locale: resolveLocale(body?.locale),
-      providerFallbackEnabled: true,
-      clientPersistedUserTurn: false,
-    },
-    response: null,
-  };
 }
 
 /**
@@ -254,7 +215,16 @@ export async function setupConversation(
   );
 
   const clientPersistedUserTurn = body?.client_capabilities?.client_persisted_user_turn === true;
-  if (conversationId && !clientPersistedUserTurn) {
+  if (!conversationId) {
+    console.warn(
+      'setupConversation: resolveConversationId returned null; skipping user-turn persistence',
+      {
+        suppliedConversationId: body?.conversation_id ?? null,
+        userId,
+        farmId,
+      },
+    );
+  } else if (!clientPersistedUserTurn) {
     await writeConversationTurn({
       conversationId,
       userId,

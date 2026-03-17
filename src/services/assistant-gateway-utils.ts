@@ -8,7 +8,7 @@ import {
 } from '@/services/assistant-gateway-types';
 
 const MAX_AUDIO_SIZE_BYTES = 10 * 1024 * 1024;
-const MAX_AUDIO_BASE64_LENGTH = Math.ceil((MAX_AUDIO_SIZE_BYTES * 4) / 3);
+const MAX_AUDIO_BASE64_LENGTH = Math.ceil(MAX_AUDIO_SIZE_BYTES / 3) * 4;
 
 function toDebugString(value: unknown, maxLength = 1200): string {
   try {

@@ -231,9 +231,10 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
             if (!isOpenRef.current) return;
             void (async () => {
               const started = await startRecordingRef.current();
-              if (started && !isOpenRef.current) {
-                stopRecordingRef.current();
-                setVoiceState('idle');
+              if (!isOpenRef.current) {
+                if (started) {
+                  stopRecordingRef.current();
+                }
                 return;
               }
               setVoiceState(started ? 'listening' : 'idle');
@@ -351,9 +352,10 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       // Start recording
       void (async () => {
         const started = await startRecording();
-        if (started && !isOpenRef.current) {
-          stopRecordingRef.current();
-          setVoiceState('idle');
+        if (!isOpenRef.current) {
+          if (started) {
+            stopRecordingRef.current();
+          }
           return;
         }
         // startRecording sets recorderError on failure.
@@ -374,9 +376,10 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
         if (!isOpenRef.current) return;
         try {
           const started = await startRecording();
-          if (started && !isOpenRef.current) {
-            stopRecordingRef.current();
-            setVoiceState('idle');
+          if (!isOpenRef.current) {
+            if (started) {
+              stopRecordingRef.current();
+            }
             return;
           }
           setVoiceState(started ? 'listening' : 'idle');
