@@ -1,0 +1,25 @@
+supabase/functions/ai-gateway/context/memory.ts
+  d4408dd5634bfde6 79-80
+supabase/functions/ai-gateway/handlers/main.ts
+  d4408dd5634bfde6 312-315,323-329
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "f7493bc9c0ccc9ae0f2ee124e5f7b3cb4728bb23",
+  "prompts": {
+    "d4408dd5634bfde6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cfc26-edf5-7a22-8c72-e3facb1a11e2",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 4,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
