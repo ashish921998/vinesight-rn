@@ -271,10 +271,19 @@ export function toSafetyMeta(
   input: AssistantGatewayResponse['safety_flags'],
 ): AssistantSafetyMeta | null {
   if (!input) return null;
+  const riskLevel =
+    input.risk_level === 'low' ||
+    input.risk_level === 'medium' ||
+    input.risk_level === 'high' ||
+    input.risk_level === 'critical'
+      ? input.risk_level
+      : 'low';
   return {
     blocked: input.blocked === true,
-    riskLevel: input.risk_level ?? 'low',
-    reasons: Array.isArray(input.reasons) ? input.reasons : [],
+    riskLevel,
+    reasons: Array.isArray(input.reasons)
+      ? input.reasons.filter((reason): reason is string => typeof reason === 'string')
+      : [],
     escalationSuggested: input.escalation_suggested === true,
   };
 }
@@ -336,14 +345,16 @@ export function toVoiceLogAction(
 }
 
 export function buildAudioPayload(response: AssistantGatewayResponse): AssistantAudio | null {
-  const hasAudio = Boolean(response.assistant_audio_b64 || response.assistant_audio_url);
+  const base64 = response.assistant_audio_b64?.trim() || null;
+  const url = response.assistant_audio_url?.trim() || null;
+  const hasAudio = Boolean(base64 || url);
   if (!hasAudio) return null;
 
   return {
     provider: response.audio_provider_used ?? undefined,
     mimeType: response.assistant_audio_mime_type ?? 'audio/mpeg',
-    base64: response.assistant_audio_b64 ?? null,
-    url: response.assistant_audio_url ?? null,
+    base64,
+    url,
   };
 }
 
