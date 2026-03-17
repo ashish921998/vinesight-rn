@@ -1,0 +1,27 @@
+__tests__/use-assistant.test.ts
+  d4408dd5634bfde6 167-183
+src/hooks/use-assistant.ts
+  d4408dd5634bfde6 137,210
+supabase/functions/ai-gateway/handlers/farm-query.ts
+  d4408dd5634bfde6 9,37,51-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "81f480160f106e341544e2d67bdf79183dcf5d61",
+  "prompts": {
+    "d4408dd5634bfde6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cfc26-edf5-7a22-8c72-e3facb1a11e2",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 34,
+      "total_deletions": 16,
+      "accepted_lines": 32,
+      "overriden_lines": 0
+    }
+  }
+}
