@@ -47,7 +47,7 @@ function toErrorMessage(error: unknown): string {
 }
 
 export function normalizeBase64Payload(value: string): string {
-  return value.replace(/^data:[^;]+;base64,/i, '').trim();
+  return value.replace(/^data:[^;]+(?:;[^,]+)*;base64,/i, '').trim();
 }
 
 function normalizeBase64Padding(value: string): string {
@@ -138,7 +138,7 @@ export function parseInvokeError(
     ...(extras ?? {}),
   };
 
-  const errObj = error as Record<string, unknown>;
+  const errObj = error && typeof error === 'object' ? (error as Record<string, unknown>) : {};
   const status =
     typeof errObj.status === 'number'
       ? errObj.status
@@ -283,6 +283,14 @@ export function toVoiceLogAction(
   input: AssistantGatewayResponse['voice_log_action'],
 ): AssistantVoiceLogAction | null {
   if (!input || !input.kind) return null;
+  const kind =
+    input.kind === 'none' ||
+    input.kind === 'cancelled' ||
+    input.kind === 'clarify' ||
+    input.kind === 'ready'
+      ? input.kind
+      : null;
+  if (!kind) return null;
 
   const expectedFieldRaw = typeof input.expected_field === 'string' ? input.expected_field : null;
   const expectedField =
@@ -314,7 +322,7 @@ export function toVoiceLogAction(
     : undefined;
 
   return {
-    kind: input.kind,
+    kind,
     draft: isVoiceLogDraft(input.draft) ? input.draft : null,
     prefill: isVoiceLogFormPrefill(input.prefill) ? input.prefill : null,
     missingFields,
