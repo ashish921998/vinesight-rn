@@ -6,6 +6,7 @@
 import {
   queryFarmRecords,
   detectActivity,
+  detectQueryType,
   type Citation,
   type ToolCall,
 } from '../context/index.ts';
@@ -33,19 +34,7 @@ export async function handleFarmQuery(
   const { transcript, userId, farmId, locale, toolCalls } = input;
 
   const activity = detectActivity(transcript);
-
-  if (!activity) {
-    return {
-      assistantText:
-        locale === 'hi'
-          ? 'कृपया बताएं आप किस गतिविधि के बारे में जानना चाहते हैं।'
-          : locale === 'mr'
-            ? 'कृपया सांगा आप कोणत्या क्रियाकलापाबद्दल जाणून घेऊन इच्छिता.'
-            : 'Please specify which activity you want to know about.',
-      citations: [],
-      activity: null,
-    };
-  }
+  const queryType = detectQueryType(transcript);
 
   const result = await queryFarmRecords({
     transcript,
@@ -57,7 +46,19 @@ export async function handleFarmQuery(
   });
 
   return {
-    assistantText: result.answer ?? '',
+    assistantText:
+      result.answer ??
+      (queryType === 'weather'
+        ? locale === 'hi'
+          ? 'मौसम संबंधी सवाल के लिए थोड़ा और संदर्भ दें।'
+          : locale === 'mr'
+            ? 'हवामानाच्या प्रश्नासाठी थोडा अधिक संदर्भ द्या.'
+            : 'Please share a bit more context for the weather question.'
+        : locale === 'hi'
+          ? 'कृपया बताएं आप किस रिकॉर्ड के बारे में जानना चाहते हैं।'
+          : locale === 'mr'
+            ? 'कृपया सांगा तुम्हाला कोणत्या नोंदीबद्दल माहिती हवी आहे.'
+            : 'Please specify which record you want to know about.'),
     citations: result.citations,
     activity,
   };

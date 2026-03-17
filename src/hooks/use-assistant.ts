@@ -134,7 +134,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
             inputMode: 'text',
             farmContext: options.farmContext,
             attachments: pendingAttachments.length > 0 ? pendingAttachments : undefined,
-            clientPersistedUserTurn: true,
+            clientPersistedUserTurn: false,
           },
           { requestId },
         );
@@ -207,7 +207,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
           inputMode: 'text',
           farmContext: options.farmContext,
           attachments: lastAttachments.length > 0 ? lastAttachments : undefined,
-          clientPersistedUserTurn: true,
+          clientPersistedUserTurn: false,
         },
         { requestId },
       );

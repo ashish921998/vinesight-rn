@@ -164,6 +164,23 @@ describe('useAssistant', () => {
     );
   });
 
+  it('sendMessage leaves server-side user-turn persistence enabled', async () => {
+    mockSendAssistantTurn.mockResolvedValue(makeResponse());
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+
+    await act(async () => {
+      await result.current.sendMessage('Persist this');
+    });
+
+    expect(mockSendAssistantTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userMessage: 'Persist this',
+        clientPersistedUserTurn: false,
+      }),
+      expect.anything(),
+    );
+  });
+
   it('does not send empty message', async () => {
     const { result } = renderHook(() => useAssistant({ language: 'en' }));
 
