@@ -25,6 +25,10 @@ interface StatsCardProps {
   color?: string;
   iconColor?: string;
   subtitle?: string;
+  valueUnit?: string;
+  valueSuffix?: string;
+  valueUnitStyle?: TextStyle;
+  valueSuffixStyle?: TextStyle;
   onPress?: () => void;
   isLoading?: boolean;
 }
@@ -36,13 +40,19 @@ export function StatsCard({
   color,
   iconColor,
   subtitle,
+  valueUnit,
+  valueSuffix,
+  valueUnitStyle,
+  valueSuffixStyle,
   onPress,
   isLoading = false,
 }: StatsCardProps) {
   const m3 = useM3();
   const resolvedColor = color ?? m3.colorScheme.primary;
   const finalColor = iconColor || resolvedColor;
-  const a11yValue = isLoading ? 'Loading' : value;
+  const a11yValue = isLoading
+    ? 'Loading'
+    : `${value}${valueSuffix ? ` ${valueSuffix}` : ''}${valueUnit ? ` ${valueUnit}` : ''}`;
 
   const containerStyle: ViewStyle = {
     borderRadius: m3.shape.cornerMedium,
@@ -65,6 +75,26 @@ export function StatsCard({
     color: m3.colorScheme.onSurface,
   };
 
+  const valueRowStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  };
+
+  const valueContainerStyle: ViewStyle = {
+    alignItems: 'flex-end',
+  };
+
+  const valueUnitTextStyle: TextStyle = {
+    ...m3.typography.labelSmall,
+    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8),
+  };
+
+  const valueSuffixTextStyle: TextStyle = {
+    ...m3.typography.labelSmall,
+    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8),
+    marginLeft: spacing[1],
+  };
+
   const titleTextStyle: TextStyle = {
     ...m3.typography.labelSmall,
     marginTop: spacing[3],
@@ -73,9 +103,30 @@ export function StatsCard({
 
   const subtitleTextStyle: TextStyle = {
     ...m3.typography.labelSmall,
-    marginTop: spacing[0],
+    marginTop: spacing[1],
     color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8),
+    lineHeight: fontSize.sm * 1.3,
   };
+
+  const valueContent = isLoading ? (
+    <ActivityIndicator size="small" color={finalColor} />
+  ) : (
+    <View style={valueContainerStyle}>
+      <View style={valueRowStyle}>
+        <Text style={valueTextStyle}>{value}</Text>
+        {valueSuffix ? (
+          <Text style={[valueSuffixTextStyle, valueSuffixStyle]} numberOfLines={1}>
+            {valueSuffix}
+          </Text>
+        ) : null}
+      </View>
+      {valueUnit ? (
+        <Text style={[valueUnitTextStyle, valueUnitStyle]} numberOfLines={1}>
+          {valueUnit}
+        </Text>
+      ) : null}
+    </View>
+  );
 
   if (onPress) {
     return (
@@ -88,20 +139,12 @@ export function StatsCard({
           <View style={containerStyle}>
             <View style={headerStyle}>
               <UiSymbol name={icon} size={20} color={finalColor} weight="semibold" />
-              {isLoading ? (
-                <ActivityIndicator size="small" color={finalColor} />
-              ) : (
-                <Text style={valueTextStyle}>{value}</Text>
-              )}
+              {valueContent}
             </View>
             <Text style={titleTextStyle} numberOfLines={1} ellipsizeMode="tail">
               {title}
             </Text>
-            {subtitle && (
-              <Text style={subtitleTextStyle} numberOfLines={1} ellipsizeMode="tail">
-                {subtitle}
-              </Text>
-            )}
+            {subtitle && <Text style={subtitleTextStyle}>{subtitle}</Text>}
             <View
               pointerEvents="none"
               style={[
@@ -123,20 +166,12 @@ export function StatsCard({
     <View style={containerStyle}>
       <View style={headerStyle}>
         <UiSymbol name={icon} size={20} color={finalColor} weight="semibold" />
-        {isLoading ? (
-          <ActivityIndicator size="small" color={finalColor} />
-        ) : (
-          <Text style={valueTextStyle}>{value}</Text>
-        )}
+        {valueContent}
       </View>
       <Text style={titleTextStyle} numberOfLines={1} ellipsizeMode="tail">
         {title}
       </Text>
-      {subtitle && (
-        <Text style={subtitleTextStyle} numberOfLines={1} ellipsizeMode="tail">
-          {subtitle}
-        </Text>
-      )}
+      {subtitle && <Text style={subtitleTextStyle}>{subtitle}</Text>}
     </View>
   );
 }

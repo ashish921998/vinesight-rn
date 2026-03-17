@@ -236,7 +236,6 @@ export default function FarmDetailScreen() {
   const seasonSuccessTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const showFab = isAndroid;
   const bottomBarHeight = showFab ? 0 : 72 + insets.bottom;
-
   const handleBackNavigation = React.useCallback(() => {
     if (router.canGoBack()) {
       router.back();
@@ -1206,7 +1205,7 @@ export default function FarmDetailScreen() {
     triggerHapticMedium();
     switch (action.id) {
       case 'ai':
-        router.push({ pathname: '/(tabs)/assistant', params: { farmId: id } });
+        router.push(`/ai-chat?id=${id}`);
         break;
       case 'lab':
         router.push(`/lab-tests?farmId=${id}`);
@@ -1268,7 +1267,7 @@ export default function FarmDetailScreen() {
           {t('farmDetails.notFound.title')}
         </Text>
         <View style={{ marginTop: spacing[4], width: '100%', maxWidth: 320 }}>
-          <Button title={t('common.goBack')} variant="outline" onPress={handleBackNavigation} />
+          <Button title={t('common.goBack')} variant="outline" onPress={() => router.back()} />
         </View>
       </View>
     );
@@ -1281,87 +1280,93 @@ export default function FarmDetailScreen() {
           title: farm.name,
           headerStyle: { backgroundColor: m3.colorScheme.surface },
           headerTintColor: m3.colorScheme.onSurface,
+          headerBackVisible: false,
+          headerBackTitle: '',
+          headerBackTitleVisible: false,
+          headerBackButtonDisplayMode: 'minimal',
           headerLeft: () => (
             <Pressable
               onPress={handleBackNavigation}
-              style={{ marginLeft: spacing[1], padding: spacing[1] }}
+              style={{
+                marginLeft: spacing[1],
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                backgroundColor: m3.surface.surfaceContainerHigh,
+              }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
               accessibilityLabel={t('common.goBack')}
             >
-              <UiSymbol name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
+              {({ pressed }) => (
+                <View
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <UiSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </View>
+              )}
             </Pressable>
           ),
           headerRight: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Pressable
-                onPress={() => router.push(`/farm/${id}/edit`)}
-                style={{ marginRight: spacing[4] }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                accessibilityRole="button"
-                accessibilityLabel={t('farmDetails.a11y.editFarm')}
-              >
-                {({ pressed }) => (
-                  <View style={{ borderRadius: 9999, overflow: 'hidden' }}>
-                    <View style={{ padding: spacing[1] }}>
-                      <UiSymbol name="create-outline" size={24} color={m3.colorScheme.primary} />
-                    </View>
-                    <View
-                      pointerEvents="none"
-                      style={[
-                        StyleSheet.absoluteFillObject,
-                        {
-                          backgroundColor: pressed
-                            ? colorWithOpacity(
-                                m3.colorScheme.onSurface,
-                                m3.stateLayerOpacity.pressed,
-                              )
-                            : 'transparent',
-                        },
-                      ]}
-                    />
-                  </View>
-                )}
-              </Pressable>
-              <Pressable
-                onPress={handleDeleteFarm}
-                style={{
-                  marginRight: spacing[2],
-                  opacity: deleteFarmMutation.isPending ? 0.5 : 1,
-                }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                disabled={deleteFarmMutation.isPending}
-                accessibilityRole="button"
-                accessibilityLabel={t('farmDetails.a11y.deleteFarm')}
-              >
-                {({ pressed }) => (
-                  <View style={{ borderRadius: 9999, overflow: 'hidden' }}>
-                    <View style={{ padding: spacing[1] }}>
-                      {deleteFarmMutation.isPending ? (
-                        <ActivityIndicator size="small" color={m3.colorScheme.error} />
-                      ) : (
-                        <UiSymbol name="trash" size={24} color={m3.colorScheme.error} />
-                      )}
-                    </View>
-                    <View
-                      pointerEvents="none"
-                      style={[
-                        StyleSheet.absoluteFillObject,
-                        {
-                          backgroundColor:
-                            pressed && !deleteFarmMutation.isPending
-                              ? colorWithOpacity(
-                                  m3.colorScheme.onSurface,
-                                  m3.stateLayerOpacity.pressed,
-                                )
-                              : 'transparent',
-                        },
-                      ]}
-                    />
-                  </View>
-                )}
-              </Pressable>
-            </View>
+            <Pressable
+              onPress={handleOpenFarmActions}
+              style={{
+                marginRight: spacing[2],
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                backgroundColor: m3.surface.surfaceContainerHigh,
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('farmDetails.a11y.openFarmActions')}
+            >
+              {({ pressed }) => (
+                <View
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <UiSymbol name="ellipsis" size={18} color={m3.colorScheme.onSurfaceVariant} />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </View>
+              )}
+            </Pressable>
           ),
           headerTitle: () => (
             <View style={{ alignItems: 'center' }}>
@@ -1422,7 +1427,7 @@ export default function FarmDetailScreen() {
           style={{ flex: 1 }}
           scrollEnabled={!isGuidedAddLogStep}
           contentContainerStyle={{
-            paddingTop: insets.top + (isIOS ? spacing[2] : spacing[1]),
+            paddingTop: 0,
             paddingBottom: bottomBarHeight + spacing[6],
           }}
           contentInsetAdjustmentBehavior="never"
@@ -1439,7 +1444,7 @@ export default function FarmDetailScreen() {
           <View
             style={{
               marginHorizontal: spacing[4],
-              marginTop: spacing[2],
+              marginTop: 0,
               borderRadius: m3.shape.cornerLarge,
               overflow: 'hidden',
               backgroundColor: m3.surface.surfaceContainerLow,

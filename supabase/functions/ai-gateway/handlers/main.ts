@@ -126,6 +126,15 @@ export async function handleRequest(req: Request): Promise<Response> {
       return jsonResponse({ error: 'Conversation not found for authenticated user' }, 403);
     }
 
+    if (!conversationId) {
+      console.error('[ai-gateway] Failed to resolve or create conversationId; aborting request', {
+        traceId,
+        bodyConversationId: body?.conversation_id ?? null,
+        userId: authenticatedUserId,
+      });
+      return jsonResponse({ error: 'Could not create conversation' }, 500);
+    }
+
     // Route decision
     const nextRouteState: AssistantRouteState = { ...routeState };
     let routeStateDirty = false;

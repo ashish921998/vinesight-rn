@@ -30,7 +30,6 @@ import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatNumber } from '@/i18n/format';
 import { useThemeTokens } from '@/styles/use-theme';
-import { FloatingAssistantButton } from '@/components/ui/floating-assistant-button';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
 import { guidedTourEmit } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
@@ -639,7 +638,6 @@ export default function DashboardScreen() {
           {/* Add Entry handled via route */}
         </View>
       </ScrollView>
-      <FloatingAssistantButton onPress={() => router.push('/(tabs)/assistant')} />
     </>
   );
 }

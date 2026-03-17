@@ -49,6 +49,7 @@ import { ConversationSidebar } from './ConversationSidebar';
 import { ActivityConfirmCard } from './ActivityConfirmCard';
 import { VoiceModeModal } from './VoiceMode/VoiceModeModal';
 import { useVoiceMode } from '@/hooks/use-voice-mode';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 
 /** Maximum size for inline text content (100KB) */
 const MAX_INLINE_TEXT_BYTES = 100_000;
@@ -122,6 +123,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const router = useRouter();
   const { setAddEntry } = useModalStore();
   const { data: farms } = useFarms();
+  const tabBarInset = useTabBarInset();
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
   // Tracks the effective farmId override and the prop value it was derived from.
@@ -292,7 +294,6 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: [
-          'application/pdf',
           'text/plain',
           'text/csv',
           'application/json',
@@ -427,11 +428,17 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const showSuggestionsBelow = hasMessages && suggestions.length > 0;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: m3.colorScheme.surface }]}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        { backgroundColor: m3.colorScheme.surface, marginBottom: tabBarInset },
+      ]}
+      edges={['top', 'left', 'right']}
+    >
       <KeyboardAvoidingView
         style={styles.keyboardAvoiding}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? tabBarInset : 0}
       >
         {/* Header */}
         <View

@@ -24,6 +24,14 @@ import {
 
 const REQUEST_TIMEOUT_MS = 45_000;
 
+/**
+ * Strip trailing "Sources:" / "SOURCES" blocks the LLM sometimes appends to its text.
+ * Structured citations are already delivered separately via the `citations` field.
+ */
+function stripTrailingSourcesBlock(text: string): string {
+  return text.replace(/\n{1,3}(?:sources|SOURCES):?\s*\n[\s\S]*$/, '').trim();
+}
+
 const pendingGatewayRequests = new Map<string, PendingGatewayRequest>();
 
 export {
@@ -237,11 +245,31 @@ export async function sendAssistantTurn(
     const audio = buildAudioPayload(response);
     const elapsed = Date.now() - requestStart;
 
+    if (__DEV__) {
+      console.log('[assistant-gateway] TTS diagnostics:', {
+        hasAudioB64: Boolean(response.assistant_audio_b64),
+        audioB64Length: response.assistant_audio_b64?.length ?? 0,
+        hasAudioUrl: Boolean(response.assistant_audio_url),
+        audioMimeType: response.assistant_audio_mime_type ?? null,
+        audioProviderUsed: response.audio_provider_used ?? null,
+        ttsSkippedReason: response.tts_skipped_reason ?? null,
+        ttsGenerationMs: response.tts_generation_ms ?? null,
+        builtAudioPayload: audio
+          ? {
+              provider: audio.provider,
+              mimeType: audio.mimeType,
+              hasBase64: Boolean(audio.base64),
+              hasUrl: Boolean(audio.url),
+            }
+          : null,
+      });
+    }
+
     const result: AssistantTurnResponse = {
       message: {
         id: response.turn_id ?? Date.now().toString(),
         role: 'assistant',
-        content: response.assistant_text,
+        content: stripTrailingSourcesBlock(response.assistant_text),
         timestamp: new Date(),
         conversationId: response.conversation_id ?? input.conversationId ?? undefined,
         turnId: response.turn_id,

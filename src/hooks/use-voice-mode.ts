@@ -221,6 +221,17 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       setBackendError(null);
 
       // Transition state and handle TTS playback
+      if (__DEV__) {
+        console.log('[use-voice-mode] Audio decision:', {
+          hasAudio: Boolean(response.message.audio),
+          hasBase64: Boolean(response.message.audio?.base64),
+          hasUrl: Boolean(response.message.audio?.url),
+          audioProvider: response.message.audio?.provider ?? null,
+          audioMimeType: response.message.audio?.mimeType ?? null,
+          ttsSkippedReason: response.ttsSkippedReason ?? null,
+          userTranscript: response.userTranscript ?? null,
+        });
+      }
       if (response.message.audio?.base64 || response.message.audio?.url) {
         // Audio present → enter speaking state and play via voiceOutputService
         setVoiceState('speaking');

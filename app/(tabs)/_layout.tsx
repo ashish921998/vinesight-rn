@@ -183,7 +183,8 @@ export default function TabLayout() {
             name="assistant"
             options={{
               title: t('tabs.aiAssistant'),
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('sparkles', focused),
+              headerShown: false,
+              tabBarIcon: ({ focused }) => renderAndroidTabIcon('brain', focused),
             }}
           />
           <Tabs.Screen
@@ -267,9 +268,9 @@ export default function TabLayout() {
         </NativeTabs.Trigger>
         <NativeTabs.Trigger
           name="assistant"
-          options={{ ...defaultHeaderOptions, title: t('tabs.aiAssistant') }}
+          options={{ ...defaultHeaderOptions, headerShown: false, title: t('tabs.aiAssistant') }}
         >
-          {renderTabIcon(sf('sparkles'), sf('sparkles.fill'), 'sparkles-outline', 'sparkles')}
+          {renderTabIcon(sf('brain'), sf('brain.fill'), 'sparkles-outline', 'sparkles')}
           <Label>{t('tabs.aiAssistant')}</Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger

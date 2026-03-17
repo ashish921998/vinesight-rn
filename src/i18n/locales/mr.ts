@@ -121,7 +121,7 @@ export const mr = {
 
   sprayCatalog: {
     title: 'स्प्रे कॅटलॉग',
-    subtitle: 'कीड आणि मोडनुसार मिक्स पाहा.',
+    subtitle: '$t(glossary.pest) आणि मोडनुसार मिक्स पाहा.',
     searchPlaceholder: 'मिक्स, $t(glossary.pest) किंवा उत्पादन शोधा',
     modeFilter: 'अर्ज मोड',
     modeAll: 'सर्व',
@@ -851,8 +851,8 @@ export const mr = {
   safeToSpray: {
     title: 'Safe-to-spray तपासणी',
     subtitle: 'लक्ष्य $t(glossary.harvest) दिनांक टाका आणि सुरक्षित स्प्रे पाहा.',
-    searchLabel: 'मिक्स, कीड किंवा उत्पादन शोधा',
-    searchPlaceholder: 'मिक्स, कीड किंवा उत्पादन शोधा',
+    searchLabel: 'मिक्स, $t(glossary.pest) किंवा उत्पादन शोधा',
+    searchPlaceholder: 'मिक्स, $t(glossary.pest) किंवा उत्पादन शोधा',
     targetDate: 'लक्ष्य $t(glossary.harvest) दिनांक',
     saveSeasonTarget: 'हा दिनांक हंगामासाठी जतन करा',
     blocking: 'गव्हर्निंग PHI: {{days}} दिवस ({{component}})',
@@ -1246,7 +1246,7 @@ export const mr = {
     settingsButtonA11y: 'सेटिंग्ज उघडा',
     chat: {
       welcomeTitle: 'मी कसे मदत करू?',
-      welcomeSubtitle: 'तुमचे पीक, सिंचन, रोग आणि इतरांबद्दल विचारा.',
+      welcomeSubtitle: 'तुमचे पीक, $t(glossary.disease), $t(glossary.pest) आणि इतरांबद्दल विचारा.',
       sendA11y: 'संदेश पाठवा',
       suggestionChipA11y: 'सूचना पाठवा: {{text}}',
       userMessageA11y: 'तुम्ही म्हणालात: {{content}}',
@@ -2582,6 +2582,7 @@ export const mr = {
       completeTitle: 'पूर्ण',
       completeBody: 'सर्व $t(glossary.worker) पूर्ण!',
     },
+    tapHint: '💡 दिवस टॅप करा: पूर्ण → अर्धा → अनुपस्थित → साफ करा',
   },
 
   workerAnalyticsDetail: {
