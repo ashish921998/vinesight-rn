@@ -100,7 +100,7 @@ export function buildSafetyFlags(input: {
     reasons.push('Dosage advice missing explicit safety precautions');
   }
 
-  if (/\bguarantee|100% cure|certainly\b/i.test(lower)) {
+  if (/\bguarantee\b|\b100%\s*cure\b|\bcertainly\b/i.test(lower)) {
     reasons.push('Overconfident claim detected');
   }
 

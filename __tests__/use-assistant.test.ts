@@ -255,6 +255,45 @@ describe('useAssistant', () => {
     expect(mockCancelPending).not.toHaveBeenCalled();
   });
 
+  it('startNewConversation cancels any in-flight assistant request and resets state', async () => {
+    let resolvePendingRequest!: (value: ReturnType<typeof makeResponse>) => void;
+    const pendingRequest = new Promise<ReturnType<typeof makeResponse>>((resolve) => {
+      resolvePendingRequest = resolve;
+    });
+    mockSendAssistantTurn.mockReturnValueOnce(pendingRequest);
+
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+
+    act(() => {
+      result.current.setVoiceLogAction({
+        kind: 'ready',
+        draft: { activityType: 'spray' } as never,
+      });
+    });
+
+    let sendPromise!: Promise<void>;
+    act(() => {
+      sendPromise = result.current.sendMessage('Hello');
+    });
+
+    act(() => {
+      result.current.startNewConversation();
+    });
+
+    expect(mockCancelPending).toHaveBeenCalledTimes(1);
+    expect(result.current.messages).toEqual([]);
+    expect(result.current.conversationId).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.inputText).toBe('');
+    expect(result.current.suggestions).toEqual([]);
+    expect(result.current.error).toBeNull();
+
+    await act(async () => {
+      resolvePendingRequest(makeResponse());
+      await sendPromise;
+    });
+  });
+
   it('retryLastMessage re-sends the last user message', async () => {
     mockSendAssistantTurn
       .mockRejectedValueOnce(new Error('fail'))
@@ -358,6 +397,48 @@ describe('useAssistant', () => {
 
     expect(mockSendAssistantTurn).toHaveBeenCalledWith(
       expect.objectContaining({ farmContext }),
+      expect.anything(),
+    );
+  });
+
+  it('includes Hindi language in API request when farmContext is provided', async () => {
+    mockSendAssistantTurn.mockResolvedValue(makeResponse());
+    const farmContext = {
+      farmId: 1,
+      farmName: 'My Farm',
+      cropVariety: 'Shiraz',
+      area: 5,
+      region: 'Nashik',
+    };
+    const { result } = renderHook(() => useAssistant({ language: 'hi', farmContext }));
+
+    await act(async () => {
+      await result.current.sendMessage('Hello');
+    });
+
+    expect(mockSendAssistantTurn).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'hi', farmContext }),
+      expect.anything(),
+    );
+  });
+
+  it('includes Marathi language in API request when farmContext is provided', async () => {
+    mockSendAssistantTurn.mockResolvedValue(makeResponse());
+    const farmContext = {
+      farmId: 1,
+      farmName: 'My Farm',
+      cropVariety: 'Shiraz',
+      area: 5,
+      region: 'Nashik',
+    };
+    const { result } = renderHook(() => useAssistant({ language: 'mr', farmContext }));
+
+    await act(async () => {
+      await result.current.sendMessage('Hello');
+    });
+
+    expect(mockSendAssistantTurn).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'mr', farmContext }),
       expect.anything(),
     );
   });
@@ -524,6 +605,41 @@ describe('useAssistant request cancellation (VAL-CROSS-011)', () => {
     });
 
     expect(result.current.isLoading).toBe(false);
+  });
+
+  it('updates and clears voiceLogAction explicitly', () => {
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+    const voiceLogAction = { kind: 'ready', draft: { activityType: 'spray' } as never };
+
+    act(() => {
+      result.current.setVoiceLogAction(voiceLogAction);
+    });
+
+    expect(result.current.voiceLogAction).toEqual(voiceLogAction);
+
+    act(() => {
+      result.current.dismissVoiceLogAction();
+    });
+
+    expect(result.current.voiceLogAction).toBeNull();
+  });
+
+  it('preserves voiceLogAction when sendAssistantTurn throws CANCELED', async () => {
+    mockSendAssistantTurn.mockRejectedValueOnce(getMockError('CANCELED', 'Canceled'));
+
+    const { result } = renderHook(() => useAssistant({ language: 'en' }));
+    const voiceLogAction = { kind: 'ready', draft: { activityType: 'spray' } as never };
+
+    act(() => {
+      result.current.setVoiceLogAction(voiceLogAction);
+    });
+
+    await act(async () => {
+      await result.current.sendMessage('Message 1');
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.voiceLogAction).toEqual(voiceLogAction);
   });
 
   it('calls cancelPendingAssistantTurnRequest when new message sent while first is in-flight', async () => {
