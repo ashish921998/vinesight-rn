@@ -1,0 +1,27 @@
+supabase/functions/ai-gateway/providers/stt.ts
+  9f96b5406f5b4dbc 50-51,62,146-149,238
+supabase/functions/ai-gateway/handlers/request-processor.ts
+  9f96b5406f5b4dbc 35-36,63,135
+supabase/functions/ai-gateway/handlers/main.ts
+  9f96b5406f5b4dbc 110,116-117,120,195,234,245,284,298,341,357
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "03bfd2055ba149894986c08a35853bbb54015128",
+  "prompts": {
+    "9f96b5406f5b4dbc": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7c7dbdae-b94e-4a5c-8ff8-83bba5c09710",
+        "model": "glm-5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 47,
+      "total_deletions": 10,
+      "accepted_lines": 25,
+      "overriden_lines": 3
+    }
+  }
+}
