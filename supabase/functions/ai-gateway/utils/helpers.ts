@@ -3,13 +3,33 @@
  * Shared utilities used across the ai-gateway modules.
  */
 
+/** Canonical BCP-47 prefix → supported locale map. Extend here when adding a locale. */
+const BCP47_PREFIX_MAP: Record<string, 'en' | 'hi' | 'mr'> = {
+  mr: 'mr',
+  hi: 'hi',
+  en: 'en',
+  // Map other Indian languages to closest supported locale
+  bn: 'hi',
+  ta: 'hi',
+  te: 'hi',
+  kn: 'hi',
+};
+
 /**
- * Resolve locale to supported values
+ * Resolve a BCP-47 language code (e.g. 'mr-IN') to a supported locale.
+ * Returns null for unrecognized languages so callers can fall back to app locale.
+ */
+export function resolveLocaleFromBcp47(lang: string | null): 'en' | 'hi' | 'mr' | null {
+  if (!lang) return null;
+  const prefix = lang.toLowerCase().slice(0, 2);
+  return BCP47_PREFIX_MAP[prefix] ?? null;
+}
+
+/**
+ * Resolve locale to supported values (defaults to 'en')
  */
 export function resolveLocale(locale: string | undefined): 'en' | 'hi' | 'mr' {
-  if (locale === 'hi') return 'hi';
-  if (locale === 'mr') return 'mr';
-  return 'en';
+  return resolveLocaleFromBcp47(locale ?? null) ?? 'en';
 }
 
 /**

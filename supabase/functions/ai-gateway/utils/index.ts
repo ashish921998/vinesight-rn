@@ -44,6 +44,7 @@ export {
   normalizeInputText,
   parseJsonObjectFromText,
   resolveLocale,
+  resolveLocaleFromBcp47,
   safeNumber,
   stringifyUnknown,
   toOptionalNumber,

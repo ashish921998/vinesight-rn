@@ -47,6 +47,8 @@ export interface SttResult {
   confidence: number | null;
   provider: string;
   fallbackReason?: string;
+  /** BCP-47 language code detected from the audio (e.g., 'mr-IN' for Marathi) */
+  detectedLanguage: string | null;
 }
 
 /**
@@ -56,9 +58,8 @@ export interface SttResult {
 async function callSarvamSttInternal(
   base64Audio: string,
   mimeType: string,
-  locale: 'en' | 'hi' | 'mr',
   signal?: AbortSignal,
-): Promise<{ transcript: string; confidence: number | null }> {
+): Promise<{ transcript: string; confidence: number | null; detectedLanguage: string | null }> {
   if (!SARVAM_API_KEY) throw new Error('SARVAM_API_KEY is not configured');
 
   const normalizedMimeType = (() => {
@@ -142,7 +143,10 @@ async function callSarvamSttInternal(
       ? Math.min(1, Math.max(0, confidenceRaw > 1 ? confidenceRaw / 100 : confidenceRaw))
       : null;
 
-  return { transcript: transcript.trim(), confidence };
+  // Extract detected language from Sarvam response (BCP-47 code like 'mr-IN', 'hi-IN')
+  const detectedLanguage = toOptionalString(data?.language_code);
+
+  return { transcript: transcript.trim(), confidence, detectedLanguage };
 }
 
 /**
@@ -207,7 +211,7 @@ export async function transcribeAudio(input: {
   locale: 'en' | 'hi' | 'mr';
   providerFallbackEnabled: boolean;
 }): Promise<SttResult> {
-  const { base64Audio, mimeType, locale, providerFallbackEnabled } = input;
+  const { base64Audio, mimeType, providerFallbackEnabled } = input;
 
   // Note: Saaras v3 supports M4A/MP4 - no bypass needed for these formats
 
@@ -222,7 +226,7 @@ export async function transcribeAudio(input: {
     if (canUseSarvam) {
       try {
         const result = await withAbortTimeout(
-          (signal) => callSarvamSttInternal(base64Audio, mimeType, locale, signal),
+          (signal) => callSarvamSttInternal(base64Audio, mimeType, signal),
           STT_TIMEOUT_MS,
           `Sarvam STT timed out after ${STT_TIMEOUT_MS}ms`,
         );
@@ -231,6 +235,7 @@ export async function transcribeAudio(input: {
           transcript: result.transcript,
           confidence: result.confidence,
           provider: 'sarvam',
+          detectedLanguage: result.detectedLanguage,
         };
       } catch (error) {
         recordProviderFailure('sarvam_stt');
@@ -269,6 +274,7 @@ export async function transcribeAudio(input: {
       confidence: result.confidence,
       provider: fallbackReason ? 'openai_fallback' : 'openai',
       fallbackReason,
+      detectedLanguage: null,
     };
   } catch (error) {
     recordProviderFailure('openai_stt');

@@ -22,6 +22,7 @@ import {
   jsonResponse,
   resolveAuthenticatedUserId,
   resolveLocale,
+  resolveLocaleFromBcp47,
   trackTelemetry,
   writeConversationRouteState,
   writeConversationTurn,
@@ -106,10 +107,17 @@ export async function handleRequest(req: Request): Promise<Response> {
       sttProviderUsed,
       sttConfidence,
       providerFallbackReason,
+      detectedLanguage,
     } = sttResult.result!;
     if (sttProviderUsed) {
       sttLatencyMs = Date.now() - sttStart;
     }
+
+    // For voice input, prefer detected language from STT over app locale
+    const effectiveLocale: 'en' | 'hi' | 'mr' =
+      effectiveInputMode === 'audio'
+        ? (resolveLocaleFromBcp47(detectedLanguage) ?? locale)
+        : locale;
 
     // Conversation setup
     const convSetup = await setupConversation(
@@ -184,7 +192,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       ) {
         llmExtraction = await extractActivityIntent({
           transcript: effectiveTranscript,
-          locale,
+          locale: effectiveLocale,
           farmNames: farmsForRouting.map((f) => f.name),
           contextFarmName: contextFarmForRouting?.name ?? body?.farm_context?.farm_name ?? null,
         });
@@ -223,7 +231,7 @@ export async function handleRequest(req: Request): Promise<Response> {
         nextRouteState.route_clarification_pending = true;
         nextRouteState.pending_ambiguous_transcript = effectiveTranscript;
         routeStateDirty = true;
-        assistantText = buildClarificationPrompt(locale);
+        assistantText = buildClarificationPrompt(effectiveLocale);
       } else if (routeDecision === 'voice_log') {
         // Use voice-log handler
         const voiceLogResult = handleVoiceLog({
@@ -234,7 +242,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           expectedField: nextRouteState.voice_log_expected_field as VoiceLogMissingField,
           clarifyAttempts: nextRouteState.voice_log_clarify_attempts,
           llmExtraction,
-          locale,
+          locale: effectiveLocale,
           originContext: farmId !== null ? 'farm' : 'dashboard',
         });
 
@@ -273,7 +281,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           transcript: effectiveTranscript,
           userId,
           farmId,
-          locale,
+          locale: effectiveLocale,
           toolCalls,
         });
         assistantText = farmQueryResult.assistantText;
@@ -287,7 +295,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           attachments: body?.attachments,
           userId,
           farmId,
-          locale,
+          locale: effectiveLocale,
           memoryEnabled: body?.client_capabilities?.memory_enabled !== false,
           ragEnabled: body?.client_capabilities?.rag_enabled !== false,
           embeddingTokenCounter,
@@ -330,7 +338,7 @@ export async function handleRequest(req: Request): Promise<Response> {
     }
     if (safetyFlags.blocked && !blocked) {
       assistantText = buildBlockedAdviceMessage(
-        locale,
+        effectiveLocale,
         isSprayOrFertigationTopic(effectiveTranscript),
       );
     }
@@ -346,7 +354,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       const ttsStart = Date.now();
       const ttsResult = await generateSpeech({
         text: assistantText,
-        locale,
+        locale: effectiveLocale,
         providerFallbackEnabled,
         canPlayAudio: true,
       });
