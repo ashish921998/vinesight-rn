@@ -21,6 +21,8 @@ import {
   generateTraceId,
   jsonResponse,
   resolveAuthenticatedUserId,
+  resolveLocaleFromBcp47,
+  resolveEffectiveAssistantLocale,
   resolveLocale,
   trackTelemetry,
   writeConversationRouteState,
@@ -106,12 +108,13 @@ export async function handleRequest(req: Request): Promise<Response> {
       sttProviderUsed,
       sttConfidence,
       providerFallbackReason,
+      detectedLanguage,
     } = sttResult.result!;
     if (sttProviderUsed) {
       sttLatencyMs = Date.now() - sttStart;
     }
 
-    // Conversation setup
+    // Conversation setup (needed before effectiveLocale to access persisted detected_locale)
     const convSetup = await setupConversation(
       body,
       authenticatedUserId,
@@ -135,9 +138,27 @@ export async function handleRequest(req: Request): Promise<Response> {
       return jsonResponse({ error: 'Could not create conversation' }, 500);
     }
 
+    // For voice input, prefer detected language from STT over app locale.
+    // For text follow-ups in a multi-turn flow, restore the persisted detected_locale.
+    const sttDetectedLocale =
+      effectiveInputMode === 'audio' ? resolveLocaleFromBcp47(detectedLanguage) : null;
+    const effectiveLocale: 'en' | 'hi' | 'mr' = resolveEffectiveAssistantLocale({
+      inputMode: effectiveInputMode,
+      detectedLanguage,
+      routeStateDetectedLocale: routeState.detected_locale,
+      locale,
+    });
+
     // Route decision
     const nextRouteState: AssistantRouteState = { ...routeState };
     let routeStateDirty = false;
+
+    // On audio turns, sync persisted detected_locale with current STT result
+    // (including clearing to null when STT returns no language).
+    if (effectiveInputMode === 'audio' && sttDetectedLocale !== routeState.detected_locale) {
+      nextRouteState.detected_locale = sttDetectedLocale;
+      routeStateDirty = true;
+    }
     let routeDecision: HybridChatRoute = 'fallback_llm';
     let voiceLogAction: VoiceLogActionPayload | null = null;
     let llmExtraction: ActivityLogExtractionResult | null = null;
@@ -150,7 +171,7 @@ export async function handleRequest(req: Request): Promise<Response> {
 
     // Handle route clarification using clarify handler
     if (nextRouteState.route_clarification_pending) {
-      const clarifyResult = handleClarify({ transcript, locale });
+      const clarifyResult = handleClarify({ transcript, locale: effectiveLocale });
       if (clarifyResult.resolvedRoute) {
         forcedRoute = clarifyResult.resolvedRoute;
         routeDecision = clarifyResult.resolvedRoute;
@@ -184,7 +205,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       ) {
         llmExtraction = await extractActivityIntent({
           transcript: effectiveTranscript,
-          locale,
+          locale: effectiveLocale,
           farmNames: farmsForRouting.map((f) => f.name),
           contextFarmName: contextFarmForRouting?.name ?? body?.farm_context?.farm_name ?? null,
         });
@@ -223,7 +244,7 @@ export async function handleRequest(req: Request): Promise<Response> {
         nextRouteState.route_clarification_pending = true;
         nextRouteState.pending_ambiguous_transcript = effectiveTranscript;
         routeStateDirty = true;
-        assistantText = buildClarificationPrompt(locale);
+        assistantText = buildClarificationPrompt(effectiveLocale);
       } else if (routeDecision === 'voice_log') {
         // Use voice-log handler
         const voiceLogResult = handleVoiceLog({
@@ -234,7 +255,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           expectedField: nextRouteState.voice_log_expected_field as VoiceLogMissingField,
           clarifyAttempts: nextRouteState.voice_log_clarify_attempts,
           llmExtraction,
-          locale,
+          locale: effectiveLocale,
           originContext: farmId !== null ? 'farm' : 'dashboard',
         });
 
@@ -251,7 +272,7 @@ export async function handleRequest(req: Request): Promise<Response> {
         } else {
           assistantText = voiceLogResult.assistantText;
           voiceLogAction = voiceLogResult.voiceLogAction;
-          routeStateDirty = voiceLogResult.routeStateDirty;
+          routeStateDirty = routeStateDirty || voiceLogResult.routeStateDirty;
           if (voiceLogResult.nextDraft !== undefined) {
             nextRouteState.voice_log_draft = voiceLogResult.nextDraft as unknown as Record<
               string,
@@ -273,7 +294,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           transcript: effectiveTranscript,
           userId,
           farmId,
-          locale,
+          locale: effectiveLocale,
           toolCalls,
         });
         assistantText = farmQueryResult.assistantText;
@@ -287,7 +308,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           attachments: body?.attachments,
           userId,
           farmId,
-          locale,
+          locale: effectiveLocale,
           memoryEnabled: body?.client_capabilities?.memory_enabled !== false,
           ragEnabled: body?.client_capabilities?.rag_enabled !== false,
           embeddingTokenCounter,
@@ -330,7 +351,7 @@ export async function handleRequest(req: Request): Promise<Response> {
     }
     if (safetyFlags.blocked && !blocked) {
       assistantText = buildBlockedAdviceMessage(
-        locale,
+        effectiveLocale,
         isSprayOrFertigationTopic(effectiveTranscript),
       );
     }
@@ -346,7 +367,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       const ttsStart = Date.now();
       const ttsResult = await generateSpeech({
         text: assistantText,
-        locale,
+        locale: effectiveLocale,
         providerFallbackEnabled,
         canPlayAudio: true,
       });

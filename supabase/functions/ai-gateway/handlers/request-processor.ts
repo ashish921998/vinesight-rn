@@ -14,6 +14,7 @@ import {
   MIN_AUDIO_ESTIMATED_BYTES,
   normalizeBase64Input,
   normalizeInputText,
+  coerceSupportedLocale,
   readConversationRouteState,
   resolveConversationId,
   stringifyUnknown,
@@ -32,6 +33,8 @@ export interface SttResult {
   sttProviderUsed: string | null;
   sttConfidence: number | null;
   providerFallbackReason: string | null;
+  /** BCP-47 language code detected from the audio (e.g., 'mr-IN' for Marathi) */
+  detectedLanguage: string | null;
 }
 
 export interface ConversationSetup {
@@ -58,6 +61,7 @@ export async function processStt(
   let sttProviderUsed: string | null = null;
   let sttConfidence: number | null = null;
   let providerFallbackReason: string | null = null;
+  let detectedLanguage: string | null = null;
 
   if (inputMode === 'audio') {
     const audioBase64 = body?.input_audio_b64?.trim();
@@ -117,18 +121,22 @@ export async function processStt(
         const sttResult = await transcribeAudio({
           base64Audio: normalizedAudioBase64,
           mimeType: audioMimeType,
-          locale,
           providerFallbackEnabled,
         });
         transcript = sttResult.transcript;
         sttProviderUsed = sttResult.provider;
         sttConfidence = sttResult.confidence;
         providerFallbackReason = sttResult.fallbackReason;
+        detectedLanguage = sttResult.detectedLanguage;
 
         toolCalls.push({
           tool: 'stt.transcribe',
           status: 'ok',
-          output: { stt_provider: sttProviderUsed, stt_confidence: sttConfidence },
+          output: {
+            stt_provider: sttProviderUsed,
+            stt_confidence: sttConfidence,
+            detected_language: detectedLanguage,
+          },
         });
       } catch (error) {
         const errorMessage = stringifyUnknown(error);
@@ -190,6 +198,7 @@ export async function processStt(
       sttProviderUsed,
       sttConfidence,
       providerFallbackReason,
+      detectedLanguage,
     },
     response: null,
   };
@@ -236,11 +245,12 @@ export async function setupConversation(
     });
   }
 
-  const farmsForRouting = await fetchUserFarms(userId);
+  const [farmsForRouting, routeStateRaw] = await Promise.all([
+    fetchUserFarms(userId),
+    readConversationRouteState(conversationId),
+  ]);
   const contextFarmForRouting =
     farmId !== null ? (farmsForRouting.find((f) => f.id === farmId) ?? null) : null;
-
-  const routeStateRaw = await readConversationRouteState(conversationId);
   const routeState: AssistantRouteState = {
     voice_log_draft: (routeStateRaw?.voice_log_draft as VoiceLogDraft) ?? null,
     voice_log_expected_field:
@@ -248,6 +258,7 @@ export async function setupConversation(
     voice_log_clarify_attempts: (routeStateRaw?.voice_log_clarify_attempts as number) ?? 0,
     route_clarification_pending: (routeStateRaw?.route_clarification_pending as boolean) ?? false,
     pending_ambiguous_transcript: (routeStateRaw?.pending_ambiguous_transcript as string) ?? null,
+    detected_locale: coerceSupportedLocale(routeStateRaw?.detected_locale),
   };
 
   return { farmId, userId, conversationId, farmsForRouting, contextFarmForRouting, routeState };
