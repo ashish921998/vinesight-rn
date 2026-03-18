@@ -21,8 +21,9 @@ import {
   generateTraceId,
   jsonResponse,
   resolveAuthenticatedUserId,
-  resolveLocale,
   resolveLocaleFromBcp47,
+  resolveEffectiveAssistantLocale,
+  resolveLocale,
   trackTelemetry,
   writeConversationRouteState,
   writeConversationTurn,
@@ -141,8 +142,12 @@ export async function handleRequest(req: Request): Promise<Response> {
     // For text follow-ups in a multi-turn flow, restore the persisted detected_locale.
     const sttDetectedLocale =
       effectiveInputMode === 'audio' ? resolveLocaleFromBcp47(detectedLanguage) : null;
-    const effectiveLocale: 'en' | 'hi' | 'mr' =
-      sttDetectedLocale ?? routeState.detected_locale ?? locale;
+    const effectiveLocale: 'en' | 'hi' | 'mr' = resolveEffectiveAssistantLocale({
+      inputMode: effectiveInputMode,
+      detectedLanguage,
+      routeStateDetectedLocale: routeState.detected_locale,
+      locale,
+    });
 
     // Route decision
     const nextRouteState: AssistantRouteState = { ...routeState };
@@ -266,7 +271,7 @@ export async function handleRequest(req: Request): Promise<Response> {
         } else {
           assistantText = voiceLogResult.assistantText;
           voiceLogAction = voiceLogResult.voiceLogAction;
-          routeStateDirty = voiceLogResult.routeStateDirty;
+          routeStateDirty = routeStateDirty || voiceLogResult.routeStateDirty;
           if (voiceLogResult.nextDraft !== undefined) {
             nextRouteState.voice_log_draft = voiceLogResult.nextDraft as unknown as Record<
               string,

@@ -10,6 +10,8 @@ const BCP47_PREFIX_MAP: Record<string, 'en' | 'hi' | 'mr'> = {
   en: 'en',
 };
 
+const SUPPORTED_LOCALES = new Set<'en' | 'hi' | 'mr'>(['en', 'hi', 'mr']);
+
 /**
  * Resolve a BCP-47 language code (e.g. 'mr-IN') to a supported locale.
  * Returns null for unrecognized languages so callers can fall back to app locale.
@@ -18,6 +20,33 @@ export function resolveLocaleFromBcp47(lang: string | null): 'en' | 'hi' | 'mr' 
   if (!lang) return null;
   const prefix = lang.trim().toLowerCase().slice(0, 2);
   return BCP47_PREFIX_MAP[prefix] ?? null;
+}
+
+/**
+ * Runtime guard for persisted locale values loaded from storage.
+ */
+export function coerceSupportedLocale(value: unknown): 'en' | 'hi' | 'mr' | null {
+  return typeof value === 'string' && SUPPORTED_LOCALES.has(value as 'en' | 'hi' | 'mr')
+    ? (value as 'en' | 'hi' | 'mr')
+    : null;
+}
+
+/**
+ * Resolve assistant locale for the current turn.
+ * Audio turns should use fresh STT detection or fall back to the app locale.
+ * Text turns can reuse a previously detected voice locale from route state.
+ */
+export function resolveEffectiveAssistantLocale(input: {
+  inputMode: 'text' | 'audio';
+  detectedLanguage: string | null;
+  routeStateDetectedLocale: 'en' | 'hi' | 'mr' | null;
+  locale: 'en' | 'hi' | 'mr';
+}): 'en' | 'hi' | 'mr' {
+  const sttDetectedLocale =
+    input.inputMode === 'audio' ? resolveLocaleFromBcp47(input.detectedLanguage) : null;
+  return input.inputMode === 'audio'
+    ? (sttDetectedLocale ?? input.locale)
+    : (input.routeStateDetectedLocale ?? input.locale);
 }
 
 /**

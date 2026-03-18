@@ -14,6 +14,7 @@ import {
   MIN_AUDIO_ESTIMATED_BYTES,
   normalizeBase64Input,
   normalizeInputText,
+  coerceSupportedLocale,
   readConversationRouteState,
   resolveConversationId,
   stringifyUnknown,
@@ -257,7 +258,7 @@ export async function setupConversation(
     voice_log_clarify_attempts: (routeStateRaw?.voice_log_clarify_attempts as number) ?? 0,
     route_clarification_pending: (routeStateRaw?.route_clarification_pending as boolean) ?? false,
     pending_ambiguous_transcript: (routeStateRaw?.pending_ambiguous_transcript as string) ?? null,
-    detected_locale: (routeStateRaw?.detected_locale as 'en' | 'hi' | 'mr') ?? null,
+    detected_locale: coerceSupportedLocale(routeStateRaw?.detected_locale),
   };
 
   return { farmId, userId, conversationId, farmsForRouting, contextFarmForRouting, routeState };
