@@ -153,8 +153,9 @@ export async function handleRequest(req: Request): Promise<Response> {
     const nextRouteState: AssistantRouteState = { ...routeState };
     let routeStateDirty = false;
 
-    // Persist detected locale when it changes
-    if (sttDetectedLocale && sttDetectedLocale !== routeState.detected_locale) {
+    // On audio turns, sync persisted detected_locale with current STT result
+    // (including clearing to null when STT returns no language).
+    if (effectiveInputMode === 'audio' && sttDetectedLocale !== routeState.detected_locale) {
       nextRouteState.detected_locale = sttDetectedLocale;
       routeStateDirty = true;
     }
