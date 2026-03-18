@@ -113,13 +113,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       sttLatencyMs = Date.now() - sttStart;
     }
 
-    // For voice input, prefer detected language from STT over app locale
-    const effectiveLocale: 'en' | 'hi' | 'mr' =
-      effectiveInputMode === 'audio'
-        ? (resolveLocaleFromBcp47(detectedLanguage) ?? locale)
-        : locale;
-
-    // Conversation setup
+    // Conversation setup (needed before effectiveLocale to access persisted detected_locale)
     const convSetup = await setupConversation(
       body,
       authenticatedUserId,
@@ -143,9 +137,22 @@ export async function handleRequest(req: Request): Promise<Response> {
       return jsonResponse({ error: 'Could not create conversation' }, 500);
     }
 
+    // For voice input, prefer detected language from STT over app locale.
+    // For text follow-ups in a multi-turn flow, restore the persisted detected_locale.
+    const sttDetectedLocale =
+      effectiveInputMode === 'audio' ? resolveLocaleFromBcp47(detectedLanguage) : null;
+    const effectiveLocale: 'en' | 'hi' | 'mr' =
+      sttDetectedLocale ?? routeState.detected_locale ?? locale;
+
     // Route decision
     const nextRouteState: AssistantRouteState = { ...routeState };
     let routeStateDirty = false;
+
+    // Persist detected locale when it changes
+    if (sttDetectedLocale && sttDetectedLocale !== routeState.detected_locale) {
+      nextRouteState.detected_locale = sttDetectedLocale;
+      routeStateDirty = true;
+    }
     let routeDecision: HybridChatRoute = 'fallback_llm';
     let voiceLogAction: VoiceLogActionPayload | null = null;
     let llmExtraction: ActivityLogExtractionResult | null = null;

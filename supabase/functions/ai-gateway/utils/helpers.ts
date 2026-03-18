@@ -3,16 +3,11 @@
  * Shared utilities used across the ai-gateway modules.
  */
 
-/** Canonical BCP-47 prefix → supported locale map. Extend here when adding a locale. */
+/** Canonical BCP-47 prefix → supported locale map. Only maps languages we actually support. */
 const BCP47_PREFIX_MAP: Record<string, 'en' | 'hi' | 'mr'> = {
   mr: 'mr',
   hi: 'hi',
   en: 'en',
-  // Map other Indian languages to closest supported locale
-  bn: 'hi',
-  ta: 'hi',
-  te: 'hi',
-  kn: 'hi',
 };
 
 /**

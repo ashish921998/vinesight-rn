@@ -89,6 +89,8 @@ export interface AssistantRouteState {
   voice_log_clarify_attempts: number;
   route_clarification_pending: boolean;
   pending_ambiguous_transcript: string | null;
+  /** Detected voice locale persisted across follow-up turns (e.g. 'mr', 'hi') */
+  detected_locale: 'en' | 'hi' | 'mr' | null;
 }
 
 export const DEFAULT_ROUTE_STATE: AssistantRouteState = {
@@ -97,6 +99,7 @@ export const DEFAULT_ROUTE_STATE: AssistantRouteState = {
   voice_log_clarify_attempts: 0,
   route_clarification_pending: false,
   pending_ambiguous_transcript: null,
+  detected_locale: null,
 };
 
 export interface VoiceLogActionPayload {
