@@ -120,7 +120,6 @@ export async function processStt(
         const sttResult = await transcribeAudio({
           base64Audio: normalizedAudioBase64,
           mimeType: audioMimeType,
-          locale,
           providerFallbackEnabled,
         });
         transcript = sttResult.transcript;

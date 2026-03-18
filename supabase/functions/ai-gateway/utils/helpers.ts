@@ -21,7 +21,7 @@ const BCP47_PREFIX_MAP: Record<string, 'en' | 'hi' | 'mr'> = {
  */
 export function resolveLocaleFromBcp47(lang: string | null): 'en' | 'hi' | 'mr' | null {
   if (!lang) return null;
-  const prefix = lang.toLowerCase().slice(0, 2);
+  const prefix = lang.trim().toLowerCase().slice(0, 2);
   return BCP47_PREFIX_MAP[prefix] ?? null;
 }
 

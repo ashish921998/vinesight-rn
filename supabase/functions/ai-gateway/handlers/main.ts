@@ -158,7 +158,7 @@ export async function handleRequest(req: Request): Promise<Response> {
 
     // Handle route clarification using clarify handler
     if (nextRouteState.route_clarification_pending) {
-      const clarifyResult = handleClarify({ transcript, locale });
+      const clarifyResult = handleClarify({ transcript, locale: effectiveLocale });
       if (clarifyResult.resolvedRoute) {
         forcedRoute = clarifyResult.resolvedRoute;
         routeDecision = clarifyResult.resolvedRoute;

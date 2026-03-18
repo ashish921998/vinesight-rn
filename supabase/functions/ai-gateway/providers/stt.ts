@@ -144,7 +144,10 @@ async function callSarvamSttInternal(
       : null;
 
   // Extract detected language from Sarvam response (BCP-47 code like 'mr-IN', 'hi-IN')
-  const detectedLanguage = toOptionalString(data?.language_code);
+  const detectedLanguage =
+    toOptionalString(data?.language_code) ??
+    toOptionalString(data?.data?.language_code) ??
+    toOptionalString(data?.result?.language_code);
 
   return { transcript: transcript.trim(), confidence, detectedLanguage };
 }
@@ -208,7 +211,6 @@ async function callOpenAiSttInternal(
 export async function transcribeAudio(input: {
   base64Audio: string;
   mimeType: string;
-  locale: 'en' | 'hi' | 'mr';
   providerFallbackEnabled: boolean;
 }): Promise<SttResult> {
   const { base64Audio, mimeType, providerFallbackEnabled } = input;
