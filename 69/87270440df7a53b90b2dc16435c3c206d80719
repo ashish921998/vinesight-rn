@@ -1,0 +1,25 @@
+app/(tabs)/settings.tsx
+  457bcac3edcf5518 147
+src/services/worker-service.ts
+  457bcac3edcf5518 86,91,103,105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "6987270440df7a53b90b2dc16435c3c206d80719",
+  "prompts": {
+    "457bcac3edcf5518": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7aafb198-12dc-49f5-b8ba-f976bafa9424",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 6,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
