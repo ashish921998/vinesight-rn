@@ -1227,7 +1227,7 @@ export default function SettingsScreen() {
         >
           {t('settings.madeForVineyardManagement')}
         </Text>
-        {canSendSentryEvent ? (
+        {__DEV__ ? (
           <Pressable
             onPress={handleSendSentryTestEvent}
             style={styles.sentryTestButton}
