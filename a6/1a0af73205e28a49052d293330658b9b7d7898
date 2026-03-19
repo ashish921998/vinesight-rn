@@ -1,0 +1,54 @@
+__tests__/tts-provider.test.ts
+  bb04789e0835c88b 286
+app/farm/[id].tsx
+  54564da732ba2f27 1208
+__tests__/otp-verification.test.tsx
+  bb04789e0835c88b 104-107,118-120,125-128,131-132
+__tests__/phi-service.test.ts
+  bb04789e0835c88b 27,40
+jest.config.js
+  bb04789e0835c88b 10-11
+__tests__/spray-safe-checker.test.tsx
+  bb04789e0835c88b 14
+__tests__/phone-auth-store.test.ts
+  bb04789e0835c88b 168
+__tests__/voice-mode-modal.test.tsx
+  bb04789e0835c88b 87-91
+__tests__/stt-provider.test.ts
+  bb04789e0835c88b 370,464,488,548-549
+__tests__/entry-form.integration.test.tsx
+  bb04789e0835c88b 2,169,172-173,177,180,241,244-245,253-254,275,282-284,291,334,337-338,342,345,365
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "a61a0af73205e28a49052d293330658b9b7d7898",
+  "prompts": {
+    "54564da732ba2f27": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "0b893999-7dce-4168-abcc-c7c1ab1f036b",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "bb04789e0835c88b": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "323a6e65-9e8b-4fce-80ee-da2bc2702449",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 79,
+      "total_deletions": 64,
+      "accepted_lines": 56,
+      "overriden_lines": 0
+    }
+  }
+}
