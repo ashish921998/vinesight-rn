@@ -237,7 +237,8 @@ const styles = StyleSheet.create({
   outerContainer: {
     flexDirection: 'column',
     paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[1],
     borderTopWidth: StyleSheet.hairlineWidth,
     gap: spacing[2],
   },

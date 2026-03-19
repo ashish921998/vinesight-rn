@@ -93,6 +93,8 @@ const SearchHeader = React.memo<SearchHeaderProps>(
             onFocus={onSearchFocus}
             onBlur={onSearchBlur}
             returnKeyType="search"
+            accessibilityRole="search"
+            accessibilityLabel={t('farms.search.placeholder')}
           />
           {searchQuery.length > 0 && (
             <Pressable

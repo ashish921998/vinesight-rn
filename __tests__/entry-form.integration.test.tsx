@@ -166,18 +166,18 @@ describe('EntryForm UI integration', () => {
     fireEvent.press(screen.getByText('logs.types.expense'));
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Enter amount')).toBeTruthy();
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getAllByText('Other')[0]);
-    fireEvent.changeText(screen.getByPlaceholderText('Enter amount'), '300');
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
     fireEvent.press(screen.getByText('entryForm.addEntry'));
 
     await waitFor(() => {
-      expect(screen.getByText('common.save')).toBeTruthy();
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByText('common.save'));
+    fireEvent.press(screen.getByText('entryForm.saveLogs'));
 
     await waitFor(() => {
       expect(mockCreateExpenseMutate).toHaveBeenCalledTimes(1);
@@ -238,18 +238,20 @@ describe('EntryForm UI integration', () => {
         },
       ],
     });
-    mockUsePhiComputation.mockReturnValue({
+    mockUsePhiComputation.mockImplementation((mixId: number | null) => ({
       isLoading: false,
       error: null,
-      data: {
-        catalogMixId: 991,
-        sprayDate: '2026-02-01',
-        governingPhiDays: 20,
-        safeHarvestDate: '2026-02-20',
-        blockingComponentName: 'Lannate',
-        phiStatus: 'verified',
-      },
-    });
+      data: mixId
+        ? {
+            catalogMixId: mixId,
+            sprayDate: '2026-02-01',
+            governingPhiDays: 20,
+            safeHarvestDate: '2026-02-20',
+            blockingComponentName: 'Lannate',
+            phiStatus: 'verified',
+          }
+        : null,
+    }));
 
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -270,6 +272,7 @@ describe('EntryForm UI integration', () => {
     });
 
     fireEvent.changeText(screen.getByPlaceholderText('sprayForm.waterVolume.placeholder'), '200');
+    fireEvent.press(screen.getByText('sprayForm.catalogOnly.title'));
     fireEvent.press(screen.getByText('Demo Mix'));
 
     await waitFor(() => {
@@ -282,6 +285,7 @@ describe('EntryForm UI integration', () => {
       expect(alertSpy).toHaveBeenCalledWith(
         'entryForm.phiErrors.conflictTitle',
         'entryForm.phiErrors.conflictBody',
+        expect.any(Array),
       );
     });
     expect(mockCreateSprayMutate).not.toHaveBeenCalled();
@@ -324,18 +328,18 @@ describe('EntryForm UI integration', () => {
     fireEvent.press(screen.getByText('logs.types.expense'));
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Enter amount')).toBeTruthy();
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getAllByText('Other')[0]);
-    fireEvent.changeText(screen.getByPlaceholderText('Enter amount'), '500');
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '500');
     fireEvent.press(screen.getByText('entryForm.addEntry'));
 
     await waitFor(() => {
-      expect(screen.getByText('common.save')).toBeTruthy();
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByText('common.save'));
+    fireEvent.press(screen.getByText('entryForm.saveLogs'));
 
     await waitFor(() => {
       expect(mockCreateExpenseMutate).toHaveBeenCalledTimes(2);
@@ -355,7 +359,7 @@ describe('EntryForm UI integration', () => {
       );
     });
 
-    fireEvent.press(screen.getByText('common.save'));
+    fireEvent.press(screen.getByText('entryForm.saveLogs'));
 
     await waitFor(() => {
       expect(mockCreateExpenseMutate).toHaveBeenCalledTimes(3);

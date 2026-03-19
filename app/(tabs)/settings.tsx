@@ -106,22 +106,16 @@ export default function SettingsScreen() {
     ? `Vinesight v${appVersion} (${appBuild})`
     : `Vinesight v${appVersion}`;
   const sentryDsnConfigured = Boolean(process.env.EXPO_PUBLIC_SENTRY_DSN?.trim());
-  const canSendSentryEvent = !__DEV__ && sentryDsnConfigured;
 
   const handleSendSentryTestEvent = useCallback(() => {
-    if (!canSendSentryEvent) {
+    if (!sentryDsnConfigured) {
       Alert.alert(
         t('settings.sentry.transportDisabledTitle', {
           defaultValue: 'Sentry transport is disabled',
         }),
-        __DEV__
-          ? t('settings.sentry.transportDisabledDescriptionDev', {
-              defaultValue:
-                'This app disables Sentry in development. Test with a preview/production build, or temporarily enable Sentry in app/_layout.tsx for local verification.',
-            })
-          : t('settings.sentry.transportDisabledDescriptionProd', {
-              defaultValue: 'Sentry DSN is missing. Add EXPO_PUBLIC_SENTRY_DSN and rebuild.',
-            }),
+        t('settings.sentry.transportDisabledDescriptionProd', {
+          defaultValue: 'Sentry DSN is missing. Add EXPO_PUBLIC_SENTRY_DSN and rebuild.',
+        }),
       );
       return;
     }
@@ -150,7 +144,7 @@ export default function SettingsScreen() {
         }),
       );
     }
-  }, [canSendSentryEvent, t]);
+  }, [sentryDsnConfigured, t]);
 
   const {
     user,
@@ -1042,7 +1036,11 @@ export default function SettingsScreen() {
               {userEmail}
             </Text>
           </View>
-          <Pressable onPress={() => setShowEditProfile(true)}>
+          <Pressable
+            onPress={() => setShowEditProfile(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.editProfile')}
+          >
             <UISymbol name="pencil" size={24} color={m3.colorScheme.primary} />
           </Pressable>
         </View>
@@ -1052,13 +1050,19 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text
           style={styles.sectionHeader}
+          accessibilityRole="header"
           textBreakStrategy="highQuality"
           lineBreakStrategyIOS="standard"
         >
           {t('settings.sectionGeneral')}
         </Text>
         <View style={styles.sectionContent}>
-          <Pressable onPress={() => setShowLanguagePicker(true)}>
+          <Pressable
+            onPress={() => setShowLanguagePicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.language')}
+            accessibilityValue={{ text: getLanguageLabel(language) }}
+          >
             <SettingsItem
               icon="globe"
               title={t('settings.language')}
@@ -1068,7 +1072,12 @@ export default function SettingsScreen() {
               colors={colors}
             />
           </Pressable>
-          <Pressable onPress={() => setShowThemePicker(true)}>
+          <Pressable
+            onPress={() => setShowThemePicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.theme')}
+            accessibilityValue={{ text: getThemeLabel(themeMode) }}
+          >
             <SettingsItem
               icon="sun.max.fill"
               title={t('settings.theme')}
@@ -1078,7 +1087,12 @@ export default function SettingsScreen() {
               colors={colors}
             />
           </Pressable>
-          <Pressable onPress={() => setShowAreaPicker(true)}>
+          <Pressable
+            onPress={() => setShowAreaPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.areaUnit')}
+            accessibilityValue={{ text: getAreaUnitLabel(selectedAreaUnit) }}
+          >
             <SettingsItem
               icon="arrow.up.left.and.arrow.down.right"
               title={t('settings.areaUnit')}
@@ -1088,7 +1102,12 @@ export default function SettingsScreen() {
               colors={colors}
             />
           </Pressable>
-          <Pressable onPress={() => setShowCurrencyPicker(true)}>
+          <Pressable
+            onPress={() => setShowCurrencyPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.currency')}
+            accessibilityValue={{ text: getCurrencyLabel(selectedCurrency) }}
+          >
             <SettingsItem
               icon="banknote"
               title={t('settings.currency')}
@@ -1098,7 +1117,12 @@ export default function SettingsScreen() {
               colors={colors}
             />
           </Pressable>
-          <Pressable onPress={handleReplayGuidedTour} disabled={isResettingGuidedTour}>
+          <Pressable
+            onPress={handleReplayGuidedTour}
+            disabled={isResettingGuidedTour}
+            accessibilityRole="button"
+            accessibilityLabel={t('guidedTour.settings.replay')}
+          >
             <SettingsItem
               icon="sparkles"
               title={t('guidedTour.settings.replay')}
@@ -1115,6 +1139,7 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text
           style={styles.sectionHeader}
+          accessibilityRole="header"
           textBreakStrategy="highQuality"
           lineBreakStrategyIOS="standard"
         >
@@ -1123,6 +1148,8 @@ export default function SettingsScreen() {
         <View style={styles.sectionContent}>
           <Pressable
             onPress={handleOpenLinkPhone}
+            accessibilityRole="button"
+            accessibilityLabel={phoneActionTitle}
             style={[styles.settingsItem, styles.borderBottom]}
           >
             <View style={styles.settingsIcon}>
@@ -1147,6 +1174,8 @@ export default function SettingsScreen() {
           <Pressable
             onPress={handleSignOut}
             disabled={authLoading}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.signOut')}
             style={[styles.settingsItem, styles.borderBottom]}
           >
             <View style={styles.signOutIcon}>
@@ -1160,7 +1189,12 @@ export default function SettingsScreen() {
               {t('settings.signOut')}
             </Text>
           </Pressable>
-          <Pressable onPress={handleDeleteAccount} style={styles.settingsItem}>
+          <Pressable
+            onPress={handleDeleteAccount}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.deleteAccount')}
+            style={styles.settingsItem}
+          >
             <View style={styles.deleteIcon}>
               <UISymbol name="trash" size={20} color={colors.error} />
             </View>
@@ -1191,7 +1225,7 @@ export default function SettingsScreen() {
         >
           {t('settings.madeForVineyardManagement')}
         </Text>
-        {canSendSentryEvent ? (
+        {__DEV__ ? (
           <Pressable
             onPress={handleSendSentryTestEvent}
             style={styles.sentryTestButton}
@@ -1228,7 +1262,11 @@ export default function SettingsScreen() {
               >
                 {t('settings.editProfile')}
               </Text>
-              <Pressable onPress={() => setShowEditProfile(false)}>
+              <Pressable
+                onPress={() => setShowEditProfile(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
@@ -1379,7 +1417,11 @@ export default function SettingsScreen() {
                       ? t('settings.linkPhone.verifyTitle')
                       : t('settings.linkPhone.title')}
                 </Text>
-                <Pressable onPress={handleCloseLinkPhone}>
+                <Pressable
+                  onPress={handleCloseLinkPhone}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.close')}
+                >
                   <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
                 </Pressable>
               </View>
@@ -1655,7 +1697,11 @@ export default function SettingsScreen() {
               >
                 {t('settings.selectLanguage')}
               </Text>
-              <Pressable onPress={() => setShowLanguagePicker(false)}>
+              <Pressable
+                onPress={() => setShowLanguagePicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
@@ -1668,7 +1714,7 @@ export default function SettingsScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <View style={styles.sectionContent}>
+            <View style={styles.sectionContent} accessibilityRole="radiogroup">
               {(
                 [
                   { code: 'en' as const, label: t('settings.languageEnglish') },
@@ -1684,6 +1730,8 @@ export default function SettingsScreen() {
                     setShowLanguagePicker(false);
                   }}
                   style={[styles.settingsItem, index < arr.length - 1 && styles.borderBottom]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: language === opt.code }}
                 >
                   <Text
                     style={styles.pickerItemText}
@@ -1723,7 +1771,11 @@ export default function SettingsScreen() {
               >
                 {t('settings.selectTheme')}
               </Text>
-              <Pressable onPress={() => setShowThemePicker(false)}>
+              <Pressable
+                onPress={() => setShowThemePicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
@@ -1736,7 +1788,7 @@ export default function SettingsScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <View style={styles.sectionContent}>
+            <View style={styles.sectionContent} accessibilityRole="radiogroup">
               {(
                 [
                   { mode: 'system' as const, label: t('settings.themeSystem') },
@@ -1751,6 +1803,8 @@ export default function SettingsScreen() {
                     setShowThemePicker(false);
                   }}
                   style={[styles.settingsItem, index < arr.length - 1 && styles.borderBottom]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: themeMode === opt.mode }}
                 >
                   <Text
                     style={styles.pickerItemText}
@@ -1790,7 +1844,11 @@ export default function SettingsScreen() {
               >
                 {t('settings.selectCurrency')}
               </Text>
-              <Pressable onPress={() => setShowCurrencyPicker(false)}>
+              <Pressable
+                onPress={() => setShowCurrencyPicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
@@ -1803,7 +1861,7 @@ export default function SettingsScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <View style={styles.sectionContent}>
+            <View style={styles.sectionContent} accessibilityRole="radiogroup">
               {CURRENCIES.map((currency, index) => (
                 <Pressable
                   key={currency.code}
@@ -1812,6 +1870,8 @@ export default function SettingsScreen() {
                     styles.settingsItem,
                     index < CURRENCIES.length - 1 && styles.borderBottom,
                   ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selectedCurrency === currency.code }}
                 >
                   <Text
                     style={styles.pickerItemText}
@@ -1851,7 +1911,11 @@ export default function SettingsScreen() {
               >
                 {t('settings.selectAreaUnit')}
               </Text>
-              <Pressable onPress={() => setShowAreaPicker(false)}>
+              <Pressable
+                onPress={() => setShowAreaPicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
@@ -1864,10 +1928,12 @@ export default function SettingsScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <View style={styles.sectionContent}>
+            <View style={styles.sectionContent} accessibilityRole="radiogroup">
               {AREA_UNITS.map((unit, index) => (
                 <Pressable
                   key={unit.id}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selectedAreaUnit === unit.id }}
                   onPress={async () => {
                     try {
                       await updateProfile.mutateAsync({
@@ -1929,7 +1995,11 @@ export default function SettingsScreen() {
                 >
                   {t('settings.deleteAccountModal.title')}
                 </Text>
-                <Pressable onPress={() => setShowDeleteAccount(false)}>
+                <Pressable
+                  onPress={() => setShowDeleteAccount(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.close')}
+                >
                   <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
                 </Pressable>
               </View>

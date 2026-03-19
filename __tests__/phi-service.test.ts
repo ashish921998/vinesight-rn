@@ -24,6 +24,7 @@ const sampleMix: ChemicalMix = {
       dose_basis: 'per_liter',
       phi_days: 10,
       phi_source: 'Label',
+      phi_verified: true,
     },
     {
       id: 2,
@@ -36,6 +37,7 @@ const sampleMix: ChemicalMix = {
       dose_basis: 'per_liter',
       phi_days: 28,
       phi_source: 'Label',
+      phi_verified: true,
     },
   ],
 };
@@ -77,6 +79,41 @@ describe('phi-service', () => {
       yellowBufferDays: 3,
     });
     expect(red[0]?.status).toBe('red');
+  });
+
+  it('returns legacy_unverified status when a component has phi_verified: false', () => {
+    const unverifiedMix: ChemicalMix = {
+      ...sampleMix,
+      id: 9,
+      name: 'Unverified Mix',
+      components: [
+        {
+          ...sampleMix.components[0],
+          id: 4,
+          mix_id: 9,
+          product_id: 4,
+          product_name: 'Unverified Product',
+          phi_days: 14,
+          phi_verified: false,
+        },
+        {
+          ...sampleMix.components[1],
+          id: 5,
+          mix_id: 9,
+          product_id: 5,
+          product_name: 'Verified Product',
+          phi_days: 7,
+          phi_verified: true,
+        },
+      ],
+    };
+
+    const result = computePhiForMix(unverifiedMix, '2026-01-15');
+    expect(result).not.toBeNull();
+    expect(result?.phiStatus).toBe('legacy_unverified');
+    expect(result?.governingPhiDays).toBeNull();
+    expect(result?.safeHarvestDate).toBeNull();
+    expect(result?.blockingComponentName).toBeNull();
   });
 
   it('treats 0-day PHI as valid in safe-to-spray status', () => {

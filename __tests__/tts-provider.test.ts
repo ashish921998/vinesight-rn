@@ -283,7 +283,7 @@ describe('generateSpeech — real module function', () => {
 
   describe('circuit breaker integration', () => {
     it('skips Sarvam and falls back to OpenAI when circuit breaker is open', async () => {
-      mockCheckCB.mockReturnValue(false); // circuit is open
+      mockCheckCB.mockImplementation((provider: string) => provider.startsWith('openai'));
 
       const result = await generateSpeech({
         text: 'Hello',

@@ -1,7 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Platform } from 'react-native';
-import * as ReactNative from 'react-native';
 import OTPVerificationScreen from '../app/(auth)/otp-verification';
 
 const mockRouterReplace = jest.fn();
@@ -102,31 +101,35 @@ jest.mock('@/components/ui/symbol', () => ({
   Symbol: () => null,
 }));
 
-jest.mock('@/components/ui', () => ({
-  Button: ({
-    title,
-    onPress,
-    disabled,
-  }: {
-    title: string;
-    onPress?: () => void;
-    disabled?: boolean;
-  }) => {
-    return (
-      <ReactNative.Pressable onPress={onPress} disabled={disabled}>
-        <ReactNative.Text>{title}</ReactNative.Text>
-      </ReactNative.Pressable>
-    );
-  },
-  OTPInput: ({ value, focusKey }: { value: string; focusKey?: string | number }) => {
-    return (
-      <ReactNative.View>
-        <ReactNative.Text testID="otp-value">{value}</ReactNative.Text>
-        <ReactNative.Text testID="otp-focus-key">{String(focusKey ?? '')}</ReactNative.Text>
-      </ReactNative.View>
-    );
-  },
-}));
+jest.mock('@/components/ui', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const RN = require('react-native');
+  return {
+    Button: ({
+      title,
+      onPress,
+      disabled,
+    }: {
+      title: string;
+      onPress?: () => void;
+      disabled?: boolean;
+    }) => {
+      return (
+        <RN.Pressable onPress={onPress} disabled={disabled}>
+          <RN.Text>{title}</RN.Text>
+        </RN.Pressable>
+      );
+    },
+    OTPInput: ({ value, focusKey }: { value: string; focusKey?: string | number }) => {
+      return (
+        <RN.View>
+          <RN.Text testID="otp-value">{value}</RN.Text>
+          <RN.Text testID="otp-focus-key">{String(focusKey ?? '')}</RN.Text>
+        </RN.View>
+      );
+    },
+  };
+});
 
 jest.mock('@/i18n/format', () => ({
   formatNumber: (value: number) => String(value),

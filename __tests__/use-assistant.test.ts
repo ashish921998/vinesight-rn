@@ -609,7 +609,7 @@ describe('useAssistant request cancellation (VAL-CROSS-011)', () => {
 
   it('updates and clears voiceLogAction explicitly', () => {
     const { result } = renderHook(() => useAssistant({ language: 'en' }));
-    const voiceLogAction = { kind: 'ready', draft: { activityType: 'spray' } as never };
+    const voiceLogAction = { kind: 'ready' as const, draft: { activityType: 'spray' } as never };
 
     act(() => {
       result.current.setVoiceLogAction(voiceLogAction);
@@ -628,7 +628,7 @@ describe('useAssistant request cancellation (VAL-CROSS-011)', () => {
     mockSendAssistantTurn.mockRejectedValueOnce(getMockError('CANCELED', 'Canceled'));
 
     const { result } = renderHook(() => useAssistant({ language: 'en' }));
-    const voiceLogAction = { kind: 'ready', draft: { activityType: 'spray' } as never };
+    const voiceLogAction = { kind: 'ready' as const, draft: { activityType: 'spray' } as never };
 
     act(() => {
       result.current.setVoiceLogAction(voiceLogAction);

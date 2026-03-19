@@ -25,6 +25,8 @@ import {
   TouchableOpacity,
   Text,
   Alert,
+  Modal,
+  Pressable,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,7 +39,7 @@ import { useThemeTokens } from '@/styles/use-theme';
 import { useLanguageStore } from '@/stores/language-store';
 import { useModalStore } from '@/stores/modal-store';
 import { useFarms } from '@/hooks/use-farms';
-import { spacing } from '@/styles/theme';
+import { spacing, borderRadius } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useAssistant } from '@/hooks/use-assistant';
 import type { AssistantFarmContext } from '@/hooks/use-assistant';
@@ -126,6 +128,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const tabBarInset = useTabBarInset();
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [attachModalVisible, setAttachModalVisible] = useState(false);
   // Tracks the effective farmId override and the prop value it was derived from.
   const [farmSelectionState, setFarmSelectionState] = useState<{
     overrideFarmId: string | null | undefined;
@@ -365,12 +368,18 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   }, [addAttachment, t]);
 
   const handleAttachPress = useCallback(() => {
-    Alert.alert(t('assistant.attachments.title'), t('assistant.attachments.choosePrompt'), [
-      { text: t('assistant.attachments.image'), onPress: () => void handlePickImage() },
-      { text: t('assistant.attachments.file'), onPress: () => void handlePickDocument() },
-      { text: t('assistant.chat.close'), style: 'cancel' },
-    ]);
-  }, [handlePickImage, handlePickDocument, t]);
+    setAttachModalVisible(true);
+  }, []);
+
+  const handleAttachImage = useCallback(() => {
+    setAttachModalVisible(false);
+    void handlePickImage();
+  }, [handlePickImage]);
+
+  const handleAttachDocument = useCallback(() => {
+    setAttachModalVisible(false);
+    void handlePickDocument();
+  }, [handlePickDocument]);
 
   // Handle voice log confirmation
   const handleVoiceLogConfirm = useCallback(() => {
@@ -431,7 +440,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     <SafeAreaView
       style={[
         styles.safeArea,
-        { backgroundColor: m3.colorScheme.surface, marginBottom: tabBarInset },
+        { backgroundColor: m3.colorScheme.surface, paddingBottom: tabBarInset },
       ]}
       edges={['top', 'left', 'right']}
     >
@@ -654,6 +663,100 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
         voiceModeError={voiceModeError}
         onClearError={clearVoiceModeError}
       />
+
+      {/* Attachment picker modal */}
+      <Modal
+        visible={attachModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAttachModalVisible(false)}
+        statusBarTranslucent={Platform.OS === 'android'}
+      >
+        <Pressable style={styles.attachModalOverlay} onPress={() => setAttachModalVisible(false)}>
+          <Pressable
+            style={[styles.attachModalSheet, { backgroundColor: m3.colorScheme.surface }]}
+            onPress={() => {}}
+          >
+            <View style={styles.attachModalHandle}>
+              <View
+                style={[
+                  styles.attachModalHandleBar,
+                  { backgroundColor: m3.colorScheme.outlineVariant },
+                ]}
+              />
+            </View>
+            <Text
+              style={[
+                styles.attachModalTitle,
+                { color: m3.colorScheme.onSurface, ...m3.typography.titleMedium },
+              ]}
+            >
+              {t('assistant.attachments.title')}
+            </Text>
+            <View style={styles.attachModalOptions}>
+              <TouchableOpacity
+                style={[
+                  styles.attachModalOption,
+                  { backgroundColor: m3.colorScheme.primaryContainer },
+                ]}
+                onPress={handleAttachImage}
+                accessibilityLabel={t('assistant.attachments.image')}
+                accessibilityRole="button"
+              >
+                <SymbolIcon name="photo" size={28} color={m3.colorScheme.onPrimaryContainer} />
+                <Text
+                  style={[
+                    styles.attachModalOptionLabel,
+                    { color: m3.colorScheme.onPrimaryContainer, ...m3.typography.labelLarge },
+                  ]}
+                >
+                  {t('assistant.attachments.image')}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.attachModalOption,
+                  { backgroundColor: m3.colorScheme.secondaryContainer },
+                ]}
+                onPress={handleAttachDocument}
+                accessibilityLabel={t('assistant.attachments.file')}
+                accessibilityRole="button"
+              >
+                <SymbolIcon
+                  name="doc.text.fill"
+                  size={28}
+                  color={m3.colorScheme.onSecondaryContainer}
+                />
+                <Text
+                  style={[
+                    styles.attachModalOptionLabel,
+                    { color: m3.colorScheme.onSecondaryContainer, ...m3.typography.labelLarge },
+                  ]}
+                >
+                  {t('assistant.attachments.file')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.attachModalCancel, { backgroundColor: m3.colorScheme.surfaceVariant }]}
+              onPress={() => setAttachModalVisible(false)}
+              accessibilityLabel={t('assistant.chat.close')}
+              accessibilityRole="button"
+            >
+              <Text
+                style={[
+                  styles.attachModalCancelText,
+                  { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge },
+                ]}
+              >
+                {t('assistant.chat.close')}
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -719,5 +822,54 @@ const styles = StyleSheet.create({
   errorBannerButtonText: {
     fontSize: 13,
     fontWeight: '600' as const,
+  },
+  attachModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  attachModalSheet: {
+    borderTopLeftRadius: borderRadius['3xl'],
+    borderTopRightRadius: borderRadius['3xl'],
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[6],
+  },
+  attachModalHandle: {
+    alignItems: 'center',
+    paddingVertical: spacing[3],
+  },
+  attachModalHandleBar: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+  },
+  attachModalTitle: {
+    textAlign: 'center',
+    marginBottom: spacing[4],
+  },
+  attachModalOptions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing[4],
+    marginBottom: spacing[4],
+  },
+  attachModalOption: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing[4],
+    borderRadius: borderRadius.xl,
+    gap: spacing[2],
+  },
+  attachModalOptionLabel: {
+    textAlign: 'center',
+  },
+  attachModalCancel: {
+    alignItems: 'center',
+    paddingVertical: spacing[3],
+    borderRadius: borderRadius.lg,
+  },
+  attachModalCancelText: {
+    textAlign: 'center',
   },
 });
