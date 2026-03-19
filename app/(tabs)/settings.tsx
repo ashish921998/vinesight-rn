@@ -1061,6 +1061,7 @@ export default function SettingsScreen() {
             onPress={() => setShowLanguagePicker(true)}
             accessibilityRole="button"
             accessibilityLabel={t('settings.language')}
+            accessibilityValue={{ text: getLanguageLabel(language) }}
           >
             <SettingsItem
               icon="globe"
@@ -1075,6 +1076,7 @@ export default function SettingsScreen() {
             onPress={() => setShowThemePicker(true)}
             accessibilityRole="button"
             accessibilityLabel={t('settings.theme')}
+            accessibilityValue={{ text: getThemeLabel(themeMode) }}
           >
             <SettingsItem
               icon="sun.max.fill"
@@ -1089,6 +1091,7 @@ export default function SettingsScreen() {
             onPress={() => setShowAreaPicker(true)}
             accessibilityRole="button"
             accessibilityLabel={t('settings.areaUnit')}
+            accessibilityValue={{ text: getAreaUnitLabel(selectedAreaUnit) }}
           >
             <SettingsItem
               icon="arrow.up.left.and.arrow.down.right"
@@ -1103,6 +1106,7 @@ export default function SettingsScreen() {
             onPress={() => setShowCurrencyPicker(true)}
             accessibilityRole="button"
             accessibilityLabel={t('settings.currency')}
+            accessibilityValue={{ text: getCurrencyLabel(selectedCurrency) }}
           >
             <SettingsItem
               icon="banknote"
@@ -1258,7 +1262,11 @@ export default function SettingsScreen() {
               >
                 {t('settings.editProfile')}
               </Text>
-              <Pressable onPress={() => setShowEditProfile(false)}>
+              <Pressable
+                onPress={() => setShowEditProfile(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
@@ -1409,7 +1417,11 @@ export default function SettingsScreen() {
                       ? t('settings.linkPhone.verifyTitle')
                       : t('settings.linkPhone.title')}
                 </Text>
-                <Pressable onPress={handleCloseLinkPhone}>
+                <Pressable
+                  onPress={handleCloseLinkPhone}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.close')}
+                >
                   <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
                 </Pressable>
               </View>
@@ -1685,7 +1697,11 @@ export default function SettingsScreen() {
               >
                 {t('settings.selectLanguage')}
               </Text>
-              <Pressable onPress={() => setShowLanguagePicker(false)}>
+              <Pressable
+                onPress={() => setShowLanguagePicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
@@ -1698,7 +1714,7 @@ export default function SettingsScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <View style={styles.sectionContent}>
+            <View style={styles.sectionContent} accessibilityRole="radiogroup">
               {(
                 [
                   { code: 'en' as const, label: t('settings.languageEnglish') },
@@ -1714,6 +1730,8 @@ export default function SettingsScreen() {
                     setShowLanguagePicker(false);
                   }}
                   style={[styles.settingsItem, index < arr.length - 1 && styles.borderBottom]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: language === opt.code }}
                 >
                   <Text
                     style={styles.pickerItemText}
@@ -1753,7 +1771,11 @@ export default function SettingsScreen() {
               >
                 {t('settings.selectTheme')}
               </Text>
-              <Pressable onPress={() => setShowThemePicker(false)}>
+              <Pressable
+                onPress={() => setShowThemePicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
@@ -1766,7 +1788,7 @@ export default function SettingsScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <View style={styles.sectionContent}>
+            <View style={styles.sectionContent} accessibilityRole="radiogroup">
               {(
                 [
                   { mode: 'system' as const, label: t('settings.themeSystem') },
@@ -1781,6 +1803,8 @@ export default function SettingsScreen() {
                     setShowThemePicker(false);
                   }}
                   style={[styles.settingsItem, index < arr.length - 1 && styles.borderBottom]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: themeMode === opt.mode }}
                 >
                   <Text
                     style={styles.pickerItemText}
@@ -1820,7 +1844,11 @@ export default function SettingsScreen() {
               >
                 {t('settings.selectCurrency')}
               </Text>
-              <Pressable onPress={() => setShowCurrencyPicker(false)}>
+              <Pressable
+                onPress={() => setShowCurrencyPicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
@@ -1833,7 +1861,7 @@ export default function SettingsScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <View style={styles.sectionContent}>
+            <View style={styles.sectionContent} accessibilityRole="radiogroup">
               {CURRENCIES.map((currency, index) => (
                 <Pressable
                   key={currency.code}
@@ -1842,6 +1870,8 @@ export default function SettingsScreen() {
                     styles.settingsItem,
                     index < CURRENCIES.length - 1 && styles.borderBottom,
                   ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selectedCurrency === currency.code }}
                 >
                   <Text
                     style={styles.pickerItemText}
@@ -1881,7 +1911,11 @@ export default function SettingsScreen() {
               >
                 {t('settings.selectAreaUnit')}
               </Text>
-              <Pressable onPress={() => setShowAreaPicker(false)}>
+              <Pressable
+                onPress={() => setShowAreaPicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
                 <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
@@ -1894,10 +1928,12 @@ export default function SettingsScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <View style={styles.sectionContent}>
+            <View style={styles.sectionContent} accessibilityRole="radiogroup">
               {AREA_UNITS.map((unit, index) => (
                 <Pressable
                   key={unit.id}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selectedAreaUnit === unit.id }}
                   onPress={async () => {
                     try {
                       await updateProfile.mutateAsync({
@@ -1959,7 +1995,11 @@ export default function SettingsScreen() {
                 >
                   {t('settings.deleteAccountModal.title')}
                 </Text>
-                <Pressable onPress={() => setShowDeleteAccount(false)}>
+                <Pressable
+                  onPress={() => setShowDeleteAccount(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.close')}
+                >
                   <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
                 </Pressable>
               </View>
