@@ -1,0 +1,25 @@
+__tests__/worker-service.test.ts
+  4e71c7e21430e5c3 35,161-182,186,201-202,204-208,213,227-235
+app/farm/[id].tsx
+  4e71c7e21430e5c3 1208
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "72f9a40b4a703f3eb72da24fc0ad0619626264dd",
+  "prompts": {
+    "4e71c7e21430e5c3": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f78a3a35-b928-43c6-8816-6d76821eba63",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 9,
+      "accepted_lines": 44,
+      "overriden_lines": 0
+    }
+  }
+}
