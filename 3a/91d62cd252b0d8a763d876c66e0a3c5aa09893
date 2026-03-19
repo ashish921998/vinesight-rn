@@ -1,0 +1,31 @@
+__tests__/stt-provider.test.ts
+  874a6c129e8fa0ef 393-394
+__tests__/phi-service.test.ts
+  874a6c129e8fa0ef 84-118
+__tests__/entry-form.integration.test.tsx
+  874a6c129e8fa0ef 2,246
+__tests__/spray-safe-checker.test.tsx
+  874a6c129e8fa0ef 213-215,217-219
+__tests__/phone-auth-store.test.ts
+  874a6c129e8fa0ef 46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "3a91d62cd252b0d8a763d876c66e0a3c5aa09893",
+  "prompts": {
+    "874a6c129e8fa0ef": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "b57f1be8-03f7-4762-b4e1-dc28ca938a43",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 47,
+      "total_deletions": 12,
+      "accepted_lines": 46,
+      "overriden_lines": 0
+    }
+  }
+}
