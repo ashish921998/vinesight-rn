@@ -1,0 +1,25 @@
+app/(tabs)/settings.tsx
+  8c07bd70709ff104 1064,1079,1094,1109,1267-1268,1422-1423,1702-1703,1717,1733-1734,1776-1777,1791,1806-1807,1849-1850,1864,1873-1874,1916-1917,1931,1935-1936,2000-2001
+src/services/worker-service.ts
+  8c07bd70709ff104 112,125,127-129,134-140,144,146,160,162,169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "f50e1ccc5c125f65214d69d42279f6c893458930",
+  "prompts": {
+    "8c07bd70709ff104": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "b10ebd61-e6b1-4379-a0ea-4d4f15c1b623",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 105,
+      "total_deletions": 63,
+      "accepted_lines": 48,
+      "overriden_lines": 0
+    }
+  }
+}
