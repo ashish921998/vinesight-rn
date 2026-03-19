@@ -83,12 +83,12 @@ export async function calculateWorkerSettlement(
 }
 
 /**
- * Create and confirm a worker settlement
+ * Create a worker settlement with the given status.
  */
 export async function createWorkerSettlement(
   settlement: WorkerSettlementInsert,
 ): Promise<WorkerSettlement> {
-  // Create settlement as draft
+  const status = settlement.status ?? 'confirmed';
   const { data: createdSettlement, error: insertError } = await supabase
     .from('worker_settlements')
     .insert({
@@ -100,9 +100,9 @@ export async function createWorkerSettlement(
       gross_amount: settlement.gross_amount,
       advance_deducted: settlement.advance_deducted,
       net_payment: settlement.net_payment,
-      status: 'confirmed',
+      status,
       notes: settlement.notes ?? null,
-      confirmed_at: new Date().toISOString(),
+      confirmed_at: status === 'confirmed' ? new Date().toISOString() : null,
     })
     .select()
     .single();

@@ -106,7 +106,6 @@ export default function SettingsScreen() {
     ? `Vinesight v${appVersion} (${appBuild})`
     : `Vinesight v${appVersion}`;
   const sentryDsnConfigured = Boolean(process.env.EXPO_PUBLIC_SENTRY_DSN?.trim());
-  const canSendSentryEvent = !__DEV__ && sentryDsnConfigured;
 
   const handleSendSentryTestEvent = useCallback(() => {
     if (!sentryDsnConfigured) {
@@ -145,7 +144,7 @@ export default function SettingsScreen() {
         }),
       );
     }
-  }, [canSendSentryEvent, t]);
+  }, [sentryDsnConfigured, t]);
 
   const {
     user,
