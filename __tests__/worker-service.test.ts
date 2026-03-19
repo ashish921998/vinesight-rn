@@ -9,10 +9,19 @@ jest.mock('@/lib/supabase', () => ({
 
 const mockedFrom = supabase.from as jest.Mock;
 
-/** Build a chainable query mock where terminal methods resolve to the given result */
+/** Build a chainable query mock where terminal methods resolve to the given result.
+ *  Non-terminal methods are also thenable so awaiting any point in the chain resolves to terminalResult. */
 function mockChain(terminalResult: { data: unknown; error: unknown }) {
-  const chain: Record<string, jest.Mock> = {};
+  const chain: Record<string, jest.Mock> & { then?: typeof Promise.prototype.then } = {};
   const self = () => chain;
+
+  // Make the chain itself thenable so `await chain.insert(...)` resolves correctly
+  chain.then = function (
+    onFulfilled?: ((v: unknown) => unknown) | null,
+    onRejected?: ((r: unknown) => unknown) | null,
+  ) {
+    return Promise.resolve(terminalResult).then(onFulfilled, onRejected);
+  } as typeof Promise.prototype.then;
 
   chain.select = jest.fn(self);
   chain.insert = jest.fn(self);
@@ -174,6 +183,8 @@ describe('createWorkerSettlement', () => {
     const result = await createWorkerSettlement(settlement);
 
     expect(mockedFrom).toHaveBeenCalledWith('worker_settlements');
+    // net_payment > 0 triggers a payment transaction insert
+    expect(mockedFrom).toHaveBeenCalledWith('worker_transactions');
     expect(chain.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         worker_id: 1,

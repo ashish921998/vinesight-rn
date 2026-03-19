@@ -928,7 +928,14 @@ export default function ExploreScreen() {
               <Pressable
                 key={type}
                 onPress={() => setWarehouseFilter(type)}
-                accessibilityRole="button"
+                accessibilityRole="tab"
+                accessibilityLabel={
+                  type === 'all'
+                    ? t('warehouse.filters.all', { count: warehouseTotals.count })
+                    : type === 'fertilizer'
+                      ? t('warehouse.filters.fertilizer', { count: warehouseTotals.fertilizers })
+                      : t('warehouse.filters.spray', { count: warehouseTotals.sprays })
+                }
                 accessibilityState={{ selected: warehouseFilter === type }}
                 style={{
                   flex: 1,
@@ -1033,6 +1040,7 @@ export default function ExploreScreen() {
               return (
                 <View
                   key={item.id}
+                  accessible={true}
                   accessibilityLabel={item.name}
                   style={{
                     borderRadius: borderRadius['2xl'],

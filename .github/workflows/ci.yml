@@ -31,4 +31,4 @@ jobs:
         run: npm run typecheck
 
       - name: Test
-        run: npm run test -- --ci --forceExit
+        run: npm run test -- --ci --detectOpenHandles
