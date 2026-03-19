@@ -1,0 +1,27 @@
+__tests__/worker-service.test.ts
+  8f86e457d4f1cfc4 12-13,15,18-24,186-187
+app/(tabs)/explore.tsx
+  8f86e457d4f1cfc4 931-938,1043
+.github/workflows/ci.yml
+  8f86e457d4f1cfc4 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "da5de3eb566e80b00fc068f1c6a1916132a35473",
+  "prompts": {
+    "8f86e457d4f1cfc4": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "82fc85b8-f097-4155-976a-053ae1080e14",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 6,
+      "accepted_lines": 23,
+      "overriden_lines": 0
+    }
+  }
+}
