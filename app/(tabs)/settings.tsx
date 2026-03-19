@@ -1042,7 +1042,11 @@ export default function SettingsScreen() {
               {userEmail}
             </Text>
           </View>
-          <Pressable onPress={() => setShowEditProfile(true)}>
+          <Pressable
+            onPress={() => setShowEditProfile(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.editProfile')}
+          >
             <UISymbol name="pencil" size={24} color={m3.colorScheme.primary} />
           </Pressable>
         </View>
@@ -1052,13 +1056,18 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text
           style={styles.sectionHeader}
+          accessibilityRole="header"
           textBreakStrategy="highQuality"
           lineBreakStrategyIOS="standard"
         >
           {t('settings.sectionGeneral')}
         </Text>
         <View style={styles.sectionContent}>
-          <Pressable onPress={() => setShowLanguagePicker(true)}>
+          <Pressable
+            onPress={() => setShowLanguagePicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.language')}
+          >
             <SettingsItem
               icon="globe"
               title={t('settings.language')}
@@ -1068,7 +1077,11 @@ export default function SettingsScreen() {
               colors={colors}
             />
           </Pressable>
-          <Pressable onPress={() => setShowThemePicker(true)}>
+          <Pressable
+            onPress={() => setShowThemePicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.theme')}
+          >
             <SettingsItem
               icon="sun.max.fill"
               title={t('settings.theme')}
@@ -1078,7 +1091,11 @@ export default function SettingsScreen() {
               colors={colors}
             />
           </Pressable>
-          <Pressable onPress={() => setShowAreaPicker(true)}>
+          <Pressable
+            onPress={() => setShowAreaPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.areaUnit')}
+          >
             <SettingsItem
               icon="arrow.up.left.and.arrow.down.right"
               title={t('settings.areaUnit')}
@@ -1088,7 +1105,11 @@ export default function SettingsScreen() {
               colors={colors}
             />
           </Pressable>
-          <Pressable onPress={() => setShowCurrencyPicker(true)}>
+          <Pressable
+            onPress={() => setShowCurrencyPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.currency')}
+          >
             <SettingsItem
               icon="banknote"
               title={t('settings.currency')}
@@ -1098,7 +1119,12 @@ export default function SettingsScreen() {
               colors={colors}
             />
           </Pressable>
-          <Pressable onPress={handleReplayGuidedTour} disabled={isResettingGuidedTour}>
+          <Pressable
+            onPress={handleReplayGuidedTour}
+            disabled={isResettingGuidedTour}
+            accessibilityRole="button"
+            accessibilityLabel={t('guidedTour.settings.replay')}
+          >
             <SettingsItem
               icon="sparkles"
               title={t('guidedTour.settings.replay')}
@@ -1115,6 +1141,7 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text
           style={styles.sectionHeader}
+          accessibilityRole="header"
           textBreakStrategy="highQuality"
           lineBreakStrategyIOS="standard"
         >
@@ -1123,6 +1150,8 @@ export default function SettingsScreen() {
         <View style={styles.sectionContent}>
           <Pressable
             onPress={handleOpenLinkPhone}
+            accessibilityRole="button"
+            accessibilityLabel={phoneActionTitle}
             style={[styles.settingsItem, styles.borderBottom]}
           >
             <View style={styles.settingsIcon}>
@@ -1147,6 +1176,8 @@ export default function SettingsScreen() {
           <Pressable
             onPress={handleSignOut}
             disabled={authLoading}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.signOut')}
             style={[styles.settingsItem, styles.borderBottom]}
           >
             <View style={styles.signOutIcon}>
@@ -1160,7 +1191,12 @@ export default function SettingsScreen() {
               {t('settings.signOut')}
             </Text>
           </Pressable>
-          <Pressable onPress={handleDeleteAccount} style={styles.settingsItem}>
+          <Pressable
+            onPress={handleDeleteAccount}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.deleteAccount')}
+            style={styles.settingsItem}
+          >
             <View style={styles.deleteIcon}>
               <UISymbol name="trash" size={20} color={colors.error} />
             </View>

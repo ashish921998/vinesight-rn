@@ -256,7 +256,9 @@ export default function DashboardScreen() {
             farmsNeedingAttention &&
             farmsNeedingAttention.length > 0 && (
               <View style={{ marginBottom: spacing[6] }}>
-                <Text style={sectionTitleStyle}>{t('dashboard.needsAttention.title')}</Text>
+                <Text style={sectionTitleStyle} accessibilityRole="header">
+                  {t('dashboard.needsAttention.title')}
+                </Text>
                 {farmsNeedingAttention.slice(0, 3).map((item) => (
                   <Pressable
                     key={item.farm.id}
@@ -333,7 +335,9 @@ export default function DashboardScreen() {
 
           {/* Quick Actions */}
           <View style={{ marginBottom: spacing[6] }}>
-            <Text style={sectionTitleStyle}>{t('dashboard.quickActions.title')}</Text>
+            <Text style={sectionTitleStyle} accessibilityRole="header">
+              {t('dashboard.quickActions.title')}
+            </Text>
             <View
               style={{
                 borderRadius: m3.shape.cornerLarge,
@@ -381,7 +385,9 @@ export default function DashboardScreen() {
 
           {/* Recent Activity */}
           <View>
-            <Text style={sectionTitleStyle}>{t('dashboard.recentActivity.title')}</Text>
+            <Text style={sectionTitleStyle} accessibilityRole="header">
+              {t('dashboard.recentActivity.title')}
+            </Text>
             {isLoadingActivities || isLoadingFarms ? (
               <View
                 style={{

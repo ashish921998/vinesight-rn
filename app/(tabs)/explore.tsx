@@ -649,6 +649,8 @@ export default function ExploreScreen() {
           >
             <Pressable
               onPress={handleAddFarm}
+              accessibilityRole="button"
+              accessibilityLabel={t('farms.addFarm')}
               style={{
                 width: '100%',
                 height: '100%',
@@ -816,6 +818,8 @@ export default function ExploreScreen() {
                     <Pressable
                       key={item.id}
                       onPress={() => handleAddStock(item)}
+                      accessibilityRole="button"
+                      accessibilityLabel={item.name}
                       style={{ width: 160 }}
                     >
                       <View
@@ -924,6 +928,8 @@ export default function ExploreScreen() {
               <Pressable
                 key={type}
                 onPress={() => setWarehouseFilter(type)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: warehouseFilter === type }}
                 style={{
                   flex: 1,
                   paddingVertical: 10,
@@ -1027,6 +1033,7 @@ export default function ExploreScreen() {
               return (
                 <View
                   key={item.id}
+                  accessibilityLabel={item.name}
                   style={{
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[4],
@@ -1253,6 +1260,8 @@ export default function ExploreScreen() {
           onPress={() => {
             openWarehouseItem(null);
           }}
+          accessibilityRole="button"
+          accessibilityLabel={t('warehouse.actions.addItem')}
           style={{
             position: 'absolute',
             bottom: fabBottom,
@@ -1329,11 +1338,15 @@ export default function ExploreScreen() {
             onFocus={handleSearchFocus}
             onBlur={handleSearchBlur}
             returnKeyType="search"
+            accessibilityRole="search"
+            accessibilityLabel={searchPlaceholder}
           />
           {searchQuery.length > 0 && (
             <Pressable
               onPress={() => handleSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.clearSearch')}
             >
               <Icon
                 name="xmark.circle.fill"
@@ -1374,6 +1387,9 @@ export default function ExploreScreen() {
               >
                 <Pressable
                   onPress={() => handleTabChange(tab.id)}
+                  accessibilityRole="tab"
+                  accessibilityLabel={tab.label}
+                  accessibilityState={{ selected: isSelected }}
                   style={({ pressed }) => ({
                     alignItems: 'center',
                     justifyContent: 'center',
