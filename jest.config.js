@@ -7,6 +7,8 @@ module.exports = {
     '^@widgets/shared$': '<rootDir>/components/widgets/shared',
     '^@widgets/(.*)$': '<rootDir>/components/widgets/$1',
     '^expo-file-system/legacy$': 'expo-file-system',
+    '^@react-native-async-storage/async-storage$':
+      '@react-native-async-storage/async-storage/jest/async-storage-mock',
   },
   collectCoverageFrom: [
     'components/widgets/**/*.{ts,tsx}',

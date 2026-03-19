@@ -24,6 +24,7 @@ const sampleMix: ChemicalMix = {
       dose_basis: 'per_liter',
       phi_days: 10,
       phi_source: 'Label',
+      phi_verified: true,
     },
     {
       id: 2,
@@ -36,6 +37,7 @@ const sampleMix: ChemicalMix = {
       dose_basis: 'per_liter',
       phi_days: 28,
       phi_source: 'Label',
+      phi_verified: true,
     },
   ],
 };

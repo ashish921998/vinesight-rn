@@ -11,6 +11,7 @@ const mockUseChemicalCatalog = jest.fn();
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockUseLocalSearchParams(),
+  Stack: { Screen: () => null },
 }));
 
 jest.mock('react-i18next', () => ({

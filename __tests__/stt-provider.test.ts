@@ -367,7 +367,7 @@ describe('transcribeAudio — real module function', () => {
 
   describe('circuit breaker integration', () => {
     it('skips Sarvam and falls back to OpenAI when circuit breaker is open', async () => {
-      mockCheckCB.mockReturnValue(false); // circuit is open
+      mockCheckCB.mockImplementation((provider: string) => provider.startsWith('openai'));
 
       const result = await transcribeAudio({
         base64Audio: makeAudioBase64(),
@@ -461,7 +461,7 @@ describe('transcribeAudio — real module function', () => {
 
     it('throws stt_empty_transcript when OpenAI returns empty transcript', async () => {
       // Sarvam circuit open → go directly to OpenAI
-      mockCheckCB.mockReturnValue(false);
+      mockCheckCB.mockImplementation((provider: string) => provider.startsWith('openai'));
 
       mockFetchImpl.mockImplementation(async (url: string) => {
         if (String(url).includes('openai.com')) {
@@ -485,7 +485,7 @@ describe('transcribeAudio — real module function', () => {
     });
 
     it('throws stt_empty_transcript when OpenAI returns whitespace-only transcript', async () => {
-      mockCheckCB.mockReturnValue(false);
+      mockCheckCB.mockImplementation((provider: string) => provider.startsWith('openai'));
 
       mockFetchImpl.mockImplementation(async (url: string) => {
         if (String(url).includes('openai.com')) {
@@ -545,8 +545,8 @@ describe('transcribeAudio — real module function', () => {
 
   describe('OpenAI primary (no Sarvam)', () => {
     it('returns provider=openai when calling OpenAI without fallback reason', async () => {
-      // Force circuit open → use OpenAI directly
-      mockCheckCB.mockReturnValue(false);
+      // Force Sarvam circuit open → use OpenAI directly
+      mockCheckCB.mockImplementation((provider: string) => provider.startsWith('openai'));
 
       const result = await transcribeAudio({
         base64Audio: makeAudioBase64(),

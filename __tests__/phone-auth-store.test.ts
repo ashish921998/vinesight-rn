@@ -165,7 +165,9 @@ describe('signInWithPhone', () => {
     });
     await useAuthStore.getState().signInWithPhone('+919876543210');
     const state = useAuthStore.getState();
-    expect(state.errorMessage).toBe('Rate limit exceeded');
+    expect(state.errorMessage).toBe(
+      'Too many attempts right now. Please wait a minute and try again.',
+    );
     expect(state.otpSentSuccessfully).toBe(false);
     expect(state.isLoading).toBe(false);
     expect(state.pendingOTPPhone).toBeNull();
@@ -278,7 +280,9 @@ describe('verifyPhoneOTP', () => {
     (supabase.auth.verifyOtp as jest.Mock).mockRejectedValue(new Error('Token expired'));
     await useAuthStore.getState().verifyPhoneOTP('+919876543210', '123456');
     const state = useAuthStore.getState();
-    expect(state.errorMessage).toBe('Invalid or expired code. Please try again.');
+    expect(state.errorMessage).toBe(
+      'The verification code is invalid or expired. Please request a new code.',
+    );
     expect(state.isAuthenticated).toBe(false);
     expect(state.isLoading).toBe(false);
   });
@@ -320,7 +324,7 @@ describe('resendPhoneOTP', () => {
   });
 
   it('resends in signup mode when requested', async () => {
-    useAuthStore.setState({ pendingOTPPhone: '+919876543210' });
+    useAuthStore.setState({ pendingOTPPhone: '+919876543210', pendingOTPPhoneMode: null });
     (supabase.auth.signInWithOtp as jest.Mock).mockResolvedValue({ error: null });
 
     await useAuthStore.getState().resendPhoneOTP('signup');
@@ -340,7 +344,9 @@ describe('resendPhoneOTP', () => {
 
     const state = useAuthStore.getState();
     expect(state.pendingOTPPhone).toBe('+919876543210');
-    expect(state.errorMessage).toBe('Rate limit exceeded');
+    expect(state.errorMessage).toBe(
+      'Too many attempts right now. Please wait a minute and try again.',
+    );
   });
 });
 
@@ -547,7 +553,9 @@ describe('completeProfile', () => {
       email: 'alice@example.com',
     });
     const state = useAuthStore.getState();
-    expect(state.errorMessage).toBe('Update failed');
+    expect(state.errorMessage).toBe(
+      'We could not save your profile changes right now. Please try again.',
+    );
     expect(state.isLoading).toBe(false);
   });
 });

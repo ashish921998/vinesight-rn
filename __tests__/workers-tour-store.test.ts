@@ -1,10 +1,5 @@
 import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
 
-jest.mock('@react-native-async-storage/async-storage', () =>
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
-);
-
 const INITIAL_STATE = {
   _hydrated: false,
   hasSeenTour: false,
