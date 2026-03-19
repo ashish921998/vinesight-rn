@@ -32,7 +32,7 @@ function mockChain(terminalResult: { data: unknown; error: unknown }) {
   chain.gte = jest.fn(self);
   chain.lte = jest.fn(self);
   chain.contains = jest.fn(self);
-  chain.order = jest.fn().mockResolvedValue(terminalResult);
+  chain.order = jest.fn(self);
   chain.single = jest.fn().mockResolvedValue(terminalResult);
 
   return chain;
@@ -158,10 +158,32 @@ describe('calculateWorkerSettlement', () => {
       message: 'Worker not found',
     });
   });
+
+  it('applies contains filter when farmId is provided', async () => {
+    const { attendanceChain } = setupMocks(
+      { data: { id: 1, daily_rate: 500 }, error: null },
+      { data: [], error: null },
+    );
+
+    await calculateWorkerSettlement(1, 42, '2024-06-01', '2024-06-30');
+
+    expect(attendanceChain.contains).toHaveBeenCalledWith('farm_ids', [42]);
+  });
+
+  it('throws when attendance fetch fails', async () => {
+    setupMocks(
+      { data: { id: 1, daily_rate: 500 }, error: null },
+      { data: null, error: { message: 'Attendance fetch failed' } },
+    );
+
+    await expect(calculateWorkerSettlement(1, null, '2024-06-01', '2024-06-30')).rejects.toEqual({
+      message: 'Attendance fetch failed',
+    });
+  });
 });
 
 describe('createWorkerSettlement', () => {
-  it('calls supabase insert with correct data', async () => {
+  it('calls supabase insert with correct data and creates payment transaction', async () => {
     const settlement = {
       worker_id: 1,
       farm_id: 10,
@@ -176,16 +198,19 @@ describe('createWorkerSettlement', () => {
     };
 
     const createdRecord = { id: 42, ...settlement };
-    const chain = mockChain({ data: createdRecord, error: null });
+    const settlementChain = mockChain({ data: createdRecord, error: null });
+    const transactionChain = mockChain({ data: null, error: null });
 
-    mockedFrom.mockImplementation(() => chain);
+    mockedFrom.mockImplementation((table: string) => {
+      if (table === 'worker_settlements') return settlementChain;
+      if (table === 'worker_transactions') return transactionChain;
+      return mockChain({ data: null, error: null });
+    });
 
     const result = await createWorkerSettlement(settlement);
 
     expect(mockedFrom).toHaveBeenCalledWith('worker_settlements');
-    // net_payment > 0 triggers a payment transaction insert
-    expect(mockedFrom).toHaveBeenCalledWith('worker_transactions');
-    expect(chain.insert).toHaveBeenCalledWith(
+    expect(settlementChain.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         worker_id: 1,
         farm_id: 10,
@@ -197,6 +222,17 @@ describe('createWorkerSettlement', () => {
         net_payment: 10000,
         status: 'confirmed',
         notes: 'June settlement',
+      }),
+    );
+
+    // net_payment > 0 triggers a payment transaction insert
+    expect(mockedFrom).toHaveBeenCalledWith('worker_transactions');
+    expect(transactionChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        worker_id: 1,
+        type: 'payment',
+        amount: 10000,
+        settlement_id: 42,
       }),
     );
     expect(result).toEqual(createdRecord);

@@ -1040,7 +1040,6 @@ export default function ExploreScreen() {
               return (
                 <View
                   key={item.id}
-                  accessible={true}
                   accessibilityLabel={item.name}
                   style={{
                     borderRadius: borderRadius['2xl'],

@@ -1205,7 +1205,7 @@ export default function FarmDetailScreen() {
     triggerHapticMedium();
     switch (action.id) {
       case 'ai':
-        router.push({ pathname: '/ai-chat', params: { id } } as never);
+        router.push('/(tabs)/assistant');
         break;
       case 'lab':
         router.push(`/lab-tests?farmId=${id}`);
