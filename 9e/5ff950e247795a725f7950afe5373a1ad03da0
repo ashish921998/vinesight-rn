@@ -1,0 +1,31 @@
+__tests__/use-assistant.test.ts
+  4e71c7e21430e5c3 612,631
+src/hooks/use-voice-recorder.ts
+  4e71c7e21430e5c3 167,238
+assets.d.ts
+  4e71c7e21430e5c3 2-3,8-9,14-15
+app/farm/[id].tsx
+  4e71c7e21430e5c3 1208,1285
+app/(tabs)/_layout.tsx
+  4e71c7e21430e5c3 61-64,275
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "9e5ff950e247795a725f7950afe5373a1ad03da0",
+  "prompts": {
+    "4e71c7e21430e5c3": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f78a3a35-b928-43c6-8816-6d76821eba63",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 19,
+      "total_deletions": 9,
+      "accepted_lines": 17,
+      "overriden_lines": 0
+    }
+  }
+}
