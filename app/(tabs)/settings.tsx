@@ -109,19 +109,14 @@ export default function SettingsScreen() {
   const canSendSentryEvent = !__DEV__ && sentryDsnConfigured;
 
   const handleSendSentryTestEvent = useCallback(() => {
-    if (!canSendSentryEvent) {
+    if (!sentryDsnConfigured) {
       Alert.alert(
         t('settings.sentry.transportDisabledTitle', {
           defaultValue: 'Sentry transport is disabled',
         }),
-        __DEV__
-          ? t('settings.sentry.transportDisabledDescriptionDev', {
-              defaultValue:
-                'This app disables Sentry in development. Test with a preview/production build, or temporarily enable Sentry in app/_layout.tsx for local verification.',
-            })
-          : t('settings.sentry.transportDisabledDescriptionProd', {
-              defaultValue: 'Sentry DSN is missing. Add EXPO_PUBLIC_SENTRY_DSN and rebuild.',
-            }),
+        t('settings.sentry.transportDisabledDescriptionProd', {
+          defaultValue: 'Sentry DSN is missing. Add EXPO_PUBLIC_SENTRY_DSN and rebuild.',
+        }),
       );
       return;
     }
