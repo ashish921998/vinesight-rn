@@ -204,19 +204,19 @@ describe('SpraySafeCheckerScreen search', () => {
   });
 
   it('clearing search restores the full status-sorted list', () => {
-    const view = render(<SpraySafeCheckerScreen />);
+    render(<SpraySafeCheckerScreen />);
     const searchInput = screen.getByPlaceholderText('Search mix, pest, or product');
 
     fireEvent.changeText(searchInput, 'berry');
     fireEvent.press(screen.getByLabelText('Clear search'));
 
-    expect(screen.getByText('Berry Guard')).toBeTruthy();
-    expect(screen.getByText('Alpha Shield')).toBeTruthy();
-    expect(screen.getByText('Copper Cover')).toBeTruthy();
+    const mixNames = ['Berry Guard', 'Alpha Shield', 'Copper Cover'];
+    const allText = screen.getAllByText(/Berry Guard|Alpha Shield|Copper Cover/);
+    const renderedOrder = allText.map((node) => node.props.children);
 
-    const tree = JSON.stringify(view.toJSON());
-    expect(tree.indexOf('Berry Guard')).toBeLessThan(tree.indexOf('Alpha Shield'));
-    expect(tree.indexOf('Alpha Shield')).toBeLessThan(tree.indexOf('Copper Cover'));
+    mixNames.forEach((name, i) => {
+      expect(renderedOrder[i]).toBe(name);
+    });
   });
 
   it('shows a no-results state for unmatched queries', () => {

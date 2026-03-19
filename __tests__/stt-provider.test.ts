@@ -390,6 +390,8 @@ describe('transcribeAudio — real module function', () => {
 
       expect(result.provider).toBe('openai_fallback');
       expect(result.fallbackReason).toBe('sarvam_stt_circuit_open');
+      expect(typeof result.fallbackReason).toBe('string');
+      expect(result.fallbackReason).not.toBeUndefined();
     });
 
     it('records Sarvam failure and falls back on API error', async () => {

@@ -43,6 +43,7 @@ const initialState = {
   errorMessage: null,
   pendingOTPEmail: null,
   pendingOTPPhone: null,
+  pendingOTPPhoneMode: null as 'signin' | 'signup' | null,
   otpSentSuccessfully: false,
   pendingOTPType: 'email' as const,
   needsProfileCompletion: false,

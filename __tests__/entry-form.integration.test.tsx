@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 import { EntryForm } from '@/components/screens/entry-form';
@@ -243,7 +243,7 @@ describe('EntryForm UI integration', () => {
       error: null,
       data: mixId
         ? {
-            catalogMixId: 991,
+            catalogMixId: mixId,
             sprayDate: '2026-02-01',
             governingPhiDays: 20,
             safeHarvestDate: '2026-02-20',
@@ -278,9 +278,6 @@ describe('EntryForm UI integration', () => {
     await waitFor(() => {
       expect(screen.getByText('sprayForm.catalogOnly.selectedMix')).toBeTruthy();
     });
-
-    // Flush pending effects so PHI computation syncs to sprayData
-    await act(async () => {});
 
     fireEvent.press(screen.getByText('entryForm.addEntry'));
 
