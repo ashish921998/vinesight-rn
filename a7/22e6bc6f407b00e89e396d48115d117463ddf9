@@ -1,0 +1,42 @@
+app/(tabs)/settings.tsx
+  00f802b762b73083 1230
+src/components/ui/symbol.tsx
+  00f802b762b73083 174-177
+src/components/assistant/ChatScreen.tsx
+  00f802b762b73083 28-29,42,131,371-381,443,666-759,838-874
+src/components/assistant/InputBar.tsx
+  00f802b762b73083 240-241
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "a722e6bc6f407b00e89e396d48115d117463ddf9",
+  "prompts": {
+    "00f802b762b73083": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "be2d6017-2b6a-44af-bf58-b6538fcfadcd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 392,
+      "total_deletions": 145,
+      "accepted_lines": 255,
+      "overriden_lines": 0
+    },
+    "9681e1e037e06bc8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fa8f6bccffeJjp7xkQ7uYuhSZ",
+        "model": "zai-coding-plan/glm-4.7"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 90,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
