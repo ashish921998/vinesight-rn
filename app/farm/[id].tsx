@@ -1205,7 +1205,7 @@ export default function FarmDetailScreen() {
     triggerHapticMedium();
     switch (action.id) {
       case 'ai':
-        router.push(`/ai-chat?id=${id}`);
+        router.push({ pathname: '/ai-chat', params: { id } } as never);
         break;
       case 'lab':
         router.push(`/lab-tests?farmId=${id}`);
@@ -1282,6 +1282,7 @@ export default function FarmDetailScreen() {
           headerTintColor: m3.colorScheme.onSurface,
           headerBackVisible: false,
           headerBackTitle: '',
+          // @ts-expect-error headerBackTitleVisible is supported at runtime but not in type definitions
           headerBackTitleVisible: false,
           headerBackButtonDisplayMode: 'minimal',
           headerLeft: () => (

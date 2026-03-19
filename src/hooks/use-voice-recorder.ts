@@ -164,6 +164,7 @@ export function useVoiceRecorder(
         await setAudioModeAsync({
           allowsRecording: false,
           playsInSilentMode: true,
+          interruptionMode: 'mixWithOthers',
           shouldRouteThroughEarpiece: false,
           shouldPlayInBackground: false,
         });
@@ -234,6 +235,7 @@ export function useVoiceRecorder(
       void setAudioModeAsync({
         allowsRecording: false,
         playsInSilentMode: true,
+        interruptionMode: 'mixWithOthers',
         shouldPlayInBackground: false,
         shouldRouteThroughEarpiece: false,
       }).catch(() => undefined);

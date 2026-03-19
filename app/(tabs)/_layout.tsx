@@ -58,6 +58,10 @@ export default function TabLayout() {
   // (headerRight is not in NativeTabOptions typings but is supported at runtime)
   const dashboardHeaderRight = { headerRight: renderSettingsHeaderButton };
 
+  // Spread into NativeTabs options to avoid TS excess-property error
+  // (headerShown is not in NativeTabOptions typings but is supported at runtime)
+  const assistantHeaderOverrides = { headerShown: false };
+
   const renderTabIcon = (
     sfDefault: SFSymbol,
     sfSelected: SFSymbol,
@@ -268,7 +272,11 @@ export default function TabLayout() {
         </NativeTabs.Trigger>
         <NativeTabs.Trigger
           name="assistant"
-          options={{ ...defaultHeaderOptions, headerShown: false, title: t('tabs.aiAssistant') }}
+          options={{
+            ...defaultHeaderOptions,
+            ...assistantHeaderOverrides,
+            title: t('tabs.aiAssistant'),
+          }}
         >
           {renderTabIcon(sf('brain'), sf('brain.fill'), 'sparkles-outline', 'sparkles')}
           <Label>{t('tabs.aiAssistant')}</Label>
