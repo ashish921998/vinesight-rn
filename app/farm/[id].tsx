@@ -104,9 +104,13 @@ export default function FarmDetailScreen() {
   const router = useRouter();
   const isFocused = useIsFocused();
   const { setEditActivity, setAddEntry } = useModalStore();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const insets = useSafeAreaInsets();
-  const farmId = id ? parseInt(id, 10) : undefined;
+
+  // Expo Router route params can be `string[]` in some cases; normalize to one value.
+  const normalizedId = Array.isArray(id) ? id[0] : id;
+  const farmId = normalizedId ? parseInt(normalizedId, 10) : undefined;
+  const farmIdParam = normalizedId != null ? String(normalizedId) : undefined;
 
   const { data: farm, isLoading: farmLoading, refetch: refetchFarm } = useFarm(farmId);
   const {
@@ -260,7 +264,8 @@ export default function FarmDetailScreen() {
       {
         id: 'ai',
         titleKey: 'farmDetails.workboard.actions.ai',
-        icon: 'lightbulb.fill',
+        // Match the bottom navbar AI assistant icon.
+        icon: 'brain',
         color: m3.colorScheme.primary,
       },
       {
@@ -1205,19 +1210,25 @@ export default function FarmDetailScreen() {
     triggerHapticMedium();
     switch (action.id) {
       case 'ai':
-        router.push({ pathname: '/(tabs)/assistant', params: { farmId: id } });
+        if (!farmIdParam) return;
+        // Use `navigate` here (instead of `push`) to avoid occasional unmatched-route
+        // resolution issues when switching from Stack -> tabs group.
+        router.navigate(`/(tabs)/assistant?farmId=${encodeURIComponent(farmIdParam)}`);
         break;
       case 'lab':
-        router.push(`/lab-tests?farmId=${id}`);
+        if (!farmIdParam) return;
+        router.push(`/lab-tests?farmId=${encodeURIComponent(farmIdParam)}`);
         break;
       case 'reports':
         router.push('/reports');
         break;
       case 'soil':
-        router.push(`/soil-profiling?farmId=${id}`);
+        if (!farmIdParam) return;
+        router.push(`/soil-profiling?farmId=${encodeURIComponent(farmIdParam)}`);
         break;
       case 'fertilizer-plans':
-        router.push({ pathname: '/fertilizer-plans', params: { farmId: id } });
+        if (!farmIdParam) return;
+        router.push({ pathname: '/fertilizer-plans', params: { farmId: farmIdParam } });
         break;
     }
   };
@@ -1900,7 +1911,10 @@ export default function FarmDetailScreen() {
                   icon="document-text"
                   iconColor={m3.colorScheme.primary}
                   subtitle={t('farmDetails.stats.recordsSubtitle')}
-                  onPress={() => router.push(`/logs?farmId=${id}`)}
+                  onPress={() => {
+                    if (!farmIdParam) return;
+                    router.push(`/logs?farmId=${encodeURIComponent(farmIdParam)}`);
+                  }}
                 />
               </View>
               <View style={{ flex: 1 }}>
