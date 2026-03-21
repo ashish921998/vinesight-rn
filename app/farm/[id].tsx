@@ -110,7 +110,7 @@ export default function FarmDetailScreen() {
   // Expo Router route params can be `string[]` in some cases; normalize to one value.
   const normalizedId = Array.isArray(id) ? id[0] : id;
   const farmId = normalizedId ? parseInt(normalizedId, 10) : undefined;
-  const farmIdParam = normalizedId != null ? String(normalizedId) : undefined;
+  const farmIdParam = normalizedId;
 
   const { data: farm, isLoading: farmLoading, refetch: refetchFarm } = useFarm(farmId);
   const {
@@ -657,7 +657,10 @@ export default function FarmDetailScreen() {
     const actions = [
       {
         text: t('farmDetails.actions.editFarm'),
-        onPress: () => router.push(`/farm/${id}/edit`),
+        onPress: () => {
+          if (!farmIdParam) return;
+          router.push(`/farm/${farmIdParam}/edit`);
+        },
       },
       {
         text: seasonActionLabel,
@@ -699,7 +702,8 @@ export default function FarmDetailScreen() {
 
   const openEditFarm = () => {
     setShowFarmActionsSheet(false);
-    router.push(`/farm/${id}/edit`);
+    if (!farmIdParam) return;
+    router.push(`/farm/${farmIdParam}/edit`);
   };
 
   const closeSeasonForm = React.useCallback(() => {
