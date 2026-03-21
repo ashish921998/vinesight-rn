@@ -20,6 +20,13 @@ jest.mock('react-native-reanimated', () => {
   return Reanimated;
 });
 
+jest.mock('@/components/ui/symbol', () => ({
+  Symbol: ({ testID, ...props }: Record<string, unknown>) => {
+    const { View } = require('react-native');
+    return <View testID={testID} {...props} />;
+  },
+}));
+
 jest.mock('@/styles/use-theme', () => ({
   useThemeTokens: () => ({
     isDark: false,

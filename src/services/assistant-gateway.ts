@@ -246,14 +246,19 @@ export async function sendAssistantTurn(
     const elapsed = Date.now() - requestStart;
 
     if (__DEV__) {
+      const ttsProvider = response.audio_provider_used ?? 'NONE';
+      console.log(
+        `[assistant-gateway] ===== SERVER TTS PROVIDER: ${ttsProvider.toUpperCase()} =====`,
+      );
       console.log('[assistant-gateway] TTS diagnostics:', {
         hasAudioB64: Boolean(response.assistant_audio_b64),
         audioB64Length: response.assistant_audio_b64?.length ?? 0,
         hasAudioUrl: Boolean(response.assistant_audio_url),
         audioMimeType: response.assistant_audio_mime_type ?? null,
-        audioProviderUsed: response.audio_provider_used ?? null,
+        audioProviderUsed: ttsProvider,
         ttsSkippedReason: response.tts_skipped_reason ?? null,
         ttsGenerationMs: response.tts_generation_ms ?? null,
+        providerFallbackReason: response.provider_fallback_reason ?? null,
         builtAudioPayload: audio
           ? {
               provider: audio.provider,
@@ -263,6 +268,11 @@ export async function sendAssistantTurn(
             }
           : null,
       });
+      if (ttsProvider === 'NONE' || response.tts_skipped_reason) {
+        console.warn(
+          `[assistant-gateway] TTS SKIPPED: ${response.tts_skipped_reason ?? 'no audio returned from server'}`,
+        );
+      }
     }
 
     const result: AssistantTurnResponse = {

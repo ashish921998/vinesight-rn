@@ -114,6 +114,9 @@ class VoiceOutputService {
     const text = response.message.content?.trim();
     const audio = response.message.audio;
     if (__DEV__) {
+      console.log(
+        `[voice-output] ===== TTS PROVIDER: ${audio?.provider ?? 'NONE (device fallback)'} =====`,
+      );
       console.log('[voice-output] playAssistantTurn entry:', {
         hasText: Boolean(text),
         textLength: text?.length ?? 0,
@@ -124,6 +127,15 @@ class VoiceOutputService {
         provider: audio?.provider ?? null,
         allowDeviceFallback: options.allowDeviceFallback !== false,
       });
+      if (!audio?.base64) {
+        console.warn(
+          '[voice-output] No server audio returned — will fall back to device Speech.speak (NOT Sarvam)',
+        );
+      } else if (audio.provider === 'openai_fallback' || audio.provider === 'openai') {
+        console.warn(
+          '[voice-output] Using OpenAI TTS, NOT Sarvam. Check SARVAM_API_KEY in Supabase secrets.',
+        );
+      }
     }
     let replacedAudioUri: string | null = null;
     let replacedAudioUriDeleted = false;

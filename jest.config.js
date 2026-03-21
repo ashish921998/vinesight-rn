@@ -1,6 +1,6 @@
 module.exports = {
   preset: 'jest-expo',
-  setupFiles: ['<rootDir>/jest-setup/deno-mock.js'],
+  setupFiles: ['<rootDir>/jest-setup/deno-mock.js', 'react-native-gesture-handler/jestSetup.js'],
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',

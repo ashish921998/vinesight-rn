@@ -2,17 +2,28 @@
  * VoiceThread Component
  * Displays the voice conversation thread (transcripts and AI responses).
  * Each turn shows:
- * - User: "You: <transcript>" in a pill bubble
- * - Assistant: "AI: <response>" in a different colored bubble
+ * - User: right-aligned pill bubble with enter animation
+ * - Assistant: left-aligned pill bubble with enter animation
  * The list is scrollable and auto-scrolls to the latest message.
+ * Empty state shows a pulsing mic icon with placeholder text.
  * M3 themed — no hardcoded colors.
  */
 
 import React, { useEffect, useRef } from 'react';
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+  FadeInUp,
+} from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { useThemeTokens } from '@/styles/use-theme';
 import { spacing } from '@/styles/theme';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 
 export interface VoiceModeMessage {
   id: string;
@@ -27,14 +38,10 @@ interface VoiceThreadProps {
 }
 
 export function VoiceThread({ messages, testID }: VoiceThreadProps) {
-  const { m3 } = useThemeTokens();
-  const { t } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messages.length > 0) {
-      // Small delay to let layout finish before scrolling
       const timer = setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
       }, 50);
@@ -44,21 +51,7 @@ export function VoiceThread({ messages, testID }: VoiceThreadProps) {
   }, [messages]);
 
   if (messages.length === 0) {
-    return (
-      <View style={styles.emptyContainer} testID={testID}>
-        <Text
-          style={[
-            styles.emptyText,
-            {
-              color: m3.colorScheme.onSurfaceVariant,
-              ...m3.typography.bodyMedium,
-            },
-          ]}
-        >
-          {t('assistant.chat.transcriptPlaceholder')}
-        </Text>
-      </View>
-    );
+    return <EmptyState testID={testID} />;
   }
 
   return (
@@ -69,20 +62,61 @@ export function VoiceThread({ messages, testID }: VoiceThreadProps) {
       showsVerticalScrollIndicator={false}
       testID={testID}
     >
-      {messages.map((message) => (
-        <VoiceMessageBubble key={message.id} message={message} t={t} m3={m3} />
+      {messages.map((message, index) => (
+        <Animated.View
+          key={message.id}
+          entering={FadeInUp.duration(300).delay(Math.min(index * 50, 200))}
+        >
+          <VoiceMessageBubble message={message} />
+        </Animated.View>
       ))}
     </ScrollView>
   );
 }
 
-interface VoiceMessageBubbleProps {
-  message: VoiceModeMessage;
-  t: (key: string, options?: Record<string, unknown>) => string;
-  m3: ReturnType<typeof useThemeTokens>['m3'];
+function EmptyState({ testID }: { testID?: string }) {
+  const { m3 } = useThemeTokens();
+  const { t } = useTranslation();
+  const pulseScale = useSharedValue(1);
+
+  useEffect(() => {
+    pulseScale.value = withRepeat(
+      withSequence(
+        withTiming(1.08, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+  }, [pulseScale]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+  }));
+
+  return (
+    <View style={styles.emptyContainer} testID={testID}>
+      <Animated.View style={[styles.emptyIconContainer, pulseStyle]}>
+        <SymbolIcon name="mic.fill" size={32} color={m3.colorScheme.onSurfaceVariant} />
+      </Animated.View>
+      <Text
+        style={[
+          styles.emptyText,
+          {
+            color: m3.colorScheme.onSurfaceVariant,
+            ...m3.typography.bodyMedium,
+          },
+        ]}
+      >
+        {t('assistant.chat.transcriptPlaceholder')}
+      </Text>
+    </View>
+  );
 }
 
-function VoiceMessageBubble({ message, t, m3 }: VoiceMessageBubbleProps) {
+function VoiceMessageBubble({ message }: { message: VoiceModeMessage }) {
+  const { m3 } = useThemeTokens();
+  const { t } = useTranslation();
   const isUser = message.role === 'user';
 
   const bubbleBg = isUser
@@ -132,6 +166,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing[6],
+    gap: spacing[3],
+  },
+  emptyIconContainer: {
+    opacity: 0.4,
   },
   emptyText: {
     textAlign: 'center',

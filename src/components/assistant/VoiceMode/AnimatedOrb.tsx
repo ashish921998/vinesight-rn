@@ -1,17 +1,18 @@
 /**
  * AnimatedOrb Component
- * Renders the animated orb for voice mode with 4 distinct states:
+ * Renders the animated orb for voice mode with 5 distinct states:
  * - idle: subtle pulse (scale 1.0 → 1.06 → 1.0)
- * - listening: expanding pulse (scale 1.0 → 1.22 → 1.0) with outer rings
+ * - listening: expanding pulse (scale 1.0 → 1.18 → 1.0) with outer rings
  * - processing: rotation + opacity pulse
- * - speaking: rhythmic waveform-like scaling
+ * - speaking: rhythmic waveform-like scaling with rings
+ * - error: static, slightly dimmed
  *
  * Uses react-native-reanimated v4 for smooth 60fps animations.
  * All colors from M3 theme tokens — no hardcoded colors.
  */
 
 import React, { useEffect } from 'react';
-import { TouchableOpacity, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,10 +20,13 @@ import Animated, {
   withSequence,
   withTiming,
   withSpring,
+  withDelay,
   cancelAnimation,
   Easing,
+  interpolateColor,
 } from 'react-native-reanimated';
 import { useThemeTokens } from '@/styles/use-theme';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 
 export type VoiceModeState = 'idle' | 'listening' | 'processing' | 'speaking' | 'error';
 
@@ -37,6 +41,16 @@ interface AnimatedOrbProps {
 const ORB_SIZE = 120;
 const RING_SIZE = ORB_SIZE + 40;
 const OUTER_RING_SIZE = ORB_SIZE + 80;
+
+const STATE_INDEX_MAP: Record<VoiceModeState, number> = {
+  idle: 0,
+  listening: 1,
+  processing: 2,
+  speaking: 3,
+  error: 4,
+};
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function AnimatedOrb({
   state,
@@ -59,9 +73,26 @@ export function AnimatedOrb({
   // Outer ring
   const ring2Scale = useSharedValue(1);
   const ring2Opacity = useSharedValue(0);
+  // Entrance animation
+  const entranceScale = useSharedValue(0);
+  const entranceOpacity = useSharedValue(0);
+  // Press feedback
+  const pressScale = useSharedValue(1);
+  // Color transition
+  const colorProgress = useSharedValue(STATE_INDEX_MAP[state]);
+
+  // Entrance animation on mount
+  useEffect(() => {
+    entranceScale.value = withSpring(1, { damping: 12, stiffness: 150 });
+    entranceOpacity.value = withTiming(1, { duration: 300 });
+  }, [entranceScale, entranceOpacity]);
+
+  // Animate color transition when state changes
+  useEffect(() => {
+    colorProgress.value = withTiming(STATE_INDEX_MAP[state], { duration: 300 });
+  }, [state, colorProgress]);
 
   useEffect(() => {
-    // Cancel previous animations
     cancelAnimation(scale);
     cancelAnimation(orbOpacity);
     cancelAnimation(rotation);
@@ -70,13 +101,11 @@ export function AnimatedOrb({
     cancelAnimation(ring2Scale);
     cancelAnimation(ring2Opacity);
 
-    // Reset rings
     ring1Opacity.value = 0;
     ring2Opacity.value = 0;
 
     switch (state) {
       case 'idle':
-        // Subtle slow pulse
         scale.value = withRepeat(
           withSequence(
             withTiming(1.06, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
@@ -90,7 +119,6 @@ export function AnimatedOrb({
         break;
 
       case 'listening':
-        // Faster expanding pulse with visible rings
         scale.value = withRepeat(
           withSequence(
             withTiming(1.18, { duration: 700, easing: Easing.inOut(Easing.ease) }),
@@ -101,7 +129,6 @@ export function AnimatedOrb({
         );
         orbOpacity.value = 1;
         rotation.value = 0;
-        // Expand rings
         ring1Scale.value = withRepeat(
           withSequence(
             withTiming(1.4, { duration: 900, easing: Easing.out(Easing.ease) }),
@@ -118,7 +145,6 @@ export function AnimatedOrb({
         break;
 
       case 'processing':
-        // Slow steady pulse + rotation effect via opacity
         scale.value = withRepeat(
           withSequence(
             withTiming(1.08, { duration: 900, easing: Easing.inOut(Easing.ease) }),
@@ -143,7 +169,6 @@ export function AnimatedOrb({
         break;
 
       case 'speaking':
-        // Rhythmic waveform — alternating fast/slow pulses like audio waveform
         scale.value = withRepeat(
           withSequence(
             withTiming(1.22, { duration: 250, easing: Easing.out(Easing.ease) }),
@@ -156,7 +181,6 @@ export function AnimatedOrb({
         );
         orbOpacity.value = 1;
         rotation.value = 0;
-        // Expand rings for speaking
         ring1Scale.value = withRepeat(
           withSequence(
             withTiming(1.5, { duration: 500, easing: Easing.out(Easing.ease) }),
@@ -186,7 +210,6 @@ export function AnimatedOrb({
         break;
 
       case 'error':
-        // Static, slightly dimmed
         scale.value = withSpring(1.0, { damping: 12, stiffness: 150 });
         orbOpacity.value = withTiming(0.65, { duration: 300 });
         rotation.value = 0;
@@ -194,37 +217,50 @@ export function AnimatedOrb({
     }
   }, [state, scale, orbOpacity, rotation, ring1Scale, ring1Opacity, ring2Scale, ring2Opacity]);
 
+  // Build color arrays for interpolation
+  const orbColors = [
+    m3.colorScheme.primaryContainer, // idle
+    m3.colorScheme.primary, // listening
+    m3.colorScheme.secondary ?? m3.colorScheme.primary, // processing
+    m3.colorScheme.tertiary ?? m3.colorScheme.primary, // speaking
+    m3.colorScheme.error, // error
+  ];
+
+  const orbAnimatedColorStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(colorProgress.value, [0, 1, 2, 3, 4], orbColors),
+  }));
+
+  const ringColorStyle = useAnimatedStyle(() => ({
+    borderColor: interpolateColor(colorProgress.value, [0, 1, 2, 3, 4], orbColors),
+  }));
+
   const orbStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }, { rotate: `${rotation.value}deg` }],
-    opacity: orbOpacity.value,
+    transform: [
+      { scale: entranceScale.value * scale.value * pressScale.value },
+      { rotate: `${rotation.value}deg` },
+    ],
+    opacity: entranceOpacity.value * orbOpacity.value,
   }));
 
   const ring1Style = useAnimatedStyle(() => ({
     transform: [{ scale: ring1Scale.value }],
-    opacity: ring1Opacity.value,
+    opacity: ring1Opacity.value * entranceOpacity.value,
   }));
 
   const ring2Style = useAnimatedStyle(() => ({
     transform: [{ scale: ring2Scale.value }],
-    opacity: ring2Opacity.value,
+    opacity: ring2Opacity.value * entranceOpacity.value,
   }));
 
-  // Orb colors based on state
-  const getOrbColor = () => {
-    switch (state) {
-      case 'listening':
-        return m3.colorScheme.primary;
-      case 'processing':
-        return m3.colorScheme.secondary ?? m3.colorScheme.primary;
-      case 'speaking':
-        return m3.colorScheme.tertiary ?? m3.colorScheme.primary;
-      case 'error':
-        return m3.colorScheme.error;
-      default:
-        return m3.colorScheme.primaryContainer;
-    }
+  const handlePressIn = () => {
+    pressScale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
   };
 
+  const handlePressOut = () => {
+    pressScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+  };
+
+  // Static icon color based on current state (icons don't animate color)
   const getIconColor = () => {
     switch (state) {
       case 'listening':
@@ -240,7 +276,6 @@ export function AnimatedOrb({
     }
   };
 
-  const orbColor = getOrbColor();
   const iconColor = getIconColor();
 
   return (
@@ -253,8 +288,8 @@ export function AnimatedOrb({
             width: OUTER_RING_SIZE,
             height: OUTER_RING_SIZE,
             borderRadius: OUTER_RING_SIZE / 2,
-            borderColor: orbColor,
           },
+          ringColorStyle,
           ring2Style,
         ]}
       />
@@ -266,62 +301,63 @@ export function AnimatedOrb({
             width: RING_SIZE,
             height: RING_SIZE,
             borderRadius: RING_SIZE / 2,
-            borderColor: orbColor,
           },
+          ringColorStyle,
           ring1Style,
         ]}
       />
       {/* Orb */}
-      <TouchableOpacity
+      <AnimatedPressable
         onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         disabled={disabled}
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
-        activeOpacity={0.85}
       >
-        <Animated.View style={[styles.orb, { backgroundColor: orbColor }, orbStyle]}>
-          {/* Mic or waveform indicator */}
+        <Animated.View style={[styles.orb, orbAnimatedColorStyle, orbStyle]}>
           <View style={styles.indicator}>
             {state === 'processing' ? (
-              // Processing dots
               <View style={styles.dotsRow}>
                 {[0, 1, 2].map((i) => (
                   <ProcessingDot key={i} index={i} color={iconColor} />
                 ))}
               </View>
             ) : state === 'speaking' ? (
-              // Waveform bars
               <View style={styles.waveformRow}>
                 {[0, 1, 2, 3, 4].map((i) => (
                   <WaveformBar key={i} index={i} color={iconColor} />
                 ))}
               </View>
             ) : (
-              // Mic icon shape using View
-              <MicIcon color={iconColor} />
+              <SymbolIcon
+                name={state === 'error' ? 'exclamationmark.triangle.fill' : 'mic.fill'}
+                size={36}
+                color={iconColor}
+              />
             )}
           </View>
         </Animated.View>
-      </TouchableOpacity>
+      </AnimatedPressable>
     </View>
   );
 }
 
-// Processing dot with staggered animation
 function ProcessingDot({ index, color }: { index: number; color: string }) {
   const dotScale = useSharedValue(1);
 
   useEffect(() => {
-    // Stagger by using a delay based on index
-    const baseDelay = index * 180;
-    dotScale.value = withRepeat(
-      withSequence(
-        withTiming(1.0, { duration: baseDelay }),
-        withTiming(1.5, { duration: 350, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1.0, { duration: 350 - Math.min(baseDelay, 350) }),
+    const staggerDelay = index * 180;
+    dotScale.value = withDelay(
+      staggerDelay,
+      withRepeat(
+        withSequence(
+          withTiming(1.5, { duration: 350, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.0, { duration: 350, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        false,
       ),
-      -1,
-      false,
     );
   }, [dotScale, index]);
 
@@ -332,7 +368,6 @@ function ProcessingDot({ index, color }: { index: number; color: string }) {
   return <Animated.View style={[styles.dot, { backgroundColor: color }, dotStyle]} />;
 }
 
-// Waveform bar with staggered animation
 function WaveformBar({ index, color }: { index: number; color: string }) {
   const barHeight = useSharedValue(8);
   const centerDistances = [2, 1, 0, 1, 2];
@@ -341,14 +376,16 @@ function WaveformBar({ index, color }: { index: number; color: string }) {
   useEffect(() => {
     const delays = [0, 120, 60, 180, 90];
     const delay = delays[index] ?? 0;
-    barHeight.value = withRepeat(
-      withSequence(
-        withTiming(8, { duration: delay }),
-        withTiming(baseH + 10, { duration: 250, easing: Easing.out(Easing.ease) }),
-        withTiming(8, { duration: 250, easing: Easing.in(Easing.ease) }),
+    barHeight.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(baseH + 10, { duration: 250, easing: Easing.out(Easing.ease) }),
+          withTiming(8, { duration: 250, easing: Easing.in(Easing.ease) }),
+        ),
+        -1,
+        false,
       ),
-      -1,
-      false,
     );
   }, [barHeight, index, baseH]);
 
@@ -360,17 +397,6 @@ function WaveformBar({ index, color }: { index: number; color: string }) {
     <Animated.View
       style={[styles.waveBar, { backgroundColor: color, width: 4, borderRadius: 2 }, barStyle]}
     />
-  );
-}
-
-// Simple mic icon shape
-function MicIcon({ color }: { color: string }) {
-  return (
-    <View style={styles.micContainer}>
-      <View style={[styles.micBody, { borderColor: color, borderWidth: 3 }]} />
-      <View style={[styles.micStand, { backgroundColor: color }]} />
-      <View style={[styles.micBase, { backgroundColor: color }]} />
-    </View>
   );
 }
 
@@ -424,26 +450,5 @@ const styles = StyleSheet.create({
     width: 4,
     borderRadius: 2,
     minHeight: 8,
-  },
-  micContainer: {
-    alignItems: 'center',
-    width: 28,
-    height: 40,
-  },
-  micBody: {
-    width: 16,
-    height: 22,
-    borderRadius: 8,
-    backgroundColor: 'transparent',
-  },
-  micStand: {
-    width: 2,
-    height: 6,
-    marginTop: 1,
-  },
-  micBase: {
-    width: 14,
-    height: 2,
-    borderRadius: 1,
   },
 });
