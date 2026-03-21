@@ -1,0 +1,31 @@
+__tests__/voice-mode-modal.test.tsx
+  90eea587adf96088 28-31
+supabase/functions/ai-gateway/utils/helpers.ts
+  90eea587adf96088 72,75,78-80
+src/components/assistant/VoiceMode/VoiceModeModal.tsx
+  90eea587adf96088 14,103-130
+src/components/assistant/VoiceMode/VoiceThread.tsx
+  90eea587adf96088 17,82,85-88,97
+src/components/assistant/VoiceMode/AnimatedOrb.tsx
+  90eea587adf96088 14,221-230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "010933a3743eb275748b630307be88b6cdff77cb",
+  "prompts": {
+    "90eea587adf96088": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "5cd67e40-3a9c-4dab-81db-8dfd8541e111",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 58,
+      "total_deletions": 75,
+      "accepted_lines": 57,
+      "overriden_lines": 0
+    }
+  }
+}
