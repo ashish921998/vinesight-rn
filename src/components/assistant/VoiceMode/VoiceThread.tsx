@@ -40,6 +40,7 @@ interface VoiceThreadProps {
 
 export function VoiceThread({ messages, testID }: VoiceThreadProps) {
   const scrollRef = useRef<ScrollView>(null);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -66,7 +67,9 @@ export function VoiceThread({ messages, testID }: VoiceThreadProps) {
       {messages.map((message, index) => (
         <Animated.View
           key={message.id}
-          entering={FadeInUp.duration(300).delay(Math.min(index * 50, 200))}
+          entering={
+            reduceMotion ? undefined : FadeInUp.duration(300).delay(Math.min(index * 50, 200))
+          }
         >
           <VoiceMessageBubble message={message} />
         </Animated.View>
