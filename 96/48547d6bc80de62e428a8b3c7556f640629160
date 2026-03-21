@@ -1,0 +1,23 @@
+src/components/assistant/VoiceMode/VoiceThread.tsx
+  357efb2869e299ac 43,70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "9648547d6bc80de62e428a8b3c7556f640629160",
+  "prompts": {
+    "357efb2869e299ac": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "0969a068-cf67-423b-b513-6f4a419fd614",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 1,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
