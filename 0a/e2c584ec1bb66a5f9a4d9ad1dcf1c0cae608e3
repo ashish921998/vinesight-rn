@@ -1,0 +1,23 @@
+app/farm/[id].tsx
+  742ba543a4440d0d 107,110-113,267-268,1213-1216,1219-1220,1226-1227,1230-1231,1914-1917
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "0ae2c584ec1bb66a5f9a4d9ad1dcf1c0cae608e3",
+  "prompts": {
+    "742ba543a4440d0d": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "6d6e716d-93b9-4be9-839e-948364369511",
+        "model": "default"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 9,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  }
+}
