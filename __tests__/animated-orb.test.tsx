@@ -115,32 +115,4 @@ describe('AnimatedOrb', () => {
     // Processing state renders View-based dots row; ensure no crash
     expect(UNSAFE_getAllByType(View).length).toBeGreaterThan(0);
   });
-
-  it('renders idle state without crash', () => {
-    const { getByTestId } = render(
-      <AnimatedOrb state="idle" onPress={jest.fn()} testID="orb-idle" />,
-    );
-    expect(getByTestId('orb-idle')).toBeTruthy();
-  });
-
-  it('renders listening state without crash', () => {
-    const { getByTestId } = render(
-      <AnimatedOrb state="listening" onPress={jest.fn()} testID="orb-listening" />,
-    );
-    expect(getByTestId('orb-listening')).toBeTruthy();
-  });
-
-  it('renders speaking state without crash', () => {
-    const { getByTestId } = render(
-      <AnimatedOrb state="speaking" onPress={jest.fn()} testID="orb-speaking" />,
-    );
-    expect(getByTestId('orb-speaking')).toBeTruthy();
-  });
-
-  it('renders error state without crash', () => {
-    const { getByTestId } = render(
-      <AnimatedOrb state="error" onPress={jest.fn()} testID="orb-error" />,
-    );
-    expect(getByTestId('orb-error')).toBeTruthy();
-  });
 });

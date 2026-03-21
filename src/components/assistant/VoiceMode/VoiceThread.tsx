@@ -14,6 +14,7 @@ import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useReducedMotion,
   withRepeat,
   withSequence,
   withTiming,
@@ -78,8 +79,13 @@ function EmptyState({ testID }: { testID?: string }) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
   const pulseScale = useSharedValue(1);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reduceMotion) {
+      pulseScale.value = 1;
+      return;
+    }
     pulseScale.value = withRepeat(
       withSequence(
         withTiming(1.08, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
@@ -88,7 +94,7 @@ function EmptyState({ testID }: { testID?: string }) {
       -1,
       false,
     );
-  }, [pulseScale]);
+  }, [pulseScale, reduceMotion]);
 
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],

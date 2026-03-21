@@ -11,7 +11,7 @@
  * All colors from M3 theme tokens — no hardcoded colors.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -218,13 +218,16 @@ export function AnimatedOrb({
   }, [state, scale, orbOpacity, rotation, ring1Scale, ring1Opacity, ring2Scale, ring2Opacity]);
 
   // Build color arrays for interpolation
-  const orbColors = [
-    m3.colorScheme.primaryContainer, // idle
-    m3.colorScheme.primary, // listening
-    m3.colorScheme.secondary ?? m3.colorScheme.primary, // processing
-    m3.colorScheme.tertiary ?? m3.colorScheme.primary, // speaking
-    m3.colorScheme.error, // error
-  ];
+  const orbColors = useMemo(
+    () => [
+      m3.colorScheme.primaryContainer, // idle
+      m3.colorScheme.primary, // listening
+      m3.colorScheme.secondary ?? m3.colorScheme.primary, // processing
+      m3.colorScheme.tertiary ?? m3.colorScheme.primary, // speaking
+      m3.colorScheme.error, // error
+    ],
+    [m3.colorScheme],
+  );
 
   const orbAnimatedColorStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(colorProgress.value, [0, 1, 2, 3, 4], orbColors),

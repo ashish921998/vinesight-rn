@@ -69,14 +69,15 @@ export function resolveTtsLocale(
   effectiveLocale: 'en' | 'hi' | 'mr',
   sttDetectedLocale: 'en' | 'hi' | 'mr' | null,
 ): 'en' | 'hi' | 'mr' {
-  const stripped = assistantText.replace(/[\s\d]/g, '');
+  const stripped = assistantText.replace(/[^\p{L}\p{M}]/gu, '');
   if (stripped.length === 0) return effectiveLocale;
 
-  const devanagariCount = (assistantText.match(DEVANAGARI_RE) ?? []).length;
+  const devanagariCount = (stripped.match(DEVANAGARI_RE) ?? []).length;
   const ratio = devanagariCount / stripped.length;
 
-  if (ratio > 0.3 && effectiveLocale === 'en') {
-    // Text is Devanagari but locale says English — use STT hint or default to 'hi'
+  if (ratio > 0.3) {
+    // Text is predominantly Devanagari — keep locale if already hi/mr, else default to 'hi'
+    if (effectiveLocale === 'mr' || effectiveLocale === 'hi') return effectiveLocale;
     return sttDetectedLocale === 'mr' || sttDetectedLocale === 'hi' ? sttDetectedLocale : 'hi';
   }
 

@@ -11,7 +11,7 @@
  * - Animated status label with fade transitions
  */
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Modal,
   View,
@@ -100,38 +100,34 @@ export function VoiceModeModal({
     onCloseRef.current();
   }, []);
 
-  const snapBack = useCallback(() => {
-    'worklet';
-    translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
-  }, [translateY]);
-
-  const panGesture = Gesture.Pan()
-    .onUpdate((e) => {
-      'worklet';
-      if (e.translationY > 0) {
-        translateY.value = e.translationY;
-      }
-    })
-    .onEnd((e) => {
-      'worklet';
-      if (e.translationY > SWIPE_DOWN_THRESHOLD || e.velocityY > 800) {
-        isDismissing.value = 1;
-        translateY.value = withTiming(800, { duration: 200 }, () => {
-          runOnJS(dismissModal)();
-        });
-      } else {
-        snapBack();
-      }
-    })
-    .onFinalize(() => {
-      'worklet';
-      // Snap back if gesture was cancelled/stolen mid-swipe (not if we're dismissing)
-      if (isDismissing.value === 0 && translateY.value > 0) {
-        snapBack();
-      }
-    })
-    .activeOffsetY(5)
-    .failOffsetX([-15, 15]);
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .onUpdate((e) => {
+          'worklet';
+          translateY.value = Math.max(0, e.translationY);
+        })
+        .onEnd((e) => {
+          'worklet';
+          if (e.translationY > SWIPE_DOWN_THRESHOLD || e.velocityY > 800) {
+            isDismissing.value = 1;
+            translateY.value = withTiming(800, { duration: 200 }, () => {
+              runOnJS(dismissModal)();
+            });
+          } else {
+            translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
+          }
+        })
+        .onFinalize(() => {
+          'worklet';
+          if (isDismissing.value === 0 && translateY.value > 0) {
+            translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
+          }
+        })
+        .activeOffsetY(5)
+        .failOffsetX([-15, 15]),
+    [translateY, isDismissing, dismissModal],
+  );
 
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
