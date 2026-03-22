@@ -68,7 +68,9 @@ export function VoiceThread({ messages, testID }: VoiceThreadProps) {
         <Animated.View
           key={message.id}
           entering={
-            reduceMotion ? undefined : FadeInUp.duration(300).delay(Math.min(index * 50, 200))
+            reduceMotion
+              ? undefined
+              : FadeInUp.duration(300).delay(messages.length > 1 ? Math.min(index * 50, 200) : 0)
           }
         >
           <VoiceMessageBubble message={message} />

@@ -57,7 +57,7 @@ export function resolveLocale(locale: string | undefined): 'en' | 'hi' | 'mr' {
 }
 
 // Unicode range for Devanagari script (used by Hindi and Marathi)
-const DEVANAGARI_RE = /[\u0900-\u097F]/g;
+const DEVANAGARI_RE = /[\u0900-\u097F]/gu;
 
 /**
  * Resolve the TTS locale from the actual assistant response text.
