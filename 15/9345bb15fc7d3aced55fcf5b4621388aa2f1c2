@@ -1,0 +1,25 @@
+src/components/assistant/VoiceMode/VoiceThread.tsx
+  941c1c3b23f00eb9 71-73
+supabase/functions/ai-gateway/utils/helpers.ts
+  941c1c3b23f00eb9 60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "159345bb15fc7d3aced55fcf5b4621388aa2f1c2",
+  "prompts": {
+    "941c1c3b23f00eb9": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "054efc24-66f9-4123-9595-8bfcdbeb0514",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 2,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
