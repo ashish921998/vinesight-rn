@@ -1,0 +1,23 @@
+supabase/functions/ai-gateway/utils/helpers.ts
+  fa069a0513a6b935 81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "410addfee3be2078549046047d8392c6e6348e77",
+  "prompts": {
+    "fa069a0513a6b935": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d139f-a1a7-7ae0-ae1c-962204c8bb38",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 3,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
