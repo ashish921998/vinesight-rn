@@ -30,6 +30,7 @@ import Animated, {
   runOnJS,
   FadeIn,
   FadeOut,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -70,6 +71,7 @@ export function VoiceModeModal({
   const { m3, isDark } = useThemeTokens();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
 
   const translateY = useSharedValue(0);
   const isDismissing = useSharedValue(0);
@@ -253,8 +255,8 @@ export function VoiceModeModal({
             {/* Animated status label */}
             <Animated.Text
               key={statusLabel}
-              entering={FadeIn.duration(200)}
-              exiting={FadeOut.duration(150)}
+              entering={reduceMotion ? undefined : FadeIn.duration(200)}
+              exiting={reduceMotion ? undefined : FadeOut.duration(150)}
               style={[
                 styles.statusLabel,
                 {

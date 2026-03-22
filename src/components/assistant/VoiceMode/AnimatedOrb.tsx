@@ -24,6 +24,7 @@ import Animated, {
   cancelAnimation,
   Easing,
   interpolateColor,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { useThemeTokens } from '@/styles/use-theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
@@ -60,6 +61,7 @@ export function AnimatedOrb({
   testID,
 }: AnimatedOrbProps) {
   const { m3 } = useThemeTokens();
+  const reduceMotion = useReducedMotion();
 
   // Core orb scale
   const scale = useSharedValue(1);
@@ -74,8 +76,8 @@ export function AnimatedOrb({
   const ring2Scale = useSharedValue(1);
   const ring2Opacity = useSharedValue(0);
   // Entrance animation
-  const entranceScale = useSharedValue(0);
-  const entranceOpacity = useSharedValue(0);
+  const entranceScale = useSharedValue(reduceMotion ? 1 : 0);
+  const entranceOpacity = useSharedValue(reduceMotion ? 1 : 0);
   // Press feedback
   const pressScale = useSharedValue(1);
   // Color transition
@@ -83,9 +85,10 @@ export function AnimatedOrb({
 
   // Entrance animation on mount
   useEffect(() => {
+    if (reduceMotion) return;
     entranceScale.value = withSpring(1, { damping: 12, stiffness: 150 });
     entranceOpacity.value = withTiming(1, { duration: 300 });
-  }, [entranceScale, entranceOpacity]);
+  }, [entranceScale, entranceOpacity, reduceMotion]);
 
   // Animate color transition when state changes
   useEffect(() => {
@@ -256,10 +259,12 @@ export function AnimatedOrb({
   }));
 
   const handlePressIn = () => {
+    if (reduceMotion) return;
     pressScale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
   };
 
   const handlePressOut = () => {
+    if (reduceMotion) return;
     pressScale.value = withSpring(1, { damping: 12, stiffness: 200 });
   };
 
