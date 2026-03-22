@@ -1,0 +1,27 @@
+__tests__/chat-screen.test.tsx
+  018aa1644e3efbd4 30-33
+__tests__/animated-orb.test.tsx
+  018aa1644e3efbd4 20-23
+src/components/assistant/VoiceMode/AnimatedOrb.tsx
+  018aa1644e3efbd4 110-116,228,378,407
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "12629fcf0d1eda0812304d3c1b82226bda0b7576",
+  "prompts": {
+    "018aa1644e3efbd4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d13d5-fbd3-7770-af12-2774aa45e170",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 10,
+      "accepted_lines": 25,
+      "overriden_lines": 0
+    }
+  }
+}
