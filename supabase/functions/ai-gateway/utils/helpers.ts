@@ -78,10 +78,8 @@ export function resolveTtsLocale(
   if (ratio > 0.3) {
     // Text is predominantly Devanagari — keep locale if already hi/mr, else default to 'hi'
     if (effectiveLocale === 'mr' || effectiveLocale === 'hi') return effectiveLocale;
-    // Prefer sttDetectedLocale if it signals Indic; fall back to effectiveLocale if it's
-    // already Indic; otherwise default to 'hi'.
+    // Prefer sttDetectedLocale if it signals Indic; otherwise default to 'hi'.
     if (sttDetectedLocale === 'mr' || sttDetectedLocale === 'hi') return sttDetectedLocale;
-    if (effectiveLocale === 'mr') return 'mr';
     return 'hi';
   }
 
