@@ -17,7 +17,10 @@ import type { VoiceModeState } from '@/components/assistant/VoiceMode/AnimatedOr
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
-  return Reanimated;
+  return {
+    ...Reanimated,
+    useReducedMotion: () => false,
+  };
 });
 
 jest.mock('@/components/ui/symbol', () => ({

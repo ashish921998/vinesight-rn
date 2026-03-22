@@ -107,6 +107,13 @@ export function AnimatedOrb({
     ring1Opacity.value = 0;
     ring2Opacity.value = 0;
 
+    if (reduceMotion) {
+      scale.value = 1;
+      orbOpacity.value = state === 'error' ? 0.65 : 1;
+      rotation.value = 0;
+      return;
+    }
+
     switch (state) {
       case 'idle':
         scale.value = withRepeat(
@@ -218,7 +225,17 @@ export function AnimatedOrb({
         rotation.value = 0;
         break;
     }
-  }, [state, scale, orbOpacity, rotation, ring1Scale, ring1Opacity, ring2Scale, ring2Opacity]);
+  }, [
+    state,
+    reduceMotion,
+    scale,
+    orbOpacity,
+    rotation,
+    ring1Scale,
+    ring1Opacity,
+    ring2Scale,
+    ring2Opacity,
+  ]);
 
   // Build color arrays for interpolation
   const orbColors = useMemo(
@@ -328,13 +345,13 @@ export function AnimatedOrb({
             {state === 'processing' ? (
               <View style={styles.dotsRow}>
                 {[0, 1, 2].map((i) => (
-                  <ProcessingDot key={i} index={i} color={iconColor} />
+                  <ProcessingDot key={i} index={i} color={iconColor} reduceMotion={reduceMotion} />
                 ))}
               </View>
             ) : state === 'speaking' ? (
               <View style={styles.waveformRow}>
                 {[0, 1, 2, 3, 4].map((i) => (
-                  <WaveformBar key={i} index={i} color={iconColor} />
+                  <WaveformBar key={i} index={i} color={iconColor} reduceMotion={reduceMotion} />
                 ))}
               </View>
             ) : (
@@ -351,10 +368,19 @@ export function AnimatedOrb({
   );
 }
 
-function ProcessingDot({ index, color }: { index: number; color: string }) {
+function ProcessingDot({
+  index,
+  color,
+  reduceMotion,
+}: {
+  index: number;
+  color: string;
+  reduceMotion: boolean;
+}) {
   const dotScale = useSharedValue(1);
 
   useEffect(() => {
+    if (reduceMotion) return;
     const staggerDelay = index * 180;
     dotScale.value = withDelay(
       staggerDelay,
@@ -367,7 +393,7 @@ function ProcessingDot({ index, color }: { index: number; color: string }) {
         false,
       ),
     );
-  }, [dotScale, index]);
+  }, [dotScale, index, reduceMotion]);
 
   const dotStyle = useAnimatedStyle(() => ({
     transform: [{ scale: dotScale.value }],
@@ -376,12 +402,21 @@ function ProcessingDot({ index, color }: { index: number; color: string }) {
   return <Animated.View style={[styles.dot, { backgroundColor: color }, dotStyle]} />;
 }
 
-function WaveformBar({ index, color }: { index: number; color: string }) {
-  const barHeight = useSharedValue(8);
+function WaveformBar({
+  index,
+  color,
+  reduceMotion,
+}: {
+  index: number;
+  color: string;
+  reduceMotion: boolean;
+}) {
   const centerDistances = [2, 1, 0, 1, 2];
   const baseH = 8 + (2 - (centerDistances[index] ?? 0)) * 6;
+  const barHeight = useSharedValue(reduceMotion ? baseH : 8);
 
   useEffect(() => {
+    if (reduceMotion) return;
     const delays = [0, 120, 60, 180, 90];
     const delay = delays[index] ?? 0;
     barHeight.value = withDelay(
@@ -395,7 +430,7 @@ function WaveformBar({ index, color }: { index: number; color: string }) {
         false,
       ),
     );
-  }, [barHeight, index, baseH]);
+  }, [barHeight, index, baseH, reduceMotion]);
 
   const barStyle = useAnimatedStyle(() => ({
     height: barHeight.value,
