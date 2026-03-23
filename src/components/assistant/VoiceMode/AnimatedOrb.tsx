@@ -85,7 +85,13 @@ export function AnimatedOrb({
 
   // Entrance animation on mount
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion) {
+      cancelAnimation(entranceScale);
+      cancelAnimation(entranceOpacity);
+      entranceScale.value = 1;
+      entranceOpacity.value = 1;
+      return;
+    }
     entranceScale.value = withSpring(1, { damping: 12, stiffness: 150 });
     entranceOpacity.value = withTiming(1, { duration: 300 });
   }, [entranceScale, entranceOpacity, reduceMotion]);
@@ -380,7 +386,11 @@ function ProcessingDot({
   const dotScale = useSharedValue(1);
 
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion) {
+      cancelAnimation(dotScale);
+      dotScale.value = 1;
+      return;
+    }
     const staggerDelay = index * 180;
     dotScale.value = withDelay(
       staggerDelay,
@@ -416,7 +426,11 @@ function WaveformBar({
   const barHeight = useSharedValue(reduceMotion ? baseH : 8);
 
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion) {
+      cancelAnimation(barHeight);
+      barHeight.value = baseH;
+      return;
+    }
     const delays = [0, 120, 60, 180, 90];
     const delay = delays[index] ?? 0;
     barHeight.value = withDelay(
