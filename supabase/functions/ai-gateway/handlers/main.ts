@@ -161,10 +161,15 @@ export async function handleRequest(req: Request): Promise<Response> {
     // use text-based Devanagari detection so the locale signal isn't lost.
     const detectedLocaleForPersistence: 'en' | 'hi' | 'mr' | null =
       sttDetectedLocale ?? detectLocaleFromText(transcript);
-    if (
+    // Only update locale when STT actually returned a language code, or when
+    // there's no existing persisted locale to preserve (prevents 'hi' fallback
+    // from overwriting a valid 'mr' that STT failed to detect).
+    const shouldUpdateLocale =
       effectiveInputMode === 'audio' &&
-      detectedLocaleForPersistence !== routeState.detected_locale
-    ) {
+      (sttDetectedLocale != null || routeState.detected_locale == null) &&
+      detectedLocaleForPersistence !== null &&
+      detectedLocaleForPersistence !== routeState.detected_locale;
+    if (shouldUpdateLocale) {
       nextRouteState.detected_locale = detectedLocaleForPersistence;
       routeStateDirty = true;
     }

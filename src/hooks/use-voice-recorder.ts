@@ -372,6 +372,8 @@ export function useVoiceRecorder(
       // Pre-set to 'maxDuration'; overridden to 'silence' by silence detection or to
       // undefined by manual stopRecording() before the duration actually expires.
       autoStopReasonRef.current = 'maxDuration';
+      // Arm the no-speech watchdog only after recording is actually started
+      recordingStartTimeRef.current = Date.now();
       return true;
     } catch (startErr) {
       setError({ kind: 'recording_failed', message: String(startErr) });

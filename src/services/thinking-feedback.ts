@@ -25,6 +25,8 @@ class ThinkingFeedbackService {
       // Non-critical
     }
 
+    if (!this.isActive) return;
+
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const source = require('../../assets/sounds/thinking-tone.mp3');
@@ -36,6 +38,8 @@ class ThinkingFeedbackService {
     } catch {
       if (__DEV__) console.warn('[thinking-feedback] Failed to start audio');
     }
+
+    if (!this.isActive) return;
 
     // Gentle haptic pulse at regular intervals
     this.triggerHaptic();
@@ -68,11 +72,9 @@ class ThinkingFeedbackService {
   }
 
   private triggerHaptic(): void {
-    try {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {
       // no-op — haptics not available on all devices
-    }
+    });
   }
 }
 

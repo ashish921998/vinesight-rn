@@ -86,10 +86,15 @@ export interface UseVoiceModeReturn {
   noSpeechLabel: boolean;
 }
 
+const NO_SPEECH_LABEL_DURATION_MS = 3000;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function isEmptyTranscriptError(err: unknown): boolean {
   if (err instanceof AssistantGatewayError) {
+    if (err.code === AssistantGatewayErrorCode.EMPTY_TRANSCRIPT) {
+      return true;
+    }
     const msg = err.message.toLowerCase();
     return (
       msg.includes('empty_transcript') ||
@@ -162,9 +167,13 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
     if (result.autoStopReason === 'noSpeech') {
       setNoSpeechLabel(true);
       setVoiceState('idle');
+      if (noSpeechTimerRef.current) {
+        clearTimeout(noSpeechTimerRef.current);
+        noSpeechTimerRef.current = null;
+      }
       noSpeechTimerRef.current = setTimeout(() => {
         setNoSpeechLabel(false);
-      }, 3000);
+      }, NO_SPEECH_LABEL_DURATION_MS);
       return;
     }
 

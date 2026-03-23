@@ -55,8 +55,8 @@ export function resolveEffectiveAssistantLocale(input: {
     // 4. App UI locale (final fallback)
     return (
       sttDetectedLocale ??
-      input.routeStateDetectedLocale ??
       detectLocaleFromText(input.transcript ?? null) ??
+      input.routeStateDetectedLocale ??
       input.locale
     );
   }
@@ -84,7 +84,7 @@ const DEVANAGARI_RE = /[\u0900-\u097F]/gu;
  * Marathi use Devanagari, and we cannot distinguish them from script alone.
  * The caller can refine to 'mr' using other signals (e.g., routeState).
  */
-export function detectLocaleFromText(text: string | null): 'hi' | 'mr' | null {
+export function detectLocaleFromText(text: string | null): 'hi' | null {
   if (!text) return null;
   const stripped = text.replace(/[^\p{L}\p{M}]/gu, '');
   if (stripped.length < 3) return null;
