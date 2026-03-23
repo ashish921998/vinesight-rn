@@ -1,0 +1,64 @@
+__tests__/locale-detection.test.ts
+  c6f2fd5016ec0f0d 9,13,176
+  1f6ed8ea6b718f91 1-8,10-12,14-175,177-188
+src/components/assistant/ChatScreen.tsx
+  f308195bf1d91198 203,666
+src/hooks/use-voice-mode.ts
+  f308195bf1d91198 27,42,85-86,91-102,105-107,132-133,161-170,172,254,333-334,336-346,388,395-397,432-436,492-494,501-506,533
+assets.d.ts
+  f308195bf1d91198 23-27
+src/components/assistant/VoiceMode/VoiceModeModal.tsx
+  f308195bf1d91198 58,71,149
+src/hooks/use-voice-recorder.ts
+  f308195bf1d91198 8-10,33,35-42,99,141-144,150,240-241,276,286-305,328-329
+__tests__/use-voice-mode.test.ts
+  f308195bf1d91198 116-125
+src/services/thinking-feedback.ts
+  f308195bf1d91198 1-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "7f14dc44d9e4a17cd992d6933da361200c6eab2d",
+  "prompts": {
+    "1f6ed8ea6b718f91": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fff496ab-655a-4040-b83e-ba6e75197632",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 185,
+      "overriden_lines": 0
+    },
+    "c6f2fd5016ec0f0d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2e5460d37ffexFYHThz2exRtDG",
+        "model": "zai-coding-plan/glm-4.7"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 22,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "f308195bf1d91198": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "85997ee0-ae20-4263-850f-8b61dfd94fbd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 211,
+      "total_deletions": 7,
+      "accepted_lines": 211,
+      "overriden_lines": 0
+    }
+  }
+}
