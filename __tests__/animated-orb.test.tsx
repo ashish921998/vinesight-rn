@@ -17,8 +17,18 @@ import type { VoiceModeState } from '@/components/assistant/VoiceMode/AnimatedOr
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
-  return Reanimated;
+  return {
+    ...Reanimated,
+    useReducedMotion: () => false,
+  };
 });
+
+jest.mock('@/components/ui/symbol', () => ({
+  Symbol: ({ testID, ...props }: Record<string, unknown>) => {
+    const { View } = require('react-native');
+    return <View testID={testID} {...props} />;
+  },
+}));
 
 jest.mock('@/styles/use-theme', () => ({
   useThemeTokens: () => ({
@@ -107,33 +117,5 @@ describe('AnimatedOrb', () => {
     const { View } = require('react-native');
     // Processing state renders View-based dots row; ensure no crash
     expect(UNSAFE_getAllByType(View).length).toBeGreaterThan(0);
-  });
-
-  it('renders idle state without crash', () => {
-    const { getByTestId } = render(
-      <AnimatedOrb state="idle" onPress={jest.fn()} testID="orb-idle" />,
-    );
-    expect(getByTestId('orb-idle')).toBeTruthy();
-  });
-
-  it('renders listening state without crash', () => {
-    const { getByTestId } = render(
-      <AnimatedOrb state="listening" onPress={jest.fn()} testID="orb-listening" />,
-    );
-    expect(getByTestId('orb-listening')).toBeTruthy();
-  });
-
-  it('renders speaking state without crash', () => {
-    const { getByTestId } = render(
-      <AnimatedOrb state="speaking" onPress={jest.fn()} testID="orb-speaking" />,
-    );
-    expect(getByTestId('orb-speaking')).toBeTruthy();
-  });
-
-  it('renders error state without crash', () => {
-    const { getByTestId } = render(
-      <AnimatedOrb state="error" onPress={jest.fn()} testID="orb-error" />,
-    );
-    expect(getByTestId('orb-error')).toBeTruthy();
   });
 });

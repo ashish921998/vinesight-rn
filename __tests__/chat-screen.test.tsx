@@ -27,7 +27,10 @@ jest.mock('@/utils/haptics', () => ({
 // Mock react-native-reanimated (used by VoiceModeModal's AnimatedOrb)
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
-  return Reanimated;
+  return {
+    ...Reanimated,
+    useReducedMotion: () => false,
+  };
 });
 
 // Mock the assistant hook to control behavior

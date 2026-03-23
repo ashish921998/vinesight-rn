@@ -222,15 +222,31 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
 
       // Transition state and handle TTS playback
       if (__DEV__) {
+        const provider = response.message.audio?.provider ?? 'NONE';
+        const isSarvam = provider === 'sarvam';
+        console.log(
+          `[use-voice-mode] ===== TTS: ${isSarvam ? 'SARVAM' : provider.toUpperCase()} =====`,
+        );
         console.log('[use-voice-mode] Audio decision:', {
           hasAudio: Boolean(response.message.audio),
           hasBase64: Boolean(response.message.audio?.base64),
           hasUrl: Boolean(response.message.audio?.url),
-          audioProvider: response.message.audio?.provider ?? null,
+          audioProvider: provider,
           audioMimeType: response.message.audio?.mimeType ?? null,
           ttsSkippedReason: response.ttsSkippedReason ?? null,
+          providerFallbackReason: response.providerFallbackReason ?? null,
           userTranscript: response.userTranscript ?? null,
         });
+        if (!isSarvam && provider !== 'NONE') {
+          console.warn(
+            `[use-voice-mode] Sarvam NOT used. Provider: ${provider}. Fallback reason: ${response.providerFallbackReason ?? 'unknown'}`,
+          );
+        }
+        if (provider === 'NONE') {
+          console.warn(
+            `[use-voice-mode] No TTS audio returned. Reason: ${response.ttsSkippedReason ?? 'unknown'}. Device fallback will be used.`,
+          );
+        }
       }
       if (response.message.audio?.base64 || response.message.audio?.url) {
         // Audio present → enter speaking state and play via voiceOutputService

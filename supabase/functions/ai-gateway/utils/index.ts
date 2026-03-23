@@ -47,6 +47,7 @@ export {
   resolveEffectiveAssistantLocale,
   resolveLocale,
   resolveLocaleFromBcp47,
+  resolveTtsLocale,
   safeNumber,
   stringifyUnknown,
   toOptionalNumber,

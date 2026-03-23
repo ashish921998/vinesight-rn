@@ -369,7 +369,7 @@ export default function DashboardScreen() {
                 />
                 <QuickActionButton
                   title={t('dashboard.quickActions.expense')}
-                  icon="dollarsign.circle"
+                  icon="receipt"
                   color={colors.expense[500]}
                   onPress={() => handleQuickAction('expense')}
                 />

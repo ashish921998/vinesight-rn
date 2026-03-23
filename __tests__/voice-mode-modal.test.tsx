@@ -25,7 +25,10 @@ import type { VoiceModeError } from '@/hooks/use-voice-mode';
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
-  return Reanimated;
+  return {
+    ...Reanimated,
+    useReducedMotion: () => false,
+  };
 });
 
 // Mock haptics

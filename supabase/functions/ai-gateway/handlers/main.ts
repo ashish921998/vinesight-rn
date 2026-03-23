@@ -24,6 +24,7 @@ import {
   resolveLocaleFromBcp47,
   resolveEffectiveAssistantLocale,
   resolveLocale,
+  resolveTtsLocale,
   trackTelemetry,
   writeConversationRouteState,
   writeConversationTurn,
@@ -364,10 +365,16 @@ export async function handleRequest(req: Request): Promise<Response> {
     let ttsSkippedReason: string | null = null;
 
     if (body?.client_capabilities?.can_play_audio !== false) {
+      const ttsLocale = resolveTtsLocale(assistantText, effectiveLocale, sttDetectedLocale);
+      if (ttsLocale !== effectiveLocale) {
+        console.log(
+          `[ai-gateway] TTS locale override: ${effectiveLocale} → ${ttsLocale} (text script mismatch)`,
+        );
+      }
       const ttsStart = Date.now();
       const ttsResult = await generateSpeech({
         text: assistantText,
-        locale: effectiveLocale,
+        locale: ttsLocale,
         providerFallbackEnabled,
         canPlayAudio: true,
       });

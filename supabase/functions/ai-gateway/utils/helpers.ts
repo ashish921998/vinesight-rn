@@ -56,6 +56,41 @@ export function resolveLocale(locale: string | undefined): 'en' | 'hi' | 'mr' {
   return resolveLocaleFromBcp47(locale ?? null) ?? 'en';
 }
 
+// Unicode range for Devanagari script (used by Hindi and Marathi)
+const DEVANAGARI_RE = /[\u0900-\u097F]/gu;
+
+/**
+ * Resolve the TTS locale from the actual assistant response text.
+ * Guards against mismatch where effectiveLocale is 'en' but the LLM
+ * responded in Devanagari (Hindi/Marathi).
+ */
+export function resolveTtsLocale(
+  assistantText: string,
+  effectiveLocale: 'en' | 'hi' | 'mr',
+  sttDetectedLocale: 'en' | 'hi' | 'mr' | null,
+): 'en' | 'hi' | 'mr' {
+  const stripped = assistantText.replace(/[^\p{L}\p{M}]/gu, '');
+  if (stripped.length === 0) return effectiveLocale;
+
+  const devanagariCount = (stripped.match(DEVANAGARI_RE) ?? []).length;
+  const ratio = devanagariCount / stripped.length;
+
+  if (ratio > 0.3) {
+    // Text is predominantly Devanagari — keep locale if already hi/mr, else default to 'hi'
+    if (effectiveLocale === 'mr' || effectiveLocale === 'hi') return effectiveLocale;
+    // Prefer sttDetectedLocale if it signals Indic; otherwise default to 'hi'.
+    if (sttDetectedLocale === 'mr' || sttDetectedLocale === 'hi') return sttDetectedLocale;
+    return 'hi';
+  }
+
+  if (ratio < 0.05 && stripped.length > 10 && effectiveLocale !== 'en') {
+    // Text is Latin but locale says Hindi/Marathi — switch to English
+    return 'en';
+  }
+
+  return effectiveLocale;
+}
+
 /**
  * Normalize input text (trim whitespace)
  */
