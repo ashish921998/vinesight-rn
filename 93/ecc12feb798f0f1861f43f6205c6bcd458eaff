@@ -1,0 +1,25 @@
+src/utils/expense-icons.ts
+  36f970ab27c28733 17
+src/components/assistant/VoiceMode/AnimatedOrb.tsx
+  36f970ab27c28733 293-296,301-304
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "93ecc12feb798f0f1861f43f6205c6bcd458eaff",
+  "prompts": {
+    "36f970ab27c28733": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2e6efe053ffeOiD6vQdKEQD9r6",
+        "model": "zai-coding-plan/glm-4.7"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 3,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
