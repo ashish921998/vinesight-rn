@@ -55,8 +55,8 @@ export function resolveEffectiveAssistantLocale(input: {
     // 4. App UI locale (final fallback)
     return (
       sttDetectedLocale ??
-      detectLocaleFromText(input.transcript ?? null) ??
       input.routeStateDetectedLocale ??
+      detectLocaleFromText(input.transcript ?? null) ??
       input.locale
     );
   }
