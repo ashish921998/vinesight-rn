@@ -98,8 +98,12 @@ export function AnimatedOrb({
 
   // Animate color transition when state changes
   useEffect(() => {
-    colorProgress.value = withTiming(STATE_INDEX_MAP[state], { duration: 300 });
-  }, [state, colorProgress]);
+    if (reduceMotion) {
+      colorProgress.value = STATE_INDEX_MAP[state];
+    } else {
+      colorProgress.value = withTiming(STATE_INDEX_MAP[state], { duration: 300 });
+    }
+  }, [state, colorProgress, reduceMotion]);
 
   useEffect(() => {
     cancelAnimation(scale);
@@ -269,6 +273,10 @@ export function AnimatedOrb({
       { rotate: `${rotation.value}deg` },
     ],
     opacity: entranceOpacity.value * orbOpacity.value,
+    shadowColor: m3.colorScheme.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
   }));
 
   const ring1Style = useAnimatedStyle(() => ({
@@ -471,10 +479,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
   },
   ring: {
     position: 'absolute',
