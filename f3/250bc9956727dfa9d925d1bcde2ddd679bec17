@@ -1,0 +1,23 @@
+src/components/assistant/VoiceMode/AnimatedOrb.tsx
+  74334214f5e5ff4c 88-94,389-393,429-433
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "f3250bc9956727dfa9d925d1bcde2ddd679bec17",
+  "prompts": {
+    "74334214f5e5ff4c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d190c-1c1e-7ba3-b220-baa4da0474c1",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 3,
+      "accepted_lines": 17,
+      "overriden_lines": 0
+    }
+  }
+}
