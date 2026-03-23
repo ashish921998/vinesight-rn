@@ -1,0 +1,23 @@
+supabase/functions/ai-gateway/utils/helpers.ts
+  76ec0b6e1ae01928 305
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "ad8d41febe51fbbbb74de75f3cd21a8443160ccd",
+  "prompts": {
+    "76ec0b6e1ae01928": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "04e49b0a-48e6-45ce-b502-e268281bcd6d",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
