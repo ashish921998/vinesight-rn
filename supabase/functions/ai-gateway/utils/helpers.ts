@@ -302,7 +302,7 @@ export async function withAbortTimeout<T>(
   errorMessage: string,
 ): Promise<T> {
   const controller = new AbortController();
-  let timeoutHandle: number | null = null;
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutHandle = setTimeout(() => {
