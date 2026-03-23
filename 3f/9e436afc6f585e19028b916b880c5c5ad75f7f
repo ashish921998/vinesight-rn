@@ -1,0 +1,41 @@
+supabase/functions/ai-gateway/utils/index.ts
+  1f6ed8ea6b718f91 42
+supabase/functions/ai-gateway/providers/tts.ts
+  1f6ed8ea6b718f91 99,118-123,208
+__tests__/tts-provider.test.ts
+  1f6ed8ea6b718f91 265-331
+src/services/assistant-gateway-types.ts
+  1f6ed8ea6b718f91 127-128
+supabase/functions/ai-gateway/types.ts
+  1f6ed8ea6b718f91 125-126
+src/hooks/use-voice-mode.ts
+  1f6ed8ea6b718f91 254-255
+supabase/functions/ai-gateway/utils/helpers.ts
+  1f6ed8ea6b718f91 44-45,49-65,79-96
+src/services/assistant-gateway.ts
+  1f6ed8ea6b718f91 325-326
+supabase/functions/ai-gateway/handlers/main.ts
+  1f6ed8ea6b718f91 21,152,159-165
+src/types/ai.ts
+  1f6ed8ea6b718f91 121-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "3f9e436afc6f585e19028b916b880c5c5ad75f7f",
+  "prompts": {
+    "1f6ed8ea6b718f91": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fff496ab-655a-4040-b83e-ba6e75197632",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 349,
+      "total_deletions": 12,
+      "accepted_lines": 347,
+      "overriden_lines": 0
+    }
+  }
+}
