@@ -96,6 +96,7 @@ async function callSarvamTtsInternal(
  */
 async function callOpenAiTtsInternal(
   text: string,
+  locale: 'en' | 'hi' | 'mr',
   signal?: AbortSignal,
 ): Promise<{ base64: string; mimeType: string }> {
   if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured');
@@ -114,6 +115,12 @@ async function callOpenAiTtsInternal(
       voice: 'alloy',
       input: truncatedText,
       response_format: 'mp3',
+      ...(locale !== 'en' && {
+        instructions:
+          locale === 'mr'
+            ? 'Speak naturally in Marathi. Read the text as Marathi language.'
+            : 'Speak naturally in Hindi. Read the text as Hindi language.',
+      }),
     }),
     signal,
   });
@@ -198,7 +205,7 @@ export async function generateSpeech(input: {
   }
   try {
     const result = await withAbortTimeout(
-      (signal) => callOpenAiTtsInternal(text, signal),
+      (signal) => callOpenAiTtsInternal(text, locale, signal),
       TTS_TIMEOUT_MS,
       `OpenAI TTS timed out after ${TTS_TIMEOUT_MS}ms`,
     );

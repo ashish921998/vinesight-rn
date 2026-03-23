@@ -122,6 +122,8 @@ export interface AssistantGatewayResponse {
   stt_latency_ms: number | null;
   tts_generation_ms: number | null;
   tts_skipped_reason: string | null;
+  effective_locale: 'en' | 'hi' | 'mr';
+  tts_locale: 'en' | 'hi' | 'mr';
   cost_breakdown: CostBreakdown;
   route_decision: string;
   voice_log_action: VoiceLogActionPayload | null;

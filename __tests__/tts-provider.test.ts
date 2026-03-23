@@ -262,6 +262,73 @@ describe('generateSpeech — real module function', () => {
       expect(mockRecordFailure).toHaveBeenCalledWith('sarvam_tts');
     });
 
+    it('passes Marathi language instructions to OpenAI TTS when locale is mr', async () => {
+      // Sarvam fails → OpenAI fallback should include instructions
+      mockFetchImpl.mockImplementation(async (url: string) => {
+        if (String(url).includes('sarvam.ai')) {
+          return { ok: false, status: 500, json: async () => ({ error: 'server error' }) };
+        }
+        if (String(url).includes('openai.com')) {
+          const fakeAudio = new Uint8Array([0xff, 0xfb, 0x90, 0x00]);
+          return {
+            ok: true,
+            status: 200,
+            arrayBuffer: async () => fakeAudio.buffer,
+            json: async () => ({}),
+          };
+        }
+        return { ok: false, status: 404, json: async () => ({}) };
+      });
+
+      await generateSpeech({
+        text: 'मराठी पाठ',
+        locale: 'mr',
+        providerFallbackEnabled: true,
+        canPlayAudio: true,
+      });
+
+      const openaiCall = mockFetchImpl.mock.calls.find((c: unknown[]) =>
+        String(c[0]).includes('openai.com'),
+      );
+      expect(openaiCall).toBeDefined();
+      const body = JSON.parse((openaiCall?.[1] as RequestInit)?.body as string);
+      expect(body.instructions).toBeDefined();
+      expect(body.instructions).toContain('Marathi');
+    });
+
+    it('does not pass instructions to OpenAI TTS for English locale', async () => {
+      // Sarvam fails → OpenAI fallback should NOT include instructions for English
+      mockFetchImpl.mockImplementation(async (url: string) => {
+        if (String(url).includes('sarvam.ai')) {
+          return { ok: false, status: 500, json: async () => ({ error: 'server error' }) };
+        }
+        if (String(url).includes('openai.com')) {
+          const fakeAudio = new Uint8Array([0xff, 0xfb, 0x90, 0x00]);
+          return {
+            ok: true,
+            status: 200,
+            arrayBuffer: async () => fakeAudio.buffer,
+            json: async () => ({}),
+          };
+        }
+        return { ok: false, status: 404, json: async () => ({}) };
+      });
+
+      await generateSpeech({
+        text: 'Hello world',
+        locale: 'en',
+        providerFallbackEnabled: true,
+        canPlayAudio: true,
+      });
+
+      const openaiCall = mockFetchImpl.mock.calls.find((c: unknown[]) =>
+        String(c[0]).includes('openai.com'),
+      );
+      expect(openaiCall).toBeDefined();
+      const body = JSON.parse((openaiCall?.[1] as RequestInit)?.body as string);
+      expect(body.instructions).toBeUndefined();
+    });
+
     it('returns null (no audio) when Sarvam fails and fallback is disabled', async () => {
       mockFetchImpl.mockImplementation(async (url: string) => {
         if (String(url).includes('sarvam.ai')) {

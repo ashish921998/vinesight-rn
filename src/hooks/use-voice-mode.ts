@@ -251,8 +251,11 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       if (response.message.audio?.base64 || response.message.audio?.url) {
         // Audio present → enter speaking state and play via voiceOutputService
         setVoiceState('speaking');
+        // Use the server's resolved TTS locale for device fallback, or fall back to app language
+        const ttsLanguage =
+          response.ttsLocale ?? response.effectiveLocale ?? optionsRef.current.language;
         void voiceOutputService.playAssistantTurn(response, {
-          language: optionsRef.current.language,
+          language: ttsLanguage,
           onDone: () => {
             // Natural end of TTS playback → auto-listen for next question
             if (!isOpenRef.current) return;

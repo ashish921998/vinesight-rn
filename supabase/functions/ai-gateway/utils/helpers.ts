@@ -41,12 +41,28 @@ export function resolveEffectiveAssistantLocale(input: {
   detectedLanguage: string | null;
   routeStateDetectedLocale: 'en' | 'hi' | 'mr' | null;
   locale: 'en' | 'hi' | 'mr';
+  /** Transcript text for text-based locale fallback when STT doesn't return language */
+  transcript?: string | null;
 }): 'en' | 'hi' | 'mr' {
   const sttDetectedLocale =
     input.inputMode === 'audio' ? resolveLocaleFromBcp47(input.detectedLanguage) : null;
-  return input.inputMode === 'audio'
-    ? (sttDetectedLocale ?? input.locale)
-    : (input.routeStateDetectedLocale ?? input.locale);
+
+  if (input.inputMode === 'audio') {
+    // Priority chain for audio:
+    // 1. STT-detected language (from Sarvam BCP-47 code)
+    // 2. Route state persisted locale from prior turn (e.g., prior Sarvam detection of 'mr')
+    // 3. Text-based Devanagari script detection on the transcript
+    // 4. App UI locale (final fallback)
+    return (
+      sttDetectedLocale ??
+      input.routeStateDetectedLocale ??
+      detectLocaleFromText(input.transcript ?? null) ??
+      input.locale
+    );
+  }
+
+  // Text input: reuse persisted detected_locale from prior voice turn
+  return input.routeStateDetectedLocale ?? input.locale;
 }
 
 /**
@@ -58,6 +74,25 @@ export function resolveLocale(locale: string | undefined): 'en' | 'hi' | 'mr' {
 
 // Unicode range for Devanagari script (used by Hindi and Marathi)
 const DEVANAGARI_RE = /[\u0900-\u097F]/gu;
+
+/**
+ * Detect locale from transcript text using Devanagari script analysis.
+ * Used as a fallback when the STT provider doesn't return a language code
+ * (e.g., OpenAI Whisper fallback).
+ *
+ * Returns 'hi' as a conservative default for Devanagari text — both Hindi and
+ * Marathi use Devanagari, and we cannot distinguish them from script alone.
+ * The caller can refine to 'mr' using other signals (e.g., routeState).
+ */
+export function detectLocaleFromText(text: string | null): 'hi' | 'mr' | null {
+  if (!text) return null;
+  const stripped = text.replace(/[^\p{L}\p{M}]/gu, '');
+  if (stripped.length < 3) return null;
+  const devanagariCount = (stripped.match(DEVANAGARI_RE) ?? []).length;
+  const ratio = devanagariCount / stripped.length;
+  if (ratio > 0.3) return 'hi';
+  return null;
+}
 
 /**
  * Resolve the TTS locale from the actual assistant response text.
