@@ -14,7 +14,7 @@ export const EXPENSE_TYPE_ICONS: Record<ExpenseTypeId, string> = {
 
 export function getExpenseIconName(
   expenseType: string | null | undefined,
-  fallback = 'receipt.fill',
+  fallback = 'receipt',
 ): string {
   const normalizedType = mapExpenseRecordTypeToTypeId(expenseType, '');
   const resolvedFallback = resolveSymbolIconName(fallback);

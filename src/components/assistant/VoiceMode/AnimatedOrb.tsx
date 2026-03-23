@@ -290,12 +290,18 @@ export function AnimatedOrb({
   }));
 
   const handlePressIn = () => {
-    if (reduceMotion) return;
+    if (reduceMotion) {
+      pressScale.value = 0.92;
+      return;
+    }
     pressScale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
   };
 
   const handlePressOut = () => {
-    if (reduceMotion) return;
+    if (reduceMotion) {
+      pressScale.value = 1;
+      return;
+    }
     pressScale.value = withSpring(1, { damping: 12, stiffness: 200 });
   };
 
