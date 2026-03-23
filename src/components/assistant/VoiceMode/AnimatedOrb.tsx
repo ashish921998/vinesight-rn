@@ -11,7 +11,7 @@
  * All colors from M3 theme tokens — no hardcoded colors.
  */
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -81,7 +81,10 @@ export function AnimatedOrb({
   // Press feedback
   const pressScale = useSharedValue(1);
   // Color transition
-  const colorProgress = useSharedValue(STATE_INDEX_MAP[state]);
+  const prevStateRef = useRef<VoiceModeState>(state);
+  const colorTransitionProgress = useSharedValue(0);
+  const prevColorIndex = useSharedValue(STATE_INDEX_MAP[state]);
+  const nextColorIndex = useSharedValue(STATE_INDEX_MAP[state]);
 
   // Entrance animation on mount
   useEffect(() => {
@@ -98,12 +101,18 @@ export function AnimatedOrb({
 
   // Animate color transition when state changes
   useEffect(() => {
+    const prevState = prevStateRef.current;
     if (reduceMotion) {
-      colorProgress.value = STATE_INDEX_MAP[state];
+      prevColorIndex.value = STATE_INDEX_MAP[prevState];
+      nextColorIndex.value = STATE_INDEX_MAP[state];
+      colorTransitionProgress.value = 1;
     } else {
-      colorProgress.value = withTiming(STATE_INDEX_MAP[state], { duration: 300 });
+      prevColorIndex.value = STATE_INDEX_MAP[prevState];
+      nextColorIndex.value = STATE_INDEX_MAP[state];
+      colorTransitionProgress.value = withTiming(1, { duration: 300 });
     }
-  }, [state, colorProgress, reduceMotion]);
+    prevStateRef.current = state;
+  }, [state, reduceMotion, prevColorIndex, nextColorIndex, colorTransitionProgress]);
 
   useEffect(() => {
     cancelAnimation(scale);
@@ -116,6 +125,8 @@ export function AnimatedOrb({
 
     ring1Opacity.value = 0;
     ring2Opacity.value = 0;
+    ring1Scale.value = 1;
+    ring2Scale.value = 1;
 
     if (reduceMotion) {
       scale.value = 1;
@@ -259,13 +270,25 @@ export function AnimatedOrb({
     [m3.colorScheme],
   );
 
-  const orbAnimatedColorStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(colorProgress.value, [0, 1, 2, 3, 4], orbColors),
-  }));
+  const orbAnimatedColorStyle = useAnimatedStyle(() => {
+    const prevColor = orbColors[Math.round(prevColorIndex.value)];
+    const nextColor = orbColors[Math.round(nextColorIndex.value)];
+    return {
+      backgroundColor: interpolateColor(
+        colorTransitionProgress.value,
+        [0, 1],
+        [prevColor, nextColor],
+      ),
+    };
+  });
 
-  const ringColorStyle = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(colorProgress.value, [0, 1, 2, 3, 4], orbColors),
-  }));
+  const ringColorStyle = useAnimatedStyle(() => {
+    const prevColor = orbColors[Math.round(prevColorIndex.value)];
+    const nextColor = orbColors[Math.round(nextColorIndex.value)];
+    return {
+      borderColor: interpolateColor(colorTransitionProgress.value, [0, 1], [prevColor, nextColor]),
+    };
+  });
 
   const orbStyle = useAnimatedStyle(() => ({
     transform: [
