@@ -1,0 +1,33 @@
+src/services/assistant-gateway-types.ts
+  84738157ffcb7642 20
+src/services/thinking-feedback.ts
+  84738157ffcb7642 28-29,42-43,75,77
+src/hooks/use-voice-mode.ts
+  84738157ffcb7642 89-90,95-97,170-173,176
+supabase/functions/ai-gateway/utils/helpers.ts
+  84738157ffcb7642 59,87
+src/hooks/use-voice-recorder.ts
+  84738157ffcb7642 375-376
+supabase/functions/ai-gateway/handlers/main.ts
+  84738157ffcb7642 164-167,169-172
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "f542d52d741328ce208081a74da2b8c43607e146",
+  "prompts": {
+    "84738157ffcb7642": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2e416dca2ffevgOSvzBBDpdLhL",
+        "model": "opencode/minimax-m2.5-free"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 29,
+      "total_deletions": 10,
+      "accepted_lines": 29,
+      "overriden_lines": 0
+    }
+  }
+}
