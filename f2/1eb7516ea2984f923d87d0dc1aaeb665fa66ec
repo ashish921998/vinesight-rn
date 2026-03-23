@@ -1,0 +1,23 @@
+supabase/functions/ai-gateway/utils/helpers.ts
+  dba3b1542978dcce 59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "f21eb7516ea2984f923d87d0dc1aaeb665fa66ec",
+  "prompts": {
+    "dba3b1542978dcce": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2e3ea6d75ffehtGg2gGtssju0t",
+        "model": "opencode/minimax-m2.5-free"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
