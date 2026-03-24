@@ -1,0 +1,23 @@
+src/hooks/use-voice-mode.ts
+  dba3b1542978dcce 350-353,356
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "994595e7049e604cbdfd84e828a0578daf3760b4",
+  "prompts": {
+    "dba3b1542978dcce": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2e3ea6d75ffehtGg2gGtssju0t",
+        "model": "opencode/minimax-m2.5-free"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 1,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
