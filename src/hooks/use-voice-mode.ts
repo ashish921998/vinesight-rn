@@ -90,6 +90,26 @@ const NO_SPEECH_LABEL_DURATION_MS = 3000;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function clearNoSpeechTimer(
+  noSpeechTimerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
+) {
+  if (noSpeechTimerRef.current) {
+    clearTimeout(noSpeechTimerRef.current);
+    noSpeechTimerRef.current = null;
+  }
+}
+
+function showNoSpeechLabel(
+  noSpeechTimerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
+  setNoSpeechLabel: (value: boolean) => void,
+) {
+  clearNoSpeechTimer(noSpeechTimerRef);
+  setNoSpeechLabel(true);
+  noSpeechTimerRef.current = setTimeout(() => {
+    setNoSpeechLabel(false);
+  }, NO_SPEECH_LABEL_DURATION_MS);
+}
+
 function isEmptyTranscriptError(err: unknown): boolean {
   if (err instanceof AssistantGatewayError) {
     if (err.code === AssistantGatewayErrorCode.EMPTY_TRANSCRIPT) {
@@ -165,15 +185,8 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
 
     // No speech detected by recorder — skip backend call, show friendly label
     if (result.autoStopReason === 'noSpeech') {
-      setNoSpeechLabel(true);
+      showNoSpeechLabel(noSpeechTimerRef, setNoSpeechLabel);
       setVoiceState('idle');
-      if (noSpeechTimerRef.current) {
-        clearTimeout(noSpeechTimerRef.current);
-        noSpeechTimerRef.current = null;
-      }
-      noSpeechTimerRef.current = setTimeout(() => {
-        setNoSpeechLabel(false);
-      }, NO_SPEECH_LABEL_DURATION_MS);
       return;
     }
 
@@ -334,8 +347,10 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       if (!isOpenRef.current || voiceRequestIdRef.current !== requestId) return;
       voiceRequestIdRef.current = null;
 
-      // Silently ignore cancellation
+      // Silently ignore cancellation — stop thinking loop, recover to idle
       if (err instanceof AssistantGatewayError && err.code === AssistantGatewayErrorCode.CANCELED) {
+        thinkingFeedback.stop();
+        setVoiceState('idle');
         return;
       }
 
@@ -345,15 +360,8 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
 
       // No speech detected by backend — show friendly label, return to idle
       if (classified.kind === 'no_speech') {
-        setNoSpeechLabel(true);
+        showNoSpeechLabel(noSpeechTimerRef, setNoSpeechLabel);
         setVoiceState('idle');
-        if (noSpeechTimerRef.current) {
-          clearTimeout(noSpeechTimerRef.current);
-          noSpeechTimerRef.current = null;
-        }
-        noSpeechTimerRef.current = setTimeout(() => {
-          setNoSpeechLabel(false);
-        }, NO_SPEECH_LABEL_DURATION_MS);
         return;
       }
 

@@ -8,10 +8,12 @@ class ThinkingFeedbackService {
   private player: AudioPlayer | null = null;
   private hapticTimer: ReturnType<typeof setInterval> | null = null;
   private isActive = false;
+  private generation = 0;
 
   async start(): Promise<void> {
-    if (this.isActive) return;
+    this.stop();
     this.isActive = true;
+    const gen = ++this.generation;
 
     try {
       await setAudioModeAsync({
@@ -25,7 +27,7 @@ class ThinkingFeedbackService {
       // Non-critical
     }
 
-    if (!this.isActive) return;
+    if (gen !== this.generation) return;
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -39,7 +41,7 @@ class ThinkingFeedbackService {
       if (__DEV__) console.warn('[thinking-feedback] Failed to start audio');
     }
 
-    if (!this.isActive) return;
+    if (gen !== this.generation) return;
 
     // Gentle haptic pulse at regular intervals
     this.triggerHaptic();
