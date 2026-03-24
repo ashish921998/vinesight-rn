@@ -347,9 +347,13 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       if (classified.kind === 'no_speech') {
         setNoSpeechLabel(true);
         setVoiceState('idle');
+        if (noSpeechTimerRef.current) {
+          clearTimeout(noSpeechTimerRef.current);
+          noSpeechTimerRef.current = null;
+        }
         noSpeechTimerRef.current = setTimeout(() => {
           setNoSpeechLabel(false);
-        }, 3000);
+        }, NO_SPEECH_LABEL_DURATION_MS);
         return;
       }
 
