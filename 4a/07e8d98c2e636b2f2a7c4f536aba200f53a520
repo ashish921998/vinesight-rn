@@ -1,0 +1,40 @@
+src/hooks/use-voice-mode.ts
+  ab291348d2b683ee 93-112,188,350,352-353,363
+src/services/thinking-feedback.ts
+  51e625c0b2c3b407 11,14,16,30,44
+src/services/assistant-gateway-utils.ts
+  51e625c0b2c3b407 262-282
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "4a07e8d98c2e636b2f2a7c4f536aba200f53a520",
+  "prompts": {
+    "51e625c0b2c3b407": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d1e41-ae89-7e41-8eb4-63e2f131ca1b",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 26,
+      "total_deletions": 3,
+      "accepted_lines": 26,
+      "overriden_lines": 0
+    },
+    "ab291348d2b683ee": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2e1c2c2cbffevvrfDPMOC9FUIb",
+        "model": "opencode/minimax-m2.5-free"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 17,
+      "accepted_lines": 25,
+      "overriden_lines": 0
+    }
+  }
+}
