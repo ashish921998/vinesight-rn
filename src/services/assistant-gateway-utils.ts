@@ -264,13 +264,16 @@ export function parseInvokeError(
     errObj.context && typeof errObj.context === 'object'
       ? (errObj.context as Record<string, unknown>)
       : null;
-  const contextError = typeof contextObj?.error === 'string' ? contextObj.error : '';
-  const contextMessage = typeof contextObj?.message === 'string' ? contextObj.message : '';
+  const contextErrorNormalized =
+    typeof contextObj?.error === 'string' ? contextObj.error.trim().toLowerCase() : '';
+  const contextMessage = typeof contextObj?.message === 'string' ? contextObj.message.trim() : '';
+  const contextMessageNormalized = contextMessage.toLowerCase();
   if (
-    contextError === 'EMPTY_TRANSCRIPT' ||
+    contextErrorNormalized === 'empty_transcript' ||
+    contextErrorNormalized === 'empty transcript' ||
     normalizedMessage.includes('empty_transcript') ||
     normalizedMessage.includes('empty transcript') ||
-    contextMessage.toLowerCase().includes('transcription returned no text')
+    contextMessageNormalized.includes('transcription returned no text')
   ) {
     return new AssistantGatewayError(
       AssistantGatewayErrorCode.EMPTY_TRANSCRIPT,
