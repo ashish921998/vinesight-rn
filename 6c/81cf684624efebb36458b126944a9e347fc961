@@ -1,0 +1,23 @@
+src/services/assistant-gateway-utils.ts
+  425a26328646103e 267-270,272-273,276
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "6c81cf684624efebb36458b126944a9e347fc961",
+  "prompts": {
+    "425a26328646103e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d1e74-7206-7b80-b4fc-2578610fa5f3",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 4,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}
