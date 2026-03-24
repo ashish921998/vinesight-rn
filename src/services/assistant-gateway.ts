@@ -322,6 +322,8 @@ export async function sendAssistantTurn(
           : null,
       ttsSkippedReason: response.tts_skipped_reason ?? null,
       providerFallbackReason: response.provider_fallback_reason ?? null,
+      effectiveLocale: response.effective_locale ?? null,
+      ttsLocale: response.tts_locale ?? null,
       userTranscript: response.user_transcript ?? null,
     };
     options?.onProgress?.({ phase: 'complete', percentage: 100 });

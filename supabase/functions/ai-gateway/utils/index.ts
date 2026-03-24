@@ -39,6 +39,7 @@ export { corsHeaders, corsOptionsResponse, jsonResponse } from './cors.ts';
 export {
   coerceSupportedLocale,
   decodeBase64ToBytes,
+  detectLocaleFromText,
   estimateBase64Bytes,
   isLikelyInvalidAudioError,
   normalizeBase64Input,

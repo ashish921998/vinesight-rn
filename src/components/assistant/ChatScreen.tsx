@@ -200,6 +200,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     handleClose: handleCloseVoiceMode,
     voiceModeError,
     clearVoiceModeError,
+    noSpeechLabel,
   } = useVoiceMode({
     conversationId,
     language,
@@ -662,6 +663,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
         onClose={handleCloseVoiceMode}
         voiceModeError={voiceModeError}
         onClearError={clearVoiceModeError}
+        noSpeechLabel={noSpeechLabel}
       />
 
       {/* Attachment picker modal */}

@@ -18,6 +18,7 @@ import {
 import {
   calculateCost,
   cleanExpiredCircuitBreakers,
+  detectLocaleFromText,
   generateTraceId,
   jsonResponse,
   resolveAuthenticatedUserId,
@@ -148,16 +149,28 @@ export async function handleRequest(req: Request): Promise<Response> {
       detectedLanguage,
       routeStateDetectedLocale: routeState.detected_locale,
       locale,
+      transcript,
     });
 
     // Route decision
     const nextRouteState: AssistantRouteState = { ...routeState };
     let routeStateDirty = false;
 
-    // On audio turns, sync persisted detected_locale with current STT result
-    // (including clearing to null when STT returns no language).
-    if (effectiveInputMode === 'audio' && sttDetectedLocale !== routeState.detected_locale) {
-      nextRouteState.detected_locale = sttDetectedLocale;
+    // On audio turns, sync persisted detected_locale with current STT result.
+    // When STT didn't return a language code (e.g., OpenAI Whisper fallback),
+    // use text-based Devanagari detection so the locale signal isn't lost.
+    const detectedLocaleForPersistence: 'en' | 'hi' | 'mr' | null =
+      sttDetectedLocale ?? detectLocaleFromText(transcript);
+    // Only update locale when STT actually returned a language code, or when
+    // there's no existing persisted locale to preserve (prevents 'hi' fallback
+    // from overwriting a valid 'mr' that STT failed to detect).
+    const shouldUpdateLocale =
+      effectiveInputMode === 'audio' &&
+      (sttDetectedLocale != null || routeState.detected_locale == null) &&
+      detectedLocaleForPersistence !== null &&
+      detectedLocaleForPersistence !== routeState.detected_locale;
+    if (shouldUpdateLocale) {
+      nextRouteState.detected_locale = detectedLocaleForPersistence;
       routeStateDirty = true;
     }
     let routeDecision: HybridChatRoute = 'fallback_llm';
@@ -364,8 +377,10 @@ export async function handleRequest(req: Request): Promise<Response> {
     let ttsGenerationMs: number | null = null;
     let ttsSkippedReason: string | null = null;
 
+    // Compute TTS locale unconditionally (used in response even when audio is skipped)
+    const ttsLocale = resolveTtsLocale(assistantText, effectiveLocale, sttDetectedLocale);
+
     if (body?.client_capabilities?.can_play_audio !== false) {
-      const ttsLocale = resolveTtsLocale(assistantText, effectiveLocale, sttDetectedLocale);
       if (ttsLocale !== effectiveLocale) {
         console.log(
           `[ai-gateway] TTS locale override: ${effectiveLocale} → ${ttsLocale} (text script mismatch)`,
@@ -441,6 +456,8 @@ export async function handleRequest(req: Request): Promise<Response> {
       stt_latency_ms: sttLatencyMs,
       tts_generation_ms: ttsGenerationMs,
       tts_skipped_reason: ttsSkippedReason,
+      effective_locale: effectiveLocale,
+      tts_locale: ttsLocale,
       cost_breakdown: costBreakdown,
       route_decision: routeDecision,
       voice_log_action: voiceLogAction,

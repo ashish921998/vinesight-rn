@@ -113,6 +113,16 @@ jest.mock('@/services/voice-output', () => ({
   },
 }));
 
+const mockThinkingStart = jest.fn().mockResolvedValue(undefined);
+const mockThinkingStop = jest.fn();
+
+jest.mock('@/services/thinking-feedback', () => ({
+  thinkingFeedback: {
+    start: (...args: unknown[]) => mockThinkingStart(...args),
+    stop: (...args: unknown[]) => mockThinkingStop(...args),
+  },
+}));
+
 const mockSendAssistantTurn = sendAssistantTurn as jest.Mock;
 
 // ── Sample data ────────────────────────────────────────────────────────────────

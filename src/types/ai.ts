@@ -118,6 +118,10 @@ export interface AssistantTurnResponse {
   ttsGenerationMs?: number | null;
   ttsSkippedReason?: string | null;
   providerFallbackReason?: string | null;
+  /** Effective locale used for this response (detected from speech/text) */
+  effectiveLocale?: 'en' | 'hi' | 'mr' | null;
+  /** TTS locale used for this response (may differ from effectiveLocale due to script detection) */
+  ttsLocale?: 'en' | 'hi' | 'mr' | null;
   /** Transcript of the user's audio input (only present for audio input_mode) */
   userTranscript?: string | null;
 }

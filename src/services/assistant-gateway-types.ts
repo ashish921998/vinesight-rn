@@ -17,6 +17,7 @@ export enum AssistantGatewayErrorCode {
   AUTHENTICATION_FAILED = 'AUTHENTICATION_FAILED',
   RATE_LIMITED = 'RATE_LIMITED',
   CANCELED = 'CANCELED',
+  EMPTY_TRANSCRIPT = 'EMPTY_TRANSCRIPT',
   UNKNOWN = 'UNKNOWN',
 }
 
@@ -124,6 +125,8 @@ export interface AssistantGatewayResponse {
   stt_latency_ms?: number | null;
   tts_generation_ms?: number | null;
   tts_skipped_reason?: string | null;
+  effective_locale?: 'en' | 'hi' | 'mr';
+  tts_locale?: 'en' | 'hi' | 'mr';
   provider_fallback_reason?: string | null;
 }
 

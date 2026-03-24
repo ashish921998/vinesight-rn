@@ -24,6 +24,7 @@ import {
   AssistantGatewayErrorCode,
 } from '@/services/assistant-gateway';
 import { voiceOutputService } from '@/services/voice-output';
+import { thinkingFeedback } from '@/services/thinking-feedback';
 import { useVoiceRecorder } from './use-voice-recorder';
 import type { RecordingResultData } from './use-voice-recorder';
 import type { VoiceModeState } from '@/components/assistant/VoiceMode/AnimatedOrb';
@@ -38,6 +39,7 @@ export type VoiceModeErrorKind =
   | 'permission_denied'
   | 'recording_failed'
   | 'stt_failed'
+  | 'no_speech'
   | 'network_error'
   | 'timeout'
   | 'gateway_error'
@@ -80,12 +82,54 @@ export interface UseVoiceModeReturn {
   /** Combined error from recording or backend (null when no error) */
   voiceModeError: VoiceModeError | null;
   clearVoiceModeError: () => void;
+  /** Transient flag: true briefly when no speech was detected (shows friendly label) */
+  noSpeechLabel: boolean;
 }
+
+const NO_SPEECH_LABEL_DURATION_MS = 3000;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function clearNoSpeechTimer(
+  noSpeechTimerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
+) {
+  if (noSpeechTimerRef.current) {
+    clearTimeout(noSpeechTimerRef.current);
+    noSpeechTimerRef.current = null;
+  }
+}
+
+function showNoSpeechLabel(
+  noSpeechTimerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
+  setNoSpeechLabel: (value: boolean) => void,
+) {
+  clearNoSpeechTimer(noSpeechTimerRef);
+  setNoSpeechLabel(true);
+  noSpeechTimerRef.current = setTimeout(() => {
+    setNoSpeechLabel(false);
+  }, NO_SPEECH_LABEL_DURATION_MS);
+}
+
+function isEmptyTranscriptError(err: unknown): boolean {
+  if (err instanceof AssistantGatewayError) {
+    if (err.code === AssistantGatewayErrorCode.EMPTY_TRANSCRIPT) {
+      return true;
+    }
+    const msg = err.message.toLowerCase();
+    return (
+      msg.includes('empty_transcript') ||
+      msg.includes('empty transcript') ||
+      msg.includes('transcription returned no text')
+    );
+  }
+  return false;
+}
+
 function classifyGatewayError(err: unknown): VoiceModeError {
   if (err instanceof AssistantGatewayError) {
+    if (isEmptyTranscriptError(err)) {
+      return { kind: 'no_speech', message: err.message };
+    }
     if (err.code === AssistantGatewayErrorCode.NETWORK_ERROR) {
       return { kind: 'network_error', message: err.message };
     }
@@ -110,6 +154,8 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
   const [voiceMessages, setVoiceMessages] = useState<VoiceModeMessage[]>([]);
   const [isVoiceModeVisible, setIsVoiceModeVisible] = useState(false);
   const [backendError, setBackendError] = useState<VoiceModeError | null>(null);
+  const [noSpeechLabel, setNoSpeechLabel] = useState(false);
+  const noSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep the latest options in a ref to avoid stale closures in async code
   const optionsRef = useRef(options);
@@ -137,7 +183,15 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
     // If voice mode was closed before recording finished, discard
     if (!isOpenRef.current) return;
 
+    // No speech detected by recorder — skip backend call, show friendly label
+    if (result.autoStopReason === 'noSpeech') {
+      showNoSpeechLabel(noSpeechTimerRef, setNoSpeechLabel);
+      setVoiceState('idle');
+      return;
+    }
+
     setVoiceState('processing');
+    void thinkingFeedback.start();
 
     const { conversationId, language, farmContext, onNewMessage, onConversationIdChange } =
       optionsRef.current;
@@ -219,6 +273,7 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       }
 
       setBackendError(null);
+      thinkingFeedback.stop();
 
       // Transition state and handle TTS playback
       if (__DEV__) {
@@ -251,8 +306,11 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       if (response.message.audio?.base64 || response.message.audio?.url) {
         // Audio present → enter speaking state and play via voiceOutputService
         setVoiceState('speaking');
+        // Use the server's resolved TTS locale for device fallback, or fall back to app language
+        const ttsLanguage =
+          response.ttsLocale ?? response.effectiveLocale ?? optionsRef.current.language;
         void voiceOutputService.playAssistantTurn(response, {
-          language: optionsRef.current.language,
+          language: ttsLanguage,
           onDone: () => {
             // Natural end of TTS playback → auto-listen for next question
             if (!isOpenRef.current) return;
@@ -289,12 +347,24 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       if (!isOpenRef.current || voiceRequestIdRef.current !== requestId) return;
       voiceRequestIdRef.current = null;
 
-      // Silently ignore cancellation
+      // Silently ignore cancellation — stop thinking loop, recover to idle
       if (err instanceof AssistantGatewayError && err.code === AssistantGatewayErrorCode.CANCELED) {
+        thinkingFeedback.stop();
+        setVoiceState('idle');
         return;
       }
 
+      thinkingFeedback.stop();
+
       const classified = classifyGatewayError(err);
+
+      // No speech detected by backend — show friendly label, return to idle
+      if (classified.kind === 'no_speech') {
+        showNoSpeechLabel(noSpeechTimerRef, setNoSpeechLabel);
+        setVoiceState('idle');
+        return;
+      }
+
       setBackendError(classified);
       setVoiceState('error');
     }
@@ -336,10 +406,16 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
         voiceRequestIdRef.current = null;
       }
 
+      thinkingFeedback.stop();
       void voiceOutputService.stop();
 
       if (isRecordingRef.current) {
         stopRecordingRef.current();
+      }
+
+      if (noSpeechTimerRef.current) {
+        clearTimeout(noSpeechTimerRef.current);
+        noSpeechTimerRef.current = null;
       }
 
       clearRecorderErrorRef.current();
@@ -374,6 +450,11 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
   const handleOrbPress = useCallback(() => {
     setBackendError(null);
     clearRecorderError();
+    setNoSpeechLabel(false);
+    if (noSpeechTimerRef.current) {
+      clearTimeout(noSpeechTimerRef.current);
+      noSpeechTimerRef.current = null;
+    }
 
     if (effectiveVoiceState === 'idle' || effectiveVoiceState === 'error') {
       // Start recording
@@ -429,11 +510,21 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
       voiceRequestIdRef.current = null;
     }
 
+    // Stop thinking feedback
+    thinkingFeedback.stop();
+
     // Stop any active TTS playback
     void voiceOutputService.stop();
 
     // stopRecording is idempotent and uses recorder-owned state
     stopRecording();
+
+    // Clear no-speech timer
+    if (noSpeechTimerRef.current) {
+      clearTimeout(noSpeechTimerRef.current);
+      noSpeechTimerRef.current = null;
+    }
+    setNoSpeechLabel(false);
 
     setIsVoiceModeVisible(false);
     setVoiceState('idle');
@@ -460,5 +551,6 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
     handleClose,
     voiceModeError,
     clearVoiceModeError,
+    noSpeechLabel,
   };
 }

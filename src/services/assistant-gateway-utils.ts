@@ -259,6 +259,30 @@ export function parseInvokeError(
     );
   }
 
+  // Check for empty transcript from backend (FunctionsHttpError wraps response body in context)
+  const contextObj =
+    errObj.context && typeof errObj.context === 'object'
+      ? (errObj.context as Record<string, unknown>)
+      : null;
+  const contextErrorNormalized =
+    typeof contextObj?.error === 'string' ? contextObj.error.trim().toLowerCase() : '';
+  const contextMessage = typeof contextObj?.message === 'string' ? contextObj.message.trim() : '';
+  const contextMessageNormalized = contextMessage.toLowerCase();
+  if (
+    contextErrorNormalized === 'empty_transcript' ||
+    contextErrorNormalized === 'empty transcript' ||
+    normalizedMessage.includes('empty_transcript') ||
+    normalizedMessage.includes('empty transcript') ||
+    contextMessageNormalized.includes('transcription returned no text')
+  ) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.EMPTY_TRANSCRIPT,
+      contextMessage || 'Speech transcription returned no text',
+      details,
+      baseError,
+    );
+  }
+
   return new AssistantGatewayError(
     AssistantGatewayErrorCode.UNKNOWN,
     rawMessage,

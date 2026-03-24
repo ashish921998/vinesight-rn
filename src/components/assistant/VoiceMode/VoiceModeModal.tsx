@@ -55,6 +55,7 @@ interface VoiceModeModalProps {
   onClose: () => void;
   voiceModeError?: VoiceModeError | null;
   onClearError?: () => void;
+  noSpeechLabel?: boolean;
 }
 
 const SWIPE_DOWN_THRESHOLD = 80;
@@ -67,6 +68,7 @@ export function VoiceModeModal({
   onClose,
   voiceModeError,
   onClearError: _onClearError,
+  noSpeechLabel,
 }: VoiceModeModalProps) {
   const { m3, isDark } = useThemeTokens();
   const { t } = useTranslation();
@@ -144,6 +146,7 @@ export function VoiceModeModal({
   const getStatusLabel = (): string => {
     switch (voiceState) {
       case 'idle':
+        if (noSpeechLabel) return t('ai.voice.noSpeechBody');
         return t('assistant.chat.tapToSpeak');
       case 'listening':
         return t('ai.voice.listening');

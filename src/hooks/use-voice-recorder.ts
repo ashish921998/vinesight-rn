@@ -5,7 +5,9 @@
  * Features:
  * - Platform-specific recording options (WAV/LPCM on iOS, AAC on Android)
  * - Permission checking via expo-audio
- * - Silence detection: auto-stops after 2 seconds of silence (metering < -40 dBFS)
+ * - Speech detection: requires actual speech (> -32 dBFS) before silence auto-stop
+ * - Silence detection: auto-stops after 1.5s of silence once speech is detected
+ * - No-speech timeout: auto-stops after 8s if no speech is ever detected
  * - Maximum recording duration: 60 seconds via forDuration param
  * - Reads recorded audio as base64 via expo-file-system
  * - Fires onRecordingComplete callback when recording finishes (any cause)
@@ -28,10 +30,16 @@ import type { RecordingOptions } from 'expo-audio';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 /** dBFS threshold below which audio counts as silence */
-const SILENCE_THRESHOLD_DB = -40;
+const SILENCE_THRESHOLD_DB = -38;
 
-/** How long (ms) continuous silence must last before auto-stopping */
-const SILENCE_TIMEOUT_MS = 2000;
+/** dBFS threshold above which audio counts as speech */
+const SPEECH_THRESHOLD_DB = -32;
+
+/** How long (ms) continuous silence must last before auto-stopping (after speech detected) */
+const SILENCE_TIMEOUT_MS = 1500;
+
+/** How long (ms) to wait before auto-stopping if no speech is ever detected */
+const NO_SPEECH_TIMEOUT_MS = 8000;
 
 /** Maximum recording duration in seconds (auto-stops after this) */
 export const MAX_RECORDING_DURATION_SECONDS = 60;
@@ -88,7 +96,7 @@ export interface RecordingResultData {
   /** 'wav' on iOS, 'm4a' on Android, 'webm' on web */
   format: string;
   durationSeconds: number;
-  autoStopReason?: 'silence' | 'maxDuration';
+  autoStopReason?: 'silence' | 'maxDuration' | 'noSpeech';
 }
 
 export interface UseVoiceRecorderReturn {
@@ -130,12 +138,16 @@ export function useVoiceRecorder(
 
   // Silence detection: tracks when continuous silence started
   const silenceStartTimeRef = useRef<number | null>(null);
+  // Speech detection: whether user has spoken above SPEECH_THRESHOLD_DB
+  const hasDetectedSpeechRef = useRef(false);
+  // Tracks when recording started for no-speech timeout
+  const recordingStartTimeRef = useRef<number>(0);
   // Prevents duplicate result processing once recording has fully stopped
   const isProcessingStopRef = useRef(false);
   // Prevents re-entrant stop calls while a stop request is already in flight
   const isStopRequestedRef = useRef(false);
   // Set just before calling recorder.stop() so handleRecordingFinished knows the reason
-  const autoStopReasonRef = useRef<'silence' | 'maxDuration' | undefined>(undefined);
+  const autoStopReasonRef = useRef<'silence' | 'maxDuration' | 'noSpeech' | undefined>(undefined);
   // True when recording has been active this session (guards the stop-detection effect)
   const wasRecordingRef = useRef(false);
   // Captured durationMillis at the moment recording ends (recorder may reset to 0)
@@ -225,6 +237,8 @@ export function useVoiceRecorder(
   useEffect(() => {
     return () => {
       silenceStartTimeRef.current = null;
+      hasDetectedSpeechRef.current = false;
+      recordingStartTimeRef.current = 0;
       autoStopReasonRef.current = undefined;
 
       if (isRecordingRef.current || isStopRequestedRef.current) {
@@ -259,7 +273,7 @@ export function useVoiceRecorder(
     }
   }, [recorderState.isRecording, recorderState.durationMillis]);
 
-  // ── Effect: silence detection ─────────────────────────────────────────────
+  // ── Effect: speech + silence detection ──────────────────────────────────────
 
   useEffect(() => {
     if (!recorderState.isRecording || isStopRequestedRef.current) return;
@@ -268,6 +282,27 @@ export function useVoiceRecorder(
     if (metering === undefined || metering === null) return;
 
     const now = Date.now();
+
+    // Detect speech: level must exceed SPEECH_THRESHOLD_DB to count as "user spoke"
+    if (metering > SPEECH_THRESHOLD_DB) {
+      hasDetectedSpeechRef.current = true;
+    }
+
+    // No-speech timeout: if user hasn't spoken at all after NO_SPEECH_TIMEOUT_MS, auto-stop
+    if (
+      !hasDetectedSpeechRef.current &&
+      recordingStartTimeRef.current > 0 &&
+      now - recordingStartTimeRef.current >= NO_SPEECH_TIMEOUT_MS
+    ) {
+      silenceStartTimeRef.current = null;
+      autoStopReasonRef.current = 'noSpeech';
+      isStopRequestedRef.current = true;
+      void recorder.stop();
+      return;
+    }
+
+    // Silence-based auto-stop only kicks in after speech has been detected
+    if (!hasDetectedSpeechRef.current) return;
 
     if (metering < SILENCE_THRESHOLD_DB) {
       if (silenceStartTimeRef.current === null) {
@@ -290,6 +325,8 @@ export function useVoiceRecorder(
   const startRecording = useCallback(async (): Promise<boolean> => {
     setError(null);
     silenceStartTimeRef.current = null;
+    hasDetectedSpeechRef.current = false;
+    recordingStartTimeRef.current = Date.now();
     isProcessingStopRef.current = false;
     isStopRequestedRef.current = false;
     autoStopReasonRef.current = undefined;
@@ -335,6 +372,8 @@ export function useVoiceRecorder(
       // Pre-set to 'maxDuration'; overridden to 'silence' by silence detection or to
       // undefined by manual stopRecording() before the duration actually expires.
       autoStopReasonRef.current = 'maxDuration';
+      // Arm the no-speech watchdog only after recording is actually started
+      recordingStartTimeRef.current = Date.now();
       return true;
     } catch (startErr) {
       setError({ kind: 'recording_failed', message: String(startErr) });
