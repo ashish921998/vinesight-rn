@@ -52,6 +52,7 @@ class ThinkingFeedbackService {
 
   stop(): void {
     this.isActive = false;
+    this.generation++;
 
     if (this.hapticTimer) {
       clearInterval(this.hapticTimer);
