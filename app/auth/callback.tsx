@@ -5,9 +5,7 @@ import { supabase } from '@/lib/supabase';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const { access_token, refresh_token, code, error, error_description } = useLocalSearchParams<{
-    access_token?: string;
-    refresh_token?: string;
+  const { code, error, error_description } = useLocalSearchParams<{
     code?: string;
     error?: string;
     error_description?: string;
@@ -19,14 +17,6 @@ export default function AuthCallback() {
         router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
         return;
       }
-
-      const url = await Linking.getInitialURL();
-      const hashParams = url ? new URLSearchParams(url.split('#')[1] || '') : null;
-      const tokenFromHash = hashParams?.get('access_token');
-      const refreshFromHash = hashParams?.get('refresh_token');
-
-      const resolvedAccessToken = tokenFromHash || access_token;
-      const resolvedRefreshToken = refreshFromHash || refresh_token || '';
 
       if (code) {
         try {
@@ -43,39 +33,26 @@ export default function AuthCallback() {
         return;
       }
 
-      if (resolvedAccessToken) {
-        if (!resolvedRefreshToken) {
-          router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
-          return;
-        }
+      const url = await Linking.getInitialURL();
+      const hashParams = url ? new URLSearchParams(url.split('#')[1] || '') : null;
+      const tokenOnlyCallback =
+        hashParams?.has('access_token') ||
+        hashParams?.has('refresh_token') ||
+        url?.includes('access_token=') ||
+        url?.includes('refresh_token=');
 
-        try {
-          const { data, error: sessionError } = await supabase.auth.setSession({
-            access_token: resolvedAccessToken,
-            refresh_token: resolvedRefreshToken,
-          });
-
-          if (sessionError) throw sessionError;
-
-          if (data.session) {
-            router.replace('/');
-          } else {
-            router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
-          }
-        } catch (err) {
-          console.error('Auth callback error:', err);
-          router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
-        }
-      } else {
-        if (error_description && __DEV__) {
-          console.warn('Auth callback error:', error_description);
-        }
-        router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
+      if (tokenOnlyCallback && __DEV__) {
+        console.warn('Rejected token-based auth callback. OAuth code exchange is required.');
       }
+
+      if (error_description && __DEV__) {
+        console.warn('Auth callback error:', error_description);
+      }
+      router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
     };
 
     handleCallback();
-  }, [access_token, refresh_token, code, error, error_description, router]);
+  }, [code, error, error_description, router]);
 
   return null;
 }

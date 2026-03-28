@@ -1,18 +1,26 @@
 import { useAuthStore } from '@/stores/auth-store';
 import { supabase } from '@/lib/supabase';
+import { openAuthSessionAsync } from 'expo-web-browser';
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
     auth: {
       signInWithOtp: jest.fn(),
+      signInWithOAuth: jest.fn(),
       verifyOtp: jest.fn(),
       updateUser: jest.fn(),
       getUser: jest.fn(),
       getSession: jest.fn(),
+      exchangeCodeForSession: jest.fn(),
+      setSession: jest.fn(),
       signOut: jest.fn(),
     },
   },
+}));
+
+jest.mock('expo-web-browser', () => ({
+  openAuthSessionAsync: jest.fn(),
 }));
 
 jest.mock('@/services/telemetry', () => ({
@@ -558,6 +566,30 @@ describe('completeProfile', () => {
       'We could not save your profile changes right now. Please try again.',
     );
     expect(state.isLoading).toBe(false);
+  });
+});
+
+// ============================================================
+// Google OAuth
+// ============================================================
+
+describe('signInWithGoogle', () => {
+  it('rejects token-only callback URLs and never installs a session from raw tokens', async () => {
+    (supabase.auth.signInWithOAuth as jest.Mock).mockResolvedValue({
+      data: { url: 'https://example.com/oauth/start' },
+      error: null,
+    });
+    (openAuthSessionAsync as jest.Mock).mockResolvedValue({
+      type: 'success',
+      url: 'vinesight://auth/callback#access_token=attacker-token&refresh_token=attacker-refresh',
+    });
+
+    await useAuthStore.getState().signInWithGoogle();
+
+    expect(supabase.auth.exchangeCodeForSession).not.toHaveBeenCalled();
+    expect(supabase.auth.setSession).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(useAuthStore.getState().errorMessage).toBe('OAuth callback missing authorization code');
   });
 });
 
