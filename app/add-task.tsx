@@ -5,7 +5,6 @@ import { EntryForm } from '@/components/screens/entry-form';
 import { useModalStore } from '@/stores';
 import {
   markOnboardingFirstActionCompleted,
-  parseOnboardingActionType,
   parseOnboardingFlag,
 } from '@/features/onboarding/activation';
 
@@ -20,10 +19,6 @@ export default function AddTaskRoute() {
   const initialFarmId =
     params.farmId && !isNaN(Number(params.farmId)) ? parseInt(params.farmId, 10) : undefined;
   const isOnboardingActionFlow = parseOnboardingFlag(params.onboarding);
-  const onboardingActionType = useMemo(
-    () => parseOnboardingActionType(params.onboardingActionType) ?? 'task',
-    [params.onboardingActionType],
-  );
   const onboardingFarmId = useMemo(
     () => initialFarmId ?? addEntry?.initialFarmId ?? null,
     [addEntry?.initialFarmId, initialFarmId],
@@ -39,10 +34,10 @@ export default function AddTaskRoute() {
   const handleTaskSaveSuccess = useCallback(() => {
     if (!isOnboardingActionFlow) return;
     markOnboardingFirstActionCompleted({
-      actionType: onboardingActionType,
+      actionType: 'task',
       farmId: onboardingFarmId,
     });
-  }, [isOnboardingActionFlow, onboardingActionType, onboardingFarmId]);
+  }, [isOnboardingActionFlow, onboardingFarmId]);
 
   return (
     <EntryForm

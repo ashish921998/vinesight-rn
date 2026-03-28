@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -78,6 +78,11 @@ export default function TasksScreen() {
       : 'all';
   const [filter, setFilter] = useState<FilterType>(initialFilter);
   const farmIdValue = farmId ? parseInt(farmId, 10) : undefined;
+
+  useEffect(() => {
+    setFilter(initialFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeFilter]);
 
   // Get farm name by ID
   const getFarmName = (farmId: number) => {

@@ -45,9 +45,9 @@ Scope:
 - Track activation events in telemetry
 
 Suggested implementation areas:
-- [src/features/onboarding/onboarding-screen.tsx](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/features/onboarding/onboarding-screen.tsx)
-- first-farm slide components under [src/features/onboarding](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/features/onboarding)
-- guided tour logic under [src/features/guided-tour](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/features/guided-tour)
+- [src/features/onboarding/onboarding-screen.tsx](../src/features/onboarding/onboarding-screen.tsx)
+- first-farm slide components under [src/features/onboarding](../src/features/onboarding)
+- guided tour logic under [src/features/guided-tour](../src/features/guided-tour)
 
 Tasks:
 1. Define activation completion state in onboarding store.
@@ -80,9 +80,9 @@ Scope:
 - Keep one-tap navigation into the correct farm or workflow
 
 Suggested implementation areas:
-- [app/(tabs)/index.tsx](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/app/(tabs)/index.tsx)
-- [src/hooks/use-dashboard-stats.ts](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/hooks/use-dashboard-stats.ts)
-- tasks, logs, weather, and farm hooks under [src/hooks](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/hooks)
+- [app/(tabs)/index.tsx](../app/(tabs)/index.tsx)
+- [src/hooks/use-dashboard-stats.ts](../src/hooks/use-dashboard-stats.ts)
+- tasks, logs, weather, and farm hooks under [src/hooks](../src/hooks)
 
 Tasks:
 1. Add a `todayNeedsAttention` model for the dashboard.
@@ -115,9 +115,9 @@ Priority jobs:
 - Summarize the last 7 to 14 days for a farm
 
 Suggested implementation areas:
-- [src/components/assistant/ChatScreen.tsx](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/components/assistant/ChatScreen.tsx)
-- [src/hooks/use-assistant.ts](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/hooks/use-assistant.ts)
-- assistant services under [src/services](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/services)
+- [src/components/assistant/ChatScreen.tsx](../src/components/assistant/ChatScreen.tsx)
+- [src/hooks/use-assistant.ts](../src/hooks/use-assistant.ts)
+- assistant services under [src/services](../src/services)
 
 Tasks:
 1. Replace generic suggestion chips with task-oriented prompts.
@@ -151,9 +151,9 @@ Scope:
 - Reduce the need to jump across unrelated tabs
 
 Suggested implementation areas:
-- farm routes under [app/farm](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/app/farm)
-- farm hooks such as [src/hooks/use-farms.ts](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/hooks/use-farms.ts)
-- related weather, tasks, logs, and worker hooks in [src/hooks](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/hooks)
+- farm routes under [app/farm](../app/farm)
+- farm hooks such as [src/hooks/use-farms.ts](../src/hooks/use-farms.ts)
+- related weather, tasks, logs, and worker hooks in [src/hooks](../src/hooks)
 
 Tasks:
 1. Redesign farm detail as a single high-signal summary surface.
@@ -197,9 +197,9 @@ Suggested metrics:
 - missing expected logs
 
 Suggested implementation areas:
-- [src/hooks/use-dashboard-stats.ts](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/hooks/use-dashboard-stats.ts)
-- reporting and analytics hooks under [src/hooks](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/hooks)
-- analytics services under [src/services](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/services)
+- [src/hooks/use-dashboard-stats.ts](../src/hooks/use-dashboard-stats.ts)
+- reporting and analytics hooks under [src/hooks](../src/hooks)
+- analytics services under [src/services](../src/services)
 
 Tasks:
 1. Add a derived dashboard model instead of only count-based aggregates.
@@ -252,9 +252,9 @@ Scope:
 - conflict-safe recovery
 
 Suggested implementation areas:
-- query cache and storage in [src/lib/query-cache.ts](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/lib/query-cache.ts)
-- local stores under [src/stores](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/stores)
-- relevant hooks and submit utilities under [src/hooks](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/hooks) and [src/utils](/Users/ashishhuddar/conductor/workspaces/vinesight-rn/little-rock/src/utils)
+- query cache and storage in [src/lib/query-cache.ts](../src/lib/query-cache.ts)
+- local stores under [src/stores](../src/stores)
+- relevant hooks and submit utilities under [src/hooks](../src/hooks) and [src/utils](../src/utils)
 
 Tasks:
 1. Define which mutations support offline queueing first.

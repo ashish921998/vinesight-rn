@@ -71,7 +71,7 @@ export default function DashboardScreen() {
     data: todayNeedsAttention,
     refetch: refetchTodayNeedsAttention,
     isLoading: isLoadingTodayNeedsAttention,
-  } = useTodayNeedsAttention(8);
+  } = useTodayNeedsAttention(6);
   const {
     data: recentActivities,
     refetch: refetchActivities,

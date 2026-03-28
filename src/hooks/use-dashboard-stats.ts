@@ -55,22 +55,6 @@ const severityRank: Record<TodayNeedAttentionSeverity, number> = {
 
 const toDateString = (value: Date): string => value.toISOString().split('T')[0];
 
-const isLowWaterFarm = (
-  remainingWater?: number | null,
-  totalTankCapacity?: number | null,
-): boolean => {
-  if (
-    typeof remainingWater !== 'number' ||
-    !Number.isFinite(remainingWater) ||
-    typeof totalTankCapacity !== 'number' ||
-    !Number.isFinite(totalTankCapacity) ||
-    totalTankCapacity <= 0
-  ) {
-    return false;
-  }
-  return (remainingWater / totalTankCapacity) * 100 < 30;
-};
-
 export function useTodayNeedsAttention(limit: number = 10) {
   return useQuery({
     queryKey: [...queryKeys.dashboard.todayNeedsAttention(), limit],
@@ -197,13 +181,13 @@ export function useTodayNeedsAttention(limit: number = 10) {
 
       farms.forEach((farm) => {
         if (typeof farm.id !== 'number') return;
-        if (!isLowWaterFarm(farm.remaining_water, farm.total_tank_capacity)) return;
+        if (!isLowWater(farm)) return;
         items.push({
           id: `low-water-${farm.id}`,
           type: 'lowWaterLevel',
           severity: 'high',
           farmId: farm.id,
-          farmName: farm.name,
+          farmName: farmNameById.get(farm.id) ?? 'Farm',
         });
       });
 
@@ -231,7 +215,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
           type: 'noRecentLogs',
           severity: 'medium',
           farmId: farm.id,
-          farmName: farm.name,
+          farmName: farmNameById.get(farm.id) ?? 'Farm',
         });
       });
 
@@ -258,7 +242,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
           const aDate = a.dueDate ?? a.safeHarvestDate ?? '9999-12-31';
           const bDate = b.dueDate ?? b.safeHarvestDate ?? '9999-12-31';
           if (aDate !== bDate) return aDate.localeCompare(bDate);
-          return a.farmName.localeCompare(b.farmName);
+          return (a.farmName ?? 'Farm').localeCompare(b.farmName ?? 'Farm');
         })
         .slice(0, limit);
     },

@@ -1334,8 +1334,8 @@ export const mr = {
     },
     jobs: {
       title: 'मुख्य कामे',
-      subtitle: 'एक ऑपरेशनल काम निवडून सुरू करा.',
-      subtitleWithFarm: '{{name}} साठी एक ऑपरेशनल काम निवडून सुरू करा.',
+      subtitle: 'एक ऑपरेशनल $t(glossary.task) निवडून सुरू करा.',
+      subtitleWithFarm: '{{name}} साठी एक ऑपरेशनल $t(glossary.task) निवडून सुरू करा.',
       prompts: {
         logActivity: 'मला $t(glossary.farm) कृती नोंदवायला मदत करा.',
         todayPlan: 'या $t(glossary.farm) साठी आज काय करावे?',
@@ -1496,7 +1496,7 @@ export const mr = {
         },
         task: {
           title: '$t(glossary.task) जोडा',
-          description: 'पुढचे ऑपरेशनल काम आणि देय तारीख तयार करा.',
+          description: 'पुढचे ऑपरेशनल $t(glossary.task) आणि देय तारीख तयार करा.',
         },
       },
       pendingHint: 'पुढे जाण्यासाठी एक कृती पूर्ण करा.',
@@ -1964,7 +1964,7 @@ export const mr = {
     },
     needsAttention: {
       title: 'लक्ष आवश्यक',
-      taskFallback: 'मुदत संपलेले काम',
+      taskFallback: 'मुदत संपलेले $t(glossary.task)',
       reasons: {
         overdueTask: 'कामाची मुदत संपली',
         noRecentLogs: 'अलीकडील नोंदी नाहीत',
@@ -1972,19 +1972,19 @@ export const mr = {
         phiDeadline: 'PHI अंतिम वेळ जवळ आहे',
       },
       actions: {
-        reviewTasks: 'काम पहा',
+        reviewTasks: '$t(glossary.task) पहा',
         logNow: 'आत्ताच नोंदवा',
         reviewSpraySafety: 'स्प्रे सुरक्षितता तपासा',
         openFarm: '$t(glossary.farm) उघडा',
       },
       meta: {
         taskDue: 'देय: {{date}}',
-        phiDue: 'सुरक्षित कापणी: {{date}} पासून',
+        phiDue: 'सुरक्षित $t(glossary.harvest): {{date}} पासून',
       },
       empty: {
         title: 'सध्या तातडीची समस्या नाही.',
-        subtitle: 'दररोजचे काम नोंदवत राहा म्हणजे इशारे उपयोगी राहतील.',
-        ctaWithFarms: 'आजचे काम नोंदवा',
+        subtitle: 'दररोजचे $t(glossary.task) नोंदवत राहा म्हणजे इशारे उपयोगी राहतील.',
+        ctaWithFarms: 'आजचे $t(glossary.task) नोंदवा',
       },
     },
     quickActions: {

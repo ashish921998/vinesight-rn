@@ -7,7 +7,6 @@ import type { LogTypeId } from '@/constants/calculator-models';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import {
   markOnboardingFirstActionCompleted,
-  parseOnboardingActionType,
   parseOnboardingFlag,
 } from '@/features/onboarding/activation';
 
@@ -105,10 +104,6 @@ export default function AddEntryRoute() {
     () => parseOnboardingFlag(params.onboarding),
     [params.onboarding],
   );
-  const onboardingActionType = useMemo(
-    () => parseOnboardingActionType(params.onboardingActionType) ?? 'log',
-    [params.onboardingActionType],
-  );
   const voiceLogPrefill = useMemo<VoiceLogFormPrefill | null>(
     () => addEntry?.voiceLogPrefill ?? null,
     [addEntry?.voiceLogPrefill],
@@ -122,11 +117,11 @@ export default function AddEntryRoute() {
     (actionType: 'log' | 'task') => {
       if (!isOnboardingActionFlow) return;
       markOnboardingFirstActionCompleted({
-        actionType: actionType === 'task' ? 'task' : onboardingActionType,
+        actionType,
         farmId: resolvedFarmIdForOnboarding,
       });
     },
-    [isOnboardingActionFlow, onboardingActionType, resolvedFarmIdForOnboarding],
+    [isOnboardingActionFlow, resolvedFarmIdForOnboarding],
   );
 
   useEffect(() => {
