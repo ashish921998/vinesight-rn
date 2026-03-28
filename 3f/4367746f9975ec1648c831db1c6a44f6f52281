@@ -1,0 +1,41 @@
+src/stores/onboarding-store.ts
+  b50bbc7b66796b84 129
+supabase/migrations/20260329093000_dashboard_recent_log_farms_rpc.sql
+  b50bbc7b66796b84 1-65
+app/add-task.tsx
+  b50bbc7b66796b84 34-35,39,41-43,50
+app/(tabs)/index.tsx
+  b50bbc7b66796b84 36,140-141
+src/hooks/use-dashboard-stats.ts
+  b50bbc7b66796b84 15,49-52,61,98,108-112,125,162-168
+app/add-entry.tsx
+  b50bbc7b66796b84 117,121,149
+src/features/onboarding/slides/first-action-slide.tsx
+  b50bbc7b66796b84 15,50,100-105,115
+src/features/onboarding/onboarding-screen.tsx
+  b50bbc7b66796b84 63-65,194-197,211,223,234,240,333
+src/components/assistant/ChatScreen.tsx
+  b50bbc7b66796b84 48,479-495
+src/components/screens/entry-form.tsx
+  b50bbc7b66796b84 153,1673
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "3f4367746f9975ec1648c831db1c6a44f6f52281",
+  "prompts": {
+    "b50bbc7b66796b84": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d358d-2dcf-7450-994f-f2f5d3c447fa",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 141,
+      "total_deletions": 79,
+      "accepted_lines": 141,
+      "overriden_lines": 0
+    }
+  }
+}
