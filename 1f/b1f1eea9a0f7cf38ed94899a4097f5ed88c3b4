@@ -1,0 +1,25 @@
+__tests__/phone-auth-store.test.ts
+  ae362cbff05e8402 594-622
+app/auth/callback.tsx
+  ae362cbff05e8402 4,45-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "1fb1f1eea9a0f7cf38ed94899a4097f5ed88c3b4",
+  "prompts": {
+    "ae362cbff05e8402": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5df55f22-271b-409f-952c-2c6c78a1ff15",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 35,
+      "total_deletions": 2,
+      "accepted_lines": 35,
+      "overriden_lines": 0
+    }
+  }
+}
