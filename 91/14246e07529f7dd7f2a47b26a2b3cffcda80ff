@@ -1,0 +1,25 @@
+app/auth/callback.tsx
+  ae362cbff05e8402 48-49
+src/lib/supabase.ts
+  ae362cbff05e8402 146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "9114246e07529f7dd7f2a47b26a2b3cffcda80ff",
+  "prompts": {
+    "ae362cbff05e8402": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5df55f22-271b-409f-952c-2c6c78a1ff15",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 1,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
