@@ -137,10 +137,14 @@ export { useCurrency } from './use-currency';
 // Dashboard Hooks
 export {
   useDashboardStats,
+  useTodayNeedsAttention,
   useFarmsNeedingAttention,
   useRecentActivities,
   type DashboardStats,
   type FarmNeedingAttention,
+  type TodayNeedAttentionItem,
+  type TodayNeedAttentionType,
+  type TodayNeedAttentionSeverity,
   type RecentActivity,
 } from './use-dashboard-stats';
 

@@ -15,17 +15,17 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useDashboardStats,
-  useFarmsNeedingAttention,
+  useTodayNeedsAttention,
   useRecentActivities,
   useFarms,
   useProfile,
+  type TodayNeedAttentionItem,
 } from '@/hooks';
 import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import type { LogTypeId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatNumber } from '@/i18n/format';
@@ -68,10 +68,10 @@ export default function DashboardScreen() {
   // Data hooks
   const { data: stats, refetch: refetchStats, isLoading: isLoadingStats } = useDashboardStats();
   const {
-    data: farmsNeedingAttention,
-    refetch: refetchAttention,
-    isLoading: isLoadingAttention,
-  } = useFarmsNeedingAttention();
+    data: todayNeedsAttention,
+    refetch: refetchTodayNeedsAttention,
+    isLoading: isLoadingTodayNeedsAttention,
+  } = useTodayNeedsAttention(8);
   const {
     data: recentActivities,
     refetch: refetchActivities,
@@ -84,7 +84,12 @@ export default function DashboardScreen() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([refetchStats(), refetchAttention(), refetchActivities(), refetchFarms()]);
+    await Promise.all([
+      refetchStats(),
+      refetchTodayNeedsAttention(),
+      refetchActivities(),
+      refetchFarms(),
+    ]);
     setIsRefreshing(false);
   };
 
@@ -124,6 +129,116 @@ export default function DashboardScreen() {
 
   const handleFarmAttention = (farmId: number) => {
     router.push(`/farm/${farmId}`);
+  };
+
+  const hasFarms = Boolean(farms && farms.length > 0);
+  const attentionItems = todayNeedsAttention ?? [];
+
+  const formatAttentionDate = (value?: string | null): string | null => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return formatDate(parsed, { month: 'short', day: 'numeric' });
+  };
+
+  const getAttentionActionLabel = (item: TodayNeedAttentionItem): string => {
+    if (item.type === 'overdueTask') return t('dashboard.needsAttention.actions.reviewTasks');
+    if (item.type === 'noRecentLogs') return t('dashboard.needsAttention.actions.logNow');
+    if (item.type === 'phiDeadline') return t('dashboard.needsAttention.actions.reviewSpraySafety');
+    return t('dashboard.needsAttention.actions.openFarm');
+  };
+
+  const getAttentionIcon = (
+    item: TodayNeedAttentionItem,
+  ): { name: string; background: string; color: string } => {
+    if (item.type === 'overdueTask') {
+      return {
+        name: 'checklist',
+        background: colorWithOpacity(m3.colorScheme.error, 0.14),
+        color: m3.colorScheme.error,
+      };
+    }
+
+    if (item.type === 'lowWaterLevel') {
+      return {
+        name: 'water',
+        background: colorWithOpacity(m3.colorScheme.warning, 0.16),
+        color: m3.colorScheme.warning,
+      };
+    }
+
+    if (item.type === 'phiDeadline') {
+      return {
+        name: 'calendar',
+        background: colorWithOpacity(m3.colorScheme.tertiary, 0.16),
+        color: m3.colorScheme.tertiary,
+      };
+    }
+
+    return {
+      name: 'square.and.pencil',
+      background: colorWithOpacity(m3.colorScheme.primary, 0.16),
+      color: m3.colorScheme.primary,
+    };
+  };
+
+  const getAttentionMetaLabel = (item: TodayNeedAttentionItem): string | null => {
+    if (item.type === 'overdueTask') {
+      const dueDate = formatAttentionDate(item.dueDate);
+      return dueDate ? t('dashboard.needsAttention.meta.taskDue', { date: dueDate }) : null;
+    }
+    if (item.type === 'phiDeadline') {
+      const safeDate = formatAttentionDate(item.safeHarvestDate);
+      return safeDate ? t('dashboard.needsAttention.meta.phiDue', { date: safeDate }) : null;
+    }
+    return null;
+  };
+
+  const getAttentionTitle = (item: TodayNeedAttentionItem): string => {
+    if (item.type === 'overdueTask') {
+      return item.taskTitle?.trim() || t('dashboard.needsAttention.taskFallback');
+    }
+    if (item.type === 'phiDeadline' && item.chemical?.trim()) {
+      return item.chemical.trim();
+    }
+    return item.farmName;
+  };
+
+  const handleNeedsAttentionPress = (item: TodayNeedAttentionItem) => {
+    if (item.type === 'overdueTask') {
+      router.push({
+        pathname: '/tasks',
+        params: {
+          farmId: String(item.farmId),
+          filter: 'overdue',
+        },
+      });
+      return;
+    }
+
+    if (item.type === 'noRecentLogs') {
+      router.push({
+        pathname: '/add-entry',
+        params: {
+          farmId: String(item.farmId),
+          initialTab: 'log',
+          tabs: 'log',
+        },
+      });
+      return;
+    }
+
+    if (item.type === 'phiDeadline') {
+      router.push({
+        pathname: '/spray-safe-checker',
+        params: {
+          farmId: String(item.farmId),
+        },
+      });
+      return;
+    }
+
+    router.push(`/farm/${item.farmId}`);
   };
 
   const containerStyle: ViewStyle = {
@@ -186,94 +301,54 @@ export default function DashboardScreen() {
             <Text style={dateStyle}>{todayLabel}</Text>
           </View>
 
-          {/* Stats Grid */}
+          {/* Today Needs Attention */}
           <View style={{ marginBottom: spacing[6] }}>
-            <View style={{ flexDirection: 'row', marginBottom: spacing[3] }}>
-              <View style={{ flex: 1, paddingRight: spacing[2] }}>
-                <StatsCard
-                  title={t('dashboard.stats.farms')}
-                  value={formatNumber(stats?.farmsCount ?? 0, { maximumFractionDigits: 0 })}
-                  icon="leaf"
-                  color={m3.colorScheme.primary}
-                  isLoading={isLoadingStats}
-                  onPress={() => router.navigate('/(tabs)/explore')}
-                />
+            <Text style={sectionTitleStyle} accessibilityRole="header">
+              {t('dashboard.needsAttention.title')}
+            </Text>
+            {isLoadingTodayNeedsAttention ? (
+              <View
+                style={{
+                  height: 72,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderRadius: m3.shape.cornerMedium,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                }}
+              >
+                <ActivityIndicator color={m3.colorScheme.primary} />
               </View>
-              <View style={{ flex: 1, paddingLeft: spacing[2] }}>
-                <StatsCard
-                  title={t('dashboard.stats.activeWorkers')}
-                  value={formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })}
-                  icon="people"
-                  color={m3.colorScheme.primary}
-                  isLoading={isLoadingStats}
-                  onPress={() => router.navigate('/(tabs)/workers')}
-                />
-              </View>
-            </View>
-            <View style={{ flexDirection: 'row' }}>
-              <View style={{ flex: 1, paddingRight: spacing[2] }}>
-                <StatsCard
-                  title={t('dashboard.stats.activities')}
-                  value={formatNumber(stats?.recentActivitiesCount ?? 0, {
-                    maximumFractionDigits: 0,
-                  })}
-                  icon="bar-chart"
-                  color={m3.colorScheme.primary}
-                  isLoading={isLoadingStats}
-                  onPress={() => router.navigate('/logs')}
-                />
-              </View>
-              <View style={{ flex: 1, paddingLeft: spacing[2] }}>
-                <StatsCard
-                  title={t('dashboard.stats.tasks')}
-                  value={formatNumber(stats?.pendingTasksCount ?? 0, {
-                    maximumFractionDigits: 0,
-                  })}
-                  icon="checklist"
-                  color={m3.colorScheme.primary}
-                  isLoading={isLoadingStats}
-                  onPress={() => router.navigate('/tasks')}
-                />
-              </View>
-            </View>
-          </View>
+            ) : attentionItems.length > 0 ? (
+              attentionItems.slice(0, 6).map((item) => {
+                const title = getAttentionTitle(item);
+                const reasonLabel = t(`dashboard.needsAttention.reasons.${item.type}`);
+                const actionLabel = getAttentionActionLabel(item);
+                const metaLabel = getAttentionMetaLabel(item);
+                const icon = getAttentionIcon(item);
+                const emphasisColor =
+                  item.severity === 'high'
+                    ? m3.colorScheme.error
+                    : item.severity === 'medium'
+                      ? m3.colorScheme.warning
+                      : m3.colorScheme.primary;
 
-          {/* Farms Needing Attention */}
-          {isLoadingAttention ? (
-            <View
-              style={{
-                marginBottom: spacing[6],
-                height: 60,
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                borderRadius: m3.shape.cornerMedium,
-              }}
-            >
-              <ActivityIndicator color={m3.colorScheme.primary} />
-            </View>
-          ) : (
-            farmsNeedingAttention &&
-            farmsNeedingAttention.length > 0 && (
-              <View style={{ marginBottom: spacing[6] }}>
-                <Text style={sectionTitleStyle} accessibilityRole="header">
-                  {t('dashboard.needsAttention.title')}
-                </Text>
-                {farmsNeedingAttention.slice(0, 3).map((item) => (
+                return (
                   <Pressable
-                    key={item.farm.id}
-                    onPress={() => item.farm.id && handleFarmAttention(item.farm.id)}
+                    key={item.id}
+                    onPress={() => handleNeedsAttentionPress(item)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${item.farm.name}. ${t(`dashboard.needsAttention.reasons.${item.reason}`)}.`}
+                    accessibilityLabel={`${title}. ${reasonLabel}. ${actionLabel}.`}
                     style={{
                       borderRadius: m3.shape.cornerMedium,
                       padding: spacing[3],
                       marginBottom: spacing[2],
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.08),
+                      backgroundColor: colorWithOpacity(emphasisColor, 0.07),
                       borderWidth: 1,
-                      borderColor: colorWithOpacity(m3.colorScheme.warning, 0.25),
+                      borderColor: colorWithOpacity(emphasisColor, 0.25),
                       overflow: 'hidden',
                     }}
                   >
@@ -281,36 +356,68 @@ export default function DashboardScreen() {
                       <>
                         <View
                           style={{
-                            width: 36,
-                            height: 36,
+                            width: 38,
+                            height: 38,
                             borderRadius: borderRadius.full,
                             alignItems: 'center',
                             justifyContent: 'center',
-                            backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
+                            backgroundColor: icon.background,
                           }}
                         >
-                          <SymbolIcon
-                            name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
-                            size={18}
-                            color={m3.colorScheme.warning}
-                          />
+                          <SymbolIcon name={icon.name} size={18} color={icon.color} />
                         </View>
                         <View style={{ marginLeft: spacing[3], flex: 1 }}>
                           <Text
-                            style={{ ...m3.typography.labelLarge, color: m3.colorScheme.onSurface }}
+                            style={{
+                              ...m3.typography.labelLarge,
+                              color: m3.colorScheme.onSurface,
+                            }}
                           >
-                            {item.farm.name}
+                            {title}
                           </Text>
+                          {title !== item.farmName ? (
+                            <Text
+                              style={{
+                                ...m3.typography.labelSmall,
+                                color: m3.colorScheme.onSurfaceVariant,
+                              }}
+                            >
+                              {item.farmName}
+                            </Text>
+                          ) : null}
                           <Text
                             style={{
                               ...m3.typography.labelSmall,
                               color: m3.colorScheme.onSurfaceVariant,
                             }}
                           >
-                            {t(`dashboard.needsAttention.reasons.${item.reason}`)}
+                            {reasonLabel}
                           </Text>
+                          {metaLabel ? (
+                            <Text
+                              style={{
+                                ...m3.typography.labelSmall,
+                                color: m3.colorScheme.onSurfaceVariant,
+                                marginTop: spacing[1],
+                              }}
+                            >
+                              {metaLabel}
+                            </Text>
+                          ) : null}
                         </View>
-                        <SymbolIcon name="chevron.right" size={16} color={colors.gray[300]} />
+                        <View style={{ alignItems: 'flex-end', gap: spacing[1] }}>
+                          <Text
+                            style={{
+                              ...m3.typography.labelSmall,
+                              color: m3.colorScheme.primary,
+                              fontWeight: fontWeight.semibold,
+                              textAlign: 'right',
+                            }}
+                          >
+                            {actionLabel}
+                          </Text>
+                          <SymbolIcon name="chevron.right" size={16} color={colors.gray[300]} />
+                        </View>
                         <View
                           pointerEvents="none"
                           style={[
@@ -328,10 +435,65 @@ export default function DashboardScreen() {
                       </>
                     )}
                   </Pressable>
-                ))}
+                );
+              })
+            ) : (
+              <View
+                style={{
+                  borderRadius: m3.shape.cornerLarge,
+                  padding: spacing[5],
+                  alignItems: 'center',
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                }}
+              >
+                <SymbolIcon name="checkmark.seal.fill" size={38} color={m3.colorScheme.primary} />
+                <Text
+                  style={{
+                    ...m3.typography.titleMedium,
+                    color: m3.colorScheme.onSurface,
+                    marginTop: spacing[3],
+                    textAlign: 'center',
+                  }}
+                >
+                  {t('dashboard.needsAttention.empty.title')}
+                </Text>
+                <Text
+                  style={{
+                    ...m3.typography.bodyMedium,
+                    color: m3.colorScheme.onSurfaceVariant,
+                    marginTop: spacing[2],
+                    textAlign: 'center',
+                  }}
+                >
+                  {t('dashboard.needsAttention.empty.subtitle')}
+                </Text>
+                <View style={{ marginTop: spacing[4], width: '100%' }}>
+                  <Button
+                    title={
+                      hasFarms
+                        ? t('dashboard.needsAttention.empty.ctaWithFarms')
+                        : t('dashboard.cta.addFirstFarm')
+                    }
+                    onPress={() => {
+                      if (hasFarms) {
+                        router.push({
+                          pathname: '/add-entry',
+                          params: {
+                            initialTab: 'log',
+                            tabs: 'log',
+                          },
+                        });
+                        return;
+                      }
+                      router.push('/(tabs)/explore');
+                    }}
+                  />
+                </View>
               </View>
-            )
-          )}
+            )}
+          </View>
 
           {/* Quick Actions */}
           <View style={{ marginBottom: spacing[6] }}>
@@ -384,7 +546,7 @@ export default function DashboardScreen() {
           </View>
 
           {/* Recent Activity */}
-          <View>
+          <View style={{ marginBottom: spacing[6] }}>
             <Text style={sectionTitleStyle} accessibilityRole="header">
               {t('dashboard.recentActivity.title')}
             </Text>
@@ -455,11 +617,78 @@ export default function DashboardScreen() {
                         ? t('dashboard.cta.addEntry')
                         : t('dashboard.cta.addFirstFarm')
                     }
-                    onPress={() => router.push('/(tabs)/explore')}
+                    onPress={() => {
+                      if (hasFarms) {
+                        router.push({
+                          pathname: '/add-entry',
+                          params: {
+                            initialTab: 'log',
+                            tabs: 'log',
+                          },
+                        });
+                        return;
+                      }
+                      router.push('/(tabs)/explore');
+                    }}
                   />
                 </View>
               </View>
             )}
+          </View>
+
+          {/* Stats Grid */}
+          <View style={{ marginBottom: spacing[2] }}>
+            <Text style={sectionTitleStyle} accessibilityRole="header">
+              {t('dashboard.stats.title')}
+            </Text>
+            <View style={{ flexDirection: 'row', marginBottom: spacing[3] }}>
+              <View style={{ flex: 1, paddingRight: spacing[2] }}>
+                <StatsCard
+                  title={t('dashboard.stats.farms')}
+                  value={formatNumber(stats?.farmsCount ?? 0, { maximumFractionDigits: 0 })}
+                  icon="leaf"
+                  color={m3.colorScheme.primary}
+                  isLoading={isLoadingStats}
+                  onPress={() => router.navigate('/(tabs)/explore')}
+                />
+              </View>
+              <View style={{ flex: 1, paddingLeft: spacing[2] }}>
+                <StatsCard
+                  title={t('dashboard.stats.activeWorkers')}
+                  value={formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })}
+                  icon="people"
+                  color={m3.colorScheme.primary}
+                  isLoading={isLoadingStats}
+                  onPress={() => router.navigate('/(tabs)/workers')}
+                />
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row' }}>
+              <View style={{ flex: 1, paddingRight: spacing[2] }}>
+                <StatsCard
+                  title={t('dashboard.stats.activities')}
+                  value={formatNumber(stats?.recentActivitiesCount ?? 0, {
+                    maximumFractionDigits: 0,
+                  })}
+                  icon="bar-chart"
+                  color={m3.colorScheme.primary}
+                  isLoading={isLoadingStats}
+                  onPress={() => router.navigate('/logs')}
+                />
+              </View>
+              <View style={{ flex: 1, paddingLeft: spacing[2] }}>
+                <StatsCard
+                  title={t('dashboard.stats.tasks')}
+                  value={formatNumber(stats?.pendingTasksCount ?? 0, {
+                    maximumFractionDigits: 0,
+                  })}
+                  icon="checklist"
+                  color={m3.colorScheme.primary}
+                  isLoading={isLoadingStats}
+                  onPress={() => router.navigate('/tasks')}
+                />
+              </View>
+            </View>
           </View>
 
           {/* Farm Picker Modal */}

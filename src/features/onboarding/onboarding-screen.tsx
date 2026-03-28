@@ -13,33 +13,53 @@ import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useAuthStore, useLanguageStore, useNotificationStore } from '@/stores';
 import { useOnboardingStore } from '@/stores/onboarding-store';
+import type { OnboardingActionType, OnboardingStep } from '@/types/onboarding';
 import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { colorWithOpacity } from '@/utils/color';
 import { OnboardingButton } from './components/onboarding-button';
 import { PageIndicator } from './components/page-indicator';
 import { FirstFarmSlide } from './slides/first-farm-slide';
+import { FirstActionSlide } from './slides/first-action-slide';
 import { HeroSlide } from './slides/hero-slide';
 import { NotificationsSlide } from './slides/notifications-slide';
 import { ValuePropsSlide } from './slides/value-props-slide';
-
-const TOTAL_PAGES = 4;
+const TOTAL_PAGES = 5;
 const FIRST_FARM_PAGE_INDEX = 2;
-const NOTIFICATIONS_PAGE_INDEX = 3;
+const FIRST_ACTION_PAGE_INDEX = 3;
+const NOTIFICATIONS_PAGE_INDEX = 4;
+const PAGE_STEPS: OnboardingStep[] = [
+  'welcome',
+  'features',
+  'firstFarm',
+  'firstAction',
+  'notifications',
+];
+
+const pageIndexForStep = (step: OnboardingStep): number => {
+  const index = PAGE_STEPS.indexOf(step);
+  return index >= 0 ? index : 0;
+};
 
 export function OnboardingScreen() {
   const m3 = useM3();
   const { width } = useWindowDimensions();
   const { data: farms = [] } = useFarms();
+  const onboardingCurrentStep = useOnboardingStore((s) => s.currentStep);
+  const onboardingActivation = useOnboardingStore((s) => s.activation);
   const language = useLanguageStore((s) => s.language);
   const scrollX = useSharedValue(0);
   const scrollRef = useRef<Animated.ScrollView>(null);
   const viewedSlides = useRef(new Set<number>());
   const farmCreatedRef = useRef(false);
+  const hasAppliedResumeStepRef = useRef(false);
   const [activatedSlides, setActivatedSlides] = useState(new Set<number>([0]));
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [createdFarmId, setCreatedFarmId] = useState<number | null>(null);
-  const hasAtLeastOneFarm = farms.length > 0;
+  const [createdFarmId, setCreatedFarmId] = useState<number | null>(
+    onboardingActivation.farmId ?? null,
+  );
+  const hasAtLeastOneFarm = farms.length > 0 || onboardingActivation.farmCreated;
+  const hasCompletedFirstAction = onboardingActivation.firstActionCompletedAt !== null;
 
   const currentPage = useDerivedValue(() => scrollX.value / width);
 
@@ -56,6 +76,11 @@ export function OnboardingScreen() {
       if (index === FIRST_FARM_PAGE_INDEX) {
         telemetry.capture('onboarding_first_farm_started');
       }
+    }
+
+    const stepForIndex = PAGE_STEPS[index];
+    if (stepForIndex) {
+      useOnboardingStore.getState().setCurrentStep(stepForIndex);
     }
     setActivatedSlides((prev) => {
       if (prev.has(index)) return prev;
@@ -74,10 +99,16 @@ export function OnboardingScreen() {
         handleSlideChange(FIRST_FARM_PAGE_INDEX);
         return;
       }
+      if (page > FIRST_ACTION_PAGE_INDEX && !hasCompletedFirstAction) {
+        scrollRef.current?.scrollTo({ x: FIRST_ACTION_PAGE_INDEX * width, animated: true });
+        setCurrentPageIndex(FIRST_ACTION_PAGE_INDEX);
+        handleSlideChange(FIRST_ACTION_PAGE_INDEX);
+        return;
+      }
       setCurrentPageIndex(page);
       handleSlideChange(page);
     },
-    [handleSlideChange, hasAtLeastOneFarm, width],
+    [handleSlideChange, hasAtLeastOneFarm, hasCompletedFirstAction, width],
   );
 
   const handleNext = useCallback(() => {
@@ -90,6 +121,13 @@ export function OnboardingScreen() {
 
   const finishOnboarding = useCallback(
     async (notificationsEnabled: boolean) => {
+      const latestActivation = useOnboardingStore.getState().activation;
+      if (!latestActivation.firstActionCompletedAt) {
+        scrollRef.current?.scrollTo({ x: FIRST_ACTION_PAGE_INDEX * width, animated: true });
+        setCurrentPageIndex(FIRST_ACTION_PAGE_INDEX);
+        handleSlideChange(FIRST_ACTION_PAGE_INDEX);
+        return;
+      }
       useOnboardingStore.getState().setPreferences({ notificationsEnabled });
 
       if (notificationsEnabled && (language === 'en' || language === 'hi' || language === 'mr')) {
@@ -102,16 +140,21 @@ export function OnboardingScreen() {
       useNotificationStore.getState().setNotificationPermissionPrompted(true);
       useAuthStore.getState().setHasSeenOnboarding(true);
       useOnboardingStore.getState().completeOnboarding();
-      telemetry.capture('onboarding_completed', { notifications_enabled: notificationsEnabled });
-      if (typeof createdFarmId === 'number') {
-        useGuidedTourStore.getState().startTourAtStep('add_log', { farmId: createdFarmId });
+      telemetry.capture('onboarding_completed', {
+        notifications_enabled: notificationsEnabled,
+        first_action_type: latestActivation.firstActionType,
+        farm_id: latestActivation.farmId,
+      });
+      const resolvedFarmId = createdFarmId ?? latestActivation.farmId;
+      if (typeof resolvedFarmId === 'number') {
+        useGuidedTourStore.getState().startTourAtStep('add_log', { farmId: resolvedFarmId });
         router.replace('/(tabs)');
-        router.push(`/farm/${createdFarmId}`);
+        router.push(`/farm/${resolvedFarmId}`);
         return;
       }
       router.replace('/(tabs)');
     },
-    [createdFarmId, language],
+    [createdFarmId, handleSlideChange, language, width],
   );
 
   const jumpToPage = useCallback(
@@ -135,11 +178,91 @@ export function OnboardingScreen() {
       if (farmId !== null) {
         farmCreatedRef.current = true;
       }
+      useOnboardingStore.getState().markFarmCreated(farmId);
+      telemetry.capture('onboarding_farm_created', { farm_id: farmId });
       setCreatedFarmId(farmId);
-      jumpToPage(NOTIFICATIONS_PAGE_INDEX);
+      jumpToPage(FIRST_ACTION_PAGE_INDEX);
     },
     [jumpToPage],
   );
+
+  const handleStartFirstAction = useCallback(
+    (actionType: OnboardingActionType) => {
+      const fallbackFarmId = farms.find((farm) => typeof farm.id === 'number')?.id ?? null;
+      const resolvedFarmId = createdFarmId ?? onboardingActivation.farmId ?? fallbackFarmId ?? null;
+
+      useOnboardingStore.getState().markFirstActionStarted(actionType);
+      telemetry.capture('onboarding_first_action_started', {
+        action_type: actionType,
+        farm_id: resolvedFarmId,
+      });
+
+      if (actionType === 'log') {
+        router.push({
+          pathname: '/add-entry',
+          params: {
+            tabs: 'log',
+            initialTab: 'log',
+            ...(resolvedFarmId ? { farmId: String(resolvedFarmId) } : {}),
+            onboarding: 'true',
+            onboardingActionType: actionType,
+          },
+        });
+        return;
+      }
+
+      if (actionType === 'note') {
+        router.push({
+          pathname: '/add-note',
+          params: {
+            ...(resolvedFarmId ? { farmId: String(resolvedFarmId) } : {}),
+            onboarding: 'true',
+            onboardingActionType: actionType,
+          },
+        });
+        return;
+      }
+
+      router.push({
+        pathname: '/add-task',
+        params: {
+          ...(resolvedFarmId ? { farmId: String(resolvedFarmId) } : {}),
+          onboarding: 'true',
+          onboardingActionType: actionType,
+        },
+      });
+    },
+    [createdFarmId, farms, onboardingActivation.farmId],
+  );
+
+  const handleContinueFromFirstAction = useCallback(() => {
+    if (!hasCompletedFirstAction) return;
+    jumpToPage(NOTIFICATIONS_PAGE_INDEX);
+  }, [hasCompletedFirstAction, jumpToPage]);
+
+  React.useEffect(() => {
+    if (createdFarmId === null && onboardingActivation.farmId !== null) {
+      setCreatedFarmId(onboardingActivation.farmId);
+    }
+  }, [createdFarmId, onboardingActivation.farmId]);
+
+  React.useEffect(() => {
+    if (hasAppliedResumeStepRef.current || width <= 0) return;
+    const resumePage = pageIndexForStep(onboardingCurrentStep);
+    hasAppliedResumeStepRef.current = true;
+    if (resumePage <= 0) return;
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ x: resumePage * width, animated: false });
+      setCurrentPageIndex(resumePage);
+      handleSlideChange(resumePage);
+    });
+  }, [handleSlideChange, onboardingCurrentStep, width]);
+
+  React.useEffect(() => {
+    if (!hasCompletedFirstAction) return;
+    if (currentPageIndex >= NOTIFICATIONS_PAGE_INDEX) return;
+    jumpToPage(NOTIFICATIONS_PAGE_INDEX);
+  }, [currentPageIndex, hasCompletedFirstAction, jumpToPage]);
 
   React.useEffect(() => {
     if (viewedSlides.current.has(0)) return;
@@ -199,7 +322,16 @@ export function OnboardingScreen() {
           <FirstFarmSlide isActive={activatedSlides.has(2)} onResolved={handleFarmResolved} />
         </View>
         <View style={[styles.slide, { width }]}>
-          <NotificationsSlide isActive={activatedSlides.has(3)} onFinish={finishOnboarding} />
+          <FirstActionSlide
+            isActive={activatedSlides.has(3)}
+            isCompleted={hasCompletedFirstAction}
+            onContinue={handleContinueFromFirstAction}
+            onSelectAction={handleStartFirstAction}
+            selectedActionType={onboardingActivation.firstActionType}
+          />
+        </View>
+        <View style={[styles.slide, { width }]}>
+          <NotificationsSlide isActive={activatedSlides.has(4)} onFinish={finishOnboarding} />
         </View>
       </Animated.ScrollView>
 

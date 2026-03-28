@@ -1308,11 +1308,52 @@ export const en = {
         retryButton: 'Retry last request',
         dismissButton: 'Dismiss error',
       },
+      guidance: {
+        addFarm: 'Add a farm first, then ask your question again.',
+        selectFarm: 'Select a farm context so I can give farm-specific steps.',
+        provideContext: 'Try adding the farm name, date, and the operation you want help with.',
+        retryWithDetails: 'Retry with a short operational request like “what should I do today?”',
+      },
     },
     noFarm: {
       banner: 'No farms added. Add a farm for personalized advice.',
       noFarmSelected: 'No farm selected. Select a farm for personalized advice.',
       addFarmButton: 'Add Farm',
+      selectFarmButton: 'Select farm',
+    },
+    context: {
+      activeFarmLabel: 'Active farm',
+      openFarm: 'Open farm',
+      fallbackMeta: 'Farm context ready',
+    },
+    jobs: {
+      title: 'Top jobs',
+      subtitle: 'Start with one operational task.',
+      subtitleWithFarm: 'Start with one operational task for {{name}}.',
+      prompts: {
+        logActivity: 'Help me log a farm activity.',
+        todayPlan: 'What should I do today on this farm?',
+        spraySafety: 'Check spray safety against recent farm history.',
+        recentSummary: 'Summarize this farm for the last 7 days.',
+      },
+      cards: {
+        logActivity: {
+          title: 'Log an activity',
+          description: 'Capture irrigation, spray, harvest, or expense quickly.',
+        },
+        todayPlan: {
+          title: 'Plan today’s work',
+          description: 'Get a short task list based on current farm context.',
+        },
+        spraySafety: {
+          title: 'Check spray safety',
+          description: 'Validate risk before applying a spray.',
+        },
+        recentSummary: {
+          title: 'Summarize last week',
+          description: 'Review what happened and what to do next.',
+        },
+      },
     },
     safety: {
       blockedLabel: 'Safety Notice',
@@ -1427,6 +1468,28 @@ export const en = {
       existingFarmFallback: 'Farm',
       existingRegionFallback: 'Region',
       existingCropFallback: 'Crop',
+    },
+    firstAction: {
+      badge: 'Activation step',
+      title: 'Do one real farm action.',
+      subtitle: 'This makes your dashboard and assistant useful from day one.',
+      actions: {
+        log: {
+          title: 'Log an activity',
+          description: 'Record irrigation, spray, fertigation, harvest, or expense.',
+        },
+        note: {
+          title: 'Write a note',
+          description: 'Capture today’s field observations for this farm.',
+        },
+        task: {
+          title: 'Add a task',
+          description: 'Create your next operational task and due date.',
+        },
+      },
+      pendingHint: 'Complete one action to continue.',
+      completedHint: 'Great — activation is complete.',
+      continue: 'Continue',
     },
     complete: {
       title: "You're all set!",
@@ -1876,6 +1939,7 @@ export const en = {
       night: 'Good night, {{name}}',
     },
     stats: {
+      title: 'Overview',
       farms: 'Farms',
       activeWorkers: 'Active workers',
       activities: 'Activities',
@@ -1883,8 +1947,27 @@ export const en = {
     },
     needsAttention: {
       title: 'Needs attention',
+      taskFallback: 'Overdue task',
       reasons: {
+        overdueTask: 'Task overdue',
+        noRecentLogs: 'No recent logs',
         lowWaterLevel: 'Low water level',
+        phiDeadline: 'PHI deadline approaching',
+      },
+      actions: {
+        reviewTasks: 'Review task',
+        logNow: 'Log now',
+        reviewSpraySafety: 'Review spray safety',
+        openFarm: 'Open farm',
+      },
+      meta: {
+        taskDue: 'Due {{date}}',
+        phiDue: 'Safe harvest from {{date}}',
+      },
+      empty: {
+        title: 'No urgent issues right now.',
+        subtitle: 'Keep logging daily work so alerts stay useful.',
+        ctaWithFarms: 'Log today’s work',
       },
     },
     quickActions: {

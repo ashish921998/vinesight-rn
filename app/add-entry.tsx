@@ -1,10 +1,15 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { EntryForm } from '@/components/screens/entry-form';
 import { useModalStore } from '@/stores';
 import type { LogTypeId } from '@/constants/calculator-models';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
+import {
+  markOnboardingFirstActionCompleted,
+  parseOnboardingActionType,
+  parseOnboardingFlag,
+} from '@/features/onboarding/activation';
 
 const parseTabs = (value?: string | string[]) => {
   if (!value) return undefined;
@@ -52,6 +57,8 @@ export default function AddEntryRoute() {
     irrigationDurationHours?: string;
     initialLogDate?: string;
     entrySource?: string;
+    onboarding?: string;
+    onboardingActionType?: string;
   }>();
   const { addEntry, setAddEntry } = useModalStore();
 
@@ -94,9 +101,32 @@ export default function AddEntryRoute() {
     () => parseEntrySource(params.entrySource) ?? addEntry?.entrySource ?? null,
     [params.entrySource, addEntry?.entrySource],
   );
+  const isOnboardingActionFlow = useMemo(
+    () => parseOnboardingFlag(params.onboarding),
+    [params.onboarding],
+  );
+  const onboardingActionType = useMemo(
+    () => parseOnboardingActionType(params.onboardingActionType) ?? 'log',
+    [params.onboardingActionType],
+  );
   const voiceLogPrefill = useMemo<VoiceLogFormPrefill | null>(
     () => addEntry?.voiceLogPrefill ?? null,
     [addEntry?.voiceLogPrefill],
+  );
+  const resolvedFarmIdForOnboarding = useMemo(
+    () => initialFarmId ?? addEntry?.initialFarmId ?? null,
+    [addEntry?.initialFarmId, initialFarmId],
+  );
+
+  const handleOnboardingActionCompleted = useCallback(
+    (actionType: 'log' | 'task') => {
+      if (!isOnboardingActionFlow) return;
+      markOnboardingFirstActionCompleted({
+        actionType: actionType === 'task' ? 'task' : onboardingActionType,
+        farmId: resolvedFarmIdForOnboarding,
+      });
+    },
+    [isOnboardingActionFlow, onboardingActionType, resolvedFarmIdForOnboarding],
   );
 
   useEffect(() => {
@@ -120,6 +150,8 @@ export default function AddEntryRoute() {
         editingTask={addEntry?.editingTask ?? null}
         sourceTaskId={addEntry?.sourceTaskId ?? null}
         initialLogPrefill={addEntry?.logPrefill ?? null}
+        onLogSaveSuccess={() => handleOnboardingActionCompleted('log')}
+        onTaskSaveSuccess={() => handleOnboardingActionCompleted('task')}
       />
     </>
   );

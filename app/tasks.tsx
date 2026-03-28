@@ -57,7 +57,10 @@ export default function TasksScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
-  const { farmId } = useLocalSearchParams<{ farmId?: string }>();
+  const { farmId, filter: routeFilter } = useLocalSearchParams<{
+    farmId?: string;
+    filter?: FilterType;
+  }>();
   const { setAddEntry } = useModalStore();
   const { data: farms } = useFarms();
   const { data: tasks, isLoading, refetch, isRefetching } = useAllTasks();
@@ -66,7 +69,14 @@ export default function TasksScreen() {
   const taskSchedules = useNotificationStore((s) => s.taskSchedules);
   const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
 
-  const [filter, setFilter] = useState<FilterType>('all');
+  const initialFilter: FilterType =
+    routeFilter === 'pending' ||
+    routeFilter === 'overdue' ||
+    routeFilter === 'completed' ||
+    routeFilter === 'all'
+      ? routeFilter
+      : 'all';
+  const [filter, setFilter] = useState<FilterType>(initialFilter);
   const farmIdValue = farmId ? parseInt(farmId, 10) : undefined;
 
   // Get farm name by ID

@@ -1306,11 +1306,52 @@ export const hi = {
         retryButton: 'अंतिम अनुरोध फिर से भेजें',
         dismissButton: 'त्रुटि खारिज करें',
       },
+      guidance: {
+        addFarm: 'पहले एक खेत जोड़ें, फिर अपना सवाल दोबारा पूछें।',
+        selectFarm: 'खेत संदर्भ चुनें ताकि मैं खेत-विशिष्ट सुझाव दे सकूं।',
+        provideContext: 'खेत का नाम, तारीख और ऑपरेशन जोड़कर फिर प्रयास करें।',
+        retryWithDetails: 'छोटे ऑपरेशनल प्रश्न के साथ फिर प्रयास करें, जैसे “आज क्या करना चाहिए?”',
+      },
     },
     noFarm: {
       banner: 'कोई खेत नहीं जोड़ा गया। व्यक्तिगत सलाह के लिए खेत जोड़ें।',
       noFarmSelected: 'कोई खेत नहीं चुना गया। व्यक्तिगत सलाह के लिए कोई खेत चुनें।',
       addFarmButton: 'खेत जोड़ें',
+      selectFarmButton: 'खेत चुनें',
+    },
+    context: {
+      activeFarmLabel: 'सक्रिय खेत',
+      openFarm: 'खेत खोलें',
+      fallbackMeta: 'खेत संदर्भ तैयार है',
+    },
+    jobs: {
+      title: 'मुख्य कार्य',
+      subtitle: 'एक ऑपरेशनल काम से शुरुआत करें।',
+      subtitleWithFarm: '{{name}} के लिए एक ऑपरेशनल काम से शुरुआत करें।',
+      prompts: {
+        logActivity: 'मुझे खेत की एक गतिविधि लॉग करने में मदद करें।',
+        todayPlan: 'इस खेत पर आज मुझे क्या करना चाहिए?',
+        spraySafety: 'हाल की फार्म हिस्ट्री के आधार पर स्प्रे सुरक्षा जांचें।',
+        recentSummary: 'पिछले 7 दिनों का इस खेत का सारांश दें।',
+      },
+      cards: {
+        logActivity: {
+          title: 'गतिविधि लॉग करें',
+          description: 'सिंचाई, छिड़काव, कटाई या खर्च जल्दी दर्ज करें।',
+        },
+        todayPlan: {
+          title: 'आज का काम तय करें',
+          description: 'वर्तमान खेत संदर्भ के आधार पर छोटा कार्य-योजना पाएं।',
+        },
+        spraySafety: {
+          title: 'स्प्रे सुरक्षा जांचें',
+          description: 'स्प्रे लगाने से पहले जोखिम की पुष्टि करें।',
+        },
+        recentSummary: {
+          title: 'पिछला सप्ताह सारांश',
+          description: 'क्या हुआ और आगे क्या करना है, यह तुरंत देखें।',
+        },
+      },
     },
     safety: {
       blockedLabel: 'सुरक्षा सूचना',
@@ -1433,6 +1474,28 @@ export const hi = {
       existingFarmFallback: 'खेत',
       existingRegionFallback: 'क्षेत्र',
       existingCropFallback: 'फसल',
+    },
+    firstAction: {
+      badge: 'सक्रियण चरण',
+      title: 'एक वास्तविक खेत कार्य करें।',
+      subtitle: 'इससे आपका डैशबोर्ड और सहायक पहले दिन से उपयोगी बनता है।',
+      actions: {
+        log: {
+          title: 'गतिविधि लॉग करें',
+          description: 'सिंचाई, छिड़काव, फर्टिगेशन, कटाई या खर्च रिकॉर्ड करें।',
+        },
+        note: {
+          title: 'नोट लिखें',
+          description: 'आज के खेत अवलोकन को जल्दी सहेजें।',
+        },
+        task: {
+          title: 'कार्य जोड़ें',
+          description: 'अगला ऑपरेशनल कार्य और उसकी नियत तिथि बनाएं।',
+        },
+      },
+      pendingHint: 'आगे बढ़ने के लिए एक कार्य पूरा करें।',
+      completedHint: 'बहुत बढ़िया — सक्रियण पूरा हुआ।',
+      continue: 'जारी रखें',
     },
     complete: {
       title: 'आप सभी सेट हैं!',
@@ -1883,6 +1946,7 @@ export const hi = {
       night: 'शुभ रात्रि, {{name}}',
     },
     stats: {
+      title: 'ओवरव्यू',
       farms: 'खेत',
       activeWorkers: 'सक्रिय श्रमिक',
       activities: 'गतिविधियां',
@@ -1890,8 +1954,27 @@ export const hi = {
     },
     needsAttention: {
       title: 'ध्यान देने की आवश्यकता है',
+      taskFallback: 'अतिदेय कार्य',
       reasons: {
+        overdueTask: 'कार्य अतिदेय',
+        noRecentLogs: 'हाल में कोई लॉग नहीं',
         lowWaterLevel: 'पानी का स्तर कम',
+        phiDeadline: 'PHI अंतिम समय निकट है',
+      },
+      actions: {
+        reviewTasks: 'कार्य देखें',
+        logNow: 'अभी लॉग करें',
+        reviewSpraySafety: 'स्प्रे सुरक्षा देखें',
+        openFarm: 'खेत खोलें',
+      },
+      meta: {
+        taskDue: 'नियत: {{date}}',
+        phiDue: 'सुरक्षित कटाई: {{date}} से',
+      },
+      empty: {
+        title: 'अभी कोई तात्कालिक समस्या नहीं है।',
+        subtitle: 'रोज़ाना काम लॉग करते रहें ताकि अलर्ट उपयोगी रहें।',
+        ctaWithFarms: 'आज का काम लॉग करें',
       },
     },
     quickActions: {

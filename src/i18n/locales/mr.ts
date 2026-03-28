@@ -1311,6 +1311,13 @@ export const mr = {
         retryButton: 'शेवटची विनंती पुन्हा पाठवा',
         dismissButton: 'त्रुटी बंद करा',
       },
+      guidance: {
+        addFarm: 'आधी एक $t(glossary.farm) जोडा, मग प्रश्न पुन्हा विचारा.',
+        selectFarm:
+          '$t(glossary.farm) संदर्भ निवडा म्हणजे मी त्या शेतासाठी योग्य मार्गदर्शन देऊ शकेन.',
+        provideContext: '$t(glossary.farm) नाव, तारीख आणि कामाचा प्रकार देऊन पुन्हा प्रयत्न करा.',
+        retryWithDetails: '“आज काय करावे?” सारख्या छोट्या ऑपरेशनल प्रश्नाने पुन्हा विचारा.',
+      },
     },
     noFarm: {
       banner:
@@ -1318,6 +1325,42 @@ export const mr = {
       noFarmSelected:
         'कोणताही $t(glossary.farm) निवडलेला नाही. वैयक्तिक सल्ल्यासाठी $t(glossary.farm) निवडा.',
       addFarmButton: '$t(glossary.farm) जोडा',
+      selectFarmButton: '$t(glossary.farm) निवडा',
+    },
+    context: {
+      activeFarmLabel: 'सक्रिय $t(glossary.farm)',
+      openFarm: '$t(glossary.farm) उघडा',
+      fallbackMeta: '$t(glossary.farm) संदर्भ तयार आहे',
+    },
+    jobs: {
+      title: 'मुख्य कामे',
+      subtitle: 'एक ऑपरेशनल काम निवडून सुरू करा.',
+      subtitleWithFarm: '{{name}} साठी एक ऑपरेशनल काम निवडून सुरू करा.',
+      prompts: {
+        logActivity: 'मला $t(glossary.farm) कृती नोंदवायला मदत करा.',
+        todayPlan: 'या $t(glossary.farm) साठी आज काय करावे?',
+        spraySafety: 'अलीकडील इतिहासावरून स्प्रे सुरक्षितता तपासा.',
+        recentSummary: 'या $t(glossary.farm) चा मागील 7 दिवसांचा सारांश द्या.',
+      },
+      cards: {
+        logActivity: {
+          title: 'कृती नोंदवा',
+          description:
+            '$t(glossary.irrigation), $t(glossary.spray), $t(glossary.harvest) किंवा $t(glossary.expense) पटकन नोंदवा.',
+        },
+        todayPlan: {
+          title: 'आजचा प्लॅन',
+          description: 'सध्याच्या संदर्भावर आधारित छोटा कामांचा प्लॅन घ्या.',
+        },
+        spraySafety: {
+          title: 'स्प्रे सुरक्षितता तपासा',
+          description: 'स्प्रे करण्यापूर्वी धोका तपासा.',
+        },
+        recentSummary: {
+          title: 'मागील आठवड्याचा सारांश',
+          description: 'काय झाले आणि पुढे काय करायचे ते लगेच पाहा.',
+        },
+      },
     },
     safety: {
       blockedLabel: 'सुरक्षा सूचना',
@@ -1436,6 +1479,29 @@ export const mr = {
       existingFarmFallback: '$t(glossary.farm)',
       existingRegionFallback: 'प्रदेश',
       existingCropFallback: '$t(glossary.crop)',
+    },
+    firstAction: {
+      badge: 'सक्रियण पायरी',
+      title: 'एक खरी $t(glossary.farm) कृती पूर्ण करा.',
+      subtitle: 'यामुळे तुमचा डॅशबोर्ड आणि सहाय्यक पहिल्याच दिवसापासून उपयोगी होतो.',
+      actions: {
+        log: {
+          title: 'कृती नोंदवा',
+          description:
+            '$t(glossary.irrigation), $t(glossary.spray), $t(glossary.fertigation), $t(glossary.harvest) किंवा $t(glossary.expense) नोंदवा.',
+        },
+        note: {
+          title: 'नोंद लिहा',
+          description: 'आजच्या शेतातील निरीक्षणांची नोंद करा.',
+        },
+        task: {
+          title: '$t(glossary.task) जोडा',
+          description: 'पुढचे ऑपरेशनल काम आणि देय तारीख तयार करा.',
+        },
+      },
+      pendingHint: 'पुढे जाण्यासाठी एक कृती पूर्ण करा.',
+      completedHint: 'छान — सक्रियण पूर्ण झाले.',
+      continue: 'पुढे चला',
     },
     complete: {
       title: 'सर्व तयार!',
@@ -1890,6 +1956,7 @@ export const mr = {
       night: 'शुभ रात्री, {{name}}',
     },
     stats: {
+      title: 'ओव्हरव्ह्यू',
       farms: '$t(glossary.farm)',
       activeWorkers: 'सक्रिय $t(glossary.worker)',
       activities: 'क्रियाकलाप',
@@ -1897,8 +1964,27 @@ export const mr = {
     },
     needsAttention: {
       title: 'लक्ष आवश्यक',
+      taskFallback: 'मुदत संपलेले काम',
       reasons: {
+        overdueTask: 'कामाची मुदत संपली',
+        noRecentLogs: 'अलीकडील नोंदी नाहीत',
         lowWaterLevel: 'पाणी स्तर कमी',
+        phiDeadline: 'PHI अंतिम वेळ जवळ आहे',
+      },
+      actions: {
+        reviewTasks: 'काम पहा',
+        logNow: 'आत्ताच नोंदवा',
+        reviewSpraySafety: 'स्प्रे सुरक्षितता तपासा',
+        openFarm: '$t(glossary.farm) उघडा',
+      },
+      meta: {
+        taskDue: 'देय: {{date}}',
+        phiDue: 'सुरक्षित कापणी: {{date}} पासून',
+      },
+      empty: {
+        title: 'सध्या तातडीची समस्या नाही.',
+        subtitle: 'दररोजचे काम नोंदवत राहा म्हणजे इशारे उपयोगी राहतील.',
+        ctaWithFarms: 'आजचे काम नोंदवा',
       },
     },
     quickActions: {
