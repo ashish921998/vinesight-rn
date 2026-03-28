@@ -126,7 +126,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
           activation: {
             ...state.activation,
             farmCreated: true,
-            farmId,
+            farmId: farmId ?? state.activation.farmId,
           },
         })),
 

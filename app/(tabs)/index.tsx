@@ -33,6 +33,7 @@ import { useThemeTokens } from '@/styles/use-theme';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
 import { guidedTourEmit } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { parseDbDateToLocalDate } from '@/utils/date';
 
 // ============================================================
 // MARK: - Greeting Helper
@@ -136,8 +137,8 @@ export default function DashboardScreen() {
 
   const formatAttentionDate = (value?: string | null): string | null => {
     if (!value) return null;
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return null;
+    const parsed = parseDbDateToLocalDate(value);
+    if (!parsed) return null;
     return formatDate(parsed, { month: 'short', day: 'numeric' });
   };
 

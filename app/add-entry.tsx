@@ -114,11 +114,11 @@ export default function AddEntryRoute() {
   );
 
   const handleOnboardingActionCompleted = useCallback(
-    (actionType: 'log' | 'task') => {
+    (actionType: 'log' | 'task', farmIdOverride?: number | null) => {
       if (!isOnboardingActionFlow) return;
       markOnboardingFirstActionCompleted({
         actionType,
-        farmId: resolvedFarmIdForOnboarding,
+        farmId: farmIdOverride ?? resolvedFarmIdForOnboarding,
       });
     },
     [isOnboardingActionFlow, resolvedFarmIdForOnboarding],
@@ -146,7 +146,7 @@ export default function AddEntryRoute() {
         sourceTaskId={addEntry?.sourceTaskId ?? null}
         initialLogPrefill={addEntry?.logPrefill ?? null}
         onLogSaveSuccess={() => handleOnboardingActionCompleted('log')}
-        onTaskSaveSuccess={() => handleOnboardingActionCompleted('task')}
+        onTaskSaveSuccess={(savedFarmId) => handleOnboardingActionCompleted('task', savedFarmId)}
       />
     </>
   );

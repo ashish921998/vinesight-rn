@@ -12,6 +12,7 @@ import { TABLES, isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
 import { formatCurrency } from '@/i18n/format';
 import { useCurrency } from './use-currency';
+import { formatLocalDate } from '@/utils/date';
 
 // ============================================================
 // MARK: - Types
@@ -45,6 +46,10 @@ export interface TodayNeedAttentionItem {
   chemical?: string | null;
 }
 
+interface RecentLogFarmIdRow {
+  farm_id: number;
+}
+
 const RECENT_LOG_WINDOW_DAYS = 7;
 const PHI_DEADLINE_WINDOW_DAYS = 3;
 const severityRank: Record<TodayNeedAttentionSeverity, number> = {
@@ -53,7 +58,7 @@ const severityRank: Record<TodayNeedAttentionSeverity, number> = {
   low: 2,
 };
 
-const toDateString = (value: Date): string => value.toISOString().split('T')[0];
+const toDateString = (value: Date): string => formatLocalDate(value);
 
 export function useTodayNeedsAttention(limit: number = 10) {
   return useQuery({
@@ -90,16 +95,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
       phiDeadlineThreshold.setDate(phiDeadlineThreshold.getDate() + PHI_DEADLINE_WINDOW_DAYS);
       const phiDeadlineThresholdStr = toDateString(phiDeadlineThreshold);
 
-      const [
-        overdueTasksResult,
-        irrigationRecentResult,
-        sprayRecentResult,
-        fertigationRecentResult,
-        harvestRecentResult,
-        expenseRecentResult,
-        noteRecentResult,
-        phiDeadlinesResult,
-      ] = await Promise.all([
+      const [overdueTasksResult, recentLogFarmsResult, phiDeadlinesResult] = await Promise.all([
         supabase
           .from('task_reminders')
           .select('id, farm_id, title, due_date')
@@ -109,35 +105,11 @@ export function useTodayNeedsAttention(limit: number = 10) {
           .lt('due_date', todayStr)
           .order('due_date', { ascending: true }),
         supabase
-          .from(TABLES.IRRIGATION_RECORDS)
-          .select('farm_id')
-          .in('farm_id', farmIds)
-          .gte('date', recentLogThresholdStr),
-        supabase
-          .from(TABLES.SPRAY_RECORDS)
-          .select('farm_id')
-          .in('farm_id', farmIds)
-          .gte('date', recentLogThresholdStr),
-        supabase
-          .from(TABLES.FERTIGATION_RECORDS)
-          .select('farm_id')
-          .in('farm_id', farmIds)
-          .gte('date', recentLogThresholdStr),
-        supabase
-          .from(TABLES.HARVEST_RECORDS)
-          .select('farm_id')
-          .in('farm_id', farmIds)
-          .gte('date', recentLogThresholdStr),
-        supabase
-          .from(TABLES.EXPENSE_RECORDS)
-          .select('farm_id')
-          .in('farm_id', farmIds)
-          .gte('date', recentLogThresholdStr),
-        supabase
-          .from(TABLES.DAILY_NOTES)
-          .select('farm_id')
-          .in('farm_id', farmIds)
-          .gte('date', recentLogThresholdStr),
+          .rpc('get_recent_log_farm_ids', {
+            p_farm_ids: farmIds,
+            p_since: recentLogThresholdStr,
+          })
+          .returns<RecentLogFarmIdRow[]>(),
         supabase
           .from(TABLES.SPRAY_RECORDS)
           .select('id, farm_id, safe_harvest_date, chemical')
@@ -150,12 +122,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
 
       const queryErrors = [
         overdueTasksResult.error,
-        irrigationRecentResult.error,
-        sprayRecentResult.error,
-        fertigationRecentResult.error,
-        harvestRecentResult.error,
-        expenseRecentResult.error,
-        noteRecentResult.error,
+        recentLogFarmsResult.error,
         phiDeadlinesResult.error,
       ];
       const firstQueryError = queryErrors.find((error) => Boolean(error));
@@ -192,19 +159,13 @@ export function useTodayNeedsAttention(limit: number = 10) {
       });
 
       const farmsWithRecentLogs = new Set<number>();
-      [
-        irrigationRecentResult.data,
-        sprayRecentResult.data,
-        fertigationRecentResult.data,
-        harvestRecentResult.data,
-        expenseRecentResult.data,
-        noteRecentResult.data,
-      ].forEach((records) => {
-        records?.forEach((record) => {
-          if (typeof record.farm_id === 'number') {
-            farmsWithRecentLogs.add(record.farm_id);
-          }
-        });
+      const recentLogFarmRows = Array.isArray(recentLogFarmsResult.data)
+        ? recentLogFarmsResult.data
+        : [];
+      recentLogFarmRows.forEach((record: RecentLogFarmIdRow) => {
+        if (typeof record.farm_id === 'number') {
+          farmsWithRecentLogs.add(record.farm_id);
+        }
       });
 
       farms.forEach((farm) => {

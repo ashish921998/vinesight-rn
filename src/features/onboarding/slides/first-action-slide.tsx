@@ -12,6 +12,7 @@ import { OnboardingButton } from '../components/onboarding-button';
 interface FirstActionSlideProps {
   isActive: boolean;
   isCompleted: boolean;
+  canStartAction: boolean;
   selectedActionType: OnboardingActionType | null;
   onSelectAction: (actionType: OnboardingActionType) => void;
   onContinue: () => void;
@@ -46,6 +47,7 @@ const ACTIONS: Array<{
 export function FirstActionSlide({
   isActive,
   isCompleted,
+  canStartAction,
   selectedActionType,
   onSelectAction,
   onContinue,
@@ -95,7 +97,12 @@ export function FirstActionSlide({
                 entering={isActive ? FadeInDown.delay(90 + index * 80).duration(420) : undefined}
               >
                 <Pressable
-                  onPress={() => onSelectAction(action.type)}
+                  onPress={() => {
+                    if (canStartAction) {
+                      onSelectAction(action.type);
+                    }
+                  }}
+                  disabled={!canStartAction}
                   style={({ pressed }) => [
                     styles.actionCard,
                     {
@@ -105,7 +112,7 @@ export function FirstActionSlide({
                       borderColor: isSelected
                         ? colorWithOpacity(m3.colorScheme.primary, 0.3)
                         : colorWithOpacity(m3.colorScheme.outline, 0.1),
-                      opacity: pressed ? 0.88 : 1,
+                      opacity: !canStartAction ? 0.55 : pressed ? 0.88 : 1,
                     },
                   ]}
                 >

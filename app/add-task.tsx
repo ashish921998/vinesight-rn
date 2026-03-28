@@ -31,20 +31,23 @@ export default function AddTaskRoute() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleTaskSaveSuccess = useCallback(() => {
-    if (!isOnboardingActionFlow) return;
-    markOnboardingFirstActionCompleted({
-      actionType: 'task',
-      farmId: onboardingFarmId,
-    });
-  }, [isOnboardingActionFlow, onboardingFarmId]);
+  const handleTaskSaveSuccess = useCallback(
+    (savedFarmId?: number | null) => {
+      if (!isOnboardingActionFlow) return;
+      markOnboardingFirstActionCompleted({
+        actionType: 'task',
+        farmId: savedFarmId ?? onboardingFarmId,
+      });
+    },
+    [isOnboardingActionFlow, onboardingFarmId],
+  );
 
   return (
     <EntryForm
       onClose={() => router.back()}
       presentation="screen"
       editingTask={addEntry?.editingTask ?? null}
-      initialFarmId={initialFarmId ?? null}
+      initialFarmId={onboardingFarmId}
       tabs={['log', 'task']}
       initialTab="task"
       onTaskSaveSuccess={handleTaskSaveSuccess}

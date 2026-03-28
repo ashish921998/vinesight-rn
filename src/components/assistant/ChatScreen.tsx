@@ -45,6 +45,7 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useAssistant } from '@/hooks/use-assistant';
 import type { AssistantFarmContext } from '@/hooks/use-assistant';
 import type { AIMessageAttachmentInput } from '@/types/ai';
+import { AssistantGatewayError, AssistantGatewayErrorCode } from '@/services/assistant-gateway';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
 import { SuggestionChips } from './SuggestionChips';
@@ -474,6 +475,24 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     if (error == null) return null;
     if (hasNoFarms) return t('assistant.error.guidance.addFarm');
     if (hasNoFarmSelected) return t('assistant.error.guidance.selectFarm');
+
+    if (error instanceof AssistantGatewayError) {
+      if (
+        error.code === AssistantGatewayErrorCode.INVALID_RESPONSE ||
+        error.code === AssistantGatewayErrorCode.SERVER_ERROR ||
+        error.code === AssistantGatewayErrorCode.TIMEOUT ||
+        error.code === AssistantGatewayErrorCode.NETWORK_ERROR
+      ) {
+        return t('assistant.error.guidance.retryWithDetails');
+      }
+      if (
+        error.code === AssistantGatewayErrorCode.INVALID_REQUEST ||
+        error.code === AssistantGatewayErrorCode.AUDIO_VALIDATION_FAILED ||
+        error.code === AssistantGatewayErrorCode.EMPTY_TRANSCRIPT
+      ) {
+        return t('assistant.error.guidance.provideContext');
+      }
+    }
 
     const normalizedErrorMessage = getSafeErrorMessage(error).toLowerCase();
     if (

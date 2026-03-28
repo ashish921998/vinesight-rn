@@ -60,6 +60,9 @@ export function OnboardingScreen() {
   );
   const hasAtLeastOneFarm = farms.length > 0 || onboardingActivation.farmCreated;
   const hasCompletedFirstAction = onboardingActivation.firstActionCompletedAt !== null;
+  const firstAvailableFarmId = farms.find((farm) => typeof farm.id === 'number')?.id ?? null;
+  const resolvedFirstActionFarmId =
+    createdFarmId ?? onboardingActivation.farmId ?? firstAvailableFarmId;
 
   const currentPage = useDerivedValue(() => scrollX.value / width);
 
@@ -188,8 +191,10 @@ export function OnboardingScreen() {
 
   const handleStartFirstAction = useCallback(
     (actionType: OnboardingActionType) => {
-      const fallbackFarmId = farms.find((farm) => typeof farm.id === 'number')?.id ?? null;
-      const resolvedFarmId = createdFarmId ?? onboardingActivation.farmId ?? fallbackFarmId ?? null;
+      const resolvedFarmId = resolvedFirstActionFarmId;
+      if (resolvedFarmId === null) {
+        return;
+      }
 
       useOnboardingStore.getState().markFirstActionStarted(actionType);
       telemetry.capture('onboarding_first_action_started', {
@@ -203,7 +208,7 @@ export function OnboardingScreen() {
           params: {
             tabs: 'log',
             initialTab: 'log',
-            ...(resolvedFarmId ? { farmId: String(resolvedFarmId) } : {}),
+            farmId: String(resolvedFarmId),
             onboarding: 'true',
             onboardingActionType: actionType,
           },
@@ -215,7 +220,7 @@ export function OnboardingScreen() {
         router.push({
           pathname: '/add-note',
           params: {
-            ...(resolvedFarmId ? { farmId: String(resolvedFarmId) } : {}),
+            farmId: String(resolvedFarmId),
             onboarding: 'true',
             onboardingActionType: actionType,
           },
@@ -226,13 +231,13 @@ export function OnboardingScreen() {
       router.push({
         pathname: '/add-task',
         params: {
-          ...(resolvedFarmId ? { farmId: String(resolvedFarmId) } : {}),
+          farmId: String(resolvedFarmId),
           onboarding: 'true',
           onboardingActionType: actionType,
         },
       });
     },
-    [createdFarmId, farms, onboardingActivation.farmId],
+    [resolvedFirstActionFarmId],
   );
 
   const handleContinueFromFirstAction = useCallback(() => {
@@ -325,6 +330,7 @@ export function OnboardingScreen() {
           <FirstActionSlide
             isActive={activatedSlides.has(3)}
             isCompleted={hasCompletedFirstAction}
+            canStartAction={resolvedFirstActionFarmId !== null}
             onContinue={handleContinueFromFirstAction}
             onSelectAction={handleStartFirstAction}
             selectedActionType={onboardingActivation.firstActionType}
