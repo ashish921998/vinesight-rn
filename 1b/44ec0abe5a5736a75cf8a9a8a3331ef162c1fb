@@ -1,0 +1,39 @@
+app/tasks.tsx
+  b50bbc7b66796b84 1,82-85
+__tests__/chat-screen.test.tsx
+  b50bbc7b66796b84 157-174,297-298
+docs/product-roadmap.md
+  b50bbc7b66796b84 48-50,83-85,118-120,154-156,200-202,255-257
+app/(tabs)/index.tsx
+  b50bbc7b66796b84 74
+app/add-entry.tsx
+  b50bbc7b66796b84 120,124
+src/types/database.ts
+  b50bbc7b66796b84 53-62
+app/add-task.tsx
+  b50bbc7b66796b84 37,40
+src/hooks/use-dashboard-stats.ts
+  b50bbc7b66796b84 184,190,218,245
+src/i18n/locales/mr.ts
+  b50bbc7b66796b84 1337-1338,1499,1967,1975,1982,1986-1987
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "1b44ec0abe5a5736a75cf8a9a8a3331ef162c1fb",
+  "prompts": {
+    "b50bbc7b66796b84": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d358d-2dcf-7450-994f-f2f5d3c447fa",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 77,
+      "total_deletions": 70,
+      "accepted_lines": 77,
+      "overriden_lines": 0
+    }
+  }
+}
