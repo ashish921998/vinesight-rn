@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
+import * as Sentry from '@sentry/react-native';
 import { supabase } from '@/lib/supabase';
 
 export default function AuthCallback() {
@@ -41,8 +42,11 @@ export default function AuthCallback() {
         url?.includes('access_token=') ||
         url?.includes('refresh_token=');
 
-      if (tokenOnlyCallback && __DEV__) {
-        console.warn('Rejected token-based auth callback. OAuth code exchange is required.');
+      if (tokenOnlyCallback) {
+        if (__DEV__) {
+          console.warn('Rejected token-based auth callback. OAuth code exchange is required.');
+        }
+        Sentry.captureMessage('Rejected token-based OAuth callback', 'warning');
       }
 
       if (error_description && __DEV__) {

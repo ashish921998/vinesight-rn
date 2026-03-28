@@ -591,6 +591,35 @@ describe('signInWithGoogle', () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
     expect(useAuthStore.getState().errorMessage).toBe('OAuth callback missing authorization code');
   });
+
+  it('exchanges authorization code for session and authenticates', async () => {
+    const mockUser = {
+      id: 'google-user-1',
+      email: 'user@gmail.com',
+      user_metadata: { full_name: 'Test User' },
+    };
+    const mockSession = { user: mockUser, access_token: 'tok', refresh_token: 'ref' };
+
+    (supabase.auth.signInWithOAuth as jest.Mock).mockResolvedValue({
+      data: { url: 'https://accounts.google.com/o/oauth2/auth?...' },
+      error: null,
+    });
+    (openAuthSessionAsync as jest.Mock).mockResolvedValue({
+      type: 'success',
+      url: 'vinesight://auth/callback?code=valid-auth-code',
+    });
+    (supabase.auth.exchangeCodeForSession as jest.Mock).mockResolvedValue({
+      data: { user: mockUser, session: mockSession },
+      error: null,
+    });
+
+    await useAuthStore.getState().signInWithGoogle();
+
+    expect(supabase.auth.exchangeCodeForSession).toHaveBeenCalledWith('valid-auth-code');
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().errorMessage).toBeNull();
+    expect(useAuthStore.getState().user).toEqual(mockUser);
+  });
 });
 
 // ============================================================
