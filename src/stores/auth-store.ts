@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import * as Sentry from '@sentry/react-native';
+import { openAuthSessionAsync } from 'expo-web-browser';
 import { supabase } from '@/lib/supabase';
 import { queryClient, queryPersister } from '@/lib/query-cache';
 import { telemetry } from '@/services/telemetry';
@@ -624,8 +625,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     telemetry.capture('auth_sign_in_started', { method: 'google' });
 
     try {
-      const { openAuthSessionAsync } = await import('expo-web-browser');
-
       const redirectUri = 'vinesight://auth/callback';
 
       const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -644,17 +643,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         let url: URL;
         let code: string | null;
         let queryError: string | null;
-        let hashParams: URLSearchParams;
-        let accessToken: string | null;
-        let refreshToken: string | null;
 
         try {
           url = new URL(result.url);
           code = url.searchParams.get('code');
           queryError = url.searchParams.get('error');
-          hashParams = new URLSearchParams(url.hash.replace(/^#/, ''));
-          accessToken = hashParams.get('access_token') || url.searchParams.get('access_token');
-          refreshToken = hashParams.get('refresh_token') || url.searchParams.get('refresh_token');
         } catch (error) {
           throw new Error(`Failed to parse OAuth URL: ${result.url}. ${error}`);
         }
@@ -677,33 +670,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
             isAuthenticated: true,
             isLoading: false,
           });
-        } else if (accessToken) {
-          if (!refreshToken && __DEV__) {
-            console.warn('OAuth response missing refresh_token - session may not persist');
-          }
-          if (!refreshToken) {
-            throw new Error('OAuth response missing refresh_token');
-          }
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (error) throw error;
-          await upsertProfileNameFromAuthUserBestEffort(data.user);
-          if (data.user) {
-            setSentryUser(data.user);
-            telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
-          }
-          telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
-          telemetry.capture('user_logged_in', { method: 'google' });
-          set({
-            user: data.user,
-            session: data.session,
-            isAuthenticated: true,
-            isLoading: false,
-          });
         } else {
-          throw new Error('No code or access token in response');
+          throw new Error('OAuth callback missing authorization code');
         }
       } else if (result.type === 'cancel') {
         telemetry.capture('auth_sign_in_cancelled', { method: 'google' });
