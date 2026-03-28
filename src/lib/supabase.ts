@@ -143,6 +143,7 @@ export const supabase: SupabaseClient = (() => {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false, // Required for mobile apps
+        flowType: 'pkce',
       },
     });
 

@@ -45,8 +45,9 @@ export default function AuthCallback() {
       if (tokenOnlyCallback) {
         if (__DEV__) {
           console.warn('Rejected token-based auth callback. OAuth code exchange is required.');
+        } else {
+          Sentry.captureMessage('Rejected token-based OAuth callback', 'warning');
         }
-        Sentry.captureMessage('Rejected token-based OAuth callback', 'warning');
       }
 
       if (error_description && __DEV__) {
