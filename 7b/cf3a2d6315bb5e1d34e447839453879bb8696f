@@ -1,0 +1,68 @@
+.factory/validation/theme-foundation/scrutiny/synthesis.json
+  c257e72ec99543a9 1-84
+.factory/validation/theme-foundation/scrutiny/reviews/update-design-tokens.json
+  519a9b35c18ef6ea 1-34
+.factory/validation/theme-foundation/scrutiny/reviews/update-tab-bar.json
+  a357c6c88333e39f 1-39
+.factory/validation/theme-foundation/scrutiny/reviews/update-shared-components.json
+  76f61b73095a59a9 1-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "7bcf3a2d6315bb5e1d34e447839453879bb8696f",
+  "prompts": {
+    "519a9b35c18ef6ea": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "b6b79382-18d3-41b0-9795-3b30123835fc",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 34,
+      "total_deletions": 0,
+      "accepted_lines": 34,
+      "overriden_lines": 0
+    },
+    "76f61b73095a59a9": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c432060a-2a9c-4250-ad8b-6edae08a6b71",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 0,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    },
+    "a357c6c88333e39f": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "430f0ccd-5f11-4a2a-b99b-5cb5293e6429",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 0,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    },
+    "c257e72ec99543a9": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "2638e62b-9277-4347-a4c5-ec0d3aa0c7ff",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 88,
+      "total_deletions": 0,
+      "accepted_lines": 88,
+      "overriden_lines": 0
+    }
+  }
+}
