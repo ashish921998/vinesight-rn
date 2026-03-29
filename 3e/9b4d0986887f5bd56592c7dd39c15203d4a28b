@@ -1,0 +1,68 @@
+.factory/validation/core-screens/user-testing/flows/onboarding.json
+  9ae871f435f0e184 1-57
+.factory/validation/core-screens/user-testing/flows/dashboard-and-farms.json
+  b2e2dea4a2b91331 1-84
+.factory/validation/core-screens/user-testing/flows/ai-assistant.json
+  29fb1bec81cd2c8b 1-91
+.factory/validation/core-screens/user-testing/flows/farm-detail.json
+  254582a242e1f34c 1-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "3e9b4d0986887f5bd56592c7dd39c15203d4a28b",
+  "prompts": {
+    "254582a242e1f34c": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "87a21ad2-fe7c-4467-93d6-b4509d21bf5b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 76,
+      "total_deletions": 0,
+      "accepted_lines": 76,
+      "overriden_lines": 0
+    },
+    "29fb1bec81cd2c8b": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "bde1dbcd-1a8d-47e9-997b-dc4b140e82ac",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 91,
+      "total_deletions": 0,
+      "accepted_lines": 91,
+      "overriden_lines": 0
+    },
+    "9ae871f435f0e184": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "60096e08-6a7e-48ec-8a5a-3c207758b243",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 57,
+      "total_deletions": 0,
+      "accepted_lines": 57,
+      "overriden_lines": 0
+    },
+    "b2e2dea4a2b91331": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "b880b3ed-22a5-41ac-bb1d-141877ff4966",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 94,
+      "total_deletions": 0,
+      "accepted_lines": 94,
+      "overriden_lines": 0
+    }
+  }
+}
