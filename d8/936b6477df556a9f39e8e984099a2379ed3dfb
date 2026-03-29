@@ -1,0 +1,40 @@
+.factory/validation/theme-foundation/user-testing/synthesis.round1.json
+  5f666f8b9af900ad 1-38
+.factory/validation/theme-foundation/user-testing/flows/theme-foundation-regression-fixes.json
+  00ac683ac959d950 1-22
+.factory/validation/theme-foundation/user-testing/synthesis.json
+  5f666f8b9af900ad 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "d8936b6477df556a9f39e8e984099a2379ed3dfb",
+  "prompts": {
+    "00ac683ac959d950": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "9cd59b1f-324a-40ee-b660-aa8ba19284a8",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 27,
+      "total_deletions": 0,
+      "accepted_lines": 27,
+      "overriden_lines": 0
+    },
+    "5f666f8b9af900ad": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "19441b87-bd87-4720-a3d7-c5dfed0b7bb7",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 40,
+      "overriden_lines": 4
+    }
+  }
+}
