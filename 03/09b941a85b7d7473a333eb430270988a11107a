@@ -1,0 +1,23 @@
+src/styles/theme.ts
+  ed900467077c30a1 245-249,252-254,438
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "0309b941a85b7d7473a333eb430270988a11107a",
+  "prompts": {
+    "ed900467077c30a1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "14bd1a57-673c-4227-ab97-de12a1fc4d51",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 22,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
