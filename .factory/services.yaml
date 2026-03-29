@@ -1,0 +1,11 @@
+commands:
+  install: npm install
+  typecheck: npm run typecheck
+  lint: npm run lint
+  test: npm test -- --passWithNoTests
+  web_smoke: npm run web:smoke
+  build_android_preview: npm run build:android:preview:local
+
+# No long-running services needed - this is a frontend-only visual redesign mission.
+# The app is React Native/Expo and cannot be tested visually without a device/emulator.
+services: {}
