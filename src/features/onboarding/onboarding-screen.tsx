@@ -263,11 +263,20 @@ export function OnboardingScreen() {
     const resumePage = pageIndexForStep(onboardingCurrentStep);
     hasAppliedResumeStepRef.current = true;
     if (resumePage <= 0) return;
-    requestAnimationFrame(() => {
+    let rafId: number | null = null;
+    let isMounted = true;
+    rafId = requestAnimationFrame(() => {
+      if (!isMounted) return;
       scrollRef.current?.scrollTo({ x: resumePage * width, animated: false });
       setCurrentPageIndex(resumePage);
       handleSlideChange(resumePage);
     });
+    return () => {
+      isMounted = false;
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
   }, [handleSlideChange, onboardingCurrentStep, width]);
 
   React.useEffect(() => {
