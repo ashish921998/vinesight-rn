@@ -135,12 +135,12 @@ export default function TabLayout() {
             tabBarActiveTintColor: m3.colorScheme.primary,
             tabBarInactiveTintColor: m3.colorScheme.onSurfaceVariant,
             tabBarStyle: {
-              backgroundColor: m3.surface.surfaceContainer,
-              borderTopColor: m3.colorScheme.outlineVariant,
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderTopColor: m3.colorScheme.outline,
               borderTopWidth: 1,
               paddingTop: 8,
-              paddingBottom: Math.max(insets.bottom + 12, 20),
-              height: Math.max(insets.bottom + 64, 76),
+              paddingBottom: Math.max(insets.bottom + 8, 16),
+              height: Math.max(insets.bottom + 56, 72),
             },
             tabBarLabelStyle: {
               fontSize: 11,
@@ -225,9 +225,10 @@ export default function TabLayout() {
           },
           selected: {
             color: m3.colorScheme.primary,
+            fontWeight: '600',
           },
         }}
-        backgroundColor={m3.surface.surfaceContainer}
+        backgroundColor={m3.surface.surfaceContainerLow}
         shadowColor={colorWithOpacity(m3.colorScheme.shadow, isDark ? 0.6 : 0.05)}
       >
         <NativeTabs.Trigger
