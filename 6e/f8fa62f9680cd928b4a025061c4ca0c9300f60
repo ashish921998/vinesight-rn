@@ -1,0 +1,23 @@
+.factory/validation/core-screens/scrutiny/reviews/fix-en-farms-summary-keys.json
+  c65560865f501e46 1-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "6ef8fa62f9680cd928b4a025061c4ca0c9300f60",
+  "prompts": {
+    "c65560865f501e46": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "af1f8d65-4113-4519-8093-6e2886bd12b9",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 26,
+      "total_deletions": 0,
+      "accepted_lines": 26,
+      "overriden_lines": 0
+    }
+  }
+}
