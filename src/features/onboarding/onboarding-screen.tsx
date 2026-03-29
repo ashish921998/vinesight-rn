@@ -191,6 +191,7 @@ export function OnboardingScreen() {
       useOnboardingStore.getState().markFarmCreated(farmId);
       telemetry.capture('onboarding_farm_created', { farm_id: farmId });
       setCreatedFarmId(farmId);
+      setHasManuallyNavigatedBack(false);
       jumpToPage(FIRST_ACTION_PAGE_INDEX);
     },
     [jumpToPage],
@@ -261,8 +262,11 @@ export function OnboardingScreen() {
   React.useEffect(() => {
     if (hasAppliedResumeStepRef.current || width <= 0) return;
     const resumePage = pageIndexForStep(onboardingCurrentStep);
+    if (resumePage <= 0) {
+      hasAppliedResumeStepRef.current = true;
+      return;
+    }
     hasAppliedResumeStepRef.current = true;
-    if (resumePage <= 0) return;
     let rafId: number | null = null;
     let isMounted = true;
     rafId = requestAnimationFrame(() => {
