@@ -1,0 +1,33 @@
+.factory/services.yaml
+  05870e7ad5fd06d8 1-11
+.factory/library/architecture.md
+  05870e7ad5fd06d8 1-91
+.factory/skills/ui-worker/SKILL.md
+  05870e7ad5fd06d8 1-95
+.factory/init.sh
+  05870e7ad5fd06d8 1-11
+.factory/library/environment.md
+  05870e7ad5fd06d8 1-26
+.factory/library/user-testing.md
+  05870e7ad5fd06d8 1-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "298f7c6fd8d61fbbf796ef23bec1d7a464a10031",
+  "prompts": {
+    "05870e7ad5fd06d8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d1167030-fd5b-475b-aa51-e8e2e34457cd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 292,
+      "total_deletions": 29,
+      "accepted_lines": 263,
+      "overriden_lines": 0
+    }
+  }
+}
