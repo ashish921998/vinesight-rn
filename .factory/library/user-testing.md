@@ -27,3 +27,11 @@ This is a React Native/Expo mobile app. It cannot be tested visually in this env
 All wireframes at: `~/.gstack/projects/ashish921998-vinesight-rn/designs/dashboard-20260329/`
 - 27 wireframe HTML files (wireframe-*.html)
 - Design tokens extracted in `.factory/library/architecture.md`
+
+## Flow Validator Guidance: code-review
+
+- Isolation boundary: read-only validation against the current working tree; do not modify application source files during flow validation.
+- Use `Read`, `Grep`, and related repo inspection tools to verify exact token names, hex values, border usage, radius values, and dark-mode mappings.
+- Record evidence with concrete file paths and line references when possible.
+- Limit scope to the assigned assertions and their direct evidence files; theme-foundation assertions are expected to resolve primarily in `src/styles/theme.ts` and shared theme consumers.
+- Write only the assigned flow report under `.factory/validation/<milestone>/user-testing/flows/` and evidence notes under the provided mission evidence directory.

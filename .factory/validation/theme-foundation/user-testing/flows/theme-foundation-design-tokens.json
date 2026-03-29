@@ -1,0 +1,92 @@
+{
+  "groupId": "theme-foundation-design-tokens",
+  "testedAt": "2026-03-29T20:58:24.391917Z",
+  "isolation": {
+    "mode": "read-only code review",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "surface": "code-review"
+  },
+  "toolsUsed": ["code-review", "Read", "Grep", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-THEME-001",
+      "status": "pass",
+      "reason": "The light semantic palette maps the required primary, secondary, accent, info, warning, error, and success roles to the specified hex values.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/theme-foundation/theme-foundation-design-tokens/theme-foundation-design-tokens-evidence.md",
+        "references": ["src/styles/theme.ts:72,80,83,86-89"]
+      }
+    },
+    {
+      "id": "VAL-THEME-002",
+      "status": "pass",
+      "reason": "The warm light neutral scale is present in lightSurface with the specified background, card, divider, border, muted, secondary text, and primary text values.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/theme-foundation/theme-foundation-design-tokens/theme-foundation-design-tokens-evidence.md",
+        "references": ["src/styles/theme.ts:35-40,44"]
+      }
+    },
+    {
+      "id": "VAL-THEME-003",
+      "status": "pass",
+      "reason": "All five activity category colors are defined with the required hex values for irrigation, spray, harvest, labour, and fertigation.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/theme-foundation/theme-foundation-design-tokens/theme-foundation-design-tokens-evidence.md",
+        "references": ["src/styles/theme.ts:92-104"]
+      }
+    },
+    {
+      "id": "VAL-THEME-004",
+      "status": "pass",
+      "reason": "Dark surface tokens and dark category colors match the bark-charcoal palette and lighter dark-mode category values from the contract.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/theme-foundation/theme-foundation-design-tokens/theme-foundation-design-tokens-evidence.md",
+        "references": ["src/styles/theme.ts:49-57,143-175"]
+      }
+    },
+    {
+      "id": "VAL-THEME-005",
+      "status": "fail",
+      "reason": "Theme exports still include lg/glass shadow presets, commonStyles glassCard variants still define shadow props, and a direct card consumer still uses elevation/shadow on a card container.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/theme-foundation/theme-foundation-design-tokens/theme-foundation-design-tokens-evidence.md",
+        "references": [
+          "src/styles/theme.ts:286-317",
+          "src/styles/theme.ts:438-457",
+          "src/components/cards/timeline-log-card.tsx:248-256"
+        ]
+      }
+    },
+    {
+      "id": "VAL-THEME-006",
+      "status": "fail",
+      "reason": "The borderRadius scale does not match the spec exactly: the object still includes sm: 4 and uses md: 12, lg: 16, xl: 24, full: 999 instead of the required xs: 8, sm: 12, md: 16, lg: 24, pill: 999 mapping.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/theme-foundation/theme-foundation-design-tokens/theme-foundation-design-tokens-evidence.md",
+        "references": ["src/styles/theme.ts:243-253"]
+      }
+    },
+    {
+      "id": "VAL-THEME-007",
+      "status": "pass",
+      "reason": "The spacing scale contains the required 4px-grid values 4, 8, 12, 16, 20, 24, 32, and 48, and all listed values remain aligned to a 4px base grid.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/theme-foundation/theme-foundation-design-tokens/theme-foundation-design-tokens-evidence.md",
+        "references": ["src/styles/theme.ts:219-234"]
+      }
+    },
+    {
+      "id": "VAL-CROSS-007",
+      "status": "pass",
+      "reason": "Dark mode exports include the full bark-charcoal surface palette, dark primary, all five lighter category colors, and dark semantic error/warning/success values required by the cross-area contract.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/theme-foundation/theme-foundation-design-tokens/theme-foundation-design-tokens-evidence.md",
+        "references": ["src/styles/theme.ts:49-57,143-175,158-160,196-199"]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Reviewed 8 assigned assertions by code review: 6 passed, 2 failed, 0 blocked. Failures: VAL-THEME-005 (card shadows still present) and VAL-THEME-006 (border radius scale does not match the contract mapping)."
+}
