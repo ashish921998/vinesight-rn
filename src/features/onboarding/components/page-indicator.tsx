@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, interpolate, type SharedValue } from 'react-native-reanimated';
+import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius } from '@/styles/theme';
 
 interface PageIndicatorProps {
@@ -10,7 +11,8 @@ interface PageIndicatorProps {
 
 const DOT_SIZE = 8;
 const ACTIVE_DOT_WIDTH = 24;
-const ACTIVE_COLOR = '#408059';
+const INACTIVE_OPACITY = 0.25;
+const ACTIVE_OPACITY = 1;
 
 const Dot = memo(function Dot({
   index,
@@ -19,6 +21,8 @@ const Dot = memo(function Dot({
   index: number;
   currentPage: SharedValue<number>;
 }) {
+  const m3 = useM3();
+
   const animatedStyle = useAnimatedStyle(() => {
     const width = interpolate(
       currentPage.value,
@@ -30,7 +34,7 @@ const Dot = memo(function Dot({
     const opacity = interpolate(
       currentPage.value,
       [index - 1, index, index + 1],
-      [0.3, 1, 0.3],
+      [INACTIVE_OPACITY, ACTIVE_OPACITY, INACTIVE_OPACITY],
       'clamp',
     );
 
@@ -44,7 +48,7 @@ const Dot = memo(function Dot({
         {
           height: DOT_SIZE,
           borderRadius: borderRadius.full,
-          backgroundColor: ACTIVE_COLOR,
+          backgroundColor: m3.colorScheme.primary,
         },
         animatedStyle,
       ]}
