@@ -1,0 +1,23 @@
+src/components/cards/farm-card.tsx
+  ca4aaa1321206164 48,52,106-118,205
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "39e59da952a066c6a8be2410f34d272c300d878d",
+  "prompts": {
+    "ca4aaa1321206164": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "047ffda4-3381-4bdf-a9a2-127dbda0aaae",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 1,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}
