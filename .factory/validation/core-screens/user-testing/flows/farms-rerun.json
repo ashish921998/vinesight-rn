@@ -1,0 +1,36 @@
+{
+  "groupId": "farms-rerun",
+  "testedAt": "2026-03-29T23:38:35.406460+00:00",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185"
+  },
+  "toolsUsed": ["Read", "Grep"],
+  "assertionResults": [
+    {
+      "id": "VAL-FARMLIST-001",
+      "title": "Farm cards with variety and area badge",
+      "contract": "Farm cards: mist-1 bg, 1px stone-3 border, 16px radius, variety text, area pill badge (borderRadius 999, primary-tinted bg), chevron.",
+      "status": "pass",
+      "reason": "The current FarmCard implementation uses the 16px radius token and includes the mist-1 background, 1px stone-3 border, variety text, area pill badge with primary tint, and trailing chevron required by the contract.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/farms-rerun/farms-rerun-evidence.md",
+        "references": [
+          "app/(tabs)/farms.tsx:19",
+          "app/(tabs)/farms.tsx:314-323",
+          "src/components/cards/farm-card.tsx:49-55",
+          "src/components/cards/farm-card.tsx:185-205",
+          "src/components/cards/farm-card.tsx:224-226",
+          "src/styles/theme.ts:36-38",
+          "src/styles/theme.ts:72",
+          "src/styles/theme.ts:247"
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Re-reviewed 1 assigned assertion by read-only code review. VAL-FARMLIST-001 now passes because the farms-list card uses a 16px radius and still includes the required mist-1 background, stone-3 border, variety text, area badge, and chevron."
+}

@@ -1,0 +1,32 @@
+{
+  "groupId": "onboarding-rerun",
+  "testedAt": "2026-03-29T23:38:44Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "milestone": "core-screens",
+    "assignedAssertions": ["VAL-ONBOARD-001"]
+  },
+  "toolsUsed": ["Read", "Grep", "Glob", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-ONBOARD-001",
+      "title": "Fraunces serif font for headlines",
+      "status": "pass",
+      "reason": "`validation-contract.md:117` allows either a `Fraunces` reference or `Platform.select({ ios: 'Georgia', default: 'serif' })` as a serif fallback. `src/features/onboarding/slides/hero-slide.tsx:137-139` uses that exact fallback and sets the headline size to `28`, so the assertion passes on the current codebase.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/onboarding-rerun/onboarding-rerun-evidence.md",
+        "references": [
+          "validation-contract.md:116-119",
+          "src/features/onboarding/slides/hero-slide.tsx:137-139",
+          "src/features/onboarding/ (search `Fraunces|Georgia|serif|fontFamily` returned only `slides/hero-slide.tsx:137`)"
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Re-tested VAL-ONBOARD-001 by read-only code review against the exact contract wording and it passes: the onboarding headline uses the allowed `Platform.select({ ios: 'Georgia', default: 'serif' })` fallback at `src/features/onboarding/slides/hero-slide.tsx:137`, with `fontSize: 28` at line 138."
+}
