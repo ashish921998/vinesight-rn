@@ -242,15 +242,16 @@ export const androidTextPadding = {
 
 export const borderRadius = {
   none: 0,
-  sm: 4,
-  xs: 8, // r-xs from wireframes
-  md: 12, // r-sm from wireframes
-  lg: 16, // r-md from wireframes
-  xl: 24, // r-lg from wireframes
+  xs: 8,
+  sm: 12, // was 4
+  md: 16, // was 12
+  lg: 24, // was 16
+  xl: 24, // keep for backwards compat, same as lg
   '2xl': 20,
   '3xl': 32,
-  '4xl': 40,
-  full: 999, // r-pill from wireframes
+  '4xl': 32, // was 40
+  full: 9999, // was 999
+  pill: 999,
 } as const;
 
 export const size = {
@@ -434,27 +435,18 @@ export const getM3Theme = (isDark: boolean) => (isDark ? m3Dark : m3);
 
 // Common component styles - Cellar Ledger design (borders, no heavy shadows)
 export const commonStyles = {
-  // Glass effect cards - now using border instead of heavy shadow
+  // Glass effect cards - using border instead of heavy shadow
   glassCard: {
     backgroundColor: colors.surface[100],
     borderRadius: borderRadius.xl,
     borderWidth: 1,
     borderColor: colors.surface[300],
-    // No heavy shadows - use minimal shadow if needed
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
   },
   glassCardDark: {
     backgroundColor: darkColors.surface[100],
     borderRadius: borderRadius.xl,
     borderWidth: 1,
     borderColor: darkColors.surface[300],
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
   },
   // Buttons - use primary token
   primaryButton: {
