@@ -574,6 +574,11 @@ export const en = {
       totalFarms: 'Total farms',
       totalArea: 'Total area',
     },
+    summary: {
+      count_one: '{{count}} farm',
+      count_other: '{{count}} farms',
+      area: '{{value}} acres total',
+    },
   },
 
   entryForm: {
