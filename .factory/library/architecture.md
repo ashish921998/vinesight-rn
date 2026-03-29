@@ -75,7 +75,7 @@ Screens access theme via hooks (`useM3()`, `useThemeColors()`). The M3 theme is 
 
 ### Typography
 - Body: IBM Plex Sans (400/500/600/700)
-- Display: Fraunces serif (onboarding headlines only)
+- Display: Georgia/serif fallback for onboarding headlines (Fraunces is not currently shipped in the repo)
 
 ### Key Patterns
 - Cards: 1px solid border (stone-3), NO shadows

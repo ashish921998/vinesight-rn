@@ -1,0 +1,44 @@
+{
+  "featureId": "fix-core-screens-i18n-a11y-tokens",
+  "reviewedAt": "2026-03-29T22:49:10Z",
+  "commitId": "d500e940ef940b697824b49ef8505e5500a6c95d",
+  "transcriptSkeletonReviewed": false,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The rerun does clear the AI assistant token issue, the onboarding legacy-color / serif-fallback issue, and the dashboard heading accessibility regression, but the i18n repair is still incomplete. Dashboard hero copy was moved behind new `t()` keys that exist only in English, and farm detail still ships several hardcoded labels plus one new safe-harvest key that also only exists in English.",
+    "issues": [
+      {
+        "file": "src/i18n/locales/en.ts",
+        "line": 1887,
+        "severity": "blocking",
+        "description": "The dashboard hero is still not fully localized across supported languages. `app/(tabs)/index.tsx:209,241,271,291` now calls `t('dashboard.hero.*')`, but those new keys were only added in `src/i18n/locales/en.ts:1887-1893`; the corresponding dashboard sections in `src/i18n/locales/hi.ts:1879-1933` and `src/i18n/locales/mr.ts:1886-1940` do not define `hero.today`, `hero.alertCount_*`, `hero.allClear`, or `hero.attentionNeeded`, so Hindi and Marathi users still fall back to English for the redesigned hero."
+      },
+      {
+        "file": "app/farm/[id].tsx",
+        "line": 1909,
+        "severity": "blocking",
+        "description": "The farm-detail i18n fix remains incomplete. The current screen still hardcodes `Soil Water` at `app/farm/[id].tsx:1909,2162`, `Days Pruned` at `:1940`, `Log Entries` at `:2090`, and `Total records` at `:2100`. In addition, the new `t('farmDetails.safeHarvest.inlineTitle')` usage at `app/farm/[id].tsx:1758` only has an English entry in `src/i18n/locales/en.ts:184`; `src/i18n/locales/hi.ts:177-186` and `src/i18n/locales/mr.ts:178-187` do not define `inlineTitle`, so that label still falls back to English off the default locale."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The mission guidance and the actual fix requirements conflict on i18n work. `AGENTS.md` marks `src/i18n/` as off-limits and says not to change i18n keys, but this fix needed locale changes to resolve scrutiny and did edit `src/i18n/locales/en.ts` anyway. The shared guidance should explain what workers should do when a redesign introduces new user-facing copy that has no existing translation keys, including the expectation for locale parity across `en`/`hi`/`mr`.",
+      "evidence": "`/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/AGENTS.md` lists `src/i18n/` under off-limits files; `git show --stat ee665df` includes `src/i18n/locales/en.ts`; the rerun still failed because the new dashboard/farm-detail keys were not propagated to `hi.ts` and `mr.ts`."
+    },
+    {
+      "area": "skills",
+      "observation": "This fix feature produced no normal handoff or transcript artifact, so scrutiny had to reconstruct the review from progress_log plus git history. The crash/manual-recovery path is still leaving reviewers without the standard evidence bundle.",
+      "evidence": "`progress_log.jsonl:84-90` shows worker sessions `2089be30-5544-4778-82f6-baf67e0e9bf8` and `8662321c-e8c8-42db-8011-6ac11fc42cbd` both starting `fix-core-screens-i18n-a11y-tokens` and then exiting unexpectedly; `worker-transcripts.jsonl` has no entries for either session, and `handoffs/` has no `fix-core-screens-i18n-a11y-tokens` handoff file."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The shared architecture note still says onboarding headlines use Fraunces, but the accepted fix replaced that with a Georgia/serif fallback because no Fraunces asset or load path exists. Future workers reading the library will still be pointed toward the old broken assumption.",
+      "evidence": "`.factory/library/architecture.md:78` says `Display: Fraunces serif (onboarding headlines only)`, while `src/features/onboarding/slides/hero-slide.tsx:137` now uses `Platform.select({ ios: 'Georgia', default: 'serif' })`."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/core-screens/scrutiny/synthesis.json",
+  "summary": "Fail: the rerun fixes the AI assistant token problem, onboarding color/font issue, and dashboard header accessibility, but it does not fully clear the i18n failures. Dashboard hero strings were only localized in `en`, and farm detail still has remaining hardcoded / English-fallback labels."
+}

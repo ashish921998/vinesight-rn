@@ -24,6 +24,12 @@ export function SuggestionChips({
 }: SuggestionChipsProps) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
+  const chipBackgroundColor =
+    m3.surface?.surfaceContainerLow ??
+    m3.colorScheme.surfaceVariant ??
+    m3.colorScheme.secondaryContainer ??
+    m3.colorScheme.surface;
+  const chipBorderColor = m3.colorScheme.outline ?? m3.colorScheme.outlineVariant;
 
   if (suggestions.length === 0) return null;
 
@@ -36,7 +42,7 @@ export function SuggestionChips({
   };
 
   return (
-    <View style={[styles.container, { borderTopColor: m3.colorScheme.outline }]}>
+    <View style={[styles.container, { borderTopColor: chipBorderColor }]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -53,8 +59,8 @@ export function SuggestionChips({
                 {
                   // Cellar Ledger: pill shape with mist-1 bg and 1px stone-3 border
                   // Use surfaceContainerLow which maps to mist-1 (surface[100])
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderColor: m3.colorScheme.outline,
+                  backgroundColor: chipBackgroundColor,
+                  borderColor: chipBorderColor,
                   borderRadius: 999,
                 },
                 disabled && styles.chipDisabled,
