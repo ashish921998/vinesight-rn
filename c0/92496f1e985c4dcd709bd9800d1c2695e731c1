@@ -1,0 +1,27 @@
+src/components/assistant/MessageBubble.tsx
+  c79bf7fbe19c7bdf 35-36,38,42-43,46-50,53-54,269,272-275,280-281,287
+src/components/assistant/InputBar.tsx
+  c79bf7fbe19c7bdf 65-68,77-80,183-184,187-188,216-220,226,251,309
+src/components/assistant/SuggestionChips.tsx
+  c79bf7fbe19c7bdf 54-56,58,71-74,100-102,110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "c092496f1e985c4dcd709bd9800d1c2695e731c1",
+  "prompts": {
+    "c79bf7fbe19c7bdf": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "10d4ceca-c5b3-4889-b449-0357c609da4e",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 60,
+      "total_deletions": 30,
+      "accepted_lines": 53,
+      "overriden_lines": 0
+    }
+  }
+}
