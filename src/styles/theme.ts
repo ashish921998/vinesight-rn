@@ -103,8 +103,12 @@ const baseColors = {
   labour: {
     500: '#7A5E8E',
   },
+  note: {
+    500: '#5C6D91', // Cellar Ledger note category
+  },
+  // observation maps to note color
   observation: {
-    500: '#738c7a',
+    500: '#5C6D91', // note color
   },
   task: {
     500: '#4d8573',
@@ -170,8 +174,12 @@ const darkModeColors = {
   labour: {
     500: '#9A7EAE',
   },
+  note: {
+    500: '#7A8DAA', // Cellar Ledger note category - dark mode
+  },
+  // observation maps to note color
   observation: {
-    500: '#8a9a8e',
+    500: '#7A8DAA', // note color - dark mode
   },
   task: {
     500: '#5a8b96',
@@ -383,10 +391,11 @@ const createM3Theme = (isDark: boolean) => {
       onSuccess: onAccent,
 
       background: themeColors.surface[50], // #FBF8F3 (light) / #121613 (dark)
-      onBackground: themeColors.surface[900], // #1E241F (light) / #E8E4DE (dark)
+      // Dark mode uses surface[800] (#E8E4DE) for primary text, not surface[900] (#F0F2F0)
+      onBackground: isDark ? themeColors.surface[800] : themeColors.surface[900], // #1E241F (light) / #E8E4DE (dark)
 
       surface: themeColors.surface[50],
-      onSurface: themeColors.surface[900],
+      onSurface: isDark ? themeColors.surface[800] : themeColors.surface[900],
       surfaceVariant: isDark ? themeColors.surface[200] : themeColors.surface[100],
       onSurfaceVariant: isDark ? themeColors.surface[500] : themeColors.surface[500],
 
