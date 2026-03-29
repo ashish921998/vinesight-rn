@@ -103,7 +103,8 @@ export function useTodayNeedsAttention(limit: number = 10) {
           .eq('completed', false)
           .not('due_date', 'is', null)
           .lt('due_date', todayStr)
-          .order('due_date', { ascending: true }),
+          .order('due_date', { ascending: true })
+          .limit(limit),
         supabase
           .rpc('get_recent_log_farm_ids', {
             p_farm_ids: farmIds,

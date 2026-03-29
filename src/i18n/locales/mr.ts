@@ -1986,6 +1986,12 @@ export const mr = {
         subtitle: 'दररोजचे $t(glossary.task) नोंदवत राहा म्हणजे इशारे उपयोगी राहतील.',
         ctaWithFarms: 'आजचे $t(glossary.task) नोंदवा',
       },
+      error: {
+        title: 'लक्ष देण्याचे आयटम लोड करता आले नाहीत.',
+        subtitle:
+          'मुदत संपलेली $t(glossary.task), PHI मुदती आणि इतर तातडीचे शेतातील प्रश्न पाहण्यासाठी पुन्हा प्रयत्न करा.',
+        cta: 'पुन्हा प्रयत्न करा',
+      },
     },
     quickActions: {
       title: 'त्वरित क्रिया',

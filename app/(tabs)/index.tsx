@@ -72,6 +72,7 @@ export default function DashboardScreen() {
     data: todayNeedsAttention,
     refetch: refetchTodayNeedsAttention,
     isLoading: isLoadingTodayNeedsAttention,
+    error: todayNeedsAttentionError,
   } = useTodayNeedsAttention(6);
   const {
     data: recentActivities,
@@ -321,13 +322,65 @@ export default function DashboardScreen() {
               >
                 <ActivityIndicator color={m3.colorScheme.primary} />
               </View>
+            ) : todayNeedsAttentionError ? (
+              <View
+                style={{
+                  borderRadius: m3.shape.cornerLarge,
+                  padding: spacing[5],
+                  alignItems: 'center',
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                }}
+              >
+                <SymbolIcon
+                  name="exclamationmark.triangle.fill"
+                  size={38}
+                  color={m3.colorScheme.error}
+                />
+                <Text
+                  style={{
+                    ...m3.typography.titleMedium,
+                    color: m3.colorScheme.onSurface,
+                    marginTop: spacing[3],
+                    textAlign: 'center',
+                  }}
+                >
+                  {t('dashboard.needsAttention.error.title')}
+                </Text>
+                <Text
+                  style={{
+                    ...m3.typography.bodyMedium,
+                    color: m3.colorScheme.onSurfaceVariant,
+                    marginTop: spacing[2],
+                    textAlign: 'center',
+                  }}
+                >
+                  {t('dashboard.needsAttention.error.subtitle')}
+                </Text>
+                <View style={{ marginTop: spacing[4], width: '100%' }}>
+                  <Button
+                    title={t('dashboard.needsAttention.error.cta')}
+                    onPress={() => {
+                      void refetchTodayNeedsAttention();
+                    }}
+                  />
+                </View>
+              </View>
             ) : attentionItems.length > 0 ? (
-              attentionItems.slice(0, 6).map((item) => {
+              attentionItems.map((item) => {
                 const title = getAttentionTitle(item);
                 const reasonLabel = t(`dashboard.needsAttention.reasons.${item.type}`);
                 const actionLabel = getAttentionActionLabel(item);
                 const metaLabel = getAttentionMetaLabel(item);
                 const icon = getAttentionIcon(item);
+                const accessibilityParts = [
+                  title,
+                  title !== item.farmName ? item.farmName : null,
+                  reasonLabel,
+                  metaLabel,
+                  actionLabel,
+                ].filter((part): part is string => Boolean(part));
                 const emphasisColor =
                   item.severity === 'high'
                     ? m3.colorScheme.error
@@ -340,7 +393,7 @@ export default function DashboardScreen() {
                     key={item.id}
                     onPress={() => handleNeedsAttentionPress(item)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${title}. ${reasonLabel}. ${actionLabel}.`}
+                    accessibilityLabel={accessibilityParts.join('. ')}
                     style={{
                       borderRadius: m3.shape.cornerMedium,
                       padding: spacing[3],

@@ -1969,6 +1969,11 @@ export const en = {
         subtitle: 'Keep logging daily work so alerts stay useful.',
         ctaWithFarms: 'Log today’s work',
       },
+      error: {
+        title: 'Could not load attention items.',
+        subtitle: 'Retry to check overdue tasks, PHI deadlines, and other urgent farm issues.',
+        cta: 'Retry',
+      },
     },
     quickActions: {
       title: 'Quick actions',

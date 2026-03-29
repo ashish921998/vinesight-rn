@@ -31,7 +31,7 @@ Target window: 1 to 2 weeks
 ### Epic 1: Onboarding To First Real Value
 
 Problem:
-Users can complete onboarding after creating a farm, but the stronger activation event is completing the first real log or task.
+Users can complete onboarding after creating a farm, but the stronger activation event is completing the first real log, note, or task.
 
 Goal:
 End onboarding only after the user has created a farm and completed one meaningful operational action.
@@ -39,8 +39,8 @@ End onboarding only after the user has created a farm and completed one meaningf
 Scope:
 - Update onboarding flow so success is:
   - first farm created
-  - first log completed, or first task created
-- Route the user directly into the shortest action flow after farm creation
+  - first log completed, first note saved, or first task created
+- Route the user directly into the shortest action flow after farm creation, whether that is a log, note, or task
 - Preserve guided tour support
 - Track activation events in telemetry
 

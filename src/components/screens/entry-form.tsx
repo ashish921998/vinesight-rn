@@ -1670,7 +1670,7 @@ export function EntryForm({
     }
 
     await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-    onTaskSaveSuccess?.(savedTask.farm_id ?? null);
+    onTaskSaveSuccess?.(savedTask?.farm_id ?? resolvedFarmId);
     onClose();
   };
 
