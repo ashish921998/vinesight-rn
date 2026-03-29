@@ -1,7 +1,7 @@
 {
   "milestone": "theme-foundation",
-  "round": 2,
-  "status": "fail",
+  "round": 3,
+  "status": "pass",
   "validatorsRun": {
     "test": {
       "passed": true,
@@ -21,24 +21,25 @@
   },
   "reviewsSummary": {
     "total": 1,
-    "passed": 0,
-    "failed": 1,
-    "failedFeatures": ["fix-theme-foundation-scrutiny"]
+    "passed": 1,
+    "failed": 0,
+    "failedFeatures": []
   },
-  "blockingIssues": [
+  "blockingIssues": [],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
     {
-      "featureId": "fix-theme-foundation-scrutiny",
-      "severity": "blocking",
-      "description": "The note palette fix is only partial. `src/styles/theme.ts` now defines `note`/`observation` as `#5C6D91`/`#7A8DAA`, but `src/constants/calculator-models.ts:296` and `src/types/task.ts:98` still hardcode the legacy note color `#738c7a`, so note-related UI does not consistently resolve through the required Cellar Ledger blue note palette."
-    },
-    {
-      "featureId": "fix-theme-foundation-scrutiny",
-      "severity": "blocking",
-      "description": "The bottom navigation still exposes the old tab IA in `app/(tabs)/_layout.tsx` (`tabs.dashboard`, `tabs.explore`, `tabs.workers`, `tabs.tools`, `tabs.aiAssistant`) instead of the requested `Home`, `Farms`, `Logs`, `AI`, `More` set on both Android and iOS."
+      "target": "skill:ui-worker",
+      "suggestion": "Clarify whether tiny scrutiny-fix features may skip `npm test -- --passWithNoTests`, or require workers to explicitly report deviations when they do so.",
+      "evidence": "The `fix-legacy-note-colors` review found worker session `1614c419-85d8-4778-906e-84816bee424f` only ran typecheck and lint even though `.factory/skills/ui-worker/SKILL.md` still requires `npm test -- --passWithNoTests`.",
+      "isSystemic": false
     }
   ],
-  "appliedUpdates": [],
-  "suggestedGuidanceUpdates": [],
-  "rejectedObservations": [],
-  "previousRound": ".factory/validation/theme-foundation/scrutiny/synthesis.round1.json"
+  "rejectedObservations": [
+    {
+      "observation": "Prior blocker claiming `app/(tabs)/_layout.tsx` had to replace the visible tab IA with Home/Farms/Logs/AI/More.",
+      "reason": "Rejected because `AGENTS.md` documents preserving the existing tab IA as an intentional mission deviation; only visual styling changes were in scope."
+    }
+  ],
+  "previousRound": ".factory/validation/theme-foundation/scrutiny/synthesis.round2.json"
 }

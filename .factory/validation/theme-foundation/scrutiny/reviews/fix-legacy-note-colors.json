@@ -1,0 +1,21 @@
+{
+  "featureId": "fix-legacy-note-colors",
+  "reviewedAt": "2026-03-29T20:51:38Z",
+  "commitId": "50024b193f6c33f026d4283d7f5ace824fdea401",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Pass. The prior fix commit `abf2252` correctly added the note/observation theme tokens and other theme adjustments. After applying `AGENTS.md`'s documented intentional tab-bar IA deviation, the only remaining valid blocker from the prior scrutiny review was the legacy note color still hardcoded in `src/constants/calculator-models.ts` and `src/types/task.ts`. This rerun commit updates both remaining occurrences to `#5C6D91`, so the existing note/task metadata now matches the Cellar Ledger note palette and `#738c7a` no longer appears anywhere in source files.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `ui-worker` skill still says workers must run `npm test -- --passWithNoTests`, but this fix worker only ran typecheck and lint and still reported `followedProcedure: true`. Either the skill should explicitly allow test omission for tiny scrutiny-fix flows or the worker procedure enforcement/reporting should be tightened.",
+      "evidence": "`.factory/skills/ui-worker/SKILL.md:52` requires `npm test -- --passWithNoTests`; the transcript skeleton and handoff for worker session `1614c419-85d8-4778-906e-84816bee424f` only show `npm run typecheck` and `npm run lint` in verification."
+    }
+  ],
+  "addressesFailureFrom": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185/.factory/validation/theme-foundation/scrutiny/reviews/fix-theme-foundation-scrutiny.json",
+  "summary": "Pass: once the documented tab-bar IA deviation is accounted for, this rerun resolves the only remaining valid scrutiny blocker by replacing the last two legacy note-color constants with `#5C6D91`; no still-valid blocking issues remain in the reviewed scope."
+}

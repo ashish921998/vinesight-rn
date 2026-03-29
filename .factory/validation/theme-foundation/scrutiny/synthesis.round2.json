@@ -1,0 +1,44 @@
+{
+  "milestone": "theme-foundation",
+  "round": 2,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "npm --prefix \"/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185\" test -- --passWithNoTests",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "npm --prefix \"/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185\" run typecheck",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "npm --prefix \"/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185\" run lint",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "failedFeatures": ["fix-theme-foundation-scrutiny"]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "fix-theme-foundation-scrutiny",
+      "severity": "blocking",
+      "description": "The note palette fix is only partial. `src/styles/theme.ts` now defines `note`/`observation` as `#5C6D91`/`#7A8DAA`, but `src/constants/calculator-models.ts:296` and `src/types/task.ts:98` still hardcode the legacy note color `#738c7a`, so note-related UI does not consistently resolve through the required Cellar Ledger blue note palette."
+    },
+    {
+      "featureId": "fix-theme-foundation-scrutiny",
+      "severity": "blocking",
+      "description": "The bottom navigation still exposes the old tab IA in `app/(tabs)/_layout.tsx` (`tabs.dashboard`, `tabs.explore`, `tabs.workers`, `tabs.tools`, `tabs.aiAssistant`) instead of the requested `Home`, `Farms`, `Logs`, `AI`, `More` set on both Android and iOS."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [],
+  "rejectedObservations": [],
+  "previousRound": ".factory/validation/theme-foundation/scrutiny/synthesis.round1.json"
+}
