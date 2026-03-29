@@ -1,6 +1,7 @@
 /**
  * FarmCard Component
  * Card showing farm info with status, water balance, region
+ * Cellar Ledger design: mist-1 bg, stone-3 border, farm name 15px bold
  */
 
 import React from 'react';
@@ -37,17 +38,19 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
   const statusText = needsAttention
     ? t('farmCard.status.needsAttention')
     : t('farmCard.status.healthy');
-  const statusColor = needsAttention ? m3.colorScheme.error : m3.colorScheme.primary;
+  // Cellar Ledger colors
+  const statusColor = needsAttention ? colors.error : colors.primary[500];
   const statusBg = needsAttention
-    ? colorWithOpacity(m3.colorScheme.error, 0.12)
-    : colorWithOpacity(m3.colorScheme.primary, 0.12);
+    ? colorWithOpacity(colors.error, 0.12)
+    : colorWithOpacity(colors.primary[500], 0.12);
 
+  // Cellar Ledger: mist-1 bg, stone-3 border, 16px radius
   const cardStyle: ViewStyle = {
-    borderRadius: m3.shape.cornerLarge,
+    borderRadius: borderRadius.lg, // 16px
     padding: spacing[4],
-    backgroundColor: m3.surface.surfaceContainerLow,
+    backgroundColor: colors.surface[100], // mist-1
     borderWidth: 1,
-    borderColor: m3.colorScheme.outlineVariant,
+    borderColor: colors.surface[300], // stone-3
     overflow: 'hidden',
   };
 
@@ -58,12 +61,13 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
     marginBottom: spacing[3],
   };
 
+  // Cellar Ledger: Farm name bold 15px
   const nameStyle: TextStyle = {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.medium,
+    fontSize: 15, // explicit 15px
+    fontWeight: fontWeight.semibold, // bold (600)
     flex: 1,
     marginRight: spacing[2],
-    color: m3.colorScheme.onSurface,
+    color: colors.surface[900], // ink
   };
 
   const actionsStyle: ViewStyle = {
@@ -111,13 +115,10 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               }}
               style={({ pressed: actionPressed }) => [
                 actionButtonStyle,
-                { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12) },
+                { backgroundColor: colorWithOpacity(colors.primary[500], 0.12) },
                 actionPressed
                   ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.primary,
-                        0.12 + m3.stateLayerOpacity.pressed,
-                      ),
+                      backgroundColor: colorWithOpacity(colors.primary[500], 0.24),
                     }
                   : null,
               ]}
@@ -125,7 +126,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               accessibilityRole="button"
               accessibilityLabel={t('farmCard.a11y.editFarm', { name: farm.name })}
             >
-              <UiSymbol name="pencil" size={18} color={m3.colorScheme.primary} />
+              <UiSymbol name="pencil" size={18} color={colors.primary[500]} />
             </Pressable>
           )}
           {onDelete && (
@@ -136,13 +137,10 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               }}
               style={({ pressed: actionPressed }) => [
                 actionButtonStyle,
-                { backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12) },
+                { backgroundColor: colorWithOpacity(colors.error, 0.12) },
                 actionPressed
                   ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.error,
-                        0.12 + m3.stateLayerOpacity.pressed,
-                      ),
+                      backgroundColor: colorWithOpacity(colors.error, 0.24),
                     }
                   : null,
               ]}
@@ -150,7 +148,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               accessibilityRole="button"
               accessibilityLabel={t('farmCard.a11y.deleteFarm', { name: farm.name })}
             >
-              <UiSymbol name="trash" size={18} color={m3.colorScheme.error} />
+              <UiSymbol name="trash" size={18} color={colors.error} />
             </Pressable>
           )}
           <View style={statusBadgeStyle}>
@@ -168,42 +166,51 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
           marginBottom: spacing[4],
         }}
       >
+        {/* Cellar Ledger: variety 13px muted (bark color) */}
         {farm.crop_variety ? (
+          <Text
+            style={{
+              fontSize: 13, // 13px
+              color: colors.surface[500], // bark
+            }}
+            numberOfLines={1}
+          >
+            {farm.crop_variety}
+          </Text>
+        ) : (
+          <View />
+        )}
+        {/* Cellar Ledger: area badge pill with chevron right */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
           <View
             style={{
               paddingHorizontal: spacing[2],
               paddingVertical: spacing[1],
-              borderRadius: borderRadius.md,
-              backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+              borderRadius: borderRadius.full, // pill (999)
+              backgroundColor: colorWithOpacity(colors.primary[500], 0.12), // primary-tinted bg
             }}
           >
             <Text
               style={{
-                ...m3.typography.labelSmall,
-                fontWeight: fontWeight.bold,
-                textTransform: 'uppercase',
-                color: m3.colorScheme.primary,
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.semibold,
+                color: colors.primary[500],
               }}
               numberOfLines={1}
             >
-              {farm.crop_variety}
+              {farm.area != null
+                ? t('farmCard.area.acres', {
+                    value: formatNumber(farm.area, { maximumFractionDigits: 1 }),
+                  })
+                : t('farmCard.area.unknownAcres')}
             </Text>
           </View>
-        ) : (
-          <View />
-        )}
-        <Text
-          style={{
-            fontSize: fontSize.sm,
-            color: m3.colorScheme.onSurfaceVariant,
-          }}
-        >
-          {farm.area != null
-            ? t('farmCard.area.acres', {
-                value: formatNumber(farm.area, { maximumFractionDigits: 1 }),
-              })
-            : t('farmCard.area.unknownAcres')}
-        </Text>
+          <UiSymbol
+            name="chevron.right"
+            size={16}
+            color={colors.surface[400]} // stone-5
+          />
+        </View>
       </View>
 
       {/* Data Grid */}
@@ -212,11 +219,11 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
         <View
           style={{
             flex: 1,
-            borderRadius: m3.shape.cornerMedium,
+            borderRadius: borderRadius.md,
             padding: spacing[3],
-            backgroundColor: m3.surface.surfaceContainerHigh,
+            backgroundColor: colors.surface[200], // mist-2
             borderWidth: 1,
-            borderColor: m3.colorScheme.outlineVariant,
+            borderColor: colors.surface[300], // stone-3
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
@@ -233,10 +240,10 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
             <View>
               <Text
                 style={{
-                  ...m3.typography.labelSmall,
-                  fontWeight: fontWeight.bold,
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.semibold,
                   textTransform: 'uppercase',
-                  color: m3.colorScheme.onSurfaceVariant,
+                  color: colors.surface[500], // bark
                 }}
                 numberOfLines={1}
               >
@@ -246,7 +253,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: m3.colorScheme.onSurface,
+                  color: colors.surface[900], // ink
                 }}
               >
                 {farm.remaining_water != null
@@ -263,26 +270,26 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
         <View
           style={{
             flex: 1,
-            borderRadius: m3.shape.cornerMedium,
+            borderRadius: borderRadius.md,
             padding: spacing[3],
-            backgroundColor: m3.surface.surfaceContainerHigh,
+            backgroundColor: colors.surface[200], // mist-2
             borderWidth: 1,
-            borderColor: m3.colorScheme.outlineVariant,
+            borderColor: colors.surface[300], // stone-3
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
             <UiSymbol
               name="location.fill"
               size={12}
-              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+              color={colorWithOpacity(colors.surface[500], 0.7)} // bark
             />
             <View>
               <Text
                 style={{
-                  ...m3.typography.labelSmall,
-                  fontWeight: fontWeight.bold,
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.semibold,
                   textTransform: 'uppercase',
-                  color: m3.colorScheme.onSurfaceVariant,
+                  color: colors.surface[500], // bark
                 }}
                 numberOfLines={1}
               >

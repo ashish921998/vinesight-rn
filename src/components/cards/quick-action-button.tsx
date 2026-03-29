@@ -1,14 +1,15 @@
 /**
  * QuickActionButton Component
  * Circular icon button with label for dashboard quick actions
+ * Cellar Ledger design: 44x44 icon container with tinted bg
  */
 
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontWeight, fontSize } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3 } from '@/styles/use-theme';
+import { useThemeColors } from '@/styles/use-theme';
 
 interface QuickActionButtonProps {
   title: string;
@@ -18,31 +19,34 @@ interface QuickActionButtonProps {
 }
 
 export function QuickActionButton({ title, icon, color, onPress }: QuickActionButtonProps) {
-  const m3 = useM3();
+  const colors = useThemeColors();
+
   const containerStyle: ViewStyle = {
     alignItems: 'center',
-    minWidth: 72,
+    minWidth: 68,
     paddingVertical: spacing[2],
     paddingHorizontal: spacing[2],
-    borderRadius: m3.shape.cornerMedium,
+    borderRadius: borderRadius.md, // 12px
     overflow: 'hidden',
   };
 
+  // Cellar Ledger: Icon container 44x44, borderRadius 12, 12% opacity category-tinted bg
   const iconContainerStyle: ViewStyle = {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.full,
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.md, // 12px
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[2],
     backgroundColor: colorWithOpacity(color, 0.12),
   };
 
+  // Cellar Ledger: Label 12px/500, bark color
   const textStyle: TextStyle = {
-    ...m3.typography.labelSmall,
-    fontWeight: fontWeight.medium,
+    fontSize: fontSize.xs, // 12px
+    fontWeight: fontWeight.medium, // 500
     textAlign: 'center',
-    color: m3.colorScheme.onSurface,
+    color: colors.surface[500], // bark
   };
 
   return (
@@ -66,7 +70,7 @@ export function QuickActionButton({ title, icon, color, onPress }: QuickActionBu
               StyleSheet.absoluteFillObject,
               {
                 backgroundColor: pressed
-                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  ? colorWithOpacity(colors.surface[900], 0.12)
                   : 'transparent',
               },
             ]}

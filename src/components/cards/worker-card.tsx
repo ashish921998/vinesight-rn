@@ -1,6 +1,7 @@
 /**
  * WorkerCard Component
  * Displays a single worker with avatar, rate, and advance balance
+ * Cellar Ledger design: 44px circular avatar, status dot, call button
  */
 
 import React from 'react';
@@ -12,7 +13,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
 import { useCurrency } from '@/hooks/use-currency';
-import { useM3 } from '@/styles/use-theme';
+import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
 
 interface WorkerCardProps {
   worker: Worker;
@@ -23,8 +24,13 @@ interface WorkerCardProps {
 
 export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProps) {
   const m3 = useM3();
+  const colors = useThemeColors();
+  const isDark = useIsDark();
   const { t } = useTranslation();
   const preferredCurrency = useCurrency();
+
+  // Labour category color for avatar (#7A5E8E light, #9A7EAE dark)
+  const labourColor = isDark ? '#9A7EAE' : '#7A5E8E';
 
   const initial = worker.name.charAt(0).toUpperCase();
   const formattedRate = formatCurrency(worker.daily_rate, preferredCurrency, {
@@ -36,25 +42,27 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
     maximumFractionDigits: 0,
   });
 
+  // Cellar Ledger: Card mist-1 bg, stone-3 border, 16px radius
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: m3.surface.surfaceContainerLow,
-    borderRadius: m3.shape.cornerLarge,
+    backgroundColor: colors.surface[100], // mist-1
+    borderRadius: borderRadius.lg, // 16px
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderWidth: 1,
-    borderColor: m3.colorScheme.outlineVariant,
+    borderColor: colors.surface[300], // stone-3
     overflow: 'hidden',
   };
 
+  // Cellar Ledger: 44px circular avatar with labour color bg, white initials
   const avatarStyle: ViewStyle = {
-    width: 48,
-    height: 48,
-    minWidth: 48,
-    minHeight: 48,
+    width: 44,
+    height: 44,
+    minWidth: 44,
+    minHeight: 44,
     borderRadius: borderRadius.full,
-    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
+    backgroundColor: labourColor,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing[3],
@@ -63,17 +71,18 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   const avatarTextStyle: TextStyle = {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: m3.colorScheme.primary,
+    color: '#FFFFFF', // white initials
   };
 
   const infoContainerStyle: ViewStyle = {
     flex: 1,
   };
 
+  // Cellar Ledger: Farm name bold 15px - using name for worker
   const nameTextStyle: TextStyle = {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold,
-    color: m3.colorScheme.onSurface,
+    fontSize: 15, // 15px
+    fontWeight: fontWeight.semibold, // bold
+    color: colors.surface[900], // ink
   };
 
   const rateContainerStyle: ViewStyle = {
@@ -82,15 +91,16 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
     marginTop: spacing[1],
   };
 
+  // Cellar Ledger: secondary text 12px/bark
   const rateTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: m3.colorScheme.onSurfaceVariant,
+    color: colors.surface[500], // bark
     marginLeft: spacing[1],
   };
 
   const dayTextStyle: TextStyle = {
     fontSize: fontSize.xs,
-    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
+    color: colors.surface[400], // stone-5
   };
 
   const advanceContainerStyle: ViewStyle = {
@@ -101,8 +111,27 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   const advanceTextStyle: TextStyle = {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: m3.colorScheme.warning,
+    color: colors.warning, // warning
     marginLeft: spacing[1],
+  };
+
+  // Cellar Ledger: status dot (7px)
+  const statusDotStyle: ViewStyle = {
+    width: 7,
+    height: 7,
+    borderRadius: borderRadius.full,
+    backgroundColor: worker.advance_balance > 0 ? colors.warning : colors.success, // green for active/healthy, amber for advance due
+    marginRight: spacing[2],
+  };
+
+  // Cellar Ledger: call button (36px, borderRadius 12, primary-tinted bg)
+  const callButtonStyle: ViewStyle = {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md, // 12px
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorWithOpacity(colors.primary[500], 0.12), // primary-tinted bg
   };
 
   const actionsContainerStyle: ViewStyle = {
@@ -128,14 +157,18 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
       </View>
 
       <View style={infoContainerStyle}>
-        <Text style={nameTextStyle} numberOfLines={1}>
-          {worker.name}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/* Cellar Ledger: status dot (7px) */}
+          <View style={statusDotStyle} />
+          <Text style={nameTextStyle} numberOfLines={1}>
+            {worker.name}
+          </Text>
+        </View>
         <View style={rateContainerStyle}>
           <CardSymbol
             name="dollarsign.circle"
             size={12}
-            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)}
+            color={colors.surface[400]} // stone-5
           />
           <Text style={rateTextStyle} numberOfLines={1}>
             {formattedRate}
@@ -144,9 +177,21 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
         </View>
       </View>
 
+      {/* Cellar Ledger: call button (36px, borderRadius 12, primary-tinted bg) */}
+      <Pressable
+        style={({ pressed: callPressed }) => [
+          callButtonStyle,
+          callPressed ? { backgroundColor: colorWithOpacity(colors.primary[500], 0.24) } : null,
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={t('workers.workerCard.callA11y', { name: worker.name })}
+      >
+        <CardSymbol name="phone.fill" size={16} color={colors.primary[500]} />
+      </Pressable>
+
       {worker.advance_balance > 0 && (
-        <View style={advanceContainerStyle}>
-          <CardSymbol name="arrow.up.circle.fill" size={12} color={m3.colorScheme.warning} />
+        <View style={[advanceContainerStyle, { marginLeft: spacing[2] }]}>
+          <CardSymbol name="arrow.up.circle.fill" size={12} color={colors.warning} />
           <Text style={advanceTextStyle}>{formattedAdvance}</Text>
         </View>
       )}
