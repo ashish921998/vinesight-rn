@@ -1,0 +1,23 @@
+.factory/validation/core-screens/scrutiny/synthesis.json
+  ea3db7cd29a39df5 3,8,13,18,23-24,26,30,32,35,38-40,44-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "0ec487b2c1993173d74d251cfb13092f553adaa1",
+  "prompts": {
+    "ea3db7cd29a39df5": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "9334de8a-aad7-4758-9a36-b56d5c351269",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 41,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    }
+  }
+}
