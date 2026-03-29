@@ -1,0 +1,27 @@
+src/features/onboarding/components/onboarding-button.tsx
+  ef8f25a3c11b02cd 10,65,84-86,94,101
+src/features/onboarding/slides/hero-slide.tsx
+  ef8f25a3c11b02cd 131-142,145
+src/features/onboarding/components/page-indicator.tsx
+  ef8f25a3c11b02cd 4,14-15,24-25,37,51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "54c827c2057de35df1a5657b78b573cdbb278de4",
+  "prompts": {
+    "ef8f25a3c11b02cd": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7757bf94-c292-4455-9653-0427a2211dac",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 16,
+      "accepted_lines": 28,
+      "overriden_lines": 0
+    }
+  }
+}
