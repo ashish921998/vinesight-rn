@@ -1,0 +1,184 @@
+import { supabase } from '@/lib/supabase';
+import { telemetry } from '@/services/telemetry';
+import {
+  getErrorMessage,
+  getAuthErrorMessage,
+  setSentryUser,
+  clearQueryCache,
+} from './auth-helpers';
+import type { SetState, GetState } from './auth-types';
+
+export const createAccountActions = (set: SetState, get: GetState) => ({
+  signOut: async () => {
+    set({ errorMessage: null, isLoading: true });
+    telemetry.capture('auth_sign_out');
+    telemetry.capture('user_logged_out');
+
+    try {
+      if (__DEV__) {
+        console.log('Signing out...');
+      }
+
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) throw error;
+
+      if (__DEV__) {
+        console.log('Sign out successful, clearing state');
+      }
+
+      setSentryUser(null);
+
+      set({
+        user: null,
+        session: null,
+        isAuthenticated: false,
+        isLoading: false,
+        pendingOTPEmail: null,
+        pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
+        otpSentSuccessfully: false,
+        pendingOTPType: 'email',
+        needsProfileCompletion: false,
+        phoneLinkingPending: false,
+        phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
+      });
+      telemetry.reset();
+      await clearQueryCache('sign out success path');
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Sign out error:', error);
+      }
+
+      set({
+        isLoading: false,
+        errorMessage: getAuthErrorMessage(error, 'Failed to sign out'),
+      });
+    }
+  },
+
+  deleteAccount: async (deleteReason: string) => {
+    set({ errorMessage: null, isLoading: true });
+
+    const currentUser = get().user;
+    const userId = currentUser?.id;
+    const userEmail = currentUser?.email;
+
+    try {
+      telemetry.capture('account_deletion_requested', {
+        has_reason: Boolean(deleteReason?.trim()),
+      });
+
+      if (__DEV__) {
+        console.log('Logging deletion request...');
+      }
+
+      if (userId) {
+        const maskEmail = (email: string) => {
+          const [localPart, domain] = email.split('@');
+          if (localPart.length <= 2) {
+            return `${localPart[0]}***@${domain}`;
+          }
+          return `${localPart[0]}${localPart[1]}***@${domain}`;
+        };
+        console.warn('[DELETE ACCOUNT REQUEST]', {
+          user_id: userId,
+          user_email: userEmail ? maskEmail(userEmail) : undefined,
+          delete_reason: deleteReason || 'Not provided',
+          status: 'pending',
+          requested_at: new Date().toISOString(),
+        });
+      }
+
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) throw error;
+
+      setSentryUser(null);
+
+      set({
+        user: null,
+        session: null,
+        isAuthenticated: false,
+        isLoading: false,
+        pendingOTPEmail: null,
+        pendingOTPPhone: null,
+        pendingOTPPhoneName: null,
+        pendingOTPPhoneMode: null,
+        otpSentSuccessfully: false,
+        pendingOTPType: 'email',
+        needsProfileCompletion: false,
+        phoneLinkingPending: false,
+        phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
+      });
+      await clearQueryCache('delete account');
+      telemetry.capture('account_deletion_succeeded');
+      try {
+        await telemetry.flush();
+      } catch (err) {
+        if (__DEV__) {
+          console.error('[Telemetry] Failed to flush account deletion event:', err);
+        }
+      }
+      telemetry.reset();
+    } catch (error) {
+      telemetry.capture('account_deletion_failed', {
+        message: getErrorMessage(error, 'Failed to delete account'),
+      });
+      if (__DEV__) {
+        console.error('Delete account error:', error);
+      }
+
+      set({
+        isLoading: false,
+        errorMessage: getAuthErrorMessage(error, 'Failed to delete account', 'delete_account'),
+      });
+
+      throw error;
+    }
+  },
+
+  updateUserCountry: async (country: string) => {
+    if (!country) {
+      set({ errorMessage: 'Country cannot be empty' });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { country },
+      });
+
+      if (error) throw error;
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      set({ user });
+    } catch (error: unknown) {
+      set({
+        errorMessage: getAuthErrorMessage(error, 'Failed to update country', 'profile_update'),
+      });
+    }
+  },
+
+  updateUserAreaUnit: async (areaUnit: 'hectares' | 'acres') => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { area_unit: areaUnit },
+      });
+
+      if (error) throw error;
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      set({ user });
+    } catch (error: unknown) {
+      set({
+        errorMessage: getAuthErrorMessage(error, 'Failed to update area unit', 'profile_update'),
+      });
+    }
+  },
+});
