@@ -147,6 +147,7 @@ export default function DashboardScreen() {
     if (item.type === 'overdueTask') return t('dashboard.needsAttention.actions.reviewTasks');
     if (item.type === 'noRecentLogs') return t('dashboard.needsAttention.actions.logNow');
     if (item.type === 'phiDeadline') return t('dashboard.needsAttention.actions.reviewSpraySafety');
+    if (item.type === 'lowWaterLevel') return t('dashboard.needsAttention.actions.openFarm');
     return t('dashboard.needsAttention.actions.openFarm');
   };
 
@@ -237,6 +238,11 @@ export default function DashboardScreen() {
           farmId: String(item.farmId),
         },
       });
+      return;
+    }
+
+    if (item.type === 'lowWaterLevel') {
+      router.push(`/farm/${item.farmId}`);
       return;
     }
 

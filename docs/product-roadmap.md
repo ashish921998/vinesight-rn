@@ -18,11 +18,11 @@ The app already has broad feature coverage. The next phase should improve focus,
 
 ## Principles
 
-- Prefer workflow compression over feature expansion.
-- Prefer exceptions and actions over raw counts.
-- Prefer farm-scoped experiences over global generic screens.
-- Prefer trustable assistant outputs over broad assistant behavior.
-- Prefer offline-safe capture for field work.
+- Compress workflows rather than expanding features.
+- Surface exceptions and actions, not raw counts.
+- Farm-scoped experiences over global generic screens.
+- Trustable assistant outputs over broad behavior.
+- Offline-safe capture for field work.
 
 ## Phase 1: Activation And Daily Triage
 
@@ -214,7 +214,7 @@ Acceptance criteria:
 ### Epic 6: Assistant Trust Layer
 
 Problem:
-An assistant that is powerful but opaque is hard to trust in operational settings.
+An assistant that is powerful but opaque is difficult to trust in operational settings.
 
 Goal:
 Make assistant outputs feel grounded, scoped, and safe to act on.
