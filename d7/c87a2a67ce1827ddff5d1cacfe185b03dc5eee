@@ -1,0 +1,23 @@
+src/styles/theme.ts
+  e6a7889758c8a096 3,6,33,35-44,47,49-58,61,65,72-76,80,83,85-90,92,95,98,101-104,116-117,121-186,188-191,202,238-241,243-245,354-358,362,364-365,367,369-370,372,374-375,379,385-386,389,391,393-394,396-398,404,426,428,430-438,441-448,450,452,472,477,479,499
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "d7c87a2a67ce1827ddff5d1cacfe185b03dc5eee",
+  "prompts": {
+    "e6a7889758c8a096": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3d17076c-cdb3-4dce-8a7a-ec3906774894",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 179,
+      "total_deletions": 96,
+      "accepted_lines": 177,
+      "overriden_lines": 0
+    }
+  }
+}
