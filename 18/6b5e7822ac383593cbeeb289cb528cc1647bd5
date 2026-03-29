@@ -1,0 +1,76 @@
+src/components/screens/settings/AccountSection.tsx
+  fecb7355094cee7b 1-107
+src/components/screens/settings/DeleteAccountModal.tsx
+  5ee6ca423face331 1-838
+app/(tabs)/settings.tsx
+  fecb7355094cee7b 1,3,19-20,23-29,111,114-115,117-118,134,148,150,185,191,199,206-208,210-215,257,287,290,293,296,305,308-309,312,320,322,325,359-395,436-445,447-448,450-456
+src/components/screens/settings/PreferencesSection.tsx
+  fecb7355094cee7b 1-315
+src/stores/auth-phone.ts
+  fecb7355094cee7b 1-424
+src/stores/auth-social.ts
+  fecb7355094cee7b 1-152
+src/stores/auth-store.ts
+  fecb7355094cee7b 5-15,17,34-37,130-133,136
+src/stores/auth-helpers.ts
+  fecb7355094cee7b 1-267
+src/components/screens/settings/index.ts
+  fecb7355094cee7b 1-6
+src/stores/auth-account.ts
+  fecb7355094cee7b 1-184
+src/components/screens/settings/ProfileSection.tsx
+  fecb7355094cee7b 1-260
+src/components/screens/settings/LinkPhoneModal.tsx
+  fecb7355094cee7b 1,152-153,159,166-170,173-177,179-181,183,190
+  ff027c04fd4f4b27 2-151,154-158,160-165,171-172,178,182,184-189,191-576
+src/stores/auth-email.ts
+  fecb7355094cee7b 1-311
+src/stores/auth-types.ts
+  fecb7355094cee7b 1-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "186b5e7822ac383593cbeeb289cb528cc1647bd5",
+  "prompts": {
+    "5ee6ca423face331": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "84a55d6e-1171-4584-b4ff-2be9b735faf4",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 838,
+      "total_deletions": 0,
+      "accepted_lines": 838,
+      "overriden_lines": 0
+    },
+    "fecb7355094cee7b": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4d1e403c-d480-4c18-b835-5d8681d04c9c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 2693,
+      "total_deletions": 3853,
+      "accepted_lines": 2668,
+      "overriden_lines": 0
+    },
+    "ff027c04fd4f4b27": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3f807dd7-2ccc-45e6-8d99-1a17b6e64408",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 572,
+      "total_deletions": 0,
+      "accepted_lines": 557,
+      "overriden_lines": 0
+    }
+  }
+}
