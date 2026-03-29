@@ -164,6 +164,7 @@ export const mr = {
     },
     pruning: {
       daysShort: '{{count}}दि',
+      daysPruned: 'छाटणीचे दिवस',
     },
     weather: {
       current: 'सध्याचे $t(glossary.weather)',

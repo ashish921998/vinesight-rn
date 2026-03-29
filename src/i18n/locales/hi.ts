@@ -163,6 +163,7 @@ export const hi = {
     },
     pruning: {
       daysShort: '{{count}}दि',
+      daysPruned: 'छंटाई के दिन',
     },
     weather: {
       current: 'वर्तमान मौसम',
@@ -180,6 +181,7 @@ export const hi = {
       noData: 'अभी तक कोई PHI आधारित स्प्रे रिकॉर्ड नहीं है।',
       safeDate: '{{date}} से सुरक्षित',
       inlineDate: 'सुरक्षित कटाई तिथि: {{date}}',
+      inlineTitle: 'सुरक्षित कटाई:',
       blockedBy: '{{reason}} के कारण अवरुद्ध',
       ctaSetTarget: 'लक्ष्य तिथि सेट करें',
       ctaOpenChecker: 'Safe-to-spray चेकर खोलें',
@@ -571,6 +573,11 @@ export const hi = {
     stats: {
       totalFarms: 'कुल खेत',
       totalArea: 'कुल क्षेत्रफल',
+    },
+    summary: {
+      count_one: '{{count}} खेत',
+      count_other: '{{count}} खेत',
+      area: '{{value}} एकड़ कुल',
     },
   },
 
@@ -1888,6 +1895,13 @@ export const hi = {
       afternoon: 'शुभ दोपहर, {{name}}',
       evening: 'शुभ संध्या, {{name}}',
       night: 'शुभ रात्रि, {{name}}',
+    },
+    hero: {
+      today: 'आज',
+      allClear: 'सब ठीक',
+      attentionNeeded: 'ध्यान देने की जरूरत',
+      alertCount_one: '{{count}} अलर्ट',
+      alertCount_other: '{{count}} अलर्ट',
     },
     stats: {
       farms: 'खेत',
