@@ -34,6 +34,7 @@ export const hi = {
     clearAll: 'सभी साफ़ करें',
     today: 'आज',
     yesterday: 'कल',
+    view: 'देखें',
     units: {
       hours: 'घंटे',
       days: 'दिन',
@@ -156,6 +157,9 @@ export const hi = {
     header: {
       areaAcres: '{{value}} एकड़',
       areaAcresUnknown: '— एकड़',
+      targetLabel: 'लक्ष्य:',
+      pickNewDate: 'नई तिथि चुनें',
+      clearDate: 'तिथि हटाएं',
     },
     pruning: {
       daysShort: '{{count}}दि',
@@ -180,6 +184,9 @@ export const hi = {
       ctaSetTarget: 'लक्ष्य तिथि सेट करें',
       ctaOpenChecker: 'Safe-to-spray चेकर खोलें',
       saveTarget: 'लक्ष्य तिथि सहेजें',
+    },
+    riskBlock: {
+      urgentTasks: '{{count}} अत्यावश्यक कार्य',
     },
     water: {
       noIrrigationLoggedYet: 'अभी तक कोई सिंचाई लॉग नहीं की गई',

@@ -34,6 +34,7 @@ export const mr = {
     clearAll: 'सर्व साफ करा',
     today: 'आज',
     yesterday: 'काल',
+    view: 'पहा',
     units: {
       hours: 'तास',
       days: 'दिवस',
@@ -157,6 +158,9 @@ export const mr = {
     header: {
       areaAcres: '{{value}} एकर',
       areaAcresUnknown: '— एकर',
+      targetLabel: 'लक्ष्य:',
+      pickNewDate: 'नवीन दिनांक निवडा',
+      clearDate: 'दिनांक साफ करा',
     },
     pruning: {
       daysShort: '{{count}}दि',
@@ -181,6 +185,9 @@ export const mr = {
       ctaSetTarget: 'लक्ष्य दिनांक सेट करा',
       ctaOpenChecker: 'Safe-to-spray तपासा',
       saveTarget: 'लक्ष्य दिनांक जतन करा',
+    },
+    riskBlock: {
+      urgentTasks: '{{count}} तातडीचे कार्य',
     },
     water: {
       noIrrigationLoggedYet: 'अजून $t(glossary.irrigation) नोंदवलेले नाही',

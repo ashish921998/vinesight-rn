@@ -34,6 +34,7 @@ export const en = {
     clearAll: 'Clear all',
     today: 'Today',
     yesterday: 'Yesterday',
+    view: 'View',
     units: {
       hours: 'hours',
       days: 'days',
@@ -157,6 +158,8 @@ export const en = {
       areaAcres: '{{value}} acres',
       areaAcresUnknown: '— acres',
       targetLabel: 'Target:',
+      pickNewDate: 'Pick New Date',
+      clearDate: 'Clear Date',
     },
     pruning: {
       daysShort: '{{count}}d',
@@ -183,6 +186,9 @@ export const en = {
       ctaSetTarget: 'Set target date',
       ctaOpenChecker: 'Open safe-to-spray checker',
       saveTarget: 'Save target date',
+    },
+    riskBlock: {
+      urgentTasks: '{{count}} urgent task{{count, plural, =1 {} other {s}}}',
     },
     water: {
       noIrrigationLoggedYet: 'No irrigation logged yet',

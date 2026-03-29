@@ -400,6 +400,24 @@ export default function FarmDetailScreen() {
     return formatLocalDate(new Date()) < formatLocalDate(minimumSeasonStartDate);
   }, [activeSeasonRecord, minimumSeasonStartDate]);
 
+  // Compute urgent tasks (overdue or due today)
+  const urgentTasks = useMemo(() => {
+    if (!tasks) return [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = formatLocalDate(today);
+    return tasks.filter((task) => {
+      if (task.completed) return false;
+      if (!task.due_date) return false;
+      const taskDate = parseDbDateToLocalDate(task.due_date);
+      if (!taskDate) return false;
+      taskDate.setHours(0, 0, 0, 0);
+      const taskDateStr = formatLocalDate(taskDate);
+      // Overdue (before today) or due today
+      return taskDateStr <= todayStr;
+    });
+  }, [tasks]);
+
   // "Days after pruning" should always be based on the pruning date.
   const daysSincePruning = useMemo(() => {
     if (!farm?.date_of_pruning) return null;
@@ -827,7 +845,26 @@ export default function FarmDetailScreen() {
       setIsEditingActiveSeasonTargetIOS(true);
       return;
     }
-    setShowActiveSeasonTargetPicker(true);
+    // Android: Show Alert with options to Pick New Date or Clear Date
+    const hasExistingDate = Boolean(activeSeasonRecord?.target_harvest_date);
+    if (hasExistingDate) {
+      Alert.alert(t('farmDetails.header.targetLabel'), undefined, [
+        {
+          text: t('farmDetails.header.pickNewDate'),
+          onPress: () => setShowActiveSeasonTargetPicker(true),
+        },
+        {
+          text: t('farmDetails.header.clearDate'),
+          style: 'destructive',
+          onPress: () => {
+            void saveActiveSeasonTargetHarvestDate(null);
+          },
+        },
+        { text: t('common.cancel'), style: 'cancel' },
+      ]);
+    } else {
+      setShowActiveSeasonTargetPicker(true);
+    }
   };
 
   const _clearActiveSeasonTargetHarvestDate = () => {
@@ -1746,6 +1783,57 @@ export default function FarmDetailScreen() {
                   </Text>
                 </View>
               ) : null}
+
+              {/* Urgent Tasks Risk Block */}
+              {urgentTasks.length > 0 && (
+                <View
+                  style={{
+                    marginTop: spacing[2],
+                    backgroundColor: 'rgba(0,0,0,0.15)',
+                    borderRadius: 16,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
+                  <UiSymbol
+                    name="exclamationmark.triangle.fill"
+                    size={14}
+                    color={colorWithOpacity('#ffffff', 0.9)}
+                  />
+                  <Text
+                    style={{
+                      marginLeft: spacing[2],
+                      color: colorWithOpacity('#ffffff', 0.9),
+                      fontSize: 12,
+                      fontWeight: fontWeight.medium,
+                      flex: 1,
+                    }}
+                  >
+                    {t('farmDetails.riskBlock.urgentTasks', { count: urgentTasks.length })}
+                  </Text>
+                  <Pressable
+                    onPress={() => setSelectedTab('tasks')}
+                    style={{
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: 2,
+                      backgroundColor: colorWithOpacity('#ffffff', 0.2),
+                      borderRadius: borderRadius.full,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: colorWithOpacity('#ffffff', 0.95),
+                        fontSize: 11,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {t('common.view')}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
 
             {/* Season Metrics Row */}
