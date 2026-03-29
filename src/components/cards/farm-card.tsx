@@ -47,7 +47,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
   // Cellar Ledger: mist-1 bg, stone-3 border, 16px radius
   // Note: 3px left strip applied via absolute positioned View with primary color
   const cardStyle: ViewStyle = {
-    borderRadius: borderRadius.lg, // 16px
+    borderRadius: borderRadius.md, // 16px
     padding: spacing[4],
     paddingLeft: spacing[4] + 3, // extra padding for left strip
     backgroundColor: colors.surface[100], // mist-1
@@ -112,8 +112,8 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
           bottom: 0,
           width: 3,
           backgroundColor: colors.primary[500],
-          borderTopLeftRadius: borderRadius.lg,
-          borderBottomLeftRadius: borderRadius.lg,
+          borderTopLeftRadius: borderRadius.md,
+          borderBottomLeftRadius: borderRadius.md,
         }}
       />
       {/* Header: Name & Status */}
