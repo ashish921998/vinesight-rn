@@ -1,0 +1,25 @@
+src/i18n/locales/mr.ts
+  94253656e4836b46 167
+src/i18n/locales/hi.ts
+  94253656e4836b46 166,184,577-581,1899-1905
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "a6487fb0b858548a85063a9c8d8facba3a4ee58e",
+  "prompts": {
+    "94253656e4836b46": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "96c589e1-001b-441a-b4ae-a7ae70e894a4",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 0,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    }
+  }
+}
