@@ -15,7 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useFarms, useDeleteFarm, useFabBottomPosition, isAndroid } from '@/hooks';
+import { useFarms, useDeleteFarm, useFabBottomPosition } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
@@ -33,6 +33,7 @@ interface SearchHeaderProps {
   onSearchBlur: () => void;
   filteredFarms: Farm[];
   farms: Farm[] | undefined;
+  onAddFarm: () => void;
 }
 
 const SearchHeader = React.memo<SearchHeaderProps>(
@@ -44,6 +45,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
     onSearchBlur,
     filteredFarms,
     farms,
+    onAddFarm,
   }) => {
     const m3 = useM3();
     const { t } = useTranslation();
@@ -66,181 +68,149 @@ const SearchHeader = React.memo<SearchHeaderProps>(
       color: m3.colorScheme.onSurface,
     };
 
+    // Header area matching wireframe-farms-list.html
+    const showSearchBar = searchQuery.trim() || isSearchFocused;
+
     return (
       <View
         style={{
-          paddingHorizontal: spacing[4],
-          paddingBottom: spacing[4],
+          paddingHorizontal: spacing[5],
+          paddingBottom: spacing[3],
         }}
       >
-        {/* Search Bar */}
-        <View style={searchBarStyle}>
-          <SymbolIcon
-            name="magnifyingglass"
-            size={20}
-            color={
-              isSearchFocused
-                ? m3.colorScheme.primary
-                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
-            }
-          />
-          <TextInput
-            style={searchInputStyle}
-            placeholder={t('farms.search.placeholder')}
-            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-            value={searchQuery}
-            onChangeText={onSearchChange}
-            onFocus={onSearchFocus}
-            onBlur={onSearchBlur}
-            returnKeyType="search"
-            accessibilityRole="search"
-            accessibilityLabel={t('farms.search.placeholder')}
-          />
-          {searchQuery.length > 0 && (
+        {/* Header: Title + Actions */}
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingTop: spacing[2],
+            paddingBottom: spacing[3],
+          }}
+        >
+          {/* Screen Title */}
+          <Text
+            style={{
+              fontSize: 26,
+              fontWeight: fontWeight.bold,
+              color: m3.colorScheme.onSurface,
+              lineHeight: 32,
+            }}
+          >
+            {t('farms.title', { defaultValue: 'Farms' })}
+          </Text>
+
+          {/* Header Actions: Search + Add */}
+          <View style={{ flexDirection: 'row', gap: spacing[3] }}>
+            {/* Search Icon Button */}
             <Pressable
-              onPress={() => onSearchChange('')}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: borderRadius.sm,
+                borderWidth: 1,
+                borderColor: m3.colorScheme.outlineVariant,
+                backgroundColor: m3.surface.surfaceContainerLow,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={onSearchFocus}
               accessibilityRole="button"
-              accessibilityLabel={t('common.clearSearch')}
+              accessibilityLabel={t('farms.search.placeholder')}
             >
               <SymbolIcon
-                name="xmark.circle.fill"
-                size={20}
+                name="magnifyingglass"
+                size={18}
                 color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
               />
             </Pressable>
-          )}
+
+            {/* Add Farm Icon Button */}
+            <Pressable
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: borderRadius.sm,
+                backgroundColor: m3.colorScheme.primary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={onAddFarm}
+              accessibilityRole="button"
+              accessibilityLabel={t('farms.addFarm')}
+            >
+              <SymbolIcon name="plus" size={20} color={m3.colorScheme.onPrimary} />
+            </Pressable>
+          </View>
         </View>
 
-        {/* Results Count */}
+        {/* Summary Line */}
+        {farms && farms.length > 0 && !showSearchBar && (
+          <Text
+            style={{
+              fontSize: 13,
+              color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
+              fontWeight: fontWeight.medium,
+              lineHeight: 16,
+              paddingBottom: spacing[3],
+            }}
+          >
+            {farms.length} farms · {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}{' '}
+            acres total
+          </Text>
+        )}
+
+        {/* Search Bar (shown when focused or has query) */}
+        {showSearchBar && (
+          <View style={[searchBarStyle, { marginBottom: spacing[3] }]}>
+            <SymbolIcon
+              name="magnifyingglass"
+              size={20}
+              color={
+                isSearchFocused
+                  ? m3.colorScheme.primary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+              }
+            />
+            <TextInput
+              style={searchInputStyle}
+              placeholder={t('farms.search.placeholder')}
+              placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+              value={searchQuery}
+              onChangeText={onSearchChange}
+              onFocus={onSearchFocus}
+              onBlur={onSearchBlur}
+              returnKeyType="search"
+              accessibilityRole="search"
+              accessibilityLabel={t('farms.search.placeholder')}
+            />
+            {searchQuery.length > 0 && (
+              <Pressable
+                onPress={() => onSearchChange('')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.clearSearch')}
+              >
+                <SymbolIcon
+                  name="xmark.circle.fill"
+                  size={20}
+                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                />
+              </Pressable>
+            )}
+          </View>
+        )}
+
+        {/* Results Count when searching */}
         {searchQuery.trim() && (
           <Text
             style={{
               fontSize: fontSize.sm,
-              marginTop: spacing[3],
               color: m3.colorScheme.onSurfaceVariant,
             }}
           >
             {t('farms.search.found', { count: filteredFarms.length })}
           </Text>
-        )}
-
-        {/* Quick Stats */}
-        {!searchQuery.trim() && farms && farms.length > 0 && (
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: spacing[4],
-              gap: spacing[3],
-            }}
-          >
-            <View
-              style={{
-                flex: 1,
-                borderRadius: borderRadius.xl,
-                borderCurve: 'continuous',
-                minHeight: 72,
-                paddingHorizontal: spacing[4],
-                paddingVertical: spacing[3],
-                justifyContent: 'center',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                borderWidth: 1,
-                borderColor: m3.colorScheme.outlineVariant,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: borderRadius.full,
-                    borderCurve: 'continuous',
-                    overflow: 'hidden',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                  }}
-                >
-                  <SymbolIcon name="leaf.fill" size={16} color={m3.colorScheme.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      color: m3.colorScheme.onSurface,
-                      fontSize: fontSize.lg,
-                      fontWeight: fontWeight.bold,
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    {farms.length}
-                  </Text>
-                  <Text
-                    style={{
-                      color: m3.colorScheme.onSurfaceVariant,
-                      ...m3.typography.labelSmall,
-                    }}
-                  >
-                    {t('farms.stats.totalFarms')}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            <View
-              style={{
-                flex: 1,
-                borderRadius: borderRadius.xl,
-                borderCurve: 'continuous',
-                minHeight: 72,
-                paddingHorizontal: spacing[4],
-                paddingVertical: spacing[3],
-                justifyContent: 'center',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                borderWidth: 1,
-                borderColor: m3.colorScheme.outlineVariant,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: borderRadius.full,
-                    borderCurve: 'continuous',
-                    overflow: 'hidden',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: m3.surface.surfaceContainerHigh,
-                  }}
-                >
-                  <SymbolIcon
-                    name="square.grid.2x2"
-                    size={18}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      color: m3.colorScheme.onSurface,
-                      fontSize: fontSize.lg,
-                      fontWeight: fontWeight.bold,
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}
-                  </Text>
-                  <Text
-                    style={{
-                      color: m3.colorScheme.onSurfaceVariant,
-                      ...m3.typography.labelSmall,
-                    }}
-                  >
-                    {t('farms.stats.totalArea')}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
         )}
       </View>
     );
@@ -520,11 +490,8 @@ export default function FarmsScreen() {
     );
   };
 
-  const showFab = isAndroid && (farms?.length || 0) > 0;
-  const listBottomPadding = Math.max(
-    spacing[16] + (isAndroid ? 16 : 0),
-    (showFab ? fabBottom + 56 : 0) + spacing[8],
-  );
+  const showFab = (farms?.length || 0) > 0;
+  const listBottomPadding = Math.max(spacing[16], (showFab ? fabBottom + 56 : 0) + spacing[8]);
 
   return (
     <View
@@ -551,6 +518,7 @@ export default function FarmsScreen() {
             onSearchBlur={handleSearchBlur}
             filteredFarms={filteredFarms}
             farms={farms}
+            onAddFarm={handleAddFarm}
           />
         }
         ListEmptyComponent={renderEmpty}
