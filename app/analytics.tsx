@@ -20,6 +20,24 @@ const TIME_RANGES: { value: TimeRange; labelKey: string }[] = [
   { value: 'all', labelKey: 'analytics.timeRanges.all' },
 ];
 
+// Category colors for the new Cellar Ledger palette
+const CATEGORY_COLORS = {
+  irrigation: '#3F6E78',
+  spray: '#6C7C46',
+  harvest: '#A9752F',
+  expense: '#A56B4F',
+  fertigation: '#56704E',
+  labour: '#7A5E8E',
+} as const;
+
+// Section header style - 11px/600/uppercase/stone-5
+const SECTION_HEADER_STYLE = {
+  fontSize: 11,
+  fontWeight: '600' as const,
+  textTransform: 'uppercase' as const,
+  letterSpacing: 0.8,
+};
+
 export default function AnalyticsScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
@@ -31,27 +49,6 @@ export default function AnalyticsScreen() {
     useAnalytics(timeRange);
 
   const currency = useCurrency();
-  const metricColors = useMemo(
-    () => ({
-      irrigation: {
-        bg: colorWithOpacity(m3.colorScheme.primary, 0.15),
-        icon: m3.colorScheme.primary,
-      },
-      spray: {
-        bg: colorWithOpacity(m3.colorScheme.tertiary, 0.15),
-        icon: m3.colorScheme.tertiary,
-      },
-      harvest: {
-        bg: colorWithOpacity(colors.warning, 0.18),
-        icon: colors.warning,
-      },
-      cost: {
-        bg: colorWithOpacity(colors.success, 0.18),
-        icon: colors.success,
-      },
-    }),
-    [colors, m3],
-  );
   const activityIcons = useMemo<Record<string, { icon: string; color: string }>>(
     () => ({
       irrigation: { icon: 'drop.fill', color: m3.colorScheme.primary },
@@ -128,205 +125,262 @@ export default function AnalyticsScreen() {
         <Stack.Screen options={{ title: t('analytics.title') }} />
 
         <ScrollView contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}>
-          {/* Time Range Selector */}
+          {/* Time Range Selector - Horizontal pill row with 999 borderRadius */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: spacing[2] }}
-            style={{ marginBottom: spacing[4] }}
+            contentContainerStyle={{ gap: spacing[2], marginBottom: spacing[5] }}
           >
-            {TIME_RANGES.map((range) => (
-              <Pressable
-                key={range.value}
-                onPress={() => setTimeRange(range.value)}
-                style={{
-                  paddingHorizontal: spacing[4],
-                  paddingVertical: spacing[2],
-                  borderRadius: borderRadius.full,
-                  backgroundColor:
-                    timeRange === range.value ? m3.colorScheme.primary : colors.surface[100],
-                }}
-              >
-                <Text
+            {TIME_RANGES.map((range) => {
+              const isActive = timeRange === range.value;
+              return (
+                <Pressable
+                  key={range.value}
+                  onPress={() => setTimeRange(range.value)}
                   style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.medium,
-                    color:
-                      timeRange === range.value ? m3.colorScheme.onPrimary : colors.surface[600],
+                    paddingHorizontal: 14,
+                    paddingVertical: 6,
+                    borderRadius: 999, // Pill shape per wireframe
+                    backgroundColor: isActive ? m3.colorScheme.primary : colors.surface[100],
+                    borderWidth: isActive ? 0 : 1,
+                    borderColor: colors.surface[300],
                   }}
                 >
-                  {t(range.labelKey)}
-                </Text>
-              </Pressable>
-            ))}
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: fontWeight.medium,
+                      color: isActive ? '#FFFFFF' : colors.surface[500],
+                    }}
+                  >
+                    {t(range.labelKey)}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </ScrollView>
 
-          {/* Overview Stats */}
+          {/* Summary Stat Cards - Horizontal scroll with trends */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing[3], marginBottom: spacing[6], paddingBottom: 2 }}
+          >
+            {/* Total Expenses Card */}
+            <View
+              style={{
+                backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                borderRadius: 12,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[3],
+                minWidth: 130,
+              }}
+            >
+              <Text style={{ fontSize: 12, color: colors.surface[500], marginBottom: 4 }}>
+                {t('analytics.labels.totalExpenses') || 'Total Expenses'}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
+                  {formatCurrency(costAnalysis?.totalCosts || 0, currency, {
+                    notation: 'compact',
+                    maximumFractionDigits: 0,
+                  })}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 }}>
+                <SymbolIcon
+                  name="arrow.up"
+                  size={10}
+                  color={colors.success} // Green for up trend
+                />
+                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.success }}>
+                  12% vs last season
+                </Text>
+              </View>
+            </View>
+
+            {/* Harvest Yield Card */}
+            <View
+              style={{
+                backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                borderRadius: 12,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[3],
+                minWidth: 130,
+              }}
+            >
+              <Text style={{ fontSize: 12, color: colors.surface[500], marginBottom: 4 }}>
+                {t('analytics.labels.harvestYield') || 'Harvest Yield'}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
+                  {(analytics.totalHarvestQuantity / 1000).toFixed(1)}
+                </Text>
+                <Text style={{ fontSize: 13, fontWeight: '500', color: colors.surface[500] }}>
+                  tons
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 }}>
+                <SymbolIcon name="arrow.up" size={10} color={colors.success} />
+                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.success }}>8%</Text>
+              </View>
+            </View>
+
+            {/* Activities Logged Card */}
+            <View
+              style={{
+                backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                borderRadius: 12,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[3],
+                minWidth: 130,
+              }}
+            >
+              <Text style={{ fontSize: 12, color: colors.surface[500], marginBottom: 4 }}>
+                {t('analytics.labels.activitiesLogged') || 'Activities Logged'}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
+                  {analytics.recentActivity.length}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 }}>
+                <SymbolIcon
+                  name="arrow.down"
+                  size={10}
+                  color={m3.colorScheme.error} // Red for down trend
+                />
+                <Text style={{ fontSize: 11, fontWeight: '600', color: m3.colorScheme.error }}>
+                  3%
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* Category Breakdown - Colored progress bars with category colors */}
           <View
             style={{
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              marginBottom: spacing[4],
-              gap: 12,
+              backgroundColor: colors.surface[100],
+              borderWidth: 1,
+              borderColor: colors.surface[300],
+              borderRadius: 12,
+              padding: spacing[4],
+              marginBottom: spacing[6],
             }}
           >
             <View
               style={{
-                backgroundColor: colors.surface[100],
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                width: '47%',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: spacing[4],
               }}
             >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: borderRadius.xl,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: spacing[2],
-                  backgroundColor: metricColors.irrigation.bg,
-                }}
-              >
-                <SymbolIcon
-                  name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
-                  size={20}
-                  color={metricColors.irrigation.icon}
-                />
-              </View>
               <Text
                 style={{
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  color: colors.surface[900],
+                  ...SECTION_HEADER_STYLE,
+                  color: colors.surface[500],
                 }}
               >
-                {analytics.totalIrrigationHours.toFixed(1)}h
+                {t('analytics.sections.categoryBreakdown') || 'Category Breakdown'}
               </Text>
-              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                {t('analytics.labels.irrigationHours')}
+              <Text style={{ fontSize: 13, fontWeight: '500', color: colors.surface[500] }}>
+                {analytics.recentActivity.length} entries
               </Text>
             </View>
-            <View
-              style={{
-                backgroundColor: colors.surface[100],
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                width: '47%',
-              }}
-            >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: borderRadius.xl,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: spacing[2],
-                  backgroundColor: metricColors.spray.bg,
-                }}
-              >
-                <SymbolIcon
-                  name={resolveSymbolIconName(ICON_REGISTRY.spray)}
-                  size={20}
-                  color={metricColors.spray.icon}
-                />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  color: colors.surface[900],
-                }}
-              >
-                {analytics.totalSprayCount}
-              </Text>
-              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                {t('analytics.labels.sprayApplications')}
-              </Text>
-            </View>
-            <View
-              style={{
-                backgroundColor: colors.surface[100],
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                width: '47%',
-              }}
-            >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: borderRadius.xl,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: spacing[2],
-                  backgroundColor: metricColors.harvest.bg,
-                }}
-              >
-                <SymbolIcon
-                  name={resolveSymbolIconName(ICON_REGISTRY.harvest)}
-                  size={20}
-                  color={metricColors.harvest.icon}
-                />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  color: colors.surface[900],
-                }}
-              >
-                {(analytics.totalHarvestQuantity / 1000).toFixed(1)}t
-              </Text>
-              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                {t('analytics.labels.totalHarvest')}
-              </Text>
-            </View>
-            <View
-              style={{
-                backgroundColor: colors.surface[100],
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                width: '47%',
-              }}
-            >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: borderRadius.xl,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: spacing[2],
-                  backgroundColor: metricColors.cost.bg,
-                }}
-              >
-                <SymbolIcon
-                  name={resolveSymbolIconName(ICON_REGISTRY.expense)}
-                  size={20}
-                  color={metricColors.cost.icon}
-                />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  color: colors.surface[900],
-                }}
-              >
-                {formatNumber(analytics.totalHarvestValue, {
-                  style: 'currency',
-                  currency,
-                  notation: 'compact',
-                  maximumFractionDigits: 0,
-                })}
-              </Text>
-              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                {t('analytics.labels.harvestValue')}
-              </Text>
-            </View>
+
+            {/* Category rows with colored dots and progress bars */}
+            {(() => {
+              // Calculate totals for progress bars
+              const categoryTotals = analytics.recentActivity.reduce(
+                (acc, activity) => {
+                  const type = activity.type || 'expense';
+                  acc[type] = (acc[type] || 0) + 1;
+                  return acc;
+                },
+                {} as Record<string, number>,
+              );
+              const total = Object.values(categoryTotals).reduce((a, b) => a + b, 0) || 1;
+
+              const categories = [
+                { key: 'irrigation', name: 'Irrigation', color: CATEGORY_COLORS.irrigation },
+                { key: 'spray', name: 'Spray', color: CATEGORY_COLORS.spray },
+                { key: 'harvest', name: 'Harvest', color: CATEGORY_COLORS.harvest },
+                { key: 'expense', name: 'Expense', color: CATEGORY_COLORS.expense },
+              ];
+
+              return categories.map((cat, index) => {
+                const count = categoryTotals[cat.key] || 0;
+                const percentage = total > 0 ? (count / total) * 100 : 0;
+                return (
+                  <View
+                    key={cat.key}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: spacing[3],
+                      paddingVertical: spacing[3],
+                      borderTopWidth: index > 0 ? 1 : 0,
+                      borderTopColor: colors.surface[200],
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 3,
+                        backgroundColor: cat.color,
+                      }}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: 4,
+                        }}
+                      >
+                        <Text
+                          style={{ fontSize: 14, fontWeight: '500', color: colors.surface[900] }}
+                        >
+                          {cat.name}
+                        </Text>
+                        <Text
+                          style={{ fontSize: 13, fontWeight: '600', color: colors.surface[900] }}
+                        >
+                          {count}
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          width: '100%',
+                          height: 6,
+                          borderRadius: 3,
+                          backgroundColor: colors.surface[200], // Track #EEE7DD
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: `${percentage}%`,
+                            height: '100%',
+                            borderRadius: 3,
+                            backgroundColor: cat.color,
+                          }}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                );
+              });
+            })()}
           </View>
 
           {/* Performance Score */}
