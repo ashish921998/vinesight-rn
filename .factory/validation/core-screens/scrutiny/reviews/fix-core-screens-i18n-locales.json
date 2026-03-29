@@ -1,0 +1,28 @@
+{
+  "featureId": "fix-core-screens-i18n-locales",
+  "reviewedAt": "2026-03-29T23:11:56Z",
+  "commitId": "0941db298a793fcf7552f4c609cb38dc3452c60c",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The rerun clears the prior dashboard and farm-detail locale blockers: `dashboard.hero.*` now exists in `hi.ts`/`mr.ts`, `farmDetails.safeHarvest.inlineTitle` exists in `hi.ts`/`mr.ts`, and the previously hardcoded farm-detail labels now go through `t()` calls. But the new farms-summary localization is still incomplete because the screen now reads `farms.summary.*` keys that were never added to the default English locale.",
+    "issues": [
+      {
+        "file": "app/(tabs)/farms.tsx",
+        "line": 160,
+        "severity": "blocking",
+        "description": "The farms-summary fix is still incomplete in the default locale. `app/(tabs)/farms.tsx:160` now calls `t('farms.summary.count', { count: farms.length })` and `t('farms.summary.area', { value: totalArea })`, but `src/i18n/locales/en.ts:562-577` has no `farms.summary` block at all; only `src/i18n/locales/hi.ts:577-580` and `src/i18n/locales/mr.ts:578-581` define those keys. Because `src/i18n/index.ts:24-25` sets both `lng` and `fallbackLng` to `en`, English users will fall through to missing-key output instead of localized summary text."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The shared UI-worker guidance still conflicts with real fix work. This rerun correctly invoked `ui-worker`, but the task required locale-file edits even though both the mission guidance and the skill tell workers not to change i18n keys / translation files.",
+      "evidence": "`worker-transcripts.jsonl:20` for session `ee6cb54f-5591-425a-aeb6-3d19905a3164` shows both `mission-worker-base` and `ui-worker` were invoked; `.factory/skills/ui-worker/SKILL.md:47` says 'Do NOT modify ... i18n keys'; `AGENTS.md:10` marks `src/i18n/` off-limits; `git show --stat 0941db2` includes `src/i18n/locales/mr.ts`."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/core-screens/scrutiny/reviews/fix-core-screens-i18n-a11y-tokens.json",
+  "summary": "Fail: the rerun fixes the prior dashboard/farm-detail locale blockers, but it still ships an incomplete farms-summary localization because `en.ts` lacks `farms.summary.*`, so the default English locale will not render the new summary line correctly."
+}
