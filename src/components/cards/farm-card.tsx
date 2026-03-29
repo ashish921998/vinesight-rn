@@ -45,9 +45,11 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
     : colorWithOpacity(colors.primary[500], 0.12);
 
   // Cellar Ledger: mist-1 bg, stone-3 border, 16px radius
+  // Note: 3px left strip applied via absolute positioned View with primary color
   const cardStyle: ViewStyle = {
     borderRadius: borderRadius.lg, // 16px
     padding: spacing[4],
+    paddingLeft: spacing[4] + 3, // extra padding for left strip
     backgroundColor: colors.surface[100], // mist-1
     borderWidth: 1,
     borderColor: colors.surface[300], // stone-3
@@ -101,6 +103,19 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
 
   const renderCardContent = (pressed: boolean) => (
     <View style={cardStyle}>
+      {/* Cellar Ledger: 3px left green strip */}
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 3,
+          backgroundColor: colors.primary[500],
+          borderTopLeftRadius: borderRadius.lg,
+          borderBottomLeftRadius: borderRadius.lg,
+        }}
+      />
       {/* Header: Name & Status */}
       <View style={headerStyle}>
         <Text style={nameStyle} numberOfLines={1}>
@@ -187,7 +202,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               paddingHorizontal: spacing[2],
               paddingVertical: spacing[1],
               borderRadius: borderRadius.full, // pill (999)
-              backgroundColor: colorWithOpacity(colors.primary[500], 0.12), // primary-tinted bg
+              backgroundColor: colorWithOpacity(colors.primary[500], 0.08), // rgba(53,88,71,0.08) per wireframe
             }}
           >
             <Text
