@@ -1,0 +1,26 @@
+{
+  "featureId": "fix-en-farms-summary-keys",
+  "reviewedAt": "2026-03-29T23:20:49.510132Z",
+  "commitId": "5a8c11aba91bb981c76510ecc5bcc8689056ba45",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Pass. The fix commit adds the missing English `farms.summary` pluralization keys that the prior rerun forgot, so the farms list summary in `app/(tabs)/farms.tsx` now resolves correctly for the default/fallback `en` locale. I also verified the related `farmDetails.stats.soilWaterTitle`, `logEntriesTitle`, and `recordsSubtitle` keys are still present in `src/i18n/locales/en.ts`.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The assigned `ui-worker` skill still conflicts with locale-fix work. This fix feature was an i18n repair, but the skill explicitly forbids changing i18n keys, so workers are being routed through guidance that does not match the task reality.",
+      "evidence": "Feature metadata for `fix-en-farms-summary-keys` uses `skillName: \"ui-worker\"`; `.factory/skills/ui-worker/SKILL.md:47` says `Do NOT modify ... i18n keys`; the transcript skeleton for session `609ea5ad-6e76-4c5c-a95a-3a3db0d6342f` explicitly notes the skill is for visual redesign while this task was a straightforward locale-key addition."
+    },
+    {
+      "area": "conventions",
+      "observation": "The mission i18n rule is too rigid for parity-repair fixes. It says every new key must be added to all three locale files together, but this rerun correctly needed to touch only `en.ts` because `hi.ts` and `mr.ts` already had the `farms.summary.*` keys from the previous commit.",
+      "evidence": "`AGENTS.md:10` says new i18n keys `MUST` be added to `en.ts`, `hi.ts`, and `mr.ts` together; `git show 0941db298a793fcf7552f4c609cb38dc3452c60c` already added `farms.summary.*` to `src/i18n/locales/mr.ts` and `app/(tabs)/farms.tsx` already uses those keys at line 160; `git show 5a8c11aba91bb981c76510ecc5bcc8689056ba45` shows the correct targeted follow-up was only `src/i18n/locales/en.ts`."
+    }
+  ],
+  "addressesFailureFrom": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185/.factory/validation/core-screens/scrutiny/reviews/fix-core-screens-i18n-locales.json",
+  "summary": "Pass: commit `5a8c11a` resolves the prior scrutiny blocker by adding `en.ts` `farms.summary.count_one`, `count_other`, and `area`, which matches the existing `t('farms.summary.count', ...)`/`t('farms.summary.area', ...)` calls in `app/(tabs)/farms.tsx` and the app's English fallback configuration."
+}

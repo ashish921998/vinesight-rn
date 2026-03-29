@@ -1,0 +1,46 @@
+{
+  "milestone": "core-screens",
+  "round": 3,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "npm --prefix \"/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185\" test -- --passWithNoTests",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "npm --prefix \"/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185\" run typecheck",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "npm --prefix \"/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185\" run lint",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "failedFeatures": ["fix-core-screens-i18n-locales"]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "fix-core-screens-i18n-locales",
+      "severity": "blocking",
+      "description": "The farms-summary localization fix is incomplete because `app/(tabs)/farms.tsx` now calls `t('farms.summary.count')` and `t('farms.summary.area')`, but `src/i18n/locales/en.ts` still has no `farms.summary` block. Since English is both the active default locale and the fallback locale, the new summary line will render missing-key output for English users."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skill:ui-worker",
+      "suggestion": "Clarify the locale-parity exception for redesign and fix work: when a task introduces or reroutes user-facing copy behind translation keys, workers may edit locale files and must update all supported locales together instead of treating `src/i18n/` as categorically off-limits.",
+      "evidence": "The prior failed feature `fix-core-screens-i18n-a11y-tokens` and this rerun `fix-core-screens-i18n-locales` both had to touch locale files to satisfy scrutiny, yet `.factory/skills/ui-worker/SKILL.md` and mission guidance still say not to modify i18n keys / translation files. This round still failed because only `hi.ts` and `mr.ts` received the new `farms.summary.*` keys while `en.ts` was left behind.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": ".factory/validation/core-screens/scrutiny/synthesis.round2.json"
+}
