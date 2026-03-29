@@ -1,0 +1,25 @@
+.factory/validation/theme-foundation/scrutiny/synthesis.json
+  6123b29cda8a4087 3,23,25-26,32,37,43
+.factory/validation/theme-foundation/scrutiny/synthesis.round1.json
+  6123b29cda8a4087 1-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "ea92ae296a4458870fc3457062fe2c275301e19b",
+  "prompts": {
+    "6123b29cda8a4087": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c5aac5e0-042d-44fd-8b4c-9dd3ee802644",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 101,
+      "total_deletions": 51,
+      "accepted_lines": 101,
+      "overriden_lines": 0
+    }
+  }
+}
