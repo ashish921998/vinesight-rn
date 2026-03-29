@@ -55,7 +55,6 @@ export function OnboardingScreen() {
   const hasAppliedResumeStepRef = useRef(false);
   const [activatedSlides, setActivatedSlides] = useState(new Set<number>([0]));
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [hasManuallyNavigatedBack, setHasManuallyNavigatedBack] = useState(false);
   const [createdFarmId, setCreatedFarmId] = useState<number | null>(
     onboardingActivation.farmId ?? null,
   );
@@ -109,21 +108,15 @@ export function OnboardingScreen() {
         handleSlideChange(FIRST_ACTION_PAGE_INDEX);
         return;
       }
-      if (page < currentPageIndex) {
-        setHasManuallyNavigatedBack(true);
-      } else if (page > currentPageIndex) {
-        setHasManuallyNavigatedBack(false);
-      }
       setCurrentPageIndex(page);
       handleSlideChange(page);
     },
-    [currentPageIndex, handleSlideChange, hasAtLeastOneFarm, hasCompletedFirstAction, width],
+    [handleSlideChange, hasAtLeastOneFarm, hasCompletedFirstAction, width],
   );
 
   const handleNext = useCallback(() => {
     const nextPage = currentPageIndex + 1;
     if (nextPage >= TOTAL_PAGES) return;
-    setHasManuallyNavigatedBack(false);
     scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
     setCurrentPageIndex(nextPage);
     handleSlideChange(nextPage);
@@ -147,7 +140,6 @@ export function OnboardingScreen() {
         });
       }
 
-      setHasManuallyNavigatedBack(false);
       useNotificationStore.getState().setNotificationPermissionPrompted(true);
       useAuthStore.getState().setHasSeenOnboarding(true);
       useOnboardingStore.getState().completeOnboarding();
@@ -186,9 +178,8 @@ export function OnboardingScreen() {
 
   const handleFarmResolved = useCallback(
     (farmId: number | null) => {
-      if (farmId !== null) {
-        farmCreatedRef.current = true;
-      }
+      if (farmId === null) return;
+      farmCreatedRef.current = true;
       useOnboardingStore.getState().markFarmCreated(farmId);
       telemetry.capture('onboarding_farm_created', { farm_id: farmId });
       setCreatedFarmId(farmId);
@@ -274,9 +265,8 @@ export function OnboardingScreen() {
   React.useEffect(() => {
     if (!hasCompletedFirstAction) return;
     if (currentPageIndex >= NOTIFICATIONS_PAGE_INDEX) return;
-    if (hasManuallyNavigatedBack) return;
     jumpToPage(NOTIFICATIONS_PAGE_INDEX);
-  }, [currentPageIndex, hasCompletedFirstAction, hasManuallyNavigatedBack, jumpToPage]);
+  }, [currentPageIndex, hasCompletedFirstAction, jumpToPage]);
 
   React.useEffect(() => {
     if (viewedSlides.current.has(0)) return;

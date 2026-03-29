@@ -253,7 +253,7 @@ export function useDashboardStats() {
       // Get recent activities count (last 7 days)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const dateStr = sevenDaysAgo.toISOString().split('T')[0];
+      const dateStr = toDateString(sevenDaysAgo);
 
       // Get farm IDs first
       const { data: farms } = await supabase.from(TABLES.FARMS).select('id').eq('user_id', userId);

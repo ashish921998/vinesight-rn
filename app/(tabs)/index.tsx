@@ -134,7 +134,7 @@ export default function DashboardScreen() {
   };
 
   const hasFarms = Boolean(farms && farms.length > 0);
-  const attentionItems = todayNeedsAttention ?? [];
+  const attentionItems = todayNeedsAttention;
 
   const formatAttentionDate = (value?: string | null): string | null => {
     if (!value) return null;
@@ -147,7 +147,6 @@ export default function DashboardScreen() {
     if (item.type === 'overdueTask') return t('dashboard.needsAttention.actions.reviewTasks');
     if (item.type === 'noRecentLogs') return t('dashboard.needsAttention.actions.logNow');
     if (item.type === 'phiDeadline') return t('dashboard.needsAttention.actions.reviewSpraySafety');
-    if (item.type === 'lowWaterLevel') return t('dashboard.needsAttention.actions.openFarm');
     return t('dashboard.needsAttention.actions.openFarm');
   };
 
@@ -238,11 +237,6 @@ export default function DashboardScreen() {
           farmId: String(item.farmId),
         },
       });
-      return;
-    }
-
-    if (item.type === 'lowWaterLevel') {
-      router.push(`/farm/${item.farmId}`);
       return;
     }
 
@@ -373,20 +367,16 @@ export default function DashboardScreen() {
                   />
                 </View>
               </View>
-            ) : attentionItems.length > 0 ? (
+            ) : attentionItems && attentionItems.length > 0 ? (
               attentionItems.map((item) => {
                 const title = getAttentionTitle(item);
                 const reasonLabel = t(`dashboard.needsAttention.reasons.${item.type}`);
                 const actionLabel = getAttentionActionLabel(item);
                 const metaLabel = getAttentionMetaLabel(item);
                 const icon = getAttentionIcon(item);
-                const accessibilityParts = [
-                  title,
-                  title !== item.farmName ? item.farmName : null,
-                  reasonLabel,
-                  metaLabel,
-                  actionLabel,
-                ].filter((part): part is string => Boolean(part));
+                const accessibilityLabel = `${title}. ${item.farmName}. ${reasonLabel}. ${
+                  metaLabel ? `${metaLabel}. ` : ''
+                }${actionLabel}.`;
                 const emphasisColor =
                   item.severity === 'high'
                     ? m3.colorScheme.error
@@ -399,7 +389,7 @@ export default function DashboardScreen() {
                     key={item.id}
                     onPress={() => handleNeedsAttentionPress(item)}
                     accessibilityRole="button"
-                    accessibilityLabel={accessibilityParts.join('. ')}
+                    accessibilityLabel={accessibilityLabel}
                     style={{
                       borderRadius: m3.shape.cornerMedium,
                       padding: spacing[3],

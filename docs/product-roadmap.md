@@ -18,11 +18,11 @@ The app already has broad feature coverage. The next phase should improve focus,
 
 ## Principles
 
-- Compress workflows rather than expanding features.
-- Surface exceptions and actions, not raw counts.
-- Farm-scoped experiences over global generic screens.
-- Trustable assistant outputs over broad behavior.
-- Offline-safe capture for field work.
+- Prefer workflow compression over feature expansion.
+- Prefer exceptions and actions over raw counts.
+- Prefer farm-scoped experiences over global generic screens.
+- Prefer trustable assistant outputs over broad assistant behavior.
+- Prefer offline-safe capture for field work.
 
 ## Phase 1: Activation And Daily Triage
 
@@ -31,7 +31,7 @@ Target window: 1 to 2 weeks
 ### Epic 1: Onboarding To First Real Value
 
 Problem:
-Users can complete onboarding after creating a farm, but the stronger activation event is completing the first real log, note, or task.
+Users can complete onboarding after creating a farm, but the stronger activation event is completing the first real log, task, or note.
 
 Goal:
 End onboarding only after the user has created a farm and completed one meaningful operational action.
@@ -39,8 +39,8 @@ End onboarding only after the user has created a farm and completed one meaningf
 Scope:
 - Update onboarding flow so success is:
   - first farm created
-  - first log completed, first note saved, or first task created
-- Route the user directly into the shortest action flow after farm creation, whether that is a log, note, or task
+  - first log completed, first task created, or first note created/completed
+- Route the user directly into the shortest action flow after farm creation, whether that is a log, task, or note
 - Preserve guided tour support
 - Track activation events in telemetry
 
@@ -214,7 +214,7 @@ Acceptance criteria:
 ### Epic 6: Assistant Trust Layer
 
 Problem:
-An assistant that is powerful but opaque is difficult to trust in operational settings.
+An assistant that is powerful but opaque is hard to trust in operational settings.
 
 Goal:
 Make assistant outputs feel grounded, scoped, and safe to act on.

@@ -81,8 +81,7 @@ export default function TasksScreen() {
 
   useEffect(() => {
     setFilter(initialFilter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeFilter]);
+  }, [initialFilter]);
 
   // Get farm name by ID
   const getFarmName = (farmId: number) => {
