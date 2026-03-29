@@ -1,0 +1,23 @@
+app/(tabs)/_layout.tsx
+  8d1cd22cbcc5c0f2 138-139,142-143,228,231
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "8297afb37ea1cbeaa31ec717be1c9213bcb3d13a",
+  "prompts": {
+    "8d1cd22cbcc5c0f2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "58982a04-0116-400b-926d-b50e8bb78fc8",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 5,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
