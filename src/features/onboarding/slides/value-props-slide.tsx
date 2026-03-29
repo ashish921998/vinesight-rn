@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useM3 } from '@/styles/use-theme';
-import { borderRadius, fontSize, fontWeight, shadows, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 
 interface ValuePropsSlideProps {
@@ -106,7 +106,6 @@ export function ValuePropsSlide({ isActive }: ValuePropsSlideProps) {
                     backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.82),
                     borderColor: colorWithOpacity(m3.colorScheme.outline, 0.1),
                   },
-                  shadows.glass,
                 ]}
               >
                 <View style={styles.cardInner}>
