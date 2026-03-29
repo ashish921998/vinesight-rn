@@ -1,0 +1,27 @@
+src/i18n/locales/mr.ts
+  d18b1926b8d16b75 185,578-582,1906-1912
+app/farm/[id].tsx
+  d18b1926b8d16b75 1909,1940,2090,2100,2162
+app/(tabs)/farms.tsx
+  d18b1926b8d16b75 158-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "0941db298a793fcf7552f4c609cb38dc3452c60c",
+  "prompts": {
+    "d18b1926b8d16b75": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "ee6cb54f-5591-425a-aeb6-3d19905a3164",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 22,
+      "total_deletions": 7,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  }
+}
