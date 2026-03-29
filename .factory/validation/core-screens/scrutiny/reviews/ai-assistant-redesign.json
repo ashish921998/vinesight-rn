@@ -1,0 +1,44 @@
+{
+  "featureId": "ai-assistant-redesign",
+  "reviewedAt": "2026-03-29T22:01:50.291082+00:00",
+  "commitId": "c092496f1e985c4dcd709bd9800d1c2695e731c1",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The redesign updated the light-mode bubble/chip/composer shapes, but it does not fully match the Cellar Ledger spec. The committed components use the wrong border token for all assistant surfaces, and they also rely on `surfaceVariant` for dark-mode card backgrounds even though that token maps to the darker hover surface instead of the wireframed card color.",
+    "issues": [
+      {
+        "file": "src/components/assistant/MessageBubble.tsx",
+        "line": 49,
+        "severity": "blocking",
+        "description": "Assistant/loading bubbles use `m3.colorScheme.outlineVariant` for their 1px border here, and the same mistake appears in `src/components/assistant/SuggestionChips.tsx:57` and `src/components/assistant/InputBar.tsx:76,186`. In `src/styles/theme.ts:404`, `outlineVariant` resolves to `surface[200]` (`#EEE7DD` light / `#242A24` dark), but VAL-AI-002/003 and the wireframes require the stone-3/card-border token (`#D9D0C4` / `#2E342F`). The assistant UI therefore ships the wrong border color in both themes."
+      },
+      {
+        "file": "src/components/assistant/MessageBubble.tsx",
+        "line": 38,
+        "severity": "blocking",
+        "description": "Assistant bubbles use `m3.colorScheme.surfaceVariant` here, and the same background token is reused in `src/components/assistant/SuggestionChips.tsx:56` and `src/components/assistant/InputBar.tsx:67-68,184`. In `src/styles/theme.ts:400`, dark `surfaceVariant` maps to `surface[200]` (`#242A24`), but the dark AI-assistant wireframe specifies `bg-card`/mist-1 (`#1A1E1B`) for assistant bubbles, suggestion chips, and the input bar. Dark mode therefore does not match the required bark-charcoal card surfaces."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "`ui-worker` and mission `AGENTS.md` both require reading the light and dark wireframes before implementing a screen, but this worker only read the light AI assistant wireframe.",
+      "evidence": "The transcript skeleton for session `10d4ceca-c5b3-4889-b449-0357c609da4e` contains a `Read` of `wireframe-ai-assistant.html`; a search of `worker-transcripts.jsonl` found no `wireframe-ai-assistant-dark.html` read for that session."
+    },
+    {
+      "area": "skills",
+      "observation": "The worker reported `validatorsPassed: true` even though the transcript says `npm run typecheck` surfaced pre-existing errors and the handoff omitted typecheck from `verification.commandsRun`.",
+      "evidence": "Transcript snippet for session `10d4ceca-c5b3-4889-b449-0357c609da4e`: \"There are pre-existing TypeScript errors in app/farm/[id].tsx\" immediately after running `npm run typecheck`. The handoff file `handoffs/2026-03-29T21-39-47-716Z__ai-assistant-redesign__10d4ceca-c5b3-4889-b449-0357c609da4e.json` still sets `validatorsPassed` to true and only lists lint/test/commit under `verification.commandsRun`."
+    },
+    {
+      "area": "conventions",
+      "observation": "The shared docs do not explicitly map which M3 semantic roles correspond to Cellar Ledger card and border tokens, which made it easy to pick `surfaceVariant`/`outlineVariant` even though those resolve to the wrong dark-mode surfaces.",
+      "evidence": "`src/styles/theme.ts:400-404` maps `surfaceVariant` to `surface[200]` and `outlineVariant` to `surface[200]`, while the dark wireframe uses `bg-card` `#1A1E1B` and `border` `#2E342F` for the assistant surfaces. The feature code follows the misleading M3 names in `MessageBubble.tsx`, `SuggestionChips.tsx`, and `InputBar.tsx`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail. I reviewed the transcript skeleton, handoff, skill, shared-state docs, and commit `c092496`. The AI assistant redesign misses the required Cellar Ledger border token and dark-mode card backgrounds, and I also recorded process/documentation gaps around dark-wireframe review and validator reporting."
+}

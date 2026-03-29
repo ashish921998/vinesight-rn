@@ -1,0 +1,46 @@
+{
+  "featureId": "farm-detail-redesign",
+  "reviewedAt": "2026-03-29T21:57:20.361995Z",
+  "commitId": "aabc4d205548b2c5f7a15936defd39a37edc35ab",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The redesign delivers the green identity card, weather strip, stats cards, workboard, and segmented tabs, but it misses the required risk-block treatment and introduces i18n and Android target-date regressions.",
+    "issues": [
+      {
+        "file": "app/farm/[id].tsx",
+        "line": 1656,
+        "severity": "blocking",
+        "description": "VAL-FARMDET-001 is not actually satisfied. The hero only renders inline target-harvest, safe-harvest, and review-badge rows at lines 1656-1749; it never creates the required dark overlay risk block with warning-colored title/subtext inside the green identity card. The validation contract explicitly requires that risk block when urgent items exist."
+      },
+      {
+        "file": "app/farm/[id].tsx",
+        "line": 1529,
+        "severity": "blocking",
+        "description": "The redesign hardcodes several new user-facing labels instead of preserving translations, which breaks the feature's i18n requirement. Examples include `acres` (1529), `Target:` (1674), `Edit` (1700), `Safe harvest:` (1721), `Log Entries` (1781 and 2002), `Soil Water` (1821 and 2074), `Days Pruned` (1852), and `Total records` (2012)."
+      },
+      {
+        "file": "app/farm/[id].tsx",
+        "line": 3313,
+        "severity": "blocking",
+        "description": "Android users can no longer clear an active season target harvest date. `openActiveSeasonTargetEditor()` routes Android into the bare DateTimePicker flow (830, 3313-3327), which only saves a picked date, while the clear action exists only inside the iOS-only modal (3328-3390). The old clear helper is now unused (`_clearActiveSeasonTargetHarvestDate` at 833), so this redesign regresses existing target-date editing behavior on Android."
+      },
+      {
+        "file": "src/components/cards/timeline-log-card.tsx",
+        "line": 245,
+        "severity": "non_blocking",
+        "description": "The activities tab still uses the generic `TimelineLogCard` card layout (`app/farm/[id].tsx`: 2499-2508) rather than the requested compact activity rows with a 36px tinted icon circle and the date presented as row metadata. The component still renders a bordered card with the only icon inside the small type pill (245-403), so the timeline only partially matches the redesign brief."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The mission's manual recovery path after a worker crash did not emit the usual handoff/transcript artifacts, so scrutiny had to reconstruct this review from progress_log and git history instead of the normal reviewed-session evidence.",
+      "evidence": "`progress_log.jsonl:63-66` shows worker session `83cefe81-9da9-4bf4-9fad-52782f068928` failing and the mission continuing with 'Farm detail done manually after crash'. `features.json:734-739` still marks the feature completed while `completedWorkerSessionId` remains null, `worker-transcripts.jsonl` has no object for that session, and no handoff file in `handoffs/` matches the session id."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: the feature lands most of the visual refresh, but the required risk block is missing, several new labels bypass i18n, and Android lost the ability to clear the active season target harvest date."
+}

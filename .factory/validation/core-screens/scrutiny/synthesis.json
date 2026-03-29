@@ -1,0 +1,130 @@
+{
+  "milestone": "core-screens",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "npm test -- --passWithNoTests",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "npm run lint",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 5,
+    "passed": 0,
+    "failed": 5,
+    "failedFeatures": [
+      "dashboard-redesign",
+      "farm-detail-redesign",
+      "ai-assistant-redesign",
+      "onboarding-redesign",
+      "farms-list-redesign"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "dashboard-redesign",
+      "severity": "blocking",
+      "description": "The dashboard hero introduces hardcoded strings (`Today`, `alert/alerts`, `All clear`, `Attention needed`) instead of preserving i18n, and the redesigned section headers no longer expose `accessibilityRole=\"header\"`."
+    },
+    {
+      "featureId": "farm-detail-redesign",
+      "severity": "blocking",
+      "description": "The farm detail redesign is missing the required dark overlay risk block in the green identity card when urgent items exist."
+    },
+    {
+      "featureId": "farm-detail-redesign",
+      "severity": "blocking",
+      "description": "Farm detail hardcodes multiple new user-facing labels (`acres`, `Target:`, `Edit`, `Safe harvest:`, `Log Entries`, `Soil Water`, `Days Pruned`, `Total records`) instead of preserving translations."
+    },
+    {
+      "featureId": "farm-detail-redesign",
+      "severity": "blocking",
+      "description": "Android users can no longer clear an active season target harvest date because the clear action only exists in the iOS-only modal flow."
+    },
+    {
+      "featureId": "ai-assistant-redesign",
+      "severity": "blocking",
+      "description": "Assistant bubbles, suggestion chips, and the input bar use `outlineVariant` for borders instead of the required Cellar Ledger card-border token (`stone-3` / `#D9D0C4`, dark `#2E342F`)."
+    },
+    {
+      "featureId": "ai-assistant-redesign",
+      "severity": "blocking",
+      "description": "Assistant bubbles, suggestion chips, and the input bar use `surfaceVariant`, which maps to the wrong dark-mode surface (`#242A24`) instead of the required dark card surface (`#1A1E1B`)."
+    },
+    {
+      "featureId": "onboarding-redesign",
+      "severity": "blocking",
+      "description": "Onboarding references `fontFamily: 'Fraunces'` but no Fraunces font asset/load path exists in the repo, so the headline will fall back to the system font at runtime."
+    },
+    {
+      "featureId": "onboarding-redesign",
+      "severity": "blocking",
+      "description": "The onboarding flow still ships legacy `#408059` styling in multiple slides instead of fully adopting Cellar Ledger tokens."
+    },
+    {
+      "featureId": "farms-list-redesign",
+      "severity": "blocking",
+      "description": "The farms list screen itself was not redesigned to the requested wireframe structure; it still renders the old search-first header with quick stats instead of the in-content title, summary, and action layout."
+    },
+    {
+      "featureId": "farms-list-redesign",
+      "severity": "blocking",
+      "description": "The populated farms list loses its persistent add-farm control on iOS/non-Android because the surviving FAB path is Android-only."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Added Cellar Ledger M3 semantic mapping guidance to `.factory/library/architecture.md`, documenting that default card surfaces should use `surfaceContainerLow` / `mist-1` and card borders should use `outline` / `stone-3`, not `surfaceVariant` or `outlineVariant`.",
+      "sourceFeature": "ai-assistant-redesign"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skill:ui-worker",
+      "suggestion": "Require workers to record both light and dark wireframe files consulted in their handoff, and document the fallback rule when a screen has no matching `wireframe-{name}-dark.html` (for example, dashboard-style shared dark references).",
+      "evidence": "Dashboard review found there is no `wireframe-D-dark.html`, while the AI assistant, onboarding, and farms-list reviews found workers only read the light wireframes even though the skill and mission guidance require both modes.",
+      "isSystemic": true
+    },
+    {
+      "target": "skill:ui-worker",
+      "suggestion": "Tighten validator reporting: every final handoff should list every validator command actually run, and `validatorsPassed` must never be set to true when a validator failed or was skipped. The skill should also explain how to report pre-existing failures.",
+      "evidence": "The AI assistant review found the worker reported `validatorsPassed: true` even though the transcript recorded typecheck failures and the handoff omitted the typecheck command; a similar validator-reporting concern was already raised during theme-foundation scrutiny.",
+      "isSystemic": true
+    },
+    {
+      "target": "skill:mission-worker-base",
+      "suggestion": "Add a recovery/handoff rule for crash or manual-completion cases: emit normalized metadata with a resolvable commit hash and provenance even when the original worker session did not complete cleanly.",
+      "evidence": "Dashboard review found a bad commit hash recorded in handoff metadata, and farm-detail review had to reconstruct the feature from `progress_log.jsonl` and git history because the worker crashed and no normal handoff/transcript artifacts existed.",
+      "isSystemic": false
+    },
+    {
+      "target": "validation-contract",
+      "suggestion": "When generating screen redesign assertions, cover the full screen-level behaviors described in the feature brief (header layout, summary rows, persistent add CTA) rather than only local card/search styling.",
+      "evidence": "The farms-list feature description required an in-content title/header and persistent add-farm CTA, but the contract only asserted farm-card styling and search presence, which allowed the incomplete implementation to slip through until scrutiny.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Add a library note describing where the Fraunces font asset should live and how Expo should load it.",
+      "reason": "Rejected as ambiguous because the repo currently contains no Fraunces asset or canonical load path, so documenting a specific solution would have been speculative rather than factual."
+    },
+    {
+      "observation": "Record separate guidance updates for each feature that skipped reading a dark wireframe.",
+      "reason": "Rejected as duplicate because the synthesis already consolidates these into one systemic `ui-worker` recommendation covering dark-wireframe evidence across multiple reviews plus the missing-file fallback case."
+    }
+  ],
+  "previousRound": null
+}

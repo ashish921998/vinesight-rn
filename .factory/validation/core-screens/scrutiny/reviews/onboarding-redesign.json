@@ -1,0 +1,45 @@
+{
+  "featureId": "onboarding-redesign",
+  "reviewedAt": "2026-03-29T21:54:34.848419+00:00",
+  "commitId": "54c827c2057de35df1a5657b78b573cdbb278de4",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature updates the pagination dots, primary onboarding button, and hero copy, but it does not fully satisfy the onboarding redesign brief: the Fraunces headline will fall back at runtime because the font is never loaded, and legacy #408059 accents still remain across the onboarding flow.",
+    "issues": [
+      {
+        "file": "src/features/onboarding/slides/hero-slide.tsx",
+        "line": 136,
+        "severity": "blocking",
+        "description": "The hero headline only sets `fontFamily: 'Fraunces'`, but the repo has no Fraunces font asset or load path (`Glob` found no `Fraunces`/`fonts` files and `app.config.js` only enables the generic `expo-font` plugin). On device this will fall back to the system font, so VAL-ONBOARD-001 and the wireframe typography are not actually met."
+      },
+      {
+        "file": "src/features/onboarding/slides/notifications-slide.tsx",
+        "line": 16,
+        "severity": "blocking",
+        "description": "The onboarding flow still ships legacy `#408059` styling instead of Cellar Ledger tokens. The final permissions CTA keeps `NOTIFICATION_ACCENT_COLOR = '#408059'` here, and other onboarding slides still use the same legacy color in `src/features/onboarding/slides/value-props-slide.tsx:37`, `src/features/onboarding/slides/value-props-slide.tsx:223`, `src/features/onboarding/slides/first-farm-slide.tsx:171`, and `src/features/onboarding/slides/hero-slide.tsx:287`. The feature description covers the whole onboarding flow, so leaving these legacy accents behind means the redesign is incomplete."
+      },
+      {
+        "file": "src/features/onboarding/components/onboarding-button.tsx",
+        "line": 101,
+        "severity": "non_blocking",
+        "description": "The CTA label uses `fontSize.lg`, which resolves to 18 in `src/styles/theme.ts:273`, but the spec called for 16px/600 text. The button is close, but it still misses the requested typography."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "`ui-worker` requires reading both the light and dark onboarding wireframes, but the transcript only shows `wireframe-onboarding.html` being read. The missed dark-wireframe step lines up with the remaining hardcoded legacy colors in the flow.",
+      "evidence": "`worker-transcripts.jsonl` for session `7757bf94-c292-4455-9653-0427a2211dac` shows a `Read` of `wireframe-onboarding.html` and no read of `wireframe-onboarding-dark.html`; both `AGENTS.md` and `.factory/skills/ui-worker/SKILL.md` explicitly require reading both variants."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The shared docs say onboarding headlines should use Fraunces, but the repo does not document where the font asset comes from or how it is loaded in Expo. That gap led the worker to ship a bare `fontFamily: 'Fraunces'` reference without an actual load path.",
+      "evidence": "`.factory/library/architecture.md` says 'Display: Fraunces serif (onboarding headlines only)', while a repo-wide search found no Fraunces font files and no `useFonts`/`loadAsync` setup; the transcript explicitly notes the worker chose the bare fontFamily approach because proper loading was 'complex'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail. The onboarding review covered the handoff, transcript skeleton, and commit `54c827c`, and found two blocking gaps: Fraunces is referenced but never loaded, and multiple onboarding slides still use legacy `#408059` accents instead of Cellar Ledger tokens. I also noted a non-blocking CTA text-size mismatch and two shared-state/process observations."
+}

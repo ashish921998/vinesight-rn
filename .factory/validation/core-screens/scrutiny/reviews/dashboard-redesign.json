@@ -1,0 +1,45 @@
+{
+  "featureId": "dashboard-redesign",
+  "reviewedAt": "2026-03-29T21:54:57.125968+00:00",
+  "commitId": "98fae7435e6bc34568f5116fa346f18c22b91912",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The dashboard redesign hits the main visual assertions, but it regresses preserved i18n/accessibility behavior and misses one explicit no-alert hero styling requirement, so it should not pass as-is.",
+    "issues": [
+      {
+        "file": "app/(tabs)/index.tsx",
+        "line": 209,
+        "severity": "blocking",
+        "description": "The hero introduces hardcoded user-facing strings instead of preserving i18n. `Today` (line 209), `alert/alerts` (line 241), `All clear` (line 271), and fallback `Attention needed` (line 291) bypass `t()`, so this redesign breaks localization on the dashboard's new hero path."
+      },
+      {
+        "file": "app/(tabs)/index.tsx",
+        "line": 579,
+        "severity": "blocking",
+        "description": "The redesign removes existing section-header accessibility roles. The new `Needs Attention`, `Quick Actions`, and `Recent Activity` header Text nodes at lines 579, 691, and 838 no longer include `accessibilityRole=\"header\"`, even though the pre-redesign file exposed those headings to assistive tech. That violates the requirement to preserve accessibility props."
+      },
+      {
+        "file": "app/(tabs)/index.tsx",
+        "line": 312,
+        "severity": "non_blocking",
+        "description": "The no-alert greeting branch does not apply the requested Fraunces styling. The text style only sets size/weight/color/lineHeight and has no `fontFamily`, so the fallback hero does not fully match the wireframe specification."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `ui-worker` skill says workers must read both `wireframe-{name}.html` and `wireframe-{name}-dark.html`, but this dashboard feature uses `wireframe-D.html` and there is no matching `wireframe-D-dark.html`. The worker searched for a dark variant, got no matches, and proceeded anyway. The skill should document the fallback dark-reference rule for screens that only have a shared dark wireframe.",
+      "evidence": "`ui-worker` SKILL.md Step 2 requires both light and dark screen-specific wireframes; the transcript skeleton for session `07bcb180-93da-4738-a13b-68808be27510` shows a `Glob` for `**/wireframe-D*dark*.html` returning `No matching files found`; the design directory contains `wireframe-D.html` but no `wireframe-D-dark.html`."
+    },
+    {
+      "area": "conventions",
+      "observation": "The feature handoff recorded an invalid full commit hash, which breaks downstream reviewers that rely on `handoff.commitId` to fetch the diff.",
+      "evidence": "`/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/handoffs/2026-03-29T21-25-41-710Z__dashboard-redesign__07bcb180-93da-4738-a13b-68808be27510.json` stores `98fae7497fe8a7b1fd7f0a1f0e0d0f4a4de2a41d`, but `git show` on that hash fails with `fatal: bad object`; `git rev-parse 98fae74` resolves to the actual commit `98fae7435e6bc34568f5116fa346f18c22b91912`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: the dashboard visuals are largely in place, but the feature regresses localization and heading accessibility, and the no-alert hero misses the requested Fraunces treatment."
+}

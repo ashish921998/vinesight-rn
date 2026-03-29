@@ -1,0 +1,45 @@
+{
+  "featureId": "farms-list-redesign",
+  "reviewedAt": "2026-03-29T21:54:37Z",
+  "commitId": "39e59da",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The commit improves FarmCard styling, but it does not fully redesign the farms list screen described in the feature. The main screen layout in app/(tabs)/farms.tsx remains the old search-first/quick-stats composition, and populated iOS screens still lose the add-farm action entirely.",
+    "issues": [
+      {
+        "file": "app/(tabs)/farms.tsx",
+        "line": 38,
+        "severity": "blocking",
+        "description": "The target screen itself was not redesigned to the wireframe structure. SearchHeader still renders a search bar plus quick-stat cards (see lines 76-145), and ListHeaderComponent wires that unchanged header into the list (line 545), but the wireframe/feature description requires an in-content 26px Farms title, trailing search/add actions, and a one-line summary before the cards."
+      },
+      {
+        "file": "app/(tabs)/farms.tsx",
+        "line": 523,
+        "severity": "blocking",
+        "description": "The add-farm control disappears on populated iOS/non-Android screens. showFab is gated by isAndroid, so the only add button for non-empty lists is Android-only; the remaining add buttons are limited to loading and empty states. The feature description and wireframe require a persistent add-farm button/FAB on the farms list."
+      },
+      {
+        "file": "src/components/cards/farm-card.tsx",
+        "line": 205,
+        "severity": "non_blocking",
+        "description": "The area badge tint is hard-coded to 0.08 opacity in all themes. The dark wireframe specifies a stronger rgba(74,139,107,0.15) pill, so dark mode cards will render a noticeably lighter-than-spec area badge."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The validation contract for farms-list-redesign is too narrow for the feature description. It checks only farm-card styling and search UI, but it never asserts the required screen header/summary/add-CTA work, which allowed an incomplete screen implementation to pass validation.",
+      "evidence": "features.json:807 requires HEADER and ADD FARM UI for app/(tabs)/farms.tsx, while validation-contract.md:135-143 only defines VAL-FARMLIST-001 (card) and VAL-FARMLIST-002 (search input)."
+    },
+    {
+      "area": "skills",
+      "observation": "The ui-worker procedure requires reading both the light and dark wireframes, but this worker session only referenced the light farms-list wireframe. That gap is consistent with the dark-mode badge mismatch left in FarmCard.",
+      "evidence": "ui-worker SKILL.md Step 2 requires both wireframes; transcript inspection for worker session 047ffda4-3381-4bdf-a9a2-127dbda0aaae contains wireframe-farms-list.html but not wireframe-farms-list-dark.html, while src/components/cards/farm-card.tsx:205 keeps the light-mode 0.08 badge tint in dark mode too."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed. Commit 39e59da updates FarmCard visuals, but the farms list screen itself still misses the wireframe header/summary layout and lacks a persistent add-farm action on populated iOS screens."
+}

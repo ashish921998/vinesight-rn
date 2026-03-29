@@ -84,6 +84,13 @@ Screens access theme via hooks (`useM3()`, `useThemeColors()`). The M3 theme is 
 - Metric values: tabular-nums
 - Section headers: 11px/600/uppercase/0.8px letter-spacing/stone-5
 
+### M3 Semantic Mapping Gotchas
+- `m3.colorScheme.surface` / `background` = screen background (`mist-0` / `#FBF8F3`, dark `#121613`)
+- `m3.surface.surfaceContainerLow` = card surface (`mist-1` / `#F7F3ED`, dark `#1A1E1B`)
+- `m3.colorScheme.outline` = card border (`stone-3` / `#D9D0C4`, dark `#2E342F`)
+- `m3.colorScheme.outlineVariant` = divider / hover surface (`mist-2` / `#EEE7DD`, dark `#242A24`) — **do not use for primary card borders**
+- `m3.colorScheme.surfaceVariant` resolves to the lighter card bg in light mode but to dark `surface-2` (`#242A24`), so it should be treated as a hover/secondary surface, **not** the default Cellar Ledger card background in dark mode
+
 ### Dark Mode Wireframes
 Workers must reference BOTH wireframe versions when implementing:
 - Light: `wireframe-{name}.html`

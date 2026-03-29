@@ -1317,7 +1317,7 @@ export default function FarmDetailScreen() {
               accessibilityRole="button"
               accessibilityLabel={t('common.goBack')}
             >
-              {({ pressed: _pressed }) => (
+              {({ pressed }) => (
                 <View
                   style={{
                     width: '100%',
@@ -1359,7 +1359,7 @@ export default function FarmDetailScreen() {
               accessibilityRole="button"
               accessibilityLabel={t('farmDetails.a11y.openFarmActions')}
             >
-              {({ pressed: _pressed }) => (
+              {({ pressed }) => (
                 <View
                   style={{
                     width: '100%',
@@ -1539,7 +1539,7 @@ export default function FarmDetailScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={t('farmDetails.a11y.openFarmActions')}
                 >
-                  {({ pressed: _pressed }) => (
+                  {({ pressed }) => (
                     <View
                       style={{
                         width: 40,
@@ -2129,7 +2129,7 @@ export default function FarmDetailScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={t(action.titleKey)}
                   >
-                    {({ pressed: _pressed }) => (
+                    {({ pressed }) => (
                       <View
                         style={{
                           alignItems: 'center',
@@ -2209,7 +2209,7 @@ export default function FarmDetailScreen() {
                       : t('farmDetails.a11y.showTasks')
                   }
                 >
-                  {({ pressed: _pressed }) => {
+                  {({ pressed }) => {
                     const selected = selectedTab === tab;
                     const isFirst = tab === 'activities';
                     const isLast = tab === 'tasks';
@@ -2341,7 +2341,7 @@ export default function FarmDetailScreen() {
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={`${t('farmDetails.actions.seeAllLogs')}. ${allLogs.length}`}
-                    style={({ pressed: _pressed }) => ({
+                    style={({ pressed }) => ({
                       flexDirection: 'row',
                       alignItems: 'center',
                       paddingHorizontal: spacing[2],
@@ -2373,7 +2373,7 @@ export default function FarmDetailScreen() {
                   >
                     <Pressable
                       onPress={() => setSelectedLogTypes([])}
-                      style={({ pressed: _pressed }) => ({
+                      style={({ pressed }) => ({
                         flexDirection: 'row',
                         alignItems: 'center',
                         minHeight: 36,
@@ -2420,7 +2420,7 @@ export default function FarmDetailScreen() {
                         <Pressable
                           key={logType.id}
                           onPress={() => toggleLogTypeFilter(logType.id)}
-                          style={({ pressed: _pressed }) => ({
+                          style={({ pressed }) => ({
                             flexDirection: 'row',
                             alignItems: 'center',
                             minHeight: 36,
@@ -2452,7 +2452,7 @@ export default function FarmDetailScreen() {
                     {hasActiveLogTypeFilters ? (
                       <Pressable
                         onPress={() => setSelectedLogTypes([])}
-                        style={({ pressed: _pressed }) => ({
+                        style={({ pressed }) => ({
                           flexDirection: 'row',
                           alignItems: 'center',
                           minHeight: 36,
@@ -2583,7 +2583,7 @@ export default function FarmDetailScreen() {
                       }}
                       accessibilityRole="button"
                       accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
-                      style={({ pressed: _pressed }) => ({
+                      style={({ pressed }) => ({
                         paddingHorizontal: spacing[2],
                         paddingVertical: spacing[1],
                         borderRadius: m3.shape.cornerMedium,
@@ -2743,7 +2743,7 @@ export default function FarmDetailScreen() {
               onPress={openEditFarm}
               accessibilityRole="button"
               accessibilityLabel={t('farmDetails.actions.editFarm')}
-              style={({ pressed: _pressed }) => ({
+              style={({ pressed }) => ({
                 borderRadius: m3.shape.cornerMedium,
                 paddingVertical: spacing[3],
                 paddingHorizontal: spacing[3],
@@ -2777,7 +2777,7 @@ export default function FarmDetailScreen() {
                   ? t('farmDetails.actions.endSeason')
                   : t('farmDetails.actions.startSeason')
               }
-              style={({ pressed: _pressed }) => ({
+              style={({ pressed }) => ({
                 borderRadius: m3.shape.cornerMedium,
                 paddingVertical: spacing[3],
                 paddingHorizontal: spacing[3],
@@ -2827,7 +2827,7 @@ export default function FarmDetailScreen() {
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={t('farmDetails.actions.reviewSeasonHistory')}
-                style={({ pressed: _pressed }) => ({
+                style={({ pressed }) => ({
                   borderRadius: m3.shape.cornerMedium,
                   paddingVertical: spacing[3],
                   paddingHorizontal: spacing[3],
@@ -2858,7 +2858,7 @@ export default function FarmDetailScreen() {
               onPress={confirmDeleteFarmFromSheet}
               accessibilityRole="button"
               accessibilityLabel={t('common.delete')}
-              style={({ pressed: _pressed }) => ({
+              style={({ pressed }) => ({
                 borderRadius: m3.shape.cornerMedium,
                 paddingVertical: spacing[3],
                 paddingHorizontal: spacing[3],
@@ -2886,7 +2886,7 @@ export default function FarmDetailScreen() {
             </Pressable>
             <Pressable
               onPress={() => setShowFarmActionsSheet(false)}
-              style={({ pressed: _pressed }) => ({
+              style={({ pressed }) => ({
                 borderRadius: m3.shape.cornerMedium,
                 paddingVertical: spacing[3],
                 paddingHorizontal: spacing[3],
@@ -3537,7 +3537,7 @@ export default function FarmDetailScreen() {
               overflow: 'hidden',
             }}
           >
-            {({ pressed: _pressed }) => (
+            {({ pressed }) => (
               <>
                 <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
                 <View
