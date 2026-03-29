@@ -33,9 +33,9 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
   const isUser = message.role === 'user';
 
   // Cellar Ledger design: User bubbles use primary, assistant use mist-1 with border
-  // Use surfaceVariant which maps to mist-1 (surface[100])
+  // Use surfaceContainerLow which maps to mist-1 (surface[100])
   const bubbleStyle = {
-    backgroundColor: isUser ? m3.colorScheme.primary : m3.colorScheme.surfaceVariant,
+    backgroundColor: isUser ? m3.colorScheme.primary : m3.surface.surfaceContainerLow,
     borderRadius: 16,
     borderBottomRightRadius: isUser ? 4 : 16,
     borderBottomLeftRadius: isUser ? 16 : 4,
@@ -46,7 +46,7 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
     // Assistant bubbles get a 1px border (stone-3)
     ...(!isUser && {
       borderWidth: 1,
-      borderColor: m3.colorScheme.outlineVariant,
+      borderColor: m3.colorScheme.outline,
     }),
   };
 
@@ -266,8 +266,8 @@ export function LoadingBubble() {
     >
       <View
         style={{
-          // Use surfaceVariant which maps to mist-1 (surface[100])
-          backgroundColor: m3.colorScheme.surfaceVariant,
+          // Use surfaceContainerLow which maps to mist-1 (surface[100])
+          backgroundColor: m3.surface.surfaceContainerLow,
           borderRadius: 16,
           borderTopLeftRadius: 4,
           borderTopRightRadius: 16,
@@ -278,7 +278,7 @@ export function LoadingBubble() {
           alignItems: 'center',
           gap: spacing[2],
           borderWidth: 1,
-          borderColor: m3.colorScheme.outlineVariant,
+          borderColor: m3.colorScheme.outline,
         }}
       >
         <ActivityIndicator size="small" color={m3.colorScheme.primary} />

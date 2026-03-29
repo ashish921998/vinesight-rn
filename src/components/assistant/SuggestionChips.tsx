@@ -36,7 +36,7 @@ export function SuggestionChips({
   };
 
   return (
-    <View style={[styles.container, { borderTopColor: m3.colorScheme.outlineVariant }]}>
+    <View style={[styles.container, { borderTopColor: m3.colorScheme.outline }]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -52,9 +52,9 @@ export function SuggestionChips({
                 styles.chip,
                 {
                   // Cellar Ledger: pill shape with mist-1 bg and 1px stone-3 border
-                  // Use surfaceVariant which maps to mist-1 (surface[100])
-                  backgroundColor: m3.colorScheme.surfaceVariant,
-                  borderColor: m3.colorScheme.outlineVariant,
+                  // Use surfaceContainerLow which maps to mist-1 (surface[100])
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderColor: m3.colorScheme.outline,
                   borderRadius: 999,
                 },
                 disabled && styles.chipDisabled,

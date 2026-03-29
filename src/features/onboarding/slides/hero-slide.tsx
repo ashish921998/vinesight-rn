@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Image,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -133,7 +134,7 @@ export function HeroSlide({ isActive }: HeroSlideProps) {
                 styles.headline,
                 {
                   color: m3.colorScheme.onSurface,
-                  fontFamily: 'Fraunces',
+                  fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
                   fontSize: 28,
                   fontWeight: '400',
                 },
@@ -177,7 +178,13 @@ export function HeroSlide({ isActive }: HeroSlideProps) {
             </View>
           </Animated.View>
 
-          <Animated.View style={[styles.statementCard, subtitleAnimatedStyle]}>
+          <Animated.View
+            style={[
+              styles.statementCard,
+              { borderLeftColor: m3.colorScheme.primary },
+              subtitleAnimatedStyle,
+            ]}
+          >
             <Text
               style={[
                 styles.statementText,
@@ -284,7 +291,6 @@ const styles = StyleSheet.create({
   },
   statementCard: {
     borderLeftWidth: 3,
-    borderLeftColor: '#408059',
     paddingLeft: spacing[4],
     paddingVertical: spacing[2],
   },

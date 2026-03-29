@@ -34,7 +34,7 @@ const VALUE_PROPS = [
   },
   {
     icon: 'indianrupeesign.circle.fill' as const,
-    color: '#408059',
+    color: 'primary' as const,
     title: 'Protect seasonal margin',
     description:
       'Small operational misses stack up. Better records preserve money already earned in the field.',
@@ -89,52 +89,62 @@ export function ValuePropsSlide({ isActive }: ValuePropsSlideProps) {
           </View>
 
           <View style={styles.cardsContainer}>
-            {VALUE_PROPS.map((prop, index) => (
-              <Animated.View
-                key={prop.title}
-                entering={
-                  isActive
-                    ? FadeInDown.delay(index * 120)
-                        .duration(450)
-                        .springify()
-                        .damping(14)
-                    : undefined
-                }
-                style={[
-                  styles.card,
-                  {
-                    backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.82),
-                    borderColor: colorWithOpacity(m3.colorScheme.outline, 0.1),
-                  },
-                ]}
-              >
-                <View style={styles.cardInner}>
-                  <View style={styles.cardLeading}>
-                    <View
-                      style={[
-                        styles.iconCircle,
-                        { backgroundColor: colorWithOpacity(prop.color, 0.12) },
-                      ]}
-                    >
-                      <SymbolIcon name={prop.icon} size={22} color={prop.color} />
+            {VALUE_PROPS.map((prop, index) => {
+              const resolvedColor = prop.color === 'primary' ? m3.colorScheme.primary : prop.color;
+              return (
+                <Animated.View
+                  key={prop.title}
+                  entering={
+                    isActive
+                      ? FadeInDown.delay(index * 120)
+                          .duration(450)
+                          .springify()
+                          .damping(14)
+                      : undefined
+                  }
+                  style={[
+                    styles.card,
+                    {
+                      backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.82),
+                      borderColor: colorWithOpacity(m3.colorScheme.outline, 0.1),
+                    },
+                  ]}
+                >
+                  <View style={styles.cardInner}>
+                    <View style={styles.cardLeading}>
+                      <View
+                        style={[
+                          styles.iconCircle,
+                          { backgroundColor: colorWithOpacity(resolvedColor, 0.12) },
+                        ]}
+                      >
+                        <SymbolIcon name={prop.icon} size={22} color={resolvedColor} />
+                      </View>
+                      <View
+                        style={[
+                          styles.rule,
+                          { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.18) },
+                        ]}
+                      />
                     </View>
-                    <View style={styles.rule} />
-                  </View>
 
-                  <View style={styles.cardText}>
-                    <Text style={[styles.cardEyebrow, { color: prop.color }]}>Priority risk</Text>
-                    <Text style={[styles.cardTitle, { color: m3.colorScheme.onSurface }]}>
-                      {prop.title}
-                    </Text>
-                    <Text
-                      style={[styles.cardDescription, { color: m3.colorScheme.onSurfaceVariant }]}
-                    >
-                      {prop.description}
-                    </Text>
+                    <View style={styles.cardText}>
+                      <Text style={[styles.cardEyebrow, { color: resolvedColor }]}>
+                        Priority risk
+                      </Text>
+                      <Text style={[styles.cardTitle, { color: m3.colorScheme.onSurface }]}>
+                        {prop.title}
+                      </Text>
+                      <Text
+                        style={[styles.cardDescription, { color: m3.colorScheme.onSurfaceVariant }]}
+                      >
+                        {prop.description}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              </Animated.View>
-            ))}
+                </Animated.View>
+              );
+            })}
           </View>
 
           <View
@@ -220,7 +230,6 @@ const styles = StyleSheet.create({
   rule: {
     width: 1,
     height: 56,
-    backgroundColor: colorWithOpacity('#408059', 0.18),
   },
   cardText: {
     flex: 1,

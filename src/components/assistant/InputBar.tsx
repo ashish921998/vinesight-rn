@@ -62,10 +62,10 @@ export function InputBar({
   const canSend = hasText && !isLoading && !disabled;
   const canRemoveAttachment = onRemoveAttachment != null && !isLoading && !disabled;
 
-  // Cellar Ledger: Input bar uses mist-1 (surfaceVariant) background with 1px border
-  // Use surfaceVariant which maps to mist-1 (surface[100])
-  const containerBg = m3.colorScheme.surfaceVariant;
-  const inputBg = isDark ? m3.colorScheme.surfaceVariant : m3.colorScheme.surface;
+  // Cellar Ledger: Input bar uses mist-1 (surfaceContainerLow) background with 1px border
+  // Use surfaceContainerLow which maps to mist-1 (surface[100])
+  const containerBg = m3.surface.surfaceContainerLow;
+  const inputBg = isDark ? m3.surface.surfaceContainerLow : m3.colorScheme.surface;
 
   return (
     <View
@@ -73,7 +73,7 @@ export function InputBar({
         styles.outerContainer,
         {
           backgroundColor: containerBg,
-          borderTopColor: m3.colorScheme.outlineVariant,
+          borderTopColor: m3.colorScheme.outline,
           borderTopWidth: 1,
           paddingHorizontal: spacing[3],
           paddingTop: spacing[2],
@@ -94,7 +94,7 @@ export function InputBar({
               {attachment.dataUrl != null ? (
                 <Image
                   source={{ uri: attachment.dataUrl }}
-                  style={[styles.thumbnail, { borderColor: m3.colorScheme.outlineVariant }]}
+                  style={[styles.thumbnail, { borderColor: m3.colorScheme.outline }]}
                   accessibilityLabel={t('assistant.attachments.thumbnailA11y')}
                 />
               ) : (
@@ -102,7 +102,7 @@ export function InputBar({
                   style={[
                     styles.thumbnail,
                     styles.documentThumbnail,
-                    { borderColor: m3.colorScheme.outlineVariant },
+                    { borderColor: m3.colorScheme.outline },
                   ]}
                   accessible
                   accessibilityLabel={`${t('assistant.attachments.documentA11y')}: ${attachment.name}`}
@@ -183,7 +183,7 @@ export function InputBar({
               // Cellar Ledger: mist-0 bg, 1px stone-3 border, borderRadius 24
               backgroundColor: inputBg,
               color: m3.colorScheme.onSurface,
-              borderColor: m3.colorScheme.outlineVariant,
+              borderColor: m3.colorScheme.outline,
               borderWidth: 1,
               borderRadius: 24,
               ...Platform.select({
