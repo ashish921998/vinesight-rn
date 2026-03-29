@@ -1,0 +1,29 @@
+docs/product-roadmap.md
+  5dcc2b5fb9034053 21-25,217
+supabase/migrations/20260329093000_dashboard_recent_log_farms_rpc.sql
+  5dcc2b5fb9034053 22,29,36,43,50
+src/features/onboarding/onboarding-screen.tsx
+  5dcc2b5fb9034053 58,112-116,120,126,150,277,279
+app/(tabs)/index.tsx
+  5dcc2b5fb9034053 150,244-248
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "59f23dee38f6839a72c014062c806fef18af9246",
+  "prompts": {
+    "5dcc2b5fb9034053": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "92bf0746-3046-4d2a-ba0f-75b15434a9f1",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 17,
+      "accepted_lines": 28,
+      "overriden_lines": 0
+    }
+  }
+}
