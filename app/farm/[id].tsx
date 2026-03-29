@@ -1526,7 +1526,7 @@ export default function FarmDetailScreen() {
                           fontWeight: fontWeight.medium,
                         }}
                       >
-                        {farm.area.toFixed(1)} acres
+                        {t('farmDetails.header.areaAcres', { value: farm.area.toFixed(1) })}
                       </Text>
                     </View>
                   )}
@@ -1671,7 +1671,7 @@ export default function FarmDetailScreen() {
                       flex: 1,
                     }}
                   >
-                    Target:{' '}
+                    {t('farmDetails.header.targetLabel')}{' '}
                     {(() => {
                       const raw = activeSeasonRecord.target_harvest_date;
                       if (!raw) return '—';
@@ -1697,7 +1697,7 @@ export default function FarmDetailScreen() {
                         fontWeight: fontWeight.semibold,
                       }}
                     >
-                      Edit
+                      {t('common.edit')}
                     </Text>
                   </Pressable>
                 </View>
@@ -1718,7 +1718,7 @@ export default function FarmDetailScreen() {
                       marginLeft: spacing[1],
                     }}
                   >
-                    Safe harvest: {earliestSafeHarvestDateLabel}
+                    {t('farmDetails.safeHarvest.inlineTitle')} {earliestSafeHarvestDateLabel}
                   </Text>
                 </View>
               ) : null}
@@ -1778,7 +1778,7 @@ export default function FarmDetailScreen() {
                     marginTop: 2,
                   }}
                 >
-                  Log Entries
+                  {t('farmDetails.stats.logEntriesTitle')}
                 </Text>
               </View>
               <View

@@ -156,9 +156,11 @@ export const en = {
     header: {
       areaAcres: '{{value}} acres',
       areaAcresUnknown: '— acres',
+      targetLabel: 'Target:',
     },
     pruning: {
       daysShort: '{{count}}d',
+      daysPruned: 'Days Pruned',
     },
     weather: {
       current: 'Current Weather',
@@ -176,6 +178,7 @@ export const en = {
       noData: 'No PHI spray records available yet.',
       safeDate: 'Safe from {{date}}',
       inlineDate: 'Safe harvest date: {{date}}',
+      inlineTitle: 'Safe harvest:',
       blockedBy: 'Blocked by {{reason}}',
       ctaSetTarget: 'Set target date',
       ctaOpenChecker: 'Open safe-to-spray checker',
@@ -1874,6 +1877,13 @@ export const en = {
       afternoon: 'Good afternoon, {{name}}',
       evening: 'Good evening, {{name}}',
       night: 'Good night, {{name}}',
+    },
+    hero: {
+      today: 'Today',
+      allClear: 'All clear',
+      attentionNeeded: 'Attention needed',
+      alertCount_one: '{{count}} alert',
+      alertCount_other: '{{count}} alerts',
     },
     stats: {
       farms: 'Farms',

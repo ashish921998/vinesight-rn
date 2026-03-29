@@ -206,7 +206,7 @@ export default function DashboardScreen() {
                 letterSpacing: 0.3,
               }}
             >
-              Today
+              {t('dashboard.hero.today')}
             </Text>
             {hasAlerts ? (
               <View
@@ -238,7 +238,7 @@ export default function DashboardScreen() {
                     letterSpacing: 0.2,
                   }}
                 >
-                  {alertCount} {alertCount === 1 ? 'alert' : 'alerts'}
+                  {t('dashboard.hero.alertCount', { count: alertCount })}
                 </Text>
               </View>
             ) : (
@@ -268,7 +268,7 @@ export default function DashboardScreen() {
                     letterSpacing: 0.2,
                   }}
                 >
-                  All clear
+                  {t('dashboard.hero.allClear')}
                 </Text>
               </View>
             )}
@@ -288,7 +288,7 @@ export default function DashboardScreen() {
               >
                 {farmsNeedingAttention && farmsNeedingAttention[0]
                   ? t(`dashboard.needsAttention.reasons.${farmsNeedingAttention[0].reason}`)
-                  : 'Attention needed'}
+                  : t('dashboard.hero.attentionNeeded')}
               </Text>
               <Text
                 style={{
@@ -576,7 +576,9 @@ export default function DashboardScreen() {
               <View style={{ marginBottom: spacing[6] }}>
                 <View style={sectionTitleStyle as ViewStyle}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                    <Text style={sectionTitleStyle}>{t('dashboard.needsAttention.title')}</Text>
+                    <Text style={sectionTitleStyle} accessibilityRole="header">
+                      {t('dashboard.needsAttention.title')}
+                    </Text>
                     <Text style={sectionCountStyle}>{farmsNeedingAttention.length}</Text>
                   </View>
                 </View>
@@ -688,7 +690,9 @@ export default function DashboardScreen() {
                 marginBottom: spacing[3],
               }}
             >
-              <Text style={sectionTitleStyle}>{t('dashboard.quickActions.title')}</Text>
+              <Text style={sectionTitleStyle} accessibilityRole="header">
+                {t('dashboard.quickActions.title')}
+              </Text>
             </View>
             <View
               style={{
@@ -835,7 +839,9 @@ export default function DashboardScreen() {
                 marginBottom: spacing[3],
               }}
             >
-              <Text style={sectionTitleStyle}>{t('dashboard.recentActivity.title')}</Text>
+              <Text style={sectionTitleStyle} accessibilityRole="header">
+                {t('dashboard.recentActivity.title')}
+              </Text>
             </View>
             {isLoadingActivities || isLoadingFarms ? (
               <View
