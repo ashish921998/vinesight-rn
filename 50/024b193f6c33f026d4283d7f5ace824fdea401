@@ -1,0 +1,25 @@
+src/types/task.ts
+  15ae251ad9780b95 98
+src/constants/calculator-models.ts
+  15ae251ad9780b95 296
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "50024b193f6c33f026d4283d7f5ace824fdea401",
+  "prompts": {
+    "15ae251ad9780b95": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1614c419-85d8-4778-906e-84816bee424f",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
