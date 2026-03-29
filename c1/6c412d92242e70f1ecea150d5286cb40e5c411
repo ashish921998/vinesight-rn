@@ -1,0 +1,23 @@
+.factory/validation/theme-foundation/scrutiny/reviews/fix-legacy-note-colors.json
+  276099c893651622 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "c16c412d92242e70f1ecea150d5286cb40e5c411",
+  "prompts": {
+    "276099c893651622": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3e74a7e5-57d7-43d5-8648-62a36add71bb",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 21,
+      "total_deletions": 0,
+      "accepted_lines": 21,
+      "overriden_lines": 0
+    }
+  }
+}
