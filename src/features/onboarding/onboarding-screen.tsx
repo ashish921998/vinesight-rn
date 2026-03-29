@@ -263,7 +263,6 @@ export function OnboardingScreen() {
     if (hasAppliedResumeStepRef.current || width <= 0) return;
     const resumePage = pageIndexForStep(onboardingCurrentStep);
     if (resumePage <= 0) {
-      hasAppliedResumeStepRef.current = true;
       return;
     }
     hasAppliedResumeStepRef.current = true;
