@@ -1,0 +1,35 @@
+docs/product-roadmap.md
+  b50bbc7b66796b84 34,42-43
+src/hooks/use-dashboard-stats.ts
+  b50bbc7b66796b84 106-107
+src/i18n/locales/en.ts
+  b50bbc7b66796b84 1972-1976
+src/i18n/locales/mr.ts
+  b50bbc7b66796b84 1989-1994
+src/i18n/locales/hi.ts
+  b50bbc7b66796b84 1979-1984
+app/(tabs)/index.tsx
+  b50bbc7b66796b84 75,325-365,367,377-379
+src/components/screens/entry-form.tsx
+  b50bbc7b66796b84 1673
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "f3e0ff0086d97b20173b4fe5675805549828d6a1",
+  "prompts": {
+    "b50bbc7b66796b84": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d358d-2dcf-7450-994f-f2f5d3c447fa",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 74,
+      "total_deletions": 7,
+      "accepted_lines": 74,
+      "overriden_lines": 0
+    }
+  }
+}
