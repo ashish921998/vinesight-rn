@@ -1,0 +1,91 @@
+{
+  "groupId": "ai-assistant",
+  "testedAt": "2026-03-29T23:26:46Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185"
+  },
+  "toolsUsed": ["Read", "Grep"],
+  "assertionResults": [
+    {
+      "id": "VAL-AI-001",
+      "status": "pass",
+      "reason": "User messages use the primary theme color, white text, asymmetric bubble corners, and are right-aligned via the user-message container style.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/ai-assistant/ai-assistant-evidence.md",
+        "references": [
+          {
+            "file": "src/components/assistant/MessageBubble.tsx",
+            "lines": "37-54",
+            "details": "bubbleStyle uses m3.colorScheme.primary for user messages, applies asymmetric radii, and sets user text to #FFFFFF"
+          },
+          {
+            "file": "src/components/assistant/MessageBubble.tsx",
+            "lines": "221-222",
+            "details": "containerRight sets alignItems to flex-end for right alignment"
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "72,371",
+            "details": "the Cellar Ledger light primary token is #355847 and the M3 primary role resolves to it"
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-AI-002",
+      "status": "pass",
+      "reason": "Assistant messages use the warm card surface token, a 1px outline border, dark on-surface text, and left alignment through the assistant-message container style.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/ai-assistant/ai-assistant-evidence.md",
+        "references": [
+          {
+            "file": "src/components/assistant/MessageBubble.tsx",
+            "lines": "37-49",
+            "details": "assistant bubble uses surfaceContainerLow with borderWidth 1 and outline border"
+          },
+          {
+            "file": "src/components/assistant/MessageBubble.tsx",
+            "lines": "54,218-219",
+            "details": "assistant text uses onSurface and assistant container aligns content to flex-start"
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "36,38,44,399,403,421",
+            "details": "surfaceContainerLow, outline, and onSurface map to #F7F3ED, #D9D0C4, and #1E241F in light mode"
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-AI-003",
+      "status": "pass",
+      "reason": "The welcome state supplies default suggestions when there are no messages and renders SuggestionChips styled with pill radius, card-surface fill, and a 1px outline border.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/ai-assistant/ai-assistant-evidence.md",
+        "references": [
+          {
+            "file": "src/components/assistant/ChatScreen.tsx",
+            "lines": "63-67,432-434,617-623",
+            "details": "default suggestions are defined, returned for the no-message welcome state, and rendered through SuggestionChips when !hasMessages"
+          },
+          {
+            "file": "src/components/assistant/SuggestionChips.tsx",
+            "lines": "27-32,64,107-108",
+            "details": "chips use surfaceContainerLow and outline colors with borderRadius 999 and borderWidth 1"
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "36,38,403,421",
+            "details": "chip surface and border roles resolve to warm card and stone border tokens in light mode"
+          }
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated 3 AI assistant assertions by read-only code review; VAL-AI-001, VAL-AI-002, and VAL-AI-003 all pass."
+}

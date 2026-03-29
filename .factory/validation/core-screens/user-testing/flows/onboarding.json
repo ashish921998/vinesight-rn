@@ -1,0 +1,57 @@
+{
+  "groupId": "onboarding",
+  "testedAt": "2026-03-29T23:26:51Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "milestone": "core-screens"
+  },
+  "toolsUsed": ["Read", "Grep", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-ONBOARD-001",
+      "status": "fail",
+      "reason": "Onboarding headline styling does not reference Fraunces. The only explicit onboarding headline font family is `Platform.select({ ios: 'Georgia', default: 'serif' })` in `src/features/onboarding/slides/hero-slide.tsx:137`, although the size is `28` at line 138.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/onboarding/onboarding-evidence.md",
+        "references": [
+          "src/features/onboarding/slides/hero-slide.tsx:137-139",
+          "src/features/onboarding/ (search `Fraunces|fontFamily|Georgia|serif` returned only `hero-slide.tsx:137`)"
+        ]
+      }
+    },
+    {
+      "id": "VAL-ONBOARD-002",
+      "status": "pass",
+      "reason": "Pagination dots implement the required active/inactive differentiation: base size `8`, active width `24`, inactive opacity `0.25`, and primary-color fill.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/onboarding/onboarding-evidence.md",
+        "references": [
+          "src/features/onboarding/components/page-indicator.tsx:12-14",
+          "src/features/onboarding/components/page-indicator.tsx:26-38",
+          "src/features/onboarding/components/page-indicator.tsx:49-51"
+        ]
+      }
+    },
+    {
+      "id": "VAL-ONBOARD-003",
+      "status": "pass",
+      "reason": "The reusable onboarding primary button is full-width, `48px` tall, uses `borderRadius.md` (`16`), white text, and the shared primary token, which resolves to `#355847` in light mode.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/onboarding/onboarding-evidence.md",
+        "references": [
+          "src/features/onboarding/components/onboarding-button.tsx:65",
+          "src/features/onboarding/components/onboarding-button.tsx:84-86",
+          "src/features/onboarding/components/onboarding-button.tsx:104-105",
+          "src/styles/theme.ts:72",
+          "src/styles/theme.ts:247",
+          "src/styles/theme.ts:371"
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated 3 onboarding assertions by read-only code review: 2 passed (VAL-ONBOARD-002, VAL-ONBOARD-003) and 1 failed (VAL-ONBOARD-001, onboarding headlines use Georgia/serif instead of Fraunces)."
+}

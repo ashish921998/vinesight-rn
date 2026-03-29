@@ -1,0 +1,67 @@
+{
+  "groupId": "farm-detail",
+  "testedAt": "2026-03-29T23:26:46.773678+00:00",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "milestone": "core-screens",
+    "primaryEvidenceTargets": ["app/farm/[id].tsx", "src/styles/theme.ts"]
+  },
+  "toolsUsed": ["Read", "Grep", "Execute"],
+  "assertionResults": [
+    {
+      "id": "VAL-FARMDET-001",
+      "status": "pass",
+      "reason": "The farm detail screen defines a primary green identity card with 24px bottom radii, white farm name text, white-tinted variety text, and a conditional urgent-task risk block that uses rgba(0,0,0,0.15) plus warning copy.",
+      "evidence": {
+        "noteFile": "core-screens/farm-detail/farm-detail-evidence.md",
+        "references": [
+          "app/farm/[id].tsx:1496-1547",
+          "app/farm/[id].tsx:1787-1823",
+          "src/styles/theme.ts:66-72",
+          "src/styles/theme.ts:247-248"
+        ]
+      }
+    },
+    {
+      "id": "VAL-FARMDET-002",
+      "status": "pass",
+      "reason": "The screen renders a horizontal weather strip with icon/text pairs and two explicit 1px divider elements between the data groups when weather data is available.",
+      "evidence": {
+        "noteFile": "core-screens/farm-detail/farm-detail-evidence.md",
+        "references": ["app/farm/[id].tsx:1945-2037"]
+      }
+    },
+    {
+      "id": "VAL-FARMDET-003",
+      "status": "pass",
+      "reason": "The stats area is implemented as a two-column row of bordered cards using the card and border theme tokens, 16px radii, 40x40 icon circles, and bold 20px values.",
+      "evidence": {
+        "noteFile": "core-screens/farm-detail/farm-detail-evidence.md",
+        "references": [
+          "app/farm/[id].tsx:2041-2173",
+          "src/styles/theme.ts:36-40",
+          "src/styles/theme.ts:247"
+        ]
+      }
+    },
+    {
+      "id": "VAL-FARMDET-004",
+      "status": "pass",
+      "reason": "The workboard quick actions use per-action category colors, 40x40 circular icons with 12% tinted backgrounds, and muted 11px labels.",
+      "evidence": {
+        "noteFile": "core-screens/farm-detail/farm-detail-evidence.md",
+        "references": [
+          "app/farm/[id].tsx:262-298",
+          "app/farm/[id].tsx:2201-2250",
+          "src/styles/theme.ts:40"
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Reviewed 4 assigned farm-detail assertions by code inspection; all 4 pass against the current working tree."
+}

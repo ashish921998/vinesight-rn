@@ -1,0 +1,84 @@
+{
+  "groupId": "dashboard-and-farms",
+  "testedAt": "2026-03-29T23:27:07.917576+00:00",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185"
+  },
+  "toolsUsed": ["Read", "Grep"],
+  "assertionResults": [
+    {
+      "id": "VAL-DASH-001",
+      "status": "pass",
+      "reason": "The dashboard hero uses the primary theme token, applies rounded bottom corners, and includes both the Today label and alert badge implementation.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/dashboard-and-farms/dashboard-and-farms-evidence.md",
+        "references": [
+          "app/(tabs)/index.tsx:181-241",
+          "src/styles/theme.ts:248-249",
+          "src/styles/theme.ts:371-371"
+        ]
+      }
+    },
+    {
+      "id": "VAL-DASH-002",
+      "status": "pass",
+      "reason": "The metric section is implemented as a 2x2 wrapped grid with 36x36 tinted icon circles, 24px values, and uppercase labels.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/dashboard-and-farms/dashboard-and-farms-evidence.md",
+        "references": ["app/(tabs)/index.tsx:351-550"]
+      }
+    },
+    {
+      "id": "VAL-DASH-003",
+      "status": "pass",
+      "reason": "Attention cards include a 3px warning strip, 36x36 warning icon wrap, bold farm name, muted reason text, and a chevron.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/dashboard-and-farms/dashboard-and-farms-evidence.md",
+        "references": ["app/(tabs)/index.tsx:591-658"]
+      }
+    },
+    {
+      "id": "VAL-DASH-004",
+      "status": "pass",
+      "reason": "Quick actions are arranged in a horizontal row inside a bordered 16px-radius card, and each action uses a 44x44 tinted icon container with 12px radius.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/dashboard-and-farms/dashboard-and-farms-evidence.md",
+        "references": ["app/(tabs)/index.tsx:697-810", "src/styles/theme.ts:247-247"]
+      }
+    },
+    {
+      "id": "VAL-FARMLIST-001",
+      "status": "fail",
+      "reason": "The FarmCard includes the required mist-1 background, stone-3 border, variety text, area pill badge, and chevron, but the card radius is wired to borderRadius.lg (24px) instead of the required 16px radius.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/dashboard-and-farms/dashboard-and-farms-evidence.md",
+        "references": [
+          "src/components/cards/farm-card.tsx:49-55",
+          "src/components/cards/farm-card.tsx:185-225",
+          "src/styles/theme.ts:247-249"
+        ]
+      }
+    },
+    {
+      "id": "VAL-FARMLIST-002",
+      "status": "pass",
+      "reason": "The farms list includes a styled search control with warm background, border, rounded corners, search icon trigger, and a TextInput with search accessibility metadata.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/core-screens/dashboard-and-farms/dashboard-and-farms-evidence.md",
+        "references": [
+          "app/(tabs)/farms.tsx:53-61",
+          "app/(tabs)/farms.tsx:106-119",
+          "app/(tabs)/farms.tsx:166-187",
+          "src/styles/theme.ts:356-356",
+          "src/styles/theme.ts:421-421"
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Reviewed 6 assigned assertions by read-only code review: 5 passed and 1 failed. The only failure is VAL-FARMLIST-001 because the farm card uses a 24px radius token instead of the required 16px radius."
+}

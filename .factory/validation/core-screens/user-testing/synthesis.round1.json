@@ -1,0 +1,40 @@
+{
+  "milestone": "core-screens",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 16,
+    "passed": 14,
+    "failed": 2,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-DASH-001",
+    "VAL-DASH-002",
+    "VAL-DASH-003",
+    "VAL-DASH-004",
+    "VAL-FARMDET-001",
+    "VAL-FARMDET-002",
+    "VAL-FARMDET-003",
+    "VAL-FARMDET-004",
+    "VAL-AI-001",
+    "VAL-AI-002",
+    "VAL-AI-003",
+    "VAL-ONBOARD-002",
+    "VAL-ONBOARD-003",
+    "VAL-FARMLIST-002"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-ONBOARD-001",
+      "reason": "Onboarding headline styling does not reference Fraunces. The only explicit onboarding headline font family is `Platform.select({ ios: 'Georgia', default: 'serif' })` in `src/features/onboarding/slides/hero-slide.tsx:137`, although the size is `28` at line 138."
+    },
+    {
+      "id": "VAL-FARMLIST-001",
+      "reason": "The FarmCard includes the required mist-1 background, stone-3 border, variety text, area pill badge, and chevron, but the card radius is wired to borderRadius.lg (24px) instead of the required 16px radius."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": null
+}
