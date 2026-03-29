@@ -1,0 +1,65 @@
+src/components/cards/stats-card.tsx
+  9d10f182b9afda58 4,18,20,52,59,61,63,65,75-85,87-89,102-104,108-110,114,116-117,119-121,125-126,128,162-164,177,191-193
+src/components/cards/worker-card.tsx
+  142f860386461c59 4,16,27-28,32-33,45,49-50,54,58,60-63,65,74,81,83-85,94,97,103,114,118-134,160-166,171,180-190,193-194
+src/components/cards/activity-log-card.tsx
+  9d10f182b9afda58 4,12,17,109,127,131,133-134,136,140-144,146-147,154,156-158,167,169-170,174,176,179,181-182,194,216,224,238,274,295,305
+  142f860386461c59 116-117
+src/components/cards/farm-card.tsx
+  9d10f182b9afda58 4,41-42,44-45,47,49,51,53,64,66-67,70,118,143,175,177-184,189-190,195-196,201-203,208-211,290
+src/components/cards/task-row.tsx
+  142f860386461c59 3,13,47,69-76,80-81,85-86,89-90,93-102,105,107,119-120,128,130,132,164,172-179
+  05870e7ad5fd06d8 7
+src/components/ui/button.tsx
+  142f860386461c59 15,43,52,63,66-69,72,74-75,79,101,105,109
+  05870e7ad5fd06d8 17
+src/components/cards/quick-action-button.tsx
+  9d10f182b9afda58 4,10,22-23,26,29,33,35-37,44,46-47,49,73
+  05870e7ad5fd06d8 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "0bea3d5134bf776b8be60441f3f1c0503b465f52",
+  "prompts": {
+    "05870e7ad5fd06d8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d1167030-fd5b-475b-aa51-e8e2e34457cd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 5,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "142f860386461c59": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c84e43f7-1523-40f6-b870-dd26b6102dca",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 153,
+      "total_deletions": 73,
+      "accepted_lines": 144,
+      "overriden_lines": 0
+    },
+    "9d10f182b9afda58": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "e2061190-24b9-40c1-8bf6-5262cc8e614d",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 163,
+      "total_deletions": 122,
+      "accepted_lines": 160,
+      "overriden_lines": 0
+    }
+  }
+}
