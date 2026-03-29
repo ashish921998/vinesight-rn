@@ -1,6 +1,6 @@
 {
   "milestone": "theme-foundation",
-  "round": 1,
+  "round": 2,
   "status": "fail",
   "validatorsRun": {
     "test": {
@@ -20,65 +20,25 @@
     }
   },
   "reviewsSummary": {
-    "total": 3,
+    "total": 1,
     "passed": 0,
-    "failed": 3,
-    "failedFeatures": ["update-design-tokens", "update-shared-components", "update-tab-bar"]
+    "failed": 1,
+    "failedFeatures": ["fix-theme-foundation-scrutiny"]
   },
   "blockingIssues": [
     {
-      "featureId": "update-design-tokens",
+      "featureId": "fix-theme-foundation-scrutiny",
       "severity": "blocking",
-      "description": "The theme still exposes legacy observation colors instead of the required note palette (#5C6D91 light / #7A8DAA dark), so note-related UI cannot resolve the specified Cellar Ledger blue tokens."
+      "description": "The note palette fix is only partial. `src/styles/theme.ts` now defines `note`/`observation` as `#5C6D91`/`#7A8DAA`, but `src/constants/calculator-models.ts:296` and `src/types/task.ts:98` still hardcode the legacy note color `#738c7a`, so note-related UI does not consistently resolve through the required Cellar Ledger blue note palette."
     },
     {
-      "featureId": "update-design-tokens",
+      "featureId": "fix-theme-foundation-scrutiny",
       "severity": "blocking",
-      "description": "The dark M3 theme maps onBackground/onSurface to surface[900] (#F0F2F0) instead of the required bark-charcoal text token #E8E4DE."
-    },
-    {
-      "featureId": "update-shared-components",
-      "severity": "blocking",
-      "description": "StatsCard's icon circle uses borderRadius.sm (4px) rather than the required 10px radius, so it does not meet the Cellar Ledger component contract."
-    },
-    {
-      "featureId": "update-tab-bar",
-      "severity": "blocking",
-      "description": "The visible tab set still follows the old IA instead of the requested Home/Farms/Logs/AI/More bottom navigation."
+      "description": "The bottom navigation still exposes the old tab IA in `app/(tabs)/_layout.tsx` (`tabs.dashboard`, `tabs.explore`, `tabs.workers`, `tabs.tools`, `tabs.aiAssistant`) instead of the requested `Home`, `Farms`, `Logs`, `AI`, `More` set on both Android and iOS."
     }
   ],
   "appliedUpdates": [],
-  "suggestedGuidanceUpdates": [
-    {
-      "target": "ui-worker skill",
-      "suggestion": "Clarify how workers must report validator failures and procedure compliance when a required validator fails before or during feature work; handoffs should not claim validators passed or full procedure compliance in that state.",
-      "evidence": "The update-design-tokens review found a transcript with a failing npm test run while the recorded handoff still marked success, validatorsPassed=true, and followedProcedure=true.",
-      "isSystemic": true
-    },
-    {
-      "target": "ui-worker skill",
-      "suggestion": "Require explicit evidence that both light and dark wireframes were read before visual-task completion, or relax the rule when dark wireframes are unavailable.",
-      "evidence": "The update-tab-bar review found the transcript only read the light wireframe while AGENTS.md and the ui-worker skill both required reading light and dark variants; the handoff still reported followedProcedure=true.",
-      "isSystemic": true
-    },
-    {
-      "target": "ui-worker skill",
-      "suggestion": "Add an alternate procedure for component-only/theme-foundation features that have no screen-specific wireframe path, so workers and reviewers are not forced into an ill-fitting screen-wireframe workflow.",
-      "evidence": "The update-shared-components review found the feature definition only listed component expectations, while the ui-worker skill assumes a screen-specific wireframe implementation flow.",
-      "isSystemic": true
-    },
-    {
-      "target": "AGENTS.md",
-      "suggestion": "When the orchestrator completes a feature manually after worker crashes, require a minimal handoff/transcript artifact so later scrutiny reviews have a standard evidence trail.",
-      "evidence": "The update-shared-components review found no dedicated handoff JSON or worker transcript entry for the manually completed feature and had to infer the implementation commit from git history.",
-      "isSystemic": true
-    }
-  ],
-  "rejectedObservations": [
-    {
-      "observation": "The library architecture note describing the current tab layout conflicts with the update-tab-bar feature spec.",
-      "reason": "Rejected as a library update because the discrepancy is mission-specific and should be resolved by orchestrator guidance and follow-up feature work rather than recorded as durable codebase knowledge."
-    }
-  ],
-  "previousRound": null
+  "suggestedGuidanceUpdates": [],
+  "rejectedObservations": [],
+  "previousRound": ".factory/validation/theme-foundation/scrutiny/synthesis.round1.json"
 }

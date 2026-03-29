@@ -1,0 +1,28 @@
+{
+  "featureId": "fix-theme-foundation-scrutiny",
+  "reviewedAt": "2026-03-29T20:42:52Z",
+  "commitId": "abf22521d1f1283fd3e20301eb813625e10c3af0",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The fix commit correctly adds note tokens in `theme.ts`, switches dark M3 `onBackground`/`onSurface` to `#E8E4DE`, sets StatsCard's icon circle to 10px, and updates Android tab labels to weight 600. However, it does not fully resolve the prior scrutiny failures: note-related UI still has legacy hardcoded colors outside the theme layer, and the bottom navigation still exposes the old tab IA instead of the requested Home/Farms/Logs/AI/More set.",
+    "issues": [
+      {
+        "file": "src/constants/calculator-models.ts",
+        "line": 296,
+        "severity": "blocking",
+        "description": "The note palette issue is only partially fixed. `src/styles/theme.ts` now defines `note`/`observation` as `#5C6D91`/`#7A8DAA`, but `LOG_TYPES` still hardcodes the legacy note color `#738c7a`. That metadata is consumed by `src/components/screens/entry-form.tsx:71`, `src/components/screens/entry-form/PendingLogs.tsx:1`, `src/components/cards/activity-log-card.tsx:115`, and `src/components/cards/timeline-log-card.tsx:177`, so note-related UI still does not consistently resolve through the required blue note palette. `src/types/task.ts:98` also still hardcodes `#738c7a` for note tasks."
+      },
+      {
+        "file": "app/(tabs)/_layout.tsx",
+        "line": 159,
+        "severity": "blocking",
+        "description": "The Android active-label weight is now `600`, but the visible tabs still render the old IA (`tabs.dashboard`, `tabs.explore`, `tabs.workers`, `tabs.tools`, `tabs.aiAssistant`) instead of the requested `Home`, `Farms`, `Logs`, `AI`, `More` set. The same mismatch remains in the iOS `NativeTabs` triggers at lines 236-299, so the original tab-set blocking issue from `update-tab-bar` is still unresolved."
+      }
+    ]
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185/.factory/validation/theme-foundation/scrutiny/synthesis.json",
+  "summary": "Fail: the fix clears the dark M3 text mapping, StatsCard radius, and Android font-weight issues, but note-related UI still contains legacy hardcoded colors and the bottom nav still does not implement the requested Home/Farms/Logs/AI/More tab set. No new regressions were found in the touched files beyond these still-unresolved requirements."
+}
