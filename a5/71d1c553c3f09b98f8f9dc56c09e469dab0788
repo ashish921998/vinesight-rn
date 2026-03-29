@@ -1,0 +1,23 @@
+app/(tabs)/farms.tsx
+  83458feadfb9323a 18,36,48,71-73,77-78,81-105,107-117,119,122-123,127-142,144,147-148,151-155,158,163-200,203-205,208,212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "a571d1c553c3f09b98f8f9dc56c09e469dab0788",
+  "prompts": {
+    "83458feadfb9323a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "562f2b3c-65fb-4cfa-b7c7-6993a012cb86",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 130,
+      "total_deletions": 160,
+      "accepted_lines": 124,
+      "overriden_lines": 0
+    }
+  }
+}
