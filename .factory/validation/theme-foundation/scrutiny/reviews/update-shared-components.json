@@ -1,0 +1,39 @@
+{
+  "featureId": "update-shared-components",
+  "reviewedAt": "2026-03-29T20:32:50Z",
+  "commitId": "0bea3d5134bf776b8be60441f3f1c0503b465f52",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The shared-components commit moves the cards toward the Cellar Ledger palette and border-only treatment, but it does not fully satisfy the feature contract. The StatsCard icon circle misses the required 10px radius, and WorkerCard now exposes a visible call button that is rendered as a button but has no action attached.",
+    "issues": [
+      {
+        "file": "src/components/cards/stats-card.tsx",
+        "line": 79,
+        "severity": "blocking",
+        "description": "The feature contract requires StatsCard's tinted icon circle to be 36x36 with a 10px radius, but this implementation uses `borderRadius.sm`. In `src/styles/theme.ts`, `borderRadius.sm` resolves to 4, so the card does not match the required Cellar Ledger shape."
+      },
+      {
+        "file": "src/components/cards/worker-card.tsx",
+        "line": 181,
+        "severity": "non_blocking",
+        "description": "WorkerCard adds a new phone/call control as a `Pressable`, but the element has no `onPress` handler. It is announced as a button via accessibility props yet tapping it does nothing, which creates a dead interactive control in the redesigned component."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "When the orchestrator completed this feature manually after worker crashes, the mission artifacts did not record a feature handoff or transcript entry for the completed work. Review had to infer the relevant commit from git history instead of using the standard mission evidence trail.",
+      "evidence": "progress_log.jsonl:8-15 shows both `update-shared-components` worker sessions crashed and the mission continued manually; `handoffs/` only contains JSON files for `update-design-tokens` and `update-tab-bar`; `worker-transcripts.jsonl` contains only two entries for those same features."
+    },
+    {
+      "area": "skills",
+      "observation": "The `ui-worker` skill assumes a screen-specific wireframe workflow, but this shared-components feature has no wireframe path or alternate review recipe documented. That makes the skill a poor fit for component-only theme work, especially when the feature is later completed manually.",
+      "evidence": "features.json:623-641 defines component expectations only for `update-shared-components`; `.factory/skills/ui-worker/SKILL.md` Step 2 requires reading both light and dark `wireframe-{name}.html` files for the assigned screen."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: the redesign generally aligns with Cellar Ledger tokens, but StatsCard still misses a required 10px icon-circle radius, and WorkerCard introduces a non-functional call button. Report written from git/history review because this manually completed feature has no dedicated handoff/transcript artifact."
+}

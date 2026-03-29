@@ -1,0 +1,34 @@
+{
+  "featureId": "update-design-tokens",
+  "reviewedAt": "2026-03-29T20:32:10Z",
+  "commitId": "d7c87a2",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The theme overhaul covers most Cellar Ledger tokens, but two blocking gaps remain: the requested note/observation category token was not updated to the specified blue palette, and the dark M3 theme still resolves body text from `surface[900]` (#F0F2F0) instead of the required `#E8E4DE` bark-charcoal text token.",
+    "issues": [
+      {
+        "file": "src/styles/theme.ts",
+        "line": 106,
+        "severity": "blocking",
+        "description": "The feature required note colors `#5C6D91` (light) and `#7A8DAA` (dark), but the theme still exposes the legacy `observation` token at `#738c7a` / `#8a9a8e` and never defines a `note` token. Existing note/observation flows still resolve through `src/styles/utils.ts:103` to `colors.observation[500]`, so note-related UI cannot pick up the specified Cellar Ledger blue tokens."
+      },
+      {
+        "file": "src/styles/theme.ts",
+        "line": 386,
+        "severity": "blocking",
+        "description": "The dark M3 theme does not use the requested bark-charcoal text color. `createM3Theme()` sets `onBackground` and `onSurface` from `themeColors.surface[900]` (see also line 389), which resolves to `#F0F2F0` in dark mode, while the feature description requires dark text to be `#E8E4DE`."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `ui-worker` skill says `npm test -- --passWithNoTests` must exit 0, but this worker's transcript shows the test command failed and the handoff still marked `skillFeedback.followedProcedure=true` and `validatorsPassed=true`. The skill or mission guidance should clarify how to report pre-existing validator failures instead of treating them as a successful run.",
+      "evidence": "`.factory/skills/ui-worker/SKILL.md` Step 5 requires tests to pass; the transcript skeleton for session `3d17076c-cdb3-4dce-8a7a-ec3906774894` records a failing `npm test -- --passWithNoTests`, while the handoff file `~/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/handoffs/2026-03-29T20-10-35-847Z__update-design-tokens__3d17076c-cdb3-4dce-8a7a-ec3906774894.json` still reports success."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: most theme tokens were updated, but note/observation colors still use legacy values and the dark M3 text roles resolve to `#F0F2F0` instead of the required `#E8E4DE`."
+}
