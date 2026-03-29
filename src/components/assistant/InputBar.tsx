@@ -62,17 +62,22 @@ export function InputBar({
   const canSend = hasText && !isLoading && !disabled;
   const canRemoveAttachment = onRemoveAttachment != null && !isLoading && !disabled;
 
-  const containerBg = isDark ? m3.surface.surfaceContainer : m3.surface.surfaceContainerHigh;
-
-  const inputBg = isDark ? m3.surface.surfaceContainerHigh : m3.colorScheme.surface;
+  // Cellar Ledger: Input bar uses mist-1 (surfaceVariant) background with 1px border
+  // Use surfaceVariant which maps to mist-1 (surface[100])
+  const containerBg = m3.colorScheme.surfaceVariant;
+  const inputBg = isDark ? m3.colorScheme.surfaceVariant : m3.colorScheme.surface;
 
   return (
     <View
       style={[
         styles.outerContainer,
         {
-          backgroundColor: containerBg ?? m3.colorScheme.surface,
+          backgroundColor: containerBg,
           borderTopColor: m3.colorScheme.outlineVariant,
+          borderTopWidth: 1,
+          paddingHorizontal: spacing[3],
+          paddingTop: spacing[2],
+          paddingBottom: spacing[1],
         },
       ]}
     >
@@ -175,9 +180,12 @@ export function InputBar({
           style={[
             styles.textInput,
             {
-              backgroundColor: inputBg ?? m3.colorScheme.surface,
+              // Cellar Ledger: mist-0 bg, 1px stone-3 border, borderRadius 24
+              backgroundColor: inputBg,
               color: m3.colorScheme.onSurface,
               borderColor: m3.colorScheme.outlineVariant,
+              borderWidth: 1,
+              borderRadius: 24,
               ...Platform.select({
                 ios: {
                   maxHeight: INPUT_MAX_HEIGHT,
@@ -205,13 +213,17 @@ export function InputBar({
           </View>
         ) : hasText ? (
           <TouchableOpacity
-            style={[styles.sendButton, { backgroundColor: m3.colorScheme.primary }]}
+            style={[
+              styles.sendButton,
+              // Cellar Ledger: primary green circle
+              { backgroundColor: m3.colorScheme.primary },
+            ]}
             onPress={onSend}
             disabled={!canSend}
             accessibilityLabel={t('assistant.chat.sendA11y')}
             accessibilityRole="button"
           >
-            <SymbolIcon name="paperplane.fill" size={18} color={m3.colorScheme.onPrimary} />
+            <SymbolIcon name="paperplane.fill" size={18} color="#FFFFFF" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -236,10 +248,7 @@ export function InputBar({
 const styles = StyleSheet.create({
   outerContainer: {
     flexDirection: 'column',
-    paddingHorizontal: spacing[3],
-    paddingTop: spacing[2],
-    paddingBottom: spacing[1],
-    borderTopWidth: StyleSheet.hairlineWidth,
+    // Note: padding and border set inline for Cellar Ledger design
     gap: spacing[2],
   },
   thumbnailsScroll: {
@@ -297,7 +306,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 20,
+    borderRadius: 24, // Cellar Ledger: 24px radius (rounded)
     paddingHorizontal: spacing[4],
     paddingVertical: Platform.OS === 'ios' ? spacing[2] : spacing[1],
     fontSize: 15,

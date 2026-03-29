@@ -51,8 +51,11 @@ export function SuggestionChips({
               style={[
                 styles.chip,
                 {
-                  backgroundColor: m3.colorScheme.secondaryContainer,
+                  // Cellar Ledger: pill shape with mist-1 bg and 1px stone-3 border
+                  // Use surfaceVariant which maps to mist-1 (surface[100])
+                  backgroundColor: m3.colorScheme.surfaceVariant,
                   borderColor: m3.colorScheme.outlineVariant,
+                  borderRadius: 999,
                 },
                 disabled && styles.chipDisabled,
               ]}
@@ -65,9 +68,10 @@ export function SuggestionChips({
                 style={[
                   styles.chipText,
                   {
-                    color: disabled
-                      ? m3.colorScheme.onSurfaceVariant
-                      : m3.colorScheme.onSecondaryContainer,
+                    // Cellar Ledger: 13px/500 text with dark ink color
+                    color: disabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onSurface,
+                    fontSize: 13,
+                    fontWeight: '500',
                   },
                 ]}
                 numberOfLines={1}
@@ -93,9 +97,9 @@ const styles = StyleSheet.create({
   },
   chip: {
     paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    borderRadius: 16,
-    borderWidth: 1,
+    paddingVertical: 7, // ~14px - matches wireframe padding
+    borderRadius: 999, // Pill shape - set inline but also here for base
+    borderWidth: 1, // 1px border - stone-3
     maxWidth: 220,
   },
   chipDisabled: {
@@ -103,6 +107,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
+    fontWeight: '500',
     lineHeight: 18,
   },
 });
