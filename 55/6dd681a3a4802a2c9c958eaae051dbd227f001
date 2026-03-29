@@ -1,0 +1,40 @@
+src/components/assistant/SuggestionChips.tsx
+  dc4548f525340044 27-32,45,62-63
+.factory/validation/core-screens/scrutiny/reviews/fix-core-screens-i18n-a11y-tokens.json
+  cf2940b6fc6ada7a 1-44
+.factory/library/architecture.md
+  dc4548f525340044 78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "556dd681a3a4802a2c9c958eaae051dbd227f001",
+  "prompts": {
+    "cf2940b6fc6ada7a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a8a87b6d-a6e1-4c95-8e6e-d331ee32c6f5",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 0,
+      "accepted_lines": 44,
+      "overriden_lines": 0
+    },
+    "dc4548f525340044": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "9fa0f30a-199d-4cbd-b2c7-c2e21974b8c0",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 4,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
