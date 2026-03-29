@@ -404,7 +404,7 @@ export function LinkPhoneModal({
                     </Text>
                     <TextInput
                       value={linkPhoneCode}
-                      onChangeText={setLinkPhoneCode}
+                      onChangeText={(text) => setLinkPhoneCode(text.replace(/[^0-9]/g, ''))}
                       placeholder={t('settings.linkPhone.codePlaceholder')}
                       placeholderTextColor={colors.gray[400]}
                       keyboardType="number-pad"

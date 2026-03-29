@@ -158,7 +158,7 @@ export function DeleteAccountModal({
   };
 
   const handleVerifyDeletePhoneOtp = async () => {
-    if (!canAttemptDeleteWithPhone || deletePhoneOtp.trim().length < 4) {
+    if (!canAttemptDeleteWithPhone || !/^\d{6}$/.test(deletePhoneOtp.trim())) {
       Alert.alert(
         t('common.error'),
         t('settings.deleteAccountModal.errors.invalidOtp', {
@@ -297,7 +297,7 @@ export function DeleteAccountModal({
     setIsVerifyingDeleteOtp(true);
     try {
       const normalizedOtp = deleteEmailOtp.trim();
-      if (!normalizedOtp) {
+      if (!/^\d{6}$/.test(normalizedOtp)) {
         Alert.alert(
           t('common.error'),
           t('settings.deleteAccountModal.errors.otpVerifyFailed', {
@@ -616,7 +616,7 @@ export function DeleteAccountModal({
                     <TextInput
                       value={deletePhoneOtp}
                       onChangeText={(value) => {
-                        setDeletePhoneOtp(value);
+                        setDeletePhoneOtp(value.replace(/[^0-9]/g, ''));
                         setDeletePhoneVerified(false);
                       }}
                       placeholder={t('settings.deleteAccountModal.enterOtp', {
@@ -710,7 +710,7 @@ export function DeleteAccountModal({
                       <TextInput
                         value={deleteEmailOtp}
                         onChangeText={(value) => {
-                          setDeleteEmailOtp(value);
+                          setDeleteEmailOtp(value.replace(/[^0-9]/g, ''));
                           setDeleteEmailVerified(false);
                         }}
                         placeholder={t('settings.deleteAccountModal.enterOtp', {

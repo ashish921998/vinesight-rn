@@ -145,6 +145,8 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
       return;
     }
 
+    set({ errorMessage: null });
+
     try {
       const { error } = await supabase.auth.updateUser({
         data: { country },

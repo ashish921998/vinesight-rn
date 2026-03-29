@@ -314,6 +314,7 @@ export default function SettingsScreen() {
       if (__DEV__) {
         console.error('Failed to update currency:', error);
       }
+      Alert.alert(t('common.error'), t('settings.errors.updateCurrencyFailed'));
     }
   };
 

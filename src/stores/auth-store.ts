@@ -196,6 +196,7 @@ export const initAuthListener = () => {
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
         phoneLinkingLoading: false,
+        hasSeenOnboarding: false,
       });
     } else if (event === 'TOKEN_REFRESHED' && session) {
       const currentState = useAuthStore.getState();

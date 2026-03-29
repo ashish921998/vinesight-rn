@@ -154,6 +154,7 @@ export function PreferencesSection({
               title={t('guidedTour.settings.replay')}
               value={isResettingGuidedTour ? t('common.loading') : undefined}
               isLast
+              disabled={isResettingGuidedTour}
               styles={styles}
               colors={colors}
             />

@@ -86,8 +86,10 @@ export function AccountSection({
         </Pressable>
         <Pressable
           onPress={onDeleteAccount}
+          disabled={authLoading}
           accessibilityRole="button"
           accessibilityLabel={t('settings.deleteAccount')}
+          accessibilityState={{ disabled: authLoading }}
           style={styles.settingsItem}
         >
           <View style={styles.deleteIcon}>
