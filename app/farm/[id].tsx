@@ -1906,7 +1906,7 @@ export default function FarmDetailScreen() {
                     marginTop: 2,
                   }}
                 >
-                  Soil Water
+                  {t('farmDetails.stats.soilWaterTitle')}
                 </Text>
               </View>
               <View
@@ -1937,7 +1937,7 @@ export default function FarmDetailScreen() {
                     marginTop: 2,
                   }}
                 >
-                  Days Pruned
+                  {t('farmDetails.pruning.daysPruned')}
                 </Text>
               </View>
             </View>
@@ -2087,7 +2087,7 @@ export default function FarmDetailScreen() {
                     lineHeight: 16,
                   }}
                 >
-                  Log Entries
+                  {t('farmDetails.stats.logEntriesTitle')}
                 </Text>
                 <Text
                   style={{
@@ -2097,7 +2097,7 @@ export default function FarmDetailScreen() {
                     marginTop: 2,
                   }}
                 >
-                  Total records
+                  {t('farmDetails.stats.recordsSubtitle')}
                 </Text>
               </Pressable>
 
@@ -2159,7 +2159,7 @@ export default function FarmDetailScreen() {
                     lineHeight: 16,
                   }}
                 >
-                  Soil Water
+                  {t('farmDetails.stats.soilWaterTitle')}
                 </Text>
                 <Text
                   style={{

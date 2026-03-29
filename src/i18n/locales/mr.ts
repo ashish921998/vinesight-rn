@@ -182,6 +182,7 @@ export const mr = {
       noData: 'अजून PHI आधारित $t(glossary.spray) नोंदी उपलब्ध नाहीत.',
       safeDate: '{{date}} पासून सुरक्षित',
       inlineDate: 'सुरक्षित $t(glossary.harvest) दिनांक: {{date}}',
+      inlineTitle: 'सुरक्षित $t(glossary.harvest):',
       blockedBy: '{{reason}} मुळे अडथळा',
       ctaSetTarget: 'लक्ष्य दिनांक सेट करा',
       ctaOpenChecker: 'Safe-to-spray तपासा',
@@ -573,6 +574,11 @@ export const mr = {
     stats: {
       totalFarms: 'एकूण $t(glossary.farm)',
       totalArea: 'एकूण क्षेत्रफळ',
+    },
+    summary: {
+      count_one: '{{count}} $t(glossary.farm)',
+      count_other: '{{count}} $t(glossary.farm)',
+      area: '{{value}} एकर एकूण',
     },
   },
 
@@ -1896,6 +1902,13 @@ export const mr = {
       afternoon: 'शुभ दुपार, {{name}}',
       evening: 'शुभ संध्याकाळ, {{name}}',
       night: 'शुभ रात्री, {{name}}',
+    },
+    hero: {
+      today: 'आज',
+      allClear: 'सर्व ठीक',
+      attentionNeeded: 'लक्ष आवश्यक',
+      alertCount_one: '{{count}} इशारा',
+      alertCount_other: '{{count}} इशारे',
     },
     stats: {
       farms: '$t(glossary.farm)',

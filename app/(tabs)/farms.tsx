@@ -155,8 +155,10 @@ const SearchHeader = React.memo<SearchHeaderProps>(
               paddingBottom: spacing[3],
             }}
           >
-            {farms.length} farms · {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}{' '}
-            acres total
+            {(() => {
+              const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1);
+              return `${t('farms.summary.count', { count: farms.length })} · ${t('farms.summary.area', { value: totalArea })}`;
+            })()}
           </Text>
         )}
 
