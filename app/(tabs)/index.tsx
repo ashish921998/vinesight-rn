@@ -20,12 +20,10 @@ import {
   useFarms,
   useProfile,
 } from '@/hooks';
-import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import type { LogTypeId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatNumber } from '@/i18n/format';
@@ -66,7 +64,7 @@ export default function DashboardScreen() {
   const hasHydrated = useGuidedTourStore((s) => s.hasHydrated);
 
   // Data hooks
-  const { data: stats, refetch: refetchStats, isLoading: isLoadingStats } = useDashboardStats();
+  const { data: stats, refetch: refetchStats } = useDashboardStats();
   const {
     data: farmsNeedingAttention,
     refetch: refetchAttention,
@@ -131,21 +129,22 @@ export default function DashboardScreen() {
     paddingHorizontal: spacing[4],
   };
 
-  const greetingStyle: TextStyle = {
-    ...m3.typography.headlineSmall,
-    color: m3.colorScheme.onSurface,
-  };
-
-  const dateStyle: TextStyle = {
-    ...m3.typography.labelSmall,
-    color: m3.colorScheme.onSurfaceVariant,
-    marginTop: spacing[1],
-  };
-
   const sectionTitleStyle: TextStyle = {
-    ...m3.typography.titleMedium,
+    fontSize: 15,
+    fontWeight: fontWeight.semibold,
     marginBottom: spacing[3],
-    color: m3.colorScheme.onSurface,
+    color: colors.surface[900],
+  };
+
+  const sectionCountStyle: TextStyle = {
+    fontSize: 12,
+    fontWeight: fontWeight.semibold,
+    color: colors.warning,
+    backgroundColor: colorWithOpacity(colors.warning, 0.12),
+    paddingHorizontal: spacing[2],
+    paddingVertical: 1,
+    borderRadius: borderRadius.pill,
+    overflow: 'hidden',
   };
 
   const bottomPadding = Math.max(insets.bottom + spacing[12], spacing[16]);
@@ -154,6 +153,9 @@ export default function DashboardScreen() {
     hasHydrated &&
     (guidedTourStatus === 'in_progress' ||
       (guidedTourStatus === 'not_started' && !hasSeenWelcomeThisSession));
+
+  const hasAlerts = farmsNeedingAttention && farmsNeedingAttention.length > 0;
+  const alertCount = farmsNeedingAttention?.length ?? 0;
 
   useEffect(() => {
     guidedTourEmit('guidedTour.appReadyHome', {});
@@ -175,70 +177,384 @@ export default function DashboardScreen() {
         }
         scrollIndicatorInsets={{ top: insets.top }}
       >
-        <View style={containerStyle}>
-          {/* Welcome Header */}
-          <View style={{ marginBottom: spacing[6] }}>
-            <Text style={greetingStyle}>
-              {profile?.full_name
-                ? t(`dashboard.greetingWithName.${greetingKey}`, { name: profile.full_name })
-                : t(`dashboard.greeting.${greetingKey}`)}
+        {/* Hero Block - Action-forward (with alerts) or All Clear fallback */}
+        <View
+          style={{
+            backgroundColor: m3.colorScheme.primary,
+            paddingVertical: spacing[4],
+            paddingHorizontal: spacing[5],
+            paddingBottom: spacing[5],
+            borderBottomLeftRadius: borderRadius.lg,
+            borderBottomRightRadius: borderRadius.lg,
+            marginBottom: spacing[6],
+          }}
+        >
+          {/* Top row with Today label and alert badge or all clear badge */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: spacing[3],
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 13,
+                color: colorWithOpacity('#ffffff', 0.65),
+                fontWeight: fontWeight.medium,
+                letterSpacing: 0.3,
+              }}
+            >
+              Today
             </Text>
-            <Text style={dateStyle}>{todayLabel}</Text>
+            {hasAlerts ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                  backgroundColor: colorWithOpacity(colors.accent[500], 0.25),
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(colors.accent[500], 0.4),
+                  borderRadius: borderRadius.pill,
+                  paddingHorizontal: spacing[2] + 2,
+                  paddingVertical: 2,
+                }}
+              >
+                <View
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: 3.5,
+                    backgroundColor: colors.accent[500],
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.accent[500],
+                    letterSpacing: 0.2,
+                  }}
+                >
+                  {alertCount} {alertCount === 1 ? 'alert' : 'alerts'}
+                </Text>
+              </View>
+            ) : (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                  backgroundColor: colorWithOpacity(colors.success, 0.35),
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(colors.success, 0.5),
+                  borderRadius: borderRadius.pill,
+                  paddingHorizontal: spacing[2] + 2,
+                  paddingVertical: 2,
+                }}
+              >
+                <SymbolIcon
+                  name="checkmark.circle.fill"
+                  size={12}
+                  color={colorWithOpacity(colors.success, 0.8)}
+                />
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: fontWeight.semibold,
+                    color: colorWithOpacity(colors.success, 0.8),
+                    letterSpacing: 0.2,
+                  }}
+                >
+                  All clear
+                </Text>
+              </View>
+            )}
           </View>
 
-          {/* Stats Grid */}
-          <View style={{ marginBottom: spacing[6] }}>
-            <View style={{ flexDirection: 'row', marginBottom: spacing[3] }}>
-              <View style={{ flex: 1, paddingRight: spacing[2] }}>
-                <StatsCard
-                  title={t('dashboard.stats.farms')}
-                  value={formatNumber(stats?.farmsCount ?? 0, { maximumFractionDigits: 0 })}
-                  icon="leaf"
-                  color={m3.colorScheme.primary}
-                  isLoading={isLoadingStats}
-                  onPress={() => router.navigate('/(tabs)/explore')}
-                />
+          {hasAlerts ? (
+            // Urgent title with alerts
+            <>
+              <Text
+                style={{
+                  fontSize: 19,
+                  fontWeight: fontWeight.semibold,
+                  color: '#ffffff',
+                  lineHeight: 24,
+                  marginBottom: spacing[1],
+                }}
+              >
+                {farmsNeedingAttention && farmsNeedingAttention[0]
+                  ? t(`dashboard.needsAttention.reasons.${farmsNeedingAttention[0].reason}`)
+                  : 'Attention needed'}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: colorWithOpacity('#ffffff', 0.7),
+                  lineHeight: 20,
+                  marginBottom: spacing[3],
+                }}
+              >
+                {farmsNeedingAttention && farmsNeedingAttention[0]?.farm?.name
+                  ? farmsNeedingAttention[0].farm.name
+                  : ''}
+              </Text>
+            </>
+          ) : (
+            // Greeting fallback when no alerts
+            <>
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: fontWeight.normal,
+                  color: '#ffffff',
+                  lineHeight: 30,
+                  marginBottom: spacing[1],
+                }}
+              >
+                {profile?.full_name
+                  ? t(`dashboard.greetingWithName.${greetingKey}`, { name: profile.full_name })
+                  : t(`dashboard.greeting.${greetingKey}`)}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: colorWithOpacity('#ffffff', 0.7),
+                  lineHeight: 20,
+                  marginBottom: spacing[3],
+                }}
+              >
+                {stats?.farmsCount
+                  ? t('dashboard.allFarmsHealthy', { count: stats.farmsCount })
+                  : t('dashboard.greeting.noFarms')}
+              </Text>
+            </>
+          )}
+
+          {/* Weather line */}
+          <Text
+            style={{
+              fontSize: 12,
+              color: colorWithOpacity('#ffffff', 0.5),
+              fontWeight: fontWeight.normal,
+              letterSpacing: 0.2,
+            }}
+          >
+            {todayLabel}
+          </Text>
+        </View>
+
+        <View style={containerStyle}>
+          {/* 2x2 Metric Grid */}
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: spacing[3],
+              marginBottom: spacing[6],
+            }}
+          >
+            {/* Farms */}
+            <View
+              style={{
+                flex: 1,
+                minWidth: '45%',
+                backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                borderRadius: borderRadius.md,
+                padding: spacing[4],
+              }}
+            >
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: colorWithOpacity(colors.primary[500], 0.12),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: spacing[3],
+                }}
+              >
+                <SymbolIcon name="leaf" size={18} color={colors.primary[500]} />
               </View>
-              <View style={{ flex: 1, paddingLeft: spacing[2] }}>
-                <StatsCard
-                  title={t('dashboard.stats.activeWorkers')}
-                  value={formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })}
-                  icon="people"
-                  color={m3.colorScheme.primary}
-                  isLoading={isLoadingStats}
-                  onPress={() => router.navigate('/(tabs)/workers')}
-                />
-              </View>
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: fontWeight.bold,
+                  color: colors.surface[900],
+                  lineHeight: 28,
+                  marginBottom: spacing[1],
+                }}
+              >
+                {formatNumber(stats?.farmsCount ?? 0, { maximumFractionDigits: 0 })}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[500],
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.8,
+                }}
+              >
+                {t('dashboard.stats.farms')}
+              </Text>
             </View>
-            <View style={{ flexDirection: 'row' }}>
-              <View style={{ flex: 1, paddingRight: spacing[2] }}>
-                <StatsCard
-                  title={t('dashboard.stats.activities')}
-                  value={formatNumber(stats?.recentActivitiesCount ?? 0, {
-                    maximumFractionDigits: 0,
-                  })}
-                  icon="bar-chart"
-                  color={m3.colorScheme.primary}
-                  isLoading={isLoadingStats}
-                  onPress={() => router.navigate('/logs')}
-                />
+
+            {/* Workers */}
+            <View
+              style={{
+                flex: 1,
+                minWidth: '45%',
+                backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                borderRadius: borderRadius.md,
+                padding: spacing[4],
+              }}
+            >
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: colorWithOpacity(colors.secondary[500], 0.12),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: spacing[3],
+                }}
+              >
+                <SymbolIcon name="person.2" size={18} color={colors.secondary[500]} />
               </View>
-              <View style={{ flex: 1, paddingLeft: spacing[2] }}>
-                <StatsCard
-                  title={t('dashboard.stats.tasks')}
-                  value={formatNumber(stats?.pendingTasksCount ?? 0, {
-                    maximumFractionDigits: 0,
-                  })}
-                  icon="checklist"
-                  color={m3.colorScheme.primary}
-                  isLoading={isLoadingStats}
-                  onPress={() => router.navigate('/tasks')}
-                />
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: fontWeight.bold,
+                  color: colors.surface[900],
+                  lineHeight: 28,
+                  marginBottom: spacing[1],
+                }}
+              >
+                {formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[500],
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.8,
+                }}
+              >
+                {t('dashboard.stats.activeWorkers')}
+              </Text>
+            </View>
+
+            {/* Tasks */}
+            <View
+              style={{
+                flex: 1,
+                minWidth: '45%',
+                backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                borderRadius: borderRadius.md,
+                padding: spacing[4],
+              }}
+            >
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: colorWithOpacity(colors.accent[500], 0.12),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: spacing[3],
+                }}
+              >
+                <SymbolIcon name="checklist" size={18} color={colors.accent[500]} />
               </View>
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: fontWeight.bold,
+                  color: colors.surface[900],
+                  lineHeight: 28,
+                  marginBottom: spacing[1],
+                }}
+              >
+                {formatNumber(stats?.pendingTasksCount ?? 0, { maximumFractionDigits: 0 })}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[500],
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.8,
+                }}
+              >
+                {t('dashboard.stats.tasks')}
+              </Text>
+            </View>
+
+            {/* Activities */}
+            <View
+              style={{
+                flex: 1,
+                minWidth: '45%',
+                backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                borderRadius: borderRadius.md,
+                padding: spacing[4],
+              }}
+            >
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: colorWithOpacity(colors.info, 0.12),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: spacing[3],
+                }}
+              >
+                <SymbolIcon name="chart.bar" size={18} color={colors.info} />
+              </View>
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: fontWeight.bold,
+                  color: colors.surface[900],
+                  lineHeight: 28,
+                  marginBottom: spacing[1],
+                }}
+              >
+                {formatNumber(stats?.recentActivitiesCount ?? 0, { maximumFractionDigits: 0 })}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[500],
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.8,
+                }}
+              >
+                {t('dashboard.stats.activities')}
+              </Text>
             </View>
           </View>
 
-          {/* Farms Needing Attention */}
+          {/* Needs Attention Section */}
           {isLoadingAttention ? (
             <View
               style={{
@@ -246,8 +562,10 @@ export default function DashboardScreen() {
                 height: 60,
                 justifyContent: 'center',
                 alignItems: 'center',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                borderRadius: m3.shape.cornerMedium,
+                backgroundColor: colors.surface[100],
+                borderRadius: borderRadius.md,
+                borderWidth: 1,
+                borderColor: colors.surface[300],
               }}
             >
               <ActivityIndicator color={m3.colorScheme.primary} />
@@ -256,9 +574,12 @@ export default function DashboardScreen() {
             farmsNeedingAttention &&
             farmsNeedingAttention.length > 0 && (
               <View style={{ marginBottom: spacing[6] }}>
-                <Text style={sectionTitleStyle} accessibilityRole="header">
-                  {t('dashboard.needsAttention.title')}
-                </Text>
+                <View style={sectionTitleStyle as ViewStyle}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                    <Text style={sectionTitleStyle}>{t('dashboard.needsAttention.title')}</Text>
+                    <Text style={sectionCountStyle}>{farmsNeedingAttention.length}</Text>
+                  </View>
+                </View>
                 {farmsNeedingAttention.slice(0, 3).map((item) => (
                   <Pressable
                     key={item.farm.id}
@@ -266,51 +587,75 @@ export default function DashboardScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={`${item.farm.name}. ${t(`dashboard.needsAttention.reasons.${item.reason}`)}.`}
                     style={{
-                      borderRadius: m3.shape.cornerMedium,
-                      padding: spacing[3],
-                      marginBottom: spacing[2],
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.08),
+                      backgroundColor: colors.surface[100],
                       borderWidth: 1,
-                      borderColor: colorWithOpacity(m3.colorScheme.warning, 0.25),
+                      borderColor: colors.surface[300],
+                      borderRadius: borderRadius.md,
                       overflow: 'hidden',
+                      marginBottom: spacing[2],
                     }}
                   >
                     {({ pressed }) => (
-                      <>
+                      <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
+                        {/* 3px amber left strip */}
                         <View
                           style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: borderRadius.full,
+                            width: 3,
+                            backgroundColor: colors.warning,
+                            flexShrink: 0,
+                          }}
+                        />
+                        {/* Body */}
+                        <View
+                          style={{
+                            flex: 1,
+                            flexDirection: 'row',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
+                            padding: spacing[3] + 2,
+                            paddingLeft: spacing[3],
                           }}
                         >
-                          <SymbolIcon
-                            name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
-                            size={18}
-                            color={m3.colorScheme.warning}
-                          />
-                        </View>
-                        <View style={{ marginLeft: spacing[3], flex: 1 }}>
-                          <Text
-                            style={{ ...m3.typography.labelLarge, color: m3.colorScheme.onSurface }}
-                          >
-                            {item.farm.name}
-                          </Text>
-                          <Text
+                          <View
                             style={{
-                              ...m3.typography.labelSmall,
-                              color: m3.colorScheme.onSurfaceVariant,
+                              width: 36,
+                              height: 36,
+                              borderRadius: 10,
+                              backgroundColor: colorWithOpacity(colors.warning, 0.12),
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
                             }}
                           >
-                            {t(`dashboard.needsAttention.reasons.${item.reason}`)}
-                          </Text>
+                            <SymbolIcon
+                              name="exclamationmark.triangle"
+                              size={18}
+                              color={colors.warning}
+                            />
+                          </View>
+                          <View style={{ marginLeft: spacing[2] + 2, flex: 1 }}>
+                            <Text
+                              style={{
+                                fontSize: 14,
+                                fontWeight: fontWeight.semibold,
+                                color: colors.surface[900],
+                                lineHeight: 19,
+                              }}
+                            >
+                              {item.farm.name}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: 13,
+                                color: colors.surface[500],
+                                lineHeight: 18,
+                              }}
+                            >
+                              {t(`dashboard.needsAttention.reasons.${item.reason}`)}
+                            </Text>
+                          </View>
+                          <SymbolIcon name="chevron.right" size={16} color={colors.surface[400]} />
                         </View>
-                        <SymbolIcon name="chevron.right" size={16} color={colors.gray[300]} />
+                        {/* Press overlay */}
                         <View
                           pointerEvents="none"
                           style={[
@@ -318,14 +663,14 @@ export default function DashboardScreen() {
                             {
                               backgroundColor: pressed
                                 ? colorWithOpacity(
-                                    m3.colorScheme.onSurface,
+                                    colors.surface[900],
                                     m3.stateLayerOpacity.pressed,
                                   )
                                 : 'transparent',
                             },
                           ]}
                         />
-                      </>
+                      </View>
                     )}
                   </Pressable>
                 ))}
@@ -333,71 +678,175 @@ export default function DashboardScreen() {
             )
           )}
 
-          {/* Quick Actions */}
+          {/* Quick Actions Section */}
           <View style={{ marginBottom: spacing[6] }}>
-            <Text style={sectionTitleStyle} accessibilityRole="header">
-              {t('dashboard.quickActions.title')}
-            </Text>
             <View
               style={{
-                borderRadius: m3.shape.cornerLarge,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing[2],
+                marginBottom: spacing[3],
+              }}
+            >
+              <Text style={sectionTitleStyle}>{t('dashboard.quickActions.title')}</Text>
+            </View>
+            <View
+              style={{
+                borderRadius: borderRadius.md,
                 padding: spacing[4],
-                backgroundColor: m3.surface.surfaceContainerLow,
+                paddingHorizontal: spacing[3],
+                backgroundColor: colors.surface[100],
                 borderWidth: 1,
-                borderColor: m3.colorScheme.outlineVariant,
+                borderColor: colors.surface[300],
               }}
             >
               <View
                 style={{
                   flexDirection: 'row',
                   justifyContent: 'space-around',
-                  flexWrap: 'wrap',
-                  rowGap: spacing[2],
                 }}
               >
-                <QuickActionButton
-                  title={t('dashboard.quickActions.irrigation')}
-                  icon="water"
-                  color={colors.irrigation[500]}
+                {/* Irrigation */}
+                <Pressable
                   onPress={() => handleQuickAction('irrigation')}
-                />
-                <QuickActionButton
-                  title={t('dashboard.quickActions.spray')}
-                  icon="flask"
-                  color={colors.spray[500]}
+                  style={{ alignItems: 'center', minWidth: 68 }}
+                >
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      backgroundColor: colorWithOpacity(colors.irrigation[500], 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <SymbolIcon name="water" size={20} color={colors.irrigation[500]} />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: fontWeight.medium,
+                      color: colors.surface[500],
+                      marginTop: spacing[1] + 2,
+                    }}
+                  >
+                    {t('dashboard.quickActions.irrigation')}
+                  </Text>
+                </Pressable>
+
+                {/* Spray */}
+                <Pressable
                   onPress={() => handleQuickAction('spray')}
-                />
-                <QuickActionButton
-                  title={t('dashboard.quickActions.expense')}
-                  icon="receipt"
-                  color={colors.expense[500]}
+                  style={{ alignItems: 'center', minWidth: 68 }}
+                >
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      backgroundColor: colorWithOpacity(colors.spray[500], 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <SymbolIcon name="flask" size={20} color={colors.spray[500]} />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: fontWeight.medium,
+                      color: colors.surface[500],
+                      marginTop: spacing[1] + 2,
+                    }}
+                  >
+                    {t('dashboard.quickActions.spray')}
+                  </Text>
+                </Pressable>
+
+                {/* Expense */}
+                <Pressable
                   onPress={() => handleQuickAction('expense')}
-                />
-                <QuickActionButton
-                  title={t('dashboard.quickActions.note')}
-                  icon="document-text"
-                  color={m3.colorScheme.primary}
+                  style={{ alignItems: 'center', minWidth: 68 }}
+                >
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      backgroundColor: colorWithOpacity(colors.harvest[500], 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <SymbolIcon name="dollarsign.circle" size={20} color={colors.harvest[500]} />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: fontWeight.medium,
+                      color: colors.surface[500],
+                      marginTop: spacing[1] + 2,
+                    }}
+                  >
+                    {t('dashboard.quickActions.expense')}
+                  </Text>
+                </Pressable>
+
+                {/* Note */}
+                <Pressable
                   onPress={() => handleQuickAction('note')}
-                />
+                  style={{ alignItems: 'center', minWidth: 68 }}
+                >
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      backgroundColor: colorWithOpacity(colors.labour[500], 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <SymbolIcon name="doc.text" size={20} color={colors.labour[500]} />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: fontWeight.medium,
+                      color: colors.surface[500],
+                      marginTop: spacing[1] + 2,
+                    }}
+                  >
+                    {t('dashboard.quickActions.note')}
+                  </Text>
+                </Pressable>
               </View>
             </View>
           </View>
 
-          {/* Recent Activity */}
+          {/* Recent Activity Section - Compact list without card wrapper */}
           <View>
-            <Text style={sectionTitleStyle} accessibilityRole="header">
-              {t('dashboard.recentActivity.title')}
-            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing[2],
+                marginBottom: spacing[3],
+              }}
+            >
+              <Text style={sectionTitleStyle}>{t('dashboard.recentActivity.title')}</Text>
+            </View>
             {isLoadingActivities || isLoadingFarms ? (
               <View
                 style={{
-                  borderRadius: m3.shape.cornerLarge,
+                  borderRadius: borderRadius.md,
                   padding: spacing[8],
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: m3.surface.surfaceContainerLow,
+                  backgroundColor: colors.surface[100],
                   borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
+                  borderColor: colors.surface[300],
                 }}
               >
                 <ActivityIndicator color={m3.colorScheme.primary} />
@@ -405,43 +854,93 @@ export default function DashboardScreen() {
             ) : recentActivities && recentActivities.length > 0 ? (
               <View
                 style={{
-                  borderRadius: m3.shape.cornerLarge,
-                  padding: spacing[4],
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                  gap: spacing[2],
+                  borderTopWidth: 1,
+                  borderTopColor: colors.surface[200],
                 }}
               >
-                {recentActivities.map((activity) => (
-                  <ActivityLogCard
+                {recentActivities.map((activity, index) => (
+                  <Pressable
                     key={activity.id}
-                    type={activity.type}
-                    date={activity.date}
-                    description={activity.description}
-                    farmName={activity.farmName}
                     onPress={() => handleFarmAttention(activity.farmId)}
-                  />
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: spacing[3],
+                      paddingVertical: spacing[3],
+                      borderBottomWidth: index < recentActivities.length - 1 ? 1 : 0,
+                      borderBottomColor: colors.surface[200],
+                    }}
+                  >
+                    {/* Colored dot */}
+                    <View
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor:
+                          activity.type === 'irrigation'
+                            ? colors.irrigation[500]
+                            : activity.type === 'expense'
+                              ? colors.harvest[500]
+                              : activity.type === 'note'
+                                ? colors.labour[500]
+                                : m3.colorScheme.primary,
+                        flexShrink: 0,
+                      }}
+                    />
+                    {/* Primary and secondary text */}
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: fontWeight.medium,
+                          color: colors.surface[900],
+                          lineHeight: 20,
+                        }}
+                      >
+                        {activity.description}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: colors.surface[500],
+                          lineHeight: 16,
+                        }}
+                      >
+                        {activity.farmName}
+                      </Text>
+                    </View>
+                    {/* Time */}
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: colors.surface[400],
+                        flexShrink: 0,
+                      }}
+                    >
+                      {activity.date}
+                    </Text>
+                  </Pressable>
                 ))}
               </View>
             ) : (
               <View
                 style={{
-                  borderRadius: m3.shape.cornerLarge,
+                  borderRadius: borderRadius.md,
                   padding: spacing[6],
                   alignItems: 'center',
-                  backgroundColor: m3.surface.surfaceContainerLow,
+                  backgroundColor: colors.surface[100],
                   borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
+                  borderColor: colors.surface[300],
                 }}
               >
-                <SymbolIcon name="clock" size={48} color={colors.gray[300]} />
+                <SymbolIcon name="clock" size={48} color={colors.surface[400]} />
                 <Text
                   style={{
                     textAlign: 'center',
                     marginTop: spacing[4],
-                    ...m3.typography.bodyMedium,
-                    color: m3.colorScheme.onSurfaceVariant,
+                    fontSize: fontSize.sm,
+                    color: colors.surface[500],
                   }}
                 >
                   {farms && farms.length > 0
