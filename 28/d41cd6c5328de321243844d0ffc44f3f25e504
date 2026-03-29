@@ -1,0 +1,23 @@
+app/analytics.tsx
+  62f13a084256f6f6 23-39,128,132,134-139,141-146,149-160,163-167,169,173-178,181-182,184-189,191-192,195-196,200,208-210,213,216-217,219-224,226-228,230,232,240-242,245,248-253,255-256,259-260,264,267,269-276,279-282,287-288,291,293-294,297-381
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "28d41cd6c5328de321243844d0ffc44f3f25e504",
+  "prompts": {
+    "62f13a084256f6f6": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "02375047-6b0e-436f-848b-c60647744707",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 235,
+      "total_deletions": 185,
+      "accepted_lines": 234,
+      "overriden_lines": 0
+    }
+  }
+}
