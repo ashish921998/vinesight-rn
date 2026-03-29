@@ -1,38 +1,16 @@
 {
   "milestone": "theme-foundation",
-  "round": 1,
-  "status": "fail",
+  "round": 3,
+  "status": "pass",
   "assertionsSummary": {
-    "total": 8,
-    "passed": 6,
-    "failed": 2,
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
     "blocked": 0
   },
-  "passedAssertions": [
-    "VAL-THEME-001",
-    "VAL-THEME-002",
-    "VAL-THEME-003",
-    "VAL-THEME-004",
-    "VAL-THEME-007",
-    "VAL-CROSS-007"
-  ],
-  "failedAssertions": [
-    {
-      "id": "VAL-THEME-005",
-      "reason": "Theme exports still include lg/glass shadow presets, commonStyles glassCard variants still define shadow props, and a direct card consumer still uses elevation/shadow on a card container."
-    },
-    {
-      "id": "VAL-THEME-006",
-      "reason": "The borderRadius scale does not match the spec exactly: the object still includes sm: 4 and uses md: 12, lg: 16, xl: 24, full: 999 instead of the required xs: 8, sm: 12, md: 16, lg: 24, pill: 999 mapping."
-    }
-  ],
+  "passedAssertions": ["VAL-THEME-005"],
+  "failedAssertions": [],
   "blockedAssertions": [],
-  "appliedUpdates": [
-    {
-      "target": "user-testing.md",
-      "description": "Added Flow Validator Guidance: code-review to document the read-only isolation boundary and evidence expectations for theme-foundation validation runs.",
-      "source": "setup"
-    }
-  ],
-  "previousRound": null
+  "appliedUpdates": [],
+  "previousRound": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185/.factory/validation/theme-foundation/user-testing/synthesis.round2.json"
 }

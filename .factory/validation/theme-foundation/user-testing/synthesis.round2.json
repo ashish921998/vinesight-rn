@@ -1,0 +1,21 @@
+{
+  "milestone": "theme-foundation",
+  "round": 2,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 2,
+    "passed": 1,
+    "failed": 1,
+    "blocked": 0
+  },
+  "passedAssertions": ["VAL-THEME-006"],
+  "failedAssertions": [
+    {
+      "id": "VAL-THEME-005",
+      "reason": "`commonStyles.glassCard` and `glassCardDark` are now border-only, but `src/styles/theme.ts` still exports `shadows.lg`/`shadows.glass` and `src/features/onboarding/slides/value-props-slide.tsx` still applies `shadows.glass` to a bordered card container, so cards are not fully border-only yet."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185/.factory/validation/theme-foundation/user-testing/synthesis.round1.json"
+}

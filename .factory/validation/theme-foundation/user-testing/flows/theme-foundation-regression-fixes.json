@@ -1,0 +1,22 @@
+{
+  "milestone": "theme-foundation",
+  "groupId": "theme-foundation-regression-fixes",
+  "surface": "code-review",
+  "testedAt": "2026-03-29T21:17:20Z",
+  "assertions": [
+    {
+      "id": "VAL-THEME-005",
+      "status": "pass",
+      "evidence": [
+        "src/styles/theme.ts:439-449 shows `commonStyles.glassCard` and `glassCardDark` using `borderWidth: 1` plus surface border colors, with no shadow props.",
+        "src/features/onboarding/slides/value-props-slide.tsx:64-68 and 104-109 set onboarding panel/card `borderColor` values, while 166-202 defines `borderWidth: 1` for the panel and cards.",
+        "A repo grep for `shadows.glass` found no current usages in `src/` or `app/`; only stale validation artifacts still mention it.",
+        "A grep for `shadows.(lg|glass)` found only non-card controls (`src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx` save button/toast and `src/components/ui/floating-assistant-button.tsx`), not onboarding or shared card containers."
+      ],
+      "reason": "Pass: the prior shadow-based onboarding card styling has been removed. Shared theme card styles and the onboarding value-props panel/cards are now border-first, and no heavy `shadows.glass`/`shadows.lg` card usage remains in the current working tree."
+    }
+  ],
+  "toolsUsed": ["Read", "Grep", "Execute", "ApplyPatch"],
+  "frictions": [],
+  "blockers": []
+}
