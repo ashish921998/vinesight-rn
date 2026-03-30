@@ -1,0 +1,37 @@
+app/warehouse.tsx
+  05870e7ad5fd06d8 23,42-44,175,434-436,467,528-529,538,626
+  b28002449eb66439 19,27-34,51,54-61,125-127,139,145,212-221,223-232,253,257,261-274,276-284,289,291,294-300,302-315,317,320-328,330,333-335,337-340,342-343,345-349,426,429-433,437-439,447-448,450,459,465-466,468-474,479-493,495,500-527,530-537,539-545,550-552,559-560,562,564,570-571,573,575,582,594-595,597-603,606,608-610,613-623,625,627-628,631-652,654-659,662-672,674-679,682-684
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "a65a21b2c16edc183167406108b3b48251a1fd0a",
+  "prompts": {
+    "05870e7ad5fd06d8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d1167030-fd5b-475b-aa51-e8e2e34457cd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 16,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    },
+    "b28002449eb66439": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "ab716934-f545-4c4d-b132-d4594e4262f9",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 362,
+      "total_deletions": 488,
+      "accepted_lines": 342,
+      "overriden_lines": 0
+    }
+  }
+}
