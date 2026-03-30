@@ -554,7 +554,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'soil' ? colors.labTest.soil : m3.colorScheme.onSurfaceVariant,
+              color: selectedTab === 'soil' ? colors.labTest.soil : colors.surface[500],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
@@ -569,7 +569,7 @@ export default function LabTestsScreen() {
             paddingVertical: spacing[2],
             marginLeft: spacing[2],
             borderBottomWidth: selectedTab === 'petiole' ? 2 : 0,
-            borderBottomColor: selectedTab === 'petiole' ? colors.labTest.petiole : 'transparent',
+            borderBottomColor: selectedTab === 'petiole' ? colors.labTest.soil : 'transparent',
           }}
         >
           <Text
@@ -578,10 +578,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color:
-                selectedTab === 'petiole'
-                  ? colors.labTest.petiole
-                  : m3.colorScheme.onSurfaceVariant,
+              color: selectedTab === 'petiole' ? colors.labTest.soil : colors.surface[500],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
