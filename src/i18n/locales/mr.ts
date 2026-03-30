@@ -2078,6 +2078,7 @@ export const mr = {
       addTempWorkerDesc: 'एकदा दिवसाचा श्रम नोंदणी करा',
     },
     workerCard: {
+      callA11y: '{{name}} ला कॉल करा',
       editA11y: '{{name}} संपादित करा',
       deleteA11y: '{{name}} हटवा',
     },

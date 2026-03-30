@@ -76,7 +76,7 @@ export function StatsCard({
   const iconContainerStyle: ViewStyle = {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: borderRadius.xs,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colorWithOpacity(finalColor, 0.12),

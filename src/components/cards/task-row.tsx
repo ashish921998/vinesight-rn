@@ -117,6 +117,7 @@ export function TaskRow({
             }
           }}
           disabled={task.completed || !onComplete}
+          hitSlop={{ top: 11, bottom: 11, left: 11, right: 11 }}
           accessibilityRole="button"
           accessibilityLabel={t('tasks.a11y.completeTask', { title: task.title })}
           style={({ pressed }) => ({

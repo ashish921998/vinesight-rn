@@ -220,11 +220,13 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 : t('farmCard.area.unknownAcres')}
             </Text>
           </View>
-          <UiSymbol
-            name="chevron.right"
-            size={16}
-            color={colors.surface[400]} // stone-5
-          />
+          {onPress ? (
+            <UiSymbol
+              name="chevron.right"
+              size={16}
+              color={colors.surface[400]} // stone-5
+            />
+          ) : null}
         </View>
       </View>
 

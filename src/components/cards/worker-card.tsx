@@ -16,6 +16,7 @@ import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
 interface WorkerCardProps {
   worker: Worker;
   onPress?: () => void;
+  onCall?: (worker: Worker) => void;
   onEdit?: () => void;
   onDelete?: () => void;
   /** Whether the worker is currently active (for status display) */
@@ -25,9 +26,10 @@ interface WorkerCardProps {
 export function WorkerCard({
   worker,
   onPress,
+  onCall,
   onEdit,
   onDelete,
-  isActive = true,
+  isActive = worker.is_active,
 }: WorkerCardProps) {
   const m3 = useM3();
   const colors = useThemeColors();
@@ -155,23 +157,26 @@ export function WorkerCard({
         <View style={statusContainerStyle}>
           <View style={statusDotStyle} />
           <Text style={statusLabelStyle}>
-            {isActive ? t('workers.status.active') : t('workers.status.offToday')}
+            {isActive ? t('workers.status.active') : t('workers.status.inactive')}
           </Text>
         </View>
       </View>
 
       {/* Call button (36px, 12px radius, primary-tinted bg) */}
-      <Pressable
-        style={({ pressed: callPressed }) => [
-          callButtonStyle,
-          callPressed ? { backgroundColor: colorWithOpacity(colors.primary[500], 0.24) } : null,
-          !isActive ? { opacity: 0.5 } : null,
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={t('workers.workerCard.callA11y', { name: worker.name })}
-      >
-        <CardSymbol name="phone.fill" size={16} color={colors.primary[500]} />
-      </Pressable>
+      {onCall ? (
+        <Pressable
+          onPress={() => onCall(worker)}
+          style={({ pressed: callPressed }) => [
+            callButtonStyle,
+            callPressed ? { backgroundColor: colorWithOpacity(colors.primary[500], 0.24) } : null,
+            !isActive ? { opacity: 0.5 } : null,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('workers.workerCard.callA11y', { name: worker.name })}
+        >
+          <CardSymbol name="phone.fill" size={16} color={colors.primary[500]} />
+        </Pressable>
+      ) : null}
 
       {(onEdit || onDelete) && (
         <View style={actionsContainerStyle}>

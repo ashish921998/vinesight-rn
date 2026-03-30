@@ -247,11 +247,11 @@ export const borderRadius = {
   md: 16, // was 12
   lg: 24, // was 16
   xl: 24, // keep for backwards compat, same as lg
-  '2xl': 20,
+  '2xl': 28,
   '3xl': 32,
   '4xl': 32, // was 40
   full: 9999, // was 999
-  pill: 999,
+  pill: 9999,
 } as const;
 
 export const size = {

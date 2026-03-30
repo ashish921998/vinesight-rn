@@ -2064,6 +2064,7 @@ export const en = {
       addTempWorkerDesc: 'Log a one-time day labour entry',
     },
     workerCard: {
+      callA11y: 'Call {{name}}',
       editA11y: 'Edit {{name}}',
       deleteA11y: 'Delete {{name}}',
     },

@@ -49,7 +49,7 @@ export function Button({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: borderRadius.md, // 12px for Cellar Ledger
+    borderRadius: borderRadius.md, // 16px for Cellar Ledger
     overflow: 'hidden',
   };
 

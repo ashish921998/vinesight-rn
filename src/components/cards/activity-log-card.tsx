@@ -14,8 +14,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
-import { useM3, useThemeColors } from '@/styles/use-theme';
-import { getExpenseIconName } from '@/utils/expense-icons';
+import { useThemeColors } from '@/styles/use-theme';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -105,7 +104,6 @@ export function ActivityLogCard({
   onEdit,
   onDelete,
 }: ActivityLogCardProps) {
-  const m3 = useM3();
   const colors = useThemeColors();
   const { t } = useTranslation();
   const currency = useCurrency();
@@ -113,11 +111,6 @@ export function ActivityLogCard({
   const hasActions = Boolean(onEdit || onDelete);
   const isInteractive = Boolean(onPress) && !hasActions;
   const logType = getLogType(type);
-  // iconName kept for potential future use - prefixed with underscore to avoid lint error
-  const _iconName =
-    type === 'expense'
-      ? getExpenseIconName((data as ExpenseRecord | undefined)?.type, logType.icon)
-      : logType.icon;
   const parsedDate = fromSupabaseDateString(date);
   const displayDescription = description || getDescriptionFromData(type, t, data, currency);
   const displayDate = parsedDate
@@ -263,11 +256,11 @@ export function ActivityLogCard({
               style={({ pressed }) => ({
                 width: 36,
                 height: 36,
-                borderRadius: m3.shape.cornerMedium,
+                borderRadius: borderRadius.md,
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: pressed
-                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  ? colorWithOpacity(colors.surface[900], 0.12)
                   : 'transparent',
               })}
             >
@@ -284,11 +277,11 @@ export function ActivityLogCard({
               style={({ pressed }) => ({
                 width: 36,
                 height: 36,
-                borderRadius: m3.shape.cornerMedium,
+                borderRadius: borderRadius.md,
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: pressed
-                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  ? colorWithOpacity(colors.surface[900], 0.12)
                   : 'transparent',
               })}
             >
