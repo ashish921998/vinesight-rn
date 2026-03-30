@@ -1,0 +1,42 @@
+src/components/cards/task-row.tsx
+  b260ce4fedfc1931 106
+app/logs.tsx
+  b260ce4fedfc1931 670,672
+app/spray-catalog.tsx
+  b260ce4fedfc1931 307
+app/lab-tests.tsx
+  b260ce4fedfc1931 557,581
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "6cba8cf68158e6f88d625ad85919722c2305fc50",
+  "prompts": {
+    "5fd5cc2170827a5a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1ad99019-9679-4acd-92c1-dde9ad89bc78",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 94,
+      "total_deletions": 0,
+      "accepted_lines": 94,
+      "overriden_lines": 0
+    },
+    "b260ce4fedfc1931": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "56324d34-d4c8-4014-8d85-e6028691f494",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
