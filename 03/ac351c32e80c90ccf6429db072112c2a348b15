@@ -1,0 +1,68 @@
+.factory/validation/data-screens/scrutiny/reviews/fix-spray-catalog-cleanup.json
+  f345d0c9c8fbf1b4 1-21
+.factory/validation/data-screens/scrutiny/reviews/fix-data-screens-quick-wins.json
+  5d2dadcf2f78d027 1-21
+.factory/validation/data-screens/scrutiny/reviews/fix-attendance-redesign.json
+  435a9b9a9aae6df0 1-46
+.factory/validation/data-screens/scrutiny/reviews/fix-tasks-completed-section.json
+  b4371c00aa4b46cc 1-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "03ac351c32e80c90ccf6429db072112c2a348b15",
+  "prompts": {
+    "435a9b9a9aae6df0": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "48222c20-94cc-4587-9988-5845f37a6b24",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 46,
+      "total_deletions": 0,
+      "accepted_lines": 46,
+      "overriden_lines": 0
+    },
+    "5d2dadcf2f78d027": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "22566d54-ef0f-42d2-aa81-7f50ce344e4c",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 21,
+      "total_deletions": 0,
+      "accepted_lines": 21,
+      "overriden_lines": 0
+    },
+    "b4371c00aa4b46cc": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "137087db-2073-4960-87fd-e6ef34be6cfa",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 0,
+      "accepted_lines": 28,
+      "overriden_lines": 0
+    },
+    "f345d0c9c8fbf1b4": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1e381d4e-5fad-404b-b7b3-7d36972b5779",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 21,
+      "total_deletions": 0,
+      "accepted_lines": 21,
+      "overriden_lines": 0
+    }
+  }
+}
