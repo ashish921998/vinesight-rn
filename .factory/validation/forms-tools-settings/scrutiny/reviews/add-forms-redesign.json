@@ -1,0 +1,45 @@
+{
+  "featureId": "add-forms-redesign",
+  "reviewedAt": "2026-03-30T04:44:01.380458Z",
+  "commitId": "eb1c99103cfb1603f3d1c67348a0eceae4c32b41",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The landed commit improves shared form styling, the add-farm chrome, the add-log type chips, and the warehouse quantity/unit layout, but it does not fully implement the add-task and warehouse requirements from the feature description and expected behavior.",
+    "issues": [
+      {
+        "file": "src/components/screens/entry-form.tsx",
+        "line": 2482,
+        "severity": "blocking",
+        "description": "The add-task redesign is incomplete. The form still uses a picker-style priority Pressable instead of inline Low/Medium/High chips with the specified amber Medium treatment, and the task UI only exposes a due-date field later in the section (`src/components/screens/entry-form.tsx:2701`) with no visible 48x28 reminder toggle or time-preset chips. That leaves multiple required add-task wireframe elements from the feature description unimplemented."
+      },
+      {
+        "file": "src/components/ui/form-components.tsx",
+        "line": 859,
+        "severity": "blocking",
+        "description": "The add-warehouse pricing field still does not render an attached currency prefix. `WarehouseItemForm` passes the prefix into the unit-price input (`src/components/screens/warehouse-item-form.tsx:792`), but `FormInput` renders it as plain text with padding inside the same container instead of as a left-rounded attached segment with its own integrated border treatment, so the required attached-₹ input styling is missing."
+      },
+      {
+        "file": "src/components/screens/entry-form.tsx",
+        "line": 1966,
+        "severity": "non_blocking",
+        "description": "The add-log farm selector shows the icon, farm name, and chevron, but it still omits the farm variety/subtitle called for in the feature description. The log-type chips are updated correctly, so this is a completeness gap rather than the main contract failure."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `ui-worker` skill requires reading `AGENTS.md`, `.factory/library/architecture.md`, and both light and dark wireframes for each assigned screen, but this worker session only captured the four light add-form wireframes in its transcript skeleton.",
+      "evidence": "`/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/worker-transcripts.jsonl` session `241e60bf-977e-43bb-96b9-2bebf1e9d932` contains `wireframe-add-farm.html`, `wireframe-add-log.html`, `wireframe-add-task.html`, and `wireframe-add-warehouse-item.html`, but no `wireframe-add-*-dark.html` references and no visible `AGENTS.md` or `architecture.md` reads."
+    },
+    {
+      "area": "conventions",
+      "observation": "The mission workflow allowed this feature to be handed off as a success even though the handoff itself records unresolved scope items that map directly to the feature contract.",
+      "evidence": "`/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/handoffs/2026-03-30T04-14-55-666Z__add-forms-redesign__241e60bf-977e-43bb-96b9-2bebf1e9d932.json` sets `successState: \"success\"` with commit `eb1c991`, but `whatWasLeftUndone` and `discoveredIssues` explicitly list the missing add-task priority/reminder work and the incomplete warehouse currency-prefix styling."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: commit `eb1c99103cfb1603f3d1c67348a0eceae4c32b41` partially redesigns the add forms, but the add-task screen is still missing required priority/reminder UI and the add-warehouse price input still lacks the attached currency-prefix treatment."
+}

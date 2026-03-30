@@ -1,0 +1,45 @@
+{
+  "featureId": "settings-redesign",
+  "reviewedAt": "2026-03-30T04:37:59Z",
+  "commitId": "3c2b0b40c5bb02cd55467a6b1652b23e78704b7f",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The landed settings restyle improves the profile card and section typography, but it still misses key wireframe/contract requirements. The profile card radius uses the wrong token, the grouped-settings flow never implements the requested toggle rows, and Delete Account remains a standard neutral row instead of the required red-tinted danger card.",
+    "issues": [
+      {
+        "file": "app/(tabs)/settings.tsx",
+        "line": 2411,
+        "severity": "blocking",
+        "description": "VAL-SETTINGS-001 is only partially implemented. The profile card now has the right border treatment, avatar size, and edit link, but its radius is `borderRadius.lg` here. In this repo's token scale, `borderRadius.lg` is 24px (`src/styles/theme.ts:248`), while the wireframe and contract call for a 16px profile card. The landed screen therefore still misses the specified profile-card shape."
+      },
+      {
+        "file": "app/(tabs)/settings.tsx",
+        "line": 1059,
+        "severity": "blocking",
+        "description": "VAL-SETTINGS-002 is not covered by the landed UI. The grouped settings area only renders navigation/action rows (language, theme, area unit, currency, replay, phone, sign out, delete), and there is no `Switch`/toggle implementation anywhere in the file even though the feature description and contract explicitly require grouped toggle rows with primary-on/stone-off states. The shared card style also uses `borderRadius.md` at line 2457, which resolves to 16px instead of the required 12px group-card radius."
+      },
+      {
+        "file": "app/(tabs)/settings.tsx",
+        "line": 1196,
+        "severity": "blocking",
+        "description": "VAL-SETTINGS-003 is missing. `Delete Account` is rendered as a normal row inside the same neutral `sectionContent` container as the rest of the account actions, so it inherits the standard `surface[100]` background and `surface[300]` border from lines 2455-2459. There is no separate red-tinted delete card background/border and no destructive subtitle like the wireframe specifies."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `ui-worker` procedure says workers must read `.factory/library/architecture.md` plus both the light and dark wireframes, but this session only shows the light settings wireframe being read before implementation while the handoff still records `followedProcedure: true`.",
+      "evidence": "`.factory/skills/ui-worker/SKILL.md` Step 1-2 requires `architecture.md`, `wireframe-settings.html`, and `wireframe-settings-dark.html`; the transcript skeleton for session `e64a4652-481b-414d-8e60-63e9ad5d90f9` shows reads of `mission.md`, `validation-contract.md`, `AGENTS.md`, `app/(tabs)/settings.tsx`, and `wireframe-settings.html`, but grep over the session transcript found no `architecture.md` or `wireframe-settings-dark.html` reads. `/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/handoffs/2026-03-30T03-36-55-035Z__settings-redesign__e64a4652-481b-414d-8e60-63e9ad5d90f9.json` still marks `skillFeedback.followedProcedure: true`."
+    },
+    {
+      "area": "conventions",
+      "observation": "The mission guidance around 'visual styling changes only' is easy to misread as permission to skip missing wireframe sections, which happened here: the worker explicitly decided there was 'nothing to style' for toggles and treated the neutral account list as sufficient danger-zone coverage.",
+      "evidence": "In transcript session `e64a4652-481b-414d-8e60-63e9ad5d90f9`, the worker notes `No matches found` for `Switch|toggle`, then reasons that 'Since these toggles don't exist in the current implementation, there's nothing to style' and later concludes 'The Sign Out and Delete Account are in the Account section... restructuring would violate the constraint,' despite the feature description and `VAL-SETTINGS-002` / `VAL-SETTINGS-003` requiring notification toggles and a red-tinted delete card."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: commit `3c2b0b40c5bb02cd55467a6b1652b23e78704b7f` improves settings styling, but it still misses the required profile-card radius, grouped toggle rows, and red-tinted Delete Account danger card."
+}

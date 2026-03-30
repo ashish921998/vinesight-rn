@@ -1,0 +1,46 @@
+{
+  "featureId": "reports-and-fertplans-redesign",
+  "reviewedAt": "2026-03-30T04:39:17Z",
+  "commitId": "c16216abd30ac7c3e8435fd4809ce14b8b0c8a8a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The landed work only covers part of the requested redesign. Reports still use the old filter/preview/export flow instead of report cards with Generate buttons, the new PDF/CSV chips are static and untranslated, and the fertilizer-plans screen fabricates schedule status from array order while adding selector/FAB affordances that do not do anything.",
+    "issues": [
+      {
+        "file": "app/reports.tsx",
+        "line": 423,
+        "severity": "blocking",
+        "description": "VAL-REPORTS-001 is still missing. The screen continues to render the existing `ReportFiltersPanel` + preview/export stack (`ReportExecutiveSummary`, `ReportDocumentBody`, `ReportExportActions`) rather than the required bordered report cards with 42px icon circles and per-card `Generate` buttons. Evidence: app/reports.tsx:423-507 still wires the old flow, and report-filters-panel.tsx:722-740 keeps a segmented control instead of report cards."
+      },
+      {
+        "file": "src/components/screens/reports/report-filters-panel.tsx",
+        "line": 667,
+        "severity": "blocking",
+        "description": "VAL-REPORTS-002 is only approximated visually and does not preserve i18n. The added PDF/CSV chips are decorative `Pressable`s with no `onPress`, no active-state state management, and no connection to export behavior, while `t('reports.exportAs', 'Export as')`, `t('reports.dateRange.from', 'From')`, and `t('reports.dateRange.toLabel', 'To')` rely on hardcoded English fallbacks because those keys do not exist in `src/i18n/locales/en.ts`, `hi.ts`, or `mr.ts`. Evidence: report-filters-panel.tsx:667-717 plus repo search showing no locale entries for those keys."
+      },
+      {
+        "file": "app/fertilizer-plans.tsx",
+        "line": 14,
+        "severity": "blocking",
+        "description": "VAL-FERTPLAN-001 is not data-driven. `getPlanItemStatus()` explicitly uses placeholder logic (`0 => completed`, `2 => overdue`, everything else upcoming`), and the left-strip / badge colors are derived from that fabricated value rather than fertilizer-plan data. This changes behavior instead of preserving the existing data flow. Evidence: app/fertilizer-plans.tsx:12-17 and 271-274; the underlying type at src/types/fertilizer-plan.ts:1-12 has no status field to support these badges."
+      },
+      {
+        "file": "app/fertilizer-plans.tsx",
+        "line": 67,
+        "severity": "non_blocking",
+        "description": "The new farm-selector chip and FAB are inert affordances. Both are rendered as `Pressable`s without `onPress`, and the selector can display `farms[0].name` even when no `farmId` is present even though `useFertilizerPlan` disables fetching unless `farmId` is truthy. That can show a selected-looking farm without actually loading its plan. Evidence: app/fertilizer-plans.tsx:61-71, 89-114, 377-396; src/hooks/use-fertilizer-plan.ts:6-13."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "The mission asks for fertilizer-plan status badges and category strips, but the shared docs do not mention that the fertilizer-plan model only exposes `name`, `quantity`, and `unit`. That gap makes it easy for workers to invent placeholder status logic instead of escalating the data mismatch.",
+      "evidence": "src/types/fertilizer-plan.ts:1-12 defines no status/category metadata; app/fertilizer-plans.tsx:12-17 adds a comment acknowledging the new status logic is placeholder-only."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed. Reports never received the required card-and-generate-button redesign, the new export chips are static/untranslated, and fertilizer-plan statuses are fabricated from item order instead of real data."
+}

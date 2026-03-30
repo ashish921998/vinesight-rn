@@ -1,0 +1,140 @@
+{
+  "milestone": "forms-tools-settings",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "npm test -- --passWithNoTests",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "npm run lint",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 6,
+    "passed": 1,
+    "failed": 5,
+    "failedFeatures": [
+      "add-forms-redesign",
+      "reports-and-fertplans-redesign",
+      "settings-redesign",
+      "tools-and-calculators-redesign",
+      "warehouse-redesign"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "add-forms-redesign",
+      "severity": "blocking",
+      "description": "The add-task redesign is incomplete. The form still uses a picker-style priority Pressable instead of inline Low/Medium/High chips with the specified amber Medium treatment, and the task UI only exposes a due-date field later in the section (`src/components/screens/entry-form.tsx:2701`) with no visible 48x28 reminder toggle or time-preset chips. That leaves multiple required add-task wireframe elements from the feature description unimplemented."
+    },
+    {
+      "featureId": "add-forms-redesign",
+      "severity": "blocking",
+      "description": "The add-warehouse pricing field still does not render an attached currency prefix. `WarehouseItemForm` passes the prefix into the unit-price input (`src/components/screens/warehouse-item-form.tsx:792`), but `FormInput` renders it as plain text with padding inside the same container instead of as a left-rounded attached segment with its own integrated border treatment, so the required attached-\u20b9 input styling is missing."
+    },
+    {
+      "featureId": "reports-and-fertplans-redesign",
+      "severity": "blocking",
+      "description": "VAL-REPORTS-001 is still missing. The screen continues to render the existing `ReportFiltersPanel` + preview/export stack (`ReportExecutiveSummary`, `ReportDocumentBody`, `ReportExportActions`) rather than the required bordered report cards with 42px icon circles and per-card `Generate` buttons. Evidence: app/reports.tsx:423-507 still wires the old flow, and report-filters-panel.tsx:722-740 keeps a segmented control instead of report cards."
+    },
+    {
+      "featureId": "reports-and-fertplans-redesign",
+      "severity": "blocking",
+      "description": "VAL-REPORTS-002 is only approximated visually and does not preserve i18n. The added PDF/CSV chips are decorative `Pressable`s with no `onPress`, no active-state state management, and no connection to export behavior, while `t('reports.exportAs', 'Export as')`, `t('reports.dateRange.from', 'From')`, and `t('reports.dateRange.toLabel', 'To')` rely on hardcoded English fallbacks because those keys do not exist in `src/i18n/locales/en.ts`, `hi.ts`, or `mr.ts`. Evidence: report-filters-panel.tsx:667-717 plus repo search showing no locale entries for those keys."
+    },
+    {
+      "featureId": "reports-and-fertplans-redesign",
+      "severity": "blocking",
+      "description": "VAL-FERTPLAN-001 is not data-driven. `getPlanItemStatus()` explicitly uses placeholder logic (`0 => completed`, `2 => overdue`, everything else upcoming`), and the left-strip / badge colors are derived from that fabricated value rather than fertilizer-plan data. This changes behavior instead of preserving the existing data flow. Evidence: app/fertilizer-plans.tsx:12-17 and 271-274; the underlying type at src/types/fertilizer-plan.ts:1-12 has no status field to support these badges."
+    },
+    {
+      "featureId": "settings-redesign",
+      "severity": "blocking",
+      "description": "VAL-SETTINGS-001 is only partially implemented. The profile card now has the right border treatment, avatar size, and edit link, but its radius is `borderRadius.lg` here. In this repo's token scale, `borderRadius.lg` is 24px (`src/styles/theme.ts:248`), while the wireframe and contract call for a 16px profile card. The landed screen therefore still misses the specified profile-card shape."
+    },
+    {
+      "featureId": "settings-redesign",
+      "severity": "blocking",
+      "description": "VAL-SETTINGS-002 is not covered by the landed UI. The grouped settings area only renders navigation/action rows (language, theme, area unit, currency, replay, phone, sign out, delete), and there is no `Switch`/toggle implementation anywhere in the file even though the feature description and contract explicitly require grouped toggle rows with primary-on/stone-off states. The shared card style also uses `borderRadius.md` at line 2457, which resolves to 16px instead of the required 12px group-card radius."
+    },
+    {
+      "featureId": "settings-redesign",
+      "severity": "blocking",
+      "description": "VAL-SETTINGS-003 is missing. `Delete Account` is rendered as a normal row inside the same neutral `sectionContent` container as the rest of the account actions, so it inherits the standard `surface[100]` background and `surface[300]` border from lines 2455-2459. There is no separate red-tinted delete card background/border and no destructive subtitle like the wireframe specifies."
+    },
+    {
+      "featureId": "tools-and-calculators-redesign",
+      "severity": "blocking",
+      "description": "VAL-TOOLS-001 requires category-colored icon circles, but the irrigation tools are not actually using the irrigation token. `mad` is tagged with `categoryKey: 'tools.categories.irrigation'` while using `colors.spray[500]` at line 127, and `system-discharge` is also tagged as irrigation while using `colors.primary[500]` at line 136. That leaves the tools hub out of sync with the category palette defined for irrigation."
+    },
+    {
+      "featureId": "tools-and-calculators-redesign",
+      "severity": "blocking",
+      "description": "VAL-CALC-002 calls for 24px/700 values in both LAI result boxes, but both highlighted values use `fontSize: fontSize.xl` at lines 285 and 313. In `src/styles/theme.ts:274`, `fontSize.xl` resolves to 20, so the redesign does not meet the required 24px result emphasis for either the LAI or canopy-width tile."
+    },
+    {
+      "featureId": "warehouse-redesign",
+      "severity": "blocking",
+      "description": "The redesign introduces new translation lookups that do not exist in the locale files: `warehouse.labels.itemsCount` (line 336), `warehouse.labels.lowStockCount` (line 342), `warehouse.filters.equipment` (line 300), `warehouse.itemTypes.equipment` (line 511), and `warehouse.labels.updatedDate` (line 614). `src/i18n/locales/en.ts:2281-2306`, `hi.ts:2289-2314`, and `mr.ts:2297-2322` only define the older warehouse keys, so the UI will render raw i18n keys in the summary strip, filter pill, card badge, and metadata row. The same metadata row also hardcodes `toLocaleDateString('en-GB', ...)`, so even after the missing key is added the rendered month names stay English-only instead of following app locale rules."
+    },
+    {
+      "featureId": "warehouse-redesign",
+      "severity": "blocking",
+      "description": "The stock bar is computed from `quantity / reorder_quantity`, while low stock is defined above as `quantity <= reorder_quantity` (line 424). That means an item exactly at its reorder threshold is simultaneously marked low-stock and rendered as a full-width green bar, and any item above 60% of the threshold still looks healthy. This makes the three-level stock indicator misleading and undercuts `VAL-WAREHOUSE-001`."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Added .factory/library/fertilizer-plan-data-model.md documenting that fertilizer plans only expose name/quantity/unit and do not provide real status/category metadata for badge-driven UI.",
+      "sourceFeature": "reports-and-fertplans-redesign"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "ui-worker skill",
+      "suggestion": "Require transcript-visible reads of AGENTS.md, .factory/library/architecture.md, and both light/dark wireframes before implementation, and only allow followedProcedure=true when those reads actually occurred.",
+      "evidence": "Reviews for settings-redesign, tools-and-calculators-redesign, and add-forms-redesign all found missing architecture.md and/or dark-wireframe reads even though the worker handoff marked the procedure as followed.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Clarify that \"visual styling changes only\" does not permit skipping wireframe/contract sections. If a required control or section is absent in the current UI, workers must implement it within scope or explicitly escalate the mismatch instead of omitting it.",
+      "evidence": "settings-redesign skipped the required toggle rows and danger card, add-forms-redesign skipped the task reminder/priority controls, and reports-and-fertplans-redesign kept old report flows because the existing structure was preserved instead of landing the specified UI.",
+      "isSystemic": true
+    },
+    {
+      "target": "orchestrator mission workflow",
+      "suggestion": "When the orchestrator lands or recovers a feature after a worker crash, emit a synthetic handoff with a resolved commit pointer so scrutiny can review the implementation without reconstructing git history.",
+      "evidence": "warehouse-redesign had completedWorkerSessionId=null and no handoff, so the reviewer had to infer the landed commit from git history before reviewing the feature.",
+      "isSystemic": true
+    },
+    {
+      "target": "mission-worker-base skill",
+      "suggestion": "Make the absolute missionDir path the canonical source for mission artifacts during worker startup and discourage probing repo-local .factory/missions paths first.",
+      "evidence": "The cross-area-verification transcript first attempted to read mission files from the repo-local .factory/missions tree and briefly concluded validation-contract.md was missing before switching to the real ~/.factory/missions path.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Document that a tools hub card categoryKey should always drive its icon tint token.",
+      "reason": "feature-specific; the validation contract already states the required category-colored icon behavior for the tools hub."
+    },
+    {
+      "observation": "Add a shared rule for validating full commit hashes in handoffs based on the single invalid commitId found in cross-area-verification.",
+      "reason": "ambiguous; only one instance was observed and the broader synthetic-handoff recommendation already addresses traceability for recovered work."
+    }
+  ],
+  "previousRound": null
+}

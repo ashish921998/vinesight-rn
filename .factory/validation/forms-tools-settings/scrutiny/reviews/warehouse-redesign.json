@@ -1,0 +1,40 @@
+{
+  "featureId": "warehouse-redesign",
+  "reviewedAt": "2026-03-30T04:39:28Z",
+  "commitId": "a65a21b2c16edc183167406108b3b48251a1fd0a",
+  "transcriptSkeletonReviewed": false,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The landed warehouse redesign adds the requested pill CTA, summary strip, and stock-bar card treatment, but it ships broken i18n strings on the live screen and the stock-bar math can contradict the low-stock state. It also drops the prior in-screen add-stock affordance, which is a behavior regression for a visual-only change.",
+    "issues": [
+      {
+        "file": "app/warehouse.tsx",
+        "line": 336,
+        "severity": "blocking",
+        "description": "The redesign introduces new translation lookups that do not exist in the locale files: `warehouse.labels.itemsCount` (line 336), `warehouse.labels.lowStockCount` (line 342), `warehouse.filters.equipment` (line 300), `warehouse.itemTypes.equipment` (line 511), and `warehouse.labels.updatedDate` (line 614). `src/i18n/locales/en.ts:2281-2306`, `hi.ts:2289-2314`, and `mr.ts:2297-2322` only define the older warehouse keys, so the UI will render raw i18n keys in the summary strip, filter pill, card badge, and metadata row. The same metadata row also hardcodes `toLocaleDateString('en-GB', ...)`, so even after the missing key is added the rendered month names stay English-only instead of following app locale rules."
+      },
+      {
+        "file": "app/warehouse.tsx",
+        "line": 430,
+        "severity": "blocking",
+        "description": "The stock bar is computed from `quantity / reorder_quantity`, while low stock is defined above as `quantity <= reorder_quantity` (line 424). That means an item exactly at its reorder threshold is simultaneously marked low-stock and rendered as a full-width green bar, and any item above 60% of the threshold still looks healthy. This makes the three-level stock indicator misleading and undercuts `VAL-WAREHOUSE-001`."
+      },
+      {
+        "file": "app/warehouse.tsx",
+        "line": 175,
+        "severity": "non_blocking",
+        "description": "The redesign leaves `openAddStock()` wired up through `_handleAddStock()` but no rendered control invokes it anymore. In the pre-redesign screen there was an in-screen restock entry point for low-stock items (`a65a21b^:app/warehouse.tsx:332`); now warehouse cards only expose edit/delete actions. Because AGENTS.md scoped this feature to visual changes only, removing that affordance is a behavior regression even though the add-stock route still exists elsewhere in the app."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Crash-recovered, orchestrator-landed features do not leave a synthetic handoff or commit pointer, so scrutiny has to reconstruct the reviewed implementation from git history.",
+      "evidence": "`features.json:1125-1154` marks `warehouse-redesign` as completed by orchestrator with `completedWorkerSessionId: null`; `progress_log.jsonl:238-239` only shows the crashed worker session `ab716934-f545-4c4d-b132-d4594e4262f9` being selected/started; `handoffs/` contains no matching warehouse artifact; and the reviewed commit had to be inferred from `git log -- app/warehouse.tsx` as `a65a21b2c16edc183167406108b3b48251a1fd0a`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: the warehouse redesign landed the requested Cellar Ledger shell, but the live screen now uses missing warehouse i18n keys, the stock-bar calculation can show green/full stock for low-stock items, and the previous in-screen add-stock affordance is gone. No transcript skeleton or handoff was available because the original worker session crashed before completion."
+}

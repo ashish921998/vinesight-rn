@@ -1,0 +1,26 @@
+{
+  "featureId": "cross-area-verification",
+  "reviewedAt": "2026-03-30T04:38:48.237676Z",
+  "commitId": "5022f72bec8c2ae432534b9bc5f6793c8c714c3a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The landed diff only touches `app/logs.tsx` and correctly removes the remaining card shadow from the logs filter card (`app/logs.tsx:69-74`). Read-only review of the current `app/` tree found no remaining old Cellar Ledger-blocked hex values (`#408059`, `#f2f2f7`, `#e5e5ea`) and no `#ffffff` card backgrounds, while remaining shadow usage is limited to FABs in `app/tasks.tsx:671-675` and `app/fertilizer-plans.tsx:389-393` plus the acceptable tab-bar shadow in `app/(tabs)/_layout.tsx:232`. The updated logs screen still uses warm theme-token backgrounds (`app/logs.tsx:457`, `app/logs.tsx:486-487`), the diff removes no accessibility props, and the transcript/handoff evidence is consistent with `VAL-CROSS-006`, which explicitly allows the known pre-existing `react-native-maps` web-smoke failure.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The handoff recorded an invalid full commit hash, which breaks direct `git show` lookup from the mission artifact and forces reviewers to recover the real commit from the short hash.",
+      "evidence": "Handoff `/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/handoffs/2026-03-30T04-21-07-581Z__cross-area-verification__fe633c82-5825-4edb-8716-002df1174f98.json` stores `commitId: 5022f72a60cf3f0b8d6c8e8b7c7f3e0c7d9f2a7`, but `git show` on that hash fails; `git rev-parse 5022f72` resolves to the actual landed commit `5022f72bec8c2ae432534b9bc5f6793c8c714c3a`."
+    },
+    {
+      "area": "skills",
+      "observation": "The worker transcript shows startup pathing that looked for mission artifacts under the repo's `.factory/missions/...` tree, briefly concluding that `validation-contract.md` did not exist even though the real mission files lived under `~/.factory/missions/...`. Startup guidance should make the absolute `missionDir` path unambiguous so workers reliably read mission constraints before acting.",
+      "evidence": "Transcript skeleton for session `fe633c82-5825-4edb-8716-002df1174f98` includes failed reads of `/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/{mission.md,AGENTS.md,validation-contract.md,features.json}` followed by the statement that `validation-contract.md` \"doesn't exist\"; the actual files are present at `/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Pass: the review found the logs-card shadow cleanup correctly landed, the current screen code meets the cross-area color/shadow/accessibility assertions, and the validator evidence matches the contract's allowed pre-existing `web:smoke` failure."
+}
