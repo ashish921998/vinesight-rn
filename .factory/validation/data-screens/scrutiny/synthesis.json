@@ -1,6 +1,6 @@
 {
   "milestone": "data-screens",
-  "round": 2,
+  "round": 3,
   "status": "fail",
   "validatorsRun": {
     "test": {
@@ -20,68 +20,43 @@
     }
   },
   "reviewsSummary": {
-    "total": 5,
-    "passed": 2,
-    "failed": 3,
-    "failedFeatures": ["analytics-redesign", "tasks-redesign", "workers-and-attendance-redesign"]
+    "total": 3,
+    "passed": 1,
+    "failed": 2,
+    "failedFeatures": ["analytics-redesign", "workers-and-attendance-redesign"]
   },
   "blockingIssues": [
     {
       "featureId": "analytics-redesign",
       "severity": "blocking",
-      "description": "app/analytics.tsx still uses grouped aggregates as if they were record counts: `analytics.harvestsByFarm.length` counts farms-with-harvests instead of harvest records, and `analytics.expensesByType.reduce((sum, _e) => sum + 1, 0)` counts expense categories instead of expense records, so the Activities Logged card and Category Breakdown still underreport filtered activity totals."
-    },
-    {
-      "featureId": "analytics-redesign",
-      "severity": "blocking",
-      "description": "The analytics rerun still lacks locale entries for `analytics.labels.totalExpenses`, `analytics.labels.harvestYield`, and `analytics.sections.categoryBreakdown`, so the screen falls back to hardcoded English copy in non-English locales."
-    },
-    {
-      "featureId": "tasks-redesign",
-      "severity": "blocking",
-      "description": "Completed tasks are dimmed twice: `app/tasks.tsx` wraps completed rows in `opacity: 0.8` while `src/components/cards/task-row.tsx` also applies `opacity: task.completed ? 0.8 : 1`, yielding an effective opacity near 0.64 instead of the required 0.8."
+      "description": "app/analytics.tsx still computes Activities Logged and category totals from grouped quantity/category aggregates (`harvestsByFarm.reduce(... quantity ...)`, `expensesByType.reduce(sum + 1)`) instead of truthful record counts, so filtered activity totals remain incorrect."
     },
     {
       "featureId": "workers-and-attendance-redesign",
       "severity": "blocking",
-      "description": "The redesigned attendance worker rows read from `workerAttendance`, but `loadAttendance()` still hydrates only the old single-worker `cellData` grid, so Full/Half/Absent pills do not reflect existing attendance records."
+      "description": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx still hydrates attendance only for `selectedWorker` in `loadAttendance()`, while the redesign renders all worker rows from `workers.map(...)`, so non-selected worker pills do not reflect saved attendance."
     },
     {
       "featureId": "workers-and-attendance-redesign",
       "severity": "blocking",
-      "description": "The new attendance row toggles and `handleMarkAllPresent()` mutate `workerAttendance`, but unsaved-change detection and persistence still run through `cellData`/`handleSave()`, so the redesigned worker-list interactions cannot actually save attendance changes."
-    },
-    {
-      "featureId": "workers-and-attendance-redesign",
-      "severity": "blocking",
-      "description": "The arrow date navigator only updates display state; real loading/saving still uses `rangeStart` / `dateRange`, and the old From/To date-range picker UI remains rendered, so the required arrow-based navigator is still cosmetic."
-    },
-    {
-      "featureId": "workers-and-attendance-redesign",
-      "severity": "blocking",
-      "description": "The new `Mark All Present` button lives inline inside the `ScrollView` and scrolls away, while the only bottom-anchored control remains the conditional save bar, so the required always-visible sticky CTA is still not implemented."
+      "description": "The arrow date navigator only updates `selectedDate`; loading and copy-from-yesterday still use `rangeStart` / `dateRange`, so the new navigator is not the canonical attendance date control and can move outside the hydrated window without refetching."
     }
   ],
   "appliedUpdates": [],
   "suggestedGuidanceUpdates": [
     {
-      "target": "AGENTS.md",
-      "suggestion": "Require handoff `commitId` values to reference the actual landing commit for the feature being reported, or explicitly list any prerequisite/stacked commits when a follow-up fix depends on earlier changes.",
-      "evidence": "Two rerun fix reports (`fix-analytics-data-integrity` and `fix-spray-catalog-cleanup`) recorded handoff `commitId: 6cba8cf`, but that commit only contains the earlier quick-win patch. Scrutiny had to review later repository state (`74b70d1` for spray cleanup and post-6cba8cf analytics changes) because the recorded commit did not reproduce the claimed feature changes.",
+      "target": "skill:ui-worker",
+      "suggestion": "Add an escalation rule for scrutiny follow-up fixes that require data-contract, state-management, or business-logic work (not just visual restyling); these should be reassigned or explicitly permitted before implementation.",
+      "evidence": "The combined rerun feature `fix-data-screens-round2` needed truthful analytics totals and attendance state wiring, but the assigned `ui-worker` skill and AGENTS guidance still frame screen work as visual-only and keep service/hook changes off-limits. Round-2 and round-3 scrutiny both found partially fixed logic because the skill boundaries do not match the work.",
       "isSystemic": true
     },
     {
-      "target": "skill:ui-worker",
-      "suggestion": "Add an explicit exception or escalation rule for follow-up fixes that require i18n, data-contract, or business-logic changes instead of pure visual restyling; such work should either use a different skill or document the allowed non-visual edits.",
-      "evidence": "The failed `fix-analytics-data-integrity` task explicitly required adding locale keys and restoring truthful analytics totals, but `ui-worker` still instructs workers to avoid i18n and business-logic changes. The rerun landed partial approximations (grouped aggregate counts and missing locale keys) rather than a full fix.",
-      "isSystemic": false
+      "target": "AGENTS.md",
+      "suggestion": "When the orchestrator lands a crashed worker's feature, require a synthetic handoff/transcript artifact that records the landing commit, files touched, and intended scope so scrutiny has a canonical implementation record.",
+      "evidence": "For `fix-data-screens-round2`, worker session `03dcc80c-d9af-4b09-850f-1874bb851778` crashed and no handoff or transcript artifact was created. Scrutiny had to infer the landed fix from git history (`d289b29`) instead of reviewing a canonical worker record.",
+      "isSystemic": true
     }
   ],
-  "rejectedObservations": [
-    {
-      "observation": "Repeated reports that `ui-worker` follow-up fix sessions did not evidence reading `AGENTS.md`, `.factory/library/architecture.md`, or both light/dark wireframes before editing.",
-      "reason": "duplicate of the round-1 scrutiny recommendation already recorded in `.factory/validation/data-screens/scrutiny/synthesis.round1.json`; no new direct update was applied in this rerun."
-    }
-  ],
-  "previousRound": ".factory/validation/data-screens/scrutiny/synthesis.round1.json"
+  "rejectedObservations": [],
+  "previousRound": ".factory/validation/data-screens/scrutiny/synthesis.round2.json"
 }

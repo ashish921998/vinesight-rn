@@ -1,0 +1,45 @@
+{
+  "featureId": "fix-data-screens-round2",
+  "reviewedAt": "2026-03-30T02:59:19.917603Z",
+  "commitId": "d289b29fefbe9effd33651aa166e8a4eb2c02a54",
+  "transcriptSkeletonReviewed": false,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "This rerun fixes the missing analytics locale keys, removes the duplicate TaskRow opacity, removes the old visible attendance date-range picker, and makes Mark All Present sticky. However, the analytics screen still does not use truthful activity totals, and the attendance redesign remains only partially wired: it still hydrates records for the selected worker only and the arrow navigator never becomes the canonical attendance date state.",
+    "issues": [
+      {
+        "file": "app/analytics.tsx",
+        "line": 236,
+        "severity": "blocking",
+        "description": "The Activities Logged card and category totals are still derived from grouped quantity/summary fields instead of truthful record counts. `analytics.harvestsByFarm.reduce((sum, h) => sum + h.quantity, 0)` sums harvested quantity, not harvest records, and `analytics.expensesByType.reduce((sum, _e) => sum + 1, 0)` still counts expense categories, not expense entries. The underlying analytics contract exposes `harvestsByFarm` grouped by farm and `expensesByType` grouped by type (`src/services/analytics-service.ts:68-71`, `src/services/analytics-service.ts:324-333`), so the rerun still misstates filtered activity totals rather than restoring truthful counts."
+      },
+      {
+        "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+        "line": 240,
+        "severity": "blocking",
+        "description": "The redesigned worker list is still not hydrated from real attendance state for all rows. `loadAttendance()` fetches only `selectedWorker` via `fetchAttendanceForWorker(workerId, startDate, endDate)` and seeds `cellData` only for that worker, but the UI renders `workers.map(...)` and reads `cellData.get(worker.id, selectedDate)` for every worker. After initial load and after save-triggered reloads, every non-selected worker row falls back to null even when attendance records exist."
+      },
+      {
+        "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+        "line": 414,
+        "severity": "blocking",
+        "description": "The arrow navigator is still not the canonical attendance date control. `handleDateNavigation()` only changes `selectedDate`, while loading and copy-from-yesterday continue to use the old `rangeStart` / `dateRange` state (`src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx:166-175`, `src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx:368-389`). Navigating days does not refetch attendance for the new day and can move outside the hydrated 7-day window, so the new date navigator remains partially cosmetic instead of driving real load/save state."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "This mission still routes data-integrity and state-wiring follow-up fixes through the visual-only `ui-worker` skill, even though the needed fixes require business-logic and data-contract changes.",
+      "evidence": "`AGENTS.md` marks `src/services/` and `src/hooks/` off-limits and frames screen edits as visual-only; `.factory/skills/ui-worker/SKILL.md` Step 4 says `Do NOT modify data fetching, navigation, i18n keys, or business logic. Visual changes only.` Yet `features.json` for `fix-data-screens-round2` expects truthful analytics totals and attendance state wiring, which still require non-visual contract changes."
+    },
+    {
+      "area": "conventions",
+      "observation": "Orchestrator-completed crash recoveries still lack a synthetic handoff/transcript artifact, which leaves scrutiny without a canonical implementation record for the landed fix.",
+      "evidence": "`progress_log.jsonl:199-201` shows worker session `03dcc80c-d9af-4b09-850f-1874bb851778` started and then failed; `features.json:1153-1177` marks `fix-data-screens-round2` completed with `completedWorkerSessionId: null`; searches of `worker-transcripts.jsonl` and `handoffs/` for that session id returned no matches, so scrutiny had to infer the landing commit from git history (`d289b29`)."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/data-screens/scrutiny/reviews/fix-analytics-data-integrity.json; .factory/validation/data-screens/scrutiny/reviews/fix-tasks-completed-section.json; .factory/validation/data-screens/scrutiny/reviews/fix-attendance-redesign.json",
+  "summary": "Fail. Commit `d289b29` resolves the analytics locale-key gap, removes the duplicate TaskRow opacity so completed tasks now render at the intended 0.8, removes the old visible range-picker UI, and makes `Mark All Present` sticky. But the analytics screen still computes activity totals from grouped quantity/category fields instead of real record counts, and the attendance redesign still only hydrates the selected worker while the arrow navigator does not drive canonical loading state."
+}
