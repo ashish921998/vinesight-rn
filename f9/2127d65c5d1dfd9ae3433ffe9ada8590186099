@@ -1,0 +1,39 @@
+app/calculator/tank-mix.tsx
+  a5456350816ec61f 80,112,168,170,173
+  05870e7ad5fd06d8 116
+app/calculator/lai.tsx
+  a5456350816ec61f 278,285,306,313,338,370
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "f92127d65c5d1dfd9ae3433ffe9ada8590186099",
+  "prompts": {
+    "05870e7ad5fd06d8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d1167030-fd5b-475b-aa51-e8e2e34457cd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 5,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "a5456350816ec61f": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3d06bab8-a825-4b29-85f9-4c78102fa504",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 58,
+      "total_deletions": 53,
+      "accepted_lines": 53,
+      "overriden_lines": 0
+    }
+  }
+}
