@@ -1,0 +1,25 @@
+app/soil-profiling.tsx
+  93b4eabc3d2bee7c 159,163,169,189-200,204-206,209-211,214-216,218-219,221,223-224,227-229,232-250
+app/lab-tests.tsx
+  93b4eabc3d2bee7c 182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "188582b1de75374a7b7f2ff19866a9491f254923",
+  "prompts": {
+    "93b4eabc3d2bee7c": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "206670c4-0935-4761-a9ec-35eb735a65f6",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 75,
+      "total_deletions": 45,
+      "accepted_lines": 64,
+      "overriden_lines": 0
+    }
+  }
+}
