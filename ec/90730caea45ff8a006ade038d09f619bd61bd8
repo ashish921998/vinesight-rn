@@ -1,0 +1,41 @@
+src/i18n/locales/en.ts
+  4282529342b04ae3 2067
+src/components/cards/worker-card.tsx
+  4282529342b04ae3 19,29,32,160,166-179
+src/i18n/locales/mr.ts
+  4282529342b04ae3 2081
+src/styles/theme.ts
+  4282529342b04ae3 250,254
+src/components/ui/button.tsx
+  4282529342b04ae3 52
+src/i18n/locales/hi.ts
+  4282529342b04ae3 2074
+src/components/cards/farm-card.tsx
+  4282529342b04ae3 223-229
+src/components/cards/task-row.tsx
+  4282529342b04ae3 120
+src/components/cards/activity-log-card.tsx
+  4282529342b04ae3 17,259,263,280,284
+src/components/cards/stats-card.tsx
+  4282529342b04ae3 79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "ec90730caea45ff8a006ade038d09f619bd61bd8",
+  "prompts": {
+    "4282529342b04ae3": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1b89e1ab-5727-4a07-8127-6aeeb0723c8f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 38,
+      "total_deletions": 34,
+      "accepted_lines": 38,
+      "overriden_lines": 0
+    }
+  }
+}
