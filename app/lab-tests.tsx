@@ -554,7 +554,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'soil' ? colors.labTest.soil : colors.surface[500],
+              color: selectedTab === 'soil' ? colors.labTest.soil : colors.surface[400],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
@@ -578,7 +578,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'petiole' ? colors.labTest.soil : colors.surface[500],
+              color: selectedTab === 'petiole' ? colors.labTest.soil : colors.surface[400],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"

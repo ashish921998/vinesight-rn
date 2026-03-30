@@ -667,9 +667,13 @@ export default function LogsScreen() {
                         paddingHorizontal: spacing[4],
                         paddingVertical: spacing[2],
                         borderRadius: borderRadius.full,
-                        backgroundColor: isSelected ? chipColor : m3.surface.surfaceContainerLow,
+                        backgroundColor: isSelected
+                          ? m3.colorScheme.primary
+                          : m3.surface.surfaceContainerLow,
                         borderWidth: 1,
-                        borderColor: isSelected ? chipColor : m3.colorScheme.outlineVariant,
+                        borderColor: isSelected
+                          ? m3.colorScheme.primary
+                          : m3.colorScheme.outlineVariant,
                       }}
                     >
                       <View

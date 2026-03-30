@@ -304,7 +304,7 @@ export default function SprayCatalogScreen() {
             {/* Component list - clickable to show product details */}
             {mix.components.length > 1 && (
               <View style={{ marginTop: spacing[2], gap: spacing[1] }}>
-                {mix.components.slice(1).map((component: ChemicalMixComponent) => (
+                {mix.components.slice(0).map((component: ChemicalMixComponent) => (
                   <Pressable
                     key={component.id}
                     onPress={() => {
