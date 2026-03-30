@@ -1,70 +1,32 @@
 {
   "milestone": "forms-tools-settings",
-  "round": 1,
+  "round": 2,
   "status": "fail",
   "assertionsSummary": {
-    "total": 28,
-    "passed": 20,
-    "failed": 8,
+    "total": 8,
+    "passed": 6,
+    "failed": 2,
     "blocked": 0
   },
   "passedAssertions": [
-    "VAL-SETTINGS-001",
-    "VAL-SETTINGS-003",
-    "VAL-TOOLS-001",
-    "VAL-CALC-003",
-    "VAL-CALC-004",
-    "VAL-CALC-005",
-    "VAL-WAREHOUSE-001",
-    "VAL-WAREHOUSE-002",
-    "VAL-WAREHOUSE-003",
-    "VAL-FERTPLAN-001",
-    "VAL-FERTPLAN-002",
-    "VAL-ADDFORM-001",
-    "VAL-ADDFORM-003",
-    "VAL-ADDFORM-004",
-    "VAL-CROSS-001",
-    "VAL-CROSS-008",
-    "VAL-CROSS-003",
-    "VAL-CROSS-004",
-    "VAL-CROSS-005",
-    "VAL-CROSS-006"
+    "VAL-SETTINGS-002",
+    "VAL-TOOLS-002",
+    "VAL-CALC-001",
+    "VAL-CALC-002",
+    "VAL-REPORTS-002",
+    "VAL-ADDFORM-002"
   ],
   "failedAssertions": [
     {
-      "id": "VAL-SETTINGS-002",
-      "reason": "The grouped cards and row separators match the contract, but the section labels use fontSize.xs and the theme defines fontSize.xs as 12px instead of the required 11px."
-    },
-    {
-      "id": "VAL-TOOLS-002",
-      "reason": "The tools screen has uppercase headers, but they use colors.surface[500] and letterSpacing 0.8 instead of the required stone-5 muted color and letterSpacing 0.6."
-    },
-    {
-      "id": "VAL-CALC-001",
-      "reason": "Tank Mix has the required 1px selectable borders, primary selected border, 0.08 selected fill, and product-row results card, but the selectable cards use `borderRadius.lg`, which resolves to 24px instead of the 12px radius required by the contract."
-    },
-    {
-      "id": "VAL-CALC-002",
-      "reason": "LAI renders the dual result layout and interpretation dot, and both values are 24px bold primary green, but the result boxes use a 24px radius instead of the required 14px and the second box uses a 0.10 primary tint instead of the required 0.08."
-    },
-    {
       "id": "VAL-REPORTS-001",
-      "reason": "The reports flow uses warm surface colors, but its main filter/report containers still rely on box-shadow and shadow/elevation styling instead of the bordered Cellar Ledger card treatment required by the contract."
-    },
-    {
-      "id": "VAL-REPORTS-002",
-      "reason": "The date fields meet the bordered-card requirement, but the screen does not implement PDF/CSV export chips with an active primary-filled, white-text state."
-    },
-    {
-      "id": "VAL-ADDFORM-002",
-      "reason": "The farm selector card matches the contract and each log type shows an 8px colored dot plus a category-colored active state, but the type selector is still implemented as large 3-column cards instead of chips."
+      "reason": "The outer report wrappers now use warm bordered Cellar Ledger panels, but the shared report section block still applies `shadows.sm` and `elevation: 1`, so the report sections are not yet fully using the required border-only treatment."
     },
     {
       "id": "VAL-CROSS-002",
-      "reason": "Shadow and elevation props are still present on add-entry card surfaces and in other forms-tools-settings screens, so the milestone is not yet fully border-only."
+      "reason": "Shadow/elevation styling still remains on add-entry and reports card surfaces within the forms-tools-settings scope (`LogTypeSelector`, `LogForm`, `entry-form.tsx`, and `report-section-block.tsx`), so the milestone is not yet fully border-only."
     }
   ],
   "blockedAssertions": [],
   "appliedUpdates": [],
-  "previousRound": null
+  "previousRound": ".factory/validation/forms-tools-settings/user-testing/synthesis.round1.json"
 }

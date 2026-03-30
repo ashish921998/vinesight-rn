@@ -1,85 +1,49 @@
 {
   "groupId": "settings-tools",
-  "testedAt": "2026-03-30T05:17:44.239312Z",
+  "testedAt": "2026-03-30T11:12:00Z",
   "isolation": {
     "surface": "code-review",
     "mode": "read-only validation against the current working tree",
     "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
     "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
     "milestone": "forms-tools-settings",
-    "assignedAssertions": [
-      "VAL-SETTINGS-001",
-      "VAL-SETTINGS-002",
-      "VAL-SETTINGS-003",
-      "VAL-TOOLS-001",
-      "VAL-TOOLS-002"
-    ]
+    "assignedAssertions": ["VAL-SETTINGS-002", "VAL-TOOLS-002"],
+    "fixCommitUnderTest": "a2515f5"
   },
   "toolsUsed": ["Read", "Grep", "LS", "Execute"],
   "assertionResults": [
     {
-      "id": "VAL-SETTINGS-001",
-      "title": "Profile card with circular avatar",
-      "status": "pass",
-      "reason": "The settings screen renders a bordered profile card with a 56x56 circular primary avatar, white initials, muted email text, and a primary-colored Edit Profile link.",
-      "evidence": {
-        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/settings-tools/settings-tools-evidence.md",
-        "references": ["app/(tabs)/settings.tsx:1008-1044", "app/(tabs)/settings.tsx:2407-2442"]
-      }
-    },
-    {
       "id": "VAL-SETTINGS-002",
       "title": "Grouped settings rows with section labels",
-      "status": "fail",
-      "reason": "The grouped cards and row separators match the contract, but the section labels use fontSize.xs and the theme defines fontSize.xs as 12px instead of the required 11px.",
+      "status": "pass",
+      "reason": "The settings section header now uses a literal 11px semibold uppercase label in the stone-5 token, while the grouped cards remain border-only and row separators use mist-2 dividers.",
       "evidence": {
         "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/settings-tools/settings-tools-evidence.md",
         "references": [
+          "app/(tabs)/settings.tsx:1051-1059",
           "app/(tabs)/settings.tsx:2446-2459",
-          "app/(tabs)/settings.tsx:2531-2531",
-          "src/styles/theme.ts:34-40",
-          "src/styles/theme.ts:219-255"
-        ]
-      }
-    },
-    {
-      "id": "VAL-SETTINGS-003",
-      "title": "Danger zone with red-tinted card",
-      "status": "pass",
-      "reason": "The delete action uses the required red-tinted treatment with a 5% red background, 22% red border, and red text in the account section.",
-      "evidence": {
-        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/settings-tools/settings-tools-evidence.md",
-        "references": ["app/(tabs)/settings.tsx:1192-1208", "app/(tabs)/settings.tsx:2511-2525"]
-      }
-    },
-    {
-      "id": "VAL-TOOLS-001",
-      "title": "Two-column tool grid with colored icons",
-      "status": "pass",
-      "reason": "The tools hub uses a two-column wrapping grid with a 12px gap, border-only 16px cards, and 40x40 icon circles tinted with 12% category color backgrounds.",
-      "evidence": {
-        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/settings-tools/settings-tools-evidence.md",
-        "references": [
-          "app/(tabs)/tools.tsx:29-58",
-          "app/(tabs)/tools.tsx:120-195",
-          "app/(tabs)/tools.tsx:227-246",
-          "src/styles/theme.ts:84-105",
-          "src/styles/theme.ts:219-255"
+          "app/(tabs)/settings.tsx:2531",
+          "src/styles/theme.ts:39"
         ]
       }
     },
     {
       "id": "VAL-TOOLS-002",
       "title": "Section headers for categories",
-      "status": "fail",
-      "reason": "The tools screen has uppercase headers, but they use colors.surface[500] and letterSpacing 0.8 instead of the required stone-5 muted color and letterSpacing 0.6.",
+      "status": "pass",
+      "reason": "The tools category headers now use the muted stone-5 token, uppercase semibold text, the required 0.6 letter spacing, and the shared 12px xs type size from the theme.",
       "evidence": {
         "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/settings-tools/settings-tools-evidence.md",
-        "references": ["app/(tabs)/tools.tsx:228-259", "src/styles/theme.ts:34-40"]
+        "references": [
+          "app/(tabs)/tools.tsx:227-238",
+          "app/(tabs)/tools.tsx:250-261",
+          "src/styles/theme.ts:39",
+          "src/styles/theme.ts:270"
+        ]
       }
     }
   ],
   "frictions": [],
   "blockers": [],
-  "summary": "Validated 5 assigned assertions by read-only code review: 3 passed and 2 failed. Failing assertions are VAL-SETTINGS-002 (section header size is 12px instead of 11px) and VAL-TOOLS-002 (tools headers use surface[500] with letterSpacing 0.8 instead of stone-5 with letterSpacing 0.6)."
+  "summary": "Retested the 2 previously failing settings/tools assertions after commit a2515f5; VAL-SETTINGS-002 and VAL-TOOLS-002 both now pass."
 }

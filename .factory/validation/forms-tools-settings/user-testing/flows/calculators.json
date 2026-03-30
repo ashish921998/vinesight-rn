@@ -1,94 +1,44 @@
 {
   "groupId": "calculators",
-  "testedAt": "2026-03-30T05:16:44.951132+00:00",
+  "testedAt": "2026-03-30T05:36:18.298434Z",
   "isolation": {
     "surface": "code-review",
     "mode": "read-only validation against the current working tree",
-    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
     "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
     "milestone": "forms-tools-settings",
-    "primaryEvidenceTargets": [
-      "app/calculator/tank-mix.tsx",
-      "app/calculator/lai.tsx",
-      "app/calculator/mad.tsx",
-      "app/calculator/system-discharge.tsx",
-      "app/calculator/nutrients.tsx",
-      "src/styles/theme.ts"
-    ]
+    "assignedAssertions": ["VAL-CALC-001", "VAL-CALC-002"],
+    "workingTree": "clean (git status --short returned no changes)",
+    "lastRelevantCommit": "a2515f5 Fix user-testing round1 for forms-tools-settings: settings section labels 11px, tools headers letterSpacing 0.6, tank mix card radius 12px, LAI result boxes 14px radius with 0.08 opacity, reports border-only styling, export chips active state, log type selector chip layout, remove remaining shadows from cards"
   },
-  "toolsUsed": ["Read", "Grep", "Glob"],
+  "toolsUsed": ["Read", "Grep", "LS", "Execute"],
   "assertionResults": [
     {
       "id": "VAL-CALC-001",
-      "status": "fail",
-      "reason": "Tank Mix has the required 1px selectable borders, primary selected border, 0.08 selected fill, and product-row results card, but the selectable cards use `borderRadius.lg`, which resolves to 24px instead of the 12px radius required by the contract.",
+      "title": "Tank Mix selectable cards",
+      "status": "pass",
+      "reason": "Tank Mix now renders selectable mix cards with a 1px border, 12px radius via borderRadius.sm, primary border plus 0.08 primary tint for the selected state, and a bordered results card with per-product result rows.",
       "evidence": {
-        "noteFile": "forms-tools-settings/calculators/calculators-evidence.md",
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/calculators/calculators-evidence.md",
         "references": [
-          "app/calculator/tank-mix.tsx:164-170",
-          "app/calculator/tank-mix.tsx:223-250",
-          "src/styles/theme.ts:248-249"
+          "app/calculator/tank-mix.tsx:166-170",
+          "app/calculator/tank-mix.tsx:223-260",
+          "src/styles/theme.ts:243-247"
         ]
       }
     },
     {
       "id": "VAL-CALC-002",
-      "status": "fail",
-      "reason": "LAI renders the dual result layout and interpretation dot, and both values are 24px bold primary green, but the result boxes use a 24px radius instead of the required 14px and the second box uses a 0.10 primary tint instead of the required 0.08.",
-      "evidence": {
-        "noteFile": "forms-tools-settings/calculators/calculators-evidence.md",
-        "references": [
-          "app/calculator/lai.tsx:273-315",
-          "app/calculator/lai.tsx:336-357",
-          "src/styles/theme.ts:248-249"
-        ]
-      }
-    },
-    {
-      "id": "VAL-CALC-003",
+      "title": "LAI dual result boxes",
       "status": "pass",
-      "reason": "MAD uses a multi-step layout, applies the selected refill-span teal border and 0.08 fill from the irrigation token, and displays both the MAD and refill-tank results.",
+      "reason": "LAI now renders two side-by-side result boxes with 0.08 primary tint, 14px corner radius, and 24px bold primary-green values, plus an interpretation box that includes the required status dot.",
       "evidence": {
-        "noteFile": "forms-tools-settings/calculators/calculators-evidence.md",
-        "references": [
-          "app/calculator/mad.tsx:169",
-          "app/calculator/mad.tsx:287-320",
-          "app/calculator/mad.tsx:334-364",
-          "app/calculator/mad.tsx:429-443",
-          "src/styles/theme.ts:91-92"
-        ]
-      }
-    },
-    {
-      "id": "VAL-CALC-004",
-      "status": "pass",
-      "reason": "System Discharge renders method selection cards with active checkmarks, shows the computed result in 28px bold primary green, and includes italic formula text below the main value.",
-      "evidence": {
-        "noteFile": "forms-tools-settings/calculators/calculators-evidence.md",
-        "references": [
-          "app/calculator/system-discharge.tsx:415-492",
-          "app/calculator/system-discharge.tsx:778-782",
-          "app/calculator/system-discharge.tsx:810-814",
-          "src/styles/theme.ts:365-371"
-        ]
-      }
-    },
-    {
-      "id": "VAL-CALC-005",
-      "status": "pass",
-      "reason": "Nutrients applies primary-background/white-text active growth-stage chips, renders NPK rows with the required nitrogen, phosphorus, and potassium colors, and includes the Total NPK summary row.",
-      "evidence": {
-        "noteFile": "forms-tools-settings/calculators/calculators-evidence.md",
-        "references": [
-          "app/calculator/nutrients.tsx:175-202",
-          "app/calculator/nutrients.tsx:277-296",
-          "app/calculator/nutrients.tsx:300-327",
-          "src/styles/theme.ts:97-98"
-        ]
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/calculators/calculators-evidence.md",
+        "references": ["app/calculator/lai.tsx:275-315", "app/calculator/lai.tsx:334-357"]
       }
     }
   ],
   "frictions": [],
   "blockers": [],
-  "summary": "Reviewed 5 assigned calculator assertions by code inspection; 3 pass and 2 fail (VAL-CALC-001 and VAL-CALC-002)."
+  "summary": "Re-validated the 2 assigned calculator assertions by read-only code review; VAL-CALC-001 and VAL-CALC-002 both pass in the current working tree."
 }
