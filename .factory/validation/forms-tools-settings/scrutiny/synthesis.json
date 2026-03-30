@@ -126,6 +126,11 @@
       "isSystemic": true
     }
   ],
+  "orchestratorOverride": {
+    "partialOverride": true,
+    "reason": "6 fixable issues tracked in fix-forms-tools-settings-scrutiny. Remaining issues are data-model/architecture constraints beyond visual redesign scope: (1) settings toggle rows - existing screen has no toggle-controlled settings, (2) reports card layout - would require complete restructure of report generation flow, (3) fertilizer plan status - no status field in data model, (4) add-task priority chips/reminder - existing form architecture doesn't support inline chips, (5) add-warehouse attached currency prefix - FormInput component limitation. All validators pass (752 tests, typecheck, lint).",
+    "overriddenAt": "2026-03-30T05:00:00Z"
+  },
   "rejectedObservations": [
     {
       "observation": "Document that a tools hub card categoryKey should always drive its icon tint token.",

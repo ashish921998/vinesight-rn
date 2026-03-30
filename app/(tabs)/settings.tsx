@@ -1193,13 +1193,13 @@ export default function SettingsScreen() {
             onPress={handleDeleteAccount}
             accessibilityRole="button"
             accessibilityLabel={t('settings.deleteAccount')}
-            style={styles.settingsItem}
+            style={styles.dangerCard}
           >
             <View style={styles.deleteIcon}>
               <UISymbol name="trash" size={20} color={colors.error} />
             </View>
             <Text
-              style={styles.deleteText}
+              style={styles.dangerText}
               textBreakStrategy="highQuality"
               lineBreakStrategyIOS="standard"
             >
@@ -2408,7 +2408,7 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     backgroundColor: colors.surface[100],
     marginHorizontal: spacing[4],
     marginTop: spacing[4],
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.surface[300],
     padding: spacing[4],
@@ -2507,6 +2507,21 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     marginLeft: spacing[3],
     fontSize: fontSize.base,
     color: colors.error,
+  } as TextStyle,
+  dangerCard: {
+    backgroundColor: colorWithOpacity('#B84C3A', 0.05),
+    borderWidth: 1,
+    borderColor: colorWithOpacity('#B84C3A', 0.22),
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    flexDirection: 'row',
+    alignItems: 'center',
+  } as ViewStyle,
+  dangerText: {
+    flex: 1,
+    marginLeft: spacing[3],
+    fontSize: fontSize.base,
+    color: '#B84C3A',
   } as TextStyle,
   settingsValue: {
     fontSize: fontSize.sm,
