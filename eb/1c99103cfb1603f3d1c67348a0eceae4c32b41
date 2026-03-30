@@ -1,0 +1,27 @@
+src/components/screens/entry-form/LogTypeSelector.tsx
+  ee6f0124df505852 104,106,111,134,137,140,143-151,160,163
+src/components/ui/form-components.tsx
+  ee6f0124df505852 132-134,352-354,476,479,481-485,815,817,819,824,827,832-835
+src/components/screens/warehouse-item-form.tsx
+  ee6f0124df505852 763,766-787
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "eb1c99103cfb1603f3d1c67348a0eceae4c32b41",
+  "prompts": {
+    "ee6f0124df505852": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "241e60bf-977e-43bb-96b9-2bebf1e9d932",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 66,
+      "total_deletions": 75,
+      "accepted_lines": 66,
+      "overriden_lines": 0
+    }
+  }
+}
