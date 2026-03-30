@@ -668,11 +668,8 @@ export default function TasksScreen() {
           borderRadius: borderRadius.full,
           alignItems: 'center',
           justifyContent: 'center',
-          shadowColor: m3.colorScheme.shadow,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 4,
+          borderWidth: 1,
+          borderColor: colorWithOpacity(m3.colorScheme.primary, 0.3),
         }}
       >
         <SFSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />

@@ -163,7 +163,7 @@ export default function TankMixCalculatorScreen() {
                   key={mix.id}
                   onPress={() => router.setParams({ mixId: String(mix.id) })}
                   style={{
-                    borderRadius: borderRadius.lg,
+                    borderRadius: borderRadius.sm,
                     borderWidth: 1,
                     borderColor: selected ? m3.colorScheme.primary : colors.surface[300],
                     backgroundColor: selected

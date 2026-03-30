@@ -227,11 +227,11 @@ export default function ToolsScreen() {
       <View style={{ marginBottom: spacing[6] }}>
         <Text
           style={{
-            color: colors.surface[500],
+            color: colors.surface[400],
             fontSize: fontSize.xs,
             fontWeight: fontWeight.semibold,
             textTransform: 'uppercase',
-            letterSpacing: 0.8,
+            letterSpacing: 0.6,
             marginBottom: spacing[3],
           }}
         >
@@ -250,11 +250,11 @@ export default function ToolsScreen() {
         <View>
           <Text
             style={{
-              color: colors.surface[500],
+              color: colors.surface[400],
               fontSize: fontSize.xs,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              letterSpacing: 0.8,
+              letterSpacing: 0.6,
               marginBottom: spacing[3],
             }}
           >

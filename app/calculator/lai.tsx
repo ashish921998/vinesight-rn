@@ -275,7 +275,7 @@ export default function LAICalculatorScreen() {
                       style={{
                         flex: 1,
                         backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
-                        borderRadius: borderRadius.lg,
+                        borderRadius: 14,
                         padding: spacing[4],
                         alignItems: 'center',
                       }}
@@ -302,8 +302,8 @@ export default function LAICalculatorScreen() {
                     <View
                       style={{
                         flex: 1,
-                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-                        borderRadius: borderRadius.lg,
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
+                        borderRadius: 14,
                         padding: spacing[4],
                         alignItems: 'center',
                       }}

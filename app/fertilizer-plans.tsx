@@ -7,6 +7,7 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { useFarm, useFertilizerPlan, useProfile, useFarms } from '@/hooks';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 
 // Determine plan item status and color based on item index (placeholder logic)
@@ -373,7 +374,7 @@ export default function FertilizerPlansScreen() {
           </View>
         )}
       </ScrollView>
-      {/* FAB - Cellar Ledger design: primary bg, 16px radius, white '+' */}
+      {/* FAB - Cellar Ledger design: primary bg, 16px radius, white '+', border-only */}
       <Pressable
         style={{
           position: 'absolute',
@@ -385,12 +386,8 @@ export default function FertilizerPlansScreen() {
           backgroundColor: colors.primary[500],
           alignItems: 'center',
           justifyContent: 'center',
-          // Add subtle shadow for elevation
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.15,
-          shadowRadius: 4,
-          elevation: 4,
+          borderWidth: 1,
+          borderColor: colorWithOpacity(colors.primary[500], 0.3),
         }}
         accessibilityRole="button"
         accessibilityLabel={t('farmDetails.fertilizerPlan.addPlan', 'Add Plan')}

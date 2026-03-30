@@ -77,7 +77,7 @@ export function LogTypeSelector({
           flexDirection: 'row',
           flexWrap: 'wrap',
           justifyContent: 'space-between',
-          rowGap: 10,
+          rowGap: 8,
         }}
       >
         {ACTIVITY_TYPES.map((logType: LogType) => {
@@ -93,13 +93,13 @@ export function LogTypeSelector({
                 onSelect(selectedType);
               }}
               style={{
-                width: '31.5%',
-                minHeight: 108,
-                paddingHorizontal: 10,
-                paddingVertical: 12,
+                width: '31%',
+                minHeight: 72,
+                paddingHorizontal: 8,
+                paddingVertical: 8,
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: 16,
+                borderRadius: 12,
                 borderWidth: emphasizeSelectedGuidedCard ? 2 : 1,
                 // Cellar Ledger spec: active chip uses category color bg with white text
                 backgroundColor: isSelected
@@ -145,24 +145,24 @@ export function LogTypeSelector({
                   borderRadius: 999,
                   backgroundColor: logType.color,
                   position: 'absolute',
-                  top: 12,
-                  left: 12,
+                  top: 8,
+                  left: 8,
                 }}
               />
               <View
                 style={{
-                  width: 42,
-                  height: 42,
+                  width: 32,
+                  height: 32,
                   borderRadius: 999,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: 10,
+                  marginBottom: 6,
                   backgroundColor: isSelected ? '#FFFFFF30' : `${logType.color}12`,
                 }}
               >
                 <AppIcon
                   name={logType.icon}
-                  size={20}
+                  size={16}
                   color={isSelected ? '#FFFFFF' : logType.color}
                 />
               </View>

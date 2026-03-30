@@ -102,6 +102,7 @@ export default function ReportsScreen() {
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');
+  const [selectedExportFormat, setSelectedExportFormat] = useState<ReportFormat>('pdf');
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
   const [showFarmPicker, setShowFarmPicker] = useState(false);
@@ -378,7 +379,8 @@ export default function ReportsScreen() {
     borderRadius: borderRadius.xl,
     borderCurve: 'continuous' as const,
     padding: spacing[3],
-    boxShadow: `0 8px 24px ${colorWithOpacity(m3.colorScheme.shadow, 0.08)}`,
+    borderWidth: 1,
+    borderColor: colors.surface[300],
   };
 
   const showStickyExport = Boolean(farms && farms.length > 0);
@@ -456,6 +458,8 @@ export default function ReportsScreen() {
               reportType={reportType}
               reportTypes={REPORT_TYPES}
               onSelectReportType={setReportType}
+              selectedExportFormat={selectedExportFormat}
+              onSelectExportFormat={setSelectedExportFormat}
               panelStyle={panelStyle}
             />
 

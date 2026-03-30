@@ -2444,7 +2444,7 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
 
   section: { marginTop: spacing[6], paddingHorizontal: spacing[4] } as ViewStyle,
   sectionHeader: {
-    fontSize: fontSize.xs,
+    fontSize: 11,
     fontWeight: fontWeight.semibold,
     color: colors.surface[400],
     textTransform: 'uppercase',

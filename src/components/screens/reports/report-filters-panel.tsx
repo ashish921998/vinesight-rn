@@ -16,7 +16,7 @@ import { borderRadius, fontSize, fontWeight, spacing, shadows } from '@/styles/t
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { convertAreaFromAcres } from '@/utils/preferences';
-import type { ReportType } from '@/types/report';
+import type { ReportFormat, ReportType } from '@/types/report';
 import type { Farm } from '@/types';
 
 interface ReportTypeOption {
@@ -66,6 +66,8 @@ interface ReportFiltersPanelProps {
   reportType: ReportType;
   reportTypes: ReportTypeOption[];
   onSelectReportType: (reportType: ReportType) => void;
+  selectedExportFormat?: ReportFormat;
+  onSelectExportFormat?: (format: ReportFormat) => void;
   panelStyle: object;
 }
 
@@ -253,6 +255,8 @@ export function ReportFiltersPanel({
   reportType,
   reportTypes,
   onSelectReportType,
+  selectedExportFormat,
+  onSelectExportFormat,
   panelStyle,
 }: ReportFiltersPanelProps) {
   const colors = useThemeColors();
@@ -260,6 +264,21 @@ export function ReportFiltersPanel({
   const { t } = useTranslation();
 
   const [expanded, setExpanded] = React.useState(true);
+
+  // Local state for export format selection (falls back to prop if provided)
+  const [localExportFormat, setLocalExportFormat] = React.useState<ReportFormat>(
+    selectedExportFormat ?? 'pdf',
+  );
+
+  const activeExportFormat = selectedExportFormat ?? localExportFormat;
+
+  const handleSelectExportFormat = useCallback(
+    (format: ReportFormat) => {
+      setLocalExportFormat(format);
+      onSelectExportFormat?.(format);
+    },
+    [onSelectExportFormat],
+  );
 
   const toggleExpand = useCallback(async () => {
     if (Platform.OS === 'ios') {
@@ -677,40 +696,52 @@ export function ReportFiltersPanel({
               </Text>
               <View style={{ flexDirection: 'row', gap: spacing[2] }}>
                 <Pressable
+                  onPress={() => handleSelectExportFormat('pdf')}
                   style={{
                     paddingHorizontal: spacing[4],
                     paddingVertical: spacing[1] + 2,
                     borderRadius: borderRadius.pill,
                     borderWidth: 1,
-                    borderColor: colors.surface[300],
-                    backgroundColor: colors.surface[100],
+                    borderColor:
+                      activeExportFormat === 'pdf' ? m3.colorScheme.primary : colors.surface[300],
+                    backgroundColor:
+                      activeExportFormat === 'pdf' ? m3.colorScheme.primary : colors.surface[100],
                   }}
                 >
                   <Text
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: m3.colorScheme.onSurfaceVariant,
+                      color:
+                        activeExportFormat === 'pdf'
+                          ? m3.colorScheme.onPrimary
+                          : m3.colorScheme.onSurfaceVariant,
                     }}
                   >
                     PDF
                   </Text>
                 </Pressable>
                 <Pressable
+                  onPress={() => handleSelectExportFormat('csv')}
                   style={{
                     paddingHorizontal: spacing[4],
                     paddingVertical: spacing[1] + 2,
                     borderRadius: borderRadius.pill,
                     borderWidth: 1,
-                    borderColor: colors.surface[300],
-                    backgroundColor: colors.surface[100],
+                    borderColor:
+                      activeExportFormat === 'csv' ? m3.colorScheme.primary : colors.surface[300],
+                    backgroundColor:
+                      activeExportFormat === 'csv' ? m3.colorScheme.primary : colors.surface[100],
                   }}
                 >
                   <Text
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: m3.colorScheme.onSurfaceVariant,
+                      color:
+                        activeExportFormat === 'csv'
+                          ? m3.colorScheme.onPrimary
+                          : m3.colorScheme.onSurfaceVariant,
                     }}
                   >
                     CSV
