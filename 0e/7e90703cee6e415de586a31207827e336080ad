@@ -1,0 +1,53 @@
+.factory/validation/forms-tools-settings/user-testing/flows/settings-tools.json
+  823d42bd60a9a6bb 1-85
+.factory/validation/forms-tools-settings/user-testing/flows/calculators.json
+  ff5e0b267acda0c4 1-94
+.factory/validation/forms-tools-settings/user-testing/flows/warehouse-reports-fertplans.json
+  dc0851bd2daac3c1 1-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "0e7e90703cee6e415de586a31207827e336080ad",
+  "prompts": {
+    "823d42bd60a9a6bb": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "91e60d7e-67a0-4476-a7dc-c929ce4594bd",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 99,
+      "total_deletions": 0,
+      "accepted_lines": 99,
+      "overriden_lines": 0
+    },
+    "dc0851bd2daac3c1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a0c93db8-1191-4c79-957b-4cb94c87b8e5",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 156,
+      "total_deletions": 0,
+      "accepted_lines": 156,
+      "overriden_lines": 0
+    },
+    "ff5e0b267acda0c4": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "5d2cc268-a403-45a9-a649-26309e861e80",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 94,
+      "total_deletions": 0,
+      "accepted_lines": 94,
+      "overriden_lines": 0
+    }
+  }
+}
