@@ -1,0 +1,25 @@
+src/components/screens/reports/report-export-actions.tsx
+  d06658cff4dd79cd 12,21,106
+app/reports.tsx
+  d06658cff4dd79cd 510
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "1776a2167e30408fcc673dd3ab867708a6895a11",
+  "prompts": {
+    "d06658cff4dd79cd": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "cdeb903c-b82b-4bb1-b3b9-ec6fd5812cde",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 1,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
