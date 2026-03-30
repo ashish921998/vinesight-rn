@@ -1,0 +1,40 @@
+app/analytics.tsx
+  04f034396d33282f 214,236-238,272-275,281-284,286-292,299
+.factory/validation/data-screens/scrutiny/fix-analysis.md
+  5fd5cc2170827a5a 1-94
+src/i18n/locales/en.ts
+  04f034396d33282f 790-791,820-821
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "74b70d1800536c76a1ef662e7b8736a0261b0353",
+  "prompts": {
+    "04f034396d33282f": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1c3d7cd2-7a6a-4ab2-bb69-4e8631321cae",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 28,
+      "overriden_lines": 0
+    },
+    "5fd5cc2170827a5a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1ad99019-9679-4acd-92c1-dde9ad89bc78",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 94,
+      "overriden_lines": 0
+    }
+  }
+}
