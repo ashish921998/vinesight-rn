@@ -3,7 +3,8 @@ import { FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { borderRadius, fontWeight, spacing } from '@/styles/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { borderRadius, colors, darkColors, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
 import { ProductDetailSheet } from '@/components/sheets/product-detail-sheet';
@@ -62,6 +63,10 @@ export default function SprayCatalogScreen() {
     ).length;
   }, [mixes, selectedComponent]);
 
+  // Get spray color based on dark mode
+  const sprayColor =
+    m3.colorScheme.surface === colors.surface[50] ? colors.spray[500] : darkColors.spray[500];
+
   const renderChip = useCallback(
     (key: string, label: string, selected: boolean, onPress: () => void) => (
       <Pressable
@@ -70,91 +75,255 @@ export default function SprayCatalogScreen() {
         style={{
           borderRadius: borderRadius.full,
           borderWidth: 1,
-          borderColor: selected ? m3.colorScheme.primary : m3.colorScheme.outlineVariant,
-          backgroundColor: selected
-            ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-            : m3.surface.surfaceContainerLow,
-          paddingHorizontal: spacing[3],
+          borderColor: selected ? sprayColor : m3.colorScheme.outlineVariant,
+          backgroundColor: selected ? sprayColor : m3.surface.surfaceContainerLow,
+          paddingHorizontal: spacing[3] + 1,
           paddingVertical: spacing[2],
           marginRight: spacing[2],
         }}
       >
-        <Text style={{ color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurface }}>
+        <Text
+          style={{
+            color: selected ? '#ffffff' : m3.colorScheme.onSurface,
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.medium,
+          }}
+        >
           {label}
         </Text>
       </Pressable>
     ),
-    [m3],
+    [m3, sprayColor],
   );
 
   const renderMixCard = useCallback(
-    ({ item: mix }: { item: ChemicalMix }) => (
-      <View
-        style={{
-          borderRadius: borderRadius.xl,
-          borderWidth: 1,
-          borderColor: m3.colorScheme.outlineVariant,
-          backgroundColor: m3.surface.surfaceContainerLow,
-          padding: spacing[4],
-          marginBottom: spacing[3],
-        }}
-      >
-        <Text style={{ color: m3.colorScheme.onSurface, fontWeight: fontWeight.semibold }}>
-          {mix.name}
-        </Text>
-        <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
-          {mix.target_problem ??
-            t('sprayCatalog.genericProblem', { defaultValue: 'General protection' })}
-        </Text>
-        <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
-          {t('sprayCatalog.modeLabel', {
-            defaultValue: 'Mode: {{mode}}',
-            mode: mix.application_mode ?? 'unspecified',
-          })}
-        </Text>
+    ({ item: mix }: { item: ChemicalMix }) => {
+      // Determine chemical type from components (default to Fungicide)
+      const chemicalType = 'Fungicide';
 
-        <View style={{ marginTop: spacing[2], gap: spacing[1] }}>
-          {mix.components.map((component: ChemicalMixComponent) => (
-            <Pressable
-              key={component.id}
-              onPress={() => {
-                setSelectedComponent(component);
-                setShowSheet(true);
-              }}
-            >
-              <Text style={{ color: m3.colorScheme.primary }}>
-                • {component.product_name} ({component.dose_value} {component.dose_unit}
-                {component.dose_basis === 'per_100_liter'
-                  ? '/100L'
-                  : component.dose_basis === 'fixed_per_tank'
-                    ? '/tank'
-                    : '/L'}
-                )
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+      // Type badge colors based on chemical type
+      const getTypeBadgeStyle = (type: string) => {
+        const isDark = m3.colorScheme.surface !== colors.surface[50];
+        switch (type) {
+          case 'Fungicide':
+            return {
+              backgroundColor: isDark ? 'rgba(138,154,94,0.15)' : 'rgba(108,124,70,0.12)',
+              color: isDark ? darkColors.spray[500] : colors.spray[500],
+            };
+          case 'Insecticide':
+            return {
+              backgroundColor: isDark ? 'rgba(90,128,144,0.15)' : 'rgba(78,115,132,0.12)',
+              color: isDark ? darkColors.info : colors.info,
+            };
+          case 'Herbicide':
+            return {
+              backgroundColor: isDark ? 'rgba(154,106,82,0.15)' : 'rgba(166,107,79,0.12)',
+              color: isDark ? darkColors.secondary[500] : colors.secondary[500],
+            };
+          default:
+            return {
+              backgroundColor: isDark ? 'rgba(138,154,94,0.15)' : 'rgba(108,124,70,0.12)',
+              color: isDark ? darkColors.spray[500] : colors.spray[500],
+            };
+        }
+      };
 
-        <Pressable
-          onPress={() =>
-            router.push({ pathname: '/calculator/tank-mix', params: { mixId: String(mix.id) } })
-          }
+      // Get dose display string from component
+      const getDoseDisplay = (component: ChemicalMixComponent): string => {
+        if (component.dose_basis === 'per_100_liter') {
+          return `${component.dose_value}${component.dose_unit === 'gm' ? 'g' : 'mL'}/100L`;
+        } else if (component.dose_basis === 'fixed_per_tank') {
+          return `${component.dose_value}${component.dose_unit === 'gm' ? 'g' : 'mL'}/tank`;
+        }
+        return `${component.dose_value}${component.dose_unit === 'gm' ? 'g' : 'mL'}/L`;
+      };
+
+      const typeBadgeStyle = getTypeBadgeStyle(chemicalType);
+      const firstComponent = mix.components[0];
+      const phiDays = firstComponent?.phi_days;
+      const hasPhiWarning = phiDays !== null && phiDays > 0;
+
+      // Get warning color based on dark mode
+      const isDark = m3.colorScheme.surface !== colors.surface[50];
+      const warningColor = isDark ? darkColors.warning : colors.warning;
+
+      return (
+        <View
           style={{
-            marginTop: spacing[3],
-            borderRadius: borderRadius.full,
-            alignSelf: 'flex-start',
-            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-            paddingHorizontal: spacing[3],
-            paddingVertical: spacing[2],
+            borderRadius: borderRadius.sm,
+            borderWidth: 1,
+            borderColor: m3.colorScheme.outlineVariant,
+            backgroundColor: m3.surface.surfaceContainerLow,
+            flexDirection: 'row',
+            marginBottom: spacing[3],
+            overflow: 'hidden',
           }}
         >
-          <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
-            {t('sprayCatalog.openTankMix', { defaultValue: 'Open in Tank Mix Calculator' })}
-          </Text>
-        </Pressable>
-      </View>
-    ),
-    [m3, router, t],
+          {/* Left strip - 3px spray green */}
+          <View
+            style={{
+              width: 3,
+              backgroundColor: sprayColor,
+              borderRadius: 3,
+              borderTopLeftRadius: borderRadius.sm,
+              borderBottomLeftRadius: borderRadius.sm,
+            }}
+          />
+
+          {/* Card body */}
+          <View style={{ flex: 1, padding: spacing[4], gap: spacing[2] }}>
+            {/* Top row: name + type badge */}
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing[2] }}>
+              <Text
+                style={{
+                  color: m3.colorScheme.onSurface,
+                  fontSize: 15,
+                  fontWeight: fontWeight.semibold,
+                  flex: 1,
+                  lineHeight: 20,
+                }}
+              >
+                {mix.name}
+              </Text>
+              <View
+                style={{
+                  backgroundColor: typeBadgeStyle.backgroundColor,
+                  paddingHorizontal: spacing[2],
+                  paddingVertical: 1,
+                  borderRadius: borderRadius.full,
+                }}
+              >
+                <Text
+                  style={{
+                    color: typeBadgeStyle.color,
+                    fontSize: 11,
+                    fontWeight: fontWeight.semibold,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  {chemicalType}
+                </Text>
+              </View>
+            </View>
+
+            {/* Info row: PHI / Dose / Target */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+              {phiDays !== null && (
+                <>
+                  <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: 13 }}>
+                    PHI: {phiDays} days
+                  </Text>
+                  <View
+                    style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: 1.5,
+                      backgroundColor: m3.colorScheme.onSurfaceVariant,
+                      marginHorizontal: spacing[2],
+                      opacity: 0.6,
+                    }}
+                  />
+                </>
+              )}
+              {firstComponent && (
+                <>
+                  <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: 13 }}>
+                    Dose: {getDoseDisplay(firstComponent)}
+                  </Text>
+                  <View
+                    style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: 1.5,
+                      backgroundColor: m3.colorScheme.onSurfaceVariant,
+                      marginHorizontal: spacing[2],
+                      opacity: 0.6,
+                    }}
+                  />
+                </>
+              )}
+              <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: 13 }}>
+                {mix.target_problem ??
+                  t('sprayCatalog.genericProblem', { defaultValue: 'General protection' })}
+              </Text>
+            </View>
+
+            {/* Last used - placeholder since we don't have this data */}
+            <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: 13 }}>
+              {mix.source_page
+                ? t('sprayCatalog.sourcePage', {
+                    defaultValue: 'Page {{page}}',
+                    page: mix.source_page,
+                  })
+                : t('sprayCatalog.inLibrary', { defaultValue: 'In your library' })}
+            </Text>
+
+            {/* PHI Warning banner - shown when PHI is active (within harvest safety window) */}
+            {hasPhiWarning && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[1] + 2,
+                  paddingVertical: spacing[1] + 1,
+                  paddingHorizontal: spacing[2] + 2,
+                  backgroundColor: colorWithOpacity(warningColor, 0.1),
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(warningColor, 0.25),
+                  borderRadius: borderRadius.xs,
+                  alignSelf: 'flex-start',
+                }}
+              >
+                <Ionicons name="warning" size={14} color={warningColor} />
+                <Text style={{ color: warningColor, fontSize: 12, fontWeight: fontWeight.medium }}>
+                  {t('sprayCatalog.phiActive', { defaultValue: 'PHI active' })}
+                </Text>
+              </View>
+            )}
+
+            {/* Tank Mix Calculator button */}
+            <Pressable
+              onPress={() =>
+                router.push({ pathname: '/calculator/tank-mix', params: { mixId: String(mix.id) } })
+              }
+              style={{
+                marginTop: spacing[2],
+                borderRadius: borderRadius.full,
+                alignSelf: 'flex-start',
+                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[2],
+              }}
+            >
+              <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
+                {t('sprayCatalog.openTankMix', { defaultValue: 'Open in Tank Mix Calculator' })}
+              </Text>
+            </Pressable>
+
+            {/* Component list - clickable to show product details */}
+            {mix.components.length > 1 && (
+              <View style={{ marginTop: spacing[2], gap: spacing[1] }}>
+                {mix.components.slice(1).map((component: ChemicalMixComponent) => (
+                  <Pressable
+                    key={component.id}
+                    onPress={() => {
+                      setSelectedComponent(component);
+                      setShowSheet(true);
+                    }}
+                  >
+                    <Text style={{ color: m3.colorScheme.primary }}>
+                      + {component.product_name} ({getDoseDisplay(component)})
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+      );
+    },
+    [m3, router, t, sprayColor],
   );
 
   const listHeader = useMemo(
@@ -170,23 +339,39 @@ export default function SprayCatalogScreen() {
         </Text>
 
         <View style={{ marginTop: spacing[3] }}>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t('sprayCatalog.searchPlaceholder', {
-              defaultValue: 'Search mix, pest, or product',
-            })}
-            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+          <View
             style={{
-              borderRadius: borderRadius.lg,
+              borderRadius: borderRadius.sm,
               borderWidth: 1,
               borderColor: m3.colorScheme.outlineVariant,
               backgroundColor: m3.surface.surfaceContainerLow,
-              color: m3.colorScheme.onSurface,
-              paddingHorizontal: spacing[3],
-              paddingVertical: spacing[3],
+              height: 44,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: spacing[4],
             }}
-          />
+          >
+            <Ionicons
+              name="search"
+              size={18}
+              color={m3.colorScheme.onSurfaceVariant}
+              style={{ marginRight: spacing[2] }}
+            />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder={t('sprayCatalog.searchPlaceholder', {
+                defaultValue: 'Search chemicals, targets, ingredients...',
+              })}
+              placeholderTextColor={m3.colorScheme.onSurfaceVariant}
+              style={{
+                flex: 1,
+                color: m3.colorScheme.onSurface,
+                fontSize: fontSize.base,
+                paddingVertical: 0,
+              }}
+            />
+          </View>
         </View>
 
         <Text
