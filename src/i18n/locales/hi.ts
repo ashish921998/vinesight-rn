@@ -787,6 +787,8 @@ export const hi = {
       sprayApplications: 'छिड़काव अनुप्रयोग',
       totalHarvest: 'कुल कटाई',
       harvestValue: 'कटाई मूल्य',
+      totalExpenses: 'कुल खर्च',
+      harvestYield: 'उपज',
       performanceScore: 'प्रदर्शन स्कोर',
       activitiesLogged: 'गतिविधियां लॉग की गईं',
       entries: 'प्रविष्टियां',
@@ -795,6 +797,7 @@ export const hi = {
       overview: 'अवलोकन',
       trends: 'रुझान',
       comparisons: 'तुलना',
+      categoryBreakdown: 'श्रेणी विभाजन',
     },
     timeRanges: {
       last7Days: 'पिछले 7 दिन',

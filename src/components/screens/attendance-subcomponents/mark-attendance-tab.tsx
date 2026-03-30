@@ -7,7 +7,6 @@ import {
   Alert,
   Pressable,
   StyleSheet,
-  Modal,
 } from 'react-native';
 import Animated, {
   FadeIn,
@@ -25,19 +24,15 @@ import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus
 import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useTabBarInset, isAndroid, isIOS } from '@/hooks';
+import { useTabBarInset, isAndroid } from '@/hooks';
 import { WorkerSelectSheet, FarmSelectSheet } from './index';
 import { formatDate as formatDateLocalized } from '@/i18n/format';
-import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { normalizeDate, addDays } from '@/utils/worker-analytics';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 const STORAGE_KEYS = {
   ATTENDANCE_RANGE_START: 'attendance_range_start',
   ATTENDANCE_RANGE_LENGTH: 'attendance_range_length',
 };
-
-const isIos = isIOS;
 
 interface ToastState {
   visible: boolean;
@@ -59,7 +54,7 @@ interface CellData {
 
 const STATUS_CYCLE: AttendanceStatus[] = ['full_day', 'half_day', 'absent', null];
 
-const getStatusDisplay = (
+const _getStatusDisplay = (
   status: AttendanceStatus,
   t: (key: string) => string,
   m3Theme: ReturnType<typeof useM3>,
@@ -128,7 +123,7 @@ export function MarkAttendanceTab({
   selectedWorkerIndex,
   onWorkerIndexChange,
   onSaveSuccess,
-  isTourActive = false,
+  isTourActive: _isTourActive = false,
   onBottomActionBarVisibilityChange,
 }: MarkAttendanceTabProps) {
   const { t } = useTranslation();
@@ -173,12 +168,7 @@ export function MarkAttendanceTab({
   // NEW: Single date for the redesigned UI
   const [selectedDate, setSelectedDate] = useState<Date>(() => normalizeDate(new Date()));
 
-  // NEW: Track attendance for each worker on the selected date
-  const [workerAttendance, setWorkerAttendance] = useState<
-    Map<number, { status: AttendanceStatus; existingRecordId?: number; isModified: boolean }>
-  >(new Map());
-
-  const rangeEnd = useMemo(() => addDays(rangeStart, rangeLength - 1), [rangeStart, rangeLength]);
+  const _rangeEnd = useMemo(() => addDays(rangeStart, rangeLength - 1), [rangeStart, rangeLength]);
 
   const dateRange = useMemo(() => {
     return Array.from({ length: rangeLength }, (_, i) => addDays(rangeStart, i));
@@ -316,7 +306,7 @@ export function MarkAttendanceTab({
     }
   }, [loadAttendance, isRangeLoaded]);
 
-  const handleDayCellClick = (date: Date) => {
+  const _handleDayCellClick = (date: Date) => {
     if (!selectedWorker) return;
     const workerId = selectedWorker.id;
     if (workerId === undefined) return;
@@ -344,7 +334,7 @@ export function MarkAttendanceTab({
     });
   };
 
-  const handleQuickAction = (status: AttendanceStatus) => {
+  const _handleQuickAction = (status: AttendanceStatus) => {
     if (!selectedWorker) return;
     const workerId = selectedWorker.id;
     if (workerId === undefined) return;
@@ -370,7 +360,7 @@ export function MarkAttendanceTab({
     });
   };
 
-  const handleCopyFromYesterday = async () => {
+  const _handleCopyFromYesterday = async () => {
     if (!selectedWorker) return;
     const workerId = selectedWorker.id;
     if (workerId === undefined) return;
@@ -425,14 +415,22 @@ export function MarkAttendanceTab({
     setSelectedDate(normalizeDate(newDate));
   };
 
-  // NEW: Handle worker attendance change
+  // NEW: Handle worker attendance change - now writes to canonical cellData
   const handleWorkerAttendanceChange = (workerId: number, status: AttendanceStatus) => {
+    if (workerId === undefined) return;
     triggerHaptic();
-    setWorkerAttendance((prev) => {
+    const dateStr = formatDate(selectedDate);
+    const key = getCellKey(workerId, dateStr);
+
+    setCellData((prev) => {
       const newMap = new Map(prev);
-      const current = newMap.get(workerId);
-      newMap.set(workerId, {
+      const current = newMap.get(key);
+      newMap.set(key, {
+        workerId,
+        date: dateStr,
         status,
+        workType: null,
+        farmIds: selectedFarmIds,
         existingRecordId: current?.existingRecordId,
         isModified: true,
       });
@@ -440,16 +438,22 @@ export function MarkAttendanceTab({
     });
   };
 
-  // NEW: Handle Mark All Present
+  // NEW: Handle Mark All Present - now writes to canonical cellData
   const handleMarkAllPresent = () => {
     triggerHapticMedium();
-    setWorkerAttendance((prev) => {
+    const dateStr = formatDate(selectedDate);
+    setCellData((prev) => {
       const newMap = new Map(prev);
       workers.forEach((w) => {
         if (w.id != null) {
-          const current = newMap.get(w.id);
-          newMap.set(w.id, {
+          const key = getCellKey(w.id, dateStr);
+          const current = newMap.get(key);
+          newMap.set(key, {
+            workerId: w.id,
+            date: dateStr,
             status: 'full_day',
+            workType: null,
+            farmIds: selectedFarmIds,
             existingRecordId: current?.existingRecordId,
             isModified: true,
           });
@@ -541,13 +545,13 @@ export function MarkAttendanceTab({
     loadAttendance();
   };
 
-  const handleWorkerSelect = () => {
+  const _handleWorkerSelect = () => {
     if (workers.length === 0) return;
     setWorkerSheetVisible(true);
   };
 
-  const handleDateRangeChange = (type: 'from' | 'to', event: DateTimePickerEvent, date?: Date) => {
-    if (event.type === 'dismissed') {
+  const _handleDateRangeChange = (type: 'from' | 'to', event: unknown, date?: Date) => {
+    if ((event as { type: string }).type === 'dismissed') {
       if (isAndroid) {
         if (type === 'from') setShowFromPicker(false);
         if (type === 'to') setShowToPicker(false);
@@ -582,7 +586,7 @@ export function MarkAttendanceTab({
     setTempPickerDate(null);
   };
 
-  const confirmPickerDate = () => {
+  const _confirmPickerDate = () => {
     if (tempPickerDate && activePickerType) {
       const normalized = normalizeDate(tempPickerDate);
       if (activePickerType === 'from') {
@@ -595,7 +599,7 @@ export function MarkAttendanceTab({
     closePickers();
   };
 
-  const isToday = (date: Date): boolean => {
+  const _isToday = (date: Date): boolean => {
     const today = new Date();
     return (
       date.getDate() === today.getDate() &&
@@ -604,11 +608,11 @@ export function MarkAttendanceTab({
     );
   };
 
-  const getDayName = (date: Date): string => {
+  const _getDayName = (date: Date): string => {
     return formatDateLocalized(date, { weekday: 'short' });
   };
 
-  const formatShortDate = (date: Date) => {
+  const _formatShortDate = (date: Date) => {
     return formatDateLocalized(date, { month: 'short', day: 'numeric' });
   };
 
@@ -740,8 +744,10 @@ export function MarkAttendanceTab({
         {/* NEW: Worker List */}
         {workers.map((worker) => {
           if (worker.id === undefined) return null;
-          const record = workerAttendance.get(worker.id);
-          const status = record?.status ?? null;
+          const dateStr = formatDate(selectedDate);
+          const key = getCellKey(worker.id, dateStr);
+          const cell = cellData.get(key);
+          const status = cell?.status ?? null;
           const avatarBg = colors.labour ? colors.labour[500] : '#7A5E8E';
           return (
             <View
@@ -872,12 +878,25 @@ export function MarkAttendanceTab({
             </View>
           );
         })}
+      </ScrollView>
 
-        {/* NEW: Mark All Present Button */}
+      {/* NEW: Mark All Present - sticky at bottom */}
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: actionBarBottom,
+          paddingHorizontal: spacing[4],
+          paddingVertical: spacing[3],
+          backgroundColor: m3.colorScheme.surface,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: m3.colorScheme.outlineVariant,
+        }}
+      >
         <Pressable
           onPress={handleMarkAllPresent}
           style={{
-            marginTop: spacing[2],
             paddingVertical: spacing[3] + 2,
             borderRadius: borderRadius.md,
             backgroundColor: m3.colorScheme.primary,
@@ -894,674 +913,7 @@ export function MarkAttendanceTab({
             Mark All Present
           </Text>
         </Pressable>
-
-        {/* ── Filters Section ── */}
-        <View style={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}>
-          <Text
-            style={{
-              fontSize: fontSize.xs,
-              fontWeight: fontWeight.bold,
-              textTransform: 'uppercase',
-              letterSpacing: 0.8,
-              color: m3.colorScheme.onSurfaceVariant,
-              marginBottom: spacing[2],
-            }}
-          >
-            {t('attendance.filters.label')}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: spacing[3] }}>
-            <Pressable
-              onPress={handleWorkerSelect}
-              accessibilityRole="button"
-              accessibilityLabel={t('attendance.a11y.selectWorkerButton')}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[3],
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                overflow: 'hidden',
-                ...(pressed
-                  ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.onSurface,
-                        m3.stateLayerOpacity.pressed,
-                      ),
-                    }
-                  : null),
-              })}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                <View
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: borderRadius.full,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <UiSymbol name="person" size={14} color={m3.colorScheme.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.medium,
-                      color: m3.colorScheme.onSurfaceVariant,
-                    }}
-                  >
-                    {t('attendance.filters.worker')}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.bold,
-                      color: m3.colorScheme.onSurface,
-                      marginTop: 1,
-                    }}
-                  >
-                    {selectedWorker?.name || t('attendance.filters.allWorkers')}
-                  </Text>
-                </View>
-                <UiSymbol
-                  name="chevron.down"
-                  size={12}
-                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
-                />
-              </View>
-            </Pressable>
-            <Pressable
-              onPress={() => setFarmSheetVisible(true)}
-              accessibilityRole="button"
-              accessibilityLabel={t('attendance.a11y.selectFarmsButton')}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[3],
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                overflow: 'hidden',
-                ...(pressed
-                  ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.onSurface,
-                        m3.stateLayerOpacity.pressed,
-                      ),
-                    }
-                  : null),
-              })}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                <View
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: borderRadius.full,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <UiSymbol name="leaf" size={14} color={m3.colorScheme.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.medium,
-                      color: m3.colorScheme.onSurfaceVariant,
-                    }}
-                  >
-                    {t('attendance.filters.farms')}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.bold,
-                      color: m3.colorScheme.onSurface,
-                      marginTop: 1,
-                    }}
-                  >
-                    {selectedFarmIds.length > 0
-                      ? t('attendance.filters.farmsSelected', { count: selectedFarmIds.length })
-                      : t('attendance.filters.allFarms')}
-                  </Text>
-                </View>
-                <UiSymbol
-                  name="chevron.down"
-                  size={12}
-                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
-                />
-              </View>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* ── Date Range Section ── */}
-        <View style={{ paddingHorizontal: spacing[4] }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: spacing[2],
-            }}
-          >
-            <Text
-              style={{
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.bold,
-                textTransform: 'uppercase',
-                letterSpacing: 0.8,
-                color: m3.colorScheme.onSurfaceVariant,
-              }}
-            >
-              {t('attendance.dateRange.label')}
-            </Text>
-          </View>
-
-          <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[3] }}>
-            <Pressable
-              onPress={() => {
-                setShowFromPicker(true);
-                setShowToPicker(false);
-              }}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[3],
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                ...(pressed
-                  ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.onSurface,
-                        m3.stateLayerOpacity.pressed,
-                      ),
-                    }
-                  : null),
-              })}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.onSurfaceVariant,
-                }}
-              >
-                {t('common.from')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.bold,
-                  marginTop: spacing[1],
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {formatShortDate(rangeStart)}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                setShowToPicker(true);
-                setShowFromPicker(false);
-              }}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[3],
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                ...(pressed
-                  ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.onSurface,
-                        m3.stateLayerOpacity.pressed,
-                      ),
-                    }
-                  : null),
-              })}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.onSurfaceVariant,
-                }}
-              >
-                {t('common.to')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.bold,
-                  marginTop: spacing[1],
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {formatShortDate(rangeEnd)}
-              </Text>
-            </Pressable>
-          </View>
-
-          {isIos ? (
-            activePickerType ? (
-              <Modal transparent animationType="fade" onRequestClose={closePickers}>
-                <Pressable
-                  onPress={closePickers}
-                  style={{
-                    flex: 1,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-                    justifyContent: 'flex-end',
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: m3.colorScheme.surface,
-                      borderTopLeftRadius: borderRadius['3xl'],
-                      borderTopRightRadius: borderRadius['3xl'],
-                      padding: spacing[4],
-                      paddingBottom: spacing[6],
-                    }}
-                    onStartShouldSetResponder={() => true}
-                  >
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: spacing[3],
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.semibold,
-                          color: m3.colorScheme.onSurface,
-                        }}
-                      >
-                        {activePickerType === 'from' ? t('common.from') : t('common.to')}
-                      </Text>
-                      <Pressable onPress={closePickers}>
-                        <UiSymbol
-                          name="xmark"
-                          size={18}
-                          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                        />
-                      </Pressable>
-                    </View>
-                    <DateTimePicker
-                      value={
-                        tempPickerDate ?? (activePickerType === 'from' ? rangeStart : rangeEnd)
-                      }
-                      mode="date"
-                      display="spinner"
-                      onChange={(_event, date) => {
-                        if (date) setTempPickerDate(date);
-                      }}
-                      textColor={m3.colorScheme.onSurface}
-                      style={{ height: 200 }}
-                    />
-                    <Pressable
-                      onPress={confirmPickerDate}
-                      style={{
-                        marginTop: spacing[3],
-                        paddingVertical: spacing[3],
-                        borderRadius: m3.shape.cornerMedium,
-                        borderCurve: 'continuous',
-                        alignItems: 'center',
-                        backgroundColor: m3.colorScheme.primary,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: fontSize.sm,
-                          fontWeight: fontWeight.semibold,
-                          color: m3.colorScheme.onPrimary,
-                        }}
-                      >
-                        {t('common.done')}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </Pressable>
-              </Modal>
-            ) : null
-          ) : (
-            <>
-              {showFromPicker && (
-                <DateTimePicker
-                  value={rangeStart}
-                  mode="date"
-                  display="default"
-                  onChange={(event, date) => handleDateRangeChange('from', event, date)}
-                />
-              )}
-              {showToPicker && (
-                <DateTimePicker
-                  value={rangeEnd}
-                  mode="date"
-                  display="default"
-                  onChange={(event, date) => handleDateRangeChange('to', event, date)}
-                />
-              )}
-            </>
-          )}
-        </View>
-
-        {/* ── Day Cells Grid ── */}
-        <View style={{ paddingHorizontal: spacing[4] }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              gap: spacing[2],
-            }}
-          >
-            {selectedWorker && selectedWorker.id
-              ? (() => {
-                  const workerId = selectedWorker.id;
-                  return dateRange.map((date) => {
-                    const dateStr = formatDate(date);
-                    const key = getCellKey(workerId, dateStr);
-                    const cell = cellData.get(key);
-                    const statusInfo = getStatusDisplay(cell?.status ?? null, t, m3, colors);
-                    const isTodayDate = isToday(date);
-                    const hasStatus = cell?.status !== null;
-                    const isIdleToday = isTodayDate && !hasStatus;
-
-                    const isFirst = dateRange.indexOf(date) === 0;
-
-                    const cellPressable = (
-                      <Pressable
-                        key={dateStr}
-                        onPress={() => handleDayCellClick(date)}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('attendance.a11y.dayStatus', {
-                          day: getDayName(date),
-                          date: date.getDate(),
-                          status: statusInfo.fullLabel,
-                        })}
-                        style={({ pressed }) => ({
-                          flex: 1,
-                          aspectRatio: 0.48,
-                          borderRadius: m3.shape.cornerMedium,
-                          borderCurve: 'continuous',
-                          backgroundColor: hasStatus
-                            ? statusInfo.bgColor
-                            : isIdleToday
-                              ? colorWithOpacity(m3.colorScheme.primary, 0.06)
-                              : m3.surface.surfaceContainerLow,
-                          overflow: 'hidden',
-                          ...(isTodayDate
-                            ? {
-                                borderWidth: 2,
-                                borderColor: colorWithOpacity(m3.colorScheme.primary, 0.4),
-                              }
-                            : null),
-                          ...(pressed
-                            ? {
-                                opacity: 0.8,
-                              }
-                            : null),
-                        })}
-                      >
-                        <View
-                          style={{
-                            flex: 1,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 3,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: fontSize.xs,
-                              fontWeight: fontWeight.semibold,
-                              textTransform: 'uppercase',
-                              letterSpacing: 0.3,
-                              color: isTodayDate
-                                ? m3.colorScheme.primary
-                                : hasStatus
-                                  ? statusInfo.textColor
-                                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-                            }}
-                          >
-                            {getDayName(date)}
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.bold,
-                              fontVariant: ['tabular-nums'],
-                              color: isTodayDate
-                                ? m3.colorScheme.primary
-                                : hasStatus
-                                  ? statusInfo.textColor
-                                  : m3.colorScheme.onSurface,
-                            }}
-                          >
-                            {date.getDate()}
-                          </Text>
-                          <View
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: borderRadius.full,
-                              backgroundColor: hasStatus
-                                ? statusInfo.badgeColor
-                                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: fontSize.sm,
-                                lineHeight: 14,
-                                fontWeight: fontWeight.bold,
-                                textAlign: 'center',
-                                ...(isAndroid
-                                  ? { includeFontPadding: false, textAlignVertical: 'center' }
-                                  : null),
-                                color: hasStatus
-                                  ? statusInfo.badgeTextColor
-                                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5),
-                              }}
-                            >
-                              {statusInfo.label}
-                            </Text>
-                          </View>
-                          {cell?.existingRecordId && (
-                            <View
-                              style={{
-                                position: 'absolute',
-                                bottom: 4,
-                                width: 5,
-                                height: 5,
-                                borderRadius: 3,
-                                backgroundColor: m3.colorScheme.primary,
-                              }}
-                            />
-                          )}
-                        </View>
-                      </Pressable>
-                    );
-
-                    return isFirst ? (
-                      <GuidedTourTarget
-                        key={dateStr}
-                        targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_MARK_DAY_CELL}
-                        enabled={isTourActive}
-                        style={{ flex: 1 }}
-                      >
-                        {cellPressable}
-                      </GuidedTourTarget>
-                    ) : (
-                      cellPressable
-                    );
-                  });
-                })()
-              : null}
-          </View>
-        </View>
-
-        {/* ── Tap hint (only show during tour mode) ── */}
-        {isTourActive && (
-          <Animated.View
-            entering={FadeIn.duration(400)}
-            style={{ alignItems: 'center', marginTop: spacing[2] }}
-          >
-            <Text
-              style={{
-                fontSize: fontSize.xs,
-                color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-                textAlign: 'center',
-              }}
-            >
-              {t('attendance.tapHint')}
-            </Text>
-          </Animated.View>
-        )}
-
-        {/* ── Quick Actions ── */}
-        <View style={{ paddingHorizontal: spacing[4] }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: spacing[2],
-            }}
-          >
-            <Pressable
-              onPress={() => handleQuickAction('full_day')}
-              accessibilityRole="button"
-              accessibilityLabel={t('attendance.a11y.setAllFullDay')}
-              style={({ pressed }) => ({
-                flex: 1,
-                height: 44,
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: spacing[1],
-                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <UiSymbol name="checkmark.circle.fill" size={15} color={m3.colorScheme.primary} />
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.bold,
-                  color: m3.colorScheme.primary,
-                }}
-              >
-                {t('attendance.quickActions.allFull')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => handleQuickAction('half_day')}
-              accessibilityRole="button"
-              accessibilityLabel={t('attendance.a11y.setAllHalfDay')}
-              style={({ pressed }) => ({
-                flex: 1,
-                height: 44,
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: spacing[1],
-                backgroundColor: colorWithOpacity(colors.warning, 0.12),
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <UiSymbol name="clock.fill" size={15} color={colors.warning} />
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.bold,
-                  color: colors.warning,
-                }}
-              >
-                {t('attendance.quickActions.allHalf')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => handleQuickAction('absent')}
-              accessibilityRole="button"
-              accessibilityLabel={t('attendance.a11y.setAllAbsent')}
-              style={({ pressed }) => ({
-                flex: 1,
-                height: 44,
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: spacing[1],
-                backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <UiSymbol name="xmark.circle.fill" size={15} color={m3.colorScheme.error} />
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.bold,
-                  color: m3.colorScheme.error,
-                }}
-              >
-                {t('attendance.quickActions.allOff')}
-              </Text>
-            </Pressable>
-          </View>
-          <Pressable
-            onPress={handleCopyFromYesterday}
-            accessibilityRole="button"
-            accessibilityLabel={t('attendance.a11y.copyFromYesterday')}
-            style={({ pressed }) => ({
-              marginTop: spacing[2],
-              height: 40,
-              borderRadius: m3.shape.cornerMedium,
-              borderCurve: 'continuous',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: spacing[2],
-              borderWidth: 1,
-              borderColor: m3.colorScheme.outlineVariant,
-              backgroundColor: 'transparent',
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <UiSymbol
-              name="arrow.uturn.backward"
-              size={14}
-              color={m3.colorScheme.onSurfaceVariant}
-            />
-            <Text
-              style={{
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.semibold,
-                color: m3.colorScheme.onSurfaceVariant,
-              }}
-            >
-              {t('attendance.quickActions.copyFromYesterday')}
-            </Text>
-          </Pressable>
-        </View>
-      </ScrollView>
+      </View>
 
       {/* ── Bottom Action Bar — only visible when there are unsaved changes ── */}
       {hasModifications && (

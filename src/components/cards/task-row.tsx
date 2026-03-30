@@ -103,7 +103,6 @@ export function TaskRow({
     backgroundColor: colors.surface[100], // mist-1
     borderWidth: 1,
     borderColor: colors.surface[300], // stone-3
-    opacity: task.completed ? 0.8 : 1,
   };
 
   return (

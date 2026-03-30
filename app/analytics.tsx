@@ -179,7 +179,7 @@ export default function AnalyticsScreen() {
               }}
             >
               <Text style={{ fontSize: 12, color: colors.surface[500], marginBottom: 4 }}>
-                {t('analytics.labels.totalExpenses') || 'Total Expenses'}
+                {t('analytics.labels.totalExpenses')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
                 <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
@@ -204,7 +204,7 @@ export default function AnalyticsScreen() {
               }}
             >
               <Text style={{ fontSize: 12, color: colors.surface[500], marginBottom: 4 }}>
-                {t('analytics.labels.harvestYield') || 'Harvest Yield'}
+                {t('analytics.labels.harvestYield')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
                 <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
@@ -229,13 +229,13 @@ export default function AnalyticsScreen() {
               }}
             >
               <Text style={{ fontSize: 12, color: colors.surface[500], marginBottom: 4 }}>
-                {t('analytics.labels.activitiesLogged') || 'Activities Logged'}
+                {t('analytics.labels.activitiesLogged')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
                 <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
                   {analytics.irrigationsByMonth.reduce((sum, m) => sum + m.count, 0) +
                     analytics.totalSprayCount +
-                    analytics.harvestsByFarm.length}
+                    analytics.harvestsByFarm.reduce((sum, h) => sum + h.quantity, 0)}
                 </Text>
               </View>
             </View>
@@ -266,12 +266,12 @@ export default function AnalyticsScreen() {
                   color: colors.surface[500],
                 }}
               >
-                {t('analytics.sections.categoryBreakdown') || 'Category Breakdown'}
+                {t('analytics.sections.categoryBreakdown')}
               </Text>
               <Text style={{ fontSize: 13, fontWeight: '500', color: colors.surface[500] }}>
                 {analytics.irrigationsByMonth.reduce((sum, m) => sum + m.count, 0) +
                   analytics.totalSprayCount +
-                  analytics.harvestsByFarm.length}{' '}
+                  analytics.harvestsByFarm.reduce((sum, h) => sum + h.quantity, 0)}{' '}
                 {t('analytics.labels.entries')}
               </Text>
             </View>
@@ -284,7 +284,7 @@ export default function AnalyticsScreen() {
                 0,
               );
               const sprayCount = analytics.totalSprayCount;
-              const harvestCount = analytics.harvestsByFarm.length;
+              const harvestCount = analytics.harvestsByFarm.reduce((sum, h) => sum + h.quantity, 0);
               const expenseCount = analytics.expensesByType.reduce((sum, _e) => sum + 1, 0);
 
               const categoryTotals: Record<string, number> = {

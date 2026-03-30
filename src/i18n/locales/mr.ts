@@ -788,6 +788,8 @@ export const mr = {
       sprayApplications: '$t(glossary.spray) वापर',
       totalHarvest: 'एकूण $t(glossary.harvest)',
       harvestValue: '$t(glossary.harvest) मूल्य',
+      totalExpenses: 'एकूण खर्च',
+      harvestYield: 'उत्पादन',
       performanceScore: 'कामगिरी गुण',
       activitiesLogged: 'क्रियाकलाप नोंदले',
       entries: 'प्रविष्ट्या',
@@ -796,6 +798,7 @@ export const mr = {
       overview: 'आढावा',
       trends: 'कल',
       comparisons: 'तुलना',
+      categoryBreakdown: 'श्रेणी विभाजन',
     },
     timeRanges: {
       last7Days: 'शेवटचे 7 दिवस',

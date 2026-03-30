@@ -786,6 +786,8 @@ export const en = {
       sprayApplications: 'Spray Applications',
       totalHarvest: 'Total Harvest',
       harvestValue: 'Harvest Value',
+      totalExpenses: 'Total Expenses',
+      harvestYield: 'Harvest Yield',
       performanceScore: 'Performance Score',
       activitiesLogged: 'Activities Logged',
       entries: 'entries',
@@ -794,6 +796,7 @@ export const en = {
       overview: 'Overview',
       trends: 'Trends',
       comparisons: 'Comparisons',
+      categoryBreakdown: 'Category Breakdown',
     },
     timeRanges: {
       last7Days: 'Last 7 Days',
