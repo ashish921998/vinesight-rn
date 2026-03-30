@@ -1,0 +1,31 @@
+src/i18n/locales/en.ts
+  ef1e0b959219aa61 2286-2289,2293,2300,2312
+app/calculator/lai.tsx
+  ef1e0b959219aa61 285,313
+src/i18n/locales/hi.ts
+  ef1e0b959219aa61 2294-2297,2301,2308,2320
+src/i18n/locales/mr.ts
+  ef1e0b959219aa61 2302-2305,2309,2316,2328
+app/warehouse.tsx
+  ef1e0b959219aa61 429,431
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "9215dbbaf4cdf775056af58b8a65dbbc9154655a",
+  "prompts": {
+    "ef1e0b959219aa61": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "49dba119-383b-4a20-90e7-adbafaa05de1",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 4,
+      "accepted_lines": 25,
+      "overriden_lines": 0
+    }
+  }
+}
