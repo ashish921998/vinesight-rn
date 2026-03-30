@@ -16,15 +16,22 @@ import { useWarehouseItems, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import { useModalStore } from '@/stores';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
-import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
+// import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { useNotificationStore } from '@/stores';
 import { notifyWarehouseReorder } from '@/services/notifications';
 
-type FilterType = 'all' | 'fertilizer' | 'spray';
+type FilterType = 'all' | 'fertilizer' | 'spray' | 'equipment';
+
+// Category colors for warehouse items
+const CATEGORY_COLORS = {
+  spray: { light: '#355847', dark: '#4A8B6B' },
+  fertilizer: { light: '#56704E', dark: '#6A8A5E' },
+  equipment: { light: '#3F6E78', dark: '#5A8B96' },
+};
 
 export default function WarehouseScreen() {
   const { t } = useTranslation();
@@ -32,16 +39,26 @@ export default function WarehouseScreen() {
   const m3 = useM3();
 
   const glassSurface = colorWithOpacity(colors.surface[100], 0.85);
-  const lowStockColor = colors.warning;
-  const fertilizerColor = m3.colorScheme.tertiary;
-  const sprayColor = m3.colorScheme.primary;
+  const _lowStockColor = colors.warning;
+  const _fertilizerColor = m3.colorScheme.tertiary;
+  const _sprayColor = m3.colorScheme.primary;
 
   const router = useRouter();
   const { setAddWarehouseItem, setAddStock } = useModalStore();
   const { data: items, isLoading, refetch, isRefetching } = useWarehouseItems();
   const deleteItemMutation = useDeleteWarehouseItem();
 
+  const isDark = useIsDark();
   const [filter, setFilter] = useState<FilterType>('all');
+
+  // Get category colors based on theme
+  const getCategoryColors = (type: string) => {
+    const colors = CATEGORY_COLORS[type as keyof typeof CATEGORY_COLORS];
+    if (colors) {
+      return isDark ? colors.dark : colors.light;
+    }
+    return m3.colorScheme.primary;
+  };
 
   const currency = useCurrency();
   const warehouseReorderAlertsEnabled = useNotificationStore(
@@ -105,6 +122,9 @@ export default function WarehouseScreen() {
   const filteredItems = useMemo(() => {
     if (!items) return [];
     if (filter === 'all') return items;
+    if (filter === 'equipment') {
+      return items.filter((item) => item.type === 'equipment');
+    }
     return items.filter((item) => item.type === filter);
   }, [items, filter]);
 
@@ -116,12 +136,13 @@ export default function WarehouseScreen() {
 
   // Calculate totals
   const totals = useMemo(() => {
-    if (!items) return { count: 0, value: 0, fertilizers: 0, sprays: 0 };
+    if (!items) return { count: 0, value: 0, fertilizers: 0, sprays: 0, equipment: 0 };
     return {
       count: items.length,
       value: items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0),
       fertilizers: items.filter((item) => item.type === 'fertilizer').length,
       sprays: items.filter((item) => item.type === 'spray').length,
+      equipment: items.filter((item) => item.type === 'equipment').length,
     };
   }, [items]);
 
@@ -151,7 +172,7 @@ export default function WarehouseScreen() {
     );
   };
 
-  const handleAddStock = (item: WarehouseItem) => {
+  const _handleAddStock = (item: WarehouseItem) => {
     openAddStock(item);
   };
 
@@ -188,9 +209,27 @@ export default function WarehouseScreen() {
               onPress={() => {
                 openAddItem(null);
               }}
-              style={{ marginRight: spacing[4] }}
+              style={{
+                marginRight: spacing[4],
+                height: 40,
+                paddingHorizontal: 16,
+                borderRadius: 999,
+                backgroundColor: m3.colorScheme.primary,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }}
             >
-              <Icon name="plus.circle.fill" size={28} color={m3.colorScheme.primary} />
+              <Icon name="plus" size={16} color={m3.colorScheme.onPrimary} />
+              <Text
+                style={{
+                  color: m3.colorScheme.onPrimary,
+                  fontSize: 14,
+                  fontWeight: fontWeight.semibold,
+                }}
+              >
+                {t('warehouse.actions.addItem')}
+              </Text>
             </Pressable>
           ),
         }}
@@ -211,246 +250,105 @@ export default function WarehouseScreen() {
             />
           }
         >
-          {/* Summary Cards */}
+          {/* Filter Tabs - Horizontal pills */}
           <View
             style={{
               flexDirection: 'row',
-              marginTop: spacing[4],
+              gap: 8,
               marginBottom: spacing[4],
-              gap: 12,
             }}
           >
-            <View
-              style={{
-                flex: 1,
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                backgroundColor: glassSurface,
-              }}
-            >
-              <Icon
-                name="exclamationmark.triangle.fill"
-                size={24}
-                color={lowStockItems.length > 0 ? lowStockColor : m3.colorScheme.primary}
-              />
-              <Text
-                style={{
-                  color: colors.surface[900],
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  marginTop: spacing[2],
-                }}
-              >
-                {lowStockItems.length}
-              </Text>
-              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                {t('warehouse.labels.lowStock')}
-              </Text>
-            </View>
-            <View
-              style={{
-                flex: 1,
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                backgroundColor: glassSurface,
-              }}
-            >
-              <Icon
-                name={resolveSymbolIconName(ICON_REGISTRY.expense)}
-                size={24}
-                color={m3.colorScheme.primary}
-              />
-              <Text
-                style={{
-                  color: colors.surface[900],
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  marginTop: spacing[2],
-                }}
-              >
-                {formatCurrency(totals.value, currency)}
-              </Text>
-              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                {t('common.labels.value')}
-              </Text>
-            </View>
-          </View>
-
-          {/* Low Stock Alert */}
-          {lowStockItems.length > 0 && (
-            <View
-              style={{
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                marginBottom: spacing[4],
-                backgroundColor: colorWithOpacity(lowStockColor, 0.08),
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginBottom: spacing[3],
-                }}
-              >
-                <Icon name="exclamationmark.triangle.fill" size={20} color={lowStockColor} />
-                <Text
+            {(['all', 'spray', 'fertilizer', 'equipment'] as FilterType[]).map((type) => {
+              const isActive = filter === type;
+              const count =
+                type === 'all'
+                  ? totals.count
+                  : type === 'spray'
+                    ? totals.sprays
+                    : type === 'fertilizer'
+                      ? totals.fertilizers
+                      : totals.equipment;
+              return (
+                <Pressable
+                  key={type}
+                  onPress={() => setFilter(type)}
                   style={{
-                    color: lowStockColor,
-                    fontSize: fontSize.base,
-                    fontWeight: fontWeight.semibold,
-                    marginLeft: spacing[2],
-                  }}
-                >
-                  {t('warehouse.labels.lowStockAlerts')}
-                </Text>
-                <View
-                  style={{
-                    paddingHorizontal: spacing[2],
-                    paddingVertical: 2,
-                    borderRadius: borderRadius.full,
-                    marginLeft: 'auto',
-                    backgroundColor: colorWithOpacity(lowStockColor, 0.18),
+                    height: 34,
+                    paddingHorizontal: 14,
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: isActive ? m3.colorScheme.primary : colors.surface[300],
+                    backgroundColor: isActive ? m3.colorScheme.primary : 'transparent',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
                   }}
                 >
                   <Text
                     style={{
-                      color: lowStockColor,
-                      fontSize: fontSize.xs,
+                      fontSize: 13,
                       fontWeight: fontWeight.medium,
+                      color: isActive ? m3.colorScheme.onPrimary : colors.surface[500],
                     }}
                   >
-                    {t('warehouse.labels.itemCount', { count: lowStockItems.length })}
+                    {type === 'all'
+                      ? t('warehouse.filters.all', { count })
+                      : type === 'spray'
+                        ? t('warehouse.filters.spray', { count })
+                        : type === 'fertilizer'
+                          ? t('warehouse.filters.fertilizer', { count })
+                          : t('warehouse.filters.equipment', { count })}
                   </Text>
-                </View>
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                  {lowStockItems.map((item) => (
-                    <Pressable
-                      key={item.id}
-                      onPress={() => handleAddStock(item)}
-                      style={{ width: 160 }}
-                    >
-                      <View
-                        style={{
-                          borderRadius: borderRadius.xl,
-                          padding: spacing[3],
-                          backgroundColor: glassSurface,
-                        }}
-                      >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Icon
-                            name={resolveSymbolIconName(
-                              item.type === 'fertilizer'
-                                ? ICON_REGISTRY.fertigation
-                                : ICON_REGISTRY.spray,
-                            )}
-                            size={16}
-                            color={lowStockColor}
-                          />
-                          <Text
-                            style={{
-                              color: colors.surface[900],
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.semibold,
-                              marginLeft: spacing[2],
-                            }}
-                            numberOfLines={1}
-                          >
-                            {item.name}
-                          </Text>
-                        </View>
-                        <Text
-                          style={{
-                            color: colors.surface[600],
-                            fontSize: fontSize.xs,
-                            marginTop: spacing[1],
-                          }}
-                        >
-                          {item.quantity} {item.unit}
-                        </Text>
-                        {item.reorder_quantity && (
-                          <Text
-                            style={{
-                              color: colors.surface[500],
-                              fontSize: fontSize.xs,
-                              marginTop: 2,
-                            }}
-                          >
-                            {t('warehouse.reorderAt', {
-                              quantity: item.reorder_quantity,
-                              unit: item.unit,
-                            })}
-                          </Text>
-                        )}
-                        <View
-                          style={{
-                            marginTop: spacing[2],
-                            paddingVertical: 6,
-                            paddingHorizontal: spacing[3],
-                            borderRadius: borderRadius.full,
-                            alignItems: 'center',
-                            alignSelf: 'flex-start',
-                            backgroundColor: m3.colorScheme.primary,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: m3.colorScheme.onPrimary,
-                              fontSize: fontSize.xs,
-                              fontWeight: fontWeight.medium,
-                            }}
-                          >
-                            {t('warehouse.stockForm.title')}
-                          </Text>
-                        </View>
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
-          )}
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: isActive
+                        ? colorWithOpacity(m3.colorScheme.onPrimary, 0.7)
+                        : colors.surface[400],
+                    }}
+                  >
+                    {count}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
-          {/* Filter Tabs - Segmented style */}
+          {/* Summary Strip */}
           <View
             style={{
-              flexDirection: 'row',
-              borderRadius: borderRadius.xl,
-              padding: spacing[1],
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              backgroundColor: glassSurface,
+              borderWidth: 1,
+              borderColor: colors.surface[300],
+              borderRadius: 12,
               marginBottom: spacing[4],
-              backgroundColor: colorWithOpacity(m3.colorScheme.onSurface, 0.08),
+              flexDirection: 'row',
             }}
           >
-            {(['all', 'fertilizer', 'spray'] as FilterType[]).map((type) => (
-              <Pressable
-                key={type}
-                onPress={() => setFilter(type)}
-                style={{
-                  flex: 1,
-                  paddingVertical: 10,
-                  borderRadius: borderRadius.lg,
-                  backgroundColor:
-                    filter === type ? colorWithOpacity(colors.surface[100], 0.9) : 'transparent',
-                }}
-              >
-                <Text
-                  style={{
-                    textAlign: 'center',
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.medium,
-                    color: filter === type ? colors.surface[900] : colors.surface[600],
-                  }}
-                >
-                  {type === 'all'
-                    ? t('warehouse.filters.all', { count: totals.count })
-                    : type === 'fertilizer'
-                      ? t('warehouse.filters.fertilizer', { count: totals.fertilizers })
-                      : t('warehouse.filters.spray', { count: totals.sprays })}
-                </Text>
-              </Pressable>
-            ))}
+            <Text
+              style={{ fontSize: 13, color: colors.surface[500], fontWeight: fontWeight.medium }}
+            >
+              {t('warehouse.labels.itemsCount', { count: totals.count })}
+            </Text>
+            <View
+              style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.surface[400] }}
+            />
+            <Text style={{ fontSize: 13, color: colors.warning, fontWeight: fontWeight.semibold }}>
+              {t('warehouse.labels.lowStockCount', { count: lowStockItems.length })}
+            </Text>
+            <View
+              style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.surface[400] }}
+            />
+            <Text
+              style={{ fontSize: 13, color: colors.surface[500], fontWeight: fontWeight.medium }}
+            >
+              {t('warehouse.labels.totalValue', { value: formatCurrency(totals.value, currency) })}
+            </Text>
           </View>
 
           {/* Inventory List */}
@@ -524,294 +422,272 @@ export default function WarehouseScreen() {
           ) : (
             filteredItems.map((item) => {
               const isLowStock = item.reorder_quantity && item.quantity <= item.reorder_quantity;
-              const itemValue = item.quantity * item.unit_price;
-              const itemColor = item.type === 'fertilizer' ? fertilizerColor : sprayColor;
+              const _itemValue = item.quantity * item.unit_price;
+              const itemColor = getCategoryColors(item.type || 'spray');
               const itemAccessibilityName = item.name || item.id?.toString() || 'item';
+
+              // Calculate stock percentage for the bar (assuming reorder_quantity is the threshold for full stock)
+              const stockPercentage = item.reorder_quantity
+                ? Math.min(100, Math.round((item.quantity / item.reorder_quantity) * 100))
+                : 100;
+
+              // Determine stock bar color based on percentage
+              const getStockBarColor = () => {
+                if (stockPercentage <= 30) return colors.warning as string; // low - amber
+                if (stockPercentage <= 60) return colors.accent[500]; // mid - gold
+                return colors.success as string; // ok - green
+              };
+
+              const stockBarColor = getStockBarColor();
 
               return (
                 <View
                   key={item.id}
                   style={{
-                    borderRadius: borderRadius['2xl'],
-                    padding: spacing[4],
-                    marginBottom: spacing[3],
-                    backgroundColor: isLowStock
-                      ? colorWithOpacity(lowStockColor, 0.08)
-                      : glassSurface,
-                    borderColor: isLowStock
-                      ? colorWithOpacity(lowStockColor, 0.3)
-                      : colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
+                    borderRadius: 16,
+                    padding: 16,
+                    marginBottom: 12,
+                    backgroundColor: glassSurface,
                     borderWidth: 1,
+                    borderColor: isLowStock ? colors.warning : colors.surface[300],
                   }}
                 >
+                  {/* Card Top: Name and Badge */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      marginBottom: 10,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: fontWeight.semibold,
+                        color: colors.surface[400],
+                        lineHeight: 20,
+                        flex: 1,
+                      }}
+                      numberOfLines={2}
+                    >
+                      {item.name}
+                    </Text>
+                    <View
+                      style={{
+                        height: 24,
+                        paddingHorizontal: 10,
+                        borderRadius: 999,
+                        backgroundColor:
+                          item.type === 'spray'
+                            ? colorWithOpacity(getCategoryColors('spray'), 0.08)
+                            : item.type === 'fertilizer'
+                              ? colorWithOpacity(getCategoryColors('fertilizer'), 0.1)
+                              : colorWithOpacity(getCategoryColors('equipment'), 0.08),
+                        borderWidth: 1,
+                        borderColor:
+                          item.type === 'spray'
+                            ? colorWithOpacity(getCategoryColors('spray'), 0.18)
+                            : item.type === 'fertilizer'
+                              ? colorWithOpacity(getCategoryColors('fertilizer'), 0.2)
+                              : colorWithOpacity(getCategoryColors('equipment'), 0.18),
+                        flexShrink: 1,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: fontWeight.semibold,
+                          color: itemColor,
+                        }}
+                      >
+                        {item.type === 'spray'
+                          ? t('warehouse.itemTypes.spray')
+                          : item.type === 'fertilizer'
+                            ? t('warehouse.itemTypes.fertilizer')
+                            : t('warehouse.itemTypes.equipment')}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Card Body: Quantity and Stock Bar */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      gap: spacing[3],
+                      gap: 12,
                     }}
                   >
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: spacing[2],
-                        flex: 1,
-                        minWidth: 0,
-                      }}
-                    >
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                      <Text
+                        style={{
+                          fontSize: 20,
+                          fontWeight: fontWeight.bold,
+                          color: colors.surface[400],
+                          fontVariant: ['tabular-nums'],
+                        }}
+                      >
+                        {item.quantity}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: fontWeight.medium,
+                          color: colors.surface[500],
+                        }}
+                      >
+                        {item.unit}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      {/* Stock Bar */}
                       <View
                         style={{
-                          paddingHorizontal: 12,
-                          paddingVertical: spacing[1],
-                          borderRadius: borderRadius.full,
-                          backgroundColor:
-                            item.type === 'fertilizer'
-                              ? colorWithOpacity(fertilizerColor, 0.16)
-                              : colorWithOpacity(sprayColor, 0.16),
-                          borderWidth: 1,
-                          borderColor: colorWithOpacity(itemColor, 0.18),
-                          flexShrink: 1,
-                          minWidth: 0,
+                          width: 56,
+                          height: 5,
+                          borderRadius: 3,
+                          backgroundColor: isDark ? '#242A24' : '#EEE7DD',
+                          overflow: 'hidden',
                         }}
                       >
                         <View
                           style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            flexShrink: 1,
-                            minWidth: 0,
+                            width: `${Math.min(stockPercentage, 100)}%`,
+                            height: '100%',
+                            borderRadius: 3,
+                            backgroundColor: stockBarColor,
                           }}
-                        >
-                          <Icon
-                            name={resolveSymbolIconName(
-                              item.type === 'fertilizer'
-                                ? ICON_REGISTRY.fertigation
-                                : ICON_REGISTRY.spray,
-                            )}
-                            size={12}
-                            color={itemColor}
-                          />
-                          <Text
-                            style={{
-                              color: itemColor,
-                              fontSize: fontSize.xs,
-                              fontWeight: fontWeight.semibold,
-                              marginLeft: spacing[1],
-                              flexShrink: 1,
-                            }}
-                            numberOfLines={1}
-                            ellipsizeMode="tail"
-                          >
-                            {item.type === 'fertilizer'
-                              ? t('warehouse.itemTypes.fertilizer')
-                              : t('warehouse.itemTypes.spray')}
-                          </Text>
-                        </View>
+                        />
                       </View>
+                      {/* Low Stock Badge */}
                       {isLowStock && (
                         <View
                           style={{
-                            paddingHorizontal: spacing[2],
-                            paddingVertical: 3,
-                            borderRadius: borderRadius.full,
-                            backgroundColor: colorWithOpacity(lowStockColor, 0.16),
+                            height: 22,
+                            paddingHorizontal: 8,
+                            borderRadius: 999,
+                            backgroundColor: colorWithOpacity(colors.warning, 0.12),
                             borderWidth: 1,
-                            borderColor: colorWithOpacity(lowStockColor, 0.24),
-                            flexShrink: 1,
-                            minWidth: 0,
+                            borderColor: colorWithOpacity(colors.warning, 0.25),
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
                         >
                           <Text
                             style={{
-                              color: lowStockColor,
-                              fontSize: fontSize.xs,
+                              fontSize: 11,
                               fontWeight: fontWeight.semibold,
-                              flexShrink: 1,
+                              color: colors.warning,
                             }}
-                            numberOfLines={1}
-                            ellipsizeMode="tail"
                           >
-                            {t('common.labels.low')}
+                            {t('common.labels.lowStock')}
                           </Text>
                         </View>
                       )}
                     </View>
-                    <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-                      <Pressable
-                        onPress={() => handleEditItem(item)}
-                        accessible
-                        accessibilityRole="button"
-                        accessibilityLabel={t('common.a11y.editWithName', {
-                          name: itemAccessibilityName,
-                        })}
-                        accessibilityHint={t('common.a11y.opensEditForm')}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: borderRadius.full,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-                        }}
-                      >
-                        <Icon name="pencil" size={17} color={m3.colorScheme.primary} />
-                      </Pressable>
-                      <Pressable
-                        onPress={() => handleDeleteItem(item)}
-                        accessible
-                        accessibilityRole="button"
-                        accessibilityLabel={t('common.a11y.deleteWithName', {
-                          name: itemAccessibilityName,
-                        })}
-                        accessibilityHint={t('common.a11y.deletesThisItem')}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: borderRadius.full,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
-                        }}
-                      >
-                        <Icon name="trash" size={17} color={m3.colorScheme.error} />
-                      </Pressable>
-                    </View>
                   </View>
 
-                  <Text
+                  {/* Card Meta: Date and Price */}
+                  <View
                     style={{
-                      color: colors.surface[900],
-                      fontSize: fontSize.lg,
-                      fontWeight: fontWeight.semibold,
-                      marginTop: spacing[3],
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginTop: 10,
+                      paddingTop: 10,
+                      borderTopWidth: 1,
+                      borderTopColor: isDark ? '#242A24' : '#EEE7DD',
                     }}
-                    numberOfLines={2}
                   >
-                    {item.name}
-                  </Text>
-
-                  <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[3] }}>
-                    <View
-                      style={{
-                        flex: 1,
-                        paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[3],
-                        borderRadius: borderRadius.xl,
-                        backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.5),
-                        borderWidth: 1,
-                        borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
-                      }}
-                    >
-                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        {t('warehouse.labels.quantity')}
-                      </Text>
-                      <Text
-                        style={{
-                          color: colors.surface[900],
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.semibold,
-                          marginTop: 2,
-                        }}
-                      >
-                        {item.quantity} {item.unit}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[3],
-                        borderRadius: borderRadius.xl,
-                        backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.5),
-                        borderWidth: 1,
-                        borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
-                      }}
-                    >
-                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        {t('warehouse.labels.unitPrice')}
-                      </Text>
-                      <Text
-                        style={{
-                          color: colors.surface[900],
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.medium,
-                          marginTop: 2,
-                        }}
-                        numberOfLines={1}
-                      >
-                        {formatCurrency(item.unit_price, currency)}/{item.unit}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[3],
-                        borderRadius: borderRadius.xl,
-                        backgroundColor: colorWithOpacity(itemColor, 0.08),
-                        borderWidth: 1,
-                        borderColor: colorWithOpacity(itemColor, 0.16),
-                      }}
-                    >
-                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        {t('warehouse.labels.totalValue')}
-                      </Text>
-                      <Text
-                        style={{
-                          color: itemColor,
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.semibold,
-                          marginTop: 2,
-                        }}
-                        numberOfLines={1}
-                      >
-                        {formatCurrency(itemValue, currency)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {item.notes && (
                     <Text
                       style={{
-                        color: colors.surface[600],
-                        fontSize: fontSize.xs,
-                        marginTop: spacing[2],
+                        fontSize: 12,
+                        color: colors.surface[400],
+                        fontWeight: fontWeight.normal,
                       }}
-                      numberOfLines={2}
                     >
-                      {item.notes}
+                      {item.updated_at
+                        ? t('warehouse.labels.updatedDate', {
+                            date: new Date(item.updated_at).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            }),
+                          })
+                        : ''}
                     </Text>
-                  )}
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: colors.surface[500],
+                        fontWeight: fontWeight.medium,
+                        fontVariant: ['tabular-nums'],
+                      }}
+                    >
+                      {formatCurrency(item.unit_price, currency)}/{item.unit}
+                    </Text>
+                  </View>
+
+                  {/* Edit and Delete Actions */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'flex-end',
+                      gap: spacing[2],
+                      marginTop: spacing[3],
+                    }}
+                  >
+                    <Pressable
+                      onPress={() => handleEditItem(item)}
+                      accessible
+                      accessibilityRole="button"
+                      accessibilityLabel={t('common.a11y.editWithName', {
+                        name: itemAccessibilityName,
+                      })}
+                      accessibilityHint={t('common.a11y.opensEditForm')}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+                      }}
+                    >
+                      <Icon name="pencil" size={17} color={m3.colorScheme.primary} />
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDeleteItem(item)}
+                      accessible
+                      accessibilityRole="button"
+                      accessibilityLabel={t('common.a11y.deleteWithName', {
+                        name: itemAccessibilityName,
+                      })}
+                      accessibilityHint={t('common.a11y.deletesThisItem')}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
+                      }}
+                    >
+                      <Icon name="trash" size={17} color={m3.colorScheme.error} />
+                    </Pressable>
+                  </View>
                 </View>
               );
             })
           )}
         </ScrollView>
       </View>
-
-      {/* FAB */}
-      <Pressable
-        onPress={() => {
-          openAddItem(null);
-        }}
-        style={{
-          position: 'absolute',
-          bottom: spacing[6],
-          right: spacing[6],
-          width: 56,
-          height: 56,
-          borderRadius: borderRadius.full,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: m3.colorScheme.primary,
-        }}
-      >
-        <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
-      </Pressable>
 
       {/* Modals */}
       {/* Warehouse modals are now route-based */}
