@@ -1,0 +1,35 @@
+src/i18n/locales/en.ts
+  83c6dc6f6304de2a 172
+app/(tabs)/farms.tsx
+  83c6dc6f6304de2a 12,540-541
+src/i18n/locales/hi.ts
+  83c6dc6f6304de2a 172
+src/i18n/locales/mr.ts
+  83c6dc6f6304de2a 173
+app/farm/[id].tsx
+  83c6dc6f6304de2a 1963
+app/(tabs)/index.tsx
+  83c6dc6f6304de2a 577,579
+src/components/assistant/InputBar.tsx
+  83c6dc6f6304de2a 226
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "32fb34fc5cb9dda09ebf02a7b06de4b5ba6a3c20",
+  "prompts": {
+    "83c6dc6f6304de2a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f812c8bf-0a66-4924-9479-acb3b7732197",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 14,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
