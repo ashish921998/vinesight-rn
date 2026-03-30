@@ -867,11 +867,6 @@ export default function FarmDetailScreen() {
     }
   };
 
-  const _clearActiveSeasonTargetHarvestDate = () => {
-    if (isSavingActiveSeasonTargetDate) return;
-    void saveActiveSeasonTargetHarvestDate(null);
-  };
-
   useEffect(() => {
     const isGuidedAddLog = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
     if (!isGuidedAddLog) {
@@ -1659,7 +1654,7 @@ export default function FarmDetailScreen() {
                         marginLeft: spacing[1],
                       }}
                     >
-                      {daysSincePruning}d
+                      {t('farmDetails.pruning.daysShort', { count: daysSincePruning })}
                     </Text>
                   </View>
                 )}
