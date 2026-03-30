@@ -1,0 +1,34 @@
+{
+  "featureId": "logs-redesign",
+  "reviewedAt": "2026-03-30T01:29:09.428948Z",
+  "commitId": "d8230f5",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The redesign adds grouped date sections, left-strip cards, a search/filter panel, and a rounded-square FAB, but it does not fully satisfy the filter-chip contract and introduces a locale-specific date header implementation.",
+    "issues": [
+      {
+        "file": "app/logs.tsx",
+        "line": 670,
+        "severity": "blocking",
+        "description": "Selected category filter chips use each category color as the active background/border (`chipColor`). The feature contract and VAL-LOGS-002 require active chips to use the primary background with white text while keeping the category represented only by the small colored dot. As implemented, selected chips render in irrigation/spray/harvest/expense/fertigation colors instead of the primary token."
+      },
+      {
+        "file": "app/logs.tsx",
+        "line": 1123,
+        "severity": "non_blocking",
+        "description": "Date group headers are formatted with `toLocaleDateString('en-GB', ...)`, which hardcodes English month names and bypasses the screen's existing locale-aware date formatting path (`formatDate` is still used later in the file at line 1266). The mission explicitly required preserving i18n, so these new headers will not follow non-English locales."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `ui-worker` skill requires reading `AGENTS.md`, `.factory/library/architecture.md`, and both light/dark wireframes before implementation, but this worker transcript only evidences reading the light logs wireframe. There is no recorded evidence that the dark wireframe or architecture docs were consulted.",
+      "evidence": "`.factory/skills/ui-worker/SKILL.md` Step 1-2 require `AGENTS.md`, `.factory/library/architecture.md`, `wireframe-logs.html`, and `wireframe-logs-dark.html`; transcript session `cbcbc1c8-9f60-4fca-83ee-f7ec4330be90` includes `wireframe-logs.html` but not `AGENTS.md`, `architecture.md`, or `wireframe-logs-dark.html`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed commit `d8230f5` and the worker transcript for `logs-redesign`. The screen redesign mostly matches the intended layout, but the selected category chips do not use the required primary active styling, so the feature does not fully satisfy `VAL-LOGS-002`. I also noted a locale-specific date header implementation and a skill-procedure adherence gap in the transcript evidence."
+}

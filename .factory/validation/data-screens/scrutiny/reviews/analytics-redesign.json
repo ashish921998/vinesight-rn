@@ -1,0 +1,40 @@
+{
+  "featureId": "analytics-redesign",
+  "reviewedAt": "2026-03-30T01:29:50.108860Z",
+  "commitId": "28d41cd6c5328de321243844d0ffc44f3f25e504",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The visual restyling hits the requested pill/card/progress-bar patterns, but the feature regresses analytics correctness and localization. The new summary cards show fabricated trend numbers, the category breakdown is built from a truncated recent-activity sample instead of the real filtered analytics data, and the newly added labels were not wired into the locale files.",
+    "issues": [
+      {
+        "file": "app/analytics.tsx",
+        "line": 193,
+        "severity": "blocking",
+        "description": "The redesign hardcodes trend outputs (e.g. `12% vs last season`, `8%`, `3%`) in the new summary cards instead of deriving them from analytics data. That introduces fabricated numbers into an analytics screen, which violates the requirement to preserve existing data/analytics behavior. Evidence: app/analytics.tsx:193-200, 227-229, 255-260."
+      },
+      {
+        "file": "app/analytics.tsx",
+        "line": 301,
+        "severity": "blocking",
+        "description": "The new 'Activities Logged' stat and category breakdown are computed from `analytics.recentActivity`, but that source is only the latest 10 irrigation/spray/harvest items and omits expenses/fertigation entirely. As a result, the redesigned counts/bars underreport the selected time range and can never reflect all categories accurately. Evidence: app/analytics.tsx:250, 294, 301-315; src/services/analytics-service.ts:396-435."
+      },
+      {
+        "file": "app/analytics.tsx",
+        "line": 182,
+        "severity": "blocking",
+        "description": "The feature introduced new analytics labels without adding locale entries, and also hardcoded several English strings directly in the screen. `analytics.labels.totalExpenses`, `analytics.labels.harvestYield`, `analytics.labels.activitiesLogged`, and `analytics.sections.categoryBreakdown` do not exist in the locale files, so the UI will render raw translation keys; additional strings like `tons`, `entries`, `Irrigation`, and `vs last season` bypass i18n entirely. Evidence: app/analytics.tsx:182, 199, 217, 224, 246, 291, 294, 312-315; src/i18n/locales/en.ts:783-812 (same gap in hi.ts:784-813 and mr.ts:785-814)."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `ui-worker` procedure explicitly requires reading both the light and dark wireframes, but this worker only read `wireframe-analytics.html` and still marked `skillFeedback.followedProcedure` as true. The scrutiny pipeline should not rely on self-reported procedure adherence without checking the transcript.",
+      "evidence": ".factory/skills/ui-worker/SKILL.md Step 2 requires `wireframe-{name}.html` and `wireframe-{name}-dark.html`; transcript skeleton for worker session 02375047-6b0e-436f-848b-c60647744707 contains `wireframe-analytics.html` but no `wireframe-analytics-dark.html`; handoff.skillFeedback.followedProcedure=true in handoffs/2026-03-29T23-47-06-374Z__analytics-redesign__02375047-6b0e-436f-848b-c60647744707.json."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed. The redesign mostly matches the target styling, but it introduces fake trend values, bases the new breakdown on a truncated recent-activity sample instead of full analytics data, and breaks localization for the added labels."
+}

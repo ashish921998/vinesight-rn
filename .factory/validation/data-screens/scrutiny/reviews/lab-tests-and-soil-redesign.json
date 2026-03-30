@@ -1,0 +1,28 @@
+{
+  "featureId": "lab-tests-and-soil-redesign",
+  "reviewedAt": "2026-03-30T01:28:37.922072+00:00",
+  "commitId": "188582b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The soil profiling changes in commit 188582b satisfy the requested moisture-hero and four-section reading updates, and the lab tests screen still preserves its existing hooks, trend navigation, detail modal, and i18n wiring. However, the lab test tab bar still renders inactive labels with colors.surface[500] (#5C584F) instead of the required stone-5 muted color (#A89E92), so the feature does not fully meet VAL-LABTESTS-002.",
+    "issues": [
+      {
+        "file": "app/lab-tests.tsx",
+        "line": 557,
+        "severity": "blocking",
+        "description": "The Soil/Petiole tab labels use colors.surface[500] for the inactive state here (and again at line 581). The feature contract requires inactive tabs to use stone-5/muted text (#A89E92), so VAL-LABTESTS-002 is still unmet."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The ui-worker skill requires reading AGENTS.md, architecture.md, and both light/dark wireframe HTML files before implementation, but this worker session's transcript skeleton does not show those reads even though handoff.skillFeedback.followedProcedure is true.",
+      "evidence": "In worker-transcripts.jsonl for session 206670c4-0935-4761-a9ec-35eb735a65f6, the visible Read tool calls cover mission.md, validation-contract.md, features.json, app/lab-tests.tsx, app/soil-profiling.tsx, and src/styles/theme.ts, while AGENTS.md, .factory/library/architecture.md, wireframe-lab-tests*.html, and wireframe-soil-profiling*.html do not appear. The handoff file 2026-03-30T01-19-21-030Z__lab-tests-and-soil-redesign__206670c4-0935-4761-a9ec-35eb735a65f6.json sets skillFeedback.followedProcedure to true."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed feature lab-tests-and-soil-redesign at commit 188582b. Soil profiling meets the requested redesign assertions, but the lab test tab bar still uses bark text instead of the required stone-5 inactive color, so the review fails on VAL-LABTESTS-002."
+}

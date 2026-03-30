@@ -1,0 +1,40 @@
+{
+  "featureId": "spray-catalog-redesign",
+  "reviewedAt": "2026-03-30T01:28:39+00:00",
+  "commitId": "1ddf655",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The redesign picks up most of the requested visual treatments, but it does not fully satisfy the feature contract. The implementation fabricates chemistry metadata, derives PHI-active warnings from static catalog fields, and regresses the existing product-detail/safe-checker access for the first component in each mix.",
+    "issues": [
+      {
+        "file": "app/spray-catalog.tsx",
+        "line": 102,
+        "severity": "blocking",
+        "description": "Every card hardcodes `chemicalType = 'Fungicide'`, so insecticide/herbicide badges can never render correctly and the screen misrepresents catalog data instead of preserving it."
+      },
+      {
+        "file": "app/spray-catalog.tsx",
+        "line": 144,
+        "severity": "blocking",
+        "description": "The PHI warning state is computed as `phi_days > 0` and then rendered as `PHI active`. `phi_days` is static catalog metadata, not a live safety-window status, so this banner will appear for products that simply have a PHI value even when no active restriction exists."
+      },
+      {
+        "file": "app/spray-catalog.tsx",
+        "line": 305,
+        "severity": "blocking",
+        "description": "Only `mix.components.slice(1)` remains tappable. The first/primary component shown in the card summary can no longer open `ProductDetailSheet`, which regresses the existing per-component product detail / safe-checker flow."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "The spray catalog data model does not expose chemical classification or usage-history fields, even though the wireframe expects type badges, 'used on' text, and conditional PHI-active messaging. That mismatch is not called out in the mission/library docs, which makes it easy for workers to invent placeholder semantics.",
+      "evidence": "src/types/phi.ts:15-38 only provides mix name, target_problem, application_mode, source_page, and component dose/PHI metadata; transcript skeleton for c9235c53-b928-49aa-ad3e-3a52d217783e shows the worker spending time reconciling the wireframe with missing type/last-used data before hardcoding fallback UI."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed. The feature delivers the requested card/search/chip styling, but it does not faithfully preserve required behavior: badges are hardcoded to Fungicide, PHI-active warnings are inferred from static PHI values, and the first component in each mix no longer opens the product detail sheet."
+}

@@ -1,0 +1,40 @@
+{
+  "featureId": "workers-and-attendance-redesign",
+  "reviewedAt": "2026-03-30T01:33:16.608621Z",
+  "commitId": "b7611a005c76d5539a342157aad3db7e62f54a36",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The reviewed commit only updates `app/(tabs)/workers.tsx` and `src/components/cards/worker-card.tsx`; the attendance redesign described in the feature contract was not implemented. The current attendance UI is still a single-worker date-range grid with a conditional save bar, which does not match the required attendance rows, arrow-based date navigator, or persistent sticky action button from the validation contract and worker-attendance wireframes.",
+    "issues": [
+      {
+        "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+        "line": 970,
+        "severity": "blocking",
+        "description": "The attendance tab still renders `dateRange.map(...)` for one `selectedWorker` instead of a list of worker rows. The required redesign/wireframe is a per-worker attendance list with avatar, worker name, daily rate, and a Full/Half/Absent pill toggle on each row, so VAL-ATTEND-001 is not implemented."
+      },
+      {
+        "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+        "line": 796,
+        "severity": "blocking",
+        "description": "This screen uses separate `From` / `To` date pickers rather than a single bordered date navigator with left/right arrows and a centered 15px/600 date label. That misses VAL-ATTEND-002 and the `date-sel` pattern shown in `wireframe-worker-attendance.html`."
+      },
+      {
+        "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+        "line": 1264,
+        "severity": "blocking",
+        "description": "The bottom CTA only appears when `hasModifications` is true and saves edits with `t('common.save')`. The contract requires an always-visible sticky primary button for `Mark All Present`, so VAL-ATTEND-003 is still unmet."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The assigned `ui-worker` procedure requires reading both light and dark wireframes before implementation, but this worker skipped that step and treated the existing attendance UI as sufficient.",
+      "evidence": "`.factory/skills/ui-worker/SKILL.md` Step 2 explicitly requires reading `wireframe-{name}.html` and `wireframe-{name}-dark.html`. The transcript skeleton for session `147277ca-6c8d-435a-9daf-7f1c75436d19` shows repo/mission reads plus inspection of `app/(tabs)/workers.tsx`, `src/components/cards/worker-card.tsx`, `src/components/screens/attendance-view.tsx`, and `src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx`, but no reads under `~/.gstack/projects/ashish921998-vinesight-rn/designs/dashboard-20260329/`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed feature `workers-and-attendance-redesign` using the handoff, transcript skeleton, commit `b7611a005c76d5539a342157aad3db7e62f54a36`, current implementation, and the worker attendance wireframes. The worker-card styling updates are present, but the attendance redesign still fails the contract because the app shows a single-worker date grid with a conditional save bar instead of worker attendance rows, an arrow-based date navigator, and an always-visible `Mark All Present` sticky CTA."
+}

@@ -1,0 +1,51 @@
+{
+  "featureId": "tasks-redesign",
+  "reviewedAt": "2026-03-30T01:29:22.145402Z",
+  "commitId": "74f9b877eaaf93ef3fc8e3496d3079595adbdfca",
+  "transcriptSkeletonReviewed": false,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The inferred implementation commit matches the task card and segmented-toggle visuals, but it does not satisfy VAL-TASKS-003: completed tasks were moved into a separate tab instead of a collapsible completed section, and completed cards are dimmed more than specified. I also found localization regressions on the redesigned screen.",
+    "issues": [
+      {
+        "file": "app/tasks.tsx",
+        "line": 623,
+        "severity": "blocking",
+        "description": "Completed tasks are only rendered in a separate 'Completed' tab here. The contract requires an in-screen collapsible completed section with a toggle arrow and pill count badge, so VAL-TASKS-003 is not implemented."
+      },
+      {
+        "file": "src/components/cards/task-row.tsx",
+        "line": 106,
+        "severity": "blocking",
+        "description": "Completed task cards use `opacity: task.completed ? 0.6 : 1`, but VAL-TASKS-003 specifies dimmed completed cards at 0.8 opacity."
+      },
+      {
+        "file": "app/tasks.tsx",
+        "line": 335,
+        "severity": "non_blocking",
+        "description": "The summary bar hardcodes the user-facing labels 'pending', 'due today', and 'overdue' instead of using `t(...)`, which regresses localization that the mission says to preserve."
+      },
+      {
+        "file": "app/tasks.tsx",
+        "line": 507,
+        "severity": "non_blocking",
+        "description": "This screen uses new `tasks.sections.*` translation keys, but only `src/i18n/locales/en.ts:1992-1995` defines them; grep found no matching keys in `src/i18n/locales/hi.ts` or `src/i18n/locales/mr.ts`, so non-English locales will fall back incorrectly."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Orchestrator-completed features are not leaving a synthetic handoff or commit record in mission state, so scrutiny had to infer the reviewed commit from git history.",
+      "evidence": "`features.json:918-922` lists `workerSessionIds` but leaves `completedWorkerSessionId` null for `tasks-redesign`; `handoffs/` has no matching file for session `15461f2b-c36f-468a-a6ad-a3d1c22c441a`; `git log -- app/tasks.tsx` identifies commit `74f9b877eaaf93ef3fc8e3496d3079595adbdfca` as the redesign change."
+    },
+    {
+      "area": "skills",
+      "observation": "When the orchestrator finishes a feature after a worker crash, there may be no transcript skeleton to audit against the assigned skill procedure.",
+      "evidence": "`progress_log.jsonl:142-144` records the `tasks-redesign` worker start and crash for session `15461f2b-c36f-468a-a6ad-a3d1c22c441a`, but `worker-transcripts.jsonl` contains no matching entry."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed the inferred `tasks-redesign` commit `74f9b877eaaf93ef3fc8e3496d3079595adbdfca`. The task card visuals and pending/completed segmented control are present, but the feature fails contract assertion VAL-TASKS-003 because the completed section is not collapsible and completed cards are dimmed to 0.6 instead of 0.8. The redesign also introduced localization regressions via hardcoded English summary labels and en-only section keys."
+}
