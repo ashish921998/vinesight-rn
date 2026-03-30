@@ -69,16 +69,10 @@ export default function LogsScreen() {
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const insets = useSafeAreaInsets();
   const currency = useCurrency();
+  // Cellar Ledger: No shadows on cards, use borders instead
   const filterCardStyle = Platform.select({
-    ios: {
-      shadowColor: m3.colorScheme.shadow,
-      shadowOffset: { width: 0, height: 5 },
-      shadowOpacity: 0.08,
-      shadowRadius: 10,
-    },
-    android: {
-      elevation: 2,
-    },
+    ios: {},
+    android: {},
     default: {},
   });
 
