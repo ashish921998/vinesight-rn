@@ -1,0 +1,55 @@
+.factory/validation/data-screens/scrutiny/synthesis.json
+  af6106574d43e969 1-136
+.factory/validation/data-screens/scrutiny/reviews/workers-and-attendance-redesign.json
+  05ee7f57ff1b30a8 1-40
+.factory/validation/data-screens/scrutiny/reviews/spray-catalog-redesign.json
+  e39508a2054315e1 1-40
+.factory/library/spray-catalog-data-model.md
+  af6106574d43e969 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "ce3cc4e52377326072af842f2e23caf3ba677ca4",
+  "prompts": {
+    "05ee7f57ff1b30a8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d42314a0-08ac-48e5-ba81-48a427618ae0",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 40,
+      "total_deletions": 0,
+      "accepted_lines": 40,
+      "overriden_lines": 0
+    },
+    "af6106574d43e969": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "b4be6dc5-f767-40f4-bbb2-f007408fd0d8",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 147,
+      "total_deletions": 0,
+      "accepted_lines": 147,
+      "overriden_lines": 0
+    },
+    "e39508a2054315e1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3e0e287e-d68d-49d5-bb3b-232a3b98bdbd",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 40,
+      "total_deletions": 0,
+      "accepted_lines": 40,
+      "overriden_lines": 0
+    }
+  }
+}
