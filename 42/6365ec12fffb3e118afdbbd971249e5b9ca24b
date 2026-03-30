@@ -1,0 +1,27 @@
+src/components/screens/entry-form/LogTypeSelector.tsx
+  e12c2506e2c04aef 41,44
+src/components/screens/entry-form.tsx
+  e12c2506e2c04aef 1861,3325-3326
+src/components/screens/reports/report-section-block.tsx
+  e12c2506e2c04aef 4,68-69,301-302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "426365ec12fffb3e118afdbbd971249e5b9ca24b",
+  "prompts": {
+    "e12c2506e2c04aef": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "9fc5226b-edd9-4a3c-99e6-809466e30624",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 36,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
