@@ -814,8 +814,19 @@ export function MarkAttendanceTab({
                       status === 'full_day' ? '#4F7A5A' : m3.surface.surfaceContainerLow,
                     borderWidth: 1,
                     borderColor: status === 'full_day' ? '#4F7A5A' : m3.colorScheme.outlineVariant,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
                   }}
                 >
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: status === 'full_day' ? '#FFFFFF' : '#4F7A5A',
+                    }}
+                  />
                   <Text
                     style={{
                       fontSize: fontSize.xs - 1,
@@ -838,8 +849,19 @@ export function MarkAttendanceTab({
                       status === 'half_day' ? '#C58A2B' : m3.surface.surfaceContainerLow,
                     borderWidth: 1,
                     borderColor: status === 'half_day' ? '#C58A2B' : m3.colorScheme.outlineVariant,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
                   }}
                 >
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: status === 'half_day' ? '#FFFFFF' : '#C58A2B',
+                    }}
+                  />
                   <Text
                     style={{
                       fontSize: fontSize.xs - 1,
@@ -862,8 +884,19 @@ export function MarkAttendanceTab({
                       status === 'absent' ? '#B84C3A' : m3.surface.surfaceContainerLow,
                     borderWidth: 1,
                     borderColor: status === 'absent' ? '#B84C3A' : m3.colorScheme.outlineVariant,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
                   }}
                 >
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: status === 'absent' ? '#FFFFFF' : '#B84C3A',
+                    }}
+                  />
                   <Text
                     style={{
                       fontSize: fontSize.xs - 1,
@@ -898,7 +931,7 @@ export function MarkAttendanceTab({
           onPress={handleMarkAllPresent}
           style={{
             paddingVertical: spacing[3] + 2,
-            borderRadius: borderRadius.md,
+            borderRadius: borderRadius.sm,
             backgroundColor: m3.colorScheme.primary,
             alignItems: 'center',
           }}

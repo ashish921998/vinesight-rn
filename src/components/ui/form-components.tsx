@@ -609,7 +609,7 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
     borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: selected ? colors.surface[100] : pressed ? colors.surface[300] : 'transparent',
+    backgroundColor: selected ? '#FFFFFF' : pressed ? colors.surface[300] : 'transparent',
     borderWidth: 0,
     borderCurve: 'continuous',
   });
@@ -619,7 +619,9 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
     lineHeight: Platform.OS === 'android' ? 16 : fontSize.sm + 6,
     fontWeight:
       Platform.OS === 'android'
-        ? fontWeight.medium
+        ? selected
+          ? fontWeight.semibold
+          : fontWeight.medium
         : selected
           ? fontWeight.semibold
           : fontWeight.medium,
