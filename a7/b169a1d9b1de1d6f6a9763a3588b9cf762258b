@@ -1,0 +1,27 @@
+src/components/screens/reports/report-export-actions.tsx
+  9261a0bd99020a95 5,43-46,84-85
+src/components/screens/reports/report-executive-summary.tsx
+  9261a0bd99020a95 11,230-231
+src/components/screens/reports/report-filters-panel.tsx
+  9261a0bd99020a95 15,142-143
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "a7b169a1d9b1de1d6f6a9763a3588b9cf762258b",
+  "prompts": {
+    "9261a0bd99020a95": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f53cb532-b97e-4544-ade0-a2f288978dee",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 7,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
