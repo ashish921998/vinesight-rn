@@ -189,16 +189,6 @@ export default function AnalyticsScreen() {
                   })}
                 </Text>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 }}>
-                <SymbolIcon
-                  name="arrow.up"
-                  size={10}
-                  color={colors.success} // Green for up trend
-                />
-                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.success }}>
-                  12% vs last season
-                </Text>
-              </View>
             </View>
 
             {/* Harvest Yield Card */}
@@ -221,12 +211,8 @@ export default function AnalyticsScreen() {
                   {(analytics.totalHarvestQuantity / 1000).toFixed(1)}
                 </Text>
                 <Text style={{ fontSize: 13, fontWeight: '500', color: colors.surface[500] }}>
-                  tons
+                  {t('analytics.units.tons')}
                 </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 }}>
-                <SymbolIcon name="arrow.up" size={10} color={colors.success} />
-                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.success }}>8%</Text>
               </View>
             </View>
 
@@ -247,17 +233,9 @@ export default function AnalyticsScreen() {
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
                 <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
-                  {analytics.recentActivity.length}
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 }}>
-                <SymbolIcon
-                  name="arrow.down"
-                  size={10}
-                  color={m3.colorScheme.error} // Red for down trend
-                />
-                <Text style={{ fontSize: 11, fontWeight: '600', color: m3.colorScheme.error }}>
-                  3%
+                  {analytics.irrigationsByMonth.reduce((sum, m) => sum + m.count, 0) +
+                    analytics.totalSprayCount +
+                    analytics.harvestsByFarm.length}
                 </Text>
               </View>
             </View>
@@ -291,28 +269,53 @@ export default function AnalyticsScreen() {
                 {t('analytics.sections.categoryBreakdown') || 'Category Breakdown'}
               </Text>
               <Text style={{ fontSize: 13, fontWeight: '500', color: colors.surface[500] }}>
-                {analytics.recentActivity.length} entries
+                {analytics.irrigationsByMonth.reduce((sum, m) => sum + m.count, 0) +
+                  analytics.totalSprayCount +
+                  analytics.harvestsByFarm.length}{' '}
+                {t('analytics.labels.entries')}
               </Text>
             </View>
 
             {/* Category rows with colored dots and progress bars */}
             {(() => {
-              // Calculate totals for progress bars
-              const categoryTotals = analytics.recentActivity.reduce(
-                (acc, activity) => {
-                  const type = activity.type || 'expense';
-                  acc[type] = (acc[type] || 0) + 1;
-                  return acc;
-                },
-                {} as Record<string, number>,
+              // Calculate totals for progress bars from real analytics data
+              const irrigationCount = analytics.irrigationsByMonth.reduce(
+                (sum, m) => sum + m.count,
+                0,
               );
+              const sprayCount = analytics.totalSprayCount;
+              const harvestCount = analytics.harvestsByFarm.length;
+              const expenseCount = analytics.expensesByType.reduce((sum, _e) => sum + 1, 0);
+
+              const categoryTotals: Record<string, number> = {
+                irrigation: irrigationCount,
+                spray: sprayCount,
+                harvest: harvestCount,
+                expense: expenseCount,
+              };
               const total = Object.values(categoryTotals).reduce((a, b) => a + b, 0) || 1;
 
               const categories = [
-                { key: 'irrigation', name: 'Irrigation', color: CATEGORY_COLORS.irrigation },
-                { key: 'spray', name: 'Spray', color: CATEGORY_COLORS.spray },
-                { key: 'harvest', name: 'Harvest', color: CATEGORY_COLORS.harvest },
-                { key: 'expense', name: 'Expense', color: CATEGORY_COLORS.expense },
+                {
+                  key: 'irrigation',
+                  name: t('analytics.categories.irrigation'),
+                  color: CATEGORY_COLORS.irrigation,
+                },
+                {
+                  key: 'spray',
+                  name: t('analytics.categories.spray'),
+                  color: CATEGORY_COLORS.spray,
+                },
+                {
+                  key: 'harvest',
+                  name: t('analytics.categories.harvest'),
+                  color: CATEGORY_COLORS.harvest,
+                },
+                {
+                  key: 'expense',
+                  name: t('analytics.categories.expense'),
+                  color: CATEGORY_COLORS.expense,
+                },
               ];
 
               return categories.map((cat, index) => {

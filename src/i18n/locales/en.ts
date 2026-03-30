@@ -787,6 +787,8 @@ export const en = {
       totalHarvest: 'Total Harvest',
       harvestValue: 'Harvest Value',
       performanceScore: 'Performance Score',
+      activitiesLogged: 'Activities Logged',
+      entries: 'entries',
     },
     sections: {
       overview: 'Overview',
@@ -814,6 +816,9 @@ export const en = {
       harvest: 'Harvest',
       expense: 'Expense',
       efficiency: 'Efficiency',
+    },
+    units: {
+      tons: 'tons',
     },
   },
 

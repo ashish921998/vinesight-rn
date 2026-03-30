@@ -98,36 +98,6 @@ export default function SprayCatalogScreen() {
 
   const renderMixCard = useCallback(
     ({ item: mix }: { item: ChemicalMix }) => {
-      // Determine chemical type from components (default to Fungicide)
-      const chemicalType = 'Fungicide';
-
-      // Type badge colors based on chemical type
-      const getTypeBadgeStyle = (type: string) => {
-        const isDark = m3.colorScheme.surface !== colors.surface[50];
-        switch (type) {
-          case 'Fungicide':
-            return {
-              backgroundColor: isDark ? 'rgba(138,154,94,0.15)' : 'rgba(108,124,70,0.12)',
-              color: isDark ? darkColors.spray[500] : colors.spray[500],
-            };
-          case 'Insecticide':
-            return {
-              backgroundColor: isDark ? 'rgba(90,128,144,0.15)' : 'rgba(78,115,132,0.12)',
-              color: isDark ? darkColors.info : colors.info,
-            };
-          case 'Herbicide':
-            return {
-              backgroundColor: isDark ? 'rgba(154,106,82,0.15)' : 'rgba(166,107,79,0.12)',
-              color: isDark ? darkColors.secondary[500] : colors.secondary[500],
-            };
-          default:
-            return {
-              backgroundColor: isDark ? 'rgba(138,154,94,0.15)' : 'rgba(108,124,70,0.12)',
-              color: isDark ? darkColors.spray[500] : colors.spray[500],
-            };
-        }
-      };
-
       // Get dose display string from component
       const getDoseDisplay = (component: ChemicalMixComponent): string => {
         if (component.dose_basis === 'per_100_liter') {
@@ -138,14 +108,8 @@ export default function SprayCatalogScreen() {
         return `${component.dose_value}${component.dose_unit === 'gm' ? 'g' : 'mL'}/L`;
       };
 
-      const typeBadgeStyle = getTypeBadgeStyle(chemicalType);
       const firstComponent = mix.components[0];
       const phiDays = firstComponent?.phi_days;
-      const hasPhiWarning = phiDays !== null && phiDays > 0;
-
-      // Get warning color based on dark mode
-      const isDark = m3.colorScheme.surface !== colors.surface[50];
-      const warningColor = isDark ? darkColors.warning : colors.warning;
 
       return (
         <View
@@ -185,26 +149,6 @@ export default function SprayCatalogScreen() {
               >
                 {mix.name}
               </Text>
-              <View
-                style={{
-                  backgroundColor: typeBadgeStyle.backgroundColor,
-                  paddingHorizontal: spacing[2],
-                  paddingVertical: 1,
-                  borderRadius: borderRadius.full,
-                }}
-              >
-                <Text
-                  style={{
-                    color: typeBadgeStyle.color,
-                    fontSize: 11,
-                    fontWeight: fontWeight.semibold,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.3,
-                  }}
-                >
-                  {chemicalType}
-                </Text>
-              </View>
             </View>
 
             {/* Info row: PHI / Dose / Target */}
@@ -258,29 +202,6 @@ export default function SprayCatalogScreen() {
                   })
                 : t('sprayCatalog.inLibrary', { defaultValue: 'In your library' })}
             </Text>
-
-            {/* PHI Warning banner - shown when PHI is active (within harvest safety window) */}
-            {hasPhiWarning && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing[1] + 2,
-                  paddingVertical: spacing[1] + 1,
-                  paddingHorizontal: spacing[2] + 2,
-                  backgroundColor: colorWithOpacity(warningColor, 0.1),
-                  borderWidth: 1,
-                  borderColor: colorWithOpacity(warningColor, 0.25),
-                  borderRadius: borderRadius.xs,
-                  alignSelf: 'flex-start',
-                }}
-              >
-                <Ionicons name="warning" size={14} color={warningColor} />
-                <Text style={{ color: warningColor, fontSize: 12, fontWeight: fontWeight.medium }}>
-                  {t('sprayCatalog.phiActive', { defaultValue: 'PHI active' })}
-                </Text>
-              </View>
-            )}
 
             {/* Tank Mix Calculator button */}
             <Pressable
