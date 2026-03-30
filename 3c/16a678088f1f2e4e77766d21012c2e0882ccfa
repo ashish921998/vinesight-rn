@@ -1,0 +1,25 @@
+src/components/forms/spray-form.tsx
+  73dd75e50b3b8f59 1016
+src/components/forms/fertigation-form.tsx
+  73dd75e50b3b8f59 628
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "3c16a678088f1f2e4e77766d21012c2e0882ccfa",
+  "prompts": {
+    "73dd75e50b3b8f59": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "00be4ade-6828-4f1b-ab2d-871024008934",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 12,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
