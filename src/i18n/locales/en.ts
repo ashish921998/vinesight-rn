@@ -34,6 +34,7 @@ export const en = {
     clearAll: 'Clear all',
     today: 'Today',
     yesterday: 'Yesterday',
+    view: 'View',
     units: {
       hours: 'hours',
       days: 'days',
@@ -156,9 +157,13 @@ export const en = {
     header: {
       areaAcres: '{{value}} acres',
       areaAcresUnknown: '— acres',
+      targetLabel: 'Target:',
+      pickNewDate: 'Pick New Date',
+      clearDate: 'Clear Date',
     },
     pruning: {
       daysShort: '{{count}}d',
+      daysPruned: 'Days Pruned',
     },
     weather: {
       current: 'Current Weather',
@@ -176,10 +181,14 @@ export const en = {
       noData: 'No PHI spray records available yet.',
       safeDate: 'Safe from {{date}}',
       inlineDate: 'Safe harvest date: {{date}}',
+      inlineTitle: 'Safe harvest:',
       blockedBy: 'Blocked by {{reason}}',
       ctaSetTarget: 'Set target date',
       ctaOpenChecker: 'Open safe-to-spray checker',
       saveTarget: 'Save target date',
+    },
+    riskBlock: {
+      urgentTasks: '{{count}} urgent task{{count, plural, =1 {} other {s}}}',
     },
     water: {
       noIrrigationLoggedYet: 'No irrigation logged yet',
@@ -565,6 +574,11 @@ export const en = {
       totalFarms: 'Total farms',
       totalArea: 'Total area',
     },
+    summary: {
+      count_one: '{{count}} farm',
+      count_other: '{{count}} farms',
+      area: '{{value}} acres total',
+    },
   },
 
   entryForm: {
@@ -772,12 +786,17 @@ export const en = {
       sprayApplications: 'Spray Applications',
       totalHarvest: 'Total Harvest',
       harvestValue: 'Harvest Value',
+      totalExpenses: 'Total Expenses',
+      harvestYield: 'Harvest Yield',
       performanceScore: 'Performance Score',
+      activitiesLogged: 'Activities Logged',
+      entries: 'entries',
     },
     sections: {
       overview: 'Overview',
       trends: 'Trends',
       comparisons: 'Comparisons',
+      categoryBreakdown: 'Category Breakdown',
     },
     timeRanges: {
       last7Days: 'Last 7 Days',
@@ -800,6 +819,9 @@ export const en = {
       harvest: 'Harvest',
       expense: 'Expense',
       efficiency: 'Efficiency',
+    },
+    units: {
+      tons: 'tons',
     },
   },
 
@@ -1875,6 +1897,13 @@ export const en = {
       evening: 'Good evening, {{name}}',
       night: 'Good night, {{name}}',
     },
+    hero: {
+      today: 'Today',
+      allClear: 'All clear',
+      attentionNeeded: 'Attention needed',
+      alertCount_one: '{{count}} alert',
+      alertCount_other: '{{count}} alerts',
+    },
     stats: {
       farms: 'Farms',
       activeWorkers: 'Active workers',
@@ -1968,6 +1997,11 @@ export const en = {
       addTask: 'Add task',
     },
     logNow: 'Log now',
+    sections: {
+      dueToday: 'Due Today',
+      thisWeek: 'This Week',
+      upcoming: 'Upcoming',
+    },
     dueDate: {
       none: 'No due date',
       today: 'Today',
@@ -2249,15 +2283,21 @@ export const en = {
       lowStockAlerts: 'Low Stock Alerts',
       itemCount_one: '{{count}} item',
       itemCount_other: '{{count}} items',
+      itemsCount_one: '{{count}} item',
+      itemsCount_other: '{{count}} items',
+      lowStockCount_one: '{{count}} low stock',
+      lowStockCount_other: '{{count}} low stock',
       quantity: 'Quantity',
       unitPrice: 'Unit Price',
       totalValue: 'Total Value',
+      updatedDate: 'Updated {{date}}',
     },
     reorderAt: 'Reorder at: {{quantity}} {{unit}}',
     filters: {
       all: 'All ({{count}})',
       fertilizer: 'Fertilizers ({{count}})',
       spray: 'Sprays ({{count}})',
+      equipment: 'Equipment ({{count}})',
     },
     search: {
       placeholder: 'Search inventory...',
@@ -2269,6 +2309,7 @@ export const en = {
     itemTypes: {
       fertilizer: 'Fertilizer',
       spray: 'Spray',
+      equipment: 'Equipment',
     },
     empty: {
       title: 'No items in warehouse',

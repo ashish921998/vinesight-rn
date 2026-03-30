@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Image,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -128,12 +129,21 @@ export function HeroSlide({ isActive }: HeroSlideProps) {
                 Built for vineyard teams
               </Text>
             </View>
-            <Text style={[styles.headline, { color: m3.colorScheme.onSurface }]}>
-              Run one sharp season instead of chasing mistakes.
+            <Text
+              style={[
+                styles.headline,
+                {
+                  color: m3.colorScheme.onSurface,
+                  fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
+                  fontSize: 28,
+                  fontWeight: '400',
+                },
+              ]}
+            >
+              Your vineyard, one app
             </Text>
             <Text style={[styles.subtitle, { color: m3.colorScheme.onSurfaceVariant }]}>
-              Spray history, irrigation timing, labour records, and export readiness in one calm
-              control room.
+              Track irrigation, sprays, harvests, and tasks. All in one place.
             </Text>
           </Animated.View>
 
@@ -168,7 +178,13 @@ export function HeroSlide({ isActive }: HeroSlideProps) {
             </View>
           </Animated.View>
 
-          <Animated.View style={[styles.statementCard, subtitleAnimatedStyle]}>
+          <Animated.View
+            style={[
+              styles.statementCard,
+              { borderLeftColor: m3.colorScheme.primary },
+              subtitleAnimatedStyle,
+            ]}
+          >
             <Text
               style={[
                 styles.statementText,
@@ -275,7 +291,6 @@ const styles = StyleSheet.create({
   },
   statementCard: {
     borderLeftWidth: 3,
-    borderLeftColor: '#408059',
     paddingLeft: spacing[4],
     paddingVertical: spacing[2],
   },

@@ -24,6 +24,12 @@ export function SuggestionChips({
 }: SuggestionChipsProps) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
+  const chipBackgroundColor =
+    m3.surface?.surfaceContainerLow ??
+    m3.colorScheme.surfaceVariant ??
+    m3.colorScheme.secondaryContainer ??
+    m3.colorScheme.surface;
+  const chipBorderColor = m3.colorScheme.outline ?? m3.colorScheme.outlineVariant;
 
   if (suggestions.length === 0) return null;
 
@@ -36,7 +42,7 @@ export function SuggestionChips({
   };
 
   return (
-    <View style={[styles.container, { borderTopColor: m3.colorScheme.outlineVariant }]}>
+    <View style={[styles.container, { borderTopColor: chipBorderColor }]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -51,8 +57,11 @@ export function SuggestionChips({
               style={[
                 styles.chip,
                 {
-                  backgroundColor: m3.colorScheme.secondaryContainer,
-                  borderColor: m3.colorScheme.outlineVariant,
+                  // Cellar Ledger: pill shape with mist-1 bg and 1px stone-3 border
+                  // Use surfaceContainerLow which maps to mist-1 (surface[100])
+                  backgroundColor: chipBackgroundColor,
+                  borderColor: chipBorderColor,
+                  borderRadius: 999,
                 },
                 disabled && styles.chipDisabled,
               ]}
@@ -65,9 +74,10 @@ export function SuggestionChips({
                 style={[
                   styles.chipText,
                   {
-                    color: disabled
-                      ? m3.colorScheme.onSurfaceVariant
-                      : m3.colorScheme.onSecondaryContainer,
+                    // Cellar Ledger: 13px/500 text with dark ink color
+                    color: disabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onSurface,
+                    fontSize: 13,
+                    fontWeight: '500',
                   },
                 ]}
                 numberOfLines={1}
@@ -93,9 +103,9 @@ const styles = StyleSheet.create({
   },
   chip: {
     paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    borderRadius: 16,
-    borderWidth: 1,
+    paddingVertical: 7, // ~14px - matches wireframe padding
+    borderRadius: 999, // Pill shape - set inline but also here for base
+    borderWidth: 1, // 1px border - stone-3
     maxWidth: 220,
   },
   chipDisabled: {
@@ -103,6 +113,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
+    fontWeight: '500',
     lineHeight: 18,
   },
 });

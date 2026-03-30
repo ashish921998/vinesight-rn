@@ -34,6 +34,7 @@ export const mr = {
     clearAll: 'सर्व साफ करा',
     today: 'आज',
     yesterday: 'काल',
+    view: 'पहा',
     units: {
       hours: 'तास',
       days: 'दिवस',
@@ -157,9 +158,13 @@ export const mr = {
     header: {
       areaAcres: '{{value}} एकर',
       areaAcresUnknown: '— एकर',
+      targetLabel: 'लक्ष्य:',
+      pickNewDate: 'नवीन दिनांक निवडा',
+      clearDate: 'दिनांक साफ करा',
     },
     pruning: {
       daysShort: '{{count}}दि',
+      daysPruned: 'छाटणीचे दिवस',
     },
     weather: {
       current: 'सध्याचे $t(glossary.weather)',
@@ -177,10 +182,14 @@ export const mr = {
       noData: 'अजून PHI आधारित $t(glossary.spray) नोंदी उपलब्ध नाहीत.',
       safeDate: '{{date}} पासून सुरक्षित',
       inlineDate: 'सुरक्षित $t(glossary.harvest) दिनांक: {{date}}',
+      inlineTitle: 'सुरक्षित $t(glossary.harvest):',
       blockedBy: '{{reason}} मुळे अडथळा',
       ctaSetTarget: 'लक्ष्य दिनांक सेट करा',
       ctaOpenChecker: 'Safe-to-spray तपासा',
       saveTarget: 'लक्ष्य दिनांक जतन करा',
+    },
+    riskBlock: {
+      urgentTasks: '{{count}} तातडीचे कार्य',
     },
     water: {
       noIrrigationLoggedYet: 'अजून $t(glossary.irrigation) नोंदवलेले नाही',
@@ -566,6 +575,11 @@ export const mr = {
       totalFarms: 'एकूण $t(glossary.farm)',
       totalArea: 'एकूण क्षेत्रफळ',
     },
+    summary: {
+      count_one: '{{count}} $t(glossary.farm)',
+      count_other: '{{count}} $t(glossary.farm)',
+      area: '{{value}} एकर एकूण',
+    },
   },
 
   entryForm: {
@@ -774,12 +788,17 @@ export const mr = {
       sprayApplications: '$t(glossary.spray) वापर',
       totalHarvest: 'एकूण $t(glossary.harvest)',
       harvestValue: '$t(glossary.harvest) मूल्य',
+      totalExpenses: 'एकूण खर्च',
+      harvestYield: 'उत्पादन',
       performanceScore: 'कामगिरी गुण',
+      activitiesLogged: 'क्रियाकलाप नोंदले',
+      entries: 'प्रविष्ट्या',
     },
     sections: {
       overview: 'आढावा',
       trends: 'कल',
       comparisons: 'तुलना',
+      categoryBreakdown: 'श्रेणी विभाजन',
     },
     timeRanges: {
       last7Days: 'शेवटचे 7 दिवस',
@@ -802,6 +821,9 @@ export const mr = {
       harvest: '$t(glossary.harvest)',
       expense: '$t(glossary.expense)',
       efficiency: 'कार्यक्षमता',
+    },
+    units: {
+      tons: 'टन',
     },
   },
 
@@ -1889,6 +1911,13 @@ export const mr = {
       evening: 'शुभ संध्याकाळ, {{name}}',
       night: 'शुभ रात्री, {{name}}',
     },
+    hero: {
+      today: 'आज',
+      allClear: 'सर्व ठीक',
+      attentionNeeded: 'लक्ष आवश्यक',
+      alertCount_one: '{{count}} इशारा',
+      alertCount_other: '{{count}} इशारे',
+    },
     stats: {
       farms: '$t(glossary.farm)',
       activeWorkers: 'सक्रिय $t(glossary.worker)',
@@ -1982,6 +2011,12 @@ export const mr = {
       addTask: '$t(glossary.task) जोडा',
     },
     logNow: 'आत्ताच नोंदवा',
+    sections: {
+      dueToday: 'आज देय',
+      thisWeek: 'हा आठवडा',
+      overdue: 'विलंबित',
+      completed: 'पूर्ण',
+    },
     dueDate: {
       none: 'देय तारीख नाही',
       today: 'आज',
@@ -2264,15 +2299,21 @@ export const mr = {
       lowStockAlerts: 'कमी स्टॉक इशारे',
       itemCount_one: '{{count}} वस्तू',
       itemCount_other: '{{count}} वस्तू',
+      itemsCount_one: '{{count}} वस्तू',
+      itemsCount_other: '{{count}} वस्तू',
+      lowStockCount_one: '{{count}} कमी स्टॉक',
+      lowStockCount_other: '{{count}} कमी स्टॉक',
       quantity: 'प्रमाण',
       unitPrice: 'युनिट किंमत',
       totalValue: 'एकूण मूल्य',
+      updatedDate: 'अपडेट {{date}}',
     },
     reorderAt: 'पुनर्भरण पातळी: {{quantity}} {{unit}}',
     filters: {
       all: 'सर्व ({{count}})',
       fertilizer: '$t(glossary.fertigation) ({{count}})',
       spray: '$t(glossary.spray) ({{count}})',
+      equipment: 'उपकरण ({{count}})',
     },
     search: {
       placeholder: 'गोदाम शोधा...',
@@ -2284,6 +2325,7 @@ export const mr = {
     itemTypes: {
       fertilizer: '$t(glossary.fertigation)',
       spray: '$t(glossary.spray)',
+      equipment: 'उपकरण',
     },
     empty: {
       title: 'गोदामात वस्तू नाहीत',

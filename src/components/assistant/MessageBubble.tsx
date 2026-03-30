@@ -32,16 +32,26 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
 
   const isUser = message.role === 'user';
 
+  // Cellar Ledger design: User bubbles use primary, assistant use mist-1 with border
+  // Use surfaceContainerLow which maps to mist-1 (surface[100])
   const bubbleStyle = {
-    backgroundColor: isUser ? m3.colorScheme.primaryContainer : m3.colorScheme.surfaceVariant,
+    backgroundColor: isUser ? m3.colorScheme.primary : m3.surface.surfaceContainerLow,
     borderRadius: 16,
     borderBottomRightRadius: isUser ? 4 : 16,
     borderBottomLeftRadius: isUser ? 16 : 4,
+    borderTopLeftRadius: isUser ? 16 : 4,
+    borderTopRightRadius: isUser ? 16 : 16,
     padding: spacing[3],
     maxWidth: '80%' as const,
+    // Assistant bubbles get a 1px border (stone-3)
+    ...(!isUser && {
+      borderWidth: 1,
+      borderColor: m3.colorScheme.outline,
+    }),
   };
 
-  const textColor = isUser ? m3.colorScheme.onPrimaryContainer : m3.colorScheme.onSurfaceVariant;
+  // User text is white, assistant text uses onSurface (dark ink)
+  const textColor = isUser ? '#FFFFFF' : m3.colorScheme.onSurface;
 
   // Use plain objects for react-native-markdown-display styles (not StyleSheet.create)
   // to avoid the react-native/no-unused-styles lint false positives
@@ -256,19 +266,25 @@ export function LoadingBubble() {
     >
       <View
         style={{
-          backgroundColor: m3.colorScheme.surfaceVariant,
+          // Use surfaceContainerLow which maps to mist-1 (surface[100])
+          backgroundColor: m3.surface.surfaceContainerLow,
           borderRadius: 16,
-          borderBottomLeftRadius: 4,
+          borderTopLeftRadius: 4,
+          borderTopRightRadius: 16,
+          borderBottomLeftRadius: 16,
+          borderBottomRightRadius: 16,
           padding: spacing[3],
           flexDirection: 'row',
           alignItems: 'center',
           gap: spacing[2],
+          borderWidth: 1,
+          borderColor: m3.colorScheme.outline,
         }}
       >
         <ActivityIndicator size="small" color={m3.colorScheme.primary} />
         <Text
           style={{
-            color: m3.colorScheme.onSurfaceVariant,
+            color: m3.colorScheme.onSurface,
             fontSize: 14,
           }}
         >

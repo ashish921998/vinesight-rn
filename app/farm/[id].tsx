@@ -40,7 +40,7 @@ import {
   isIOS,
 } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
-import { StatsCard, TaskRow, TimelineLogCard } from '@/components/cards';
+import { TaskRow, TimelineLogCard } from '@/components/cards';
 import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/stores';
 import { cancelNotification } from '@/services/notifications';
@@ -399,6 +399,24 @@ export default function FarmDetailScreen() {
     if (!minimumSeasonStartDate) return false;
     return formatLocalDate(new Date()) < formatLocalDate(minimumSeasonStartDate);
   }, [activeSeasonRecord, minimumSeasonStartDate]);
+
+  // Compute urgent tasks (overdue or due today)
+  const urgentTasks = useMemo(() => {
+    if (!tasks) return [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = formatLocalDate(today);
+    return tasks.filter((task) => {
+      if (task.completed) return false;
+      if (!task.due_date) return false;
+      const taskDate = parseDbDateToLocalDate(task.due_date);
+      if (!taskDate) return false;
+      taskDate.setHours(0, 0, 0, 0);
+      const taskDateStr = formatLocalDate(taskDate);
+      // Overdue (before today) or due today
+      return taskDateStr <= todayStr;
+    });
+  }, [tasks]);
 
   // "Days after pruning" should always be based on the pruning date.
   const daysSincePruning = useMemo(() => {
@@ -827,10 +845,29 @@ export default function FarmDetailScreen() {
       setIsEditingActiveSeasonTargetIOS(true);
       return;
     }
-    setShowActiveSeasonTargetPicker(true);
+    // Android: Show Alert with options to Pick New Date or Clear Date
+    const hasExistingDate = Boolean(activeSeasonRecord?.target_harvest_date);
+    if (hasExistingDate) {
+      Alert.alert(t('farmDetails.header.targetLabel'), undefined, [
+        {
+          text: t('farmDetails.header.pickNewDate'),
+          onPress: () => setShowActiveSeasonTargetPicker(true),
+        },
+        {
+          text: t('farmDetails.header.clearDate'),
+          style: 'destructive',
+          onPress: () => {
+            void saveActiveSeasonTargetHarvestDate(null);
+          },
+        },
+        { text: t('common.cancel'), style: 'cancel' },
+      ]);
+    } else {
+      setShowActiveSeasonTargetPicker(true);
+    }
   };
 
-  const clearActiveSeasonTargetHarvestDate = () => {
+  const _clearActiveSeasonTargetHarvestDate = () => {
     if (isSavingActiveSeasonTargetDate) return;
     void saveActiveSeasonTargetHarvestDate(null);
   };
@@ -1456,487 +1493,685 @@ export default function FarmDetailScreen() {
           }
           showsVerticalScrollIndicator={false}
         >
-          {/* Farm Header */}
+          {/* Farm Identity Card - Green Primary Background */}
           <View
             style={{
-              marginHorizontal: spacing[4],
-              marginTop: 0,
-              borderRadius: m3.shape.cornerLarge,
+              marginHorizontal: 0,
+              borderBottomLeftRadius: borderRadius.lg,
+              borderBottomRightRadius: borderRadius.lg,
               overflow: 'hidden',
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderWidth: 1,
-              borderColor: m3.colorScheme.outlineVariant,
+              backgroundColor: m3.colorScheme.primary,
+              paddingHorizontal: spacing[5],
+              paddingTop: spacing[3],
             }}
           >
-            <View style={{ padding: spacing[4] }}>
+            {/* Farm Name & Variety */}
+            <View style={{ paddingBottom: spacing[4] }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                {/* Farm Icon Circle */}
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: colorWithOpacity('#ffffff', 0.14),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <UiSymbol name="leaf.fill" size={24} color={colorWithOpacity('#ffffff', 0.9)} />
+                </View>
+
+                {/* Farm Text Info */}
+                <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: '#ffffff',
+                      fontSize: 22,
+                      fontWeight: fontWeight.semibold,
+                      lineHeight: 28,
+                    }}
+                  >
+                    {farm.name}
+                  </Text>
+                  <Text
+                    style={{
+                      color: colorWithOpacity('#ffffff', 0.65),
+                      fontSize: 14,
+                      lineHeight: 20,
+                      marginTop: 2,
+                    }}
+                  >
+                    {farm.crop_variety || farm.crop}
+                  </Text>
+                  {farm.area != null && (
+                    <View
+                      style={{
+                        marginTop: spacing[1],
+                        backgroundColor: colorWithOpacity('#ffffff', 0.14),
+                        alignSelf: 'flex-start',
+                        paddingHorizontal: spacing[2] + 2,
+                        paddingVertical: 2,
+                        borderRadius: borderRadius.full,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: colorWithOpacity('#ffffff', 0.85),
+                          fontSize: 12,
+                          fontWeight: fontWeight.medium,
+                        }}
+                      >
+                        {t('farmDetails.header.areaAcres', { value: farm.area.toFixed(1) })}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Actions Button */}
+                <Pressable
+                  onPress={handleOpenFarmActions}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('farmDetails.a11y.openFarmActions')}
+                >
+                  {({ pressed }) => (
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: colorWithOpacity('#ffffff', pressed ? 0.2 : 0.12),
+                      }}
+                    >
+                      <UiSymbol
+                        name="ellipsis"
+                        size={18}
+                        color={colorWithOpacity('#ffffff', 0.9)}
+                      />
+                    </View>
+                  )}
+                </Pressable>
+              </View>
+
+              {/* Season Status Row */}
               <View
                 style={{
                   flexDirection: 'row',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: spacing[3],
                 }}
               >
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <View
-                      style={{
-                        width: 48,
-                        height: 48,
-                        backgroundColor: m3.colorScheme.primaryContainer,
-                        borderRadius: m3.shape.cornerMedium,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <UiSymbol name="leaf.fill" size={24} color={m3.colorScheme.primary} />
-                    </View>
-                    <View style={{ marginLeft: spacing[3], flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Text
-                          numberOfLines={1}
-                          style={{
-                            color: m3.colorScheme.onSurface,
-                            ...m3.typography.titleMedium,
-                            flexShrink: 1,
-                          }}
-                        >
-                          {farm.name}
-                        </Text>
-                        {daysSincePruning !== null && (
-                          <View
-                            style={{
-                              marginLeft: spacing[2],
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              paddingHorizontal: spacing[2],
-                              paddingVertical: 2,
-                              borderRadius: borderRadius.full,
-                              backgroundColor: m3.colorScheme.warning,
-                            }}
-                          >
-                            <UiSymbol
-                              name="cut-outline"
-                              size={10}
-                              color={m3.colorScheme.onWarning}
-                            />
-                            <Text
-                              style={{
-                                color: m3.colorScheme.onWarning,
-                                ...m3.typography.labelSmall,
-                                fontWeight: fontWeight.bold,
-                                marginLeft: spacing[1],
-                              }}
-                            >
-                              {t('farmDetails.pruning.daysShort', { count: daysSincePruning })}
-                            </Text>
-                          </View>
-                        )}
-                        {isBetweenSeasons && (
-                          <View
-                            style={{
-                              marginLeft: spacing[2],
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              paddingHorizontal: spacing[2],
-                              paddingVertical: 2,
-                              borderRadius: borderRadius.full,
-                              backgroundColor: m3.colorScheme.secondaryContainer,
-                            }}
-                          >
-                            <UiSymbol
-                              name="calendar"
-                              size={10}
-                              color={m3.colorScheme.onSecondaryContainer}
-                            />
-                            <Text
-                              style={{
-                                color: m3.colorScheme.onSecondaryContainer,
-                                ...m3.typography.labelSmall,
-                                fontWeight: fontWeight.bold,
-                                marginLeft: spacing[1],
-                              }}
-                            >
-                              {t('farmDetails.seasons.betweenSeasonsBadge')}
-                            </Text>
-                          </View>
-                        )}
-                        <Pressable
-                          onPress={handleOpenFarmActions}
-                          style={{ marginLeft: 'auto', paddingLeft: spacing[2] }}
-                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('farmDetails.a11y.openFarmActions')}
-                        >
-                          {({ pressed }) => (
-                            <View style={{ borderRadius: 9999, overflow: 'hidden' }}>
-                              <View style={{ padding: spacing[1] }}>
-                                <UiSymbol
-                                  name="ellipsis.circle"
-                                  size={20}
-                                  color={m3.colorScheme.onSurfaceVariant}
-                                />
-                              </View>
-                              <View
-                                pointerEvents="none"
-                                style={[
-                                  StyleSheet.absoluteFillObject,
-                                  {
-                                    backgroundColor: pressed
-                                      ? colorWithOpacity(
-                                          m3.colorScheme.onSurface,
-                                          m3.stateLayerOpacity.pressed,
-                                        )
-                                      : 'transparent',
-                                  },
-                                ]}
-                              />
-                            </View>
-                          )}
-                        </Pressable>
-                      </View>
-                      <Text
-                        style={{
-                          color: m3.colorScheme.onSurfaceVariant,
-                          ...m3.typography.bodyMedium,
-                        }}
-                      >
-                        {farm.crop_variety || farm.crop}
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          marginTop: spacing[1],
-                        }}
-                      >
-                        <UiSymbol
-                          name={
-                            activeSeasonRecord
-                              ? 'calendar.badge.clock'
-                              : 'calendar.badge.exclamationmark'
-                          }
-                          size={12}
-                          color={
-                            activeSeasonRecord
-                              ? m3.colorScheme.onSurfaceVariant
-                              : m3.colorScheme.secondary
-                          }
-                        />
-                        <Text
-                          style={{
-                            marginLeft: spacing[1],
-                            color: activeSeasonRecord
-                              ? m3.colorScheme.onSurfaceVariant
-                              : m3.colorScheme.secondary,
-                            ...m3.typography.labelSmall,
-                          }}
-                        >
-                          {activeSeasonRecord
-                            ? t('farmDetails.seasons.statusActive', {
-                                start: (() => {
-                                  const parsed = parseDbDateToLocalDate(
-                                    activeSeasonRecord.start_date,
-                                  );
-                                  return parsed
-                                    ? formatDate(parsed, {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                      })
-                                    : activeSeasonRecord.start_date;
-                                })(),
-                              })
-                            : t('farmDetails.seasons.statusNone')}
-                        </Text>
-                      </View>
-                      {isGrapeFarm && activeSeasonRecord ? (
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            marginTop: spacing[1],
-                          }}
-                        >
-                          <UiSymbol
-                            name="calendar"
-                            size={12}
-                            color={m3.colorScheme.onSurfaceVariant}
-                          />
-                          <Text
-                            style={{
-                              marginLeft: spacing[1],
-                              color: m3.colorScheme.onSurfaceVariant,
-                              ...m3.typography.labelSmall,
-                              flex: 1,
-                            }}
-                          >
-                            {t('safeToSpray.targetDate', { defaultValue: 'Target harvest date' })}:{' '}
-                            {(() => {
-                              const raw = activeSeasonRecord.target_harvest_date;
-                              if (!raw) return '—';
-                              const parsed = parseDbDateToLocalDate(raw);
-                              return parsed ? formatDdMmmYyyy(parsed, i18n.language) : raw;
-                            })()}
-                          </Text>
-                          <Pressable
-                            onPress={openActiveSeasonTargetEditor}
-                            style={{
-                              borderRadius: borderRadius.full,
-                              paddingHorizontal: spacing[2],
-                              paddingVertical: 2,
-                              backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
-                            }}
-                            accessibilityRole="button"
-                            disabled={isSavingActiveSeasonTargetDate}
-                          >
-                            <Text
-                              style={{
-                                color: m3.colorScheme.primary,
-                                ...m3.typography.labelSmall,
-                                fontWeight: fontWeight.semibold,
-                              }}
-                            >
-                              {t('common.edit', { defaultValue: 'Edit' })}
-                            </Text>
-                          </Pressable>
-                          {activeSeasonRecord.target_harvest_date ? (
-                            <Pressable
-                              onPress={clearActiveSeasonTargetHarvestDate}
-                              style={{
-                                marginLeft: spacing[1],
-                                borderRadius: borderRadius.full,
-                                paddingHorizontal: spacing[2],
-                                paddingVertical: 2,
-                                borderWidth: 1,
-                                borderColor: m3.colorScheme.outlineVariant,
-                              }}
-                              accessibilityRole="button"
-                              disabled={isSavingActiveSeasonTargetDate}
-                            >
-                              <Text
-                                style={{
-                                  color: m3.colorScheme.onSurfaceVariant,
-                                  ...m3.typography.labelSmall,
-                                  fontWeight: fontWeight.semibold,
-                                }}
-                              >
-                                {t('common.clear', { defaultValue: 'Clear' })}
-                              </Text>
-                            </Pressable>
-                          ) : null}
-                        </View>
-                      ) : null}
-                      {needsSeasonReview ? (
-                        <View
-                          style={{
-                            marginTop: spacing[1],
-                            alignSelf: 'flex-start',
-                            backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.14),
-                            borderRadius: borderRadius.full,
-                            paddingHorizontal: spacing[2],
-                            paddingVertical: 2,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: m3.colorScheme.error,
-                              ...m3.typography.labelSmall,
-                              fontWeight: fontWeight.bold,
-                            }}
-                          >
-                            {t('farmDetails.seasons.reviewRequiredBadge')}
-                          </Text>
-                        </View>
-                      ) : null}
-                    </View>
-                  </View>
-
-                  {isGrapeFarm && earliestSafeHarvest?.earliestDate ? (
-                    <View
-                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
-                    >
-                      <UiSymbol
-                        name="shield.checkered"
-                        size={16}
-                        color={colorWithOpacity(m3.colorScheme.primary, 0.8)}
-                      />
-                      <Text
-                        style={{
-                          color: m3.colorScheme.onSurfaceVariant,
-                          ...m3.typography.bodyMedium,
-                          marginLeft: spacing[1],
-                        }}
-                      >
-                        {t('farmDetails.safeHarvest.inlineDate', {
-                          date: earliestSafeHarvestDateLabel,
-                          defaultValue: 'Safe harvest date: {{date}}',
-                        })}
-                      </Text>
-                    </View>
-                  ) : null}
-
-                  {!isGrapeFarm &&
-                  ((sprayRecords?.length ?? 0) > 0 || activeSeasonRecord != null) ? (
-                    <View
-                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
-                    >
-                      <UiSymbol
-                        name="info.circle"
-                        size={14}
-                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                      />
-                      <Text
-                        style={{
-                          color: m3.colorScheme.onSurfaceVariant,
-                          ...m3.typography.labelSmall,
-                          marginLeft: spacing[1],
-                        }}
-                      >
-                        {t('farmDetails.safeHarvest.grapeOnlyNote', {
-                          defaultValue:
-                            'PHI safe-harvest checks are currently available for grape farms only.',
-                        })}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              </View>
-
-              {/* Weather info */}
-              {weather && (
-                <View
+                <UiSymbol
+                  name={
+                    activeSeasonRecord ? 'calendar.badge.clock' : 'calendar.badge.exclamationmark'
+                  }
+                  size={12}
+                  color={colorWithOpacity('#ffffff', 0.65)}
+                />
+                <Text
                   style={{
-                    marginTop: spacing[4],
-                    paddingTop: spacing[4],
-                    borderTopWidth: 1,
-                    borderTopColor: m3.colorScheme.outlineVariant,
+                    marginLeft: spacing[1],
+                    color: activeSeasonRecord ? colorWithOpacity('#ffffff', 0.65) : colors.warning,
+                    fontSize: 12,
                   }}
                 >
+                  {activeSeasonRecord
+                    ? t('farmDetails.seasons.statusActive', {
+                        start: (() => {
+                          const parsed = parseDbDateToLocalDate(activeSeasonRecord.start_date);
+                          return parsed
+                            ? formatDate(parsed, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })
+                            : activeSeasonRecord.start_date;
+                        })(),
+                      })
+                    : t('farmDetails.seasons.statusNone')}
+                </Text>
+                {daysSincePruning !== null && (
                   <View
                     style={{
+                      marginLeft: spacing[2],
                       flexDirection: 'row',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: 2,
+                      borderRadius: borderRadius.full,
+                      backgroundColor: colorWithOpacity(colors.warning, 0.25),
                     }}
                   >
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <View
-                        style={{
-                          width: 32,
-                          height: 32,
-                          backgroundColor: m3.colorScheme.primaryContainer,
-                          borderRadius: m3.shape.cornerSmall,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <UiSymbol name="partly-sunny" size={16} color={m3.colorScheme.primary} />
-                      </View>
-                      <View style={{ marginLeft: spacing[2] }}>
-                        <Text
-                          style={{
-                            color: m3.colorScheme.onSurfaceVariant,
-                            ...m3.typography.labelSmall,
-                          }}
-                        >
-                          {t('farmDetails.weather.current')}
-                        </Text>
-                        <Text
-                          style={{
-                            color: m3.colorScheme.onSurface,
-                            ...m3.typography.labelLarge,
-                            fontWeight: fontWeight.semibold,
-                          }}
-                        >
-                          {weather.current.condition}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3] }}>
-                      <View style={{ alignItems: 'center' }}>
-                        <Text
-                          style={{
-                            color: m3.colorScheme.onSurface,
-                            fontSize: fontSize.lg,
-                            fontWeight: fontWeight.bold,
-                          }}
-                        >
-                          {weather.current.temperature}°
-                        </Text>
-                        <Text
-                          style={{
-                            color: m3.colorScheme.onSurfaceVariant,
-                            ...m3.typography.labelSmall,
-                          }}
-                        >
-                          {t('farmDetails.weather.temperature')}
-                        </Text>
-                      </View>
-                      <View
-                        style={{
-                          width: 1,
-                          height: 32,
-                          backgroundColor: m3.colorScheme.outlineVariant,
-                        }}
-                      />
-                      <View style={{ alignItems: 'center' }}>
-                        <Text
-                          style={{
-                            color: m3.colorScheme.onSurface,
-                            fontSize: fontSize.lg,
-                            fontWeight: fontWeight.bold,
-                          }}
-                        >
-                          {weather.forecast[0]?.et0 ?? 0}
-                        </Text>
-                        <Text
-                          style={{
-                            color: m3.colorScheme.onSurfaceVariant,
-                            ...m3.typography.labelSmall,
-                          }}
-                        >
-                          {t('farmDetails.weather.et0Mm')}
-                        </Text>
-                      </View>
-                    </View>
+                    <UiSymbol
+                      name="cut-outline"
+                      size={10}
+                      color={colorWithOpacity('#ffffff', 0.9)}
+                    />
+                    <Text
+                      style={{
+                        color: colorWithOpacity('#ffffff', 0.9),
+                        fontSize: 11,
+                        fontWeight: fontWeight.bold,
+                        marginLeft: spacing[1],
+                      }}
+                    >
+                      {daysSincePruning}d
+                    </Text>
                   </View>
+                )}
+                {isBetweenSeasons && (
+                  <View
+                    style={{
+                      marginLeft: spacing[2],
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: 2,
+                      borderRadius: borderRadius.full,
+                      backgroundColor: colorWithOpacity('#ffffff', 0.14),
+                    }}
+                  >
+                    <UiSymbol name="calendar" size={10} color={colorWithOpacity('#ffffff', 0.85)} />
+                    <Text
+                      style={{
+                        color: colorWithOpacity('#ffffff', 0.85),
+                        fontSize: 11,
+                        fontWeight: fontWeight.bold,
+                        marginLeft: spacing[1],
+                      }}
+                    >
+                      {t('farmDetails.seasons.betweenSeasonsBadge')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Target Harvest Date (for grape farms with active season) */}
+              {isGrapeFarm && activeSeasonRecord && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginTop: spacing[2],
+                  }}
+                >
+                  <UiSymbol name="calendar" size={12} color={colorWithOpacity('#ffffff', 0.65)} />
+                  <Text
+                    style={{
+                      marginLeft: spacing[1],
+                      color: colorWithOpacity('#ffffff', 0.65),
+                      fontSize: 12,
+                      flex: 1,
+                    }}
+                  >
+                    {t('farmDetails.header.targetLabel')}{' '}
+                    {(() => {
+                      const raw = activeSeasonRecord.target_harvest_date;
+                      if (!raw) return '—';
+                      const parsed = parseDbDateToLocalDate(raw);
+                      return parsed ? formatDdMmmYyyy(parsed, i18n.language) : raw;
+                    })()}
+                  </Text>
+                  <Pressable
+                    onPress={openActiveSeasonTargetEditor}
+                    style={{
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: 2,
+                      backgroundColor: colorWithOpacity('#ffffff', 0.14),
+                      borderRadius: borderRadius.full,
+                    }}
+                    accessibilityRole="button"
+                    disabled={isSavingActiveSeasonTargetDate}
+                  >
+                    <Text
+                      style={{
+                        color: colorWithOpacity('#ffffff', 0.85),
+                        fontSize: 11,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {t('common.edit')}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {/* Safe Harvest Date */}
+              {isGrapeFarm && earliestSafeHarvest?.earliestDate ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}>
+                  <UiSymbol
+                    name="shield-checkered"
+                    size={14}
+                    color={colorWithOpacity('#ffffff', 0.7)}
+                  />
+                  <Text
+                    style={{
+                      color: colorWithOpacity('#ffffff', 0.7),
+                      fontSize: 12,
+                      marginLeft: spacing[1],
+                    }}
+                  >
+                    {t('farmDetails.safeHarvest.inlineTitle')} {earliestSafeHarvestDateLabel}
+                  </Text>
+                </View>
+              ) : null}
+
+              {/* Review Required Badge */}
+              {needsSeasonReview ? (
+                <View
+                  style={{
+                    marginTop: spacing[2],
+                    alignSelf: 'flex-start',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.25),
+                    borderRadius: borderRadius.full,
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: 2,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colorWithOpacity('#ffffff', 0.9),
+                      fontSize: 11,
+                      fontWeight: fontWeight.bold,
+                    }}
+                  >
+                    {t('farmDetails.seasons.reviewRequiredBadge')}
+                  </Text>
+                </View>
+              ) : null}
+
+              {/* Urgent Tasks Risk Block */}
+              {urgentTasks.length > 0 && (
+                <View
+                  style={{
+                    marginTop: spacing[2],
+                    backgroundColor: 'rgba(0,0,0,0.15)',
+                    borderRadius: 16,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
+                  <UiSymbol
+                    name="exclamationmark.triangle.fill"
+                    size={14}
+                    color={colorWithOpacity('#ffffff', 0.9)}
+                  />
+                  <Text
+                    style={{
+                      marginLeft: spacing[2],
+                      color: colorWithOpacity('#ffffff', 0.9),
+                      fontSize: 12,
+                      fontWeight: fontWeight.medium,
+                      flex: 1,
+                    }}
+                  >
+                    {t('farmDetails.riskBlock.urgentTasks', { count: urgentTasks.length })}
+                  </Text>
+                  <Pressable
+                    onPress={() => setSelectedTab('tasks')}
+                    style={{
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: 2,
+                      backgroundColor: colorWithOpacity('#ffffff', 0.2),
+                      borderRadius: borderRadius.full,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: colorWithOpacity('#ffffff', 0.95),
+                        fontSize: 11,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {t('common.view')}
+                    </Text>
+                  </Pressable>
                 </View>
               )}
             </View>
+
+            {/* Season Metrics Row */}
+            <View style={{ flexDirection: 'row', gap: spacing[2], paddingBottom: spacing[4] }}>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: colorWithOpacity('#ffffff', 0.08),
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity('#ffffff', 0.12),
+                  borderRadius: borderRadius.md,
+                  padding: spacing[3],
+                }}
+              >
+                <Text
+                  style={{
+                    color: '#ffffff',
+                    fontSize: 20,
+                    fontWeight: fontWeight.bold,
+                    lineHeight: 24,
+                  }}
+                >
+                  {totalRecords}
+                </Text>
+                <Text
+                  style={{
+                    color: colorWithOpacity('#ffffff', 0.6),
+                    fontSize: 12,
+                    lineHeight: 16,
+                    marginTop: 2,
+                  }}
+                >
+                  {t('farmDetails.stats.logEntriesTitle')}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: colorWithOpacity('#ffffff', 0.08),
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity('#ffffff', 0.12),
+                  borderRadius: borderRadius.md,
+                  padding: spacing[3],
+                }}
+              >
+                <Text
+                  style={{
+                    color: '#ffffff',
+                    fontSize: 20,
+                    fontWeight: fontWeight.bold,
+                    lineHeight: 24,
+                  }}
+                >
+                  {farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: fontWeight.medium,
+                      color: colorWithOpacity('#ffffff', 0.7),
+                    }}
+                  >
+                    mm
+                  </Text>
+                </Text>
+                <Text
+                  style={{
+                    color: colorWithOpacity('#ffffff', 0.6),
+                    fontSize: 12,
+                    lineHeight: 16,
+                    marginTop: 2,
+                  }}
+                >
+                  {t('farmDetails.stats.soilWaterTitle')}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: colorWithOpacity('#ffffff', 0.08),
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity('#ffffff', 0.12),
+                  borderRadius: borderRadius.md,
+                  padding: spacing[3],
+                }}
+              >
+                <Text
+                  style={{
+                    color: '#ffffff',
+                    fontSize: 20,
+                    fontWeight: fontWeight.bold,
+                    lineHeight: 24,
+                  }}
+                >
+                  {daysSincePruning !== null ? daysSincePruning : '--'}
+                </Text>
+                <Text
+                  style={{
+                    color: colorWithOpacity('#ffffff', 0.6),
+                    fontSize: 12,
+                    lineHeight: 16,
+                    marginTop: 2,
+                  }}
+                >
+                  {t('farmDetails.pruning.daysPruned')}
+                </Text>
+              </View>
+            </View>
+
+            {/* Weather Strip - Horizontal with dividers */}
+            {weather && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderTopWidth: 1,
+                  borderTopColor: colorWithOpacity('#ffffff', 0.12),
+                  paddingTop: spacing[3],
+                  paddingBottom: spacing[4],
+                }}
+              >
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingRight: spacing[3] }}
+                >
+                  <UiSymbol name="calendar" size={14} color={colorWithOpacity('#ffffff', 0.65)} />
+                  <Text
+                    style={{
+                      marginLeft: spacing[1],
+                      color: colorWithOpacity('#ffffff', 0.75),
+                      fontSize: 13,
+                    }}
+                  >
+                    Since{' '}
+                    {(() => {
+                      if (farm?.date_of_pruning) {
+                        const parsed = parseDbDateToLocalDate(farm.date_of_pruning);
+                        return parsed ? formatDate(parsed, { month: 'short', day: 'numeric' }) : '';
+                      }
+                      return activeSeasonRecord
+                        ? formatDate(
+                            parseDbDateToLocalDate(activeSeasonRecord.start_date) ?? new Date(),
+                            { month: 'short', day: 'numeric' },
+                          )
+                        : '—';
+                    })()}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    width: 1,
+                    height: 16,
+                    backgroundColor: colorWithOpacity('#ffffff', 0.18),
+                  }}
+                />
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: spacing[3],
+                  }}
+                >
+                  <UiSymbol
+                    name="partly-sunny"
+                    size={14}
+                    color={colorWithOpacity('#ffffff', 0.65)}
+                  />
+                  <Text
+                    style={{
+                      marginLeft: spacing[1],
+                      color: colorWithOpacity('#ffffff', 0.75),
+                      fontSize: 13,
+                    }}
+                  >
+                    {weather.current.condition}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    width: 1,
+                    height: 16,
+                    backgroundColor: colorWithOpacity('#ffffff', 0.18),
+                  }}
+                />
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: spacing[3] }}
+                >
+                  <UiSymbol
+                    name="thermometer"
+                    size={14}
+                    color={colorWithOpacity('#ffffff', 0.65)}
+                  />
+                  <Text
+                    style={{
+                      marginLeft: spacing[1],
+                      color: colorWithOpacity('#ffffff', 0.75),
+                      fontSize: 13,
+                    }}
+                  >
+                    {weather.current.temperature}°C
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
 
-          {/* Stats Grid - iOS Style */}
-          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
+          {/* Stats Grid - 2-column with 40x40 icon circles */}
+          <View style={{ paddingHorizontal: spacing[5], marginTop: spacing[6] }}>
             <View style={{ flexDirection: 'row', gap: spacing[3] }}>
-              <View style={{ flex: 1 }}>
-                <StatsCard
-                  title={t('farmDetails.stats.logEntriesTitle')}
-                  value={totalRecords.toString()}
-                  icon="document-text"
-                  iconColor={m3.colorScheme.primary}
-                  subtitle={t('farmDetails.stats.recordsSubtitle')}
-                  onPress={() => {
-                    if (!farmIdParam) return;
-                    router.push(`/logs?farmId=${encodeURIComponent(farmIdParam)}`);
+              {/* Log Entries Card */}
+              <Pressable
+                style={({ pressed: _pressed }) => ({
+                  flex: 1,
+                  backgroundColor: colors.surface[100],
+                  borderWidth: 1,
+                  borderColor: colors.surface[300],
+                  borderRadius: borderRadius.md,
+                  padding: spacing[4],
+                })}
+                onPress={() => {
+                  if (!farmIdParam) return;
+                  router.push(`/logs?farmId=${encodeURIComponent(farmIdParam)}`);
+                }}
+                accessibilityRole="button"
+              >
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: spacing[2],
                   }}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <StatsCard
-                  title={t('farmDetails.stats.soilWaterTitle')}
-                  value={farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
-                  icon="water"
-                  iconColor={colors.irrigation[500]}
-                  subtitle={waterUsageCaption}
-                  onPress={() => {
-                    if (!farm?.id) return;
-                    router.push({
-                      pathname: '/water-level',
-                      params: { farmId: farm.id.toString() },
-                    });
+                >
+                  <UiSymbol name="document-text" size={20} color={m3.colorScheme.primary} />
+                </View>
+                <Text
+                  style={{
+                    color: colors.surface[900],
+                    fontSize: 20,
+                    fontWeight: fontWeight.bold,
+                    lineHeight: 26,
                   }}
-                />
-              </View>
+                >
+                  {totalRecords}
+                </Text>
+                <Text
+                  style={{
+                    color: colors.surface[500],
+                    fontSize: 12,
+                    lineHeight: 16,
+                  }}
+                >
+                  {t('farmDetails.stats.logEntriesTitle')}
+                </Text>
+                <Text
+                  style={{
+                    color: colors.surface[400],
+                    fontSize: 11,
+                    lineHeight: 14,
+                    marginTop: 2,
+                  }}
+                >
+                  {t('farmDetails.stats.recordsSubtitle')}
+                </Text>
+              </Pressable>
+
+              {/* Soil Water Card */}
+              <Pressable
+                style={({ pressed: _pressed }) => ({
+                  flex: 1,
+                  backgroundColor: colors.surface[100],
+                  borderWidth: 1,
+                  borderColor: colors.surface[300],
+                  borderRadius: borderRadius.md,
+                  padding: spacing[4],
+                })}
+                onPress={() => {
+                  if (!farm?.id) return;
+                  router.push({
+                    pathname: '/water-level',
+                    params: { farmId: farm.id.toString() },
+                  });
+                }}
+                accessibilityRole="button"
+              >
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: colorWithOpacity(colors.irrigation[500], 0.12),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: spacing[2],
+                  }}
+                >
+                  <UiSymbol name="water" size={20} color={colors.irrigation[500]} />
+                </View>
+                <Text
+                  style={{
+                    color: colors.surface[900],
+                    fontSize: 20,
+                    fontWeight: fontWeight.bold,
+                    lineHeight: 26,
+                  }}
+                >
+                  {farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: fontWeight.medium,
+                      color: colors.surface[500],
+                    }}
+                  >
+                    mm
+                  </Text>
+                </Text>
+                <Text
+                  style={{
+                    color: colors.surface[500],
+                    fontSize: 12,
+                    lineHeight: 16,
+                  }}
+                >
+                  {t('farmDetails.stats.soilWaterTitle')}
+                </Text>
+                <Text
+                  style={{
+                    color: colors.surface[400],
+                    fontSize: 11,
+                    lineHeight: 14,
+                    marginTop: 2,
+                  }}
+                >
+                  {waterUsageCaption}
+                </Text>
+              </Pressable>
             </View>
           </View>
 
@@ -1994,10 +2229,10 @@ export default function FarmDetailScreen() {
                       >
                         <View
                           style={{
-                            borderRadius: borderRadius.full,
+                            borderRadius: 20,
                             alignItems: 'center',
                             justifyContent: 'center',
-                            marginBottom: spacing[2],
+                            marginBottom: spacing[1] + 1,
                             width: 40,
                             height: 40,
                             backgroundColor: colorWithOpacity(action.color, 0.12),
@@ -2007,11 +2242,11 @@ export default function FarmDetailScreen() {
                         </View>
                         <Text
                           style={{
-                            color: m3.colorScheme.onSurfaceVariant,
-                            ...m3.typography.labelSmall,
+                            color: colors.surface[500],
+                            fontSize: 11,
                             fontWeight: fontWeight.medium,
                             textAlign: 'center',
-                            lineHeight: 16,
+                            lineHeight: 14,
                           }}
                         >
                           {t(action.titleKey)}
@@ -2038,16 +2273,16 @@ export default function FarmDetailScreen() {
             </View>
           </View>
 
-          {/* Tabs */}
-          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
+          {/* Tabs - Segmented Control */}
+          <View style={{ paddingHorizontal: spacing[5], marginTop: spacing[6] }}>
             <View
               style={{
                 flexDirection: 'row',
-                backgroundColor: m3.surface.surfaceContainerHigh,
-                borderRadius: m3.shape.cornerLarge,
+                backgroundColor: colors.surface[200],
+                borderRadius: borderRadius.sm,
                 borderWidth: 1,
-                borderColor: m3.colorScheme.outlineVariant,
-                overflow: 'hidden',
+                borderColor: colors.surface[300],
+                padding: 3,
               }}
             >
               {(['activities', 'tasks'] as const).map((tab) => (
@@ -2071,17 +2306,25 @@ export default function FarmDetailScreen() {
                         style={{
                           alignItems: 'center',
                           justifyContent: 'center',
-                          paddingVertical: spacing[3],
+                          paddingVertical: spacing[2] + 1,
                           paddingHorizontal: spacing[2],
                           backgroundColor: selected
-                            ? m3.colorScheme.primaryContainer
+                            ? colorWithOpacity(m3.colorScheme.primary, 0.12)
                             : 'transparent',
+                          borderRadius:
+                            isFirst && isLast
+                              ? borderRadius.sm
+                              : isFirst
+                                ? borderRadius.sm - 1
+                                : isLast
+                                  ? borderRadius.sm - 1
+                                  : 0,
                           ...(selected
                             ? {
-                                borderTopLeftRadius: isFirst ? m3.shape.cornerLarge : 0,
-                                borderBottomLeftRadius: isFirst ? m3.shape.cornerLarge : 0,
-                                borderTopRightRadius: isLast ? m3.shape.cornerLarge : 0,
-                                borderBottomRightRadius: isLast ? m3.shape.cornerLarge : 0,
+                                borderTopLeftRadius: isFirst ? borderRadius.sm - 1 : 0,
+                                borderBottomLeftRadius: isFirst ? borderRadius.sm - 1 : 0,
+                                borderTopRightRadius: isLast ? borderRadius.sm - 1 : 0,
+                                borderBottomRightRadius: isLast ? borderRadius.sm - 1 : 0,
                                 overflow: 'hidden',
                               }
                             : null),
@@ -2093,22 +2336,11 @@ export default function FarmDetailScreen() {
                           style={{
                             width: '100%',
                             flexShrink: 1,
-                            ...m3.typography.labelLarge,
-                            fontWeight: fontWeight.semibold,
-                            color: selected
-                              ? m3.colorScheme.onPrimaryContainer
-                              : m3.colorScheme.onSurfaceVariant,
+                            fontSize: 14,
+                            fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
+                            color: selected ? colors.surface[900] : colors.surface[500],
                             textAlign: 'center',
                             maxWidth: '100%',
-                            ...(isAndroid
-                              ? {
-                                  includeFontPadding: true,
-                                  // Avoid occasional bottom clipping for Marathi glyphs in tight tab rows.
-                                  paddingBottom: 2,
-                                  // Prevent occasional right-edge glyph clipping due to pixel rounding.
-                                  paddingRight: 3,
-                                }
-                              : null),
                           }}
                         >
                           {tab === 'activities'

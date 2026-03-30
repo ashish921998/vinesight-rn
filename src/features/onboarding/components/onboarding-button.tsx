@@ -7,7 +7,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { triggerHapticMedium } from '@/utils/haptics';
 
@@ -19,8 +19,6 @@ interface OnboardingButtonProps {
 }
 
 const AnimatedView = Animated.createAnimatedComponent(View);
-
-const PRIMARY_COLOR = '#408059';
 
 export function OnboardingButton({
   label,
@@ -64,7 +62,7 @@ export function OnboardingButton({
         style={[
           animatedStyle,
           isPrimary ? styles.primaryButton : styles.ghostButton,
-          isPrimary && shadows.md,
+          isPrimary && { backgroundColor: m3.colorScheme.primary },
           disabled && styles.disabled,
         ]}
       >
@@ -83,8 +81,9 @@ export function OnboardingButton({
 
 const styles = StyleSheet.create({
   primaryButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: borderRadius.xl,
+    width: '100%',
+    height: 48,
+    borderRadius: borderRadius.md,
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[6],
     alignItems: 'center',
@@ -92,14 +91,14 @@ const styles = StyleSheet.create({
   },
   ghostButton: {
     backgroundColor: 'transparent',
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.md,
     paddingVertical: spacing[3],
     paddingHorizontal: spacing[6],
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
   },
   primaryLabel: {

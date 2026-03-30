@@ -159,19 +159,22 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
   const hasFarm = farms.length > 0;
   const primaryFarm = farms[0];
 
-  const renderCropVisual = useCallback((crop: KnownCrop, size: number, selected = false) => {
-    const visual = getCropVisual(crop);
-    if ('iconName' in visual && visual.iconName) {
-      return <CropIcon name={visual.iconName} size={size} muted={!selected} />;
-    }
-    return (
-      <SymbolIcon
-        name={visual.symbolName ?? 'leaf.fill'}
-        size={size}
-        color={selected ? '#408059' : '#7B8A7F'}
-      />
-    );
-  }, []);
+  const renderCropVisual = useCallback(
+    (crop: KnownCrop, size: number, selected = false) => {
+      const visual = getCropVisual(crop);
+      if ('iconName' in visual && visual.iconName) {
+        return <CropIcon name={visual.iconName} size={size} muted={!selected} />;
+      }
+      return (
+        <SymbolIcon
+          name={visual.symbolName ?? 'leaf.fill'}
+          size={size}
+          color={selected ? m3.colorScheme.primary : '#7B8A7F'}
+        />
+      );
+    },
+    [m3],
+  );
 
   const getVarietyLabel = useCallback((value?: string) => value ?? '', []);
 

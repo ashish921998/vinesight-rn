@@ -34,6 +34,7 @@ export const hi = {
     clearAll: 'सभी साफ़ करें',
     today: 'आज',
     yesterday: 'कल',
+    view: 'देखें',
     units: {
       hours: 'घंटे',
       days: 'दिन',
@@ -156,9 +157,13 @@ export const hi = {
     header: {
       areaAcres: '{{value}} एकड़',
       areaAcresUnknown: '— एकड़',
+      targetLabel: 'लक्ष्य:',
+      pickNewDate: 'नई तिथि चुनें',
+      clearDate: 'तिथि हटाएं',
     },
     pruning: {
       daysShort: '{{count}}दि',
+      daysPruned: 'छंटाई के दिन',
     },
     weather: {
       current: 'वर्तमान मौसम',
@@ -176,10 +181,14 @@ export const hi = {
       noData: 'अभी तक कोई PHI आधारित स्प्रे रिकॉर्ड नहीं है।',
       safeDate: '{{date}} से सुरक्षित',
       inlineDate: 'सुरक्षित कटाई तिथि: {{date}}',
+      inlineTitle: 'सुरक्षित कटाई:',
       blockedBy: '{{reason}} के कारण अवरुद्ध',
       ctaSetTarget: 'लक्ष्य तिथि सेट करें',
       ctaOpenChecker: 'Safe-to-spray चेकर खोलें',
       saveTarget: 'लक्ष्य तिथि सहेजें',
+    },
+    riskBlock: {
+      urgentTasks: '{{count}} अत्यावश्यक कार्य',
     },
     water: {
       noIrrigationLoggedYet: 'अभी तक कोई सिंचाई लॉग नहीं की गई',
@@ -565,6 +574,11 @@ export const hi = {
       totalFarms: 'कुल खेत',
       totalArea: 'कुल क्षेत्रफल',
     },
+    summary: {
+      count_one: '{{count}} खेत',
+      count_other: '{{count}} खेत',
+      area: '{{value}} एकड़ कुल',
+    },
   },
 
   entryForm: {
@@ -773,12 +787,17 @@ export const hi = {
       sprayApplications: 'छिड़काव अनुप्रयोग',
       totalHarvest: 'कुल कटाई',
       harvestValue: 'कटाई मूल्य',
+      totalExpenses: 'कुल खर्च',
+      harvestYield: 'उपज',
       performanceScore: 'प्रदर्शन स्कोर',
+      activitiesLogged: 'गतिविधियां लॉग की गईं',
+      entries: 'प्रविष्टियां',
     },
     sections: {
       overview: 'अवलोकन',
       trends: 'रुझान',
       comparisons: 'तुलना',
+      categoryBreakdown: 'श्रेणी विभाजन',
     },
     timeRanges: {
       last7Days: 'पिछले 7 दिन',
@@ -801,6 +820,9 @@ export const hi = {
       harvest: 'कटाई',
       expense: 'खर्च',
       efficiency: 'दक्षता',
+    },
+    units: {
+      tons: 'टन',
     },
   },
 
@@ -1882,6 +1904,13 @@ export const hi = {
       evening: 'शुभ संध्या, {{name}}',
       night: 'शुभ रात्रि, {{name}}',
     },
+    hero: {
+      today: 'आज',
+      allClear: 'सब ठीक',
+      attentionNeeded: 'ध्यान देने की जरूरत',
+      alertCount_one: '{{count}} अलर्ट',
+      alertCount_other: '{{count}} अलर्ट',
+    },
     stats: {
       farms: 'खेत',
       activeWorkers: 'सक्रिय श्रमिक',
@@ -1975,6 +2004,12 @@ export const hi = {
       addTask: 'कार्य जोड़ें',
     },
     logNow: 'अभी लॉग करें',
+    sections: {
+      dueToday: 'आज देय',
+      thisWeek: 'इस सप्ताह',
+      overdue: 'अतिदेय',
+      completed: 'पूर्ण',
+    },
     dueDate: {
       none: 'कोई नियत तारीख नहीं',
       today: 'आज',
@@ -2256,15 +2291,21 @@ export const hi = {
       lowStockAlerts: 'कम स्टॉक अलर्ट',
       itemCount_one: '{{count}} वस्तु',
       itemCount_other: '{{count}} वस्तुएं',
+      itemsCount_one: '{{count}} वस्तु',
+      itemsCount_other: '{{count}} वस्तुएं',
+      lowStockCount_one: '{{count}} कम स्टॉक',
+      lowStockCount_other: '{{count}} कम स्टॉक',
       quantity: 'मात्रा',
       unitPrice: 'इकाई मूल्य',
       totalValue: 'कुल मूल्य',
+      updatedDate: 'अपडेट {{date}}',
     },
     reorderAt: 'पुनः ऑर्डर करें: {{quantity}} {{unit}}',
     filters: {
       all: 'सभी ({{count}})',
       fertilizer: 'उर्वरक ({{count}})',
       spray: 'छिड़काव ({{count}})',
+      equipment: 'उपकरण ({{count}})',
     },
     search: {
       placeholder: 'इन्वेंटरी खोजें...',
@@ -2276,6 +2317,7 @@ export const hi = {
     itemTypes: {
       fertilizer: 'उर्वरक',
       spray: 'छिड़काव',
+      equipment: 'उपकरण',
     },
     empty: {
       title: 'गोदाम में कोई वस्तु नहीं',
