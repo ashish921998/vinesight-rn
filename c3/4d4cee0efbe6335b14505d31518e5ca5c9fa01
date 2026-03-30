@@ -1,0 +1,27 @@
+app/calculator/mad.tsx
+  ee13fb5a523007e6 346,351,364,436,443
+app/calculator/nutrients.tsx
+  ee13fb5a523007e6 280-282,287-289,294-296,300-341,473,479,493-503
+app/calculator/system-discharge.tsx
+  ee13fb5a523007e6 780,807-820
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "c34d4cee0efbe6335b14505d31518e5ca5c9fa01",
+  "prompts": {
+    "ee13fb5a523007e6": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7e8a4c8b-adbc-436c-bcf1-bcadf693ee86",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 92,
+      "total_deletions": 19,
+      "accepted_lines": 86,
+      "overriden_lines": 0
+    }
+  }
+}
