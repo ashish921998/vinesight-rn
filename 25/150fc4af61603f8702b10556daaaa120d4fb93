@@ -1,0 +1,29 @@
+app/fertilizer-plans.tsx
+  6266ca447d9a8701 2
+app/reports.tsx
+  6266ca447d9a8701 510
+src/components/screens/warehouse-item-form.tsx
+  6266ca447d9a8701 70-73,783-796
+app/warehouse.tsx
+  6266ca447d9a8701 21,587,615
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "25150fc4af61603f8702b10556daaaa120d4fb93",
+  "prompts": {
+    "6266ca447d9a8701": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "e8b21f2f-2bb4-4bbb-b339-a372e4055ce8",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 31,
+      "total_deletions": 94,
+      "accepted_lines": 31,
+      "overriden_lines": 0
+    }
+  }
+}
