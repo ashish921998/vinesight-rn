@@ -1,0 +1,112 @@
+{
+  "groupId": "lab-soil-spray",
+  "testedAt": "2026-03-30T03:11:31.368590+00:00",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "milestone": "data-screens",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "evidenceDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/lab-soil-spray",
+    "assignedAssertions": [
+      "VAL-LABTESTS-001",
+      "VAL-LABTESTS-002",
+      "VAL-SOIL-001",
+      "VAL-SOIL-002",
+      "VAL-SPRAY-001",
+      "VAL-SPRAY-002"
+    ]
+  },
+  "toolsUsed": ["Read", "Grep", "Glob", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-LABTESTS-001",
+      "status": "pass",
+      "reason": "Lab test cards use a 4px lab-colored left accent, uppercase type labels, tinted card surfaces, and chips with status-colored dots. Theme tokens map soil to #5C6D91 and petiole to #4E7384.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/lab-soil-spray/lab-soil-spray-evidence.md",
+        "references": [
+          "app/lab-tests.tsx:134-141",
+          "app/lab-tests.tsx:167-171",
+          "app/lab-tests.tsx:263-268",
+          "src/styles/theme.ts:120-121"
+        ]
+      }
+    },
+    {
+      "id": "VAL-LABTESTS-002",
+      "status": "pass",
+      "reason": "The Soil/Petiole tab bar uses 2px lab-blue underlines on the active tab, lab-blue active text, and muted stone-5 inactive text instead of filled tab backgrounds.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/lab-soil-spray/lab-soil-spray-evidence.md",
+        "references": [
+          "app/lab-tests.tsx:547-558",
+          "app/lab-tests.tsx:571-582",
+          "src/styles/theme.ts:39",
+          "src/styles/theme.ts:120"
+        ]
+      }
+    },
+    {
+      "id": "VAL-SOIL-001",
+      "status": "pass",
+      "reason": "Soil profiling renders a status badge alongside the current profile hero, a 48px bold moisture value, and a progress bar using #EEE7DD track and #4F7A5A fill tokens.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/lab-soil-spray/lab-soil-spray-evidence.md",
+        "references": [
+          "app/soil-profiling.tsx:136-145",
+          "app/soil-profiling.tsx:177-203",
+          "src/styles/theme.ts:37",
+          "src/styles/theme.ts:89"
+        ]
+      }
+    },
+    {
+      "id": "VAL-SOIL-002",
+      "status": "pass",
+      "reason": "The reading strip renders four top/bottom/right/left columns in order with theme colors #355847/#A56B4F/#D0A14A/#4E7384 and 1px vertical dividers.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/lab-soil-spray/lab-soil-spray-evidence.md",
+        "references": [
+          "src/hooks/use-soil-profiles.ts:102-108",
+          "app/soil-profiling.tsx:215-221",
+          "app/soil-profiling.tsx:223-258",
+          "src/styles/theme.ts:66-89"
+        ]
+      }
+    },
+    {
+      "id": "VAL-SPRAY-001",
+      "status": "fail",
+      "reason": "Spray catalog cards have the required 3px green strip, PHI info, and border-only shell, but the screen never renders the required type badge or any amber warning banner path.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/lab-soil-spray/lab-soil-spray-evidence.md",
+        "references": [
+          "app/spray-catalog.tsx:115-133",
+          "app/spray-catalog.tsx:139",
+          "app/spray-catalog.tsx:155-203",
+          "app/spray-catalog.tsx:29-55",
+          "src/styles/theme.ts:94-95"
+        ]
+      }
+    },
+    {
+      "id": "VAL-SPRAY-002",
+      "status": "pass",
+      "reason": "The search control is a bordered 12px card-style input, and active filter chips use spray green (#6C7C46) via sprayColor rather than primary green.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/lab-soil-spray/lab-soil-spray-evidence.md",
+        "references": [
+          "app/spray-catalog.tsx:75-83",
+          "app/spray-catalog.tsx:263-290",
+          "src/styles/theme.ts:36",
+          "src/styles/theme.ts:95",
+          "src/styles/theme.ts:246"
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Reviewed 6 assigned assertions by read-only code review: 5 passed and 1 failed. VAL-SPRAY-001 fails because the spray catalog cards omit the required rendered type badge and warning banner path."
+}

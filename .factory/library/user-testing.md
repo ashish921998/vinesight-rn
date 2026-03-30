@@ -35,3 +35,11 @@ All wireframes at: `~/.gstack/projects/ashish921998-vinesight-rn/designs/dashboa
 - Record evidence with concrete file paths and line references when possible.
 - Limit scope to the assigned assertions and their direct evidence files; theme-foundation assertions are expected to resolve primarily in `src/styles/theme.ts` and shared theme consumers.
 - Write only the assigned flow report under `.factory/validation/<milestone>/user-testing/flows/` and evidence notes under the provided mission evidence directory.
+
+## Flow Validator Guidance: cli
+
+- Isolation boundary: validation-only commands in the current repository checkout; do not edit source files or install dependencies during flow validation.
+- Use the repo-standard commands from `.factory/services.yaml` / `README.md`: `npm run typecheck`, `npm run lint`, `npm test -- --passWithNoTests`, and `npm run web:smoke`.
+- Run CLI assertions in a single validator to avoid duplicated heavy work and cross-talk in terminal output.
+- If `npm run web:smoke` fails, confirm whether the failure matches the known `react-native-maps` web incompatibility before marking the assertion failed.
+- Write only the assigned flow report under `.factory/validation/<milestone>/user-testing/flows/` and evidence notes under the provided mission evidence directory.

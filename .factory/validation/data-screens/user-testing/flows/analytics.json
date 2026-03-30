@@ -1,0 +1,96 @@
+{
+  "groupId": "analytics",
+  "testedAt": "2026-03-30T03:09:40Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185"
+  },
+  "toolsUsed": ["Read", "Grep", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-ANALYTICS-001",
+      "status": "pass",
+      "reason": "The analytics screen implements a horizontal row of pill-shaped time filters with a primary active state, white active text, and a bordered warm-card inactive state.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/analytics/analytics-evidence.md",
+        "references": [
+          {
+            "file": "app/analytics.tsx",
+            "lines": "128-153",
+            "details": "The time-range selector is horizontal and each pill uses borderRadius 999, primary active fill, white active text, and bordered inactive styling."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "35-38",
+            "details": "surface[100] and surface[300] resolve to the warm card (#F7F3ED) and border (#D9D0C4) tokens used by inactive pills."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "72,365-371",
+            "details": "The M3 primary role used by active pills resolves to the Cellar Ledger primary token #355847."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-ANALYTICS-002",
+      "status": "fail",
+      "reason": "The horizontal summary stat cards have the required warm card styling and 22px/700 values, but they do not render the required per-card trend arrows; trend icons appear only later in the separate Performance Score section.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/analytics/analytics-evidence.md",
+        "references": [
+          {
+            "file": "app/analytics.tsx",
+            "lines": "163-241",
+            "details": "The summary stat-card row is horizontal and uses colors.surface[100], a 1px border, 12px radius, 12px labels, and 22px/700 values."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "35-38",
+            "details": "The card row is using the required warm card and border tokens."
+          },
+          {
+            "file": "app/analytics.tsx",
+            "lines": "389-478",
+            "details": "Trend icons are rendered only in the later Performance Score block, confirming the summary stat cards themselves omit the required trend arrows."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-ANALYTICS-003",
+      "status": "pass",
+      "reason": "The category breakdown renders row markers, names, counts, and progress bars with the required warm track color and category-color fills.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/analytics/analytics-evidence.md",
+        "references": [
+          {
+            "file": "app/analytics.tsx",
+            "lines": "23-30",
+            "details": "CATEGORY_COLORS defines the Cellar Ledger palette used by the breakdown rows."
+          },
+          {
+            "file": "app/analytics.tsx",
+            "lines": "244-379",
+            "details": "The category breakdown card renders the required per-row marker, label, count, and progress bar structure."
+          },
+          {
+            "file": "app/analytics.tsx",
+            "lines": "338-341,369-378",
+            "details": "The marker and fill use cat.color while the progress track uses colors.surface[200]."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "35-37",
+            "details": "surface[200] resolves to #EEE7DD, matching the required progress-track color."
+          }
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Reviewed 3 assigned analytics assertions by read-only code review: 2 passed (VAL-ANALYTICS-001, VAL-ANALYTICS-003) and 1 failed (VAL-ANALYTICS-002, because the horizontal summary stat cards omit the required trend arrows)."
+}

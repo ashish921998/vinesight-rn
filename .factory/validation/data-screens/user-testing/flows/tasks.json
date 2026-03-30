@@ -1,0 +1,117 @@
+{
+  "groupId": "tasks",
+  "testedAt": "2026-03-30T03:10:23Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "milestone": "data-screens",
+    "primaryEvidenceTargets": [
+      "app/tasks.tsx",
+      "src/components/cards/task-row.tsx",
+      "src/styles/theme.ts"
+    ]
+  },
+  "toolsUsed": ["Read", "Grep", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-TASKS-001",
+      "status": "pass",
+      "reason": "The tasks screen renders shared TaskRow cards whose implementation matches the contract: mist-toned bordered cards, circular 22px completion checkboxes that fill green when complete, and 8px red/amber/stone/green status dots.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/tasks/tasks-evidence.md",
+        "references": [
+          {
+            "file": "app/tasks.tsx",
+            "lines": "24,452-456,495-499,538-542,623-627",
+            "details": "TasksScreen imports and renders TaskRow for pending and completed task lists."
+          },
+          {
+            "file": "src/components/cards/task-row.tsx",
+            "lines": "69-80",
+            "details": "getPriorityColor maps the dot to success, error, warning, or stone states."
+          },
+          {
+            "file": "src/components/cards/task-row.tsx",
+            "lines": "98-105",
+            "details": "TaskRow card container uses the warm card fill with a 1px stone border."
+          },
+          {
+            "file": "src/components/cards/task-row.tsx",
+            "lines": "111-139",
+            "details": "Completion control is a circular 22x22 checkbox that fills green and shows a checkmark when complete."
+          },
+          {
+            "file": "src/components/cards/task-row.tsx",
+            "lines": "174-180",
+            "details": "TaskRow renders an 8x8 status dot."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "36-38,87-89,247,253",
+            "details": "Theme tokens define the mist card fill, stone border, semantic success/warning/error colors, and radius scale used by TaskRow."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-TASKS-002",
+      "status": "fail",
+      "reason": "The screen does not implement a pill-style Pending/Completed segmented toggle; instead it renders three pending sections plus a separate collapsible completed section.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/tasks/tasks-evidence.md",
+        "references": [
+          {
+            "file": "app/tasks.tsx",
+            "lines": "119-158",
+            "details": "State derives pendingTasks and completedTasks, then further groups pending items into dueTodayTasks, thisWeekTasks, and upcomingTasks; no selected segment state exists."
+          },
+          {
+            "file": "app/tasks.tsx",
+            "lines": "435-538",
+            "details": "Pending tasks are rendered directly under dueToday, thisWeek, and upcoming section headers rather than inside a pill segmented control."
+          },
+          {
+            "file": "app/tasks.tsx",
+            "lines": "563-621",
+            "details": "Completed tasks are exposed through a collapsible section instead of an active primary-colored Completed segment with white text."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-TASKS-003",
+      "status": "pass",
+      "reason": "The completed tasks area is collapsible, uses a chevron toggle and mist-2 pill badge for the count, and dims completed cards to 0.8 opacity when shown.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/tasks/tasks-evidence.md",
+        "references": [
+          {
+            "file": "app/tasks.tsx",
+            "lines": "109",
+            "details": "TasksScreen tracks completed section expansion with completedExpanded."
+          },
+          {
+            "file": "app/tasks.tsx",
+            "lines": "563-604",
+            "details": "Completed section header is pressable, switches chevron direction, and renders the count badge with colors.surface[200] and borderRadius.pill."
+          },
+          {
+            "file": "app/tasks.tsx",
+            "lines": "619-623",
+            "details": "Completed tasks render only when expanded and each wrapper applies opacity: 0.8."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "37,254",
+            "details": "Theme tokens map the count badge to mist-2 and pill radius."
+          }
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated 3 tasks assertions by read-only code review: VAL-TASKS-001 passed, VAL-TASKS-002 failed because the screen lacks the required Pending/Completed segmented toggle, and VAL-TASKS-003 passed."
+}

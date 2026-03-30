@@ -1,0 +1,81 @@
+{
+  "groupId": "logs",
+  "testedAt": "2026-03-30T03:10:03Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185"
+  },
+  "toolsUsed": ["Read", "Grep", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-LOGS-001",
+      "status": "pass",
+      "reason": "The logs list renders uppercase muted date group headers and warm bordered log cards with a 3px category-colored left strip and the shared 12px card radius token.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/logs/logs-evidence.md",
+        "references": [
+          {
+            "file": "app/logs.tsx",
+            "lines": "1137-1189",
+            "details": "Date group header uses uppercase muted styling, and each log card uses surfaceContainerLow with borderWidth 1, outlineVariant border, borderRadius.sm, and a width-3 category strip."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "35-39",
+            "details": "The warm surface palette defines the light background/card/border/muted tokens as #FBF8F3, #F7F3ED, #D9D0C4, and #A89E92."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "245-246,421",
+            "details": "borderRadius.sm is 12 and surfaceContainerLow resolves to themeColors.surface[100]."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-LOGS-002",
+      "status": "pass",
+      "reason": "The horizontal filter row uses pill-shaped chips, selected states switch to the primary background with white text, and every category chip includes a small colored dot.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/logs/logs-evidence.md",
+        "references": [
+          {
+            "file": "app/logs.tsx",
+            "lines": "588-695",
+            "details": "The chip row uses borderRadius.full, active chips use m3.colorScheme.primary and m3.colorScheme.onPrimary, and category chips render an 8x8 chipColor dot."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "72,92-104,253,371",
+            "details": "The primary role resolves to #355847, category colors map to the Cellar Ledger activity palette, and borderRadius.full provides the pill shape."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-LOGS-003",
+      "status": "pass",
+      "reason": "A rounded-square add-entry FAB is rendered at the bottom-right with the primary background, white plus icon, and the required 18px corner radius.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/logs/logs-evidence.md",
+        "references": [
+          {
+            "file": "app/logs.tsx",
+            "lines": "1502-1519",
+            "details": "The FAB is absolutely positioned at the bottom-right, uses m3.colorScheme.primary, borderRadius 18, and renders a plus icon in m3.colorScheme.onPrimary."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "72,371",
+            "details": "The primary role resolves to the Cellar Ledger primary green #355847 in light mode."
+          }
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated 3 logs assertions by read-only code review; VAL-LOGS-001, VAL-LOGS-002, and VAL-LOGS-003 pass in the current working tree."
+}

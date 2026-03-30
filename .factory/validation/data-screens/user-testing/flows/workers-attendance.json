@@ -1,0 +1,156 @@
+{
+  "groupId": "workers-attendance",
+  "testedAt": "2026-03-30T03:11:30.937760+00:00",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185"
+  },
+  "toolsUsed": ["Read", "Grep", "Glob", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-WORKERS-001",
+      "title": "Worker cards with avatar and call button",
+      "status": "pass",
+      "reason": "WorkerCard uses a border-only card, 44px circular avatar with labour/stone-5 active-state colors, a 7px status dot, and a 36px primary-tinted call button.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/workers-attendance/workers-attendance-evidence.md",
+        "references": [
+          {
+            "file": "src/components/cards/worker-card.tsx",
+            "lines": "37-40",
+            "details": "Active/inactive avatar colors are hardcoded to labour purple #7A5E8E and stone-5 #A89E92."
+          },
+          {
+            "file": "src/components/cards/worker-card.tsx",
+            "lines": "47-58",
+            "details": "Card uses the mist-1 surface with a 1px stone-3 border."
+          },
+          {
+            "file": "src/components/cards/worker-card.tsx",
+            "lines": "63-69,101-104,116-123,160-171",
+            "details": "Avatar is 44x44 and circular, status dot is 7x7, and the call button is 36x36 with a primary-tinted background."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-WORKERS-002",
+      "title": "Three-segment control",
+      "status": "fail",
+      "reason": "The outer shell matches the mist-2 pill with 3px padding, but the active segment itself uses mist-1 (#F7F3ED) instead of white and Android selected labels stay at medium weight instead of 600.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/workers-attendance/workers-attendance-evidence.md",
+        "references": [
+          {
+            "file": "app/(tabs)/workers.tsx",
+            "lines": "278-294",
+            "details": "Workers screen wraps the control in a mist-2 pill with borderRadius.full and padding: 3."
+          },
+          {
+            "file": "src/components/ui/form-components.tsx",
+            "lines": "593-613",
+            "details": "SegmentedControl uses colors.surface[200] for the container and colors.surface[100] for the selected segment background."
+          },
+          {
+            "file": "src/components/ui/form-components.tsx",
+            "lines": "616-625",
+            "details": "Selected label weight is semibold only on iOS; Android forces fontWeight.medium."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "35-37",
+            "details": "surface[100] is #F7F3ED and surface[200] is #EEE7DD, confirming the active fill is not white."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-ATTEND-001",
+      "title": "Full/Half/Absent toggle buttons",
+      "status": "fail",
+      "reason": "The mark-attendance view now has per-worker pill toggles with the correct green/amber/red fills, but the controls do not include the matching dot indicators required by the contract.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/workers-attendance/workers-attendance-evidence.md",
+        "references": [
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "741-879",
+            "details": "Screen renders worker rows with Full, Half, and Absent pill controls."
+          },
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "803-874",
+            "details": "Buttons use borderRadius.pill and state colors #4F7A5A, #C58A2B, and #B84C3A."
+          },
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "819-826,843-850,867-874",
+            "details": "Each state control renders only a Text label, with no matching dot element."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "87-89",
+            "details": "Theme success/warning/error tokens resolve to the expected green, amber, and red values."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-ATTEND-002",
+      "title": "Date navigator",
+      "status": "pass",
+      "reason": "The mark-attendance screen implements a bordered date navigator with previous/next arrow buttons, a centered semibold date label, and explicit date-navigation handlers.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/workers-attendance/workers-attendance-evidence.md",
+        "references": [
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "413-415",
+            "details": "handleDateNavigation updates the selected date for previous/next actions."
+          },
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "666-717",
+            "details": "Navigator row uses a bordered card layout with left/right arrow buttons and a centered date label."
+          },
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "692-699",
+            "details": "Centered date label uses fontWeight.semibold."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-ATTEND-003",
+      "title": "Mark All Present button",
+      "status": "fail",
+      "reason": "The sticky primary CTA is present and full width, but it uses borderRadius.md (16px) instead of the required 12px radius.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/workers-attendance/workers-attendance-evidence.md",
+        "references": [
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "883-915",
+            "details": "Always-visible sticky CTA renders the Mark All Present label with primary background and white text."
+          },
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "899-903",
+            "details": "Button styling uses borderRadius.md."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "247-247",
+            "details": "borderRadius.md is defined as 16, which is larger than the required 12px radius."
+          }
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated 5 assigned workers and attendance assertions by read-only code review: 2 passed (VAL-WORKERS-001, VAL-ATTEND-002) and 3 failed (VAL-WORKERS-002, VAL-ATTEND-001, VAL-ATTEND-003)."
+}
