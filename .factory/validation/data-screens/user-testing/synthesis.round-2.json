@@ -1,0 +1,27 @@
+{
+  "milestone": "data-screens",
+  "round": 2,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 6,
+    "passed": 5,
+    "failed": 1,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-ANALYTICS-002",
+    "VAL-TASKS-002",
+    "VAL-WORKERS-002",
+    "VAL-ATTEND-001",
+    "VAL-ATTEND-003"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-SPRAY-001",
+      "reason": "The spray catalog cards are border-only and include the required 3px spray-green strip plus the chemical name, but the info line still renders PHI, dose, and target problem instead of the contract-required active ingredient / concentration metadata."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185/.factory/validation/data-screens/user-testing/synthesis.round-1.json"
+}

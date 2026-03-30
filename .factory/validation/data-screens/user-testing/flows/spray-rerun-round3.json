@@ -1,0 +1,56 @@
+{
+  "groupId": "spray-rerun-round3",
+  "testedAt": "2026-03-30T03:30:23.699138+00:00",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "boundary": "do not modify application source files; write only the assigned flow report and evidence notes",
+    "milestone": "data-screens",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "evidenceDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/spray-rerun-round3",
+    "assignedAssertions": ["VAL-SPRAY-001"]
+  },
+  "toolsUsed": ["Read", "Grep", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-SPRAY-001",
+      "title": "Chemical cards with left strip",
+      "status": "pass",
+      "reason": "The current contract passes when spray catalog cards show a 3px spray-green strip, the chemical name, and an info line with catalog metadata. The current implementation renders a border-only card with the required strip, the mix name, and an info row containing PHI days, dose, and target problem.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/spray-rerun-round3/spray-rerun-round3-evidence.md",
+        "references": [
+          {
+            "file": "validation-contract.md",
+            "lines": "267-268",
+            "details": "The contract explicitly allows the info line to use catalog metadata such as PHI days, dose, target problem, or active ingredient, and passes if the strip, name, and info line are present."
+          },
+          {
+            "file": "app/spray-catalog.tsx",
+            "lines": "116-131",
+            "details": "Each chemical card is border-only (`borderWidth: 1`) and renders a dedicated 3px left strip using `sprayColor`."
+          },
+          {
+            "file": "app/spray-catalog.tsx",
+            "lines": "141-150",
+            "details": "The card title renders `mix.name` as the chemical name."
+          },
+          {
+            "file": "app/spray-catalog.tsx",
+            "lines": "154-193",
+            "details": "The info row renders catalog metadata on the card body: PHI days, dose, and target problem."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "94-95",
+            "details": "The spray palette defines `spray[500]` as `#6C7C46`, matching the contract's spray-green color."
+          }
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Retested VAL-SPRAY-001 by read-only code review against the current contract. The assertion now passes because the current contract accepts PHI/dose/target-problem catalog metadata, and the current spray catalog cards render the required strip, name, and metadata info line."
+}
