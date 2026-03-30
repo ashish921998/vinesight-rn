@@ -1,0 +1,56 @@
+{
+  "groupId": "reports-shadows-rerun",
+  "testedAt": "2026-03-30T06:06:06Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "milestone": "forms-tools-settings",
+    "assignedAssertions": ["VAL-REPORTS-001", "VAL-CROSS-002"],
+    "workingTree": "clean before artifact write (git status --short returned no output)",
+    "headCommit": "a7b169a"
+  },
+  "toolsUsed": ["Read", "Grep", "LS", "Execute"],
+  "assertionResults": [
+    {
+      "id": "VAL-REPORTS-001",
+      "title": "Report screen with Cellar Ledger tokens",
+      "status": "pass",
+      "reason": "The previously flagged report surfaces are now border-only and shadow-free: shared report panels use warm surface/border tokens, the filters segmented pill/date fields/export chips use bordered Cellar Ledger surfaces, the executive summary cards use borders only, and the sticky export container/buttons no longer apply any shadow or elevation styling.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/reports-shadows-rerun/reports-shadows-evidence.md",
+        "references": [
+          "app/reports.tsx:377-383",
+          "src/components/screens/reports/report-filters-panel.tsx:139-143",
+          "src/components/screens/reports/report-filters-panel.tsx:292-299",
+          "src/components/screens/reports/report-filters-panel.tsx:601-604",
+          "src/components/screens/reports/report-filters-panel.tsx:705-709",
+          "src/components/screens/reports/report-executive-summary.tsx:228-231",
+          "src/components/screens/reports/report-executive-summary.tsx:309-310",
+          "src/components/screens/reports/report-export-actions.tsx:35-45",
+          "src/components/screens/reports/report-export-actions.tsx:79-85",
+          "src/components/screens/reports/report-export-actions.tsx:123-126",
+          "src/components/screens/reports/report-document-body.tsx:168-176"
+        ]
+      }
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "title": "No shadow styles on cards",
+      "status": "fail",
+      "reason": "Forms-tools-settings still contains explicit shadow/elevation styling on the spray and fertigation suggestion dropdown surfaces, so the milestone is not yet fully shadow-free.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/reports-shadows-rerun/reports-shadows-evidence.md",
+        "references": [
+          "app/(tabs)/_layout.tsx:232",
+          "src/components/forms/fertigation-form.tsx:632-636",
+          "src/components/forms/spray-form.tsx:1020-1024"
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Retested VAL-REPORTS-001 and VAL-CROSS-002 by read-only code review at a7b169a. Reports shadow regressions are cleared, but VAL-CROSS-002 still fails because the spray and fertigation suggestion dropdowns keep explicit shadow/elevation styling."
+}

@@ -1,0 +1,25 @@
+{
+  "milestone": "forms-tools-settings",
+  "round": 3,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "blocked": 0
+  },
+  "passedAssertions": [],
+  "failedAssertions": [
+    {
+      "id": "VAL-REPORTS-001",
+      "reason": "Report wrappers are now warm, bordered, and shadow-free, but the reports surface still fails the Cellar Ledger border-only requirement because shadow tokens remain on the filters segmented pill, executive summary cards, and sticky export container/button."
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "reason": "The previously flagged add-entry wrappers and report-section-block are fixed, but forms-tools-settings still contains shadowed report components and explicit shadow/elevation styling on the spray and fertigation suggestion dropdown surfaces."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": ".factory/validation/forms-tools-settings/user-testing/synthesis.round2.json"
+}
