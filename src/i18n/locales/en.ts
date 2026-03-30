@@ -562,6 +562,7 @@ export const en = {
   },
 
   farms: {
+    title: 'Farms',
     addFarm: 'Add Farm',
     empty: {
       title: 'No farms yet',

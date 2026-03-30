@@ -561,6 +561,7 @@ export const mr = {
   },
 
   farms: {
+    title: '$t(glossary.farm)',
     addFarm: '$t(glossary.farm) जोडा',
     empty: {
       title: 'अजून $t(glossary.farm) नाहीत',

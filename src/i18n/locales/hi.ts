@@ -561,6 +561,7 @@ export const hi = {
   },
 
   farms: {
+    title: 'खेत',
     addFarm: 'खेत जोड़ें',
     empty: {
       title: 'अभी तक कोई खेत नहीं',
