@@ -1,0 +1,39 @@
+src/components/screens/entry-form/LogTypeSelector.tsx
+  e27b430c27eb2b4c 80,96-99,102,148-149,154-155,159,165
+app/calculator/lai.tsx
+  e27b430c27eb2b4c 278,305-306
+src/components/screens/reports/report-filters-panel.tsx
+  e27b430c27eb2b4c 19,69-70,258-259,268-281,699,705-706,734
+app/(tabs)/tools.tsx
+  e27b430c27eb2b4c 230,234,253,257
+app/(tabs)/settings.tsx
+  e27b430c27eb2b4c 2447
+app/fertilizer-plans.tsx
+  e27b430c27eb2b4c 10,377,389-390
+app/calculator/tank-mix.tsx
+  e27b430c27eb2b4c 166
+app/reports.tsx
+  e27b430c27eb2b4c 105,382-383,461-462
+app/tasks.tsx
+  e27b430c27eb2b4c 671-672
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "a2515f58895a2186d4f57167aedb90965480dc8b",
+  "prompts": {
+    "e27b430c27eb2b4c": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "17da3bcb-4fd4-49aa-aa10-75d3e7d43a84",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 60,
+      "total_deletions": 41,
+      "accepted_lines": 60,
+      "overriden_lines": 0
+    }
+  }
+}
