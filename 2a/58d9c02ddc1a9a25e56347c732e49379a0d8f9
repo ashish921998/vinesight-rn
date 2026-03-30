@@ -1,0 +1,31 @@
+src/components/cards/task-row.tsx
+  2033ecd2ee9f72c2 100
+src/styles/theme.ts
+  2033ecd2ee9f72c2 406-407
+src/components/cards/stats-card.tsx
+  2033ecd2ee9f72c2 61
+src/components/cards/worker-card.tsx
+  2033ecd2ee9f72c2 45-48,50-51,58,123,250
+src/components/cards/quick-action-button.tsx
+  2033ecd2ee9f72c2 29,37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "2a58d9c02ddc1a9a25e56347c732e49379a0d8f9",
+  "prompts": {
+    "2033ecd2ee9f72c2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "383be7f2-7610-45ff-bf0c-d363b1b9c1d5",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 12,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    }
+  }
+}
