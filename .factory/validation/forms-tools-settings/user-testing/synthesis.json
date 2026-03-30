@@ -1,32 +1,25 @@
 {
   "milestone": "forms-tools-settings",
-  "round": 2,
+  "round": 3,
   "status": "fail",
   "assertionsSummary": {
-    "total": 8,
-    "passed": 6,
+    "total": 2,
+    "passed": 0,
     "failed": 2,
     "blocked": 0
   },
-  "passedAssertions": [
-    "VAL-SETTINGS-002",
-    "VAL-TOOLS-002",
-    "VAL-CALC-001",
-    "VAL-CALC-002",
-    "VAL-REPORTS-002",
-    "VAL-ADDFORM-002"
-  ],
+  "passedAssertions": [],
   "failedAssertions": [
     {
       "id": "VAL-REPORTS-001",
-      "reason": "The outer report wrappers now use warm bordered Cellar Ledger panels, but the shared report section block still applies `shadows.sm` and `elevation: 1`, so the report sections are not yet fully using the required border-only treatment."
+      "reason": "Report wrappers are now warm, bordered, and shadow-free, but the reports surface still fails the Cellar Ledger border-only requirement because shadow tokens remain on the filters segmented pill, executive summary cards, and sticky export container/button."
     },
     {
       "id": "VAL-CROSS-002",
-      "reason": "Shadow/elevation styling still remains on add-entry and reports card surfaces within the forms-tools-settings scope (`LogTypeSelector`, `LogForm`, `entry-form.tsx`, and `report-section-block.tsx`), so the milestone is not yet fully border-only."
+      "reason": "The previously flagged add-entry wrappers and report-section-block are fixed, but forms-tools-settings still contains shadowed report components and explicit shadow/elevation styling on the spray and fertigation suggestion dropdown surfaces."
     }
   ],
   "blockedAssertions": [],
   "appliedUpdates": [],
-  "previousRound": ".factory/validation/forms-tools-settings/user-testing/synthesis.round1.json"
+  "previousRound": ".factory/validation/forms-tools-settings/user-testing/synthesis.round2.json"
 }

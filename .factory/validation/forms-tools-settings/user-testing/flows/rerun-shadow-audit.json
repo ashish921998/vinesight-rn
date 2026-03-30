@@ -1,0 +1,61 @@
+{
+  "groupId": "rerun-shadow-audit",
+  "testedAt": "2026-03-30T05:52:28Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "milestone": "forms-tools-settings",
+    "assignedAssertions": ["VAL-REPORTS-001", "VAL-CROSS-002"],
+    "workingTree": "clean before artifact write (git status --short returned no output)",
+    "fixCommitUnderTest": "426365e"
+  },
+  "toolsUsed": ["Read", "Grep", "LS", "Execute"],
+  "assertionResults": [
+    {
+      "id": "VAL-REPORTS-001",
+      "title": "Report screen with Cellar Ledger tokens",
+      "status": "fail",
+      "reason": "The shared report panel and report section block are now warm, bordered, and shadow-free, but the reports surface is still not fully border-only because the filters panel segmented-control pill, executive summary cards, and sticky export container/button still spread theme shadow tokens.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/rerun-shadow-audit/shadow-audit-evidence.md",
+        "references": [
+          "app/reports.tsx:377-383",
+          "src/components/screens/reports/report-section-block.tsx:64-69",
+          "src/components/screens/reports/report-section-block.tsx:295-302",
+          "src/components/screens/reports/report-filters-panel.tsx:132-143",
+          "src/components/screens/reports/report-executive-summary.tsx:228-230",
+          "src/components/screens/reports/report-export-actions.tsx:35-43",
+          "src/components/screens/reports/report-export-actions.tsx:69-81"
+        ]
+      }
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "title": "No shadow styles on cards",
+      "status": "fail",
+      "reason": "The previously flagged add-entry wrappers and report section block are now clear, but forms-tools-settings still contains shadowed card-like surfaces in report components (`report-filters-panel`, `report-executive-summary`, `report-export-actions`) and explicit shadow/elevation styling on the spray and fertigation suggestion dropdown surfaces.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/rerun-shadow-audit/shadow-audit-evidence.md",
+        "references": [
+          "src/components/screens/entry-form/LogTypeSelector.tsx:37-42",
+          "src/components/screens/entry-form/LogForm.tsx:147-151",
+          "src/components/screens/entry-form/LogForm.tsx:212-216",
+          "src/components/screens/entry-form.tsx:1857-1861",
+          "src/components/screens/entry-form.tsx:1914-1919",
+          "src/components/screens/reports/report-filters-panel.tsx:142",
+          "src/components/screens/reports/report-executive-summary.tsx:230",
+          "src/components/screens/reports/report-export-actions.tsx:43",
+          "src/components/screens/reports/report-export-actions.tsx:81",
+          "src/components/forms/spray-form.tsx:1019-1024",
+          "src/components/forms/fertigation-form.tsx:631-636",
+          "src/styles/theme.ts:287-298"
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Retested VAL-REPORTS-001 and VAL-CROSS-002 against commit 426365e by read-only code review. The prior add-entry wrapper and report-section-block issues are fixed, but both assertions still fail because report surfaces and add-entry suggestion dropdowns still apply shadow styling within the forms-tools-settings scope."
+}
