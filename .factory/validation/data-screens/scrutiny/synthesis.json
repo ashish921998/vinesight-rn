@@ -1,6 +1,6 @@
 {
   "milestone": "data-screens",
-  "round": 1,
+  "round": 2,
   "status": "fail",
   "validatorsRun": {
     "test": {
@@ -20,117 +20,68 @@
     }
   },
   "reviewsSummary": {
-    "total": 6,
-    "passed": 0,
-    "failed": 6,
-    "failedFeatures": [
-      "analytics-redesign",
-      "logs-redesign",
-      "tasks-redesign",
-      "workers-and-attendance-redesign",
-      "lab-tests-and-soil-redesign",
-      "spray-catalog-redesign"
-    ]
+    "total": 5,
+    "passed": 2,
+    "failed": 3,
+    "failedFeatures": ["analytics-redesign", "tasks-redesign", "workers-and-attendance-redesign"]
   },
   "blockingIssues": [
     {
       "featureId": "analytics-redesign",
       "severity": "blocking",
-      "description": "app/analytics.tsx hardcodes fake trend copy such as `12% vs last season`, `8%`, and `3%` instead of deriving those values from analytics data."
+      "description": "app/analytics.tsx still uses grouped aggregates as if they were record counts: `analytics.harvestsByFarm.length` counts farms-with-harvests instead of harvest records, and `analytics.expensesByType.reduce((sum, _e) => sum + 1, 0)` counts expense categories instead of expense records, so the Activities Logged card and Category Breakdown still underreport filtered activity totals."
     },
     {
       "featureId": "analytics-redesign",
       "severity": "blocking",
-      "description": "app/analytics.tsx builds the new `Activities Logged` stat and category breakdown from `analytics.recentActivity`, which is a truncated sample and omits categories like expenses/fertigation, so the redesigned counts are inaccurate."
-    },
-    {
-      "featureId": "analytics-redesign",
-      "severity": "blocking",
-      "description": "app/analytics.tsx adds new labels without locale entries and also hardcodes English strings like `tons`, `entries`, and `vs last season`, regressing i18n."
-    },
-    {
-      "featureId": "logs-redesign",
-      "severity": "blocking",
-      "description": "app/logs.tsx renders selected category filter chips in per-category colors instead of the required primary-background active state, so VAL-LOGS-002 is unmet."
+      "description": "The analytics rerun still lacks locale entries for `analytics.labels.totalExpenses`, `analytics.labels.harvestYield`, and `analytics.sections.categoryBreakdown`, so the screen falls back to hardcoded English copy in non-English locales."
     },
     {
       "featureId": "tasks-redesign",
       "severity": "blocking",
-      "description": "app/tasks.tsx moves completed tasks into a separate Completed tab instead of an in-screen collapsible completed section, so VAL-TASKS-003 is not implemented."
-    },
-    {
-      "featureId": "tasks-redesign",
-      "severity": "blocking",
-      "description": "src/components/cards/task-row.tsx dims completed cards to 0.6 opacity instead of the required 0.8 opacity."
+      "description": "Completed tasks are dimmed twice: `app/tasks.tsx` wraps completed rows in `opacity: 0.8` while `src/components/cards/task-row.tsx` also applies `opacity: task.completed ? 0.8 : 1`, yielding an effective opacity near 0.64 instead of the required 0.8."
     },
     {
       "featureId": "workers-and-attendance-redesign",
       "severity": "blocking",
-      "description": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx still renders a single-worker date-range grid instead of worker rows with Full/Half/Absent pill toggles, so VAL-ATTEND-001 is not implemented."
+      "description": "The redesigned attendance worker rows read from `workerAttendance`, but `loadAttendance()` still hydrates only the old single-worker `cellData` grid, so Full/Half/Absent pills do not reflect existing attendance records."
     },
     {
       "featureId": "workers-and-attendance-redesign",
       "severity": "blocking",
-      "description": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx uses From/To date pickers rather than the required arrow-based date navigator, so VAL-ATTEND-002 is unmet."
+      "description": "The new attendance row toggles and `handleMarkAllPresent()` mutate `workerAttendance`, but unsaved-change detection and persistence still run through `cellData`/`handleSave()`, so the redesigned worker-list interactions cannot actually save attendance changes."
     },
     {
       "featureId": "workers-and-attendance-redesign",
       "severity": "blocking",
-      "description": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx shows a conditional Save button instead of an always-visible `Mark All Present` sticky CTA, so VAL-ATTEND-003 is unmet."
+      "description": "The arrow date navigator only updates display state; real loading/saving still uses `rangeStart` / `dateRange`, and the old From/To date-range picker UI remains rendered, so the required arrow-based navigator is still cosmetic."
     },
     {
-      "featureId": "lab-tests-and-soil-redesign",
+      "featureId": "workers-and-attendance-redesign",
       "severity": "blocking",
-      "description": "app/lab-tests.tsx uses `colors.surface[500]` for inactive Soil/Petiole tab text instead of the required stone-5 muted color (#A89E92), so VAL-LABTESTS-002 is still failing."
-    },
-    {
-      "featureId": "spray-catalog-redesign",
-      "severity": "blocking",
-      "description": "app/spray-catalog.tsx hardcodes every chemical badge to `Fungicide`, so the redesign misrepresents catalog data."
-    },
-    {
-      "featureId": "spray-catalog-redesign",
-      "severity": "blocking",
-      "description": "app/spray-catalog.tsx treats any positive `phi_days` value as an active PHI warning even though `phi_days` is static catalog metadata, not runtime active-window state."
-    },
-    {
-      "featureId": "spray-catalog-redesign",
-      "severity": "blocking",
-      "description": "app/spray-catalog.tsx only keeps `mix.components.slice(1)` tappable, so the first component no longer opens `ProductDetailSheet`."
+      "description": "The new `Mark All Present` button lives inline inside the `ScrollView` and scrolls away, while the only bottom-anchored control remains the conditional save bar, so the required always-visible sticky CTA is still not implemented."
     }
   ],
-  "appliedUpdates": [
-    {
-      "target": "library",
-      "description": "Added `.factory/library/spray-catalog-data-model.md` documenting that `src/types/phi.ts` does not expose chemical classification, usage-history, or live PHI-active flags, and that `phi_days` is static catalog metadata.",
-      "sourceFeature": "spray-catalog-redesign"
-    }
-  ],
+  "appliedUpdates": [],
   "suggestedGuidanceUpdates": [
     {
-      "target": "skill:ui-worker",
-      "suggestion": "Add an explicit rule for visual redesign tasks: do not invent metrics, classifications, or warning states when the current data model does not provide them. Preserve truthful data, or document the gap for follow-up instead of hardcoding placeholders.",
-      "evidence": "Two blocking failures in this round came from invented semantics: `analytics-redesign` hardcoded fake trend values and derived category totals from a truncated sample, while `spray-catalog-redesign` hardcoded all badges to Fungicide and treated `phi_days > 0` as a live PHI warning even though the data model has no such state.",
-      "isSystemic": true
-    },
-    {
-      "target": "skill:ui-worker",
-      "suggestion": "Require workers to record the exact AGENTS/architecture/wireframe files consulted in the handoff or transcript evidence, so scrutiny can verify the mandated startup reads instead of relying on `skillFeedback.followedProcedure` alone.",
-      "evidence": "Multiple review reports (`analytics-redesign`, `logs-redesign`, `workers-and-attendance-redesign`, and `lab-tests-and-soil-redesign`) found `handoff.skillFeedback.followedProcedure=true` even though the transcript skeleton did not show the required reads of AGENTS.md, architecture.md, or the light/dark wireframes.",
-      "isSystemic": true
-    },
-    {
       "target": "AGENTS.md",
-      "suggestion": "Add a crash-recovery convention for orchestrator-completed features: when a worker crashes and the orchestrator finishes the feature, write a synthetic handoff that records the final commit and any missing transcript context.",
-      "evidence": "For `tasks-redesign`, `features.json` left `completedWorkerSessionId` null and there was no matching handoff/transcript skeleton, so scrutiny had to infer the reviewed commit from git history before it could audit the feature.",
+      "suggestion": "Require handoff `commitId` values to reference the actual landing commit for the feature being reported, or explicitly list any prerequisite/stacked commits when a follow-up fix depends on earlier changes.",
+      "evidence": "Two rerun fix reports (`fix-analytics-data-integrity` and `fix-spray-catalog-cleanup`) recorded handoff `commitId: 6cba8cf`, but that commit only contains the earlier quick-win patch. Scrutiny had to review later repository state (`74b70d1` for spray cleanup and post-6cba8cf analytics changes) because the recorded commit did not reproduce the claimed feature changes.",
+      "isSystemic": true
+    },
+    {
+      "target": "skill:ui-worker",
+      "suggestion": "Add an explicit exception or escalation rule for follow-up fixes that require i18n, data-contract, or business-logic changes instead of pure visual restyling; such work should either use a different skill or document the allowed non-visual edits.",
+      "evidence": "The failed `fix-analytics-data-integrity` task explicitly required adding locale keys and restoring truthful analytics totals, but `ui-worker` still instructs workers to avoid i18n and business-logic changes. The rerun landed partial approximations (grouped aggregate counts and missing locale keys) rather than a full fix.",
       "isSystemic": false
     }
   ],
   "rejectedObservations": [
     {
-      "observation": "Repeated reports that `ui-worker` startup reads were not evidenced in the transcript skeleton for individual features.",
-      "reason": "duplicate; consolidated into one systemic `skill:ui-worker` recommendation backed by analytics, logs, workers, and lab-tests reviews."
+      "observation": "Repeated reports that `ui-worker` follow-up fix sessions did not evidence reading `AGENTS.md`, `.factory/library/architecture.md`, or both light/dark wireframes before editing.",
+      "reason": "duplicate of the round-1 scrutiny recommendation already recorded in `.factory/validation/data-screens/scrutiny/synthesis.round1.json`; no new direct update was applied in this rerun."
     }
   ],
-  "previousRound": null
+  "previousRound": ".factory/validation/data-screens/scrutiny/synthesis.round1.json"
 }

@@ -1,0 +1,21 @@
+{
+  "featureId": "fix-spray-catalog-cleanup",
+  "reviewedAt": "2026-03-30T02:27:24.875203Z",
+  "commitId": "6cba8cf",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Current `app/spray-catalog.tsx` clears the three prior spray-catalog blockers when evaluated together with the landed quick-win follow-up. The fabricated `Fungicide` badge/type helper and PHI-active warning banner are gone, the neutral `PHI: {phiDays} days` info text remains, and the component list now maps `mix.components.slice(0)` so the first component can again open `ProductDetailSheet`.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The fix handoff records commit `6cba8cf`, but that commit only contains the spray-catalog tap-target quick win; the badge/banner cleanup reviewed here lands later in repository state. This breaks scrutiny traceability because the recorded commit does not reproduce the claimed cleanup.",
+      "evidence": "Handoff `~/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/handoffs/2026-03-30T01-50-20-782Z__fix-spray-catalog-cleanup__d086a1a2-71f7-4480-95ba-71df44b5f08f.json` records `commitId: 6cba8cf`; `git show 6cba8cf -- app/spray-catalog.tsx` only changes `mix.components.slice(1)` to `slice(0)`, while `git show 74b70d1 -- app/spray-catalog.tsx` removes `chemicalType`, `getTypeBadgeStyle`, and the PHI warning banner."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/data-screens/scrutiny/reviews/spray-catalog-redesign.json",
+  "summary": "Pass: current spray catalog code clears the prior fabricated-data blockers, and the previously separate quick-win keeps the first component tappable. Note: the handoff commit points to the quick-win commit rather than the later cleanup landing, so traceability is imperfect."
+}

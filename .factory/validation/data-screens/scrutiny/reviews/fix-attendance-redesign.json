@@ -1,0 +1,46 @@
+{
+  "featureId": "fix-attendance-redesign",
+  "reviewedAt": "2026-03-30T02:33:08.948394Z",
+  "commitId": "531159c",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The fix adds visible worker-row toggles, arrow buttons, and a `Mark All Present` button near the top of `mark-attendance-tab.tsx`, but the redesign is still not wired into the existing attendance data flow. Existing records are still loaded into the old single-worker `cellData` grid, the new row controls read/write a separate `workerAttendance` map that is never hydrated or saved, the old From/To range UI still remains underneath, and the new CTA is inline rather than sticky. The prior attendance blockers therefore remain unresolved.",
+    "issues": [
+      {
+        "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+        "line": 743,
+        "severity": "blocking",
+        "description": "The redesigned worker rows read status from `workerAttendance.get(worker.id)`, but `loadAttendance()` still fetches attendance only for `selectedWorker` into `cellData` (lines 250-301). Because `workerAttendance` is never hydrated from fetched records, the new Full/Half/Absent pills do not reflect existing attendance data for the worker list."
+      },
+      {
+        "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+        "line": 429,
+        "severity": "blocking",
+        "description": "The new row toggles and `handleMarkAllPresent()` only mutate the separate `workerAttendance` map, while unsaved-change detection and persistence still run solely through `cellData`/`handleSave()` (lines 474-541 and 1567-1678). As implemented, interacting with the redesigned worker list cannot create/update attendance records, so the fix regresses the tab's save flow instead of adapting the existing state management."
+      },
+      {
+        "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+        "line": 423,
+        "severity": "blocking",
+        "description": "The new arrow navigator only updates `selectedDate` for display, but that date is never used by loading or saving logic; actual data flow still uses `rangeStart`/`dateRange`, and the old From/To date-range picker UI remains rendered below (lines 1046-1115). This leaves the required arrow-based date navigator as a cosmetic add-on rather than the real attendance date control."
+      },
+      {
+        "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+        "line": 877,
+        "severity": "blocking",
+        "description": "The new `Mark All Present` button is rendered inline inside the `ScrollView`, so it scrolls away with content instead of staying always visible. The only bottom-anchored control is still the conditional save bar at lines 1567-1678, so the prior blocker requiring an always-visible sticky `Mark All Present` CTA is still not satisfied."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `ui-worker` procedure was not followed on this rerun: transcript evidence shows the light attendance wireframe was consulted, but there is no evidence of reading `AGENTS.md`, `.factory/library/architecture.md`, or the dark-mode wireframe before editing the screen.",
+      "evidence": "`.factory/skills/ui-worker/SKILL.md` Step 1-2 requires reading `AGENTS.md`, `.factory/library/architecture.md`, and both `wireframe-worker-attendance.html` plus `wireframe-worker-attendance-dark.html`. Transcript analysis for session `4de47365-4468-4aa1-b4d9-ec106d70041e` shows `Contains AGENTS read: False`, `Contains architecture read: False`, `Contains light wireframe read: True`, and `Contains dark wireframe read: False`."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/data-screens/scrutiny/reviews/workers-and-attendance-redesign.json",
+  "summary": "Fail: although commit `531159c` adds the requested attendance UI chrome, the new worker list, date navigator, and `Mark All Present` button are disconnected from the existing load/save pipeline and do not replace the old date-range flow. The attendance fix therefore does not actually clear the prior scrutiny blockers."
+}

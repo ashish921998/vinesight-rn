@@ -1,0 +1,28 @@
+{
+  "featureId": "fix-tasks-completed-section",
+  "reviewedAt": "2026-03-30T02:37:10.821658Z",
+  "commitId": "3caf436",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The rerun fixes the first blocker from `tasks-redesign`: completed tasks now live in an in-screen collapsible section with a chevron toggle and count badge instead of a separate tab. However, the combined fixes still do not clear the 0.8-opacity blocker, because completed rows are dimmed twice: `app/tasks.tsx` wraps each completed row in `opacity: 0.8`, and `TaskRow` also applies `opacity: task.completed ? 0.8 : 1`, yielding an effective opacity of 0.64 rather than the required 0.8.",
+    "issues": [
+      {
+        "file": "app/tasks.tsx",
+        "line": 622,
+        "severity": "blocking",
+        "description": "Each completed row in the collapsible section is wrapped in `opacity: 0.8` here, but `src/components/cards/task-row.tsx:106` already dims completed cards to `0.8`. With both fixes landed together, completed cards render at roughly 0.64 opacity overall, so the original blocker requiring completed cards at 0.8 opacity is still not fully satisfied."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `ui-worker` procedure still appears too heavyweight for narrow scrutiny follow-up fixes, and the session transcript did not follow the documented wireframe/context-reading steps before editing.",
+      "evidence": "`.factory/skills/ui-worker/SKILL.md` Step 1-2 requires reading `AGENTS.md`, `.factory/library/architecture.md`, and both light/dark wireframes. The transcript skeleton for session `7962cd5c-680b-42bb-a36a-810b71fc2954` shows reads of `mission.md`, `validation-contract.md`, `app/tasks.tsx`, and locale files, and grep over `/Users/ashishhuddar/.factory/artifacts/tool-outputs/grep_tool_cli-call_rZ8OUQ9Tl2nhVr78TgkPrXRJ-38099478.log` found no `AGENTS.md`, `architecture.md`, or `wireframe-*.html` references."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/data-screens/scrutiny/reviews/tasks-redesign.json",
+  "summary": "Fail: commit `3caf436` fixes the separate-tab blocker by moving completed tasks into a collapsible section, but the combined implementation still over-dims completed cards because opacity 0.8 is applied in both `app/tasks.tsx` and `src/components/cards/task-row.tsx`."
+}

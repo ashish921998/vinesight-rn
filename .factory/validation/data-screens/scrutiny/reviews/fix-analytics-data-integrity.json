@@ -1,0 +1,39 @@
+{
+  "featureId": "fix-analytics-data-integrity",
+  "reviewedAt": "2026-03-30T02:23:03.224288Z",
+  "commitId": "6cba8cf",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "This rerun removes the fabricated trend rows and localizes `tons`/`entries`, but it still does not fully restore truthful analytics data or localization. The current screen now avoids `recentActivity`, yet it still derives counts from grouped harvest/expense aggregates rather than real record totals, and several newly added labels still fall back to hardcoded English because their locale keys were never added.",
+    "issues": [
+      {
+        "file": "app/analytics.tsx",
+        "line": 236,
+        "severity": "blocking",
+        "description": "The fix still does not use truthful activity totals. `analytics.harvestsByFarm.length` is used for both the Activities Logged card and the Category Breakdown, but `harvestsByFarm` is grouped by farm, not by harvest record, so multiple harvests on one farm collapse into a single count. The breakdown also uses `analytics.expensesByType.reduce((sum, _e) => sum + 1, 0)`, which counts expense categories instead of expense records because `expensesByType` is grouped by type. The screen therefore still underreports filtered activity totals even after removing `recentActivity`. Evidence: app/analytics.tsx:236-238, 272-288; src/services/analytics-service.ts:68-71, 324-342; src/types/analytics.ts:15-17."
+      },
+      {
+        "file": "app/analytics.tsx",
+        "line": 182,
+        "severity": "blocking",
+        "description": "Localization is still incomplete for the added analytics copy. The component references `analytics.labels.totalExpenses`, `analytics.labels.harvestYield`, and `analytics.sections.categoryBreakdown`, but those keys are absent from all three locale files, so the `|| 'Total Expenses'`, `|| 'Harvest Yield'`, and `|| 'Category Breakdown'` fallbacks remain English in non-English locales. Only `activitiesLogged`, `entries`, and `tons` were added. Evidence: app/analytics.tsx:182, 207, 269; src/i18n/locales/en.ts:784-821; src/i18n/locales/hi.ts:785-822; src/i18n/locales/mr.ts:786-823."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The fix handoff points scrutiny at commit `6cba8cf`, but that commit does not include the analytics or locale changes for this feature. Review traceability broke because the recorded commit only touches lab-tests/logs/spray-catalog/task-row files, so scrutiny had to compare the analytics files against later repository state instead of the handoff commit.",
+      "evidence": "Handoff `~/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/handoffs/2026-03-30T01-48-24-056Z__fix-analytics-data-integrity__1c3d7cd2-7a6a-4ab2-bb69-4e8631321cae.json` records `commitId: 6cba8cf`; `git show --name-only 6cba8cf` only lists `app/lab-tests.tsx`, `app/logs.tsx`, `app/spray-catalog.tsx`, and `src/components/cards/task-row.tsx`."
+    },
+    {
+      "area": "skills",
+      "observation": "`ui-worker` is a poor fit for scrutiny fixes that require truthful data-contract changes. The skill says these tasks are visual-only and explicitly says not to modify i18n keys or business logic, but this feature required adding locale keys and exposing real analytics counts. The worker transcript shows that mismatch leading to approximation logic instead of a proper analytics contract update.",
+      "evidence": "`.factory/skills/ui-worker/SKILL.md` Step 4 says `Do NOT modify ... i18n keys, or business logic. Visual changes only.`; `features.json` for `fix-analytics-data-integrity` explicitly requires `ADD LOCALE KEYS` and real totals; transcript skeleton for session `1c3d7cd2-7a6a-4ab2-bb69-4e8631321cae` notes that the analytics object `doesn't currently expose these totals as counts` and then proposes deriving counts from `harvestsByFarm`/other grouped fields instead."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/data-screens/scrutiny/reviews/analytics-redesign.json",
+  "summary": "Fail: the fake trend copy is gone and a couple of new unit/count strings were localized, but the analytics screen still uses grouped harvest/expense aggregates as if they were record counts and still lacks locale entries for Total Expenses, Harvest Yield, and Category Breakdown."
+}
