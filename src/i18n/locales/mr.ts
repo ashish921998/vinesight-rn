@@ -789,6 +789,8 @@ export const mr = {
       totalHarvest: 'एकूण $t(glossary.harvest)',
       harvestValue: '$t(glossary.harvest) मूल्य',
       performanceScore: 'कामगिरी गुण',
+      activitiesLogged: 'क्रियाकलाप नोंदले',
+      entries: 'प्रविष्ट्या',
     },
     sections: {
       overview: 'आढावा',
@@ -816,6 +818,9 @@ export const mr = {
       harvest: '$t(glossary.harvest)',
       expense: '$t(glossary.expense)',
       efficiency: 'कार्यक्षमता',
+    },
+    units: {
+      tons: 'टन',
     },
   },
 
@@ -2003,6 +2008,12 @@ export const mr = {
       addTask: '$t(glossary.task) जोडा',
     },
     logNow: 'आत्ताच नोंदवा',
+    sections: {
+      dueToday: 'आज देय',
+      thisWeek: 'हा आठवडा',
+      overdue: 'विलंबित',
+      completed: 'पूर्ण',
+    },
     dueDate: {
       none: 'देय तारीख नाही',
       today: 'आज',

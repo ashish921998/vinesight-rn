@@ -788,6 +788,8 @@ export const hi = {
       totalHarvest: 'कुल कटाई',
       harvestValue: 'कटाई मूल्य',
       performanceScore: 'प्रदर्शन स्कोर',
+      activitiesLogged: 'गतिविधियां लॉग की गईं',
+      entries: 'प्रविष्टियां',
     },
     sections: {
       overview: 'अवलोकन',
@@ -815,6 +817,9 @@ export const hi = {
       harvest: 'कटाई',
       expense: 'खर्च',
       efficiency: 'दक्षता',
+    },
+    units: {
+      tons: 'टन',
     },
   },
 
@@ -1996,6 +2001,12 @@ export const hi = {
       addTask: 'कार्य जोड़ें',
     },
     logNow: 'अभी लॉग करें',
+    sections: {
+      dueToday: 'आज देय',
+      thisWeek: 'इस सप्ताह',
+      overdue: 'अतिदेय',
+      completed: 'पूर्ण',
+    },
     dueDate: {
       none: 'कोई नियत तारीख नहीं',
       today: 'आज',

@@ -106,7 +106,7 @@ export default function TasksScreen() {
   const taskSchedules = useNotificationStore((s) => s.taskSchedules);
   const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
 
-  const [filter, setFilter] = useState<'pending' | 'completed'>('pending');
+  const [completedExpanded, setCompletedExpanded] = useState(false);
   const farmIdValue = farmId ? parseInt(farmId, 10) : undefined;
 
   // Get farm name by ID
@@ -374,314 +374,276 @@ export default function TasksScreen() {
           );
         })()}
 
-        {/* Cellar Ledger: Segmented Toggle (Pending/Completed) */}
-        <View style={{ marginBottom: spacing[4] }}>
+        {/* Task List - Pending Tasks */}
+        {dueTodayTasks.length === 0 && thisWeekTasks.length === 0 && upcomingTasks.length === 0 ? (
           <View
             style={{
-              flexDirection: 'row',
               backgroundColor: colors.surface[100],
-              borderRadius: borderRadius.pill,
-              borderWidth: 1,
-              borderColor: colors.surface[300],
-              padding: 2,
+              borderRadius: borderRadius['2xl'],
+              padding: spacing[8],
+              alignItems: 'center',
             }}
           >
-            <Pressable
-              onPress={() => setFilter('pending')}
+            <SFSymbol
+              name="square"
+              size={48}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            />
+            <Text
               style={{
-                flex: 1,
-                paddingVertical: spacing[2],
-                paddingHorizontal: spacing[4],
-                borderRadius: borderRadius.pill,
-                backgroundColor: filter === 'pending' ? m3.colorScheme.primary : 'transparent',
-                alignItems: 'center',
+                color: colors.surface[600],
+                marginTop: spacing[4],
+                textAlign: 'center',
               }}
             >
-              <Text
-                style={{
-                  fontSize: 13,
-                  fontWeight: fontWeight.medium,
-                  color: filter === 'pending' ? m3.colorScheme.onPrimary : colors.surface[500],
-                }}
-              >
-                {t('tasks.filters.pending')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setFilter('completed')}
+              {t('tasks.empty.title')}
+            </Text>
+            <Text
               style={{
-                flex: 1,
-                paddingVertical: spacing[2],
-                paddingHorizontal: spacing[4],
-                borderRadius: borderRadius.pill,
-                backgroundColor: filter === 'completed' ? m3.colorScheme.primary : 'transparent',
-                alignItems: 'center',
+                color: colors.surface[500],
+                fontSize: fontSize.sm,
+                marginTop: spacing[1],
+                textAlign: 'center',
               }}
             >
-              <Text
-                style={{
-                  fontSize: 13,
-                  fontWeight: fontWeight.medium,
-                  color: filter === 'completed' ? m3.colorScheme.onPrimary : colors.surface[500],
-                }}
-              >
-                {t('tasks.filters.completed')}
+              {t('tasks.empty.subtitleAll')}
+            </Text>
+            <Pressable
+              onPress={() => {
+                setAddEntry({ tabs: ['task'], initialTab: 'task' });
+                router.push({
+                  pathname: '/add-entry',
+                  params: { tabs: 'task', initialTab: 'task' },
+                });
+              }}
+              style={{
+                marginTop: spacing[4],
+                backgroundColor: m3.colorScheme.primary,
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.xl,
+              }}
+            >
+              <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
+                {t('tasks.cta.addTask')}
               </Text>
             </Pressable>
           </View>
-        </View>
-
-        {/* Task List */}
-        {filter === 'pending' ? (
-          // Pending Tasks View
-          dueTodayTasks.length === 0 && thisWeekTasks.length === 0 && upcomingTasks.length === 0 ? (
-            <View
-              style={{
-                backgroundColor: colors.surface[100],
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[8],
-                alignItems: 'center',
-              }}
-            >
-              <SFSymbol
-                name="square"
-                size={48}
-                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-              />
-              <Text
-                style={{
-                  color: colors.surface[600],
-                  marginTop: spacing[4],
-                  textAlign: 'center',
-                }}
-              >
-                {t('tasks.empty.title')}
-              </Text>
-              <Text
-                style={{
-                  color: colors.surface[500],
-                  fontSize: fontSize.sm,
-                  marginTop: spacing[1],
-                  textAlign: 'center',
-                }}
-              >
-                {t('tasks.empty.subtitleAll')}
-              </Text>
-              <Pressable
-                onPress={() => {
-                  setAddEntry({ tabs: ['task'], initialTab: 'task' });
-                  router.push({
-                    pathname: '/add-entry',
-                    params: { tabs: 'task', initialTab: 'task' },
-                  });
-                }}
-                style={{
-                  marginTop: spacing[4],
-                  backgroundColor: m3.colorScheme.primary,
-                  paddingHorizontal: spacing[6],
-                  paddingVertical: spacing[3],
-                  borderRadius: borderRadius.xl,
-                }}
-              >
-                <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
-                  {t('tasks.cta.addTask')}
-                </Text>
-              </Pressable>
-            </View>
-          ) : (
-            <View>
-              {/* Due Today Section */}
-              {dueTodayTasks.length > 0 && (
-                <>
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: fontWeight.semibold,
-                      color: colors.surface[400],
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.8,
-                      marginBottom: spacing[2],
-                      paddingHorizontal: spacing[1],
-                    }}
-                  >
-                    {t('tasks.sections.dueToday')}
-                  </Text>
-                  {dueTodayTasks.map((task) => (
-                    <View key={task.id} style={{ marginBottom: spacing[3] }}>
-                      <TaskRow
-                        task={task}
-                        showFarmName
-                        farmName={getFarmName(task.farm_id)}
-                        onComplete={(item) => handleComplete(item)}
-                        onLogFromTask={(item) => handleLogFromTask(item)}
-                        onEdit={(item) => {
-                          setAddEntry({
-                            tabs: ['task'],
-                            initialTab: 'task',
-                            editingTask: item,
-                          });
-                          router.push({
-                            pathname: '/add-entry',
-                            params: { tabs: 'task', initialTab: 'task' },
-                          });
-                        }}
-                        onDelete={(item) => handleDelete(item)}
-                      />
-                    </View>
-                  ))}
-                </>
-              )}
-
-              {/* This Week Section */}
-              {thisWeekTasks.length > 0 && (
-                <>
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: fontWeight.semibold,
-                      color: colors.surface[400],
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.8,
-                      marginTop: spacing[4],
-                      marginBottom: spacing[2],
-                      paddingHorizontal: spacing[1],
-                    }}
-                  >
-                    {t('tasks.sections.thisWeek')}
-                  </Text>
-                  {thisWeekTasks.map((task) => (
-                    <View key={task.id} style={{ marginBottom: spacing[3] }}>
-                      <TaskRow
-                        task={task}
-                        showFarmName
-                        farmName={getFarmName(task.farm_id)}
-                        onComplete={(item) => handleComplete(item)}
-                        onLogFromTask={(item) => handleLogFromTask(item)}
-                        onEdit={(item) => {
-                          setAddEntry({
-                            tabs: ['task'],
-                            initialTab: 'task',
-                            editingTask: item,
-                          });
-                          router.push({
-                            pathname: '/add-entry',
-                            params: { tabs: 'task', initialTab: 'task' },
-                          });
-                        }}
-                        onDelete={(item) => handleDelete(item)}
-                      />
-                    </View>
-                  ))}
-                </>
-              )}
-
-              {/* Upcoming Section */}
-              {upcomingTasks.length > 0 && (
-                <>
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: fontWeight.semibold,
-                      color: colors.surface[400],
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.8,
-                      marginTop: spacing[4],
-                      marginBottom: spacing[2],
-                      paddingHorizontal: spacing[1],
-                    }}
-                  >
-                    {t('tasks.sections.upcoming')}
-                  </Text>
-                  {upcomingTasks.map((task) => (
-                    <View key={task.id} style={{ marginBottom: spacing[3] }}>
-                      <TaskRow
-                        task={task}
-                        showFarmName
-                        farmName={getFarmName(task.farm_id)}
-                        onComplete={(item) => handleComplete(item)}
-                        onLogFromTask={(item) => handleLogFromTask(item)}
-                        onEdit={(item) => {
-                          setAddEntry({
-                            tabs: ['task'],
-                            initialTab: 'task',
-                            editingTask: item,
-                          });
-                          router.push({
-                            pathname: '/add-entry',
-                            params: { tabs: 'task', initialTab: 'task' },
-                          });
-                        }}
-                        onDelete={(item) => handleDelete(item)}
-                      />
-                    </View>
-                  ))}
-                </>
-              )}
-            </View>
-          )
         ) : (
-          // Completed Tasks View
           <View>
-            {completedTasks.length === 0 ? (
-              <View
-                style={{
-                  backgroundColor: colors.surface[100],
-                  borderRadius: borderRadius['2xl'],
-                  padding: spacing[8],
-                  alignItems: 'center',
-                }}
-              >
-                <SFSymbol
-                  name="checkmark.circle"
-                  size={48}
-                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                />
+            {/* Due Today Section */}
+            {dueTodayTasks.length > 0 && (
+              <>
                 <Text
                   style={{
-                    color: colors.surface[600],
+                    fontSize: 11,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[400],
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.8,
+                    marginBottom: spacing[2],
+                    paddingHorizontal: spacing[1],
+                  }}
+                >
+                  {t('tasks.sections.dueToday')}
+                </Text>
+                {dueTodayTasks.map((task) => (
+                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
+                    <TaskRow
+                      task={task}
+                      showFarmName
+                      farmName={getFarmName(task.farm_id)}
+                      onComplete={(item) => handleComplete(item)}
+                      onLogFromTask={(item) => handleLogFromTask(item)}
+                      onEdit={(item) => {
+                        setAddEntry({
+                          tabs: ['task'],
+                          initialTab: 'task',
+                          editingTask: item,
+                        });
+                        router.push({
+                          pathname: '/add-entry',
+                          params: { tabs: 'task', initialTab: 'task' },
+                        });
+                      }}
+                      onDelete={(item) => handleDelete(item)}
+                    />
+                  </View>
+                ))}
+              </>
+            )}
+
+            {/* This Week Section */}
+            {thisWeekTasks.length > 0 && (
+              <>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[400],
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.8,
                     marginTop: spacing[4],
-                    textAlign: 'center',
+                    marginBottom: spacing[2],
+                    paddingHorizontal: spacing[1],
                   }}
                 >
-                  {t('tasks.empty.title')}
+                  {t('tasks.sections.thisWeek')}
                 </Text>
+                {thisWeekTasks.map((task) => (
+                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
+                    <TaskRow
+                      task={task}
+                      showFarmName
+                      farmName={getFarmName(task.farm_id)}
+                      onComplete={(item) => handleComplete(item)}
+                      onLogFromTask={(item) => handleLogFromTask(item)}
+                      onEdit={(item) => {
+                        setAddEntry({
+                          tabs: ['task'],
+                          initialTab: 'task',
+                          editingTask: item,
+                        });
+                        router.push({
+                          pathname: '/add-entry',
+                          params: { tabs: 'task', initialTab: 'task' },
+                        });
+                      }}
+                      onDelete={(item) => handleDelete(item)}
+                    />
+                  </View>
+                ))}
+              </>
+            )}
+
+            {/* Upcoming Section */}
+            {upcomingTasks.length > 0 && (
+              <>
                 <Text
                   style={{
-                    color: colors.surface[500],
-                    fontSize: fontSize.sm,
-                    marginTop: spacing[1],
-                    textAlign: 'center',
+                    fontSize: 11,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[400],
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.8,
+                    marginTop: spacing[4],
+                    marginBottom: spacing[2],
+                    paddingHorizontal: spacing[1],
                   }}
                 >
-                  {t('tasks.empty.subtitleFiltered', {
-                    filter: t(`tasks.filters.completed`),
-                  })}
+                  {t('tasks.sections.upcoming')}
                 </Text>
-              </View>
-            ) : (
-              completedTasks.map((task) => (
-                <View key={task.id} style={{ marginBottom: spacing[3] }}>
-                  <TaskRow
-                    task={task}
-                    showFarmName
-                    farmName={getFarmName(task.farm_id)}
-                    onComplete={(item) => handleComplete(item)}
-                    onLogFromTask={(item) => handleLogFromTask(item)}
-                    onEdit={(item) => {
-                      setAddEntry({
-                        tabs: ['task'],
-                        initialTab: 'task',
-                        editingTask: item,
-                      });
-                      router.push({
-                        pathname: '/add-entry',
-                        params: { tabs: 'task', initialTab: 'task' },
-                      });
-                    }}
-                    onDelete={(item) => handleDelete(item)}
+                {upcomingTasks.map((task) => (
+                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
+                    <TaskRow
+                      task={task}
+                      showFarmName
+                      farmName={getFarmName(task.farm_id)}
+                      onComplete={(item) => handleComplete(item)}
+                      onLogFromTask={(item) => handleLogFromTask(item)}
+                      onEdit={(item) => {
+                        setAddEntry({
+                          tabs: ['task'],
+                          initialTab: 'task',
+                          editingTask: item,
+                        });
+                        router.push({
+                          pathname: '/add-entry',
+                          params: { tabs: 'task', initialTab: 'task' },
+                        });
+                      }}
+                      onDelete={(item) => handleDelete(item)}
+                    />
+                  </View>
+                ))}
+              </>
+            )}
+
+            {/* Cellar Ledger: Collapsible Completed Section */}
+            {completedTasks.length > 0 && (
+              <View style={{ marginTop: spacing[6] }}>
+                {/* Section Header */}
+                <Pressable
+                  onPress={() => setCompletedExpanded(!completedExpanded)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: spacing[3],
+                    paddingHorizontal: spacing[2],
+                    backgroundColor: colors.surface[100],
+                    borderRadius: borderRadius.md,
+                    borderWidth: 1,
+                    borderColor: colors.surface[300],
+                  }}
+                >
+                  {/* Toggle Arrow */}
+                  <SFSymbol
+                    name={completedExpanded ? 'chevron.down' : 'chevron.right'}
+                    size={16}
+                    color={colors.surface[500]}
+                    style={{ marginRight: spacing[2] }}
                   />
-                </View>
-              ))
+                  {/* Completed Label */}
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.surface[700],
+                      flex: 1,
+                    }}
+                  >
+                    {t('tasks.sections.completed')}
+                  </Text>
+                  {/* Count Badge */}
+                  <View
+                    style={{
+                      backgroundColor: colors.surface[200],
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[1],
+                      borderRadius: borderRadius.pill,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: fontWeight.medium,
+                        color: colors.surface[600],
+                      }}
+                    >
+                      {completedTasks.length}
+                    </Text>
+                  </View>
+                </Pressable>
+
+                {/* Completed Tasks - Collapsed by default */}
+                {completedExpanded && (
+                  <View style={{ marginTop: spacing[3] }}>
+                    {completedTasks.map((task) => (
+                      <View key={task.id} style={{ marginBottom: spacing[3], opacity: 0.8 }}>
+                        <TaskRow
+                          task={task}
+                          showFarmName
+                          farmName={getFarmName(task.farm_id)}
+                          onComplete={(item) => handleComplete(item)}
+                          onLogFromTask={(item) => handleLogFromTask(item)}
+                          onEdit={(item) => {
+                            setAddEntry({
+                              tabs: ['task'],
+                              initialTab: 'task',
+                              editingTask: item,
+                            });
+                            router.push({
+                              pathname: '/add-entry',
+                              params: { tabs: 'task', initialTab: 'task' },
+                            });
+                          }}
+                          onDelete={(item) => handleDelete(item)}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
             )}
           </View>
         )}
