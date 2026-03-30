@@ -38,15 +38,10 @@ export function LogTypeSelector({
         borderRadius: 20,
         padding: 18,
         marginBottom: 16,
-        borderWidth: showInlineGuidance ? 2 : 0,
+        borderWidth: showInlineGuidance ? 2 : 1,
         borderColor: showInlineGuidance
           ? colorWithOpacity(m3.colorScheme.primary, 0.7)
-          : 'transparent',
-        shadowColor: showInlineGuidance ? m3.colorScheme.primary : 'transparent',
-        shadowOpacity: showInlineGuidance ? 0.24 : 0,
-        shadowRadius: showInlineGuidance ? 12 : 0,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: showInlineGuidance ? 4 : 0,
+          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
       }}
     >
       <View style={{ marginBottom: 14 }}>
@@ -113,11 +108,6 @@ export function LogTypeSelector({
                     ? colorWithOpacity(m3.colorScheme.primary, 0.25)
                     : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                 opacity: emphasizeAllGuidedCards ? 1 : undefined,
-                shadowColor: emphasizeSelectedGuidedCard ? m3.colorScheme.primary : 'transparent',
-                shadowOpacity: emphasizeSelectedGuidedCard ? 0.3 : 0,
-                shadowRadius: emphasizeSelectedGuidedCard ? 10 : 0,
-                shadowOffset: { width: 0, height: 3 },
-                elevation: emphasizeSelectedGuidedCard ? 5 : 0,
               }}
             >
               {isSelected ? (
