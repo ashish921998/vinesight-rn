@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { borderRadius, fontSize, fontWeight, shadows, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatNumber } from '@/i18n/format';
@@ -227,7 +227,8 @@ export function ReportExecutiveSummary({
               borderCurve: 'continuous',
               backgroundColor: colorWithOpacity(tile.color, 0.12),
               overflow: 'hidden',
-              ...shadows.md,
+              borderWidth: 1,
+              borderColor: colorWithOpacity(tile.color, 0.18),
             }}
           >
             {/* Card content */}

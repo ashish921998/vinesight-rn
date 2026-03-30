@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
 import * as Haptics from 'expo-haptics';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { borderRadius, fontSize, fontWeight, spacing, shadows } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { convertAreaFromAcres } from '@/utils/preferences';
@@ -139,7 +139,8 @@ function SegmentedControl({
               backgroundColor: colors.surface[100],
               borderRadius: borderRadius.lg - SEGMENT_INSET,
               borderCurve: 'continuous',
-              ...shadows.sm,
+              borderWidth: 1,
+              borderColor: colors.surface[300],
             },
             pillStyle,
           ]}

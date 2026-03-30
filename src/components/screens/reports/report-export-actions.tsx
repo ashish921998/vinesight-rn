@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { spacing, fontSize, fontWeight, borderRadius, shadows } from '@/styles/theme';
+import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -40,7 +40,10 @@ export function ReportExportActions({
           paddingHorizontal: spacing[4],
           gap: spacing[2],
         },
-        shadows.md,
+        {
+          borderWidth: 1,
+          borderColor: m3.colorScheme.outlineVariant,
+        },
         panelStyle,
       ]}
     >
@@ -78,7 +81,8 @@ export function ReportExportActions({
               : pressed
                 ? colorWithOpacity(primary, 0.85)
                 : primary,
-            ...shadows.sm,
+            borderWidth: 1,
+            borderColor: colorWithOpacity(primary, 0.2),
           })}
         >
           {isExporting ? (
