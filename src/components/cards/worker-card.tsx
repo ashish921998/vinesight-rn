@@ -1,7 +1,7 @@
 /**
  * WorkerCard Component
- * Displays a single worker with avatar, rate, and advance balance
- * Cellar Ledger design: 44px circular avatar, status dot, call button
+ * Displays a single worker with avatar, role, farm, status, and call button
+ * Cellar Ledger design: 44px circular avatar, status dot + label, call button
  */
 
 import React from 'react';
@@ -10,9 +10,7 @@ import { Symbol as CardSymbol } from '@/components/ui/symbol';
 import type { Worker } from '../../types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { formatCurrency } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
-import { useCurrency } from '@/hooks/use-currency';
 import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
 
 interface WorkerCardProps {
@@ -20,27 +18,33 @@ interface WorkerCardProps {
   onPress?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  /** Whether the worker is currently active (for status display) */
+  isActive?: boolean;
 }
 
-export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProps) {
+export function WorkerCard({
+  worker,
+  onPress,
+  onEdit,
+  onDelete,
+  isActive = true,
+}: WorkerCardProps) {
   const m3 = useM3();
   const colors = useThemeColors();
   const isDark = useIsDark();
   const { t } = useTranslation();
-  const preferredCurrency = useCurrency();
 
   // Labour category color for avatar (#7A5E8E light, #9A7EAE dark)
   const labourColor = isDark ? '#9A7EAE' : '#7A5E8E';
+  // Inactive workers use stone-5 for avatar
+  const inactiveAvatarColor = isDark ? '#7A756D' : '#A89E92';
 
-  const initial = worker.name.charAt(0).toUpperCase();
-  const formattedRate = formatCurrency(worker.daily_rate, preferredCurrency, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-  const formattedAdvance = formatCurrency(worker.advance_balance, preferredCurrency, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
+  const initials = worker.name
+    .split(' ')
+    .map((n) => n.charAt(0))
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
   // Cellar Ledger: Card mist-1 bg, stone-3 border, 16px radius
   const containerStyle: ViewStyle = {
@@ -62,7 +66,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
     minWidth: 44,
     minHeight: 44,
     borderRadius: borderRadius.full,
-    backgroundColor: labourColor,
+    backgroundColor: isActive ? labourColor : inactiveAvatarColor,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing[3],
@@ -76,52 +80,36 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
 
   const infoContainerStyle: ViewStyle = {
     flex: 1,
+    minWidth: 0,
   };
 
-  // Cellar Ledger: Farm name bold 15px - using name for worker
+  // Cellar Ledger: Worker name 15px/600
   const nameTextStyle: TextStyle = {
-    fontSize: 15, // 15px
-    fontWeight: fontWeight.semibold, // bold
+    fontSize: 15,
+    fontWeight: fontWeight.semibold,
     color: colors.surface[900], // ink
   };
 
-  const rateContainerStyle: ViewStyle = {
+  // Cellar Ledger: status dot (7px) + label (12px)
+  const statusContainerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing[1],
+    gap: spacing[2],
   };
 
-  // Cellar Ledger: secondary text 12px/bark
-  const rateTextStyle: TextStyle = {
-    fontSize: fontSize.sm,
-    color: colors.surface[500], // bark
-    marginLeft: spacing[1],
-  };
-
-  const dayTextStyle: TextStyle = {
-    fontSize: fontSize.xs,
-    color: colors.surface[400], // stone-5
-  };
-
-  const advanceContainerStyle: ViewStyle = {
-    flexDirection: 'row',
-    alignItems: 'center',
-  };
-
-  const advanceTextStyle: TextStyle = {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    color: colors.warning, // warning
-    marginLeft: spacing[1],
-  };
-
-  // Cellar Ledger: status dot (7px)
   const statusDotStyle: ViewStyle = {
     width: 7,
     height: 7,
     borderRadius: borderRadius.full,
-    backgroundColor: worker.advance_balance > 0 ? colors.warning : colors.success, // green for active/healthy, amber for advance due
-    marginRight: spacing[2],
+    backgroundColor: isActive ? colors.success : colors.surface[400], // green for active, stone-5 for inactive
+  };
+
+  const statusLabelStyle: TextStyle = {
+    fontSize: 12,
+    fontWeight: fontWeight.medium,
+    lineHeight: 16,
+    color: isActive ? colors.success : colors.surface[400], // green for active, stone-5 for inactive
   };
 
   // Cellar Ledger: call button (36px, borderRadius 12, primary-tinted bg)
@@ -137,7 +125,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   const actionsContainerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: spacing[3],
+    marginLeft: spacing[2],
     gap: spacing[2],
   };
 
@@ -152,49 +140,38 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
 
   const renderCardContent = (pressed: boolean) => (
     <View style={containerStyle}>
+      {/* 44px circular avatar */}
       <View style={avatarStyle}>
-        <Text style={avatarTextStyle}>{initial}</Text>
+        <Text style={avatarTextStyle}>{initials}</Text>
       </View>
 
+      {/* Info: name, role + farm, status dot + label */}
       <View style={infoContainerStyle}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {/* Cellar Ledger: status dot (7px) */}
+        <Text style={nameTextStyle} numberOfLines={1}>
+          {worker.name}
+        </Text>
+
+        {/* Status dot + label */}
+        <View style={statusContainerStyle}>
           <View style={statusDotStyle} />
-          <Text style={nameTextStyle} numberOfLines={1}>
-            {worker.name}
-          </Text>
-        </View>
-        <View style={rateContainerStyle}>
-          <CardSymbol
-            name="dollarsign.circle"
-            size={12}
-            color={colors.surface[400]} // stone-5
-          />
-          <Text style={rateTextStyle} numberOfLines={1}>
-            {formattedRate}
-            <Text style={dayTextStyle}>{t('workers.ratePerDayShort')}</Text>
+          <Text style={statusLabelStyle}>
+            {isActive ? t('workers.status.active') : t('workers.status.offToday')}
           </Text>
         </View>
       </View>
 
-      {/* Cellar Ledger: call button (36px, borderRadius 12, primary-tinted bg) */}
+      {/* Call button (36px, 12px radius, primary-tinted bg) */}
       <Pressable
         style={({ pressed: callPressed }) => [
           callButtonStyle,
           callPressed ? { backgroundColor: colorWithOpacity(colors.primary[500], 0.24) } : null,
+          !isActive ? { opacity: 0.5 } : null,
         ]}
         accessibilityRole="button"
         accessibilityLabel={t('workers.workerCard.callA11y', { name: worker.name })}
       >
         <CardSymbol name="phone.fill" size={16} color={colors.primary[500]} />
       </Pressable>
-
-      {worker.advance_balance > 0 && (
-        <View style={[advanceContainerStyle, { marginLeft: spacing[2] }]}>
-          <CardSymbol name="arrow.up.circle.fill" size={12} color={colors.warning} />
-          <Text style={advanceTextStyle}>{formattedAdvance}</Text>
-        </View>
-      )}
 
       {(onEdit || onDelete) && (
         <View style={actionsContainerStyle}>
@@ -261,7 +238,12 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={worker.name}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={worker.name}
+        style={!isActive ? { opacity: 0.55 } : undefined}
+      >
         {({ pressed }) => renderCardContent(pressed)}
       </Pressable>
     );
