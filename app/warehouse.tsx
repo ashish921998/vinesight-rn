@@ -426,9 +426,9 @@ export default function WarehouseScreen() {
               const itemColor = getCategoryColors(item.type || 'spray');
               const itemAccessibilityName = item.name || item.id?.toString() || 'item';
 
-              // Calculate stock percentage for the bar (assuming reorder_quantity is the threshold for full stock)
+              // Calculate stock percentage for the bar (reorder_quantity * 2 is full stock, reorder_quantity is 50%)
               const stockPercentage = item.reorder_quantity
-                ? Math.min(100, Math.round((item.quantity / item.reorder_quantity) * 100))
+                ? Math.min(100, Math.round((item.quantity / (item.reorder_quantity * 2)) * 100))
                 : 100;
 
               // Determine stock bar color based on percentage

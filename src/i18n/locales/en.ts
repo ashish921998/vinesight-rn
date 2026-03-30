@@ -2283,15 +2283,21 @@ export const en = {
       lowStockAlerts: 'Low Stock Alerts',
       itemCount_one: '{{count}} item',
       itemCount_other: '{{count}} items',
+      itemsCount_one: '{{count}} item',
+      itemsCount_other: '{{count}} items',
+      lowStockCount_one: '{{count}} low stock',
+      lowStockCount_other: '{{count}} low stock',
       quantity: 'Quantity',
       unitPrice: 'Unit Price',
       totalValue: 'Total Value',
+      updatedDate: 'Updated {{date}}',
     },
     reorderAt: 'Reorder at: {{quantity}} {{unit}}',
     filters: {
       all: 'All ({{count}})',
       fertilizer: 'Fertilizers ({{count}})',
       spray: 'Sprays ({{count}})',
+      equipment: 'Equipment ({{count}})',
     },
     search: {
       placeholder: 'Search inventory...',
@@ -2303,6 +2309,7 @@ export const en = {
     itemTypes: {
       fertilizer: 'Fertilizer',
       spray: 'Spray',
+      equipment: 'Equipment',
     },
     empty: {
       title: 'No items in warehouse',

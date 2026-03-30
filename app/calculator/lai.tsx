@@ -282,7 +282,7 @@ export default function LAICalculatorScreen() {
                     >
                       <Text
                         style={{
-                          fontSize: fontSize.xl,
+                          fontSize: 24,
                           fontWeight: fontWeight.bold,
                           color: m3.colorScheme.primary,
                         }}
@@ -310,7 +310,7 @@ export default function LAICalculatorScreen() {
                     >
                       <Text
                         style={{
-                          fontSize: fontSize.xl,
+                          fontSize: 24,
                           fontWeight: fontWeight.bold,
                           color: m3.colorScheme.primary,
                         }}

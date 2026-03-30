@@ -2291,15 +2291,21 @@ export const hi = {
       lowStockAlerts: 'कम स्टॉक अलर्ट',
       itemCount_one: '{{count}} वस्तु',
       itemCount_other: '{{count}} वस्तुएं',
+      itemsCount_one: '{{count}} वस्तु',
+      itemsCount_other: '{{count}} वस्तुएं',
+      lowStockCount_one: '{{count}} कम स्टॉक',
+      lowStockCount_other: '{{count}} कम स्टॉक',
       quantity: 'मात्रा',
       unitPrice: 'इकाई मूल्य',
       totalValue: 'कुल मूल्य',
+      updatedDate: 'अपडेट {{date}}',
     },
     reorderAt: 'पुनः ऑर्डर करें: {{quantity}} {{unit}}',
     filters: {
       all: 'सभी ({{count}})',
       fertilizer: 'उर्वरक ({{count}})',
       spray: 'छिड़काव ({{count}})',
+      equipment: 'उपकरण ({{count}})',
     },
     search: {
       placeholder: 'इन्वेंटरी खोजें...',
@@ -2311,6 +2317,7 @@ export const hi = {
     itemTypes: {
       fertilizer: 'उर्वरक',
       spray: 'छिड़काव',
+      equipment: 'उपकरण',
     },
     empty: {
       title: 'गोदाम में कोई वस्तु नहीं',

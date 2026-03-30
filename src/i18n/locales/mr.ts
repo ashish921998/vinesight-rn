@@ -2299,15 +2299,21 @@ export const mr = {
       lowStockAlerts: 'कमी स्टॉक इशारे',
       itemCount_one: '{{count}} वस्तू',
       itemCount_other: '{{count}} वस्तू',
+      itemsCount_one: '{{count}} वस्तू',
+      itemsCount_other: '{{count}} वस्तू',
+      lowStockCount_one: '{{count}} कमी स्टॉक',
+      lowStockCount_other: '{{count}} कमी स्टॉक',
       quantity: 'प्रमाण',
       unitPrice: 'युनिट किंमत',
       totalValue: 'एकूण मूल्य',
+      updatedDate: 'अपडेट {{date}}',
     },
     reorderAt: 'पुनर्भरण पातळी: {{quantity}} {{unit}}',
     filters: {
       all: 'सर्व ({{count}})',
       fertilizer: '$t(glossary.fertigation) ({{count}})',
       spray: '$t(glossary.spray) ({{count}})',
+      equipment: 'उपकरण ({{count}})',
     },
     search: {
       placeholder: 'गोदाम शोधा...',
@@ -2319,6 +2325,7 @@ export const mr = {
     itemTypes: {
       fertilizer: '$t(glossary.fertigation)',
       spray: '$t(glossary.spray)',
+      equipment: 'उपकरण',
     },
     empty: {
       title: 'गोदामात वस्तू नाहीत',
