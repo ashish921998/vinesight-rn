@@ -572,12 +572,9 @@ export default function DashboardScreen() {
             farmsNeedingAttention &&
             farmsNeedingAttention.length > 0 && (
               <View style={{ marginBottom: spacing[6] }}>
-                <View style={{ marginBottom: spacing[3] }}>
+                <View style={sectionTitleStyle as ViewStyle}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                    <Text
-                      style={[sectionTitleStyle, { marginBottom: 0 }]}
-                      accessibilityRole="header"
-                    >
+                    <Text style={sectionTitleStyle} accessibilityRole="header">
                       {t('dashboard.needsAttention.title')}
                     </Text>
                     <Text style={sectionCountStyle}>{farmsNeedingAttention.length}</Text>
@@ -779,12 +776,12 @@ export default function DashboardScreen() {
                       width: 44,
                       height: 44,
                       borderRadius: 12,
-                      backgroundColor: colorWithOpacity(colors.expense[500], 0.12),
+                      backgroundColor: colorWithOpacity(colors.harvest[500], 0.12),
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <SymbolIcon name="dollarsign.circle" size={20} color={colors.expense[500]} />
+                    <SymbolIcon name="dollarsign.circle" size={20} color={colors.harvest[500]} />
                   </View>
                   <Text
                     style={{
@@ -888,7 +885,7 @@ export default function DashboardScreen() {
                           activity.type === 'irrigation'
                             ? colors.irrigation[500]
                             : activity.type === 'expense'
-                              ? colors.expense[500]
+                              ? colors.harvest[500]
                               : activity.type === 'note'
                                 ? colors.labour[500]
                                 : m3.colorScheme.primary,
@@ -925,7 +922,7 @@ export default function DashboardScreen() {
                         flexShrink: 0,
                       }}
                     >
-                      {formatDate(activity.date, { month: 'short', day: 'numeric' })}
+                      {formatDate(activity.date)}
                     </Text>
                   </Pressable>
                 ))}

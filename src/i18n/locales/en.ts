@@ -189,7 +189,8 @@ export const en = {
       saveTarget: 'Save target date',
     },
     riskBlock: {
-      urgentTasks: '{{count}} urgent task{{count, plural, =1 {} other {s}}}',
+      urgentTasks_one: '{{count}} urgent task',
+      urgentTasks_other: '{{count}} urgent tasks',
     },
     water: {
       noIrrigationLoggedYet: 'No irrigation logged yet',
