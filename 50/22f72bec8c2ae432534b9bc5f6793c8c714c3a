@@ -1,0 +1,23 @@
+app/logs.tsx
+  df0badfa612b57ed 72,74-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "5022f72bec8c2ae432534b9bc5f6793c8c714c3a",
+  "prompts": {
+    "df0badfa612b57ed": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "fe633c82-5825-4edb-8716-002df1174f98",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 9,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
