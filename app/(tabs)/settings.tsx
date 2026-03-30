@@ -1035,14 +1035,14 @@ export default function SettingsScreen() {
             >
               {userEmail}
             </Text>
+            <Pressable
+              onPress={() => setShowEditProfile(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('settings.editProfile')}
+            >
+              <Text style={styles.editProfileLink}>{t('settings.editProfile')}</Text>
+            </Pressable>
           </View>
-          <Pressable
-            onPress={() => setShowEditProfile(true)}
-            accessibilityRole="button"
-            accessibilityLabel={t('settings.editProfile')}
-          >
-            <UISymbol name="pencil" size={24} color={m3.colorScheme.primary} />
-          </Pressable>
         </View>
       </View>
 
@@ -2408,22 +2408,24 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     backgroundColor: colors.surface[100],
     marginHorizontal: spacing[4],
     marginTop: spacing[4],
-    borderRadius: borderRadius['2xl'],
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.surface[300],
     padding: spacing[4],
   } as ViewStyle,
   rowCenter: { flexDirection: 'row', alignItems: 'center' } as ViewStyle,
   profileAvatar: {
-    width: 64,
-    height: 64,
-    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: m3.colorScheme.primary,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
   profileInitial: {
-    fontSize: fontSize['2xl'],
+    fontSize: 20,
     fontWeight: fontWeight.bold,
-    color: colors.primary[600],
+    color: '#FFFFFF',
   } as TextStyle,
   profileInfo: { flex: 1, marginLeft: spacing[4] } as ViewStyle,
   profileName: {
@@ -2432,20 +2434,29 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     color: colors.surface[900],
   } as TextStyle,
   profileEmail: { fontSize: fontSize.sm, color: colors.surface[500] } as TextStyle,
+  editProfileLink: {
+    fontSize: fontSize.sm,
+    color: m3.colorScheme.primary,
+    fontWeight: fontWeight.medium,
+    marginTop: spacing[1],
+  } as TextStyle,
   profilePhone: { fontSize: fontSize.xs, color: colors.surface[400], marginTop: 2 } as TextStyle,
 
   section: { marginTop: spacing[6], paddingHorizontal: spacing[4] } as ViewStyle,
   sectionHeader: {
     fontSize: fontSize.xs,
-    fontWeight: fontWeight.bold,
-    color: colors.surface[500],
-    letterSpacing: 0.5,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[400],
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
     marginBottom: spacing[2],
     paddingHorizontal: spacing[2],
   } as TextStyle,
   sectionContent: {
     backgroundColor: colors.surface[100],
-    borderRadius: borderRadius['2xl'],
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.surface[300],
     overflow: 'hidden',
   } as ViewStyle,
 
