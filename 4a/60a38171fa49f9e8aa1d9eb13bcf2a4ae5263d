@@ -1,0 +1,23 @@
+.factory/validation/forms-tools-settings/user-testing/flows/val-cross-002.json
+  4b9bd97899b8810b 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "4a60a38171fa49f9e8aa1d9eb13bcf2a4ae5263d",
+  "prompts": {
+    "4b9bd97899b8810b": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d5c6fc56-ee5a-468e-a1e1-ecca5fa3e873",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 37,
+      "total_deletions": 0,
+      "accepted_lines": 37,
+      "overriden_lines": 0
+    }
+  }
+}
