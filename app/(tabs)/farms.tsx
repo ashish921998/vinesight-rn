@@ -493,7 +493,7 @@ export default function FarmsScreen() {
     );
   };
 
-  const showFab = (farms?.length || 0) > 0;
+  const showFab = Platform.OS === 'android' && (farms?.length || 0) > 0;
   const listBottomPadding = Math.max(spacing[16], (showFab ? fabBottom + 56 : 0) + spacing[8]);
 
   return (

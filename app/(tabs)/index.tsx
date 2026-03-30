@@ -779,12 +779,12 @@ export default function DashboardScreen() {
                       width: 44,
                       height: 44,
                       borderRadius: 12,
-                      backgroundColor: colorWithOpacity(colors.harvest[500], 0.12),
+                      backgroundColor: colorWithOpacity(colors.expense[500], 0.12),
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <SymbolIcon name="dollarsign.circle" size={20} color={colors.harvest[500]} />
+                    <SymbolIcon name="dollarsign.circle" size={20} color={colors.expense[500]} />
                   </View>
                   <Text
                     style={{
@@ -888,7 +888,7 @@ export default function DashboardScreen() {
                           activity.type === 'irrigation'
                             ? colors.irrigation[500]
                             : activity.type === 'expense'
-                              ? colors.harvest[500]
+                              ? colors.expense[500]
                               : activity.type === 'note'
                                 ? colors.labour[500]
                                 : m3.colorScheme.primary,
@@ -925,7 +925,7 @@ export default function DashboardScreen() {
                         flexShrink: 0,
                       }}
                     >
-                      {formatDate(new Date(activity.date), { month: 'short', day: 'numeric' })}
+                      {formatDate(activity.date, { month: 'short', day: 'numeric' })}
                     </Text>
                   </Pressable>
                 ))}

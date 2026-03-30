@@ -1654,7 +1654,7 @@ export default function FarmDetailScreen() {
                         marginLeft: spacing[1],
                       }}
                     >
-                      {daysSincePruning}d
+                      {t('farmDetails.pruning.daysShort', { count: daysSincePruning })}
                     </Text>
                   </View>
                 )}
