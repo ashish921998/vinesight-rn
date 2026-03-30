@@ -1,0 +1,45 @@
+src/i18n/locales/hi.ts
+  521728f7e86141e7 790-791,800
+src/i18n/locales/en.ts
+  521728f7e86141e7 789-790,799
+src/i18n/locales/mr.ts
+  521728f7e86141e7 791-792,801
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  05870e7ad5fd06d8 57,126,171,309,337,363,548,553-554,589,602,611,615
+  521728f7e86141e7 27,418,420,422-425,427-430,432-433,441,444-445,449-453,455-456,747-750,881,883-896,916
+app/analytics.tsx
+  521728f7e86141e7 238,274,287
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "d289b29fefbe9effd33651aa166e8a4eb2c02a54",
+  "prompts": {
+    "05870e7ad5fd06d8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d1167030-fd5b-475b-aa51-e8e2e34457cd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 13,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    },
+    "521728f7e86141e7": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "03dcc80c-d9af-4b09-850f-1874bb851778",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 75,
+      "total_deletions": 715,
+      "accepted_lines": 71,
+      "overriden_lines": 0
+    }
+  }
+}
