@@ -1,0 +1,37 @@
+{
+  "surface": "code-review",
+  "assertions": [
+    {
+      "id": "VAL-CROSS-002",
+      "status": "pass",
+      "summary": "Pass. A read-only shadow audit of the forms-tools-settings milestone files and directly related shared components found no remaining `shadowColor`, `shadowOffset`, `shadowOpacity`, `shadowRadius`, or `elevation` usage on the targeted card/dropdown surfaces. The previously failing spray and fertigation suggestion dropdowns are now border-only. The only remaining shadow match in the audited surface area is the tab navigation bar shadow in `app/(tabs)/_layout.tsx:232`, which the validation contract explicitly allows.",
+      "evidence": [
+        "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/val-cross-002/shadow-audit-notes.md",
+        "No shadow/elevation matches: app/(tabs)/settings.tsx",
+        "No shadow/elevation matches: app/(tabs)/tools.tsx",
+        "No shadow/elevation matches: app/reports.tsx",
+        "No shadow/elevation matches: app/fertilizer-plans.tsx",
+        "No shadow/elevation matches: app/warehouse.tsx",
+        "No shadow/elevation matches: app/calculator/**",
+        "No shadow/elevation matches: app/farm/add.tsx",
+        "No shadow/elevation matches: app/add-task.tsx",
+        "No shadow/elevation matches: app/add-warehouse-item.tsx",
+        "No shadow/elevation matches: src/components/screens/reports/**",
+        "No shadow/elevation matches: src/components/screens/entry-form/**",
+        "No shadow/elevation matches: src/components/forms/spray-form.tsx",
+        "No shadow/elevation matches: src/components/forms/fertigation-form.tsx",
+        "src/components/forms/spray-form.tsx:1006-1018",
+        "src/components/forms/fertigation-form.tsx:618-630",
+        "app/(tabs)/tools.tsx:36-41",
+        "app/fertilizer-plans.tsx:96-99",
+        "app/fertilizer-plans.tsx:202-206",
+        "app/warehouse.tsx:446-452",
+        "app/reports.tsx:380-383",
+        "app/(tabs)/_layout.tsx:232 (allowed navigation bar shadow)"
+      ]
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "toolsUsed": ["Read", "Grep", "LS", "Execute", "ApplyPatch"]
+}

@@ -1,0 +1,21 @@
+{
+  "milestone": "forms-tools-settings",
+  "round": 4,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 2,
+    "passed": 1,
+    "failed": 1,
+    "blocked": 0
+  },
+  "passedAssertions": ["VAL-REPORTS-001"],
+  "failedAssertions": [
+    {
+      "id": "VAL-CROSS-002",
+      "reason": "Forms-tools-settings still contains explicit shadow/elevation styling on the spray and fertigation suggestion dropdown surfaces, so the milestone is not yet fully shadow-free."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": ".factory/validation/forms-tools-settings/user-testing/synthesis.round3.json"
+}
