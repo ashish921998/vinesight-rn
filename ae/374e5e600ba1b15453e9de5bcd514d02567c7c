@@ -1,0 +1,23 @@
+app/lab-tests.tsx
+  49876d6b00064027 557,572,581
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "ae374e5e600ba1b15453e9de5bcd514d02567c7c",
+  "prompts": {
+    "49876d6b00064027": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7b60c9d0-3f89-43a1-8aed-668cd1b54726",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 6,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
