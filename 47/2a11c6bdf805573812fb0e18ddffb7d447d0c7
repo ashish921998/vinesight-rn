@@ -1,0 +1,41 @@
+src/i18n/locales/hi.ts
+  3767517045887e3c 2010,2014-2017,2624-2631
+src/i18n/locales/mr.ts
+  3767517045887e3c 2017,2021-2024,2634-2641
+app/spray-catalog.tsx
+  3767517045887e3c 9,67-68,156,226
+src/i18n/locales/en.ts
+  3767517045887e3c 2004-2009,2616-2623
+app/lab-tests.tsx
+  3767517045887e3c 572,581
+app/logs.tsx
+  3767517045887e3c 1120,1124
+app/analytics.tsx
+  3767517045887e3c 238,274,287
+app/tasks.tsx
+  3767517045887e3c 118-123,132,316,338
+app/soil-profiling.tsx
+  3767517045887e3c 216-219
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  3767517045887e3c 740,801
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "472a11c6bdf805573812fb0e18ddffb7d447d0c7",
+  "prompts": {
+    "3767517045887e3c": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d8f7c1d3-8144-401d-b93a-9adfd169367d",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 76,
+      "total_deletions": 34,
+      "accepted_lines": 76,
+      "overriden_lines": 0
+    }
+  }
+}
