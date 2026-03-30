@@ -1,0 +1,23 @@
+.factory/validation/data-screens/user-testing/flows/spray-rerun-round3.json
+  6a1fce60927586ed 1-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "0bb0dfa611664bf8e7f0f34da2ffbb026f39ee76",
+  "prompts": {
+    "6a1fce60927586ed": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "28217040-2200-4cbc-a388-fbb1b7917e9b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 0,
+      "accepted_lines": 56,
+      "overriden_lines": 0
+    }
+  }
+}
