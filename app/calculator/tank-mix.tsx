@@ -77,7 +77,14 @@ export default function TankMixCalculatorScreen() {
         </View>
 
         <View style={{ marginBottom: spacing[3] }}>
-          <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginBottom: spacing[2] }}>
+          <Text
+            style={{
+              color: m3.colorScheme.onSurfaceVariant,
+              marginBottom: spacing[2],
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+            }}
+          >
             {t('tankMix.searchLabel', { defaultValue: 'Search mix' })}
           </Text>
           <TextInput
@@ -86,21 +93,29 @@ export default function TankMixCalculatorScreen() {
             placeholder={t('tankMix.searchPlaceholder', {
               defaultValue: 'Search by mix or problem',
             })}
-            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55)}
             style={{
               borderRadius: borderRadius.lg,
               borderWidth: 1,
-              borderColor: m3.colorScheme.outlineVariant,
+              borderColor: colors.surface[300],
               backgroundColor: m3.surface.surfaceContainerLow,
               color: m3.colorScheme.onSurface,
               paddingHorizontal: spacing[3],
               paddingVertical: spacing[3],
+              fontSize: fontSize.base,
             }}
           />
         </View>
 
         <View style={{ marginBottom: spacing[4] }}>
-          <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginBottom: spacing[2] }}>
+          <Text
+            style={{
+              color: m3.colorScheme.onSurfaceVariant,
+              marginBottom: spacing[2],
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+            }}
+          >
             {t('tankMix.tankSizeLabel', { defaultValue: 'Tank size (liters)' })}
           </Text>
           <TextInput
@@ -108,15 +123,16 @@ export default function TankMixCalculatorScreen() {
             onChangeText={(text) => setTankLitersText(text.replace(/[^0-9.]/g, ''))}
             keyboardType="decimal-pad"
             placeholder="200"
-            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55)}
             style={{
               borderRadius: borderRadius.lg,
               borderWidth: 1,
-              borderColor: m3.colorScheme.outlineVariant,
+              borderColor: colors.surface[300],
               backgroundColor: m3.surface.surfaceContainerLow,
               color: m3.colorScheme.onSurface,
               paddingHorizontal: spacing[3],
               paddingVertical: spacing[3],
+              fontSize: fontSize.base,
             }}
           />
         </View>
@@ -149,20 +165,31 @@ export default function TankMixCalculatorScreen() {
                   style={{
                     borderRadius: borderRadius.lg,
                     borderWidth: 1,
-                    borderColor: selected ? m3.colorScheme.primary : m3.colorScheme.outlineVariant,
+                    borderColor: selected ? m3.colorScheme.primary : colors.surface[300],
                     backgroundColor: selected
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.1)
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.08)
                       : m3.surface.surfaceContainerLow,
                     padding: spacing[3],
+                    paddingVertical: spacing[3],
                     marginBottom: spacing[2],
                   }}
                 >
                   <Text
-                    style={{ color: m3.colorScheme.onSurface, fontWeight: fontWeight.semibold }}
+                    style={{
+                      color: m3.colorScheme.onSurface,
+                      fontWeight: fontWeight.semibold,
+                      fontSize: fontSize.sm,
+                    }}
                   >
                     {mix.name}
                   </Text>
-                  <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: 2 }}>
+                  <Text
+                    style={{
+                      color: m3.colorScheme.onSurfaceVariant,
+                      marginTop: 2,
+                      fontSize: fontSize.sm,
+                    }}
+                  >
                     {mix.target_problem ??
                       t('tankMix.genericProblem', { defaultValue: 'General protection' })}
                   </Text>
@@ -195,7 +222,7 @@ export default function TankMixCalculatorScreen() {
             style={{
               borderRadius: borderRadius.xl,
               borderWidth: 1,
-              borderColor: m3.colorScheme.outlineVariant,
+              borderColor: colors.surface[300],
               backgroundColor: m3.surface.surfaceContainerLow,
               padding: spacing[4],
             }}
@@ -218,14 +245,27 @@ export default function TankMixCalculatorScreen() {
                 style={{
                   borderRadius: borderRadius.lg,
                   padding: spacing[3],
+                  paddingVertical: spacing[3],
                   marginBottom: spacing[2],
                   backgroundColor: colorWithOpacity(colors.spray[500], 0.08),
                 }}
               >
-                <Text style={{ color: m3.colorScheme.onSurface, fontWeight: fontWeight.semibold }}>
+                <Text
+                  style={{
+                    color: m3.colorScheme.onSurface,
+                    fontWeight: fontWeight.semibold,
+                    fontSize: fontSize.sm,
+                  }}
+                >
                   {row.productName}
                 </Text>
-                <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: 2 }}>
+                <Text
+                  style={{
+                    color: m3.colorScheme.onSurfaceVariant,
+                    marginTop: 2,
+                    fontSize: fontSize.sm,
+                  }}
+                >
                   {t('tankMix.resultDose', {
                     defaultValue: 'Dose: {{value}} {{unit}} ({{basis}})',
                     value: row.doseValue,
@@ -238,6 +278,7 @@ export default function TankMixCalculatorScreen() {
                     color: colors.spray[500],
                     marginTop: spacing[1],
                     fontWeight: fontWeight.semibold,
+                    fontSize: fontSize.sm,
                   }}
                 >
                   {t('tankMix.resultTotal', {

@@ -275,14 +275,14 @@ export default function LAICalculatorScreen() {
                       style={{
                         flex: 1,
                         backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
-                        borderRadius: borderRadius.xl,
+                        borderRadius: borderRadius.lg,
                         padding: spacing[4],
                         alignItems: 'center',
                       }}
                     >
                       <Text
                         style={{
-                          fontSize: fontSize['2xl'],
+                          fontSize: fontSize.xl,
                           fontWeight: fontWeight.bold,
                           color: m3.colorScheme.primary,
                         }}
@@ -303,14 +303,14 @@ export default function LAICalculatorScreen() {
                       style={{
                         flex: 1,
                         backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-                        borderRadius: borderRadius.xl,
+                        borderRadius: borderRadius.lg,
                         padding: spacing[4],
                         alignItems: 'center',
                       }}
                     >
                       <Text
                         style={{
-                          fontSize: fontSize['2xl'],
+                          fontSize: fontSize.xl,
                           fontWeight: fontWeight.bold,
                           color: m3.colorScheme.primary,
                         }}
@@ -335,7 +335,7 @@ export default function LAICalculatorScreen() {
                     return (
                       <View
                         style={{
-                          borderRadius: borderRadius.xl,
+                          borderRadius: borderRadius.lg,
                           padding: spacing[3],
                           marginTop: spacing[3],
                           backgroundColor: colorWithOpacity(interp.color, 0.12),
@@ -367,7 +367,9 @@ export default function LAICalculatorScreen() {
                             {interp.label}
                           </Text>
                         </View>
-                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[600] }}>
+                        <Text
+                          style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
+                        >
                           {interp.message}
                         </Text>
                       </View>
