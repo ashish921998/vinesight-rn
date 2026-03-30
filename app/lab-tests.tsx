@@ -179,7 +179,7 @@ export default function LabTestsScreen() {
               </Text>
               <Text
                 style={{
-                  fontSize: fontSize.base,
+                  fontSize: 15,
                   fontWeight: fontWeight.semibold,
                   color: m3.colorScheme.onSurface,
                 }}

@@ -156,24 +156,29 @@ export default function SoilProfilingScreen() {
           </View>
         </View>
 
-        {/* Average Moisture */}
+        {/* Average Moisture Hero */}
         <View
           style={{
             backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
-            padding: spacing[3],
+            padding: spacing[4],
             borderRadius: borderRadius.lg,
             marginBottom: spacing[3],
           }}
         >
           <View
-            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: spacing[2],
+            }}
           >
             <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.primary }}>
               {t('soilProfiling.averageMoisture')}
             </Text>
             <Text
               style={{
-                fontSize: fontSize.xl,
+                fontSize: 48,
                 fontWeight: fontWeight.bold,
                 color: m3.colorScheme.primary,
               }}
@@ -181,43 +186,79 @@ export default function SoilProfilingScreen() {
               {avgMoisture}%
             </Text>
           </View>
+          {/* Progress Bar */}
+          <View
+            style={{
+              height: 8,
+              backgroundColor: colors.surface[200],
+              borderRadius: borderRadius.xs,
+              overflow: 'hidden',
+            }}
+          >
+            <View
+              style={{
+                height: '100%',
+                width: `${Math.min(avgMoisture, 100)}%`,
+                backgroundColor: colors.success,
+                borderRadius: borderRadius.xs,
+              }}
+            />
+          </View>
         </View>
 
-        {/* Section Indicators */}
-        <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-          {SECTION_NAMES.map((name) => {
+        {/* Four-Section Readings */}
+        <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
+          {SECTION_NAMES.map((name, index) => {
             const value = getSectionValue(profile.sections, name);
             const info = SECTION_INFO[name];
+            // Distinct colors per section: T=#355847, B=#A56B4F, R=#D0A14A, L=#4E7384
+            const sectionColors: Record<string, string> = {
+              T: colors.primary[500],
+              B: colors.secondary[500],
+              R: colors.accent[500],
+              L: colors.info,
+            };
+            const sectionColor = sectionColors[name] || colors.primary[500];
             return (
-              <View
-                key={name}
-                style={{
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
-                  flex: 1,
-                  padding: spacing[2],
-                  borderRadius: borderRadius.lg,
-                }}
-              >
-                <Text
+              <View key={name} style={{ flex: 1, flexDirection: 'row', alignItems: 'stretch' }}>
+                <View
                   style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.bold,
-                    textAlign: 'center',
-                    color: m3.colorScheme.primary,
+                    flex: 1,
+                    padding: spacing[2],
+                    borderRadius: borderRadius.lg,
+                    backgroundColor: colorWithOpacity(sectionColor, 0.08),
                   }}
                 >
-                  {info.abbr}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.semibold,
-                    textAlign: 'center',
-                    color: m3.colorScheme.primary,
-                  }}
-                >
-                  {value !== null ? `${value}%` : '-'}
-                </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.bold,
+                      textAlign: 'center',
+                      color: sectionColor,
+                    }}
+                  >
+                    {info.abbr}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      textAlign: 'center',
+                      color: sectionColor,
+                    }}
+                  >
+                    {value !== null ? `${value}%` : '-'}
+                  </Text>
+                </View>
+                {index < SECTION_NAMES.length - 1 && (
+                  <View
+                    style={{
+                      width: 1,
+                      backgroundColor: colors.surface[300],
+                      marginHorizontal: spacing[1],
+                    }}
+                  />
+                )}
               </View>
             );
           })}
