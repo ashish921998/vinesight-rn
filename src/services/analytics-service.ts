@@ -337,13 +337,14 @@ export class AnalyticsService {
   }
 
   private static groupExpensesByType(expenses: ExpenseRecord[]) {
-    const byType = new Map<string, number>();
+    const byType = new Map<string, { amount: number; count: number }>();
     expenses.forEach((e) => {
       const type = e.type || 'other';
-      byType.set(type, (byType.get(type) || 0) + (e.cost || 0));
+      const existing = byType.get(type) || { amount: 0, count: 0 };
+      byType.set(type, { amount: existing.amount + (e.cost || 0), count: existing.count + 1 });
     });
     return Array.from(byType.entries())
-      .map(([type, amount]) => ({ type, amount }))
+      .map(([type, { amount, count }]) => ({ type, amount, count }))
       .sort((a, b) => b.amount - a.amount);
   }
 

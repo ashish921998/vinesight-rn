@@ -409,6 +409,16 @@ export function MarkAttendanceTab({
     showToast(t('attendance.success.copiedFromYesterday'), 'success');
   };
 
+  // Keep rangeStart in sync with selectedDate so attendance data is always loaded
+  React.useEffect(() => {
+    const rangeEnd = addDays(rangeStart, rangeLength - 1);
+    if (selectedDate < rangeStart || selectedDate > rangeEnd) {
+      const newStart = normalizeDate(addDays(selectedDate, -Math.floor(rangeLength / 2)));
+      setRangeStart(newStart);
+      saveRange(newStart, rangeLength);
+    }
+  }, [selectedDate, rangeStart, rangeLength]);
+
   // NEW: Handle date navigation
   const handleDateNavigation = (dir: 'prev' | 'next') => {
     const newDate = dir === 'prev' ? addDays(selectedDate, -1) : addDays(selectedDate, 1);

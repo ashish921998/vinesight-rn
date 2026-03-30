@@ -14,7 +14,7 @@ export interface AnalyticsData {
   irrigationsByMonth: MonthlyData[];
   spraysByType: { type: string; count: number }[];
   harvestsByFarm: { farmName: string; quantity: number; value: number }[];
-  expensesByType: { type: string; amount: number }[];
+  expensesByType: { type: string; amount: number; count: number }[];
   recentActivity: RecentActivity[];
 }
 

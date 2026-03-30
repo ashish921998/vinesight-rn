@@ -285,7 +285,7 @@ export default function AnalyticsScreen() {
               );
               const sprayCount = analytics.totalSprayCount;
               const harvestCount = analytics.harvestsByFarm.length;
-              const expenseCount = analytics.expensesByType.reduce((sum, _e) => sum + 1, 0);
+              const expenseCount = analytics.expensesByType.reduce((sum, e) => sum + e.count, 0);
 
               const categoryTotals: Record<string, number> = {
                 irrigation: irrigationCount,
