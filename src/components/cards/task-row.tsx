@@ -97,7 +97,7 @@ export function TaskRow({
 
   // Cellar Ledger: Card mist-1 bg, border, 12px radius
   const containerStyle: ViewStyle = {
-    borderRadius: borderRadius.md, // 12px
+    borderRadius: borderRadius.sm, // 12px
     paddingVertical: spacing[3],
     paddingHorizontal: spacing[4],
     backgroundColor: colors.surface[100], // mist-1

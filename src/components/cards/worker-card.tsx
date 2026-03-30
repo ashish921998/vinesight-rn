@@ -42,18 +42,20 @@ export function WorkerCard({
   const inactiveAvatarColor = isDark ? '#7A756D' : '#A89E92';
 
   const initials = worker.name
-    .split(' ')
-    .map((n) => n.charAt(0))
-    .slice(0, 2)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((n) => n[0])
     .join('')
-    .toUpperCase();
+    .toUpperCase()
+    .slice(0, 2);
 
   // Cellar Ledger: Card mist-1 bg, stone-3 border, 16px radius
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface[100], // mist-1
-    borderRadius: borderRadius.lg, // 16px
+    borderRadius: borderRadius.md, // 16px
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderWidth: 1,
@@ -118,7 +120,7 @@ export function WorkerCard({
   const callButtonStyle: ViewStyle = {
     width: 36,
     height: 36,
-    borderRadius: borderRadius.md, // 12px
+    borderRadius: borderRadius.sm, // 12px
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colorWithOpacity(colors.primary[500], 0.12), // primary-tinted bg
@@ -245,6 +247,7 @@ export function WorkerCard({
     return (
       <Pressable
         onPress={onPress}
+        disabled={!onPress}
         accessibilityRole="button"
         accessibilityLabel={worker.name}
         style={!isActive ? { opacity: 0.55 } : undefined}

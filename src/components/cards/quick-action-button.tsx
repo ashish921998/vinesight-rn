@@ -26,7 +26,7 @@ export function QuickActionButton({ title, icon, color, onPress }: QuickActionBu
     minWidth: 68,
     paddingVertical: spacing[2],
     paddingHorizontal: spacing[2],
-    borderRadius: borderRadius.md, // 12px
+    borderRadius: borderRadius.sm, // 12px
     overflow: 'hidden',
   };
 
@@ -34,7 +34,7 @@ export function QuickActionButton({ title, icon, color, onPress }: QuickActionBu
   const iconContainerStyle: ViewStyle = {
     width: 44,
     height: 44,
-    borderRadius: borderRadius.md, // 12px
+    borderRadius: borderRadius.sm, // 12px
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[2],
