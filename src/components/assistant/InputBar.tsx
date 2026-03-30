@@ -223,7 +223,7 @@ export function InputBar({
             accessibilityLabel={t('assistant.chat.sendA11y')}
             accessibilityRole="button"
           >
-            <SymbolIcon name="paperplane.fill" size={18} color="#FFFFFF" />
+            <SymbolIcon name="paperplane.fill" size={18} color={m3.colorScheme.onPrimary} />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity

@@ -867,11 +867,6 @@ export default function FarmDetailScreen() {
     }
   };
 
-  const _clearActiveSeasonTargetHarvestDate = () => {
-    if (isSavingActiveSeasonTargetDate) return;
-    void saveActiveSeasonTargetHarvestDate(null);
-  };
-
   useEffect(() => {
     const isGuidedAddLog = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
     if (!isGuidedAddLog) {
@@ -1965,7 +1960,7 @@ export default function FarmDetailScreen() {
                       fontSize: 13,
                     }}
                   >
-                    Since{' '}
+                    {t('farmDetails.weather.sinceLabel', { defaultValue: 'Since' })}{' '}
                     {(() => {
                       if (farm?.date_of_pruning) {
                         const parsed = parseDbDateToLocalDate(farm.date_of_pruning);

@@ -169,6 +169,7 @@ export const en = {
       current: 'Current Weather',
       temperature: 'Temperature',
       et0Mm: 'ET0 (mm)',
+      sinceLabel: 'Since',
     },
     stats: {
       logEntriesTitle: 'Log Entries',

@@ -169,6 +169,7 @@ export const hi = {
       current: 'वर्तमान मौसम',
       temperature: 'तापमान',
       et0Mm: 'ET0 (मिमी)',
+      sinceLabel: 'से',
     },
     stats: {
       logEntriesTitle: 'लॉग प्रविष्टियां',

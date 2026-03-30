@@ -170,6 +170,7 @@ export const mr = {
       current: 'सध्याचे $t(glossary.weather)',
       temperature: 'तापमान',
       et0Mm: 'ET0 (mm)',
+      sinceLabel: 'पासून',
     },
     stats: {
       logEntriesTitle: 'नोंदी',

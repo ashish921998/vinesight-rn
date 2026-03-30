@@ -327,9 +327,7 @@ export default function DashboardScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                {stats?.farmsCount
-                  ? t('dashboard.allFarmsHealthy', { count: stats.farmsCount })
-                  : t('dashboard.greeting.noFarms')}
+                {stats?.farmsCount ? t('dashboard.hero.allClear') : t('dashboard.empty.noFarms')}
               </Text>
             </>
           )}
@@ -574,9 +572,12 @@ export default function DashboardScreen() {
             farmsNeedingAttention &&
             farmsNeedingAttention.length > 0 && (
               <View style={{ marginBottom: spacing[6] }}>
-                <View style={sectionTitleStyle as ViewStyle}>
+                <View style={{ marginBottom: spacing[3] }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                    <Text style={sectionTitleStyle} accessibilityRole="header">
+                    <Text
+                      style={[sectionTitleStyle, { marginBottom: 0 }]}
+                      accessibilityRole="header"
+                    >
                       {t('dashboard.needsAttention.title')}
                     </Text>
                     <Text style={sectionCountStyle}>{farmsNeedingAttention.length}</Text>
@@ -924,7 +925,7 @@ export default function DashboardScreen() {
                         flexShrink: 0,
                       }}
                     >
-                      {activity.date}
+                      {formatDate(new Date(activity.date), { month: 'short', day: 'numeric' })}
                     </Text>
                   </Pressable>
                 ))}

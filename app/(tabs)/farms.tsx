@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  Platform,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -536,8 +537,8 @@ export default function FarmsScreen() {
         keyboardDismissMode="on-drag"
       />
 
-      {/* FAB */}
-      {showFab && (
+      {/* FAB – Android only; iOS uses the header add button */}
+      {Platform.OS === 'android' && showFab && (
         <GuidedTourTarget
           targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
           enabled={isScreenFocused}
