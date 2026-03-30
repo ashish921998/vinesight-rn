@@ -167,7 +167,16 @@ export function MarkAttendanceTab({
   const safeIndex = Math.min(selectedWorkerIndex, Math.max(0, workers.length - 1));
   const selectedWorker = workers[safeIndex];
 
+  // Original date range state
   const [rangeStart, setRangeStart] = useState<Date>(() => normalizeDate(new Date()));
+
+  // NEW: Single date for the redesigned UI
+  const [selectedDate, setSelectedDate] = useState<Date>(() => normalizeDate(new Date()));
+
+  // NEW: Track attendance for each worker on the selected date
+  const [workerAttendance, setWorkerAttendance] = useState<
+    Map<number, { status: AttendanceStatus; existingRecordId?: number; isModified: boolean }>
+  >(new Map());
 
   const rangeEnd = useMemo(() => addDays(rangeStart, rangeLength - 1), [rangeStart, rangeLength]);
 
@@ -410,6 +419,58 @@ export function MarkAttendanceTab({
     showToast(t('attendance.success.copiedFromYesterday'), 'success');
   };
 
+  // NEW: Handle date navigation
+  const handleDateNavigation = (dir: 'prev' | 'next') => {
+    const newDate = dir === 'prev' ? addDays(selectedDate, -1) : addDays(selectedDate, 1);
+    setSelectedDate(normalizeDate(newDate));
+  };
+
+  // NEW: Handle worker attendance change
+  const handleWorkerAttendanceChange = (workerId: number, status: AttendanceStatus) => {
+    triggerHaptic();
+    setWorkerAttendance((prev) => {
+      const newMap = new Map(prev);
+      const current = newMap.get(workerId);
+      newMap.set(workerId, {
+        status,
+        existingRecordId: current?.existingRecordId,
+        isModified: true,
+      });
+      return newMap;
+    });
+  };
+
+  // NEW: Handle Mark All Present
+  const handleMarkAllPresent = () => {
+    triggerHapticMedium();
+    setWorkerAttendance((prev) => {
+      const newMap = new Map(prev);
+      workers.forEach((w) => {
+        if (w.id != null) {
+          const current = newMap.get(w.id);
+          newMap.set(w.id, {
+            status: 'full_day',
+            existingRecordId: current?.existingRecordId,
+            isModified: true,
+          });
+        }
+      });
+      return newMap;
+    });
+  };
+
+  // NEW: Helper to get initials
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(' ');
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.substring(0, 2).toUpperCase();
+  };
+
+  // NEW: Format date for display
+  const formatDisplayDate = (date: Date) =>
+    formatDateLocalized(date, { day: 'numeric', month: 'short', year: 'numeric' });
+
   const hasModifications = useMemo(() => {
     return Array.from(cellData.values()).some((cell) => cell.isModified);
   }, [cellData]);
@@ -592,6 +653,248 @@ export function MarkAttendanceTab({
         }}
         showsVerticalScrollIndicator={false}
       >
+        {/* NEW: Date Navigator */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: spacing[3],
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderRadius: borderRadius.md,
+            borderWidth: 1,
+            borderColor: m3.colorScheme.outlineVariant,
+            marginBottom: spacing[2],
+          }}
+        >
+          <Pressable
+            onPress={() => handleDateNavigation('prev')}
+            style={({ pressed }) => ({
+              width: 32,
+              height: 32,
+              borderRadius: borderRadius.sm,
+              backgroundColor: m3.colorScheme.surface,
+              borderWidth: 1,
+              borderColor: m3.colorScheme.outlineVariant,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Text style={{ fontSize: 18, color: m3.colorScheme.primary, fontWeight: '600' }}>
+              ‹
+            </Text>
+          </Pressable>
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: m3.colorScheme.onSurface,
+            }}
+          >
+            {formatDisplayDate(selectedDate)}
+          </Text>
+          <Pressable
+            onPress={() => handleDateNavigation('next')}
+            style={({ pressed }) => ({
+              width: 32,
+              height: 32,
+              borderRadius: borderRadius.sm,
+              backgroundColor: m3.colorScheme.surface,
+              borderWidth: 1,
+              borderColor: m3.colorScheme.outlineVariant,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Text style={{ fontSize: 18, color: m3.colorScheme.primary, fontWeight: '600' }}>
+              ›
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* NEW: Summary Pill */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing[2],
+            marginBottom: spacing[3],
+          }}
+        >
+          <View
+            style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.success }}
+          />
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: m3.colorScheme.onSurface,
+            }}
+          >
+            {workers.length} workers
+          </Text>
+        </View>
+
+        {/* NEW: Worker List */}
+        {workers.map((worker) => {
+          if (worker.id === undefined) return null;
+          const record = workerAttendance.get(worker.id);
+          const status = record?.status ?? null;
+          const avatarBg = colors.labour ? colors.labour[500] : '#7A5E8E';
+          return (
+            <View
+              key={worker.id}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: spacing[3],
+                backgroundColor: m3.surface.surfaceContainerLow,
+                borderRadius: borderRadius.md,
+                borderWidth: 1,
+                borderColor: m3.colorScheme.outlineVariant,
+                marginBottom: spacing[2],
+                gap: spacing[3],
+              }}
+            >
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: avatarBg,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text
+                  style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: '#FFFFFF' }}
+                >
+                  {getInitials(worker.name)}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: m3.colorScheme.onSurface,
+                  }}
+                  numberOfLines={1}
+                >
+                  {worker.name}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: m3.colorScheme.onSurfaceVariant,
+                    marginTop: 2,
+                  }}
+                >
+                  {worker.daily_rate ? `₹${worker.daily_rate} / day` : ''}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: spacing[1] }}>
+                <Pressable
+                  onPress={() =>
+                    worker.id !== undefined && handleWorkerAttendanceChange(worker.id, 'full_day')
+                  }
+                  style={{
+                    paddingHorizontal: spacing[2] + 2,
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.pill,
+                    backgroundColor:
+                      status === 'full_day' ? '#4F7A5A' : m3.surface.surfaceContainerLow,
+                    borderWidth: 1,
+                    borderColor: status === 'full_day' ? '#4F7A5A' : m3.colorScheme.outlineVariant,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs - 1,
+                      fontWeight: fontWeight.bold,
+                      color: status === 'full_day' ? '#FFFFFF' : m3.colorScheme.onSurfaceVariant,
+                    }}
+                  >
+                    Full
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() =>
+                    worker.id !== undefined && handleWorkerAttendanceChange(worker.id, 'half_day')
+                  }
+                  style={{
+                    paddingHorizontal: spacing[2] + 2,
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.pill,
+                    backgroundColor:
+                      status === 'half_day' ? '#C58A2B' : m3.surface.surfaceContainerLow,
+                    borderWidth: 1,
+                    borderColor: status === 'half_day' ? '#C58A2B' : m3.colorScheme.outlineVariant,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs - 1,
+                      fontWeight: fontWeight.bold,
+                      color: status === 'half_day' ? '#FFFFFF' : m3.colorScheme.onSurfaceVariant,
+                    }}
+                  >
+                    Half
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() =>
+                    worker.id !== undefined && handleWorkerAttendanceChange(worker.id, 'absent')
+                  }
+                  style={{
+                    paddingHorizontal: spacing[2] + 2,
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.pill,
+                    backgroundColor:
+                      status === 'absent' ? '#B84C3A' : m3.surface.surfaceContainerLow,
+                    borderWidth: 1,
+                    borderColor: status === 'absent' ? '#B84C3A' : m3.colorScheme.outlineVariant,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs - 1,
+                      fontWeight: fontWeight.bold,
+                      color: status === 'absent' ? '#FFFFFF' : m3.colorScheme.onSurfaceVariant,
+                    }}
+                  >
+                    Absent
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          );
+        })}
+
+        {/* NEW: Mark All Present Button */}
+        <Pressable
+          onPress={handleMarkAllPresent}
+          style={{
+            marginTop: spacing[2],
+            paddingVertical: spacing[3] + 2,
+            borderRadius: borderRadius.md,
+            backgroundColor: m3.colorScheme.primary,
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: m3.colorScheme.onPrimary,
+            }}
+          >
+            Mark All Present
+          </Text>
+        </Pressable>
+
         {/* ── Filters Section ── */}
         <View style={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}>
           <Text
