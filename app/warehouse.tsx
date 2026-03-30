@@ -18,7 +18,7 @@ import { useModalStore } from '@/stores';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { formatCurrency } from '@/i18n/format';
+import { formatCurrency, formatDate } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
 // import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { useNotificationStore } from '@/stores';
@@ -584,7 +584,7 @@ export default function WarehouseScreen() {
                               color: colors.warning,
                             }}
                           >
-                            {t('common.labels.lowStock')}
+                            {t('warehouse.labels.lowStock')}
                           </Text>
                         </View>
                       )}
@@ -612,7 +612,7 @@ export default function WarehouseScreen() {
                     >
                       {item.updated_at
                         ? t('warehouse.labels.updatedDate', {
-                            date: new Date(item.updated_at).toLocaleDateString('en-GB', {
+                            date: formatDate(new Date(item.updated_at), {
                               day: '2-digit',
                               month: 'short',
                               year: 'numeric',

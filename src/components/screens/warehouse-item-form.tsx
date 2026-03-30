@@ -67,6 +67,10 @@ interface ManualCatalogueDraft {
   compositionRows: CompositionRow[];
 }
 
+const VALID_WAREHOUSE_UNITS: WarehouseUnit[] = ['kg', 'liter', 'gram', 'ml'];
+
+const UNIT_OPTIONS = VALID_WAREHOUSE_UNITS.map((u) => ({ value: u, label: u }));
+
 const ITEM_TYPES = [
   {
     value: 'fertilizer' as WarehouseItemType,
@@ -776,11 +780,20 @@ export default function WarehouseItemForm({
             />
           </View>
           <View style={{ flex: 1 }}>
-            <FormInput
-              label="Unit"
-              value={unit}
-              onChangeText={(v) => setUnit(v as WarehouseUnit)}
-              placeholder="kg"
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.medium,
+                color: colors.surface[500],
+                marginBottom: 6,
+              }}
+            >
+              Unit
+            </Text>
+            <PillSelector
+              options={UNIT_OPTIONS}
+              selectedValue={unit}
+              onSelect={(v) => setUnit(v as WarehouseUnit)}
               style={{ marginBottom: 0 }}
             />
           </View>

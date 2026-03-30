@@ -295,22 +295,6 @@ export function ReportExecutiveSummary({
               }}
               pointerEvents="none"
             />
-
-            {/* Subtle border */}
-            <View
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                borderRadius: borderRadius['2xl'],
-                borderCurve: 'continuous',
-                borderWidth: 1,
-                borderColor: colorWithOpacity(tile.color, 0.18),
-              }}
-              pointerEvents="none"
-            />
           </View>
         ))}
       </ScrollView>

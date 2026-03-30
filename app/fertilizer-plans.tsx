@@ -1,50 +1,13 @@
 import React, { useMemo } from 'react';
-import { ScrollView, View, Text, ActivityIndicator, Pressable } from 'react-native';
+import { ScrollView, View, Text, ActivityIndicator, Pressable, Alert } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Symbol as Icon } from '@/components/ui/symbol';
 import { useFarm, useFertilizerPlan, useProfile, useFarms } from '@/hooks';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
-
-// Determine plan item status and color based on item index (placeholder logic)
-// In a real implementation, this would come from the API or be calculated from dates
-function getPlanItemStatus(index: number): 'completed' | 'upcoming' | 'overdue' {
-  if (index === 0) return 'completed';
-  if (index === 2) return 'overdue';
-  return 'upcoming';
-}
-
-function getStatusBadgeColor(
-  status: 'completed' | 'upcoming' | 'overdue',
-  colors: ReturnType<typeof useThemeColors>,
-) {
-  switch (status) {
-    case 'completed':
-      return colors.primary[500];
-    case 'upcoming':
-      return colors.accent[500];
-    case 'overdue':
-      return colors.secondary[500];
-  }
-}
-
-function getStripColor(
-  status: 'completed' | 'upcoming' | 'overdue',
-  colors: ReturnType<typeof useThemeColors>,
-) {
-  switch (status) {
-    case 'completed':
-      return colors.fertigation[500];
-    case 'upcoming':
-      return colors.accent[500];
-    case 'overdue':
-      return colors.secondary[500];
-  }
-}
 
 export default function FertilizerPlansScreen() {
   const { t } = useTranslation();
@@ -86,8 +49,8 @@ export default function FertilizerPlansScreen() {
           <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.headlineSmall }}>
             {t('farmDetails.fertilizerPlan.title')}
           </Text>
-          {/* Farm selector pill - Cellar Ledger design: card bg, border, primary text, dropdown arrow */}
-          <Pressable
+          {/* Farm selector pill - display only (no farm switching mechanism available) */}
+          <View
             style={{
               marginTop: spacing[2],
               flexDirection: 'row',
@@ -111,8 +74,7 @@ export default function FertilizerPlansScreen() {
             >
               {currentFarmName}
             </Text>
-            <Icon name="chevron.down" size={12} color={colors.surface[500]} />
-          </Pressable>
+          </View>
         </View>
 
         {!canAccessPlans ? (
@@ -270,9 +232,6 @@ export default function FertilizerPlansScreen() {
                 </Text>
                 {/* Plan cards with 5px left strip, status badges */}
                 {fertilizerPlan.items.map((input, index) => {
-                  const status = getPlanItemStatus(index);
-                  const stripColor = getStripColor(status, colors);
-                  const badgeColor = getStatusBadgeColor(status, colors);
                   return (
                     <View
                       key={`${input.name}-${index}`}
@@ -286,21 +245,18 @@ export default function FertilizerPlansScreen() {
                         overflow: 'hidden',
                       }}
                     >
-                      {/* 5px left strip with category color */}
+                      {/* 5px left strip */}
                       <View
                         style={{
                           width: 5,
-                          backgroundColor: stripColor,
+                          backgroundColor: colors.primary[500],
                           flexShrink: 0,
                         }}
                       />
                       <View style={{ flex: 1, padding: spacing[3] + 2 }}>
-                        {/* Top row: type + status badge */}
+                        {/* Top row: item name */}
                         <View
                           style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
                             marginBottom: spacing[1],
                           }}
                         >
@@ -313,27 +269,6 @@ export default function FertilizerPlansScreen() {
                           >
                             {input.name || t('farmDetails.fertilizerPlan.unknownInput')}
                           </Text>
-                          {/* Status badge */}
-                          <View
-                            style={{
-                              backgroundColor: badgeColor,
-                              paddingHorizontal: spacing[2] + 2,
-                              paddingVertical: 2,
-                              borderRadius: borderRadius.sm + 4, // ~12px
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: fontSize.xs,
-                                fontWeight: fontWeight.semibold,
-                                color:
-                                  status === 'upcoming' ? colors.surface[900] : colors.surface[100],
-                                textTransform: 'capitalize',
-                              }}
-                            >
-                              {status}
-                            </Text>
-                          </View>
                         </View>
                         {/* Product info */}
                         {input.quantity !== null && input.quantity !== undefined && (
@@ -391,6 +326,7 @@ export default function FertilizerPlansScreen() {
         }}
         accessibilityRole="button"
         accessibilityLabel={t('farmDetails.fertilizerPlan.addPlan', 'Add Plan')}
+        onPress={() => Alert.alert(t('farmDetails.fertilizerPlan.addPlan', 'Add Plan'))}
       >
         <Text
           style={{
