@@ -507,6 +507,7 @@ export default function ReportsScreen() {
           <ReportExportActions
             canExport={Boolean(preview)}
             isExporting={isExporting}
+            exportFormat={selectedExportFormat}
             onExportPdf={() => handleExport(selectedExportFormat)}
             onDownload={handleDownloadPrompt}
             panelStyle={{ paddingBottom: spacing[6] + insets.bottom }}

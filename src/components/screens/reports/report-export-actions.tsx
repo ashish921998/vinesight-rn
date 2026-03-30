@@ -9,6 +9,7 @@ import { colorWithOpacity } from '@/utils/color';
 interface ReportExportActionsProps {
   canExport: boolean;
   isExporting: boolean;
+  exportFormat: string;
   onExportPdf: () => void;
   onDownload: () => void;
   panelStyle: object;
@@ -17,6 +18,7 @@ interface ReportExportActionsProps {
 export function ReportExportActions({
   canExport,
   isExporting,
+  exportFormat,
   onExportPdf,
   onDownload,
   panelStyle,
@@ -101,7 +103,7 @@ export function ReportExportActions({
                   color: disabled ? colorWithOpacity(onPrimary, 0.6) : onPrimary,
                 }}
               >
-                Export PDF
+                {t('reports.exportAs')} {exportFormat.toUpperCase()}
               </Text>
             </>
           )}
