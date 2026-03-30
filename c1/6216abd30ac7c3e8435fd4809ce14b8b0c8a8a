@@ -1,0 +1,25 @@
+src/components/screens/reports/report-filters-panel.tsx
+  f06e14440bdd513a 556,581,583-584,595-603,607,616-624,630,632-633,642-652,656,667-716
+app/fertilizer-plans.tsx
+  f06e14440bdd513a 2,6-8,12-40,62,84-109,256-358,376-400
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "c16216abd30ac7c3e8435fd4809ce14b8b0c8a8a",
+  "prompts": {
+    "f06e14440bdd513a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4c485fe9-f9f1-46cf-b4fa-44c31fd1ea49",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 312,
+      "total_deletions": 89,
+      "accepted_lines": 311,
+      "overriden_lines": 0
+    }
+  }
+}
