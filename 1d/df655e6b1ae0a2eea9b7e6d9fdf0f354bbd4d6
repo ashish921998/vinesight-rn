@@ -1,0 +1,23 @@
+app/spray-catalog.tsx
+  8c131bd181303657 6-7,66-68,78-79,85-90,100-281,283,285,287-292,295-296,299-300,304-318,320-322,344,349-351,353-370
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "1ddf655e6b1ae0a2eea9b7e6d9fdf0f354bbd4d6",
+  "prompts": {
+    "8c131bd181303657": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c9235c53-b928-49aa-ad3e-3a52d217783e",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 309,
+      "total_deletions": 128,
+      "accepted_lines": 262,
+      "overriden_lines": 0
+    }
+  }
+}
