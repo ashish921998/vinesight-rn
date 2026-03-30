@@ -1,0 +1,96 @@
+{
+  "groupId": "cli",
+  "testedAt": "2026-03-30T05:17:31Z",
+  "isolation": {
+    "surface": "cli",
+    "mode": "validation-only commands in the current repository checkout",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "milestone": "forms-tools-settings",
+    "assignedAssertions": ["VAL-CROSS-003", "VAL-CROSS-004", "VAL-CROSS-005", "VAL-CROSS-006"],
+    "commands": [
+      "npm run typecheck",
+      "npm run lint",
+      "npm test -- --passWithNoTests",
+      "npm run web:smoke"
+    ]
+  },
+  "toolsUsed": ["Execute", "Read", "Grep", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-CROSS-003",
+      "status": "pass",
+      "reason": "Typecheck passed: `npm run typecheck` exited 0 and `tsc --noEmit` produced no diagnostics.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/cli/cli-evidence.md",
+        "references": [
+          {
+            "command": "npm --prefix \"/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185\" run typecheck",
+            "exitCode": 0,
+            "details": "TypeScript completed successfully with no reported type errors."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-CROSS-004",
+      "status": "pass",
+      "reason": "Lint passed: `npm run lint` exited 0 and ESLint reported no repository lint violations.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/cli/cli-evidence.md",
+        "references": [
+          {
+            "command": "npm --prefix \"/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185\" run lint",
+            "exitCode": 0,
+            "details": "ESLint completed cleanly with no errors."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-CROSS-005",
+      "status": "pass",
+      "reason": "Tests passed: `npm test -- --passWithNoTests` exited 0 with all 61 suites and 752 tests passing. The run was noisy due to existing console warnings/logs, but Jest still completed green.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/cli/cli-evidence.md",
+        "references": [
+          {
+            "command": "npm --prefix \"/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185\" test -- --passWithNoTests",
+            "exitCode": 0,
+            "details": "Jest reported `Test Suites: 61 passed, 61 total` and `Tests: 752 passed, 752 total`; console output also included existing i18n dev-check messages, React act() warnings, provider fallback warnings, and a worker teardown note after completion."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-CROSS-006",
+      "status": "pass",
+      "reason": "Web smoke exited 1, but the failure exactly matches the contract-allowed pre-existing `react-native-maps` web incompatibility (`codegenNativeCommands` imported on web through the location-picker/farm-form/add-farm path), so no new redesign regression was introduced.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/cli/cli-evidence.md",
+        "references": [
+          {
+            "command": "npm --prefix \"/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185\" run web:smoke",
+            "exitCode": 1,
+            "details": "Expo export failed while bundling web because `react-native-maps/lib/MapMarkerNativeComponent.js` imports native-only `react-native/Libraries/Utilities/codegenNativeCommands` on web via `src/components/screens/location-picker.tsx` -> `src/components/screens/farm-form/index.tsx` -> `app/farm/add.tsx`."
+          },
+          {
+            "file": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/validation-contract.md",
+            "details": "`VAL-CROSS-006` explicitly says this known pre-existing `react-native-maps` web incompatibility should still count as pass unless a new redesign error appears."
+          },
+          {
+            "file": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/handoffs/2026-03-30T04-21-07-581Z__cross-area-verification__fe633c82-5825-4edb-8716-002df1174f98.json",
+            "details": "Prior milestone handoff recorded the same `web:smoke` failure as pre-existing and unrelated to the Cellar Ledger redesign."
+          },
+          {
+            "file": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185/.factory/validation/forms-tools-settings/scrutiny/reviews/cross-area-verification.json",
+            "details": "Scrutiny review says the transcript/handoff evidence is consistent with the contract-allowed pre-existing `react-native-maps` web-smoke failure."
+          }
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated 4 CLI assertions for forms-tools-settings: 4 passed, 0 failed, 0 blocked. Typecheck, lint, and test exited 0; web:smoke reproduced only the known pre-existing react-native-maps web incompatibility allowed by VAL-CROSS-006."
+}

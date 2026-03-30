@@ -1,0 +1,94 @@
+{
+  "groupId": "calculators",
+  "testedAt": "2026-03-30T05:16:44.951132+00:00",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "milestone": "forms-tools-settings",
+    "primaryEvidenceTargets": [
+      "app/calculator/tank-mix.tsx",
+      "app/calculator/lai.tsx",
+      "app/calculator/mad.tsx",
+      "app/calculator/system-discharge.tsx",
+      "app/calculator/nutrients.tsx",
+      "src/styles/theme.ts"
+    ]
+  },
+  "toolsUsed": ["Read", "Grep", "Glob"],
+  "assertionResults": [
+    {
+      "id": "VAL-CALC-001",
+      "status": "fail",
+      "reason": "Tank Mix has the required 1px selectable borders, primary selected border, 0.08 selected fill, and product-row results card, but the selectable cards use `borderRadius.lg`, which resolves to 24px instead of the 12px radius required by the contract.",
+      "evidence": {
+        "noteFile": "forms-tools-settings/calculators/calculators-evidence.md",
+        "references": [
+          "app/calculator/tank-mix.tsx:164-170",
+          "app/calculator/tank-mix.tsx:223-250",
+          "src/styles/theme.ts:248-249"
+        ]
+      }
+    },
+    {
+      "id": "VAL-CALC-002",
+      "status": "fail",
+      "reason": "LAI renders the dual result layout and interpretation dot, and both values are 24px bold primary green, but the result boxes use a 24px radius instead of the required 14px and the second box uses a 0.10 primary tint instead of the required 0.08.",
+      "evidence": {
+        "noteFile": "forms-tools-settings/calculators/calculators-evidence.md",
+        "references": [
+          "app/calculator/lai.tsx:273-315",
+          "app/calculator/lai.tsx:336-357",
+          "src/styles/theme.ts:248-249"
+        ]
+      }
+    },
+    {
+      "id": "VAL-CALC-003",
+      "status": "pass",
+      "reason": "MAD uses a multi-step layout, applies the selected refill-span teal border and 0.08 fill from the irrigation token, and displays both the MAD and refill-tank results.",
+      "evidence": {
+        "noteFile": "forms-tools-settings/calculators/calculators-evidence.md",
+        "references": [
+          "app/calculator/mad.tsx:169",
+          "app/calculator/mad.tsx:287-320",
+          "app/calculator/mad.tsx:334-364",
+          "app/calculator/mad.tsx:429-443",
+          "src/styles/theme.ts:91-92"
+        ]
+      }
+    },
+    {
+      "id": "VAL-CALC-004",
+      "status": "pass",
+      "reason": "System Discharge renders method selection cards with active checkmarks, shows the computed result in 28px bold primary green, and includes italic formula text below the main value.",
+      "evidence": {
+        "noteFile": "forms-tools-settings/calculators/calculators-evidence.md",
+        "references": [
+          "app/calculator/system-discharge.tsx:415-492",
+          "app/calculator/system-discharge.tsx:778-782",
+          "app/calculator/system-discharge.tsx:810-814",
+          "src/styles/theme.ts:365-371"
+        ]
+      }
+    },
+    {
+      "id": "VAL-CALC-005",
+      "status": "pass",
+      "reason": "Nutrients applies primary-background/white-text active growth-stage chips, renders NPK rows with the required nitrogen, phosphorus, and potassium colors, and includes the Total NPK summary row.",
+      "evidence": {
+        "noteFile": "forms-tools-settings/calculators/calculators-evidence.md",
+        "references": [
+          "app/calculator/nutrients.tsx:175-202",
+          "app/calculator/nutrients.tsx:277-296",
+          "app/calculator/nutrients.tsx:300-327",
+          "src/styles/theme.ts:97-98"
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Reviewed 5 assigned calculator assertions by code inspection; 3 pass and 2 fail (VAL-CALC-001 and VAL-CALC-002)."
+}

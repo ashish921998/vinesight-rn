@@ -1,0 +1,156 @@
+{
+  "groupId": "warehouse-reports-fertplans",
+  "testedAt": "2026-03-30T05:17:01Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185"
+  },
+  "toolsUsed": ["Read", "Grep", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-WAREHOUSE-001",
+      "status": "pass",
+      "reason": "Inventory cards render as bordered warm cards with 16px radius, a 56x5 stock bar whose fill switches between warning, accent, and success colors, and low-stock cards add both an amber border and warning badge.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/warehouse-reports-fertplans/warehouse-reports-fertplans-evidence.md",
+        "references": [
+          {
+            "file": "app/warehouse.tsx",
+            "lines": "430-585",
+            "details": "Inventory cards use a warm bordered card with 16px radius, a conditional warning border for low stock, the 56x5 stock bar, and the warning badge."
+          },
+          {
+            "file": "app/warehouse.tsx",
+            "lines": "434-438",
+            "details": "The stock-bar fill maps to warning, accent, and success colors for low, mid, and healthy inventory states."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-WAREHOUSE-002",
+      "status": "pass",
+      "reason": "The summary strip is a bordered warm card with a 12px radius and highlights the low-stock count in the warning color.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/warehouse-reports-fertplans/warehouse-reports-fertplans-evidence.md",
+        "references": [
+          {
+            "file": "app/warehouse.tsx",
+            "lines": "302-343",
+            "details": "The summary strip uses glassSurface with a 1px border, 12px radius, and warning-colored low-stock text."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-WAREHOUSE-003",
+      "status": "pass",
+      "reason": "The header action is implemented as a primary pill button with a plus icon and on-primary text.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/warehouse-reports-fertplans/warehouse-reports-fertplans-evidence.md",
+        "references": [
+          {
+            "file": "app/warehouse.tsx",
+            "lines": "206-228",
+            "details": "The Add Item header action uses borderRadius 999, primary background, plus icon, and on-primary text."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-REPORTS-001",
+      "status": "fail",
+      "reason": "The reports flow uses warm surface colors, but its main filter/report containers still rely on box-shadow and shadow/elevation styling instead of the bordered Cellar Ledger card treatment required by the contract.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/warehouse-reports-fertplans/warehouse-reports-fertplans-evidence.md",
+        "references": [
+          {
+            "file": "app/reports.tsx",
+            "lines": "376-381",
+            "details": "panelStyle uses colors.surface[100] with border radius and padding, but applies boxShadow and omits the expected border."
+          },
+          {
+            "file": "src/components/screens/reports/report-section-block.tsx",
+            "lines": "64-69",
+            "details": "The shared report-section container uses shadows.sm and elevation instead of the contract's bordered card treatment."
+          },
+          {
+            "file": "src/components/screens/reports/report-document-body.tsx",
+            "lines": "20-27",
+            "details": "Section accent colors are hardcoded instead of being consistently expressed through the shared Cellar Ledger token set."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-REPORTS-002",
+      "status": "fail",
+      "reason": "The date fields meet the bordered-card requirement, but the screen does not implement PDF/CSV export chips with an active primary-filled, white-text state.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/warehouse-reports-fertplans/warehouse-reports-fertplans-evidence.md",
+        "references": [
+          {
+            "file": "src/components/screens/reports/report-filters-panel.tsx",
+            "lines": "574-646",
+            "details": "The From/To date fields use mist-1 backgrounds, 1px borders, and borderRadius.sm, satisfying the date-range field portion of the contract."
+          },
+          {
+            "file": "src/components/screens/reports/report-filters-panel.tsx",
+            "lines": "667-716",
+            "details": "Both PDF and CSV chips render with the same neutral background and muted text; no active primary-filled chip state is present."
+          },
+          {
+            "file": "src/components/screens/reports/report-export-actions.tsx",
+            "lines": "57-143",
+            "details": "Export is implemented as a filled PDF button plus a separate download button, not as active/inactive PDF and CSV chips."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-FERTPLAN-001",
+      "status": "pass",
+      "reason": "The fertilizer-plans screen renders a farm selector pill and bordered warm plan cards with a 5px left strip and the plan/input name as the primary label.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/warehouse-reports-fertplans/warehouse-reports-fertplans-evidence.md",
+        "references": [
+          {
+            "file": "app/fertilizer-plans.tsx",
+            "lines": "83-113",
+            "details": "The farm selector pill uses the warm card background, border, pill radius, primary text, and dropdown chevron."
+          },
+          {
+            "file": "app/fertilizer-plans.tsx",
+            "lines": "263-360",
+            "details": "Each plan card uses colors.surface[100], a 1px border, a 5px stripColor bar, and the plan/input name as the main label."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-FERTPLAN-002",
+      "status": "pass",
+      "reason": "The screen includes the required farm selector chip and a primary 16px-radius FAB with a white plus.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/warehouse-reports-fertplans/warehouse-reports-fertplans-evidence.md",
+        "references": [
+          {
+            "file": "app/fertilizer-plans.tsx",
+            "lines": "83-113",
+            "details": "The farm selector is a pill-shaped bordered chip with primary text and a dropdown icon."
+          },
+          {
+            "file": "app/fertilizer-plans.tsx",
+            "lines": "376-406",
+            "details": "The FAB uses colors.primary[500], borderRadius.md (16px), and a white plus label."
+          }
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Reviewed 7 assigned assertions by read-only code review: 5 passed and 2 failed. Failures: VAL-REPORTS-001 (reports panels/sections still use shadow-driven containers instead of bordered Cellar Ledger cards) and VAL-REPORTS-002 (date fields are correct, but the required active PDF/CSV export chips are not implemented)."
+}

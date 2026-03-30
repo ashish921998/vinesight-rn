@@ -1,0 +1,135 @@
+{
+  "groupId": "add-forms-cross",
+  "testedAt": "2026-03-30T05:23:17.294239Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "milestone": "forms-tools-settings",
+    "assignedAssertions": [
+      "VAL-ADDFORM-001",
+      "VAL-ADDFORM-002",
+      "VAL-ADDFORM-003",
+      "VAL-ADDFORM-004",
+      "VAL-CROSS-001",
+      "VAL-CROSS-002",
+      "VAL-CROSS-008"
+    ]
+  },
+  "toolsUsed": ["Read", "Grep", "LS", "Execute"],
+  "assertionResults": [
+    {
+      "id": "VAL-ADDFORM-001",
+      "title": "Add Farm multi-section form",
+      "status": "pass",
+      "reason": "The add-farm flow uses shared Cellar Ledger form primitives for uppercase 11px section headers, required bordered warm inputs, red required markers, and a primary Create Farm save action.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/add-forms-cross/add-forms-cross-evidence.md",
+        "references": [
+          "app/farm/add.tsx:15",
+          "src/components/screens/farm-form/index.tsx:101-123",
+          "src/components/screens/farm-form/index.tsx:123-197",
+          "src/components/ui/form-components.tsx:352-354",
+          "src/components/ui/form-components.tsx:481-484",
+          "src/components/ui/form-components.tsx:824-835,856"
+        ]
+      }
+    },
+    {
+      "id": "VAL-ADDFORM-002",
+      "title": "Add Log type chips with colored dots",
+      "status": "fail",
+      "reason": "The farm selector card matches the contract and each log type shows an 8px colored dot plus a category-colored active state, but the type selector is still implemented as large 3-column cards instead of chips.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/add-forms-cross/add-forms-cross-evidence.md",
+        "references": [
+          "app/log-entry/add.tsx:17",
+          "src/components/screens/farm-log-form.tsx:81-85",
+          "src/components/screens/entry-form.tsx:1919-1970",
+          "src/components/screens/entry-form/LogTypeSelector.tsx:96-107,143-160"
+        ]
+      }
+    },
+    {
+      "id": "VAL-ADDFORM-003",
+      "title": "Add Task form with Cellar Ledger tokens",
+      "status": "pass",
+      "reason": "The task tab in EntryForm uses warm bordered inputs, Cellar Ledger picker cards, and a primary filled submit action throughout the add-task flow.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/add-forms-cross/add-forms-cross-evidence.md",
+        "references": [
+          "app/add-task.tsx:22-28",
+          "src/components/screens/entry-form.tsx:2285-2318",
+          "src/components/screens/entry-form.tsx:2368-2493",
+          "src/components/screens/entry-form.tsx:2701-2823",
+          "src/components/screens/entry-form.tsx:3397-3411"
+        ]
+      }
+    },
+    {
+      "id": "VAL-ADDFORM-004",
+      "title": "Add Warehouse Item form with Cellar Ledger tokens",
+      "status": "pass",
+      "reason": "The warehouse item flow is built on the shared Cellar Ledger form system and explicitly lays out the Quantity and Unit fields side-by-side.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/add-forms-cross/add-forms-cross-evidence.md",
+        "references": [
+          "app/add-warehouse-item.tsx:17",
+          "src/components/screens/warehouse-item-form.tsx:605-613",
+          "src/components/screens/warehouse-item-form.tsx:617-841",
+          "src/components/screens/warehouse-item-form.tsx:764-780",
+          "src/components/ui/form-components.tsx:481-484,824-835"
+        ]
+      }
+    },
+    {
+      "id": "VAL-CROSS-001",
+      "title": "Warm background across all screens",
+      "status": "pass",
+      "reason": "The reviewed forms-tools-settings surfaces resolve their screen backgrounds through the warm Cellar Ledger surface tokens, and the branch-changed app screens do not reintroduce hardcoded white backgrounds.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/add-forms-cross/add-forms-cross-evidence.md",
+        "references": [
+          "src/styles/theme.ts:394-399",
+          "app/(tabs)/settings.tsx:2406,2473,2589-2629,2757",
+          "app/(tabs)/tools.tsx:216-217",
+          "src/components/screens/entry-form.tsx:1736-1744,2881-2889",
+          "src/components/screens/warehouse-item-form.tsx:638-641,859-917"
+        ]
+      }
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "title": "No shadow styles on cards",
+      "status": "fail",
+      "reason": "Shadow and elevation props are still present on add-entry card surfaces and in other forms-tools-settings screens, so the milestone is not yet fully border-only.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/add-forms-cross/add-forms-cross-evidence.md",
+        "references": [
+          "src/components/screens/entry-form/LogTypeSelector.tsx:45-49,116-120",
+          "src/components/screens/entry-form/LogForm.tsx:108-112",
+          "app/tasks.tsx:671-675",
+          "app/fertilizer-plans.tsx:388-393"
+        ]
+      }
+    },
+    {
+      "id": "VAL-CROSS-008",
+      "title": "Accessibility labels and roles preserved",
+      "status": "pass",
+      "reason": "Scoped diff review against origin/main found no net removals of accessibility roles or labels in the assigned add-forms/settings/tools files, and the current files still retain the relevant accessibility props.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/forms-tools-settings/add-forms-cross/add-forms-cross-evidence.md",
+        "references": [
+          "app/(tabs)/settings.tsx:1040-1041",
+          "app/(tabs)/tools.tsx:32-33",
+          "src/components/ui/form-components.tsx:163-170,380-387"
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated 7 assigned assertions by read-only code review: 5 passed and 2 failed. Failing assertions are VAL-ADDFORM-002 (log type selector still uses large tiles instead of chips) and VAL-CROSS-002 (shadow/elevation styles remain in the add-entry flow and other milestone screens)."
+}
