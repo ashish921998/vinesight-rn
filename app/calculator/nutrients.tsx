@@ -277,21 +277,68 @@ export default function NutrientCalculatorScreen() {
                     <NutrientRow
                       label="Nitrogen (N)"
                       value={result.nitrogen}
-                      color={colors.success}
-                      bgColor={colorWithOpacity(colors.success, 0.12)}
+                      color={colors.fertigation[500]}
+                      bgColor={colorWithOpacity(colors.fertigation[500], 0.12)}
+                      dotColor={colors.fertigation[500]}
                     />
                     <NutrientRow
                       label="Phosphorus (P₂O₅)"
                       value={result.phosphorus}
-                      color={colors.warning}
-                      bgColor={colorWithOpacity(colors.warning, 0.12)}
+                      color="#D0A14A"
+                      bgColor={colorWithOpacity('#D0A14A', 0.12)}
+                      dotColor="#D0A14A"
                     />
                     <NutrientRow
                       label="Potassium (K₂O)"
                       value={result.potassium}
-                      color={m3.colorScheme.tertiary}
-                      bgColor={colorWithOpacity(m3.colorScheme.tertiary, 0.12)}
+                      color="#A56B4F"
+                      bgColor={colorWithOpacity('#A56B4F', 0.12)}
+                      dotColor="#A56B4F"
                     />
+                  </View>
+
+                  {/* Total NPK Summary Row */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'baseline',
+                      justifyContent: 'space-between',
+                      paddingTop: spacing[3],
+                      marginTop: spacing[2],
+                      borderTopWidth: 1,
+                      borderTopColor: colors.surface[300],
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                        color: m3.colorScheme.primary,
+                      }}
+                    >
+                      Total NPK
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                      <Text
+                        style={{
+                          fontSize: 22,
+                          fontWeight: fontWeight.bold,
+                          color: m3.colorScheme.primary,
+                        }}
+                      >
+                        {(result.nitrogen + result.phosphorus + result.potassium).toFixed(1)}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.normal,
+                          color: colors.surface[500],
+                          marginLeft: spacing[1],
+                        }}
+                      >
+                        kg
+                      </Text>
+                    </View>
                   </View>
 
                   <View
@@ -423,11 +470,13 @@ function NutrientRow({
   value,
   color,
   bgColor,
+  dotColor,
 }: {
   label: string;
   value: number;
   color: string;
   bgColor: string;
+  dotColor: string;
 }) {
   const colors = useThemeColors();
   return (
@@ -441,7 +490,17 @@ function NutrientRow({
         backgroundColor: bgColor,
       }}
     >
-      <Text style={{ fontSize: fontSize.sm, color: colors.surface[700] }}>{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+        <View
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: dotColor,
+          }}
+        />
+        <Text style={{ fontSize: fontSize.sm, color: colors.surface[700] }}>{label}</Text>
+      </View>
       <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color }}>
         {value.toFixed(1)} kg
       </Text>

@@ -4,7 +4,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 
@@ -15,13 +15,16 @@ interface ToolItem {
   icon: string;
   color: string;
   route: Href;
+  categoryKey?: string;
 }
 
-const ToolListItem: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onPress }) => {
+const ToolCard: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onPress }) => {
   const { t } = useTranslation();
   const m3 = useM3();
+  const colors = useThemeColors();
   const title = t(item.titleKey);
   const description = t(item.descriptionKey);
+  const category = item.categoryKey ? t(item.categoryKey) : '';
 
   return (
     <Pressable
@@ -29,14 +32,13 @@ const ToolListItem: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item,
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${description}`}
       style={{
-        backgroundColor: m3.surface.surfaceContainerLow,
-        borderRadius: m3.shape.cornerLarge,
+        backgroundColor: colors.surface[100],
+        borderRadius: borderRadius.md,
         padding: spacing[4],
-        marginBottom: spacing[3],
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
         borderWidth: 1,
-        borderColor: m3.colorScheme.outlineVariant,
+        borderColor: colors.surface[300],
         overflow: 'hidden',
       }}
     >
@@ -44,42 +46,52 @@ const ToolListItem: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item,
         <>
           <View
             style={{
-              width: 48,
-              height: 48,
-              borderRadius: m3.shape.cornerMedium,
+              width: 40,
+              height: 40,
+              borderRadius: borderRadius.lg,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: colorWithOpacity(item.color, 0.12),
+              marginBottom: spacing[3],
             }}
           >
-            <SymbolIcon name={item.icon} size={22} color={item.color} />
+            <SymbolIcon name={item.icon} size={20} color={item.color} />
           </View>
-          <View style={{ flex: 1, marginLeft: spacing[3] }}>
+          <Text
+            style={{
+              color: m3.colorScheme.onSurface,
+              fontSize: 15,
+              fontWeight: fontWeight.semibold,
+              marginBottom: 2,
+            }}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+          <Text
+            style={{
+              color: colors.surface[500],
+              fontSize: 13,
+              lineHeight: 18,
+            }}
+            numberOfLines={2}
+          >
+            {description}
+          </Text>
+          {category ? (
             <Text
               style={{
-                color: m3.colorScheme.onSurface,
-                fontSize: fontSize.base,
+                color: colors.surface[500],
+                fontSize: 10,
                 fontWeight: fontWeight.semibold,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+                marginTop: spacing[2],
               }}
             >
-              {title}
+              {category}
             </Text>
-            <Text
-              style={{
-                color: m3.colorScheme.onSurfaceVariant,
-                ...m3.typography.labelSmall,
-                marginTop: 2,
-              }}
-              numberOfLines={2}
-            >
-              {description}
-            </Text>
-          </View>
-          <SymbolIcon
-            name="chevron.right"
-            size={20}
-            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-          />
+          ) : null}
           <View
             pointerEvents="none"
             style={[
@@ -108,28 +120,22 @@ export default function ToolsScreen() {
   const calculators = useMemo(
     (): ToolItem[] => [
       {
-        id: 'weather',
-        titleKey: 'tools.items.weatherIrrigation',
-        descriptionKey: 'tools.descriptions.weatherIrrigation',
-        icon: 'sun.max.fill',
-        color: colors.warning,
-        route: '/weather',
-      },
-      {
         id: 'mad',
         titleKey: 'tools.items.madCalculator',
         descriptionKey: 'tools.descriptions.madCalculator',
         icon: 'gauge',
-        color: colors.spray[500],
+        color: colors.irrigation[500],
         route: '/calculator/mad',
+        categoryKey: 'tools.categories.irrigation',
       },
       {
         id: 'system-discharge',
         titleKey: 'tools.items.systemDischarge',
         descriptionKey: 'tools.descriptions.systemDischarge',
         icon: 'drop.fill',
-        color: colors.primary[500],
+        color: colors.irrigation[500],
         route: '/calculator/system-discharge',
+        categoryKey: 'tools.categories.irrigation',
       },
       {
         id: 'lai',
@@ -138,14 +144,16 @@ export default function ToolsScreen() {
         icon: 'leaf.fill',
         color: colors.success,
         route: '/calculator/lai',
+        categoryKey: 'tools.categories.crop',
       },
       {
         id: 'nutrients',
         titleKey: 'tools.items.nutrientCalculator',
         descriptionKey: 'tools.descriptions.nutrientCalculator',
         icon: 'flask.fill',
-        color: colors.observation[500],
+        color: colors.fertigation[500],
         route: '/calculator/nutrients',
+        categoryKey: 'tools.categories.fertility',
       },
       {
         id: 'tank-mix',
@@ -154,6 +162,7 @@ export default function ToolsScreen() {
         icon: 'spraycan.fill',
         color: colors.spray[500],
         route: '/calculator/tank-mix' as Href,
+        categoryKey: 'tools.categories.spray',
       },
       {
         id: 'safe-to-spray',
@@ -162,6 +171,16 @@ export default function ToolsScreen() {
         icon: 'checkmark.shield.fill',
         color: colors.warning,
         route: '/spray-safe-checker' as Href,
+        categoryKey: 'tools.categories.spray',
+      },
+      {
+        id: 'weather',
+        titleKey: 'tools.items.weatherIrrigation',
+        descriptionKey: 'tools.descriptions.weatherIrrigation',
+        icon: 'sun.max.fill',
+        color: colors.warning,
+        route: '/weather',
+        categoryKey: 'tools.categories.weather',
       },
       {
         id: 'spray-catalog',
@@ -170,6 +189,7 @@ export default function ToolsScreen() {
         icon: 'list.bullet.rectangle.portrait.fill',
         color: colors.observation[500],
         route: '/spray-catalog' as Href,
+        categoryKey: 'tools.categories.spray',
       },
     ],
     [colors],
@@ -207,36 +227,46 @@ export default function ToolsScreen() {
       <View style={{ marginBottom: spacing[6] }}>
         <Text
           style={{
-            color: m3.colorScheme.onSurfaceVariant,
-            ...m3.typography.labelSmall,
-            fontWeight: fontWeight.bold,
-            letterSpacing: 1,
+            color: colors.surface[400],
+            fontSize: fontSize.xs,
+            fontWeight: fontWeight.semibold,
+            textTransform: 'uppercase',
+            letterSpacing: 0.6,
             marginBottom: spacing[3],
           }}
         >
           {t('tools.sections.calculators')}
         </Text>
-        {calculators.map((calc) => (
-          <ToolListItem key={calc.id} item={calc} onPress={() => router.push(calc.route)} />
-        ))}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
+          {calculators.map((calc) => (
+            <View key={calc.id} style={{ width: '47%' }}>
+              <ToolCard item={calc} onPress={() => router.push(calc.route)} />
+            </View>
+          ))}
+        </View>
       </View>
 
       {developerTools.length > 0 ? (
         <View>
           <Text
             style={{
-              color: m3.colorScheme.onSurfaceVariant,
-              ...m3.typography.labelSmall,
-              fontWeight: fontWeight.bold,
-              letterSpacing: 1,
+              color: colors.surface[400],
+              fontSize: fontSize.xs,
+              fontWeight: fontWeight.semibold,
+              textTransform: 'uppercase',
+              letterSpacing: 0.6,
               marginBottom: spacing[3],
             }}
           >
             {t('developerTools.section')}
           </Text>
-          {developerTools.map((tool) => (
-            <ToolListItem key={tool.id} item={tool} onPress={() => router.push(tool.route)} />
-          ))}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
+            {developerTools.map((tool) => (
+              <View key={tool.id} style={{ width: '47%' }}>
+                <ToolCard item={tool} onPress={() => router.push(tool.route)} />
+              </View>
+            ))}
+          </View>
         </View>
       ) : null}
     </ScrollView>

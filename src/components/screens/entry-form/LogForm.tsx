@@ -105,11 +105,6 @@ export function LogForm({
           alignItems: 'center',
           flexDirection: 'row',
           justifyContent: 'center',
-          shadowColor: showAddEntryGuidance ? m3.colorScheme.primary : 'transparent',
-          shadowOpacity: showAddEntryGuidance ? 0.25 : 0,
-          shadowRadius: showAddEntryGuidance ? 10 : 0,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: showAddEntryGuidance ? 5 : 0,
           backgroundColor: isValid && hasFarm ? m3.colorScheme.primary : colors.surface[50],
           borderColor: showAddEntryGuidance
             ? colorWithOpacity(m3.colorScheme.primary, 0.7)
