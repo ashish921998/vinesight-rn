@@ -2001,6 +2001,12 @@ export const en = {
       dueToday: 'Due Today',
       thisWeek: 'This Week',
       upcoming: 'Upcoming',
+      completed: 'Completed',
+    },
+    summary: {
+      pending: 'pending',
+      dueToday: 'due today',
+      overdue: 'overdue',
     },
     dueDate: {
       none: 'No due date',
@@ -2607,6 +2613,14 @@ export const en = {
       completeBody: 'All workers completed!',
     },
     tapHint: '💡 Tap a day to cycle: Full → Half → Absent → Clear',
+    mark: {
+      full: 'Full',
+      half: 'Half',
+      absent: 'Absent',
+      markAllPresent: 'Mark All Present',
+      workersCount: '{{count}} workers',
+      dailyRate: '₹{{rate}} / day',
+    },
   },
 
   workerAnalyticsDetail: {

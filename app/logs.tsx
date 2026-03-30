@@ -1117,13 +1117,11 @@ export default function LogsScreen() {
                       <View style={{ gap: spacing[4] }}>
                         {sortedDates.map((dateKey) => {
                           const dateObj = new Date(dateKey);
-                          const formattedDate = dateObj
-                            .toLocaleDateString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })
-                            .toUpperCase();
+                          const formattedDate = formatDate(dateObj, {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          }).toUpperCase();
 
                           return (
                             <View key={dateKey}>

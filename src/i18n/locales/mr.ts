@@ -2014,8 +2014,14 @@ export const mr = {
     sections: {
       dueToday: 'आज देय',
       thisWeek: 'हा आठवडा',
+      upcoming: 'आगामी',
       overdue: 'विलंबित',
       completed: 'पूर्ण',
+    },
+    summary: {
+      pending: 'प्रलंबित',
+      dueToday: 'आज देय',
+      overdue: 'विलंबित',
     },
     dueDate: {
       none: 'देय तारीख नाही',
@@ -2625,6 +2631,14 @@ export const mr = {
       completeBody: 'सर्व $t(glossary.worker) पूर्ण!',
     },
     tapHint: '💡 दिवस टॅप करा: पूर्ण → अर्धा → अनुपस्थित → साफ करा',
+    mark: {
+      full: 'पूर्ण',
+      half: 'अर्धा',
+      absent: 'अनुपस्थित',
+      markAllPresent: 'सर्वांना उपस्थित करा',
+      workersCount: '{{count}} कामगार',
+      dailyRate: '₹{{rate}} / दिवस',
+    },
   },
 
   workerAnalyticsDetail: {

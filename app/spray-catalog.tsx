@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { borderRadius, colors, darkColors, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3 } from '@/styles/use-theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { ProductDetailSheet } from '@/components/sheets/product-detail-sheet';
 import { useChemicalCatalog } from '@/hooks';
 import type { ChemicalMix, ChemicalMixComponent } from '@/types/phi';
@@ -64,8 +64,8 @@ export default function SprayCatalogScreen() {
   }, [mixes, selectedComponent]);
 
   // Get spray color based on dark mode
-  const sprayColor =
-    m3.colorScheme.surface === colors.surface[50] ? colors.spray[500] : darkColors.spray[500];
+  const isDark = useIsDark();
+  const sprayColor = isDark ? darkColors.spray[500] : colors.spray[500];
 
   const renderChip = useCallback(
     (key: string, label: string, selected: boolean, onPress: () => void) => (
@@ -153,7 +153,7 @@ export default function SprayCatalogScreen() {
 
             {/* Info row: PHI / Dose / Target */}
             <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
-              {phiDays !== null && (
+              {phiDays != null && (
                 <>
                   <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: 13 }}>
                     PHI: {phiDays} days
@@ -223,7 +223,7 @@ export default function SprayCatalogScreen() {
             </Pressable>
 
             {/* Component list - clickable to show product details */}
-            {mix.components.length > 1 && (
+            {mix.components.length >= 1 && (
               <View style={{ marginTop: spacing[2], gap: spacing[1] }}>
                 {mix.components.slice(0).map((component: ChemicalMixComponent) => (
                   <Pressable

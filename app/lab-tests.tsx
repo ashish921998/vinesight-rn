@@ -569,7 +569,7 @@ export default function LabTestsScreen() {
             paddingVertical: spacing[2],
             marginLeft: spacing[2],
             borderBottomWidth: selectedTab === 'petiole' ? 2 : 0,
-            borderBottomColor: selectedTab === 'petiole' ? colors.labTest.soil : 'transparent',
+            borderBottomColor: selectedTab === 'petiole' ? colors.labTest.petiole : 'transparent',
           }}
         >
           <Text
@@ -578,7 +578,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'petiole' ? colors.labTest.soil : colors.surface[400],
+              color: selectedTab === 'petiole' ? colors.labTest.petiole : colors.surface[400],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"

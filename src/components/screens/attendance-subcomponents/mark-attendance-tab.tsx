@@ -737,7 +737,7 @@ export function MarkAttendanceTab({
               color: m3.colorScheme.onSurface,
             }}
           >
-            {workers.length} workers
+            {t('attendance.mark.workersCount', { count: workers.length })}
           </Text>
         </View>
 
@@ -798,7 +798,9 @@ export function MarkAttendanceTab({
                     marginTop: 2,
                   }}
                 >
-                  {worker.daily_rate ? `₹${worker.daily_rate} / day` : ''}
+                  {worker.daily_rate
+                    ? t('attendance.mark.dailyRate', { rate: worker.daily_rate })
+                    : ''}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', gap: spacing[1] }}>
@@ -834,7 +836,7 @@ export function MarkAttendanceTab({
                       color: status === 'full_day' ? '#FFFFFF' : m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    Full
+                    {t('attendance.mark.full')}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -869,7 +871,7 @@ export function MarkAttendanceTab({
                       color: status === 'half_day' ? '#FFFFFF' : m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    Half
+                    {t('attendance.mark.half')}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -904,7 +906,7 @@ export function MarkAttendanceTab({
                       color: status === 'absent' ? '#FFFFFF' : m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    Absent
+                    {t('attendance.mark.absent')}
                   </Text>
                 </Pressable>
               </View>
@@ -943,7 +945,7 @@ export function MarkAttendanceTab({
               color: m3.colorScheme.onPrimary,
             }}
           >
-            Mark All Present
+            {t('attendance.mark.markAllPresent')}
           </Text>
         </Pressable>
       </View>

@@ -115,18 +115,21 @@ export default function TasksScreen() {
     return farm?.name || t('tasks.unknownFarm');
   };
 
+  // Farm-scoped tasks
+  const scopedTasks = useMemo(() => {
+    if (!tasks) return null;
+    return farmIdValue !== undefined ? tasks.filter((t) => t.farm_id === farmIdValue) : tasks;
+  }, [tasks, farmIdValue]);
+
   // Filter and count tasks - Cellar Ledger design
   const { pendingTasks, completedTasks } = useMemo(() => {
-    const scopedTasks =
-      tasks && farmIdValue !== undefined ? tasks.filter((t) => t.farm_id === farmIdValue) : tasks;
-
     if (!scopedTasks) return { pendingTasks: [], completedTasks: [] };
 
     const pending = scopedTasks.filter((t) => !t.completed);
     const completed = scopedTasks.filter((t) => t.completed);
 
     return { pendingTasks: pending, completedTasks: completed };
-  }, [tasks, farmIdValue]);
+  }, [scopedTasks]);
 
   // Group pending tasks by due date status for section headers
   const { dueTodayTasks, thisWeekTasks, upcomingTasks } = useMemo(() => {
@@ -310,7 +313,7 @@ export default function TasksScreen() {
       >
         {/* Cellar Ledger: Summary Bar */}
         {(() => {
-          const summary = computeSummaryCounts(tasks);
+          const summary = computeSummaryCounts(scopedTasks);
           return (
             <View
               style={{
@@ -332,7 +335,8 @@ export default function TasksScreen() {
                   color: colors.surface[900],
                 }}
               >
-                {formatNumber(summary.pending, { maximumFractionDigits: 0 })} pending
+                {formatNumber(summary.pending, { maximumFractionDigits: 0 })}{' '}
+                {t('tasks.summary.pending')}
               </Text>
               <View
                 style={{
@@ -350,7 +354,8 @@ export default function TasksScreen() {
                   color: colors.warning,
                 }}
               >
-                {formatNumber(summary.dueToday, { maximumFractionDigits: 0 })} due today
+                {formatNumber(summary.dueToday, { maximumFractionDigits: 0 })}{' '}
+                {t('tasks.summary.dueToday')}
               </Text>
               <View
                 style={{
@@ -368,14 +373,18 @@ export default function TasksScreen() {
                   color: colors.error,
                 }}
               >
-                {formatNumber(summary.overdue, { maximumFractionDigits: 0 })} overdue
+                {formatNumber(summary.overdue, { maximumFractionDigits: 0 })}{' '}
+                {t('tasks.summary.overdue')}
               </Text>
             </View>
           );
         })()}
 
         {/* Task List - Pending Tasks */}
-        {dueTodayTasks.length === 0 && thisWeekTasks.length === 0 && upcomingTasks.length === 0 ? (
+        {dueTodayTasks.length === 0 &&
+        thisWeekTasks.length === 0 &&
+        upcomingTasks.length === 0 &&
+        completedTasks.length === 0 ? (
           <View
             style={{
               backgroundColor: colors.surface[100],

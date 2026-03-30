@@ -2007,8 +2007,14 @@ export const hi = {
     sections: {
       dueToday: 'आज देय',
       thisWeek: 'इस सप्ताह',
+      upcoming: 'आगामी',
       overdue: 'अतिदेय',
       completed: 'पूर्ण',
+    },
+    summary: {
+      pending: 'शेष',
+      dueToday: 'आज देय',
+      overdue: 'अतिदेय',
     },
     dueDate: {
       none: 'कोई नियत तारीख नहीं',
@@ -2614,6 +2620,14 @@ export const hi = {
       savedBody: '{{name}} के लिए $t(glossary.attendance) सहेजी गई।',
       completeTitle: 'पूर्ण',
       completeBody: 'सभी श्रमिक पूर्ण!',
+    },
+    mark: {
+      full: 'पूर्ण',
+      half: 'आधा',
+      absent: 'अनुपस्थित',
+      markAllPresent: 'सभी को उपस्थित करें',
+      workersCount: '{{count}} श्रमिक',
+      dailyRate: '₹{{rate}} / दिन',
     },
   },
 

@@ -119,7 +119,6 @@ export default function WorkersScreen() {
       style={{
         marginHorizontal: spacing[4],
         marginBottom: spacing[3],
-        opacity: item.is_active ? 1 : 0.55,
       }}
     >
       <WorkerCard

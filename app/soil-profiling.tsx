@@ -213,10 +213,10 @@ export default function SoilProfilingScreen() {
             const info = SECTION_INFO[name];
             // Distinct colors per section: T=#355847, B=#A56B4F, R=#D0A14A, L=#4E7384
             const sectionColors: Record<string, string> = {
-              T: colors.primary[500],
-              B: colors.secondary[500],
-              R: colors.accent[500],
-              L: colors.info,
+              top: colors.primary[500],
+              bottom: colors.secondary[500],
+              right: colors.accent[500],
+              left: colors.info,
             };
             const sectionColor = sectionColors[name] || colors.primary[500];
             return (
