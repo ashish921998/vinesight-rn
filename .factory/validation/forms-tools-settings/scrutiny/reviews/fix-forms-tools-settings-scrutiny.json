@@ -1,0 +1,58 @@
+{
+  "featureId": "fix-forms-tools-settings-scrutiny",
+  "reviewedAt": "2026-03-30T05:08:14.615525Z",
+  "commitId": "9215dbbaf4cdf775056af58b8a65dbbc9154655a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The rerun fixes the scoped quick wins from round 1 \u2014 settings profile radius/danger styling, irrigation tool tinting, LAI result emphasis, warehouse locale keys, and warehouse stock-bar math all now match the requested Cellar Ledger adjustments. However, the milestone still has unresolved blockers in add forms, reports, settings groups, fertilizer plans, and warehouse date localization, so the fix feature does not clear the prior scrutiny failures.",
+    "issues": [
+      {
+        "file": "src/components/screens/entry-form.tsx",
+        "line": 2482,
+        "severity": "blocking",
+        "description": "The add-task redesign is still incomplete. The form still uses a picker-style priority Pressable rather than inline Low/Medium/High chips, and the task section only exposes due-date selection later in the form with no visible reminder toggle or time-preset chips, so multiple required add-task wireframe controls remain missing."
+      },
+      {
+        "file": "src/components/ui/form-components.tsx",
+        "line": 859,
+        "severity": "blocking",
+        "description": "The add-warehouse pricing field still does not render an attached currency prefix. WarehouseItemForm continues passing a prefix into FormInput, but FormInput still renders that prefix as plain text inside one bordered input instead of as a left-rounded attached segment."
+      },
+      {
+        "file": "app/reports.tsx",
+        "line": 423,
+        "severity": "blocking",
+        "description": "The reports screen still renders the existing filter/preview/export flow instead of the required bordered report cards with icon circles and per-card Generate buttons. Current HEAD still mounts ReportFiltersPanel, ReportExecutiveSummary, ReportDocumentBody, and ReportExportActions in sequence."
+      },
+      {
+        "file": "src/components/screens/reports/report-filters-panel.tsx",
+        "line": 667,
+        "severity": "blocking",
+        "description": "The report export/date controls remain only approximated. PDF/CSV chips are still passive Pressables with no active-state wiring, and the date labels still rely on missing locale keys via t('reports.dateRange.from', 'From') and t('reports.dateRange.toLabel', 'To')."
+      },
+      {
+        "file": "app/(tabs)/settings.tsx",
+        "line": 1059,
+        "severity": "blocking",
+        "description": "The settings screen still lacks the required grouped toggle rows, and the grouped cards are still too rounded. Current HEAD renders only pressable rows in the main settings groups, and styles.sectionContent still uses borderRadius.md, which maps to 16px instead of the specified 12px."
+      },
+      {
+        "file": "app/fertilizer-plans.tsx",
+        "line": 12,
+        "severity": "blocking",
+        "description": "The fertilizer-plans screen still fabricates completed/upcoming/overdue status from item index and uses those placeholder values to drive strip and badge colors, even though the fertilizer-plan type has no status field. The redesign therefore still changes behavior using invented data."
+      },
+      {
+        "file": "app/warehouse.tsx",
+        "line": 614,
+        "severity": "blocking",
+        "description": "The warehouse i18n follow-up is still incomplete because the updated-date row hardcodes toLocaleDateString('en-GB', ...) instead of following the current app locale. The new translation keys exist, but the rendered date still stays English-only."
+      }
+    ]
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": ".factory/validation/forms-tools-settings/scrutiny/synthesis.round1.json",
+  "summary": "Fail: round-1 quick fixes landed, but current HEAD still leaves valid blocking gaps in add-task/add-warehouse, reports, settings-group toggles, fertilizer-plan status handling, and warehouse date localization."
+}
