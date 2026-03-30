@@ -1,0 +1,27 @@
+app/(tabs)/index.tsx
+  f47e7ae8df013a3a 782,787,891
+app/farm/[id].tsx
+  f47e7ae8df013a3a 1657
+app/(tabs)/farms.tsx
+  f47e7ae8df013a3a 496
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "6f3e4e79e14acba3da9c108b85ad8a288d5bebf0",
+  "prompts": {
+    "f47e7ae8df013a3a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "2df4f7dc-c1b8-460e-b405-9e463f47f2f5",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
