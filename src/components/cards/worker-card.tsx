@@ -1,6 +1,7 @@
 /**
  * WorkerCard Component
- * Displays a single worker with avatar, rate, and advance balance
+ * Displays a single worker with avatar, role, farm, status, and call button
+ * Cellar Ledger design: 44px circular avatar, status dot + label, call button
  */
 
 import React from 'react';
@@ -9,52 +10,63 @@ import { Symbol as CardSymbol } from '@/components/ui/symbol';
 import type { Worker } from '../../types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { formatCurrency } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
-import { useCurrency } from '@/hooks/use-currency';
-import { useM3 } from '@/styles/use-theme';
+import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
 
 interface WorkerCardProps {
   worker: Worker;
   onPress?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  /** Whether the worker is currently active (for status display) */
+  isActive?: boolean;
 }
 
-export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProps) {
+export function WorkerCard({
+  worker,
+  onPress,
+  onEdit,
+  onDelete,
+  isActive = true,
+}: WorkerCardProps) {
   const m3 = useM3();
+  const colors = useThemeColors();
+  const isDark = useIsDark();
   const { t } = useTranslation();
-  const preferredCurrency = useCurrency();
 
-  const initial = worker.name.charAt(0).toUpperCase();
-  const formattedRate = formatCurrency(worker.daily_rate, preferredCurrency, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-  const formattedAdvance = formatCurrency(worker.advance_balance, preferredCurrency, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
+  // Labour category color for avatar (#7A5E8E light, #9A7EAE dark)
+  const labourColor = isDark ? '#9A7EAE' : '#7A5E8E';
+  // Inactive workers use stone-5 for avatar
+  const inactiveAvatarColor = isDark ? '#7A756D' : '#A89E92';
 
+  const initials = worker.name
+    .split(' ')
+    .map((n) => n.charAt(0))
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  // Cellar Ledger: Card mist-1 bg, stone-3 border, 16px radius
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: m3.surface.surfaceContainerLow,
-    borderRadius: m3.shape.cornerLarge,
+    backgroundColor: colors.surface[100], // mist-1
+    borderRadius: borderRadius.lg, // 16px
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderWidth: 1,
-    borderColor: m3.colorScheme.outlineVariant,
+    borderColor: colors.surface[300], // stone-3
     overflow: 'hidden',
   };
 
+  // Cellar Ledger: 44px circular avatar with labour color bg, white initials
   const avatarStyle: ViewStyle = {
-    width: 48,
-    height: 48,
-    minWidth: 48,
-    minHeight: 48,
+    width: 44,
+    height: 44,
+    minWidth: 44,
+    minHeight: 44,
     borderRadius: borderRadius.full,
-    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
+    backgroundColor: isActive ? labourColor : inactiveAvatarColor,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing[3],
@@ -63,52 +75,57 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   const avatarTextStyle: TextStyle = {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: m3.colorScheme.primary,
+    color: '#FFFFFF', // white initials
   };
 
   const infoContainerStyle: ViewStyle = {
     flex: 1,
+    minWidth: 0,
   };
 
+  // Cellar Ledger: Worker name 15px/600
   const nameTextStyle: TextStyle = {
-    fontSize: fontSize.base,
+    fontSize: 15,
     fontWeight: fontWeight.semibold,
-    color: m3.colorScheme.onSurface,
+    color: colors.surface[900], // ink
   };
 
-  const rateContainerStyle: ViewStyle = {
+  // Cellar Ledger: status dot (7px) + label (12px)
+  const statusContainerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing[1],
+    gap: spacing[2],
   };
 
-  const rateTextStyle: TextStyle = {
-    fontSize: fontSize.sm,
-    color: m3.colorScheme.onSurfaceVariant,
-    marginLeft: spacing[1],
+  const statusDotStyle: ViewStyle = {
+    width: 7,
+    height: 7,
+    borderRadius: borderRadius.full,
+    backgroundColor: isActive ? colors.success : colors.surface[400], // green for active, stone-5 for inactive
   };
 
-  const dayTextStyle: TextStyle = {
-    fontSize: fontSize.xs,
-    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
+  const statusLabelStyle: TextStyle = {
+    fontSize: 12,
+    fontWeight: fontWeight.medium,
+    lineHeight: 16,
+    color: isActive ? colors.success : colors.surface[400], // green for active, stone-5 for inactive
   };
 
-  const advanceContainerStyle: ViewStyle = {
-    flexDirection: 'row',
+  // Cellar Ledger: call button (36px, borderRadius 12, primary-tinted bg)
+  const callButtonStyle: ViewStyle = {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md, // 12px
     alignItems: 'center',
-  };
-
-  const advanceTextStyle: TextStyle = {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    color: m3.colorScheme.warning,
-    marginLeft: spacing[1],
+    justifyContent: 'center',
+    backgroundColor: colorWithOpacity(colors.primary[500], 0.12), // primary-tinted bg
   };
 
   const actionsContainerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: spacing[3],
+    marginLeft: spacing[2],
     gap: spacing[2],
   };
 
@@ -123,33 +140,38 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
 
   const renderCardContent = (pressed: boolean) => (
     <View style={containerStyle}>
+      {/* 44px circular avatar */}
       <View style={avatarStyle}>
-        <Text style={avatarTextStyle}>{initial}</Text>
+        <Text style={avatarTextStyle}>{initials}</Text>
       </View>
 
+      {/* Info: name, role + farm, status dot + label */}
       <View style={infoContainerStyle}>
         <Text style={nameTextStyle} numberOfLines={1}>
           {worker.name}
         </Text>
-        <View style={rateContainerStyle}>
-          <CardSymbol
-            name="dollarsign.circle"
-            size={12}
-            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)}
-          />
-          <Text style={rateTextStyle} numberOfLines={1}>
-            {formattedRate}
-            <Text style={dayTextStyle}>{t('workers.ratePerDayShort')}</Text>
+
+        {/* Status dot + label */}
+        <View style={statusContainerStyle}>
+          <View style={statusDotStyle} />
+          <Text style={statusLabelStyle}>
+            {isActive ? t('workers.status.active') : t('workers.status.offToday')}
           </Text>
         </View>
       </View>
 
-      {worker.advance_balance > 0 && (
-        <View style={advanceContainerStyle}>
-          <CardSymbol name="arrow.up.circle.fill" size={12} color={m3.colorScheme.warning} />
-          <Text style={advanceTextStyle}>{formattedAdvance}</Text>
-        </View>
-      )}
+      {/* Call button (36px, 12px radius, primary-tinted bg) */}
+      <Pressable
+        style={({ pressed: callPressed }) => [
+          callButtonStyle,
+          callPressed ? { backgroundColor: colorWithOpacity(colors.primary[500], 0.24) } : null,
+          !isActive ? { opacity: 0.5 } : null,
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={t('workers.workerCard.callA11y', { name: worker.name })}
+      >
+        <CardSymbol name="phone.fill" size={16} color={colors.primary[500]} />
+      </Pressable>
 
       {(onEdit || onDelete) && (
         <View style={actionsContainerStyle}>
@@ -216,7 +238,12 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={worker.name}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={worker.name}
+        style={!isActive ? { opacity: 0.55 } : undefined}
+      >
         {({ pressed }) => renderCardContent(pressed)}
       </Pressable>
     );

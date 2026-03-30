@@ -95,7 +95,7 @@ export const TASK_TYPE_INFO: Record<TaskType, { labelKey: string; icon: string; 
     color: '#7a9a5c',
   },
   expense: { labelKey: 'tasks.types.expense', icon: ICON_REGISTRY.expense, color: '#598066' },
-  note: { labelKey: 'tasks.types.note', icon: ICON_REGISTRY.note, color: '#738c7a' },
+  note: { labelKey: 'tasks.types.note', icon: ICON_REGISTRY.note, color: '#5C6D91' },
 };
 
 // Priority display info
