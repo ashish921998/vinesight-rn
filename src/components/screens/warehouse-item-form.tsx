@@ -36,7 +36,6 @@ import {
   FormModal,
   SectionHeader,
   PillSelector,
-  CardSelector,
   FormInput,
   PreviewCard,
 } from '../ui/form-components';
@@ -238,40 +237,6 @@ export default function WarehouseItemForm({
 
   const currency = useCurrency();
   const isEditing = !!editingItem;
-
-  const unitOptions = useMemo(
-    () => [
-      {
-        value: 'kg' as WarehouseUnit,
-        label: 'kg',
-        sublabel: 'Kilograms',
-        icon: 'scale-outline' as const,
-        iconColor: colorWithOpacity(colors.warning, 0.25),
-      },
-      {
-        value: 'gram' as WarehouseUnit,
-        label: 'g',
-        sublabel: 'Grams',
-        icon: 'scale-outline' as const,
-        iconColor: colorWithOpacity(colors.warning, 0.25),
-      },
-      {
-        value: 'liter' as WarehouseUnit,
-        label: 'L',
-        sublabel: 'Liters',
-        icon: 'water-outline' as const,
-        iconColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
-      },
-      {
-        value: 'ml' as WarehouseUnit,
-        label: 'ml',
-        sublabel: 'Milliliters',
-        icon: 'water-outline' as const,
-        iconColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
-      },
-    ],
-    [colors.warning, m3.colorScheme.primary],
-  );
 
   const catalogInputTypes = useMemo(() => mapWarehouseTypeToCatalogInputTypes(type), [type]);
   const {
@@ -795,26 +760,31 @@ export default function WarehouseItemForm({
           <Text style={{ color: m3.colorScheme.tertiary, fontWeight: '600' }}>+ Add Nutrient</Text>
         </Pressable>
 
-        {/* Quantity & Unit */}
+        {/* Quantity & Unit - Cellar Ledger spec: side-by-side */}
         <SectionHeader title="Quantity & Unit" style={{ marginBottom: 16 }} />
 
-        <FormInput
-          label="Quantity"
-          value={quantity}
-          onChangeText={setQuantity}
-          placeholder="0"
-          keyboardType="decimal-pad"
-          required
-          style={{ marginBottom: 12 }}
-        />
-
-        <CardSelector
-          options={unitOptions}
-          selectedValue={unit}
-          onSelect={(value) => setUnit(value as WarehouseUnit)}
-          columns={2}
-          style={{ marginBottom: 20 }}
-        />
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+          <View style={{ flex: 1 }}>
+            <FormInput
+              label="Quantity"
+              value={quantity}
+              onChangeText={setQuantity}
+              placeholder="0"
+              keyboardType="decimal-pad"
+              required
+              style={{ marginBottom: 0 }}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <FormInput
+              label="Unit"
+              value={unit}
+              onChangeText={(v) => setUnit(v as WarehouseUnit)}
+              placeholder="kg"
+              style={{ marginBottom: 0 }}
+            />
+          </View>
+        </View>
 
         {/* Pricing & Alert */}
         <SectionHeader title="Pricing & Alerts" style={{ marginBottom: 16 }} />
