@@ -1989,6 +1989,11 @@ export const en = {
       addTask: 'Add task',
     },
     logNow: 'Log now',
+    sections: {
+      dueToday: 'Due Today',
+      thisWeek: 'This Week',
+      upcoming: 'Upcoming',
+    },
     dueDate: {
       none: 'No due date',
       today: 'Today',

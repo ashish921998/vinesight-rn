@@ -66,12 +66,17 @@ export function TaskRow({
     return display;
   };
 
-  // Cellar Ledger: priority dot colors (8px: red/amber/stone/green)
+  // Cellar Ledger: priority dot colors (8px: red/amber/stone/green based on due date status)
   const getPriorityColor = () => {
-    if (task.priority === 'high') return colors.error;
-    if (task.priority === 'medium') return colors.warning;
+    // Use due date status for colors (not priority level) as per wireframe
     if (task.completed) return colors.success;
-    return colors.surface[400]; // stone-5 for low/neutral
+
+    if (!task.due_date) return colors.surface[400]; // stone-5 for no due date
+
+    const dueDate = startOfDay(new Date(task.due_date));
+    if (dueDate < today) return colors.error; // red for overdue
+    if (dueDate.getTime() === today.getTime()) return colors.warning; // amber for today
+    return colors.surface[400]; // stone-5 for upcoming
   };
 
   const priorityTone =
