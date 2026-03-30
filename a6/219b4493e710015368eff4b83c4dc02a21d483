@@ -1,0 +1,23 @@
+.factory/validation/forms-tools-settings/scrutiny/synthesis.json
+  05870e7ad5fd06d8 65-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "a6219b4493e710015368eff4b83c4dc02a21d483",
+  "prompts": {
+    "05870e7ad5fd06d8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d1167030-fd5b-475b-aa51-e8e2e34457cd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
