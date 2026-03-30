@@ -150,7 +150,7 @@ interface EntryFormProps {
   entrySource?: 'manual' | 'voice_ai' | null;
   editingTask?: TaskReminder | null;
   onLogSaveSuccess?: () => void;
-  onTaskSaveSuccess?: () => void;
+  onTaskSaveSuccess?: (farmId?: number | null) => void;
   presentation?: 'modal' | 'screen';
 }
 
@@ -1670,7 +1670,7 @@ export function EntryForm({
     }
 
     await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-    onTaskSaveSuccess?.();
+    onTaskSaveSuccess?.(resolvedFarmId);
     onClose();
   };
 
