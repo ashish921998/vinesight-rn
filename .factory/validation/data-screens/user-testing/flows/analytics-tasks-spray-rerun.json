@@ -1,0 +1,105 @@
+{
+  "groupId": "analytics-tasks-spray-rerun",
+  "testedAt": "2026-03-30T03:24:16Z",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "boundary": "Do not modify application source files; write only the assigned flow report and evidence notes.",
+    "milestone": "data-screens",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185",
+    "evidenceDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/analytics-tasks-spray-rerun",
+    "assignedAssertions": ["VAL-ANALYTICS-002", "VAL-TASKS-002", "VAL-SPRAY-001"]
+  },
+  "toolsUsed": ["Read", "Grep", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-ANALYTICS-002",
+      "status": "pass",
+      "reason": "The current contract removes the prior trend-arrow requirement, and the analytics screen now satisfies the remaining requirement: a horizontal row of bordered warm stat cards with 12px radius and 22px/700 values.",
+      "evidence": {
+        "noteFile": "data-screens/analytics-tasks-spray-rerun/analytics-tasks-spray-rerun-evidence.md",
+        "references": [
+          {
+            "file": "validation-contract.md",
+            "lines": "154-156",
+            "details": "The current contract defines VAL-ANALYTICS-002 as horizontal stat cards with card background, 1px border, 12px radius, and 22px/700 values, and explicitly notes that trend arrows were removed because the analytics data model does not provide trend data."
+          },
+          {
+            "file": "app/analytics.tsx",
+            "lines": "163-235",
+            "details": "The summary row is a horizontal ScrollView of stat cards. Each card uses colors.surface[100], borderWidth: 1, colors.surface[300], borderRadius: 12, and a 22px / 700 value text style."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "36-38",
+            "details": "Theme tokens resolve the warm card and border colors used by the stat cards to #F7F3ED and #D9D0C4."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-TASKS-002",
+      "status": "pass",
+      "reason": "The current contract replaces the old segmented toggle with a filtered pending-task view plus a collapsible completed section, and the tasks screen implements that structure.",
+      "evidence": {
+        "noteFile": "data-screens/analytics-tasks-spray-rerun/analytics-tasks-spray-rerun-evidence.md",
+        "references": [
+          {
+            "file": "validation-contract.md",
+            "lines": "192-194",
+            "details": "The updated contract says the segmented toggle was replaced by section-based task organization and passes if pending tasks are displayed with a collapsible completed section."
+          },
+          {
+            "file": "app/tasks.tsx",
+            "lines": "119-158",
+            "details": "TasksScreen derives pendingTasks and completedTasks, then groups pending work into dueTodayTasks, thisWeekTasks, and upcomingTasks for the filtered pending view."
+          },
+          {
+            "file": "app/tasks.tsx",
+            "lines": "434-559",
+            "details": "Pending tasks render under Due Today, This Week, and Upcoming section headers."
+          },
+          {
+            "file": "app/tasks.tsx",
+            "lines": "562-622",
+            "details": "Completed tasks live in a separate collapsible section with a chevron toggle, count badge, and conditional expanded rendering."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-SPRAY-001",
+      "status": "fail",
+      "reason": "The spray catalog cards are border-only and include the required 3px spray-green strip plus the chemical name, but the info line still renders PHI, dose, and target problem instead of the contract-required active ingredient / concentration metadata.",
+      "evidence": {
+        "noteFile": "data-screens/analytics-tasks-spray-rerun/analytics-tasks-spray-rerun-evidence.md",
+        "references": [
+          {
+            "file": "validation-contract.md",
+            "lines": "267-269",
+            "details": "The current contract requires chemical cards with a 3px spray-green left strip, chemical name, and an info line showing active ingredient / concentration, while noting only the type badge and PHI warning requirements were removed."
+          },
+          {
+            "file": "app/spray-catalog.tsx",
+            "lines": "115-193",
+            "details": "Each card uses a 1px border and 3px spray strip, renders mix.name, and the visible info row is PHI, Dose, and target_problem rather than active ingredient / concentration."
+          },
+          {
+            "file": "app/spray-catalog.tsx",
+            "lines": "50-52",
+            "details": "active_ingredient is referenced for search matching only, not rendered on the card body."
+          },
+          {
+            "file": "src/hooks/use-chemical-catalog.ts",
+            "lines": "79-83",
+            "details": "The catalog mapping preserves active_ingredient and dose data on each ChemicalMixComponent, so the missing active-ingredient display is a presentation gap in the card renderer."
+          }
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Retested 3 reassigned assertions by read-only code review against the current contract: VAL-ANALYTICS-002 passed, VAL-TASKS-002 passed, and VAL-SPRAY-001 failed because the card info line still does not show active ingredient / concentration metadata."
+}

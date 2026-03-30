@@ -1,0 +1,95 @@
+{
+  "groupId": "workers-attendance-rerun",
+  "testedAt": "2026-03-30T03:23:32.926085+00:00",
+  "isolation": {
+    "surface": "code-review",
+    "mode": "read-only validation against the current working tree",
+    "boundary": "no application source files modified",
+    "missionDir": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd",
+    "repoRoot": "/Users/ashishhuddar/Desktop/worktrees/funny-spoons-appear-185"
+  },
+  "toolsUsed": ["Read", "Grep", "Glob", "LS"],
+  "assertionResults": [
+    {
+      "id": "VAL-WORKERS-002",
+      "title": "Three-segment control",
+      "status": "pass",
+      "reason": "The workers tab selector now matches the contract: the shell is a mist-2 pill with 3px padding, the active segment uses a white fill, and selected labels use semibold (600) on Android and iOS.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/workers-attendance-rerun/workers-attendance-rerun-evidence.md",
+        "references": [
+          {
+            "file": "app/(tabs)/workers.tsx",
+            "lines": "269-294",
+            "details": "Workers screen wraps the selector in a pill shell with colors.surface[200], borderRadius.full, and padding: 3 before rendering the three Workers/Attendance/Analytics segments."
+          },
+          {
+            "file": "src/components/ui/form-components.tsx",
+            "lines": "591-628",
+            "details": "SegmentedControl renders the selected segment with backgroundColor: '#FFFFFF' and applies fontWeight.semibold to selected labels on both Android and iOS."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "34-37,280-284",
+            "details": "Theme maps surface[200] to mist-2 (#EEE7DD) and semibold to 600, matching the contract language."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-ATTEND-001",
+      "title": "Full/Half/Absent toggle buttons",
+      "status": "pass",
+      "reason": "Each attendance row now uses pill-shaped Full/Half/Absent toggles with the required green/amber/red state colors and matching dot indicators inside each toggle.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/workers-attendance-rerun/workers-attendance-rerun-evidence.md",
+        "references": [
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "804-908",
+            "details": "Worker attendance rows render Full, Half, and Absent controls as pill-shaped Pressables with explicit state colors #4F7A5A, #C58A2B, and #B84C3A."
+          },
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "823-828,857-863,892-897",
+            "details": "Each toggle now includes a 6x6 circular dot whose color tracks the corresponding attendance state."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "243-255",
+            "details": "Theme defines borderRadius.pill for the pill treatment used by the state controls."
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAL-ATTEND-003",
+      "title": "Mark All Present button",
+      "status": "pass",
+      "reason": "The bottom sticky CTA remains full width with primary background and white text, and it now uses borderRadius.sm, which resolves to the required 12px radius.",
+      "evidence": {
+        "noteFile": "/Users/ashishhuddar/.factory/missions/d1167030-fd5b-475b-aa51-e8e2e34457cd/evidence/data-screens/workers-attendance-rerun/workers-attendance-rerun-evidence.md",
+        "references": [
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "916-947",
+            "details": "The sticky bottom action renders the Mark All Present label in a full-width primary button with white text."
+          },
+          {
+            "file": "src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx",
+            "lines": "931-935",
+            "details": "CTA styling now uses borderRadius.sm instead of borderRadius.md."
+          },
+          {
+            "file": "src/styles/theme.ts",
+            "lines": "243-247",
+            "details": "Theme defines borderRadius.sm as 12, satisfying the contract requirement for the CTA corner radius."
+          }
+        ]
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Re-ran the three failed workers/attendance code-review assertions for the data-screens milestone. All three now pass: VAL-WORKERS-002, VAL-ATTEND-001, and VAL-ATTEND-003."
+}

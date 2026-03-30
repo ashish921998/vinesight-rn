@@ -1,0 +1,62 @@
+{
+  "milestone": "data-screens",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 20,
+    "passed": 14,
+    "failed": 6,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-ANALYTICS-001",
+    "VAL-ANALYTICS-003",
+    "VAL-ATTEND-002",
+    "VAL-LABTESTS-001",
+    "VAL-LABTESTS-002",
+    "VAL-LOGS-001",
+    "VAL-LOGS-002",
+    "VAL-LOGS-003",
+    "VAL-SOIL-001",
+    "VAL-SOIL-002",
+    "VAL-SPRAY-002",
+    "VAL-TASKS-001",
+    "VAL-TASKS-003",
+    "VAL-WORKERS-001"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-ANALYTICS-002",
+      "reason": "The horizontal summary stat cards have the required warm card styling and 22px/700 values, but they do not render the required per-card trend arrows; trend icons appear only later in the separate Performance Score section."
+    },
+    {
+      "id": "VAL-TASKS-002",
+      "reason": "The screen does not implement a pill-style Pending/Completed segmented toggle; instead it renders three pending sections plus a separate collapsible completed section."
+    },
+    {
+      "id": "VAL-WORKERS-002",
+      "reason": "The outer shell matches the mist-2 pill with 3px padding, but the active segment itself uses mist-1 (#F7F3ED) instead of white and Android selected labels stay at medium weight instead of 600."
+    },
+    {
+      "id": "VAL-ATTEND-001",
+      "reason": "The mark-attendance view now has per-worker pill toggles with the correct green/amber/red fills, but the controls do not include the matching dot indicators required by the contract."
+    },
+    {
+      "id": "VAL-ATTEND-003",
+      "reason": "The sticky primary CTA is present and full width, but it uses borderRadius.md (16px) instead of the required 12px radius."
+    },
+    {
+      "id": "VAL-SPRAY-001",
+      "reason": "Spray catalog cards have the required 3px green strip, PHI info, and border-only shell, but the screen never renders the required type badge or any amber warning banner path."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added Flow Validator Guidance: cli to document validation-only command boundaries and the known web:smoke react-native-maps exception for future runs.",
+      "source": "setup"
+    }
+  ],
+  "previousRound": null
+}
