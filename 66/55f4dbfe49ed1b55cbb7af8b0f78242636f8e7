@@ -1,0 +1,27 @@
+app/analytics.tsx
+  6c25718bea8913a1 238,274
+src/types/analytics.ts
+  6c25718bea8913a1 13
+src/services/analytics-service.ts
+  6c25718bea8913a1 54,89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "6655f4dbfe49ed1b55cbb7af8b0f78242636f8e7",
+  "prompts": {
+    "6c25718bea8913a1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "0095e4a5-7f33-47af-ba1f-c50b5c5a92b1",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 2,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
