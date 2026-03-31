@@ -50,7 +50,7 @@ export function TaskRow({
   const cleanDescription = stripTaskPlanFromDescription(task.description);
 
   const today = startOfDay(new Date());
-  const dueDate = task.due_date ? new Date(task.due_date) : null;
+  const dueDate = task.due_date ? startOfDay(new Date(task.due_date)) : null;
   const overdue = !task.completed && dueDate ? dueDate < today : false;
 
   const formatDueDate = () => {

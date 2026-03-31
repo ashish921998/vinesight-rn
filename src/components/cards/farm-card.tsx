@@ -316,7 +316,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.onSurface,
+                  color: colors.surface[900], // ink
                 }}
                 numberOfLines={1}
               >

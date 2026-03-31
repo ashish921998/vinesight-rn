@@ -167,7 +167,10 @@ export function WorkerCard({
       {/* Call button (36px, 12px radius, primary-tinted bg) */}
       {onCall ? (
         <Pressable
-          onPress={() => onCall(worker)}
+          onPress={(e) => {
+            e.stopPropagation();
+            onCall(worker);
+          }}
           style={({ pressed: callPressed }) => [
             callButtonStyle,
             callPressed ? { backgroundColor: colorWithOpacity(colors.primary[500], 0.24) } : null,
@@ -184,7 +187,10 @@ export function WorkerCard({
         <View style={actionsContainerStyle}>
           {onEdit && (
             <Pressable
-              onPress={onEdit}
+              onPress={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={t('workers.workerCard.editA11y', { name: worker.name })}
@@ -206,7 +212,10 @@ export function WorkerCard({
           )}
           {onDelete && (
             <Pressable
-              onPress={onDelete}
+              onPress={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={t('workers.workerCard.deleteA11y', { name: worker.name })}
