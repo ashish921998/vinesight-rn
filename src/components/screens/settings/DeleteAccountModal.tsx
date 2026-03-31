@@ -439,22 +439,9 @@ export function DeleteAccountModal({
     }
 
     setIsDeleting(true);
-
-    try {
-      await onDeleteAccount(deleteReason);
-      setIsDeleting(false);
-      handleClose();
-      Alert.alert(
-        t('settings.deleteAccountModal.submittedTitle'),
-        t('settings.deleteAccountModal.submittedBody'),
-      );
-    } catch (error) {
-      if (__DEV__) {
-        console.error('Delete account error:', error);
-      }
-      setIsDeleting(false);
-      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.submitFailed'));
-    }
+    await onDeleteAccount(deleteReason);
+    setIsDeleting(false);
+    handleClose();
   };
 
   return (

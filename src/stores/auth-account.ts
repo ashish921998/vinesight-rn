@@ -181,6 +181,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
       set({
         errorMessage: getAuthErrorMessage(error, 'Failed to update area unit', 'profile_update'),
       });
+      throw error;
     }
   },
 });
