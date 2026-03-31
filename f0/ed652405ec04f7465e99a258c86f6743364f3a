@@ -1,0 +1,25 @@
+src/components/screens/settings/DeleteAccountModal.tsx
+  9ea2169c026ee483 442-444
+src/stores/auth-account.ts
+  9ea2169c026ee483 184
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "f0ed652405ec04f7465e99a258c86f6743364f3a",
+  "prompts": {
+    "9ea2169c026ee483": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "8546d1f5-dab7-4355-86fc-2219593354be",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 16,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
