@@ -16,8 +16,7 @@ import { telemetry } from '@/services/telemetry';
 import { upsertGuidedTourServerState } from '@/features/guided-tour/service';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { GUIDED_TOUR_VERSION } from '@/features/guided-tour/constants';
-import { isValidE164PhoneNumber } from '@/utils/phone';
-import { sanitizePhoneDigits } from '@/utils/phone';
+import { isValidE164PhoneNumber, sanitizePhoneDigits } from '@/utils/phone';
 
 import {
   createStyles,
@@ -333,19 +332,8 @@ export default function SettingsScreen() {
   };
 
   const handleConfirmDeleteAccount = async (reason: string) => {
-    try {
-      await deleteAccount(reason);
-      setShowDeleteAccount(false);
-      Alert.alert(
-        t('settings.deleteAccountModal.submittedTitle'),
-        t('settings.deleteAccountModal.submittedBody'),
-      );
-    } catch (error) {
-      if (__DEV__) {
-        console.error('Delete account error:', error);
-      }
-      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.submitFailed'));
-    }
+    await deleteAccount(reason);
+    setShowDeleteAccount(false);
   };
 
   return (
