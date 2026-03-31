@@ -1264,26 +1264,28 @@ export default function LogsScreen() {
                                                 day: 'numeric',
                                               })}
                                             </Text>
-                                            <View
-                                              style={{
-                                                width: 3,
-                                                height: 3,
-                                                borderRadius: 1.5,
-                                                backgroundColor: colors.surface[400],
-                                              }}
-                                            />
                                             {log.daysAfterPruning != null && (
-                                              <Text
-                                                style={{
-                                                  fontSize: fontSize.xs,
-                                                  fontWeight: fontWeight.medium,
-                                                  color: colors.surface[500],
-                                                }}
-                                              >
-                                                {t('farmDetails.pruning.daysShort', {
-                                                  count: log.daysAfterPruning,
-                                                })}
-                                              </Text>
+                                              <>
+                                                <View
+                                                  style={{
+                                                    width: 3,
+                                                    height: 3,
+                                                    borderRadius: 1.5,
+                                                    backgroundColor: colors.surface[400],
+                                                  }}
+                                                />
+                                                <Text
+                                                  style={{
+                                                    fontSize: fontSize.xs,
+                                                    fontWeight: fontWeight.medium,
+                                                    color: colors.surface[500],
+                                                  }}
+                                                >
+                                                  {t('farmDetails.pruning.daysShort', {
+                                                    count: log.daysAfterPruning,
+                                                  })}
+                                                </Text>
+                                              </>
                                             )}
                                           </View>
                                         </View>
