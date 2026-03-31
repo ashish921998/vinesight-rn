@@ -642,6 +642,26 @@ export default function WarehouseScreen() {
                     }}
                   >
                     <Pressable
+                      onPress={() => handleAddStock(item)}
+                      accessible
+                      accessibilityRole="button"
+                      accessibilityLabel={t('warehouse.a11y.addStockWithName', {
+                        name: itemAccessibilityName,
+                        defaultValue: `Add stock for ${itemAccessibilityName}`,
+                      })}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.1),
+                      }}
+                    >
+                      <Icon name="plus.circle.fill" size={17} color={m3.colorScheme.tertiary} />
+                    </Pressable>
+                    <Pressable
                       onPress={() => handleEditItem(item)}
                       accessible
                       accessibilityRole="button"
