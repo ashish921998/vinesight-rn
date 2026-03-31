@@ -60,7 +60,7 @@ export function ReportExportActions({
           marginBottom: spacing[1],
         }}
       >
-        {t('reports.exportAs', 'Export Report')}
+        {t('reports.exportSection', 'Export Report')}
       </Text>
 
       {/* Button row */}
@@ -92,7 +92,7 @@ export function ReportExportActions({
           ) : (
             <>
               <Icon
-                name="doc.fill"
+                name={exportFormat === 'csv' ? 'tablecells.fill' : 'doc.fill'}
                 size={18}
                 color={disabled ? colorWithOpacity(onPrimary, 0.6) : onPrimary}
               />

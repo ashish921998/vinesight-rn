@@ -2425,7 +2425,7 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
   profileInitial: {
     fontSize: 20,
     fontWeight: fontWeight.bold,
-    color: '#FFFFFF',
+    color: m3.colorScheme.onPrimary,
   } as TextStyle,
   profileInfo: { flex: 1, marginLeft: spacing[4] } as ViewStyle,
   profileName: {
