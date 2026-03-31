@@ -51,6 +51,7 @@ export class AnalyticsService {
       (sum, r) => sum + (r.quantity || 0) * (r.price || 0),
       0,
     );
+    const totalHarvestCount = filteredHarvests.length;
     const totalExpenseRecords = filteredExpenses.reduce((sum, r) => sum + (r.cost || 0), 0);
     const totalTempWorkerExpenses = filteredTempWorkers.reduce(
       (sum, r) => sum + (r.amount_paid || 0),
@@ -85,6 +86,7 @@ export class AnalyticsService {
       totalSprayCount: filteredSprays.length,
       totalHarvestQuantity,
       totalHarvestValue,
+      totalHarvestCount,
       totalExpenses,
       irrigationsByMonth,
       spraysByType,

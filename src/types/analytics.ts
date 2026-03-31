@@ -10,6 +10,7 @@ export interface AnalyticsData {
   totalSprayCount: number;
   totalHarvestQuantity: number;
   totalHarvestValue: number;
+  totalHarvestCount: number;
   totalExpenses: number;
   irrigationsByMonth: MonthlyData[];
   spraysByType: { type: string; count: number }[];
