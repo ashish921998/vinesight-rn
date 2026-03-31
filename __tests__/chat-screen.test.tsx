@@ -154,6 +154,24 @@ jest.mock('react-i18next', () => ({
         'assistant.attachments.attachFileA11y': 'Attach file',
         'assistant.placeholder': 'Ask about farming…',
         'assistant.chat.thinking': 'Thinking...',
+        'assistant.jobs.title': 'Top jobs',
+        'assistant.jobs.subtitle': 'Start with one operational task.',
+        'assistant.jobs.subtitleWithFarm': `Start with one operational task for ${params?.name ?? ''}.`,
+        'assistant.jobs.cards.logActivity.title': 'Log an activity',
+        'assistant.jobs.cards.logActivity.description':
+          'Capture irrigation, spray, harvest, or expense quickly.',
+        'assistant.jobs.prompts.logActivity': 'Help me log a farm activity.',
+        'assistant.jobs.cards.todayPlan.title': 'Plan today’s work',
+        'assistant.jobs.cards.todayPlan.description':
+          'Get a short task list based on current farm context.',
+        'assistant.jobs.prompts.todayPlan': 'What should I do today on this farm?',
+        'assistant.jobs.cards.spraySafety.title': 'Check spray safety',
+        'assistant.jobs.cards.spraySafety.description': 'Validate risk before applying a spray.',
+        'assistant.jobs.prompts.spraySafety': 'Check spray safety against recent farm history.',
+        'assistant.jobs.cards.recentSummary.title': 'Summarize last week',
+        'assistant.jobs.cards.recentSummary.description':
+          'Review what happened and what to do next.',
+        'assistant.jobs.prompts.recentSummary': 'Summarize this farm for the last 7 days.',
         'ai.defaultSuggestions.waterNeed': 'How much water do I need?',
         'ai.defaultSuggestions.diseases': 'Check for common diseases',
         'assistant.chat.suggestionChipA11y': params?.text ? `Send suggestion: ${params.text}` : key,
@@ -273,19 +291,21 @@ describe('ChatScreen', () => {
     expect(getByText('Ask about your crops, irrigation, diseases, and more.')).toBeTruthy();
   });
 
-  it('shows suggestion chips in welcome state', () => {
+  it('shows operational jobs in welcome state', () => {
     const { getByText } = render(<ChatScreen />);
-    expect(getByText('How much water do I need?')).toBeTruthy();
+    expect(getByText('Top jobs')).toBeTruthy();
+    expect(getByText('Start with one operational task.')).toBeTruthy();
+    expect(getByText('Log an activity')).toBeTruthy();
   });
 
-  it('tapping a suggestion chip calls sendMessage', async () => {
+  it('tapping an operational job calls sendMessage', async () => {
     mockSendMessage.mockResolvedValue(undefined);
     const { getByText } = render(<ChatScreen />);
-    const chip = getByText('How much water do I need?');
+    const chip = getByText('Log an activity');
     await act(async () => {
       fireEvent.press(chip);
     });
-    expect(mockSendMessage).toHaveBeenCalledWith('How much water do I need?');
+    expect(mockSendMessage).toHaveBeenCalledWith('Help me log a farm activity.');
   });
 
   it('shows input bar', () => {

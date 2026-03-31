@@ -50,9 +50,16 @@ export type FarmInsert = Omit<Farm, 'id' | 'created_at' | 'updated_at'>;
 export type FarmUpdate = Partial<Omit<Farm, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
 
 /** Check if water is critically low (below 30%) */
-export function isLowWater(farm: Farm): boolean {
-  if (!farm.total_tank_capacity || !farm.remaining_water) return false;
-  if (farm.total_tank_capacity <= 0) return false;
+export function isLowWater(farm: Pick<Farm, 'remaining_water' | 'total_tank_capacity'>): boolean {
+  if (
+    typeof farm.remaining_water !== 'number' ||
+    !Number.isFinite(farm.remaining_water) ||
+    typeof farm.total_tank_capacity !== 'number' ||
+    !Number.isFinite(farm.total_tank_capacity) ||
+    farm.total_tank_capacity <= 0
+  ) {
+    return false;
+  }
   const percentage = (farm.remaining_water / farm.total_tank_capacity) * 100;
   return percentage < 30;
 }

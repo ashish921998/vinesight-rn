@@ -40,10 +40,12 @@ import { useLanguageStore } from '@/stores/language-store';
 import { useModalStore } from '@/stores/modal-store';
 import { useFarms } from '@/hooks/use-farms';
 import { spacing, borderRadius } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useAssistant } from '@/hooks/use-assistant';
 import type { AssistantFarmContext } from '@/hooks/use-assistant';
 import type { AIMessageAttachmentInput } from '@/types/ai';
+import { AssistantGatewayError, AssistantGatewayErrorCode } from '@/services/assistant-gateway';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
 import { SuggestionChips } from './SuggestionChips';
@@ -60,11 +62,41 @@ interface ChatScreenProps {
   initialFarmId?: string;
 }
 
-const DEFAULT_SUGGESTIONS: readonly string[] = [
-  'ai.defaultSuggestions.waterNeed',
-  'ai.defaultSuggestions.diseases',
-  'ai.defaultSuggestions.fertilizer',
-  'ai.defaultSuggestions.pruning',
+const OPERATIONAL_JOB_CARDS: ReadonlyArray<{
+  id: 'logActivity' | 'todayPlan' | 'spraySafety' | 'recentSummary';
+  icon: string;
+  titleKey: string;
+  descriptionKey: string;
+  promptKey: string;
+}> = [
+  {
+    id: 'logActivity',
+    icon: 'square.and.pencil',
+    titleKey: 'assistant.jobs.cards.logActivity.title',
+    descriptionKey: 'assistant.jobs.cards.logActivity.description',
+    promptKey: 'assistant.jobs.prompts.logActivity',
+  },
+  {
+    id: 'todayPlan',
+    icon: 'checklist',
+    titleKey: 'assistant.jobs.cards.todayPlan.title',
+    descriptionKey: 'assistant.jobs.cards.todayPlan.description',
+    promptKey: 'assistant.jobs.prompts.todayPlan',
+  },
+  {
+    id: 'spraySafety',
+    icon: 'checkmark.shield.fill',
+    titleKey: 'assistant.jobs.cards.spraySafety.title',
+    descriptionKey: 'assistant.jobs.cards.spraySafety.description',
+    promptKey: 'assistant.jobs.prompts.spraySafety',
+  },
+  {
+    id: 'recentSummary',
+    icon: 'chart.line.uptrend.xyaxis',
+    titleKey: 'assistant.jobs.cards.recentSummary.title',
+    descriptionKey: 'assistant.jobs.cards.recentSummary.description',
+    promptKey: 'assistant.jobs.prompts.recentSummary',
+  },
 ];
 
 function getSafeErrorMessage(error: unknown): string {
@@ -426,14 +458,53 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   // No-farm detection — distinguish between no farms existing vs no farm selected
   const hasNoFarms = farms !== undefined && farms.length === 0;
   const hasNoFarmSelected = farms !== undefined && farms.length > 0 && activeFarm === null;
-
-  // Use suggestions from last response, or default suggestions for welcome state
   const hasMessages = messages.length > 0;
-  const activeSuggestions = useMemo(() => {
-    if (hasMessages && suggestions.length > 0) return suggestions;
-    if (!hasMessages) return DEFAULT_SUGGESTIONS;
-    return [];
-  }, [hasMessages, suggestions]);
+
+  const operationalJobs = useMemo(
+    () =>
+      OPERATIONAL_JOB_CARDS.map((job) => ({
+        ...job,
+        title: t(job.titleKey),
+        description: t(job.descriptionKey),
+        prompt: t(job.promptKey),
+      })),
+    [t],
+  );
+
+  const errorGuidance = useMemo(() => {
+    if (error == null) return null;
+    if (hasNoFarms) return t('assistant.error.guidance.addFarm');
+    if (hasNoFarmSelected) return t('assistant.error.guidance.selectFarm');
+
+    if (error instanceof AssistantGatewayError) {
+      if (
+        error.code === AssistantGatewayErrorCode.INVALID_RESPONSE ||
+        error.code === AssistantGatewayErrorCode.SERVER_ERROR ||
+        error.code === AssistantGatewayErrorCode.TIMEOUT ||
+        error.code === AssistantGatewayErrorCode.NETWORK_ERROR
+      ) {
+        return t('assistant.error.guidance.retryWithDetails');
+      }
+      if (
+        error.code === AssistantGatewayErrorCode.INVALID_REQUEST ||
+        error.code === AssistantGatewayErrorCode.AUDIO_VALIDATION_FAILED ||
+        error.code === AssistantGatewayErrorCode.EMPTY_TRANSCRIPT
+      ) {
+        return t('assistant.error.guidance.provideContext');
+      }
+    }
+
+    const normalizedErrorMessage = getSafeErrorMessage(error).toLowerCase();
+    if (
+      normalizedErrorMessage.includes('missing') ||
+      normalizedErrorMessage.includes('required') ||
+      normalizedErrorMessage.includes('farm')
+    ) {
+      return t('assistant.error.guidance.provideContext');
+    }
+
+    return t('assistant.error.guidance.retryWithDetails');
+  }, [error, hasNoFarmSelected, hasNoFarms, t]);
 
   const showSuggestionsBelow = hasMessages && suggestions.length > 0;
 
@@ -545,6 +616,94 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
             >
               {t('assistant.noFarm.noFarmSelected')}
             </Text>
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/explore')}
+              style={[
+                styles.noFarmBannerAction,
+                { backgroundColor: colorWithOpacity(m3.colorScheme.onSecondaryContainer, 0.16) },
+              ]}
+              accessibilityLabel={t('assistant.noFarm.selectFarmButton')}
+              accessibilityRole="button"
+            >
+              <Text
+                style={[
+                  styles.noFarmBannerActionText,
+                  { color: m3.colorScheme.onSecondaryContainer },
+                ]}
+              >
+                {t('assistant.noFarm.selectFarmButton')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {activeFarm && (
+          <View
+            style={[
+              styles.farmContextBanner,
+              {
+                backgroundColor: m3.surface.surfaceContainerLow,
+                borderBottomColor: m3.colorScheme.outlineVariant,
+              },
+            ]}
+            testID="assistant-farm-context-banner"
+          >
+            <View
+              style={[
+                styles.farmContextIconWrap,
+                { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14) },
+              ]}
+            >
+              <SymbolIcon name="leaf.fill" size={16} color={m3.colorScheme.primary} />
+            </View>
+            <View style={styles.farmContextBody}>
+              <Text
+                style={[
+                  styles.farmContextLabel,
+                  { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall },
+                ]}
+              >
+                {t('assistant.context.activeFarmLabel')}
+              </Text>
+              <Text
+                style={[
+                  styles.farmContextTitle,
+                  { color: m3.colorScheme.onSurface, ...m3.typography.labelLarge },
+                ]}
+              >
+                {activeFarm.name}
+              </Text>
+              <Text
+                style={[
+                  styles.farmContextMeta,
+                  { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall },
+                ]}
+                numberOfLines={1}
+              >
+                {[activeFarm.crop_variety, activeFarm.region].filter(Boolean).join(' • ') ||
+                  t('assistant.context.fallbackMeta')}
+              </Text>
+            </View>
+            {activeFarm.id != null && (
+              <TouchableOpacity
+                onPress={() => router.push(`/farm/${activeFarm.id}`)}
+                style={[
+                  styles.farmContextAction,
+                  { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14) },
+                ]}
+                accessibilityLabel={t('assistant.context.openFarm')}
+                accessibilityRole="button"
+              >
+                <Text
+                  style={[
+                    styles.farmContextActionText,
+                    { color: m3.colorScheme.primary, ...m3.typography.labelSmall },
+                  ]}
+                >
+                  {t('assistant.context.openFarm')}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -571,6 +730,19 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
             >
               {t('assistant.error.failedRequest')}
             </Text>
+            {errorGuidance ? (
+              <Text
+                style={[
+                  styles.errorGuidanceText,
+                  {
+                    color: m3.colorScheme.onErrorContainer,
+                    ...m3.typography.labelSmall,
+                  },
+                ]}
+              >
+                {errorGuidance}
+              </Text>
+            ) : null}
             <View style={styles.errorBannerActions}>
               <TouchableOpacity
                 onPress={handleRetry}
@@ -614,17 +786,96 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
           />
         )}
 
-        {/* Suggestion chips — shown after assistant responds OR as welcome defaults */}
+        {/* Operational jobs panel shown before conversation starts */}
         {!hasMessages && (
-          <SuggestionChips
-            suggestions={activeSuggestions}
-            onSendSuggestion={handleSendSuggestion}
-            disabled={isLoading}
-          />
+          <View
+            style={[
+              styles.jobsPanel,
+              {
+                backgroundColor: m3.surface.surfaceContainerLow,
+                borderTopColor: m3.colorScheme.outlineVariant,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.jobsPanelTitle,
+                { color: m3.colorScheme.onSurface, ...m3.typography.titleMedium },
+              ]}
+            >
+              {t('assistant.jobs.title')}
+            </Text>
+            <Text
+              style={[
+                styles.jobsPanelSubtitle,
+                { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium },
+              ]}
+            >
+              {activeFarm
+                ? t('assistant.jobs.subtitleWithFarm', { name: activeFarm.name })
+                : t('assistant.jobs.subtitle')}
+            </Text>
+
+            <View style={styles.jobCardsWrap}>
+              {operationalJobs.map((job) => (
+                <TouchableOpacity
+                  key={job.id}
+                  style={[
+                    styles.jobCard,
+                    {
+                      backgroundColor: m3.colorScheme.surface,
+                      borderColor: m3.colorScheme.outlineVariant,
+                    },
+                    isLoading && styles.jobCardDisabled,
+                  ]}
+                  onPress={() => {
+                    if (!isLoading) {
+                      handleSendSuggestion(job.prompt);
+                    }
+                  }}
+                  disabled={isLoading}
+                  accessibilityLabel={job.title}
+                  accessibilityRole="button"
+                >
+                  <View
+                    style={[
+                      styles.jobCardIconWrap,
+                      { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14) },
+                    ]}
+                  >
+                    <SymbolIcon name={job.icon} size={16} color={m3.colorScheme.primary} />
+                  </View>
+                  <View style={styles.jobCardBody}>
+                    <Text
+                      style={[
+                        styles.jobCardTitle,
+                        { color: m3.colorScheme.onSurface, ...m3.typography.labelLarge },
+                      ]}
+                    >
+                      {job.title}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.jobCardDescription,
+                        { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium },
+                      ]}
+                    >
+                      {job.description}
+                    </Text>
+                  </View>
+                  <SymbolIcon
+                    name="chevron.right"
+                    size={15}
+                    color={m3.colorScheme.onSurfaceVariant}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
         )}
         {showSuggestionsBelow && (
           <SuggestionChips
-            suggestions={activeSuggestions}
+            suggestions={suggestions}
             onSendSuggestion={handleSendSuggestion}
             disabled={isLoading}
           />
@@ -802,6 +1053,52 @@ const styles = StyleSheet.create({
   noFarmBannerText: {
     flex: 1,
   },
+  noFarmBannerAction: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.full,
+  },
+  noFarmBannerActionText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+  },
+  farmContextBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: spacing[2],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+  },
+  farmContextIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  farmContextBody: {
+    flex: 1,
+  },
+  farmContextLabel: {
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  farmContextTitle: {
+    marginBottom: 1,
+  },
+  farmContextMeta: {
+    fontSize: 11,
+  },
+  farmContextAction: {
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.full,
+  },
+  farmContextActionText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+  },
   errorBanner: {
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
@@ -810,6 +1107,9 @@ const styles = StyleSheet.create({
   },
   errorBannerText: {
     flex: 1,
+  },
+  errorGuidanceText: {
+    lineHeight: 18,
   },
   errorBannerActions: {
     flexDirection: 'row',
@@ -824,6 +1124,49 @@ const styles = StyleSheet.create({
   errorBannerButtonText: {
     fontSize: 13,
     fontWeight: '600' as const,
+  },
+  jobsPanel: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[2],
+  },
+  jobsPanelTitle: {
+    marginBottom: spacing[1],
+  },
+  jobsPanelSubtitle: {
+    marginBottom: spacing[3],
+  },
+  jobCardsWrap: {
+    gap: spacing[2],
+  },
+  jobCard: {
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  jobCardDisabled: {
+    opacity: 0.55,
+  },
+  jobCardIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  jobCardBody: {
+    flex: 1,
+  },
+  jobCardTitle: {
+    marginBottom: 1,
+  },
+  jobCardDescription: {
+    lineHeight: 17,
   },
   attachModalOverlay: {
     flex: 1,
