@@ -1,0 +1,31 @@
+app/(tabs)/settings.tsx
+  6c25718bea8913a1 2428
+src/components/screens/reports/report-export-actions.tsx
+  6c25718bea8913a1 63,95
+src/i18n/locales/hi.ts
+  6c25718bea8913a1 2300,2720
+src/i18n/locales/mr.ts
+  6c25718bea8913a1 2308,2730
+src/i18n/locales/en.ts
+  6c25718bea8913a1 2292,2712
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "801386d460359fc37602dcd67e941250089e5749",
+  "prompts": {
+    "6c25718bea8913a1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "0095e4a5-7f33-47af-ba1f-c50b5c5a92b1",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 7,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
