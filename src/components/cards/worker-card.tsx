@@ -41,14 +41,15 @@ export function WorkerCard({
   // Inactive workers use stone-5 for avatar
   const inactiveAvatarColor = isDark ? '#7A756D' : '#A89E92';
 
-  const initials = worker.name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials =
+    worker.name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || '?';
 
   // Cellar Ledger: Card mist-1 bg, stone-3 border, 16px radius
   const containerStyle: ViewStyle = {
@@ -256,7 +257,6 @@ export function WorkerCard({
     return (
       <Pressable
         onPress={onPress}
-        disabled={!onPress}
         accessibilityRole="button"
         accessibilityLabel={worker.name}
         style={!isActive ? { opacity: 0.55 } : undefined}
