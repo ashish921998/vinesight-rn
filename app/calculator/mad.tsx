@@ -343,12 +343,12 @@ export default function MADCalculatorScreen() {
                       marginBottom: spacing[2],
                       backgroundColor:
                         selectedRefillSpan === span.id
-                          ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                          ? colorWithOpacity(colors.irrigation[500], 0.08)
                           : colors.surface[50],
                       borderWidth: 1,
                       borderColor:
                         selectedRefillSpan === span.id
-                          ? m3.colorScheme.primary
+                          ? colors.irrigation[500]
                           : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                     }}
                   >
@@ -361,7 +361,7 @@ export default function MADCalculatorScreen() {
                       <IconSymbol
                         name="checkmark.circle.fill"
                         size={20}
-                        color={m3.colorScheme.primary}
+                        color={colors.irrigation[500]}
                       />
                     )}
                   </Pressable>
@@ -433,14 +433,14 @@ export default function MADCalculatorScreen() {
                         borderRadius: borderRadius.xl,
                         padding: spacing[4],
                         alignItems: 'center',
-                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
+                        backgroundColor: colorWithOpacity(colors.irrigation[500], 0.1),
                       }}
                     >
                       <Text
                         style={{
                           fontSize: fontSize['3xl'],
                           fontWeight: fontWeight.bold,
-                          color: m3.colorScheme.primary,
+                          color: colors.irrigation[500],
                         }}
                       >
                         {refillTankResult.toFixed(4)}

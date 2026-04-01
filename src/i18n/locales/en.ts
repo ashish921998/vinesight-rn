@@ -2295,7 +2295,7 @@ export const en = {
       lowStockCount_other: '{{count}} low stock',
       quantity: 'Quantity',
       unitPrice: 'Unit Price',
-      totalValue: 'Total Value',
+      totalValue: 'Value: {{value}}',
       updatedDate: 'Updated {{date}}',
     },
     reorderAt: 'Reorder at: {{quantity}} {{unit}}',
@@ -2723,6 +2723,7 @@ export const en = {
       stockCoverage: 'Estimated Coverage',
     },
     exportAs: 'Export as',
+    exportSection: 'Export Report',
     downloadReport: 'Download Report',
     errors: {
       unableToExport: 'Unable to export report. Please try again.',

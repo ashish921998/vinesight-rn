@@ -129,8 +129,9 @@ export function FormModal({
   const saveButtonStyle: ViewStyle = {
     paddingHorizontal: spacing[8],
     paddingVertical: spacing[3],
-    borderRadius: borderRadius.xl,
-    backgroundColor: isSaveDisabled || isLoading ? colors.surface[200] : colors.primary[600],
+    borderRadius: borderRadius.sm, // 12px radius per Cellar Ledger spec
+    backgroundColor: isSaveDisabled || isLoading ? colors.surface[200] : colors.primary[500],
+    minHeight: 48,
   };
 
   const saveTextStyle: TextStyle = {
@@ -348,8 +349,9 @@ export function FullScreenForm({
   const saveButtonStyle: ViewStyle = {
     paddingHorizontal: spacing[8],
     paddingVertical: spacing[3],
-    borderRadius: borderRadius.xl,
-    backgroundColor: isSaveDisabled || isLoading ? colors.surface[200] : colors.primary[600],
+    borderRadius: borderRadius.sm, // 12px radius per Cellar Ledger spec
+    backgroundColor: isSaveDisabled || isLoading ? colors.surface[200] : colors.primary[500],
+    minHeight: 48,
   };
 
   const saveTextStyle: TextStyle = {
@@ -471,14 +473,16 @@ interface SectionHeaderProps {
 export function SectionHeader({ title, subtitle, style }: SectionHeaderProps) {
   const colors = useThemeColors();
   const containerStyle: ViewStyle = {
-    marginBottom: spacing[6],
+    marginBottom: spacing[4],
   };
 
+  // Cellar Ledger spec: 11px/600/uppercase/stone-5
   const titleTextStyle: TextStyle = {
-    fontSize: fontSize['3xl'],
-    fontWeight: fontWeight.bold,
-    color: colors.surface[900],
-    marginBottom: spacing[1],
+    fontSize: 11,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[400], // stone-5
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   };
 
   const subtitleTextStyle: TextStyle = {
@@ -609,7 +613,7 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
     borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: selected ? colors.surface[100] : pressed ? colors.surface[300] : 'transparent',
+    backgroundColor: selected ? '#FFFFFF' : pressed ? colors.surface[300] : 'transparent',
     borderWidth: 0,
     borderCurve: 'continuous',
   });
@@ -619,7 +623,9 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
     lineHeight: Platform.OS === 'android' ? 16 : fontSize.sm + 6,
     fontWeight:
       Platform.OS === 'android'
-        ? fontWeight.medium
+        ? selected
+          ? fontWeight.semibold
+          : fontWeight.medium
         : selected
           ? fontWeight.semibold
           : fontWeight.medium,
@@ -806,24 +812,27 @@ export function FormInput({
     marginBottom: spacing[6],
   };
 
+  // Cellar Ledger spec: label 12px/500/#5C584F
   const labelStyle: TextStyle = {
-    fontSize: fontSize.sm,
+    fontSize: 12,
     fontWeight: fontWeight.medium,
-    color: colors.surface[700],
+    color: colors.surface[500], // #5C584F
     marginBottom: spacing[2],
   };
 
   const requiredStyle: TextStyle = {
-    color: colors.error,
+    color: colors.error, // red asterisk for required fields
   };
 
+  // Cellar Ledger spec: card bg (#F7F3ED), 1px border (#D9D0C4), 12px radius, 48px height
   const inputContainerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: multiline ? 'flex-start' : 'center',
     backgroundColor: colors.surface[100],
-    borderWidth: 2,
-    borderColor: colors.surface[200],
-    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.surface[300],
+    borderRadius: borderRadius.sm,
+    minHeight: 48,
     overflow: 'hidden',
   };
 

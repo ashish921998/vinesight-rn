@@ -12,11 +12,11 @@ import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
 import * as Haptics from 'expo-haptics';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { borderRadius, fontSize, fontWeight, spacing, shadows } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { convertAreaFromAcres } from '@/utils/preferences';
-import type { ReportType } from '@/types/report';
+import type { ReportFormat, ReportType } from '@/types/report';
 import type { Farm } from '@/types';
 
 interface ReportTypeOption {
@@ -66,6 +66,8 @@ interface ReportFiltersPanelProps {
   reportType: ReportType;
   reportTypes: ReportTypeOption[];
   onSelectReportType: (reportType: ReportType) => void;
+  selectedExportFormat?: ReportFormat;
+  onSelectExportFormat?: (format: ReportFormat) => void;
   panelStyle: object;
 }
 
@@ -137,7 +139,8 @@ function SegmentedControl({
               backgroundColor: colors.surface[100],
               borderRadius: borderRadius.lg - SEGMENT_INSET,
               borderCurve: 'continuous',
-              ...shadows.sm,
+              borderWidth: 1,
+              borderColor: colors.surface[300],
             },
             pillStyle,
           ]}
@@ -253,6 +256,8 @@ export function ReportFiltersPanel({
   reportType,
   reportTypes,
   onSelectReportType,
+  selectedExportFormat,
+  onSelectExportFormat,
   panelStyle,
 }: ReportFiltersPanelProps) {
   const colors = useThemeColors();
@@ -260,6 +265,21 @@ export function ReportFiltersPanel({
   const { t } = useTranslation();
 
   const [expanded, setExpanded] = React.useState(true);
+
+  // Local state for export format selection (falls back to prop if provided)
+  const [localExportFormat, setLocalExportFormat] = React.useState<ReportFormat>(
+    selectedExportFormat ?? 'pdf',
+  );
+
+  const activeExportFormat = selectedExportFormat ?? localExportFormat;
+
+  const handleSelectExportFormat = useCallback(
+    (format: ReportFormat) => {
+      setLocalExportFormat(format);
+      onSelectExportFormat?.(format);
+    },
+    [onSelectExportFormat],
+  );
 
   const toggleExpand = useCallback(async () => {
     if (Platform.OS === 'ios') {
@@ -553,7 +573,7 @@ export function ReportFiltersPanel({
               ) : null}
             </View>
 
-            {/* Date range */}
+            {/* Date range - Cellar Ledger design: mist-1 bg, 1px border, 10px radius */}
             <View style={{ gap: spacing[1] }}>
               <Text
                 style={{
@@ -578,10 +598,10 @@ export function ReportFiltersPanel({
                   onPress={onOpenFromDate}
                   style={{
                     flex: 1,
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: colors.surface[100], // mist-1 bg
                     borderWidth: 1,
-                    borderColor: colors.surface[200],
-                    borderRadius: borderRadius.lg,
+                    borderColor: colors.surface[300], // 1px border
+                    borderRadius: borderRadius.sm, // 10px radius
                     borderCurve: 'continuous',
                     minHeight: 44,
                     paddingHorizontal: spacing[3],
@@ -590,11 +610,21 @@ export function ReportFiltersPanel({
                     gap: spacing[2],
                   }}
                 >
-                  <Icon name="calendar" size={14} color={m3.colorScheme.onSurfaceVariant} />
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: m3.colorScheme.onSurfaceVariant,
+                      fontWeight: fontWeight.medium,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {t('reports.dateRange.from', 'From')}
+                  </Text>
                   <Text
                     style={{
                       color: m3.colorScheme.onSurface,
-                      fontWeight: fontWeight.semibold,
+                      fontWeight: fontWeight.medium,
                       fontSize: fontSize.sm,
                       fontVariant: ['tabular-nums'],
                     }}
@@ -603,20 +633,24 @@ export function ReportFiltersPanel({
                   </Text>
                 </Pressable>
 
-                <Icon
-                  name="arrow.right"
-                  size={14}
-                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
-                />
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    color: m3.colorScheme.onSurfaceVariant,
+                    fontWeight: fontWeight.medium,
+                  }}
+                >
+                  {t('reports.dateRange.to', 'to')}
+                </Text>
 
                 <Pressable
                   onPress={onOpenToDate}
                   style={{
                     flex: 1,
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: colors.surface[100], // mist-1 bg
                     borderWidth: 1,
-                    borderColor: colors.surface[200],
-                    borderRadius: borderRadius.lg,
+                    borderColor: colors.surface[300], // 1px border
+                    borderRadius: borderRadius.sm, // 10px radius
                     borderCurve: 'continuous',
                     minHeight: 44,
                     paddingHorizontal: spacing[3],
@@ -625,16 +659,93 @@ export function ReportFiltersPanel({
                     gap: spacing[2],
                   }}
                 >
-                  <Icon name="calendar" size={14} color={m3.colorScheme.onSurfaceVariant} />
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: m3.colorScheme.onSurfaceVariant,
+                      fontWeight: fontWeight.medium,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {t('reports.dateRange.toLabel', 'To')}
+                  </Text>
                   <Text
                     style={{
                       color: m3.colorScheme.onSurface,
-                      fontWeight: fontWeight.semibold,
+                      fontWeight: fontWeight.medium,
                       fontSize: fontSize.sm,
                       fontVariant: ['tabular-nums'],
                     }}
                   >
                     {dateTo}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Export chips - PDF/CSV with active state */}
+            <View style={{ gap: spacing[1] }}>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  color: m3.colorScheme.onSurfaceVariant,
+                  fontWeight: fontWeight.medium,
+                }}
+              >
+                {t('reports.exportAs', 'Export as')}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                <Pressable
+                  onPress={() => handleSelectExportFormat('pdf')}
+                  style={{
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[1] + 2,
+                    borderRadius: borderRadius.pill,
+                    borderWidth: 1,
+                    borderColor:
+                      activeExportFormat === 'pdf' ? m3.colorScheme.primary : colors.surface[300],
+                    backgroundColor:
+                      activeExportFormat === 'pdf' ? m3.colorScheme.primary : colors.surface[100],
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color:
+                        activeExportFormat === 'pdf'
+                          ? m3.colorScheme.onPrimary
+                          : m3.colorScheme.onSurfaceVariant,
+                    }}
+                  >
+                    PDF
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => handleSelectExportFormat('csv')}
+                  style={{
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[1] + 2,
+                    borderRadius: borderRadius.pill,
+                    borderWidth: 1,
+                    borderColor:
+                      activeExportFormat === 'csv' ? m3.colorScheme.primary : colors.surface[300],
+                    backgroundColor:
+                      activeExportFormat === 'csv' ? m3.colorScheme.primary : colors.surface[100],
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color:
+                        activeExportFormat === 'csv'
+                          ? m3.colorScheme.onPrimary
+                          : m3.colorScheme.onSurfaceVariant,
+                    }}
+                  >
+                    CSV
                   </Text>
                 </Pressable>
               </View>

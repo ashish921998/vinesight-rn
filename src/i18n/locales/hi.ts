@@ -2303,7 +2303,7 @@ export const hi = {
       lowStockCount_other: '{{count}} कम स्टॉक',
       quantity: 'मात्रा',
       unitPrice: 'इकाई मूल्य',
-      totalValue: 'कुल मूल्य',
+      totalValue: 'मूल्य: {{value}}',
       updatedDate: 'अपडेट {{date}}',
     },
     reorderAt: 'पुनः ऑर्डर करें: {{quantity}} {{unit}}',
@@ -2731,6 +2731,7 @@ export const hi = {
       stockCoverage: 'अनुमानित कवरेज',
     },
     exportAs: 'के रूप में निर्यात करें',
+    exportSection: 'रिपोर्ट निर्यात करें',
     downloadReport: 'रिपोर्ट डाउनलोड करें',
     errors: {
       unableToExport: 'रिपोर्ट निर्यात करने में असमर्थ। कृपया पुनः प्रयास करें।',
