@@ -115,34 +115,11 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
 
       if (error) throw error;
 
-      if (data.user) {
-        setSentryUser(data.user);
-        telemetry.identify(data.user.id, {
-          email_domain: getEmailDomain(data.user.email),
-        });
-        if (__DEV__) {
-          console.log('[auth] verifyPhoneOTP - User metadata:', {
-            user_id: data.user.id,
-            metadata_present: Boolean(data.user.user_metadata),
-            has_full_name: Boolean(data.user.user_metadata?.full_name),
-            has_name_parts: Boolean(
-              data.user.user_metadata?.first_name && data.user.user_metadata?.last_name,
-            ),
-            was_authenticated: wasAuthenticated,
-          });
-        }
-      }
-      telemetry.capture('auth_phone_otp_verify_succeeded');
-
       const isSignup = pendingPhoneMode === 'signup';
       const needsProfileCompletion = !hasCompletedProfileName(data.user);
 
+      // Set auth state FIRST before any side-effects that could throw
       if (isSignup && data.user) {
-        await upsertProfileNameFromAuthUserBestEffort(data.user, pendingSignupName || undefined);
-        telemetry.capture('user_signed_up', {
-          method: 'phone',
-          has_signup_name: Boolean(pendingSignupName),
-        });
         set({
           user: data.user,
           session: data.session,
@@ -155,10 +132,6 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
           isLoading: false,
         });
       } else {
-        if (data.user) {
-          await upsertProfileNameFromAuthUserBestEffort(data.user);
-          telemetry.capture('user_logged_in', { method: 'phone' });
-        }
         set({
           user: data.user,
           session: data.session,
@@ -170,6 +143,43 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
           needsProfileCompletion,
           isLoading: false,
         });
+      }
+
+      // Run side-effects in isolated try/catch so failures don't rollback auth state
+      try {
+        if (data.user) {
+          setSentryUser(data.user);
+          telemetry.identify(data.user.id, {
+            email_domain: getEmailDomain(data.user.email),
+          });
+          if (__DEV__) {
+            console.log('[auth] verifyPhoneOTP - User metadata:', {
+              user_id: data.user.id,
+              metadata_present: Boolean(data.user.user_metadata),
+              has_full_name: Boolean(data.user.user_metadata?.full_name),
+              has_name_parts: Boolean(
+                data.user.user_metadata?.first_name && data.user.user_metadata?.last_name,
+              ),
+              was_authenticated: wasAuthenticated,
+            });
+          }
+        }
+        telemetry.capture('auth_phone_otp_verify_succeeded');
+
+        if (isSignup && data.user) {
+          await upsertProfileNameFromAuthUserBestEffort(data.user, pendingSignupName || undefined);
+          telemetry.capture('user_signed_up', {
+            method: 'phone',
+            has_signup_name: Boolean(pendingSignupName),
+          });
+        } else if (data.user) {
+          await upsertProfileNameFromAuthUserBestEffort(data.user);
+          telemetry.capture('user_logged_in', { method: 'phone' });
+        }
+      } catch (sideEffectError) {
+        if (__DEV__) {
+          console.error('verifyOtp side-effects error:', sideEffectError);
+        }
       }
     } catch (error: unknown) {
       telemetry.capture('auth_phone_otp_verify_failed');
@@ -316,7 +326,9 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
       } = await supabase.auth.getUser();
 
       if (getUserError) {
-        console.warn('getUser failed after updateUser:', getUserError);
+        if (__DEV__) {
+          console.warn('getUser failed after updateUser:', getUserError);
+        }
       }
 
       telemetry.capture('profile_completion_succeeded');

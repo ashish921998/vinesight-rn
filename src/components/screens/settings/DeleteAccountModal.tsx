@@ -445,11 +445,11 @@ export function DeleteAccountModal({
     try {
       await onDeleteAccount(deleteReason);
       setIsDeleting(false);
-      handleClose();
       Alert.alert(
         t('settings.deleteAccountModal.submittedTitle'),
         t('settings.deleteAccountModal.submittedBody'),
       );
+      handleClose();
     } catch (error) {
       if (__DEV__) {
         console.error('Delete account error:', error);
@@ -631,7 +631,7 @@ export function DeleteAccountModal({
                     />
                     <Pressable
                       onPress={handleVerifyDeletePhoneOtp}
-                      disabled={isVerifyingDeleteOtp}
+                      disabled={isVerifyingDeleteOtp || deletePhoneVerified}
                       style={[styles.verifyPhoneCta, { marginTop: spacing[2] }]}
                     >
                       <Text
@@ -725,7 +725,7 @@ export function DeleteAccountModal({
                       />
                       <Pressable
                         onPress={handleVerifyDeleteEmailOtp}
-                        disabled={isVerifyingDeleteOtp}
+                        disabled={isVerifyingDeleteOtp || deleteEmailVerified}
                         style={[
                           styles.verifyPhoneCta,
                           {
