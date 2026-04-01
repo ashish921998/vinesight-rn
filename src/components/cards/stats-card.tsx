@@ -58,7 +58,7 @@ export function StatsCard({
 
   // Cellar Ledger: mist-1 card bg, stone-3 border, 16px radius, no shadows
   const containerStyle: ViewStyle = {
-    borderRadius: borderRadius.lg, // 16px
+    borderRadius: borderRadius.md, // 16px
     padding: spacing[4],
     backgroundColor: colors.surface[100], // mist-1
     borderWidth: 1,
@@ -76,7 +76,7 @@ export function StatsCard({
   const iconContainerStyle: ViewStyle = {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: borderRadius.xs,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colorWithOpacity(finalColor, 0.12),

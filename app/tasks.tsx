@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,8 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 
-// Cellar Ledger: Task due date status type
+// Cellar Ledger: Filter and due status types
+type FilterType = 'pending' | 'overdue' | 'completed' | 'all';
 type TaskDueStatus = 'overdue' | 'today' | 'upcoming' | 'done';
 
 const cleanupTaskNotifications = (
@@ -97,7 +98,10 @@ export default function TasksScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
-  const { farmId } = useLocalSearchParams<{ farmId?: string }>();
+  const { farmId, filter: routeFilter } = useLocalSearchParams<{
+    farmId?: string;
+    filter?: FilterType;
+  }>();
   const { setAddEntry } = useModalStore();
   const { data: farms } = useFarms();
   const { data: tasks, isLoading, refetch, isRefetching } = useAllTasks();
@@ -107,7 +111,19 @@ export default function TasksScreen() {
   const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
 
   const [completedExpanded, setCompletedExpanded] = useState(false);
+  const initialFilter: FilterType =
+    routeFilter === 'pending' ||
+    routeFilter === 'overdue' ||
+    routeFilter === 'completed' ||
+    routeFilter === 'all'
+      ? routeFilter
+      : 'all';
+  const [_filter, setFilter] = useState<FilterType>(initialFilter);
   const farmIdValue = farmId ? parseInt(farmId, 10) : undefined;
+
+  useEffect(() => {
+    setFilter(initialFilter);
+  }, [initialFilter]);
 
   // Get farm name by ID
   const getFarmName = (farmId: number) => {

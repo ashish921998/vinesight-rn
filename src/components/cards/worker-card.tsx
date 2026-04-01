@@ -16,6 +16,7 @@ import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
 interface WorkerCardProps {
   worker: Worker;
   onPress?: () => void;
+  onCall?: (worker: Worker) => void;
   onEdit?: () => void;
   onDelete?: () => void;
   /** Whether the worker is currently active (for status display) */
@@ -25,9 +26,10 @@ interface WorkerCardProps {
 export function WorkerCard({
   worker,
   onPress,
+  onCall,
   onEdit,
   onDelete,
-  isActive = true,
+  isActive = worker.is_active,
 }: WorkerCardProps) {
   const m3 = useM3();
   const colors = useThemeColors();
@@ -39,19 +41,22 @@ export function WorkerCard({
   // Inactive workers use stone-5 for avatar
   const inactiveAvatarColor = isDark ? '#7A756D' : '#A89E92';
 
-  const initials = worker.name
-    .split(' ')
-    .map((n) => n.charAt(0))
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const initials =
+    worker.name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || '?';
 
   // Cellar Ledger: Card mist-1 bg, stone-3 border, 16px radius
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface[100], // mist-1
-    borderRadius: borderRadius.lg, // 16px
+    borderRadius: borderRadius.md, // 16px
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderWidth: 1,
@@ -116,7 +121,7 @@ export function WorkerCard({
   const callButtonStyle: ViewStyle = {
     width: 36,
     height: 36,
-    borderRadius: borderRadius.md, // 12px
+    borderRadius: borderRadius.sm, // 12px
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colorWithOpacity(colors.primary[500], 0.12), // primary-tinted bg
@@ -155,29 +160,38 @@ export function WorkerCard({
         <View style={statusContainerStyle}>
           <View style={statusDotStyle} />
           <Text style={statusLabelStyle}>
-            {isActive ? t('workers.status.active') : t('workers.status.offToday')}
+            {isActive ? t('workers.status.active') : t('workers.status.inactive')}
           </Text>
         </View>
       </View>
 
       {/* Call button (36px, 12px radius, primary-tinted bg) */}
-      <Pressable
-        style={({ pressed: callPressed }) => [
-          callButtonStyle,
-          callPressed ? { backgroundColor: colorWithOpacity(colors.primary[500], 0.24) } : null,
-          !isActive ? { opacity: 0.5 } : null,
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={t('workers.workerCard.callA11y', { name: worker.name })}
-      >
-        <CardSymbol name="phone.fill" size={16} color={colors.primary[500]} />
-      </Pressable>
+      {onCall ? (
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            onCall(worker);
+          }}
+          style={({ pressed: callPressed }) => [
+            callButtonStyle,
+            callPressed ? { backgroundColor: colorWithOpacity(colors.primary[500], 0.24) } : null,
+            !isActive ? { opacity: 0.5 } : null,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('workers.workerCard.callA11y', { name: worker.name })}
+        >
+          <CardSymbol name="phone.fill" size={16} color={colors.primary[500]} />
+        </Pressable>
+      ) : null}
 
       {(onEdit || onDelete) && (
         <View style={actionsContainerStyle}>
           {onEdit && (
             <Pressable
-              onPress={onEdit}
+              onPress={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={t('workers.workerCard.editA11y', { name: worker.name })}
@@ -199,7 +213,10 @@ export function WorkerCard({
           )}
           {onDelete && (
             <Pressable
-              onPress={onDelete}
+              onPress={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={t('workers.workerCard.deleteA11y', { name: worker.name })}

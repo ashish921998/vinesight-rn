@@ -3,13 +3,30 @@
  * Types for the onboarding flow
  */
 
-export type OnboardingStep = 'welcome' | 'features' | 'firstFarm' | 'notifications' | 'complete';
+export type OnboardingStep =
+  | 'welcome'
+  | 'features'
+  | 'firstFarm'
+  | 'firstAction'
+  | 'notifications'
+  | 'complete';
+
+export type OnboardingActionType = 'log' | 'note' | 'task';
+
+export interface OnboardingActivationState {
+  farmCreated: boolean;
+  farmId: number | null;
+  firstActionType: OnboardingActionType | null;
+  firstActionStartedAt: string | null;
+  firstActionCompletedAt: string | null;
+}
 
 export interface OnboardingState {
   isComplete: boolean;
   hasHydrated: boolean;
   currentStep: OnboardingStep;
   preferences: OnboardingPreferences;
+  activation: OnboardingActivationState;
 }
 
 export interface OnboardingPreferences {
@@ -29,9 +46,21 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   'welcome',
   'features',
   'firstFarm',
+  'firstAction',
   'notifications',
   'complete',
 ];
+
+export const DEFAULT_ONBOARDING_ACTIVATION_STATE: OnboardingActivationState = {
+  farmCreated: false,
+  farmId: null,
+  firstActionType: null,
+  firstActionStartedAt: null,
+  firstActionCompletedAt: null,
+};
+
+export const isOnboardingActivationComplete = (activation: OnboardingActivationState): boolean =>
+  activation.farmCreated && activation.firstActionCompletedAt !== null;
 
 export const ONBOARDING_FEATURES: OnboardingFeature[] = [
   {

@@ -247,11 +247,11 @@ export const borderRadius = {
   md: 16, // was 12
   lg: 24, // was 16
   xl: 24, // keep for backwards compat, same as lg
-  '2xl': 20,
+  '2xl': 28,
   '3xl': 32,
   '4xl': 32, // was 40
   full: 9999, // was 999
-  pill: 999,
+  pill: 9999,
 } as const;
 
 export const size = {
@@ -403,8 +403,8 @@ const createM3Theme = (isDark: boolean) => {
       outline: isDark ? themeColors.surface[300] : themeColors.surface[300],
       outlineVariant: isDark ? themeColors.surface[200] : themeColors.surface[200],
 
-      inverseSurface: isDark ? colors.surface[900] : darkColors.surface[50],
-      inverseOnSurface: isDark ? colors.surface[50] : darkColors.surface[900],
+      inverseSurface: isDark ? colors.surface[200] : darkColors.surface[50],
+      inverseOnSurface: isDark ? colors.surface[900] : darkColors.surface[900],
       inversePrimary: isDark ? darkColors.primary[300] : colors.primary[300],
 
       shadow: '#000000',

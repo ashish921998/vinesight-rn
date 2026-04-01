@@ -16,6 +16,7 @@ import { formatDate } from '@/i18n/format';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { triggerHaptic, triggerHapticWarning } from '@/utils/haptics';
 import { stripTaskPlanFromDescription } from '@/utils/task-plan';
+import { parseDbDateToLocalDate } from '@/utils/date';
 
 interface TaskRowProps {
   task: TaskReminder;
@@ -50,12 +51,14 @@ export function TaskRow({
   const cleanDescription = stripTaskPlanFromDescription(task.description);
 
   const today = startOfDay(new Date());
-  const dueDate = task.due_date ? new Date(task.due_date) : null;
+  const dueDate = task.due_date
+    ? startOfDay(parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date))
+    : null;
   const overdue = !task.completed && dueDate ? dueDate < today : false;
 
   const formatDueDate = () => {
     if (!task.due_date) return t('tasks.dueDate.none');
-    const date = new Date(task.due_date);
+    const date = parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date);
     const display = formatDate(date, { year: 'numeric', month: 'numeric', day: 'numeric' });
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -73,7 +76,7 @@ export function TaskRow({
 
     if (!task.due_date) return colors.surface[400]; // stone-5 for no due date
 
-    const dueDate = startOfDay(new Date(task.due_date));
+    const dueDate = startOfDay(parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date));
     if (dueDate < today) return colors.error; // red for overdue
     if (dueDate.getTime() === today.getTime()) return colors.warning; // amber for today
     return colors.surface[400]; // stone-5 for upcoming
@@ -97,7 +100,7 @@ export function TaskRow({
 
   // Cellar Ledger: Card mist-1 bg, border, 12px radius
   const containerStyle: ViewStyle = {
-    borderRadius: borderRadius.md, // 12px
+    borderRadius: borderRadius.sm, // 12px
     paddingVertical: spacing[3],
     paddingHorizontal: spacing[4],
     backgroundColor: colors.surface[100], // mist-1
@@ -117,6 +120,7 @@ export function TaskRow({
             }
           }}
           disabled={task.completed || !onComplete}
+          hitSlop={{ top: 11, bottom: 11, left: 11, right: 11 }}
           accessibilityRole="button"
           accessibilityLabel={t('tasks.a11y.completeTask', { title: task.title })}
           style={({ pressed }) => ({
