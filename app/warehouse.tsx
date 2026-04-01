@@ -466,7 +466,7 @@ export default function WarehouseScreen() {
                       style={{
                         fontSize: 15,
                         fontWeight: fontWeight.semibold,
-                        color: colors.surface[400],
+                        color: colors.surface[800],
                         lineHeight: 20,
                         flex: 1,
                       }}
@@ -527,11 +527,11 @@ export default function WarehouseScreen() {
                         style={{
                           fontSize: 20,
                           fontWeight: fontWeight.bold,
-                          color: colors.surface[400],
-                          fontVariant: ['tabular-nums'],
-                        }}
-                      >
-                        {item.quantity}
+                        color: colors.surface[800],
+                        fontVariant: ['tabular-nums'],
+                      }}
+                    >
+                      {item.quantity}
                       </Text>
                       <Text
                         style={{

@@ -31,7 +31,7 @@ export default function FertilizerPlansScreen() {
   const currentFarmName = useMemo(() => {
     if (farm?.name) return farm.name;
     if (farms && farms.length > 0) return farms[0].name;
-    return 'Select Farm';
+    return t('farmDetails.fertilizerPlan.selectFarm', 'Select Farm');
   }, [farm?.name, farms]);
 
   return (
