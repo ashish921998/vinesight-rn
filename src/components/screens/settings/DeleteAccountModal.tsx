@@ -218,6 +218,8 @@ export function DeleteAccountModal({
     }
 
     setIsSendingDeleteOtp(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
       const {
         data: { session: currentSession },
@@ -225,6 +227,8 @@ export function DeleteAccountModal({
       const accessToken = currentSession?.access_token;
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
       if (!accessToken) {
+        clearTimeout(timeoutId);
+        setIsSendingDeleteOtp(false);
         Alert.alert(
           t('common.error'),
           t('settings.deleteAccountModal.errors.sessionExpired', {
@@ -247,6 +251,7 @@ export function DeleteAccountModal({
             action: 'send',
             email: userEmail.trim().toLowerCase(),
           }),
+          signal: controller.signal,
         },
       );
 
@@ -276,17 +281,24 @@ export function DeleteAccountModal({
         }),
       );
     } catch (error) {
+      clearTimeout(timeoutId);
       telemetry.capture('account_delete_email_otp_send_failed');
+      const isAbortError = error instanceof Error && error.name === 'AbortError';
       if (__DEV__) {
         console.error('Failed to send email OTP:', error);
       }
       Alert.alert(
         t('common.error'),
-        t('settings.deleteAccountModal.errors.emailOtpSendFailed', {
-          defaultValue: 'Failed to send OTP to email. Please try again.',
-        }),
+        isAbortError
+          ? t('settings.deleteAccountModal.errors.timeout', {
+              defaultValue: 'Request timed out. Please try again.',
+            })
+          : t('settings.deleteAccountModal.errors.emailOtpSendFailed', {
+              defaultValue: 'Failed to send OTP to email. Please try again.',
+            }),
       );
     } finally {
+      clearTimeout(timeoutId);
       setIsSendingDeleteOtp(false);
     }
   };
@@ -296,30 +308,30 @@ export function DeleteAccountModal({
       return;
     }
 
+    const normalizedOtp = deleteEmailOtp.trim();
+    if (!/^\d{6}$/.test(normalizedOtp)) {
+      Alert.alert(
+        t('common.error'),
+        t('settings.deleteAccountModal.errors.otpVerifyFailed', {
+          defaultValue: 'Please enter the OTP sent to your email.',
+        }),
+      );
+      return;
+    }
+
+    const requestTime = emailOtpRequestedAtRef.current;
+    if (!requestTime) {
+      Alert.alert(
+        t('common.error'),
+        t('settings.deleteAccountModal.errors.otpVerifyFailed', {
+          defaultValue: 'Email verification failed. Please request a new OTP.',
+        }),
+      );
+      return;
+    }
+
     setIsVerifyingDeleteOtp(true);
     try {
-      const normalizedOtp = deleteEmailOtp.trim();
-      if (!/^\d{6}$/.test(normalizedOtp)) {
-        Alert.alert(
-          t('common.error'),
-          t('settings.deleteAccountModal.errors.otpVerifyFailed', {
-            defaultValue: 'Please enter the OTP sent to your email.',
-          }),
-        );
-        return;
-      }
-
-      const requestTime = emailOtpRequestedAtRef.current;
-      if (!requestTime) {
-        Alert.alert(
-          t('common.error'),
-          t('settings.deleteAccountModal.errors.otpVerifyFailed', {
-            defaultValue: 'Email verification failed. Please request a new OTP.',
-          }),
-        );
-        return;
-      }
-
       const {
         data: { session: currentSession },
       } = await supabase.auth.getSession();

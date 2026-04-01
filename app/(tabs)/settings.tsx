@@ -320,7 +320,13 @@ export default function SettingsScreen() {
   const handleAreaUnitChange = async (unit: 'hectares' | 'acres') => {
     try {
       await updateProfile.mutateAsync({ area_unit_preference: unit });
-      await updateUserAreaUnit(unit);
+      try {
+        await updateUserAreaUnit(unit);
+      } catch (areaUnitError) {
+        // Rollback profile change if auth metadata update fails
+        await updateProfile.mutateAsync({ area_unit_preference: unit === 'hectares' ? 'acres' : 'hectares' });
+        throw areaUnitError;
+      }
       setSelectedAreaUnit(resolveAreaUnitPreference(unit));
       refetchProfile();
     } catch (error) {
