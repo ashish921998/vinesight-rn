@@ -43,6 +43,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
         phoneLinkingLoading: false,
+        hasSeenOnboarding: false,
       });
       telemetry.reset();
       await clearQueryCache('sign out success path');
@@ -82,13 +83,21 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
           }
           return `${localPart[0]}${localPart[1]}***@${domain}`;
         };
-        console.warn('[DELETE ACCOUNT REQUEST]', {
-          user_id: userId,
-          user_email: userEmail ? maskEmail(userEmail) : undefined,
-          delete_reason: deleteReason || 'Not provided',
-          status: 'pending',
-          requested_at: new Date().toISOString(),
-        });
+        if (__DEV__) {
+          console.warn('[DELETE ACCOUNT REQUEST]', {
+            user_id: userId,
+            user_email: userEmail ? maskEmail(userEmail) : undefined,
+            delete_reason: deleteReason || 'Not provided',
+            status: 'pending',
+            requested_at: new Date().toISOString(),
+          });
+        } else {
+          console.warn('[DELETE ACCOUNT REQUEST]', {
+            status: 'pending',
+            requested_at: new Date().toISOString(),
+            has_delete_reason: Boolean(deleteReason?.trim()),
+          });
+        }
       }
 
       const { error } = await supabase.auth.signOut({ scope: 'global' });
@@ -111,6 +120,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
         phoneLinkingLoading: false,
+        hasSeenOnboarding: false,
       });
       await clearQueryCache('delete account');
       telemetry.capture('account_deletion_succeeded');
@@ -140,7 +150,8 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
   },
 
   updateUserCountry: async (country: string) => {
-    if (!country) {
+    const trimmedCountry = country.trim();
+    if (!trimmedCountry) {
       set({ errorMessage: 'Country cannot be empty' });
       return;
     }
@@ -149,7 +160,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
 
     try {
       const { error } = await supabase.auth.updateUser({
-        data: { country },
+        data: { country: trimmedCountry },
       });
 
       if (error) throw error;
@@ -166,6 +177,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
   },
 
   updateUserAreaUnit: async (areaUnit: 'hectares' | 'acres') => {
+    set({ errorMessage: null });
     try {
       const { error } = await supabase.auth.updateUser({
         data: { area_unit: areaUnit },

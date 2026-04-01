@@ -72,8 +72,10 @@ export function DeleteAccountModal({
   const hasRequiredPhoneVerification = !canAttemptDeleteWithPhone || deletePhoneVerified;
   const hasRequiredEmailVerification = !requireEmailOtpForDelete || deleteEmailVerified;
 
+  const hasAtLeastOneVerificationPath = canAttemptDeleteWithPhone || requireEmailOtpForDelete;
   const canSubmitDeleteAccount =
     deleteConfirmed &&
+    hasAtLeastOneVerificationPath &&
     hasRequiredPhoneVerification &&
     hasRequiredEmailVerification &&
     !isDeleting &&

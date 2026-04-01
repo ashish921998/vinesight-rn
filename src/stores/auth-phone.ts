@@ -236,9 +236,9 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
 
       if (email) {
         const currentUserId = get().user?.id;
-        const query = supabase.from('profiles').select('id').eq('email', email);
+        let query = supabase.from('profiles').select('id').eq('email', email);
         if (currentUserId) {
-          query.neq('id', currentUserId);
+          query = query.neq('id', currentUserId);
         }
         const { data: existingProfiles, error: lookupError } = await query.limit(1);
 
