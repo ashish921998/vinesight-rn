@@ -172,7 +172,7 @@ export default function WarehouseScreen() {
     );
   };
 
-  const _handleAddStock = (item: WarehouseItem) => {
+  const handleAddStock = (item: WarehouseItem) => {
     openAddStock(item);
   };
 
