@@ -32,7 +32,7 @@ export default function FertilizerPlansScreen() {
     if (farm?.name) return farm.name;
     if (farms && farms.length > 0) return farms[0].name;
     return t('farmDetails.fertilizerPlan.selectFarm', 'Select Farm');
-  }, [farm?.name, farms]);
+  }, [farm?.name, farms, t]);
 
   return (
     <>
