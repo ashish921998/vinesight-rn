@@ -1,0 +1,27 @@
+src/stores/auth-phone.ts
+  13de791de2a86dd2 239,241
+src/stores/auth-account.ts
+  13de791de2a86dd2 46,86-100,123,153-154,163,180
+src/components/screens/settings/DeleteAccountModal.tsx
+  13de791de2a86dd2 75,78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "f55ebee96be54af537f5f6dc533c1ca8e7f07ede",
+  "prompts": {
+    "13de791de2a86dd2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d19e528f-658e-4908-84ee-27294cd37cbe",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 11,
+      "accepted_lines": 25,
+      "overriden_lines": 0
+    }
+  }
+}
