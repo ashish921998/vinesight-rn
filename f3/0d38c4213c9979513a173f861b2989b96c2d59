@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "f30d38c4213c9979513a173f861b2989b96c2d59",
+  "prompts": {
+    "8b3897465ba0b3c7": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7e748200-8e52-4a8f-a480-7ea9b89b343b",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
