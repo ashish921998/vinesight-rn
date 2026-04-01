@@ -625,15 +625,10 @@ function FertilizerRow({
                 backgroundColor: colors.white,
                 borderRadius: borderRadius.lg,
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: colors.surface[300],
                 maxHeight: 208,
                 overflow: 'hidden',
                 zIndex: 20,
-                elevation: 6,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.12,
-                shadowRadius: 8,
               }}
             >
               <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>

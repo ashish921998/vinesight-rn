@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, Text, FlatList, type ListRenderItemInfo, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { borderRadius, fontSize, fontWeight, shadows, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol as Icon } from '@/components/ui/symbol';
@@ -65,8 +65,8 @@ export function ReportSectionBlock({
       borderRadius: borderRadius.xl,
       borderCurve: 'continuous',
       overflow: 'hidden',
-      ...shadows.sm,
-      elevation: 1,
+      borderWidth: 1,
+      borderColor: colors.surface[300],
     }),
     [colors],
   );
@@ -298,11 +298,8 @@ export function ReportSectionBlock({
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[3],
             gap: spacing[2],
-            ...shadows.sm,
-            shadowOpacity: 0.03,
-            elevation: 1,
-            borderWidth: 0.5,
-            borderColor: colorWithOpacity(colors.surface[300], 0.6),
+            borderWidth: 1,
+            borderColor: colors.surface[300],
           }}
         >
           {primaryLine ? (
