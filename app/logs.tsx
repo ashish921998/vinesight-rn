@@ -596,6 +596,7 @@ export default function LogsScreen() {
                           'harvest',
                           'expense',
                           'fertigation',
+                          'note',
                         ] as LogTypeId[]),
                       );
                     } else {
