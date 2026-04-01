@@ -329,14 +329,6 @@ export default function ReportsScreen() {
     }
   };
 
-  const handleDownloadPrompt = () => {
-    Alert.alert(t('reports.alerts.downloadReportTitle'), t('reports.alerts.chooseFormatBody'), [
-      { text: 'PDF', onPress: () => void handleDownload('pdf') },
-      { text: 'CSV', onPress: () => void handleDownload('csv') },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
-  };
-
   const handleDateChange = (type: 'from' | 'to', date: Date | undefined) => {
     if (date) {
       const dateStr = formatLocalDate(date);
@@ -509,7 +501,7 @@ export default function ReportsScreen() {
             isExporting={isExporting}
             exportFormat={selectedExportFormat}
             onExportPdf={() => handleExport(selectedExportFormat)}
-            onDownload={handleDownloadPrompt}
+            onDownload={() => handleDownload(selectedExportFormat)}
             panelStyle={{ paddingBottom: spacing[6] + insets.bottom }}
           />
         </View>
