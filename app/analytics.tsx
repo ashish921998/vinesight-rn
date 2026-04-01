@@ -235,7 +235,8 @@ export default function AnalyticsScreen() {
                 <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
                   {analytics.irrigationsByMonth.reduce((sum, m) => sum + m.count, 0) +
                     analytics.totalSprayCount +
-                    analytics.totalHarvestCount}
+                    analytics.totalHarvestCount +
+                    analytics.expensesByType.reduce((sum, e) => sum + e.count, 0)}
                 </Text>
               </View>
             </View>
@@ -271,7 +272,8 @@ export default function AnalyticsScreen() {
               <Text style={{ fontSize: 13, fontWeight: '500', color: colors.surface[500] }}>
                 {analytics.irrigationsByMonth.reduce((sum, m) => sum + m.count, 0) +
                   analytics.totalSprayCount +
-                  analytics.totalHarvestCount}{' '}
+                  analytics.totalHarvestCount +
+                  analytics.expensesByType.reduce((sum, e) => sum + e.count, 0)}{' '}
                 {t('analytics.labels.entries')}
               </Text>
             </View>

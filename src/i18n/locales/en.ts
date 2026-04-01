@@ -2230,6 +2230,14 @@ export const en = {
         half_day: 'Half day',
         absent: 'Absent',
       },
+      mark: {
+        workersCount: '{{count}} workers',
+        dailyRate: '₹{{rate}}/day',
+        full: 'Full',
+        half: 'Half',
+        absent: 'Absent',
+        markAllPresent: 'Mark All Present',
+      },
     },
     transactions: {
       title: 'Transactions',
