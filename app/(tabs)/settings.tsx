@@ -340,6 +340,8 @@ export default function SettingsScreen() {
   const handleConfirmDeleteAccount = async (reason: string) => {
     await deleteAccount(reason);
     setShowDeleteAccount(false);
+    // Note: DeleteAccountModal handles success/failure alerts, we just close the modal
+    // If deleteAccount throws, it propagates up so DeleteAccountModal can show error alert
   };
 
   return (
