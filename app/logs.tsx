@@ -1116,7 +1116,9 @@ export default function LogsScreen() {
                     return (
                       <View style={{ gap: spacing[4] }}>
                         {sortedDates.map((dateKey) => {
-                          const dateObj = new Date(dateKey);
+                          // Parse YYYY-MM-DD in local time to avoid UTC shift
+                          const [year, month, day] = dateKey.split('-').map(Number);
+                          const dateObj = new Date(year, month - 1, day);
                           const formattedDate = formatDate(dateObj, {
                             day: 'numeric',
                             month: 'short',

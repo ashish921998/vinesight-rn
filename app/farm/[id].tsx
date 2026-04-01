@@ -1739,7 +1739,7 @@ export default function FarmDetailScreen() {
               {isGrapeFarm && earliestSafeHarvest?.earliestDate ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}>
                   <UiSymbol
-                    name="shield-checkered"
+                    name="shield.checkered"
                     size={14}
                     color={colorWithOpacity('#ffffff', 0.7)}
                   />
@@ -1882,7 +1882,7 @@ export default function FarmDetailScreen() {
                     lineHeight: 24,
                   }}
                 >
-                  {farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
+                  {farm.remaining_water ?? '--'}
                   <Text
                     style={{
                       fontSize: 14,

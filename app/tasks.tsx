@@ -148,18 +148,21 @@ export default function TasksScreen() {
   }, [scopedTasks]);
 
   // Group pending tasks by due date status for section headers
-  const { dueTodayTasks, thisWeekTasks, upcomingTasks } = useMemo(() => {
+  const { overdueTasks, dueTodayTasks, thisWeekTasks, upcomingTasks } = useMemo(() => {
     const today = startOfDay(new Date());
     const endOfWeek = new Date(today);
     endOfWeek.setDate(today.getDate() + 7); // This week = next 7 days
 
+    const overdue: TaskReminder[] = [];
     const dueToday: TaskReminder[] = [];
     const thisWeek: TaskReminder[] = [];
     const upcoming: TaskReminder[] = [];
 
     pendingTasks.forEach((task) => {
       const status = getTaskDueStatus(task);
-      if (status === 'overdue' || status === 'today') {
+      if (status === 'overdue') {
+        overdue.push(task);
+      } else if (status === 'today') {
         dueToday.push(task);
       } else if (task.due_date) {
         const dueDate = startOfDay(new Date(task.due_date));
@@ -173,7 +176,12 @@ export default function TasksScreen() {
       }
     });
 
-    return { dueTodayTasks: dueToday, thisWeekTasks: thisWeek, upcomingTasks: upcoming };
+    return {
+      overdueTasks: overdue,
+      dueTodayTasks: dueToday,
+      thisWeekTasks: thisWeek,
+      upcomingTasks: upcoming,
+    };
   }, [pendingTasks]);
 
   const handleComplete = (task: TaskReminder) => {
@@ -397,7 +405,8 @@ export default function TasksScreen() {
         })()}
 
         {/* Task List - Pending Tasks */}
-        {dueTodayTasks.length === 0 &&
+        {overdueTasks.length === 0 &&
+        dueTodayTasks.length === 0 &&
         thisWeekTasks.length === 0 &&
         upcomingTasks.length === 0 &&
         completedTasks.length === 0 ? (
@@ -456,6 +465,48 @@ export default function TasksScreen() {
           </View>
         ) : (
           <View>
+            {/* Overdue Section */}
+            {overdueTasks.length > 0 && (
+              <>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.error,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.8,
+                    marginBottom: spacing[2],
+                    paddingHorizontal: spacing[1],
+                  }}
+                >
+                  {t('tasks.sections.overdue')}
+                </Text>
+                {overdueTasks.map((task) => (
+                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
+                    <TaskRow
+                      task={task}
+                      showFarmName
+                      farmName={getFarmName(task.farm_id)}
+                      onComplete={(item) => handleComplete(item)}
+                      onLogFromTask={(item) => handleLogFromTask(item)}
+                      onEdit={(item) => {
+                        setAddEntry({
+                          tabs: ['task'],
+                          initialTab: 'task',
+                          editingTask: item,
+                        });
+                        router.push({
+                          pathname: '/add-entry',
+                          params: { tabs: 'task', initialTab: 'task' },
+                        });
+                      }}
+                      onDelete={(item) => handleDelete(item)}
+                    />
+                  </View>
+                ))}
+              </>
+            )}
+
             {/* Due Today Section */}
             {dueTodayTasks.length > 0 && (
               <>
@@ -467,6 +518,7 @@ export default function TasksScreen() {
                     textTransform: 'uppercase',
                     letterSpacing: 0.8,
                     marginBottom: spacing[2],
+                    marginTop: overdueTasks.length > 0 ? spacing[4] : 0,
                     paddingHorizontal: spacing[1],
                   }}
                 >

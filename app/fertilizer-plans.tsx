@@ -30,9 +30,13 @@ export default function FertilizerPlansScreen() {
   // Get current farm name for the selector pill
   const currentFarmName = useMemo(() => {
     if (farm?.name) return farm.name;
-    if (farms && farms.length > 0) return farms[0].name;
+    // Fall back to finding farm by farmId in the farms list
+    if (farmId && farms && farms.length > 0) {
+      const matchingFarm = farms.find((f) => f.id === farmId);
+      if (matchingFarm) return matchingFarm.name;
+    }
     return t('farmDetails.fertilizerPlan.selectFarm', 'Select Farm');
-  }, [farm?.name, farms, t]);
+  }, [farm?.name, farmId, farms, t]);
 
   return (
     <>
@@ -313,7 +317,7 @@ export default function FertilizerPlansScreen() {
       <Pressable
         style={{
           position: 'absolute',
-          bottom: 36, // 36px from bottom
+          bottom: insets.bottom + spacing[4], // Account for safe area bottom inset
           right: spacing[6], // 24px from right
           width: 52,
           height: 52,

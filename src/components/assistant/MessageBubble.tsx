@@ -50,8 +50,8 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
     }),
   };
 
-  // User text is white, assistant text uses onSurface (dark ink)
-  const textColor = isUser ? '#FFFFFF' : m3.colorScheme.onSurface;
+  // User text uses onPrimary for proper contrast on primary background
+  const textColor = isUser ? m3.colorScheme.onPrimary : m3.colorScheme.onSurface;
 
   // Use plain objects for react-native-markdown-display styles (not StyleSheet.create)
   // to avoid the react-native/no-unused-styles lint false positives

@@ -238,10 +238,7 @@ export function MarkAttendanceTab({
   const getCellKey = (workerId: number, date: string) => `${workerId}-${date}`;
 
   const loadAttendance = React.useCallback(async () => {
-    if (!selectedWorker || dateRange.length === 0) return;
-
-    const workerId = selectedWorker?.id;
-    if (workerId === undefined) return;
+    if (workers.length === 0 || dateRange.length === 0) return;
 
     setLoading(true);
     try {
@@ -249,20 +246,45 @@ export function MarkAttendanceTab({
       const startDate = formatDate(dateRange[0]);
       const endDate = formatDate(dateRange[dateRange.length - 1]);
 
-      for (const date of dateRange) {
-        const dateStr = formatDate(date);
-        const key = getCellKey(workerId, dateStr);
-        newCellData.set(key, {
-          workerId,
-          date: dateStr,
-          status: null,
-          workType: null,
-          farmIds: [],
-          isModified: false,
-        });
+      // Initialize cell data for all workers and all dates in the range
+      for (const worker of workers) {
+        const workerId = worker.id;
+        if (workerId === undefined) continue;
+        for (const date of dateRange) {
+          const dateStr = formatDate(date);
+          const key = getCellKey(workerId, dateStr);
+          newCellData.set(key, {
+            workerId,
+            date: dateStr,
+            status: null,
+            workType: null,
+            farmIds: [],
+            isModified: false,
+          });
+        }
       }
 
-      const records = await fetchAttendanceForWorker(workerId, startDate, endDate);
+      // Also initialize for the selected date (even if outside range) for all visible workers
+      const selectedDateStr = formatDate(selectedDate);
+      for (const worker of workers) {
+        const workerId = worker.id;
+        if (workerId === undefined) continue;
+        const key = getCellKey(workerId, selectedDateStr);
+        if (!newCellData.has(key)) {
+          newCellData.set(key, {
+            workerId,
+            date: selectedDateStr,
+            status: null,
+            workType: null,
+            farmIds: [],
+            isModified: false,
+          });
+        }
+      }
+
+      // Fetch attendance records for all workers
+      const workerIds = workers.map((w) => w.id).filter((id): id is number => id !== undefined);
+      const records = await fetchAttendanceForWorkers(workerIds, startDate, endDate);
 
       for (const record of records) {
         const key = getCellKey(record.worker_id, record.date);
@@ -277,15 +299,22 @@ export function MarkAttendanceTab({
         });
       }
 
-      const workerChanged = prevWorkerIdRef.current !== workerId;
-      if (workerChanged) {
-        const recordWithFarms = records.find((r) => r.farm_ids && r.farm_ids.length > 0);
-        if (recordWithFarms) {
-          setSelectedFarmIds(recordWithFarms.farm_ids || []);
-        } else if (farms.length > 0) {
-          setSelectedFarmIds([farms[0].id!]);
+      // Set farm IDs from the selected worker's records
+      const selectedWorkerId = selectedWorker?.id;
+      if (selectedWorkerId !== undefined) {
+        const workerChanged = prevWorkerIdRef.current !== selectedWorkerId;
+        if (workerChanged) {
+          const selectedWorkerRecords = records.filter((r) => r.worker_id === selectedWorkerId);
+          const recordWithFarms = selectedWorkerRecords.find(
+            (r) => r.farm_ids && r.farm_ids.length > 0,
+          );
+          if (recordWithFarms) {
+            setSelectedFarmIds(recordWithFarms.farm_ids || []);
+          } else if (farms.length > 0) {
+            setSelectedFarmIds([farms[0].id!]);
+          }
+          prevWorkerIdRef.current = selectedWorkerId;
         }
-        prevWorkerIdRef.current = workerId;
       }
 
       setCellData(newCellData);
@@ -294,7 +323,7 @@ export function MarkAttendanceTab({
     } finally {
       setLoading(false);
     }
-  }, [selectedWorker, dateRange, farms, t]);
+  }, [workers, selectedWorker, dateRange, selectedDate, farms, t]);
 
   React.useEffect(() => {
     loadSavedRange();
@@ -439,7 +468,7 @@ export function MarkAttendanceTab({
         workerId,
         date: dateStr,
         status,
-        workType: null,
+        workType: current?.workType ?? null,
         farmIds: selectedFarmIds,
         existingRecordId: current?.existingRecordId,
         isModified: true,
@@ -462,7 +491,7 @@ export function MarkAttendanceTab({
             workerId: w.id,
             date: dateStr,
             status: 'full_day',
-            workType: null,
+            workType: current?.workType ?? null,
             farmIds: selectedFarmIds,
             existingRecordId: current?.existingRecordId,
             isModified: true,
@@ -925,40 +954,42 @@ export function MarkAttendanceTab({
         })}
       </ScrollView>
 
-      {/* NEW: Mark All Present - sticky at bottom */}
-      <View
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: actionBarBottom,
-          paddingHorizontal: spacing[4],
-          paddingVertical: spacing[3],
-          backgroundColor: m3.colorScheme.surface,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: m3.colorScheme.outlineVariant,
-        }}
-      >
-        <Pressable
-          onPress={handleMarkAllPresent}
+      {/* NEW: Mark All Present - sticky at bottom (hidden when there are unsaved changes) */}
+      {!hasModifications && (
+        <View
           style={{
-            paddingVertical: spacing[3] + 2,
-            borderRadius: borderRadius.sm,
-            backgroundColor: m3.colorScheme.primary,
-            alignItems: 'center',
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: actionBarBottom,
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[3],
+            backgroundColor: m3.colorScheme.surface,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: m3.colorScheme.outlineVariant,
           }}
         >
-          <Text
+          <Pressable
+            onPress={handleMarkAllPresent}
             style={{
-              fontSize: fontSize.base,
-              fontWeight: fontWeight.semibold,
-              color: m3.colorScheme.onPrimary,
+              paddingVertical: spacing[3] + 2,
+              borderRadius: borderRadius.sm,
+              backgroundColor: m3.colorScheme.primary,
+              alignItems: 'center',
             }}
           >
-            {t('attendance.mark.markAllPresent')}
-          </Text>
-        </Pressable>
-      </View>
+            <Text
+              style={{
+                fontSize: fontSize.base,
+                fontWeight: fontWeight.semibold,
+                color: m3.colorScheme.onPrimary,
+              }}
+            >
+              {t('attendance.mark.markAllPresent')}
+            </Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* ── Bottom Action Bar — only visible when there are unsaved changes ── */}
       {hasModifications && (
@@ -1158,6 +1189,26 @@ async function fetchAttendanceForWorker(
     .from('worker_attendance')
     .select('*')
     .eq('worker_id', workerId)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: true });
+
+  if (error) {
+    throw new Error('Failed to fetch attendance');
+  }
+
+  return data || [];
+}
+
+async function fetchAttendanceForWorkers(
+  workerIds: number[],
+  startDate: string,
+  endDate: string,
+): Promise<WorkerAttendance[]> {
+  const { data, error } = await supabase
+    .from('worker_attendance')
+    .select('*')
+    .in('worker_id', workerIds)
     .gte('date', startDate)
     .lte('date', endDate)
     .order('date', { ascending: true });
