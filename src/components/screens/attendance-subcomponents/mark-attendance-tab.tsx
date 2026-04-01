@@ -242,62 +242,72 @@ export function MarkAttendanceTab({
 
     setLoading(true);
     try {
-      const newCellData = new Map<string, CellData>();
       const startDate = formatDate(dateRange[0]);
       const endDate = formatDate(dateRange[dateRange.length - 1]);
-
-      // Initialize cell data for all workers and all dates in the range
-      for (const worker of workers) {
-        const workerId = worker.id;
-        if (workerId === undefined) continue;
-        for (const date of dateRange) {
-          const dateStr = formatDate(date);
-          const key = getCellKey(workerId, dateStr);
-          newCellData.set(key, {
-            workerId,
-            date: dateStr,
-            status: null,
-            workType: null,
-            farmIds: [],
-            isModified: false,
-          });
-        }
-      }
-
-      // Also initialize for the selected date (even if outside range) for all visible workers
-      const selectedDateStr = formatDate(selectedDate);
-      for (const worker of workers) {
-        const workerId = worker.id;
-        if (workerId === undefined) continue;
-        const key = getCellKey(workerId, selectedDateStr);
-        if (!newCellData.has(key)) {
-          newCellData.set(key, {
-            workerId,
-            date: selectedDateStr,
-            status: null,
-            workType: null,
-            farmIds: [],
-            isModified: false,
-          });
-        }
-      }
 
       // Fetch attendance records for all workers
       const workerIds = workers.map((w) => w.id).filter((id): id is number => id !== undefined);
       const records = await fetchAttendanceForWorkers(workerIds, startDate, endDate);
 
-      for (const record of records) {
-        const key = getCellKey(record.worker_id, record.date);
-        newCellData.set(key, {
-          workerId: record.worker_id,
-          date: record.date,
-          status: record.work_status as AttendanceStatus,
-          workType: record.work_type,
-          farmIds: record.farm_ids || [],
-          existingRecordId: record.id,
-          isModified: false,
-        });
-      }
+      setCellData((prev) => {
+        const merged = new Map(prev);
+
+        // Merge server records, but skip cells the user has modified
+        for (const record of records) {
+          const key = getCellKey(record.worker_id, record.date);
+          const existing = merged.get(key);
+          if (existing?.isModified) continue;
+          merged.set(key, {
+            workerId: record.worker_id,
+            date: record.date,
+            status: record.work_status as AttendanceStatus,
+            workType: record.work_type,
+            farmIds: record.farm_ids || [],
+            existingRecordId: record.id,
+            isModified: false,
+          });
+        }
+
+        // Ensure every worker × date in the range has a cell entry
+        for (const worker of workers) {
+          const workerId = worker.id;
+          if (workerId === undefined) continue;
+          for (const date of dateRange) {
+            const dateStr = formatDate(date);
+            const key = getCellKey(workerId, dateStr);
+            if (!merged.has(key)) {
+              merged.set(key, {
+                workerId,
+                date: dateStr,
+                status: null,
+                workType: null,
+                farmIds: [],
+                isModified: false,
+              });
+            }
+          }
+        }
+
+        // Also ensure the selected date has entries for all workers
+        const selectedDateStr = formatDate(selectedDate);
+        for (const worker of workers) {
+          const workerId = worker.id;
+          if (workerId === undefined) continue;
+          const key = getCellKey(workerId, selectedDateStr);
+          if (!merged.has(key)) {
+            merged.set(key, {
+              workerId,
+              date: selectedDateStr,
+              status: null,
+              workType: null,
+              farmIds: [],
+              isModified: false,
+            });
+          }
+        }
+
+        return merged;
+      });
 
       // Set farm IDs from the selected worker's records
       const selectedWorkerId = selectedWorker?.id;
@@ -316,8 +326,6 @@ export function MarkAttendanceTab({
           prevWorkerIdRef.current = selectedWorkerId;
         }
       }
-
-      setCellData(newCellData);
     } catch {
       Alert.alert(t('common.error'), t('common.errors.failedToLoadAttendanceData'));
     } finally {

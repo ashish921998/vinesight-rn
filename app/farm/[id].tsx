@@ -1720,6 +1720,9 @@ export default function FarmDetailScreen() {
                       borderRadius: borderRadius.full,
                     }}
                     accessibilityRole="button"
+                    accessibilityLabel={t('farmDetails.a11y.editTargetDate', {
+                      defaultValue: 'Edit target harvest date',
+                    })}
                     disabled={isSavingActiveSeasonTargetDate}
                   >
                     <Text

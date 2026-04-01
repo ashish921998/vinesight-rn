@@ -25,6 +25,7 @@ import { TaskRow } from '@/components/cards';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
+import { parseDbDateToLocalDate } from '@/utils/date';
 
 // Cellar Ledger: Filter and due status types
 type FilterType = 'pending' | 'overdue' | 'completed' | 'all';
@@ -59,7 +60,7 @@ const getTaskDueStatus = (task: TaskReminder): TaskDueStatus => {
   if (!task.due_date) return 'upcoming';
 
   const today = startOfDay(new Date());
-  const dueDate = startOfDay(new Date(task.due_date));
+  const dueDate = startOfDay(parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date));
 
   if (dueDate < today) return 'overdue';
   if (dueDate.getTime() === today.getTime()) return 'today';
@@ -80,7 +81,7 @@ const computeSummaryCounts = (tasks: TaskReminder[] | null | undefined) => {
     pending++;
 
     if (task.due_date) {
-      const dueDate = startOfDay(new Date(task.due_date));
+      const dueDate = startOfDay(parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date));
       if (dueDate < today) {
         overdue++;
       } else if (dueDate.getTime() === today.getTime()) {
@@ -165,7 +166,9 @@ export default function TasksScreen() {
       } else if (status === 'today') {
         dueToday.push(task);
       } else if (task.due_date) {
-        const dueDate = startOfDay(new Date(task.due_date));
+        const dueDate = startOfDay(
+          parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date),
+        );
         if (dueDate <= endOfWeek) {
           thisWeek.push(task);
         } else {
@@ -199,7 +202,9 @@ export default function TasksScreen() {
             // Calculate due_offset_days using calendar days
             let dueOffsetDays: number | null = null;
             if (task.due_date) {
-              const dueDate = startOfDay(new Date(task.due_date));
+              const dueDate = startOfDay(
+                parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date),
+              );
               const today = startOfDay(new Date());
               const dayMs = 1000 * 60 * 60 * 24;
               const diffTime = dueDate.getTime() - today.getTime();
