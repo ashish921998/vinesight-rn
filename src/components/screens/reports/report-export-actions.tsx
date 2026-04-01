@@ -2,13 +2,14 @@ import React from 'react';
 import { View, Text, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { spacing, fontSize, fontWeight, borderRadius, shadows } from '@/styles/theme';
+import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 interface ReportExportActionsProps {
   canExport: boolean;
   isExporting: boolean;
+  exportFormat: string;
   onExportPdf: () => void;
   onDownload: () => void;
   panelStyle: object;
@@ -17,6 +18,7 @@ interface ReportExportActionsProps {
 export function ReportExportActions({
   canExport,
   isExporting,
+  exportFormat,
   onExportPdf,
   onDownload,
   panelStyle,
@@ -40,7 +42,10 @@ export function ReportExportActions({
           paddingHorizontal: spacing[4],
           gap: spacing[2],
         },
-        shadows.md,
+        {
+          borderWidth: 1,
+          borderColor: m3.colorScheme.outlineVariant,
+        },
         panelStyle,
       ]}
     >
@@ -55,7 +60,7 @@ export function ReportExportActions({
           marginBottom: spacing[1],
         }}
       >
-        {t('reports.exportAs', 'Export Report')}
+        {t('reports.exportSection', 'Export Report')}
       </Text>
 
       {/* Button row */}
@@ -78,7 +83,8 @@ export function ReportExportActions({
               : pressed
                 ? colorWithOpacity(primary, 0.85)
                 : primary,
-            ...shadows.sm,
+            borderWidth: 1,
+            borderColor: colorWithOpacity(primary, 0.2),
           })}
         >
           {isExporting ? (
@@ -86,7 +92,7 @@ export function ReportExportActions({
           ) : (
             <>
               <Icon
-                name="doc.fill"
+                name={exportFormat === 'csv' ? 'tablecells.fill' : 'doc.fill'}
                 size={18}
                 color={disabled ? colorWithOpacity(onPrimary, 0.6) : onPrimary}
               />
@@ -97,7 +103,7 @@ export function ReportExportActions({
                   color: disabled ? colorWithOpacity(onPrimary, 0.6) : onPrimary,
                 }}
               >
-                Export PDF
+                {t('reports.exportAs')} {exportFormat.toUpperCase()}
               </Text>
             </>
           )}

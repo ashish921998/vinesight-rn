@@ -26,7 +26,8 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 
-type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
+// Cellar Ledger: Task due date status type
+type TaskDueStatus = 'overdue' | 'today' | 'upcoming' | 'done';
 
 const cleanupTaskNotifications = (
   taskId: string,
@@ -51,6 +52,45 @@ const startOfDay = (date: Date) => {
   return result;
 };
 
+// Cellar Ledger: Get task due date status
+const getTaskDueStatus = (task: TaskReminder): TaskDueStatus => {
+  if (task.completed) return 'done';
+  if (!task.due_date) return 'upcoming';
+
+  const today = startOfDay(new Date());
+  const dueDate = startOfDay(new Date(task.due_date));
+
+  if (dueDate < today) return 'overdue';
+  if (dueDate.getTime() === today.getTime()) return 'today';
+  return 'upcoming';
+};
+
+// Cellar Ledger: Compute summary counts
+const computeSummaryCounts = (tasks: TaskReminder[] | null | undefined) => {
+  if (!tasks) return { pending: 0, dueToday: 0, overdue: 0 };
+
+  const today = startOfDay(new Date());
+  let pending = 0;
+  let dueToday = 0;
+  let overdue = 0;
+
+  tasks.forEach((task) => {
+    if (task.completed) return;
+    pending++;
+
+    if (task.due_date) {
+      const dueDate = startOfDay(new Date(task.due_date));
+      if (dueDate < today) {
+        overdue++;
+      } else if (dueDate.getTime() === today.getTime()) {
+        dueToday++;
+      }
+    }
+  });
+
+  return { pending, dueToday, overdue };
+};
+
 export default function TasksScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
@@ -66,7 +106,7 @@ export default function TasksScreen() {
   const taskSchedules = useNotificationStore((s) => s.taskSchedules);
   const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
 
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [completedExpanded, setCompletedExpanded] = useState(false);
   const farmIdValue = farmId ? parseInt(farmId, 10) : undefined;
 
   // Get farm name by ID
@@ -75,46 +115,50 @@ export default function TasksScreen() {
     return farm?.name || t('tasks.unknownFarm');
   };
 
-  // Filter and count tasks
-  const { filteredTasks, counts } = useMemo(() => {
-    const scopedTasks =
-      tasks && farmIdValue !== undefined ? tasks.filter((t) => t.farm_id === farmIdValue) : tasks;
+  // Farm-scoped tasks
+  const scopedTasks = useMemo(() => {
+    if (!tasks) return null;
+    return farmIdValue !== undefined ? tasks.filter((t) => t.farm_id === farmIdValue) : tasks;
+  }, [tasks, farmIdValue]);
 
-    if (!scopedTasks)
-      return { filteredTasks: [], counts: { all: 0, pending: 0, overdue: 0, completed: 0 } };
+  // Filter and count tasks - Cellar Ledger design
+  const { pendingTasks, completedTasks } = useMemo(() => {
+    if (!scopedTasks) return { pendingTasks: [], completedTasks: [] };
 
-    const todayMidnight = startOfDay(new Date());
+    const pending = scopedTasks.filter((t) => !t.completed);
+    const completed = scopedTasks.filter((t) => t.completed);
 
-    const overdueTasks = scopedTasks.filter(
-      (t) => !t.completed && t.due_date && new Date(t.due_date) < todayMidnight,
-    );
-    const pendingTasks = scopedTasks.filter((t) => !t.completed);
-    const completedTasks = scopedTasks.filter((t) => t.completed);
+    return { pendingTasks: pending, completedTasks: completed };
+  }, [scopedTasks]);
 
-    const counts = {
-      all: scopedTasks.length,
-      pending: pendingTasks.length,
-      overdue: overdueTasks.length,
-      completed: completedTasks.length,
-    };
+  // Group pending tasks by due date status for section headers
+  const { dueTodayTasks, thisWeekTasks, upcomingTasks } = useMemo(() => {
+    const today = startOfDay(new Date());
+    const endOfWeek = new Date(today);
+    endOfWeek.setDate(today.getDate() + 7); // This week = next 7 days
 
-    let filtered: TaskReminder[];
-    switch (filter) {
-      case 'pending':
-        filtered = pendingTasks;
-        break;
-      case 'overdue':
-        filtered = overdueTasks;
-        break;
-      case 'completed':
-        filtered = completedTasks;
-        break;
-      default:
-        filtered = scopedTasks;
-    }
+    const dueToday: TaskReminder[] = [];
+    const thisWeek: TaskReminder[] = [];
+    const upcoming: TaskReminder[] = [];
 
-    return { filteredTasks: filtered, counts };
-  }, [tasks, filter, farmIdValue]);
+    pendingTasks.forEach((task) => {
+      const status = getTaskDueStatus(task);
+      if (status === 'overdue' || status === 'today') {
+        dueToday.push(task);
+      } else if (task.due_date) {
+        const dueDate = startOfDay(new Date(task.due_date));
+        if (dueDate <= endOfWeek) {
+          thisWeek.push(task);
+        } else {
+          upcoming.push(task);
+        }
+      } else {
+        upcoming.push(task);
+      }
+    });
+
+    return { dueTodayTasks: dueToday, thisWeekTasks: thisWeek, upcomingTasks: upcoming };
+  }, [pendingTasks]);
 
   const handleComplete = (task: TaskReminder) => {
     if (!task.id) return;
@@ -267,110 +311,80 @@ export default function TasksScreen() {
           />
         }
       >
-        {/* Stats Cards */}
-        <View style={{ flexDirection: 'row', marginBottom: spacing[4], gap: spacing[2] }}>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: colors.surface[100],
-              borderRadius: borderRadius.xl,
-              padding: spacing[3],
-              alignItems: 'center',
-            }}
-          >
-            <Text
+        {/* Cellar Ledger: Summary Bar */}
+        {(() => {
+          const summary = computeSummaryCounts(scopedTasks);
+          return (
+            <View
               style={{
-                fontSize: fontSize['2xl'],
-                fontWeight: fontWeight.bold,
-                color: colors.surface[900],
-              }}
-            >
-              {counts.pending}
-            </Text>
-            <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-              {t('tasks.statusSummary.pending')}
-            </Text>
-          </View>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: colorWithOpacity(colors.warning, 0.12),
-              borderRadius: borderRadius.xl,
-              padding: spacing[3],
-              alignItems: 'center',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: fontSize['2xl'],
-                fontWeight: fontWeight.bold,
-                color: colors.warning,
-              }}
-            >
-              {counts.overdue}
-            </Text>
-            <Text style={{ fontSize: fontSize.xs, color: colorWithOpacity(colors.warning, 0.8) }}>
-              {t('tasks.statusSummary.overdue')}
-            </Text>
-          </View>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: colorWithOpacity(colors.success, 0.12),
-              borderRadius: borderRadius.xl,
-              padding: spacing[3],
-              alignItems: 'center',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: fontSize['2xl'],
-                fontWeight: fontWeight.bold,
-                color: colors.success,
-              }}
-            >
-              {counts.completed}
-            </Text>
-            <Text style={{ fontSize: fontSize.xs, color: colorWithOpacity(colors.success, 0.8) }}>
-              {t('tasks.statusSummary.completed')}
-            </Text>
-          </View>
-        </View>
-
-        {/* Filter Tabs */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: spacing[2] }}
-          style={{ marginBottom: spacing[4] }}
-        >
-          {(['all', 'pending', 'overdue', 'completed'] as FilterType[]).map((type) => (
-            <Pressable
-              key={type}
-              onPress={() => setFilter(type)}
-              style={{
-                paddingHorizontal: spacing[4],
+                marginBottom: spacing[4],
                 paddingVertical: spacing[2],
-                borderRadius: borderRadius.full,
-                backgroundColor: filter === type ? m3.colorScheme.primary : colors.surface[100],
+                paddingHorizontal: spacing[4],
+                backgroundColor: colors.surface[100],
+                borderRadius: borderRadius.xs,
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                flexDirection: 'row',
+                alignItems: 'center',
               }}
             >
               <Text
                 style={{
-                  fontSize: fontSize.sm,
+                  fontSize: 13,
                   fontWeight: fontWeight.medium,
-                  color: filter === type ? m3.colorScheme.onPrimary : colors.surface[600],
+                  color: colors.surface[900],
                 }}
               >
-                {t(`tasks.filters.${type}`)} (
-                {formatNumber(counts[type], { maximumFractionDigits: 0 })})
+                {formatNumber(summary.pending, { maximumFractionDigits: 0 })}{' '}
+                {t('tasks.summary.pending')}
               </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+              <View
+                style={{
+                  width: 3,
+                  height: 3,
+                  borderRadius: borderRadius.full,
+                  backgroundColor: colors.surface[400],
+                  marginHorizontal: spacing[3],
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: fontWeight.medium,
+                  color: colors.warning,
+                }}
+              >
+                {formatNumber(summary.dueToday, { maximumFractionDigits: 0 })}{' '}
+                {t('tasks.summary.dueToday')}
+              </Text>
+              <View
+                style={{
+                  width: 3,
+                  height: 3,
+                  borderRadius: borderRadius.full,
+                  backgroundColor: colors.surface[400],
+                  marginHorizontal: spacing[3],
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: fontWeight.medium,
+                  color: colors.error,
+                }}
+              >
+                {formatNumber(summary.overdue, { maximumFractionDigits: 0 })}{' '}
+                {t('tasks.summary.overdue')}
+              </Text>
+            </View>
+          );
+        })()}
 
-        {/* Task List */}
-        {filteredTasks.length === 0 ? (
+        {/* Task List - Pending Tasks */}
+        {dueTodayTasks.length === 0 &&
+        thisWeekTasks.length === 0 &&
+        upcomingTasks.length === 0 &&
+        completedTasks.length === 0 ? (
           <View
             style={{
               backgroundColor: colors.surface[100],
@@ -401,59 +415,246 @@ export default function TasksScreen() {
                 textAlign: 'center',
               }}
             >
-              {filter === 'all'
-                ? t('tasks.empty.subtitleAll')
-                : t('tasks.empty.subtitleFiltered', {
-                    filter: t(`tasks.filters.${filter}`),
-                  })}
+              {t('tasks.empty.subtitleAll')}
             </Text>
-            {filter === 'all' && (
-              <Pressable
-                onPress={() => {
-                  setAddEntry({ tabs: ['task'], initialTab: 'task' });
-                  router.push({
-                    pathname: '/add-entry',
-                    params: { tabs: 'task', initialTab: 'task' },
-                  });
-                }}
-                style={{
-                  marginTop: spacing[4],
-                  backgroundColor: m3.colorScheme.primary,
-                  paddingHorizontal: spacing[6],
-                  paddingVertical: spacing[3],
-                  borderRadius: borderRadius.xl,
-                }}
-              >
-                <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
-                  {t('tasks.cta.addTask')}
-                </Text>
-              </Pressable>
-            )}
+            <Pressable
+              onPress={() => {
+                setAddEntry({ tabs: ['task'], initialTab: 'task' });
+                router.push({
+                  pathname: '/add-entry',
+                  params: { tabs: 'task', initialTab: 'task' },
+                });
+              }}
+              style={{
+                marginTop: spacing[4],
+                backgroundColor: m3.colorScheme.primary,
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.xl,
+              }}
+            >
+              <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
+                {t('tasks.cta.addTask')}
+              </Text>
+            </Pressable>
           </View>
         ) : (
-          filteredTasks.map((task) => (
-            <View key={task.id} style={{ marginBottom: spacing[3] }}>
-              <TaskRow
-                task={task}
-                showFarmName
-                farmName={getFarmName(task.farm_id)}
-                onComplete={(item) => handleComplete(item)}
-                onLogFromTask={(item) => handleLogFromTask(item)}
-                onEdit={(item) => {
-                  setAddEntry({
-                    tabs: ['task'],
-                    initialTab: 'task',
-                    editingTask: item,
-                  });
-                  router.push({
-                    pathname: '/add-entry',
-                    params: { tabs: 'task', initialTab: 'task' },
-                  });
-                }}
-                onDelete={(item) => handleDelete(item)}
-              />
-            </View>
-          ))
+          <View>
+            {/* Due Today Section */}
+            {dueTodayTasks.length > 0 && (
+              <>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[400],
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.8,
+                    marginBottom: spacing[2],
+                    paddingHorizontal: spacing[1],
+                  }}
+                >
+                  {t('tasks.sections.dueToday')}
+                </Text>
+                {dueTodayTasks.map((task) => (
+                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
+                    <TaskRow
+                      task={task}
+                      showFarmName
+                      farmName={getFarmName(task.farm_id)}
+                      onComplete={(item) => handleComplete(item)}
+                      onLogFromTask={(item) => handleLogFromTask(item)}
+                      onEdit={(item) => {
+                        setAddEntry({
+                          tabs: ['task'],
+                          initialTab: 'task',
+                          editingTask: item,
+                        });
+                        router.push({
+                          pathname: '/add-entry',
+                          params: { tabs: 'task', initialTab: 'task' },
+                        });
+                      }}
+                      onDelete={(item) => handleDelete(item)}
+                    />
+                  </View>
+                ))}
+              </>
+            )}
+
+            {/* This Week Section */}
+            {thisWeekTasks.length > 0 && (
+              <>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[400],
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.8,
+                    marginTop: spacing[4],
+                    marginBottom: spacing[2],
+                    paddingHorizontal: spacing[1],
+                  }}
+                >
+                  {t('tasks.sections.thisWeek')}
+                </Text>
+                {thisWeekTasks.map((task) => (
+                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
+                    <TaskRow
+                      task={task}
+                      showFarmName
+                      farmName={getFarmName(task.farm_id)}
+                      onComplete={(item) => handleComplete(item)}
+                      onLogFromTask={(item) => handleLogFromTask(item)}
+                      onEdit={(item) => {
+                        setAddEntry({
+                          tabs: ['task'],
+                          initialTab: 'task',
+                          editingTask: item,
+                        });
+                        router.push({
+                          pathname: '/add-entry',
+                          params: { tabs: 'task', initialTab: 'task' },
+                        });
+                      }}
+                      onDelete={(item) => handleDelete(item)}
+                    />
+                  </View>
+                ))}
+              </>
+            )}
+
+            {/* Upcoming Section */}
+            {upcomingTasks.length > 0 && (
+              <>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[400],
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.8,
+                    marginTop: spacing[4],
+                    marginBottom: spacing[2],
+                    paddingHorizontal: spacing[1],
+                  }}
+                >
+                  {t('tasks.sections.upcoming')}
+                </Text>
+                {upcomingTasks.map((task) => (
+                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
+                    <TaskRow
+                      task={task}
+                      showFarmName
+                      farmName={getFarmName(task.farm_id)}
+                      onComplete={(item) => handleComplete(item)}
+                      onLogFromTask={(item) => handleLogFromTask(item)}
+                      onEdit={(item) => {
+                        setAddEntry({
+                          tabs: ['task'],
+                          initialTab: 'task',
+                          editingTask: item,
+                        });
+                        router.push({
+                          pathname: '/add-entry',
+                          params: { tabs: 'task', initialTab: 'task' },
+                        });
+                      }}
+                      onDelete={(item) => handleDelete(item)}
+                    />
+                  </View>
+                ))}
+              </>
+            )}
+
+            {/* Cellar Ledger: Collapsible Completed Section */}
+            {completedTasks.length > 0 && (
+              <View style={{ marginTop: spacing[6] }}>
+                {/* Section Header */}
+                <Pressable
+                  onPress={() => setCompletedExpanded(!completedExpanded)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: spacing[3],
+                    paddingHorizontal: spacing[2],
+                    backgroundColor: colors.surface[100],
+                    borderRadius: borderRadius.md,
+                    borderWidth: 1,
+                    borderColor: colors.surface[300],
+                  }}
+                >
+                  {/* Toggle Arrow */}
+                  <SFSymbol
+                    name={completedExpanded ? 'chevron.down' : 'chevron.right'}
+                    size={16}
+                    color={colors.surface[500]}
+                    style={{ marginRight: spacing[2] }}
+                  />
+                  {/* Completed Label */}
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.surface[700],
+                      flex: 1,
+                    }}
+                  >
+                    {t('tasks.sections.completed')}
+                  </Text>
+                  {/* Count Badge */}
+                  <View
+                    style={{
+                      backgroundColor: colors.surface[200],
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[1],
+                      borderRadius: borderRadius.pill,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: fontWeight.medium,
+                        color: colors.surface[600],
+                      }}
+                    >
+                      {completedTasks.length}
+                    </Text>
+                  </View>
+                </Pressable>
+
+                {/* Completed Tasks - Collapsed by default */}
+                {completedExpanded && (
+                  <View style={{ marginTop: spacing[3] }}>
+                    {completedTasks.map((task) => (
+                      <View key={task.id} style={{ marginBottom: spacing[3], opacity: 0.8 }}>
+                        <TaskRow
+                          task={task}
+                          showFarmName
+                          farmName={getFarmName(task.farm_id)}
+                          onComplete={(item) => handleComplete(item)}
+                          onLogFromTask={(item) => handleLogFromTask(item)}
+                          onEdit={(item) => {
+                            setAddEntry({
+                              tabs: ['task'],
+                              initialTab: 'task',
+                              editingTask: item,
+                            });
+                            router.push({
+                              pathname: '/add-entry',
+                              params: { tabs: 'task', initialTab: 'task' },
+                            });
+                          }}
+                          onDelete={(item) => handleDelete(item)}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
         )}
       </ScrollView>
 
@@ -476,11 +677,8 @@ export default function TasksScreen() {
           borderRadius: borderRadius.full,
           alignItems: 'center',
           justifyContent: 'center',
-          shadowColor: m3.colorScheme.shadow,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 4,
+          borderWidth: 1,
+          borderColor: colorWithOpacity(m3.colorScheme.primary, 0.3),
         }}
       >
         <SFSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />

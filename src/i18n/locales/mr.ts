@@ -2016,8 +2016,14 @@ export const mr = {
     sections: {
       dueToday: 'आज देय',
       thisWeek: 'हा आठवडा',
+      upcoming: 'आगामी',
       overdue: 'विलंबित',
       completed: 'पूर्ण',
+    },
+    summary: {
+      pending: 'प्रलंबित',
+      dueToday: 'आज देय',
+      overdue: 'विलंबित',
     },
     dueDate: {
       none: 'देय तारीख नाही',
@@ -2307,7 +2313,7 @@ export const mr = {
       lowStockCount_other: '{{count}} कमी स्टॉक',
       quantity: 'प्रमाण',
       unitPrice: 'युनिट किंमत',
-      totalValue: 'एकूण मूल्य',
+      totalValue: 'मूल्य: {{value}}',
       updatedDate: 'अपडेट {{date}}',
     },
     reorderAt: 'पुनर्भरण पातळी: {{quantity}} {{unit}}',
@@ -2627,6 +2633,14 @@ export const mr = {
       completeBody: 'सर्व $t(glossary.worker) पूर्ण!',
     },
     tapHint: '💡 दिवस टॅप करा: पूर्ण → अर्धा → अनुपस्थित → साफ करा',
+    mark: {
+      full: 'पूर्ण',
+      half: 'अर्धा',
+      absent: 'अनुपस्थित',
+      markAllPresent: 'सर्वांना उपस्थित करा',
+      workersCount: '{{count}} कामगार',
+      dailyRate: '₹{{rate}} / दिवस',
+    },
   },
 
   workerAnalyticsDetail: {
@@ -2729,6 +2743,7 @@ export const mr = {
       stockCoverage: 'अंदाजे कव्हरेज',
     },
     exportAs: 'या स्वरूपात निर्यात करा',
+    exportSection: 'रिपोर्ट निर्यात करा',
     downloadReport: 'रिपोर्ट डाउनलोड करा',
     errors: {
       unableToExport: '$t(glossary.report) निर्यात करणे अशक्य. कृपया पुन्हा प्रयत्न करा.',

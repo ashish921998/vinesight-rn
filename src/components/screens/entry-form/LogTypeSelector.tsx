@@ -38,15 +38,10 @@ export function LogTypeSelector({
         borderRadius: 20,
         padding: 18,
         marginBottom: 16,
-        borderWidth: showInlineGuidance ? 2 : 0,
+        borderWidth: showInlineGuidance ? 2 : 1,
         borderColor: showInlineGuidance
           ? colorWithOpacity(m3.colorScheme.primary, 0.7)
-          : 'transparent',
-        shadowColor: showInlineGuidance ? m3.colorScheme.primary : 'transparent',
-        shadowOpacity: showInlineGuidance ? 0.24 : 0,
-        shadowRadius: showInlineGuidance ? 12 : 0,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: showInlineGuidance ? 4 : 0,
+          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
       }}
     >
       <View style={{ marginBottom: 14 }}>
@@ -77,7 +72,7 @@ export function LogTypeSelector({
           flexDirection: 'row',
           flexWrap: 'wrap',
           justifyContent: 'space-between',
-          rowGap: 10,
+          rowGap: 8,
         }}
       >
         {ACTIVITY_TYPES.map((logType: LogType) => {
@@ -93,30 +88,26 @@ export function LogTypeSelector({
                 onSelect(selectedType);
               }}
               style={{
-                width: '31.5%',
-                minHeight: 108,
-                paddingHorizontal: 10,
-                paddingVertical: 12,
+                width: '31%',
+                minHeight: 72,
+                paddingHorizontal: 8,
+                paddingVertical: 8,
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: 16,
+                borderRadius: 12,
                 borderWidth: emphasizeSelectedGuidedCard ? 2 : 1,
+                // Cellar Ledger spec: active chip uses category color bg with white text
                 backgroundColor: isSelected
-                  ? colorWithOpacity(m3.colorScheme.primary, 0.1)
+                  ? logType.color
                   : emphasizeAllGuidedCards
                     ? colorWithOpacity(m3.colorScheme.primary, 0.03)
                     : colors.surface[50],
                 borderColor: isSelected
-                  ? colorWithOpacity(m3.colorScheme.primary, 0.28)
+                  ? logType.color
                   : emphasizeAllGuidedCards
                     ? colorWithOpacity(m3.colorScheme.primary, 0.25)
                     : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                 opacity: emphasizeAllGuidedCards ? 1 : undefined,
-                shadowColor: emphasizeSelectedGuidedCard ? m3.colorScheme.primary : 'transparent',
-                shadowOpacity: emphasizeSelectedGuidedCard ? 0.3 : 0,
-                shadowRadius: emphasizeSelectedGuidedCard ? 10 : 0,
-                shadowOffset: { width: 0, height: 3 },
-                elevation: emphasizeSelectedGuidedCard ? 5 : 0,
               }}
             >
               {isSelected ? (
@@ -130,30 +121,47 @@ export function LogTypeSelector({
                     borderRadius: 999,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
+                    backgroundColor: '#FFFFFF',
                   }}
                 >
-                  <AppIcon name="checkmark-circle" size={14} color={m3.colorScheme.primary} />
+                  <AppIcon name="checkmark-circle" size={14} color={logType.color} />
                 </View>
               ) : null}
+              {/* 8px colored dot per category - Cellar Ledger spec */}
               <View
                 style={{
-                  width: 42,
-                  height: 42,
+                  width: 8,
+                  height: 8,
+                  borderRadius: 999,
+                  backgroundColor: logType.color,
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                }}
+              />
+              <View
+                style={{
+                  width: 32,
+                  height: 32,
                   borderRadius: 999,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: 10,
-                  backgroundColor: isSelected ? `${logType.color}20` : `${logType.color}12`,
+                  marginBottom: 6,
+                  backgroundColor: isSelected ? '#FFFFFF30' : `${logType.color}12`,
                 }}
               >
-                <AppIcon name={logType.icon} size={20} color={logType.color} />
+                <AppIcon
+                  name={logType.icon}
+                  size={16}
+                  color={isSelected ? '#FFFFFF' : logType.color}
+                />
               </View>
               <Text
                 selectable
                 style={[
                   { fontSize: 12, fontWeight: '700', textAlign: 'center', lineHeight: 16 },
-                  { color: isSelected ? m3.colorScheme.primary : m3.colorScheme.onSurface },
+                  // Cellar Ledger spec: active uses white text, inactive uses onSurface
+                  { color: isSelected ? '#FFFFFF' : m3.colorScheme.onSurface },
                 ]}
                 numberOfLines={2}
               >

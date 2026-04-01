@@ -69,16 +69,10 @@ export default function LogsScreen() {
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const insets = useSafeAreaInsets();
   const currency = useCurrency();
+  // Cellar Ledger: No shadows on cards, use borders instead
   const filterCardStyle = Platform.select({
-    ios: {
-      shadowColor: m3.colorScheme.shadow,
-      shadowOffset: { width: 0, height: 5 },
-      shadowOpacity: 0.08,
-      shadowRadius: 10,
-    },
-    android: {
-      elevation: 2,
-    },
+    ios: {},
+    android: {},
     default: {},
   });
 
@@ -585,6 +579,123 @@ export default function LogsScreen() {
               </Pressable>
             </View>
 
+            {/* Filter Chips - Horizontal scroll */}
+            <View style={{ marginHorizontal: spacing[4], marginTop: spacing[3] }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: spacing[2], paddingRight: spacing[4] }}
+              >
+                <Pressable
+                  onPress={() => {
+                    if (selectedLogTypes.size === 0) {
+                      setSelectedLogTypes(
+                        new Set([
+                          'irrigation',
+                          'spray',
+                          'harvest',
+                          'expense',
+                          'fertigation',
+                        ] as LogTypeId[]),
+                      );
+                    } else {
+                      setSelectedLogTypes(new Set());
+                    }
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[2],
+                    borderRadius: borderRadius.full,
+                    backgroundColor:
+                      selectedLogTypes.size === 0
+                        ? m3.colorScheme.primary
+                        : m3.surface.surfaceContainerLow,
+                    borderWidth: 1,
+                    borderColor:
+                      selectedLogTypes.size === 0
+                        ? m3.colorScheme.primary
+                        : m3.colorScheme.outlineVariant,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.medium,
+                      color:
+                        selectedLogTypes.size === 0
+                          ? m3.colorScheme.onPrimary
+                          : m3.colorScheme.onSurfaceVariant,
+                    }}
+                  >
+                    {t('common.all')}
+                  </Text>
+                </Pressable>
+
+                {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
+                  const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
+                  const categoryColorMap: Record<string, string> = {
+                    irrigation: colors.irrigation[500] || '#3F6E78',
+                    spray: colors.spray[500] || '#6C7C46',
+                    harvest: colors.harvest[500] || '#A9752F',
+                    expense: colors.labour[500] || '#7A5E8E',
+                    fertigation: colors.fertigation[500] || '#56704E',
+                  };
+                  const chipColor = categoryColorMap[logType.id] || m3.colorScheme.primary;
+                  return (
+                    <Pressable
+                      key={logType.id}
+                      onPress={() => {
+                        const newSet = new Set(selectedLogTypes);
+                        if (isSelected) {
+                          newSet.delete(logType.id as LogTypeId);
+                        } else {
+                          newSet.add(logType.id as LogTypeId);
+                        }
+                        setSelectedLogTypes(newSet);
+                        setCurrentPage(1);
+                      }}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingHorizontal: spacing[4],
+                        paddingVertical: spacing[2],
+                        borderRadius: borderRadius.full,
+                        backgroundColor: isSelected
+                          ? m3.colorScheme.primary
+                          : m3.surface.surfaceContainerLow,
+                        borderWidth: 1,
+                        borderColor: isSelected
+                          ? m3.colorScheme.primary
+                          : m3.colorScheme.outlineVariant,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: chipColor,
+                          marginRight: spacing[1],
+                        }}
+                      />
+                      <Text
+                        style={{
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.medium,
+                          color: isSelected
+                            ? m3.colorScheme.onPrimary
+                            : m3.colorScheme.onSurfaceVariant,
+                        }}
+                      >
+                        {t(logType.labelKey)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
             {/* Search & Filters */}
             <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
               <View
@@ -985,193 +1096,293 @@ export default function LogsScreen() {
                     </Pressable>
                   </View>
 
-                  <View style={{ gap: spacing[3] }}>
-                    {paginatedLogs.map((log) => {
-                      const logType = LOG_TYPES.find((lt) => lt.id === log.type);
-                      const iconName =
-                        log.type === 'expense'
-                          ? getExpenseIconName(
-                              (log.data as ExpenseRecord | undefined)?.type,
-                              resolveSymbolIconName(logType?.icon),
-                            )
-                          : resolveSymbolIconName(logType?.icon);
-                      const parsedDate = new Date(log.date);
-                      return (
-                        <View
-                          key={log.id}
-                          style={{
-                            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
-                            borderRadius: borderRadius['2xl'],
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              padding: spacing[4],
-                            }}
-                          >
-                            <View
-                              style={{
-                                width: 44,
-                                height: 44,
-                                borderRadius: borderRadius.full,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: colorWithOpacity(
-                                  logType?.color || m3.colorScheme.primary,
-                                  0.12,
-                                ),
-                              }}
-                            >
-                              <UiSymbol
-                                name={iconName}
-                                size={20}
-                                color={logType?.color || m3.colorScheme.primary}
-                              />
-                            </View>
-                            <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                              <Text
-                                style={{
-                                  fontSize: fontSize.sm,
-                                  fontWeight: fontWeight.semibold,
-                                  color: colors.surface[900],
-                                }}
-                              >
-                                {logType ? t(logType.labelKey) : t('entryForm.addLog')}
-                              </Text>
+                  {/* Group logs by date */}
+                  {(() => {
+                    // Group logs by date string (YYYY-MM-DD)
+                    const groupedLogs: Record<string, typeof paginatedLogs> = {};
+                    paginatedLogs.forEach((log) => {
+                      const dateKey = log.date.split('T')[0];
+                      if (!groupedLogs[dateKey]) {
+                        groupedLogs[dateKey] = [];
+                      }
+                      groupedLogs[dateKey].push(log);
+                    });
+
+                    // Sort dates descending
+                    const sortedDates = Object.keys(groupedLogs).sort(
+                      (a, b) => new Date(b).getTime() - new Date(a).getTime(),
+                    );
+
+                    return (
+                      <View style={{ gap: spacing[4] }}>
+                        {sortedDates.map((dateKey) => {
+                          const dateObj = new Date(dateKey);
+                          const formattedDate = formatDate(dateObj, {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          }).toUpperCase();
+
+                          return (
+                            <View key={dateKey}>
+                              {/* Date Group Header */}
                               <Text
                                 style={{
                                   fontSize: fontSize.xs,
-                                  color: colors.surface[500],
-                                  marginTop: 2,
+                                  fontWeight: fontWeight.semibold,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: 0.8,
+                                  color: colors.surface[400],
+                                  marginBottom: spacing[2],
+                                  paddingLeft: spacing[1],
                                 }}
-                                numberOfLines={1}
                               >
-                                {log.description}
+                                {formattedDate}
                               </Text>
-                              <View
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  marginTop: spacing[1],
-                                  gap: spacing[2],
-                                }}
-                              >
-                                <Text
-                                  style={{
-                                    fontSize: fontSize.xs,
-                                    color: colors.surface[500],
-                                  }}
-                                >
-                                  {formatDate(parsedDate, {
-                                    weekday: 'short',
-                                    month: 'short',
-                                    day: 'numeric',
-                                  })}
-                                </Text>
-                                {log.daysAfterPruning != null && (
-                                  <View
-                                    style={{
-                                      borderRadius: borderRadius.full,
-                                      paddingHorizontal: spacing[2],
-                                      paddingVertical: 2,
-                                      backgroundColor: colorWithOpacity(
-                                        m3.colorScheme.primary,
-                                        0.12,
-                                      ),
-                                    }}
-                                  >
-                                    <Text
+
+                              {/* Logs for this date */}
+                              <View style={{ gap: spacing[3] }}>
+                                {groupedLogs[dateKey].map((log) => {
+                                  const logType = LOG_TYPES.find((lt) => lt.id === log.type);
+                                  // Category colors for left strip - using Cellar Ledger palette
+                                  const categoryColorMap: Record<string, string> = {
+                                    irrigation: colors.irrigation[500] || '#3F6E78',
+                                    spray: colors.spray[500] || '#6C7C46',
+                                    harvest: colors.harvest[500] || '#A9752F',
+                                    expense: colors.labour[500] || '#7A5E8E',
+                                    fertigation: colors.fertigation[500] || '#56704E',
+                                  };
+                                  const categoryColor =
+                                    categoryColorMap[log.type] || m3.colorScheme.primary;
+                                  const iconName =
+                                    log.type === 'expense'
+                                      ? getExpenseIconName(
+                                          (log.data as ExpenseRecord | undefined)?.type,
+                                          resolveSymbolIconName(logType?.icon),
+                                        )
+                                      : resolveSymbolIconName(logType?.icon);
+                                  const parsedDate = new Date(log.date);
+                                  return (
+                                    <View
+                                      key={log.id}
                                       style={{
-                                        fontSize: fontSize.xs,
-                                        fontWeight: fontWeight.semibold,
-                                        color: m3.colorScheme.primary,
+                                        backgroundColor: m3.surface.surfaceContainerLow,
+                                        borderRadius: borderRadius.sm,
+                                        overflow: 'hidden',
+                                        flexDirection: 'row',
+                                        borderWidth: 1,
+                                        borderColor: m3.colorScheme.outlineVariant,
                                       }}
                                     >
-                                      {t('farmDetails.pruning.daysShort', {
-                                        count: log.daysAfterPruning,
-                                      })}
-                                    </Text>
-                                  </View>
-                                )}
+                                      {/* 3px category-colored left strip */}
+                                      <View
+                                        style={{
+                                          width: 3,
+                                          backgroundColor: categoryColor,
+                                        }}
+                                      />
+                                      <View
+                                        style={{
+                                          flex: 1,
+                                          flexDirection: 'row',
+                                          alignItems: 'center',
+                                          padding: spacing[4],
+                                        }}
+                                      >
+                                        <View
+                                          style={{
+                                            width: 34,
+                                            height: 34,
+                                            borderRadius: borderRadius.xs,
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            backgroundColor: colorWithOpacity(categoryColor, 0.1),
+                                          }}
+                                        >
+                                          <UiSymbol
+                                            name={iconName}
+                                            size={18}
+                                            color={categoryColor}
+                                          />
+                                        </View>
+                                        <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                                          <View
+                                            style={{
+                                              flexDirection: 'row',
+                                              alignItems: 'center',
+                                              gap: spacing[2],
+                                              marginBottom: 3,
+                                            }}
+                                          >
+                                            <Text
+                                              style={{
+                                                fontSize: fontSize.xs,
+                                                fontWeight: fontWeight.semibold,
+                                                textTransform: 'uppercase',
+                                                letterSpacing: 0.5,
+                                                color: categoryColor,
+                                                paddingHorizontal: spacing[2],
+                                                paddingVertical: 2,
+                                                borderRadius: borderRadius.full,
+                                                backgroundColor: colorWithOpacity(
+                                                  categoryColor,
+                                                  0.1,
+                                                ),
+                                              }}
+                                            >
+                                              {logType
+                                                ? t(logType.labelKey).toUpperCase()
+                                                : t('entryForm.addLog')}
+                                            </Text>
+                                          </View>
+                                          <Text
+                                            style={{
+                                              fontSize: fontSize.base,
+                                              fontWeight: fontWeight.medium,
+                                              color: colors.surface[900],
+                                            }}
+                                            numberOfLines={1}
+                                          >
+                                            {log.description}
+                                          </Text>
+                                          <View
+                                            style={{
+                                              flexDirection: 'row',
+                                              alignItems: 'center',
+                                              marginTop: spacing[1],
+                                              gap: spacing[1],
+                                            }}
+                                          >
+                                            <Text
+                                              style={{
+                                                fontSize: fontSize.xs,
+                                                color: colors.surface[500],
+                                              }}
+                                            >
+                                              {formatDate(parsedDate, {
+                                                month: 'short',
+                                                day: 'numeric',
+                                              })}
+                                            </Text>
+                                            {log.daysAfterPruning != null && (
+                                              <>
+                                                <View
+                                                  style={{
+                                                    width: 3,
+                                                    height: 3,
+                                                    borderRadius: 1.5,
+                                                    backgroundColor: colors.surface[400],
+                                                  }}
+                                                />
+                                                <Text
+                                                  style={{
+                                                    fontSize: fontSize.xs,
+                                                    fontWeight: fontWeight.medium,
+                                                    color: colors.surface[500],
+                                                  }}
+                                                >
+                                                  {t('farmDetails.pruning.daysShort', {
+                                                    count: log.daysAfterPruning,
+                                                  })}
+                                                </Text>
+                                              </>
+                                            )}
+                                          </View>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                                          <Pressable
+                                            onPress={() => {
+                                              const logFarm =
+                                                selectedFarm ||
+                                                farms.find(
+                                                  (f) =>
+                                                    f.id ===
+                                                    (log.data as { farm_id?: number }).farm_id,
+                                                );
+                                              if (!logFarm) {
+                                                Alert.alert(
+                                                  t('common.error'),
+                                                  t('common.errors.farmNotFoundForLog'),
+                                                );
+                                                return;
+                                              }
+                                              setEditActivity({
+                                                farm: logFarm,
+                                                logType: log.type,
+                                                record: log.data,
+                                              });
+                                              router.push(`/log-entry/edit/${log.id}`);
+                                            }}
+                                            disabled={
+                                              !(
+                                                selectedFarm ||
+                                                (log.data as { farm_id?: number }).farm_id
+                                              )
+                                            }
+                                            style={({ pressed }) => ({
+                                              width: 44,
+                                              height: 44,
+                                              borderRadius: borderRadius.xl,
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              backgroundColor: pressed
+                                                ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                                                : 'transparent',
+                                              opacity:
+                                                selectedFarm ||
+                                                (log.data as { farm_id?: number }).farm_id
+                                                  ? 1
+                                                  : 0.5,
+                                            })}
+                                          >
+                                            <UiSymbol
+                                              name="pencil"
+                                              size={20}
+                                              color={
+                                                selectedFarm ||
+                                                (log.data as { farm_id?: number }).farm_id
+                                                  ? m3.colorScheme.primary
+                                                  : colorWithOpacity(
+                                                      m3.colorScheme.onSurfaceVariant,
+                                                      0.6,
+                                                    )
+                                              }
+                                            />
+                                          </Pressable>
+                                          <Pressable
+                                            onPress={() => {
+                                              setDeletingLog(log);
+                                              setShowDeleteConfirmation(true);
+                                            }}
+                                            style={({ pressed }) => ({
+                                              width: 44,
+                                              height: 44,
+                                              borderRadius: borderRadius.xl,
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              backgroundColor: pressed
+                                                ? colorWithOpacity(m3.colorScheme.error, 0.12)
+                                                : 'transparent',
+                                            })}
+                                          >
+                                            <UiSymbol
+                                              name="trash"
+                                              size={20}
+                                              color={m3.colorScheme.error}
+                                            />
+                                          </Pressable>
+                                        </View>
+                                      </View>
+                                    </View>
+                                  );
+                                })}
                               </View>
                             </View>
-                            <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-                              <Pressable
-                                onPress={() => {
-                                  const logFarm =
-                                    selectedFarm ||
-                                    farms.find(
-                                      (f) => f.id === (log.data as { farm_id?: number }).farm_id,
-                                    );
-                                  if (!logFarm) {
-                                    Alert.alert(
-                                      t('common.error'),
-                                      t('common.errors.farmNotFoundForLog'),
-                                    );
-                                    return;
-                                  }
-                                  setEditActivity({
-                                    farm: logFarm,
-                                    logType: log.type,
-                                    record: log.data,
-                                  });
-                                  router.push(`/log-entry/edit/${log.id}`);
-                                }}
-                                disabled={
-                                  !(selectedFarm || (log.data as { farm_id?: number }).farm_id)
-                                }
-                                style={({ pressed }) => ({
-                                  width: 44,
-                                  height: 44,
-                                  borderRadius: borderRadius.xl,
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  backgroundColor: pressed
-                                    ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                                    : 'transparent',
-                                  opacity:
-                                    selectedFarm || (log.data as { farm_id?: number }).farm_id
-                                      ? 1
-                                      : 0.5,
-                                })}
-                              >
-                                <UiSymbol
-                                  name="pencil"
-                                  size={20}
-                                  color={
-                                    selectedFarm || (log.data as { farm_id?: number }).farm_id
-                                      ? m3.colorScheme.primary
-                                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
-                                  }
-                                />
-                              </Pressable>
-                              <Pressable
-                                onPress={() => {
-                                  setDeletingLog(log);
-                                  setShowDeleteConfirmation(true);
-                                }}
-                                style={({ pressed }) => ({
-                                  width: 44,
-                                  height: 44,
-                                  borderRadius: borderRadius.xl,
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  backgroundColor: pressed
-                                    ? colorWithOpacity(m3.colorScheme.error, 0.12)
-                                    : 'transparent',
-                                })}
-                              >
-                                <UiSymbol name="trash" size={20} color={m3.colorScheme.error} />
-                              </Pressable>
-                            </View>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })()}
 
                   {/* Pagination */}
                   {totalPages > 1 && (
@@ -1292,14 +1503,9 @@ export default function LogsScreen() {
                 width: 56,
                 height: 56,
                 backgroundColor: m3.colorScheme.primary,
-                borderRadius: borderRadius.full,
+                borderRadius: 18,
                 alignItems: 'center',
                 justifyContent: 'center',
-                shadowColor: m3.colorScheme.shadow,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
-                shadowRadius: 8,
-                elevation: 4,
               }}
               accessibilityRole="button"
               accessibilityLabel={t('logs.cta.addActivity')}

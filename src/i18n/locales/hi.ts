@@ -2009,8 +2009,14 @@ export const hi = {
     sections: {
       dueToday: 'आज देय',
       thisWeek: 'इस सप्ताह',
+      upcoming: 'आगामी',
       overdue: 'अतिदेय',
       completed: 'पूर्ण',
+    },
+    summary: {
+      pending: 'शेष',
+      dueToday: 'आज देय',
+      overdue: 'अतिदेय',
     },
     dueDate: {
       none: 'कोई नियत तारीख नहीं',
@@ -2299,7 +2305,7 @@ export const hi = {
       lowStockCount_other: '{{count}} कम स्टॉक',
       quantity: 'मात्रा',
       unitPrice: 'इकाई मूल्य',
-      totalValue: 'कुल मूल्य',
+      totalValue: 'मूल्य: {{value}}',
       updatedDate: 'अपडेट {{date}}',
     },
     reorderAt: 'पुनः ऑर्डर करें: {{quantity}} {{unit}}',
@@ -2617,6 +2623,14 @@ export const hi = {
       completeTitle: 'पूर्ण',
       completeBody: 'सभी श्रमिक पूर्ण!',
     },
+    mark: {
+      full: 'पूर्ण',
+      half: 'आधा',
+      absent: 'अनुपस्थित',
+      markAllPresent: 'सभी को उपस्थित करें',
+      workersCount: '{{count}} श्रमिक',
+      dailyRate: '₹{{rate}} / दिन',
+    },
   },
 
   workerAnalyticsDetail: {
@@ -2719,6 +2733,7 @@ export const hi = {
       stockCoverage: 'अनुमानित कवरेज',
     },
     exportAs: 'के रूप में निर्यात करें',
+    exportSection: 'रिपोर्ट निर्यात करें',
     downloadReport: 'रिपोर्ट डाउनलोड करें',
     errors: {
       unableToExport: 'रिपोर्ट निर्यात करने में असमर्थ। कृपया पुनः प्रयास करें।',
