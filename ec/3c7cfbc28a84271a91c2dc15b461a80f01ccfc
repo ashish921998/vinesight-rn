@@ -1,0 +1,25 @@
+src/stores/auth-account.ts
+  5c49f25f21a5da48 32
+src/stores/auth-store.ts
+  5c49f25f21a5da48 10,191
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "ec3c7cfbc28a84271a91c2dc15b461a80f01ccfc",
+  "prompts": {
+    "5c49f25f21a5da48": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4927d6ee-06cb-4c9d-b040-9cb552a2b4ab",
+        "model": "kimi-k2.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 2,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
