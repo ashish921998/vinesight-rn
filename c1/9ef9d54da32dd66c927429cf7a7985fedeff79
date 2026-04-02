@@ -1,0 +1,23 @@
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  a8bba205a97cad7f 786,791,795-797,803-824,826-836,839-841,843-845
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "c19ef9d54da32dd66c927429cf7a7985fedeff79",
+  "prompts": {
+    "a8bba205a97cad7f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d4c9c-e6c5-70b0-b845-535f9644f5e5",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 52,
+      "total_deletions": 13,
+      "accepted_lines": 44,
+      "overriden_lines": 2
+    }
+  }
+}
