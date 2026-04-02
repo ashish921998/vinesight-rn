@@ -706,7 +706,7 @@ export default function TasksScreen() {
                         color: colors.surface[600],
                       }}
                     >
-                      {completedTasks.length}
+                      {formatNumber(completedTasks.length, { maximumFractionDigits: 0 })}
                     </Text>
                   </View>
                 </Pressable>

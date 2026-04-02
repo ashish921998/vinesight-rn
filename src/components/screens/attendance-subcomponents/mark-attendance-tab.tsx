@@ -331,7 +331,7 @@ export function MarkAttendanceTab({
     } finally {
       setLoading(false);
     }
-  }, [workers, selectedWorker, dateRange, selectedDate, farms, t]);
+  }, [workers, selectedWorker, dateRange, farms, t]);
 
   React.useEffect(() => {
     loadSavedRange();
@@ -732,6 +732,10 @@ export function MarkAttendanceTab({
         >
           <Pressable
             onPress={() => handleDateNavigation('prev')}
+            accessibilityRole="button"
+            accessibilityLabel={t('attendance.a11y.previousDate', {
+              defaultValue: 'Previous date',
+            })}
             style={({ pressed }) => ({
               width: 32,
               height: 32,
@@ -759,6 +763,8 @@ export function MarkAttendanceTab({
           </Text>
           <Pressable
             onPress={() => handleDateNavigation('next')}
+            accessibilityRole="button"
+            accessibilityLabel={t('attendance.a11y.nextDate', { defaultValue: 'Next date' })}
             style={({ pressed }) => ({
               width: 32,
               height: 32,
@@ -867,6 +873,9 @@ export function MarkAttendanceTab({
                   onPress={() =>
                     worker.id !== undefined && handleWorkerAttendanceChange(worker.id, 'full_day')
                   }
+                  accessibilityRole="button"
+                  accessibilityLabel={t('attendance.mark.full')}
+                  accessibilityState={{ selected: status === 'full_day' }}
                   style={{
                     paddingHorizontal: spacing[2] + 2,
                     paddingVertical: spacing[1],
@@ -902,6 +911,9 @@ export function MarkAttendanceTab({
                   onPress={() =>
                     worker.id !== undefined && handleWorkerAttendanceChange(worker.id, 'half_day')
                   }
+                  accessibilityRole="button"
+                  accessibilityLabel={t('attendance.mark.half')}
+                  accessibilityState={{ selected: status === 'half_day' }}
                   style={{
                     paddingHorizontal: spacing[2] + 2,
                     paddingVertical: spacing[1],
@@ -937,6 +949,9 @@ export function MarkAttendanceTab({
                   onPress={() =>
                     worker.id !== undefined && handleWorkerAttendanceChange(worker.id, 'absent')
                   }
+                  accessibilityRole="button"
+                  accessibilityLabel={t('attendance.mark.absent')}
+                  accessibilityState={{ selected: status === 'absent' }}
                   style={{
                     paddingHorizontal: spacing[2] + 2,
                     paddingVertical: spacing[1],
@@ -1225,6 +1240,8 @@ async function fetchAttendanceForWorkers(
   startDate: string,
   endDate: string,
 ): Promise<WorkerAttendance[]> {
+  if (workerIds.length === 0) return [];
+
   const { data, error } = await supabase
     .from('worker_attendance')
     .select('*')
