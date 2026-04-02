@@ -1,0 +1,27 @@
+app/warehouse.tsx
+  9eb82b1048dd63b2 56-58
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  9eb82b1048dd63b2 187,189,203,223-226,242-260,269-296,411,436,443-455
+app/tasks.tsx
+  9eb82b1048dd63b2 661
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "180c302d66c558ca5a73cf5966c82a5abf4f0efa",
+  "prompts": {
+    "9eb82b1048dd63b2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d4db7-8204-7912-b8ae-4c65ea430a2a",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 73,
+      "total_deletions": 30,
+      "accepted_lines": 73,
+      "overriden_lines": 0
+    }
+  }
+}
