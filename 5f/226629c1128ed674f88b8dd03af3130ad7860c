@@ -1,0 +1,25 @@
+app/(tabs)/settings.tsx
+  8f9e0df7cff1b197 363
+src/stores/auth-account.ts
+  8f9e0df7cff1b197 96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "5f226629c1128ed674f88b8dd03af3130ad7860c",
+  "prompts": {
+    "8f9e0df7cff1b197": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1c1819e5-20d7-4ec4-aed9-3e1374ece804",
+        "model": "kimi-k2.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 1,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
