@@ -783,27 +783,66 @@ export function MarkAttendanceTab({
           </Pressable>
         </View>
 
-        {/* NEW: Summary Pill */}
+        {/* NEW: Summary Pill + Farm Selector */}
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: spacing[2],
+            justifyContent: 'space-between',
             marginBottom: spacing[3],
           }}
         >
-          <View
-            style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.success }}
-          />
-          <Text
-            style={{
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.medium,
-              color: m3.colorScheme.onSurface,
-            }}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+            <View
+              style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.success }}
+            />
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: m3.colorScheme.onSurface,
+              }}
+            >
+              {t('attendance.mark.workersCount', { count: workers.length })}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => setFarmSheetVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('attendance.a11y.selectFarm', { defaultValue: 'Select farm' })}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: spacing[1],
+              paddingVertical: spacing[1],
+              paddingHorizontal: spacing[2],
+              borderRadius: borderRadius.sm,
+              borderWidth: 1,
+              borderColor: m3.colorScheme.outlineVariant,
+              backgroundColor: m3.colorScheme.surface,
+              opacity: pressed ? 0.7 : 1,
+            })}
           >
-            {t('attendance.mark.workersCount', { count: workers.length })}
-          </Text>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: m3.colorScheme.primary,
+              }}
+              numberOfLines={1}
+            >
+              {selectedFarmIds.length === 0
+                ? t('attendance.mark.selectFarm', { defaultValue: 'Select Farm' })
+                : selectedFarmIds.length === 1
+                  ? (farms.find((f) => f.id === selectedFarmIds[0])?.name ??
+                    t('attendance.mark.farm', { defaultValue: 'Farm' }))
+                  : t('attendance.mark.farmsCount', {
+                      count: selectedFarmIds.length,
+                      defaultValue: '{{count}} Farms',
+                    })}
+            </Text>
+            <Text style={{ fontSize: 12, color: m3.colorScheme.primary }}>▾</Text>
+          </Pressable>
         </View>
 
         {/* NEW: Worker List */}
