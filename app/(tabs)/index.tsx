@@ -1134,7 +1134,7 @@ export default function DashboardScreen() {
                         flexShrink: 0,
                       }}
                     >
-                      {formatDate(activity.date)}
+                      {formatDate(activity.date, { month: 'short', day: 'numeric' })}
                     </Text>
                   </Pressable>
                 ))}
