@@ -1,0 +1,39 @@
+app/(tabs)/settings.tsx
+  b051f656a4953664 321,328
+  c2c4ff0e853b1a8f 310
+src/components/screens/settings/ProfileSection.tsx
+  b051f656a4953664 12,117-118,259
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "778d2825ed8c34c39860c0b38d2c76d9e7182b55",
+  "prompts": {
+    "b051f656a4953664": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a322859d-2b0e-447a-8a5d-eee2cad6b49e",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 2,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    },
+    "c2c4ff0e853b1a8f": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a1325ef9-c204-435d-bcb5-e3e052c02172",
+        "model": "minimax-m2.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
