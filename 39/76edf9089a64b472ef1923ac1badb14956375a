@@ -1,0 +1,29 @@
+src/i18n/locales/hi.ts
+  c7b1d791baf2bdce 2026-2027
+app/(tabs)/index.tsx
+  c7b1d791baf2bdce 936-937,967-968,998-999,1029-1030,1089-1094
+src/i18n/locales/en.ts
+  c7b1d791baf2bdce 2019-2020
+src/i18n/locales/mr.ts
+  c7b1d791baf2bdce 2036-2037
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "3976edf9089a64b472ef1923ac1badb14956375a",
+  "prompts": {
+    "c7b1d791baf2bdce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d4e20-5059-7b40-8749-c78c108dc7b2",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 0,
+      "accepted_lines": 20,
+      "overriden_lines": 0
+    }
+  }
+}
