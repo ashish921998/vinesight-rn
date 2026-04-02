@@ -933,6 +933,8 @@ export default function DashboardScreen() {
                 <Pressable
                   onPress={() => handleQuickAction('irrigation')}
                   style={{ alignItems: 'center', minWidth: 68 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.quickActions.irrigation')}
                 >
                   <View
                     style={{
@@ -962,6 +964,8 @@ export default function DashboardScreen() {
                 <Pressable
                   onPress={() => handleQuickAction('spray')}
                   style={{ alignItems: 'center', minWidth: 68 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.quickActions.spray')}
                 >
                   <View
                     style={{
@@ -991,6 +995,8 @@ export default function DashboardScreen() {
                 <Pressable
                   onPress={() => handleQuickAction('expense')}
                   style={{ alignItems: 'center', minWidth: 68 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.quickActions.expense')}
                 >
                   <View
                     style={{
@@ -1020,6 +1026,8 @@ export default function DashboardScreen() {
                 <Pressable
                   onPress={() => handleQuickAction('note')}
                   style={{ alignItems: 'center', minWidth: 68 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.quickActions.note')}
                 >
                   <View
                     style={{
@@ -1078,6 +1086,12 @@ export default function DashboardScreen() {
                   <Pressable
                     key={activity.id}
                     onPress={() => handleFarmAttention(activity.farmId)}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      activity.farmName
+                        ? t('dashboard.recentActivity.openFarm', { name: activity.farmName })
+                        : t('dashboard.recentActivity.openFarmDetails')
+                    }
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',

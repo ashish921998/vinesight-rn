@@ -2033,6 +2033,8 @@ export const mr = {
     },
     recentActivity: {
       title: 'अलीकडील क्रियाकलाप',
+      openFarm: '{{name}} चे $t(glossary.farm) तपशील उघडा',
+      openFarmDetails: '$t(glossary.farm) तपशील उघडा',
     },
     empty: {
       recentActivity: 'अजून अलीकडील क्रियाकलाप नाहीत.\nसुरू करण्यासाठी नोंद जोडा.',

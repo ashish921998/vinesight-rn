@@ -2016,6 +2016,8 @@ export const en = {
     },
     recentActivity: {
       title: 'Recent activity',
+      openFarm: 'Open farm details for {{name}}',
+      openFarmDetails: 'Open farm details',
     },
     empty: {
       recentActivity: 'No recent activity yet.\nAdd an entry to get started.',
