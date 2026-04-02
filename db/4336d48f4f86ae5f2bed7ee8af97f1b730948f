@@ -1,0 +1,23 @@
+app/tasks.tsx
+  1e5bfb320b21b3d2 422-431
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "db4336d48f4f86ae5f2bed7ee8af97f1b730948f",
+  "prompts": {
+    "1e5bfb320b21b3d2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2b35e3c92ffemyWnwTUHcag6aD",
+        "model": "zai-coding-plan/glm-5.1"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 5,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
