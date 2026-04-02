@@ -1,0 +1,25 @@
+app/tasks.tsx
+  277493c6c8c128d5 709
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  277493c6c8c128d5 735-736,738,766-767,876-878,914-916,952-954,1243-1244
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "775f0440b4533ac3d6a8a1b0fe5ffafd389bfa23",
+  "prompts": {
+    "277493c6c8c128d5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d4c9b-6048-7922-abd3-9fd3a8479668",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 2,
+      "accepted_lines": 17,
+      "overriden_lines": 1
+    }
+  }
+}
