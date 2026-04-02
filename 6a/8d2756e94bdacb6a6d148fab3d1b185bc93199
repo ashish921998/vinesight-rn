@@ -1,0 +1,23 @@
+app/(tabs)/index.tsx
+  5bfa78fb9dbfe14d 1137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "6a8d2756e94bdacb6a6d148fab3d1b185bc93199",
+  "prompts": {
+    "5bfa78fb9dbfe14d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d4e13-adf5-79f0-b325-a005868d0283",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
