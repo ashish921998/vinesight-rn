@@ -1,0 +1,29 @@
+src/i18n/locales/mr.ts
+  4377e57cb12b722b 2727
+src/i18n/locales/hi.ts
+  4377e57cb12b722b 2715
+src/i18n/locales/en.ts
+  4377e57cb12b722b 2715
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  4377e57cb12b722b 92,202,212-213,270,273-275,471-482
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "2d56af7cbd88171bef25ef7800ed23ea163a411d",
+  "prompts": {
+    "4377e57cb12b722b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d4e6e-ded1-77e1-b956-66f5b7a03c56",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 2,
+      "accepted_lines": 23,
+      "overriden_lines": 0
+    }
+  }
+}
