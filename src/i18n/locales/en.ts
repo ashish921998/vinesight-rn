@@ -2712,6 +2712,7 @@ export const en = {
       partialErrorBody: 'Saved with {{count}} error(s). Reloading…',
       savedTitle: 'Success',
       savedBody: 'Saved attendance for {{name}}.',
+      workerCount: '{{count}} workers',
       completeTitle: 'Complete',
       completeBody: 'All workers completed!',
     },

@@ -2712,6 +2712,7 @@ export const hi = {
       partialErrorBody: '{{count}} त्रुटि के साथ सहेजा गया। पुनः लोड हो रहा है…',
       savedTitle: 'सफलता',
       savedBody: '{{name}} के लिए $t(glossary.attendance) सहेजी गई।',
+      workerCount: '{{count}} श्रमिक',
       completeTitle: 'पूर्ण',
       completeBody: 'सभी श्रमिक पूर्ण!',
     },

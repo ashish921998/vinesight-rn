@@ -89,6 +89,7 @@ export function MarkAttendanceTab({
   const [isRangeLoaded, setIsRangeLoaded] = useState(false);
 
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestLoadRef = useRef(0);
 
   React.useEffect(() => {
     return () => {
@@ -198,6 +199,7 @@ export function MarkAttendanceTab({
   const loadAttendance = React.useCallback(async () => {
     if (workers.length === 0 || dateRange.length === 0) return;
 
+    const loadToken = ++latestLoadRef.current;
     setLoading(true);
     try {
       const startDate = formatDate(dateRange[0]);
@@ -206,6 +208,8 @@ export function MarkAttendanceTab({
       // Fetch attendance records for all workers
       const workerIds = workers.map((w) => w.id).filter((id): id is number => id !== undefined);
       const records = await fetchAttendanceForWorkers(workerIds, startDate, endDate);
+
+      if (loadToken !== latestLoadRef.current) return;
 
       setCellData((prev) => {
         const merged = new Map<string, CellData>();
@@ -263,9 +267,12 @@ export function MarkAttendanceTab({
         ),
       );
     } catch {
+      if (loadToken !== latestLoadRef.current) return;
       Alert.alert(t('common.error'), t('common.errors.failedToLoadAttendanceData'));
     } finally {
-      setLoading(false);
+      if (loadToken === latestLoadRef.current) {
+        setLoading(false);
+      }
     }
   }, [workers, dateRange, farms, t, selectedDate, getSharedFarmIdsForDate]);
 
@@ -461,7 +468,18 @@ export function MarkAttendanceTab({
     }
 
     triggerHapticSuccess();
-    showToast(t('attendance.alerts.savedBody', { name: selectedWorker?.name ?? '' }), 'success');
+    const savedWorkerIds = new Set(modifiedCells.map((c) => c.workerId));
+    const savedWorkerNames = workers
+      .filter((w) => w.id !== undefined && savedWorkerIds.has(w.id))
+      .map((w) => w.name);
+    const toastName =
+      savedWorkerNames.length === 1
+        ? (savedWorkerNames[0] ?? '')
+        : t('attendance.alerts.workerCount', {
+            count: savedWorkerNames.length,
+            defaultValue: '{{count}} workers',
+          });
+    showToast(t('attendance.alerts.savedBody', { name: toastName }), 'success');
     onSaveSuccess();
     // Clear isModified flags so loadAttendance won't skip successfully-saved cells
     setCellData((prev) => {

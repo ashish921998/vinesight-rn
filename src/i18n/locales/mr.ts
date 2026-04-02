@@ -2724,6 +2724,7 @@ export const mr = {
       partialErrorBody: '{{count}} त्रुटीसह जतन झाले. पुन्हा लोड होत आहे…',
       savedTitle: 'यशस्वी',
       savedBody: '{{name}} साठी $t(glossary.attendance) जतन झाली.',
+      workerCount: '{{count}} कामगार',
       completeTitle: 'पूर्ण',
       completeBody: 'सर्व $t(glossary.worker) पूर्ण!',
     },
