@@ -287,7 +287,6 @@ export default function SettingsScreen() {
     try {
       await updateProfile.mutateAsync({
         full_name: name || undefined,
-        currency_preference: selectedCurrency,
       });
       refetchProfile();
     } catch (error) {
@@ -340,8 +339,7 @@ export default function SettingsScreen() {
 
   const handleConfirmDeleteAccount = async (reason: string) => {
     await deleteAccount(reason);
-    setShowDeleteAccount(false);
-    // Note: DeleteAccountModal handles success/failure alerts, we just close the modal
+    // Note: DeleteAccountModal handles success/failure alerts and modal closing
     // If deleteAccount throws, it propagates up so DeleteAccountModal can show error alert
   };
 
@@ -362,7 +360,7 @@ export default function SettingsScreen() {
         styles={styles}
         colors={colors}
         m3={m3}
-        profile={profile ?? undefined}
+        profile={profile ?? { full_name: userName }}
         onSaveProfile={handleSaveProfile}
         onOpenLinkPhone={handleOpenLinkPhone}
       />
