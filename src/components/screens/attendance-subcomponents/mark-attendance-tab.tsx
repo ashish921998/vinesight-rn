@@ -90,8 +90,6 @@ export function MarkAttendanceTab({
 
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const prevWorkerIdRef = useRef<number | undefined>(undefined);
-
   React.useEffect(() => {
     return () => {
       if (toastTimeoutRef.current) {
@@ -171,6 +169,32 @@ export function MarkAttendanceTab({
 
   const getCellKey = (workerId: number, date: string) => `${workerId}-${date}`;
 
+  const getSharedFarmIdsForDate = useCallback(
+    (
+      records: Array<Pick<WorkerAttendance, 'date' | 'farm_ids'>>,
+      date: string,
+      fallbackFarmIds: number[],
+    ) => {
+      const recordsForDate = records.filter(
+        (record) => record.date === date && (record.farm_ids?.length ?? 0) > 0,
+      );
+      if (recordsForDate.length === 0) {
+        return fallbackFarmIds;
+      }
+
+      const normalizedSelections = recordsForDate.map((record) =>
+        [...(record.farm_ids ?? [])].sort((a, b) => a - b).join(','),
+      );
+      const firstSelection = normalizedSelections[0];
+      const hasSingleSharedSelection = normalizedSelections.every(
+        (selection) => selection === firstSelection,
+      );
+
+      return hasSingleSharedSelection ? [...(recordsForDate[0].farm_ids ?? [])] : [];
+    },
+    [],
+  );
+
   const loadAttendance = React.useCallback(async () => {
     if (workers.length === 0 || dateRange.length === 0) return;
 
@@ -230,43 +254,20 @@ export function MarkAttendanceTab({
         return merged;
       });
 
-      // Set farm IDs from the selected worker's records
-      const selectedWorkerId = selectedWorker?.id;
-      if (selectedWorkerId !== undefined) {
-        const workerChanged = prevWorkerIdRef.current !== selectedWorkerId;
-        if (workerChanged) {
-          const selectedWorkerRecords = records.filter((r) => r.worker_id === selectedWorkerId);
-          const recordWithFarms = selectedWorkerRecords.find(
-            (r) => r.farm_ids && r.farm_ids.length > 0,
-          );
-          const newFarmIds = recordWithFarms
-            ? recordWithFarms.farm_ids || []
-            : farms.length > 0
-              ? [farms[0].id!]
-              : [];
-          setSelectedFarmIds(newFarmIds);
-
-          // Propagate farmIds into cellData for this worker's selected-date cell
-          const selectedDateStr = formatDate(selectedDate);
-          setCellData((prev) => {
-            const updated = new Map(prev);
-            const key = getCellKey(selectedWorkerId, selectedDateStr);
-            const existing = updated.get(key);
-            if (existing && existing.farmIds.length === 0) {
-              updated.set(key, { ...existing, farmIds: newFarmIds });
-            }
-            return updated;
-          });
-
-          prevWorkerIdRef.current = selectedWorkerId;
-        }
-      }
+      const selectedDateStr = formatDate(selectedDate);
+      setSelectedFarmIds(
+        getSharedFarmIdsForDate(
+          records,
+          selectedDateStr,
+          farms.length > 0 && farms[0].id !== undefined ? [farms[0].id] : [],
+        ),
+      );
     } catch {
       Alert.alert(t('common.error'), t('common.errors.failedToLoadAttendanceData'));
     } finally {
       setLoading(false);
     }
-  }, [workers, selectedWorker, dateRange, farms, t, selectedDate]);
+  }, [workers, dateRange, farms, t, selectedDate, getSharedFarmIdsForDate]);
 
   // Ensure selectedDate has cell entries for all workers without triggering a full fetch
   React.useEffect(() => {
@@ -454,7 +455,6 @@ export function MarkAttendanceTab({
         });
       }
       showToast(t('attendance.alerts.partialErrorBody', { count: errors.length }), 'error');
-      prevWorkerIdRef.current = undefined;
       setSaving(false);
       loadAttendance();
       return;
@@ -473,7 +473,6 @@ export function MarkAttendanceTab({
       }
       return cleaned;
     });
-    prevWorkerIdRef.current = undefined;
     setSaving(false);
     loadAttendance();
   };
@@ -1023,6 +1022,22 @@ export function MarkAttendanceTab({
         selectedFarmIds={selectedFarmIds}
         onApply={(farmIds) => {
           setSelectedFarmIds(farmIds);
+          const selectedDateStr = formatDate(selectedDate);
+          setCellData((prev) => {
+            const updated = new Map(prev);
+            for (const worker of workers) {
+              if (worker.id === undefined) continue;
+              const key = getCellKey(worker.id, selectedDateStr);
+              const existing = updated.get(key);
+              if (!existing || existing.status === null) continue;
+              updated.set(key, {
+                ...existing,
+                farmIds,
+                isModified: true,
+              });
+            }
+            return updated;
+          });
           setFarmSheetVisible(false);
         }}
         onClose={() => setFarmSheetVisible(false)}

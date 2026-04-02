@@ -69,7 +69,7 @@ export class AnalyticsService {
     const harvestsByFarm = this.groupHarvestsByFarm(filteredHarvests, farms);
 
     // Group expenses by type
-    const expensesByType = this.groupExpensesByType(filteredExpenses);
+    const expensesByType = this.groupExpensesByType(filteredExpenses, filteredTempWorkers);
 
     // Recent activity
     const recentActivity = this.getRecentActivity(
@@ -338,13 +338,30 @@ export class AnalyticsService {
     }));
   }
 
-  private static groupExpensesByType(expenses: ExpenseRecord[]) {
+  private static groupExpensesByType(
+    expenses: ExpenseRecord[],
+    tempWorkers: TemporaryWorkerEntry[] = [],
+  ) {
     const byType = new Map<string, { amount: number; count: number }>();
     expenses.forEach((e) => {
       const type = e.type || 'other';
       const existing = byType.get(type) || { amount: 0, count: 0 };
       byType.set(type, { amount: existing.amount + (e.cost || 0), count: existing.count + 1 });
     });
+    if (tempWorkers.length > 0) {
+      const existing = byType.get('labor') || { amount: 0, count: 0 };
+      const tempWorkerTotals = tempWorkers.reduce(
+        (totals, entry) => ({
+          amount: totals.amount + (entry.amount_paid || 0),
+          count: totals.count + 1,
+        }),
+        { amount: 0, count: 0 },
+      );
+      byType.set('labor', {
+        amount: existing.amount + tempWorkerTotals.amount,
+        count: existing.count + tempWorkerTotals.count,
+      });
+    }
     return Array.from(byType.entries())
       .map(([type, { amount, count }]) => ({ type, amount, count }))
       .sort((a, b) => b.amount - a.amount);
