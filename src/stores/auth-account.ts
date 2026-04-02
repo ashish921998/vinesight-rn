@@ -93,6 +93,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
           });
         } else {
           console.warn('[DELETE ACCOUNT REQUEST]', {
+            user_id: userId,
             status: 'pending',
             requested_at: new Date().toISOString(),
             has_delete_reason: Boolean(deleteReason?.trim()),

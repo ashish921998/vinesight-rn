@@ -360,7 +360,7 @@ export default function SettingsScreen() {
         styles={styles}
         colors={colors}
         m3={m3}
-        profile={profile ?? { full_name: userName }}
+        profile={profile ?? { full_name: userName === 'User' ? '' : userName }}
         onSaveProfile={handleSaveProfile}
         onOpenLinkPhone={handleOpenLinkPhone}
       />
