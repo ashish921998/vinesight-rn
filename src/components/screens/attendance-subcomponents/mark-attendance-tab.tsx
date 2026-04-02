@@ -257,15 +257,6 @@ export function MarkAttendanceTab({
 
         return merged;
       });
-
-      const selectedDateStr = formatDate(selectedDate);
-      setSelectedFarmIds(
-        getSharedFarmIdsForDate(
-          records,
-          selectedDateStr,
-          farms.length > 0 && farms[0].id !== undefined ? [farms[0].id] : [],
-        ),
-      );
     } catch {
       if (loadToken !== latestLoadRef.current) return;
       Alert.alert(t('common.error'), t('common.errors.failedToLoadAttendanceData'));
@@ -274,7 +265,22 @@ export function MarkAttendanceTab({
         setLoading(false);
       }
     }
-  }, [workers, dateRange, farms, t, selectedDate, getSharedFarmIdsForDate]);
+  }, [workers, dateRange, farms, t, getSharedFarmIdsForDate]);
+
+  // Derive shared farm selection from cellData whenever selectedDate changes
+  React.useEffect(() => {
+    const selectedDateStr = formatDate(selectedDate);
+    const recordsForDate = Array.from(cellData.values()).filter(
+      (cell) => cell.date === selectedDateStr && cell.farmIds.length > 0,
+    );
+    setSelectedFarmIds(
+      getSharedFarmIdsForDate(
+        recordsForDate.map((c) => ({ date: c.date, farm_ids: c.farmIds })),
+        selectedDateStr,
+        farms.length > 0 && farms[0].id !== undefined ? [farms[0].id] : [],
+      ),
+    );
+  }, [selectedDate, cellData, farms, getSharedFarmIdsForDate]);
 
   // Ensure selectedDate has cell entries for all workers without triggering a full fetch
   React.useEffect(() => {
