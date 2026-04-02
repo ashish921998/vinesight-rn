@@ -1,0 +1,52 @@
+src/stores/auth-store.ts
+  10ce8eb4faccb659 36-41,190
+src/stores/auth-account.ts
+  10ce8eb4faccb659 10,32,93
+  93e70963b3171027 137-146,148-155,172-181,183-190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "74ef29654a303aab061ceadb3c035cebc07f639e",
+  "prompts": {
+    "10ce8eb4faccb659": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4b9644ec-5602-40fd-8c58-241b07027370",
+        "model": "kimi-k2.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 51,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    },
+    "8f9e0df7cff1b197": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1c1819e5-20d7-4ec4-aed9-3e1374ece804",
+        "model": "kimi-k2.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "93e70963b3171027": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "048c1721-6015-4d9d-897b-eee108028891",
+        "model": "kimi-k2.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 30,
+      "total_deletions": 8,
+      "accepted_lines": 36,
+      "overriden_lines": 2
+    }
+  }
+}
