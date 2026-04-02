@@ -419,11 +419,16 @@ export default function TasksScreen() {
             ? overdueTasks.length === 0
             : filter === 'completed'
               ? completedTasks.length === 0
-              : overdueTasks.length === 0 &&
-                dueTodayTasks.length === 0 &&
-                thisWeekTasks.length === 0 &&
-                upcomingTasks.length === 0 &&
-                completedTasks.length === 0
+              : filter === 'pending'
+                ? overdueTasks.length === 0 &&
+                  dueTodayTasks.length === 0 &&
+                  thisWeekTasks.length === 0 &&
+                  upcomingTasks.length === 0
+                : overdueTasks.length === 0 &&
+                  dueTodayTasks.length === 0 &&
+                  thisWeekTasks.length === 0 &&
+                  upcomingTasks.length === 0 &&
+                  completedTasks.length === 0
         ) ? (
           <View
             style={{
