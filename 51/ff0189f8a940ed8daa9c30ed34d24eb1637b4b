@@ -1,0 +1,25 @@
+src/services/analytics-service.ts
+  ec017981c683222e 72,341-344,351-364
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  ec017981c683222e 172-183,185-197,257-264,270,1025-1040
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "51ff0189f8a940ed8daa9c30ed34d24eb1637b4b",
+  "prompts": {
+    "ec017981c683222e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d4e20-6e5e-7070-9aee-e3a56f47fff0",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 70,
+      "total_deletions": 38,
+      "accepted_lines": 70,
+      "overriden_lines": 0
+    }
+  }
+}
