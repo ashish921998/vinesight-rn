@@ -1,0 +1,23 @@
+app/(tabs)/settings.tsx
+  17fc7a44901426ae 342,363
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "d888591f5fc0874a81bc59b084873617a0b73a56",
+  "prompts": {
+    "17fc7a44901426ae": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3cb30ece-fe78-4615-9a4d-c5efe638de36",
+        "model": "kimi-k2.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 4,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
