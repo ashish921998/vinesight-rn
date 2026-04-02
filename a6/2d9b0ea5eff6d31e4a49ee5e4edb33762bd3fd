@@ -1,0 +1,23 @@
+src/styles/theme.ts
+  c0b0271e7f50b8d7 406
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "a62d9b0ea5eff6d31e4a49ee5e4edb33762bd3fd",
+  "prompts": {
+    "c0b0271e7f50b8d7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "73c76fe2-802b-4574-8790-858e9cac0696",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
