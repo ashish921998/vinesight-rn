@@ -82,6 +82,8 @@ export function DeleteAccountModal({
     !isSendingDeleteOtp &&
     !isVerifyingDeleteOtp;
 
+  const warningKeys = ['farms', 'records', 'workers', 'org', 'uploads', 'profile'];
+
   const resetState = useCallback(() => {
     setDeleteReason('');
     setDeleteConfirmed(false);
@@ -118,11 +120,20 @@ export function DeleteAccountModal({
     }
 
     setIsSendingDeleteOtp(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: deleteVerificationPhone,
-        options: { shouldCreateUser: false },
-      });
+      const { error } = await Promise.race([
+        supabase.auth.signInWithOtp({
+          phone: deleteVerificationPhone,
+          options: { shouldCreateUser: false },
+        }),
+        new Promise<never>((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            reject(new Error('AbortError'));
+          });
+        }),
+      ]);
 
       if (error) {
         Alert.alert(
@@ -144,17 +155,24 @@ export function DeleteAccountModal({
         }),
       );
     } catch (error) {
+      clearTimeout(timeoutId);
       telemetry.capture('account_delete_phone_otp_send_failed');
+      const isAbortError = error instanceof Error && error.name === 'AbortError';
       if (__DEV__) {
         console.error('Failed to send phone OTP:', error);
       }
       Alert.alert(
         t('common.error'),
-        t('settings.deleteAccountModal.errors.otpSendFailed', {
-          defaultValue: 'Failed to send OTP. Please try again.',
-        }),
+        isAbortError
+          ? t('settings.deleteAccountModal.errors.timeout', {
+              defaultValue: 'Request timed out. Please try again.',
+            })
+          : t('settings.deleteAccountModal.errors.otpSendFailed', {
+              defaultValue: 'Failed to send OTP. Please try again.',
+            }),
       );
     } finally {
+      clearTimeout(timeoutId);
       setIsSendingDeleteOtp(false);
     }
   };
@@ -255,7 +273,18 @@ export function DeleteAccountModal({
         },
       );
 
-      const data = await response.json();
+      let data: { error?: string };
+      const contentType = response.headers.get('content-type');
+      try {
+        if (contentType?.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          data = { error: text || `HTTP ${response.status}` };
+        }
+      } catch {
+        data = { error: `HTTP ${response.status}` };
+      }
 
       if (!response.ok || data.error) {
         Alert.alert(
@@ -341,6 +370,7 @@ export function DeleteAccountModal({
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
       if (!accessToken) {
         clearTimeout(timeoutId);
+        setIsVerifyingDeleteOtp(false);
         Alert.alert(
           t('common.error'),
           t('settings.deleteAccountModal.errors.sessionExpired', {
@@ -536,48 +566,16 @@ export function DeleteAccountModal({
             </View>
 
             <View style={styles.deleteWarnings}>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.farms')}
-              </Text>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.records')}
-              </Text>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.workers')}
-              </Text>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.org')}
-              </Text>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.uploads')}
-              </Text>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.profile')}
-              </Text>
+              {warningKeys.map((key) => (
+                <Text
+                  key={key}
+                  style={styles.deleteWarningItem}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  • {t(`settings.deleteAccountModal.dataList.${key}`)}
+                </Text>
+              ))}
             </View>
 
             <View style={styles.formCard}>
