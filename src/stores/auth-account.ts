@@ -7,6 +7,7 @@ import {
   clearQueryCache,
 } from './auth-helpers';
 import type { SetState, GetState } from './auth-types';
+import { signedOutState } from './auth-store';
 
 export const createAccountActions = (set: SetState, get: GetState) => ({
   signOut: async () => {
@@ -28,23 +29,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
 
       setSentryUser(null);
 
-      set({
-        user: null,
-        session: null,
-        isAuthenticated: false,
-        isLoading: false,
-        pendingOTPEmail: null,
-        pendingOTPPhone: null,
-        pendingOTPPhoneName: null,
-        pendingOTPPhoneMode: null,
-        otpSentSuccessfully: false,
-        pendingOTPType: 'email',
-        needsProfileCompletion: false,
-        phoneLinkingPending: false,
-        phoneLinkingNumber: null,
-        phoneLinkingLoading: false,
-        hasSeenOnboarding: false,
-      });
+      set(signedOutState);
       telemetry.reset();
       await clearQueryCache('sign out success path');
     } catch (error) {
@@ -93,7 +78,6 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
           });
         } else {
           console.warn('[DELETE ACCOUNT REQUEST]', {
-            user_id: userId,
             status: 'pending',
             requested_at: new Date().toISOString(),
             has_delete_reason: Boolean(deleteReason?.trim()),
@@ -106,23 +90,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
 
       setSentryUser(null);
 
-      set({
-        user: null,
-        session: null,
-        isAuthenticated: false,
-        isLoading: false,
-        pendingOTPEmail: null,
-        pendingOTPPhone: null,
-        pendingOTPPhoneName: null,
-        pendingOTPPhoneMode: null,
-        otpSentSuccessfully: false,
-        pendingOTPType: 'email',
-        needsProfileCompletion: false,
-        phoneLinkingPending: false,
-        phoneLinkingNumber: null,
-        phoneLinkingLoading: false,
-        hasSeenOnboarding: false,
-      });
+      set(signedOutState);
       await clearQueryCache('delete account');
       telemetry.capture('account_deletion_succeeded');
       try {
@@ -166,10 +134,25 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
 
       if (error) throw error;
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      set({ user });
+      const { data, error: getUserError } = await supabase.auth.getUser();
+
+      if (getUserError) {
+        if (__DEV__) {
+          console.error('Failed to get user after country update:', getUserError);
+        }
+        set({
+          errorMessage: getAuthErrorMessage(
+            getUserError,
+            'Failed to get user after country update',
+            'profile_update',
+          ),
+        });
+        return;
+      }
+
+      if (data?.user) {
+        set({ user: data.user });
+      }
     } catch (error: unknown) {
       set({
         errorMessage: getAuthErrorMessage(error, 'Failed to update country', 'profile_update'),
@@ -186,10 +169,25 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
 
       if (error) throw error;
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      set({ user });
+      const { data, error: getUserError } = await supabase.auth.getUser();
+
+      if (getUserError) {
+        if (__DEV__) {
+          console.error('Failed to get user after area unit update:', getUserError);
+        }
+        set({
+          errorMessage: getAuthErrorMessage(
+            getUserError,
+            'Failed to get user after area unit update',
+            'profile_update',
+          ),
+        });
+        return;
+      }
+
+      if (data?.user) {
+        set({ user: data.user });
+      }
     } catch (error: unknown) {
       set({
         errorMessage: getAuthErrorMessage(error, 'Failed to update area unit', 'profile_update'),

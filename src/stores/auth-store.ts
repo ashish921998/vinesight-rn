@@ -33,6 +33,12 @@ const initialState: AuthState = {
   hasSeenOnboarding: false,
 };
 
+// Shared signed-out state for use across auth store and account actions
+export const signedOutState: AuthState = {
+  ...initialState,
+  isLoading: false,
+};
+
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   ...initialState,
 
@@ -181,23 +187,7 @@ export const initAuthListener = () => {
       setSentryUser(null);
       telemetry.capture('auth_state_changed', { event: 'SIGNED_OUT' });
       telemetry.reset();
-      useAuthStore.setState({
-        user: null,
-        session: null,
-        isAuthenticated: false,
-        isLoading: false,
-        pendingOTPEmail: null,
-        pendingOTPPhone: null,
-        pendingOTPPhoneName: null,
-        pendingOTPPhoneMode: null,
-        otpSentSuccessfully: false,
-        pendingOTPType: 'email',
-        needsProfileCompletion: false,
-        phoneLinkingPending: false,
-        phoneLinkingNumber: null,
-        phoneLinkingLoading: false,
-        hasSeenOnboarding: false,
-      });
+      useAuthStore.setState(signedOutState);
     } else if (event === 'TOKEN_REFRESHED' && session) {
       const currentState = useAuthStore.getState();
       if (currentState.isAuthenticated) {
