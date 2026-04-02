@@ -266,7 +266,7 @@ export function MarkAttendanceTab({
     } finally {
       setLoading(false);
     }
-  }, [workers, selectedWorker, dateRange, farms, t]);
+  }, [workers, selectedWorker, dateRange, farms, t, selectedDate]);
 
   // Ensure selectedDate has cell entries for all workers without triggering a full fetch
   React.useEffect(() => {

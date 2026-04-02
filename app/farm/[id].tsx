@@ -2339,6 +2339,13 @@ export default function FarmDetailScreen() {
                             color: selected ? colors.surface[900] : colors.surface[500],
                             textAlign: 'center',
                             maxWidth: '100%',
+                            ...(isAndroid
+                              ? {
+                                  includeFontPadding: true,
+                                  paddingBottom: 2,
+                                  paddingRight: 3,
+                                }
+                              : null),
                           }}
                         >
                           {tab === 'activities'

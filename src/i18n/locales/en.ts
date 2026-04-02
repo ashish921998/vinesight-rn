@@ -2089,6 +2089,7 @@ export const en = {
     },
     logNow: 'Log now',
     sections: {
+      overdue: 'Overdue',
       dueToday: 'Due Today',
       thisWeek: 'This Week',
       upcoming: 'Upcoming',
