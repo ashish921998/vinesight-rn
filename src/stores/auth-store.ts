@@ -7,6 +7,7 @@ import {
   setSentryUser,
   hasCompletedProfileName,
   maskPhoneForLogs,
+  clearQueryCache,
 } from './auth-helpers';
 import type { AuthState, AuthActions } from './auth-types';
 import { createEmailActions } from './auth-email';
@@ -187,6 +188,7 @@ export const initAuthListener = () => {
       setSentryUser(null);
       telemetry.capture('auth_state_changed', { event: 'SIGNED_OUT' });
       telemetry.reset();
+      clearQueryCache('SIGNED_OUT event');
       useAuthStore.setState(signedOutState);
     } else if (event === 'TOKEN_REFRESHED' && session) {
       const currentState = useAuthStore.getState();

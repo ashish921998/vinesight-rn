@@ -13,7 +13,6 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
   signOut: async () => {
     set({ errorMessage: null, isLoading: true });
     telemetry.capture('auth_sign_out');
-    telemetry.capture('user_logged_out');
 
     try {
       if (__DEV__) {
@@ -30,6 +29,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
       setSentryUser(null);
 
       set(signedOutState);
+      telemetry.capture('user_logged_out');
       telemetry.reset();
       await clearQueryCache('sign out success path');
     } catch (error) {
@@ -192,7 +192,6 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
       set({
         errorMessage: getAuthErrorMessage(error, 'Failed to update area unit', 'profile_update'),
       });
-      throw error;
     }
   },
 });
