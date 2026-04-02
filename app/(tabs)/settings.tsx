@@ -305,9 +305,9 @@ export default function SettingsScreen() {
   };
 
   const handleCurrencyChange = async (code: string) => {
-    setSelectedCurrency(code);
     try {
       await updateProfile.mutateAsync({ currency_preference: code });
+      setSelectedCurrency(code);
       refetchProfile();
     } catch (error) {
       if (__DEV__) {
@@ -318,13 +318,14 @@ export default function SettingsScreen() {
   };
 
   const handleAreaUnitChange = async (unit: 'hectares' | 'acres') => {
+    const previousUnit = selectedAreaUnit;
     try {
       await updateProfile.mutateAsync({ area_unit_preference: unit });
       try {
         await updateUserAreaUnit(unit);
       } catch (areaUnitError) {
         // Rollback profile change if auth metadata update fails
-        await updateProfile.mutateAsync({ area_unit_preference: unit === 'hectares' ? 'acres' : 'hectares' });
+        await updateProfile.mutateAsync({ area_unit_preference: previousUnit });
         throw areaUnitError;
       }
       setSelectedAreaUnit(resolveAreaUnitPreference(unit));

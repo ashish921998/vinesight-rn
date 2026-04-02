@@ -9,6 +9,7 @@ import {
   Modal,
   KeyboardAvoidingView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { spacing } from '@/styles/theme';
@@ -113,147 +114,149 @@ export function ProfileSection({
         presentationStyle="pageSheet"
         onRequestClose={() => setShowEditProfile(false)}
       >
-        <KeyboardAvoidingView behavior={isIOS ? 'padding' : 'height'} style={styles.container}>
-          <View style={styles.modalHeader}>
-            <View style={styles.modalHeaderInner}>
-              <Text
-                style={styles.modalTitle}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                {t('settings.editProfile')}
-              </Text>
-              <Pressable
-                onPress={() => setShowEditProfile(false)}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.close')}
-              >
-                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
-              </Pressable>
-            </View>
-          </View>
-
-          <ScrollView
-            style={styles.flex1}
-            contentContainerStyle={{ padding: spacing[4] }}
-            contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={isIOS}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-          >
-            <View style={styles.formCard}>
-              <View style={styles.mb4}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+          <KeyboardAvoidingView behavior={isIOS ? 'padding' : 'height'} style={styles.container}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderInner}>
                 <Text
-                  style={styles.inputLabel}
+                  style={styles.modalTitle}
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
-                  {t('settings.email')}
-                </Text>
-                <View style={styles.inputDisabled}>
-                  <Text
-                    style={styles.inputDisabledText}
-                    textBreakStrategy="highQuality"
-                    lineBreakStrategyIOS="standard"
-                  >
-                    {userEmail}
-                  </Text>
-                </View>
-                <Text
-                  style={styles.inputHint}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {t('settings.emailCannotBeChanged')}
-                </Text>
-              </View>
-
-              <View style={styles.mb4}>
-                <Text
-                  style={styles.inputLabel}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {t('settings.fullName')}
-                </Text>
-                <TextInput
-                  value={editName}
-                  onChangeText={setEditName}
-                  placeholder={t('settings.enterName')}
-                  placeholderTextColor={colors.gray[400]}
-                  style={styles.input}
-                />
-              </View>
-
-              <View style={styles.mb4}>
-                <Text
-                  style={styles.inputLabel}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {t('settings.phone')}
-                </Text>
-                <View style={styles.inputDisabled}>
-                  <Text
-                    style={styles.inputDisabledText}
-                    textBreakStrategy="highQuality"
-                    lineBreakStrategyIOS="standard"
-                  >
-                    {linkedAuthPhone ?? t('settings.linkPhone.notLinked')}
-                  </Text>
-                </View>
-                <Text
-                  style={styles.inputHint}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {linkedAuthPhone
-                    ? t('settings.linkPhone.verified')
-                    : t('settings.linkPhone.verificationRequired')}
+                  {t('settings.editProfile')}
                 </Text>
                 <Pressable
-                  onPress={() => {
-                    setShowEditProfile(false);
-                    onOpenLinkPhone();
-                  }}
-                  style={styles.verifyPhoneCta}
+                  onPress={() => setShowEditProfile(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.close')}
                 >
+                  <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+                </Pressable>
+              </View>
+            </View>
+
+            <ScrollView
+              style={styles.flex1}
+              contentContainerStyle={{ padding: spacing[4] }}
+              contentInsetAdjustmentBehavior="automatic"
+              automaticallyAdjustKeyboardInsets={isIOS}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
+              <View style={styles.formCard}>
+                <View style={styles.mb4}>
                   <Text
-                    style={styles.verifyPhoneCtaText}
+                    style={styles.inputLabel}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.email')}
+                  </Text>
+                  <View style={styles.inputDisabled}>
+                    <Text
+                      style={styles.inputDisabledText}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {userEmail}
+                    </Text>
+                  </View>
+                  <Text
+                    style={styles.inputHint}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.emailCannotBeChanged')}
+                  </Text>
+                </View>
+
+                <View style={styles.mb4}>
+                  <Text
+                    style={styles.inputLabel}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.fullName')}
+                  </Text>
+                  <TextInput
+                    value={editName}
+                    onChangeText={setEditName}
+                    placeholder={t('settings.enterName')}
+                    placeholderTextColor={colors.gray[400]}
+                    style={styles.input}
+                  />
+                </View>
+
+                <View style={styles.mb4}>
+                  <Text
+                    style={styles.inputLabel}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.phone')}
+                  </Text>
+                  <View style={styles.inputDisabled}>
+                    <Text
+                      style={styles.inputDisabledText}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {linkedAuthPhone ?? t('settings.linkPhone.notLinked')}
+                    </Text>
+                  </View>
+                  <Text
+                    style={styles.inputHint}
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >
                     {linkedAuthPhone
-                      ? t('settings.linkPhone.changePhone')
-                      : hasSavedPhoneToVerify
-                        ? t('settings.linkPhone.verifyTitle')
-                        : t('settings.linkPhone.title')}
+                      ? t('settings.linkPhone.verified')
+                      : t('settings.linkPhone.verificationRequired')}
                   </Text>
-                </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setShowEditProfile(false);
+                      onOpenLinkPhone();
+                    }}
+                    style={styles.verifyPhoneCta}
+                  >
+                    <Text
+                      style={styles.verifyPhoneCtaText}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {linkedAuthPhone
+                        ? t('settings.linkPhone.changePhone')
+                        : hasSavedPhoneToVerify
+                          ? t('settings.linkPhone.verifyTitle')
+                          : t('settings.linkPhone.title')}
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
-            </View>
-          </ScrollView>
+            </ScrollView>
 
-          <View style={styles.modalFooter}>
-            <Pressable
-              onPress={handleSave}
-              disabled={isSaving}
-              style={[styles.saveButton, { backgroundColor: colors.primary[600] }]}
-            >
-              {isSaving ? (
-                <ActivityIndicator color={m3.colorScheme.onPrimary} />
-              ) : (
-                <Text
-                  style={styles.saveButtonText}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {t('common.saveChanges')}
-                </Text>
-              )}
-            </Pressable>
-          </View>
-        </KeyboardAvoidingView>
+            <View style={styles.modalFooter}>
+              <Pressable
+                onPress={handleSave}
+                disabled={isSaving}
+                style={[styles.saveButton, { backgroundColor: colors.primary[600] }]}
+              >
+                {isSaving ? (
+                  <ActivityIndicator color={m3.colorScheme.onPrimary} />
+                ) : (
+                  <Text
+                    style={styles.saveButtonText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('common.saveChanges')}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </Modal>
     </>
   );
