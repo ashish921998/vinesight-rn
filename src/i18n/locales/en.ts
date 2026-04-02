@@ -2724,6 +2724,10 @@ export const en = {
       markAllPresent: 'Mark All Present',
       workersCount: '{{count}} workers',
       dailyRate: '₹{{rate}} / day',
+      selectFarm: 'Select Farm',
+      farm: 'Farm',
+      farmsCount_one: '{{count}} Farm',
+      farmsCount_other: '{{count}} Farms',
     },
   },
 

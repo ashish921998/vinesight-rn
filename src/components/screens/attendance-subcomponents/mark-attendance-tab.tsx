@@ -635,7 +635,7 @@ export function MarkAttendanceTab({
           <Pressable
             onPress={() => setFarmSheetVisible(true)}
             accessibilityRole="button"
-            accessibilityLabel={t('attendance.a11y.selectFarm', { defaultValue: 'Select farm' })}
+            accessibilityLabel={t('attendance.a11y.selectFarmsButton')}
             style={({ pressed }) => ({
               flexDirection: 'row',
               alignItems: 'center',
@@ -658,13 +658,12 @@ export function MarkAttendanceTab({
               numberOfLines={1}
             >
               {selectedFarmIds.length === 0
-                ? t('attendance.mark.selectFarm', { defaultValue: 'Select Farm' })
+                ? t('attendance.mark.selectFarm')
                 : selectedFarmIds.length === 1
                   ? (farms.find((f) => f.id === selectedFarmIds[0])?.name ??
-                    t('attendance.mark.farm', { defaultValue: 'Farm' }))
+                    t('attendance.mark.farm'))
                   : t('attendance.mark.farmsCount', {
                       count: selectedFarmIds.length,
-                      defaultValue: '{{count}} Farms',
                     })}
             </Text>
             <Text style={{ fontSize: 12, color: m3.colorScheme.primary }}>▾</Text>
