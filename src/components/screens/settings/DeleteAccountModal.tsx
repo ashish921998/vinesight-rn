@@ -331,6 +331,8 @@ export function DeleteAccountModal({
     }
 
     setIsVerifyingDeleteOtp(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
       const {
         data: { session: currentSession },
@@ -338,6 +340,7 @@ export function DeleteAccountModal({
       const accessToken = currentSession?.access_token;
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
       if (!accessToken) {
+        clearTimeout(timeoutId);
         Alert.alert(
           t('common.error'),
           t('settings.deleteAccountModal.errors.sessionExpired', {
@@ -361,6 +364,7 @@ export function DeleteAccountModal({
             email: userEmail.trim().toLowerCase(),
             otp: normalizedOtp,
           }),
+          signal: controller.signal,
         },
       );
 
@@ -387,16 +391,22 @@ export function DeleteAccountModal({
       );
     } catch (error) {
       telemetry.capture('account_delete_email_otp_verify_failed');
+      const isAbortError = error instanceof Error && error.name === 'AbortError';
       if (__DEV__) {
         console.error('Failed to verify email OTP:', error);
       }
       Alert.alert(
         t('common.error'),
-        t('settings.deleteAccountModal.errors.otpVerifyFailed', {
-          defaultValue: 'Email verification failed. Please try again.',
-        }),
+        isAbortError
+          ? t('settings.deleteAccountModal.errors.timeout', {
+              defaultValue: 'Request timed out. Please try again.',
+            })
+          : t('settings.deleteAccountModal.errors.otpVerifyFailed', {
+              defaultValue: 'Email verification failed. Please try again.',
+            }),
       );
     } finally {
+      clearTimeout(timeoutId);
       setIsVerifyingDeleteOtp(false);
     }
   };

@@ -7,7 +7,7 @@ import {
   clearQueryCache,
 } from './auth-helpers';
 import type { SetState, GetState } from './auth-types';
-import { signedOutState } from './auth-store';
+import { signedOutState } from './auth-constants';
 
 export const createAccountActions = (set: SetState, get: GetState) => ({
   signOut: async () => {
@@ -192,6 +192,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
       set({
         errorMessage: getAuthErrorMessage(error, 'Failed to update area unit', 'profile_update'),
       });
+      throw error;
     }
   },
 });

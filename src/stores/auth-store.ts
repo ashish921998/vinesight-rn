@@ -14,31 +14,9 @@ import { createEmailActions } from './auth-email';
 import { createPhoneActions } from './auth-phone';
 import { createSocialActions } from './auth-social';
 import { createAccountActions } from './auth-account';
+import { initialState, signedOutState } from './auth-constants';
 
-const initialState: AuthState = {
-  user: null,
-  session: null,
-  isAuthenticated: false,
-  isLoading: true,
-  errorMessage: null,
-  pendingOTPEmail: null,
-  pendingOTPPhone: null,
-  pendingOTPPhoneName: null,
-  pendingOTPPhoneMode: null,
-  otpSentSuccessfully: false,
-  pendingOTPType: 'email',
-  needsProfileCompletion: false,
-  phoneLinkingPending: false,
-  phoneLinkingNumber: null,
-  phoneLinkingLoading: false,
-  hasSeenOnboarding: false,
-};
-
-// Shared signed-out state for use across auth store and account actions
-export const signedOutState: AuthState = {
-  ...initialState,
-  isLoading: false,
-};
+export { signedOutState } from './auth-constants';
 
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   ...initialState,
@@ -188,7 +166,11 @@ export const initAuthListener = () => {
       setSentryUser(null);
       telemetry.capture('auth_state_changed', { event: 'SIGNED_OUT' });
       telemetry.reset();
-      clearQueryCache('SIGNED_OUT event');
+      void clearQueryCache('SIGNED_OUT event').catch((err) => {
+        if (__DEV__) {
+          console.error('Failed to clear query cache on SIGNED_OUT:', err);
+        }
+      });
       useAuthStore.setState(signedOutState);
     } else if (event === 'TOKEN_REFRESHED' && session) {
       const currentState = useAuthStore.getState();
