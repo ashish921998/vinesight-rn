@@ -184,13 +184,11 @@ export function MarkAttendanceTab({
       const records = await fetchAttendanceForWorkers(workerIds, startDate, endDate);
 
       setCellData((prev) => {
-        const merged = new Map(prev);
+        const merged = new Map<string, CellData>();
 
-        // Merge server records, but skip cells the user has modified
+        // 1. Populate from authoritative server records
         for (const record of records) {
           const key = getCellKey(record.worker_id, record.date);
-          const existing = merged.get(key);
-          if (existing?.isModified) continue;
           merged.set(key, {
             workerId: record.worker_id,
             date: record.date,
@@ -202,7 +200,7 @@ export function MarkAttendanceTab({
           });
         }
 
-        // Ensure every worker × date in the range has a cell entry
+        // 2. Ensure every worker × date in the range has a cell entry
         for (const worker of workers) {
           const workerId = worker.id;
           if (workerId === undefined) continue;
@@ -222,21 +220,10 @@ export function MarkAttendanceTab({
           }
         }
 
-        // Also ensure the selected date has entries for all workers
-        const selectedDateStr = formatDate(selectedDate);
-        for (const worker of workers) {
-          const workerId = worker.id;
-          if (workerId === undefined) continue;
-          const key = getCellKey(workerId, selectedDateStr);
-          if (!merged.has(key)) {
-            merged.set(key, {
-              workerId,
-              date: selectedDateStr,
-              status: null,
-              workType: null,
-              farmIds: [],
-              isModified: false,
-            });
+        // 3. Overlay user-modified cells from prev state (preserves unsaved edits)
+        for (const [key, cell] of prev) {
+          if (cell.isModified) {
+            merged.set(key, cell);
           }
         }
 
@@ -252,11 +239,25 @@ export function MarkAttendanceTab({
           const recordWithFarms = selectedWorkerRecords.find(
             (r) => r.farm_ids && r.farm_ids.length > 0,
           );
-          if (recordWithFarms) {
-            setSelectedFarmIds(recordWithFarms.farm_ids || []);
-          } else if (farms.length > 0) {
-            setSelectedFarmIds([farms[0].id!]);
-          }
+          const newFarmIds = recordWithFarms
+            ? recordWithFarms.farm_ids || []
+            : farms.length > 0
+              ? [farms[0].id!]
+              : [];
+          setSelectedFarmIds(newFarmIds);
+
+          // Propagate farmIds into cellData for this worker's selected-date cell
+          const selectedDateStr = formatDate(selectedDate);
+          setCellData((prev) => {
+            const updated = new Map(prev);
+            const key = getCellKey(selectedWorkerId, selectedDateStr);
+            const existing = updated.get(key);
+            if (existing && existing.farmIds.length === 0) {
+              updated.set(key, { ...existing, farmIds: newFarmIds });
+            }
+            return updated;
+          });
+
           prevWorkerIdRef.current = selectedWorkerId;
         }
       }
@@ -265,7 +266,34 @@ export function MarkAttendanceTab({
     } finally {
       setLoading(false);
     }
-  }, [workers, selectedWorker, dateRange, farms, t, selectedDate]);
+  }, [workers, selectedWorker, dateRange, farms, t]);
+
+  // Ensure selectedDate has cell entries for all workers without triggering a full fetch
+  React.useEffect(() => {
+    if (workers.length === 0) return;
+    const selectedDateStr = formatDate(selectedDate);
+    setCellData((prev) => {
+      let changed = false;
+      const updated = new Map(prev);
+      for (const worker of workers) {
+        const workerId = worker.id;
+        if (workerId === undefined) continue;
+        const key = getCellKey(workerId, selectedDateStr);
+        if (!updated.has(key)) {
+          updated.set(key, {
+            workerId,
+            date: selectedDateStr,
+            status: null,
+            workType: null,
+            farmIds: [],
+            isModified: false,
+          });
+          changed = true;
+        }
+      }
+      return changed ? updated : prev;
+    });
+  }, [selectedDate, workers]);
 
   React.useEffect(() => {
     loadSavedRange();
@@ -380,6 +408,7 @@ export function MarkAttendanceTab({
 
     setSaving(true);
     const errors: Array<{ date: string; error: unknown }> = [];
+    const succeededKeys: string[] = [];
 
     for (const cell of modifiedCells) {
       try {
@@ -404,12 +433,26 @@ export function MarkAttendanceTab({
             daily_rate_override: cell.status === 'absent' ? 0 : undefined,
           });
         }
+        succeededKeys.push(getCellKey(cell.workerId, cell.date));
       } catch (error) {
         errors.push({ date: cell.date, error });
       }
     }
 
     if (errors.length > 0) {
+      // Clear isModified only for successfully-processed cells so reload picks them up
+      if (succeededKeys.length > 0) {
+        setCellData((prev) => {
+          const cleaned = new Map(prev);
+          for (const key of succeededKeys) {
+            const cell = cleaned.get(key);
+            if (cell?.isModified) {
+              cleaned.set(key, { ...cell, isModified: false });
+            }
+          }
+          return cleaned;
+        });
+      }
       showToast(t('attendance.alerts.partialErrorBody', { count: errors.length }), 'error');
       prevWorkerIdRef.current = undefined;
       setSaving(false);

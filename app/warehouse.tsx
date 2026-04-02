@@ -53,9 +53,9 @@ export default function WarehouseScreen() {
 
   // Get category colors based on theme
   const getCategoryColors = (type: string) => {
-    const colors = CATEGORY_COLORS[type as keyof typeof CATEGORY_COLORS];
-    if (colors) {
-      return isDark ? colors.dark : colors.light;
+    const catColors = CATEGORY_COLORS[type as keyof typeof CATEGORY_COLORS];
+    if (catColors) {
+      return isDark ? catColors.dark : catColors.light;
     }
     return m3.colorScheme.primary;
   };
@@ -527,11 +527,11 @@ export default function WarehouseScreen() {
                         style={{
                           fontSize: 20,
                           fontWeight: fontWeight.bold,
-                        color: colors.surface[800],
-                        fontVariant: ['tabular-nums'],
-                      }}
-                    >
-                      {item.quantity}
+                          color: colors.surface[800],
+                          fontVariant: ['tabular-nums'],
+                        }}
+                      >
+                        {item.quantity}
                       </Text>
                       <Text
                         style={{

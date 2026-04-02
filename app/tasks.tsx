@@ -658,7 +658,7 @@ export default function TasksScreen() {
             )}
 
             {/* Cellar Ledger: Collapsible Completed Section */}
-            {completedTasks.length > 0 && (
+            {(filter === 'all' || filter === 'completed') && completedTasks.length > 0 && (
               <View style={{ marginTop: spacing[6] }}>
                 {/* Section Header */}
                 <Pressable
