@@ -1,0 +1,27 @@
+src/i18n/locales/en.ts
+  0d435a9da55ad0c5 2092
+app/farm/[id].tsx
+  0d435a9da55ad0c5 2342-2348
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  0d435a9da55ad0c5 269
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "de56f46794449b5e69db8dbd965d80e60ab362bc",
+  "prompts": {
+    "0d435a9da55ad0c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d4dfd-f5f0-7dd0-9c6f-f5fe74b231e6",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 1,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
