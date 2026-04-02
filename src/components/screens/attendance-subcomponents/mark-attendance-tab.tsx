@@ -52,61 +52,6 @@ interface CellData {
   isModified: boolean;
 }
 
-const STATUS_CYCLE: AttendanceStatus[] = ['full_day', 'half_day', 'absent', null];
-
-const _getStatusDisplay = (
-  status: AttendanceStatus,
-  t: (key: string) => string,
-  m3Theme: ReturnType<typeof useM3>,
-  colors: ReturnType<typeof useThemeColors>,
-): {
-  label: string;
-  bgColor: string;
-  badgeColor: string;
-  badgeTextColor: string;
-  textColor: string;
-  fullLabel: string;
-} => {
-  switch (status) {
-    case 'full_day':
-      return {
-        label: t('attendance.status.fullDayShort'),
-        bgColor: colorWithOpacity(m3Theme.colorScheme.primary, 0.12),
-        badgeColor: m3Theme.colorScheme.primary,
-        badgeTextColor: m3Theme.colorScheme.onPrimary,
-        textColor: m3Theme.colorScheme.primary,
-        fullLabel: t('attendance.status.fullDay'),
-      };
-    case 'half_day':
-      return {
-        label: t('attendance.status.halfDayShort'),
-        bgColor: colorWithOpacity(colors.warning, 0.18),
-        badgeColor: colors.warning,
-        badgeTextColor: m3Theme.colorScheme.onWarning,
-        textColor: colors.warning,
-        fullLabel: t('attendance.status.halfDay'),
-      };
-    case 'absent':
-      return {
-        label: t('attendance.status.absentShort'),
-        bgColor: colorWithOpacity(m3Theme.colorScheme.error, 0.12),
-        badgeColor: m3Theme.colorScheme.error,
-        badgeTextColor: m3Theme.colorScheme.onError,
-        textColor: m3Theme.colorScheme.error,
-        fullLabel: t('attendance.status.absent'),
-      };
-    default:
-      return {
-        label: t('attendance.status.notSetShort'),
-        bgColor: m3Theme.surface.surfaceContainerLowest,
-        badgeColor: colorWithOpacity(m3Theme.colorScheme.onSurfaceVariant, 0.18),
-        badgeTextColor: colorWithOpacity(m3Theme.colorScheme.onSurfaceVariant, 0.7),
-        textColor: m3Theme.colorScheme.onSurfaceVariant,
-        fullLabel: t('attendance.status.notSet'),
-      };
-  }
-};
-
 interface MarkAttendanceTabProps {
   workers: Worker[];
   farms: Farm[];
@@ -139,9 +84,6 @@ export function MarkAttendanceTab({
   const [selectedFarmIds, setSelectedFarmIds] = useState<number[]>([]);
   const [workerSheetVisible, setWorkerSheetVisible] = useState(false);
   const [farmSheetVisible, setFarmSheetVisible] = useState(false);
-  const [showFromPicker, setShowFromPicker] = useState(false);
-  const [showToPicker, setShowToPicker] = useState(false);
-  const [tempPickerDate, setTempPickerDate] = useState<Date | null>(null);
   const [toast, setToast] = useState<ToastState>({ visible: false, message: '', type: 'success' });
   const [rangeLength, setRangeLength] = useState<number>(7);
   const [isRangeLoaded, setIsRangeLoaded] = useState(false);
@@ -167,8 +109,6 @@ export function MarkAttendanceTab({
 
   // NEW: Single date for the redesigned UI
   const [selectedDate, setSelectedDate] = useState<Date>(() => normalizeDate(new Date()));
-
-  const _rangeEnd = useMemo(() => addDays(rangeStart, rangeLength - 1), [rangeStart, rangeLength]);
 
   const dateRange = useMemo(() => {
     return Array.from({ length: rangeLength }, (_, i) => addDays(rangeStart, i));
@@ -220,12 +160,6 @@ export function MarkAttendanceTab({
     } catch {
       // Silently fail
     }
-  };
-
-  const handleRangeStartChange = (newStart: Date) => {
-    const normalized = normalizeDate(newStart);
-    setRangeStart(normalized);
-    saveRange(normalized, rangeLength);
   };
 
   const formatDate = (date: Date): string => {
@@ -331,7 +265,7 @@ export function MarkAttendanceTab({
     } finally {
       setLoading(false);
     }
-  }, [workers, selectedWorker, dateRange, farms, t]);
+  }, [workers, selectedWorker, dateRange, farms, t, selectedDate]);
 
   React.useEffect(() => {
     loadSavedRange();
@@ -342,109 +276,6 @@ export function MarkAttendanceTab({
       loadAttendance();
     }
   }, [loadAttendance, isRangeLoaded]);
-
-  const _handleDayCellClick = (date: Date) => {
-    if (!selectedWorker) return;
-    const workerId = selectedWorker.id;
-    if (workerId === undefined) return;
-    const dateStr = formatDate(date);
-    const key = getCellKey(workerId, dateStr);
-
-    triggerHaptic();
-
-    setCellData((prev) => {
-      const current = prev.get(key);
-      if (!current) return prev;
-
-      const currentIndex = STATUS_CYCLE.indexOf(current.status);
-      const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
-      const nextStatus = STATUS_CYCLE[nextIndex];
-
-      const newMap = new Map(prev);
-      newMap.set(key, {
-        ...current,
-        status: nextStatus,
-        farmIds: selectedFarmIds,
-        isModified: true,
-      });
-      return newMap;
-    });
-  };
-
-  const _handleQuickAction = (status: AttendanceStatus) => {
-    if (!selectedWorker) return;
-    const workerId = selectedWorker.id;
-    if (workerId === undefined) return;
-
-    triggerHapticMedium();
-
-    setCellData((prev) => {
-      const newMap = new Map(prev);
-      for (const date of dateRange) {
-        const dateStr = formatDate(date);
-        const key = getCellKey(workerId, dateStr);
-        const current = newMap.get(key);
-        if (current) {
-          newMap.set(key, {
-            ...current,
-            status,
-            farmIds: selectedFarmIds,
-            isModified: true,
-          });
-        }
-      }
-      return newMap;
-    });
-  };
-
-  const _handleCopyFromYesterday = async () => {
-    if (!selectedWorker) return;
-    const workerId = selectedWorker.id;
-    if (workerId === undefined) return;
-
-    const yesterday = addDays(rangeStart, -1);
-    const yesterdayStr = formatDate(yesterday);
-
-    let yesterdayRecord: WorkerAttendance | null = null;
-    try {
-      const records = await fetchAttendanceForWorker(workerId, yesterdayStr, yesterdayStr);
-      yesterdayRecord = records.length > 0 ? records[0] : null;
-    } catch {
-      showToast(t('attendance.errors.noYesterdayData'), 'error');
-      return;
-    }
-
-    if (!yesterdayRecord || !yesterdayRecord.work_status) {
-      showToast(t('attendance.errors.noYesterdayData'), 'error');
-      return;
-    }
-
-    triggerHapticMedium();
-
-    setCellData((prev) => {
-      const newMap = new Map(prev);
-      for (const date of dateRange) {
-        const dateStr = formatDate(date);
-        const key = getCellKey(workerId, dateStr);
-        const current = newMap.get(key);
-        if (current && current.status === null) {
-          newMap.set(key, {
-            ...current,
-            status: yesterdayRecord.work_status as AttendanceStatus,
-            workType: yesterdayRecord.work_type,
-            farmIds:
-              yesterdayRecord.farm_ids && yesterdayRecord.farm_ids.length > 0
-                ? yesterdayRecord.farm_ids
-                : selectedFarmIds,
-            isModified: true,
-          });
-        }
-      }
-      return newMap;
-    });
-
-    showToast(t('attendance.success.copiedFromYesterday'), 'success');
-  };
 
   // Keep rangeStart in sync with selectedDate so attendance data is always loaded
   React.useEffect(() => {
@@ -602,77 +433,6 @@ export function MarkAttendanceTab({
     prevWorkerIdRef.current = undefined;
     setSaving(false);
     loadAttendance();
-  };
-
-  const _handleWorkerSelect = () => {
-    if (workers.length === 0) return;
-    setWorkerSheetVisible(true);
-  };
-
-  const _handleDateRangeChange = (type: 'from' | 'to', event: unknown, date?: Date) => {
-    if ((event as { type: string }).type === 'dismissed') {
-      if (isAndroid) {
-        if (type === 'from') setShowFromPicker(false);
-        if (type === 'to') setShowToPicker(false);
-      }
-      return;
-    }
-
-    if (date) {
-      const normalized = normalizeDate(date);
-      if (type === 'from') {
-        handleRangeStartChange(normalized);
-      } else {
-        const newStart = addDays(normalized, -(rangeLength - 1));
-        handleRangeStartChange(newStart);
-      }
-    }
-
-    if (isAndroid) {
-      if (type === 'from') setShowFromPicker(false);
-      if (type === 'to') setShowToPicker(false);
-    }
-  };
-
-  const activePickerType: 'from' | 'to' | null = showFromPicker
-    ? 'from'
-    : showToPicker
-      ? 'to'
-      : null;
-  const closePickers = () => {
-    setShowFromPicker(false);
-    setShowToPicker(false);
-    setTempPickerDate(null);
-  };
-
-  const _confirmPickerDate = () => {
-    if (tempPickerDate && activePickerType) {
-      const normalized = normalizeDate(tempPickerDate);
-      if (activePickerType === 'from') {
-        handleRangeStartChange(normalized);
-      } else {
-        const newStart = addDays(normalized, -(rangeLength - 1));
-        handleRangeStartChange(newStart);
-      }
-    }
-    closePickers();
-  };
-
-  const _isToday = (date: Date): boolean => {
-    const today = new Date();
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
-  };
-
-  const _getDayName = (date: Date): string => {
-    return formatDateLocalized(date, { weekday: 'short' });
-  };
-
-  const _formatShortDate = (date: Date) => {
-    return formatDateLocalized(date, { month: 'short', day: 'numeric' });
   };
 
   if (loading) {
@@ -920,9 +680,10 @@ export function MarkAttendanceTab({
                     paddingVertical: spacing[1],
                     borderRadius: borderRadius.pill,
                     backgroundColor:
-                      status === 'full_day' ? '#4F7A5A' : m3.surface.surfaceContainerLow,
+                      status === 'full_day' ? colors.success : m3.surface.surfaceContainerLow,
                     borderWidth: 1,
-                    borderColor: status === 'full_day' ? '#4F7A5A' : m3.colorScheme.outlineVariant,
+                    borderColor:
+                      status === 'full_day' ? colors.success : m3.colorScheme.outlineVariant,
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 4,
@@ -933,14 +694,18 @@ export function MarkAttendanceTab({
                       width: 6,
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: status === 'full_day' ? '#FFFFFF' : '#4F7A5A',
+                      backgroundColor:
+                        status === 'full_day' ? m3.colorScheme.onPrimary : colors.success,
                     }}
                   />
                   <Text
                     style={{
                       fontSize: fontSize.xs - 1,
                       fontWeight: fontWeight.bold,
-                      color: status === 'full_day' ? '#FFFFFF' : m3.colorScheme.onSurfaceVariant,
+                      color:
+                        status === 'full_day'
+                          ? m3.colorScheme.onPrimary
+                          : m3.colorScheme.onSurfaceVariant,
                     }}
                   >
                     {t('attendance.mark.full')}
@@ -958,9 +723,10 @@ export function MarkAttendanceTab({
                     paddingVertical: spacing[1],
                     borderRadius: borderRadius.pill,
                     backgroundColor:
-                      status === 'half_day' ? '#C58A2B' : m3.surface.surfaceContainerLow,
+                      status === 'half_day' ? colors.warning : m3.surface.surfaceContainerLow,
                     borderWidth: 1,
-                    borderColor: status === 'half_day' ? '#C58A2B' : m3.colorScheme.outlineVariant,
+                    borderColor:
+                      status === 'half_day' ? colors.warning : m3.colorScheme.outlineVariant,
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 4,
@@ -971,14 +737,18 @@ export function MarkAttendanceTab({
                       width: 6,
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: status === 'half_day' ? '#FFFFFF' : '#C58A2B',
+                      backgroundColor:
+                        status === 'half_day' ? m3.colorScheme.onPrimary : colors.warning,
                     }}
                   />
                   <Text
                     style={{
                       fontSize: fontSize.xs - 1,
                       fontWeight: fontWeight.bold,
-                      color: status === 'half_day' ? '#FFFFFF' : m3.colorScheme.onSurfaceVariant,
+                      color:
+                        status === 'half_day'
+                          ? m3.colorScheme.onPrimary
+                          : m3.colorScheme.onSurfaceVariant,
                     }}
                   >
                     {t('attendance.mark.half')}
@@ -996,9 +766,9 @@ export function MarkAttendanceTab({
                     paddingVertical: spacing[1],
                     borderRadius: borderRadius.pill,
                     backgroundColor:
-                      status === 'absent' ? '#B84C3A' : m3.surface.surfaceContainerLow,
+                      status === 'absent' ? colors.error : m3.surface.surfaceContainerLow,
                     borderWidth: 1,
-                    borderColor: status === 'absent' ? '#B84C3A' : m3.colorScheme.outlineVariant,
+                    borderColor: status === 'absent' ? colors.error : m3.colorScheme.outlineVariant,
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 4,
@@ -1009,14 +779,18 @@ export function MarkAttendanceTab({
                       width: 6,
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: status === 'absent' ? '#FFFFFF' : '#B84C3A',
+                      backgroundColor:
+                        status === 'absent' ? m3.colorScheme.onPrimary : colors.error,
                     }}
                   />
                   <Text
                     style={{
                       fontSize: fontSize.xs - 1,
                       fontWeight: fontWeight.bold,
-                      color: status === 'absent' ? '#FFFFFF' : m3.colorScheme.onSurfaceVariant,
+                      color:
+                        status === 'absent'
+                          ? m3.colorScheme.onPrimary
+                          : m3.colorScheme.onSurfaceVariant,
                     }}
                   >
                     {t('attendance.mark.absent')}
@@ -1045,6 +819,8 @@ export function MarkAttendanceTab({
         >
           <Pressable
             onPress={handleMarkAllPresent}
+            accessibilityRole="button"
+            accessibilityLabel={t('attendance.mark.markAllPresent')}
             style={{
               paddingVertical: spacing[3] + 2,
               borderRadius: borderRadius.sm,
@@ -1252,26 +1028,6 @@ export function MarkAttendanceTab({
       )}
     </View>
   );
-}
-
-async function fetchAttendanceForWorker(
-  workerId: number,
-  startDate: string,
-  endDate: string,
-): Promise<WorkerAttendance[]> {
-  const { data, error } = await supabase
-    .from('worker_attendance')
-    .select('*')
-    .eq('worker_id', workerId)
-    .gte('date', startDate)
-    .lte('date', endDate)
-    .order('date', { ascending: true });
-
-  if (error) {
-    throw new Error('Failed to fetch attendance');
-  }
-
-  return data || [];
 }
 
 async function fetchAttendanceForWorkers(
