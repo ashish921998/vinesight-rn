@@ -1,0 +1,23 @@
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  1e5bfb320b21b3d2 268,683,685-686,697-698,705-708,726,728-729,740-741,748-751,769,771,782-783,790-793,822-823
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "5a70caa3cca7d18aa44f16431ad119e6ed0f3e21",
+  "prompts": {
+    "1e5bfb320b21b3d2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2b35e3c92ffemyWnwTUHcag6aD",
+        "model": "zai-coding-plan/glm-5.1"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 29,
+      "total_deletions": 273,
+      "accepted_lines": 29,
+      "overriden_lines": 0
+    }
+  }
+}
