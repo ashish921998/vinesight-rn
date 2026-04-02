@@ -1,0 +1,29 @@
+src/stores/auth-constants.ts
+  c9d03940d074f00b 1-25
+src/stores/auth-account.ts
+  c9d03940d074f00b 10,195
+src/components/screens/settings/DeleteAccountModal.tsx
+  c9d03940d074f00b 334-335,343,367,394,400-406,409
+src/stores/auth-store.ts
+  c9d03940d074f00b 17,19,169-173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "a620dece913ac1705176d415711805aa4821b55f",
+  "prompts": {
+    "c9d03940d074f00b": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "32e45a46-f45d-40e7-b614-9b97ac516264",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 47,
+      "total_deletions": 29,
+      "accepted_lines": 47,
+      "overriden_lines": 0
+    }
+  }
+}
