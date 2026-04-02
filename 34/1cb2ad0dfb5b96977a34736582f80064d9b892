@@ -1,0 +1,25 @@
+src/components/screens/settings/DeleteAccountModal.tsx
+  63c0ef6da67929f7 85-86,123-124,126-136,158,160,166-172,175,276-287,373,569-578
+src/stores/auth-account.ts
+  63c0ef6da67929f7 22-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "341cb2ad0dfb5b96977a34736582f80064d9b892",
+  "prompts": {
+    "63c0ef6da67929f7": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "953b8bfc-e54e-4263-bd44-4365b45199df",
+        "model": "kimi-k2.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 50,
+      "total_deletions": 51,
+      "accepted_lines": 50,
+      "overriden_lines": 0
+    }
+  }
+}
