@@ -596,7 +596,6 @@ export default function LogsScreen() {
                           'harvest',
                           'expense',
                           'fertigation',
-                          'note',
                         ] as LogTypeId[]),
                       );
                     } else {
@@ -639,7 +638,7 @@ export default function LogsScreen() {
                     irrigation: colors.irrigation[500] || '#3F6E78',
                     spray: colors.spray[500] || '#6C7C46',
                     harvest: colors.harvest[500] || '#A9752F',
-                    expense: colors.labour[500] || '#7A5E8E',
+                    expense: colors.expense[500] || '#598066',
                     fertigation: colors.fertigation[500] || '#56704E',
                   };
                   const chipColor = categoryColorMap[logType.id] || m3.colorScheme.primary;
@@ -1152,7 +1151,7 @@ export default function LogsScreen() {
                                     irrigation: colors.irrigation[500] || '#3F6E78',
                                     spray: colors.spray[500] || '#6C7C46',
                                     harvest: colors.harvest[500] || '#A9752F',
-                                    expense: colors.labour[500] || '#7A5E8E',
+                                    expense: colors.expense[500] || '#598066',
                                     fertigation: colors.fertigation[500] || '#56704E',
                                   };
                                   const categoryColor =

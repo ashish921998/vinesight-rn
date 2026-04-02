@@ -54,13 +54,17 @@ const startOfDay = (date: Date) => {
   return result;
 };
 
+/** Parse a DB date string to a local midnight Date, falling back to new Date(). */
+const dueDateToStartOfDay = (raw: string): Date =>
+  startOfDay(parseDbDateToLocalDate(raw) ?? new Date(raw));
+
 // Cellar Ledger: Get task due date status
 const getTaskDueStatus = (task: TaskReminder): TaskDueStatus => {
   if (task.completed) return 'done';
   if (!task.due_date) return 'upcoming';
 
   const today = startOfDay(new Date());
-  const dueDate = startOfDay(parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date));
+  const dueDate = dueDateToStartOfDay(task.due_date);
 
   if (dueDate < today) return 'overdue';
   if (dueDate.getTime() === today.getTime()) return 'today';
@@ -81,7 +85,7 @@ const computeSummaryCounts = (tasks: TaskReminder[] | null | undefined) => {
     pending++;
 
     if (task.due_date) {
-      const dueDate = startOfDay(parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date));
+      const dueDate = dueDateToStartOfDay(task.due_date);
       if (dueDate < today) {
         overdue++;
       } else if (dueDate.getTime() === today.getTime()) {
@@ -119,7 +123,7 @@ export default function TasksScreen() {
     routeFilter === 'all'
       ? routeFilter
       : 'all';
-  const [_filter, setFilter] = useState<FilterType>(initialFilter);
+  const [filter, setFilter] = useState<FilterType>(initialFilter);
   const farmIdValue = farmId ? parseInt(farmId, 10) : undefined;
 
   useEffect(() => {
@@ -166,9 +170,7 @@ export default function TasksScreen() {
       } else if (status === 'today') {
         dueToday.push(task);
       } else if (task.due_date) {
-        const dueDate = startOfDay(
-          parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date),
-        );
+        const dueDate = dueDateToStartOfDay(task.due_date);
         if (dueDate <= endOfWeek) {
           thisWeek.push(task);
         } else {
@@ -202,9 +204,7 @@ export default function TasksScreen() {
             // Calculate due_offset_days using calendar days
             let dueOffsetDays: number | null = null;
             if (task.due_date) {
-              const dueDate = startOfDay(
-                parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date),
-              );
+              const dueDate = dueDateToStartOfDay(task.due_date);
               const today = startOfDay(new Date());
               const dayMs = 1000 * 60 * 60 * 24;
               const diffTime = dueDate.getTime() - today.getTime();
@@ -323,6 +323,8 @@ export default function TasksScreen() {
                 });
               }}
               style={{ marginRight: spacing[4] }}
+              accessibilityRole="button"
+              accessibilityLabel={t('tasks.a11y.addTask', { defaultValue: 'Add task' })}
             >
               <SFSymbol name="plus.circle.fill" size={28} color={m3.colorScheme.primary} />
             </Pressable>
@@ -410,11 +412,19 @@ export default function TasksScreen() {
         })()}
 
         {/* Task List - Pending Tasks */}
-        {overdueTasks.length === 0 &&
-        dueTodayTasks.length === 0 &&
-        thisWeekTasks.length === 0 &&
-        upcomingTasks.length === 0 &&
-        completedTasks.length === 0 ? (
+        {/* Apply route filter: 'overdue' shows only overdue, 'completed' shows only completed,
+           'pending' shows all pending groups, 'all' shows everything */}
+        {(
+          filter === 'overdue'
+            ? overdueTasks.length === 0
+            : filter === 'completed'
+              ? completedTasks.length === 0
+              : overdueTasks.length === 0 &&
+                dueTodayTasks.length === 0 &&
+                thisWeekTasks.length === 0 &&
+                upcomingTasks.length === 0 &&
+                completedTasks.length === 0
+        ) ? (
           <View
             style={{
               backgroundColor: colors.surface[100],
@@ -471,49 +481,50 @@ export default function TasksScreen() {
         ) : (
           <View>
             {/* Overdue Section */}
-            {overdueTasks.length > 0 && (
-              <>
-                <Text
-                  style={{
-                    fontSize: 11,
-                    fontWeight: fontWeight.semibold,
-                    color: colors.error,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.8,
-                    marginBottom: spacing[2],
-                    paddingHorizontal: spacing[1],
-                  }}
-                >
-                  {t('tasks.sections.overdue')}
-                </Text>
-                {overdueTasks.map((task) => (
-                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
-                    <TaskRow
-                      task={task}
-                      showFarmName
-                      farmName={getFarmName(task.farm_id)}
-                      onComplete={(item) => handleComplete(item)}
-                      onLogFromTask={(item) => handleLogFromTask(item)}
-                      onEdit={(item) => {
-                        setAddEntry({
-                          tabs: ['task'],
-                          initialTab: 'task',
-                          editingTask: item,
-                        });
-                        router.push({
-                          pathname: '/add-entry',
-                          params: { tabs: 'task', initialTab: 'task' },
-                        });
-                      }}
-                      onDelete={(item) => handleDelete(item)}
-                    />
-                  </View>
-                ))}
-              </>
-            )}
+            {(filter === 'all' || filter === 'pending' || filter === 'overdue') &&
+              overdueTasks.length > 0 && (
+                <>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.error,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.8,
+                      marginBottom: spacing[2],
+                      paddingHorizontal: spacing[1],
+                    }}
+                  >
+                    {t('tasks.sections.overdue')}
+                  </Text>
+                  {overdueTasks.map((task) => (
+                    <View key={task.id} style={{ marginBottom: spacing[3] }}>
+                      <TaskRow
+                        task={task}
+                        showFarmName
+                        farmName={getFarmName(task.farm_id)}
+                        onComplete={(item) => handleComplete(item)}
+                        onLogFromTask={(item) => handleLogFromTask(item)}
+                        onEdit={(item) => {
+                          setAddEntry({
+                            tabs: ['task'],
+                            initialTab: 'task',
+                            editingTask: item,
+                          });
+                          router.push({
+                            pathname: '/add-entry',
+                            params: { tabs: 'task', initialTab: 'task' },
+                          });
+                        }}
+                        onDelete={(item) => handleDelete(item)}
+                      />
+                    </View>
+                  ))}
+                </>
+              )}
 
             {/* Due Today Section */}
-            {dueTodayTasks.length > 0 && (
+            {(filter === 'all' || filter === 'pending') && dueTodayTasks.length > 0 && (
               <>
                 <Text
                   style={{
@@ -556,7 +567,7 @@ export default function TasksScreen() {
             )}
 
             {/* This Week Section */}
-            {thisWeekTasks.length > 0 && (
+            {(filter === 'all' || filter === 'pending') && thisWeekTasks.length > 0 && (
               <>
                 <Text
                   style={{
@@ -599,7 +610,7 @@ export default function TasksScreen() {
             )}
 
             {/* Upcoming Section */}
-            {upcomingTasks.length > 0 && (
+            {(filter === 'all' || filter === 'pending') && upcomingTasks.length > 0 && (
               <>
                 <Text
                   style={{
@@ -642,7 +653,7 @@ export default function TasksScreen() {
             )}
 
             {/* Cellar Ledger: Collapsible Completed Section */}
-            {completedTasks.length > 0 && (
+            {(filter === 'all' || filter === 'completed') && completedTasks.length > 0 && (
               <View style={{ marginTop: spacing[6] }}>
                 {/* Section Header */}
                 <Pressable
@@ -657,6 +668,9 @@ export default function TasksScreen() {
                     borderWidth: 1,
                     borderColor: colors.surface[300],
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('tasks.sections.completed')}
+                  accessibilityState={{ expanded: completedExpanded }}
                 >
                   {/* Toggle Arrow */}
                   <SFSymbol
@@ -753,6 +767,8 @@ export default function TasksScreen() {
           borderWidth: 1,
           borderColor: colorWithOpacity(m3.colorScheme.primary, 0.3),
         }}
+        accessibilityRole="button"
+        accessibilityLabel={t('tasks.a11y.addTask', { defaultValue: 'Add task' })}
       >
         <SFSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
       </Pressable>

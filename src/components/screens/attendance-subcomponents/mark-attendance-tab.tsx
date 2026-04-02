@@ -463,6 +463,7 @@ export function MarkAttendanceTab({
   };
 
   // NEW: Handle worker attendance change - now writes to canonical cellData
+  // Toggle behavior: tapping the already-active status clears it back to null.
   const handleWorkerAttendanceChange = (workerId: number, status: AttendanceStatus) => {
     if (workerId === undefined) return;
     triggerHaptic();
@@ -472,12 +473,13 @@ export function MarkAttendanceTab({
     setCellData((prev) => {
       const newMap = new Map(prev);
       const current = newMap.get(key);
+      const resolvedStatus = current?.status === status ? null : status;
       newMap.set(key, {
         workerId,
         date: dateStr,
-        status,
+        status: resolvedStatus,
         workType: current?.workType ?? null,
-        farmIds: selectedFarmIds,
+        farmIds: current?.farmIds?.length ? current.farmIds : selectedFarmIds,
         existingRecordId: current?.existingRecordId,
         isModified: true,
       });
@@ -500,7 +502,7 @@ export function MarkAttendanceTab({
             date: dateStr,
             status: 'full_day',
             workType: current?.workType ?? null,
-            farmIds: selectedFarmIds,
+            farmIds: current?.farmIds?.length ? current.farmIds : selectedFarmIds,
             existingRecordId: current?.existingRecordId,
             isModified: true,
           });
@@ -587,6 +589,16 @@ export function MarkAttendanceTab({
     triggerHapticSuccess();
     showToast(t('attendance.alerts.savedBody', { name: selectedWorker?.name ?? '' }), 'success');
     onSaveSuccess();
+    // Clear isModified flags so loadAttendance won't skip successfully-saved cells
+    setCellData((prev) => {
+      const cleaned = new Map(prev);
+      for (const [key, cell] of cleaned) {
+        if (cell.isModified) {
+          cleaned.set(key, { ...cell, isModified: false });
+        }
+      }
+      return cleaned;
+    });
     prevWorkerIdRef.current = undefined;
     setSaving(false);
     loadAttendance();
