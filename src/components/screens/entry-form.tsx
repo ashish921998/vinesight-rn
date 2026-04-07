@@ -1858,12 +1858,7 @@ export function EntryForm({
           paddingHorizontal: 16,
           paddingVertical: 12,
           borderTopWidth: 1,
-          borderColor: colors.surface[100],
-          shadowColor: m3.colorScheme.shadow,
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 6,
+          borderColor: colors.surface[300],
         }}
       >
         <Pressable
@@ -3327,11 +3322,8 @@ export function EntryForm({
                       },
                       showSaveGuidance
                         ? {
-                            shadowColor: m3.colorScheme.primary,
-                            shadowOpacity: 0.45,
-                            shadowRadius: 14,
-                            shadowOffset: { width: 0, height: spacing[1] },
-                            elevation: 8,
+                            borderWidth: 2,
+                            borderColor: colorWithOpacity(m3.colorScheme.primary, 0.7),
                           }
                         : null,
                     ]}

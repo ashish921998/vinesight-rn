@@ -1,21 +1,22 @@
 /**
  * TaskRow Component
- * M3-styled compact list item for tasks.
+ * Cellar Ledger design: circular checkbox, priority dot, 12px radius card
  */
 
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { TaskReminder } from '@/types/task';
 import { PRIORITY_INFO, TASK_TYPE_INFO } from '@/types/task';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3 } from '@/styles/use-theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { triggerHaptic, triggerHapticWarning } from '@/utils/haptics';
 import { stripTaskPlanFromDescription } from '@/utils/task-plan';
+import { parseDbDateToLocalDate } from '@/utils/date';
 
 interface TaskRowProps {
   task: TaskReminder;
@@ -44,17 +45,20 @@ export function TaskRow({
 }: TaskRowProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const colors = useThemeColors();
   const typeInfo = TASK_TYPE_INFO[task.type];
   const priorityInfo = PRIORITY_INFO[task.priority];
   const cleanDescription = stripTaskPlanFromDescription(task.description);
 
   const today = startOfDay(new Date());
-  const dueDate = task.due_date ? new Date(task.due_date) : null;
+  const dueDate = task.due_date
+    ? startOfDay(parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date))
+    : null;
   const overdue = !task.completed && dueDate ? dueDate < today : false;
 
   const formatDueDate = () => {
     if (!task.due_date) return t('tasks.dueDate.none');
-    const date = new Date(task.due_date);
+    const date = parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date);
     const display = formatDate(date, { year: 'numeric', month: 'numeric', day: 'numeric' });
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -65,35 +69,49 @@ export function TaskRow({
     return display;
   };
 
+  // Cellar Ledger: priority dot colors (8px: red/amber/stone/green based on due date status)
+  const getPriorityColor = () => {
+    // Use due date status for colors (not priority level) as per wireframe
+    if (task.completed) return colors.success;
+
+    if (!task.due_date) return colors.surface[400]; // stone-5 for no due date
+
+    const dueDate = startOfDay(parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date));
+    if (dueDate < today) return colors.error; // red for overdue
+    if (dueDate.getTime() === today.getTime()) return colors.warning; // amber for today
+    return colors.surface[400]; // stone-5 for upcoming
+  };
+
   const priorityTone =
     task.priority === 'high'
       ? {
-          fg: m3.colorScheme.error,
-          bg: m3.colorScheme.errorContainer,
+          fg: colors.error,
+          bg: colorWithOpacity(colors.error, 0.12),
         }
       : task.priority === 'medium'
         ? {
-            fg: m3.colorScheme.warning,
-            bg: colorWithOpacity(m3.colorScheme.warning, 0.18),
+            fg: colors.warning,
+            bg: colorWithOpacity(colors.warning, 0.18),
           }
         : {
-            fg: m3.colorScheme.primary,
-            bg: colorWithOpacity(m3.colorScheme.primary, 0.12),
+            fg: colors.primary[500],
+            bg: colorWithOpacity(colors.primary[500], 0.12),
           };
 
+  // Cellar Ledger: Card mist-1 bg, border, 12px radius
+  const containerStyle: ViewStyle = {
+    borderRadius: borderRadius.sm, // 12px
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    backgroundColor: colors.surface[100], // mist-1
+    borderWidth: 1,
+    borderColor: colors.surface[300], // stone-3
+  };
+
   return (
-    <View
-      style={{
-        borderRadius: m3.shape.cornerLarge,
-        paddingVertical: spacing[3],
-        paddingHorizontal: spacing[4],
-        backgroundColor: m3.surface.surfaceContainerLow,
-        borderWidth: 1,
-        borderColor: m3.colorScheme.outlineVariant,
-        opacity: task.completed ? 0.6 : 1,
-      }}
-    >
+    <View style={containerStyle}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+        {/* Cellar Ledger: Circular checkbox (22px, border when unchecked, green filled when done) */}
         <Pressable
           onPress={() => {
             if (!task.completed && onComplete) {
@@ -102,11 +120,12 @@ export function TaskRow({
             }
           }}
           disabled={task.completed || !onComplete}
+          hitSlop={{ top: 11, bottom: 11, left: 11, right: 11 }}
           accessibilityRole="button"
           accessibilityLabel={t('tasks.a11y.completeTask', { title: task.title })}
           style={({ pressed }) => ({
-            width: 28,
-            height: 28,
+            width: 22,
+            height: 22,
             borderRadius: borderRadius.full,
             borderWidth: 2,
             alignItems: 'center',
@@ -114,16 +133,14 @@ export function TaskRow({
             marginRight: spacing[3],
             marginTop: 2,
             backgroundColor: task.completed
-              ? m3.colorScheme.primary
+              ? colors.success // green when done
               : pressed
-                ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                ? colorWithOpacity(colors.surface[900], 0.12)
                 : 'transparent',
-            borderColor: task.completed ? m3.colorScheme.primary : m3.colorScheme.outlineVariant,
+            borderColor: task.completed ? colors.success : colors.surface[300], // stone-3 when unchecked
           })}
         >
-          {task.completed && (
-            <UiSymbol name="checkmark" size={16} color={m3.colorScheme.onPrimary} />
-          )}
+          {task.completed && <UiSymbol name="checkmark" size={12} color="#FFFFFF" />}
         </Pressable>
 
         <View style={{ flex: 1 }}>
@@ -145,18 +162,29 @@ export function TaskRow({
                 color={typeInfo.color}
               />
             </View>
+            {/* Cellar Ledger: Task title 15px/600 */}
             <Text
               numberOfLines={1}
               style={{
-                fontSize: fontSize.base,
-                fontWeight: fontWeight.semibold,
+                fontSize: 15, // 15px
+                fontWeight: fontWeight.semibold, // 600
                 flex: 1,
-                color: task.completed ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onSurface,
+                color: task.completed ? colors.surface[400] : colors.surface[900], // stone-5 when completed, ink when not
                 textDecorationLine: task.completed ? 'line-through' : 'none',
               }}
             >
               {task.title}
             </Text>
+            {/* Cellar Ledger: Priority dot (8px: red/amber/stone/green) */}
+            <View
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: borderRadius.full,
+                backgroundColor: getPriorityColor(),
+                marginLeft: spacing[2],
+              }}
+            />
           </View>
 
           {cleanDescription && (

@@ -249,11 +249,6 @@ export function TimelineLogCard({
     borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.85),
     borderLeftWidth: 3,
     borderLeftColor: logType.color,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
     overflow: 'hidden',
   };
 

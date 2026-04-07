@@ -1,6 +1,7 @@
 /**
  * ActivityLogCard Component
  * Displays a single activity log entry (irrigation, spray, harvest, etc.)
+ * Cellar Ledger design: compact list item with colored dot
  */
 
 import React from 'react';
@@ -8,13 +9,12 @@ import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } fro
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
-import { spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
-import { useM3 } from '@/styles/use-theme';
-import { getExpenseIconName } from '@/utils/expense-icons';
+import { useThemeColors } from '@/styles/use-theme';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -104,55 +104,51 @@ export function ActivityLogCard({
   onEdit,
   onDelete,
 }: ActivityLogCardProps) {
-  const m3 = useM3();
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const currency = useCurrency();
 
   const hasActions = Boolean(onEdit || onDelete);
   const isInteractive = Boolean(onPress) && !hasActions;
   const logType = getLogType(type);
-  const iconName =
-    type === 'expense'
-      ? getExpenseIconName((data as ExpenseRecord | undefined)?.type, logType.icon)
-      : logType.icon;
   const parsedDate = fromSupabaseDateString(date);
   const displayDescription = description || getDescriptionFromData(type, t, data, currency);
   const displayDate = parsedDate
     ? formatDate(parsedDate, { month: 'short', day: 'numeric' })
     : date;
 
+  // Cellar Ledger: compact list item - no card wrapper, just list item styling
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: m3.shape.cornerMedium,
+    borderRadius: borderRadius.md,
     paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    backgroundColor: m3.surface.surfaceContainerLow,
+    paddingVertical: spacing[3],
+    backgroundColor: colors.surface[100], // mist-1
     borderWidth: 1,
-    borderColor: m3.colorScheme.outlineVariant,
+    borderColor: colors.surface[300], // stone-3
     overflow: 'hidden',
   };
 
-  const iconContainerStyle: ViewStyle = {
-    width: 40,
-    height: 40,
-    minWidth: 40,
-    minHeight: 40,
-    borderRadius: 9999,
-    alignItems: 'center',
-    justifyContent: 'center',
+  // Cellar Ledger: compact colored dot (8px)
+  const dotContainerStyle: ViewStyle = {
+    width: 8,
+    height: 8,
+    borderRadius: borderRadius.full,
     marginRight: spacing[3],
-    backgroundColor: colorWithOpacity(logType.color, 0.14),
+    backgroundColor: logType.color,
+    flexShrink: 0,
   };
 
   const contentContainerStyle: ViewStyle = {
     flex: 1,
   };
 
+  // Cellar Ledger: primary text 14px/500
   const descriptionTextStyle: TextStyle = {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    color: m3.colorScheme.onSurface,
+    fontSize: fontSize.sm, // 14px
+    fontWeight: fontWeight.medium, // 500
+    color: colors.surface[900], // ink
   };
 
   const metaContainerStyle: ViewStyle = {
@@ -161,20 +157,22 @@ export function ActivityLogCard({
     marginTop: spacing[1],
   };
 
+  // Cellar Ledger: secondary text 12px/bark
   const farmTextStyle: TextStyle = {
-    fontSize: 12,
-    color: m3.colorScheme.onSurfaceVariant,
+    fontSize: fontSize.xs, // 12px
+    color: colors.surface[500], // bark
   };
 
   const separatorTextStyle: TextStyle = {
-    fontSize: 12,
+    fontSize: fontSize.xs, // 12px
     marginHorizontal: 4,
-    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+    color: colors.surface[400], // stone-5
   };
 
+  // Cellar Ledger: time 12px/stone-5
   const dateTextStyle: TextStyle = {
-    fontSize: 12,
-    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+    fontSize: fontSize.xs, // 12px
+    color: colors.surface[400], // stone-5
   };
 
   if (isInteractive) {
@@ -186,9 +184,7 @@ export function ActivityLogCard({
       >
         {({ pressed }) => (
           <View style={containerStyle}>
-            <View style={iconContainerStyle}>
-              <UiSymbol name={iconName} size={18} color={logType.color} />
-            </View>
+            <View style={dotContainerStyle} />
 
             <View style={contentContainerStyle}>
               <Text style={descriptionTextStyle} numberOfLines={1}>
@@ -210,7 +206,7 @@ export function ActivityLogCard({
             <UiSymbol
               name="chevron.right"
               size={16}
-              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+              color={colors.surface[400]} // stone-5
             />
             <View
               pointerEvents="none"
@@ -218,7 +214,7 @@ export function ActivityLogCard({
                 StyleSheet.absoluteFillObject,
                 {
                   backgroundColor: pressed
-                    ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                    ? colorWithOpacity(colors.surface[900], 0.12)
                     : 'transparent',
                 },
               ]}
@@ -232,9 +228,7 @@ export function ActivityLogCard({
   if (hasActions) {
     return (
       <View style={containerStyle}>
-        <View style={iconContainerStyle}>
-          <UiSymbol name={iconName} size={18} color={logType.color} />
-        </View>
+        <View style={dotContainerStyle} />
         <View style={contentContainerStyle}>
           <Text style={descriptionTextStyle} numberOfLines={1}>
             {displayDescription || t(logType.labelKey)}
@@ -262,15 +256,15 @@ export function ActivityLogCard({
               style={({ pressed }) => ({
                 width: 36,
                 height: 36,
-                borderRadius: m3.shape.cornerMedium,
+                borderRadius: borderRadius.md,
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: pressed
-                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  ? colorWithOpacity(colors.surface[900], 0.12)
                   : 'transparent',
               })}
             >
-              <UiSymbol name="pencil" size={16} color={m3.colorScheme.primary} />
+              <UiSymbol name="pencil" size={16} color={colors.primary[500]} />
             </Pressable>
           )}
           {onDelete && (
@@ -283,15 +277,15 @@ export function ActivityLogCard({
               style={({ pressed }) => ({
                 width: 36,
                 height: 36,
-                borderRadius: m3.shape.cornerMedium,
+                borderRadius: borderRadius.md,
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: pressed
-                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  ? colorWithOpacity(colors.surface[900], 0.12)
                   : 'transparent',
               })}
             >
-              <UiSymbol name="trash" size={16} color={m3.colorScheme.error} />
+              <UiSymbol name="trash" size={16} color={colors.error} />
             </Pressable>
           )}
         </View>
@@ -301,9 +295,7 @@ export function ActivityLogCard({
 
   return (
     <View style={containerStyle}>
-      <View style={iconContainerStyle}>
-        <UiSymbol name={iconName} size={18} color={logType.color} />
-      </View>
+      <View style={dotContainerStyle} />
       <View style={contentContainerStyle}>
         <Text style={descriptionTextStyle} numberOfLines={1}>
           {displayDescription || t(logType.labelKey)}

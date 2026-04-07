@@ -13,7 +13,7 @@ import type { Worker } from '@/types';
 import { WorkerCard } from '@/components/cards';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3 } from '@/styles/use-theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { WorkersTourCoachmark } from '@/features/guided-tour/workers-tour-coachmark';
 import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
@@ -34,6 +34,7 @@ const TAB_DATA: WorkersTabMeta[] = [
 
 export default function WorkersScreen() {
   const m3 = useM3();
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -114,12 +115,18 @@ export default function WorkersScreen() {
   };
 
   const renderWorker = ({ item }: { item: Worker }) => (
-    <View style={{ marginHorizontal: spacing[4], marginBottom: spacing[3] }}>
+    <View
+      style={{
+        marginHorizontal: spacing[4],
+        marginBottom: spacing[3],
+      }}
+    >
       <WorkerCard
         worker={item}
         onPress={() => handleViewWorkerDetail(item)}
         onEdit={() => handleEditWorker(item)}
         onDelete={() => handleDeleteWorker(item)}
+        isActive={item.is_active}
       />
     </View>
   );
@@ -270,9 +277,9 @@ export default function WorkersScreen() {
             targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_TAB_SELECTOR}
             enabled={isTourActive}
             style={{
-              backgroundColor: m3.surface.surfaceContainerLow,
+              backgroundColor: colors.surface[200], // mist-2 bg per wireframe
               borderRadius: borderRadius.full,
-              padding: spacing[1],
+              padding: 3, // 3px padding per wireframe
             }}
           >
             <GuidedTourTarget

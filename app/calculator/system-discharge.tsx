@@ -777,7 +777,7 @@ export default function SystemDischargeScreen() {
                   >
                     <Text
                       style={{
-                        fontSize: fontSize['3xl'],
+                        fontSize: 28,
                         fontWeight: fontWeight.bold,
                         color: m3.colorScheme.primary,
                       }}
@@ -803,6 +803,20 @@ export default function SystemDischargeScreen() {
                     }}
                   >
                     Equivalent: {(results.systemDischarge * 1000).toFixed(0)} L/hr
+                  </Text>
+                  {/* Formula - italic style per wireframe */}
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      color: colors.surface[500],
+                      fontStyle: 'italic',
+                      textAlign: 'center',
+                      marginTop: spacing[2],
+                    }}
+                  >
+                    {results.method === 1
+                      ? 'P/H = 10000 / (DBL × DBP) • SD = (P/H × Drippers × L/hr) / 10000'
+                      : 'SD = (100 / DBL) × (100 / DBD) × Discharge × Lines / 10000'}
                   </Text>
 
                   {results.irrigationHours ? (

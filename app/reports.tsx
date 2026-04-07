@@ -102,6 +102,7 @@ export default function ReportsScreen() {
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');
+  const [selectedExportFormat, setSelectedExportFormat] = useState<ReportFormat>('pdf');
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
   const [showFarmPicker, setShowFarmPicker] = useState(false);
@@ -328,14 +329,6 @@ export default function ReportsScreen() {
     }
   };
 
-  const handleDownloadPrompt = () => {
-    Alert.alert(t('reports.alerts.downloadReportTitle'), t('reports.alerts.chooseFormatBody'), [
-      { text: 'PDF', onPress: () => void handleDownload('pdf') },
-      { text: 'CSV', onPress: () => void handleDownload('csv') },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
-  };
-
   const handleDateChange = (type: 'from' | 'to', date: Date | undefined) => {
     if (date) {
       const dateStr = formatLocalDate(date);
@@ -378,7 +371,8 @@ export default function ReportsScreen() {
     borderRadius: borderRadius.xl,
     borderCurve: 'continuous' as const,
     padding: spacing[3],
-    boxShadow: `0 8px 24px ${colorWithOpacity(m3.colorScheme.shadow, 0.08)}`,
+    borderWidth: 1,
+    borderColor: colors.surface[300],
   };
 
   const showStickyExport = Boolean(farms && farms.length > 0);
@@ -456,6 +450,8 @@ export default function ReportsScreen() {
               reportType={reportType}
               reportTypes={REPORT_TYPES}
               onSelectReportType={setReportType}
+              selectedExportFormat={selectedExportFormat}
+              onSelectExportFormat={setSelectedExportFormat}
               panelStyle={panelStyle}
             />
 
@@ -503,8 +499,9 @@ export default function ReportsScreen() {
           <ReportExportActions
             canExport={Boolean(preview)}
             isExporting={isExporting}
-            onExportPdf={() => handleExport('pdf')}
-            onDownload={handleDownloadPrompt}
+            exportFormat={selectedExportFormat}
+            onExportPdf={() => handleExport(selectedExportFormat)}
+            onDownload={() => handleDownload(selectedExportFormat)}
             panelStyle={{ paddingBottom: spacing[6] + insets.bottom }}
           />
         </View>
