@@ -164,10 +164,9 @@ export function LinkPhoneModal({
 
   // Clear local error when phone input changes
   useEffect(() => {
-    if (!linkPhoneLocalError) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLinkPhoneLocalError(null);
-  }, [linkPhoneInput, linkPhoneLocalError]);
+  }, [linkPhoneInput]);
 
   // Sync with phoneLinkingPending from auth store
   useEffect(() => {

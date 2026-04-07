@@ -191,12 +191,23 @@ export function DeleteAccountModal({
     }
 
     setIsVerifyingDeleteOtp(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone: deleteVerificationPhone,
-        token: deletePhoneOtp.trim(),
-        type: 'sms',
-      });
+      const { error } = await Promise.race([
+        supabase.auth.verifyOtp({
+          phone: deleteVerificationPhone,
+          token: deletePhoneOtp.trim(),
+          type: 'sms',
+        }),
+        new Promise<never>((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            const err = new Error('Request timed out');
+            err.name = 'AbortError';
+            reject(err);
+          });
+        }),
+      ]);
 
       if (error) {
         Alert.alert(
@@ -217,17 +228,24 @@ export function DeleteAccountModal({
         }),
       );
     } catch (error) {
+      clearTimeout(timeoutId);
       telemetry.capture('account_delete_phone_otp_verify_failed');
+      const isAbortError = error instanceof Error && error.name === 'AbortError';
       if (__DEV__) {
         console.error('Failed to verify phone OTP:', error);
       }
       Alert.alert(
         t('common.error'),
-        t('settings.deleteAccountModal.errors.otpVerifyFailed', {
-          defaultValue: 'OTP verification failed. Please try again.',
-        }),
+        isAbortError
+          ? t('settings.deleteAccountModal.errors.timeout', {
+              defaultValue: 'Request timed out. Please try again.',
+            })
+          : t('settings.deleteAccountModal.errors.otpVerifyFailed', {
+              defaultValue: 'OTP verification failed. Please try again.',
+            }),
       );
     } finally {
+      clearTimeout(timeoutId);
       setIsVerifyingDeleteOtp(false);
     }
   };
