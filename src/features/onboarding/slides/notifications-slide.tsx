@@ -13,8 +13,6 @@ interface NotificationsSlideProps {
   onFinish: (notificationsEnabled: boolean) => void | Promise<void>;
 }
 
-const NOTIFICATION_ACCENT_COLOR = '#408059';
-
 export function NotificationsSlide({ isActive, onFinish }: NotificationsSlideProps) {
   const { t } = useTranslation();
   const isDark = useIsDark();
@@ -23,9 +21,9 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
 
   const bellCircleStyle = useMemo(
     () => ({
-      backgroundColor: colorWithOpacity(NOTIFICATION_ACCENT_COLOR, isDark ? 0.15 : 0.08),
+      backgroundColor: colorWithOpacity(m3.colorScheme.primary, isDark ? 0.15 : 0.08),
     }),
-    [isDark],
+    [isDark, m3],
   );
 
   const handleEnable = useCallback(async () => {
@@ -91,7 +89,7 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
           style={styles.iconContainer}
         >
           <View style={[styles.bellCircle, bellCircleStyle]}>
-            <SymbolIcon name="bell.badge.fill" size={34} color={NOTIFICATION_ACCENT_COLOR} />
+            <SymbolIcon name="bell.badge.fill" size={34} color={m3.colorScheme.primary} />
           </View>
         </Animated.View>
 
@@ -105,7 +103,7 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
             style={({ pressed }) => [
               styles.ctaButton,
               {
-                backgroundColor: NOTIFICATION_ACCENT_COLOR,
+                backgroundColor: m3.colorScheme.primary,
                 opacity: isRequesting ? 0.72 : 1,
                 transform: [{ scale: pressed ? 0.97 : 1 }],
               },

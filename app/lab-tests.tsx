@@ -179,7 +179,7 @@ export default function LabTestsScreen() {
               </Text>
               <Text
                 style={{
-                  fontSize: fontSize.base,
+                  fontSize: 15,
                   fontWeight: fontWeight.semibold,
                   color: m3.colorScheme.onSurface,
                 }}
@@ -554,7 +554,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'soil' ? colors.labTest.soil : m3.colorScheme.onSurfaceVariant,
+              color: selectedTab === 'soil' ? colors.labTest.soil : colors.surface[400],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
@@ -578,10 +578,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color:
-                selectedTab === 'petiole'
-                  ? colors.labTest.petiole
-                  : m3.colorScheme.onSurfaceVariant,
+              color: selectedTab === 'petiole' ? colors.labTest.petiole : colors.surface[400],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"

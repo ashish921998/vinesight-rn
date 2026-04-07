@@ -51,6 +51,7 @@ export class AnalyticsService {
       (sum, r) => sum + (r.quantity || 0) * (r.price || 0),
       0,
     );
+    const totalHarvestCount = filteredHarvests.length;
     const totalExpenseRecords = filteredExpenses.reduce((sum, r) => sum + (r.cost || 0), 0);
     const totalTempWorkerExpenses = filteredTempWorkers.reduce(
       (sum, r) => sum + (r.amount_paid || 0),
@@ -68,7 +69,7 @@ export class AnalyticsService {
     const harvestsByFarm = this.groupHarvestsByFarm(filteredHarvests, farms);
 
     // Group expenses by type
-    const expensesByType = this.groupExpensesByType(filteredExpenses);
+    const expensesByType = this.groupExpensesByType(filteredExpenses, filteredTempWorkers);
 
     // Recent activity
     const recentActivity = this.getRecentActivity(
@@ -85,6 +86,7 @@ export class AnalyticsService {
       totalSprayCount: filteredSprays.length,
       totalHarvestQuantity,
       totalHarvestValue,
+      totalHarvestCount,
       totalExpenses,
       irrigationsByMonth,
       spraysByType,
@@ -336,14 +338,32 @@ export class AnalyticsService {
     }));
   }
 
-  private static groupExpensesByType(expenses: ExpenseRecord[]) {
-    const byType = new Map<string, number>();
+  private static groupExpensesByType(
+    expenses: ExpenseRecord[],
+    tempWorkers: TemporaryWorkerEntry[] = [],
+  ) {
+    const byType = new Map<string, { amount: number; count: number }>();
     expenses.forEach((e) => {
       const type = e.type || 'other';
-      byType.set(type, (byType.get(type) || 0) + (e.cost || 0));
+      const existing = byType.get(type) || { amount: 0, count: 0 };
+      byType.set(type, { amount: existing.amount + (e.cost || 0), count: existing.count + 1 });
     });
+    if (tempWorkers.length > 0) {
+      const existing = byType.get('labor') || { amount: 0, count: 0 };
+      const tempWorkerTotals = tempWorkers.reduce(
+        (totals, entry) => ({
+          amount: totals.amount + (entry.amount_paid || 0),
+          count: totals.count + 1,
+        }),
+        { amount: 0, count: 0 },
+      );
+      byType.set('labor', {
+        amount: existing.amount + tempWorkerTotals.amount,
+        count: existing.count + tempWorkerTotals.count,
+      });
+    }
     return Array.from(byType.entries())
-      .map(([type, amount]) => ({ type, amount }))
+      .map(([type, { amount, count }]) => ({ type, amount, count }))
       .sort((a, b) => b.amount - a.amount);
   }
 

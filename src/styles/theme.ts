@@ -1,10 +1,9 @@
 /**
  * VineSight Design System - Native Styles
- * Ported from tailwind.config.js for inline style usage
+ * Cellar Ledger design - warm earth tones, shadow-minimal cards
  */
 
-import { colorWithOpacity } from '@/utils/color';
-
+// Gray palette - not used in Cellar Ledger but kept for compatibility
 const lightGray = {
   50: '#f9fafb',
   100: '#f3f4f6',
@@ -31,70 +30,85 @@ const darkGray = {
   900: '#f9fafb',
 } as const;
 
+// Light mode neutrals (warm earth tones)
 const lightSurface = {
-  50: '#f2f2f7',
-  100: '#ffffff',
-  200: '#f2f2f7',
-  300: '#e5e5ea',
-  400: '#d1d1d6',
-  500: '#8e8e93',
-  600: '#636366',
-  700: '#48484a',
-  800: '#3a3a3c',
-  900: '#2c2c2e',
+  50: '#FBF8F3', // bg
+  100: '#F7F3ED', // card
+  200: '#EEE7DD', // hover/dividers
+  300: '#D9D0C4', // border
+  400: '#A89E92', // muted
+  500: '#5C584F', // secondary text
+  600: '#48484a',
+  700: '#3a3a3c',
+  800: '#2c2c2e',
+  900: '#1E241F', // primary text (ink)
 } as const;
 
+// Dark mode neutrals (bark-charcoal palette)
 const darkSurface = {
-  50: '#0b0f14',
-  100: '#11161d',
-  200: '#1a2029',
-  300: '#232b36',
-  400: '#2c3542',
-  500: '#3a4453',
-  600: '#4b5666',
-  700: '#667180',
-  800: '#8a94a3',
-  900: '#b8c0cc',
+  50: '#121613', // bg
+  100: '#1A1E1B', // card
+  200: '#242A24', // surface-2/hover
+  300: '#2E342F', // border
+  400: '#7A756D', // muted
+  500: '#A89E92', // secondary text (bark)
+  600: '#B5BDB8',
+  700: '#D9DED9',
+  800: '#E8E4DE', // primary text (ink)
+  900: '#F0F2F0',
 } as const;
 
+// Base colors - Cellar Ledger palette
 const baseColors = {
   white: '#ffffff',
   black: '#000000',
-  // Primary - Monochromatic Green Palette
+  // Primary palette - Light mode
   primary: {
     50: '#f0f5f2',
     100: '#e1ebe5',
     200: '#c3d6cc',
     300: '#9cc5b1',
     400: '#75b397',
-    500: '#408059',
-    600: '#346a4a',
-    700: '#2d5c3f',
-    800: '#264d35',
-    900: '#1f412b',
+    500: '#355847', // primary #355847
+    600: '#2d4a3a',
+    700: '#264035',
+    800: '#1f352c',
+    900: '#1E241F',
     950: '#0f2116',
   },
   secondary: {
-    500: '#598d6b',
+    500: '#A56B4F', // secondary #A56B4F
   },
   accent: {
-    500: '#33734d',
+    500: '#D0A14A', // accent #D0A14A
   },
-  // Activity Colors
+  // Status colors - Light mode
+  info: '#4E7384',
+  warning: '#C58A2B',
+  error: '#B84C3A',
+  success: '#4F7A5A',
+  // Category colors - Light mode
   irrigation: {
-    500: '#4d8573',
+    500: '#3F6E78',
   },
   spray: {
-    500: '#598d6b',
+    500: '#6C7C46',
   },
   fertigation: {
-    500: '#408059',
+    500: '#56704E',
   },
   harvest: {
-    500: '#669475',
+    500: '#A9752F',
   },
+  labour: {
+    500: '#7A5E8E',
+  },
+  note: {
+    500: '#5C6D91', // Cellar Ledger note category
+  },
+  // observation maps to note color
   observation: {
-    500: '#738c7a',
+    500: '#5C6D91', // note color
   },
   task: {
     500: '#4d8573',
@@ -103,22 +117,86 @@ const baseColors = {
     500: '#598066',
   },
   labTest: {
-    soil: '#597A61',
-    petiole: '#4C806B',
+    soil: '#5C6D91',
+    petiole: '#4E7384',
   },
-  // Status Colors
-  warning: '#ff9500',
-  error: '#ff3b30',
-  errorRed: {
-    500: '#ef4444',
-  },
-  success: '#34c759',
   // Water Status
   water: {
-    critical: '#db4437',
-    low: '#ea8600',
-    medium: '#f9a825',
-    good: '#0b8d32',
+    critical: '#B84C3A',
+    low: '#C58A2B',
+    medium: '#D0A14A',
+    good: '#4F7A5A',
+  },
+} as const;
+
+// Dark mode colors - lighter variants for dark backgrounds
+const darkModeColors = {
+  white: '#ffffff',
+  black: '#000000',
+  // Primary palette - Dark mode
+  primary: {
+    50: '#f0f5f2',
+    100: '#e1ebe5',
+    200: '#c3d6cc',
+    300: '#9cc5b1',
+    400: '#75b397',
+    500: '#4A8B6B', // primary #4A8B6B
+    600: '#3d7459',
+    700: '#345d4a',
+    800: '#2b473a',
+    900: '#E8E4DE',
+    950: '#0f2116',
+  },
+  secondary: {
+    500: '#9A6A52', // secondary #9A6A52
+  },
+  accent: {
+    500: '#C49843', // accent #C49843
+  },
+  // Status colors - Dark mode
+  info: '#5A8090',
+  warning: '#B88030',
+  error: '#C45A4A',
+  success: '#5A8B65',
+  // Category colors - Dark mode (lighter for dark bg)
+  irrigation: {
+    500: '#5A8B96',
+  },
+  spray: {
+    500: '#8A9A5E',
+  },
+  fertigation: {
+    500: '#6A8A5E',
+  },
+  harvest: {
+    500: '#C48A40',
+  },
+  labour: {
+    500: '#9A7EAE',
+  },
+  note: {
+    500: '#7A8DAA', // Cellar Ledger note category - dark mode
+  },
+  // observation maps to note color
+  observation: {
+    500: '#7A8DAA', // note color - dark mode
+  },
+  task: {
+    500: '#5a8b96',
+  },
+  expense: {
+    500: '#6a9078',
+  },
+  labTest: {
+    soil: '#7A8DAA',
+    petiole: '#5A8090',
+  },
+  // Water Status - Dark mode
+  water: {
+    critical: '#C45A4A',
+    low: '#B88030',
+    medium: '#C49843',
+    good: '#5A8B65',
   },
 } as const;
 
@@ -129,7 +207,7 @@ export const colors = {
 } as const;
 
 export const darkColors = {
-  ...baseColors,
+  ...darkModeColors,
   gray: darkGray,
   surface: darkSurface,
 } as const;
@@ -164,14 +242,16 @@ export const androidTextPadding = {
 
 export const borderRadius = {
   none: 0,
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
-  '2xl': 20,
-  '3xl': 24,
-  '4xl': 32,
-  full: 9999,
+  xs: 8,
+  sm: 12, // was 4
+  md: 16, // was 12
+  lg: 24, // was 16
+  xl: 24, // keep for backwards compat, same as lg
+  '2xl': 28,
+  '3xl': 32,
+  '4xl': 32, // was 40
+  full: 9999, // was 999
+  pill: 9999,
 } as const;
 
 export const size = {
@@ -280,56 +360,58 @@ const m3Base = {
 
 const createM3Theme = (isDark: boolean) => {
   const themeColors = getThemeColors(isDark);
-  const onAccent = isDark ? themeColors.gray[50] : themeColors.surface[100];
-  const primary = isDark ? colors.primary[300] : colors.primary[500];
-  const error = isDark ? '#ff453a' : colors.error;
-  const success = isDark ? '#32d74b' : colors.success;
+  const onAccent = isDark ? darkColors.surface[800] : colors.surface[100];
+  // Cellar Ledger primary: #355847 (light) / #4A8B6B (dark)
+  const primary = isDark ? darkColors.primary[500] : colors.primary[500];
+  const error = isDark ? darkColors.error : colors.error;
+  const success = isDark ? darkColors.success : colors.success;
 
   return {
     colorScheme: {
-      primary,
+      primary, // resolves to #355847 in light mode, #4A8B6B in dark mode
       onPrimary: onAccent,
-      primaryContainer: isDark ? colors.primary[800] : colors.primary[100],
-      onPrimaryContainer: isDark ? colors.primary[50] : colors.primary[900],
+      primaryContainer: isDark ? darkColors.primary[800] : colors.primary[100],
+      onPrimaryContainer: isDark ? darkColors.primary[50] : colors.primary[900],
 
-      secondary: colors.secondary[500],
+      secondary: isDark ? darkColors.secondary[500] : colors.secondary[500],
       onSecondary: onAccent,
-      secondaryContainer: isDark ? colors.primary[700] : colors.primary[50],
-      onSecondaryContainer: isDark ? colors.primary[50] : colors.primary[900],
+      secondaryContainer: isDark ? darkColors.primary[700] : colors.primary[50],
+      onSecondaryContainer: isDark ? darkColors.primary[50] : colors.primary[900],
 
-      tertiary: colors.harvest[500],
+      tertiary: isDark ? darkColors.harvest[500] : colors.harvest[500],
       onTertiary: onAccent,
-      tertiaryContainer: isDark ? colors.primary[700] : colors.primary[50],
-      onTertiaryContainer: isDark ? colors.primary[50] : colors.primary[900],
+      tertiaryContainer: isDark ? darkColors.primary[700] : colors.primary[50],
+      onTertiaryContainer: isDark ? darkColors.primary[50] : colors.primary[900],
 
       error,
       onError: onAccent,
-      errorContainer: isDark ? '#5c1a1a' : '#FDE8E8',
+      errorContainer: isDark ? '#3d1a1a' : '#FDE8E8',
       onErrorContainer: isDark ? '#FECACA' : '#7F1D1D',
 
       success,
       onSuccess: onAccent,
 
-      background: themeColors.surface[50],
-      onBackground: themeColors.gray[900],
+      background: themeColors.surface[50], // #FBF8F3 (light) / #121613 (dark)
+      // Dark mode uses surface[800] (#E8E4DE) for primary text, not surface[900] (#F0F2F0)
+      onBackground: isDark ? themeColors.surface[800] : themeColors.surface[900], // #1E241F (light) / #E8E4DE (dark)
 
       surface: themeColors.surface[50],
-      onSurface: themeColors.gray[900],
+      onSurface: isDark ? themeColors.surface[800] : themeColors.surface[900],
       surfaceVariant: isDark ? themeColors.surface[200] : themeColors.surface[100],
-      onSurfaceVariant: isDark ? themeColors.gray[600] : themeColors.gray[700],
+      onSurfaceVariant: isDark ? themeColors.surface[500] : themeColors.surface[500],
 
-      outline: isDark ? themeColors.gray[400] : themeColors.gray[300],
-      outlineVariant: isDark ? themeColors.gray[300] : themeColors.gray[200],
+      outline: isDark ? themeColors.surface[300] : themeColors.surface[300],
+      outlineVariant: isDark ? themeColors.surface[200] : themeColors.surface[200],
 
-      inverseSurface: themeColors.gray[900],
-      inverseOnSurface: themeColors.gray[50],
-      inversePrimary: colors.primary[200],
+      inverseSurface: isDark ? colors.surface[50] : darkColors.surface[50],
+      inverseOnSurface: isDark ? colors.surface[900] : darkColors.surface[900],
+      inversePrimary: isDark ? darkColors.primary[300] : colors.primary[300],
 
       shadow: '#000000',
       scrim: '#000000',
 
       // Not an official role; used for "Needs attention" affordances.
-      warning: colors.warning,
+      warning: isDark ? darkColors.warning : colors.warning,
       onWarning: onAccent,
     },
     surface: {
@@ -351,22 +433,24 @@ export const m3Dark = createM3Theme(true);
 
 export const getM3Theme = (isDark: boolean) => (isDark ? m3Dark : m3);
 
-// Common component styles
+// Common component styles - Cellar Ledger design (borders, no heavy shadows)
 export const commonStyles = {
-  // Glass effect cards
+  // Glass effect cards - using border instead of heavy shadow
   glassCard: {
-    backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
-    borderRadius: borderRadius['2xl'],
-    ...shadows.glass,
+    backgroundColor: colors.surface[100],
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.surface[300],
   },
   glassCardDark: {
-    backgroundColor: colorWithOpacity(darkColors.surface[100], 0.8),
-    borderRadius: borderRadius['2xl'],
-    ...shadows.glass,
+    backgroundColor: darkColors.surface[100],
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: darkColors.surface[300],
   },
-  // Buttons
+  // Buttons - use primary token
   primaryButton: {
-    backgroundColor: colors.primary[600],
+    backgroundColor: colors.primary[500], // #355847
     borderRadius: borderRadius.xl,
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[6],
@@ -386,14 +470,14 @@ export const commonStyles = {
     borderColor: colors.surface[300],
   },
   secondaryButtonText: {
-    color: colors.primary[600],
+    color: colors.primary[500],
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
     textAlign: 'center' as const,
   },
-  // Inputs
+  // Inputs - surface 100 bg, surface 300 border
   input: {
-    backgroundColor: colors.surface[50],
+    backgroundColor: colors.surface[100],
     borderWidth: 1,
     borderColor: colors.surface[300],
     borderRadius: borderRadius.xl,
@@ -413,7 +497,7 @@ export const commonStyles = {
   label: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.surface[700],
+    color: colors.surface[500],
     marginBottom: spacing[2],
   },
   errorText: {

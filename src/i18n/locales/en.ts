@@ -34,6 +34,7 @@ export const en = {
     clearAll: 'Clear all',
     today: 'Today',
     yesterday: 'Yesterday',
+    view: 'View',
     units: {
       hours: 'hours',
       days: 'days',
@@ -156,14 +157,19 @@ export const en = {
     header: {
       areaAcres: '{{value}} acres',
       areaAcresUnknown: '— acres',
+      targetLabel: 'Target:',
+      pickNewDate: 'Pick New Date',
+      clearDate: 'Clear Date',
     },
     pruning: {
       daysShort: '{{count}}d',
+      daysPruned: 'Days Pruned',
     },
     weather: {
       current: 'Current Weather',
       temperature: 'Temperature',
       et0Mm: 'ET0 (mm)',
+      sinceLabel: 'Since',
     },
     stats: {
       logEntriesTitle: 'Log Entries',
@@ -176,10 +182,15 @@ export const en = {
       noData: 'No PHI spray records available yet.',
       safeDate: 'Safe from {{date}}',
       inlineDate: 'Safe harvest date: {{date}}',
+      inlineTitle: 'Safe harvest:',
       blockedBy: 'Blocked by {{reason}}',
       ctaSetTarget: 'Set target date',
       ctaOpenChecker: 'Open safe-to-spray checker',
       saveTarget: 'Save target date',
+    },
+    riskBlock: {
+      urgentTasks_one: '{{count}} urgent task',
+      urgentTasks_other: '{{count}} urgent tasks',
     },
     water: {
       noIrrigationLoggedYet: 'No irrigation logged yet',
@@ -551,6 +562,7 @@ export const en = {
   },
 
   farms: {
+    title: 'Farms',
     addFarm: 'Add Farm',
     empty: {
       title: 'No farms yet',
@@ -564,6 +576,11 @@ export const en = {
     stats: {
       totalFarms: 'Total farms',
       totalArea: 'Total area',
+    },
+    summary: {
+      count_one: '{{count}} farm',
+      count_other: '{{count}} farms',
+      area: '{{value}} acres total',
     },
   },
 
@@ -772,12 +789,17 @@ export const en = {
       sprayApplications: 'Spray Applications',
       totalHarvest: 'Total Harvest',
       harvestValue: 'Harvest Value',
+      totalExpenses: 'Total Expenses',
+      harvestYield: 'Harvest Yield',
       performanceScore: 'Performance Score',
+      activitiesLogged: 'Activities Logged',
+      entries: 'entries',
     },
     sections: {
       overview: 'Overview',
       trends: 'Trends',
       comparisons: 'Comparisons',
+      categoryBreakdown: 'Category Breakdown',
     },
     timeRanges: {
       last7Days: 'Last 7 Days',
@@ -800,6 +822,9 @@ export const en = {
       harvest: 'Harvest',
       expense: 'Expense',
       efficiency: 'Efficiency',
+    },
+    units: {
+      tons: 'tons',
     },
   },
 
@@ -1308,11 +1333,52 @@ export const en = {
         retryButton: 'Retry last request',
         dismissButton: 'Dismiss error',
       },
+      guidance: {
+        addFarm: 'Add a farm first, then ask your question again.',
+        selectFarm: 'Select a farm context so I can give farm-specific steps.',
+        provideContext: 'Try adding the farm name, date, and the operation you want help with.',
+        retryWithDetails: 'Retry with a short operational request like “what should I do today?”',
+      },
     },
     noFarm: {
       banner: 'No farms added. Add a farm for personalized advice.',
       noFarmSelected: 'No farm selected. Select a farm for personalized advice.',
       addFarmButton: 'Add Farm',
+      selectFarmButton: 'Select farm',
+    },
+    context: {
+      activeFarmLabel: 'Active farm',
+      openFarm: 'Open farm',
+      fallbackMeta: 'Farm context ready',
+    },
+    jobs: {
+      title: 'Top jobs',
+      subtitle: 'Start with one operational task.',
+      subtitleWithFarm: 'Start with one operational task for {{name}}.',
+      prompts: {
+        logActivity: 'Help me log a farm activity.',
+        todayPlan: 'What should I do today on this farm?',
+        spraySafety: 'Check spray safety against recent farm history.',
+        recentSummary: 'Summarize this farm for the last 7 days.',
+      },
+      cards: {
+        logActivity: {
+          title: 'Log an activity',
+          description: 'Capture irrigation, spray, harvest, or expense quickly.',
+        },
+        todayPlan: {
+          title: 'Plan today’s work',
+          description: 'Get a short task list based on current farm context.',
+        },
+        spraySafety: {
+          title: 'Check spray safety',
+          description: 'Validate risk before applying a spray.',
+        },
+        recentSummary: {
+          title: 'Summarize last week',
+          description: 'Review what happened and what to do next.',
+        },
+      },
     },
     safety: {
       blockedLabel: 'Safety Notice',
@@ -1427,6 +1493,28 @@ export const en = {
       existingFarmFallback: 'Farm',
       existingRegionFallback: 'Region',
       existingCropFallback: 'Crop',
+    },
+    firstAction: {
+      badge: 'Activation step',
+      title: 'Do one real farm action.',
+      subtitle: 'This makes your dashboard and assistant useful from day one.',
+      actions: {
+        log: {
+          title: 'Log an activity',
+          description: 'Record irrigation, spray, fertigation, harvest, or expense.',
+        },
+        note: {
+          title: 'Write a note',
+          description: 'Capture today’s field observations for this farm.',
+        },
+        task: {
+          title: 'Add a task',
+          description: 'Create your next operational task and due date.',
+        },
+      },
+      pendingHint: 'Complete one action to continue.',
+      completedHint: 'Great — activation is complete.',
+      continue: 'Continue',
     },
     complete: {
       title: "You're all set!",
@@ -1875,7 +1963,15 @@ export const en = {
       evening: 'Good evening, {{name}}',
       night: 'Good night, {{name}}',
     },
+    hero: {
+      today: 'Today',
+      allClear: 'All clear',
+      attentionNeeded: 'Attention needed',
+      alertCount_one: '{{count}} alert',
+      alertCount_other: '{{count}} alerts',
+    },
     stats: {
+      title: 'Overview',
       farms: 'Farms',
       activeWorkers: 'Active workers',
       activities: 'Activities',
@@ -1883,8 +1979,32 @@ export const en = {
     },
     needsAttention: {
       title: 'Needs attention',
+      taskFallback: 'Overdue task',
       reasons: {
+        overdueTask: 'Task overdue',
+        noRecentLogs: 'No recent logs',
         lowWaterLevel: 'Low water level',
+        phiDeadline: 'PHI deadline approaching',
+      },
+      actions: {
+        reviewTasks: 'Review task',
+        logNow: 'Log now',
+        reviewSpraySafety: 'Review spray safety',
+        openFarm: 'Open farm',
+      },
+      meta: {
+        taskDue: 'Due {{date}}',
+        phiDue: 'Safe harvest from {{date}}',
+      },
+      empty: {
+        title: 'No urgent issues right now.',
+        subtitle: 'Keep logging daily work so alerts stay useful.',
+        ctaWithFarms: 'Log today’s work',
+      },
+      error: {
+        title: 'Could not load attention items.',
+        subtitle: 'Retry to check overdue tasks, PHI deadlines, and other urgent farm issues.',
+        cta: 'Retry',
       },
     },
     quickActions: {
@@ -1896,6 +2016,8 @@ export const en = {
     },
     recentActivity: {
       title: 'Recent activity',
+      openFarm: 'Open farm details for {{name}}',
+      openFarmDetails: 'Open farm details',
     },
     empty: {
       recentActivity: 'No recent activity yet.\nAdd an entry to get started.',
@@ -1968,6 +2090,18 @@ export const en = {
       addTask: 'Add task',
     },
     logNow: 'Log now',
+    sections: {
+      overdue: 'Overdue',
+      dueToday: 'Due Today',
+      thisWeek: 'This Week',
+      upcoming: 'Upcoming',
+      completed: 'Completed',
+    },
+    summary: {
+      pending: 'pending',
+      dueToday: 'due today',
+      overdue: 'overdue',
+    },
     dueDate: {
       none: 'No due date',
       today: 'Today',
@@ -2064,6 +2198,7 @@ export const en = {
       addTempWorkerDesc: 'Log a one-time day labour entry',
     },
     workerCard: {
+      callA11y: 'Call {{name}}',
       editA11y: 'Edit {{name}}',
       deleteA11y: 'Delete {{name}}',
     },
@@ -2097,6 +2232,14 @@ export const en = {
         full_day: 'Full day',
         half_day: 'Half day',
         absent: 'Absent',
+      },
+      mark: {
+        workersCount: '{{count}} workers',
+        dailyRate: '₹{{rate}}/day',
+        full: 'Full',
+        half: 'Half',
+        absent: 'Absent',
+        markAllPresent: 'Mark All Present',
       },
     },
     transactions: {
@@ -2249,15 +2392,21 @@ export const en = {
       lowStockAlerts: 'Low Stock Alerts',
       itemCount_one: '{{count}} item',
       itemCount_other: '{{count}} items',
+      itemsCount_one: '{{count}} item',
+      itemsCount_other: '{{count}} items',
+      lowStockCount_one: '{{count}} low stock',
+      lowStockCount_other: '{{count}} low stock',
       quantity: 'Quantity',
       unitPrice: 'Unit Price',
-      totalValue: 'Total Value',
+      totalValue: 'Value: {{value}}',
+      updatedDate: 'Updated {{date}}',
     },
     reorderAt: 'Reorder at: {{quantity}} {{unit}}',
     filters: {
       all: 'All ({{count}})',
       fertilizer: 'Fertilizers ({{count}})',
       spray: 'Sprays ({{count}})',
+      equipment: 'Equipment ({{count}})',
     },
     search: {
       placeholder: 'Search inventory...',
@@ -2269,6 +2418,7 @@ export const en = {
     itemTypes: {
       fertilizer: 'Fertilizer',
       spray: 'Spray',
+      equipment: 'Equipment',
     },
     empty: {
       title: 'No items in warehouse',
@@ -2562,10 +2712,23 @@ export const en = {
       partialErrorBody: 'Saved with {{count}} error(s). Reloading…',
       savedTitle: 'Success',
       savedBody: 'Saved attendance for {{name}}.',
+      workerCount: '{{count}} workers',
       completeTitle: 'Complete',
       completeBody: 'All workers completed!',
     },
     tapHint: '💡 Tap a day to cycle: Full → Half → Absent → Clear',
+    mark: {
+      full: 'Full',
+      half: 'Half',
+      absent: 'Absent',
+      markAllPresent: 'Mark All Present',
+      workersCount: '{{count}} workers',
+      dailyRate: '₹{{rate}} / day',
+      selectFarm: 'Select Farm',
+      farm: 'Farm',
+      farmsCount_one: '{{count}} Farm',
+      farmsCount_other: '{{count}} Farms',
+    },
   },
 
   workerAnalyticsDetail: {
@@ -2668,6 +2831,7 @@ export const en = {
       stockCoverage: 'Estimated Coverage',
     },
     exportAs: 'Export as',
+    exportSection: 'Export Report',
     downloadReport: 'Download Report',
     errors: {
       unableToExport: 'Unable to export report. Please try again.',

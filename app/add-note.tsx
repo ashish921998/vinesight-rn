@@ -21,6 +21,11 @@ import { spacing, borderRadius } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate } from '@/utils/date';
 import { colorWithOpacity } from '@/utils/color';
+import {
+  markOnboardingFirstActionCompleted,
+  parseOnboardingActionType,
+  parseOnboardingFlag,
+} from '@/features/onboarding/activation';
 
 export default function AddNoteRoute() {
   const router = useRouter();
@@ -29,9 +34,15 @@ export default function AddNoteRoute() {
   const colors = useThemeColors();
   const { t } = useTranslation();
 
-  const params = useLocalSearchParams<{ farmId?: string }>();
+  const params = useLocalSearchParams<{
+    farmId?: string;
+    onboarding?: string;
+    onboardingActionType?: string;
+  }>();
   const farmId =
     params.farmId && !isNaN(Number(params.farmId)) ? parseInt(params.farmId, 10) : null;
+  const isOnboardingActionFlow = parseOnboardingFlag(params.onboarding);
+  const onboardingActionType = parseOnboardingActionType(params.onboardingActionType) ?? 'note';
 
   const { data: farm } = useFarm(farmId ?? undefined);
 
@@ -88,6 +99,12 @@ export default function AddNoteRoute() {
         date: dateStr,
         notes: notes.trim(),
       });
+      if (isOnboardingActionFlow) {
+        markOnboardingFirstActionCompleted({
+          actionType: onboardingActionType,
+          farmId,
+        });
+      }
       router.back();
     } catch {
       Alert.alert(t('common.error'), t('dailyNoteForm.errors.failedToSave'));
