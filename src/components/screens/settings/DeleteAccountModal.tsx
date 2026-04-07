@@ -130,7 +130,9 @@ export function DeleteAccountModal({
         }),
         new Promise<never>((_, reject) => {
           controller.signal.addEventListener('abort', () => {
-            reject(new Error('AbortError'));
+            const err = new Error('Request timed out');
+            err.name = 'AbortError';
+            reject(err);
           });
         }),
       ]);
