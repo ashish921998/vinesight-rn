@@ -93,7 +93,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
 
       set(signedOutState);
       await clearQueryCache('delete account');
-      telemetry.capture('account_deletion_succeeded');
+      telemetry.capture('account_deletion_requested_sent');
       try {
         await telemetry.flush();
       } catch (err) {
@@ -103,8 +103,8 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
       }
       telemetry.reset();
     } catch (error) {
-      telemetry.capture('account_deletion_failed', {
-        message: getErrorMessage(error, 'Failed to delete account'),
+      telemetry.capture('account_deletion_request_failed', {
+        message: getErrorMessage(error, 'Failed to process account deletion request'),
       });
       if (__DEV__) {
         console.error('Delete account error:', error);
