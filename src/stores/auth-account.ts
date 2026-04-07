@@ -31,7 +31,13 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
 
       set(signedOutState);
       telemetry.reset();
-      await clearQueryCache('sign out success path');
+      try {
+        await clearQueryCache('sign out success path');
+      } catch (cacheError) {
+        if (__DEV__) {
+          console.error('Failed to clear query cache after sign out:', cacheError);
+        }
+      }
     } catch (error) {
       if (__DEV__) {
         console.error('Sign out error:', error);
@@ -92,7 +98,13 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
       setSentryUser(null);
 
       set(signedOutState);
-      await clearQueryCache('delete account');
+      try {
+        await clearQueryCache('delete account');
+      } catch (cacheError) {
+        if (__DEV__) {
+          console.error('Failed to clear query cache after delete account:', cacheError);
+        }
+      }
       telemetry.capture('account_deletion_requested_sent');
       try {
         await telemetry.flush();
