@@ -400,7 +400,18 @@ export function DeleteAccountModal({
         },
       );
 
-      const data = await response.json();
+      let data: { error?: string };
+      const contentType = response.headers.get('content-type');
+      try {
+        if (contentType?.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          data = { error: text || `HTTP ${response.status}` };
+        }
+      } catch {
+        data = { error: `HTTP ${response.status}` };
+      }
 
       if (!response.ok || data.error) {
         Alert.alert(

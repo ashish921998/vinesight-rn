@@ -19,8 +19,6 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
         console.log('Signing out...');
       }
 
-      telemetry.capture('user_logged_out');
-
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) throw error;
 
@@ -28,6 +26,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
         console.log('Sign out successful, clearing state');
       }
 
+      telemetry.capture('user_logged_out');
       setSentryUser(null);
 
       set(signedOutState);
