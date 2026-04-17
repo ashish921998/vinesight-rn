@@ -120,6 +120,7 @@ export default function PhoneLoginScreen() {
     isLoading,
     errorMessage,
     pendingOTPPhone,
+    pendingOTPPhoneMode,
     isAuthenticated,
     needsProfileCompletion,
     signInWithPhoneAuto,
@@ -136,7 +137,7 @@ export default function PhoneLoginScreen() {
         params: {
           phone: pendingOTPPhone,
           channel: 'phone',
-          mode: 'signup',
+          mode: pendingOTPPhoneMode ?? 'signup',
           redirect: redirectPath,
         },
       });
