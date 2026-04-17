@@ -1574,6 +1574,9 @@ export const hi = {
   authPhone: {
     title: 'फ़ोन साइन इन',
     subtitle: 'सत्यापन कोड प्राप्त करने के लिए अपना मोबाइल नंबर दर्ज करें',
+    continueTitle: 'मोबाइल नंबर दर्ज करें',
+    continueSubtitle: 'अपना मोबाइल नंबर दर्ज करें। हम SMS द्वारा एक सत्यापन कोड भेजेंगे।',
+    continueButton: 'आगे बढ़ें',
     phoneNumber: 'फ़ोन नंबर',
     phoneLabel: 'फ़ोन नंबर',
     phonePlaceholder: 'फ़ोन नंबर दर्ज करें',

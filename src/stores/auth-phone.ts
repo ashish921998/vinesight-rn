@@ -92,6 +92,84 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
     }
   },
 
+  /**
+   * Unified phone auth: tries signup first (creates user if new), falls back
+   * to signin if the user already exists. Farmers never see login vs signup.
+   */
+  signInWithPhoneAuto: async (phone: string, name?: string) => {
+    const trimmedPhone = phone.trim();
+    const maskedPhone = trimmedPhone.replace(/\d(?=\d{4})/g, '*');
+
+    if (!isValidPhone(trimmedPhone)) {
+      set({ errorMessage: 'Please enter a valid phone number with country code' });
+      return;
+    }
+
+    set({
+      errorMessage: null,
+      isLoading: true,
+      otpSentSuccessfully: false,
+    });
+    telemetry.capture('auth_phone_otp_send_started', { mode: 'auto' });
+    if (__DEV__) {
+      console.log('[auth] signInWithPhoneAuto', { phone: maskedPhone });
+    }
+
+    try {
+      // Try signup first — Supabase sends OTP for both new and existing users
+      // when shouldCreateUser is true.
+      const signupOptions: { shouldCreateUser: boolean; data?: { full_name?: string } } = {
+        shouldCreateUser: true,
+      };
+      if (name?.trim()) {
+        signupOptions.data = { full_name: name.trim() };
+      }
+
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: trimmedPhone,
+        options: signupOptions,
+      });
+
+      if (error) {
+        // If OTP signups are disabled, fall back to signin-only mode
+        if (isOtpSignupDisabledError(error)) {
+          if (__DEV__) {
+            console.log('[auth] signInWithPhoneAuto - signup disabled, falling back to signin');
+          }
+          const { error: signinError } = await supabase.auth.signInWithOtp({
+            phone: trimmedPhone,
+            options: { shouldCreateUser: false },
+          });
+          if (signinError) throw signinError;
+        } else {
+          throw error;
+        }
+      }
+
+      // Determine the effective mode for OTP verification downstream
+      const effectiveMode = 'signup';
+      telemetry.capture('auth_phone_otp_send_succeeded', { mode: 'auto' });
+      set({
+        pendingOTPPhone: trimmedPhone,
+        pendingOTPPhoneName: name?.trim() ? name.trim() : null,
+        pendingOTPPhoneMode: effectiveMode,
+        otpSentSuccessfully: true,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      telemetry.capture('auth_phone_otp_send_failed', { mode: 'auto' });
+      set({
+        errorMessage: getAuthErrorMessage(
+          error,
+          'Failed to send verification code. Please try again.',
+          'send_phone_otp',
+        ),
+        otpSentSuccessfully: false,
+        isLoading: false,
+      });
+    }
+  },
+
   verifyPhoneOTP: async (phone: string, code: string) => {
     const trimmedCode = code.trim();
 
