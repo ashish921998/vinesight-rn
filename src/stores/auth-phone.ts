@@ -125,6 +125,8 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
         signupOptions.data = { full_name: name.trim() };
       }
 
+      let effectiveMode: 'signup' | 'signin' = 'signup';
+
       const { error } = await supabase.auth.signInWithOtp({
         phone: trimmedPhone,
         options: signupOptions,
@@ -141,13 +143,11 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
             options: { shouldCreateUser: false },
           });
           if (signinError) throw signinError;
+          effectiveMode = 'signin';
         } else {
           throw error;
         }
       }
-
-      // Determine the effective mode for OTP verification downstream
-      const effectiveMode = 'signup';
       telemetry.capture('auth_phone_otp_send_succeeded', { mode: 'auto' });
       set({
         pendingOTPPhone: trimmedPhone,
