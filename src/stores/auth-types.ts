@@ -43,6 +43,7 @@ export interface AuthActions {
   cancelOTPFlow: () => void;
 
   signInWithPhone: (phone: string, mode?: PhoneAuthMode, name?: string) => Promise<void>;
+  signInWithPhoneAuto: (phone: string, name?: string) => Promise<void>;
   verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
   resendPhoneOTP: (mode?: PhoneAuthMode, phone?: string) => Promise<void>;
   cancelPhoneOTPFlow: () => void;

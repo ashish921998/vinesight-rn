@@ -30,7 +30,6 @@ import {
   matchPhoneNumberHintToCountry,
 } from '@/utils/phone';
 import { isPhoneNumberHintSupported, requestPhoneNumberHint } from '@/services/phone-number-hint';
-import type { PhoneAuthMode } from '@/types/auth';
 import appLogoDark from '../../assets/icons/ios-dark.png';
 import appLogoLight from '../../assets/icons/ios-light.png';
 import * as WebBrowser from 'expo-web-browser';
@@ -71,14 +70,11 @@ export default function PhoneLoginScreen() {
   const m3 = useM3();
   const isDark = useIsDark();
   const appLogo = isDark ? appLogoDark : appLogoLight;
-  const { mode, redirect } = useLocalSearchParams<{ mode?: string; redirect?: string }>();
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
   const redirectPath = useMemo(() => {
     if (typeof redirect === 'string' && redirect.startsWith('/')) return redirect;
     return '/';
   }, [redirect]);
-  const requestedMode: PhoneAuthMode = mode === 'signin' ? 'signin' : 'signup';
-
-  const [phoneAuthMode, setPhoneAuthMode] = useState<PhoneAuthMode>(requestedMode);
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
@@ -86,7 +82,6 @@ export default function PhoneLoginScreen() {
   const [countrySearch, setCountrySearch] = useState('');
   const [isPhoneInputFocused, setIsPhoneInputFocused] = useState(false);
   const lastNavigatedPhoneRef = useRef<string | null>(null);
-  const lastRequestedOtpModeRef = useRef<PhoneAuthMode>(requestedMode);
   const [localPhoneError, setLocalPhoneError] = useState<string | null>(null);
 
   const [isPhoneHintAvailable, setIsPhoneHintAvailable] = useState(false);
@@ -121,22 +116,14 @@ export default function PhoneLoginScreen() {
     };
   }, []);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    // Keep local auth mode and the OTP routing ref aligned when Expo Router
-    // reuses this screen instance with different query params.
-    lastRequestedOtpModeRef.current = requestedMode;
-    setPhoneAuthMode(requestedMode);
-  }, [requestedMode]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
   const {
     isLoading,
     errorMessage,
     pendingOTPPhone,
+    pendingOTPPhoneMode,
     isAuthenticated,
     needsProfileCompletion,
-    signInWithPhone,
+    signInWithPhoneAuto,
     signInWithApple,
     signInWithGoogle,
     clearError,
@@ -150,14 +137,14 @@ export default function PhoneLoginScreen() {
         params: {
           phone: pendingOTPPhone,
           channel: 'phone',
-          mode: lastRequestedOtpModeRef.current,
+          mode: pendingOTPPhoneMode ?? 'signup',
           redirect: redirectPath,
         },
       });
     } else if (!pendingOTPPhone) {
       lastNavigatedPhoneRef.current = null;
     }
-  }, [pendingOTPPhone, phoneAuthMode, redirectPath]);
+  }, [pendingOTPPhone, redirectPath]);
 
   const normalizedPhoneNumber = useMemo(
     () => buildE164PhoneNumber(selectedCountry.dialCode, phoneNumber),
@@ -183,17 +170,12 @@ export default function PhoneLoginScreen() {
       setLocalPhoneError(t('authPhone.invalidPhone'));
       return;
     }
-    const submitMode = phoneAuthMode;
-    lastRequestedOtpModeRef.current = submitMode;
     clearError();
     setLocalPhoneError(null);
     if (__DEV__) {
-      console.log('[phone-login] handleSendCode - Sending OTP', {
-        mode: submitMode,
-        isSignUp,
-      });
+      console.log('[phone-login] handleSendCode - Sending OTP (auto mode)');
     }
-    await signInWithPhone(fullPhoneNumber, submitMode);
+    await signInWithPhoneAuto(fullPhoneNumber);
   };
 
   useEffect(() => {
@@ -258,19 +240,6 @@ export default function PhoneLoginScreen() {
     setShowCountryPicker(false);
     setCountrySearch('');
   };
-
-  const toggleMode = () => {
-    switchToMode(phoneAuthMode === 'signup' ? 'signin' : 'signup');
-  };
-
-  const switchToMode = (nextMode: PhoneAuthMode) => {
-    if (isLoading) return;
-    clearError();
-    setLocalPhoneError(null);
-    setPhoneAuthMode(nextMode);
-  };
-
-  const isSignUp = phoneAuthMode === 'signup';
 
   const filteredCountries = useMemo(() => {
     if (!countrySearch.trim()) return COUNTRIES;
@@ -413,27 +382,6 @@ export default function PhoneLoginScreen() {
     color: m3.colorScheme.onSurfaceVariant,
   };
 
-  const modeToggleRowStyle: ViewStyle = {
-    flexDirection: 'row',
-    padding: spacing[1],
-    borderRadius: borderRadius.xl,
-    backgroundColor: m3.surface.surfaceContainerHigh,
-    marginBottom: spacing[4],
-  };
-
-  const modeToggleButtonStyle: ViewStyle = {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing[3],
-    borderRadius: borderRadius.lg,
-  };
-
-  const modeToggleTextStyle: TextStyle = {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-  };
-
   const emailLinkContainerStyle: ViewStyle = {
     alignItems: 'center',
     paddingVertical: spacing[4],
@@ -555,72 +503,18 @@ export default function PhoneLoginScreen() {
             </View>
             <Text style={titleTextStyle}>Vinesight</Text>
             <Text style={[titleTextStyle, { fontSize: fontSize.xl, marginTop: spacing[3] }]}>
-              {isSignUp
-                ? t('authPhone.signupTitle', { defaultValue: 'Phone Sign Up' })
-                : t('authPhone.signinTitle', { defaultValue: 'Phone Sign In' })}
+              {t('authPhone.continueTitle', { defaultValue: 'Enter Mobile Number' })}
             </Text>
             <Text style={subtitleTextStyle}>
-              {isSignUp
-                ? t('authPhone.signupSubtitle', {
-                    defaultValue:
-                      'Enter your mobile number to create your account. We will send a verification code.',
-                  })
-                : t('authPhone.signinSubtitle', {
-                    defaultValue:
-                      'Sign in with your mobile number and we will send a verification code.',
-                  })}
+              {t('authPhone.continueSubtitle', {
+                defaultValue: 'Enter your mobile number. We will send a verification code via SMS.',
+              })}
             </Text>
           </View>
 
           {/* Form */}
           <View style={formContainerStyle}>
             <View style={formInnerStyle}>
-              <View style={modeToggleRowStyle}>
-                {(['signin', 'signup'] as const).map((nextMode) => {
-                  const selected = phoneAuthMode === nextMode;
-                  return (
-                    <Pressable
-                      key={nextMode}
-                      disabled={isLoading}
-                      onPress={() => switchToMode(nextMode)}
-                      style={({ pressed }) => [
-                        modeToggleButtonStyle,
-                        {
-                          backgroundColor: selected
-                            ? m3.colorScheme.primary
-                            : pressed
-                              ? colorWithOpacity(
-                                  m3.colorScheme.onSurface,
-                                  m3.stateLayerOpacity.pressed,
-                                )
-                              : 'transparent',
-                        },
-                      ]}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected, disabled: isLoading }}
-                      accessibilityLabel={
-                        nextMode === 'signup'
-                          ? t('auth.a11y.switchToSignUp')
-                          : t('auth.a11y.switchToSignIn')
-                      }
-                    >
-                      <Text
-                        style={[
-                          modeToggleTextStyle,
-                          {
-                            color: selected
-                              ? m3.colorScheme.onPrimary
-                              : m3.colorScheme.onSurfaceVariant,
-                          },
-                        ]}
-                      >
-                        {nextMode === 'signup' ? t('auth.signUp') : t('auth.signIn')}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
               <View
                 style={[phoneInputRowStyle, isPhoneInputFocused ? phoneInputRowFocusedStyle : null]}
                 testID="phone-input-row"
@@ -694,9 +588,7 @@ export default function PhoneLoginScreen() {
                 title={
                   isLoading
                     ? t('authPhone.sendingCode')
-                    : isSignUp
-                      ? t('authPhone.sendSignupCode', { defaultValue: 'Send Sign Up Code' })
-                      : t('authPhone.sendSigninCode', { defaultValue: 'Send Sign In Code' })
+                    : t('authPhone.continueButton', { defaultValue: 'Continue' })
                 }
                 onPress={handleSendCode}
                 isLoading={isLoading}
@@ -739,7 +631,7 @@ export default function PhoneLoginScreen() {
             onPress={() =>
               router.push({
                 pathname: '/(auth)/login',
-                params: { redirect: redirectPath, mode: phoneAuthMode },
+                params: { redirect: redirectPath },
               })
             }
             style={emailLinkContainerStyle}
@@ -752,39 +644,6 @@ export default function PhoneLoginScreen() {
                 <Text style={emailLinkTextStyle}>
                   {t('authPhone.preferEmail')}{' '}
                   <Text style={emailLinkHighlightStyle}>{t('authPhone.signInWithEmail')}</Text>
-                </Text>
-                <View
-                  pointerEvents="none"
-                  style={[
-                    StyleSheet.absoluteFillObject,
-                    {
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
-                      borderRadius: m3.shape.cornerMedium,
-                    },
-                  ]}
-                />
-              </View>
-            )}
-          </Pressable>
-
-          <Pressable
-            onPress={toggleMode}
-            style={emailLinkContainerStyle}
-            disabled={isLoading}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isSignUp ? t('auth.a11y.switchToSignIn') : t('auth.a11y.switchToSignUp')
-            }
-          >
-            {({ pressed }) => (
-              <View style={{ paddingVertical: spacing[2], paddingHorizontal: spacing[2] }}>
-                <Text style={emailLinkTextStyle}>
-                  {isSignUp ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}{' '}
-                  <Text style={emailLinkHighlightStyle}>
-                    {isSignUp ? t('auth.signIn') : t('auth.signUp')}
-                  </Text>
                 </Text>
                 <View
                   pointerEvents="none"

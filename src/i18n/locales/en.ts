@@ -1568,6 +1568,9 @@ export const en = {
   authPhone: {
     title: 'Phone Sign In',
     subtitle: 'Enter your mobile number to receive a verification code',
+    continueTitle: 'Enter Mobile Number',
+    continueSubtitle: 'Enter your mobile number. We will send a verification code via SMS.',
+    continueButton: 'Continue',
     phoneNumber: 'Phone number',
     phoneLabel: 'Phone Number',
     phonePlaceholder: 'Enter phone number',
