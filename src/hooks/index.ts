@@ -180,6 +180,10 @@ export { useReportData, useReportExport, getDefaultDateRange } from './use-repor
 
 // Fertilizer Plan
 export { useFertilizerPlan } from './use-fertilizer-plan';
+
+// Petiole Triage
+export { useTriageForFarm } from './use-triage';
+
 export {
   useChemicalCatalog,
   useChemicalMixSearch,

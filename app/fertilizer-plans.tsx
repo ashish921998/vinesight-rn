@@ -3,7 +3,8 @@ import { ScrollView, View, Text, ActivityIndicator, Pressable, Alert } from 'rea
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useFarm, useFertilizerPlan, useProfile, useFarms } from '@/hooks';
+import { useFarm, useFertilizerPlan, useProfile, useFarms, useTriageForFarm } from '@/hooks';
+import { TriageCard } from '@/components/TriageCard';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -23,6 +24,7 @@ export default function FertilizerPlansScreen() {
   const { data: profile } = useProfile({ enabled: true });
   const { data: farm } = useFarm(farmId);
   const { data: fertilizerPlan, isLoading } = useFertilizerPlan(farmId);
+  const { data: triage } = useTriageForFarm(farmId);
   const { data: farms } = useFarms();
 
   const canAccessPlans = Boolean(profile?.consultant_organization_id);
@@ -80,6 +82,25 @@ export default function FertilizerPlansScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Show triage card if petiole test has been analyzed */}
+        {triage && (
+          <View style={{ marginBottom: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs + 1,
+                fontWeight: fontWeight.semibold,
+                color: m3.colorScheme.onSurfaceVariant,
+                textTransform: 'uppercase',
+                letterSpacing: 0.6,
+                marginBottom: spacing[2],
+              }}
+            >
+              {t('farmDetails.fertilizerPlan.triageTitle', 'AI Analysis')}
+            </Text>
+            <TriageCard triage={triage} />
+          </View>
+        )}
 
         {!canAccessPlans ? (
           <View
