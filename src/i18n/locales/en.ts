@@ -613,6 +613,8 @@ export const en = {
       body_one: '{{count}} log failed to save. Please review and try again.',
       body_other: '{{count}} logs failed to save. Please review and try again.',
     },
+    waterLevelSyncFailed: 'Logs were saved, but farm water level could not be updated.',
+    postSaveFollowUpFailed: 'Logs were saved, but some follow-up updates could not be completed.',
     taskCompletionLinkFailed: 'Logs were saved, but the source task could not be marked complete.',
     plannedSprayInputs: 'Planned spray inputs',
     plannedFertilizers: 'Planned fertilizers',

@@ -163,7 +163,7 @@ describe('EntryForm UI integration', () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.press(screen.getByText('logs.types.expense'));
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
@@ -325,7 +325,7 @@ describe('EntryForm UI integration', () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.press(screen.getByText('logs.types.expense'));
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
@@ -372,6 +372,104 @@ describe('EntryForm UI integration', () => {
       mockCreateExpenseMutate.mock.calls.filter((call) => call[0]?.farm_id === 101),
     ).toHaveLength(1);
 
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    alertSpy.mockRestore();
+  });
+
+  it('shows full failure alert when every pending log fails to save', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockCreateExpenseMutate.mockRejectedValue(new Error('save failed'));
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm farm={mockFarm} onClose={jest.fn()} tabs={['log']} presentation="screen" />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '450');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    fireEvent.press(screen.getByText('entryForm.saveLogs'));
+
+    await waitFor(() => {
+      expect(mockCreateExpenseMutate).toHaveBeenCalledTimes(2);
+    });
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('common.error', 'common.errors.failedToSaveLogs');
+    });
+
+    expect(alertSpy).not.toHaveBeenCalledWith('entryForm.partialSuccess.title', expect.anything());
+
+    alertSpy.mockRestore();
+  });
+
+  it('keeps irrigation drafts cleared when water sync fails after record creation', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const onClose = jest.fn();
+    mockUpdateWaterLevelMutate.mockRejectedValueOnce(new Error('water sync failed'));
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm farm={mockFarm} onClose={onClose} tabs={['log']} presentation="screen" />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.press(screen.getByText('logs.types.irrigation'));
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('irrigationForm.durationPlaceholder')).toBeTruthy();
+    });
+
+    fireEvent.changeText(screen.getByPlaceholderText('irrigationForm.durationPlaceholder'), '2');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    fireEvent.press(screen.getByText('entryForm.saveLogs'));
+
+    await waitFor(() => {
+      expect(mockCreateIrrigationMutate).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(mockUpdateWaterLevelMutate).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('common.error', 'entryForm.waterLevelSyncFailed');
+    });
     await waitFor(() => {
       expect(onClose).toHaveBeenCalled();
     });

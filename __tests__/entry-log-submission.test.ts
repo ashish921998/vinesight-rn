@@ -61,6 +61,32 @@ describe('submitEntryPendingLog', () => {
       pendingLogId: 'log-irrigation',
       type: 'irrigation',
       recordId: 11,
+      warnings: [],
+    });
+  });
+
+  it('keeps irrigation save successful when water sync fails', async () => {
+    const submitters = createSubmitters();
+    submitters.updateWaterLevel.mockRejectedValueOnce(new Error('water sync failed'));
+
+    const result = await submitEntryPendingLog({
+      log: {
+        id: 'log-irrigation-water-warning',
+        type: 'irrigation',
+        data: { duration: 2 },
+      },
+      dateStr: '2026-02-11',
+      farm: baseFarm,
+      submitters,
+    });
+
+    expect(submitters.createIrrigation).toHaveBeenCalledTimes(1);
+    expect(submitters.updateWaterLevel).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      pendingLogId: 'log-irrigation-water-warning',
+      type: 'irrigation',
+      recordId: 11,
+      warnings: ['water_level_sync_failed'],
     });
   });
 

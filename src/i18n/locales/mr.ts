@@ -609,6 +609,9 @@ export const mr = {
       body_one: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
       body_other: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
     },
+    waterLevelSyncFailed:
+      'नोंदी जतन झाल्या, पण $t(glossary.farm) साठी पाण्याची माहिती अद्ययावत करता आली नाही.',
+    postSaveFollowUpFailed: 'नोंदी जतन झाल्या, पण काही पुढील अद्यतने पूर्ण करता आली नाहीत.',
     taskCompletionLinkFailed:
       'नोंदी जतन झाल्या, पण स्रोत $t(glossary.task) पूर्ण म्हणून चिन्हांकित करता आले नाही.',
     plannedSprayInputs: 'नियोजित $t(glossary.spray) इनपुट',

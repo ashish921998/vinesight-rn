@@ -53,7 +53,10 @@ export interface EntryLogSubmissionResult {
   pendingLogId: string;
   type: LogTypeId;
   recordId: number | null;
+  warnings: EntryLogSubmissionWarning[];
 }
+
+export type EntryLogSubmissionWarning = 'water_level_sync_failed';
 
 export async function submitEntryPendingLog(params: {
   log: EntryPendingLogSubmission;
@@ -71,6 +74,7 @@ export async function submitEntryPendingLog(params: {
   switch (log.type) {
     case 'irrigation': {
       const data = log.data as IrrigationFormData;
+      const warnings: EntryLogSubmissionWarning[] = [];
       const duration = data.duration;
       if (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0) {
         throw new Error('Invalid irrigation duration');
@@ -95,13 +99,27 @@ export async function submitEntryPendingLog(params: {
         const waterAdded = duration * farm.system_discharge;
         const currentWater = farm.remaining_water ?? 0;
         const newWaterLevel = Math.min(farm.total_tank_capacity, currentWater + waterAdded);
-        await submitters.updateWaterLevel({
-          farmId,
-          remainingWater: newWaterLevel,
-        });
+        try {
+          await submitters.updateWaterLevel({
+            farmId,
+            remainingWater: newWaterLevel,
+          });
+        } catch (error) {
+          warnings.push('water_level_sync_failed');
+          console.error('Farm water level sync failed after irrigation save', {
+            farmId,
+            pendingLogId: log.id,
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
 
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return {
+        pendingLogId: log.id,
+        type: log.type,
+        recordId: created.id ?? null,
+        warnings,
+      };
     }
 
     case 'spray': {
@@ -173,7 +191,7 @@ export async function submitEntryPendingLog(params: {
         date_of_pruning: farm.date_of_pruning,
         notes: notes || undefined,
       });
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null, warnings: [] };
     }
 
     case 'harvest': {
@@ -187,7 +205,7 @@ export async function submitEntryPendingLog(params: {
         buyer: data.buyer || undefined,
         date_of_pruning: farm.date_of_pruning,
       });
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null, warnings: [] };
     }
 
     case 'expense': {
@@ -201,7 +219,7 @@ export async function submitEntryPendingLog(params: {
         date_of_pruning: farm.date_of_pruning,
         remarks: data.remarks || undefined,
       });
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null, warnings: [] };
     }
 
     case 'fertigation': {
@@ -239,10 +257,10 @@ export async function submitEntryPendingLog(params: {
         area: farmArea,
         date_of_pruning: farm.date_of_pruning,
       });
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null, warnings: [] };
     }
 
     case 'note':
-      return { pendingLogId: log.id, type: log.type, recordId: null };
+      return { pendingLogId: log.id, type: log.type, recordId: null, warnings: [] };
   }
 }

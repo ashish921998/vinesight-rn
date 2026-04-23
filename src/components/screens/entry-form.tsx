@@ -115,6 +115,7 @@ import { isGrapeCrop } from '@/utils/crop';
 import {
   submitEntryPendingLog,
   type EntryLogFarmContext,
+  type EntryLogSubmissionResult,
   type EntryLogSubmitters,
 } from '@/utils/entry-log-submission';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
@@ -1008,6 +1009,58 @@ export function EntryForm({
     setPendingLogs((prev) => prev.filter((log) => log.id !== id));
   }, []);
 
+  const hasWaterLevelSyncWarning = useCallback(
+    (results: PromiseSettledResult<EntryLogSubmissionResult>[]) =>
+      results.some(
+        (result): result is PromiseFulfilledResult<EntryLogSubmissionResult> =>
+          result.status === 'fulfilled' &&
+          result.value.warnings.includes('water_level_sync_failed'),
+      ),
+    [],
+  );
+
+  const showSaveFailureAlert = useCallback(
+    (failedCount: number, totalCount: number) => {
+      if (failedCount >= totalCount) {
+        Alert.alert(t('common.error'), t('common.errors.failedToSaveLogs'));
+        return;
+      }
+
+      Alert.alert(
+        t('entryForm.partialSuccess.title'),
+        failedCount === 1
+          ? t('entryForm.partialSuccess.body_one', { count: failedCount })
+          : t('entryForm.partialSuccess.body_other', { count: failedCount }),
+      );
+    },
+    [t],
+  );
+
+  const showPostSaveWarning = useCallback(
+    ({
+      taskCompletionUpdateFailed,
+      waterLevelSyncFailed,
+    }: {
+      taskCompletionUpdateFailed: boolean;
+      waterLevelSyncFailed: boolean;
+    }) => {
+      if (!taskCompletionUpdateFailed && !waterLevelSyncFailed) return;
+
+      if (taskCompletionUpdateFailed && waterLevelSyncFailed) {
+        Alert.alert(t('common.error'), t('entryForm.postSaveFollowUpFailed'));
+        return;
+      }
+
+      Alert.alert(
+        t('common.error'),
+        taskCompletionUpdateFailed
+          ? t('entryForm.taskCompletionLinkFailed')
+          : t('entryForm.waterLevelSyncFailed'),
+      );
+    },
+    [t],
+  );
+
   const saveAllLogs = async () => {
     if (pendingLogs.length === 0) return;
 
@@ -1039,7 +1092,7 @@ export function EntryForm({
     const saveLog = async (
       log: (typeof pendingLogs)[number],
       farmContext: EntryLogFarmContext,
-    ): Promise<{ pendingLogId: string; type: LogTypeId; recordId: number | null }> =>
+    ): Promise<EntryLogSubmissionResult> =>
       submitEntryPendingLog({
         log,
         dateStr,
@@ -1100,6 +1153,7 @@ export function EntryForm({
         const results = await Promise.allSettled(
           submissions.map((submission) => submission.promise),
         );
+        const waterLevelSyncFailed = hasWaterLevelSyncWarning(results);
         let failedCount = 0;
         let firstFailedError: unknown = null;
         let failedLogContext: (typeof pendingLogs)[number] | null = null;
@@ -1199,15 +1253,14 @@ export function EntryForm({
             });
           }
 
-          Alert.alert(
-            t('entryForm.partialSuccess.title'),
-            failedCount === 1
-              ? t('entryForm.partialSuccess.body_one', { count: failedCount })
-              : t('entryForm.partialSuccess.body_other', { count: failedCount }),
-          );
+          showSaveFailureAlert(failedCount, submissions.length);
           return;
         }
 
+        showPostSaveWarning({
+          taskCompletionUpdateFailed: false,
+          waterLevelSyncFailed,
+        });
         onClose();
         return;
       }
@@ -1240,6 +1293,7 @@ export function EntryForm({
       const results = await Promise.allSettled(
         pendingLogs.map((log) => saveLog(log, buildFarmContext(singleFarmContext))),
       );
+      const waterLevelSyncFailed = hasWaterLevelSyncWarning(results);
       const successfulIds = pendingLogs
         .filter((_, index) => results[index]?.status === 'fulfilled')
         .map((log) => log.id);
@@ -1265,13 +1319,8 @@ export function EntryForm({
         sourceTaskLogId === undefined
           ? null
           : results.find(
-              (
-                result,
-              ): result is PromiseFulfilledResult<{
-                pendingLogId: string;
-                type: LogTypeId;
-                recordId: number | null;
-              }> => result.status === 'fulfilled' && result.value.pendingLogId === sourceTaskLogId,
+              (result): result is PromiseFulfilledResult<EntryLogSubmissionResult> =>
+                result.status === 'fulfilled' && result.value.pendingLogId === sourceTaskLogId,
             )?.value;
       let taskCompletionUpdateFailed = false;
 
@@ -1396,18 +1445,11 @@ export function EntryForm({
           });
         }
 
-        Alert.alert(
-          t('entryForm.partialSuccess.title'),
-          failedCount === 1
-            ? t('entryForm.partialSuccess.body_one', { count: failedCount })
-            : t('entryForm.partialSuccess.body_other', { count: failedCount }),
-        );
+        showSaveFailureAlert(failedCount, pendingLogs.length);
         return;
       }
 
-      if (taskCompletionUpdateFailed) {
-        Alert.alert(t('common.error'), t('entryForm.taskCompletionLinkFailed'));
-      }
+      showPostSaveWarning({ taskCompletionUpdateFailed, waterLevelSyncFailed });
 
       onClose();
     } catch (error) {
