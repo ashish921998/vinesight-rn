@@ -1,0 +1,177 @@
+app/(tabs)/_layout.tsx
+  e327bf6329ae5d85 51
+app/soil-profiling.tsx
+  04d9327a4c63a3b0 569
+app/_layout.tsx
+  04d9327a4c63a3b0 751-758
+  e327bf6329ae5d85 775-782
+scripts/convert-settings.sh
+  04d9327a4c63a3b0 4,12,16
+app/app-settings.tsx
+  04d9327a4c63a3b0 1-458
+src/i18n/locales/mr.ts
+  e136dfb3b7ac9b97 35
+  768e8363859f30dc 39
+app/farm/[id].tsx
+  04d9327a4c63a3b0 248,1218
+app/farms.tsx
+  04d9327a4c63a3b0 1-588
+app/(tabs)/index.tsx
+  b5214d1c3849c879 136-137,139-151,468-472,480-481,517,520-524,532-533,569,572-576,584-585,621,624-628,636-637,673
+  96719afe42df4ef1 25,1011,1042,1073,1104
+  6a2cca77a52c2111 138
+  e327bf6329ae5d85 326,333-335,341-343,346,348,353,356,362,366,369-370,373,380
+src/components/screens/location-picker.web.tsx
+  04d9327a4c63a3b0 1-22,26-27,29-35,37-81
+src/hooks/use-tab-bar-inset.android.ts
+  6a2cca77a52c2111 1-5,8-15
+app/logs.tsx
+  e136dfb3b7ac9b97 1733,1735-1741,1743-1752,2026
+  768e8363859f30dc 16,748-749,752-757,763-772,774-797,800-805,808,810-812,814-836,838-839,841,845,847,851-865,867-868,870-873,876-885,901,911,1162,1213-1238,1241-1253,1256-1279
+  333fcd434ed07e93 548
+src/i18n/locales/en.ts
+  768e8363859f30dc 39
+  e136dfb3b7ac9b97 35
+app/tasks.tsx
+  722cf178278f5e1e 359
+src/i18n/locales/hi.ts
+  768e8363859f30dc 39
+  e136dfb3b7ac9b97 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "f889e0b7e2e3ee5d3c6eea423ecb85d47b491dd4",
+  "prompts": {
+    "04d9327a4c63a3b0": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a636c676-0933-4dae-888d-65b535a0d843",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 1164,
+      "total_deletions": 38,
+      "accepted_lines": 1136,
+      "overriden_lines": 5
+    },
+    "333fcd434ed07e93": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "5d00dd9c-625b-4cbd-bdf6-7a33511ecb6d",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 47,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "6a2cca77a52c2111": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "37469b1a-3203-4d61-b721-1a447671e3fe",
+        "model": "custom:GLM-5.1-0"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 21,
+      "total_deletions": 10,
+      "accepted_lines": 14,
+      "overriden_lines": 0
+    },
+    "722cf178278f5e1e": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "de624b63-42b6-4a44-b988-ae1ed23f868b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 48,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "768e8363859f30dc": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "0dd73e60-dddc-45d4-bcb2-0f8190e2d113",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 188,
+      "total_deletions": 336,
+      "accepted_lines": 181,
+      "overriden_lines": 2
+    },
+    "96719afe42df4ef1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "08fd7671-fdd4-4327-8f74-3047cbc806a3",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 5,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "b5214d1c3849c879": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3f05d6cb-eaff-47d1-8be6-efd54154a748",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 51,
+      "total_deletions": 17,
+      "accepted_lines": 47,
+      "overriden_lines": 0
+    },
+    "e136dfb3b7ac9b97": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "faf34778-b9a1-4033-8643-5ff3ebecae9d",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 24,
+      "total_deletions": 16,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    },
+    "e327bf6329ae5d85": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "0e7d8ef2-cd8d-4097-be4e-f706d19ba1e9",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 9,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    },
+    "e9becf652fbde5d5": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "756c6d24-dd2e-41ab-bfc9-51514cef9eb5",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 19,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
