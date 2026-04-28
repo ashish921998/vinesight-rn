@@ -2027,7 +2027,7 @@ export const hi = {
       severity: {
         high: 'उच्च',
         medium: 'मध्यम',
-        low: 'कमी',
+        low: 'निम्न',
       },
       actions: {
         reviewTasks: 'कार्य देखें',

@@ -1605,6 +1605,8 @@ export const mr = {
     subtitle: 'सत्यापन कोड मिळवण्यासाठी तुमचा मोबाइल नंबर प्रविष्ट करा',
     continueTitle: 'मोबाइल नंबर प्रविष्ट करा',
     continueSubtitle: 'तुमचा मोबाइल नंबर प्रविष्ट करा. आम्ही SMS द्वारे सत्यापन कोड पाठवू.',
+    phoneLabelHeading: 'मोबाइल नंबर',
+    phoneHelper: 'आम्ही एसएमएसद्वारे 6-अंकी सत्यापन कोड पाठवू.',
     continueButton: 'पुढे जा',
     phoneNumber: 'फोन नंबर',
     phoneLabel: 'फोन नंबर',
