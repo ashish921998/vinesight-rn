@@ -123,7 +123,7 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
   appVersion: { fontSize: fontSize.sm, color: colors.surface[400] } as TextStyle,
   appVersionSubtitle: {
     fontSize: fontSize.xs,
-    color: colors.surface[300],
+    color: colors.surface[500],
     marginTop: spacing[1],
   } as TextStyle,
   sentryTestButton: {
@@ -407,7 +407,7 @@ export function SettingsItem({
           {value}
         </Text>
       )}
-      {!disabled && <UISymbol name="chevron.right" size={18} color={colors.surface[300]} />}
+      {!disabled && <UISymbol name="chevron.right" size={18} color={colors.surface[500]} />}
     </View>
   );
 }

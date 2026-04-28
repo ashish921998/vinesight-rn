@@ -32,9 +32,11 @@ export const mr = {
     general: 'सामान्य',
     filter: 'फिल्टर',
     clearAll: 'सर्व साफ करा',
+    all: 'सर्व',
     today: 'आज',
     yesterday: 'काल',
     view: 'पहा',
+    moreOptions: 'अधिक पर्याय',
     units: {
       hours: 'तास',
       days: 'दिवस',
@@ -604,10 +606,14 @@ export const mr = {
     allFarms: 'सर्व $t(glossary.farm)',
     allFarmsExpenseOnly: 'सर्व $t(glossary.farm) पर्याय फक्त $t(glossary.expense) नोंदीसाठी आहे.',
     allFarmsNoFarms: 'हा $t(glossary.expense) लागू करण्यासाठी $t(glossary.farm) उपलब्ध नाहीत.',
-    partialSuccess: {
-      title: 'आंशिक यश',
-      body_one: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
-      body_other: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
+    saveFailed: {
+      title: 'लॉग जतन करता आले नाहीत',
+      body_one: 'हा लॉग जतन झाला नाही. कोणतेही बदल जतन झाले नाहीत. कृपया पुन्हा प्रयत्न करा.',
+      body_other: 'लॉग जतन झाले नाहीत. कोणतेही बदल जतन झाले नाहीत. कृपया पुन्हा प्रयत्न करा.',
+      rollbackWarning_one:
+        'सूचना: {{count}} जतन केलेला रेकॉर्ड काढता आला नाही. पुन्हा प्रयत्न करण्यापूर्वी कृपया तुमचा डेटा तपासा.',
+      rollbackWarning_other:
+        'सूचना: {{count}} जतन केलेले रेकॉर्ड काढता आले नाहीत. पुन्हा प्रयत्न करण्यापूर्वी कृपया तुमचा डेटा तपासा.',
     },
     taskCompletionLinkFailed:
       'नोंदी जतन झाल्या, पण स्रोत $t(glossary.task) पूर्ण म्हणून चिन्हांकित करता आले नाही.',
@@ -856,6 +862,13 @@ export const mr = {
       safeToSprayChecker: 'लक्ष्य $t(glossary.harvest) दिनांकासाठी सुरक्षित स्प्रे विंडो तपासा',
       sprayCatalog: '$t(glossary.pest), मोड आणि PHI सह कॅटलॉग स्प्रे/मिक्स ब्राउझ करा',
     },
+    categories: {
+      irrigation: 'सिंचन',
+      crop: 'पीक',
+      fertility: 'सुपीकता',
+      spray: 'स्प्रे',
+      weather: 'हवामान',
+    },
   },
 
   tankMix: {
@@ -866,6 +879,9 @@ export const mr = {
     tankSizeLabel: 'टँक आकार (लिटर)',
     catalogMixes: 'कॅटलॉग मिक्स',
     genericProblem: 'सामान्य संरक्षण',
+    selected: 'निवडलेले',
+    notSelected: 'निवडलेले नाही',
+    showingResults: '{{count}} पैकी {{visibleCount}} निकाल दाखवत आहोत',
     resultTitle: '{{liters}}L साठी आवश्यक प्रमाण',
     resultDose: 'डोस: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'एकूण: {{value}} {{unit}}',
@@ -1032,6 +1048,12 @@ export const mr = {
       actions: {
         reset: 'कॅल्क्युलेटर रीसेट करा',
       },
+    },
+    lai: {
+      title: 'LAI कॅल्क्युलेटर',
+    },
+    systemDischarge: {
+      title: 'सिस्टम डिस्चार्ज',
     },
   },
 
@@ -1268,6 +1290,7 @@ export const mr = {
   assistant: {
     placeholder: 'तुमचे प्रश्न विचारा — मी कशी मदत करू?',
     settingsButtonA11y: 'सेटिंग्ज उघडा',
+    settingsGearA11y: 'सेटिंग्ज',
     chat: {
       welcomeTitle: 'मी कसे मदत करू?',
       welcomeSubtitle: 'तुमचे पीक, $t(glossary.disease), $t(glossary.pest) आणि इतरांबद्दल विचारा.',
@@ -1582,6 +1605,8 @@ export const mr = {
     subtitle: 'सत्यापन कोड मिळवण्यासाठी तुमचा मोबाइल नंबर प्रविष्ट करा',
     continueTitle: 'मोबाइल नंबर प्रविष्ट करा',
     continueSubtitle: 'तुमचा मोबाइल नंबर प्रविष्ट करा. आम्ही SMS द्वारे सत्यापन कोड पाठवू.',
+    phoneLabelHeading: 'मोबाइल नंबर',
+    phoneHelper: 'आम्ही एसएमएसद्वारे 6-अंकी सत्यापन कोड पाठवू.',
     continueButton: 'पुढे जा',
     phoneNumber: 'फोन नंबर',
     phoneLabel: 'फोन नंबर',
@@ -1984,10 +2009,16 @@ export const mr = {
     },
     hero: {
       today: 'आज',
+      welcome: 'स्वागत आहे',
       allClear: 'सर्व ठीक',
       attentionNeeded: 'लक्ष आवश्यक',
       alertCount_one: '{{count}} इशारा',
       alertCount_other: '{{count}} इशारे',
+      attentionSummary_one: '{{count}} बाबीकडे लक्ष द्या',
+      attentionSummary_other: '{{count}} बाबींकडे लक्ष द्या',
+    },
+    header: {
+      notificationsA11y: 'सूचना',
     },
     stats: {
       title: 'ओव्हरव्ह्यू',
@@ -2004,6 +2035,11 @@ export const mr = {
         noRecentLogs: 'अलीकडील नोंदी नाहीत',
         lowWaterLevel: 'पाणी स्तर कमी',
         phiDeadline: 'PHI अंतिम वेळ जवळ आहे',
+      },
+      severity: {
+        high: 'उच्च',
+        medium: 'मध्यम',
+        low: 'कमी',
       },
       actions: {
         reviewTasks: '$t(glossary.task) पहा',
@@ -2143,10 +2179,15 @@ export const mr = {
       medium: 'मध्यम',
       high: 'उच्च',
     },
+    actions: {
+      menuTitle: '$t(glossary.task) क्रिया',
+    },
     a11y: {
       editTask: '$t(glossary.task) संपादित करा: {{title}}',
       deleteTask: '$t(glossary.task) हटवा: {{title}}',
       completeTask: '$t(glossary.task) पूर्ण करा: {{title}}',
+      taskActions: '{{title}} साठी $t(glossary.task) क्रिया',
+      addTask: '$t(glossary.task) जोडा',
     },
     status: {
       pending: 'प्रलंबित',
@@ -2526,6 +2567,11 @@ export const mr = {
     },
     actions: {
       backToList: 'लॅब चाचण्या यादीकडे परत',
+      title: 'लॅब चाचणी जोडा',
+      addSoilTest: 'माती चाचणी जोडा',
+      addSoilTestDesc: 'मातीच्या नमुन्यातून पोषक पातळ्या नोंदवा',
+      addPetioleTest: 'पेटिओल चाचणी जोडा',
+      addPetioleTestDesc: 'पेटिओल नमुन्यातून पोषक पातळ्या नोंदवा',
     },
     parameters: {
       ph: 'pH',
@@ -2587,7 +2633,7 @@ export const mr = {
         '$t(glossary.soil) प्रोफाइल विशिष्ट $t(glossary.farm)शी संबंधित आहेत. कृपया पाहण्यासाठी $t(glossary.farm) निवडा.',
       cta: '$t(glossary.farm) पृष्ठावर जा',
     },
-    title: '$t(glossary.soil) प्रोफाइलिंग',
+    title: '$t(glossary.soil) आर्द्रता',
     tabs: {
       history: 'इतिहास',
       trends: 'ट्रेंड्स',
@@ -2607,6 +2653,7 @@ export const mr = {
     noProfilesDescription:
       'तुमच्या $t(glossary.farm)ची $t(glossary.soil) आरोग्य ट्रॅक करण्यासाठी आर्द्रता प्रोफाइल जोडा.',
     addFirstProfile: 'पहिला प्रोफाइल जोडा',
+    addProfile: 'प्रोफाइल जोडा',
     notEnoughData: 'पुरेसा डेटा नाही',
     notEnoughDataDescription: 'ट्रेंड्स पाहण्यासाठी किमान 2 प्रोफाइल जोडा.',
     avgMoisture: 'सरासरी आर्द्रता',
@@ -2627,7 +2674,7 @@ export const mr = {
   },
 
   soilProfileForm: {
-    titleAdd: '$t(glossary.soil) प्रोफाइल जोडा',
+    titleAdd: '$t(glossary.soil) आर्द्रता नोंद जोडा',
     sections: {
       top: 'वर',
       bottom: 'खाली',

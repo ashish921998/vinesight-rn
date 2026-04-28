@@ -47,6 +47,7 @@ export interface EntryLogSubmitters {
   createExpense: (payload: ExpenseRecordInsert) => Promise<{ id?: number | null }>;
   createFertigation: (payload: FertigationRecordInsert) => Promise<{ id?: number | null }>;
   updateWaterLevel: (payload: { farmId: number; remainingWater: number }) => Promise<unknown>;
+  deleteIrrigation?: (payload: { id: number; farmId: number }) => Promise<unknown>;
 }
 
 export interface EntryLogSubmissionResult {
@@ -86,6 +87,8 @@ export async function submitEntryPendingLog(params: {
         date_of_pruning: farm.date_of_pruning,
       });
 
+      const recordId = created.id ?? null;
+
       if (
         farm.total_tank_capacity &&
         farm.system_discharge &&
@@ -95,13 +98,39 @@ export async function submitEntryPendingLog(params: {
         const waterAdded = duration * farm.system_discharge;
         const currentWater = farm.remaining_water ?? 0;
         const newWaterLevel = Math.min(farm.total_tank_capacity, currentWater + waterAdded);
-        await submitters.updateWaterLevel({
-          farmId,
-          remainingWater: newWaterLevel,
-        });
+        try {
+          await submitters.updateWaterLevel({
+            farmId,
+            remainingWater: newWaterLevel,
+          });
+        } catch (waterLevelError) {
+          // Water-level update failed but irrigation record already exists.
+          // Attempt compensating delete to keep atomic semantics.
+          let orphaned = false;
+          if (recordId !== null && submitters.deleteIrrigation) {
+            try {
+              await submitters.deleteIrrigation({ id: recordId, farmId });
+            } catch {
+              orphaned = true;
+              // Compensating delete failed; record is orphaned. Attach the
+              // recordId to the error so the caller can roll it back too.
+            }
+          } else if (recordId !== null) {
+            orphaned = true;
+          }
+          if (
+            orphaned &&
+            waterLevelError &&
+            typeof waterLevelError === 'object' &&
+            recordId !== null
+          ) {
+            (waterLevelError as { recordId?: number | null }).recordId = recordId;
+          }
+          throw waterLevelError;
+        }
       }
 
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return { pendingLogId: log.id, type: log.type, recordId };
     }
 
     case 'spray': {

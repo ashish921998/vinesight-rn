@@ -32,9 +32,11 @@ export const hi = {
     general: 'सामान्य',
     filter: 'फ़िल्टर',
     clearAll: 'सभी साफ़ करें',
+    all: 'सभी',
     today: 'आज',
     yesterday: 'कल',
     view: 'देखें',
+    moreOptions: 'अधिक विकल्प',
     units: {
       hours: 'घंटे',
       days: 'दिन',
@@ -607,10 +609,14 @@ export const hi = {
     allFarms: 'सभी खेत',
     allFarmsExpenseOnly: 'सभी खेत विकल्प केवल खर्च लॉग के लिए उपलब्ध है।',
     allFarmsNoFarms: 'इस खर्च को लागू करने के लिए कोई खेत उपलब्ध नहीं है।',
-    partialSuccess: {
-      title: 'आंशिक सफलता',
-      body_one: '{{count}} लॉग सहेजने में विफल। कृपया समीक्षा करें और पुनः प्रयास करें।',
-      body_other: '{{count}} लॉग सहेजने में विफल। कृपया समीक्षा करें और पुनः प्रयास करें।',
+    saveFailed: {
+      title: 'लॉग सहेजे नहीं जा सके',
+      body_one: 'यह लॉग सहेजने में विफल। कोई परिवर्तन सहेजा नहीं गया। कृपया पुनः प्रयास करें।',
+      body_other: 'लॉग सहेजने में विफल। कोई परिवर्तन सहेजा नहीं गया। कृपया पुनः प्रयास करें।',
+      rollbackWarning_one:
+        'चेतावनी: {{count}} सहेजा गया रिकॉर्ड हटाया नहीं जा सका। पुनः प्रयास करने से पहले कृपया अपना डेटा सत्यापित करें।',
+      rollbackWarning_other:
+        'चेतावनी: {{count}} सहेजे गए रिकॉर्ड हटाए नहीं जा सके। पुनः प्रयास करने से पहले कृपया अपना डेटा सत्यापित करें।',
     },
     taskCompletionLinkFailed:
       'लॉग सहेज लिए गए, लेकिन सोर्स कार्य को पूर्ण चिह्नित नहीं किया जा सका।',
@@ -853,6 +859,13 @@ export const hi = {
       safeToSprayChecker: 'लक्ष्य कटाई तिथि के लिए सुरक्षित स्प्रे विंडो जांचें',
       sprayCatalog: 'कीट, मोड और PHI के साथ कैटलॉग स्प्रे/मिक्स ब्राउज़ करें',
     },
+    categories: {
+      irrigation: 'सिंचाई',
+      crop: 'फसल',
+      fertility: 'उर्वरता',
+      spray: 'स्प्रे',
+      weather: 'मौसम',
+    },
   },
 
   tankMix: {
@@ -863,6 +876,9 @@ export const hi = {
     tankSizeLabel: 'टैंक आकार (लीटर)',
     catalogMixes: 'कैटलॉग मिक्स',
     genericProblem: 'सामान्य सुरक्षा',
+    selected: 'चयनित',
+    notSelected: 'अचयनित',
+    showingResults: '{{count}} में से {{visibleCount}} परिणाम दिखा रहे हैं',
     resultTitle: '{{liters}}L के लिए आवश्यक मात्रा',
     resultDose: 'डोज: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'कुल: {{value}} {{unit}}',
@@ -1028,6 +1044,12 @@ export const hi = {
       actions: {
         reset: 'कैलकुलेटर रीसेट करें',
       },
+    },
+    lai: {
+      title: 'LAI कैलकुलेटर',
+    },
+    systemDischarge: {
+      title: 'सिस्टम डिस्चार्ज',
     },
   },
 
@@ -1264,6 +1286,7 @@ export const hi = {
   assistant: {
     placeholder: 'आपका AI कृषि सहायक — फसल, मिट्टी और शेड्यूल के बारे में पूछें',
     settingsButtonA11y: 'सेटिंग्स खोलें',
+    settingsGearA11y: 'सेटिंग्स',
     chat: {
       welcomeTitle: 'मैं कैसे मदद कर सकता हूँ?',
       welcomeSubtitle: 'अपनी फसल, सिंचाई, बीमारियों और अन्य के बारे में पूछें।',
@@ -1974,10 +1997,16 @@ export const hi = {
     },
     hero: {
       today: 'आज',
+      welcome: 'स्वागत है',
       allClear: 'सब ठीक',
       attentionNeeded: 'ध्यान देने की जरूरत',
       alertCount_one: '{{count}} अलर्ट',
       alertCount_other: '{{count}} अलर्ट',
+      attentionSummary_one: '{{count}} काम पर ध्यान दें',
+      attentionSummary_other: '{{count}} कामों पर ध्यान दें',
+    },
+    header: {
+      notificationsA11y: 'सूचनाएँ',
     },
     stats: {
       title: 'ओवरव्यू',
@@ -1994,6 +2023,11 @@ export const hi = {
         noRecentLogs: 'हाल में कोई लॉग नहीं',
         lowWaterLevel: 'पानी का स्तर कम',
         phiDeadline: 'PHI अंतिम समय निकट है',
+      },
+      severity: {
+        high: 'उच्च',
+        medium: 'मध्यम',
+        low: 'निम्न',
       },
       actions: {
         reviewTasks: 'कार्य देखें',
@@ -2133,10 +2167,15 @@ export const hi = {
       medium: 'मध्यम',
       high: 'उच्च',
     },
+    actions: {
+      menuTitle: 'कार्य क्रियाएँ',
+    },
     a11y: {
       editTask: 'कार्य संपादित करें: {{title}}',
       deleteTask: 'कार्य हटाएं: {{title}}',
       completeTask: 'कार्य पूरा करें: {{title}}',
+      taskActions: '{{title}} के लिए कार्य क्रियाएँ',
+      addTask: 'कार्य जोड़ें',
     },
     status: {
       pending: 'लंबित',
@@ -2515,6 +2554,11 @@ export const hi = {
     },
     actions: {
       backToList: 'लैब परीक्षण सूची पर वापस जाएं',
+      title: 'लैब परीक्षण जोड़ें',
+      addSoilTest: 'मिट्टी परीक्षण जोड़ें',
+      addSoilTestDesc: 'मिट्टी के नमूने से पोषक तत्वों के स्तर दर्ज करें',
+      addPetioleTest: 'पेटीओल परीक्षण जोड़ें',
+      addPetioleTestDesc: 'पेटीओल नमूने से पोषक तत्वों के स्तर दर्ज करें',
     },
     parameters: {
       ph: 'pH',
@@ -2576,7 +2620,7 @@ export const hi = {
         'मिट्टी प्रोफाइल विशिष्ट खेतों से जुड़े होते हैं। कृपया अपने मिट्टी प्रोफाइल देखने के लिए एक खेत चुनें।',
       cta: 'खेतों पर जाएं',
     },
-    title: 'मिट्टी प्रोफाइलिंग',
+    title: 'मिट्टी की नमी',
     tabs: {
       history: 'इतिहास',
       trends: 'रुझान',
@@ -2596,6 +2640,7 @@ export const hi = {
     noProfilesDescription:
       'अपने खेत की मिट्टी की स्वास्थ्य ट्रैक करने के लिए मिट्टी नमी प्रोफाइल जोड़ें।',
     addFirstProfile: 'पहला प्रोफाइल जोड़ें',
+    addProfile: 'प्रोफाइल जोड़ें',
     notEnoughData: 'पर्याप्त डेटा नहीं',
     notEnoughDataDescription: 'ट्रेंड देखने के लिए कम से कम 2 प्रोफाइल जोड़ें।',
     avgMoisture: 'औसत नमी',
@@ -2616,7 +2661,7 @@ export const hi = {
   },
 
   soilProfileForm: {
-    titleAdd: 'मिट्टी प्रोफाइल जोड़ें',
+    titleAdd: 'मिट्टी नमी रीडिंग जोड़ें',
     sections: {
       top: 'ऊपर',
       bottom: 'नीचे',

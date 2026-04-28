@@ -11,6 +11,16 @@ const mockUseChemicalCatalog = jest.fn();
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockUseLocalSearchParams(),
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    canGoBack: jest.fn(() => false),
+    setParams: jest.fn(),
+    navigate: jest.fn(),
+    dismiss: jest.fn(),
+    dismissAll: jest.fn(),
+  }),
   Stack: { Screen: () => null },
 }));
 

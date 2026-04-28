@@ -10,6 +10,11 @@ const mockCreateSprayMutate = jest.fn();
 const mockCreateHarvestMutate = jest.fn();
 const mockCreateExpenseMutate = jest.fn();
 const mockCreateFertigationMutate = jest.fn();
+const mockDeleteIrrigationMutate = jest.fn();
+const mockDeleteSprayMutate = jest.fn();
+const mockDeleteHarvestMutate = jest.fn();
+const mockDeleteExpenseMutate = jest.fn();
+const mockDeleteFertigationMutate = jest.fn();
 const mockUpdateWaterLevelMutate = jest.fn();
 const mockTaskCreateMutate = jest.fn();
 const mockTaskUpdateMutate = jest.fn();
@@ -55,6 +60,11 @@ jest.mock('@/hooks', () => ({
   useCreateHarvestRecord: () => ({ mutateAsync: mockCreateHarvestMutate }),
   useCreateExpenseRecord: () => ({ mutateAsync: mockCreateExpenseMutate }),
   useCreateFertigationRecord: () => ({ mutateAsync: mockCreateFertigationMutate }),
+  useDeleteIrrigationRecord: () => ({ mutateAsync: mockDeleteIrrigationMutate }),
+  useDeleteSprayRecord: () => ({ mutateAsync: mockDeleteSprayMutate }),
+  useDeleteHarvestRecord: () => ({ mutateAsync: mockDeleteHarvestMutate }),
+  useDeleteExpenseRecord: () => ({ mutateAsync: mockDeleteExpenseMutate }),
+  useDeleteFertigationRecord: () => ({ mutateAsync: mockDeleteFertigationMutate }),
   useUpdateFarmWaterLevel: () => ({ mutateAsync: mockUpdateWaterLevelMutate }),
   useFarms: (...args: unknown[]) => mockUseFarms(...args),
   useProfile: () => ({ data: { area_unit_preference: 'acres' } }),
@@ -143,6 +153,11 @@ describe('EntryForm UI integration', () => {
     mockCreateHarvestMutate.mockResolvedValue({ id: 103 });
     mockCreateExpenseMutate.mockResolvedValue({ id: 104 });
     mockCreateFertigationMutate.mockResolvedValue({ id: 105 });
+    mockDeleteIrrigationMutate.mockResolvedValue(undefined);
+    mockDeleteSprayMutate.mockResolvedValue(undefined);
+    mockDeleteHarvestMutate.mockResolvedValue(undefined);
+    mockDeleteExpenseMutate.mockResolvedValue(undefined);
+    mockDeleteFertigationMutate.mockResolvedValue(undefined);
     mockUpdateWaterLevelMutate.mockResolvedValue({});
     mockTaskCreateMutate.mockResolvedValue({ id: 201 });
     mockTaskUpdateMutate.mockResolvedValue({ id: 202 });
@@ -293,7 +308,7 @@ describe('EntryForm UI integration', () => {
     alertSpy.mockRestore();
   });
 
-  it('retries all-farms expense only for farms that previously failed', async () => {
+  it('rolls back all-farms expense saves atomically and retries every farm when one fails', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const onClose = jest.fn();
     const farmA: Farm = { ...mockFarm, id: 101, name: 'Farm A', crop: 'Mango' };
@@ -353,27 +368,100 @@ describe('EntryForm UI integration', () => {
     );
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(
-        'entryForm.partialSuccess.title',
-        'entryForm.partialSuccess.body_one',
+      const matchingCall = alertSpy.mock.calls.find(
+        (call) => call[0] === 'entryForm.saveFailed.title',
+      );
+      expect(matchingCall).toBeTruthy();
+      expect(typeof matchingCall?.[1]).toBe('string');
+      expect(matchingCall?.[1]).toContain('entryForm.saveFailed.body_one');
+      expect(matchingCall?.[1]).toContain('Farm B failed once');
+    });
+
+    // Atomic semantics: the successful Farm A insert must be rolled back.
+    await waitFor(() => {
+      expect(mockDeleteExpenseMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 1010, farmId: 101 }),
       );
     });
 
     fireEvent.press(screen.getByText('entryForm.saveLogs'));
 
     await waitFor(() => {
-      expect(mockCreateExpenseMutate).toHaveBeenCalledTimes(3);
+      // 2 from the first attempt (one rolled back) + 2 from the retry (both
+      // farms retried because the first attempt was reverted).
+      expect(mockCreateExpenseMutate).toHaveBeenCalledTimes(4);
     });
 
-    expect(mockCreateExpenseMutate.mock.calls[2]?.[0]).toEqual(
-      expect.objectContaining({ farm_id: 202, cost: 500 }),
-    );
     expect(
       mockCreateExpenseMutate.mock.calls.filter((call) => call[0]?.farm_id === 101),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
+    expect(
+      mockCreateExpenseMutate.mock.calls.filter((call) => call[0]?.farm_id === 202),
+    ).toHaveLength(2);
 
     await waitFor(() => {
       expect(onClose).toHaveBeenCalled();
+    });
+
+    alertSpy.mockRestore();
+  });
+
+  it('surfaces rollback failure when compensating delete rejects', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const onClose = jest.fn();
+    const farmA: Farm = { ...mockFarm, id: 101, name: 'Farm A', crop: 'Mango' };
+    const farmB: Farm = { ...mockFarm, id: 202, name: 'Farm B', crop: 'Mango' };
+    mockUseFarms.mockReturnValue({ data: [farmA, farmB] });
+
+    mockCreateExpenseMutate.mockImplementation(async (payload: { farm_id: number }) => {
+      if (payload.farm_id === 202) {
+        throw new Error('Farm B failed');
+      }
+      return { id: payload.farm_id * 10 };
+    });
+
+    // Make the rollback delete for Farm A fail too.
+    mockDeleteExpenseMutate.mockImplementation(async () => {
+      throw new Error('Delete failed');
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm onClose={onClose} tabs={['log']} presentation="screen" initialApplyToAllFarms />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.press(screen.getByText('logs.types.expense'));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '500');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('entryForm.saveLogs'));
+
+    await waitFor(() => {
+      const matchingCall = alertSpy.mock.calls.find(
+        (call) => call[0] === 'entryForm.saveFailed.title',
+      );
+      expect(matchingCall).toBeTruthy();
+      const message = matchingCall?.[1] as string;
+      expect(message).toContain('entryForm.saveFailed.body_one');
+      // Rollback warning should be present because delete failed.
+      expect(message).toContain('entryForm.saveFailed.rollbackWarning_one');
     });
 
     alertSpy.mockRestore();

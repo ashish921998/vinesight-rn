@@ -1,11 +1,20 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, View, Text, Pressable, Platform, Modal, TextInput } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  Text,
+  Pressable,
+  Platform,
+  Modal,
+  TextInput,
+} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { borderRadius, fontWeight, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
@@ -21,6 +30,7 @@ export default function SpraySafeCheckerScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const params = useLocalSearchParams<{ farmId?: string }>();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [iosPickerDraftDate, setIosPickerDraftDate] = useState<Date>(new Date());
@@ -92,11 +102,74 @@ export default function SpraySafeCheckerScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: t('safeToSpray.title', { defaultValue: 'Safe-to-Spray Checker' }),
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
+      {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
+      <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
+        <View
+          style={{
+            height: 56,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: spacing[2],
+          }}
+        >
+          <Pressable
+            onPress={() => router.back()}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              backgroundColor: 'transparent',
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.goBack')}
+          >
+            {({ pressed }) => (
+              <View
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <UiSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      borderRadius: 22,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text
+              numberOfLines={1}
+              style={{
+                color: m3.colorScheme.onSurface,
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+              }}
+            >
+              {t('safeToSpray.title', { defaultValue: 'Safe-to-Spray Checker' })}
+            </Text>
+          </View>
+
+          <View style={{ width: 44, height: 44 }} />
+        </View>
+      </View>
       <ScrollView
         style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
         keyboardShouldPersistTaps="handled"

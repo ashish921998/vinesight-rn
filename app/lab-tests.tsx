@@ -4,11 +4,21 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { LabTestDetailsModal } from '@/components/screens/lab-test-details-modal';
+import { LabTestsFabSheet } from '@/components/modals/lab-tests-fab-sheet';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useFarm } from '../src/hooks';
 import {
@@ -46,6 +56,7 @@ export default function LabTestsScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
   const parsedFarmId = farmId ? parseInt(farmId, 10) : 0;
   const farmIdNum = Number.isNaN(parsedFarmId) ? 0 : parsedFarmId;
@@ -60,6 +71,17 @@ export default function LabTestsScreen() {
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedTest, setSelectedTest] = useState<SoilTestRecord | PetioleTestRecord | null>(null);
   const [selectedType, setSelectedType] = useState<TestType>('soil');
+  const [fabSheetVisible, setFabSheetVisible] = useState(false);
+
+  const navigateToAddLabTest = (type: TestType) => {
+    router.push({
+      pathname: '/add-lab-test',
+      params: {
+        farmId: farmIdNum.toString(),
+        testType: type,
+      },
+    });
+  };
 
   const isLoading = farmLoading || soilLoading || petioleLoading;
 
@@ -471,29 +493,105 @@ export default function LabTestsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-      <Stack.Screen
-        options={{
-          title: t('labTests.list.title'),
-          headerRight: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-              <Pressable
-                onPress={() => {
-                  if (selectedTab === 'soil') {
-                    router.push(`/soil-trends?farmId=${farmId}`);
-                  } else {
-                    router.push(`/petiole-trends?farmId=${farmId}`);
-                  }
-                }}
+      <Stack.Screen options={{ headerShown: false }} />
+      {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
+      <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
+        <View
+          style={{
+            height: 56,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: spacing[2],
+          }}
+        >
+          <Pressable
+            onPress={() => router.back()}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              backgroundColor: 'transparent',
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.goBack')}
+          >
+            {({ pressed }) => (
+              <View
                 style={{
-                  backgroundColor: m3.colorScheme.primary,
-                  paddingHorizontal: spacing[3],
-                  paddingVertical: spacing[2],
-                  borderRadius: borderRadius.full,
+                  width: '100%',
+                  height: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
+                <IconSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      borderRadius: 22,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+
+          <View style={{ flex: 1, alignItems: 'center', minWidth: 0 }}>
+            <Text
+              numberOfLines={1}
+              style={{
+                color: m3.colorScheme.onSurface,
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+              }}
+            >
+              {t('labTests.list.title')}
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => {
+              if (selectedTab === 'soil') {
+                router.push(`/soil-trends?farmId=${farmId}`);
+              } else {
+                router.push(`/petiole-trends?farmId=${farmId}`);
+              }
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('labTests.list.viewTrends')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 36,
+              paddingHorizontal: spacing[3],
+              marginRight: spacing[2],
+              borderRadius: borderRadius.full,
+              backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+              overflow: 'hidden',
+            }}
+          >
+            {({ pressed }) => (
+              <>
+                <IconSymbol
+                  name="chart.line.uptrend.xyaxis"
+                  size={16}
+                  color={m3.colorScheme.primary}
+                />
                 <Text
                   style={{
-                    color: m3.colorScheme.onPrimary,
+                    marginLeft: spacing[1],
+                    color: m3.colorScheme.primary,
                     fontWeight: fontWeight.semibold,
                     fontSize: fontSize.sm,
                   }}
@@ -502,30 +600,23 @@ export default function LabTestsScreen() {
                 >
                   {t('labTests.list.viewTrends')}
                 </Text>
-              </Pressable>
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: '/add-lab-test',
-                    params: {
-                      farmId: farmIdNum.toString(),
-                      testType: selectedTab,
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      borderRadius: borderRadius.full,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.primary, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
                     },
-                  })
-                }
-                style={{
-                  backgroundColor: m3.colorScheme.primary,
-                  padding: spacing[2],
-                  borderRadius: borderRadius.full,
-                  marginRight: spacing[2],
-                }}
-              >
-                <IconSymbol name="plus" size={24} color={m3.colorScheme.onPrimary} />
-              </Pressable>
-            </View>
-          ),
-        }}
-      />
+                  ]}
+                />
+              </>
+            )}
+          </Pressable>
+        </View>
+      </View>
 
       {/* Tabs */}
       <View
@@ -632,9 +723,50 @@ export default function LabTestsScreen() {
             : petioleTests && petioleTests.length > 0
               ? petioleTests.map((test) => renderTestCard(test, 'petiole'))
               : renderEmptyState('petiole')}
-          <View style={{ height: spacing[8] }} />
+          <View style={{ height: spacing[24] }} />
         </ScrollView>
       )}
+
+      {/* FAB to add new lab test */}
+      <Pressable
+        onPress={() => setFabSheetVisible(true)}
+        accessibilityRole="button"
+        accessibilityLabel={t('labTests.actions.title')}
+        style={{
+          position: 'absolute',
+          bottom: Math.max(insets.bottom, spacing[4]) + spacing[4],
+          right: spacing[6],
+          width: 56,
+          height: 56,
+          borderRadius: borderRadius.full,
+          backgroundColor: m3.colorScheme.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.18,
+          shadowRadius: 8,
+          elevation: 6,
+        }}
+      >
+        {({ pressed }) => (
+          <>
+            <IconSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+            <View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFillObject,
+                {
+                  backgroundColor: pressed
+                    ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                    : 'transparent',
+                },
+              ]}
+            />
+          </>
+        )}
+      </Pressable>
 
       {/* Add Modal */}
       {/* Lab test creation handled via route */}
@@ -643,6 +775,13 @@ export default function LabTestsScreen() {
         test={selectedTest}
         testType={selectedType}
         onClose={() => setDetailsVisible(false)}
+      />
+
+      <LabTestsFabSheet
+        visible={fabSheetVisible}
+        onClose={() => setFabSheetVisible(false)}
+        onAddSoilTest={() => navigateToAddLabTest('soil')}
+        onAddPetioleTest={() => navigateToAddLabTest('petiole')}
       />
     </View>
   );

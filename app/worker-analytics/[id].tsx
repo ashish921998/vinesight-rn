@@ -1,5 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  Platform,
+  StyleSheet,
+} from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -78,44 +86,50 @@ export default function WorkerAnalyticsDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-      </View>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+        </View>
+      </>
     );
   }
 
   if (!hasValidWorkerId || !worker) {
     return (
-      <View
-        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[6] }}
-      >
-        <UiSymbol name="exclamationmark.triangle.fill" size={40} color={m3.colorScheme.error} />
-        <Text
-          style={{
-            marginTop: spacing[3],
-            fontSize: fontSize.base,
-            fontWeight: fontWeight.semibold,
-            color: m3.colorScheme.onSurface,
-            textAlign: 'center',
-          }}
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[6] }}
         >
-          {t('workerAnalyticsDetail.notFound')}
-        </Text>
-        <Pressable
-          onPress={() => router.back()}
-          style={{
-            marginTop: spacing[4],
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[2],
-            borderRadius: borderRadius.full,
-            backgroundColor: m3.colorScheme.primaryContainer,
-          }}
-        >
-          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
-            {t('common.goBack')}
+          <UiSymbol name="exclamationmark.triangle.fill" size={40} color={m3.colorScheme.error} />
+          <Text
+            style={{
+              marginTop: spacing[3],
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: m3.colorScheme.onSurface,
+              textAlign: 'center',
+            }}
+          >
+            {t('workerAnalyticsDetail.notFound')}
           </Text>
-        </Pressable>
-      </View>
+          <Pressable
+            onPress={() => router.back()}
+            style={{
+              marginTop: spacing[4],
+              paddingHorizontal: spacing[4],
+              paddingVertical: spacing[2],
+              borderRadius: borderRadius.full,
+              backgroundColor: m3.colorScheme.primaryContainer,
+            }}
+          >
+            <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
+              {t('common.goBack')}
+            </Text>
+          </Pressable>
+        </View>
+      </>
     );
   }
 
@@ -124,7 +138,74 @@ export default function WorkerAnalyticsDetailScreen() {
       style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
       edges={['left', 'right']}
     >
-      <Stack.Screen options={{ title: worker.name }} />
+      <Stack.Screen options={{ headerShown: false }} />
+      {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
+      <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
+        <View
+          style={{
+            height: 56,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: spacing[2],
+          }}
+        >
+          <Pressable
+            onPress={() => router.back()}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              backgroundColor: 'transparent',
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.goBack')}
+          >
+            {({ pressed }) => (
+              <View
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <UiSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      borderRadius: 22,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text
+              numberOfLines={1}
+              style={{
+                color: m3.colorScheme.onSurface,
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+              }}
+            >
+              {worker.name}
+            </Text>
+          </View>
+
+          <View style={{ width: 44, height: 44 }} />
+        </View>
+      </View>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: spacing[8] + insets.bottom }}

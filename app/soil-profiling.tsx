@@ -4,8 +4,17 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Symbol } from '@/components/ui/symbol';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -34,10 +43,11 @@ export default function SoilProfilingScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
-  const farmIdNum = farmId ? parseInt(farmId, 10) : 0;
+  const farmIdNum = farmId && /^\d+$/.test(farmId) ? parseInt(farmId, 10) : 0;
 
-  const { data: farm, isLoading: farmLoading } = useFarm(farmIdNum);
+  const { data: _farm, isLoading: farmLoading } = useFarm(farmIdNum);
   const { data: profiles, isLoading: profilesLoading } = useSoilProfiles(farmIdNum);
   const deleteProfile = useDeleteSoilProfile();
 
@@ -457,15 +467,19 @@ export default function SoilProfilingScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Symbol
               name={
-                trendsData.moistureChange !== null && trendsData.moistureChange >= 0
-                  ? 'arrow-up'
-                  : 'arrow-down'
+                trendsData.moistureChange !== null && trendsData.moistureChange > 0
+                  ? 'arrow.up'
+                  : trendsData.moistureChange !== null && trendsData.moistureChange < 0
+                    ? 'arrow.down'
+                    : 'minus'
               }
               size={24}
               color={
-                trendsData.moistureChange !== null && trendsData.moistureChange >= 0
+                trendsData.moistureChange !== null && trendsData.moistureChange > 0
                   ? colors.success
-                  : m3.colorScheme.error
+                  : trendsData.moistureChange !== null && trendsData.moistureChange < 0
+                    ? m3.colorScheme.error
+                    : colors.surface[500]
               }
             />
             <Text
@@ -474,9 +488,11 @@ export default function SoilProfilingScreen() {
                 fontWeight: fontWeight.bold,
                 marginLeft: spacing[2],
                 color:
-                  trendsData.moistureChange !== null && trendsData.moistureChange >= 0
+                  trendsData.moistureChange !== null && trendsData.moistureChange > 0
                     ? colors.success
-                    : m3.colorScheme.error,
+                    : trendsData.moistureChange !== null && trendsData.moistureChange < 0
+                      ? m3.colorScheme.error
+                      : colors.surface[500],
               }}
             >
               {trendsData.moistureChange !== null
@@ -513,7 +529,7 @@ export default function SoilProfilingScreen() {
             {trendsData.latestMoisture}%
           </Text>
           <Text
-            style={{ fontSize: fontSize.xs, marginTop: spacing[1], color: colors.surface[300] }}
+            style={{ fontSize: fontSize.xs, marginTop: spacing[1], color: colors.surface[500] }}
           >
             {profiles[0] && formatProfileDate(profiles[0].created_at)}
           </Text>
@@ -524,76 +540,132 @@ export default function SoilProfilingScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: spacing[8],
-          }}
-        >
-          <Symbol
-            name="layers-outline"
-            size={64}
-            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-          />
-          <Text
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+          <View
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              marginTop: spacing[4],
-              color: colors.surface[900],
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: spacing[8],
             }}
           >
-            {t('soilProfiling.noFarm.title')}
-          </Text>
-          <Text style={{ textAlign: 'center', marginTop: spacing[2], color: colors.surface[500] }}>
-            {t('soilProfiling.noFarm.subtitle')}
-          </Text>
-          <Pressable
-            onPress={() => router.push('/(tabs)/farms')}
-            style={{
-              marginTop: spacing[6],
-              paddingHorizontal: spacing[6],
-              paddingVertical: spacing[3],
-              borderRadius: borderRadius.full,
-              backgroundColor: m3.colorScheme.primary,
-            }}
-          >
-            <Text style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}>
-              {t('soilProfiling.noFarm.cta')}
+            <Symbol
+              name="layers-outline"
+              size={64}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            />
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                marginTop: spacing[4],
+                color: colors.surface[900],
+              }}
+            >
+              {t('soilProfiling.noFarm.title')}
             </Text>
-          </Pressable>
+            <Text
+              style={{ textAlign: 'center', marginTop: spacing[2], color: colors.surface[500] }}
+            >
+              {t('soilProfiling.noFarm.subtitle')}
+            </Text>
+            <Pressable
+              onPress={() => router.push('/farms')}
+              style={{
+                marginTop: spacing[6],
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.full,
+                backgroundColor: m3.colorScheme.primary,
+              }}
+            >
+              <Text style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}>
+                {t('soilProfiling.noFarm.cta')}
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-      <Stack.Screen
-        options={{
-          title: t('soilProfiling.title'),
-          headerRight: () => (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: '/add-soil-profile',
-                  params: { farmId: farmIdNum.toString() },
-                })
-              }
-              style={{ padding: spacing[2], marginRight: spacing[2] }}
-            >
-              <Symbol name="add-circle" size={28} color={m3.colorScheme.primary} />
-            </Pressable>
-          ),
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
       <LinearGradient
+        pointerEvents="none"
         colors={[colorWithOpacity(m3.colorScheme.primary, 0.08), 'transparent']}
         style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
       />
+      {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
+      <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
+        <View
+          style={{
+            height: 56,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: spacing[2],
+          }}
+        >
+          <Pressable
+            onPress={() => router.back()}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              backgroundColor: 'transparent',
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.goBack')}
+          >
+            {({ pressed }) => (
+              <View
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Symbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      borderRadius: 22,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text
+              numberOfLines={1}
+              style={{
+                color: m3.colorScheme.onSurface,
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+              }}
+            >
+              {t('soilProfiling.title')}
+            </Text>
+          </View>
+
+          <View style={{ width: 44, height: 44 }} />
+        </View>
+      </View>
 
       {/* Tabs */}
       <View
@@ -669,29 +741,65 @@ export default function SoilProfilingScreen() {
           style={{ flex: 1, paddingHorizontal: spacing[4], paddingTop: spacing[4] }}
           showsVerticalScrollIndicator={false}
         >
-          {farm ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
-              <Symbol name="layers" size={18} color={m3.colorScheme.primary} />
-              <Text
-                style={{
-                  marginLeft: spacing[2],
-                  fontSize: fontSize.sm,
-                  color: colors.surface[500],
-                }}
-              >
-                {farm.name}
-              </Text>
-            </View>
-          ) : null}
           {profiles && profiles.length > 0 ? profiles.map(renderProfileCard) : renderEmptyState()}
-          <View style={{ height: spacing[8] }} />
+          <View style={{ height: spacing[24] }} />
         </ScrollView>
       ) : (
         <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
           {renderTrends()}
-          <View style={{ height: spacing[8] }} />
+          <View style={{ height: spacing[24] }} />
         </ScrollView>
       )}
+
+      {/* FAB to add new soil profile */}
+      <Pressable
+        onPress={() =>
+          router.push({
+            pathname: '/add-soil-profile',
+            params: { farmId: farmIdNum.toString() },
+          })
+        }
+        accessibilityRole="button"
+        accessibilityLabel={
+          profiles && profiles.length > 0
+            ? t('soilProfiling.addProfile', { defaultValue: 'Add profile' })
+            : t('soilProfiling.addFirstProfile')
+        }
+        style={{
+          position: 'absolute',
+          bottom: Math.max(insets.bottom, spacing[4]) + spacing[4],
+          right: spacing[6],
+          width: 56,
+          height: 56,
+          borderRadius: borderRadius.full,
+          backgroundColor: m3.colorScheme.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.18,
+          shadowRadius: 8,
+          elevation: 6,
+        }}
+      >
+        {({ pressed }) => (
+          <>
+            <Symbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+            <View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFillObject,
+                {
+                  backgroundColor: pressed
+                    ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                    : 'transparent',
+                },
+              ]}
+            />
+          </>
+        )}
+      </Pressable>
 
       {/* Add Modal */}
       {/* Soil profile creation handled via route */}

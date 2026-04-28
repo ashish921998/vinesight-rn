@@ -127,18 +127,6 @@ export function LogTypeSelector({
                   <AppIcon name="checkmark-circle" size={14} color={logType.color} />
                 </View>
               ) : null}
-              {/* 8px colored dot per category - Cellar Ledger spec */}
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 999,
-                  backgroundColor: logType.color,
-                  position: 'absolute',
-                  top: 8,
-                  left: 8,
-                }}
-              />
               <View
                 style={{
                   width: 32,

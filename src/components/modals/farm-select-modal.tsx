@@ -152,7 +152,7 @@ export function FarmSelectModal({
                     <UiSymbol
                       name={isSelected ? 'checkmark.circle.fill' : 'circle'}
                       size={20}
-                      color={isSelected ? ui.primary : colors.surface[300]}
+                      color={isSelected ? ui.primary : colors.surface[500]}
                     />
                   </Pressable>
                 );

@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, View, Text, Pressable, TextInput, Share } from 'react-native';
+import { ScrollView, View, Text, Pressable, TextInput, Share, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Symbol } from '@/components/ui/symbol';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -24,7 +25,8 @@ export default function TankMixCalculatorScreen() {
   const preselectedMixId =
     typeof rawMixId === 'string' && /^\d+$/.test(rawMixId) ? Number.parseInt(rawMixId, 10) : NaN;
 
-  const tankLiters = Number.parseFloat(tankLitersText);
+  const isValidTankSize = /^(?:\d+\.?\d*|\.\d+)$/.test(tankLitersText);
+  const tankLiters = isValidTankSize ? Number.parseFloat(tankLitersText) : NaN;
   const { data: catalogMixes = [], isLoading } = useChemicalCatalog();
   const mixes = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -56,122 +58,293 @@ export default function TankMixCalculatorScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{ title: t('tankMix.title', { defaultValue: 'Tank Mix Calculator' }) }}
-      />
-      <ScrollView
-        style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
-        contentContainerStyle={{ padding: spacing[4], paddingBottom: bottomPadding }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={{ marginBottom: spacing[4] }}>
-          <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
-            {t('tankMix.title', { defaultValue: 'Tank Mix Calculator' })}
-          </Text>
-          <Text style={{ ...m3.typography.bodyMedium, color: m3.colorScheme.onSurfaceVariant }}>
-            {t('tankMix.subtitle', {
-              defaultValue:
-                'Select a catalog mix and calculate exact quantities for your tank size.',
-            })}
-          </Text>
-        </View>
-
-        <View style={{ marginBottom: spacing[3] }}>
-          <Text
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}>
+        {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
+        <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
+          <View
             style={{
-              color: m3.colorScheme.onSurfaceVariant,
-              marginBottom: spacing[2],
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.medium,
+              height: 56,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: spacing[2],
             }}
           >
-            {t('tankMix.searchLabel', { defaultValue: 'Search mix' })}
-          </Text>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t('tankMix.searchPlaceholder', {
-              defaultValue: 'Search by mix or problem',
-            })}
-            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55)}
-            style={{
-              borderRadius: borderRadius.lg,
-              borderWidth: 1,
-              borderColor: colors.surface[300],
-              backgroundColor: m3.surface.surfaceContainerLow,
-              color: m3.colorScheme.onSurface,
-              paddingHorizontal: spacing[3],
-              paddingVertical: spacing[3],
-              fontSize: fontSize.base,
-            }}
-          />
-        </View>
-
-        <View style={{ marginBottom: spacing[4] }}>
-          <Text
-            style={{
-              color: m3.colorScheme.onSurfaceVariant,
-              marginBottom: spacing[2],
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.medium,
-            }}
-          >
-            {t('tankMix.tankSizeLabel', { defaultValue: 'Tank size (liters)' })}
-          </Text>
-          <TextInput
-            value={tankLitersText}
-            onChangeText={(text) => setTankLitersText(text.replace(/[^0-9.]/g, ''))}
-            keyboardType="decimal-pad"
-            placeholder="200"
-            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55)}
-            style={{
-              borderRadius: borderRadius.lg,
-              borderWidth: 1,
-              borderColor: colors.surface[300],
-              backgroundColor: m3.surface.surfaceContainerLow,
-              color: m3.colorScheme.onSurface,
-              paddingHorizontal: spacing[3],
-              paddingVertical: spacing[3],
-              fontSize: fontSize.base,
-            }}
-          />
-        </View>
-
-        <Text
-          style={{
-            color: m3.colorScheme.onSurfaceVariant,
-            marginBottom: spacing[2],
-            fontSize: fontSize.xs,
-            fontWeight: fontWeight.semibold,
-            letterSpacing: 0.6,
-            textTransform: 'uppercase',
-          }}
-        >
-          {t('tankMix.catalogMixes', { defaultValue: 'Catalog mixes' })}
-        </Text>
-
-        <View style={{ marginBottom: spacing[4] }}>
-          {isLoading ? (
-            <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
-              {t('common.loading', { defaultValue: 'Loading…' })}
-            </Text>
-          ) : (
-            mixes.slice(0, 20).map((mix) => {
-              const selected = selectedMix?.id === mix.id;
-              return (
-                <Pressable
-                  key={mix.id}
-                  onPress={() => router.setParams({ mixId: String(mix.id) })}
+            <Pressable
+              onPress={() => router.back()}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                backgroundColor: 'transparent',
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.goBack', { defaultValue: 'Go back' })}
+            >
+              {({ pressed }) => (
+                <View
                   style={{
-                    borderRadius: borderRadius.sm,
-                    borderWidth: 1,
-                    borderColor: selected ? m3.colorScheme.primary : colors.surface[300],
-                    backgroundColor: selected
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                      : m3.surface.surfaceContainerLow,
+                    width: '100%',
+                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Symbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        borderRadius: 22,
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </View>
+              )}
+            </Pressable>
+
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text
+                numberOfLines={1}
+                style={{
+                  color: m3.colorScheme.onSurface,
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.bold,
+                }}
+              >
+                {t('tankMix.title', { defaultValue: 'Tank Mix Calculator' })}
+              </Text>
+            </View>
+
+            <View style={{ width: 44, height: 44 }} />
+          </View>
+        </View>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
+          contentContainerStyle={{ padding: spacing[4], paddingBottom: bottomPadding }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={{ marginBottom: spacing[4] }}>
+            <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
+              {t('tankMix.title', { defaultValue: 'Tank Mix Calculator' })}
+            </Text>
+            <Text style={{ ...m3.typography.bodyMedium, color: m3.colorScheme.onSurfaceVariant }}>
+              {t('tankMix.subtitle', {
+                defaultValue:
+                  'Select a catalog mix and calculate exact quantities for your tank size.',
+              })}
+            </Text>
+          </View>
+
+          <View style={{ marginBottom: spacing[3] }}>
+            <Text
+              style={{
+                color: m3.colorScheme.onSurfaceVariant,
+                marginBottom: spacing[2],
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+              }}
+            >
+              {t('tankMix.searchLabel', { defaultValue: 'Search mix' })}
+            </Text>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder={t('tankMix.searchPlaceholder', {
+                defaultValue: 'Search by mix or problem',
+              })}
+              placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55)}
+              style={{
+                borderRadius: borderRadius.lg,
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                backgroundColor: m3.surface.surfaceContainerLow,
+                color: m3.colorScheme.onSurface,
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[3],
+                fontSize: fontSize.base,
+              }}
+            />
+          </View>
+
+          <View style={{ marginBottom: spacing[4] }}>
+            <Text
+              style={{
+                color: m3.colorScheme.onSurfaceVariant,
+                marginBottom: spacing[2],
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+              }}
+            >
+              {t('tankMix.tankSizeLabel', { defaultValue: 'Tank size (liters)' })}
+            </Text>
+            <TextInput
+              value={tankLitersText}
+              onChangeText={(text) => {
+                let normalized = text.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+                const firstDot = normalized.indexOf('.');
+                if (firstDot !== -1) {
+                  normalized =
+                    normalized.slice(0, firstDot + 1) +
+                    normalized.slice(firstDot + 1).replace(/\./g, '');
+                }
+                setTankLitersText(normalized);
+              }}
+              keyboardType="decimal-pad"
+              placeholder="200"
+              placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55)}
+              style={{
+                borderRadius: borderRadius.lg,
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                backgroundColor: m3.surface.surfaceContainerLow,
+                color: m3.colorScheme.onSurface,
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[3],
+                fontSize: fontSize.base,
+              }}
+            />
+          </View>
+
+          <Text
+            style={{
+              color: m3.colorScheme.onSurfaceVariant,
+              marginBottom: spacing[2],
+              fontSize: fontSize.xs,
+              fontWeight: fontWeight.semibold,
+              letterSpacing: 0.6,
+              textTransform: 'uppercase',
+            }}
+          >
+            {t('tankMix.catalogMixes', { defaultValue: 'Catalog mixes' })}
+          </Text>
+
+          <View style={{ marginBottom: spacing[4] }}>
+            {isLoading ? (
+              <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
+                {t('common.loading', { defaultValue: 'Loading…' })}
+              </Text>
+            ) : (
+              <>
+                {mixes.slice(0, 20).map((mix) => {
+                  const selected = selectedMix?.id === mix.id;
+                  return (
+                    <Pressable
+                      key={mix.id}
+                      onPress={() => router.setParams({ mixId: String(mix.id) })}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${mix.name}. ${selected ? t('tankMix.selected', { defaultValue: 'Selected' }) : t('tankMix.notSelected', { defaultValue: 'Not selected' })}. ${mix.target_problem ?? t('tankMix.genericProblem', { defaultValue: 'General protection' })}`}
+                      accessibilityState={{ selected }}
+                      style={{
+                        borderRadius: borderRadius.sm,
+                        borderWidth: 1,
+                        borderColor: selected ? m3.colorScheme.primary : colors.surface[300],
+                        backgroundColor: selected
+                          ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                          : m3.surface.surfaceContainerLow,
+                        padding: spacing[3],
+                        paddingVertical: spacing[3],
+                        marginBottom: spacing[2],
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: m3.colorScheme.onSurface,
+                          fontWeight: fontWeight.semibold,
+                          fontSize: fontSize.sm,
+                        }}
+                      >
+                        {mix.name}
+                      </Text>
+                      <Text
+                        style={{
+                          color: m3.colorScheme.onSurfaceVariant,
+                          marginTop: 2,
+                          fontSize: fontSize.sm,
+                        }}
+                      >
+                        {mix.target_problem ??
+                          t('tankMix.genericProblem', { defaultValue: 'General protection' })}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+                {mixes.length > 20 ? (
+                  <Text
+                    style={{
+                      color: m3.colorScheme.onSurfaceVariant,
+                      fontSize: fontSize.sm,
+                      marginTop: spacing[2],
+                    }}
+                  >
+                    {t('tankMix.showingResults', {
+                      defaultValue: 'Showing {{visibleCount}} of {{count}} results',
+                      visibleCount: Math.min(mixes.length, 20),
+                      count: mixes.length,
+                    })}
+                  </Text>
+                ) : null}
+              </>
+            )}
+          </View>
+
+          {selectedMix ? (
+            <Pressable
+              onPress={() => router.setParams({ mixId: '' })}
+              style={{
+                marginBottom: spacing[4],
+                alignSelf: 'flex-start',
+                borderRadius: borderRadius.full,
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[2],
+                backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+              }}
+            >
+              <Text style={{ color: m3.colorScheme.error, fontWeight: fontWeight.semibold }}>
+                {t('tankMix.clearSelection', { defaultValue: 'Clear selection' })}
+              </Text>
+            </Pressable>
+          ) : null}
+
+          {selectedMix && Number.isFinite(tankLiters) && tankLiters > 0 ? (
+            <View
+              style={{
+                borderRadius: borderRadius.xl,
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                backgroundColor: m3.surface.surfaceContainerLow,
+                padding: spacing[4],
+              }}
+            >
+              <Text
+                style={{
+                  color: m3.colorScheme.onSurface,
+                  ...m3.typography.titleMedium,
+                  marginBottom: spacing[3],
+                }}
+              >
+                {t('tankMix.resultTitle', {
+                  defaultValue: 'Required quantities for {{liters}}L',
+                  liters: tankLiters.toFixed(0),
+                })}
+              </Text>
+              {rows.map((row) => (
+                <View
+                  key={row.componentId}
+                  style={{
+                    borderRadius: borderRadius.lg,
                     padding: spacing[3],
                     paddingVertical: spacing[3],
                     marginBottom: spacing[2],
+                    backgroundColor: colorWithOpacity(colors.spray[500], 0.08),
                   }}
                 >
                   <Text
@@ -181,7 +354,7 @@ export default function TankMixCalculatorScreen() {
                       fontSize: fontSize.sm,
                     }}
                   >
-                    {mix.name}
+                    {row.productName}
                   </Text>
                   <Text
                     style={{
@@ -190,136 +363,61 @@ export default function TankMixCalculatorScreen() {
                       fontSize: fontSize.sm,
                     }}
                   >
-                    {mix.target_problem ??
-                      t('tankMix.genericProblem', { defaultValue: 'General protection' })}
+                    {t('tankMix.resultDose', {
+                      defaultValue: 'Dose: {{value}} {{unit}} ({{basis}})',
+                      value: row.doseValue,
+                      unit: row.doseUnit,
+                      basis: row.doseBasis,
+                    })}
                   </Text>
-                </Pressable>
-              );
-            })
-          )}
-        </View>
-
-        {selectedMix ? (
-          <Pressable
-            onPress={() => router.setParams({ mixId: '' })}
-            style={{
-              marginBottom: spacing[4],
-              alignSelf: 'flex-start',
-              borderRadius: borderRadius.full,
-              paddingHorizontal: spacing[3],
-              paddingVertical: spacing[2],
-              backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
-            }}
-          >
-            <Text style={{ color: m3.colorScheme.error, fontWeight: fontWeight.semibold }}>
-              {t('tankMix.clearSelection', { defaultValue: 'Clear selection' })}
-            </Text>
-          </Pressable>
-        ) : null}
-
-        {selectedMix && Number.isFinite(tankLiters) && tankLiters > 0 ? (
-          <View
-            style={{
-              borderRadius: borderRadius.xl,
-              borderWidth: 1,
-              borderColor: colors.surface[300],
-              backgroundColor: m3.surface.surfaceContainerLow,
-              padding: spacing[4],
-            }}
-          >
-            <Text
-              style={{
-                color: m3.colorScheme.onSurface,
-                ...m3.typography.titleMedium,
-                marginBottom: spacing[3],
-              }}
-            >
-              {t('tankMix.resultTitle', {
-                defaultValue: 'Required quantities for {{liters}}L',
-                liters: tankLiters.toFixed(0),
-              })}
-            </Text>
-            {rows.map((row) => (
-              <View
-                key={row.componentId}
+                  <Text
+                    style={{
+                      color: colors.spray[500],
+                      marginTop: spacing[1],
+                      fontWeight: fontWeight.semibold,
+                      fontSize: fontSize.sm,
+                    }}
+                  >
+                    {t('tankMix.resultTotal', {
+                      defaultValue: 'Total: {{value}} {{unit}}',
+                      value: row.totalQuantity,
+                      unit: row.doseUnit,
+                    })}
+                  </Text>
+                </View>
+              ))}
+              <Pressable
+                onPress={async () => {
+                  if (!selectedMix) return;
+                  const lines = rows.map(
+                    (row) => `${row.productName}: ${row.totalQuantity}${row.doseUnit}`,
+                  );
+                  const text = [`${selectedMix.name} - ${tankLiters.toFixed(0)}L`, ...lines].join(
+                    '\n',
+                  );
+                  try {
+                    await Share.share({ message: text });
+                  } catch {
+                    // Ignore OS-level share failures and keep the screen usable.
+                  }
+                }}
                 style={{
-                  borderRadius: borderRadius.lg,
-                  padding: spacing[3],
-                  paddingVertical: spacing[3],
-                  marginBottom: spacing[2],
-                  backgroundColor: colorWithOpacity(colors.spray[500], 0.08),
+                  marginTop: spacing[3],
+                  borderRadius: borderRadius.full,
+                  alignSelf: 'flex-start',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
                 }}
               >
-                <Text
-                  style={{
-                    color: m3.colorScheme.onSurface,
-                    fontWeight: fontWeight.semibold,
-                    fontSize: fontSize.sm,
-                  }}
-                >
-                  {row.productName}
+                <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
+                  {t('tankMix.shareSummary', { defaultValue: 'Share mix summary' })}
                 </Text>
-                <Text
-                  style={{
-                    color: m3.colorScheme.onSurfaceVariant,
-                    marginTop: 2,
-                    fontSize: fontSize.sm,
-                  }}
-                >
-                  {t('tankMix.resultDose', {
-                    defaultValue: 'Dose: {{value}} {{unit}} ({{basis}})',
-                    value: row.doseValue,
-                    unit: row.doseUnit,
-                    basis: row.doseBasis,
-                  })}
-                </Text>
-                <Text
-                  style={{
-                    color: colors.spray[500],
-                    marginTop: spacing[1],
-                    fontWeight: fontWeight.semibold,
-                    fontSize: fontSize.sm,
-                  }}
-                >
-                  {t('tankMix.resultTotal', {
-                    defaultValue: 'Total: {{value}} {{unit}}',
-                    value: row.totalQuantity,
-                    unit: row.doseUnit,
-                  })}
-                </Text>
-              </View>
-            ))}
-            <Pressable
-              onPress={async () => {
-                if (!selectedMix) return;
-                const lines = rows.map(
-                  (row) => `${row.productName}: ${row.totalQuantity}${row.doseUnit}`,
-                );
-                const text = [`${selectedMix.name} - ${tankLiters.toFixed(0)}L`, ...lines].join(
-                  '\n',
-                );
-                try {
-                  await Share.share({ message: text });
-                } catch {
-                  // Ignore OS-level share failures and keep the screen usable.
-                }
-              }}
-              style={{
-                marginTop: spacing[3],
-                borderRadius: borderRadius.full,
-                alignSelf: 'flex-start',
-                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[2],
-              }}
-            >
-              <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
-                {t('tankMix.shareSummary', { defaultValue: 'Share mix summary' })}
-              </Text>
-            </Pressable>
-          </View>
-        ) : null}
-      </ScrollView>
+              </Pressable>
+            </View>
+          ) : null}
+        </ScrollView>
+      </View>
     </>
   );
 }

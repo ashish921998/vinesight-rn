@@ -245,7 +245,7 @@ export default function FarmDetailScreen() {
       router.back();
       return true;
     }
-    router.replace('/(tabs)/farms');
+    router.replace('/farms');
     return true;
   }, [router]);
 
@@ -1215,7 +1215,7 @@ export default function FarmDetailScreen() {
                 telemetry.capture('farm_deleted', {
                   farm_id: farmId,
                 });
-                router.replace('/(tabs)/farms');
+                router.replace('/farms');
               },
               onError: (error: Error) => {
                 const normalized = `${error.name ?? ''} ${error.message ?? ''}`.toLowerCase();
@@ -1271,204 +1271,208 @@ export default function FarmDetailScreen() {
 
   if (farmLoading && !farm) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: m3.colorScheme.surface,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-        <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[4] }}>
-          {t('farmDetails.loadingFarm')}
-        </Text>
-      </View>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: m3.colorScheme.surface,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[4] }}>
+            {t('farmDetails.loadingFarm')}
+          </Text>
+        </View>
+      </>
     );
   }
 
   if (!farm) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: m3.colorScheme.surface,
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: 32,
-        }}
-      >
-        <UiSymbol
-          name="alert-circle-outline"
-          size={48}
-          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-        />
-        <Text
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View
           style={{
-            color: m3.colorScheme.onSurface,
-            fontSize: fontSize.lg,
-            fontWeight: fontWeight.semibold,
-            marginTop: spacing[4],
+            flex: 1,
+            backgroundColor: m3.colorScheme.surface,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 32,
           }}
         >
-          {t('farmDetails.notFound.title')}
-        </Text>
-        <View style={{ marginTop: spacing[4], width: '100%', maxWidth: 320 }}>
-          <Button title={t('common.goBack')} variant="outline" onPress={() => router.back()} />
+          <UiSymbol
+            name="alert-circle-outline"
+            size={48}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+          />
+          <Text
+            style={{
+              color: m3.colorScheme.onSurface,
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              marginTop: spacing[4],
+            }}
+          >
+            {t('farmDetails.notFound.title')}
+          </Text>
+          <View style={{ marginTop: spacing[4], width: '100%', maxWidth: 320 }}>
+            <Button title={t('common.goBack')} variant="outline" onPress={() => router.back()} />
+          </View>
         </View>
-      </View>
+      </>
     );
   }
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: farm.name,
-          headerStyle: { backgroundColor: m3.colorScheme.surface },
-          headerTintColor: m3.colorScheme.onSurface,
-          headerBackVisible: false,
-          headerBackTitle: '',
-          // @ts-expect-error headerBackTitleVisible is supported at runtime but not in type definitions
-          headerBackTitleVisible: false,
-          headerBackButtonDisplayMode: 'minimal',
-          headerLeft: () => (
-            <Pressable
-              onPress={handleBackNavigation}
-              style={{
-                marginLeft: spacing[1],
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                backgroundColor: m3.surface.surfaceContainerHigh,
-              }}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.goBack')}
-            >
-              {({ pressed }) => (
-                <View
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <UiSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
-                  <View
-                    pointerEvents="none"
-                    style={[
-                      StyleSheet.absoluteFillObject,
-                      {
-                        backgroundColor: pressed
-                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                </View>
-              )}
-            </Pressable>
-          ),
-          headerRight: () => (
-            <Pressable
-              onPress={handleOpenFarmActions}
-              style={{
-                marginRight: spacing[2],
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                backgroundColor: m3.surface.surfaceContainerHigh,
-              }}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityRole="button"
-              accessibilityLabel={t('farmDetails.a11y.openFarmActions')}
-            >
-              {({ pressed }) => (
-                <View
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <UiSymbol name="ellipsis" size={18} color={m3.colorScheme.onSurfaceVariant} />
-                  <View
-                    pointerEvents="none"
-                    style={[
-                      StyleSheet.absoluteFillObject,
-                      {
-                        backgroundColor: pressed
-                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                </View>
-              )}
-            </Pressable>
-          ),
-          headerTitle: () => (
-            <View style={{ alignItems: 'center' }}>
-              <Text
+      <Stack.Screen options={{ headerShown: false }} />
+      {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
+      <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
+        <View
+          style={{
+            height: 56,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: spacing[2],
+          }}
+        >
+          <Pressable
+            onPress={handleBackNavigation}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              backgroundColor: 'transparent',
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.goBack')}
+          >
+            {({ pressed }) => (
+              <View
                 style={{
-                  color: m3.colorScheme.onSurface,
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.bold,
+                  width: '100%',
+                  height: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                {farm.name}
+                <UiSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      borderRadius: 22,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text
+              numberOfLines={1}
+              style={{
+                color: m3.colorScheme.onSurface,
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+              }}
+            >
+              {farm.name}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.xs }}>
+                {farm.crop_variety || farm.crop}
               </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.xs }}>
-                  {farm.crop_variety || farm.crop}
-                </Text>
+              <Text
+                style={{
+                  color: m3.colorScheme.onSurfaceVariant,
+                  fontSize: fontSize.xs,
+                  marginHorizontal: spacing[1],
+                }}
+              >
+                •
+              </Text>
+              <View
+                style={{
+                  backgroundColor: m3.colorScheme.primary,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: spacing[2],
+                  paddingVertical: 2,
+                  borderRadius: borderRadius.full,
+                }}
+              >
+                <UiSymbol name="resize" size={10} color={m3.colorScheme.onPrimary} />
                 <Text
                   style={{
-                    color: m3.colorScheme.onSurfaceVariant,
+                    color: m3.colorScheme.onPrimary,
                     fontSize: fontSize.xs,
-                    marginHorizontal: spacing[1],
+                    fontWeight: fontWeight.bold,
+                    marginLeft: spacing[1],
                   }}
                 >
-                  •
+                  {farm.area != null
+                    ? t('farmDetails.header.areaAcres', { value: farm.area.toFixed(1) })
+                    : t('farmDetails.header.areaAcresUnknown')}
                 </Text>
-                <View
-                  style={{
-                    backgroundColor: m3.colorScheme.primary,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: spacing[2],
-                    paddingVertical: 2,
-                    borderRadius: borderRadius.full,
-                  }}
-                >
-                  <UiSymbol name="resize" size={10} color={m3.colorScheme.onPrimary} />
-                  <Text
-                    style={{
-                      color: m3.colorScheme.onPrimary,
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.bold,
-                      marginLeft: spacing[1],
-                    }}
-                  >
-                    {farm.area != null
-                      ? t('farmDetails.header.areaAcres', { value: farm.area.toFixed(1) })
-                      : t('farmDetails.header.areaAcresUnknown')}
-                  </Text>
-                </View>
               </View>
             </View>
-          ),
-        }}
-      />
+          </View>
+
+          <Pressable
+            onPress={handleOpenFarmActions}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              backgroundColor: 'transparent',
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('farmDetails.a11y.openFarmActions')}
+          >
+            {({ pressed }) => (
+              <View
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <UiSymbol name="ellipsis" size={18} color={m3.colorScheme.onSurfaceVariant} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      borderRadius: 22,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+        </View>
+      </View>
 
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}>
         <ScrollView
@@ -1500,104 +1504,13 @@ export default function FarmDetailScreen() {
               paddingTop: spacing[3],
             }}
           >
-            {/* Farm Name & Variety */}
+            {/* Season + Pruning Summary */}
             <View style={{ paddingBottom: spacing[4] }}>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                {/* Farm Icon Circle */}
-                <View
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
-                    backgroundColor: colorWithOpacity('#ffffff', 0.14),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <UiSymbol name="leaf.fill" size={24} color={colorWithOpacity('#ffffff', 0.9)} />
-                </View>
-
-                {/* Farm Text Info */}
-                <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      color: '#ffffff',
-                      fontSize: 22,
-                      fontWeight: fontWeight.semibold,
-                      lineHeight: 28,
-                    }}
-                  >
-                    {farm.name}
-                  </Text>
-                  <Text
-                    style={{
-                      color: colorWithOpacity('#ffffff', 0.65),
-                      fontSize: 14,
-                      lineHeight: 20,
-                      marginTop: 2,
-                    }}
-                  >
-                    {farm.crop_variety || farm.crop}
-                  </Text>
-                  {farm.area != null && (
-                    <View
-                      style={{
-                        marginTop: spacing[1],
-                        backgroundColor: colorWithOpacity('#ffffff', 0.14),
-                        alignSelf: 'flex-start',
-                        paddingHorizontal: spacing[2] + 2,
-                        paddingVertical: 2,
-                        borderRadius: borderRadius.full,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: colorWithOpacity('#ffffff', 0.85),
-                          fontSize: 12,
-                          fontWeight: fontWeight.medium,
-                        }}
-                      >
-                        {t('farmDetails.header.areaAcres', { value: farm.area.toFixed(1) })}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Actions Button */}
-                <Pressable
-                  onPress={handleOpenFarmActions}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('farmDetails.a11y.openFarmActions')}
-                >
-                  {({ pressed }) => (
-                    <View
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 20,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: colorWithOpacity('#ffffff', pressed ? 0.2 : 0.12),
-                      }}
-                    >
-                      <UiSymbol
-                        name="ellipsis"
-                        size={18}
-                        color={colorWithOpacity('#ffffff', 0.9)}
-                      />
-                    </View>
-                  )}
-                </Pressable>
-              </View>
-
               {/* Season Status Row */}
               <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  marginTop: spacing[3],
                 }}
               >
                 <UiSymbol
@@ -1832,112 +1745,6 @@ export default function FarmDetailScreen() {
                   </Pressable>
                 </View>
               )}
-            </View>
-
-            {/* Season Metrics Row */}
-            <View style={{ flexDirection: 'row', gap: spacing[2], paddingBottom: spacing[4] }}>
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: colorWithOpacity('#ffffff', 0.08),
-                  borderWidth: 1,
-                  borderColor: colorWithOpacity('#ffffff', 0.12),
-                  borderRadius: borderRadius.md,
-                  padding: spacing[3],
-                }}
-              >
-                <Text
-                  style={{
-                    color: '#ffffff',
-                    fontSize: 20,
-                    fontWeight: fontWeight.bold,
-                    lineHeight: 24,
-                  }}
-                >
-                  {totalRecords}
-                </Text>
-                <Text
-                  style={{
-                    color: colorWithOpacity('#ffffff', 0.6),
-                    fontSize: 12,
-                    lineHeight: 16,
-                    marginTop: 2,
-                  }}
-                >
-                  {t('farmDetails.stats.logEntriesTitle')}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: colorWithOpacity('#ffffff', 0.08),
-                  borderWidth: 1,
-                  borderColor: colorWithOpacity('#ffffff', 0.12),
-                  borderRadius: borderRadius.md,
-                  padding: spacing[3],
-                }}
-              >
-                <Text
-                  style={{
-                    color: '#ffffff',
-                    fontSize: 20,
-                    fontWeight: fontWeight.bold,
-                    lineHeight: 24,
-                  }}
-                >
-                  {farm.remaining_water ?? '--'}
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: fontWeight.medium,
-                      color: colorWithOpacity('#ffffff', 0.7),
-                    }}
-                  >
-                    mm
-                  </Text>
-                </Text>
-                <Text
-                  style={{
-                    color: colorWithOpacity('#ffffff', 0.6),
-                    fontSize: 12,
-                    lineHeight: 16,
-                    marginTop: 2,
-                  }}
-                >
-                  {t('farmDetails.stats.soilWaterTitle')}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: colorWithOpacity('#ffffff', 0.08),
-                  borderWidth: 1,
-                  borderColor: colorWithOpacity('#ffffff', 0.12),
-                  borderRadius: borderRadius.md,
-                  padding: spacing[3],
-                }}
-              >
-                <Text
-                  style={{
-                    color: '#ffffff',
-                    fontSize: 20,
-                    fontWeight: fontWeight.bold,
-                    lineHeight: 24,
-                  }}
-                >
-                  {daysSincePruning !== null ? daysSincePruning : '--'}
-                </Text>
-                <Text
-                  style={{
-                    color: colorWithOpacity('#ffffff', 0.6),
-                    fontSize: 12,
-                    lineHeight: 16,
-                    marginTop: 2,
-                  }}
-                >
-                  {t('farmDetails.pruning.daysPruned')}
-                </Text>
-              </View>
             </View>
 
             {/* Weather Strip - Horizontal with dividers */}

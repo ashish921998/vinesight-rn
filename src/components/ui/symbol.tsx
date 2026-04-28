@@ -155,6 +155,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 
   // Misc
   'bell.fill': 'notifications',
+  'bell.badge.fill': 'notifications',
   'g.circle.fill': 'logo-google',
   'indianrupeesign.circle': 'cash',
   star: 'star-outline',

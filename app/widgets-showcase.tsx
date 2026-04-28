@@ -1,6 +1,6 @@
 import React from 'react';
-import { Redirect, Stack } from 'expo-router';
-import { ScrollView, View, Text, Platform } from 'react-native';
+import { Redirect, Stack, useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, View, Text, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TestWidget } from '@widgets/foundation/TestWidget';
 import { WidgetTemplate } from '@widgets/templates/WidgetTemplate';
@@ -8,8 +8,10 @@ import { WeatherWidget } from '@widgets/dashboard/WeatherWidget';
 import { VineyardHealthWidget } from '@widgets/dashboard/VineyardHealthWidget';
 import { TaskSummaryWidget } from '@widgets/dashboard/TaskSummaryWidget';
 import { QuickStatsWidget } from '@widgets/dashboard/QuickStatsWidget';
-import { spacing } from '@/styles/theme';
+import { Symbol } from '@/components/ui/symbol';
+import { fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 const SHOWCASE_WEATHER = {
   temperature: 28,
@@ -69,6 +71,7 @@ const ScaffoldingCard: React.FC<{ title: string; children: React.ReactNode }> = 
 export default function WidgetsShowcaseScreen() {
   const insets = useSafeAreaInsets();
   const { m3 } = useThemeTokens();
+  const router = useRouter();
 
   if (!__DEV__) {
     return <Redirect href="/(tabs)/tools" />;
@@ -76,7 +79,74 @@ export default function WidgetsShowcaseScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Widget Showcase' }} />
+      <Stack.Screen options={{ headerShown: false }} />
+      {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
+      <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
+        <View
+          style={{
+            height: 56,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: spacing[2],
+          }}
+        >
+          <Pressable
+            onPress={() => router.back()}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              backgroundColor: 'transparent',
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            {({ pressed }) => (
+              <View
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Symbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      borderRadius: 22,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text
+              numberOfLines={1}
+              style={{
+                color: m3.colorScheme.onSurface,
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+              }}
+            >
+              Widget Showcase
+            </Text>
+          </View>
+
+          <View style={{ width: 44, height: 44 }} />
+        </View>
+      </View>
       <ScrollView
         style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
         contentContainerStyle={{

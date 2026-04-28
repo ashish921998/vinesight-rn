@@ -32,9 +32,11 @@ export const en = {
     general: 'General',
     filter: 'Filter',
     clearAll: 'Clear all',
+    all: 'All',
     today: 'Today',
     yesterday: 'Yesterday',
     view: 'View',
+    moreOptions: 'More options',
     units: {
       hours: 'hours',
       days: 'days',
@@ -608,10 +610,14 @@ export const en = {
     allFarms: 'All farms',
     allFarmsExpenseOnly: 'All farms can only be used for expense logs.',
     allFarmsNoFarms: 'No farms available to apply this expense.',
-    partialSuccess: {
-      title: 'Partial Success',
-      body_one: '{{count}} log failed to save. Please review and try again.',
-      body_other: '{{count}} logs failed to save. Please review and try again.',
+    saveFailed: {
+      title: 'Could not save logs',
+      body_one: 'Failed to save this log. No changes were saved. Please review and try again.',
+      body_other: 'Failed to save logs. No changes were saved. Please review and try again.',
+      rollbackWarning_one:
+        'Warning: {{count}} saved record could not be removed. Please verify your data before retrying.',
+      rollbackWarning_other:
+        'Warning: {{count}} saved records could not be removed. Please verify your data before retrying.',
     },
     taskCompletionLinkFailed: 'Logs were saved, but the source task could not be marked complete.',
     plannedSprayInputs: 'Planned spray inputs',
@@ -854,6 +860,13 @@ export const en = {
       safeToSprayChecker: 'Check which sprays are safe to apply for your target harvest date',
       sprayCatalog: 'Browse catalog sprays and mixes with pest, mode, and PHI metadata',
     },
+    categories: {
+      irrigation: 'Irrigation',
+      crop: 'Crop',
+      fertility: 'Fertility',
+      spray: 'Spray',
+      weather: 'Weather',
+    },
   },
 
   tankMix: {
@@ -864,6 +877,9 @@ export const en = {
     tankSizeLabel: 'Tank size (liters)',
     catalogMixes: 'Catalog mixes',
     genericProblem: 'General protection',
+    selected: 'Selected',
+    notSelected: 'Not selected',
+    showingResults: 'Showing {{visibleCount}} of {{count}} results',
     resultTitle: 'Required quantities for {{liters}}L',
     resultDose: 'Dose: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'Total: {{value}} {{unit}}',
@@ -1029,6 +1045,12 @@ export const en = {
       actions: {
         reset: 'Reset Calculator',
       },
+    },
+    lai: {
+      title: 'LAI Calculator',
+    },
+    systemDischarge: {
+      title: 'System Discharge',
     },
   },
 
@@ -1267,6 +1289,7 @@ export const en = {
   assistant: {
     placeholder: 'Ask about your farm…',
     settingsButtonA11y: 'Open settings',
+    settingsGearA11y: 'Settings',
     chat: {
       welcomeTitle: 'How can I help?',
       welcomeSubtitle: 'Ask about your crops, irrigation, diseases, and more.',
@@ -1568,8 +1591,10 @@ export const en = {
   authPhone: {
     title: 'Phone Sign In',
     subtitle: 'Enter your mobile number to receive a verification code',
-    continueTitle: 'Enter Mobile Number',
-    continueSubtitle: 'Enter your mobile number. We will send a verification code via SMS.',
+    continueTitle: 'Welcome to Vinesight',
+    continueSubtitle: 'Sign in to manage your farms, sprays, and harvests.',
+    phoneLabelHeading: 'Mobile Number',
+    phoneHelper: "We'll send a 6-digit verification code via SMS.",
     continueButton: 'Continue',
     phoneNumber: 'Phone number',
     phoneLabel: 'Phone Number',
@@ -1968,10 +1993,16 @@ export const en = {
     },
     hero: {
       today: 'Today',
+      welcome: 'Welcome',
       allClear: 'All clear',
       attentionNeeded: 'Attention needed',
       alertCount_one: '{{count}} alert',
       alertCount_other: '{{count}} alerts',
+      attentionSummary_one: '{{count}} item needs attention',
+      attentionSummary_other: '{{count}} items need your attention',
+    },
+    header: {
+      notificationsA11y: 'Notifications',
     },
     stats: {
       title: 'Overview',
@@ -1988,6 +2019,11 @@ export const en = {
         noRecentLogs: 'No recent logs',
         lowWaterLevel: 'Low water level',
         phiDeadline: 'PHI deadline approaching',
+      },
+      severity: {
+        high: 'High',
+        medium: 'Medium',
+        low: 'Low',
       },
       actions: {
         reviewTasks: 'Review task',
@@ -2126,10 +2162,15 @@ export const en = {
       medium: 'Medium',
       high: 'High',
     },
+    actions: {
+      menuTitle: 'Task actions',
+    },
     a11y: {
       editTask: 'Edit task: {{title}}',
       deleteTask: 'Delete task: {{title}}',
       completeTask: 'Mark task complete: {{title}}',
+      taskActions: 'Task actions for {{title}}',
+      addTask: 'Add task',
     },
     status: {
       pending: 'Pending',
@@ -2516,6 +2557,11 @@ export const en = {
     },
     actions: {
       backToList: 'Back to Lab Tests',
+      title: 'Add lab test',
+      addSoilTest: 'Add Soil Test',
+      addSoilTestDesc: 'Record nutrient levels from a soil sample',
+      addPetioleTest: 'Add Petiole Test',
+      addPetioleTestDesc: 'Record nutrient levels from a petiole sample',
     },
     parameters: {
       ph: 'pH',
@@ -2577,7 +2623,7 @@ export const en = {
         'Soil profiles are associated with specific farms. Please select a farm to view its soil profiles.',
       cta: 'Go to farms',
     },
-    title: 'Soil Profiling',
+    title: 'Soil Moisture',
     tabs: {
       history: 'History',
       trends: 'Trends',
@@ -2596,6 +2642,7 @@ export const en = {
     noProfiles: 'No Soil Profiles',
     noProfilesDescription: "Add soil moisture profiles to track your farm's soil health over time.",
     addFirstProfile: 'Add First Profile',
+    addProfile: 'Add Profile',
     notEnoughData: 'Not Enough Data',
     notEnoughDataDescription: 'Add at least 2 profiles to see trends.',
     avgMoisture: 'Avg Moisture',
@@ -2616,7 +2663,7 @@ export const en = {
   },
 
   soilProfileForm: {
-    titleAdd: 'Add Soil Profile',
+    titleAdd: 'Add Soil Moisture Reading',
     sections: {
       top: 'Top',
       bottom: 'Bottom',
