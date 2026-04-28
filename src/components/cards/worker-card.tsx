@@ -37,7 +37,7 @@ export function WorkerCard({
   const { t } = useTranslation();
 
   // Use primary green for active worker avatars — keeps palette cohesive with the warm earth tones
-  const labourColor = isDark ? colors.primary[600] : colors.primary[600];
+  const labourColor = isDark ? colors.primary[400] : colors.primary[600];
   // Inactive workers use stone-5 for avatar
   const inactiveAvatarColor = isDark ? '#7A756D' : '#A89E92';
 
