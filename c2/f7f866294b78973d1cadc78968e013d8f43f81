@@ -1,0 +1,27 @@
+app/settings.tsx
+  f6a4a292f55a38b6 1
+app/_layout.tsx
+  f6a4a292f55a38b6 767
+app/(tabs)/index.tsx
+  f6a4a292f55a38b6 22,309,372
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "c2f7f866294b78973d1cadc78968e013d8f43f81",
+  "prompts": {
+    "f6a4a292f55a38b6": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "45000a26-b0df-4b01-9c09-4473a2cb0361",
+        "model": "kimi-k2.6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 2,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
