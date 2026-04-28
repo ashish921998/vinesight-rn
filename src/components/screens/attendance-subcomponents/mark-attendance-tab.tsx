@@ -150,6 +150,7 @@ export function MarkAttendanceTab({
   const [isRangeLoaded, setIsRangeLoaded] = useState(false);
 
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestLoadRef = useRef(0);
 
   const prevWorkerIdRef = useRef<number | undefined>(undefined);
 
@@ -242,6 +243,7 @@ export function MarkAttendanceTab({
     const workerId = selectedWorker?.id;
     if (workerId === undefined) return;
 
+    const loadToken = ++latestLoadRef.current;
     setLoading(true);
     try {
       const newCellData = new Map<string, CellData>();
@@ -262,6 +264,9 @@ export function MarkAttendanceTab({
       }
 
       const records = await fetchAttendanceForWorker(workerId, startDate, endDate);
+
+      // Ignore stale fetch results when a newer load was started.
+      if (loadToken !== latestLoadRef.current) return;
 
       for (const record of records) {
         const key = getCellKey(record.worker_id, record.date);
@@ -296,9 +301,12 @@ export function MarkAttendanceTab({
 
       setCellData(newCellData);
     } catch {
+      if (loadToken !== latestLoadRef.current) return;
       Alert.alert(t('common.error'), t('common.errors.failedToLoadAttendanceData'));
     } finally {
-      setLoading(false);
+      if (loadToken === latestLoadRef.current) {
+        setLoading(false);
+      }
     }
   }, [selectedWorker, dateRange, farms, t, cellData]);
 

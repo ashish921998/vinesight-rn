@@ -1034,6 +1034,7 @@ export function EntryForm({
       createExpense: async (payload) => createExpense.mutateAsync(payload),
       createFertigation: async (payload) => createFertigation.mutateAsync(payload),
       updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
+      deleteIrrigation: async (payload) => deleteIrrigation.mutateAsync(payload),
     };
 
     const buildFarmContext = (farmItem: Farm): EntryLogFarmContext => ({
@@ -1158,6 +1159,21 @@ export function EntryForm({
           }
           Sentry.captureException(
             firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),
+          );
+        });
+      }
+      // Emit a standalone Sentry event for rollback failures so orphan-row
+      // incidents are independently queryable.
+      if (rollbackFailures && rollbackFailures.length > 0) {
+        Sentry.withScope((scope) => {
+          scope.setTag('feature', 'entry-log');
+          scope.setTag('subFeature', 'rollback-failure');
+          scope.setExtra('rollbackFailures', rollbackFailures);
+          scope.setExtra('primaryErrorMeta', { code: errorMeta.code ?? null });
+          Sentry.captureException(
+            new Error(
+              `Rollback failed for ${rollbackFailures.length} created record(s) after save failure`,
+            ),
           );
         });
       }
