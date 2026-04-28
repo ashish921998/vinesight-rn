@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ComponentProps } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { Pressable } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
@@ -42,31 +42,32 @@ export default function TabLayout() {
 
   const sf = (name: string) => name as SFSymbol;
 
-  // Settings button rendered in Dashboard header right position
-  const renderSettingsHeaderButton = () => (
-    <Pressable
-      onPress={() => router.push('/(tabs)/settings')}
-      accessibilityRole="button"
-      accessibilityLabel={t('assistant.settingsButtonA11y')}
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        backgroundColor: 'transparent',
-        marginRight: spacing[2],
-      }}
-      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-    >
-      <SymbolIcon name="gearshape" size={22} color={m3.colorScheme.onSurface} />
-    </Pressable>
+  // Settings button rendered in Dashboard header right position.
+  // Memoized to avoid constant header re-renders that can make the button
+  // feel unresponsive on Android.
+  const renderSettingsHeaderButton = useCallback(
+    () => (
+      <Pressable
+        onPress={() => router.push('/(tabs)/settings')}
+        accessibilityRole="button"
+        accessibilityLabel={t('assistant.settingsButtonA11y')}
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          backgroundColor: 'transparent',
+          marginRight: spacing[2],
+        }}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <SymbolIcon name="gearshape" size={22} color={m3.colorScheme.onSurface} />
+      </Pressable>
+    ),
+    [router, m3.colorScheme.onSurface, t],
   );
-
-  // Spread this variable into NativeTabs options to avoid TS excess-property error
-  // (headerRight is not in NativeTabOptions typings but is supported at runtime)
-  const dashboardHeaderRight = { headerRight: renderSettingsHeaderButton };
 
   // Spread into NativeTabs options to avoid TS excess-property error
   // (headerShown is not in NativeTabOptions typings but is supported at runtime)
@@ -243,7 +244,7 @@ export default function TabLayout() {
       >
         <NativeTabs.Trigger
           name="index"
-          options={{ ...defaultHeaderOptions, ...dashboardHeaderRight, title: t('tabs.dashboard') }}
+          options={{ ...defaultHeaderOptions, title: t('tabs.dashboard') }}
         >
           {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'), 'grid-outline', 'grid')}
           <Label>{t('tabs.dashboard')}</Label>
