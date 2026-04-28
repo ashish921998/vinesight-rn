@@ -259,46 +259,82 @@ export default function PhoneLoginScreen() {
 
   const contentContainerStyle: ViewStyle = {
     flex: 1,
-    paddingHorizontal: spacing[8],
-    paddingTop: spacing[16],
-    paddingBottom: spacing[8],
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[12],
+    paddingBottom: spacing[6],
   };
 
   const logoContainerStyle: ViewStyle = {
     alignItems: 'center',
-    marginTop: spacing[8],
-    marginBottom: spacing[12],
+    marginTop: spacing[4],
+    marginBottom: spacing[8],
   };
 
   const logoBoxStyle: ViewStyle = {
-    width: size['3xl'],
-    height: size['3xl'],
-    borderRadius: borderRadius['3xl'],
+    width: size.xl,
+    height: size.xl,
+    borderRadius: borderRadius['2xl'],
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing[4],
+    marginBottom: spacing[5],
     backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+    borderWidth: 1,
+    borderColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
+  };
+
+  const brandTextStyle: TextStyle = {
+    fontSize: fontSize['2xl'],
+    fontWeight: fontWeight.semibold,
+    letterSpacing: 0.3,
+    color: m3.colorScheme.primary,
+    marginBottom: spacing[2],
   };
 
   const titleTextStyle: TextStyle = {
     fontSize: fontSize['3xl'],
     fontWeight: fontWeight.bold,
     color: m3.colorScheme.onSurface,
+    textAlign: 'center',
   };
 
   const subtitleTextStyle: TextStyle = {
     fontSize: fontSize.base,
-    marginTop: spacing[1],
+    marginTop: spacing[2],
     color: m3.colorScheme.onSurfaceVariant,
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: spacing[4],
   };
 
   const formContainerStyle: ViewStyle = {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   };
 
-  const formInnerStyle: ViewStyle = {
-    gap: spacing[4],
+  const formCardStyle: ViewStyle = {
+    backgroundColor: m3.surface.surfaceContainerLow,
+    borderRadius: borderRadius['2xl'],
+    borderWidth: 1,
+    borderColor: m3.colorScheme.outlineVariant,
+    padding: spacing[5],
+    gap: spacing[3],
+  };
+
+  const fieldLabelStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: m3.colorScheme.onSurface,
+    marginBottom: spacing[1],
+  };
+
+  const helperTextStyle: TextStyle = {
+    fontSize: fontSize.xs,
+    color: m3.colorScheme.onSurfaceVariant,
+    marginTop: spacing[1],
+  };
+
+  const socialGroupStyle: ViewStyle = {
+    gap: spacing[3],
   };
 
   const countryPickerButtonStyle: ViewStyle = {
@@ -320,10 +356,10 @@ export default function PhoneLoginScreen() {
     flexDirection: 'row',
     alignItems: 'stretch',
     minHeight: 56,
-    borderRadius: borderRadius.xl,
-    borderWidth: 2,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
     borderColor: phoneError ? m3.colorScheme.error : m3.colorScheme.outlineVariant,
-    backgroundColor: m3.surface.surfaceContainerHigh,
+    backgroundColor: m3.colorScheme.surface,
     overflow: 'hidden',
   };
 
@@ -367,7 +403,7 @@ export default function PhoneLoginScreen() {
   const dividerContainerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: spacing[8],
+    marginVertical: spacing[6],
   };
 
   const dividerLineStyle: ViewStyle = {
@@ -497,24 +533,27 @@ export default function PhoneLoginScreen() {
             <View style={logoBoxStyle}>
               <Image
                 source={appLogo as ImageSourcePropType}
-                style={{ width: size.lg, height: size.lg }}
+                style={{ width: size.md - 16, height: size.md - 16 }}
                 resizeMode="contain"
               />
             </View>
-            <Text style={titleTextStyle}>Vinesight</Text>
-            <Text style={[titleTextStyle, { fontSize: fontSize.xl, marginTop: spacing[3] }]}>
-              {t('authPhone.continueTitle', { defaultValue: 'Enter Mobile Number' })}
+            <Text style={brandTextStyle}>Vinesight</Text>
+            <Text style={titleTextStyle}>
+              {t('authPhone.continueTitle', { defaultValue: 'Welcome to Vinesight' })}
             </Text>
             <Text style={subtitleTextStyle}>
               {t('authPhone.continueSubtitle', {
-                defaultValue: 'Enter your mobile number. We will send a verification code via SMS.',
+                defaultValue: 'Sign in to manage your farms, sprays, and harvests.',
               })}
             </Text>
           </View>
 
           {/* Form */}
           <View style={formContainerStyle}>
-            <View style={formInnerStyle}>
+            <View style={formCardStyle}>
+              <Text style={fieldLabelStyle}>
+                {t('authPhone.phoneLabelHeading', { defaultValue: 'Mobile Number' })}
+              </Text>
               <View
                 style={[phoneInputRowStyle, isPhoneInputFocused ? phoneInputRowFocusedStyle : null]}
                 testID="phone-input-row"
@@ -571,6 +610,13 @@ export default function PhoneLoginScreen() {
                   />
                 </View>
               </View>
+              {!phoneError && (
+                <Text style={helperTextStyle}>
+                  {t('authPhone.phoneHelper', {
+                    defaultValue: "We'll send a 6-digit verification code via SMS.",
+                  })}
+                </Text>
+              )}
               {/* Error Message */}
               {phoneError && (
                 <View style={errorContainerStyle}>
@@ -593,7 +639,7 @@ export default function PhoneLoginScreen() {
                 onPress={handleSendCode}
                 isLoading={isLoading}
                 disabled={!phoneNumber || !normalizedPhoneNumber}
-                style={{ marginTop: spacing[4] }}
+                style={{ marginTop: spacing[3] }}
               />
             </View>
 
@@ -604,26 +650,28 @@ export default function PhoneLoginScreen() {
               <View style={dividerLineStyle} />
             </View>
 
-            {/* Apple Sign In (required on iOS if Google is offered) */}
-            {Platform.OS === 'ios' && (
-              <Button
-                title={t('auth.continueWithApple')}
-                variant="outline"
-                leftIcon={<UiSymbol name="apple.logo" size={20} color={m3.colorScheme.primary} />}
-                onPress={signInWithApple}
-                disabled={isLoading}
-                style={{ marginBottom: spacing[3] }}
-              />
-            )}
+            {/* Social sign-in group */}
+            <View style={socialGroupStyle}>
+              {Platform.OS === 'ios' && (
+                <Button
+                  title={t('auth.continueWithApple')}
+                  variant="outline"
+                  leftIcon={<UiSymbol name="apple.logo" size={20} color={m3.colorScheme.primary} />}
+                  onPress={signInWithApple}
+                  disabled={isLoading}
+                />
+              )}
 
-            {/* Google Sign In */}
-            <Button
-              title={t('auth.continueWithGoogle')}
-              variant="outline"
-              leftIcon={<UiSymbol name="g.circle.fill" size={20} color={m3.colorScheme.primary} />}
-              onPress={signInWithGoogle}
-              disabled={isLoading}
-            />
+              <Button
+                title={t('auth.continueWithGoogle')}
+                variant="outline"
+                leftIcon={
+                  <UiSymbol name="g.circle.fill" size={20} color={m3.colorScheme.primary} />
+                }
+                onPress={signInWithGoogle}
+                disabled={isLoading}
+              />
+            </View>
           </View>
 
           {/* Sign in with email link */}
