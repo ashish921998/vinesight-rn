@@ -62,3 +62,4 @@ storybook-static
 .idea/
 .claude/
 agent-orchestrator.yaml
+.gstack/
