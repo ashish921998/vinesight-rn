@@ -764,6 +764,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="tasks" options={{ headerShown: true }} />
                 <Stack.Screen name="warehouse" options={{ headerShown: true }} />
                 <Stack.Screen name="weather" options={{ headerShown: true }} />
+                <Stack.Screen name="settings" options={{ headerShown: true }} />
                 <Stack.Screen name="widget-configuration" options={{ headerShown: true }} />
                 <Stack.Screen name="widgets-showcase" options={{ headerShown: true }} />
                 <Stack.Screen name="worker-analytics/[id]" options={{ headerShown: true }} />

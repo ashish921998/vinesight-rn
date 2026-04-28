@@ -19,6 +19,7 @@ import {
   useRecentActivities,
   useFarms,
   useProfile,
+  isIOS,
   type TodayNeedAttentionItem,
 } from '@/hooks';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
@@ -305,7 +306,7 @@ export default function DashboardScreen() {
             }}
           >
             <Pressable
-              onPress={() => router.push('/(tabs)/settings')}
+              onPress={() => router.push(isIOS ? '/settings' : '/(tabs)/settings')}
               accessibilityRole="button"
               accessibilityLabel={t('assistant.settingsButtonA11y')}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -368,7 +369,7 @@ export default function DashboardScreen() {
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
               <Pressable
-                onPress={() => router.push('/(tabs)/settings')}
+                onPress={() => router.push(isIOS ? '/settings' : '/(tabs)/settings')}
                 accessibilityRole="button"
                 accessibilityLabel={t('assistant.settingsGearA11y')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
