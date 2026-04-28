@@ -878,7 +878,7 @@ export const hi = {
     genericProblem: 'सामान्य सुरक्षा',
     selected: 'चयनित',
     notSelected: 'अचयनित',
-    showingResults: '{{count}} में से 20 परिणाम दिखा रहे हैं',
+    showingResults: '{{count}} में से {{visibleCount}} परिणाम दिखा रहे हैं',
     resultTitle: '{{liters}}L के लिए आवश्यक मात्रा',
     resultDose: 'डोज: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'कुल: {{value}} {{unit}}',

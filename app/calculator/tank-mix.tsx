@@ -286,7 +286,8 @@ export default function TankMixCalculatorScreen() {
                     }}
                   >
                     {t('tankMix.showingResults', {
-                      defaultValue: 'Showing 20 of {{count}} results',
+                      defaultValue: 'Showing {{visibleCount}} of {{count}} results',
+                      visibleCount: Math.min(mixes.length, 20),
                       count: mixes.length,
                     })}
                   </Text>

@@ -469,13 +469,17 @@ export default function SoilProfilingScreen() {
               name={
                 trendsData.moistureChange !== null && trendsData.moistureChange > 0
                   ? 'arrow.up'
-                  : 'arrow.down'
+                  : trendsData.moistureChange !== null && trendsData.moistureChange < 0
+                    ? 'arrow.down'
+                    : 'minus'
               }
               size={24}
               color={
                 trendsData.moistureChange !== null && trendsData.moistureChange > 0
                   ? colors.success
-                  : m3.colorScheme.error
+                  : trendsData.moistureChange !== null && trendsData.moistureChange < 0
+                    ? m3.colorScheme.error
+                    : colors.surface[500]
               }
             />
             <Text
@@ -486,7 +490,9 @@ export default function SoilProfilingScreen() {
                 color:
                   trendsData.moistureChange !== null && trendsData.moistureChange > 0
                     ? colors.success
-                    : m3.colorScheme.error,
+                    : trendsData.moistureChange !== null && trendsData.moistureChange < 0
+                      ? m3.colorScheme.error
+                      : colors.surface[500],
               }}
             >
               {trendsData.moistureChange !== null

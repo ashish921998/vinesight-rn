@@ -881,7 +881,7 @@ export const mr = {
     genericProblem: 'सामान्य संरक्षण',
     selected: 'निवडलेले',
     notSelected: 'निवडलेले नाही',
-    showingResults: '{{count}} पैकी 20 निकाल दाखवत आहोत',
+    showingResults: '{{count}} पैकी {{visibleCount}} निकाल दाखवत आहोत',
     resultTitle: '{{liters}}L साठी आवश्यक प्रमाण',
     resultDose: 'डोस: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'एकूण: {{value}} {{unit}}',

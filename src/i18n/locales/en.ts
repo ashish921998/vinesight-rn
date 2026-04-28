@@ -879,7 +879,7 @@ export const en = {
     genericProblem: 'General protection',
     selected: 'Selected',
     notSelected: 'Not selected',
-    showingResults: 'Showing 20 of {{count}} results',
+    showingResults: 'Showing {{visibleCount}} of {{count}} results',
     resultTitle: 'Required quantities for {{liters}}L',
     resultDose: 'Dose: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'Total: {{value}} {{unit}}',
