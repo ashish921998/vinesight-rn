@@ -877,6 +877,9 @@ export const mr = {
     tankSizeLabel: 'टँक आकार (लिटर)',
     catalogMixes: 'कॅटलॉग मिक्स',
     genericProblem: 'सामान्य संरक्षण',
+    selected: 'निवडलेले',
+    notSelected: 'निवडलेले नाही',
+    showingResults: '{{count}} पैकी 20 निकाल दाखवत आहोत',
     resultTitle: '{{liters}}L साठी आवश्यक प्रमाण',
     resultDose: 'डोस: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'एकूण: {{value}} {{unit}}',
@@ -2640,6 +2643,7 @@ export const mr = {
     noProfilesDescription:
       'तुमच्या $t(glossary.farm)ची $t(glossary.soil) आरोग्य ट्रॅक करण्यासाठी आर्द्रता प्रोफाइल जोडा.',
     addFirstProfile: 'पहिला प्रोफाइल जोडा',
+    addProfile: 'प्रोफाइल जोडा',
     notEnoughData: 'पुरेसा डेटा नाही',
     notEnoughDataDescription: 'ट्रेंड्स पाहण्यासाठी किमान 2 प्रोफाइल जोडा.',
     avgMoisture: 'सरासरी आर्द्रता',

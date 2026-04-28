@@ -79,7 +79,7 @@ export default function SoilTrendsScreen() {
   }
 
   return (
-    <SafeScreen backgroundColor={m3.colorScheme.background} edges={['left', 'right']}>
+    <SafeScreen backgroundColor={m3.colorScheme.background} edges={['left', 'right', 'bottom']}>
       <Stack.Screen options={{ headerShown: false }} />
       {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
       <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>

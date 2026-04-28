@@ -874,6 +874,9 @@ export const hi = {
     tankSizeLabel: 'टैंक आकार (लीटर)',
     catalogMixes: 'कैटलॉग मिक्स',
     genericProblem: 'सामान्य सुरक्षा',
+    selected: 'चयनित',
+    notSelected: 'अचयनित',
+    showingResults: '{{count}} में से 20 परिणाम दिखा रहे हैं',
     resultTitle: '{{liters}}L के लिए आवश्यक मात्रा',
     resultDose: 'डोज: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'कुल: {{value}} {{unit}}',
@@ -2627,6 +2630,7 @@ export const hi = {
     noProfilesDescription:
       'अपने खेत की मिट्टी की स्वास्थ्य ट्रैक करने के लिए मिट्टी नमी प्रोफाइल जोड़ें।',
     addFirstProfile: 'पहला प्रोफाइल जोड़ें',
+    addProfile: 'प्रोफाइल जोड़ें',
     notEnoughData: 'पर्याप्त डेटा नहीं',
     notEnoughDataDescription: 'ट्रेंड देखने के लिए कम से कम 2 प्रोफाइल जोड़ें।',
     avgMoisture: 'औसत नमी',

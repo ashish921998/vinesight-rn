@@ -559,6 +559,7 @@ export default function LogsScreen() {
                 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 accessibilityRole="button"
+                accessibilityLabel={t('logs.cta.addActivity')}
               >
                 {({ pressed }) => (
                   <View

@@ -227,46 +227,65 @@ export default function TankMixCalculatorScreen() {
                 {t('common.loading', { defaultValue: 'Loading…' })}
               </Text>
             ) : (
-              mixes.slice(0, 20).map((mix) => {
-                const selected = selectedMix?.id === mix.id;
-                return (
-                  <Pressable
-                    key={mix.id}
-                    onPress={() => router.setParams({ mixId: String(mix.id) })}
+              <>
+                {mixes.slice(0, 20).map((mix) => {
+                  const selected = selectedMix?.id === mix.id;
+                  return (
+                    <Pressable
+                      key={mix.id}
+                      onPress={() => router.setParams({ mixId: String(mix.id) })}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${mix.name}. ${selected ? t('tankMix.selected', { defaultValue: 'Selected' }) : t('tankMix.notSelected', { defaultValue: 'Not selected' })}. ${mix.target_problem ?? t('tankMix.genericProblem', { defaultValue: 'General protection' })}`}
+                      accessibilityState={{ selected }}
+                      style={{
+                        borderRadius: borderRadius.sm,
+                        borderWidth: 1,
+                        borderColor: selected ? m3.colorScheme.primary : colors.surface[300],
+                        backgroundColor: selected
+                          ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                          : m3.surface.surfaceContainerLow,
+                        padding: spacing[3],
+                        paddingVertical: spacing[3],
+                        marginBottom: spacing[2],
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: m3.colorScheme.onSurface,
+                          fontWeight: fontWeight.semibold,
+                          fontSize: fontSize.sm,
+                        }}
+                      >
+                        {mix.name}
+                      </Text>
+                      <Text
+                        style={{
+                          color: m3.colorScheme.onSurfaceVariant,
+                          marginTop: 2,
+                          fontSize: fontSize.sm,
+                        }}
+                      >
+                        {mix.target_problem ??
+                          t('tankMix.genericProblem', { defaultValue: 'General protection' })}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+                {mixes.length > 20 ? (
+                  <Text
                     style={{
-                      borderRadius: borderRadius.sm,
-                      borderWidth: 1,
-                      borderColor: selected ? m3.colorScheme.primary : colors.surface[300],
-                      backgroundColor: selected
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                        : m3.surface.surfaceContainerLow,
-                      padding: spacing[3],
-                      paddingVertical: spacing[3],
-                      marginBottom: spacing[2],
+                      color: m3.colorScheme.onSurfaceVariant,
+                      fontSize: fontSize.sm,
+                      marginTop: spacing[2],
                     }}
                   >
-                    <Text
-                      style={{
-                        color: m3.colorScheme.onSurface,
-                        fontWeight: fontWeight.semibold,
-                        fontSize: fontSize.sm,
-                      }}
-                    >
-                      {mix.name}
-                    </Text>
-                    <Text
-                      style={{
-                        color: m3.colorScheme.onSurfaceVariant,
-                        marginTop: 2,
-                        fontSize: fontSize.sm,
-                      }}
-                    >
-                      {mix.target_problem ??
-                        t('tankMix.genericProblem', { defaultValue: 'General protection' })}
-                    </Text>
-                  </Pressable>
-                );
-              })
+                    {t('tankMix.showingResults', {
+                      defaultValue: 'Showing 20 of {{count}} results',
+                      count: mixes.length,
+                    })}
+                  </Text>
+                ) : null}
+              </>
             )}
           </View>
 

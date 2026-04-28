@@ -287,17 +287,22 @@ export function MarkAttendanceTab({
         if (recordWithFarms) {
           setSelectedFarmIds(recordWithFarms.farm_ids || []);
         } else if (farms.length > 0) {
-          setSelectedFarmIds([farms[0].id!]);
+          const firstWithId = farms.find((f) => f.id != null);
+          setSelectedFarmIds(firstWithId?.id != null ? [firstWithId.id] : []);
         }
         prevWorkerIdRef.current = workerId;
       }
 
       // Preserve locally modified cells that haven't been saved yet
+      const validDateStrs = new Set(dateRange.map((d) => formatDate(d)));
       setCellData((prev) => {
         const merged = new Map(newCellData);
         prev.forEach((cell, key) => {
           if (cell.isModified && key.startsWith(`${workerId}-`)) {
-            merged.set(key, cell);
+            const datePart = key.slice(`${workerId}-`.length);
+            if (validDateStrs.has(datePart)) {
+              merged.set(key, cell);
+            }
           }
         });
         return merged;
@@ -979,7 +984,7 @@ export function MarkAttendanceTab({
               gap: spacing[2],
             }}
           >
-            {selectedWorker && selectedWorker.id
+            {selectedWorker?.id != null
               ? (() => {
                   const workerId = selectedWorker.id;
                   return dateRange.map((date) => {

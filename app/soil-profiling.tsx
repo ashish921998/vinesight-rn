@@ -45,7 +45,7 @@ export default function SoilProfilingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
-  const farmIdNum = farmId ? parseInt(farmId, 10) : 0;
+  const farmIdNum = farmId && /^\d+$/.test(farmId) ? parseInt(farmId, 10) : 0;
 
   const { data: _farm, isLoading: farmLoading } = useFarm(farmIdNum);
   const { data: profiles, isLoading: profilesLoading } = useSoilProfiles(farmIdNum);
@@ -754,7 +754,11 @@ export default function SoilProfilingScreen() {
           })
         }
         accessibilityRole="button"
-        accessibilityLabel={t('soilProfiling.addFirstProfile')}
+        accessibilityLabel={
+          profiles && profiles.length > 0
+            ? t('soilProfiling.addProfile', { defaultValue: 'Add profile' })
+            : t('soilProfiling.addFirstProfile')
+        }
         style={{
           position: 'absolute',
           bottom: Math.max(insets.bottom, spacing[4]) + spacing[4],

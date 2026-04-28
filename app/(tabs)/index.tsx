@@ -722,6 +722,7 @@ export default function DashboardScreen() {
                 const isHigh = item.severity === 'high';
                 const isMedium = item.severity === 'medium';
                 const severityHighLabel = t('dashboard.needsAttention.severity.high');
+                const severityMediumLabel = t('dashboard.needsAttention.severity.medium');
                 const emphasisColor = isHigh
                   ? m3.colorScheme.error
                   : isMedium
@@ -746,7 +747,7 @@ export default function DashboardScreen() {
                         ? metaLabel
                         : reasonLabel;
                 const accessibilityLabel = `${title}.${
-                  isHigh ? ` ${severityHighLabel}.` : ''
+                  isHigh ? ` ${severityHighLabel}.` : isMedium ? ` ${severityMediumLabel}.` : ''
                 } ${secondaryLine}. ${actionLabel}.`;
 
                 return (
