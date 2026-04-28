@@ -40,7 +40,6 @@ export interface ChemicalEntry {
 const DEFAULT_CHEMICAL_UNIT: ChemicalUnit = 'gm/L';
 const MAX_CHEMICAL_ROWS = 10;
 const QUICK_CHEMICAL_UNITS: readonly ChemicalUnit[] = ['gm/L', 'ml/L', 'kg', 'liter'];
-const TOTAL_QUANTITY_UNITS = new Set<ChemicalUnit>(['kg', 'liter', 'gram', 'ml']);
 
 function isChemicalUnit(value: string): value is ChemicalUnit {
   return CHEMICAL_UNITS.includes(value as ChemicalUnit);
@@ -962,10 +961,7 @@ function ChemicalRow({
   };
 
   const handleUnitSelect = (unit: ChemicalUnit) => {
-    onUpdate({
-      unit,
-      quantityBasis: TOTAL_QUANTITY_UNITS.has(unit) ? 'total' : chemical.quantityBasis,
-    });
+    onUpdate({ unit });
   };
 
   return (
@@ -1157,6 +1153,7 @@ function ChemicalRow({
                 key={unit}
                 onPress={() => handleUnitSelect(unit)}
                 accessibilityRole="button"
+                accessibilityState={{ selected }}
                 accessibilityLabel={t('sprayForm.chemicals.quickUnitLabel', {
                   defaultValue: 'Use {{unit}} as chemical quantity unit',
                   unit,
