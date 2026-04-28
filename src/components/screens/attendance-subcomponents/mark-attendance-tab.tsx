@@ -419,9 +419,17 @@ export function MarkAttendanceTab({
         const key = getCellKey(workerId, dateStr);
         const current = newMap.get(key);
         if (current && current.status === null) {
+          const copiedStatus = STATUS_CYCLE.includes(
+            yesterdayRecord.work_status as AttendanceStatus,
+          )
+            ? (yesterdayRecord.work_status as AttendanceStatus)
+            : null;
+          if (copiedStatus === null) {
+            continue;
+          }
           newMap.set(key, {
             ...current,
-            status: yesterdayRecord.work_status as AttendanceStatus,
+            status: copiedStatus,
             workType: yesterdayRecord.work_type,
             farmIds:
               yesterdayRecord.farm_ids && yesterdayRecord.farm_ids.length > 0

@@ -106,15 +106,24 @@ export async function submitEntryPendingLog(params: {
         } catch (waterLevelError) {
           // Water-level update failed but irrigation record already exists.
           // Attempt compensating delete to keep atomic semantics.
+          let orphaned = false;
           if (recordId !== null && submitters.deleteIrrigation) {
             try {
               await submitters.deleteIrrigation({ id: recordId, farmId });
             } catch {
+              orphaned = true;
               // Compensating delete failed; record is orphaned. Attach the
               // recordId to the error so the caller can roll it back too.
             }
+          } else if (recordId !== null) {
+            orphaned = true;
           }
-          if (waterLevelError && typeof waterLevelError === 'object' && recordId !== null) {
+          if (
+            orphaned &&
+            waterLevelError &&
+            typeof waterLevelError === 'object' &&
+            recordId !== null
+          ) {
             (waterLevelError as { recordId?: number | null }).recordId = recordId;
           }
           throw waterLevelError;

@@ -1279,6 +1279,19 @@ export function EntryForm({
             failedLogContext = pendingLogs.find((log) => log.id === submission.logId) ?? null;
           }
 
+          if (submission.logType === 'irrigation') {
+            const orphanedRecordId =
+              (result.reason as { recordId?: number | null })?.recordId ?? null;
+            if (orphanedRecordId !== null) {
+              createdRecords.push({
+                type: submission.logType,
+                recordId: orphanedRecordId,
+                farmId: submission.farmId,
+                farmContext: submission.farmContext,
+              });
+            }
+          }
+
           const error = result.reason;
           const errorMeta = getFarmErrorMeta(error);
           const errorName = error instanceof Error ? error.name : 'UnknownError';

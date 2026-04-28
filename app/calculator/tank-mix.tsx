@@ -25,7 +25,7 @@ export default function TankMixCalculatorScreen() {
   const preselectedMixId =
     typeof rawMixId === 'string' && /^\d+$/.test(rawMixId) ? Number.parseInt(rawMixId, 10) : NaN;
 
-  const isValidTankSize = /^\d+\.?\d*$/.test(tankLitersText);
+  const isValidTankSize = /^(?:\d+\.?\d*|\.\d+)$/.test(tankLitersText);
   const tankLiters = isValidTankSize ? Number.parseFloat(tankLitersText) : NaN;
   const { data: catalogMixes = [], isLoading } = useChemicalCatalog();
   const mixes = useMemo(() => {

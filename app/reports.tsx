@@ -383,7 +383,7 @@ export default function ReportsScreen() {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
-      edges={['bottom', 'left', 'right']}
+      edges={['left', 'right']}
     >
       <Stack.Screen options={{ headerShown: false }} />
       {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}

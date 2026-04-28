@@ -34,7 +34,6 @@ interface SystemDischargeResults {
 }
 
 // Standard iOS navigation bar height for keyboard offset calculations
-const IOS_NAV_BAR_HEIGHT = 44;
 
 // Offset to ensure focused input appears below the header/toolbar area
 const INPUT_FOCUS_SCROLL_OFFSET = 140;
@@ -364,7 +363,7 @@ export default function SystemDischargeScreen() {
         </View>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + IOS_NAV_BAR_HEIGHT : 0}
+          keyboardVerticalOffset={0}
           style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
         >
           <ScrollView
