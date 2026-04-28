@@ -1,0 +1,23 @@
+src/components/cards/worker-card.tsx
+  531fa084e3882db1 39-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "435a7a5616792ecc1144e42eb597cc37c9730d9c",
+  "prompts": {
+    "531fa084e3882db1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "45f2c88d-aee1-49c8-ac1c-0d3a87137675",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 1219,
+      "overriden_lines": 0
+    }
+  }
+}
