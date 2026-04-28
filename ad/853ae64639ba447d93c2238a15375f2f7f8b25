@@ -1,0 +1,23 @@
+app/(tabs)/index.tsx
+  531fa084e3882db1 504,552,600,648
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "ad853ae64639ba447d93c2238a15375f2f7f8b25",
+  "prompts": {
+    "531fa084e3882db1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "45f2c88d-aee1-49c8-ac1c-0d3a87137675",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 1220,
+      "total_deletions": 8,
+      "accepted_lines": 1221,
+      "overriden_lines": 0
+    }
+  }
+}
