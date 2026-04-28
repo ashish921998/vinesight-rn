@@ -1,0 +1,23 @@
+__tests__/spray-safe-checker.test.tsx
+  04d9327a4c63a3b0 14-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "b1f1433167fc92836c9187db3de2656624a6ad28",
+  "prompts": {
+    "04d9327a4c63a3b0": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a636c676-0933-4dae-888d-65b535a0d843",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 0,
+      "accepted_lines": 1056,
+      "overriden_lines": 0
+    }
+  }
+}
