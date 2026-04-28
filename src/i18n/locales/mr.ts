@@ -1279,6 +1279,7 @@ export const mr = {
   assistant: {
     placeholder: 'तुमचे प्रश्न विचारा — मी कशी मदत करू?',
     settingsButtonA11y: 'सेटिंग्ज उघडा',
+    settingsGearA11y: 'सेटिंग्ज',
     chat: {
       welcomeTitle: 'मी कसे मदत करू?',
       welcomeSubtitle: 'तुमचे पीक, $t(glossary.disease), $t(glossary.pest) आणि इतरांबद्दल विचारा.',
@@ -2023,7 +2024,9 @@ export const mr = {
         phiDeadline: 'PHI अंतिम वेळ जवळ आहे',
       },
       severity: {
-        high: 'मुदत संपली',
+        high: 'उच्च',
+        medium: 'मध्यम',
+        low: 'कमी',
       },
       actions: {
         reviewTasks: '$t(glossary.task) पहा',
@@ -2171,6 +2174,7 @@ export const mr = {
       deleteTask: '$t(glossary.task) हटवा: {{title}}',
       completeTask: '$t(glossary.task) पूर्ण करा: {{title}}',
       taskActions: '{{title}} साठी $t(glossary.task) क्रिया',
+      addTask: '$t(glossary.task) जोडा',
     },
     status: {
       pending: 'प्रलंबित',

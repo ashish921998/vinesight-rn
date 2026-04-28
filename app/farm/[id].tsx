@@ -1271,52 +1271,58 @@ export default function FarmDetailScreen() {
 
   if (farmLoading && !farm) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: m3.colorScheme.surface,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-        <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[4] }}>
-          {t('farmDetails.loadingFarm')}
-        </Text>
-      </View>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: m3.colorScheme.surface,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[4] }}>
+            {t('farmDetails.loadingFarm')}
+          </Text>
+        </View>
+      </>
     );
   }
 
   if (!farm) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: m3.colorScheme.surface,
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: 32,
-        }}
-      >
-        <UiSymbol
-          name="alert-circle-outline"
-          size={48}
-          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-        />
-        <Text
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View
           style={{
-            color: m3.colorScheme.onSurface,
-            fontSize: fontSize.lg,
-            fontWeight: fontWeight.semibold,
-            marginTop: spacing[4],
+            flex: 1,
+            backgroundColor: m3.colorScheme.surface,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 32,
           }}
         >
-          {t('farmDetails.notFound.title')}
-        </Text>
-        <View style={{ marginTop: spacing[4], width: '100%', maxWidth: 320 }}>
-          <Button title={t('common.goBack')} variant="outline" onPress={() => router.back()} />
+          <UiSymbol
+            name="alert-circle-outline"
+            size={48}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+          />
+          <Text
+            style={{
+              color: m3.colorScheme.onSurface,
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              marginTop: spacing[4],
+            }}
+          >
+            {t('farmDetails.notFound.title')}
+          </Text>
+          <View style={{ marginTop: spacing[4], width: '100%', maxWidth: 320 }}>
+            <Button title={t('common.goBack')} variant="outline" onPress={() => router.back()} />
+          </View>
         </View>
-      </View>
+      </>
     );
   }
 

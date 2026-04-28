@@ -1278,6 +1278,7 @@ export const en = {
   assistant: {
     placeholder: 'Ask about your farm…',
     settingsButtonA11y: 'Open settings',
+    settingsGearA11y: 'Settings',
     chat: {
       welcomeTitle: 'How can I help?',
       welcomeSubtitle: 'Ask about your crops, irrigation, diseases, and more.',
@@ -2007,7 +2008,9 @@ export const en = {
         phiDeadline: 'PHI deadline approaching',
       },
       severity: {
-        high: 'Overdue',
+        high: 'High',
+        medium: 'Medium',
+        low: 'Low',
       },
       actions: {
         reviewTasks: 'Review task',
@@ -2154,6 +2157,7 @@ export const en = {
       deleteTask: 'Delete task: {{title}}',
       completeTask: 'Mark task complete: {{title}}',
       taskActions: 'Task actions for {{title}}',
+      addTask: 'Add task',
     },
     status: {
       pending: 'Pending',

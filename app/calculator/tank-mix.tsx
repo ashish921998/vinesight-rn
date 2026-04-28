@@ -187,7 +187,11 @@ export default function TankMixCalculatorScreen() {
             </Text>
             <TextInput
               value={tankLitersText}
-              onChangeText={(text) => setTankLitersText(text.replace(/[^0-9.]/g, ''))}
+              onChangeText={(text) => {
+                const normalized = text.replace(',', '.').replace(/[^0-9.]/g, '');
+                const [whole, ...rest] = normalized.split('.');
+                setTankLitersText(rest.length > 0 ? `${whole}.${rest.join('')}` : whole);
+              }}
               keyboardType="decimal-pad"
               placeholder="200"
               placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55)}

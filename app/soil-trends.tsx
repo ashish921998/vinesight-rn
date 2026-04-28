@@ -41,6 +41,7 @@ export default function SoilTrendsScreen() {
   if (!farmId || farmIdNum === 0) {
     return (
       <SafeScreen backgroundColor={m3.colorScheme.background}>
+        <Stack.Screen options={{ headerShown: false }} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <IconSymbol name="exclamationmark.triangle.fill" size={48} color={m3.colorScheme.error} />
           <Text
@@ -61,6 +62,7 @@ export default function SoilTrendsScreen() {
   if (farmLoading || trendsLoading || !trends || !trends.parameterTrends) {
     return (
       <SafeScreen backgroundColor={m3.colorScheme.background}>
+        <Stack.Screen options={{ headerShown: false }} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color={colors.labTest.soil} />
           <Text

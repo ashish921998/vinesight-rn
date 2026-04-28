@@ -370,7 +370,7 @@ export default function DashboardScreen() {
               <Pressable
                 onPress={() => router.push('/(tabs)/settings')}
                 accessibilityRole="button"
-                accessibilityLabel={t('assistant.settingsButtonA11y')}
+                accessibilityLabel={t('assistant.settingsGearA11y')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={({ pressed }) => ({
                   width: 38,

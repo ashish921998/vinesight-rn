@@ -86,44 +86,50 @@ export default function WorkerAnalyticsDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-      </View>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+        </View>
+      </>
     );
   }
 
   if (!hasValidWorkerId || !worker) {
     return (
-      <View
-        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[6] }}
-      >
-        <UiSymbol name="exclamationmark.triangle.fill" size={40} color={m3.colorScheme.error} />
-        <Text
-          style={{
-            marginTop: spacing[3],
-            fontSize: fontSize.base,
-            fontWeight: fontWeight.semibold,
-            color: m3.colorScheme.onSurface,
-            textAlign: 'center',
-          }}
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[6] }}
         >
-          {t('workerAnalyticsDetail.notFound')}
-        </Text>
-        <Pressable
-          onPress={() => router.back()}
-          style={{
-            marginTop: spacing[4],
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[2],
-            borderRadius: borderRadius.full,
-            backgroundColor: m3.colorScheme.primaryContainer,
-          }}
-        >
-          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
-            {t('common.goBack')}
+          <UiSymbol name="exclamationmark.triangle.fill" size={40} color={m3.colorScheme.error} />
+          <Text
+            style={{
+              marginTop: spacing[3],
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: m3.colorScheme.onSurface,
+              textAlign: 'center',
+            }}
+          >
+            {t('workerAnalyticsDetail.notFound')}
           </Text>
-        </Pressable>
-      </View>
+          <Pressable
+            onPress={() => router.back()}
+            style={{
+              marginTop: spacing[4],
+              paddingHorizontal: spacing[4],
+              paddingVertical: spacing[2],
+              borderRadius: borderRadius.full,
+              backgroundColor: m3.colorScheme.primaryContainer,
+            }}
+          >
+            <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
+              {t('common.goBack')}
+            </Text>
+          </Pressable>
+        </View>
+      </>
     );
   }
 

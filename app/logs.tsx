@@ -452,19 +452,22 @@ export default function LogsScreen() {
 
   if (farmsLoading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: m3.colorScheme.background,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-        <Text style={{ marginTop: spacing[4], color: colors.surface[500] }}>
-          {t('common.loading')}
-        </Text>
-      </View>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: m3.colorScheme.background,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Text style={{ marginTop: spacing[4], color: colors.surface[500] }}>
+            {t('common.loading')}
+          </Text>
+        </View>
+      </>
     );
   }
 

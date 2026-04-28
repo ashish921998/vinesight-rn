@@ -1275,6 +1275,7 @@ export const hi = {
   assistant: {
     placeholder: 'आपका AI कृषि सहायक — फसल, मिट्टी और शेड्यूल के बारे में पूछें',
     settingsButtonA11y: 'सेटिंग्स खोलें',
+    settingsGearA11y: 'सेटिंग्स',
     chat: {
       welcomeTitle: 'मैं कैसे मदद कर सकता हूँ?',
       welcomeSubtitle: 'अपनी फसल, सिंचाई, बीमारियों और अन्य के बारे में पूछें।',
@@ -2161,6 +2162,7 @@ export const hi = {
       deleteTask: 'कार्य हटाएं: {{title}}',
       completeTask: 'कार्य पूरा करें: {{title}}',
       taskActions: '{{title}} के लिए कार्य क्रियाएँ',
+      addTask: 'कार्य जोड़ें',
     },
     status: {
       pending: 'लंबित',

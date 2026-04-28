@@ -534,49 +534,54 @@ export default function SoilProfilingScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: spacing[8],
-          }}
-        >
-          <Symbol
-            name="layers-outline"
-            size={64}
-            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-          />
-          <Text
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+          <View
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              marginTop: spacing[4],
-              color: colors.surface[900],
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: spacing[8],
             }}
           >
-            {t('soilProfiling.noFarm.title')}
-          </Text>
-          <Text style={{ textAlign: 'center', marginTop: spacing[2], color: colors.surface[500] }}>
-            {t('soilProfiling.noFarm.subtitle')}
-          </Text>
-          <Pressable
-            onPress={() => router.push('/(tabs)/farms')}
-            style={{
-              marginTop: spacing[6],
-              paddingHorizontal: spacing[6],
-              paddingVertical: spacing[3],
-              borderRadius: borderRadius.full,
-              backgroundColor: m3.colorScheme.primary,
-            }}
-          >
-            <Text style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}>
-              {t('soilProfiling.noFarm.cta')}
+            <Symbol
+              name="layers-outline"
+              size={64}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            />
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                marginTop: spacing[4],
+                color: colors.surface[900],
+              }}
+            >
+              {t('soilProfiling.noFarm.title')}
             </Text>
-          </Pressable>
+            <Text
+              style={{ textAlign: 'center', marginTop: spacing[2], color: colors.surface[500] }}
+            >
+              {t('soilProfiling.noFarm.subtitle')}
+            </Text>
+            <Pressable
+              onPress={() => router.push('/(tabs)/farms')}
+              style={{
+                marginTop: spacing[6],
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.full,
+                backgroundColor: m3.colorScheme.primary,
+              }}
+            >
+              <Text style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}>
+                {t('soilProfiling.noFarm.cta')}
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </>
     );
   }
 

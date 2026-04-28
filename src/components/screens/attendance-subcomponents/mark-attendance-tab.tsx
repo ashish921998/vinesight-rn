@@ -293,13 +293,15 @@ export function MarkAttendanceTab({
       }
 
       // Preserve locally modified cells that haven't been saved yet
-      cellData.forEach((cell, key) => {
-        if (cell.isModified && key.startsWith(`${workerId}-`)) {
-          newCellData.set(key, cell);
-        }
+      setCellData((prev) => {
+        const merged = new Map(newCellData);
+        prev.forEach((cell, key) => {
+          if (cell.isModified && key.startsWith(`${workerId}-`)) {
+            merged.set(key, cell);
+          }
+        });
+        return merged;
       });
-
-      setCellData(newCellData);
     } catch {
       if (loadToken !== latestLoadRef.current) return;
       Alert.alert(t('common.error'), t('common.errors.failedToLoadAttendanceData'));
@@ -308,7 +310,7 @@ export function MarkAttendanceTab({
         setLoading(false);
       }
     }
-  }, [selectedWorker, dateRange, farms, t, cellData]);
+  }, [selectedWorker, dateRange, farms, t]);
 
   React.useEffect(() => {
     loadSavedRange();

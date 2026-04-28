@@ -502,27 +502,8 @@ export default function LabTestsScreen() {
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: spacing[2],
-            position: 'relative',
           }}
         >
-          <View
-            pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFillObject,
-              { alignItems: 'center', justifyContent: 'center' },
-            ]}
-          >
-            <Text
-              numberOfLines={1}
-              style={{
-                color: m3.colorScheme.onSurface,
-                fontSize: fontSize.lg,
-                fontWeight: fontWeight.bold,
-              }}
-            >
-              {t('labTests.list.title')}
-            </Text>
-          </View>
           <Pressable
             onPress={() => router.back()}
             style={{
@@ -564,7 +545,18 @@ export default function LabTestsScreen() {
             )}
           </Pressable>
 
-          <View style={{ flex: 1 }} />
+          <View style={{ flex: 1, alignItems: 'center', minWidth: 0 }}>
+            <Text
+              numberOfLines={1}
+              style={{
+                color: m3.colorScheme.onSurface,
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+              }}
+            >
+              {t('labTests.list.title')}
+            </Text>
+          </View>
 
           <Pressable
             onPress={() => {
