@@ -604,15 +604,14 @@ export const mr = {
     allFarms: 'सर्व $t(glossary.farm)',
     allFarmsExpenseOnly: 'सर्व $t(glossary.farm) पर्याय फक्त $t(glossary.expense) नोंदीसाठी आहे.',
     allFarmsNoFarms: 'हा $t(glossary.expense) लागू करण्यासाठी $t(glossary.farm) उपलब्ध नाहीत.',
-    partialSuccess: {
-      title: 'आंशिक यश',
-      body_one: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
-      body_other: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
-    },
     saveFailed: {
       title: 'लॉग जतन करता आले नाहीत',
       body_one: 'हा लॉग जतन झाला नाही. कोणतेही बदल जतन झाले नाहीत. कृपया पुन्हा प्रयत्न करा.',
       body_other: 'लॉग जतन झाले नाहीत. कोणतेही बदल जतन झाले नाहीत. कृपया पुन्हा प्रयत्न करा.',
+      rollbackWarning_one:
+        'सूचना: {{count}} जतन केलेला रेकॉर्ड काढता आला नाही. पुन्हा प्रयत्न करण्यापूर्वी कृपया तुमचा डेटा तपासा.',
+      rollbackWarning_other:
+        'सूचना: {{count}} जतन केलेले रेकॉर्ड काढता आले नाहीत. पुन्हा प्रयत्न करण्यापूर्वी कृपया तुमचा डेटा तपासा.',
     },
     taskCompletionLinkFailed:
       'नोंदी जतन झाल्या, पण स्रोत $t(glossary.task) पूर्ण म्हणून चिन्हांकित करता आले नाही.',

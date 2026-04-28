@@ -1058,8 +1058,15 @@ export function EntryForm({
       });
 
     const rollbackCreatedRecords = async (
-      created: Array<{ type: LogTypeId; recordId: number | null; farmId: number }>,
+      created: Array<{
+        type: LogTypeId;
+        recordId: number | null;
+        farmId: number;
+        farmContext?: EntryLogFarmContext;
+      }>,
     ) => {
+      const failures: Array<{ type: LogTypeId; recordId: number; farmId: number; error: string }> =
+        [];
       const tasks = created
         .filter((entry) => entry.recordId !== null)
         .map(async (entry) => {
@@ -1068,6 +1075,21 @@ export function EntryForm({
             switch (entry.type) {
               case 'irrigation':
                 await deleteIrrigation.mutateAsync({ id, farmId: entry.farmId });
+                // Revert water level to pre-save state
+                if (entry.farmContext) {
+                  const farm = entry.farmContext;
+                  if (
+                    farm.total_tank_capacity &&
+                    farm.system_discharge &&
+                    farm.total_tank_capacity > 0 &&
+                    farm.system_discharge > 0
+                  ) {
+                    await updateWaterLevel.mutateAsync({
+                      farmId: entry.farmId,
+                      remainingWater: farm.remaining_water ?? 0,
+                    });
+                  }
+                }
                 break;
               case 'spray':
                 await deleteSpray.mutateAsync({ id, farmId: entry.farmId });
@@ -1085,21 +1107,38 @@ export function EntryForm({
                 break;
             }
           } catch (rollbackError) {
-            console.error('Failed to rollback created record', {
+            const errorMsg =
+              rollbackError instanceof Error ? rollbackError.message : String(rollbackError);
+            failures.push({
               type: entry.type,
-              recordId: entry.recordId,
+              recordId: entry.recordId as number,
               farmId: entry.farmId,
-              error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+              error: errorMsg,
             });
+            if (__DEV__) {
+              console.error('Failed to rollback created record', {
+                type: entry.type,
+                recordId: entry.recordId,
+                farmId: entry.farmId,
+                error: errorMsg,
+              });
+            }
           }
         });
       await Promise.all(tasks);
+      return failures;
     };
 
     const reportSaveFailure = (
       failedCount: number,
       firstFailedError: unknown,
       failedLogContext: (typeof pendingLogs)[number] | null,
+      rollbackFailures?: Array<{
+        type: LogTypeId;
+        recordId: number;
+        farmId: number;
+        error: string;
+      }>,
     ) => {
       const errorMessage =
         firstFailedError instanceof Error
@@ -1114,6 +1153,9 @@ export function EntryForm({
           scope.setExtra('pendingLogId', failedLogContext?.id ?? 'unknown');
           scope.setTag('logType', failedLogContext?.type ?? 'unknown');
           scope.setExtra('errorMeta', { code: errorMeta.code ?? null });
+          if (rollbackFailures && rollbackFailures.length > 0) {
+            scope.setExtra('rollbackFailures', rollbackFailures);
+          }
           Sentry.captureException(
             firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),
           );
@@ -1121,10 +1163,17 @@ export function EntryForm({
       }
       const detail = errorMeta.message ?? errorMessage;
       const codeSuffix = errorMeta.code ? ` [${errorMeta.code}]` : '';
-      const body =
+      let body =
         failedCount === 1
           ? t('entryForm.saveFailed.body_one', { count: failedCount })
           : t('entryForm.saveFailed.body_other', { count: failedCount });
+      if (rollbackFailures && rollbackFailures.length > 0) {
+        const rollbackWarning =
+          rollbackFailures.length === 1
+            ? t('entryForm.saveFailed.rollbackWarning_one', { count: rollbackFailures.length })
+            : t('entryForm.saveFailed.rollbackWarning_other', { count: rollbackFailures.length });
+        body += '\n\n' + rollbackWarning;
+      }
       Alert.alert(
         t('entryForm.saveFailed.title'),
         detail ? `${body}\n\n${detail}${codeSuffix}` : body,
@@ -1170,12 +1219,14 @@ export function EntryForm({
             if (successfulFarmIdsByLog.get(log.id)?.has(farmId)) {
               return [];
             }
+            const farmContext = buildFarmContext(farmItem);
             return [
               {
                 logId: log.id,
                 logType: log.type,
                 farmId,
-                promise: saveLog(log, buildFarmContext(farmItem)),
+                promise: saveLog(log, farmContext),
+                farmContext,
               },
             ];
           }),
@@ -1191,6 +1242,7 @@ export function EntryForm({
           type: LogTypeId;
           recordId: number | null;
           farmId: number;
+          farmContext?: EntryLogFarmContext;
         }> = [];
 
         results.forEach((result, index) => {
@@ -1200,6 +1252,7 @@ export function EntryForm({
               type: submission.logType,
               recordId: result.value.recordId,
               farmId: submission.farmId,
+              farmContext: submission.farmContext,
             });
             return;
           }
@@ -1227,10 +1280,10 @@ export function EntryForm({
         if (failedCount > 0) {
           // Atomic semantics: roll back any successfully created records so the
           // session has no partial saves.
-          await rollbackCreatedRecords(createdRecords);
+          const rollbackFailures = await rollbackCreatedRecords(createdRecords);
           allFarmsSucceededByLogRef.current.clear();
           await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-          reportSaveFailure(failedCount, firstFailedError, failedLogContext);
+          reportSaveFailure(failedCount, firstFailedError, failedLogContext, rollbackFailures);
           return;
         }
 
@@ -1318,6 +1371,7 @@ export function EntryForm({
       if (failedCount > 0) {
         // Atomic semantics: roll back any successfully created records so the
         // session has no partial saves.
+        const singleFarmCtx = buildFarmContext(singleFarmContext);
         const createdRecords = results.flatMap((result, index) => {
           if (result.status !== 'fulfilled') return [];
           const log = pendingLogs[index];
@@ -1327,10 +1381,11 @@ export function EntryForm({
               type: log.type,
               recordId: result.value.recordId,
               farmId,
+              farmContext: singleFarmCtx,
             },
           ];
         });
-        await rollbackCreatedRecords(createdRecords);
+        const rollbackFailures = await rollbackCreatedRecords(createdRecords);
         await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
 
         const firstFailedIndex = results.findIndex((result) => result.status === 'rejected');
@@ -1339,7 +1394,7 @@ export function EntryForm({
           results[firstFailedIndex]?.status === 'rejected'
             ? (results[firstFailedIndex] as PromiseRejectedResult).reason
             : null;
-        reportSaveFailure(failedCount, firstFailedError, failedLogContext);
+        reportSaveFailure(failedCount, firstFailedError, failedLogContext, rollbackFailures);
         return;
       }
 

@@ -37,8 +37,6 @@ const STORAGE_KEYS = {
   ATTENDANCE_RANGE_LENGTH: 'attendance_range_length',
 };
 
-const isIos = isIOS;
-
 interface ToastState {
   visible: boolean;
   message: string;
@@ -289,13 +287,20 @@ export function MarkAttendanceTab({
         prevWorkerIdRef.current = workerId;
       }
 
+      // Preserve locally modified cells that haven't been saved yet
+      cellData.forEach((cell, key) => {
+        if (cell.isModified && key.startsWith(`${workerId}-`)) {
+          newCellData.set(key, cell);
+        }
+      });
+
       setCellData(newCellData);
     } catch {
       Alert.alert(t('common.error'), t('common.errors.failedToLoadAttendanceData'));
     } finally {
       setLoading(false);
     }
-  }, [selectedWorker, dateRange, farms, t]);
+  }, [selectedWorker, dateRange, farms, t, cellData]);
 
   React.useEffect(() => {
     loadSavedRange();
@@ -321,7 +326,7 @@ export function MarkAttendanceTab({
       if (!current) return prev;
 
       const currentIndex = STATUS_CYCLE.indexOf(current.status);
-      const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
+      const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % STATUS_CYCLE.length;
       const nextStatus = STATUS_CYCLE[nextIndex];
 
       const newMap = new Map(prev);
@@ -850,7 +855,7 @@ export function MarkAttendanceTab({
             </Pressable>
           </View>
 
-          {isIos ? (
+          {isIOS ? (
             activePickerType ? (
               <Modal transparent animationType="fade" onRequestClose={closePickers}>
                 <Pressable

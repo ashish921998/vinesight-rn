@@ -608,15 +608,14 @@ export const en = {
     allFarms: 'All farms',
     allFarmsExpenseOnly: 'All farms can only be used for expense logs.',
     allFarmsNoFarms: 'No farms available to apply this expense.',
-    partialSuccess: {
-      title: 'Partial Success',
-      body_one: '{{count}} log failed to save. Please review and try again.',
-      body_other: '{{count}} logs failed to save. Please review and try again.',
-    },
     saveFailed: {
       title: 'Could not save logs',
       body_one: 'Failed to save this log. No changes were saved. Please review and try again.',
       body_other: 'Failed to save logs. No changes were saved. Please review and try again.',
+      rollbackWarning_one:
+        'Warning: {{count}} saved record could not be removed. Please verify your data before retrying.',
+      rollbackWarning_other:
+        'Warning: {{count}} saved records could not be removed. Please verify your data before retrying.',
     },
     taskCompletionLinkFailed: 'Logs were saved, but the source task could not be marked complete.',
     plannedSprayInputs: 'Planned spray inputs',

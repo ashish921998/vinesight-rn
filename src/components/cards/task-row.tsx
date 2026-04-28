@@ -4,7 +4,15 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable, Alert, type ViewStyle, type AlertButton } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  Alert,
+  Platform,
+  type ViewStyle,
+  type AlertButton,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { TaskReminder } from '@/types/task';
@@ -117,7 +125,7 @@ export function TaskRow({
         },
       });
     }
-    if (buttons.length > 0) {
+    if (buttons.length > 0 && !(Platform.OS === 'android' && buttons.length >= 3)) {
       buttons.push({ text: t('common.cancel'), style: 'cancel' });
     }
     return buttons;
