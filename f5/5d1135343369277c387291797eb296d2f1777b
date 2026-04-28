@@ -1,0 +1,42 @@
+src/utils/entry-log-submission.ts
+  8ef3eb6ef7277106 50,90-91,101-118,121
+src/components/screens/entry-form.tsx
+  8ef3eb6ef7277106 1037,1165-1179
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  8ef3eb6ef7277106 153,246,268-270,304,307-309
+__tests__/entry-form.integration.test.tsx
+  8ef3eb6ef7277106 408-468
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "f55d1135343369277c387291797eb296d2f1777b",
+  "prompts": {
+    "7dc1884b63a82ef9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a06dbbf2-691c-4115-adc1-bb8a49a4cafe",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 1396,
+      "total_deletions": 0,
+      "accepted_lines": 1381,
+      "overriden_lines": 3
+    },
+    "8ef3eb6ef7277106": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "0c9a1b03-aac2-46fe-a68a-b97156b1d13d",
+        "model": "kimi-k2.6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 134,
+      "total_deletions": 32,
+      "accepted_lines": 108,
+      "overriden_lines": 0
+    }
+  }
+}
