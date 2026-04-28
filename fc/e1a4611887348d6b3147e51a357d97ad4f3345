@@ -1,0 +1,23 @@
+src/i18n/locales/en.ts
+  531fa084e3882db1 843
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "fce1a4611887348d6b3147e51a357d97ad4f3345",
+  "prompts": {
+    "531fa084e3882db1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "45f2c88d-aee1-49c8-ac1c-0d3a87137675",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1218,
+      "overriden_lines": 0
+    }
+  }
+}
