@@ -501,8 +501,7 @@ export default function DashboardScreen() {
                   fontSize: 11,
                   fontWeight: fontWeight.semibold,
                   color: colors.surface[500],
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.8,
+                  letterSpacing: 0,
                 }}
               >
                 {t('dashboard.stats.farms')}
@@ -550,8 +549,7 @@ export default function DashboardScreen() {
                   fontSize: 11,
                   fontWeight: fontWeight.semibold,
                   color: colors.surface[500],
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.8,
+                  letterSpacing: 0,
                 }}
               >
                 {t('dashboard.stats.activeWorkers')}
@@ -599,8 +597,7 @@ export default function DashboardScreen() {
                   fontSize: 11,
                   fontWeight: fontWeight.semibold,
                   color: colors.surface[500],
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.8,
+                  letterSpacing: 0,
                 }}
               >
                 {t('dashboard.stats.tasks')}
@@ -648,8 +645,7 @@ export default function DashboardScreen() {
                   fontSize: 11,
                   fontWeight: fontWeight.semibold,
                   color: colors.surface[500],
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.8,
+                  letterSpacing: 0,
                 }}
               >
                 {t('dashboard.stats.activities')}
