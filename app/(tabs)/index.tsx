@@ -255,7 +255,6 @@ export default function DashboardScreen() {
   };
 
   const bottomPadding = Math.max(insets.bottom + spacing[12], spacing[16]);
-  const todayLabel = formatDate(new Date(), { weekday: 'short', month: 'short', day: 'numeric' });
   const isTourScrollLocked =
     hasHydrated &&
     (guidedTourStatus === 'in_progress' ||
@@ -296,106 +295,114 @@ export default function DashboardScreen() {
             marginBottom: spacing[6],
           }}
         >
-          {/* Top row with Today label and alert badge or all clear badge */}
+          {/* Top bar: avatar + brand left, settings right */}
           <View
             style={{
               flexDirection: 'row',
-              justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: spacing[3],
+              justifyContent: 'space-between',
+              marginBottom: spacing[4],
             }}
           >
-            <Text
-              style={{
-                fontSize: 13,
-                color: colorWithOpacity('#ffffff', 0.65),
-                fontWeight: fontWeight.medium,
-                letterSpacing: 0.3,
-              }}
+            <Pressable
+              onPress={() => router.push('/(tabs)/settings')}
+              accessibilityRole="button"
+              accessibilityLabel={t('assistant.settingsButtonA11y')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={({ pressed }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing[2] + 2,
+                opacity: pressed ? 0.85 : 1,
+              })}
             >
-              {t('dashboard.hero.today')}
-            </Text>
-            {hasAlerts ? (
               <View
                 style={{
-                  flexDirection: 'row',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
                   alignItems: 'center',
-                  gap: 5,
-                  backgroundColor: colorWithOpacity(colors.accent[500], 0.25),
+                  justifyContent: 'center',
+                  backgroundColor: colorWithOpacity('#ffffff', 0.18),
                   borderWidth: 1,
-                  borderColor: colorWithOpacity(colors.accent[500], 0.4),
-                  borderRadius: borderRadius.pill,
-                  paddingHorizontal: spacing[2] + 2,
-                  paddingVertical: 2,
+                  borderColor: colorWithOpacity('#ffffff', 0.22),
                 }}
               >
-                <View
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: 3.5,
-                    backgroundColor: colors.accent[500],
-                  }}
-                />
                 <Text
                   style={{
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: fontWeight.semibold,
-                    color: colors.accent[500],
-                    letterSpacing: 0.2,
+                    color: '#ffffff',
+                    letterSpacing: 0.3,
                   }}
                 >
-                  {t('dashboard.hero.alertCount', { count: alertCount })}
+                  {(profile?.full_name?.trim()?.charAt(0) || 'V').toUpperCase()}
                 </Text>
               </View>
-            ) : (
-              <View
-                style={{
-                  flexDirection: 'row',
+              <View style={{ flexShrink: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    color: colorWithOpacity('#ffffff', 0.6),
+                    fontWeight: fontWeight.medium,
+                    letterSpacing: 0.4,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {t('app.name', { defaultValue: 'Vinesight' })}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 14,
+                    color: '#ffffff',
+                    fontWeight: fontWeight.semibold,
+                    letterSpacing: 0.1,
+                    maxWidth: 180,
+                  }}
+                >
+                  {profile?.full_name || t('dashboard.hero.welcome', { defaultValue: 'Welcome' })}
+                </Text>
+              </View>
+            </Pressable>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+              <Pressable
+                onPress={() => router.push('/(tabs)/settings')}
+                accessibilityRole="button"
+                accessibilityLabel={t('assistant.settingsButtonA11y')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={({ pressed }) => ({
+                  width: 38,
+                  height: 38,
+                  borderRadius: 19,
                   alignItems: 'center',
-                  gap: 5,
-                  backgroundColor: colorWithOpacity(colors.success, 0.35),
+                  justifyContent: 'center',
+                  backgroundColor: colorWithOpacity('#ffffff', pressed ? 0.28 : 0.16),
                   borderWidth: 1,
-                  borderColor: colorWithOpacity(colors.success, 0.5),
-                  borderRadius: borderRadius.pill,
-                  paddingHorizontal: spacing[2] + 2,
-                  paddingVertical: 2,
-                }}
+                  borderColor: colorWithOpacity('#ffffff', 0.2),
+                })}
               >
-                <SymbolIcon
-                  name="checkmark.circle.fill"
-                  size={12}
-                  color={colorWithOpacity(colors.success, 0.8)}
-                />
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontWeight: fontWeight.semibold,
-                    color: colorWithOpacity(colors.success, 0.8),
-                    letterSpacing: 0.2,
-                  }}
-                >
-                  {t('dashboard.hero.allClear')}
-                </Text>
-              </View>
-            )}
+                <SymbolIcon name="gearshape.fill" size={17} color="#ffffff" />
+              </Pressable>
+            </View>
           </View>
 
           {hasAlerts ? (
-            // Urgent title with alerts
+            // Greeting title with alert summary subtitle
             <>
               <Text
                 style={{
-                  fontSize: 19,
-                  fontWeight: fontWeight.semibold,
+                  fontSize: 24,
+                  fontWeight: fontWeight.normal,
                   color: '#ffffff',
-                  lineHeight: 24,
+                  lineHeight: 30,
                   marginBottom: spacing[1],
                 }}
               >
-                {attentionItems && attentionItems[0]
-                  ? t(`dashboard.needsAttention.reasons.${attentionItems[0].type}`)
-                  : t('dashboard.hero.attentionNeeded')}
+                {profile?.full_name
+                  ? t(`dashboard.greetingWithName.${greetingKey}`, { name: profile.full_name })
+                  : t(`dashboard.greeting.${greetingKey}`)}
               </Text>
               <Text
                 style={{
@@ -405,7 +412,7 @@ export default function DashboardScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                {attentionItems && attentionItems[0]?.farmName ? attentionItems[0].farmName : ''}
+                {t('dashboard.hero.attentionSummary', { count: alertCount })}
               </Text>
             </>
           ) : (
@@ -436,18 +443,6 @@ export default function DashboardScreen() {
               </Text>
             </>
           )}
-
-          {/* Weather line */}
-          <Text
-            style={{
-              fontSize: 12,
-              color: colorWithOpacity('#ffffff', 0.5),
-              fontWeight: fontWeight.normal,
-              letterSpacing: 0.2,
-            }}
-          >
-            {todayLabel}
-          </Text>
         </View>
 
         <View style={containerStyle}>
@@ -724,15 +719,35 @@ export default function DashboardScreen() {
                 const actionLabel = getAttentionActionLabel(item);
                 const metaLabel = getAttentionMetaLabel(item);
                 const icon = getAttentionIcon(item);
-                const accessibilityLabel = `${title}. ${item.farmName}. ${reasonLabel}. ${
-                  metaLabel ? `${metaLabel}. ` : ''
-                }${actionLabel}.`;
-                const emphasisColor =
-                  item.severity === 'high'
-                    ? m3.colorScheme.error
-                    : item.severity === 'medium'
-                      ? m3.colorScheme.warning
-                      : m3.colorScheme.primary;
+                const isHigh = item.severity === 'high';
+                const isMedium = item.severity === 'medium';
+                const severityHighLabel = t('dashboard.needsAttention.severity.high');
+                const emphasisColor = isHigh
+                  ? m3.colorScheme.error
+                  : isMedium
+                    ? m3.colorScheme.warning
+                    : m3.colorScheme.primary;
+                const iconBackground = isHigh
+                  ? colorWithOpacity(m3.colorScheme.error, 0.18)
+                  : isMedium
+                    ? colorWithOpacity(m3.colorScheme.warning, 0.18)
+                    : colorWithOpacity(m3.colorScheme.primary, 0.1);
+                const iconGlyphColor = isHigh
+                  ? m3.colorScheme.error
+                  : isMedium
+                    ? m3.colorScheme.warning
+                    : icon.color;
+                const secondaryLine =
+                  item.farmName && metaLabel
+                    ? `${item.farmName} · ${metaLabel}`
+                    : item.farmName && !metaLabel
+                      ? `${item.farmName} · ${reasonLabel}`
+                      : metaLabel
+                        ? metaLabel
+                        : reasonLabel;
+                const accessibilityLabel = `${title}.${
+                  isHigh ? ` ${severityHighLabel}.` : ''
+                } ${secondaryLine}. ${actionLabel}.`;
 
                 return (
                   <Pressable
@@ -742,7 +757,8 @@ export default function DashboardScreen() {
                     accessibilityLabel={accessibilityLabel}
                     style={{
                       borderRadius: m3.shape.cornerMedium,
-                      padding: spacing[3],
+                      paddingVertical: spacing[3] + 2,
+                      paddingHorizontal: spacing[3],
                       marginBottom: spacing[2],
                       flexDirection: 'row',
                       alignItems: 'center',
@@ -756,67 +772,91 @@ export default function DashboardScreen() {
                       <>
                         <View
                           style={{
-                            width: 38,
-                            height: 38,
+                            width: 44,
+                            height: 44,
                             borderRadius: borderRadius.full,
                             alignItems: 'center',
                             justifyContent: 'center',
-                            backgroundColor: icon.background,
+                            backgroundColor: iconBackground,
                           }}
                         >
-                          <SymbolIcon name={icon.name} size={18} color={icon.color} />
+                          <SymbolIcon name={icon.name} size={20} color={iconGlyphColor} />
                         </View>
                         <View style={{ marginLeft: spacing[3], flex: 1 }}>
-                          <Text
+                          <View
                             style={{
-                              ...m3.typography.labelLarge,
-                              color: m3.colorScheme.onSurface,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: spacing[2],
                             }}
                           >
-                            {title}
-                          </Text>
-                          {title !== item.farmName ? (
                             <Text
+                              numberOfLines={1}
                               style={{
-                                ...m3.typography.labelSmall,
-                                color: m3.colorScheme.onSurfaceVariant,
+                                ...m3.typography.titleMedium,
+                                color: m3.colorScheme.onSurface,
+                                flexShrink: 1,
                               }}
                             >
-                              {item.farmName}
+                              {title}
                             </Text>
-                          ) : null}
+                            {isHigh ? (
+                              <View
+                                style={{
+                                  paddingHorizontal: 8,
+                                  paddingVertical: 2,
+                                  borderRadius: borderRadius.pill,
+                                  backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.14),
+                                }}
+                              >
+                                <Text
+                                  style={{
+                                    ...m3.typography.labelSmall,
+                                    color: m3.colorScheme.error,
+                                    fontWeight: fontWeight.semibold,
+                                    letterSpacing: 0.3,
+                                    textTransform: 'uppercase',
+                                  }}
+                                >
+                                  {severityHighLabel}
+                                </Text>
+                              </View>
+                            ) : null}
+                          </View>
                           <Text
+                            numberOfLines={1}
                             style={{
                               ...m3.typography.labelSmall,
                               color: m3.colorScheme.onSurfaceVariant,
+                              marginTop: 2,
                             }}
                           >
-                            {reasonLabel}
+                            {secondaryLine}
                           </Text>
-                          {metaLabel ? (
-                            <Text
-                              style={{
-                                ...m3.typography.labelSmall,
-                                color: m3.colorScheme.onSurfaceVariant,
-                                marginTop: spacing[1],
-                              }}
-                            >
-                              {metaLabel}
-                            </Text>
-                          ) : null}
                         </View>
-                        <View style={{ alignItems: 'flex-end', gap: spacing[1] }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
+                            marginLeft: spacing[2],
+                          }}
+                        >
                           <Text
+                            numberOfLines={1}
                             style={{
                               ...m3.typography.labelSmall,
                               color: m3.colorScheme.primary,
                               fontWeight: fontWeight.semibold,
-                              textAlign: 'right',
                             }}
                           >
                             {actionLabel}
                           </Text>
-                          <SymbolIcon name="chevron.right" size={16} color={colors.gray[300]} />
+                          <SymbolIcon
+                            name="chevron.right"
+                            size={14}
+                            color={m3.colorScheme.primary}
+                          />
                         </View>
                         <View
                           pointerEvents="none"

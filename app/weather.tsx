@@ -1,7 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  RefreshControl,
+  StyleSheet,
+} from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
@@ -68,6 +76,7 @@ function getDayName(dateString: string, t: TFunction): string {
 export default function WeatherScreen() {
   const router = useRouter();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoadingAuth = useAuthStore((state) => state.isLoading);
   const colors = useThemeColors();
@@ -156,112 +165,191 @@ export default function WeatherScreen() {
     return null;
   }
 
-  if (farmsLoading || isLoading) {
-    return (
+  // Custom JS header (avoids iOS 26 native bar-button glass capsule)
+  const weatherHeader = (
+    <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
       <View
         style={{
-          flex: 1,
-          backgroundColor: colors.surface[50],
+          height: 56,
+          flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'center',
+          paddingHorizontal: spacing[2],
         }}
       >
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-        <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
-          {t('common.loading')}
-        </Text>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            backgroundColor: 'transparent',
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.goBack')}
+        >
+          {({ pressed }) => (
+            <View
+              style={{
+                width: '100%',
+                height: '100%',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Icon name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    borderRadius: 22,
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                      : 'transparent',
+                  },
+                ]}
+              />
+            </View>
+          )}
+        </Pressable>
+
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text
+            numberOfLines={1}
+            style={{
+              color: m3.colorScheme.onSurface,
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.bold,
+            }}
+          >
+            {t('tools.items.weatherIrrigation')}
+          </Text>
+        </View>
+
+        <View style={{ width: 44, height: 44 }} />
+      </View>
+    </View>
+  );
+
+  if (farmsLoading || isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        {weatherHeader}
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+            {t('common.loading')}
+          </Text>
+        </View>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.surface[50],
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: spacing[6],
-        }}
-      >
-        <Icon
-          name="cloud.slash.fill"
-          size={48}
-          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-        />
-        <Text
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        {weatherHeader}
+        <View
           style={{
-            color: colors.surface[600],
-            marginTop: spacing[4],
-            textAlign: 'center',
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: spacing[6],
           }}
         >
-          {t('weather.errors.unableToLoad')}
-        </Text>
-        <Text
-          style={{
-            color: colors.surface[500],
-            fontSize: fontSize.sm,
-            marginTop: spacing[2],
-            textAlign: 'center',
-          }}
-        >
-          {error.message}
-        </Text>
-        <Pressable
-          onPress={() => refetch()}
-          style={{
-            marginTop: spacing[4],
-            backgroundColor: colors.primary[600],
-            paddingHorizontal: spacing[6],
-            paddingVertical: spacing[3],
-            borderRadius: borderRadius.xl,
-          }}
-        >
-          <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
-            {t('common.tryAgain')}
+          <Icon
+            name="cloud.slash.fill"
+            size={48}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+          />
+          <Text
+            style={{
+              color: colors.surface[600],
+              marginTop: spacing[4],
+              textAlign: 'center',
+            }}
+          >
+            {t('weather.errors.unableToLoad')}
           </Text>
-        </Pressable>
+          <Text
+            style={{
+              color: colors.surface[500],
+              fontSize: fontSize.sm,
+              marginTop: spacing[2],
+              textAlign: 'center',
+            }}
+          >
+            {error.message}
+          </Text>
+          <Pressable
+            onPress={() => refetch()}
+            style={{
+              marginTop: spacing[4],
+              backgroundColor: colors.primary[600],
+              paddingHorizontal: spacing[6],
+              paddingVertical: spacing[3],
+              borderRadius: borderRadius.xl,
+            }}
+          >
+            <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
+              {t('common.tryAgain')}
+            </Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
 
   if (!farms || farms.length === 0) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.surface[50],
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: spacing[6],
-        }}
-      >
-        <Icon
-          name="leaf.fill"
-          size={48}
-          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-        />
-        <Text
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        {weatherHeader}
+        <View
           style={{
-            color: colors.surface[600],
-            marginTop: spacing[4],
-            textAlign: 'center',
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: spacing[6],
           }}
         >
-          {t('weather.empty.noFarmsTitle')}
-        </Text>
-        <Text
-          style={{
-            color: colors.surface[500],
-            fontSize: fontSize.sm,
-            marginTop: spacing[2],
-            textAlign: 'center',
-          }}
-        >
-          {t('weather.empty.noFarmsSubtitle')}
-        </Text>
+          <Icon
+            name="leaf.fill"
+            size={48}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+          />
+          <Text
+            style={{
+              color: colors.surface[600],
+              marginTop: spacing[4],
+              textAlign: 'center',
+            }}
+          >
+            {t('weather.empty.noFarmsTitle')}
+          </Text>
+          <Text
+            style={{
+              color: colors.surface[500],
+              fontSize: fontSize.sm,
+              marginTop: spacing[2],
+              textAlign: 'center',
+            }}
+          >
+            {t('weather.empty.noFarmsSubtitle')}
+          </Text>
+        </View>
       </View>
     );
   }
@@ -274,6 +362,8 @@ export default function WeatherScreen() {
       style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
       edges={['left', 'right']}
     >
+      <Stack.Screen options={{ headerShown: false }} />
+      {weatherHeader}
       <ScrollView
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}
         style={{ backgroundColor: m3.colorScheme.background }}

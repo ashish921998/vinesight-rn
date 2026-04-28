@@ -609,6 +609,11 @@ export const mr = {
       body_one: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
       body_other: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
     },
+    saveFailed: {
+      title: 'लॉग जतन करता आले नाहीत',
+      body_one: 'हा लॉग जतन झाला नाही. कोणतेही बदल जतन झाले नाहीत. कृपया पुन्हा प्रयत्न करा.',
+      body_other: 'लॉग जतन झाले नाहीत. कोणतेही बदल जतन झाले नाहीत. कृपया पुन्हा प्रयत्न करा.',
+    },
     taskCompletionLinkFailed:
       'नोंदी जतन झाल्या, पण स्रोत $t(glossary.task) पूर्ण म्हणून चिन्हांकित करता आले नाही.',
     plannedSprayInputs: 'नियोजित $t(glossary.spray) इनपुट',
@@ -855,6 +860,13 @@ export const mr = {
       tankMixCalculator: 'टँक क्षमतेनुसार प्रत्येक घटकाचे अचूक gm/ml प्रमाण काढा',
       safeToSprayChecker: 'लक्ष्य $t(glossary.harvest) दिनांकासाठी सुरक्षित स्प्रे विंडो तपासा',
       sprayCatalog: '$t(glossary.pest), मोड आणि PHI सह कॅटलॉग स्प्रे/मिक्स ब्राउझ करा',
+    },
+    categories: {
+      irrigation: 'सिंचन',
+      crop: 'पीक',
+      fertility: 'सुपीकता',
+      spray: 'स्प्रे',
+      weather: 'हवामान',
     },
   },
 
@@ -1984,10 +1996,16 @@ export const mr = {
     },
     hero: {
       today: 'आज',
+      welcome: 'स्वागत आहे',
       allClear: 'सर्व ठीक',
       attentionNeeded: 'लक्ष आवश्यक',
       alertCount_one: '{{count}} इशारा',
       alertCount_other: '{{count}} इशारे',
+      attentionSummary_one: '{{count}} बाबीकडे लक्ष द्या',
+      attentionSummary_other: '{{count}} बाबींकडे लक्ष द्या',
+    },
+    header: {
+      notificationsA11y: 'सूचना',
     },
     stats: {
       title: 'ओव्हरव्ह्यू',
@@ -2004,6 +2022,9 @@ export const mr = {
         noRecentLogs: 'अलीकडील नोंदी नाहीत',
         lowWaterLevel: 'पाणी स्तर कमी',
         phiDeadline: 'PHI अंतिम वेळ जवळ आहे',
+      },
+      severity: {
+        high: 'मुदत संपली',
       },
       actions: {
         reviewTasks: '$t(glossary.task) पहा',
@@ -2143,10 +2164,14 @@ export const mr = {
       medium: 'मध्यम',
       high: 'उच्च',
     },
+    actions: {
+      menuTitle: '$t(glossary.task) क्रिया',
+    },
     a11y: {
       editTask: '$t(glossary.task) संपादित करा: {{title}}',
       deleteTask: '$t(glossary.task) हटवा: {{title}}',
       completeTask: '$t(glossary.task) पूर्ण करा: {{title}}',
+      taskActions: '{{title}} साठी $t(glossary.task) क्रिया',
     },
     status: {
       pending: 'प्रलंबित',
@@ -2526,6 +2551,11 @@ export const mr = {
     },
     actions: {
       backToList: 'लॅब चाचण्या यादीकडे परत',
+      title: 'लॅब चाचणी जोडा',
+      addSoilTest: 'माती चाचणी जोडा',
+      addSoilTestDesc: 'मातीच्या नमुन्यातून पोषक पातळ्या नोंदवा',
+      addPetioleTest: 'पेटिओल चाचणी जोडा',
+      addPetioleTestDesc: 'पेटिओल नमुन्यातून पोषक पातळ्या नोंदवा',
     },
     parameters: {
       ph: 'pH',
@@ -2587,7 +2617,7 @@ export const mr = {
         '$t(glossary.soil) प्रोफाइल विशिष्ट $t(glossary.farm)शी संबंधित आहेत. कृपया पाहण्यासाठी $t(glossary.farm) निवडा.',
       cta: '$t(glossary.farm) पृष्ठावर जा',
     },
-    title: '$t(glossary.soil) प्रोफाइलिंग',
+    title: '$t(glossary.soil) आर्द्रता',
     tabs: {
       history: 'इतिहास',
       trends: 'ट्रेंड्स',
@@ -2627,7 +2657,7 @@ export const mr = {
   },
 
   soilProfileForm: {
-    titleAdd: '$t(glossary.soil) प्रोफाइल जोडा',
+    titleAdd: '$t(glossary.soil) आर्द्रता नोंद जोडा',
     sections: {
       top: 'वर',
       bottom: 'खाली',

@@ -81,6 +81,11 @@ import {
   useCreateHarvestRecord,
   useCreateExpenseRecord,
   useCreateFertigationRecord,
+  useDeleteIrrigationRecord,
+  useDeleteSprayRecord,
+  useDeleteHarvestRecord,
+  useDeleteExpenseRecord,
+  useDeleteFertigationRecord,
   useUpdateFarmWaterLevel,
   useFarms,
   useProfile,
@@ -540,6 +545,11 @@ export function EntryForm({
   const createHarvest = useCreateHarvestRecord();
   const createExpense = useCreateExpenseRecord();
   const createFertigation = useCreateFertigationRecord();
+  const deleteIrrigation = useDeleteIrrigationRecord();
+  const deleteSpray = useDeleteSprayRecord();
+  const deleteHarvest = useDeleteHarvestRecord();
+  const deleteExpense = useDeleteExpenseRecord();
+  const deleteFertigation = useDeleteFertigationRecord();
   const updateWaterLevel = useUpdateFarmWaterLevel();
 
   const scrollToNode = useCallback(
@@ -1047,6 +1057,80 @@ export function EntryForm({
         submitters,
       });
 
+    const rollbackCreatedRecords = async (
+      created: Array<{ type: LogTypeId; recordId: number | null; farmId: number }>,
+    ) => {
+      const tasks = created
+        .filter((entry) => entry.recordId !== null)
+        .map(async (entry) => {
+          try {
+            const id = entry.recordId as number;
+            switch (entry.type) {
+              case 'irrigation':
+                await deleteIrrigation.mutateAsync({ id, farmId: entry.farmId });
+                break;
+              case 'spray':
+                await deleteSpray.mutateAsync({ id, farmId: entry.farmId });
+                break;
+              case 'harvest':
+                await deleteHarvest.mutateAsync({ id, farmId: entry.farmId });
+                break;
+              case 'expense':
+                await deleteExpense.mutateAsync({ id, farmId: entry.farmId });
+                break;
+              case 'fertigation':
+                await deleteFertigation.mutateAsync({ id, farmId: entry.farmId });
+                break;
+              default:
+                break;
+            }
+          } catch (rollbackError) {
+            console.error('Failed to rollback created record', {
+              type: entry.type,
+              recordId: entry.recordId,
+              farmId: entry.farmId,
+              error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+            });
+          }
+        });
+      await Promise.all(tasks);
+    };
+
+    const reportSaveFailure = (
+      failedCount: number,
+      firstFailedError: unknown,
+      failedLogContext: (typeof pendingLogs)[number] | null,
+    ) => {
+      const errorMessage =
+        firstFailedError instanceof Error
+          ? firstFailedError.message
+          : typeof firstFailedError === 'string'
+            ? firstFailedError
+            : 'An unexpected error occurred (see logs for details)';
+      const errorMeta = getFarmErrorMeta(firstFailedError);
+      if (shouldCaptureFarmErrorInSentry(errorMeta)) {
+        Sentry.withScope((scope) => {
+          scope.setTag('feature', 'entry-log');
+          scope.setExtra('pendingLogId', failedLogContext?.id ?? 'unknown');
+          scope.setTag('logType', failedLogContext?.type ?? 'unknown');
+          scope.setExtra('errorMeta', { code: errorMeta.code ?? null });
+          Sentry.captureException(
+            firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),
+          );
+        });
+      }
+      const detail = errorMeta.message ?? errorMessage;
+      const codeSuffix = errorMeta.code ? ` [${errorMeta.code}]` : '';
+      const body =
+        failedCount === 1
+          ? t('entryForm.saveFailed.body_one', { count: failedCount })
+          : t('entryForm.saveFailed.body_other', { count: failedCount });
+      Alert.alert(
+        t('entryForm.saveFailed.title'),
+        detail ? `${body}\n\n${detail}${codeSuffix}` : body,
+      );
+    };
+
     try {
       if (hasAllFarmsDrafts && hasSingleFarmDrafts) {
         Alert.alert(
@@ -1103,32 +1187,20 @@ export function EntryForm({
         let failedCount = 0;
         let firstFailedError: unknown = null;
         let failedLogContext: (typeof pendingLogs)[number] | null = null;
+        const createdRecords: Array<{
+          type: LogTypeId;
+          recordId: number | null;
+          farmId: number;
+        }> = [];
 
         results.forEach((result, index) => {
           const submission = submissions[index];
           if (result.status === 'fulfilled') {
-            try {
-              telemetry.capture('record_created', {
-                record_type: submission.logType,
-                created_from: createdFrom,
-                farm_id: submission.farmId,
-              });
-              telemetry.capture('meaningful_action', {
-                action_type: 'record_created',
-                feature_name: submission.logType,
-              });
-              if (typeof submission.farmId === 'number') {
-                guidedTourEmit('guidedTour.logCreated', {
-                  farmId: submission.farmId,
-                  recordType: submission.logType,
-                });
-              }
-            } catch (err) {
-              if (process.env.NODE_ENV === 'development') {
-                console.error('[Telemetry] failed to send:', err);
-              }
-            }
-            successfulFarmIdsByLog.get(submission.logId)?.add(submission.farmId);
+            createdRecords.push({
+              type: submission.logType,
+              recordId: result.value.recordId,
+              farmId: submission.farmId,
+            });
             return;
           }
 
@@ -1152,61 +1224,45 @@ export function EntryForm({
           });
         });
 
-        pendingLogs.forEach((log) => {
-          const succeededFarmIds = successfulFarmIdsByLog.get(log.id);
-          if (!succeededFarmIds || succeededFarmIds.size === 0) {
-            allFarmsSucceededByLogRef.current.delete(log.id);
-            return;
-          }
-          allFarmsSucceededByLogRef.current.set(log.id, new Set(succeededFarmIds));
-        });
-
-        const successfulIds = pendingLogs
-          .filter((log) => {
-            const succeededFarmIds = successfulFarmIdsByLog.get(log.id);
-            return Boolean(succeededFarmIds && succeededFarmIds.size === farmsToUse.length);
-          })
-          .map((log) => log.id);
-
-        if (successfulIds.length > 0) {
-          successfulIds.forEach((id) => {
-            allFarmsSucceededByLogRef.current.delete(id);
-          });
-          setPendingLogs((prev) => prev.filter((log) => !successfulIds.includes(log.id)));
-          await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-          triggerHapticSuccess();
-          onLogSaveSuccess?.();
-        }
-
         if (failedCount > 0) {
-          const errorMessage =
-            firstFailedError instanceof Error
-              ? firstFailedError.message
-              : typeof firstFailedError === 'string'
-                ? firstFailedError
-                : 'An unexpected error occurred (see logs for details)';
-
-          const errorMeta = getFarmErrorMeta(firstFailedError);
-          if (shouldCaptureFarmErrorInSentry(errorMeta)) {
-            Sentry.withScope((scope) => {
-              scope.setTag('feature', 'entry-log');
-              scope.setExtra('pendingLogId', failedLogContext?.id ?? 'unknown');
-              scope.setTag('logType', failedLogContext?.type ?? 'unknown');
-              scope.setExtra('errorMeta', { code: errorMeta.code ?? null });
-              Sentry.captureException(
-                firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),
-              );
-            });
-          }
-
-          Alert.alert(
-            t('entryForm.partialSuccess.title'),
-            failedCount === 1
-              ? t('entryForm.partialSuccess.body_one', { count: failedCount })
-              : t('entryForm.partialSuccess.body_other', { count: failedCount }),
-          );
+          // Atomic semantics: roll back any successfully created records so the
+          // session has no partial saves.
+          await rollbackCreatedRecords(createdRecords);
+          allFarmsSucceededByLogRef.current.clear();
+          await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+          reportSaveFailure(failedCount, firstFailedError, failedLogContext);
           return;
         }
+
+        // All farms x all logs succeeded -- emit telemetry + clear session.
+        submissions.forEach((submission) => {
+          try {
+            telemetry.capture('record_created', {
+              record_type: submission.logType,
+              created_from: createdFrom,
+              farm_id: submission.farmId,
+            });
+            telemetry.capture('meaningful_action', {
+              action_type: 'record_created',
+              feature_name: submission.logType,
+            });
+            if (typeof submission.farmId === 'number') {
+              guidedTourEmit('guidedTour.logCreated', {
+                farmId: submission.farmId,
+                recordType: submission.logType,
+              });
+            }
+          } catch (err) {
+            if (process.env.NODE_ENV === 'development') {
+              console.error('[Telemetry] failed to send:', err);
+            }
+          }
+        });
+        allFarmsSucceededByLogRef.current.clear();
+        setPendingLogs([]);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+        triggerHapticSuccess();
+        onLogSaveSuccess?.();
 
         onClose();
         return;
@@ -1240,10 +1296,8 @@ export function EntryForm({
       const results = await Promise.allSettled(
         pendingLogs.map((log) => saveLog(log, buildFarmContext(singleFarmContext))),
       );
-      const successfulIds = pendingLogs
-        .filter((_, index) => results[index]?.status === 'fulfilled')
-        .map((log) => log.id);
       const failedCount = results.filter((result) => result.status === 'rejected').length;
+
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
           const failedLog = pendingLogs[index];
@@ -1260,6 +1314,36 @@ export function EntryForm({
           });
         }
       });
+
+      if (failedCount > 0) {
+        // Atomic semantics: roll back any successfully created records so the
+        // session has no partial saves.
+        const createdRecords = results.flatMap((result, index) => {
+          if (result.status !== 'fulfilled') return [];
+          const log = pendingLogs[index];
+          if (!log) return [];
+          return [
+            {
+              type: log.type,
+              recordId: result.value.recordId,
+              farmId,
+            },
+          ];
+        });
+        await rollbackCreatedRecords(createdRecords);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+
+        const firstFailedIndex = results.findIndex((result) => result.status === 'rejected');
+        const failedLogContext = firstFailedIndex >= 0 ? pendingLogs[firstFailedIndex] : null;
+        const firstFailedError =
+          results[firstFailedIndex]?.status === 'rejected'
+            ? (results[firstFailedIndex] as PromiseRejectedResult).reason
+            : null;
+        reportSaveFailure(failedCount, firstFailedError, failedLogContext);
+        return;
+      }
+
+      // All saves succeeded -- emit telemetry, update task, clear pending.
       const sourceTaskLogId = pendingLogs.find((log) => log.isSourceTaskLog)?.id;
       const matchingSuccessfulRecord =
         sourceTaskLogId === undefined
@@ -1275,135 +1359,86 @@ export function EntryForm({
             )?.value;
       let taskCompletionUpdateFailed = false;
 
-      if (successfulIds.length > 0) {
-        successfulIds.forEach((id) => {
-          allFarmsSucceededByLogRef.current.delete(id);
-        });
-        // Track telemetry for successfully created records
-        pendingLogs
-          .filter((log) => successfulIds.includes(log.id))
-          .forEach((log) => {
-            try {
-              telemetry.capture('record_created', {
-                record_type: log.type,
-                created_from: createdFrom,
-                farm_id: farmId,
-              });
-              if (entrySource === 'voice_ai') {
-                telemetry.capture('voice_log_submitted', {
-                  farm_id: farmId,
-                  record_type: log.type,
-                  duration_hours:
-                    log.type === 'irrigation'
-                      ? ((log.data as IrrigationFormData).duration ?? null)
-                      : null,
-                });
-              }
-              // Track meaningful action for record creation
-              telemetry.capture('meaningful_action', {
-                action_type: 'record_created',
-                feature_name: log.type,
-              });
-            } catch (err) {
-              if (process.env.NODE_ENV === 'development') {
-                console.error('[Telemetry] failed to send:', err);
-              }
-            }
-            if (typeof farmId === 'number') {
-              guidedTourEmit('guidedTour.logCreated', {
-                farmId,
-                recordType: log.type,
-              });
-            }
+      pendingLogs.forEach((log) => {
+        allFarmsSucceededByLogRef.current.delete(log.id);
+        try {
+          telemetry.capture('record_created', {
+            record_type: log.type,
+            created_from: createdFrom,
+            farm_id: farmId,
           });
-        setPendingLogs((prev) => prev.filter((log) => !successfulIds.includes(log.id)));
-
-        if (
-          sourceTaskId &&
-          matchingSuccessfulRecord &&
-          matchingSuccessfulRecord.recordId !== null
-        ) {
-          try {
-            await updateTask.mutateAsync({
-              id: sourceTaskId,
-              updates: {
-                status: 'completed',
-                completed: true,
-                completed_at: new Date().toISOString(),
-                linked_record_type: matchingSuccessfulRecord.type,
-                linked_record_id: matchingSuccessfulRecord.recordId,
-              },
+          if (entrySource === 'voice_ai') {
+            telemetry.capture('voice_log_submitted', {
+              farm_id: farmId,
+              record_type: log.type,
+              duration_hours:
+                log.type === 'irrigation'
+                  ? ((log.data as IrrigationFormData).duration ?? null)
+                  : null,
             });
-          } catch (taskUpdateError) {
-            taskCompletionUpdateFailed = true;
-            const taskUpdateErrorMeta = getFarmErrorMeta(taskUpdateError);
-            const taskUpdateErrorName =
-              taskUpdateError instanceof Error ? taskUpdateError.name : 'UnknownError';
-            console.error('Task completion update failed after log save', {
-              errorName: taskUpdateErrorName,
-              errorCode: taskUpdateErrorMeta.code ?? null,
-              errorMessage:
-                taskUpdateErrorMeta.message ??
-                (taskUpdateError instanceof Error ? taskUpdateError.message : null),
-              ...(__DEV__ ? { errorHint: taskUpdateErrorMeta.hint ?? null } : {}),
-            });
-
-            if (shouldCaptureFarmErrorInSentry(taskUpdateErrorMeta)) {
-              Sentry.withScope((scope) => {
-                scope.setTag('feature', 'entry-log');
-                scope.setExtra('taskId', sourceTaskId);
-                scope.setExtra('errorMeta', { code: taskUpdateErrorMeta.code ?? null });
-                Sentry.captureException(
-                  taskUpdateError instanceof Error
-                    ? taskUpdateError
-                    : new Error('Task completion update failed'),
-                );
-              });
-            }
+          }
+          telemetry.capture('meaningful_action', {
+            action_type: 'record_created',
+            feature_name: log.type,
+          });
+        } catch (err) {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[Telemetry] failed to send:', err);
           }
         }
-
-        await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-        triggerHapticSuccess();
-        onLogSaveSuccess?.();
-      }
-
-      if (failedCount > 0) {
-        const firstFailedIndex = results.findIndex((result) => result.status === 'rejected');
-        const failedLogContext = firstFailedIndex >= 0 ? pendingLogs[firstFailedIndex] : null;
-        const firstFailedError =
-          results[firstFailedIndex]?.status === 'rejected'
-            ? (results[firstFailedIndex] as PromiseRejectedResult).reason
-            : null;
-
-        const errorMessage =
-          firstFailedError instanceof Error
-            ? firstFailedError.message
-            : typeof firstFailedError === 'string'
-              ? firstFailedError
-              : 'An unexpected error occurred (see logs for details)';
-
-        const errorMeta = getFarmErrorMeta(firstFailedError);
-        if (shouldCaptureFarmErrorInSentry(errorMeta)) {
-          Sentry.withScope((scope) => {
-            scope.setTag('feature', 'entry-log');
-            scope.setExtra('pendingLogId', failedLogContext?.id ?? 'unknown');
-            scope.setTag('logType', failedLogContext?.type ?? 'unknown');
-            scope.setExtra('errorMeta', { code: errorMeta.code ?? null });
-            Sentry.captureException(
-              firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),
-            );
+        if (typeof farmId === 'number') {
+          guidedTourEmit('guidedTour.logCreated', {
+            farmId,
+            recordType: log.type,
           });
         }
+      });
+      setPendingLogs([]);
 
-        Alert.alert(
-          t('entryForm.partialSuccess.title'),
-          failedCount === 1
-            ? t('entryForm.partialSuccess.body_one', { count: failedCount })
-            : t('entryForm.partialSuccess.body_other', { count: failedCount }),
-        );
-        return;
+      if (sourceTaskId && matchingSuccessfulRecord && matchingSuccessfulRecord.recordId !== null) {
+        try {
+          await updateTask.mutateAsync({
+            id: sourceTaskId,
+            updates: {
+              status: 'completed',
+              completed: true,
+              completed_at: new Date().toISOString(),
+              linked_record_type: matchingSuccessfulRecord.type,
+              linked_record_id: matchingSuccessfulRecord.recordId,
+            },
+          });
+        } catch (taskUpdateError) {
+          taskCompletionUpdateFailed = true;
+          const taskUpdateErrorMeta = getFarmErrorMeta(taskUpdateError);
+          const taskUpdateErrorName =
+            taskUpdateError instanceof Error ? taskUpdateError.name : 'UnknownError';
+          console.error('Task completion update failed after log save', {
+            errorName: taskUpdateErrorName,
+            errorCode: taskUpdateErrorMeta.code ?? null,
+            errorMessage:
+              taskUpdateErrorMeta.message ??
+              (taskUpdateError instanceof Error ? taskUpdateError.message : null),
+            ...(__DEV__ ? { errorHint: taskUpdateErrorMeta.hint ?? null } : {}),
+          });
+
+          if (shouldCaptureFarmErrorInSentry(taskUpdateErrorMeta)) {
+            Sentry.withScope((scope) => {
+              scope.setTag('feature', 'entry-log');
+              scope.setExtra('taskId', sourceTaskId);
+              scope.setExtra('errorMeta', { code: taskUpdateErrorMeta.code ?? null });
+              Sentry.captureException(
+                taskUpdateError instanceof Error
+                  ? taskUpdateError
+                  : new Error('Task completion update failed'),
+              );
+            });
+          }
+        }
       }
+
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      triggerHapticSuccess();
+      onLogSaveSuccess?.();
 
       if (taskCompletionUpdateFailed) {
         Alert.alert(t('common.error'), t('entryForm.taskCompletionLinkFailed'));

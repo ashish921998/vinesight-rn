@@ -7,7 +7,9 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  StyleSheet,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
@@ -44,6 +46,7 @@ export default function WarehouseScreen() {
   const _sprayColor = m3.colorScheme.primary;
 
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { setAddWarehouseItem, setAddStock } = useModalStore();
   const { data: items, isLoading, refetch, isRefetching } = useWarehouseItems();
   const deleteItemMutation = useDeleteWarehouseItem();
@@ -180,60 +183,119 @@ export default function WarehouseScreen() {
     openAddItem(item);
   };
 
-  if (isLoading) {
-    return (
+  // Custom JS header (avoids iOS 26 native bar-button glass capsule)
+  const renderHeader = () => (
+    <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
       <View
         style={{
-          flex: 1,
-          backgroundColor: m3.colorScheme.background,
-          justifyContent: 'center',
+          height: 56,
+          flexDirection: 'row',
           alignItems: 'center',
+          paddingHorizontal: spacing[2],
         }}
       >
-        <Stack.Screen options={{ title: t('warehouse.title') }} />
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-        <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
-          {t('warehouse.loading.inventory')}
-        </Text>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            backgroundColor: 'transparent',
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.goBack')}
+        >
+          {({ pressed }) => (
+            <View
+              style={{
+                width: '100%',
+                height: '100%',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Icon name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    borderRadius: 22,
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                      : 'transparent',
+                  },
+                ]}
+              />
+            </View>
+          )}
+        </Pressable>
+
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text
+            numberOfLines={1}
+            style={{
+              color: m3.colorScheme.onSurface,
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.bold,
+            }}
+          >
+            {t('warehouse.title')}
+          </Text>
+        </View>
+
+        <Pressable
+          onPress={() => {
+            openAddItem(null);
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={t('warehouse.actions.addItem')}
+          style={{ paddingHorizontal: spacing[3], paddingVertical: spacing[2] }}
+        >
+          <Text
+            style={{
+              color: m3.colorScheme.primary,
+              fontWeight: fontWeight.semibold,
+              fontSize: fontSize.sm,
+            }}
+          >
+            {t('warehouse.actions.addItem')}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        {renderHeader()}
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+            {t('warehouse.loading.inventory')}
+          </Text>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-      <Stack.Screen
-        options={{
-          title: t('warehouse.title'),
-          headerRight: () => (
-            <Pressable
-              onPress={() => {
-                openAddItem(null);
-              }}
-              style={{
-                marginRight: spacing[4],
-                height: 40,
-                paddingHorizontal: 16,
-                borderRadius: 999,
-                backgroundColor: m3.colorScheme.primary,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <Icon name="plus" size={16} color={m3.colorScheme.onPrimary} />
-              <Text
-                style={{
-                  color: m3.colorScheme.onPrimary,
-                  fontSize: 14,
-                  fontWeight: fontWeight.semibold,
-                }}
-              >
-                {t('warehouse.actions.addItem')}
-              </Text>
-            </Pressable>
-          ),
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
+      {renderHeader()}
 
       <View style={{ flex: 1 }}>
         <ScrollView

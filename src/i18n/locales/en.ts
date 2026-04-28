@@ -613,6 +613,11 @@ export const en = {
       body_one: '{{count}} log failed to save. Please review and try again.',
       body_other: '{{count}} logs failed to save. Please review and try again.',
     },
+    saveFailed: {
+      title: 'Could not save logs',
+      body_one: 'Failed to save this log. No changes were saved. Please review and try again.',
+      body_other: 'Failed to save logs. No changes were saved. Please review and try again.',
+    },
     taskCompletionLinkFailed: 'Logs were saved, but the source task could not be marked complete.',
     plannedSprayInputs: 'Planned spray inputs',
     plannedFertilizers: 'Planned fertilizers',
@@ -853,6 +858,13 @@ export const en = {
       tankMixCalculator: 'Calculate exact gm/ml quantity for each component based on tank liters',
       safeToSprayChecker: 'Check which sprays are safe to apply for your target harvest date',
       sprayCatalog: 'Browse catalog sprays and mixes with pest, mode, and PHI metadata',
+    },
+    categories: {
+      irrigation: 'Irrigation',
+      crop: 'Crop',
+      fertility: 'Fertility',
+      spray: 'Spray',
+      weather: 'Weather',
     },
   },
 
@@ -1968,10 +1980,16 @@ export const en = {
     },
     hero: {
       today: 'Today',
+      welcome: 'Welcome',
       allClear: 'All clear',
       attentionNeeded: 'Attention needed',
       alertCount_one: '{{count}} alert',
       alertCount_other: '{{count}} alerts',
+      attentionSummary_one: '{{count}} item needs attention',
+      attentionSummary_other: '{{count}} items need your attention',
+    },
+    header: {
+      notificationsA11y: 'Notifications',
     },
     stats: {
       title: 'Overview',
@@ -1988,6 +2006,9 @@ export const en = {
         noRecentLogs: 'No recent logs',
         lowWaterLevel: 'Low water level',
         phiDeadline: 'PHI deadline approaching',
+      },
+      severity: {
+        high: 'Overdue',
       },
       actions: {
         reviewTasks: 'Review task',
@@ -2126,10 +2147,14 @@ export const en = {
       medium: 'Medium',
       high: 'High',
     },
+    actions: {
+      menuTitle: 'Task actions',
+    },
     a11y: {
       editTask: 'Edit task: {{title}}',
       deleteTask: 'Delete task: {{title}}',
       completeTask: 'Mark task complete: {{title}}',
+      taskActions: 'Task actions for {{title}}',
     },
     status: {
       pending: 'Pending',
@@ -2516,6 +2541,11 @@ export const en = {
     },
     actions: {
       backToList: 'Back to Lab Tests',
+      title: 'Add lab test',
+      addSoilTest: 'Add Soil Test',
+      addSoilTestDesc: 'Record nutrient levels from a soil sample',
+      addPetioleTest: 'Add Petiole Test',
+      addPetioleTestDesc: 'Record nutrient levels from a petiole sample',
     },
     parameters: {
       ph: 'pH',
@@ -2577,7 +2607,7 @@ export const en = {
         'Soil profiles are associated with specific farms. Please select a farm to view its soil profiles.',
       cta: 'Go to farms',
     },
-    title: 'Soil Profiling',
+    title: 'Soil Moisture',
     tabs: {
       history: 'History',
       trends: 'Trends',
@@ -2616,7 +2646,7 @@ export const en = {
   },
 
   soilProfileForm: {
-    titleAdd: 'Add Soil Profile',
+    titleAdd: 'Add Soil Moisture Reading',
     sections: {
       top: 'Top',
       bottom: 'Bottom',

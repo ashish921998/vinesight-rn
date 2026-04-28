@@ -48,9 +48,19 @@ export default function TabLayout() {
       onPress={() => router.push('/(tabs)/settings')}
       accessibilityRole="button"
       accessibilityLabel={t('assistant.settingsButtonA11y')}
-      style={{ marginRight: spacing[4] }}
+      style={{
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        backgroundColor: 'transparent',
+        marginRight: spacing[2],
+      }}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
-      <SymbolIcon name="gearshape" size={24} color={m3.colorScheme.onSurface} />
+      <SymbolIcon name="gearshape" size={22} color={m3.colorScheme.onSurface} />
     </Pressable>
   );
 

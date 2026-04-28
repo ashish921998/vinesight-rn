@@ -7,8 +7,9 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Symbol as SFSymbol } from '@/components/ui/symbol';
@@ -103,6 +104,7 @@ export default function TasksScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { farmId, filter: routeFilter } = useLocalSearchParams<{
     farmId?: string;
     filter?: FilterType;
@@ -289,48 +291,157 @@ export default function TasksScreen() {
     });
   };
 
+  const handleAddTaskPress = () => {
+    setAddEntry({ tabs: ['task'], initialTab: 'task' });
+    router.push({
+      pathname: '/add-entry',
+      params: { tabs: 'task', initialTab: 'task' },
+    });
+  };
+
+  // Custom JS header (avoids iOS 26 native bar-button glass capsule)
+  const renderHeader = () => (
+    <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
+      <View
+        style={{
+          height: 56,
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing[2],
+        }}
+      >
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            backgroundColor: 'transparent',
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.goBack')}
+        >
+          {({ pressed }) => (
+            <View
+              style={{
+                width: '100%',
+                height: '100%',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <SFSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    borderRadius: 22,
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                      : 'transparent',
+                  },
+                ]}
+              />
+            </View>
+          )}
+        </Pressable>
+
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text
+            numberOfLines={1}
+            style={{
+              color: m3.colorScheme.onSurface,
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.bold,
+            }}
+          >
+            {t('tasks.title')}
+          </Text>
+        </View>
+
+        <Pressable
+          onPress={handleAddTaskPress}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            backgroundColor: 'transparent',
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={t('tasks.a11y.addTask', { defaultValue: 'Add task' })}
+        >
+          {({ pressed }) => (
+            <View
+              style={{
+                width: '100%',
+                height: '100%',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <SFSymbol name="plus" size={24} color={m3.colorScheme.primary} />
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    borderRadius: 22,
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                      : 'transparent',
+                  },
+                ]}
+              />
+            </View>
+          )}
+        </Pressable>
+      </View>
+    </View>
+  );
+
   if (isLoading) {
     return (
       <SafeAreaView
         style={{
           flex: 1,
           backgroundColor: m3.colorScheme.background,
-          alignItems: 'center',
-          justifyContent: 'center',
         }}
+        edges={['left', 'right', 'bottom']}
       >
-        <Stack.Screen options={{ title: t('tasks.title') }} />
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-        <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
-          {t('common.loading')}
-        </Text>
+        <Stack.Screen options={{ headerShown: false }} />
+        {renderHeader()}
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+            {t('common.loading')}
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-      <Stack.Screen
-        options={{
-          title: t('tasks.title'),
-          headerRight: () => (
-            <Pressable
-              onPress={() => {
-                setAddEntry({ tabs: ['task'], initialTab: 'task' });
-                router.push({
-                  pathname: '/add-entry',
-                  params: { tabs: 'task', initialTab: 'task' },
-                });
-              }}
-              style={{ marginRight: spacing[4] }}
-              accessibilityRole="button"
-              accessibilityLabel={t('tasks.a11y.addTask', { defaultValue: 'Add task' })}
-            >
-              <SFSymbol name="plus.circle.fill" size={28} color={m3.colorScheme.primary} />
-            </Pressable>
-          ),
-        }}
-      />
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
+      edges={['left', 'right', 'bottom']}
+    >
+      <Stack.Screen options={{ headerShown: false }} />
+      {renderHeader()}
 
       <ScrollView
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[24] }}

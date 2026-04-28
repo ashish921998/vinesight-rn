@@ -12,9 +12,11 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
 } from 'react-native';
 
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculator-models';
@@ -32,6 +34,8 @@ interface NutrientResult {
 export default function NutrientCalculatorScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [area, setArea] = useState(''); // acres
   const [targetYield, setTargetYield] = useState(''); // kg/acre
   const [selectedStage, setSelectedStage] = useState<GrapeGrowthStageId | null>(null);
@@ -84,13 +88,75 @@ export default function NutrientCalculatorScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: 'Nutrient Calculator',
-          headerTitleStyle: { fontWeight: '600' },
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+        {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
+        <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
+          <View
+            style={{
+              height: 56,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: spacing[2],
+            }}
+          >
+            <Pressable
+              onPress={() => router.back()}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                backgroundColor: 'transparent',
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              {({ pressed }) => (
+                <View
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        borderRadius: 22,
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </View>
+              )}
+            </Pressable>
+
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text
+                numberOfLines={1}
+                style={{
+                  color: m3.colorScheme.onSurface,
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.bold,
+                }}
+              >
+                Nutrient Calculator
+              </Text>
+            </View>
+
+            <View style={{ width: 44, height: 44 }} />
+          </View>
+        </View>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1, backgroundColor: m3.colorScheme.background }}

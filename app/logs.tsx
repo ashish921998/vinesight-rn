@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   Platform,
+  StyleSheet,
 } from 'react-native';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -469,27 +470,127 @@ export default function LogsScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: t('logs.screenTitle'),
-          headerStyle: { backgroundColor: m3.colorScheme.background },
-          headerTintColor: m3.colorScheme.onBackground,
-          headerRight: () =>
-            selectedFarmId !== undefined && (
-              <Pressable onPress={handleAddActivity} style={{ marginRight: spacing[4] }}>
-                <UiSymbol name="plus.circle.fill" size={28} color={m3.colorScheme.primary} />
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+        <LinearGradient
+          pointerEvents="none"
+          colors={[colorWithOpacity(m3.colorScheme.primary, 0.08), 'transparent']}
+          style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
+        />
+        {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
+        <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
+          <View
+            style={{
+              height: 56,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: spacing[2],
+            }}
+          >
+            <Pressable
+              onPress={() => router.back()}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                backgroundColor: 'transparent',
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.goBack')}
+            >
+              {({ pressed }) => (
+                <View
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <UiSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        borderRadius: 22,
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </View>
+              )}
+            </Pressable>
+
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text
+                numberOfLines={1}
+                style={{
+                  color: m3.colorScheme.onSurface,
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.bold,
+                }}
+              >
+                {t('logs.screenTitle')}
+              </Text>
+            </View>
+
+            {selectedFarmId !== undefined ? (
+              <Pressable
+                onPress={handleAddActivity}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  backgroundColor: 'transparent',
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+              >
+                {({ pressed }) => (
+                  <View
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <UiSymbol name="plus" size={24} color={m3.colorScheme.primary} />
+                    <View
+                      pointerEvents="none"
+                      style={[
+                        StyleSheet.absoluteFillObject,
+                        {
+                          borderRadius: 22,
+                          backgroundColor: pressed
+                            ? colorWithOpacity(
+                                m3.colorScheme.onSurface,
+                                m3.stateLayerOpacity.pressed,
+                              )
+                            : 'transparent',
+                        },
+                      ]}
+                    />
+                  </View>
+                )}
               </Pressable>
-            ),
-        }}
-      />
-
-      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background, paddingTop: insets.top }}>
+            ) : (
+              <View style={{ width: 44, height: 44 }} />
+            )}
+          </View>
+        </View>
         <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-          <LinearGradient
-            colors={[colorWithOpacity(m3.colorScheme.primary, 0.08), 'transparent']}
-            style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
-          />
-
           <ScrollView
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}

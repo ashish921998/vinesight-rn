@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -42,6 +43,8 @@ export default function AnalyticsScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
 
@@ -60,69 +63,141 @@ export default function AnalyticsScreen() {
     [colors.success, colors.warning, m3],
   );
 
-  if (isLoading) {
-    return (
+  // Custom JS header (avoids iOS 26 native bar-button glass capsule)
+  const analyticsHeader = (
+    <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
       <View
         style={{
-          flex: 1,
-          backgroundColor: m3.colorScheme.background,
+          height: 56,
+          flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'center',
+          paddingHorizontal: spacing[2],
         }}
       >
-        <Stack.Screen options={{ title: t('analytics.title') }} />
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-        <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
-          {t('analytics.loading')}
-        </Text>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            backgroundColor: 'transparent',
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.goBack')}
+        >
+          {({ pressed }) => (
+            <View
+              style={{
+                width: '100%',
+                height: '100%',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <SymbolIcon name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    borderRadius: 22,
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                      : 'transparent',
+                  },
+                ]}
+              />
+            </View>
+          )}
+        </Pressable>
+
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text
+            numberOfLines={1}
+            style={{
+              color: m3.colorScheme.onSurface,
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.bold,
+            }}
+          >
+            {t('analytics.title')}
+          </Text>
+        </View>
+
+        <View style={{ width: 44, height: 44 }} />
+      </View>
+    </View>
+  );
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        {analyticsHeader}
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+            {t('analytics.loading')}
+          </Text>
+        </View>
       </View>
     );
   }
 
   if (!analytics) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: m3.colorScheme.background,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: spacing[6],
-        }}
-      >
-        <Stack.Screen options={{ title: t('analytics.title') }} />
-        <SymbolIcon
-          name="chart.bar.fill"
-          size={48}
-          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-        />
-        <Text
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        {analyticsHeader}
+        <View
           style={{
-            color: colors.surface[600],
-            marginTop: spacing[4],
-            textAlign: 'center',
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: spacing[6],
           }}
         >
-          {t('analytics.empty.title')}
-        </Text>
-        <Text
-          style={{
-            color: colors.surface[500],
-            fontSize: fontSize.sm,
-            marginTop: spacing[2],
-            textAlign: 'center',
-          }}
-        >
-          {t('analytics.empty.subtitle')}
-        </Text>
+          <SymbolIcon
+            name="chart.bar.fill"
+            size={48}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+          />
+          <Text
+            style={{
+              color: colors.surface[600],
+              marginTop: spacing[4],
+              textAlign: 'center',
+            }}
+          >
+            {t('analytics.empty.title')}
+          </Text>
+          <Text
+            style={{
+              color: colors.surface[500],
+              fontSize: fontSize.sm,
+              marginTop: spacing[2],
+              textAlign: 'center',
+            }}
+          >
+            {t('analytics.empty.subtitle')}
+          </Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
+      edges={['left', 'right', 'bottom']}
+    >
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-        <Stack.Screen options={{ title: t('analytics.title') }} />
+        <Stack.Screen options={{ headerShown: false }} />
+        {analyticsHeader}
 
         <ScrollView contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}>
           {/* Time Range Selector - Horizontal pill row with 999 borderRadius */}
