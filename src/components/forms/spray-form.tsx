@@ -40,6 +40,7 @@ export interface ChemicalEntry {
 const DEFAULT_CHEMICAL_UNIT: ChemicalUnit = 'gm/L';
 const MAX_CHEMICAL_ROWS = 10;
 const QUICK_CHEMICAL_UNITS: readonly ChemicalUnit[] = ['gm/L', 'ml/L', 'kg', 'liter'];
+const BULK_CHEMICAL_UNITS = new Set<ChemicalUnit>(['kg', 'liter']);
 
 function isChemicalUnit(value: string): value is ChemicalUnit {
   return CHEMICAL_UNITS.includes(value as ChemicalUnit);
@@ -961,7 +962,7 @@ function ChemicalRow({
   };
 
   const handleUnitSelect = (unit: ChemicalUnit) => {
-    onUpdate({ unit });
+    onUpdate(BULK_CHEMICAL_UNITS.has(unit) ? { unit, quantityBasis: 'total' } : { unit });
   };
 
   return (
