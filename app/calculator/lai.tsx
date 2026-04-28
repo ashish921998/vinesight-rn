@@ -22,12 +22,14 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
+import { useTranslation } from 'react-i18next';
 
 export default function LAICalculatorScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const [shootLength, setShootLength] = useState(''); // cm
   const [shootsPerVine, setShootsPerVine] = useState('');
   const [vineSpacing, setVineSpacing] = useState(''); // m
@@ -153,7 +155,7 @@ export default function LAICalculatorScreen() {
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
-              accessibilityLabel="Go back"
+              accessibilityLabel={t('common.goBack')}
             >
               {({ pressed }) => (
                 <View
@@ -190,7 +192,7 @@ export default function LAICalculatorScreen() {
                   fontWeight: fontWeight.bold,
                 }}
               >
-                LAI Calculator
+                {t('calculator.lai.title', { defaultValue: 'LAI Calculator' })}
               </Text>
             </View>
 

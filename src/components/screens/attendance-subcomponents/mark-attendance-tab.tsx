@@ -151,6 +151,8 @@ export function MarkAttendanceTab({
 
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestLoadRef = useRef(0);
+  const farmsRef = useRef(farms);
+  farmsRef.current = farms;
 
   const prevWorkerIdRef = useRef<number | undefined>(undefined);
 
@@ -286,8 +288,8 @@ export function MarkAttendanceTab({
         const recordWithFarms = records.find((r) => r.farm_ids && r.farm_ids.length > 0);
         if (recordWithFarms) {
           setSelectedFarmIds(recordWithFarms.farm_ids || []);
-        } else if (farms.length > 0) {
-          const firstWithId = farms.find((f) => f.id != null);
+        } else if (farmsRef.current.length > 0) {
+          const firstWithId = farmsRef.current.find((f) => f.id != null);
           setSelectedFarmIds(firstWithId?.id != null ? [firstWithId.id] : []);
         }
         prevWorkerIdRef.current = workerId;
@@ -315,7 +317,7 @@ export function MarkAttendanceTab({
         setLoading(false);
       }
     }
-  }, [selectedWorker, dateRange, farms, t]);
+  }, [selectedWorker, dateRange, t]);
 
   React.useEffect(() => {
     loadSavedRange();
@@ -341,8 +343,13 @@ export function MarkAttendanceTab({
       if (!current) return prev;
 
       const currentIndex = STATUS_CYCLE.indexOf(current.status);
-      const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % STATUS_CYCLE.length;
-      const nextStatus = STATUS_CYCLE[nextIndex];
+      let nextStatus: AttendanceStatus;
+      if (currentIndex === -1) {
+        // Unrecognized status from DB — reset to unmarked instead of defaulting to full_day
+        nextStatus = null;
+      } else {
+        nextStatus = STATUS_CYCLE[(currentIndex + 1) % STATUS_CYCLE.length];
+      }
 
       const newMap = new Map(prev);
       newMap.set(key, {

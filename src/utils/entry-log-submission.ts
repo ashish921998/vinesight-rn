@@ -110,9 +110,12 @@ export async function submitEntryPendingLog(params: {
             try {
               await submitters.deleteIrrigation({ id: recordId, farmId });
             } catch {
-              // Compensating delete failed; record is orphaned. Re-throw
-              // the original water-level error so the caller knows.
+              // Compensating delete failed; record is orphaned. Attach the
+              // recordId to the error so the caller can roll it back too.
             }
+          }
+          if (waterLevelError && typeof waterLevelError === 'object' && recordId !== null) {
+            (waterLevelError as { recordId?: number | null }).recordId = recordId;
           }
           throw waterLevelError;
         }

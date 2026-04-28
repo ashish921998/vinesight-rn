@@ -1047,6 +1047,12 @@ export const mr = {
         reset: 'कॅल्क्युलेटर रीसेट करा',
       },
     },
+    lai: {
+      title: 'LAI कॅल्क्युलेटर',
+    },
+    systemDischarge: {
+      title: 'सिस्टम डिस्चार्ज',
+    },
   },
 
   parameterSelector: {

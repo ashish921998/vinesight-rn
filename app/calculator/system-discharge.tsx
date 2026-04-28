@@ -24,6 +24,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
+import { useTranslation } from 'react-i18next';
 
 interface SystemDischargeResults {
   plantsPerHectare?: number | null;
@@ -43,6 +44,7 @@ export default function SystemDischargeScreen() {
   const m3 = useM3();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useTranslation();
   const [dbl, setDbl] = useState('');
   const [refillTankValue, setRefillTankValue] = useState('');
 
@@ -316,7 +318,7 @@ export default function SystemDischargeScreen() {
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
-              accessibilityLabel="Go back"
+              accessibilityLabel={t('common.goBack')}
             >
               {({ pressed }) => (
                 <View
@@ -353,7 +355,7 @@ export default function SystemDischargeScreen() {
                   fontWeight: fontWeight.bold,
                 }}
               >
-                System Discharge
+                {t('calculator.systemDischarge.title', { defaultValue: 'System Discharge' })}
               </Text>
             </View>
 

@@ -1043,6 +1043,12 @@ export const hi = {
         reset: 'कैलकुलेटर रीसेट करें',
       },
     },
+    lai: {
+      title: 'LAI कैलकुलेटर',
+    },
+    systemDischarge: {
+      title: 'सिस्टम डिस्चार्ज',
+    },
   },
 
   parameterSelector: {

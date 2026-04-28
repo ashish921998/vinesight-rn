@@ -25,7 +25,8 @@ export default function TankMixCalculatorScreen() {
   const preselectedMixId =
     typeof rawMixId === 'string' && /^\d+$/.test(rawMixId) ? Number.parseInt(rawMixId, 10) : NaN;
 
-  const tankLiters = Number.parseFloat(tankLitersText);
+  const isValidTankSize = /^\d+\.?\d*$/.test(tankLitersText);
+  const tankLiters = isValidTankSize ? Number.parseFloat(tankLitersText) : NaN;
   const { data: catalogMixes = [], isLoading } = useChemicalCatalog();
   const mixes = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -188,9 +189,14 @@ export default function TankMixCalculatorScreen() {
             <TextInput
               value={tankLitersText}
               onChangeText={(text) => {
-                const normalized = text.replace(',', '.').replace(/[^0-9.]/g, '');
-                const [whole, ...rest] = normalized.split('.');
-                setTankLitersText(rest.length > 0 ? `${whole}.${rest.join('')}` : whole);
+                let normalized = text.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+                const firstDot = normalized.indexOf('.');
+                if (firstDot !== -1) {
+                  normalized =
+                    normalized.slice(0, firstDot + 1) +
+                    normalized.slice(firstDot + 1).replace(/\./g, '');
+                }
+                setTankLitersText(normalized);
               }}
               keyboardType="decimal-pad"
               placeholder="200"

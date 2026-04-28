@@ -1044,6 +1044,12 @@ export const en = {
         reset: 'Reset Calculator',
       },
     },
+    lai: {
+      title: 'LAI Calculator',
+    },
+    systemDischarge: {
+      title: 'System Discharge',
+    },
   },
 
   parameterSelector: {

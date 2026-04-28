@@ -381,10 +381,13 @@ export default function ReportsScreen() {
   const showStickyExport = Boolean(farms && farms.length > 0);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }} edges={['top']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
+      edges={['bottom', 'left', 'right']}
+    >
       <Stack.Screen options={{ headerShown: false }} />
       {/* Custom JS header (avoids iOS 26 native bar-button glass capsule) */}
-      <View style={{ backgroundColor: m3.colorScheme.surface }}>
+      <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
         <View
           style={{
             height: 56,

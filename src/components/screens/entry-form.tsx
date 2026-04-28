@@ -1389,13 +1389,20 @@ export function EntryForm({
         // session has no partial saves.
         const singleFarmCtx = buildFarmContext(singleFarmContext);
         const createdRecords = results.flatMap((result, index) => {
-          if (result.status !== 'fulfilled') return [];
           const log = pendingLogs[index];
           if (!log) return [];
+          let recordId: number | null = null;
+          if (result.status === 'fulfilled') {
+            recordId = result.value.recordId;
+          } else if (log.type === 'irrigation') {
+            const reason = (result as PromiseRejectedResult).reason;
+            recordId = reason?.recordId ?? null;
+          }
+          if (recordId == null) return [];
           return [
             {
               type: log.type,
-              recordId: result.value.recordId,
+              recordId,
               farmId,
               farmContext: singleFarmCtx,
             },
