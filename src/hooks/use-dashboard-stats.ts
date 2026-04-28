@@ -121,14 +121,17 @@ export function useTodayNeedsAttention(limit: number = 10) {
           .order('safe_harvest_date', { ascending: true }),
       ]);
 
-      const queryErrors = [
-        overdueTasksResult.error,
-        recentLogFarmsResult.error,
-        phiDeadlinesResult.error,
-      ];
-      const firstQueryError = queryErrors.find((error) => Boolean(error));
-      if (firstQueryError) {
-        throw firstQueryError;
+      if (overdueTasksResult.error) throw overdueTasksResult.error;
+      if (phiDeadlinesResult.error) throw phiDeadlinesResult.error;
+      // RPC may not be deployed in all environments — degrade gracefully rather than
+      // surfacing a dev error overlay on every screen.
+      if (recentLogFarmsResult.error) {
+        if (__DEV__) {
+          console.warn(
+            '[useTodayNeedsAttention] recentLogFarms RPC unavailable:',
+            recentLogFarmsResult.error.message,
+          );
+        }
       }
 
       const items: TodayNeedAttentionItem[] = [];
@@ -169,17 +172,21 @@ export function useTodayNeedsAttention(limit: number = 10) {
         }
       });
 
-      farms.forEach((farm) => {
-        if (typeof farm.id !== 'number') return;
-        if (farmsWithRecentLogs.has(farm.id)) return;
-        items.push({
-          id: `no-recent-log-${farm.id}`,
-          type: 'noRecentLogs',
-          severity: 'medium',
-          farmId: farm.id,
-          farmName: farmNameById.get(farm.id) ?? 'Farm',
+      // Only flag farms as missing logs when the RPC succeeded; if unavailable,
+      // skip the loop entirely to avoid false "needs attention" warnings.
+      if (!recentLogFarmsResult.error) {
+        farms.forEach((farm) => {
+          if (typeof farm.id !== 'number') return;
+          if (farmsWithRecentLogs.has(farm.id)) return;
+          items.push({
+            id: `no-recent-log-${farm.id}`,
+            type: 'noRecentLogs',
+            severity: 'medium',
+            farmId: farm.id,
+            farmName: farmNameById.get(farm.id) ?? 'Farm',
+          });
         });
-      });
+      }
 
       const phiDeadlineFarms = new Set<number>();
       phiDeadlinesResult.data?.forEach((record) => {

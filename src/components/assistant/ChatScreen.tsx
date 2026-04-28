@@ -864,9 +864,9 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
                     </Text>
                   </View>
                   <SymbolIcon
-                    name="chevron.right"
-                    size={15}
-                    color={m3.colorScheme.onSurfaceVariant}
+                    name="arrow.up.circle.fill"
+                    size={18}
+                    color={m3.colorScheme.primary}
                   />
                 </TouchableOpacity>
               ))}
