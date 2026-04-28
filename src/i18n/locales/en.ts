@@ -840,7 +840,7 @@ export const en = {
       laiCalculator: 'LAI Calculator',
       nutrientCalculator: 'Nutrient Calculator',
       tankMixCalculator: 'Tank Mix Calculator',
-      safeToSprayChecker: 'Safe-to-Spray Checker',
+      safeToSprayChecker: 'Spray Safety Check',
       sprayCatalog: 'Spray Catalog',
     },
     descriptions: {
