@@ -674,6 +674,7 @@ export const hi = {
       namePlaceholder: 'रसायन का नाम',
       qtyPlaceholder: 'मात्रा',
       selectUnit: 'इकाई चुनें',
+      quickUnitLabel: 'रसायन मात्रा इकाई के रूप में {{unit}} उपयोग करें',
       totalQty: 'कुल मात्रा',
       perAcre: 'प्रति एकड़',
     },
