@@ -1,0 +1,42 @@
+app/(tabs)/index.tsx
+  f3bbb8e53b97fc10 850-870
+app/soil-profiling.tsx
+  f3bbb8e53b97fc10 470,476,487
+src/i18n/locales/hi.ts
+  f3bbb8e53b97fc10 2028-2030,2560-2561
+src/hooks/use-tab-bar-inset.android.ts
+  f3bbb8e53b97fc10 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "3f5b30a6a7d5760d4eef406593016158221bb85e",
+  "prompts": {
+    "07d9668e771a6c6e": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "38caaa9b-e57b-4c17-bcae-b5a6f719794e",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 95,
+      "total_deletions": 45,
+      "accepted_lines": 92,
+      "overriden_lines": 0
+    },
+    "f3bbb8e53b97fc10": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "719f8116-3fb8-467d-8050-6e91b268e8ee",
+        "model": "minimax-m2.7"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 30,
+      "total_deletions": 7,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    }
+  }
+}
