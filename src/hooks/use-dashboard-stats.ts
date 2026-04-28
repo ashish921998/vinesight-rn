@@ -121,14 +121,15 @@ export function useTodayNeedsAttention(limit: number = 10) {
           .order('safe_harvest_date', { ascending: true }),
       ]);
 
-      const queryErrors = [
-        overdueTasksResult.error,
-        recentLogFarmsResult.error,
-        phiDeadlinesResult.error,
-      ];
-      const firstQueryError = queryErrors.find((error) => Boolean(error));
-      if (firstQueryError) {
-        throw firstQueryError;
+      if (overdueTasksResult.error) throw overdueTasksResult.error;
+      if (phiDeadlinesResult.error) throw phiDeadlinesResult.error;
+      // RPC may not be deployed in all environments — degrade gracefully rather than
+      // surfacing a dev error overlay on every screen.
+      if (recentLogFarmsResult.error) {
+        console.warn(
+          '[useTodayNeedsAttention] recentLogFarms RPC unavailable:',
+          recentLogFarmsResult.error,
+        );
       }
 
       const items: TodayNeedAttentionItem[] = [];
