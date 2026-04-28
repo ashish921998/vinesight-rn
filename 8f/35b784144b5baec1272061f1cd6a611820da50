@@ -1,0 +1,25 @@
+src/i18n/locales/hi.ts
+  40c097619fb51187 2030
+src/i18n/locales/mr.ts
+  40c097619fb51187 1608-1609
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "8f35b784144b5baec1272061f1cd6a611820da50",
+  "prompts": {
+    "40c097619fb51187": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "91fac025-9c32-433d-a37c-524f80589da3",
+        "model": "custom:GLM-5.1-0"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 1,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
