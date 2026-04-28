@@ -19,10 +19,10 @@ import {
   useRecentActivities,
   useFarms,
   useProfile,
-  isIOS,
   type TodayNeedAttentionItem,
 } from '@/hooks';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui';
 import type { LogTypeId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -131,6 +131,22 @@ export default function DashboardScreen() {
 
   const handleFarmAttention = (farmId: number) => {
     router.push(`/farm/${farmId}`);
+  };
+
+  const handleMetricCardPress = (destination: 'farms' | 'workers' | 'tasks' | 'activities') => {
+    if (destination === 'farms') {
+      router.push('/(tabs)/explore');
+      return;
+    }
+    if (destination === 'workers') {
+      router.push('/(tabs)/workers');
+      return;
+    }
+    if (destination === 'tasks') {
+      router.push('/tasks');
+      return;
+    }
+    router.push('/logs');
   };
 
   const hasFarms = Boolean(farms && farms.length > 0);
@@ -296,80 +312,72 @@ export default function DashboardScreen() {
             marginBottom: spacing[6],
           }}
         >
-          {/* Top bar: avatar + brand left, settings right */}
+          {/* Top bar: brand + user left, settings right */}
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
+              gap: spacing[3],
               marginBottom: spacing[4],
             }}
           >
             <Pressable
-              onPress={() => router.push(isIOS ? '/settings' : '/(tabs)/settings')}
+              onPress={() => router.push('/app-settings')}
               accessibilityRole="button"
               accessibilityLabel={t('assistant.settingsButtonA11y')}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={({ pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: spacing[2] + 2,
+                flex: 1,
+                minWidth: 0,
+                gap: spacing[3],
                 opacity: pressed ? 0.85 : 1,
               })}
             >
               <View
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
+                  width: 42,
+                  height: 42,
+                  borderRadius: 21,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: colorWithOpacity('#ffffff', 0.18),
+                  backgroundColor: colorWithOpacity('#ffffff', 0.2),
                   borderWidth: 1,
-                  borderColor: colorWithOpacity('#ffffff', 0.22),
+                  borderColor: colorWithOpacity('#ffffff', 0.28),
                 }}
               >
                 <Text
                   style={{
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: fontWeight.semibold,
                     color: '#ffffff',
-                    letterSpacing: 0.3,
+                    letterSpacing: 0.2,
                   }}
                 >
                   {(profile?.full_name?.trim()?.charAt(0) || 'V').toUpperCase()}
                 </Text>
               </View>
-              <View style={{ flexShrink: 1 }}>
-                <Text
-                  style={{
-                    fontSize: 11,
-                    color: colorWithOpacity('#ffffff', 0.6),
-                    fontWeight: fontWeight.medium,
-                    letterSpacing: 0.4,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {t('app.name', { defaultValue: 'Vinesight' })}
-                </Text>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 <Text
                   numberOfLines={1}
                   style={{
-                    fontSize: 14,
+                    fontSize: 20,
                     color: '#ffffff',
                     fontWeight: fontWeight.semibold,
-                    letterSpacing: 0.1,
-                    maxWidth: 180,
+                    letterSpacing: -0.3,
+                    lineHeight: 25,
                   }}
                 >
-                  {profile?.full_name || t('dashboard.hero.welcome', { defaultValue: 'Welcome' })}
+                  {t('app.name', { defaultValue: 'VineSight' })}
                 </Text>
               </View>
             </Pressable>
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
               <Pressable
-                onPress={() => router.push(isIOS ? '/settings' : '/(tabs)/settings')}
+                onPress={() => router.push('/app-settings')}
                 accessibilityRole="button"
                 accessibilityLabel={t('assistant.settingsGearA11y')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -457,8 +465,11 @@ export default function DashboardScreen() {
             }}
           >
             {/* Farms */}
-            <View
-              style={{
+            <Pressable
+              onPress={() => handleMetricCardPress('farms')}
+              accessibilityRole="button"
+              accessibilityLabel={t('dashboard.stats.farms')}
+              style={({ pressed }) => ({
                 flex: 1,
                 minWidth: '45%',
                 backgroundColor: colors.surface[100],
@@ -466,7 +477,8 @@ export default function DashboardScreen() {
                 borderColor: colors.surface[300],
                 borderRadius: borderRadius.md,
                 padding: spacing[4],
-              }}
+                opacity: pressed ? 0.85 : 1,
+              })}
             >
               <View
                 style={{
@@ -502,11 +514,14 @@ export default function DashboardScreen() {
               >
                 {t('dashboard.stats.farms')}
               </Text>
-            </View>
+            </Pressable>
 
             {/* Workers */}
-            <View
-              style={{
+            <Pressable
+              onPress={() => handleMetricCardPress('workers')}
+              accessibilityRole="button"
+              accessibilityLabel={t('dashboard.stats.activeWorkers')}
+              style={({ pressed }) => ({
                 flex: 1,
                 minWidth: '45%',
                 backgroundColor: colors.surface[100],
@@ -514,7 +529,8 @@ export default function DashboardScreen() {
                 borderColor: colors.surface[300],
                 borderRadius: borderRadius.md,
                 padding: spacing[4],
-              }}
+                opacity: pressed ? 0.85 : 1,
+              })}
             >
               <View
                 style={{
@@ -550,11 +566,14 @@ export default function DashboardScreen() {
               >
                 {t('dashboard.stats.activeWorkers')}
               </Text>
-            </View>
+            </Pressable>
 
             {/* Tasks */}
-            <View
-              style={{
+            <Pressable
+              onPress={() => handleMetricCardPress('tasks')}
+              accessibilityRole="button"
+              accessibilityLabel={t('dashboard.stats.tasks')}
+              style={({ pressed }) => ({
                 flex: 1,
                 minWidth: '45%',
                 backgroundColor: colors.surface[100],
@@ -562,7 +581,8 @@ export default function DashboardScreen() {
                 borderColor: colors.surface[300],
                 borderRadius: borderRadius.md,
                 padding: spacing[4],
-              }}
+                opacity: pressed ? 0.85 : 1,
+              })}
             >
               <View
                 style={{
@@ -598,11 +618,14 @@ export default function DashboardScreen() {
               >
                 {t('dashboard.stats.tasks')}
               </Text>
-            </View>
+            </Pressable>
 
             {/* Activities */}
-            <View
-              style={{
+            <Pressable
+              onPress={() => handleMetricCardPress('activities')}
+              accessibilityRole="button"
+              accessibilityLabel={t('dashboard.stats.activities')}
+              style={({ pressed }) => ({
                 flex: 1,
                 minWidth: '45%',
                 backgroundColor: colors.surface[100],
@@ -610,7 +633,8 @@ export default function DashboardScreen() {
                 borderColor: colors.surface[300],
                 borderRadius: borderRadius.md,
                 padding: spacing[4],
-              }}
+                opacity: pressed ? 0.85 : 1,
+              })}
             >
               <View
                 style={{
@@ -646,7 +670,7 @@ export default function DashboardScreen() {
               >
                 {t('dashboard.stats.activities')}
               </Text>
-            </View>
+            </Pressable>
           </View>
 
           {/* Today Needs Attention */}
@@ -984,7 +1008,7 @@ export default function DashboardScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <SymbolIcon name="water" size={20} color={colors.irrigation[500]} />
+                    <AppIcon name="water" size={20} color={colors.irrigation[500]} />
                   </View>
                   <Text
                     style={{
@@ -1015,7 +1039,7 @@ export default function DashboardScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <SymbolIcon name="flask" size={20} color={colors.spray[500]} />
+                    <AppIcon name="spraycan" size={20} color={colors.spray[500]} />
                   </View>
                   <Text
                     style={{
@@ -1046,7 +1070,7 @@ export default function DashboardScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <SymbolIcon name="dollarsign.circle" size={20} color={colors.expense[500]} />
+                    <AppIcon name="receipt" size={20} color={colors.expense[500]} />
                   </View>
                   <Text
                     style={{
@@ -1077,7 +1101,7 @@ export default function DashboardScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <SymbolIcon name="doc.text" size={20} color={colors.labour[500]} />
+                    <AppIcon name="document-text" size={20} color={colors.labour[500]} />
                   </View>
                   <Text
                     style={{

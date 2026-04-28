@@ -748,6 +748,14 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="farm/add" options={{ headerShown: false }} />
                 <Stack.Screen name="farm/[id]" options={{ headerShown: true }} />
                 <Stack.Screen name="farm/[id]/edit" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="farms"
+                  options={{
+                    headerShown: true,
+                    title: i18n.t('tabs.farms'),
+                    headerBackTitle: i18n.t('common.back'),
+                  }}
+                />
                 <Stack.Screen name="fertilizer-plans" options={{ headerShown: true }} />
                 <Stack.Screen name="lab-tests" options={{ headerShown: true }} />
                 <Stack.Screen name="logs" options={{ headerShown: true }} />
@@ -764,7 +772,14 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="tasks" options={{ headerShown: true }} />
                 <Stack.Screen name="warehouse" options={{ headerShown: true }} />
                 <Stack.Screen name="weather" options={{ headerShown: true }} />
-                <Stack.Screen name="settings" options={{ headerShown: true }} />
+                <Stack.Screen
+                  name="app-settings"
+                  options={{
+                    headerShown: true,
+                    title: i18n.t('tabs.settings'),
+                    headerBackTitle: i18n.t('common.back'),
+                  }}
+                />
                 <Stack.Screen name="widget-configuration" options={{ headerShown: true }} />
                 <Stack.Screen name="widgets-showcase" options={{ headerShown: true }} />
                 <Stack.Screen name="worker-analytics/[id]" options={{ headerShown: true }} />

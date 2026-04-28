@@ -291,14 +291,6 @@ export default function TasksScreen() {
     });
   };
 
-  const handleAddTaskPress = () => {
-    setAddEntry({ tabs: ['task'], initialTab: 'task' });
-    router.push({
-      pathname: '/add-entry',
-      params: { tabs: 'task', initialTab: 'task' },
-    });
-  };
-
   // Custom JS header (avoids iOS 26 native bar-button glass capsule)
   const renderHeader = () => (
     <View style={{ paddingTop: insets.top, backgroundColor: m3.colorScheme.surface }}>
@@ -364,46 +356,7 @@ export default function TasksScreen() {
           </Text>
         </View>
 
-        <Pressable
-          onPress={handleAddTaskPress}
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            backgroundColor: 'transparent',
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityRole="button"
-          accessibilityLabel={t('tasks.a11y.addTask', { defaultValue: 'Add task' })}
-        >
-          {({ pressed }) => (
-            <View
-              style={{
-                width: '100%',
-                height: '100%',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <SFSymbol name="plus" size={24} color={m3.colorScheme.primary} />
-              <View
-                pointerEvents="none"
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  {
-                    borderRadius: 22,
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                      : 'transparent',
-                  },
-                ]}
-              />
-            </View>
-          )}
-        </Pressable>
+        <View style={{ width: 44, height: 44 }} />
       </View>
     </View>
   );

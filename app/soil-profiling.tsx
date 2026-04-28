@@ -566,7 +566,7 @@ export default function SoilProfilingScreen() {
               {t('soilProfiling.noFarm.subtitle')}
             </Text>
             <Pressable
-              onPress={() => router.push('/(tabs)/farms')}
+              onPress={() => router.push('/farms')}
               style={{
                 marginTop: spacing[6],
                 paddingHorizontal: spacing[6],

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Accept an optional CLI argument for file path
-FILE="${1:-./app/(tabs)/settings.tsx}"
+FILE="${1:-./app/app-settings.tsx}"
 
 # Show usage if help is requested
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
@@ -9,11 +9,11 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
   echo "Convert settings.tsx from className to inline styles."
   echo ""
   echo "Arguments:"
-  echo "  file_path    Optional path to the settings file (default: ./app/(tabs)/settings.tsx)"
+  echo "  file_path    Optional path to the settings file (default: ./app/app-settings.tsx)"
   echo ""
   echo "Examples:"
   echo "  $0"
-  echo "  $0 ./app/(tabs)/settings.tsx"
+  echo "  $0 ./app/app-settings.tsx"
   exit 0
 fi
 

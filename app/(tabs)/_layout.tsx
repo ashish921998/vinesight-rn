@@ -48,7 +48,7 @@ export default function TabLayout() {
   const renderSettingsHeaderButton = useCallback(
     () => (
       <Pressable
-        onPress={() => router.push('/(tabs)/settings')}
+        onPress={() => router.push('/app-settings')}
         accessibilityRole="button"
         accessibilityLabel={t('assistant.settingsButtonA11y')}
         style={{
@@ -202,18 +202,6 @@ export default function TabLayout() {
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('brain', focused),
             }}
           />
-          <Tabs.Screen
-            name="settings"
-            options={{
-              href: null,
-            }}
-          />
-          <Tabs.Screen
-            name="farms"
-            options={{
-              href: null,
-            }}
-          />
         </Tabs>
       </>
     );
@@ -292,22 +280,6 @@ export default function TabLayout() {
         >
           {renderTabIcon(sf('brain'), sf('brain.fill'), 'sparkles-outline', 'sparkles')}
           <Label>{t('tabs.aiAssistant')}</Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="settings"
-          hidden
-          options={{ ...defaultHeaderOptions, title: t('tabs.settings') }}
-        >
-          {renderTabIcon(sf('gearshape'), sf('gearshape.fill'), 'settings-outline', 'settings')}
-          <Label>{t('tabs.settings')}</Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="farms"
-          hidden
-          options={{ ...defaultHeaderOptions, title: t('tabs.farms') }}
-        >
-          {renderTabIcon(sf('leaf'), sf('leaf.fill'), 'leaf-outline', 'leaf')}
-          <Label>{t('tabs.farms')}</Label>
         </NativeTabs.Trigger>
       </NativeTabs>
     </>

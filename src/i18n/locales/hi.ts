@@ -32,9 +32,11 @@ export const hi = {
     general: 'सामान्य',
     filter: 'फ़िल्टर',
     clearAll: 'सभी साफ़ करें',
+    all: 'सभी',
     today: 'आज',
     yesterday: 'कल',
     view: 'देखें',
+    moreOptions: 'अधिक विकल्प',
     units: {
       hours: 'घंटे',
       days: 'दिन',

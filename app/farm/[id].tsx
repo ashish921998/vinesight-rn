@@ -245,7 +245,7 @@ export default function FarmDetailScreen() {
       router.back();
       return true;
     }
-    router.replace('/(tabs)/farms');
+    router.replace('/farms');
     return true;
   }, [router]);
 
@@ -1215,7 +1215,7 @@ export default function FarmDetailScreen() {
                 telemetry.capture('farm_deleted', {
                   farm_id: farmId,
                 });
-                router.replace('/(tabs)/farms');
+                router.replace('/farms');
               },
               onError: (error: Error) => {
                 const normalized = `${error.name ?? ''} ${error.message ?? ''}`.toLowerCase();

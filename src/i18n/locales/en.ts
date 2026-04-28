@@ -32,9 +32,11 @@ export const en = {
     general: 'General',
     filter: 'Filter',
     clearAll: 'Clear all',
+    all: 'All',
     today: 'Today',
     yesterday: 'Yesterday',
     view: 'View',
+    moreOptions: 'More options',
     units: {
       hours: 'hours',
       days: 'days',

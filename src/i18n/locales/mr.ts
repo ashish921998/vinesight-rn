@@ -32,9 +32,11 @@ export const mr = {
     general: 'सामान्य',
     filter: 'फिल्टर',
     clearAll: 'सर्व साफ करा',
+    all: 'सर्व',
     today: 'आज',
     yesterday: 'काल',
     view: 'पहा',
+    moreOptions: 'अधिक पर्याय',
     units: {
       hours: 'तास',
       days: 'दिवस',

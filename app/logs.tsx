@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -545,53 +545,7 @@ export default function LogsScreen() {
               </Text>
             </View>
 
-            {selectedFarmId !== undefined ? (
-              <Pressable
-                onPress={handleAddActivity}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                  backgroundColor: 'transparent',
-                }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                accessibilityRole="button"
-                accessibilityLabel={t('logs.cta.addActivity')}
-              >
-                {({ pressed }) => (
-                  <View
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <UiSymbol name="plus" size={24} color={m3.colorScheme.primary} />
-                    <View
-                      pointerEvents="none"
-                      style={[
-                        StyleSheet.absoluteFillObject,
-                        {
-                          borderRadius: 22,
-                          backgroundColor: pressed
-                            ? colorWithOpacity(
-                                m3.colorScheme.onSurface,
-                                m3.stateLayerOpacity.pressed,
-                              )
-                            : 'transparent',
-                        },
-                      ]}
-                    />
-                  </View>
-                )}
-              </Pressable>
-            ) : (
-              <View style={{ width: 44, height: 44 }} />
-            )}
+            <View style={{ width: 44, height: 44 }} />
           </View>
         </View>
         <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
@@ -604,16 +558,6 @@ export default function LogsScreen() {
           >
             {/* Farm Selector */}
             <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.bold,
-                  color: colors.surface[500],
-                  marginBottom: spacing[2],
-                }}
-              >
-                {t('logs.labels.selectedFarm')}
-              </Text>
               <Pressable
                 onPress={() => setShowFarmSelector(true)}
                 style={{
@@ -801,119 +745,144 @@ export default function LogsScreen() {
               </ScrollView>
             </View>
 
-            {/* Search & Filters */}
-            <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
+            {/* Search + inline Filter */}
+            <View style={{ marginHorizontal: spacing[4], marginTop: spacing[3] }}>
               <View
                 style={{
-                  borderRadius: borderRadius['2xl'],
-                  padding: spacing[4],
-                  backgroundColor: m3.surface.surfaceContainerLow,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: m3.surface.surfaceContainerHigh,
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
                   borderWidth: 1,
                   borderColor: m3.colorScheme.outlineVariant,
                   ...(filterCardStyle ?? {}),
                 }}
               >
-                {/* Search Bar */}
-                <View
+                <UiSymbol
+                  name="magnifyingglass"
+                  size={18}
+                  color={m3.colorScheme.onSurfaceVariant}
+                />
+                <TextInput
+                  placeholder={t('logs.search.placeholder')}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholderTextColor={m3.colorScheme.onSurfaceVariant}
                   style={{
+                    flex: 1,
+                    marginLeft: spacing[2],
+                    color: m3.colorScheme.onSurface,
+                  }}
+                />
+                {searchQuery !== '' && (
+                  <Pressable
+                    onPress={() => setSearchQuery('')}
+                    style={{ marginRight: spacing[2] }}
+                    hitSlop={8}
+                  >
+                    <UiSymbol
+                      name="xmark.circle.fill"
+                      size={18}
+                      color={m3.colorScheme.onSurfaceVariant}
+                    />
+                  </Pressable>
+                )}
+                <Pressable
+                  onPress={() => setIsFilterSheetOpen(true)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.filter')}
+                  style={({ pressed }) => ({
                     flexDirection: 'row',
                     alignItems: 'center',
-                    backgroundColor: m3.surface.surfaceContainerHigh,
-                    borderRadius: borderRadius.xl,
-                    paddingHorizontal: spacing[3],
-                    paddingVertical: spacing[2],
-                    borderWidth: 1,
-                    borderColor: m3.colorScheme.outlineVariant,
-                  }}
+                    paddingLeft: spacing[2],
+                    marginLeft: spacing[1],
+                    borderLeftWidth: 1,
+                    borderLeftColor: m3.colorScheme.outlineVariant,
+                    opacity: pressed ? 0.6 : 1,
+                  })}
                 >
                   <UiSymbol
-                    name="magnifyingglass"
+                    name="line.3.horizontal.decrease"
                     size={18}
-                    color={m3.colorScheme.onSurfaceVariant}
+                    color={
+                      hasActiveFilters ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant
+                    }
                   />
-                  <TextInput
-                    placeholder={t('logs.search.placeholder')}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    placeholderTextColor={m3.colorScheme.onSurfaceVariant}
-                    style={{
-                      flex: 1,
-                      marginLeft: spacing[2],
-                      color: m3.colorScheme.onSurface,
-                    }}
-                  />
-                  {searchQuery !== '' && (
-                    <Pressable onPress={() => setSearchQuery('')}>
-                      <UiSymbol
-                        name="xmark.circle.fill"
-                        size={18}
-                        color={m3.colorScheme.onSurfaceVariant}
-                      />
-                    </Pressable>
+                  {hasActiveFilters && (
+                    <View
+                      style={{
+                        marginLeft: spacing[1],
+                        minWidth: 18,
+                        height: 18,
+                        paddingHorizontal: 5,
+                        borderRadius: 9,
+                        backgroundColor: m3.colorScheme.primary,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          fontWeight: fontWeight.bold,
+                          color: m3.colorScheme.onPrimary,
+                        }}
+                      >
+                        {selectedLogTypes.size + (dateFrom || dateTo ? 1 : 0)}
+                      </Text>
+                    </View>
                   )}
-                </View>
+                </Pressable>
+              </View>
 
-                {/* Filter Controls */}
+              {(dateFrom || dateTo || hasActiveFilters) && (
                 <View
                   style={{
                     flexDirection: 'row',
+                    flexWrap: 'wrap',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    gap: spacing[2],
                     marginTop: spacing[3],
                   }}
                 >
-                  <Pressable
-                    onPress={() => setIsFilterSheetOpen(true)}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[2],
-                      borderRadius: borderRadius.full,
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.2)
-                        : colorWithOpacity(m3.colorScheme.primary, 0.12),
-                      borderWidth: 1,
-                      borderColor: colorWithOpacity(m3.colorScheme.primary, 0.35),
-                    })}
-                  >
-                    <UiSymbol
-                      name="line.3.horizontal.decrease"
-                      size={16}
-                      color={m3.colorScheme.primary}
-                    />
-                    <Text
-                      style={{
-                        marginLeft: spacing[1],
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                        color: m3.colorScheme.primary,
-                      }}
+                  {(dateFrom || dateTo) && (
+                    <Pressable
+                      onPress={() => setIsFilterSheetOpen(true)}
+                      style={({ pressed }) => ({
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingHorizontal: spacing[3],
+                        paddingVertical: 6,
+                        borderRadius: borderRadius.full,
+                        backgroundColor: pressed
+                          ? m3.surface.surfaceContainerHigh
+                          : m3.surface.surfaceContainerLow,
+                        borderWidth: 1,
+                        borderColor: m3.colorScheme.outlineVariant,
+                      })}
                     >
-                      {t('common.filter')}
-                    </Text>
-                    {hasActiveFilters && (
-                      <View
+                      <UiSymbol name="calendar" size={12} color={m3.colorScheme.primary} />
+                      <Text
                         style={{
-                          marginLeft: spacing[2],
-                          backgroundColor: m3.colorScheme.primary,
-                          paddingHorizontal: spacing[2],
-                          paddingVertical: 2,
-                          borderRadius: borderRadius.full,
+                          marginLeft: spacing[1],
+                          fontSize: fontSize.xs,
+                          fontWeight: fontWeight.semibold,
+                          color: m3.colorScheme.onSurfaceVariant,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontSize: fontSize.xs,
-                            fontWeight: fontWeight.bold,
-                            color: m3.colorScheme.onPrimary,
-                          }}
-                        >
-                          {selectedLogTypes.size + (dateFrom || dateTo ? 1 : 0)}
-                        </Text>
-                      </View>
-                    )}
-                  </Pressable>
+                        {dateFrom
+                          ? formatDate(dateFrom, { month: 'short', day: 'numeric' })
+                          : t('common.from')}
+                        {' – '}
+                        {dateTo
+                          ? formatDate(dateTo, { month: 'short', day: 'numeric' })
+                          : t('common.to')}
+                      </Text>
+                    </Pressable>
+                  )}
 
                   {hasActiveFilters && (
                     <Pressable
@@ -929,7 +898,7 @@ export default function LogsScreen() {
                     >
                       <Text
                         style={{
-                          fontSize: fontSize.sm,
+                          fontSize: fontSize.xs,
                           fontWeight: fontWeight.semibold,
                           color: m3.colorScheme.error,
                         }}
@@ -939,133 +908,7 @@ export default function LogsScreen() {
                     </Pressable>
                   )}
                 </View>
-
-                {(selectedLogTypes.size > 0 ||
-                  dateFrom ||
-                  dateTo ||
-                  selectedFarmId !== undefined) && (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      flexWrap: 'wrap',
-                      gap: spacing[2],
-                      marginTop: spacing[3],
-                    }}
-                  >
-                    {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
-                      if (!selectedLogTypes.has(logType.id as LogTypeId)) return null;
-                      return (
-                        <Pressable
-                          key={logType.id}
-                          onPress={() => {
-                            const newSet = new Set(selectedLogTypes);
-                            newSet.delete(logType.id as LogTypeId);
-                            setSelectedLogTypes(newSet);
-                            setCurrentPage(1);
-                          }}
-                          style={({ pressed }) => ({
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            paddingHorizontal: spacing[3],
-                            paddingVertical: 6,
-                            borderRadius: borderRadius.full,
-                            backgroundColor: pressed
-                              ? m3.surface.surfaceContainerHigh
-                              : m3.surface.surfaceContainerLow,
-                            borderWidth: 1,
-                            borderColor: m3.colorScheme.outlineVariant,
-                          })}
-                        >
-                          <UiSymbol
-                            name={resolveSymbolIconName(logType.icon)}
-                            size={12}
-                            color={logType.color}
-                          />
-                          <Text
-                            style={{
-                              marginLeft: spacing[1],
-                              fontSize: fontSize.xs,
-                              fontWeight: fontWeight.semibold,
-                              color: m3.colorScheme.onSurfaceVariant,
-                            }}
-                          >
-                            {t(logType.labelKey)}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-
-                    {selectedFarmId !== undefined && (
-                      <Pressable
-                        onPress={() => {
-                          setSelectedFarmId(undefined);
-                          setCurrentPage(1);
-                        }}
-                        style={({ pressed }) => ({
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingHorizontal: spacing[3],
-                          paddingVertical: 6,
-                          borderRadius: borderRadius.full,
-                          backgroundColor: pressed
-                            ? m3.surface.surfaceContainerHigh
-                            : m3.surface.surfaceContainerLow,
-                          borderWidth: 1,
-                          borderColor: m3.colorScheme.outlineVariant,
-                        })}
-                      >
-                        <UiSymbol name="leaf.fill" size={12} color={m3.colorScheme.primary} />
-                        <Text
-                          style={{
-                            marginLeft: spacing[1],
-                            fontSize: fontSize.xs,
-                            fontWeight: fontWeight.semibold,
-                            color: m3.colorScheme.onSurfaceVariant,
-                          }}
-                        >
-                          {selectedFarm?.name ?? t('tasks.unknownFarm')}
-                        </Text>
-                      </Pressable>
-                    )}
-
-                    {(dateFrom || dateTo) && (
-                      <Pressable
-                        onPress={() => setIsFilterSheetOpen(true)}
-                        style={({ pressed }) => ({
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingHorizontal: spacing[3],
-                          paddingVertical: 6,
-                          borderRadius: borderRadius.full,
-                          backgroundColor: pressed
-                            ? m3.surface.surfaceContainerHigh
-                            : m3.surface.surfaceContainerLow,
-                          borderWidth: 1,
-                          borderColor: m3.colorScheme.outlineVariant,
-                        })}
-                      >
-                        <UiSymbol name="calendar" size={12} color={m3.colorScheme.primary} />
-                        <Text
-                          style={{
-                            marginLeft: spacing[1],
-                            fontSize: fontSize.xs,
-                            fontWeight: fontWeight.semibold,
-                            color: m3.colorScheme.onSurfaceVariant,
-                          }}
-                        >
-                          {dateFrom
-                            ? formatDate(dateFrom, { month: 'short', day: 'numeric' })
-                            : t('common.from')}
-                          {' – '}
-                          {dateTo
-                            ? formatDate(dateTo, { month: 'short', day: 'numeric' })
-                            : t('common.to')}
-                        </Text>
-                      </Pressable>
-                    )}
-                  </View>
-                )}
-              </View>
+              )}
             </View>
 
             {/* Logs List */}
@@ -1313,39 +1156,10 @@ export default function LogsScreen() {
                                           />
                                         </View>
                                         <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                                          <View
-                                            style={{
-                                              flexDirection: 'row',
-                                              alignItems: 'center',
-                                              gap: spacing[2],
-                                              marginBottom: 3,
-                                            }}
-                                          >
-                                            <Text
-                                              style={{
-                                                fontSize: fontSize.xs,
-                                                fontWeight: fontWeight.semibold,
-                                                textTransform: 'uppercase',
-                                                letterSpacing: 0.5,
-                                                color: categoryColor,
-                                                paddingHorizontal: spacing[2],
-                                                paddingVertical: 2,
-                                                borderRadius: borderRadius.full,
-                                                backgroundColor: colorWithOpacity(
-                                                  categoryColor,
-                                                  0.1,
-                                                ),
-                                              }}
-                                            >
-                                              {logType
-                                                ? t(logType.labelKey).toUpperCase()
-                                                : t('entryForm.addLog')}
-                                            </Text>
-                                          </View>
                                           <Text
                                             style={{
                                               fontSize: fontSize.base,
-                                              fontWeight: fontWeight.medium,
+                                              fontWeight: fontWeight.semibold,
                                               color: colors.surface[900],
                                             }}
                                             numberOfLines={1}
@@ -1396,89 +1210,73 @@ export default function LogsScreen() {
                                             )}
                                           </View>
                                         </View>
-                                        <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-                                          <Pressable
-                                            onPress={() => {
-                                              const logFarm =
-                                                selectedFarm ||
-                                                farms.find(
-                                                  (f) =>
-                                                    f.id ===
-                                                    (log.data as { farm_id?: number }).farm_id,
-                                                );
-                                              if (!logFarm) {
-                                                Alert.alert(
-                                                  t('common.error'),
-                                                  t('common.errors.farmNotFoundForLog'),
-                                                );
-                                                return;
-                                              }
-                                              setEditActivity({
-                                                farm: logFarm,
-                                                logType: log.type,
-                                                record: log.data,
+                                        <Pressable
+                                          onPress={() => {
+                                            const logFarm =
+                                              selectedFarm ||
+                                              farms.find(
+                                                (f) =>
+                                                  f.id ===
+                                                  (log.data as { farm_id?: number }).farm_id,
+                                              );
+                                            const canEdit = Boolean(logFarm);
+                                            const buttons: {
+                                              text: string;
+                                              style?: 'default' | 'destructive' | 'cancel';
+                                              onPress?: () => void;
+                                            }[] = [];
+                                            if (canEdit) {
+                                              buttons.push({
+                                                text: t('common.edit'),
+                                                onPress: () => {
+                                                  setEditActivity({
+                                                    farm: logFarm!,
+                                                    logType: log.type,
+                                                    record: log.data,
+                                                  });
+                                                  router.push(`/log-entry/edit/${log.id}`);
+                                                },
                                               });
-                                              router.push(`/log-entry/edit/${log.id}`);
-                                            }}
-                                            disabled={
-                                              !(
-                                                selectedFarm ||
-                                                (log.data as { farm_id?: number }).farm_id
-                                              )
                                             }
-                                            style={({ pressed }) => ({
-                                              width: 44,
-                                              height: 44,
-                                              borderRadius: borderRadius.xl,
-                                              alignItems: 'center',
-                                              justifyContent: 'center',
-                                              backgroundColor: pressed
-                                                ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                                                : 'transparent',
-                                              opacity:
-                                                selectedFarm ||
-                                                (log.data as { farm_id?: number }).farm_id
-                                                  ? 1
-                                                  : 0.5,
-                                            })}
-                                          >
-                                            <UiSymbol
-                                              name="pencil"
-                                              size={20}
-                                              color={
-                                                selectedFarm ||
-                                                (log.data as { farm_id?: number }).farm_id
-                                                  ? m3.colorScheme.primary
-                                                  : colorWithOpacity(
-                                                      m3.colorScheme.onSurfaceVariant,
-                                                      0.6,
-                                                    )
-                                              }
-                                            />
-                                          </Pressable>
-                                          <Pressable
-                                            onPress={() => {
-                                              setDeletingLog(log);
-                                              setShowDeleteConfirmation(true);
-                                            }}
-                                            style={({ pressed }) => ({
-                                              width: 44,
-                                              height: 44,
-                                              borderRadius: borderRadius.xl,
-                                              alignItems: 'center',
-                                              justifyContent: 'center',
-                                              backgroundColor: pressed
-                                                ? colorWithOpacity(m3.colorScheme.error, 0.12)
-                                                : 'transparent',
-                                            })}
-                                          >
-                                            <UiSymbol
-                                              name="trash"
-                                              size={20}
-                                              color={m3.colorScheme.error}
-                                            />
-                                          </Pressable>
-                                        </View>
+                                            buttons.push({
+                                              text: t('common.delete'),
+                                              style: 'destructive',
+                                              onPress: () => {
+                                                setDeletingLog(log);
+                                                setShowDeleteConfirmation(true);
+                                              },
+                                            });
+                                            buttons.push({
+                                              text: t('common.cancel'),
+                                              style: 'cancel',
+                                            });
+                                            Alert.alert(log.description, undefined, buttons, {
+                                              cancelable: true,
+                                            });
+                                          }}
+                                          accessibilityRole="button"
+                                          accessibilityLabel={t('common.moreOptions') as string}
+                                          hitSlop={8}
+                                          style={({ pressed }) => ({
+                                            width: 36,
+                                            height: 36,
+                                            borderRadius: borderRadius.full,
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            backgroundColor: pressed
+                                              ? colorWithOpacity(
+                                                  m3.colorScheme.onSurface,
+                                                  m3.stateLayerOpacity.pressed,
+                                                )
+                                              : 'transparent',
+                                          })}
+                                        >
+                                          <UiSymbol
+                                            name="ellipsis"
+                                            size={20}
+                                            color={m3.colorScheme.onSurfaceVariant}
+                                          />
+                                        </Pressable>
                                       </View>
                                     </View>
                                   );
@@ -1932,21 +1730,26 @@ export default function LogsScreen() {
           visible={isFilterSheetOpen}
           onRequestClose={() => setIsFilterSheetOpen(false)}
           animationType="slide"
+          statusBarTranslucent
         >
-          <SafeAreaView
-            style={{ flex: 1, backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3) }}
+          <View
+            style={{
+              flex: 1,
+              paddingTop: insets.top,
+              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3),
+              justifyContent: 'flex-end',
+            }}
           >
-            <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-              <View
-                style={{
-                  backgroundColor: colors.surface[100],
-                  borderTopLeftRadius: borderRadius['3xl'],
-                  borderTopRightRadius: borderRadius['3xl'],
-                  overflow: 'hidden',
-                  height: '78%',
-                  flex: 1,
-                }}
-              >
+            <View
+              style={{
+                backgroundColor: colors.surface[100],
+                borderTopLeftRadius: borderRadius['3xl'],
+                borderTopRightRadius: borderRadius['3xl'],
+                overflow: 'hidden',
+                height: '78%',
+              }}
+            >
+              <View style={{ flex: 1 }}>
                 <View
                   style={{
                     width: 48,
@@ -2220,7 +2023,7 @@ export default function LogsScreen() {
                 </View>
               </View>
             </View>
-          </SafeAreaView>
+          </View>
         </Modal>
       )}
 
