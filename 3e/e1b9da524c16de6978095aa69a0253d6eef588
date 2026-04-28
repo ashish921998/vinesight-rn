@@ -1,0 +1,47 @@
+app/soil-trends.tsx
+  04e7217980949605 44,65
+app/calculator/tank-mix.tsx
+  04e7217980949605 190-194
+app/logs.tsx
+  04e7217980949605 455-470
+app/lab-tests.tsx
+  04e7217980949605 548-559
+src/i18n/locales/mr.ts
+  04e7217980949605 1282,2027-2029,2177
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  04e7217980949605 296-303,313
+app/worker-analytics/[id].tsx
+  04e7217980949605 89-94,100-103,105-115,117-132
+app/(tabs)/index.tsx
+  04e7217980949605 373
+src/i18n/locales/en.ts
+  04e7217980949605 1281,2011-2013,2160
+app/petiole-trends.tsx
+  04e7217980949605 110,131
+src/i18n/locales/hi.ts
+  04e7217980949605 1278,2165
+app/farm/[id].tsx
+  04e7217980949605 1274-1289,1295-1297,1299-1303,1306-1323,1325
+app/soil-profiling.tsx
+  04e7217980949605 537-540,542-545,548-561,563-582,584
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "3ee1b9da524c16de6978095aa69a0253d6eef588",
+  "prompts": {
+    "04e7217980949605": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f5cb93d2-a2ef-4a53-a35c-77bcbe19747b",
+        "model": "custom:GLM-5.1-0"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 105,
+      "total_deletions": 77,
+      "accepted_lines": 102,
+      "overriden_lines": 1
+    }
+  }
+}
