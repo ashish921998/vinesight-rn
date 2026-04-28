@@ -1,0 +1,41 @@
+app/calculator/tank-mix.tsx
+  a37934fd428ecf08 28-29,192-199
+app/reports.tsx
+  a37934fd428ecf08 384-387,390
+src/i18n/locales/en.ts
+  a37934fd428ecf08 1047-1052
+src/i18n/locales/hi.ts
+  a37934fd428ecf08 1046-1051
+src/i18n/locales/mr.ts
+  a37934fd428ecf08 1050-1055
+src/components/screens/entry-form.tsx
+  a37934fd428ecf08 1394-1401,1405
+app/calculator/system-discharge.tsx
+  a37934fd428ecf08 27,47,321,358
+app/calculator/lai.tsx
+  a37934fd428ecf08 25,32,158,195
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  a37934fd428ecf08 154-155,291-292,320,346-352
+src/utils/entry-log-submission.ts
+  a37934fd428ecf08 113-114,117-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "e296c202b987f76b4f4bdc66ab3d4d7f5d041d23",
+  "prompts": {
+    "a37934fd428ecf08": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "32c506bc-9eb8-43af-a262-8ce60cb0e1ef",
+        "model": "kimi-k2.6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 65,
+      "total_deletions": 20,
+      "accepted_lines": 67,
+      "overriden_lines": 0
+    }
+  }
+}
