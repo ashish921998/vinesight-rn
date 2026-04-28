@@ -36,8 +36,8 @@ export function WorkerCard({
   const isDark = useIsDark();
   const { t } = useTranslation();
 
-  // Labour category color for avatar (#7A5E8E light, #9A7EAE dark)
-  const labourColor = isDark ? '#9A7EAE' : '#7A5E8E';
+  // Use primary green for active worker avatars — keeps palette cohesive with the warm earth tones
+  const labourColor = isDark ? colors.primary[400] : colors.primary[600];
   // Inactive workers use stone-5 for avatar
   const inactiveAvatarColor = isDark ? '#7A756D' : '#A89E92';
 
