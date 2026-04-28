@@ -1,0 +1,39 @@
+src/i18n/locales/en.ts
+  24396a51836cf9d4 878-880,2635
+src/i18n/locales/hi.ts
+  24396a51836cf9d4 877-879,2633
+app/soil-profiling.tsx
+  24396a51836cf9d4 48,757-761
+app/calculator/tank-mix.tsx
+  24396a51836cf9d4 230-239,241-249,252-288
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  24396a51836cf9d4 290-291,297,302-305,987
+src/i18n/locales/mr.ts
+  24396a51836cf9d4 880-882,2646
+app/(tabs)/index.tsx
+  24396a51836cf9d4 725,750
+app/soil-trends.tsx
+  24396a51836cf9d4 82
+app/logs.tsx
+  24396a51836cf9d4 562
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "9b441df1f9211576f6158db0712044ddffa2c8cb",
+  "prompts": {
+    "24396a51836cf9d4": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c0ded320-b618-4bd0-9b79-5694a12d78eb",
+        "model": "kimi-k2.6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 87,
+      "total_deletions": 45,
+      "accepted_lines": 86,
+      "overriden_lines": 0
+    }
+  }
+}
