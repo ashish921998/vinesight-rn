@@ -12,5 +12,5 @@ export function useTabBarInset() {
     return FALLBACK_TAB_BAR_HEIGHT + bottom;
   }
 
-  return height;
+  return height + bottom;
 }

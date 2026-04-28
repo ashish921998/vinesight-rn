@@ -467,13 +467,13 @@ export default function SoilProfilingScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Symbol
               name={
-                trendsData.moistureChange !== null && trendsData.moistureChange >= 0
+                trendsData.moistureChange !== null && trendsData.moistureChange > 0
                   ? 'arrow.up'
                   : 'arrow.down'
               }
               size={24}
               color={
-                trendsData.moistureChange !== null && trendsData.moistureChange >= 0
+                trendsData.moistureChange !== null && trendsData.moistureChange > 0
                   ? colors.success
                   : m3.colorScheme.error
               }
@@ -484,7 +484,7 @@ export default function SoilProfilingScreen() {
                 fontWeight: fontWeight.bold,
                 marginLeft: spacing[2],
                 color:
-                  trendsData.moistureChange !== null && trendsData.moistureChange >= 0
+                  trendsData.moistureChange !== null && trendsData.moistureChange > 0
                     ? colors.success
                     : m3.colorScheme.error,
               }}

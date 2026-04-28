@@ -2025,7 +2025,9 @@ export const hi = {
         phiDeadline: 'PHI अंतिम समय निकट है',
       },
       severity: {
-        high: 'अतिदेय',
+        high: 'उच्च',
+        medium: 'मध्यम',
+        low: 'कमी',
       },
       actions: {
         reviewTasks: 'कार्य देखें',
@@ -2555,8 +2557,8 @@ export const hi = {
       title: 'लैब परीक्षण जोड़ें',
       addSoilTest: 'मिट्टी परीक्षण जोड़ें',
       addSoilTestDesc: 'मिट्टी के नमूने से पोषक तत्वों के स्तर दर्ज करें',
-      addPetioleTest: 'पेटिओल परीक्षण जोड़ें',
-      addPetioleTestDesc: 'पेटिओल नमूने से पोषक तत्वों के स्तर दर्ज करें',
+      addPetioleTest: 'पेटीओल परीक्षण जोड़ें',
+      addPetioleTestDesc: 'पेटीओल नमूने से पोषक तत्वों के स्तर दर्ज करें',
     },
     parameters: {
       ph: 'pH',

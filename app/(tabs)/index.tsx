@@ -847,6 +847,27 @@ export default function DashboardScreen() {
                                   {severityHighLabel}
                                 </Text>
                               </View>
+                            ) : isMedium ? (
+                              <View
+                                style={{
+                                  paddingHorizontal: 8,
+                                  paddingVertical: 2,
+                                  borderRadius: borderRadius.pill,
+                                  backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.14),
+                                }}
+                              >
+                                <Text
+                                  style={{
+                                    ...m3.typography.labelSmall,
+                                    color: m3.colorScheme.warning,
+                                    fontWeight: fontWeight.semibold,
+                                    letterSpacing: 0.3,
+                                    textTransform: 'uppercase',
+                                  }}
+                                >
+                                  {severityMediumLabel}
+                                </Text>
+                              </View>
                             ) : null}
                           </View>
                           <Text
