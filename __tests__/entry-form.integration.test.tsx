@@ -368,14 +368,14 @@ describe('EntryForm UI integration', () => {
     );
 
     await waitFor(() => {
-      const matchingCall = alertSpy.mock.calls.find(
-        (call) => call[0] === 'entryForm.saveFailed.title',
-      );
-      expect(matchingCall).toBeTruthy();
-      expect(typeof matchingCall?.[1]).toBe('string');
-      expect(matchingCall?.[1]).toContain('entryForm.saveFailed.body_one');
-      expect(matchingCall?.[1]).toContain('Farm B failed once');
+      expect(screen.getByText('entryForm.saveFailed.inlineTitle')).toBeTruthy();
+      expect(screen.getByText('entryForm.saveFailed.inlineBody')).toBeTruthy();
+      expect(screen.getByText('entryForm.saveFailed.draftFailed')).toBeTruthy();
+      expect(screen.getByText('Farm B failed once')).toBeTruthy();
     });
+    expect(alertSpy.mock.calls.some((call) => call[0] === 'entryForm.saveFailed.title')).toBe(
+      false,
+    );
 
     // Atomic semantics: the successful Farm A insert must be rolled back.
     await waitFor(() => {
@@ -384,7 +384,7 @@ describe('EntryForm UI integration', () => {
       );
     });
 
-    fireEvent.press(screen.getByText('entryForm.saveLogs'));
+    fireEvent.press(screen.getByText('entryForm.retrySaveLogs'));
 
     await waitFor(() => {
       // 2 from the first attempt (one rolled back) + 2 from the retry (both
@@ -454,15 +454,15 @@ describe('EntryForm UI integration', () => {
     fireEvent.press(screen.getByText('entryForm.saveLogs'));
 
     await waitFor(() => {
-      const matchingCall = alertSpy.mock.calls.find(
-        (call) => call[0] === 'entryForm.saveFailed.title',
-      );
-      expect(matchingCall).toBeTruthy();
-      const message = matchingCall?.[1] as string;
-      expect(message).toContain('entryForm.saveFailed.body_one');
+      expect(screen.getByText('entryForm.saveFailed.inlineTitle')).toBeTruthy();
+      expect(screen.getByText('entryForm.saveFailed.draftFailed')).toBeTruthy();
+      expect(screen.getByText('Farm B failed')).toBeTruthy();
       // Rollback warning should be present because delete failed.
-      expect(message).toContain('entryForm.saveFailed.rollbackWarning_one');
+      expect(screen.getByText('entryForm.saveFailed.rollbackInlineWarning')).toBeTruthy();
     });
+    expect(alertSpy.mock.calls.some((call) => call[0] === 'entryForm.saveFailed.title')).toBe(
+      false,
+    );
 
     alertSpy.mockRestore();
   });
