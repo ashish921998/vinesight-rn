@@ -1,0 +1,43 @@
+app.config.js
+  h_e1aac9baf373c4 61
+src/components/ui/form-components.tsx
+  6178e3d00163dc42 593,596-601,638
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "34b017f97c9dec0373db5953c15daffe31d73dd1",
+  "prompts": {
+    "6178e3d00163dc42": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019de964-83d6-7eb3-bbb1-4d1df677153d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 3,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    },
+    "ca08caecd8999aad": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019de89e-acc1-79d0-b1b0-b5febc450a96",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_e1aac9baf373c4": {
+      "author": "Ashish Huddar"
+    }
+  }
+}
