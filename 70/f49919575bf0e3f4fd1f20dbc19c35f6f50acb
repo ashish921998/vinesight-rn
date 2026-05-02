@@ -1,0 +1,27 @@
+__tests__/entry-form.integration.test.tsx
+  2b015a922e02d246 181,343,416-426,428-429,447,460-472,477,479-555
+src/components/screens/entry-form.tsx
+  2b015a922e02d246 1101-1118,1162,1170,1188,1230-1234,1304,1310,1334,1479
+src/components/animated-splash.tsx
+  2b015a922e02d246 15-16,47,53,68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "70f49919575bf0e3f4fd1f20dbc19c35f6f50acb",
+  "prompts": {
+    "2b015a922e02d246": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019de78d-7533-77b1-8cb1-c6632956ead3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 146,
+      "total_deletions": 44,
+      "accepted_lines": 142,
+      "overriden_lines": 0
+    }
+  }
+}
