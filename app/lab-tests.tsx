@@ -506,6 +506,7 @@ export default function LabTestsScreen() {
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: spacing[2],
+            position: 'relative',
           }}
         >
           <Pressable
@@ -518,6 +519,7 @@ export default function LabTestsScreen() {
               justifyContent: 'center',
               overflow: 'hidden',
               backgroundColor: 'transparent',
+              zIndex: 1,
             }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
@@ -549,7 +551,15 @@ export default function LabTestsScreen() {
             )}
           </Pressable>
 
-          <View style={{ flex: 1, alignItems: 'center', minWidth: 0 }}>
+          <View
+            pointerEvents="none"
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 112,
+            }}
+          >
             <Text
               numberOfLines={1}
               style={{
@@ -583,6 +593,8 @@ export default function LabTestsScreen() {
               borderRadius: borderRadius.full,
               backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
               overflow: 'hidden',
+              marginLeft: 'auto',
+              zIndex: 1,
             }}
           >
             {({ pressed }) => (
