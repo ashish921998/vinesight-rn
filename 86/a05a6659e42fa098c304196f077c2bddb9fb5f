@@ -1,0 +1,25 @@
+src/components/animated-splash.tsx
+  2b015a922e02d246 41-43,45-48,50-52,55-60
+src/i18n/locales/mr.ts
+  2b015a922e02d246 2302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "86a05a6659e42fa098c304196f077c2bddb9fb5f",
+  "prompts": {
+    "2b015a922e02d246": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019de78d-7533-77b1-8cb1-c6632956ead3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 7,
+      "accepted_lines": 17,
+      "overriden_lines": 0
+    }
+  }
+}
