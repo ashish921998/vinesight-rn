@@ -261,18 +261,22 @@ export default function LabTestsScreen() {
                       : accentColor;
                 const unit = getParameterUnit(String(key), isSoil);
                 const displayValue = typeof value === 'number' ? value.toFixed(2) : String(value);
+                const chipBorderColor =
+                  status === 'ok'
+                    ? colorWithOpacity(accentColor, 0.18)
+                    : colorWithOpacity(statusColor, 0.28);
 
                 return (
                   <View
                     key={String(key)}
                     style={{
-                      backgroundColor: m3.surface.surfaceContainerHighest,
+                      backgroundColor: m3.colorScheme.surface,
                       borderRadius: borderRadius.lg,
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[2],
                       minWidth: 96,
                       borderWidth: 1,
-                      borderColor: m3.colorScheme.outlineVariant,
+                      borderColor: chipBorderColor,
                     }}
                     accessibilityLabel={`${formatParameterKey(
                       String(key),
@@ -287,7 +291,7 @@ export default function LabTestsScreen() {
                           width: 8,
                           height: 8,
                           borderRadius: 4,
-                          backgroundColor: statusColor,
+                          backgroundColor: colorWithOpacity(statusColor, 0.78),
                           marginRight: spacing[1],
                         }}
                       />
@@ -320,13 +324,13 @@ export default function LabTestsScreen() {
               {remainingCount > 0 && (
                 <View
                   style={{
-                    backgroundColor: m3.surface.surfaceContainerHighest,
+                    backgroundColor: m3.colorScheme.surface,
                     borderRadius: borderRadius.lg,
                     paddingHorizontal: spacing[3],
                     paddingVertical: spacing[2],
                     minWidth: 96,
                     borderWidth: 1,
-                    borderColor: m3.colorScheme.outlineVariant,
+                    borderColor: colorWithOpacity(accentColor, 0.18),
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
@@ -502,6 +506,7 @@ export default function LabTestsScreen() {
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: spacing[2],
+            position: 'relative',
           }}
         >
           <Pressable
@@ -514,6 +519,7 @@ export default function LabTestsScreen() {
               justifyContent: 'center',
               overflow: 'hidden',
               backgroundColor: 'transparent',
+              zIndex: 1,
             }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
@@ -545,7 +551,15 @@ export default function LabTestsScreen() {
             )}
           </Pressable>
 
-          <View style={{ flex: 1, alignItems: 'center', minWidth: 0 }}>
+          <View
+            pointerEvents="none"
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 112,
+            }}
+          >
             <Text
               numberOfLines={1}
               style={{
@@ -579,6 +593,8 @@ export default function LabTestsScreen() {
               borderRadius: borderRadius.full,
               backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
               overflow: 'hidden',
+              marginLeft: 'auto',
+              zIndex: 1,
             }}
           >
             {({ pressed }) => (

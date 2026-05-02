@@ -6,7 +6,7 @@ import type { Worker, WorkerAttendance, WorkStatus } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { WorkerSelectSheet } from './index';
+import { WorkerSelectSheet } from '@/components/modals';
 import i18n from '@/i18n';
 
 function formatDateToYYYYMMDD(date: Date): string {

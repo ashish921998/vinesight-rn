@@ -16,7 +16,6 @@ module.exports = {
       appleTeamId: process.env.EXPO_APPLE_TEAM_ID || undefined,
       supportsTablet: true,
       bundleIdentifier: 'com.vinesight.ios',
-      scheme: 'vinesight',
       usesAppleSignIn: true,
       buildNumber: '1.3.1',
       entitlements: {

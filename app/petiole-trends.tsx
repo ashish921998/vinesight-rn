@@ -155,6 +155,7 @@ export default function PetioleTrendsScreen() {
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: spacing[2],
+            position: 'relative',
           }}
         >
           <Pressable
@@ -167,6 +168,7 @@ export default function PetioleTrendsScreen() {
               justifyContent: 'center',
               overflow: 'hidden',
               backgroundColor: 'transparent',
+              zIndex: 1,
             }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
@@ -198,7 +200,15 @@ export default function PetioleTrendsScreen() {
             )}
           </Pressable>
 
-          <View style={{ flex: 1, alignItems: 'center' }}>
+          <View
+            pointerEvents="none"
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 64,
+            }}
+          >
             <Text
               numberOfLines={1}
               style={{
@@ -210,8 +220,6 @@ export default function PetioleTrendsScreen() {
               {t('trends.screens.petiole')}
             </Text>
           </View>
-
-          <View style={{ width: 44, height: 44 }} />
         </View>
       </View>
 

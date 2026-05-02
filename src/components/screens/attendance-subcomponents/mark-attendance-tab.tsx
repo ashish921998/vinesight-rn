@@ -26,7 +26,7 @@ import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/t
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTabBarInset, isAndroid, isIOS } from '@/hooks';
-import { WorkerSelectSheet, FarmSelectSheet } from './index';
+import { WorkerSelectSheet, FarmSelectSheet } from '@/components/modals';
 import { formatDate as formatDateLocalized } from '@/i18n/format';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { normalizeDate, addDays } from '@/utils/worker-analytics';

@@ -1,5 +1,5 @@
 import { View, Image } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,12 +7,14 @@ import Animated, {
   withSequence,
   withDelay,
   Easing,
-  FadeIn,
-  FadeOut,
+  runOnJS,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { colors, spacing, size, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import appLogoLight from '../../assets/icons/ios-light.png';
+
+const FADE_OUT_DURATION = 300;
 
 interface SplashProps {
   onComplete?: () => void;
@@ -20,12 +22,16 @@ interface SplashProps {
 }
 
 export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
-  const [shouldRender, setShouldRender] = useState(true);
   const [isMounted, setIsMounted] = useState(true);
 
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
   const logoOpacity = useSharedValue(0);
+
+  const finishSplash = useCallback(() => {
+    setIsMounted(false);
+    onComplete?.();
+  }, [onComplete]);
 
   useEffect(() => {
     scale.value = withSequence(
@@ -41,23 +47,25 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
     );
 
     const timer = setTimeout(() => {
-      if (onComplete) {
-        onComplete();
-      }
-      setShouldRender(false);
+      opacity.value = withTiming(
+        0,
+        {
+          duration: FADE_OUT_DURATION,
+          easing: Easing.out(Easing.ease),
+        },
+        (finished) => {
+          if (finished) {
+            runOnJS(finishSplash)();
+          }
+        },
+      );
     }, duration);
 
-    return () => clearTimeout(timer);
-  }, [duration, onComplete, scale, opacity, logoOpacity]);
-
-  useEffect(() => {
-    if (!shouldRender) {
-      const exitTimer = setTimeout(() => {
-        setIsMounted(false);
-      }, 300);
-      return () => clearTimeout(exitTimer);
-    }
-  }, [shouldRender]);
+    return () => {
+      clearTimeout(timer);
+      cancelAnimation(opacity);
+    };
+  }, [duration, finishSplash, scale, opacity, logoOpacity]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -80,7 +88,7 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
   }
 
   return (
-    <Animated.View entering={FadeIn} exiting={FadeOut} style={[containerStyle, { flex: 1 }]}>
+    <Animated.View style={[containerStyle, { flex: 1 }]}>
       <View
         style={{
           flex: 1,

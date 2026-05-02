@@ -144,7 +144,7 @@ export default function PhoneLoginScreen() {
     } else if (!pendingOTPPhone) {
       lastNavigatedPhoneRef.current = null;
     }
-  }, [pendingOTPPhone, redirectPath]);
+  }, [pendingOTPPhone, pendingOTPPhoneMode, redirectPath]);
 
   const normalizedPhoneNumber = useMemo(
     () => buildE164PhoneNumber(selectedCountry.dialCode, phoneNumber),

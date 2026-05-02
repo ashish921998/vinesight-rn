@@ -599,6 +599,7 @@ export const hi = {
     selectTaskType: 'कार्य प्रकार चुनें',
     selectPriority: 'प्राथमिकता चुनें',
     saveLogs: 'लॉग सहेजें ({{count}})',
+    retrySaveLogs: 'फिर से सहेजें ({{count}})',
     saveTask: 'कार्य सहेजें',
     drafts_one: '{{count}} ड्राफ्ट',
     drafts_other: '{{count}} ड्राफ्ट',
@@ -617,6 +618,14 @@ export const hi = {
         'चेतावनी: {{count}} सहेजा गया रिकॉर्ड हटाया नहीं जा सका। पुनः प्रयास करने से पहले कृपया अपना डेटा सत्यापित करें।',
       rollbackWarning_other:
         'चेतावनी: {{count}} सहेजे गए रिकॉर्ड हटाए नहीं जा सके। पुनः प्रयास करने से पहले कृपया अपना डेटा सत्यापित करें।',
+      inlineTitle_one: '{{count}} ड्राफ्ट पर ध्यान दें',
+      inlineTitle_other: '{{count}} ड्राफ्ट पर ध्यान दें',
+      inlineBody: 'कुछ भी सहेजा नहीं गया। हाइलाइट किए गए ड्राफ्ट देखें और फिर से प्रयास करें।',
+      draftFailed_one: 'सहेजना विफल',
+      draftFailed_other: '{{count}} सेव विफल',
+      rollbackInlineWarning:
+        'कुछ सहेजे गए रिकॉर्ड वापस नहीं लिए जा सके। फिर से प्रयास करने से पहले रिकॉर्ड सत्यापित करें।',
+      unexpectedError: 'अनपेक्षित सेव त्रुटि। कृपया फिर से प्रयास करें।',
     },
     taskCompletionLinkFailed:
       'लॉग सहेज लिए गए, लेकिन सोर्स कार्य को पूर्ण चिह्नित नहीं किया जा सका।',
