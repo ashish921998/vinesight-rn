@@ -16,7 +16,6 @@ module.exports = {
       appleTeamId: process.env.EXPO_APPLE_TEAM_ID || undefined,
       supportsTablet: true,
       bundleIdentifier: 'com.vinesight.ios',
-      scheme: 'vinesight',
       usesAppleSignIn: true,
       buildNumber: '1.3.1',
       entitlements: {
@@ -36,6 +35,7 @@ module.exports = {
         NSMicrophoneUsageDescription: 'Allow Vinesight to use the microphone for voice queries.',
         NSSpeechRecognitionUsageDescription:
           'Allow Vinesight to convert your speech to text for voice queries.',
+        UIBackgroundModes: ['fetch', 'remote-notification'],
       },
       privacyManifests: {
         NSPrivacyTracking: false,

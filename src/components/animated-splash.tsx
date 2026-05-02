@@ -7,8 +7,6 @@ import Animated, {
   withSequence,
   withDelay,
   Easing,
-  FadeIn,
-  FadeOut,
 } from 'react-native-reanimated';
 import { colors, spacing, size, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -44,6 +42,7 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
       if (onComplete) {
         onComplete();
       }
+      opacity.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) });
       setShouldRender(false);
     }, duration);
 
@@ -80,7 +79,7 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
   }
 
   return (
-    <Animated.View entering={FadeIn} exiting={FadeOut} style={[containerStyle, { flex: 1 }]}>
+    <Animated.View style={[containerStyle, { flex: 1 }]}>
       <View
         style={{
           flex: 1,
