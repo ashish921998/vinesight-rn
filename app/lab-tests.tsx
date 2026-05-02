@@ -261,18 +261,22 @@ export default function LabTestsScreen() {
                       : accentColor;
                 const unit = getParameterUnit(String(key), isSoil);
                 const displayValue = typeof value === 'number' ? value.toFixed(2) : String(value);
+                const chipBorderColor =
+                  status === 'ok'
+                    ? colorWithOpacity(accentColor, 0.18)
+                    : colorWithOpacity(statusColor, 0.28);
 
                 return (
                   <View
                     key={String(key)}
                     style={{
-                      backgroundColor: m3.surface.surfaceContainerHighest,
+                      backgroundColor: m3.colorScheme.surface,
                       borderRadius: borderRadius.lg,
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[2],
                       minWidth: 96,
                       borderWidth: 1,
-                      borderColor: m3.colorScheme.outlineVariant,
+                      borderColor: chipBorderColor,
                     }}
                     accessibilityLabel={`${formatParameterKey(
                       String(key),
@@ -287,7 +291,7 @@ export default function LabTestsScreen() {
                           width: 8,
                           height: 8,
                           borderRadius: 4,
-                          backgroundColor: statusColor,
+                          backgroundColor: colorWithOpacity(statusColor, 0.78),
                           marginRight: spacing[1],
                         }}
                       />
@@ -320,13 +324,13 @@ export default function LabTestsScreen() {
               {remainingCount > 0 && (
                 <View
                   style={{
-                    backgroundColor: m3.surface.surfaceContainerHighest,
+                    backgroundColor: m3.colorScheme.surface,
                     borderRadius: borderRadius.lg,
                     paddingHorizontal: spacing[3],
                     paddingVertical: spacing[2],
                     minWidth: 96,
                     borderWidth: 1,
-                    borderColor: m3.colorScheme.outlineVariant,
+                    borderColor: colorWithOpacity(accentColor, 0.18),
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
