@@ -1,0 +1,27 @@
+src/i18n/locales/mr.ts
+  ca08caecd8999aad 605,620-627
+src/i18n/locales/hi.ts
+  ca08caecd8999aad 602,621-628
+src/i18n/locales/en.ts
+  ca08caecd8999aad 603,622-629
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "6cb6e3cb6f6c5719f2726031d9541336f7263347",
+  "prompts": {
+    "ca08caecd8999aad": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019de89e-acc1-79d0-b1b0-b5febc450a96",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 27,
+      "total_deletions": 0,
+      "accepted_lines": 27,
+      "overriden_lines": 0
+    }
+  }
+}
