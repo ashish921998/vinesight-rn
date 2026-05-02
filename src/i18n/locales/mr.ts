@@ -2299,7 +2299,7 @@ export const mr = {
       },
       mark: {
         workersCount: '{{count}} $t(glossary.worker)',
-        dailyRate: '₹{{rate}}/दिवस',
+        dailyRate: '₹{{rate}} / दिवस',
         full: 'पूर्ण',
         half: 'अर्धा',
         absent: 'अनुपस्थित',

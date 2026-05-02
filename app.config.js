@@ -35,7 +35,6 @@ module.exports = {
         NSMicrophoneUsageDescription: 'Allow Vinesight to use the microphone for voice queries.',
         NSSpeechRecognitionUsageDescription:
           'Allow Vinesight to convert your speech to text for voice queries.',
-        UIBackgroundModes: ['fetch', 'remote-notification'],
       },
       privacyManifests: {
         NSPrivacyTracking: false,

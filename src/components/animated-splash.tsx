@@ -38,15 +38,26 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
       withTiming(1, { duration: 500, easing: Easing.out(Easing.ease) }),
     );
 
+    let onCompleteTimer: ReturnType<typeof setTimeout> | undefined;
+    const fadeOutDuration = 300;
+
     const timer = setTimeout(() => {
-      if (onComplete) {
-        onComplete();
-      }
-      opacity.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) });
+      opacity.value = withTiming(0, {
+        duration: fadeOutDuration,
+        easing: Easing.out(Easing.ease),
+      });
       setShouldRender(false);
+      onCompleteTimer = setTimeout(() => {
+        onComplete?.();
+      }, fadeOutDuration);
     }, duration);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (onCompleteTimer) {
+        clearTimeout(onCompleteTimer);
+      }
+    };
   }, [duration, onComplete, scale, opacity, logoOpacity]);
 
   useEffect(() => {
