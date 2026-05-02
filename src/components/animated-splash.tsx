@@ -1,5 +1,5 @@
 import { View, Image } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,6 +7,8 @@ import Animated, {
   withSequence,
   withDelay,
   Easing,
+  runOnJS,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { colors, spacing, size, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -20,12 +22,16 @@ interface SplashProps {
 }
 
 export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
-  const [shouldRender, setShouldRender] = useState(true);
   const [isMounted, setIsMounted] = useState(true);
 
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
   const logoOpacity = useSharedValue(0);
+
+  const finishSplash = useCallback(() => {
+    setIsMounted(false);
+    onComplete?.();
+  }, [onComplete]);
 
   useEffect(() => {
     scale.value = withSequence(
@@ -40,35 +46,26 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
       withTiming(1, { duration: 500, easing: Easing.out(Easing.ease) }),
     );
 
-    let onCompleteTimer: ReturnType<typeof setTimeout> | undefined;
-
     const timer = setTimeout(() => {
-      opacity.value = withTiming(0, {
-        duration: FADE_OUT_DURATION,
-        easing: Easing.out(Easing.ease),
-      });
-      setShouldRender(false);
-      onCompleteTimer = setTimeout(() => {
-        onComplete?.();
-      }, FADE_OUT_DURATION);
+      opacity.value = withTiming(
+        0,
+        {
+          duration: FADE_OUT_DURATION,
+          easing: Easing.out(Easing.ease),
+        },
+        (finished) => {
+          if (finished) {
+            runOnJS(finishSplash)();
+          }
+        },
+      );
     }, duration);
 
     return () => {
       clearTimeout(timer);
-      if (onCompleteTimer) {
-        clearTimeout(onCompleteTimer);
-      }
+      cancelAnimation(opacity);
     };
-  }, [duration, onComplete, scale, opacity, logoOpacity]);
-
-  useEffect(() => {
-    if (!shouldRender) {
-      const exitTimer = setTimeout(() => {
-        setIsMounted(false);
-      }, FADE_OUT_DURATION);
-      return () => clearTimeout(exitTimer);
-    }
-  }, [shouldRender]);
+  }, [duration, finishSplash, scale, opacity, logoOpacity]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
