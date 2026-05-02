@@ -36,7 +36,11 @@ import { triggerHapticSuccess } from '@/utils/haptics';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
 import { androidTextPadding, spacing, borderRadius, fontWeight } from '@/styles/theme';
 import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
-import { PendingLogs, type PendingLog } from '@/components/screens/entry-form/PendingLogs';
+import {
+  PendingLogs,
+  type PendingLog,
+  type PendingLogFailure,
+} from '@/components/screens/entry-form/PendingLogs';
 import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
 import { LogForm } from '@/components/screens/entry-form/LogForm';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
@@ -410,6 +414,9 @@ export function EntryForm({
   const [selectedLogType, setSelectedLogType] = useState<LogTypeId | null>(null);
   const [showLogFormModal, setShowLogFormModal] = useState(false);
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
+  const [pendingLogFailures, setPendingLogFailures] = useState<Record<string, PendingLogFailure>>(
+    {},
+  );
   const allFarmsSucceededByLogRef = useRef<Map<string, Set<number>>>(new Map());
   const [isSubmittingLogs, setIsSubmittingLogs] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -864,6 +871,7 @@ export function EntryForm({
         );
         return [...prev, { ...newLog, isSourceTaskLog: shouldMarkSourceTaskLog }];
       });
+      setPendingLogFailures({});
       setSelectedLogType(null);
       setShowLogFormModal(false);
     },
@@ -1015,6 +1023,12 @@ export function EntryForm({
 
   const removeLogFromSession = useCallback((id: string) => {
     allFarmsSucceededByLogRef.current.delete(id);
+    setPendingLogFailures((prev) => {
+      if (!prev[id]) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
     setPendingLogs((prev) => prev.filter((log) => log.id !== id));
   }, []);
 
@@ -1022,6 +1036,7 @@ export function EntryForm({
     if (pendingLogs.length === 0) return;
 
     setIsSubmittingLogs(true);
+    setPendingLogFailures({});
     const dateStr = toSupabaseDateString(selectedDate);
     const createdFrom = entrySource === 'voice_ai' ? 'voice_ai' : 'manual';
     const hasAllFarmsDrafts = pendingLogs.some((log) => log.scope === 'all_farms');
@@ -1035,6 +1050,27 @@ export function EntryForm({
       createFertigation: async (payload) => createFertigation.mutateAsync(payload),
       updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
       deleteIrrigation: async (payload) => deleteIrrigation.mutateAsync(payload),
+    };
+
+    const buildPendingLogFailure = (
+      error: unknown,
+      existing?: PendingLogFailure,
+    ): PendingLogFailure => {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'string'
+            ? error
+            : t('entryForm.saveFailed.unexpectedError', {
+                defaultValue: 'Unexpected save error. Please try again.',
+              });
+      const errorMeta = getFarmErrorMeta(error);
+      return {
+        message: errorMeta.message ?? errorMessage,
+        code: errorMeta.code,
+        failedCount: (existing?.failedCount ?? 0) + 1,
+        hasRollbackFailure: existing?.hasRollbackFailure,
+      };
     };
 
     const buildFarmContext = (farmItem: Farm): EntryLogFarmContext => ({
@@ -1134,6 +1170,7 @@ export function EntryForm({
       failedCount: number,
       firstFailedError: unknown,
       failedLogContext: (typeof pendingLogs)[number] | null,
+      failuresByLogId: Record<string, PendingLogFailure>,
       rollbackFailures?: Array<{
         type: LogTypeId;
         recordId: number;
@@ -1152,6 +1189,7 @@ export function EntryForm({
         Sentry.withScope((scope) => {
           scope.setTag('feature', 'entry-log');
           scope.setExtra('pendingLogId', failedLogContext?.id ?? 'unknown');
+          scope.setExtra('failedCount', failedCount);
           scope.setTag('logType', failedLogContext?.type ?? 'unknown');
           scope.setExtra('errorMeta', { code: errorMeta.code ?? null });
           if (rollbackFailures && rollbackFailures.length > 0) {
@@ -1177,23 +1215,20 @@ export function EntryForm({
           );
         });
       }
-      const detail = errorMeta.message ?? errorMessage;
-      const codeSuffix = errorMeta.code ? ` [${errorMeta.code}]` : '';
-      let body =
-        failedCount === 1
-          ? t('entryForm.saveFailed.body_one', { count: failedCount })
-          : t('entryForm.saveFailed.body_other', { count: failedCount });
+
+      const nextFailures = { ...failuresByLogId };
       if (rollbackFailures && rollbackFailures.length > 0) {
-        const rollbackWarning =
-          rollbackFailures.length === 1
-            ? t('entryForm.saveFailed.rollbackWarning_one', { count: rollbackFailures.length })
-            : t('entryForm.saveFailed.rollbackWarning_other', { count: rollbackFailures.length });
-        body += '\n\n' + rollbackWarning;
+        Object.keys(nextFailures).forEach((logId) => {
+          nextFailures[logId] = {
+            ...nextFailures[logId],
+            hasRollbackFailure: true,
+          };
+        });
       }
-      Alert.alert(
-        t('entryForm.saveFailed.title'),
-        detail ? `${body}\n\n${detail}${codeSuffix}` : body,
-      );
+      if (Object.keys(nextFailures).length === 0 && failedLogContext) {
+        nextFailures[failedLogContext.id] = buildPendingLogFailure(firstFailedError);
+      }
+      setPendingLogFailures(nextFailures);
     };
 
     try {
@@ -1254,6 +1289,7 @@ export function EntryForm({
         let failedCount = 0;
         let firstFailedError: unknown = null;
         let failedLogContext: (typeof pendingLogs)[number] | null = null;
+        const failuresByLogId: Record<string, PendingLogFailure> = {};
         const createdRecords: Array<{
           type: LogTypeId;
           recordId: number | null;
@@ -1274,6 +1310,10 @@ export function EntryForm({
           }
 
           failedCount += 1;
+          failuresByLogId[submission.logId] = buildPendingLogFailure(
+            result.reason,
+            failuresByLogId[submission.logId],
+          );
           if (!firstFailedError) {
             firstFailedError = result.reason;
             failedLogContext = pendingLogs.find((log) => log.id === submission.logId) ?? null;
@@ -1312,7 +1352,13 @@ export function EntryForm({
           const rollbackFailures = await rollbackCreatedRecords(createdRecords);
           allFarmsSucceededByLogRef.current.clear();
           await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-          reportSaveFailure(failedCount, firstFailedError, failedLogContext, rollbackFailures);
+          reportSaveFailure(
+            failedCount,
+            firstFailedError,
+            failedLogContext,
+            failuresByLogId,
+            rollbackFailures,
+          );
           return;
         }
 
@@ -1342,6 +1388,7 @@ export function EntryForm({
         });
         allFarmsSucceededByLogRef.current.clear();
         setPendingLogs([]);
+        setPendingLogFailures({});
         await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
         triggerHapticSuccess();
         onLogSaveSuccess?.();
@@ -1379,11 +1426,18 @@ export function EntryForm({
         pendingLogs.map((log) => saveLog(log, buildFarmContext(singleFarmContext))),
       );
       const failedCount = results.filter((result) => result.status === 'rejected').length;
+      const failuresByLogId: Record<string, PendingLogFailure> = {};
 
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
           const failedLog = pendingLogs[index];
           const error = result.reason;
+          if (failedLog) {
+            failuresByLogId[failedLog.id] = buildPendingLogFailure(
+              error,
+              failuresByLogId[failedLog.id],
+            );
+          }
           const errorMeta = getFarmErrorMeta(error);
           const errorName = error instanceof Error ? error.name : 'UnknownError';
           console.error('Failed to save pending log', {
@@ -1430,7 +1484,13 @@ export function EntryForm({
           results[firstFailedIndex]?.status === 'rejected'
             ? (results[firstFailedIndex] as PromiseRejectedResult).reason
             : null;
-        reportSaveFailure(failedCount, firstFailedError, failedLogContext, rollbackFailures);
+        reportSaveFailure(
+          failedCount,
+          firstFailedError,
+          failedLogContext,
+          failuresByLogId,
+          rollbackFailures,
+        );
         return;
       }
 
@@ -1485,6 +1545,7 @@ export function EntryForm({
         }
       });
       setPendingLogs([]);
+      setPendingLogFailures({});
 
       if (sourceTaskId && matchingSuccessfulRecord && matchingSuccessfulRecord.recordId !== null) {
         try {
@@ -1824,6 +1885,7 @@ export function EntryForm({
             onPress: () => {
               allFarmsSucceededByLogRef.current.clear();
               setPendingLogs([]);
+              setPendingLogFailures({});
               resetTaskForm();
               setSelectedLogType(null);
               onClose();
@@ -2294,7 +2356,11 @@ export function EntryForm({
           }}
         />
       </GuidedTourTarget>
-      <PendingLogs pendingLogs={pendingLogs} onRemove={removeLogFromSession} />
+      <PendingLogs
+        pendingLogs={pendingLogs}
+        failures={pendingLogFailures}
+        onRemove={removeLogFromSession}
+      />
     </>
   );
 
@@ -3479,10 +3545,15 @@ export function EntryForm({
                           ]}
                         >
                           {pendingLogs.length > 0
-                            ? t('entryForm.saveLogs', {
-                                count: pendingLogs.length,
-                                defaultValue: `Save ${pendingLogs.length} log${pendingLogs.length === 1 ? '' : 's'}`,
-                              })
+                            ? Object.keys(pendingLogFailures).length > 0
+                              ? t('entryForm.retrySaveLogs', {
+                                  count: pendingLogs.length,
+                                  defaultValue: `Retry save (${pendingLogs.length})`,
+                                })
+                              : t('entryForm.saveLogs', {
+                                  count: pendingLogs.length,
+                                  defaultValue: `Save ${pendingLogs.length} log${pendingLogs.length === 1 ? '' : 's'}`,
+                                })
                             : t('common.save')}
                         </Text>
                       </>

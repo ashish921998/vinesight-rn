@@ -30,15 +30,24 @@ export interface PendingLog {
   isSourceTaskLog?: boolean;
 }
 
+export interface PendingLogFailure {
+  message: string;
+  code?: string;
+  failedCount?: number;
+  hasRollbackFailure?: boolean;
+}
+
 interface PendingLogsProps {
   pendingLogs: PendingLog[];
+  failures?: Record<string, PendingLogFailure>;
   onRemove: (id: string) => void;
 }
 
-export function PendingLogs({ pendingLogs, onRemove }: PendingLogsProps) {
+export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLogsProps) {
   const m3 = useM3();
   const colors = useThemeColors();
   const { t } = useTranslation();
+  const failedDraftCount = pendingLogs.filter((log) => failures[log.id]).length;
 
   if (pendingLogs.length === 0) return null;
 
@@ -106,6 +115,55 @@ export function PendingLogs({ pendingLogs, onRemove }: PendingLogsProps) {
           </Text>
         </View>
       </View>
+      {failedDraftCount > 0 && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            gap: 10,
+            marginBottom: 12,
+            padding: 12,
+            borderRadius: 14,
+            backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
+            borderWidth: 1,
+            borderColor: colorWithOpacity(m3.colorScheme.error, 0.22),
+          }}
+        >
+          <AppIcon name="alert-circle-outline" size={18} color={m3.colorScheme.error} />
+          <View style={{ flex: 1 }}>
+            <Text
+              selectable
+              style={{
+                fontSize: 13,
+                lineHeight: 18,
+                fontWeight: '700',
+                color: m3.colorScheme.error,
+              }}
+            >
+              {t('entryForm.saveFailed.inlineTitle', {
+                count: failedDraftCount,
+                defaultValue:
+                  failedDraftCount === 1
+                    ? '1 draft needs attention'
+                    : `${failedDraftCount} drafts need attention`,
+              })}
+            </Text>
+            <Text
+              selectable
+              style={{
+                marginTop: 2,
+                fontSize: 12,
+                lineHeight: 17,
+                color: m3.colorScheme.onSurfaceVariant,
+              }}
+            >
+              {t('entryForm.saveFailed.inlineBody', {
+                defaultValue: 'Nothing was saved. Review the highlighted drafts and retry.',
+              })}
+            </Text>
+          </View>
+        </View>
+      )}
       <ScrollView
         nestedScrollEnabled
         style={{ maxHeight: 280 }}
@@ -114,6 +172,7 @@ export function PendingLogs({ pendingLogs, onRemove }: PendingLogsProps) {
       >
         {pendingLogs.map((log) => {
           const logType = LOG_TYPES.find((lt) => lt.id === log.type);
+          const failure = failures[log.id];
           const iconName =
             log.type === 'expense'
               ? getExpenseIconName(
@@ -134,7 +193,14 @@ export function PendingLogs({ pendingLogs, onRemove }: PendingLogsProps) {
                   borderWidth: 1,
                   borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
                 },
-                { backgroundColor: colors.surface[50] },
+                {
+                  backgroundColor: failure
+                    ? colorWithOpacity(m3.colorScheme.error, 0.08)
+                    : colors.surface[50],
+                  borderColor: failure
+                    ? colorWithOpacity(m3.colorScheme.error, 0.42)
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
+                },
               ]}
             >
               <View
@@ -171,6 +237,54 @@ export function PendingLogs({ pendingLogs, onRemove }: PendingLogsProps) {
                 >
                   {log.displayDescription}
                 </Text>
+                {failure && (
+                  <View style={{ marginTop: 8 }}>
+                    <Text
+                      selectable
+                      style={{
+                        fontSize: 12,
+                        lineHeight: 17,
+                        fontWeight: '700',
+                        color: m3.colorScheme.error,
+                      }}
+                    >
+                      {t('entryForm.saveFailed.draftFailed', {
+                        count: failure.failedCount ?? 1,
+                        defaultValue:
+                          failure.failedCount && failure.failedCount > 1
+                            ? `${failure.failedCount} saves failed`
+                            : 'Save failed',
+                      })}
+                    </Text>
+                    <Text
+                      selectable
+                      style={{
+                        marginTop: 2,
+                        fontSize: 12,
+                        lineHeight: 17,
+                        color: m3.colorScheme.onSurfaceVariant,
+                      }}
+                    >
+                      {failure.code ? `${failure.message} [${failure.code}]` : failure.message}
+                    </Text>
+                    {failure.hasRollbackFailure && (
+                      <Text
+                        selectable
+                        style={{
+                          marginTop: 2,
+                          fontSize: 12,
+                          lineHeight: 17,
+                          color: m3.colorScheme.error,
+                        }}
+                      >
+                        {t('entryForm.saveFailed.rollbackInlineWarning', {
+                          defaultValue:
+                            'Some saved records could not be rolled back. Verify records before retrying.',
+                        })}
+                      </Text>
+                    )}
+                  </View>
+                )}
               </View>
               <Pressable
                 onPress={() => onRemove(log.id)}
