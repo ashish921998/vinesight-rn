@@ -1,0 +1,23 @@
+app/lab-tests.tsx
+  2b015a922e02d246 264-267,273,279,294,327,333
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "35783975ec7d1127ed15a3d2d999b87944a3208c",
+  "prompts": {
+    "2b015a922e02d246": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019de78d-7533-77b1-8cb1-c6632956ead3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 6,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
