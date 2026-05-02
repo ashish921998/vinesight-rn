@@ -418,9 +418,6 @@ describe('EntryForm UI integration', () => {
         if (payload.cost === 700) {
           throw new Error('Every farm failed');
         }
-        if (payload.farm_id === 202) {
-          throw new Error('Farm B failed');
-        }
         return { id: payload.farm_id * 10 };
       },
     );
@@ -475,7 +472,7 @@ describe('EntryForm UI integration', () => {
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveFailed.inlineTitle')).toBeTruthy();
       expect(screen.getAllByText('entryForm.saveFailed.draftFailed')).toHaveLength(2);
-      expect(screen.getByText('Farm B failed')).toBeTruthy();
+      expect(screen.getByText('Delete failed')).toBeTruthy();
       expect(screen.getByText('Every farm failed')).toBeTruthy();
       expect(screen.getAllByText('entryForm.saveFailed.rollbackInlineWarning')).toHaveLength(1);
     });
@@ -552,7 +549,8 @@ describe('EntryForm UI integration', () => {
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveFailed.inlineTitle')).toBeTruthy();
       expect(screen.getAllByText('entryForm.saveFailed.draftFailed')).toHaveLength(2);
-      expect(screen.getAllByText('Every farm failed')).toHaveLength(2);
+      expect(screen.getByText('Delete failed')).toBeTruthy();
+      expect(screen.getByText('Every farm failed')).toBeTruthy();
       // Rollback warning should be present because delete failed.
       expect(screen.getByText('entryForm.saveFailed.rollbackInlineWarning')).toBeTruthy();
     });

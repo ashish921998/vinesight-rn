@@ -1229,7 +1229,7 @@ export function EntryForm({
       if (rollbackFailures && rollbackFailures.length > 0) {
         rollbackFailures.forEach((failure) => {
           const existingFailure =
-            nextFailures[failure.pendingLogId] ?? buildPendingLogFailure(firstFailedError);
+            nextFailures[failure.pendingLogId] ?? buildPendingLogFailure(failure.error);
           nextFailures[failure.pendingLogId] = {
             ...existingFailure,
             hasRollbackFailure: true,
