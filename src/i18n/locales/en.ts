@@ -600,6 +600,7 @@ export const en = {
     selectTaskType: 'Select task type',
     selectPriority: 'Select priority',
     saveLogs: 'Save logs ({{count}})',
+    retrySaveLogs: 'Retry save ({{count}})',
     saveTask: 'Save task',
     drafts_one: '{{count}} draft',
     drafts_other: '{{count}} drafts',
@@ -618,6 +619,14 @@ export const en = {
         'Warning: {{count}} saved record could not be removed. Please verify your data before retrying.',
       rollbackWarning_other:
         'Warning: {{count}} saved records could not be removed. Please verify your data before retrying.',
+      inlineTitle_one: '{{count}} draft needs attention',
+      inlineTitle_other: '{{count}} drafts need attention',
+      inlineBody: 'Nothing was saved. Review the highlighted drafts and retry.',
+      draftFailed_one: 'Save failed',
+      draftFailed_other: '{{count}} saves failed',
+      rollbackInlineWarning:
+        'Some saved records could not be rolled back. Verify records before retrying.',
+      unexpectedError: 'Unexpected save error. Please try again.',
     },
     taskCompletionLinkFailed: 'Logs were saved, but the source task could not be marked complete.',
     plannedSprayInputs: 'Planned spray inputs',

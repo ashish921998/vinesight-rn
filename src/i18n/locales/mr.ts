@@ -602,6 +602,7 @@ export const mr = {
     selectTaskType: '$t(glossary.task) प्रकार निवडा',
     selectPriority: 'प्राधान्य निवडा',
     saveLogs: 'नोंदी जतन करा ({{count}})',
+    retrySaveLogs: 'पुन्हा जतन करा ({{count}})',
     saveTask: '$t(glossary.task) जतन करा',
     farmLabel: '$t(glossary.farm) *',
     selectFarm: '$t(glossary.farm) निवडा',
@@ -616,6 +617,14 @@ export const mr = {
         'सूचना: {{count}} जतन केलेला रेकॉर्ड काढता आला नाही. पुन्हा प्रयत्न करण्यापूर्वी कृपया तुमचा डेटा तपासा.',
       rollbackWarning_other:
         'सूचना: {{count}} जतन केलेले रेकॉर्ड काढता आले नाहीत. पुन्हा प्रयत्न करण्यापूर्वी कृपया तुमचा डेटा तपासा.',
+      inlineTitle_one: '{{count}} मसुद्याकडे लक्ष द्या',
+      inlineTitle_other: '{{count}} मसुद्यांकडे लक्ष द्या',
+      inlineBody: 'काहीही जतन झाले नाही. चिन्हांकित मसुदे तपासा आणि पुन्हा प्रयत्न करा.',
+      draftFailed_one: 'जतन करणे अयशस्वी',
+      draftFailed_other: '{{count}} जतन करण्याचे प्रयत्न अयशस्वी',
+      rollbackInlineWarning:
+        'काही जतन केलेले रेकॉर्ड मागे घेता आले नाहीत. पुन्हा प्रयत्न करण्यापूर्वी रेकॉर्ड तपासा.',
+      unexpectedError: 'अनपेक्षित जतन त्रुटी आली. कृपया पुन्हा प्रयत्न करा.',
     },
     taskCompletionLinkFailed:
       'नोंदी जतन झाल्या, पण स्रोत $t(glossary.task) पूर्ण म्हणून चिन्हांकित करता आले नाही.',
