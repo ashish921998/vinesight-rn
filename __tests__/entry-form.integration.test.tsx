@@ -406,6 +406,76 @@ describe('EntryForm UI integration', () => {
     alertSpy.mockRestore();
   });
 
+  it('preserves pending save failure state when another draft is queued', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const onClose = jest.fn();
+    const farmA: Farm = { ...mockFarm, id: 101, name: 'Farm A', crop: 'Mango' };
+    const farmB: Farm = { ...mockFarm, id: 202, name: 'Farm B', crop: 'Mango' };
+    mockUseFarms.mockReturnValue({ data: [farmA, farmB] });
+
+    mockCreateExpenseMutate.mockImplementation(async (payload: { farm_id: number }) => {
+      if (payload.farm_id === 202) {
+        throw new Error('Farm B failed once');
+      }
+      return { id: payload.farm_id * 10 };
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm onClose={onClose} tabs={['log']} presentation="screen" initialApplyToAllFarms />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '500');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('entryForm.saveLogs'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveFailed.inlineTitle')).toBeTruthy();
+      expect(screen.getByText('Farm B failed once')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '700');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveFailed.inlineTitle')).toBeTruthy();
+      expect(screen.getByText('entryForm.saveFailed.draftFailed')).toBeTruthy();
+      expect(screen.getByText('Farm B failed once')).toBeTruthy();
+    });
+    expect(alertSpy.mock.calls.some((call) => call[0] === 'entryForm.saveFailed.title')).toBe(
+      false,
+    );
+
+    alertSpy.mockRestore();
+  });
+
   it('surfaces rollback failure when compensating delete rejects', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const onClose = jest.fn();

@@ -872,7 +872,6 @@ export function EntryForm({
         );
         return [...prev, { ...newLog, isSourceTaskLog: shouldMarkSourceTaskLog }];
       });
-      setPendingLogFailures({});
       setSelectedLogType(null);
       setShowLogFormModal(false);
       setTimeout(() => {
