@@ -1,0 +1,23 @@
+__tests__/entry-form.integration.test.tsx
+  2b015a922e02d246 409-478
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "90ad8837d45067c04c7f4c85091c439545a57735",
+  "prompts": {
+    "2b015a922e02d246": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019de78d-7533-77b1-8cb1-c6632956ead3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 70,
+      "total_deletions": 1,
+      "accepted_lines": 70,
+      "overriden_lines": 0
+    }
+  }
+}
