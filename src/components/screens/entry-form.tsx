@@ -1098,16 +1098,24 @@ export function EntryForm({
         submitters,
       });
 
-    const rollbackCreatedRecords = async (
-      created: Array<{
-        type: LogTypeId;
-        recordId: number | null;
-        farmId: number;
-        farmContext?: EntryLogFarmContext;
-      }>,
-    ) => {
-      const failures: Array<{ type: LogTypeId; recordId: number; farmId: number; error: string }> =
-        [];
+    type CreatedRecord = {
+      pendingLogId: string;
+      type: LogTypeId;
+      recordId: number | null;
+      farmId: number;
+      farmContext?: EntryLogFarmContext;
+    };
+
+    type RollbackFailure = {
+      pendingLogId: string;
+      type: LogTypeId;
+      recordId: number;
+      farmId: number;
+      error: string;
+    };
+
+    const rollbackCreatedRecords = async (created: CreatedRecord[]) => {
+      const failures: RollbackFailure[] = [];
       const tasks = created
         .filter((entry) => entry.recordId !== null)
         .map(async (entry) => {
@@ -1151,6 +1159,7 @@ export function EntryForm({
             const errorMsg =
               rollbackError instanceof Error ? rollbackError.message : String(rollbackError);
             failures.push({
+              pendingLogId: entry.pendingLogId,
               type: entry.type,
               recordId: entry.recordId as number,
               farmId: entry.farmId,
@@ -1158,6 +1167,7 @@ export function EntryForm({
             });
             if (__DEV__) {
               console.error('Failed to rollback created record', {
+                pendingLogId: entry.pendingLogId,
                 type: entry.type,
                 recordId: entry.recordId,
                 farmId: entry.farmId,
@@ -1175,12 +1185,7 @@ export function EntryForm({
       firstFailedError: unknown,
       failedLogContext: (typeof pendingLogs)[number] | null,
       failuresByLogId: Record<string, PendingLogFailure>,
-      rollbackFailures?: Array<{
-        type: LogTypeId;
-        recordId: number;
-        farmId: number;
-        error: string;
-      }>,
+      rollbackFailures?: RollbackFailure[],
     ) => {
       const errorMessage =
         firstFailedError instanceof Error
@@ -1222,9 +1227,11 @@ export function EntryForm({
 
       const nextFailures = { ...failuresByLogId };
       if (rollbackFailures && rollbackFailures.length > 0) {
-        Object.keys(nextFailures).forEach((logId) => {
-          nextFailures[logId] = {
-            ...nextFailures[logId],
+        rollbackFailures.forEach((failure) => {
+          const existingFailure =
+            nextFailures[failure.pendingLogId] ?? buildPendingLogFailure(firstFailedError);
+          nextFailures[failure.pendingLogId] = {
+            ...existingFailure,
             hasRollbackFailure: true,
           };
         });
@@ -1294,17 +1301,13 @@ export function EntryForm({
         let firstFailedError: unknown = null;
         let failedLogContext: (typeof pendingLogs)[number] | null = null;
         const failuresByLogId: Record<string, PendingLogFailure> = {};
-        const createdRecords: Array<{
-          type: LogTypeId;
-          recordId: number | null;
-          farmId: number;
-          farmContext?: EntryLogFarmContext;
-        }> = [];
+        const createdRecords: CreatedRecord[] = [];
 
         results.forEach((result, index) => {
           const submission = submissions[index];
           if (result.status === 'fulfilled') {
             createdRecords.push({
+              pendingLogId: submission.logId,
               type: submission.logType,
               recordId: result.value.recordId,
               farmId: submission.farmId,
@@ -1328,6 +1331,7 @@ export function EntryForm({
               (result.reason as { recordId?: number | null })?.recordId ?? null;
             if (orphanedRecordId !== null) {
               createdRecords.push({
+                pendingLogId: submission.logId,
                 type: submission.logType,
                 recordId: orphanedRecordId,
                 farmId: submission.farmId,
@@ -1472,6 +1476,7 @@ export function EntryForm({
           if (recordId == null) return [];
           return [
             {
+              pendingLogId: log.id,
               type: log.type,
               recordId,
               farmId,

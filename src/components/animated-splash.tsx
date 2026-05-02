@@ -12,6 +12,8 @@ import { colors, spacing, size, borderRadius, fontSize, fontWeight } from '@/sty
 import { colorWithOpacity } from '@/utils/color';
 import appLogoLight from '../../assets/icons/ios-light.png';
 
+const FADE_OUT_DURATION = 300;
+
 interface SplashProps {
   onComplete?: () => void;
   duration?: number;
@@ -39,17 +41,16 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
     );
 
     let onCompleteTimer: ReturnType<typeof setTimeout> | undefined;
-    const fadeOutDuration = 300;
 
     const timer = setTimeout(() => {
       opacity.value = withTiming(0, {
-        duration: fadeOutDuration,
+        duration: FADE_OUT_DURATION,
         easing: Easing.out(Easing.ease),
       });
       setShouldRender(false);
       onCompleteTimer = setTimeout(() => {
         onComplete?.();
-      }, fadeOutDuration);
+      }, FADE_OUT_DURATION);
     }, duration);
 
     return () => {
@@ -64,7 +65,7 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
     if (!shouldRender) {
       const exitTimer = setTimeout(() => {
         setIsMounted(false);
-      }, 300);
+      }, FADE_OUT_DURATION);
       return () => clearTimeout(exitTimer);
     }
   }, [shouldRender]);

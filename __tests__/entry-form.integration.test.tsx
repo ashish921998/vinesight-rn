@@ -178,7 +178,7 @@ describe('EntryForm UI integration', () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.press(screen.getByText('logs.types.expense'));
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
@@ -340,7 +340,7 @@ describe('EntryForm UI integration', () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.press(screen.getByText('logs.types.expense'));
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
@@ -413,14 +413,20 @@ describe('EntryForm UI integration', () => {
     const farmB: Farm = { ...mockFarm, id: 202, name: 'Farm B', crop: 'Mango' };
     mockUseFarms.mockReturnValue({ data: [farmA, farmB] });
 
-    mockCreateExpenseMutate.mockImplementation(async (payload: { farm_id: number }) => {
-      if (payload.farm_id === 202) {
-        throw new Error('Farm B failed');
-      }
-      return { id: payload.farm_id * 10 };
-    });
+    mockCreateExpenseMutate.mockImplementation(
+      async (payload: { farm_id: number; cost: number }) => {
+        if (payload.cost === 700) {
+          throw new Error('Every farm failed');
+        }
+        if (payload.farm_id === 202) {
+          throw new Error('Farm B failed');
+        }
+        return { id: payload.farm_id * 10 };
+      },
+    );
 
-    // Make the rollback delete for Farm A fail too.
+    // Make the rollback delete for Farm A fail too. Only the draft that
+    // created that Farm A record should receive the rollback warning.
     mockDeleteExpenseMutate.mockImplementation(async () => {
       throw new Error('Delete failed');
     });
@@ -438,7 +444,7 @@ describe('EntryForm UI integration', () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.press(screen.getByText('logs.types.expense'));
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
     await waitFor(() => {
       expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
     });
@@ -451,12 +457,102 @@ describe('EntryForm UI integration', () => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
     });
 
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '700');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+
     fireEvent.press(screen.getByText('entryForm.saveLogs'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveFailed.inlineTitle')).toBeTruthy();
-      expect(screen.getByText('entryForm.saveFailed.draftFailed')).toBeTruthy();
+      expect(screen.getAllByText('entryForm.saveFailed.draftFailed')).toHaveLength(2);
       expect(screen.getByText('Farm B failed')).toBeTruthy();
+      expect(screen.getByText('Every farm failed')).toBeTruthy();
+      expect(screen.getAllByText('entryForm.saveFailed.rollbackInlineWarning')).toHaveLength(1);
+    });
+    expect(alertSpy.mock.calls.some((call) => call[0] === 'entryForm.saveFailed.title')).toBe(
+      false,
+    );
+
+    alertSpy.mockRestore();
+  });
+
+  it('surfaces rollback failure for single-farm drafts when compensating delete rejects', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const onClose = jest.fn();
+    const farmA: Farm = { ...mockFarm, id: 101, name: 'Farm A', crop: 'Mango' };
+    mockUseFarms.mockReturnValue({ data: [farmA] });
+
+    mockCreateExpenseMutate.mockImplementation(async (payload: { cost: number }) => {
+      if (payload.cost === 700) {
+        throw new Error('Every farm failed');
+      }
+      return { id: 1010 };
+    });
+
+    mockDeleteExpenseMutate.mockImplementation(async () => {
+      throw new Error('Delete failed');
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={farmA}
+          onClose={onClose}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="expense"
+        />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '500');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '700');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('entryForm.saveLogs'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveFailed.inlineTitle')).toBeTruthy();
+      expect(screen.getAllByText('entryForm.saveFailed.draftFailed')).toHaveLength(2);
+      expect(screen.getAllByText('Every farm failed')).toHaveLength(2);
       // Rollback warning should be present because delete failed.
       expect(screen.getByText('entryForm.saveFailed.rollbackInlineWarning')).toBeTruthy();
     });
