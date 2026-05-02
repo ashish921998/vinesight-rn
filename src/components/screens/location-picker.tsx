@@ -12,8 +12,8 @@ import {
   Keyboard,
   Platform,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_DEFAULT, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
+import LocationPickerMap, { LocationPickerMapRef } from './location-picker-map';
 import { Ionicons } from '@expo/vector-icons';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
@@ -91,7 +91,7 @@ export default function LocationPicker({
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const searchInputRef = useRef<TextInput>(null);
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<LocationPickerMapRef>(null);
   const wasVisibleRef = useRef(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -293,8 +293,7 @@ export default function LocationPicker({
     }
   };
 
-  const handleMapPress = (event: MapPressEvent) => {
-    const { coordinate } = event.nativeEvent;
+  const handleMapPress = (coordinate: { latitude: number; longitude: number }) => {
     setSelectedCoordinate(coordinate);
   };
 
@@ -408,21 +407,13 @@ export default function LocationPicker({
 
         <MapErrorBoundary
           fallback={
-            <View style={styles.mapFallback}>
-              <View style={styles.mapFallbackIcon}>
-                <Ionicons name="map" size={32} color={colors.gray[600]} />
-              </View>
-              <Text style={styles.mapFallbackTitle}>
-                {t('locationPicker.mapsUnavailableTitle')}
-              </Text>
-              <Text style={styles.mapFallbackBody}>{t('locationPicker.mapsUnavailableBody')}</Text>
-              {selectedCoordinate && (
-                <Text style={styles.mapFallbackCoords}>
-                  {selectedCoordinate.latitude.toFixed(6)},{' '}
-                  {selectedCoordinate.longitude.toFixed(6)}
-                </Text>
-              )}
-            </View>
+            <MapFallback
+              styles={styles}
+              colors={colors}
+              selectedCoordinate={selectedCoordinate}
+              title={t('locationPicker.mapsUnavailableTitle')}
+              body={t('locationPicker.mapsUnavailableBody')}
+            />
           }
           onError={(error) => {
             if (__DEV__) {
@@ -430,10 +421,9 @@ export default function LocationPicker({
             }
           }}
         >
-          <MapView
+          <LocationPickerMap
             ref={mapRef}
             style={styles.map}
-            provider={PROVIDER_DEFAULT}
             initialRegion={{
               latitude:
                 typeof initialLatitude === 'number' && Number.isFinite(initialLatitude)
@@ -446,15 +436,19 @@ export default function LocationPicker({
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             }}
-            onPress={handleMapPress}
-          >
-            {selectedCoordinate && (
-              <Marker
-                coordinate={selectedCoordinate}
-                title={t('locationPicker.selectedLocationMarkerTitle')}
+            selectedCoordinate={selectedCoordinate}
+            selectedLocationMarkerTitle={t('locationPicker.selectedLocationMarkerTitle')}
+            onCoordinateSelect={handleMapPress}
+            fallback={
+              <MapFallback
+                styles={styles}
+                colors={colors}
+                selectedCoordinate={selectedCoordinate}
+                title={t('locationPicker.mapsUnavailableTitle')}
+                body={t('locationPicker.mapsUnavailableBody')}
               />
-            )}
-          </MapView>
+            }
+          />
         </MapErrorBoundary>
 
         <View style={styles.footer}>
@@ -486,6 +480,31 @@ export default function LocationPicker({
           </TouchableOpacity>
         </View>
       </View>
+    </View>
+  );
+}
+
+interface MapFallbackProps {
+  styles: ReturnType<typeof createStyles>;
+  colors: ReturnType<typeof useThemeColors>;
+  selectedCoordinate: { latitude: number; longitude: number } | null;
+  title: string;
+  body: string;
+}
+
+function MapFallback({ styles, colors, selectedCoordinate, title, body }: MapFallbackProps) {
+  return (
+    <View style={styles.mapFallback}>
+      <View style={styles.mapFallbackIcon}>
+        <Ionicons name="map" size={32} color={colors.gray[600]} />
+      </View>
+      <Text style={styles.mapFallbackTitle}>{title}</Text>
+      <Text style={styles.mapFallbackBody}>{body}</Text>
+      {selectedCoordinate && (
+        <Text style={styles.mapFallbackCoords}>
+          {selectedCoordinate.latitude.toFixed(6)}, {selectedCoordinate.longitude.toFixed(6)}
+        </Text>
+      )}
     </View>
   );
 }
