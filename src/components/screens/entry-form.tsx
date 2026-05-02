@@ -421,6 +421,7 @@ export function EntryForm({
   const [isSubmittingLogs, setIsSubmittingLogs] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [footerHeight, setFooterHeight] = useState(112);
+  const contentScrollViewRef = useRef<ScrollView>(null);
   const logFormScrollViewRef = useRef<ScrollView>(null);
   const focusedInputRef = useRef<number | null>(null);
   const scrollOffsetRef = useRef(0);
@@ -874,6 +875,9 @@ export function EntryForm({
       setPendingLogFailures({});
       setSelectedLogType(null);
       setShowLogFormModal(false);
+      setTimeout(() => {
+        contentScrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 250);
     },
     [activeFarm?.id, getLogDescription, isAllFarmsSelected, sourceTaskId, sourceTaskType],
   );
@@ -3433,6 +3437,7 @@ export function EntryForm({
         )}
 
         <ScrollView
+          ref={contentScrollViewRef}
           style={{ flex: 1 }}
           contentContainerStyle={{
             padding: 16,
