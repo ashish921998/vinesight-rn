@@ -13,10 +13,12 @@ import { isLowWater } from '../../types';
 import { spacing, borderRadius, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { parseDbDateToLocalDate } from '@/utils/date';
+import { formatNumber, formatDate } from '@/i18n/format';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 
 interface FarmCardProps {
   farm: Farm;
+  today?: Date;
   onPress?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -31,12 +33,11 @@ const MILESTONES = [
   { pct: 100, labelKey: 'farmCard.season.harvest' },
 ] as const;
 
-function useDaysSincePruning(dateOfPruning: string | null | undefined): number | null {
+function useDaysSincePruning(dateOfPruning: string | null | undefined, today: Date): number | null {
   return useMemo(() => {
     if (!dateOfPruning) return null;
     const pruningDate = parseDbDateToLocalDate(dateOfPruning);
     if (!pruningDate) return null;
-    const today = new Date();
     const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
     const pruneUtc = Date.UTC(
       pruningDate.getFullYear(),
@@ -45,13 +46,10 @@ function useDaysSincePruning(dateOfPruning: string | null | undefined): number |
     );
     const diff = Math.floor((todayUtc - pruneUtc) / (1000 * 60 * 60 * 24));
     return diff >= 0 ? diff : null;
-  }, [dateOfPruning]);
+  }, [dateOfPruning, today]);
 }
 
-function useEstimatedHarvestLabel(
-  dateOfPruning: string | null | undefined,
-  locale: string,
-): string | null {
+function useEstimatedHarvestLabel(dateOfPruning: string | null | undefined): string | null {
   return useMemo(() => {
     if (!dateOfPruning) return null;
     const pruningDate = parseDbDateToLocalDate(dateOfPruning);
@@ -61,17 +59,23 @@ function useEstimatedHarvestLabel(
       pruningDate.getMonth(),
       pruningDate.getDate() + SEASON_LENGTH_DAYS,
     );
-    return harvest.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
-  }, [dateOfPruning, locale]);
+    return formatDate(harvest, { day: 'numeric', month: 'short' });
+  }, [dateOfPruning]);
 }
 
-export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
+export const FarmCard = React.memo(function FarmCard({
+  farm,
+  today = new Date(),
+  onPress,
+  onEdit,
+  onDelete,
+}: FarmCardProps) {
   const m3 = useM3();
   const colors = useThemeColors();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
-  const daysSincePruning = useDaysSincePruning(farm.date_of_pruning);
-  const estimatedHarvestLabel = useEstimatedHarvestLabel(farm.date_of_pruning, i18n.language);
+  const daysSincePruning = useDaysSincePruning(farm.date_of_pruning, today);
+  const estimatedHarvestLabel = useEstimatedHarvestLabel(farm.date_of_pruning);
   const lowWater = isLowWater(farm);
 
   const todayPct =
@@ -144,7 +148,11 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
             >
               {[
                 farm.region,
-                farm.area != null ? t('farmCard.area.acres', { value: farm.area }) : null,
+                farm.area != null
+                  ? t('farmCard.area.acres', {
+                      value: formatNumber(farm.area, { maximumFractionDigits: 1 }),
+                    })
+                  : null,
                 farm.crop_variety,
               ]
                 .filter(Boolean)
@@ -354,14 +362,17 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
         {/* Stat strip */}
         <View
           style={{
+            height: 1,
+            backgroundColor: colorWithOpacity(colors.surface[300], 0.6),
+            marginTop: spacing[3],
+          }}
+        />
+        <View
+          style={{
             flexDirection: 'row',
             alignItems: 'center',
             gap: spacing[4],
-            marginTop: spacing[3],
             paddingTop: spacing[3],
-            borderTopWidth: 1,
-            borderTopColor: colorWithOpacity(colors.surface[300], 0.6),
-            borderStyle: 'dashed',
           }}
         >
           {/* Water status */}
@@ -458,4 +469,4 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
   }
 
   return renderCardContent(false);
-}
+});

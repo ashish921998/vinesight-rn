@@ -37,7 +37,7 @@ function FarmsSummaryLine({
   farms: Farm[];
   m3: ReturnType<typeof useM3>;
   t: TFunction;
-  style?: ViewStyle;
+  style?: TextStyle;
 }) {
   const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1);
   const needsAttentionCount = farms.filter(isLowWater).length;
@@ -250,6 +250,7 @@ export default function FarmsScreen() {
   const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [today, setToday] = useState(() => new Date());
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchQuery(text);
@@ -265,6 +266,7 @@ export default function FarmsScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      setToday(new Date());
       return () => {
         setSearchQuery('');
         setIsSearchFocused(false);
@@ -292,62 +294,76 @@ export default function FarmsScreen() {
     });
   }, [farms, searchQuery]);
 
-  const handleFarmPress = (farm: Farm) => {
-    if (typeof farm.id !== 'number') return;
-    router.push(`/farm/${farm.id}`);
-  };
+  const handleFarmPress = useCallback(
+    (farm: Farm) => {
+      if (typeof farm.id !== 'number') return;
+      router.push(`/farm/${farm.id}`);
+    },
+    [router],
+  );
 
-  const handleAddFarm = () => {
+  const handleAddFarm = useCallback(() => {
     router.push('/farm/add');
-  };
+  }, [router]);
 
-  const handleEditFarm = (farm: Farm) => {
-    if (typeof farm.id !== 'number') return;
-    router.push(`/farm/${farm.id}/edit`);
-  };
+  const handleEditFarm = useCallback(
+    (farm: Farm) => {
+      if (typeof farm.id !== 'number') return;
+      router.push(`/farm/${farm.id}/edit`);
+    },
+    [router],
+  );
 
-  const handleDeleteFarm = (farm: Farm) => {
-    const farmId = farm.id;
-    if (typeof farmId !== 'number') return;
-    Alert.alert(
-      t('farmDetails.deleteFarmTitle'),
-      t('farmDetails.deleteFarmBody', { name: farm.name }),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteFarm.mutateAsync(farmId);
-            } catch (error: unknown) {
-              const errorMessage =
-                error instanceof Error ? error.message : t('farmDetails.errors.deleteFarmFailed');
-              Alert.alert(t('common.error'), errorMessage);
-            }
+  const handleDeleteFarm = useCallback(
+    (farm: Farm) => {
+      const farmId = farm.id;
+      if (typeof farmId !== 'number') return;
+      Alert.alert(
+        t('farmDetails.deleteFarmTitle'),
+        t('farmDetails.deleteFarmBody', { name: farm.name }),
+        [
+          {
+            text: t('common.cancel'),
+            style: 'cancel',
           },
-        },
-      ],
-    );
-  };
+          {
+            text: t('common.delete'),
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteFarm.mutateAsync(farmId);
+              } catch (error: unknown) {
+                const errorMessage =
+                  error instanceof Error ? error.message : t('farmDetails.errors.deleteFarmFailed');
+                Alert.alert(t('common.error'), errorMessage);
+              }
+            },
+          },
+        ],
+      );
+    },
+    [t, deleteFarm],
+  );
 
-  const renderFarm = ({ item }: { item: Farm }) => (
-    <View
-      style={{
-        paddingHorizontal: spacing[4],
-        marginBottom: spacing[3],
-      }}
-    >
-      <FarmCard
-        farm={item}
-        onPress={() => handleFarmPress(item)}
-        onEdit={() => handleEditFarm(item)}
-        onDelete={() => handleDeleteFarm(item)}
-      />
-    </View>
+  const renderFarm = useCallback(
+    ({ item }: { item: Farm }) => (
+      <View
+        style={{
+          paddingHorizontal: spacing[4],
+          marginBottom: spacing[3],
+        }}
+      >
+        <FarmCard
+          farm={item}
+          today={today}
+          onPress={() => handleFarmPress(item)}
+          onEdit={() => handleEditFarm(item)}
+          onDelete={() => handleDeleteFarm(item)}
+        />
+      </View>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [today, handleEditFarm, handleDeleteFarm],
   );
 
   const renderEmpty = () => {
