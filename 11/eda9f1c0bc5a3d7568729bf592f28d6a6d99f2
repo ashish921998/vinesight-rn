@@ -1,0 +1,27 @@
+app/(tabs)/workers.tsx
+  13b73779385df335 246-249
+src/hooks/use-workers.ts
+  13b73779385df335 149-151,157
+app/worker-detail/[id].tsx
+  13b73779385df335 255-256,269-273,402-406,835-838
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "11eda9f1c0bc5a3d7568729bf592f28d6a6d99f2",
+  "prompts": {
+    "13b73779385df335": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5c877c8-4d97-4420-9af6-8c6afd24f07f",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 6,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    }
+  }
+}
