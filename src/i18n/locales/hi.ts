@@ -336,6 +336,13 @@ export const hi = {
       editFarm: '{{name}} संपादित करें',
       deleteFarm: '{{name}} हटाएं',
     },
+    season: {
+      pruning: 'छंटाई',
+      bloom: 'फूल',
+      veraison: 'वेरेसन',
+      harvest: 'फसल',
+      sincePruning: 'छंटाई से',
+    },
   },
 
   farmForm: {
@@ -582,6 +589,8 @@ export const hi = {
       count_one: '{{count}} खेत',
       count_other: '{{count}} खेत',
       area: '{{value}} एकड़ कुल',
+      needsAttention_one: '{{count}} को ध्यान चाहिए',
+      needsAttention_other: '{{count}} को ध्यान चाहिए',
     },
   },
 

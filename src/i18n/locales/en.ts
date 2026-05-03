@@ -337,6 +337,13 @@ export const en = {
       editFarm: 'Edit {{name}}',
       deleteFarm: 'Delete {{name}}',
     },
+    season: {
+      pruning: 'Pruning',
+      bloom: 'Bloom',
+      veraison: 'Véraison',
+      harvest: 'Harvest',
+      sincePruning: 'since pruning',
+    },
   },
 
   farmForm: {
@@ -583,6 +590,8 @@ export const en = {
       count_one: '{{count}} farm',
       count_other: '{{count}} farms',
       area: '{{value}} acres total',
+      needsAttention_one: '{{count}} needs attention',
+      needsAttention_other: '{{count}} need attention',
     },
   },
 

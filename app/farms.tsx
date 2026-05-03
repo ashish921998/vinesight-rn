@@ -16,15 +16,44 @@ import {
 import { useRouter } from 'expo-router';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useFarms, useDeleteFarm, useFabBottomPosition } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import type { Farm } from '@/types';
+import { isLowWater } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
+
+function FarmsSummaryLine({
+  farms,
+  m3,
+  t,
+  style,
+}: {
+  farms: Farm[];
+  m3: ReturnType<typeof useM3>;
+  t: TFunction;
+  style?: ViewStyle;
+}) {
+  const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1);
+  const needsAttentionCount = farms.filter(isLowWater).length;
+  return (
+    <Text style={[{ fontSize: 13, fontWeight: fontWeight.medium, lineHeight: 16 }, style]}>
+      <Text style={{ color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7) }}>
+        {`${t('farms.summary.count', { count: farms.length })} · ${t('farms.summary.area', { value: totalArea })}`}
+      </Text>
+      {needsAttentionCount > 0 && (
+        <Text style={{ color: m3.colorScheme.error, fontWeight: fontWeight.semibold }}>
+          {` · ${t('farms.summary.needsAttention', { count: needsAttentionCount })}`}
+        </Text>
+      )}
+    </Text>
+  );
+}
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -92,10 +121,11 @@ const SearchHeader = React.memo<SearchHeaderProps>(
           {/* Screen Title */}
           <Text
             style={{
-              fontSize: 26,
+              fontSize: 28,
               fontWeight: fontWeight.bold,
               color: m3.colorScheme.onSurface,
-              lineHeight: 32,
+              letterSpacing: -0.4,
+              lineHeight: 34,
             }}
           >
             {t('farms.title', { defaultValue: 'Farms' })}
@@ -147,20 +177,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
 
         {/* Summary Line */}
         {farms && farms.length > 0 && !showSearchBar && (
-          <Text
-            style={{
-              fontSize: 13,
-              color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
-              fontWeight: fontWeight.medium,
-              lineHeight: 16,
-              paddingBottom: spacing[3],
-            }}
-          >
-            {(() => {
-              const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1);
-              return `${t('farms.summary.count', { count: farms.length })} · ${t('farms.summary.area', { value: totalArea })}`;
-            })()}
-          </Text>
+          <FarmsSummaryLine farms={farms} m3={m3} t={t} style={{ paddingBottom: spacing[3] }} />
         )}
 
         {/* Search Bar (shown when focused or has query) */}
@@ -255,19 +272,23 @@ export default function FarmsScreen() {
     }, []),
   );
 
-  // Filter farms based on search query
+  // Filter farms based on search query, sorted urgency-first (low water first)
   const filteredFarms = useMemo(() => {
     if (!farms) return [];
-    if (!searchQuery.trim()) return farms;
-
-    const query = searchQuery.toLowerCase().trim();
-    return farms.filter(
-      (farm) =>
-        farm.name.toLowerCase().includes(query) ||
-        farm.crop?.toLowerCase().includes(query) ||
-        farm.crop_variety?.toLowerCase().includes(query) ||
-        farm.region?.toLowerCase().includes(query),
-    );
+    const filtered = searchQuery.trim()
+      ? farms.filter(
+          (farm) =>
+            farm.name.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+            farm.crop?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+            farm.crop_variety?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+            farm.region?.toLowerCase().includes(searchQuery.toLowerCase().trim()),
+        )
+      : farms;
+    return [...filtered].sort((a, b) => {
+      const aUrgent = isLowWater(a) ? 1 : 0;
+      const bUrgent = isLowWater(b) ? 1 : 0;
+      return bUrgent - aUrgent;
+    });
   }, [farms, searchQuery]);
 
   const handleFarmPress = (farm: Farm) => {

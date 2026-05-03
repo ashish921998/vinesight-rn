@@ -338,6 +338,13 @@ export const mr = {
       editFarm: '$t(glossary.farm) संपादित करा: {{name}}',
       deleteFarm: '$t(glossary.farm) हटवा: {{name}}',
     },
+    season: {
+      pruning: 'छाटणी',
+      bloom: 'फुलणे',
+      veraison: 'व्हेरेसन',
+      harvest: 'काढणी',
+      sincePruning: 'छाटणीपासून',
+    },
   },
 
   farmForm: {
@@ -585,6 +592,8 @@ export const mr = {
       count_one: '{{count}} $t(glossary.farm)',
       count_other: '{{count}} $t(glossary.farm)',
       area: '{{value}} एकर एकूण',
+      needsAttention_one: '{{count}} ला लक्ष हवे',
+      needsAttention_other: '{{count}} ला लक्ष हवे',
     },
   },
 
