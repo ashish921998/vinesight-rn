@@ -48,7 +48,10 @@ function useDaysSincePruning(dateOfPruning: string | null | undefined): number |
   }, [dateOfPruning]);
 }
 
-function useEstimatedHarvestLabel(dateOfPruning: string | null | undefined): string | null {
+function useEstimatedHarvestLabel(
+  dateOfPruning: string | null | undefined,
+  locale: string,
+): string | null {
   return useMemo(() => {
     if (!dateOfPruning) return null;
     const pruningDate = parseDbDateToLocalDate(dateOfPruning);
@@ -58,17 +61,17 @@ function useEstimatedHarvestLabel(dateOfPruning: string | null | undefined): str
       pruningDate.getMonth(),
       pruningDate.getDate() + SEASON_LENGTH_DAYS,
     );
-    return harvest.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-  }, [dateOfPruning]);
+    return harvest.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  }, [dateOfPruning, locale]);
 }
 
 export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
   const m3 = useM3();
   const colors = useThemeColors();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const daysSincePruning = useDaysSincePruning(farm.date_of_pruning);
-  const estimatedHarvestLabel = useEstimatedHarvestLabel(farm.date_of_pruning);
+  const estimatedHarvestLabel = useEstimatedHarvestLabel(farm.date_of_pruning, i18n.language);
   const lowWater = isLowWater(farm);
 
   const todayPct =
