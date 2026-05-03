@@ -1,0 +1,31 @@
+src/i18n/locales/hi.ts
+  a83a009b431c8171 339-345,592-593
+src/i18n/locales/mr.ts
+  a83a009b431c8171 341-347,595-596
+app/farms.tsx
+  a83a009b431c8171 19,25,31-57,124,127-128,180,275,278-291
+src/i18n/locales/en.ts
+  a83a009b431c8171 340-346,593-594
+src/components/cards/farm-card.tsx
+  a83a009b431c8171 3-4,7-8,13,15,25-64,70-72,74-75,77,79,81-84,87-96,104,109-126,128,130-131,134-136,140-142,145-237,240-346,349-356,359-362,365,367,370,372-378,381-382,385,388,390-405,407-410,412,415-419,422,428-429
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "6938cf9be9cd0b59e6474ef837ecf76c2759ac17",
+  "prompts": {
+    "a83a009b431c8171": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0cdcd298-0784-445c-8fee-867719c3bd9c",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 488,
+      "total_deletions": 339,
+      "accepted_lines": 431,
+      "overriden_lines": 0
+    }
+  }
+}
