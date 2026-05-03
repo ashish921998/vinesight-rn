@@ -188,7 +188,7 @@ export function MessageBubble({ message, isLoading = false, onActionPress }: Mes
                 <CitationFooter citations={message.citations} />
               )}
               {isLoading && (
-                <View style={styles.loadingRow}>
+                <View style={styles.loadingRow} testID="typing-indicator">
                   <TypingDots color={m3.colorScheme.primary} />
                   <Text
                     style={{
@@ -302,6 +302,7 @@ export function LoadingBubble() {
             borderWidth: 1,
             borderColor: m3.colorScheme.outline,
           }}
+          testID="typing-indicator"
         >
           <TypingDots color={m3.colorScheme.primary} />
         </View>
