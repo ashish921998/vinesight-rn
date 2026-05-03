@@ -648,7 +648,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     >
       <KeyboardAvoidingView
         style={styles.keyboardAvoiding}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? tabBarInset : 0}
       >
         {/* Header */}
