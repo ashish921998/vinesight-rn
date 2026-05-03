@@ -10,12 +10,13 @@ import {
   useFabBottomPosition,
   isAndroid,
   useAllWorkerAttendance,
+  useAllWorkerTransactions,
 } from '@/hooks';
 import { useModalStore } from '@/stores';
 import { AttendanceView, WorkerAnalyticsView, TempWorkerForm } from '@/components/screens';
 import { WorkerSettlementModal } from '@/components/modals/worker-settlement-modal';
 import { Button, SegmentedControl } from '@/components/ui';
-import type { Worker, WorkerAttendance } from '@/types';
+import type { Worker, WorkerAttendance, WorkerTransaction } from '@/types';
 import { WorkerCard } from '@/components/cards';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -50,6 +51,7 @@ export default function WorkersScreen() {
   const { setAddWorker } = useModalStore();
   const { data: workers, isLoading, refetch } = useWorkers();
   const { data: allAttendance } = useAllWorkerAttendance();
+  const { data: allTransactions } = useAllWorkerTransactions();
   const deleteWorker = useDeleteWorker();
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
@@ -85,7 +87,19 @@ export default function WorkersScreen() {
     return map;
   }, [allAttendance]);
 
-  // Period summary across all active workers
+  // Per-worker transactions map for settlement-aware pending totals
+  const transactionsByWorker = useMemo(() => {
+    if (!allTransactions) return new Map<number, WorkerTransaction[]>();
+    const map = new Map<number, WorkerTransaction[]>();
+    allTransactions.forEach((tx) => {
+      const arr = map.get(tx.worker_id) || [];
+      arr.push(tx);
+      map.set(tx.worker_id, arr);
+    });
+    return map;
+  }, [allTransactions]);
+
+  // Period summary across all active workers — uses netBalance so settled amounts are excluded
   const periodSummary = useMemo(() => {
     if (!workers || !allAttendance) return null;
     let totalPending = 0;
@@ -94,12 +108,20 @@ export default function WorkersScreen() {
       .filter((w) => w.is_active && w.id !== undefined)
       .forEach((w) => {
         const wAttendance = attendanceByWorker.get(w.id!) || [];
-        const metrics = computeWorkerMetrics(w, wAttendance, [], dateRange);
-        totalPending += metrics.earnings;
+        const wTransactions = transactionsByWorker.get(w.id!) || [];
+        const metrics = computeWorkerMetrics(w, wAttendance, wTransactions, dateRange);
+        totalPending += Math.max(0, metrics.netBalance);
         totalDays += metrics.fullDays + metrics.halfDays;
       });
     return { totalPending, totalDays };
-  }, [workers, allAttendance, attendanceByWorker, dateRange]);
+  }, [
+    workers,
+    allAttendance,
+    allTransactions,
+    attendanceByWorker,
+    transactionsByWorker,
+    dateRange,
+  ]);
 
   const handleDeleteWorker = (worker: Worker) => {
     Alert.alert(

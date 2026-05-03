@@ -75,7 +75,7 @@ export function WorkerCard({
   const periodSummary = useMemo(() => {
     if (!attendance || attendance.length === 0) return null;
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
+    cutoff.setDate(cutoff.getDate() - 29);
     const cutoffStr = localDateKey(cutoff);
     let full = 0,
       half = 0,
