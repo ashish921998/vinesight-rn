@@ -87,25 +87,22 @@ describe('MessageBubble', () => {
     expect(markdown.props.children).toBe('**Bold** text');
   });
 
-  it('renders loading indicator when isLoading is true (for assistant message)', () => {
+  it('renders typing indicator when isLoading is true (for assistant message)', () => {
     const message = makeMessage({ role: 'assistant', content: '' });
-    const { UNSAFE_getByType } = render(<MessageBubble message={message} isLoading={true} />);
-    const { ActivityIndicator } = require('react-native');
-    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+    const { getByTestId } = render(<MessageBubble message={message} isLoading={true} />);
+    expect(getByTestId('typing-indicator')).toBeTruthy();
   });
 
-  it('does not render loading indicator when isLoading is false', () => {
+  it('does not render typing indicator when isLoading is false', () => {
     const message = makeMessage({ role: 'assistant', content: 'Done' });
-    const { UNSAFE_queryByType } = render(<MessageBubble message={message} isLoading={false} />);
-    const { ActivityIndicator } = require('react-native');
-    expect(UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+    const { queryByTestId } = render(<MessageBubble message={message} isLoading={false} />);
+    expect(queryByTestId('typing-indicator')).toBeNull();
   });
 
-  it('does not render loading indicator for user messages', () => {
+  it('does not render typing indicator for user messages', () => {
     const message = makeMessage({ role: 'user', content: 'Still typing' });
-    const { UNSAFE_queryByType } = render(<MessageBubble message={message} isLoading={true} />);
-    const { ActivityIndicator } = require('react-native');
-    expect(UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+    const { queryByTestId } = render(<MessageBubble message={message} isLoading={true} />);
+    expect(queryByTestId('typing-indicator')).toBeNull();
   });
 
   it('renders user message without Markdown component', () => {
@@ -210,10 +207,9 @@ describe('MessageBubble safety warning (VAL-CROSS-012)', () => {
 });
 
 describe('LoadingBubble', () => {
-  it('renders loading indicator', () => {
-    const { UNSAFE_getByType } = render(<LoadingBubble />);
-    const { ActivityIndicator } = require('react-native');
-    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+  it('renders typing indicator', () => {
+    const { getByTestId } = render(<LoadingBubble />);
+    expect(getByTestId('typing-indicator')).toBeTruthy();
   });
 
   it('has accessibility label', () => {

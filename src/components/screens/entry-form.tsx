@@ -99,6 +99,7 @@ import {
   useFarmSeasonStatus,
   useChemicalMixSearch,
   usePhiComputation,
+  useFertilizerPlan,
   queryKeys,
   isIOS,
   useResponsiveHeight,
@@ -346,6 +347,7 @@ export function EntryForm({
     [tabs],
   );
   const isScreenPresentation = presentation === 'screen';
+  const isInlineComposerMode = isScreenPresentation;
   const defaultTab = resolvedTabs.includes(initialTab || 'log')
     ? initialTab || resolvedTabs[0]
     : resolvedTabs[0];
@@ -377,6 +379,7 @@ export function EntryForm({
   const { data: fertilizerWarehouseItems } = useWarehouseItems('fertilizer');
   const { data: recentSprayChemicals } = useRecentSprayChemicals(logFarmId ?? undefined);
   const { data: recentFertigationItems } = useRecentFertigationItems(logFarmId ?? undefined);
+  const { data: fertilizerPlan } = useFertilizerPlan(logFarmId ?? undefined);
   const { activeSeason } = useFarmSeasonStatus(logFarmId ?? undefined);
   const { data: catalogMixes = [] } = useChemicalMixSearch('', isGrapeFarm);
 
@@ -510,6 +513,14 @@ export function EntryForm({
   }, [sprayPhiComputation]);
 
   const fertigationQuickAddItems = useMemo<FertigationQuickAddItem[]>(() => {
+    const byPlan = (fertilizerPlan?.items ?? []).map((item) => ({
+      name: item.name,
+      unit: normalizeWarehouseFertilizerUnit(item.unit),
+      quantity: item.quantity ?? null,
+      quantityBasis: inferWarehouseFertilizerQuantityBasis(item.unit),
+      warehouseItemId: null,
+      catalogProductId: null,
+    }));
     const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
       name: item.name,
       unit: normalizeWarehouseFertilizerUnit(item.unit),
@@ -527,7 +538,7 @@ export function EntryForm({
       quantityBasis: undefined,
     }));
     const deduped = new Map<string, FertigationQuickAddItem>();
-    [...byWarehouse, ...byRecent].forEach((item) => {
+    [...byPlan, ...byWarehouse, ...byRecent].forEach((item) => {
       const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
       const existing = deduped.get(key);
       if (!existing) {
@@ -546,7 +557,7 @@ export function EntryForm({
       }
     });
     return Array.from(deduped.values()).slice(0, 15);
-  }, [fertilizerWarehouseItems, recentFertigationItems]);
+  }, [fertilizerPlan, fertilizerWarehouseItems, recentFertigationItems]);
 
   const createIrrigation = useCreateIrrigationRecord();
   const createSpray = useCreateSprayRecord();
@@ -606,7 +617,7 @@ export function EntryForm({
   useEffect(() => {
     if (isVisible && initialLogType) {
       setSelectedLogType(initialLogType);
-      setShowLogFormModal(true);
+      setShowLogFormModal(!isInlineComposerMode);
       if (initialLogType === 'spray' && initialLogPrefill?.sprayChemicals?.length) {
         setSprayData({
           waterVolume: undefined,
@@ -642,7 +653,7 @@ export function EntryForm({
         });
       }
     }
-  }, [isVisible, initialLogType, initialLogPrefill]);
+  }, [isVisible, initialLogType, initialLogPrefill, isInlineComposerMode]);
 
   useEffect(() => {
     if (selectedFarmId !== ALL_FARMS_ID) return;
@@ -678,7 +689,7 @@ export function EntryForm({
     if (!isVisible || !initialVoiceLogPrefill) return;
 
     setSelectedLogType(initialVoiceLogPrefill.type);
-    setShowLogFormModal(true);
+    setShowLogFormModal(!isInlineComposerMode);
 
     const prefillDate = parseInitialLogDate(initialVoiceLogPrefill.date);
     if (prefillDate) {
@@ -767,7 +778,7 @@ export function EntryForm({
         break;
       }
     }
-  }, [initialVoiceLogPrefill, isVisible]);
+  }, [initialVoiceLogPrefill, isVisible, isInlineComposerMode]);
 
   type OnFocusEvent = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
 
@@ -2043,6 +2054,61 @@ export function EntryForm({
     );
   };
 
+  const renderInlineLogComposerForm = () => {
+    if (!isInlineComposerMode || !selectedLogType) return null;
+
+    return (
+      <View style={{ marginBottom: 16 }}>
+        {selectedLogType === 'spray' ? (
+          <View
+            style={{
+              marginBottom: 10,
+              padding: 12,
+              borderRadius: 12,
+              backgroundColor: colorWithOpacity(m3.colorScheme.secondaryContainer, 0.5),
+            }}
+          >
+            <Text
+              style={{
+                color: m3.colorScheme.onSurfaceVariant,
+                ...m3.typography.labelSmall,
+              }}
+            >
+              {isGrapeFarm
+                ? t('entryForm.phiScope.grapeOnlyEnabled', {
+                    defaultValue: 'PHI safety checks are currently available for grape sprays.',
+                  })
+                : t('entryForm.phiScope.grapeOnlyDisabled', {
+                    defaultValue:
+                      'PHI safety validation is currently available for grape sprays only.',
+                  })}
+            </Text>
+          </View>
+        ) : null}
+        <LogForm
+          selectedLogType={selectedLogType}
+          irrigationData={irrigationData}
+          sprayData={sprayData}
+          harvestData={harvestData}
+          expenseData={expenseData}
+          fertigationData={fertigationData}
+          onIrrigationChange={setIrrigationData}
+          onSprayChange={setSprayData}
+          onHarvestChange={setHarvestData}
+          onExpenseChange={setExpenseData}
+          onFertigationChange={setFertigationData}
+          onInputFocus={scrollToFocusedInput}
+          onAdd={addLogToSession}
+          isValid={isLogFormValid}
+          hasFarm={hasFarmForCurrentLog}
+          sprayQuickAddItems={sprayQuickAddItems}
+          fertigationQuickAddItems={fertigationQuickAddItems}
+          sprayCatalogMixes={catalogMixes}
+        />
+      </View>
+    );
+  };
+
   // Render sticky add entry button above keyboard
   const renderStickyAddButton = () => {
     if (!isLogFormValid || !selectedLogType) return null;
@@ -2242,8 +2308,8 @@ export function EntryForm({
       <View
         style={{
           backgroundColor: colors.surface[100],
-          borderRadius: 18,
-          padding: 16,
+          borderRadius: 16,
+          padding: 14,
           marginBottom: 16,
           borderWidth: 1,
           borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
@@ -2261,13 +2327,15 @@ export function EntryForm({
             <Text
               selectable
               style={{
-                fontSize: 13,
-                fontWeight: '600',
+                fontSize: 11,
+                fontWeight: '700',
+                letterSpacing: 0.6,
+                textTransform: 'uppercase',
                 color: m3.colorScheme.onSurfaceVariant,
-                marginBottom: 6,
+                marginBottom: 4,
               }}
             >
-              {t('entryForm.selectDate')}
+              {t('entryForm.loggingFor', { defaultValue: 'Logging for' })}
             </Text>
             <Text
               selectable
@@ -2314,9 +2382,9 @@ export function EntryForm({
             alignItems: 'center',
             justifyContent: 'space-between',
             backgroundColor: colors.surface[50],
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            borderRadius: 14,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            borderRadius: 12,
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
           }}
@@ -2352,18 +2420,61 @@ export function EntryForm({
         <LogTypeSelector
           selectedLogType={selectedLogType}
           hasPendingDrafts={pendingLogs.length > 0}
+          pendingLogTypes={pendingLogs.map((log) => log.type)}
           hintText={t('entryForm.logTypeHelper', {
             defaultValue:
               pendingLogs.length > 0
-                ? 'Add more drafts or review the queue below before saving.'
-                : 'Choose a log type to open the full-screen form.',
+                ? 'Add more activities or review the stack below before saving.'
+                : 'Tap a chip to add it to today, then save the stack together.',
           })}
           onSelect={(type) => {
             setSelectedLogType(type);
-            setShowLogFormModal(true);
+            setShowLogFormModal(!isInlineComposerMode);
           }}
         />
       </GuidedTourTarget>
+      {renderInlineLogComposerForm()}
+      {isInlineComposerMode && pendingLogs.length === 0 && !selectedLogType && (
+        <View
+          style={{
+            borderWidth: 1,
+            borderStyle: 'dashed',
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+            borderRadius: 14,
+            paddingHorizontal: 16,
+            paddingVertical: 18,
+            marginBottom: 16,
+            alignItems: 'center',
+            backgroundColor: colorWithOpacity(colors.surface[100], 0.72),
+          }}
+        >
+          <Text
+            selectable
+            style={{
+              fontSize: 13,
+              fontWeight: '700',
+              color: m3.colorScheme.onSurface,
+              textAlign: 'center',
+            }}
+          >
+            {t('entryForm.emptyStackTitle', { defaultValue: 'Tap a chip above to start' })}
+          </Text>
+          <Text
+            selectable
+            style={{
+              marginTop: 4,
+              fontSize: 12,
+              lineHeight: 17,
+              color: m3.colorScheme.onSurfaceVariant,
+              textAlign: 'center',
+            }}
+          >
+            {t('entryForm.emptyStackBody', {
+              defaultValue: 'Add one or more activities, then save them together.',
+            })}
+          </Text>
+        </View>
+      )}
       <PendingLogs
         pendingLogs={pendingLogs}
         failures={pendingLogFailures}
@@ -3455,10 +3566,14 @@ export function EntryForm({
           {activeTab === 'log' ? renderLogContent() : renderTaskContent()}
         </ScrollView>
 
-        {activeTab === 'log' && renderLogFormModal()}
+        {activeTab === 'log' && !isInlineComposerMode && renderLogFormModal()}
 
         {/* Sticky Add Entry button above keyboard */}
-        {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
+        {activeTab === 'log' &&
+          isKeyboardVisible &&
+          !showLogFormModal &&
+          !isInlineComposerMode &&
+          renderStickyAddButton()}
 
         <View
           onLayout={(event) => {
@@ -3545,7 +3660,7 @@ export function EntryForm({
                         <Text
                           selectable
                           style={[
-                            { marginLeft: 8, fontWeight: '600', flexShrink: 1 },
+                            { marginLeft: 8, fontWeight: '700', flexShrink: 1 },
                             {
                               color: canSaveLogs
                                 ? m3.colorScheme.onPrimary
@@ -3565,6 +3680,30 @@ export function EntryForm({
                                 })
                             : t('common.save')}
                         </Text>
+                        {pendingLogs.length > 1 && canSaveLogs ? (
+                          <View
+                            style={{
+                              marginLeft: 8,
+                              minWidth: 24,
+                              height: 22,
+                              borderRadius: 999,
+                              paddingHorizontal: 7,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: colorWithOpacity(m3.colorScheme.onPrimary, 0.18),
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 11,
+                                fontWeight: '700',
+                                color: m3.colorScheme.onPrimary,
+                              }}
+                            >
+                              {pendingLogs.length}
+                            </Text>
+                          </View>
+                        ) : null}
                       </>
                     )}
                   </Pressable>

@@ -53,6 +53,8 @@ import type {
   CostBreakdown,
   AssistantRouteState,
   VoiceLogActionPayload,
+  AssistantMessageCardPayload,
+  AssistantMessageActionPayload,
 } from '../types.ts';
 
 /**
@@ -182,6 +184,8 @@ export async function handleRequest(req: Request): Promise<Response> {
     let citations: Citation[] = [];
     let safetyFlags: SafetyFlags | null = null;
     let blocked = false;
+    let cards: AssistantMessageCardPayload[] = [];
+    let actions: AssistantMessageActionPayload[] = [];
 
     // Handle route clarification using clarify handler
     if (nextRouteState.route_clarification_pending) {
@@ -195,15 +199,24 @@ export async function handleRequest(req: Request): Promise<Response> {
         }
         nextRouteState.pending_ambiguous_transcript = null;
         routeStateDirty = true;
+        if (clarifyResult.cards) cards = clarifyResult.cards as AssistantMessageCardPayload[];
+        if (clarifyResult.actions)
+          actions = clarifyResult.actions as AssistantMessageActionPayload[];
       } else if (clarifyResult.cancelled) {
         nextRouteState.route_clarification_pending = false;
         nextRouteState.pending_ambiguous_transcript = null;
         routeStateDirty = true;
         routeDecision = 'clarify_route';
         assistantText = clarifyResult.assistantText;
+        if (clarifyResult.cards) cards = clarifyResult.cards as AssistantMessageCardPayload[];
+        if (clarifyResult.actions)
+          actions = clarifyResult.actions as AssistantMessageActionPayload[];
       } else {
         routeDecision = 'clarify_route';
         assistantText = clarifyResult.assistantText;
+        if (clarifyResult.cards) cards = clarifyResult.cards as AssistantMessageCardPayload[];
+        if (clarifyResult.actions)
+          actions = clarifyResult.actions as AssistantMessageActionPayload[];
       }
     }
 
@@ -299,6 +312,9 @@ export async function handleRequest(req: Request): Promise<Response> {
           if (voiceLogResult.nextClarifyAttempts !== undefined) {
             nextRouteState.voice_log_clarify_attempts = voiceLogResult.nextClarifyAttempts;
           }
+          if (voiceLogResult.cards) cards = voiceLogResult.cards as AssistantMessageCardPayload[];
+          if (voiceLogResult.actions)
+            actions = voiceLogResult.actions as AssistantMessageActionPayload[];
         }
       }
 
@@ -314,6 +330,9 @@ export async function handleRequest(req: Request): Promise<Response> {
         assistantText = farmQueryResult.assistantText;
         citations = farmQueryResult.citations;
         routeDecision = 'farm_query';
+        if (farmQueryResult.cards) cards = farmQueryResult.cards as AssistantMessageCardPayload[];
+        if (farmQueryResult.actions)
+          actions = farmQueryResult.actions as AssistantMessageActionPayload[];
       } else if (routeDecision === 'advisory' || routeDecision === 'fallback_llm') {
         // Use advisory handler
         const advisoryResult = await handleAdvisory({
@@ -334,6 +353,9 @@ export async function handleRequest(req: Request): Promise<Response> {
         llmInputTokens = advisoryResult.inputTokens;
         llmOutputTokens = advisoryResult.outputTokens;
         blocked = advisoryResult.blocked;
+        if (advisoryResult.cards) cards = advisoryResult.cards as AssistantMessageCardPayload[];
+        if (advisoryResult.actions)
+          actions = advisoryResult.actions as AssistantMessageActionPayload[];
       }
     }
 
@@ -473,6 +495,8 @@ export async function handleRequest(req: Request): Promise<Response> {
       conversation_id: conversationId,
       turn_id: assistantTurnId,
       suggestions: [],
+      cards,
+      actions,
     });
   } catch (error) {
     console.error('ai-gateway error', { traceId, error });

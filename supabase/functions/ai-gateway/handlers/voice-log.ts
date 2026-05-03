@@ -58,6 +58,10 @@ export interface VoiceLogHandlerResult {
   nextDraft?: VoiceLogDraft | null;
   nextExpectedField?: VoiceLogMissingField | null;
   nextClarifyAttempts?: number;
+  /** Structured cards rendered inline within the assistant bubble */
+  cards?: Array<Record<string, unknown>>;
+  /** Action buttons rendered below the assistant bubble */
+  actions?: Array<Record<string, unknown>>;
 }
 
 /**

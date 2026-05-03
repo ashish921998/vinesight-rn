@@ -590,9 +590,15 @@ interface SegmentedControlProps {
   options: SegmentOption[];
   selectedValue: string;
   onSelect: (value: string) => void;
+  selectedTextColor?: string;
 }
 
-export function SegmentedControl({ options, selectedValue, onSelect }: SegmentedControlProps) {
+export function SegmentedControl({
+  options,
+  selectedValue,
+  onSelect,
+  selectedTextColor,
+}: SegmentedControlProps) {
   const colors = useThemeColors();
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
@@ -629,7 +635,7 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
         : selected
           ? fontWeight.semibold
           : fontWeight.medium,
-    color: selected ? colors.gray[900] : colors.gray[500],
+    color: selected ? (selectedTextColor ?? colors.gray[900]) : colors.gray[500],
     textAlign: 'center',
     ...(Platform.OS === 'android'
       ? {

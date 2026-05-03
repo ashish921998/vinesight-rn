@@ -295,6 +295,21 @@ export async function sendAssistantTurn(
           ttsSkippedReason: response.tts_skipped_reason ?? null,
           providerFallbackReason: response.provider_fallback_reason ?? null,
         },
+        cards: Array.isArray(response.cards)
+          ? response.cards.map((c) => ({
+              type: c.type,
+              title: c.title,
+              rows: c.rows,
+            }))
+          : undefined,
+        actions: Array.isArray(response.actions)
+          ? response.actions.map((a) => ({
+              label: a.label,
+              icon: a.icon,
+              actionType: a.action_type,
+              payload: a.payload,
+            }))
+          : undefined,
       },
       suggestions: Array.isArray(response.suggestions) ? response.suggestions : undefined,
       providerUsed: response.audio_provider_used ?? 'ai-gateway',

@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
-import { Pressable } from 'react-native';
+import { useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
@@ -12,7 +11,6 @@ import { useAuthStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useThemeTokens } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { spacing } from '@/styles/theme';
 import { isAndroid } from '@/hooks';
 
 export default function TabLayout() {
@@ -41,33 +39,6 @@ export default function TabLayout() {
   );
 
   const sf = (name: string) => name as SFSymbol;
-
-  // Settings button rendered in Dashboard header right position.
-  // Memoized to avoid constant header re-renders that can make the button
-  // feel unresponsive on Android.
-  const renderSettingsHeaderButton = useCallback(
-    () => (
-      <Pressable
-        onPress={() => router.push('/app-settings')}
-        accessibilityRole="button"
-        accessibilityLabel={t('assistant.settingsButtonA11y')}
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: 22,
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          backgroundColor: 'transparent',
-          marginRight: spacing[2],
-        }}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <SymbolIcon name="gearshape" size={22} color={m3.colorScheme.onSurface} />
-      </Pressable>
-    ),
-    [router, m3.colorScheme.onSurface, t],
-  );
 
   // Spread into NativeTabs options to avoid TS excess-property error
   // (headerShown is not in NativeTabOptions typings but is supported at runtime)
@@ -168,8 +139,8 @@ export default function TabLayout() {
             name="index"
             options={{
               title: t('tabs.dashboard'),
+              headerShown: false,
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('square.grid.2x2', focused),
-              headerRight: renderSettingsHeaderButton,
             }}
           />
           <Tabs.Screen

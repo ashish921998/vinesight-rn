@@ -23,6 +23,10 @@ export interface FarmQueryHandlerResult {
   assistantText: string;
   citations: Citation[];
   activity: 'irrigation' | 'spray' | 'fertigation' | 'expense' | null;
+  /** Structured cards rendered inline within the assistant bubble */
+  cards?: Array<Record<string, unknown>>;
+  /** Action buttons rendered below the assistant bubble */
+  actions?: Array<Record<string, unknown>>;
 }
 
 /**

@@ -1007,9 +1007,11 @@ export default function FarmDetailScreen() {
       return;
     }
     router.push({
-      pathname: '/log-entry/add',
+      pathname: '/add-entry',
       params: {
         farmId: farm.id.toString(),
+        initialTab: 'log',
+        tabs: 'log,task',
       },
     });
   };
