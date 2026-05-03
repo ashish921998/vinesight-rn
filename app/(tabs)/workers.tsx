@@ -12,6 +12,8 @@ import {
   useAllWorkerAttendance,
   useAllWorkerTransactions,
 } from '@/hooks';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/query-keys';
 import { useModalStore } from '@/stores';
 import { AttendanceView, WorkerAnalyticsView, TempWorkerForm } from '@/components/screens';
 import { WorkerSettlementModal } from '@/components/modals/worker-settlement-modal';
@@ -49,6 +51,7 @@ export default function WorkersScreen() {
   const insets = useSafeAreaInsets();
   const fabBottom = useFabBottomPosition();
   const { setAddWorker } = useModalStore();
+  const queryClient = useQueryClient();
   const { data: workers, isLoading, refetch } = useWorkers();
   const { data: allAttendance } = useAllWorkerAttendance();
   const { data: allTransactions } = useAllWorkerTransactions();
@@ -101,7 +104,7 @@ export default function WorkersScreen() {
 
   // Period summary across all active workers — uses netBalance so settled amounts are excluded
   const periodSummary = useMemo(() => {
-    if (!workers || !allAttendance) return null;
+    if (!workers) return null;
     let totalPending = 0;
     let totalDays = 0;
     workers
@@ -114,14 +117,7 @@ export default function WorkersScreen() {
         totalDays += metrics.fullDays + metrics.halfDays;
       });
     return { totalPending, totalDays };
-  }, [
-    workers,
-    allAttendance,
-    allTransactions,
-    attendanceByWorker,
-    transactionsByWorker,
-    dateRange,
-  ]);
+  }, [workers, attendanceByWorker, transactionsByWorker, dateRange]);
 
   const handleDeleteWorker = (worker: Worker) => {
     Alert.alert(
@@ -167,6 +163,8 @@ export default function WorkersScreen() {
 
   const handleSettlementSuccess = () => {
     refetch();
+    queryClient.invalidateQueries({ queryKey: queryKeys.workerAttendance.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.workerTransactions.all });
   };
 
   const handleFabPress = () => {

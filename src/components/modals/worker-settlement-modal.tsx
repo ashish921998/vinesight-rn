@@ -268,8 +268,18 @@ export function WorkerSettlementModal({
   };
 
   const handleConfirm = async () => {
+    if (isConfirming) return;
     if (!selectedWorker?.id || !settlementCalculation) return;
     const deduction = parseFloat(advanceDeduction) || 0;
+    if (advanceDeduction.trim() !== '' && isNaN(parseFloat(advanceDeduction))) {
+      Alert.alert(
+        t('common.error'),
+        t('settlement.invalidDeductionAmount', {
+          defaultValue: 'Please enter a valid deduction amount.',
+        }),
+      );
+      return;
+    }
 
     const { data: freshWorker } = await supabase
       .from('workers')
@@ -315,7 +325,7 @@ export function WorkerSettlementModal({
   };
 
   const handleSettleNext = () => {
-    // Move to next unsettled worker
+    onSuccess();
     const currentIndex = workers.findIndex((w) => w.id === selectedWorker?.id);
     const nextWorker = workers[currentIndex + 1] ?? null;
     setIsDone(false);

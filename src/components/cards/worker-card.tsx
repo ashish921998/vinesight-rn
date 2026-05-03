@@ -81,8 +81,10 @@ export function WorkerCard({
       half = 0,
       absent = 0,
       pending = 0;
+    const todayStr = localDateKey(new Date());
     attendance.forEach((r) => {
-      if (r.date.slice(0, 10) < cutoffStr) return;
+      const d = r.date.slice(0, 10);
+      if (d < cutoffStr || d > todayStr) return;
       const s = r.work_status as WorkStatus;
       if (s === 'full_day') full++;
       else if (s === 'half_day') half++;

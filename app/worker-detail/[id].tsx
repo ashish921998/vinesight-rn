@@ -15,6 +15,20 @@ import type { WorkStatus } from '@/types';
 import { getDefaultDateRange, isDateInRange } from '@/utils/worker-analytics';
 
 const ACCENT_COLORS = ['#355847', '#A56B4F', '#D0A14A', '#4E7384', '#7A5E8E'];
+const MONTH_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 function localDateKey(d: Date): string {
   const y = d.getFullYear();
@@ -713,10 +727,8 @@ export default function WorkerDetailScreen() {
                   const dl = dayLabel(r.date);
                   const farmId = r.farm_ids?.[0];
                   const farm = farms?.find((f) => f.id === farmId);
-                  const farmAccent =
-                    ACCENT_COLORS[
-                      byFarm.findIndex((f) => f.farmId === farmId) % ACCENT_COLORS.length
-                    ] || ACCENT_COLORS[0];
+                  const farmIdx = byFarm.findIndex((f) => f.farmId === farmId);
+                  const farmAccent = ACCENT_COLORS[Math.max(0, farmIdx) % ACCENT_COLORS.length];
 
                   return (
                     <View
@@ -744,30 +756,7 @@ export default function WorkerDetailScreen() {
                             fontVariant: ['tabular-nums'],
                           }}
                         >
-                          {dl.num}{' '}
-                          {r.date.slice(5, 7) === '01'
-                            ? 'Jan'
-                            : r.date.slice(5, 7) === '02'
-                              ? 'Feb'
-                              : r.date.slice(5, 7) === '03'
-                                ? 'Mar'
-                                : r.date.slice(5, 7) === '04'
-                                  ? 'Apr'
-                                  : r.date.slice(5, 7) === '05'
-                                    ? 'May'
-                                    : r.date.slice(5, 7) === '06'
-                                      ? 'Jun'
-                                      : r.date.slice(5, 7) === '07'
-                                        ? 'Jul'
-                                        : r.date.slice(5, 7) === '08'
-                                          ? 'Aug'
-                                          : r.date.slice(5, 7) === '09'
-                                            ? 'Sep'
-                                            : r.date.slice(5, 7) === '10'
-                                              ? 'Oct'
-                                              : r.date.slice(5, 7) === '11'
-                                                ? 'Nov'
-                                                : 'Dec'}
+                          {dl.num} {MONTH_SHORT[parseInt(r.date.slice(5, 7), 10) - 1] ?? ''}
                         </Text>
                       </View>
                       <View style={{ flex: 1, minWidth: 0 }}>
