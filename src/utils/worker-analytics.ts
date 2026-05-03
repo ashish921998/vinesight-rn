@@ -98,7 +98,7 @@ export function computeWorkerMetrics(
   const payments = sumTransactions(transactions, 'payment', range);
   const advancesGiven = sumTransactions(transactions, 'advance_given', range);
   const advancesDeducted = sumTransactions(transactions, 'advance_deducted', range);
-  const netBalance = earnings - payments - advancesGiven + advancesDeducted;
+  const netBalance = earnings - payments + advancesDeducted;
 
   const totalDays = getDateRangeDays(range);
   const attendanceRate = totalDays > 0 ? workDaysEquivalent / totalDays : 0;
@@ -174,7 +174,7 @@ export function getWeeklySummaries(
   return summaries;
 }
 
-function formatLocalDate(date: Date): string {
+export function formatLocalDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');

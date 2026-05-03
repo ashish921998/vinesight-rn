@@ -13,7 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize } from '@/styles/theme';
-import { formatDate } from '@/i18n/format';
+import { formatCurrency, formatDate } from '@/i18n/format';
+import { useCurrency } from '@/hooks';
 import { Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { Worker } from '@/types';
@@ -64,6 +65,11 @@ function formatDateToYYYYMMDD(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function parseYYYYMMDDToLocalDate(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
 }
 
 interface LedgerRowProps {
@@ -120,6 +126,9 @@ export function WorkerSettlementModal({
   const colors = useThemeColors();
   const isDark = useIsDark();
   const { t } = useTranslation();
+  const currency = useCurrency();
+  const formatMoney = (amount: number) =>
+    formatCurrency(amount, currency, { maximumFractionDigits: 0 });
   const isAndroid = Platform.OS === 'android';
   const insets = useSafeAreaInsets();
 
@@ -147,11 +156,11 @@ export function WorkerSettlementModal({
   const [advanceDeduction, setAdvanceDeduction] = useState('');
 
   useEffect(() => {
-    if (visible && workers.length > 0) {
+    if (visible && workers.length > 0 && !selectedWorker) {
       const initialWorker = initialWorkerId ? workers.find((w) => w.id === initialWorkerId) : null;
       setSelectedWorker(initialWorker ?? workers[0]);
     }
-  }, [visible, workers, initialWorkerId]);
+  }, [visible, workers, initialWorkerId, selectedWorker]);
 
   const { _hydrated, hasSeenSettlementTour, startSettlementTour } = useWorkersTourStore();
   useEffect(() => {
@@ -192,8 +201,12 @@ export function WorkerSettlementModal({
     const details = settlementCalculation.attendance_details;
     const fullDays = details.filter((d) => d.work_status === 'full_day');
     const halfDays = details.filter((d) => d.work_status === 'half_day');
-    const fullRate = fullDays[0]?.rate ?? selectedWorker?.daily_rate ?? 0;
-    const halfRate = halfDays[0]?.rate ?? Math.round((selectedWorker?.daily_rate ?? 0) * 0.5);
+    const getUniformRate = (days: typeof details) => {
+      const rates = Array.from(new Set(days.map((d) => d.rate)));
+      return rates.length === 1 ? rates[0] : null;
+    };
+    const fullRate = getUniformRate(fullDays);
+    const halfRate = getUniformRate(halfDays);
     const fullEarnings = fullDays.reduce((a, d) => a + d.earnings, 0);
     const halfEarnings = halfDays.reduce((a, d) => a + d.earnings, 0);
     return {
@@ -204,7 +217,7 @@ export function WorkerSettlementModal({
       fullEarnings,
       halfEarnings,
     };
-  }, [settlementCalculation, selectedWorker]);
+  }, [settlementCalculation]);
 
   useEffect(() => {
     if (!visible) {
@@ -214,6 +227,7 @@ export function WorkerSettlementModal({
       setSelectedPeriod('this_week');
       setIsDone(false);
       setPaymentMethod('cash');
+      setSelectedWorker(null);
       return;
     }
     const today = new Date();
@@ -238,8 +252,8 @@ export function WorkerSettlementModal({
         Alert.alert(t('common.error'), t('settlement.invalidDateRange'));
         return;
       }
-      const startDate = new Date(customStartDate);
-      const endDate = new Date(customEndDate);
+      const startDate = parseYYYYMMDDToLocalDate(customStartDate);
+      const endDate = parseYYYYMMDDToLocalDate(customEndDate);
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate > endDate) {
         Alert.alert(t('common.error'), t('settlement.invalidDateRange'));
         return;
@@ -253,6 +267,18 @@ export function WorkerSettlementModal({
         periodDates.start,
         periodDates.end,
       );
+      if (calculation.attendance_details.length === 0) {
+        setSettlementCalculation(null);
+        setAdvanceDeduction('0');
+        setIsCalculated(false);
+        Alert.alert(
+          t('common.info', { defaultValue: 'No payable attendance' }),
+          t('settlement.noPayableAttendance', {
+            defaultValue: 'There is no payable attendance for this period.',
+          }),
+        );
+        return;
+      }
       setSettlementCalculation(calculation);
       setAdvanceDeduction(
         selectedWorker.advance_balance > 0
@@ -270,8 +296,8 @@ export function WorkerSettlementModal({
   const handleConfirm = async () => {
     if (isConfirming) return;
     if (!selectedWorker?.id || !settlementCalculation) return;
-    const deduction = parseFloat(advanceDeduction) || 0;
-    if (advanceDeduction.trim() !== '' && isNaN(parseFloat(advanceDeduction))) {
+    const deduction = advanceDeduction.trim() === '' ? 0 : Number(advanceDeduction);
+    if (Number.isNaN(deduction)) {
       Alert.alert(
         t('common.error'),
         t('settlement.invalidDeductionAmount', {
@@ -281,19 +307,8 @@ export function WorkerSettlementModal({
       return;
     }
 
-    const { data: freshWorker } = await supabase
-      .from('workers')
-      .select('advance_balance')
-      .eq('id', selectedWorker.id)
-      .single();
-    const currentBalance = freshWorker?.advance_balance ?? 0;
-
     if (deduction < 0) {
       Alert.alert(t('common.error'), t('settlement.deductionCannotBeNegative'));
-      return;
-    }
-    if (deduction > currentBalance) {
-      Alert.alert(t('common.error'), t('settlement.deductionExceedsBalance'));
       return;
     }
     if (deduction > settlementCalculation.gross_amount) {
@@ -303,6 +318,28 @@ export function WorkerSettlementModal({
 
     setIsConfirming(true);
     try {
+      const { data: freshWorker, error: freshWorkerError } = await supabase
+        .from('workers')
+        .select('advance_balance')
+        .eq('id', selectedWorker.id)
+        .single();
+
+      if (freshWorkerError || !freshWorker) {
+        Alert.alert(
+          t('common.error'),
+          t('settlement.balanceRefreshFailed', {
+            defaultValue: 'Could not refresh the worker balance. Please try again.',
+          }),
+        );
+        return;
+      }
+
+      const currentBalance = freshWorker.advance_balance ?? 0;
+      if (deduction > currentBalance) {
+        Alert.alert(t('common.error'), t('settlement.deductionExceedsBalance'));
+        return;
+      }
+
       await createWorkerSettlement({
         worker_id: selectedWorker.id,
         farm_id: null,
@@ -344,7 +381,10 @@ export function WorkerSettlementModal({
     <Modal
       visible={visible}
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={() => {
+        if (isDone) onSuccess();
+        onClose();
+      }}
       presentationStyle="pageSheet"
     >
       <KeyboardAvoidingView
@@ -365,7 +405,13 @@ export function WorkerSettlementModal({
             borderBottomColor: m3.colorScheme.outlineVariant,
           }}
         >
-          <Pressable onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Pressable
+            onPress={() => {
+              if (isDone) onSuccess();
+              onClose();
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <UiSymbol name="xmark" size={20} color={colors.surface[500]} />
           </Pressable>
           <Text style={{ fontSize: 15, fontWeight: '600', color: colors.surface[900] }}>
@@ -410,8 +456,8 @@ export function WorkerSettlementModal({
               }}
             >
               {t('settlement.paidToWorker', {
-                defaultValue: 'Paid ₹{{amount}} to {{name}} via {{method}}.',
-                amount: settledAmount.toLocaleString('en-IN'),
+                defaultValue: 'Paid {{amount}} to {{name}} via {{method}}.',
+                amount: formatMoney(settledAmount),
                 name: selectedWorker.name.split(' ')[0],
                 method: paymentMethod === 'cash' ? 'cash' : 'UPI',
               })}
@@ -442,7 +488,7 @@ export function WorkerSettlementModal({
                   {t('settlement.netPayment', { defaultValue: 'Net paid' })}
                 </Text>
                 <Text style={{ fontSize: 12, fontWeight: '700', color: colors.surface[900] }}>
-                  ₹{settledAmount.toLocaleString('en-IN')}
+                  {formatMoney(settledAmount)}
                 </Text>
               </View>
             </View>
@@ -523,16 +569,16 @@ export function WorkerSettlementModal({
                   {selectedWorker.name}
                 </Text>
                 <Text style={{ fontSize: 12, color: colors.surface[500], marginTop: 2 }}>
-                  {formatDate(new Date(`${periodDates.start}T00:00:00`), {
+                  {formatDate(parseYYYYMMDDToLocalDate(periodDates.start), {
                     month: 'short',
                     day: 'numeric',
                   })}{' '}
                   –{' '}
-                  {formatDate(new Date(`${periodDates.end}T00:00:00`), {
+                  {formatDate(parseYYYYMMDDToLocalDate(periodDates.end), {
                     month: 'short',
                     day: 'numeric',
                   })}{' '}
-                  · ₹{selectedWorker.daily_rate}/day
+                  · {formatMoney(selectedWorker.daily_rate)}/day
                 </Text>
               </View>
             </View>
@@ -684,7 +730,8 @@ export function WorkerSettlementModal({
                     (selectedPeriod === 'custom' &&
                       (!customStartDate ||
                         !customEndDate ||
-                        new Date(customStartDate) > new Date(customEndDate)))
+                        parseYYYYMMDDToLocalDate(customStartDate) >
+                          parseYYYYMMDDToLocalDate(customEndDate)))
                   }
                   style={({ pressed }) => ({
                     height: 48,
@@ -744,28 +791,40 @@ export function WorkerSettlementModal({
                   {ledgerLines.fullDays > 0 && (
                     <LedgerRow
                       label={t('settlement.fullDaysLine', {
-                        defaultValue: 'Full days · {{count}} × ₹{{rate}}',
+                        defaultValue:
+                          ledgerLines.fullRate === null
+                            ? 'Full days · {{count}} days'
+                            : 'Full days · {{count}} × {{rate}}',
                         count: ledgerLines.fullDays,
-                        rate: ledgerLines.fullRate,
+                        rate:
+                          ledgerLines.fullRate === null
+                            ? undefined
+                            : formatMoney(ledgerLines.fullRate),
                       })}
-                      value={`₹${ledgerLines.fullEarnings.toLocaleString('en-IN')}`}
+                      value={formatMoney(ledgerLines.fullEarnings)}
                     />
                   )}
 
                   {ledgerLines.halfDays > 0 && (
                     <LedgerRow
                       label={t('settlement.halfDaysLine', {
-                        defaultValue: 'Half days · {{count}} × ₹{{rate}}',
+                        defaultValue:
+                          ledgerLines.halfRate === null
+                            ? 'Half days · {{count}} days'
+                            : 'Half days · {{count}} × {{rate}}',
                         count: ledgerLines.halfDays,
-                        rate: ledgerLines.halfRate,
+                        rate:
+                          ledgerLines.halfRate === null
+                            ? undefined
+                            : formatMoney(ledgerLines.halfRate),
                       })}
-                      value={`₹${ledgerLines.halfEarnings.toLocaleString('en-IN')}`}
+                      value={formatMoney(ledgerLines.halfEarnings)}
                     />
                   )}
 
                   <LedgerRow
                     label={t('settlement.calculatedGross', { defaultValue: 'Gross' })}
-                    value={`₹${settlementCalculation.gross_amount.toLocaleString('en-IN')}`}
+                    value={formatMoney(settlementCalculation.gross_amount)}
                     bold
                   />
 
@@ -792,7 +851,7 @@ export function WorkerSettlementModal({
                           fontVariant: ['tabular-nums'],
                         }}
                       >
-                        − ₹{advanceDeductionAmount.toLocaleString('en-IN')}
+                        − {formatMoney(advanceDeductionAmount)}
                       </Text>
                     </View>
                   )}
@@ -839,7 +898,7 @@ export function WorkerSettlementModal({
                         fontVariant: ['tabular-nums'],
                       }}
                     >
-                      ₹{netPayment.toLocaleString('en-IN')}
+                      {formatMoney(netPayment)}
                     </Text>
                   </View>
                 </View>
@@ -856,7 +915,7 @@ export function WorkerSettlementModal({
                       }}
                     >
                       {t('settlement.cutFromAdvance', { defaultValue: 'Deduct from advance' })} (max
-                      ₹{selectedWorker.advance_balance})
+                      {formatMoney(selectedWorker.advance_balance)})
                     </Text>
                     <Input
                       value={advanceDeduction}
@@ -994,8 +1053,8 @@ export function WorkerSettlementModal({
                     {isConfirming
                       ? t('confirming', { defaultValue: 'Confirming…' })
                       : t('settlement.confirmPay', {
-                          defaultValue: 'Confirm · pay ₹{{amount}}',
-                          amount: netPayment.toLocaleString('en-IN'),
+                          defaultValue: 'Confirm · pay {{amount}}',
+                          amount: formatMoney(netPayment),
                         })}
                   </Text>
                 </Pressable>

@@ -56,7 +56,9 @@ export default function WorkerDetailScreen() {
   const isDark = useIsDark();
   const { setAddWorker } = useModalStore();
 
-  const workerId = Number(id);
+  const rawId = Array.isArray(id) ? id[0] : id;
+  const parsedWorkerId = rawId ? Number(rawId) : undefined;
+  const workerId = Number.isFinite(parsedWorkerId) ? parsedWorkerId : undefined;
   const { data: worker, isLoading: workerLoading, refetch: refetchWorker } = useWorker(workerId);
   const {
     data: attendance,
@@ -113,13 +115,14 @@ export default function WorkerDetailScreen() {
   const byFarm = useMemo(() => {
     const map = new Map<number, { full: number; half: number }>();
     periodAttendance.forEach((r) => {
-      const primaryFarm = r.farm_ids?.[0];
-      if (!primaryFarm) return;
+      const farmIds = r.farm_ids ?? [];
       const s = r.work_status as WorkStatus;
-      const existing = map.get(primaryFarm) ?? { full: 0, half: 0 };
-      if (s === 'full_day') existing.full++;
-      else if (s === 'half_day') existing.half++;
-      map.set(primaryFarm, existing);
+      farmIds.forEach((farmId) => {
+        const existing = map.get(farmId) ?? { full: 0, half: 0 };
+        if (s === 'full_day') existing.full++;
+        else if (s === 'half_day') existing.half++;
+        map.set(farmId, existing);
+      });
     });
     return Array.from(map.entries())
       .map(([farmId, counts], i) => {
@@ -740,7 +743,9 @@ export default function WorkerDetailScreen() {
                   const farmId = r.farm_ids?.[0];
                   const farm = farms?.find((f) => f.id === farmId);
                   const farmIdx = byFarm.findIndex((f) => f.farmId === farmId);
-                  const farmAccent = ACCENT_COLORS[Math.max(0, farmIdx) % ACCENT_COLORS.length];
+                  const fallbackFarmIdx = farms?.findIndex((f) => f.id === farmId) ?? 0;
+                  const accentIndex = farmIdx >= 0 ? farmIdx : Math.max(0, fallbackFarmIdx);
+                  const farmAccent = ACCENT_COLORS[accentIndex % ACCENT_COLORS.length];
 
                   return (
                     <View
@@ -831,7 +836,9 @@ export default function WorkerDetailScreen() {
                   alignItems: 'center',
                   justifyContent: 'center',
                 })}
-                onPress={() => router.push(`/worker-analytics/${workerId}`)}
+                onPress={() =>
+                  workerId ? router.push(`/worker-analytics/${workerId}`) : undefined
+                }
                 accessibilityRole="button"
                 accessibilityLabel={t('workers.detail.viewFullHistoryA11y', {
                   defaultValue: 'View full attendance history',

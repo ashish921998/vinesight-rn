@@ -53,8 +53,8 @@ export default function WorkersScreen() {
   const { setAddWorker } = useModalStore();
   const queryClient = useQueryClient();
   const { data: workers, isLoading, refetch } = useWorkers();
-  const { data: allAttendance } = useAllWorkerAttendance();
-  const { data: allTransactions } = useAllWorkerTransactions();
+  const { data: allAttendance, refetch: refetchAllAttendance } = useAllWorkerAttendance();
+  const { data: allTransactions, refetch: refetchAllTransactions } = useAllWorkerTransactions();
   const deleteWorker = useDeleteWorker();
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
@@ -104,7 +104,7 @@ export default function WorkersScreen() {
 
   // Period summary across all active workers — uses netBalance so settled amounts are excluded
   const periodSummary = useMemo(() => {
-    if (!workers) return null;
+    if (!workers || !allAttendance || !allTransactions) return null;
     let totalPending = 0;
     let totalDays = 0;
     workers
@@ -117,7 +117,14 @@ export default function WorkersScreen() {
         totalDays += metrics.fullDays + metrics.halfDays;
       });
     return { totalPending, totalDays };
-  }, [workers, attendanceByWorker, transactionsByWorker, dateRange]);
+  }, [
+    workers,
+    allAttendance,
+    allTransactions,
+    attendanceByWorker,
+    transactionsByWorker,
+    dateRange,
+  ]);
 
   const handleDeleteWorker = (worker: Worker) => {
     Alert.alert(
@@ -161,8 +168,12 @@ export default function WorkersScreen() {
     setSettlementModalVisible(false);
   };
 
+  const handleRefreshWorkers = () => {
+    void Promise.all([refetch(), refetchAllAttendance(), refetchAllTransactions()]);
+  };
+
   const handleSettlementSuccess = () => {
-    refetch();
+    handleRefreshWorkers();
     queryClient.invalidateQueries({ queryKey: queryKeys.workerAttendance.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.workerTransactions.all });
   };
@@ -373,7 +384,7 @@ export default function WorkersScreen() {
       refreshControl={
         <RefreshControl
           refreshing={isLoading}
-          onRefresh={refetch}
+          onRefresh={handleRefreshWorkers}
           tintColor={m3.colorScheme.primary}
         />
       }
@@ -383,7 +394,7 @@ export default function WorkersScreen() {
   const renderAttendanceTab = () => (
     <AttendanceView
       workers={activeWorkers}
-      onSaveSuccess={refetch}
+      onSaveSuccess={handleRefreshWorkers}
       onBottomActionBarVisibilityChange={setAttendanceActionBarVisible}
     />
   );

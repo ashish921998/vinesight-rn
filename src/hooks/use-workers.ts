@@ -24,6 +24,7 @@ import {
   type TemporaryWorkerEntryInsert,
 } from '../types';
 import { resolveSeasonIdForDate } from '../lib/season-context';
+import { formatLocalDate } from '../utils/worker-analytics';
 
 // ============================================================
 // MARK: - Helper
@@ -148,7 +149,7 @@ export function useAllWorkerAttendance() {
       const userId = await getUserId();
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
-      const cutoff = thirtyDaysAgo.toISOString().slice(0, 10);
+      const cutoff = formatLocalDate(thirtyDaysAgo);
 
       const { data, error } = await supabase
         .from(TABLES.WORKER_ATTENDANCE)
