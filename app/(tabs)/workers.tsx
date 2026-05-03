@@ -4,12 +4,18 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { useWorkers, useDeleteWorker, useFabBottomPosition, isAndroid } from '@/hooks';
+import {
+  useWorkers,
+  useDeleteWorker,
+  useFabBottomPosition,
+  isAndroid,
+  useAllWorkerAttendance,
+} from '@/hooks';
 import { useModalStore } from '@/stores';
 import { AttendanceView, WorkerAnalyticsView, TempWorkerForm } from '@/components/screens';
 import { WorkerSettlementModal } from '@/components/modals/worker-settlement-modal';
 import { Button, SegmentedControl } from '@/components/ui';
-import type { Worker } from '@/types';
+import type { Worker, WorkerAttendance } from '@/types';
 import { WorkerCard } from '@/components/cards';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -18,6 +24,7 @@ import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour
 import { WorkersTourCoachmark } from '@/features/guided-tour/workers-tour-coachmark';
 import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
 import { WorkersFabSheet } from '@/components/modals/workers-fab-sheet';
+import { computeWorkerMetrics, getDefaultDateRange } from '@/utils/worker-analytics';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
@@ -42,6 +49,7 @@ export default function WorkersScreen() {
   const fabBottom = useFabBottomPosition();
   const { setAddWorker } = useModalStore();
   const { data: workers, isLoading, refetch } = useWorkers();
+  const { data: allAttendance } = useAllWorkerAttendance();
   const deleteWorker = useDeleteWorker();
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
@@ -50,12 +58,8 @@ export default function WorkersScreen() {
   const [fabSheetVisible, setFabSheetVisible] = useState(false);
   const [attendanceActionBarVisible, setAttendanceActionBarVisible] = useState(false);
 
-  // Workers guided mini-tour
   const { _hydrated, hasSeenTour, isActive: isTourActive, startTour } = useWorkersTourStore();
   useEffect(() => {
-    // Wait for AsyncStorage rehydration before deciding whether to start the tour.
-    // Without this guard, the tour would fire on every app launch during the
-    // brief window where hasSeenTour is still the in-memory default (false).
     if (!_hydrated) return;
     if (!hasSeenTour && !isTourActive) {
       const timer = setTimeout(() => startTour(), 600);
@@ -63,10 +67,39 @@ export default function WorkersScreen() {
     }
   }, [_hydrated, hasSeenTour, isTourActive, startTour]);
 
-  const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
+  const dateRange = useMemo(() => getDefaultDateRange(30), []);
 
+  const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
   const inactiveWorkers = useMemo(() => workers?.filter((w) => !w.is_active) || [], [workers]);
   const showPrimaryFab = selectedTab !== 'attendance' || !attendanceActionBarVisible;
+
+  // Per-worker attendance map for strip visualization
+  const attendanceByWorker = useMemo(() => {
+    if (!allAttendance) return new Map<number, WorkerAttendance[]>();
+    const map = new Map<number, WorkerAttendance[]>();
+    allAttendance.forEach((record) => {
+      const arr = map.get(record.worker_id) || [];
+      arr.push(record);
+      map.set(record.worker_id, arr);
+    });
+    return map;
+  }, [allAttendance]);
+
+  // Period summary across all active workers
+  const periodSummary = useMemo(() => {
+    if (!workers || !allAttendance) return null;
+    let totalPending = 0;
+    let totalDays = 0;
+    workers
+      .filter((w) => w.is_active && w.id !== undefined)
+      .forEach((w) => {
+        const wAttendance = attendanceByWorker.get(w.id!) || [];
+        const metrics = computeWorkerMetrics(w, wAttendance, [], dateRange);
+        totalPending += metrics.earnings;
+        totalDays += metrics.fullDays + metrics.halfDays;
+      });
+    return { totalPending, totalDays };
+  }, [workers, allAttendance, attendanceByWorker, dateRange]);
 
   const handleDeleteWorker = (worker: Worker) => {
     Alert.alert(
@@ -99,7 +132,11 @@ export default function WorkersScreen() {
   };
 
   const handleViewWorkerDetail = (worker: Worker) => {
-    handleEditWorker(worker);
+    if (worker.id) {
+      router.push(`/worker-detail/${worker.id}`);
+    } else {
+      handleEditWorker(worker);
+    }
   };
 
   const handleCloseSettlement = () => {
@@ -115,21 +152,92 @@ export default function WorkersScreen() {
   };
 
   const renderWorker = ({ item }: { item: Worker }) => (
-    <View
-      style={{
-        marginHorizontal: spacing[4],
-        marginBottom: spacing[3],
-      }}
-    >
+    <View style={{ marginHorizontal: spacing[4], marginBottom: spacing[3] }}>
       <WorkerCard
         worker={item}
         onPress={() => handleViewWorkerDetail(item)}
         onEdit={() => handleEditWorker(item)}
         onDelete={() => handleDeleteWorker(item)}
         isActive={item.is_active}
+        attendance={item.id !== undefined ? attendanceByWorker.get(item.id) : undefined}
       />
     </View>
   );
+
+  const renderPeriodSummaryBand = () => {
+    if (!periodSummary || activeWorkers.length === 0) return null;
+    return (
+      <View style={{ marginHorizontal: spacing[4], marginBottom: spacing[3] }}>
+        <View
+          style={{
+            backgroundColor: colors.surface[100],
+            borderWidth: 1,
+            borderColor: colors.surface[300],
+            borderRadius: 14,
+            padding: 12,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <View>
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: '600',
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                color: colors.surface[500],
+              }}
+            >
+              {t('workers.period.thisMonth', { defaultValue: 'This period · last 30 days' })}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+              <Text
+                style={{
+                  fontSize: 22,
+                  fontWeight: '700',
+                  color: colors.surface[900],
+                  fontVariant: ['tabular-nums'],
+                }}
+              >
+                ₹{periodSummary.totalPending.toLocaleString('en-IN')}
+              </Text>
+              <Text style={{ fontSize: 12, color: colors.surface[500] }}>
+                {t('workers.period.pendingAcrossTeam', { defaultValue: 'pending across team' })}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 12, color: colors.surface[500], marginTop: 4 }}>
+              {periodSummary.totalDays} {t('workers.period.days', { defaultValue: 'days' })} ·{' '}
+              {activeWorkers.length} {t('workers.period.workers', { defaultValue: 'workers' })}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => setSettlementModalVisible(true)}
+            style={({ pressed }) => ({
+              height: 38,
+              paddingHorizontal: 14,
+              borderRadius: 10,
+              backgroundColor: colorWithOpacity(m3.colorScheme.primary, pressed ? 0.9 : 1),
+              alignItems: 'center',
+              justifyContent: 'center',
+            })}
+          >
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: '600',
+                color: m3.colorScheme.onPrimary,
+              }}
+            >
+              {t('workers.actions.settleAll', { defaultValue: 'Settle' })}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
 
   const renderWorkersTab = () => (
     <FlatList
@@ -142,20 +250,23 @@ export default function WorkersScreen() {
         flexGrow: 1,
       }}
       ListHeaderComponent={
-        activeWorkers.length > 0 ? (
-          <Text
-            style={{
-              fontSize: fontSize.xs,
-              fontWeight: fontWeight.bold,
-              color: m3.colorScheme.onSurfaceVariant,
-              letterSpacing: 0.5,
-              marginHorizontal: spacing[4],
-              marginBottom: spacing[2],
-            }}
-          >
-            {t('workers.lists.activeTitle', { count: activeWorkers.length })}
-          </Text>
-        ) : null
+        <>
+          {renderPeriodSummaryBand()}
+          {activeWorkers.length > 0 ? (
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                color: m3.colorScheme.onSurfaceVariant,
+                letterSpacing: 0.5,
+                marginHorizontal: spacing[4],
+                marginBottom: spacing[2],
+              }}
+            >
+              {t('workers.lists.activeTitle', { count: activeWorkers.length })}
+            </Text>
+          ) : null}
+        </>
       }
       ListFooterComponent={
         inactiveWorkers.length > 0 ? (
@@ -277,9 +388,9 @@ export default function WorkersScreen() {
             targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_TAB_SELECTOR}
             enabled={isTourActive}
             style={{
-              backgroundColor: colors.surface[200], // mist-2 bg per wireframe
+              backgroundColor: colors.surface[200],
               borderRadius: borderRadius.full,
-              padding: 3, // 3px padding per wireframe
+              padding: 3,
             }}
           >
             <GuidedTourTarget
@@ -303,12 +414,10 @@ export default function WorkersScreen() {
           }}
         />
 
-        {/* Tab Content */}
         {selectedTab === 'workers' && renderWorkersTab()}
         {selectedTab === 'attendance' && renderAttendanceTab()}
         {selectedTab === 'analytics' && renderAnalyticsTab()}
 
-        {/* Primary action — single FAB that opens labeled action sheet */}
         {showPrimaryFab && (
           <GuidedTourTarget
             targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_FAB}
@@ -354,10 +463,8 @@ export default function WorkersScreen() {
         )}
       </View>
 
-      {/* Workers guided tour overlay */}
       <WorkersTourCoachmark onNavigateToAttendance={() => setSelectedTab('attendance')} />
 
-      {/* FAB Action Sheet */}
       <WorkersFabSheet
         visible={fabSheetVisible}
         onClose={() => setFabSheetVisible(false)}
@@ -369,7 +476,6 @@ export default function WorkersScreen() {
         onAddTempWorker={() => setTempWorkerFormVisible(true)}
       />
 
-      {/* Settlement Modal */}
       <WorkerSettlementModal
         visible={settlementModalVisible}
         onClose={handleCloseSettlement}
@@ -377,7 +483,6 @@ export default function WorkersScreen() {
         onSuccess={handleSettlementSuccess}
       />
 
-      {/* Temp Worker Form Modal */}
       <TempWorkerForm
         visible={tempWorkerFormVisible}
         onClose={() => setTempWorkerFormVisible(false)}

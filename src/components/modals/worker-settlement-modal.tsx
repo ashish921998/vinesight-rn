@@ -11,12 +11,11 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useM3 } from '@/styles/use-theme';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { formatDate, formatCurrency } from '@/i18n/format';
-import { useCurrency } from '@/hooks/use-currency';
+import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
+import { spacing, borderRadius, fontSize } from '@/styles/theme';
+import { formatDate } from '@/i18n/format';
 import { Input } from '@/components/ui';
-import { Button } from '@/components/ui';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { Worker } from '@/types';
 import { calculateWorkerSettlement, createWorkerSettlement } from '@/services/worker-service';
 import { Picker } from '@react-native-picker/picker';
@@ -24,8 +23,10 @@ import { supabase } from '@/lib/supabase';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { SettlementTourCoachmark } from '@/features/guided-tour/settlement-tour-coachmark';
 import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
+import { colorWithOpacity } from '@/utils/color';
 
 type SettlementPeriod = 'this_week' | 'last_week' | 'custom';
+type PaymentMethod = 'cash' | 'upi' | 'split';
 
 interface WorkerSettlementModalProps {
   visible: boolean;
@@ -65,6 +66,49 @@ function formatDateToYYYYMMDD(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+interface LedgerRowProps {
+  label: string;
+  value: React.ReactNode;
+  bold?: boolean;
+}
+
+function LedgerRow({ label, value, bold }: LedgerRowProps) {
+  const colors = useThemeColors();
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 11,
+        paddingHorizontal: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.surface[300],
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 13,
+          color: bold ? colors.surface[900] : colors.surface[500],
+          fontWeight: bold ? '700' : '500',
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontSize: 14,
+          color: colors.surface[900],
+          fontWeight: bold ? '700' : '600',
+          fontVariant: ['tabular-nums'],
+        }}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
 export function WorkerSettlementModal({
   visible,
   onClose,
@@ -73,31 +117,35 @@ export function WorkerSettlementModal({
   onSuccess,
 }: WorkerSettlementModalProps) {
   const m3 = useM3();
+  const colors = useThemeColors();
+  const isDark = useIsDark();
   const { t } = useTranslation();
   const isAndroid = Platform.OS === 'android';
-  const currency = useCurrency();
   const insets = useSafeAreaInsets();
 
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
-
-  // State
   const [selectedPeriod, setSelectedPeriod] = useState<SettlementPeriod>('this_week');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
-
   const [isCalculated, setIsCalculated] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-
+  const [isDone, setIsDone] = useState(false);
+  const [settledAmount, setSettledAmount] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [settlementCalculation, setSettlementCalculation] = useState<{
     days_worked: number;
     gross_amount: number;
+    attendance_details: Array<{
+      date: string;
+      work_status: 'full_day' | 'half_day';
+      work_type: string;
+      rate: number;
+      earnings: number;
+    }>;
   } | null>(null);
-
-  const [totalSalary, setTotalSalary] = useState('');
   const [advanceDeduction, setAdvanceDeduction] = useState('');
 
-  // Initialize selected worker when modal opens
   useEffect(() => {
     if (visible && workers.length > 0) {
       const initialWorker = initialWorkerId ? workers.find((w) => w.id === initialWorkerId) : null;
@@ -105,7 +153,6 @@ export function WorkerSettlementModal({
     }
   }, [visible, workers, initialWorkerId]);
 
-  // Fire settlement tour once on first open
   const { _hydrated, hasSeenSettlementTour, startSettlementTour } = useWorkersTourStore();
   useEffect(() => {
     if (!_hydrated) return;
@@ -115,7 +162,6 @@ export function WorkerSettlementModal({
     }
   }, [_hydrated, visible, hasSeenSettlementTour, startSettlementTour]);
 
-  // Period dates
   const periodDates = useMemo(() => {
     const today = new Date();
     if (selectedPeriod === 'this_week') {
@@ -130,43 +176,55 @@ export function WorkerSettlementModal({
         end: formatDateToYYYYMMDD(getWeekEnd(lastWeek)),
       };
     } else {
-      return {
-        start: customStartDate,
-        end: customEndDate,
-      };
+      return { start: customStartDate, end: customEndDate };
     }
   }, [selectedPeriod, customStartDate, customEndDate]);
 
-  // Net payment calculation
+  const advanceDeductionAmount = parseFloat(advanceDeduction) || 0;
   const netPayment = useMemo(() => {
-    const salary = parseFloat(totalSalary) || 0;
-    const deduction = parseFloat(advanceDeduction) || 0;
-    return salary - deduction;
-  }, [totalSalary, advanceDeduction]);
+    const gross = settlementCalculation?.gross_amount ?? 0;
+    return gross - advanceDeductionAmount;
+  }, [settlementCalculation, advanceDeductionAmount]);
 
-  // Reset state when modal opens/closes
+  // Aggregate lines for ledger display
+  const ledgerLines = useMemo(() => {
+    if (!settlementCalculation) return null;
+    const details = settlementCalculation.attendance_details;
+    const fullDays = details.filter((d) => d.work_status === 'full_day');
+    const halfDays = details.filter((d) => d.work_status === 'half_day');
+    const fullRate = fullDays[0]?.rate ?? selectedWorker?.daily_rate ?? 0;
+    const halfRate = halfDays[0]?.rate ?? Math.round((selectedWorker?.daily_rate ?? 0) * 0.5);
+    const fullEarnings = fullDays.reduce((a, d) => a + d.earnings, 0);
+    const halfEarnings = halfDays.reduce((a, d) => a + d.earnings, 0);
+    return {
+      fullDays: fullDays.length,
+      halfDays: halfDays.length,
+      fullRate,
+      halfRate,
+      fullEarnings,
+      halfEarnings,
+    };
+  }, [settlementCalculation, selectedWorker]);
+
   useEffect(() => {
     if (!visible) {
       setIsCalculated(false);
       setSettlementCalculation(null);
-      setTotalSalary('');
       setAdvanceDeduction('');
       setSelectedPeriod('this_week');
+      setIsDone(false);
+      setPaymentMethod('cash');
       return;
     }
-
-    // Set default dates for custom period
     const today = new Date();
     const lastWeekStart = getWeekStart(addDays(today, -7));
     setCustomStartDate(formatDateToYYYYMMDD(lastWeekStart));
     setCustomEndDate(formatDateToYYYYMMDD(today));
   }, [visible]);
 
-  // Reset calculation when period or worker changes
   useEffect(() => {
     setIsCalculated(false);
     setSettlementCalculation(null);
-    setTotalSalary('');
     setAdvanceDeduction('');
   }, [selectedPeriod, customStartDate, customEndDate, selectedWorker?.id]);
 
@@ -175,14 +233,11 @@ export function WorkerSettlementModal({
       Alert.alert(t('common.error'), 'Worker not selected');
       return;
     }
-
     if (selectedPeriod === 'custom') {
-      // Validate dates are not empty
       if (!customStartDate || !customEndDate) {
         Alert.alert(t('common.error'), t('settlement.invalidDateRange'));
         return;
       }
-      // Parse and compare dates
       const startDate = new Date(customStartDate);
       const endDate = new Date(customEndDate);
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate > endDate) {
@@ -190,7 +245,6 @@ export function WorkerSettlementModal({
         return;
       }
     }
-
     setIsCalculating(true);
     try {
       const calculation = await calculateWorkerSettlement(
@@ -200,8 +254,11 @@ export function WorkerSettlementModal({
         periodDates.end,
       );
       setSettlementCalculation(calculation);
-      setTotalSalary(calculation.gross_amount.toString());
-      setAdvanceDeduction('0');
+      setAdvanceDeduction(
+        selectedWorker.advance_balance > 0
+          ? String(Math.min(selectedWorker.advance_balance, calculation.gross_amount))
+          : '0',
+      );
       setIsCalculated(true);
     } catch (_error: unknown) {
       Alert.alert(t('common.error'), t('settlement.calculationFailed'));
@@ -212,25 +269,16 @@ export function WorkerSettlementModal({
 
   const handleConfirm = async () => {
     if (!selectedWorker?.id || !settlementCalculation) return;
+    const deduction = parseFloat(advanceDeduction) || 0;
 
-    const salary = parseFloat(totalSalary);
-    const deduction = parseFloat(advanceDeduction);
-
-    // Fetch fresh advance balance before validation
     const { data: freshWorker } = await supabase
       .from('workers')
       .select('advance_balance')
       .eq('id', selectedWorker.id)
       .single();
-
     const currentBalance = freshWorker?.advance_balance ?? 0;
 
-    // Validation
-    if (isNaN(salary) || salary < 0) {
-      Alert.alert(t('common.error'), t('settlement.salaryCannotBeNegative'));
-      return;
-    }
-    if (isNaN(deduction) || deduction < 0) {
+    if (deduction < 0) {
       Alert.alert(t('common.error'), t('settlement.deductionCannotBeNegative'));
       return;
     }
@@ -238,7 +286,7 @@ export function WorkerSettlementModal({
       Alert.alert(t('common.error'), t('settlement.deductionExceedsBalance'));
       return;
     }
-    if (deduction > salary) {
+    if (deduction > settlementCalculation.gross_amount) {
       Alert.alert(t('common.error'), t('settlement.deductionExceedsSalary'));
       return;
     }
@@ -251,25 +299,33 @@ export function WorkerSettlementModal({
         period_start: periodDates.start,
         period_end: periodDates.end,
         days_worked: settlementCalculation.days_worked,
-        gross_amount: salary,
+        gross_amount: settlementCalculation.gross_amount,
         advance_deducted: deduction,
         net_payment: netPayment,
         status: 'confirmed',
-        notes: null,
+        notes: paymentMethod !== 'cash' ? paymentMethod : null,
       });
-      Alert.alert(
-        t('settlement.settlementConfirmedTitle'),
-        t('settlement.settlementConfirmedMessage', {
-          formattedAmount: formatCurrency(netPayment, currency),
-        }),
-      );
+      setSettledAmount(netPayment);
+      setIsDone(true);
       onSuccess();
-      onClose();
     } catch (_error: unknown) {
       Alert.alert(t('common.error'), t('settlement.confirmationFailed'));
-      onClose();
     } finally {
       setIsConfirming(false);
+    }
+  };
+
+  const handleSettleNext = () => {
+    // Move to next unsettled worker
+    const currentIndex = workers.findIndex((w) => w.id === selectedWorker?.id);
+    const nextWorker = workers[currentIndex + 1] ?? null;
+    setIsDone(false);
+    setIsCalculated(false);
+    setSettlementCalculation(null);
+    setAdvanceDeduction('');
+    setPaymentMethod('cash');
+    if (nextWorker) {
+      setSelectedWorker(nextWorker);
     }
   };
 
@@ -295,359 +351,652 @@ export function WorkerSettlementModal({
             justifyContent: 'space-between',
             paddingHorizontal: spacing[4],
             paddingTop: insets.top + spacing[4],
-            paddingBottom: spacing[4],
+            paddingBottom: spacing[3],
             borderBottomWidth: 1,
             borderBottomColor: m3.colorScheme.outlineVariant,
           }}
         >
-          <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold }}>
-            {t('settlePayment')}
-          </Text>
-          <Pressable
-            onPress={onClose}
-            style={{
-              width: 36,
-              height: 36,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: m3.surface.surfaceContainerHighest,
-              borderRadius: borderRadius.full,
-            }}
-          >
-            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold }}>✕</Text>
+          <Pressable onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <UiSymbol name="xmark" size={20} color={colors.surface[500]} />
           </Pressable>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: colors.surface[900] }}>
+            {t('settlePayment', { defaultValue: 'Settle wages' })}
+          </Text>
+          <View style={{ width: 20 }} />
         </View>
 
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ padding: spacing[4] }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Worker Selector */}
-          <Text
-            style={{
-              fontSize: fontSize.sm,
-              color: m3.colorScheme.onSurfaceVariant,
-              marginBottom: spacing[2],
-            }}
-          >
-            {t('selectWorkerAndPeriod')}
-          </Text>
-          <GuidedTourTarget
-            targetId={GUIDED_TOUR_TARGET_IDS.SETTLEMENT_WORKER_PICKER}
-            style={{ marginBottom: spacing[4] }}
-          >
+        {/* Done state */}
+        {isDone ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 }}>
             <View
               style={{
-                backgroundColor: m3.surface.surfaceContainerLow,
-                borderRadius: borderRadius.lg,
-                overflow: 'hidden',
+                width: 76,
+                height: 76,
+                borderRadius: 999,
+                backgroundColor: colorWithOpacity(colors.success, isDark ? 0.18 : 0.14),
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 18,
               }}
             >
-              <Picker
-                selectedValue={selectedWorker.id?.toString()}
-                onValueChange={(itemValue) => {
-                  const worker = workers.find((w) => w.id?.toString() === itemValue);
-                  if (worker) setSelectedWorker(worker);
-                }}
-                style={{
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {workers.map((worker, index) => (
-                  <Picker.Item
-                    key={worker.id ?? `worker-${index}`}
-                    label={worker.name}
-                    value={worker.id?.toString() ?? `worker-${index}`}
-                    style={{ backgroundColor: m3.surface.surfaceContainerLow }}
-                  />
-                ))}
-              </Picker>
+              <UiSymbol name="checkmark" size={36} color={colors.success} />
             </View>
-          </GuidedTourTarget>
-
-          {/* Selected Worker Info */}
-          <View
-            style={{
-              padding: spacing[3],
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderRadius: borderRadius.lg,
-              marginBottom: spacing[4],
-            }}
-          >
-            <Text style={{ fontSize: fontSize.base, fontWeight: fontWeight.semibold }}>
-              {selectedWorker.name}
-            </Text>
-            <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
-              {t('dailyRate')}: {selectedWorker.daily_rate}
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: '700',
+                color: colors.surface[900],
+                letterSpacing: -0.3,
+              }}
+            >
+              {t('settlement.settled', { defaultValue: 'Settled' })}
             </Text>
             <Text
               style={{
-                fontSize: fontSize.sm,
-                color: m3.colorScheme.error,
-                marginTop: spacing[1],
+                fontSize: 14,
+                color: colors.surface[500],
+                marginTop: 8,
+                lineHeight: 22,
+                textAlign: 'center',
               }}
             >
-              {t('advanceBalance')}: {selectedWorker.advance_balance ?? 0}
+              {t('settlement.paidToWorker', {
+                defaultValue: 'Paid ₹{{amount}} to {{name}} via {{method}}.',
+                amount: settledAmount.toLocaleString('en-IN'),
+                name: selectedWorker.name.split(' ')[0],
+                method:
+                  paymentMethod === 'cash' ? 'cash' : paymentMethod === 'upi' ? 'UPI' : 'split',
+              })}
             </Text>
-          </View>
 
-          {/* Period Selection */}
-          <GuidedTourTarget
-            targetId={GUIDED_TOUR_TARGET_IDS.SETTLEMENT_PERIOD_SELECTOR}
-            style={{ marginBottom: spacing[4] }}
+            <View
+              style={{
+                marginTop: 22,
+                width: '100%',
+                backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colors.surface[300],
+                borderRadius: 14,
+                padding: '14px 16px' as unknown as number,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+              }}
+            >
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ fontSize: 12, color: colors.surface[500] }}>
+                  {t('daysWorked', { defaultValue: 'Days worked' })}
+                </Text>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.surface[900] }}>
+                  {settlementCalculation?.days_worked.toFixed(1)}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+                <Text style={{ fontSize: 12, color: colors.surface[500] }}>
+                  {t('settlement.netPayment', { defaultValue: 'Net paid' })}
+                </Text>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.surface[900] }}>
+                  ₹{settledAmount.toLocaleString('en-IN')}
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ marginTop: 18, width: '100%', gap: 8 }}>
+              <Pressable
+                onPress={onClose}
+                style={({ pressed }) => ({
+                  height: 48,
+                  borderRadius: 14,
+                  backgroundColor: m3.colorScheme.primary,
+                  opacity: pressed ? 0.85 : 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                })}
+              >
+                <Text style={{ fontSize: 15, fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                  {t('common.done', { defaultValue: 'Done' })}
+                </Text>
+              </Pressable>
+
+              {workers.findIndex((w) => w.id === selectedWorker.id) < workers.length - 1 && (
+                <Pressable
+                  onPress={handleSettleNext}
+                  style={({ pressed }) => ({
+                    height: 48,
+                    borderRadius: 14,
+                    backgroundColor: pressed ? colors.surface[200] : 'transparent',
+                    borderWidth: 1,
+                    borderColor: colors.surface[300],
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  })}
+                >
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.surface[900] }}>
+                    {t('settlement.settleNext', { defaultValue: 'Settle next worker' })}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
+        ) : (
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}
+            keyboardShouldPersistTaps="handled"
           >
-            <View>
-              <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[2] }}>{t('period')}</Text>
+            {/* Worker chip */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <View
                 style={{
-                  flexDirection: 'row',
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderRadius: borderRadius.full,
-                  padding: spacing[1],
-                  marginBottom: spacing[3],
+                  width: 48,
+                  height: 48,
+                  borderRadius: 999,
+                  backgroundColor: isDark ? colors.primary[400] : colors.primary[600],
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                {(['this_week', 'last_week', 'custom'] as SettlementPeriod[]).map((period) => (
-                  <Pressable
-                    key={period}
-                    onPress={() => setSelectedPeriod(period)}
+                <Text
+                  style={{ fontSize: 17, fontWeight: '700', color: '#F7F3ED', letterSpacing: -0.2 }}
+                >
+                  {selectedWorker.name
+                    .trim()
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2)}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 17, fontWeight: '700', color: colors.surface[900] }}>
+                  {selectedWorker.name}
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.surface[500], marginTop: 2 }}>
+                  {formatDate(new Date(periodDates.start), { month: 'short', day: 'numeric' })} –{' '}
+                  {formatDate(new Date(periodDates.end), { month: 'short', day: 'numeric' })} · ₹
+                  {selectedWorker.daily_rate}/day
+                </Text>
+              </View>
+            </View>
+
+            {/* Worker selector (if multiple) */}
+            {workers.length > 1 && (
+              <GuidedTourTarget
+                targetId={GUIDED_TOUR_TARGET_IDS.SETTLEMENT_WORKER_PICKER}
+                style={{ marginBottom: spacing[3] }}
+              >
+                <View
+                  style={{
+                    backgroundColor: m3.surface.surfaceContainerLow,
+                    borderRadius: borderRadius.lg,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Picker
+                    selectedValue={selectedWorker.id?.toString()}
+                    onValueChange={(itemValue) => {
+                      const worker = workers.find((w) => w.id?.toString() === itemValue);
+                      if (worker) setSelectedWorker(worker);
+                    }}
                     style={{
-                      flex: 1,
-                      paddingVertical: spacing[2],
-                      paddingHorizontal: spacing[3],
-                      borderRadius: borderRadius.full,
-                      alignItems: 'center',
-                      backgroundColor:
-                        selectedPeriod === period ? m3.colorScheme.surface : 'transparent',
+                      backgroundColor: m3.surface.surfaceContainerLow,
+                      color: m3.colorScheme.onSurface,
+                    }}
+                  >
+                    {workers.map((worker, index) => (
+                      <Picker.Item
+                        key={worker.id ?? `worker-${index}`}
+                        label={worker.name}
+                        value={worker.id?.toString() ?? `worker-${index}`}
+                        style={{ backgroundColor: m3.surface.surfaceContainerLow }}
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </GuidedTourTarget>
+            )}
+
+            {/* Period Selection */}
+            <GuidedTourTarget
+              targetId={GUIDED_TOUR_TARGET_IDS.SETTLEMENT_PERIOD_SELECTOR}
+              style={{ marginBottom: spacing[3] }}
+            >
+              <View>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '600',
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase',
+                    color: colors.surface[500],
+                    marginBottom: 8,
+                  }}
+                >
+                  {t('period', { defaultValue: 'Period' })}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    backgroundColor: colors.surface[200],
+                    borderRadius: 12,
+                    padding: 3,
+                    gap: 2,
+                    borderWidth: 1,
+                    borderColor: colors.surface[300],
+                  }}
+                >
+                  {[
+                    {
+                      k: 'this_week' as SettlementPeriod,
+                      l: t('settlement.this_week', { defaultValue: 'This week' }),
+                    },
+                    {
+                      k: 'last_week' as SettlementPeriod,
+                      l: t('settlement.last_week', { defaultValue: 'Last week' }),
+                    },
+                    {
+                      k: 'custom' as SettlementPeriod,
+                      l: t('settlement.custom', { defaultValue: 'Custom' }),
+                    },
+                  ].map((period) => {
+                    const on = selectedPeriod === period.k;
+                    return (
+                      <Pressable
+                        key={period.k}
+                        onPress={() => setSelectedPeriod(period.k)}
+                        style={{
+                          flex: 1,
+                          height: 34,
+                          borderRadius: 9,
+                          backgroundColor: on ? colors.surface[100] : 'transparent',
+                          borderWidth: 1,
+                          borderColor: on ? colors.surface[300] : 'transparent',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: on ? '700' : '500',
+                            color: on ? colors.surface[900] : colors.surface[500],
+                          }}
+                        >
+                          {period.l}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            </GuidedTourTarget>
+
+            {selectedPeriod === 'custom' && (
+              <View style={{ gap: spacing[3], marginBottom: spacing[3] }}>
+                <View>
+                  <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1] }}>
+                    {t('startDate', { defaultValue: 'Start date' })}
+                  </Text>
+                  <Input
+                    value={customStartDate}
+                    onChangeText={setCustomStartDate}
+                    placeholder="YYYY-MM-DD"
+                  />
+                </View>
+                <View>
+                  <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1] }}>
+                    {t('endDate', { defaultValue: 'End date' })}
+                  </Text>
+                  <Input
+                    value={customEndDate}
+                    onChangeText={setCustomEndDate}
+                    placeholder="YYYY-MM-DD"
+                  />
+                </View>
+              </View>
+            )}
+
+            {/* Calculate button */}
+            {!isCalculated && (
+              <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.SETTLEMENT_CALCULATE_BTN}>
+                <Pressable
+                  onPress={handleCalculate}
+                  disabled={
+                    isCalculating ||
+                    (selectedPeriod === 'custom' &&
+                      (!customStartDate ||
+                        !customEndDate ||
+                        new Date(customStartDate) > new Date(customEndDate)))
+                  }
+                  style={({ pressed }) => ({
+                    height: 48,
+                    borderRadius: 14,
+                    backgroundColor: m3.colorScheme.primary,
+                    opacity: pressed || isCalculating ? 0.8 : 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  })}
+                >
+                  <Text
+                    style={{ fontSize: 15, fontWeight: '600', color: m3.colorScheme.onPrimary }}
+                  >
+                    {isCalculating
+                      ? t('calculating', { defaultValue: 'Calculating…' })
+                      : t('calculate', { defaultValue: 'Calculate' })}
+                  </Text>
+                </Pressable>
+              </GuidedTourTarget>
+            )}
+
+            {/* Ledger calculation */}
+            {isCalculated && settlementCalculation && ledgerLines && (
+              <>
+                {/* Calculation card */}
+                <View
+                  style={{
+                    backgroundColor: colors.surface[100],
+                    borderWidth: 1,
+                    borderColor: colors.surface[300],
+                    borderRadius: 16,
+                    marginBottom: 12,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <View
+                    style={{
+                      padding: '12px 14px' as unknown as number,
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[300],
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: fontSize.xs,
-                        fontWeight:
-                          selectedPeriod === period ? fontWeight.semibold : fontWeight.normal,
-                        color:
-                          selectedPeriod === period
-                            ? m3.colorScheme.primary
-                            : m3.colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                        fontWeight: '600',
+                        letterSpacing: 0.8,
+                        textTransform: 'uppercase',
+                        color: colors.surface[500],
                       }}
                     >
-                      {t(`settlement.${period}`)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          </GuidedTourTarget>
-
-          {selectedPeriod === 'custom' && (
-            <View style={{ gap: spacing[3] }}>
-              <View>
-                <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1] }}>
-                  {t('startDate')}
-                </Text>
-                <Input
-                  value={customStartDate}
-                  onChangeText={setCustomStartDate}
-                  placeholder="YYYY-MM-DD"
-                />
-              </View>
-              <View>
-                <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1] }}>
-                  {t('endDate')}
-                </Text>
-                <Input
-                  value={customEndDate}
-                  onChangeText={setCustomEndDate}
-                  placeholder="YYYY-MM-DD"
-                />
-              </View>
-            </View>
-          )}
-
-          {/* Calculate Button */}
-          {!isCalculated && (
-            <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.SETTLEMENT_CALCULATE_BTN}>
-              <Button
-                title={t('calculate')}
-                onPress={handleCalculate}
-                isLoading={isCalculating}
-                disabled={
-                  selectedPeriod === 'custom' &&
-                  (!customStartDate ||
-                    !customEndDate ||
-                    new Date(customStartDate) > new Date(customEndDate))
-                }
-              />
-            </GuidedTourTarget>
-          )}
-
-          {/* Settlement Summary */}
-          {isCalculated && settlementCalculation && (
-            <>
-              <View
-                style={{
-                  padding: spacing[4],
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderRadius: borderRadius.lg,
-                  marginBottom: spacing[4],
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.bold,
-                    marginBottom: spacing[3],
-                  }}
-                >
-                  {t('settlement.summary')}
-                </Text>
-                <View style={{ gap: spacing[2] }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
-                      {t('period')}
-                    </Text>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
-                      {formatDate(new Date(periodDates.start), { month: 'short', day: 'numeric' })}{' '}
-                      - {formatDate(new Date(periodDates.end), { month: 'short', day: 'numeric' })}
+                      {t('settlement.summary', { defaultValue: 'Calculation' })}
                     </Text>
                   </View>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
-                      {t('daysWorked')}
-                    </Text>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
-                      {settlementCalculation.days_worked.toFixed(1)}
-                    </Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
-                      {t('settlement.calculatedGross')}
-                    </Text>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
-                      {settlementCalculation.gross_amount.toFixed(2)}
-                    </Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
-                      {t('advanceBalance')}
-                    </Text>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.error }}>
-                      {selectedWorker.advance_balance ?? 0}
-                    </Text>
-                  </View>
-                </View>
-              </View>
 
-              {/* Adjustments */}
-              <View style={{ marginBottom: spacing[4], gap: spacing[3] }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.bold,
-                    marginBottom: spacing[1],
-                  }}
-                >
-                  {t('settlement.adjustments')}
-                </Text>
+                  {ledgerLines.fullDays > 0 && (
+                    <LedgerRow
+                      label={t('settlement.fullDaysLine', {
+                        defaultValue: 'Full days · {{count}} × ₹{{rate}}',
+                        count: ledgerLines.fullDays,
+                        rate: ledgerLines.fullRate,
+                      })}
+                      value={`₹${ledgerLines.fullEarnings.toLocaleString('en-IN')}`}
+                    />
+                  )}
 
-                <View>
-                  <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1] }}>
-                    {t('settlement.totalSalary')}
-                  </Text>
-                  <Input
-                    value={totalSalary}
-                    onChangeText={setTotalSalary}
-                    placeholder="0"
-                    keyboardType="decimal-pad"
+                  {ledgerLines.halfDays > 0 && (
+                    <LedgerRow
+                      label={t('settlement.halfDaysLine', {
+                        defaultValue: 'Half days · {{count}} × ₹{{rate}}',
+                        count: ledgerLines.halfDays,
+                        rate: ledgerLines.halfRate,
+                      })}
+                      value={`₹${ledgerLines.halfEarnings.toLocaleString('en-IN')}`}
+                    />
+                  )}
+
+                  <LedgerRow
+                    label={t('settlement.calculatedGross', { defaultValue: 'Gross' })}
+                    value={`₹${settlementCalculation.gross_amount.toLocaleString('en-IN')}`}
+                    bold
                   />
-                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-                    {t('settlement.totalSalaryHint')}
+
+                  {advanceDeductionAmount > 0 && (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        paddingVertical: 11,
+                        paddingHorizontal: 14,
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.surface[300],
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, color: colors.surface[500], fontWeight: '500' }}>
+                        {t('settlement.cutFromAdvance', { defaultValue: 'Advance deducted' })}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '600',
+                          color: m3.colorScheme.error,
+                          fontVariant: ['tabular-nums'],
+                        }}
+                      >
+                        − ₹{advanceDeductionAmount.toLocaleString('en-IN')}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Net band */}
+                  <View
+                    style={{
+                      paddingHorizontal: 14,
+                      paddingVertical: 14,
+                      backgroundColor: colorWithOpacity(
+                        m3.colorScheme.primary,
+                        isDark ? 0.1 : 0.06,
+                      ),
+                      borderTopWidth: 1,
+                      borderTopColor: colors.surface[300],
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                    }}
+                  >
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: '600',
+                          letterSpacing: 0.6,
+                          textTransform: 'uppercase',
+                          color: colors.surface[500],
+                        }}
+                      >
+                        {t('settlement.netPayment', { defaultValue: 'Net to pay' })}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: colors.surface[500], marginTop: 2 }}>
+                        {settlementCalculation.days_worked.toFixed(1)}{' '}
+                        {t('daysWorked', { defaultValue: 'days worked' })}
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: 26,
+                        fontWeight: '700',
+                        color: colors.surface[900],
+                        letterSpacing: -0.4,
+                        fontVariant: ['tabular-nums'],
+                      }}
+                    >
+                      ₹{netPayment.toLocaleString('en-IN')}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Advance deduction override */}
+                {selectedWorker.advance_balance > 0 && (
+                  <View style={{ marginBottom: 12 }}>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: '600',
+                        color: colors.surface[500],
+                        marginBottom: 6,
+                      }}
+                    >
+                      {t('settlement.cutFromAdvance', { defaultValue: 'Deduct from advance' })} (max
+                      ₹{selectedWorker.advance_balance})
+                    </Text>
+                    <Input
+                      value={advanceDeduction}
+                      onChangeText={setAdvanceDeduction}
+                      placeholder="0"
+                      keyboardType="decimal-pad"
+                    />
+                  </View>
+                )}
+
+                {/* Payment method */}
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '600',
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase',
+                    color: colors.surface[500],
+                    marginBottom: 8,
+                  }}
+                >
+                  {t('settlement.payBy', { defaultValue: 'Pay by' })}
+                </Text>
+                <View style={{ gap: 6, marginBottom: 14 }}>
+                  {[
+                    {
+                      k: 'cash' as PaymentMethod,
+                      l: t('settlement.cash', { defaultValue: 'Cash' }),
+                      sub: t('settlement.cashSub', { defaultValue: 'Mark as paid in hand' }),
+                    },
+                    {
+                      k: 'upi' as PaymentMethod,
+                      l: t('settlement.upi', { defaultValue: 'UPI / bank' }),
+                      sub: t('settlement.upiSub', { defaultValue: 'Log a digital transfer' }),
+                    },
+                    {
+                      k: 'split' as PaymentMethod,
+                      l: t('settlement.split', { defaultValue: 'Cash + advance carry-over' }),
+                      sub: t('settlement.splitSub', {
+                        defaultValue: 'Pay part now, roll over the rest',
+                      }),
+                    },
+                  ].map((opt) => {
+                    const on = paymentMethod === opt.k;
+                    return (
+                      <Pressable
+                        key={opt.k}
+                        onPress={() => setPaymentMethod(opt.k)}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: 12,
+                          paddingHorizontal: 14,
+                          backgroundColor: on
+                            ? colorWithOpacity(m3.colorScheme.primary, isDark ? 0.1 : 0.06)
+                            : colors.surface[100],
+                          borderWidth: on ? 2 : 1,
+                          borderColor: on ? m3.colorScheme.primary : colors.surface[300],
+                          borderRadius: 12,
+                        }}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={{ fontSize: 14, fontWeight: '600', color: colors.surface[900] }}
+                          >
+                            {opt.l}
+                          </Text>
+                          <Text style={{ fontSize: 11, color: colors.surface[500], marginTop: 2 }}>
+                            {opt.sub}
+                          </Text>
+                        </View>
+                        <View
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: 999,
+                            borderWidth: 2,
+                            borderColor: on ? m3.colorScheme.primary : colors.surface[300],
+                            backgroundColor: on ? m3.colorScheme.primary : 'transparent',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {on && (
+                            <UiSymbol name="checkmark" size={10} color={m3.colorScheme.onPrimary} />
+                          )}
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                {/* Confirm note */}
+                <View
+                  style={{
+                    backgroundColor: colors.surface[100],
+                    borderWidth: 1,
+                    borderColor: colors.surface[300],
+                    borderRadius: 12,
+                    padding: 10,
+                    paddingHorizontal: 12,
+                    marginBottom: 14,
+                  }}
+                >
+                  <Text style={{ fontSize: 12, color: colors.surface[500] }}>
+                    {t('settlement.confirmNote', {
+                      defaultValue:
+                        'Settling this period for {{name}} — a new period starts tomorrow. You can edit any day before settling.',
+                      name: selectedWorker.name.split(' ')[0],
+                    })}
                   </Text>
                 </View>
 
-                <View>
-                  <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1] }}>
-                    {t('settlement.cutFromAdvance')}
-                  </Text>
-                  <Input
-                    value={advanceDeduction}
-                    onChangeText={setAdvanceDeduction}
-                    placeholder="0"
-                    keyboardType="decimal-pad"
+                {/* Confirm button */}
+                <Pressable
+                  onPress={handleConfirm}
+                  disabled={isConfirming || netPayment < 0}
+                  style={({ pressed }) => ({
+                    height: 48,
+                    borderRadius: 14,
+                    backgroundColor: netPayment < 0 ? colors.surface[300] : m3.colorScheme.primary,
+                    opacity: pressed || isConfirming ? 0.8 : 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                  })}
+                >
+                  <UiSymbol
+                    name="checkmark"
+                    size={16}
+                    color={netPayment < 0 ? colors.surface[500] : m3.colorScheme.onPrimary}
                   />
-                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-                    {t('settlement.max', { max: selectedWorker.advance_balance ?? 0 })}
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      fontWeight: '600',
+                      color: netPayment < 0 ? colors.surface[500] : m3.colorScheme.onPrimary,
+                    }}
+                  >
+                    {isConfirming
+                      ? t('confirming', { defaultValue: 'Confirming…' })
+                      : t('settlement.confirmPay', {
+                          defaultValue: 'Confirm · pay ₹{{amount}}',
+                          amount: netPayment.toLocaleString('en-IN'),
+                        })}
                   </Text>
-                </View>
-              </View>
+                </Pressable>
+              </>
+            )}
+          </ScrollView>
+        )}
 
-              {/* Net Payment */}
-              <View
-                style={{
-                  padding: spacing[4],
-                  backgroundColor:
-                    netPayment >= 0
-                      ? m3.colorScheme.primaryContainer
-                      : m3.colorScheme.errorContainer,
-                  borderRadius: borderRadius.lg,
-                  marginBottom: spacing[6],
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    color:
-                      netPayment >= 0
-                        ? m3.colorScheme.onPrimaryContainer
-                        : m3.colorScheme.onErrorContainer,
-                    marginBottom: spacing[2],
-                  }}
-                >
-                  {t('settlement.netPayment')}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: fontSize['2xl'],
-                    fontWeight: fontWeight.bold,
-                    color:
-                      netPayment >= 0
-                        ? m3.colorScheme.onPrimaryContainer
-                        : m3.colorScheme.onErrorContainer,
-                  }}
-                >
-                  {netPayment.toFixed(2)}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    color:
-                      netPayment >= 0
-                        ? m3.colorScheme.onPrimaryContainer
-                        : m3.colorScheme.onErrorContainer,
-                    marginTop: spacing[1],
-                  }}
-                >
-                  {t('settlement.netPaymentHint')}
-                </Text>
-              </View>
-
-              {/* Confirm Button */}
-              <Button
-                title={t('confirm')}
-                onPress={handleConfirm}
-                isLoading={isConfirming}
-                disabled={netPayment < 0}
-              />
-            </>
-          )}
-        </ScrollView>
+        <SettlementTourCoachmark />
       </KeyboardAvoidingView>
-
-      {/* Settlement guided tour overlay */}
-      <SettlementTourCoachmark />
     </Modal>
   );
 }

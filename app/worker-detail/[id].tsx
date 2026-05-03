@@ -1,0 +1,855 @@
+import React, { useMemo, useState } from 'react';
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { useLocalSearchParams, router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { useWorker, useWorkerAttendance, useFarms, isAndroid } from '@/hooks';
+import { useModalStore } from '@/stores';
+import { WorkerSettlementModal } from '@/components/modals/worker-settlement-modal';
+import { spacing, borderRadius, fontSize } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
+import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
+import { calculateWorkerEarnings } from '@/types';
+import type { WorkStatus } from '@/types';
+import { getDefaultDateRange, isDateInRange } from '@/utils/worker-analytics';
+
+const ACCENT_COLORS = ['#355847', '#A56B4F', '#D0A14A', '#4E7384', '#7A5E8E'];
+
+function dayLabel(dateStr: string): { short: string; num: number } {
+  try {
+    const d = new Date(`${dateStr}T00:00:00`);
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return { short: days[d.getDay()], num: d.getDate() };
+  } catch {
+    return { short: '', num: 0 };
+  }
+}
+
+export default function WorkerDetailScreen() {
+  const { id } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const m3 = useM3();
+  const colors = useThemeColors();
+  const isDark = useIsDark();
+  const { setAddWorker } = useModalStore();
+
+  const workerId = Number(id);
+  const { data: worker, isLoading: workerLoading } = useWorker(workerId);
+  const { data: attendance, isLoading: attendanceLoading } = useWorkerAttendance(workerId);
+  const { data: farms } = useFarms();
+
+  const [settlementVisible, setSettlementVisible] = useState(false);
+
+  const isLoading = workerLoading || attendanceLoading;
+
+  const dateRange = useMemo(() => getDefaultDateRange(30), []);
+
+  const periodAttendance = useMemo(() => {
+    if (!attendance) return [];
+    return attendance
+      .filter((r) => isDateInRange(r.date, dateRange))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [attendance, dateRange]);
+
+  const metrics = useMemo(() => {
+    let full = 0,
+      half = 0,
+      absent = 0,
+      earnings = 0;
+    periodAttendance.forEach((r) => {
+      const s = r.work_status as WorkStatus;
+      if (s === 'full_day') full++;
+      else if (s === 'half_day') half++;
+      else if (s === 'absent') absent++;
+      if (worker)
+        earnings += calculateWorkerEarnings(worker, s, r.daily_rate_override ?? undefined);
+    });
+    return { full, half, absent, earnings };
+  }, [periodAttendance, worker]);
+
+  // 30-day strip for calendar grid
+  const calendarDays = useMemo(() => {
+    const map = new Map<string, WorkStatus>();
+    periodAttendance.forEach((r) => map.set(r.date.slice(0, 10), r.work_status as WorkStatus));
+    const days: { date: string; status: WorkStatus | null }[] = [];
+    const today = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({ date: key, status: map.get(key) ?? null });
+    }
+    return days;
+  }, [periodAttendance]);
+
+  // By-farm breakdown using farm_ids
+  const byFarm = useMemo(() => {
+    const map = new Map<number, { full: number; half: number }>();
+    periodAttendance.forEach((r) => {
+      const primaryFarm = r.farm_ids?.[0];
+      if (!primaryFarm) return;
+      const s = r.work_status as WorkStatus;
+      const existing = map.get(primaryFarm) ?? { full: 0, half: 0 };
+      if (s === 'full_day') existing.full++;
+      else if (s === 'half_day') existing.half++;
+      map.set(primaryFarm, existing);
+    });
+    return Array.from(map.entries())
+      .map(([farmId, counts], i) => {
+        const farm = farms?.find((f) => f.id === farmId);
+        return {
+          farmId,
+          name: farm?.name ?? `Farm ${farmId}`,
+          accent: ACCENT_COLORS[i % ACCENT_COLORS.length],
+          ...counts,
+        };
+      })
+      .filter((f) => f.full + f.half > 0);
+  }, [periodAttendance, farms]);
+
+  const recentDays = useMemo(() => periodAttendance.slice(0, 6), [periodAttendance]);
+
+  const totalFarmDays = byFarm.reduce((a, f) => a + f.full + f.half, 0);
+
+  const cellColor = (status: WorkStatus | null) => {
+    if (status === 'full_day') return colors.success;
+    if (status === 'half_day') return isDark ? '#C49843' : '#D0A14A';
+    if (status === 'absent') return m3.colorScheme.error;
+    return isDark ? colors.surface[200] : colors.surface[200];
+  };
+
+  const cellLabel = (status: WorkStatus | null) => {
+    if (status === 'full_day') return 'F';
+    if (status === 'half_day') return 'H';
+    if (status === 'absent') return 'A';
+    return '·';
+  };
+
+  const statusBadgeProps = (status: WorkStatus | null) => {
+    if (status === 'full_day')
+      return {
+        label: t('attendance.status.fullDay', { defaultValue: 'Full' }),
+        color: colors.success,
+        bg: colorWithOpacity(colors.success, isDark ? 0.18 : 0.14),
+      };
+    if (status === 'half_day')
+      return {
+        label: t('attendance.status.halfDay', { defaultValue: 'Half' }),
+        color: isDark ? '#C49843' : '#D0A14A',
+        bg: colorWithOpacity(isDark ? '#C49843' : '#D0A14A', 0.18),
+      };
+    if (status === 'absent')
+      return {
+        label: t('attendance.status.absent', { defaultValue: 'Absent' }),
+        color: m3.colorScheme.error,
+        bg: colorWithOpacity(m3.colorScheme.error, isDark ? 0.18 : 0.12),
+      };
+    return {
+      label: t('attendance.status.off', { defaultValue: 'Off' }),
+      color: colors.surface[400],
+      bg: colors.surface[200],
+    };
+  };
+
+  if (isLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: m3.colorScheme.background,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <ActivityIndicator color={m3.colorScheme.primary} />
+      </View>
+    );
+  }
+
+  if (!worker) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: m3.colorScheme.background,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: spacing[6],
+        }}
+      >
+        <Text style={{ color: m3.colorScheme.onSurface, fontSize: fontSize.lg }}>
+          {t('common.notFound', { defaultValue: 'Not found' })}
+        </Text>
+        <Pressable onPress={() => router.back()} style={{ marginTop: spacing[4] }}>
+          <Text style={{ color: m3.colorScheme.primary, fontWeight: '600' }}>
+            {t('common.back', { defaultValue: 'Go back' })}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const initials =
+    worker.name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || '?';
+  const avatarTint = isDark ? colors.primary[400] : colors.primary[600];
+
+  return (
+    <>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: m3.colorScheme.background,
+        }}
+      >
+        {/* Header */}
+        <View
+          style={{
+            paddingTop: (isAndroid ? 0 : insets.top) + spacing[2],
+            paddingHorizontal: spacing[4],
+            paddingBottom: spacing[2],
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottomWidth: 0.5,
+            borderBottomColor: m3.colorScheme.outlineVariant,
+          }}
+        >
+          <Pressable
+            onPress={() => router.back()}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <UiSymbol name="chevron.left" size={18} color={colors.surface[500]} />
+            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.surface[500] }}>
+              {t('workers.title', { defaultValue: 'Workers' })}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              setAddWorker({ worker });
+              router.push('/add-worker');
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <UiSymbol name="ellipsis" size={20} color={colors.surface[500]} />
+          </Pressable>
+        </View>
+
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            padding: spacing[4],
+            paddingBottom: insets.bottom + spacing[8],
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Identity */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingBottom: 14 }}>
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: borderRadius.full,
+                backgroundColor: avatarTint,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text
+                style={{ fontSize: 20, fontWeight: '700', color: '#F7F3ED', letterSpacing: -0.3 }}
+              >
+                {initials}
+              </Text>
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text
+                style={{
+                  fontSize: 22,
+                  fontWeight: '700',
+                  color: colors.surface[900],
+                  letterSpacing: -0.3,
+                }}
+              >
+                {worker.name}
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                <View
+                  style={{
+                    height: 22,
+                    paddingHorizontal: 9,
+                    borderRadius: 999,
+                    backgroundColor: colors.surface[200],
+                    borderWidth: 1,
+                    borderColor: colors.surface[300],
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.surface[500] }}>
+                    ₹{worker.daily_rate}/day
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Settlement summary card */}
+          <View
+            style={{
+              backgroundColor: colors.surface[100],
+              borderWidth: 1,
+              borderColor: colors.surface[300],
+              borderRadius: 16,
+              padding: 14,
+              marginBottom: 12,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: 10,
+              }}
+            >
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '600',
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase',
+                    color: colors.surface[500],
+                  }}
+                >
+                  {t('workers.settlement.pendingWages', {
+                    defaultValue: 'Pending wages · last 30 days',
+                  })}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 28,
+                    fontWeight: '700',
+                    color: colors.surface[900],
+                    letterSpacing: -0.4,
+                    marginTop: 4,
+                    fontVariant: ['tabular-nums'],
+                  }}
+                >
+                  ₹{metrics.earnings.toLocaleString('en-IN')}
+                </Text>
+                {worker.advance_balance > 0 && (
+                  <Text style={{ fontSize: 12, color: colors.surface[500], marginTop: 4 }}>
+                    {t('workers.settlement.advanceBalance', {
+                      defaultValue: 'Advance: ₹{{amount}}',
+                      amount: worker.advance_balance.toLocaleString('en-IN'),
+                    })}
+                  </Text>
+                )}
+              </View>
+              <Pressable
+                onPress={() => setSettlementVisible(true)}
+                style={({ pressed }) => ({
+                  height: 40,
+                  paddingHorizontal: 14,
+                  borderRadius: 11,
+                  backgroundColor: m3.colorScheme.primary,
+                  opacity: pressed ? 0.85 : 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                })}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                  {t('workers.actions.settle', { defaultValue: 'Settle' })}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Day summary tiles */}
+          <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
+            {[
+              {
+                label: t('attendance.status.full', { defaultValue: 'Full' }),
+                value: metrics.full,
+                color: colors.success,
+              },
+              {
+                label: t('attendance.status.half', { defaultValue: 'Half' }),
+                value: metrics.half,
+                color: isDark ? '#C49843' : '#D0A14A',
+              },
+              {
+                label: t('attendance.status.absent', { defaultValue: 'Absent' }),
+                value: metrics.absent,
+                color: m3.colorScheme.error,
+              },
+              {
+                label: t('attendance.status.off', { defaultValue: 'Off' }),
+                value: Math.max(0, 30 - metrics.full - metrics.half - metrics.absent),
+                color: colors.surface[400],
+              },
+            ].map((s) => (
+              <View
+                key={s.label}
+                style={{
+                  flex: 1,
+                  backgroundColor: colors.surface[100],
+                  borderWidth: 1,
+                  borderColor: colors.surface[300],
+                  borderRadius: 12,
+                  padding: 10,
+                  alignItems: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 22,
+                    fontWeight: '700',
+                    color: s.color,
+                    fontVariant: ['tabular-nums'],
+                    lineHeight: 24,
+                  }}
+                >
+                  {s.value}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: '600',
+                    letterSpacing: 0.6,
+                    textTransform: 'uppercase',
+                    color: colors.surface[500],
+                    marginTop: 4,
+                  }}
+                >
+                  {s.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Month calendar */}
+          <View
+            style={{
+              backgroundColor: colors.surface[100],
+              borderWidth: 1,
+              borderColor: colors.surface[300],
+              borderRadius: 16,
+              padding: 14,
+              marginBottom: 12,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '600',
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                  color: colors.surface[500],
+                }}
+              >
+                {t('workers.detail.last30Days', { defaultValue: 'Last 30 days' })}
+              </Text>
+              <Text style={{ fontSize: 11, color: colors.surface[500] }}>
+                {calendarDays.length} days
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 10 }}>
+              {calendarDays.map(({ date, status }, i) => {
+                const { num } = dayLabel(date);
+                const bg = cellColor(status);
+                const label = cellLabel(status);
+                const isOff = status === null;
+                return (
+                  <View
+                    key={i}
+                    style={{
+                      width: '14.5%',
+                      aspectRatio: 1,
+                      borderRadius: 8,
+                      backgroundColor: bg,
+                      borderWidth: isOff ? 1 : 0,
+                      borderColor: colors.surface[300],
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 9,
+                        opacity: 0.85,
+                        fontWeight: '500',
+                        color: isOff ? colors.surface[400] : '#F7F3ED',
+                      }}
+                    >
+                      {num}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        fontWeight: '700',
+                        color: isOff ? colors.surface[400] : '#F7F3ED',
+                        lineHeight: 13,
+                      }}
+                    >
+                      {label}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* Legend */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
+              {[
+                {
+                  color: colors.success,
+                  label: t('attendance.status.full', { defaultValue: 'Full' }),
+                },
+                {
+                  color: isDark ? '#C49843' : '#D0A14A',
+                  label: t('attendance.status.half', { defaultValue: 'Half' }),
+                },
+                {
+                  color: m3.colorScheme.error,
+                  label: t('attendance.status.absent', { defaultValue: 'Absent' }),
+                },
+                {
+                  color: colors.surface[200],
+                  label: t('attendance.status.noRecord', { defaultValue: 'No record' }),
+                  border: true,
+                },
+              ].map((s, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <View
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: 3,
+                      backgroundColor: s.color,
+                      borderWidth: s.border ? 1 : 0,
+                      borderColor: colors.surface[300],
+                    }}
+                  />
+                  <Text style={{ fontSize: 11, color: colors.surface[500] }}>{s.label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* By-farm breakdown */}
+          {byFarm.length > 0 && (
+            <>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '600',
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                  color: colors.surface[500],
+                  marginBottom: 8,
+                }}
+              >
+                {t('workers.detail.byFarm', { defaultValue: 'By farm · this period' })}
+              </Text>
+              <View style={{ gap: 8, marginBottom: 14 }}>
+                {byFarm.map((f) => {
+                  const total = f.full + f.half;
+                  const pct = totalFarmDays > 0 ? total / totalFarmDays : 0;
+                  return (
+                    <View
+                      key={f.farmId}
+                      style={{
+                        backgroundColor: colors.surface[100],
+                        borderWidth: 1,
+                        borderColor: colors.surface[300],
+                        borderRadius: 14,
+                        padding: 12,
+                      }}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: 10,
+                        }}
+                      >
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 10,
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <View
+                            style={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: 999,
+                              backgroundColor: f.accent,
+                            }}
+                          />
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              style={{
+                                fontSize: 14,
+                                fontWeight: '600',
+                                color: colors.surface[900],
+                              }}
+                              numberOfLines={1}
+                            >
+                              {f.name}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: 11,
+                                color: colors.surface[500],
+                                marginTop: 2,
+                                fontVariant: ['tabular-nums'],
+                              }}
+                            >
+                              {f.full} full · {f.half} half
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={{ alignItems: 'flex-end' }}>
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              fontWeight: '700',
+                              color: colors.surface[900],
+                              fontVariant: ['tabular-nums'],
+                            }}
+                          >
+                            {total} d
+                          </Text>
+                          <Text style={{ fontSize: 10, color: colors.surface[500] }}>
+                            {Math.round(pct * 100)}%
+                          </Text>
+                        </View>
+                      </View>
+                      {/* Stacked bar */}
+                      <View
+                        style={{
+                          marginTop: 10,
+                          height: 6,
+                          borderRadius: 999,
+                          backgroundColor: colors.surface[200],
+                          overflow: 'hidden',
+                          flexDirection: 'row',
+                        }}
+                      >
+                        <View style={{ flex: f.full, backgroundColor: colors.success }} />
+                        <View
+                          style={{ flex: f.half, backgroundColor: isDark ? '#C49843' : '#D0A14A' }}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
+          {/* Recent days log */}
+          {recentDays.length > 0 && (
+            <>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '600',
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                  color: colors.surface[500],
+                  marginBottom: 8,
+                }}
+              >
+                {t('workers.detail.recentDays', { defaultValue: 'Recent days' })}
+              </Text>
+              <View
+                style={{
+                  backgroundColor: colors.surface[100],
+                  borderWidth: 1,
+                  borderColor: colors.surface[300],
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  marginBottom: 14,
+                }}
+              >
+                {recentDays.map((r, i) => {
+                  const badge = statusBadgeProps(r.work_status as WorkStatus);
+                  const dl = dayLabel(r.date);
+                  const farmId = r.farm_ids?.[0];
+                  const farm = farms?.find((f) => f.id === farmId);
+                  const farmAccent =
+                    ACCENT_COLORS[
+                      byFarm.findIndex((f) => f.farmId === farmId) % ACCENT_COLORS.length
+                    ] || ACCENT_COLORS[0];
+
+                  return (
+                    <View
+                      key={r.id ?? i}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: 11,
+                        paddingHorizontal: 14,
+                        borderBottomWidth: i < recentDays.length - 1 ? 1 : 0,
+                        borderBottomColor: colors.surface[300],
+                      }}
+                    >
+                      <View style={{ width: 50 }}>
+                        <Text
+                          style={{ fontSize: 13, fontWeight: '600', color: colors.surface[900] }}
+                        >
+                          {dl.short}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            color: colors.surface[500],
+                            fontVariant: ['tabular-nums'],
+                          }}
+                        >
+                          {dl.num}{' '}
+                          {r.date.slice(5, 7) === '01'
+                            ? 'Jan'
+                            : r.date.slice(5, 7) === '02'
+                              ? 'Feb'
+                              : r.date.slice(5, 7) === '03'
+                                ? 'Mar'
+                                : r.date.slice(5, 7) === '04'
+                                  ? 'Apr'
+                                  : r.date.slice(5, 7) === '05'
+                                    ? 'May'
+                                    : r.date.slice(5, 7) === '06'
+                                      ? 'Jun'
+                                      : r.date.slice(5, 7) === '07'
+                                        ? 'Jul'
+                                        : r.date.slice(5, 7) === '08'
+                                          ? 'Aug'
+                                          : r.date.slice(5, 7) === '09'
+                                            ? 'Sep'
+                                            : r.date.slice(5, 7) === '10'
+                                              ? 'Oct'
+                                              : r.date.slice(5, 7) === '11'
+                                                ? 'Nov'
+                                                : 'Dec'}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <View
+                            style={{
+                              height: 20,
+                              paddingHorizontal: 8,
+                              borderRadius: 999,
+                              backgroundColor: badge.bg,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Text style={{ fontSize: 10, fontWeight: '700', color: badge.color }}>
+                              {badge.label}
+                            </Text>
+                          </View>
+                          {farm && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <View
+                                style={{
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: 999,
+                                  backgroundColor: farmAccent,
+                                }}
+                              />
+                              <Text
+                                style={{ fontSize: 11, color: colors.surface[500] }}
+                                numberOfLines={1}
+                              >
+                                {farm.name}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                        {r.work_type ? (
+                          <Text
+                            style={{ fontSize: 11, color: colors.surface[400], marginTop: 3 }}
+                            numberOfLines={1}
+                          >
+                            {r.work_type}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <UiSymbol name="chevron.right" size={14} color={colors.surface[400]} />
+                    </View>
+                  );
+                })}
+              </View>
+
+              <Pressable
+                style={({ pressed }) => ({
+                  width: '100%',
+                  height: 44,
+                  backgroundColor: pressed ? colors.surface[200] : colors.surface[100],
+                  borderWidth: 1,
+                  borderColor: colors.surface[300],
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                })}
+                onPress={() => router.push(`/worker-analytics/${workerId}`)}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.surface[500] }}>
+                  {t('workers.detail.viewFullHistory', { defaultValue: 'View full history' })}
+                </Text>
+              </Pressable>
+            </>
+          )}
+
+          {periodAttendance.length === 0 && !isLoading && (
+            <View style={{ alignItems: 'center', padding: spacing[8] }}>
+              <Text
+                style={{ fontSize: fontSize.sm, color: colors.surface[500], textAlign: 'center' }}
+              >
+                {t('workers.detail.noAttendanceYet', {
+                  defaultValue: 'No attendance recorded in the last 30 days.',
+                })}
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
+
+      <WorkerSettlementModal
+        visible={settlementVisible}
+        onClose={() => setSettlementVisible(false)}
+        workers={worker ? [worker] : []}
+        initialWorkerId={workerId}
+        onSuccess={() => setSettlementVisible(false)}
+      />
+    </>
+  );
+}
