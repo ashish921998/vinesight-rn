@@ -43,8 +43,12 @@ export default function WorkerDetailScreen() {
   const { setAddWorker } = useModalStore();
 
   const workerId = Number(id);
-  const { data: worker, isLoading: workerLoading } = useWorker(workerId);
-  const { data: attendance, isLoading: attendanceLoading } = useWorkerAttendance(workerId);
+  const { data: worker, isLoading: workerLoading, refetch: refetchWorker } = useWorker(workerId);
+  const {
+    data: attendance,
+    isLoading: attendanceLoading,
+    refetch: refetchAttendance,
+  } = useWorkerAttendance(workerId);
   const { data: farms } = useFarms();
 
   const [settlementVisible, setSettlementVisible] = useState(false);
@@ -855,7 +859,11 @@ export default function WorkerDetailScreen() {
         onClose={() => setSettlementVisible(false)}
         workers={worker ? [worker] : []}
         initialWorkerId={workerId}
-        onSuccess={() => setSettlementVisible(false)}
+        onSuccess={() => {
+          setSettlementVisible(false);
+          refetchWorker();
+          refetchAttendance();
+        }}
       />
     </>
   );

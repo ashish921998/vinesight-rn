@@ -513,9 +513,16 @@ export function WorkerSettlementModal({
                   {selectedWorker.name}
                 </Text>
                 <Text style={{ fontSize: 12, color: colors.surface[500], marginTop: 2 }}>
-                  {formatDate(new Date(periodDates.start), { month: 'short', day: 'numeric' })} –{' '}
-                  {formatDate(new Date(periodDates.end), { month: 'short', day: 'numeric' })} · ₹
-                  {selectedWorker.daily_rate}/day
+                  {formatDate(new Date(`${periodDates.start}T00:00:00`), {
+                    month: 'short',
+                    day: 'numeric',
+                  })}{' '}
+                  –{' '}
+                  {formatDate(new Date(`${periodDates.end}T00:00:00`), {
+                    month: 'short',
+                    day: 'numeric',
+                  })}{' '}
+                  · ₹{selectedWorker.daily_rate}/day
                 </Text>
               </View>
             </View>
