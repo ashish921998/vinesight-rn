@@ -1,0 +1,25 @@
+__tests__/entry-form.integration.test.tsx
+  13b73779385df335 78
+__tests__/message-bubble.test.tsx
+  13b73779385df335 92-93,98-99,104-105,211-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "800bfe044b0258b486d12a17634490a8d5421517",
+  "prompts": {
+    "13b73779385df335": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5c877c8-4d97-4420-9af6-8c6afd24f07f",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 12,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
