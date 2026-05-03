@@ -1,0 +1,29 @@
+app/farm/[id].tsx
+  e26ae26e8626ec50 1010,1013-1014
+src/components/screens/entry-form/LogTypeSelector.tsx
+  e26ae26e8626ec50 16,24,40-41,49,53-67,83-86,93,98,110-112,116-117,121-125,128-132,138-139,143-148,152-154,160-167,169
+src/components/screens/entry-form/PendingLogs.tsx
+  e26ae26e8626ec50 58-59,77-91,187,204-205,222-224,236,239,247-248,251,314-316,319-323,326-334,336-362
+src/components/screens/entry-form.tsx
+  e26ae26e8626ec50 349,610,646,682,771,2047-2101,2301-2302,2320-2323,2325,2328,2375-2377,2413,2417-2418,2422,2426-2467,3559,3562-3566,3653,3673-3696
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "ba32a266088986785a1300f4e2b7717782799c65",
+  "prompts": {
+    "e26ae26e8626ec50": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019dea1a-8da1-71c3-8eb2-87102a895dc3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 469,
+      "total_deletions": 90,
+      "accepted_lines": 465,
+      "overriden_lines": 0
+    }
+  }
+}
