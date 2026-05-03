@@ -217,21 +217,50 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                 },
               ]}
             >
-              <View
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 10,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: `${logType?.color ?? m3.colorScheme.primary}15`,
-                }}
-              >
-                <UiSymbol
-                  name={iconName}
-                  size={18}
-                  color={logType?.color ?? m3.colorScheme.primary}
-                />
+              <View style={{ position: 'relative' }}>
+                <View
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: `${logType?.color ?? m3.colorScheme.primary}15`,
+                  }}
+                >
+                  <UiSymbol
+                    name={iconName}
+                    size={18}
+                    color={logType?.color ?? m3.colorScheme.primary}
+                  />
+                </View>
+                {pendingLogs.length > 1 && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      right: -5,
+                      top: -5,
+                      minWidth: 18,
+                      height: 18,
+                      borderRadius: 999,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: colors.surface[100],
+                      borderWidth: 1,
+                      borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontWeight: '700',
+                        color: m3.colorScheme.onSurfaceVariant,
+                      }}
+                    >
+                      {index + 1}
+                    </Text>
+                  </View>
+                )}
               </View>
               <View style={{ flex: 1, marginLeft: 10 }}>
                 <Text
@@ -333,33 +362,6 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                   }
                 />
               </Pressable>
-              {pendingLogs.length > 1 && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    left: 27,
-                    top: 2,
-                    minWidth: 18,
-                    height: 18,
-                    borderRadius: 999,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: colors.surface[100],
-                    borderWidth: 1,
-                    borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 10,
-                      fontWeight: '700',
-                      color: m3.colorScheme.onSurfaceVariant,
-                    }}
-                  >
-                    {index + 1}
-                  </Text>
-                </View>
-              )}
             </View>
           );
         })}

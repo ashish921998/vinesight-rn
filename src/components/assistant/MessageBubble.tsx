@@ -7,22 +7,26 @@
  * - M3 themed colors — no hardcoded values
  */
 
-import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { Animated, Easing, View, Text, StyleSheet } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { useTranslation } from 'react-i18next';
 import { formatTime } from '@/i18n/format';
 import { useThemeTokens } from '@/styles/use-theme';
 import { spacing } from '@/styles/theme';
 import { CitationFooter } from './CitationFooter';
-import type { ChatMessage } from '@/types/ai';
+import { RichMessageContent } from './RichMessageContent';
+import { MessageActions } from './MessageActions';
+import { AIAvatar } from './AIAvatar';
+import type { ChatMessage, AssistantMessageAction } from '@/types/ai';
 
 interface MessageBubbleProps {
   message: ChatMessage;
   isLoading?: boolean;
+  onActionPress?: (action: AssistantMessageAction) => void;
 }
 
-export function MessageBubble({ message, isLoading = false }: MessageBubbleProps) {
+export function MessageBubble({ message, isLoading = false, onActionPress }: MessageBubbleProps) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
 
@@ -39,10 +43,10 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
     borderRadius: 16,
     borderBottomRightRadius: isUser ? 4 : 16,
     borderBottomLeftRadius: isUser ? 16 : 4,
-    borderTopLeftRadius: isUser ? 16 : 4,
-    borderTopRightRadius: isUser ? 16 : 16,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     padding: spacing[3],
-    maxWidth: '80%' as const,
+    maxWidth: isUser ? ('82%' as const) : ('86%' as const),
     // Assistant bubbles get a 1px border (stone-3)
     ...(!isUser && {
       borderWidth: 1,
@@ -149,8 +153,8 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
           </Text>
         </View>
       )}
-      <View style={bubbleStyle}>
-        {isUser ? (
+      {isUser ? (
+        <View style={bubbleStyle}>
           <Text
             accessibilityRole="text"
             accessibilityLabel={a11yLabel}
@@ -162,41 +166,48 @@ export function MessageBubble({ message, isLoading = false }: MessageBubbleProps
           >
             {message.content}
           </Text>
-        ) : (
-          <>
-            <View
-              accessible
-              accessibilityRole="text"
-              accessibilityLabel={
-                isSafetyBlocked ? `${t('assistant.safety.blockedA11y')} ${a11yLabel}` : a11yLabel
-              }
-            >
-              <Markdown style={markdownStyles}>{message.content}</Markdown>
+        </View>
+      ) : (
+        <React.Fragment>
+          <View style={styles.assistantMessageRow}>
+            <AIAvatar size={28} />
+            <View style={bubbleStyle}>
+              <View
+                accessible
+                accessibilityRole="text"
+                accessibilityLabel={
+                  isSafetyBlocked ? `${t('assistant.safety.blockedA11y')} ${a11yLabel}` : a11yLabel
+                }
+              >
+                <Markdown style={markdownStyles}>{message.content}</Markdown>
+              </View>
+              {!isLoading && message.cards && message.cards.length > 0 && (
+                <RichMessageContent cards={message.cards} />
+              )}
+              {!isLoading && message.citations && message.citations.length > 0 && (
+                <CitationFooter citations={message.citations} />
+              )}
+              {isLoading && (
+                <View style={styles.loadingRow}>
+                  <TypingDots color={m3.colorScheme.primary} />
+                  <Text
+                    style={{
+                      color: m3.colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                      marginLeft: spacing[2],
+                    }}
+                  >
+                    {t('assistant.chat.thinking')}
+                  </Text>
+                </View>
+              )}
             </View>
-            {!isLoading && message.citations && message.citations.length > 0 && (
-              <CitationFooter citations={message.citations} />
-            )}
-          </>
-        )}
-        {!isUser && isLoading && (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator
-              size="small"
-              color={m3.colorScheme.primary}
-              accessibilityLabel={t('assistant.chat.thinking')}
-            />
-            <Text
-              style={{
-                color: m3.colorScheme.onSurfaceVariant,
-                fontSize: 13,
-                marginLeft: spacing[2],
-              }}
-            >
-              {t('assistant.chat.thinking')}
-            </Text>
           </View>
-        )}
-      </View>
+          {message.actions && message.actions.length > 0 && (
+            <MessageActions actions={message.actions} onActionPress={onActionPress} />
+          )}
+        </React.Fragment>
+      )}
       <Text
         style={[
           styles.timestamp,
@@ -232,6 +243,17 @@ const styles = StyleSheet.create({
   },
   timestampLeft: {
     alignSelf: 'flex-start',
+    marginLeft: 36,
+  },
+  assistantMessageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing[2],
+  },
+  typingDotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   timestampRight: {
     alignSelf: 'flex-end',
@@ -252,7 +274,8 @@ const styles = StyleSheet.create({
 });
 
 /**
- * LoadingBubble - shows a typing indicator for when the assistant is responding
+ * LoadingBubble - shows a 3-dot typing indicator for when the assistant is responding.
+ * Matches the AITyping primitive in the design.
  */
 export function LoadingBubble() {
   const { m3 } = useThemeTokens();
@@ -264,33 +287,85 @@ export function LoadingBubble() {
       accessible
       accessibilityLabel={t('assistant.chat.thinking')}
     >
-      <View
-        style={{
-          // Use surfaceContainerLow which maps to mist-1 (surface[100])
-          backgroundColor: m3.surface.surfaceContainerLow,
-          borderRadius: 16,
-          borderTopLeftRadius: 4,
-          borderTopRightRadius: 16,
-          borderBottomLeftRadius: 16,
-          borderBottomRightRadius: 16,
-          padding: spacing[3],
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: spacing[2],
-          borderWidth: 1,
-          borderColor: m3.colorScheme.outline,
-        }}
-      >
-        <ActivityIndicator size="small" color={m3.colorScheme.primary} />
-        <Text
+      <View style={styles.assistantMessageRow}>
+        <AIAvatar size={28} />
+        <View
           style={{
-            color: m3.colorScheme.onSurface,
-            fontSize: 14,
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderRadius: 16,
+            borderBottomLeftRadius: 4,
+            paddingHorizontal: spacing[3] + 2,
+            paddingVertical: spacing[2] + 2,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            borderWidth: 1,
+            borderColor: m3.colorScheme.outline,
           }}
         >
-          {t('assistant.chat.thinking')}
-        </Text>
+          <TypingDots color={m3.colorScheme.primary} />
+        </View>
       </View>
+    </View>
+  );
+}
+
+/**
+ * TypingDots — three primary-colored dots that bob up and down,
+ * matching the @keyframes vsBob animation in vs-ai-primitives.jsx.
+ */
+function TypingDots({ color }: { color: string }) {
+  const dot1 = useMemo(() => new Animated.Value(0), []);
+  const dot2 = useMemo(() => new Animated.Value(0), []);
+  const dot3 = useMemo(() => new Animated.Value(0), []);
+
+  useEffect(() => {
+    const makeLoop = (value: Animated.Value, delay: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(value, {
+            toValue: 1,
+            duration: 480,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(value, {
+            toValue: 0,
+            duration: 480,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+
+    const animation = Animated.parallel([
+      makeLoop(dot1, 0),
+      makeLoop(dot2, 180),
+      makeLoop(dot3, 360),
+    ]);
+    animation.start();
+    return () => animation.stop();
+  }, [dot1, dot2, dot3]);
+
+  const dotStyle = (value: Animated.Value) => ({
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: color,
+    opacity: value.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }),
+    transform: [
+      {
+        translateY: value.interpolate({ inputRange: [0, 1], outputRange: [0, -5] }),
+      },
+    ],
+  });
+
+  return (
+    <View style={styles.typingDotsRow}>
+      <Animated.View style={dotStyle(dot1)} />
+      <Animated.View style={dotStyle(dot2)} />
+      <Animated.View style={dotStyle(dot3)} />
     </View>
   );
 }

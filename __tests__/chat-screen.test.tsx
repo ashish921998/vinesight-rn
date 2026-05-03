@@ -281,31 +281,35 @@ describe('ChatScreen', () => {
     expect(getByText('AI Assistant')).toBeTruthy();
   });
 
-  it('shows welcome state (title) when no messages', () => {
+  it('shows assistant landing title when no messages', () => {
     const { getByText } = render(<ChatScreen />);
-    expect(getByText('How can I help?')).toBeTruthy();
+    expect(getByText('Assistant')).toBeTruthy();
   });
 
-  it('shows welcome subtitle when no messages', () => {
+  it('shows the daily briefing when no messages', () => {
     const { getByText } = render(<ChatScreen />);
-    expect(getByText('Ask about your crops, irrigation, diseases, and more.')).toBeTruthy();
+    expect(
+      getByText('Sunset needs irrigation before 11 AM. North Field is 14 mm below target.'),
+    ).toBeTruthy();
   });
 
-  it('shows operational jobs in welcome state', () => {
+  it('shows quick actions in the assistant landing', () => {
     const { getByText } = render(<ChatScreen />);
-    expect(getByText('Top jobs')).toBeTruthy();
-    expect(getByText('Start with one operational task.')).toBeTruthy();
-    expect(getByText('Log an activity')).toBeTruthy();
+    expect(getByText('Ask me')).toBeTruthy();
+    expect(getByText('Water status')).toBeTruthy();
+    expect(getByText('Wage summary')).toBeTruthy();
   });
 
-  it('tapping an operational job calls sendMessage', async () => {
+  it('tapping a quick action calls sendMessage', async () => {
     mockSendMessage.mockResolvedValue(undefined);
     const { getByText } = render(<ChatScreen />);
-    const chip = getByText('Log an activity');
+    const chip = getByText('Water status');
     await act(async () => {
       fireEvent.press(chip);
     });
-    expect(mockSendMessage).toHaveBeenCalledWith('Help me log a farm activity.');
+    expect(mockSendMessage).toHaveBeenCalledWith(
+      'What is the water situation across all my farms this week?',
+    );
   });
 
   it('shows input bar', () => {

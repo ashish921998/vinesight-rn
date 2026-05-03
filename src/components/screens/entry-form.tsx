@@ -99,6 +99,7 @@ import {
   useFarmSeasonStatus,
   useChemicalMixSearch,
   usePhiComputation,
+  useFertilizerPlan,
   queryKeys,
   isIOS,
   useResponsiveHeight,
@@ -346,7 +347,7 @@ export function EntryForm({
     [tabs],
   );
   const isScreenPresentation = presentation === 'screen';
-  const useInlineLogComposer = isScreenPresentation;
+  const isInlineComposerMode = isScreenPresentation;
   const defaultTab = resolvedTabs.includes(initialTab || 'log')
     ? initialTab || resolvedTabs[0]
     : resolvedTabs[0];
@@ -378,6 +379,7 @@ export function EntryForm({
   const { data: fertilizerWarehouseItems } = useWarehouseItems('fertilizer');
   const { data: recentSprayChemicals } = useRecentSprayChemicals(logFarmId ?? undefined);
   const { data: recentFertigationItems } = useRecentFertigationItems(logFarmId ?? undefined);
+  const { data: fertilizerPlan } = useFertilizerPlan(logFarmId ?? undefined);
   const { activeSeason } = useFarmSeasonStatus(logFarmId ?? undefined);
   const { data: catalogMixes = [] } = useChemicalMixSearch('', isGrapeFarm);
 
@@ -511,6 +513,14 @@ export function EntryForm({
   }, [sprayPhiComputation]);
 
   const fertigationQuickAddItems = useMemo<FertigationQuickAddItem[]>(() => {
+    const byPlan = (fertilizerPlan?.items ?? []).map((item) => ({
+      name: item.name,
+      unit: normalizeWarehouseFertilizerUnit(item.unit),
+      quantity: item.quantity ?? null,
+      quantityBasis: inferWarehouseFertilizerQuantityBasis(item.unit),
+      warehouseItemId: null,
+      catalogProductId: null,
+    }));
     const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
       name: item.name,
       unit: normalizeWarehouseFertilizerUnit(item.unit),
@@ -528,7 +538,7 @@ export function EntryForm({
       quantityBasis: undefined,
     }));
     const deduped = new Map<string, FertigationQuickAddItem>();
-    [...byWarehouse, ...byRecent].forEach((item) => {
+    [...byPlan, ...byWarehouse, ...byRecent].forEach((item) => {
       const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
       const existing = deduped.get(key);
       if (!existing) {
@@ -547,7 +557,7 @@ export function EntryForm({
       }
     });
     return Array.from(deduped.values()).slice(0, 15);
-  }, [fertilizerWarehouseItems, recentFertigationItems]);
+  }, [fertilizerPlan, fertilizerWarehouseItems, recentFertigationItems]);
 
   const createIrrigation = useCreateIrrigationRecord();
   const createSpray = useCreateSprayRecord();
@@ -607,7 +617,7 @@ export function EntryForm({
   useEffect(() => {
     if (isVisible && initialLogType) {
       setSelectedLogType(initialLogType);
-      setShowLogFormModal(!useInlineLogComposer);
+      setShowLogFormModal(!isInlineComposerMode);
       if (initialLogType === 'spray' && initialLogPrefill?.sprayChemicals?.length) {
         setSprayData({
           waterVolume: undefined,
@@ -643,7 +653,7 @@ export function EntryForm({
         });
       }
     }
-  }, [isVisible, initialLogType, initialLogPrefill, useInlineLogComposer]);
+  }, [isVisible, initialLogType, initialLogPrefill, isInlineComposerMode]);
 
   useEffect(() => {
     if (selectedFarmId !== ALL_FARMS_ID) return;
@@ -679,7 +689,7 @@ export function EntryForm({
     if (!isVisible || !initialVoiceLogPrefill) return;
 
     setSelectedLogType(initialVoiceLogPrefill.type);
-    setShowLogFormModal(!useInlineLogComposer);
+    setShowLogFormModal(!isInlineComposerMode);
 
     const prefillDate = parseInitialLogDate(initialVoiceLogPrefill.date);
     if (prefillDate) {
@@ -768,7 +778,7 @@ export function EntryForm({
         break;
       }
     }
-  }, [initialVoiceLogPrefill, isVisible, useInlineLogComposer]);
+  }, [initialVoiceLogPrefill, isVisible, isInlineComposerMode]);
 
   type OnFocusEvent = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
 
@@ -2045,7 +2055,7 @@ export function EntryForm({
   };
 
   const renderInlineLogComposerForm = () => {
-    if (!useInlineLogComposer || !selectedLogType) return null;
+    if (!isInlineComposerMode || !selectedLogType) return null;
 
     return (
       <View style={{ marginBottom: 16 }}>
@@ -2419,12 +2429,12 @@ export function EntryForm({
           })}
           onSelect={(type) => {
             setSelectedLogType(type);
-            setShowLogFormModal(!useInlineLogComposer);
+            setShowLogFormModal(!isInlineComposerMode);
           }}
         />
       </GuidedTourTarget>
       {renderInlineLogComposerForm()}
-      {pendingLogs.length === 0 && !selectedLogType && (
+      {isInlineComposerMode && pendingLogs.length === 0 && !selectedLogType && (
         <View
           style={{
             borderWidth: 1,
@@ -3556,13 +3566,13 @@ export function EntryForm({
           {activeTab === 'log' ? renderLogContent() : renderTaskContent()}
         </ScrollView>
 
-        {activeTab === 'log' && !useInlineLogComposer && renderLogFormModal()}
+        {activeTab === 'log' && !isInlineComposerMode && renderLogFormModal()}
 
         {/* Sticky Add Entry button above keyboard */}
         {activeTab === 'log' &&
           isKeyboardVisible &&
           !showLogFormModal &&
-          !useInlineLogComposer &&
+          !isInlineComposerMode &&
           renderStickyAddButton()}
 
         <View

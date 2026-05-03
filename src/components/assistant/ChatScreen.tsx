@@ -28,8 +28,9 @@ import {
   Modal,
   Pressable,
   StyleSheet,
+  ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -42,6 +43,7 @@ import { useFarms } from '@/hooks/use-farms';
 import { spacing, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { AIAvatar } from './AIAvatar';
 import { useAssistant } from '@/hooks/use-assistant';
 import type { AssistantFarmContext } from '@/hooks/use-assistant';
 import type { AIMessageAttachmentInput } from '@/types/ai';
@@ -62,40 +64,40 @@ interface ChatScreenProps {
   initialFarmId?: string;
 }
 
-const OPERATIONAL_JOB_CARDS: ReadonlyArray<{
-  id: 'logActivity' | 'todayPlan' | 'spraySafety' | 'recentSummary';
+const ASSISTANT_QUICK_ACTIONS: ReadonlyArray<{
+  id: 'waterStatus' | 'wageSummary' | 'weatherOutlook' | 'harvestReadiness';
   icon: string;
-  titleKey: string;
-  descriptionKey: string;
-  promptKey: string;
+  title: string;
+  description: string;
+  prompt: string;
 }> = [
   {
-    id: 'logActivity',
-    icon: 'square.and.pencil',
-    titleKey: 'assistant.jobs.cards.logActivity.title',
-    descriptionKey: 'assistant.jobs.cards.logActivity.description',
-    promptKey: 'assistant.jobs.prompts.logActivity',
+    id: 'waterStatus',
+    icon: 'drop.fill',
+    title: 'Water status',
+    description: 'All farms this week',
+    prompt: 'What is the water situation across all my farms this week?',
   },
   {
-    id: 'todayPlan',
-    icon: 'checklist',
-    titleKey: 'assistant.jobs.cards.todayPlan.title',
-    descriptionKey: 'assistant.jobs.cards.todayPlan.description',
-    promptKey: 'assistant.jobs.prompts.todayPlan',
+    id: 'wageSummary',
+    icon: 'chart.bar.fill',
+    title: 'Wage summary',
+    description: 'This period',
+    prompt: 'Summarize worker wages due this period.',
   },
   {
-    id: 'spraySafety',
-    icon: 'checkmark.shield.fill',
-    titleKey: 'assistant.jobs.cards.spraySafety.title',
-    descriptionKey: 'assistant.jobs.cards.spraySafety.description',
-    promptKey: 'assistant.jobs.prompts.spraySafety',
+    id: 'weatherOutlook',
+    icon: 'sun.max.fill',
+    title: 'Weather outlook',
+    description: 'Next 7 days',
+    prompt: 'Show me the weather outlook for the next 7 days.',
   },
   {
-    id: 'recentSummary',
-    icon: 'chart.line.uptrend.xyaxis',
-    titleKey: 'assistant.jobs.cards.recentSummary.title',
-    descriptionKey: 'assistant.jobs.cards.recentSummary.description',
-    promptKey: 'assistant.jobs.prompts.recentSummary',
+    id: 'harvestReadiness',
+    icon: 'basket.fill',
+    title: 'Harvest readiness',
+    description: 'Across all farms',
+    prompt: 'Check harvest readiness across all my farms.',
   },
 ];
 
@@ -150,9 +152,137 @@ function ensureUtf8ByteLimit(text: string, maxBytes: number): string {
   return text.slice(0, low);
 }
 
+function AssistantHomeLanding({
+  activeFarmName,
+  onQuickActionPress,
+  disabled,
+}: {
+  activeFarmName?: string;
+  onQuickActionPress: (text: string) => void;
+  disabled?: boolean;
+}) {
+  const { m3 } = useThemeTokens();
+  const briefingText = activeFarmName
+    ? `${activeFarmName} is ready for today. Ask for water, wages, weather, or harvest next steps.`
+    : 'Sunset needs irrigation before 11 AM. North Field is 14 mm below target.';
+
+  return (
+    <ScrollView
+      style={[styles.homeScroll, { backgroundColor: m3.colorScheme.surface }]}
+      contentContainerStyle={styles.homeContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.homeHeroRow}>
+        <View>
+          <Text
+            style={[
+              styles.homeEyebrow,
+              { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall },
+            ]}
+          >
+            Good morning
+          </Text>
+          <View style={styles.homeTitleRow}>
+            <Text
+              style={[
+                styles.homeTitle,
+                { color: m3.colorScheme.onSurface, ...m3.typography.headlineSmall },
+              ]}
+            >
+              Assistant
+            </Text>
+            <View
+              style={[
+                styles.aiBadge,
+                {
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+                  borderColor: colorWithOpacity(m3.colorScheme.primary, 0.22),
+                },
+              ]}
+            >
+              <SymbolIcon name="sparkles" size={11} color={m3.colorScheme.primary} />
+              <Text style={[styles.aiBadgeText, { color: m3.colorScheme.primary }]}>AI</Text>
+            </View>
+          </View>
+        </View>
+        <AIAvatar size={38} iconSize={18} />
+      </View>
+
+      <View
+        style={[
+          styles.briefingBand,
+          {
+            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.06),
+            borderColor: colorWithOpacity(m3.colorScheme.primary, 0.16),
+          },
+        ]}
+      >
+        <AIAvatar size={30} iconSize={14} />
+        <Text
+          style={[
+            styles.briefingText,
+            { color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium },
+          ]}
+        >
+          {briefingText}
+        </Text>
+      </View>
+
+      <Text
+        style={[
+          styles.quickActionLabel,
+          { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall },
+        ]}
+      >
+        Ask me
+      </Text>
+      <View style={styles.quickActionGrid}>
+        {ASSISTANT_QUICK_ACTIONS.map((action) => (
+          <TouchableOpacity
+            key={action.id}
+            style={[
+              styles.quickActionCard,
+              {
+                backgroundColor: m3.surface.surfaceContainerLow ?? m3.colorScheme.surfaceVariant,
+                borderColor: m3.colorScheme.outlineVariant,
+              },
+              disabled && styles.jobCardDisabled,
+            ]}
+            onPress={() => onQuickActionPress(action.prompt)}
+            disabled={disabled}
+            accessibilityLabel={action.title}
+            accessibilityRole="button"
+          >
+            <View style={styles.quickActionTitleRow}>
+              <SymbolIcon name={action.icon} size={15} color={m3.colorScheme.primary} />
+              <Text
+                style={[
+                  styles.quickActionTitle,
+                  { color: m3.colorScheme.onSurface, ...m3.typography.labelLarge },
+                ]}
+              >
+                {action.title}
+              </Text>
+            </View>
+            <Text
+              style={[
+                styles.quickActionDescription,
+                { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall },
+              ]}
+            >
+              {action.description}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+
 export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const { m3 } = useThemeTokens();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const language = useLanguageStore((s) => s.language) ?? 'en';
   const router = useRouter();
   const { setAddEntry } = useModalStore();
@@ -251,6 +381,17 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
       void sendMessage(text);
     },
     [sendMessage],
+  );
+
+  const handleMessageAction = useCallback(
+    (action: { actionType: string; payload?: string }) => {
+      if (action.actionType === 'navigate' && action.payload) {
+        router.push(action.payload as never);
+      } else if (action.actionType === 'prompt' && action.payload) {
+        void sendMessage(action.payload);
+      }
+    },
+    [router, sendMessage],
   );
 
   const handleOpenSidebar = useCallback(() => {
@@ -459,17 +600,6 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const hasNoFarms = farms !== undefined && farms.length === 0;
   const hasNoFarmSelected = farms !== undefined && farms.length > 0 && activeFarm === null;
   const hasMessages = messages.length > 0;
-
-  const operationalJobs = useMemo(
-    () =>
-      OPERATIONAL_JOB_CARDS.map((job) => ({
-        ...job,
-        title: t(job.titleKey),
-        description: t(job.descriptionKey),
-        prompt: t(job.promptKey),
-      })),
-    [t],
-  );
 
   const errorGuidance = useMemo(() => {
     if (error == null) return null;
@@ -774,7 +904,19 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
 
         {/* Message area */}
         <View style={styles.messageArea}>
-          <MessageList messages={messages} isLoading={isLoading} />
+          {!hasMessages && !isLoading ? (
+            <AssistantHomeLanding
+              activeFarmName={activeFarm?.name}
+              onQuickActionPress={handleSendSuggestion}
+              disabled={isLoading}
+            />
+          ) : (
+            <MessageList
+              messages={messages}
+              isLoading={isLoading}
+              onActionPress={handleMessageAction}
+            />
+          )}
         </View>
 
         {/* Voice log confirmation card */}
@@ -786,93 +928,6 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
           />
         )}
 
-        {/* Operational jobs panel shown before conversation starts */}
-        {!hasMessages && (
-          <View
-            style={[
-              styles.jobsPanel,
-              {
-                backgroundColor: m3.surface.surfaceContainerLow,
-                borderTopColor: m3.colorScheme.outlineVariant,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.jobsPanelTitle,
-                { color: m3.colorScheme.onSurface, ...m3.typography.titleMedium },
-              ]}
-            >
-              {t('assistant.jobs.title')}
-            </Text>
-            <Text
-              style={[
-                styles.jobsPanelSubtitle,
-                { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium },
-              ]}
-            >
-              {activeFarm
-                ? t('assistant.jobs.subtitleWithFarm', { name: activeFarm.name })
-                : t('assistant.jobs.subtitle')}
-            </Text>
-
-            <View style={styles.jobCardsWrap}>
-              {operationalJobs.map((job) => (
-                <TouchableOpacity
-                  key={job.id}
-                  style={[
-                    styles.jobCard,
-                    {
-                      backgroundColor: m3.colorScheme.surface,
-                      borderColor: m3.colorScheme.outlineVariant,
-                    },
-                    isLoading && styles.jobCardDisabled,
-                  ]}
-                  onPress={() => {
-                    if (!isLoading) {
-                      handleSendSuggestion(job.prompt);
-                    }
-                  }}
-                  disabled={isLoading}
-                  accessibilityLabel={job.title}
-                  accessibilityRole="button"
-                >
-                  <View
-                    style={[
-                      styles.jobCardIconWrap,
-                      { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14) },
-                    ]}
-                  >
-                    <SymbolIcon name={job.icon} size={16} color={m3.colorScheme.primary} />
-                  </View>
-                  <View style={styles.jobCardBody}>
-                    <Text
-                      style={[
-                        styles.jobCardTitle,
-                        { color: m3.colorScheme.onSurface, ...m3.typography.labelLarge },
-                      ]}
-                    >
-                      {job.title}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.jobCardDescription,
-                        { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium },
-                      ]}
-                    >
-                      {job.description}
-                    </Text>
-                  </View>
-                  <SymbolIcon
-                    name="arrow.up.circle.fill"
-                    size={18}
-                    color={m3.colorScheme.primary}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
         {showSuggestionsBelow && (
           <SuggestionChips
             suggestions={suggestions}
@@ -927,7 +982,13 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
       >
         <Pressable style={styles.attachModalOverlay} onPress={() => setAttachModalVisible(false)}>
           <Pressable
-            style={[styles.attachModalSheet, { backgroundColor: m3.colorScheme.surface }]}
+            style={[
+              styles.attachModalSheet,
+              {
+                backgroundColor: m3.colorScheme.surface,
+                paddingBottom: spacing[6] + insets.bottom,
+              },
+            ]}
             onPress={() => {}}
           >
             <View style={styles.attachModalHandle}>
@@ -1042,6 +1103,93 @@ const styles = StyleSheet.create({
   messageArea: {
     flex: 1,
   },
+  homeScroll: {
+    flex: 1,
+  },
+  homeContent: {
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[1],
+    paddingBottom: spacing[4],
+  },
+  homeHeroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: spacing[1],
+    paddingBottom: spacing[3],
+  },
+  homeEyebrow: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    fontWeight: '600' as const,
+  },
+  homeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    marginTop: 2,
+  },
+  homeTitle: {
+    letterSpacing: -0.4,
+  },
+  aiBadge: {
+    height: 22,
+    paddingHorizontal: 9,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+  },
+  aiBadgeText: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    letterSpacing: 0.4,
+  },
+  briefingBand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2] + 2,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    marginBottom: spacing[4],
+  },
+  briefingText: {
+    flex: 1,
+    lineHeight: 20,
+  },
+  quickActionLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    fontWeight: '600' as const,
+    marginBottom: spacing[2],
+  },
+  quickActionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[2],
+  },
+  quickActionCard: {
+    width: '48.7%',
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    padding: spacing[3],
+    gap: spacing[1],
+  },
+  quickActionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  quickActionTitle: {
+    flex: 1,
+    fontWeight: '600' as const,
+  },
+  quickActionDescription: {
+    lineHeight: 16,
+  },
   noFarmBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1125,48 +1273,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600' as const,
   },
-  jobsPanel: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[3],
-    paddingBottom: spacing[2],
-  },
-  jobsPanelTitle: {
-    marginBottom: spacing[1],
-  },
-  jobsPanelSubtitle: {
-    marginBottom: spacing[3],
-  },
-  jobCardsWrap: {
-    gap: spacing[2],
-  },
-  jobCard: {
-    borderWidth: 1,
-    borderRadius: borderRadius.xl,
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[3],
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-  },
   jobCardDisabled: {
     opacity: 0.55,
-  },
-  jobCardIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: borderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  jobCardBody: {
-    flex: 1,
-  },
-  jobCardTitle: {
-    marginBottom: 1,
-  },
-  jobCardDescription: {
-    lineHeight: 17,
   },
   attachModalOverlay: {
     flex: 1,
@@ -1177,7 +1285,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius['3xl'],
     borderTopRightRadius: borderRadius['3xl'],
     paddingHorizontal: spacing[5],
-    paddingBottom: spacing[6],
   },
   attachModalHandle: {
     alignItems: 'center',

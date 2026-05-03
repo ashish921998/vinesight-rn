@@ -57,6 +57,47 @@ export interface AssistantVoiceLogAction {
   clarifyExhausted?: boolean;
 }
 
+export interface AssistantMessageAction {
+  label: string;
+  icon?: string;
+  actionType: 'navigate' | 'prompt' | 'log' | 'url' | 'dismiss';
+  payload?: string;
+}
+
+export interface DataTableRow {
+  label: string;
+  value: string;
+  valueColor?: string;
+  bold?: boolean;
+}
+
+export interface WorkerListRow {
+  name: string;
+  role: string;
+  amount: string;
+  days?: number | null;
+  highlight?: boolean;
+}
+
+export interface PhiConflictRow {
+  label: string;
+  value: string;
+  color?: string;
+  bold?: boolean;
+}
+
+export interface AlertListRow {
+  icon?: string;
+  color?: string;
+  text: string;
+}
+
+export interface AssistantMessageCard {
+  type: 'data_table' | 'worker_list' | 'phi_conflict' | 'alert_list' | 'key_value';
+  title?: string;
+  rows: Array<Record<string, unknown>>;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -76,6 +117,10 @@ export interface ChatMessage {
     ttsSkippedReason?: string | null;
     providerFallbackReason?: string | null;
   };
+  /** Structured cards rendered inline within the assistant bubble */
+  cards?: AssistantMessageCard[];
+  /** Action buttons rendered below the assistant bubble */
+  actions?: AssistantMessageAction[];
 }
 
 export interface ChatSession {

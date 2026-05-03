@@ -202,7 +202,7 @@ export function InputBar({
           returnKeyType="default"
           blurOnSubmit={false}
           scrollEnabled
-          textAlignVertical="center"
+          textAlignVertical="top"
           accessibilityLabel={t('assistant.placeholder')}
         />
 

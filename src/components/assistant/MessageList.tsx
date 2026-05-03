@@ -14,14 +14,15 @@ import { useThemeTokens } from '@/styles/use-theme';
 import { spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { MessageBubble, LoadingBubble } from './MessageBubble';
-import type { ChatMessage } from '@/types/ai';
+import type { ChatMessage, AssistantMessageAction } from '@/types/ai';
 
 interface MessageListProps {
   messages: ChatMessage[];
   isLoading: boolean;
+  onActionPress?: (action: AssistantMessageAction) => void;
 }
 
-export function MessageList({ messages, isLoading }: MessageListProps) {
+export function MessageList({ messages, isLoading, onActionPress }: MessageListProps) {
   const { m3 } = useThemeTokens();
   const flatListRef = useRef<FlatList<ChatMessage>>(null);
 
@@ -38,8 +39,10 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   }, [messages.length, isLoading]);
 
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<ChatMessage>) => <MessageBubble message={item} />,
-    [],
+    ({ item }: ListRenderItemInfo<ChatMessage>) => (
+      <MessageBubble message={item} onActionPress={onActionPress} />
+    ),
+    [onActionPress],
   );
 
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);

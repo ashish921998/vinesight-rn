@@ -17,6 +17,10 @@ export interface ClarifyHandlerResult {
   resolvedRoute: Exclude<HybridChatRoute, 'advisory' | 'clarify_route' | 'fallback_llm'> | null;
   cancelled: boolean;
   routeStateDirty: boolean;
+  /** Structured cards rendered inline within the assistant bubble */
+  cards?: Array<Record<string, unknown>>;
+  /** Action buttons rendered below the assistant bubble */
+  actions?: Array<Record<string, unknown>>;
 }
 
 /**

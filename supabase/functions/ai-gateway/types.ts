@@ -112,6 +112,19 @@ export interface VoiceLogActionPayload {
   clarify_exhausted?: boolean;
 }
 
+export interface AssistantMessageActionPayload {
+  label: string;
+  icon?: string;
+  action_type: 'navigate' | 'prompt' | 'log' | 'url' | 'dismiss';
+  payload?: string;
+}
+
+export interface AssistantMessageCardPayload {
+  type: 'data_table' | 'worker_list' | 'phi_conflict' | 'alert_list' | 'key_value';
+  title?: string;
+  rows: Array<Record<string, unknown>>;
+}
+
 export interface AssistantGatewayResponse {
   assistant_text: string;
   assistant_audio_b64: string | null;
@@ -139,4 +152,8 @@ export interface AssistantGatewayResponse {
   conversation_id: string | null;
   turn_id: string | null;
   suggestions: string[];
+  /** Structured cards rendered inline within the assistant bubble */
+  cards: AssistantMessageCardPayload[];
+  /** Action buttons rendered below the assistant bubble */
+  actions: AssistantMessageActionPayload[];
 }

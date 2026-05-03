@@ -110,6 +110,19 @@ export interface AssistantGatewayResponse {
   conversation_id?: string;
   turn_id?: string;
   suggestions?: string[];
+  /** Structured cards rendered inline within the assistant bubble */
+  cards?: Array<{
+    type: 'data_table' | 'worker_list' | 'phi_conflict' | 'alert_list' | 'key_value';
+    title?: string;
+    rows: Array<Record<string, unknown>>;
+  }>;
+  /** Action buttons rendered below the assistant bubble */
+  actions?: Array<{
+    label: string;
+    icon?: string;
+    action_type: 'navigate' | 'prompt' | 'log' | 'url' | 'dismiss';
+    payload?: string;
+  }>;
   route_decision?: AssistantRouteDecision | null;
   voice_log_action?: {
     kind?: 'none' | 'cancelled' | 'clarify' | 'ready';
