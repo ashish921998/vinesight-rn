@@ -18,6 +18,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { supabase } from '@/lib/supabase';
 import { telemetry } from '@/services/telemetry';
 import { isIOS } from '@/hooks';
+import { sendPhoneOtpPreferringWhatsApp } from '@/stores/auth-helpers';
 import type { SettingsStyles } from './settings-styles';
 
 export interface DeleteAccountModalProps {
@@ -123,10 +124,9 @@ export function DeleteAccountModal({
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const { error } = await Promise.race([
-        supabase.auth.signInWithOtp({
-          phone: deleteVerificationPhone,
-          options: { shouldCreateUser: false },
+      await Promise.race([
+        sendPhoneOtpPreferringWhatsApp(deleteVerificationPhone, {
+          shouldCreateUser: false,
         }),
         new Promise<never>((_, reject) => {
           controller.signal.addEventListener('abort', () => {
@@ -136,16 +136,6 @@ export function DeleteAccountModal({
           });
         }),
       ]);
-
-      if (error) {
-        Alert.alert(
-          t('common.error'),
-          t('settings.deleteAccountModal.errors.otpSendFailed', {
-            defaultValue: 'Failed to send OTP. Please try again.',
-          }),
-        );
-        return;
-      }
 
       setDeletePhoneOtpSent(true);
       setDeletePhoneVerified(false);

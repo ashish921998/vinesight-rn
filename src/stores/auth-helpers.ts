@@ -145,6 +145,50 @@ export const isValidPhone = (phone: string): boolean => {
   return phoneRegex.test(trimmed);
 };
 
+type PhoneOtpOptions = {
+  shouldCreateUser: boolean;
+  data?: { full_name?: string };
+};
+
+const PHONE_OTP_CHANNEL_PRIORITY = ['whatsapp', 'sms'] as const;
+type PhoneOtpChannel = (typeof PHONE_OTP_CHANNEL_PRIORITY)[number];
+
+const sendPhoneOtpByChannel = async (
+  phone: string,
+  options: PhoneOtpOptions,
+  channel: PhoneOtpChannel,
+) =>
+  supabase.auth.signInWithOtp({
+    phone,
+    options: {
+      ...options,
+      channel,
+    },
+  });
+
+export const sendPhoneOtpPreferringWhatsApp = async (
+  phone: string,
+  options: PhoneOtpOptions,
+): Promise<void> => {
+  let lastError: unknown = null;
+
+  for (const channel of PHONE_OTP_CHANNEL_PRIORITY) {
+    try {
+      const { error } = await sendPhoneOtpByChannel(phone, options, channel);
+      if (!error) return;
+      lastError = error;
+    } catch (error: unknown) {
+      lastError = error;
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+
+  throw new Error('Failed to send verification code');
+};
+
 export const getEmailDomain = (email: string | undefined | null) => {
   if (!email) return null;
   const [, domain] = email.split('@');

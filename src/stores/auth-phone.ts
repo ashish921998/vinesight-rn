@@ -9,6 +9,7 @@ import {
   getAuthErrorMessage,
   isValidEmail,
   isValidPhone,
+  sendPhoneOtpPreferringWhatsApp,
   getEmailDomain,
   setSentryUser,
   hasCompletedProfileName,
@@ -57,11 +58,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
         }
       }
 
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: trimmedPhone,
-        options,
-      });
-      if (error) throw error;
+      await sendPhoneOtpPreferringWhatsApp(trimmedPhone, options);
 
       telemetry.capture('auth_phone_otp_send_succeeded', { mode });
       set({
@@ -127,22 +124,15 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
 
       let effectiveMode: 'signup' | 'signin' = 'signup';
 
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: trimmedPhone,
-        options: signupOptions,
-      });
-
-      if (error) {
+      try {
+        await sendPhoneOtpPreferringWhatsApp(trimmedPhone, signupOptions);
+      } catch (error: unknown) {
         // If OTP signups are disabled, fall back to signin-only mode
         if (isOtpSignupDisabledError(error)) {
           if (__DEV__) {
             console.log('[auth] signInWithPhoneAuto - signup disabled, falling back to signin');
           }
-          const { error: signinError } = await supabase.auth.signInWithOtp({
-            phone: trimmedPhone,
-            options: { shouldCreateUser: false },
-          });
-          if (signinError) throw signinError;
+          await sendPhoneOtpPreferringWhatsApp(trimmedPhone, { shouldCreateUser: false });
           effectiveMode = 'signin';
         } else {
           throw error;

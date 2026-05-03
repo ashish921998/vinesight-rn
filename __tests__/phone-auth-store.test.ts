@@ -133,9 +133,27 @@ describe('signInWithPhone', () => {
       await useAuthStore.getState().signInWithPhone(phone);
       expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({
         phone,
-        options: { shouldCreateUser: false },
+        options: { shouldCreateUser: false, channel: 'whatsapp' },
       });
     });
+  });
+
+  it('tries WhatsApp first and falls back to SMS when WhatsApp send fails', async () => {
+    (supabase.auth.signInWithOtp as jest.Mock)
+      .mockResolvedValueOnce({ error: { message: 'WhatsApp unavailable' } })
+      .mockResolvedValueOnce({ error: null });
+
+    await useAuthStore.getState().signInWithPhone('+919876543210');
+
+    expect(supabase.auth.signInWithOtp).toHaveBeenNthCalledWith(1, {
+      phone: '+919876543210',
+      options: { shouldCreateUser: false, channel: 'whatsapp' },
+    });
+    expect(supabase.auth.signInWithOtp).toHaveBeenNthCalledWith(2, {
+      phone: '+919876543210',
+      options: { shouldCreateUser: false, channel: 'sms' },
+    });
+    expect(useAuthStore.getState().otpSentSuccessfully).toBe(true);
   });
 
   it('trims whitespace from phone input', async () => {
@@ -143,7 +161,7 @@ describe('signInWithPhone', () => {
     await useAuthStore.getState().signInWithPhone('  +919876543210  ');
     expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({
       phone: '+919876543210',
-      options: { shouldCreateUser: false },
+      options: { shouldCreateUser: false, channel: 'whatsapp' },
     });
   });
 
@@ -154,7 +172,7 @@ describe('signInWithPhone', () => {
 
     expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({
       phone: '+919876543210',
-      options: { shouldCreateUser: true },
+      options: { shouldCreateUser: true, channel: 'whatsapp' },
     });
   });
 
@@ -317,7 +335,7 @@ describe('resendPhoneOTP', () => {
 
     expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({
       phone: '+14155552671',
-      options: { shouldCreateUser: false },
+      options: { shouldCreateUser: false, channel: 'whatsapp' },
     });
   });
 
@@ -328,7 +346,7 @@ describe('resendPhoneOTP', () => {
     await useAuthStore.getState().resendPhoneOTP();
     expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({
       phone: '+919876543210',
-      options: { shouldCreateUser: false },
+      options: { shouldCreateUser: false, channel: 'whatsapp' },
     });
   });
 
@@ -339,7 +357,7 @@ describe('resendPhoneOTP', () => {
     await useAuthStore.getState().resendPhoneOTP('signup');
     expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({
       phone: '+919876543210',
-      options: { shouldCreateUser: true },
+      options: { shouldCreateUser: true, channel: 'whatsapp' },
     });
   });
 
