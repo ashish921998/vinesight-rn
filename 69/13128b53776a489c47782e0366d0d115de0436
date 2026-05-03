@@ -1,0 +1,29 @@
+app/(tabs)/workers.tsx
+  13b73779385df335 15-16,54,107,120,166-167
+app/worker-detail/[id].tsx
+  13b73779385df335 18-29,31,730-731
+src/components/cards/worker-card.tsx
+  13b73779385df335 84,86-87
+src/components/modals/worker-settlement-modal.tsx
+  13b73779385df335 271,274-277,280-282,328
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "6913128b53776a489c47782e0366d0d115de0436",
+  "prompts": {
+    "13b73779385df335": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5c877c8-4d97-4420-9af6-8c6afd24f07f",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 20,
+      "total_deletions": 38,
+      "accepted_lines": 34,
+      "overriden_lines": 4
+    }
+  }
+}
