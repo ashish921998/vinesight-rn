@@ -26,7 +26,7 @@ import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
 import { colorWithOpacity } from '@/utils/color';
 
 type SettlementPeriod = 'this_week' | 'last_week' | 'custom';
-type PaymentMethod = 'cash' | 'upi' | 'split';
+type PaymentMethod = 'cash' | 'upi';
 
 interface WorkerSettlementModalProps {
   visible: boolean;
@@ -404,8 +404,7 @@ export function WorkerSettlementModal({
                 defaultValue: 'Paid ₹{{amount}} to {{name}} via {{method}}.',
                 amount: settledAmount.toLocaleString('en-IN'),
                 name: selectedWorker.name.split(' ')[0],
-                method:
-                  paymentMethod === 'cash' ? 'cash' : paymentMethod === 'upi' ? 'UPI' : 'split',
+                method: paymentMethod === 'cash' ? 'cash' : 'UPI',
               })}
             </Text>
 
@@ -875,13 +874,6 @@ export function WorkerSettlementModal({
                       k: 'upi' as PaymentMethod,
                       l: t('settlement.upi', { defaultValue: 'UPI / bank' }),
                       sub: t('settlement.upiSub', { defaultValue: 'Log a digital transfer' }),
-                    },
-                    {
-                      k: 'split' as PaymentMethod,
-                      l: t('settlement.split', { defaultValue: 'Cash + advance carry-over' }),
-                      sub: t('settlement.splitSub', {
-                        defaultValue: 'Pay part now, roll over the rest',
-                      }),
                     },
                   ].map((opt) => {
                     const on = paymentMethod === opt.k;

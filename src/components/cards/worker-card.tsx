@@ -68,17 +68,22 @@ export function WorkerCard({
 
   const periodSummary = useMemo(() => {
     if (!attendance || attendance.length === 0) return null;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
     let full = 0,
       half = 0,
       absent = 0,
       pending = 0;
     attendance.forEach((r) => {
+      if (r.date.slice(0, 10) < cutoffStr) return;
       const s = r.work_status as WorkStatus;
       if (s === 'full_day') full++;
       else if (s === 'half_day') half++;
       else if (s === 'absent') absent++;
       pending += calculateWorkerEarnings(worker, s, r.daily_rate_override ?? undefined);
     });
+    if (full + half + absent === 0) return null;
     return { full, half, absent, pending };
   }, [attendance, worker]);
 
