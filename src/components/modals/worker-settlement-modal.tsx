@@ -307,7 +307,6 @@ export function WorkerSettlementModal({
       });
       setSettledAmount(netPayment);
       setIsDone(true);
-      onSuccess();
     } catch (_error: unknown) {
       Alert.alert(t('common.error'), t('settlement.confirmationFailed'));
     } finally {
@@ -416,7 +415,6 @@ export function WorkerSettlementModal({
                 borderWidth: 1,
                 borderColor: colors.surface[300],
                 borderRadius: 14,
-                padding: '14px 16px' as unknown as number,
                 paddingHorizontal: 16,
                 paddingVertical: 14,
               }}
@@ -441,7 +439,10 @@ export function WorkerSettlementModal({
 
             <View style={{ marginTop: 18, width: '100%', gap: 8 }}>
               <Pressable
-                onPress={onClose}
+                onPress={() => {
+                  onSuccess();
+                  onClose();
+                }}
                 style={({ pressed }) => ({
                   height: 48,
                   borderRadius: 14,
@@ -704,7 +705,6 @@ export function WorkerSettlementModal({
                 >
                   <View
                     style={{
-                      padding: '12px 14px' as unknown as number,
                       paddingHorizontal: 14,
                       paddingVertical: 12,
                       borderBottomWidth: 1,

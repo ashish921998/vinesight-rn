@@ -16,6 +16,13 @@ import { getDefaultDateRange, isDateInRange } from '@/utils/worker-analytics';
 
 const ACCENT_COLORS = ['#355847', '#A56B4F', '#D0A14A', '#4E7384', '#7A5E8E'];
 
+function localDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function dayLabel(dateStr: string): { short: string; num: number } {
   try {
     const d = new Date(`${dateStr}T00:00:00`);
@@ -78,7 +85,7 @@ export default function WorkerDetailScreen() {
     for (let i = 29; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
+      const key = localDateKey(d);
       days.push({ date: key, status: map.get(key) ?? null });
     }
     return days;
@@ -331,8 +338,8 @@ export default function WorkerDetailScreen() {
                     color: colors.surface[500],
                   }}
                 >
-                  {t('workers.settlement.pendingWages', {
-                    defaultValue: 'Pending wages · last 30 days',
+                  {t('workers.settlement.earnedWages', {
+                    defaultValue: 'Earned wages · last 30 days',
                   })}
                 </Text>
                 <Text

@@ -19,6 +19,13 @@ interface WorkerCardProps {
   attendance?: WorkerAttendance[];
 }
 
+function localDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function buildStrip(attendance: WorkerAttendance[], days = 30): (WorkStatus | null)[] {
   const map = new Map<string, WorkStatus>();
   attendance.forEach((r) => {
@@ -31,14 +38,13 @@ function buildStrip(attendance: WorkerAttendance[], days = 30): (WorkStatus | nu
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    strip.push(map.get(key) ?? null);
+    strip.push(map.get(localDateKey(d)) ?? null);
   }
   return strip;
 }
 
 function todayStatus(attendance: WorkerAttendance[]): WorkStatus | null {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateKey(new Date());
   const record = attendance.find((r) => r.date.slice(0, 10) === today);
   return record ? (record.work_status as WorkStatus) : null;
 }
@@ -70,7 +76,7 @@ export function WorkerCard({
     if (!attendance || attendance.length === 0) return null;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 30);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const cutoffStr = localDateKey(cutoff);
     let full = 0,
       half = 0,
       absent = 0,
@@ -319,7 +325,7 @@ export function WorkerCard({
           <Text style={{ fontSize: 13, fontWeight: '700', color: colors.surface[900] }}>
             ₹{periodSummary.pending.toLocaleString('en-IN')}{' '}
             <Text style={{ fontSize: 10, fontWeight: '500', color: colors.surface[500] }}>
-              {t('workers.card.pending', { defaultValue: 'pending' })}
+              {t('workers.card.earned', { defaultValue: 'earned' })}
             </Text>
           </Text>
         </View>
