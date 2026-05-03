@@ -49,8 +49,12 @@ function useDaysSincePruning(dateOfPruning: string | null | undefined, today: Da
   }, [dateOfPruning, today]);
 }
 
-function useEstimatedHarvestLabel(dateOfPruning: string | null | undefined): string | null {
+function useEstimatedHarvestLabel(
+  dateOfPruning: string | null | undefined,
+  locale: string,
+): string | null {
   return useMemo(() => {
+    void locale;
     if (!dateOfPruning) return null;
     const pruningDate = parseDbDateToLocalDate(dateOfPruning);
     if (!pruningDate) return null;
@@ -60,7 +64,7 @@ function useEstimatedHarvestLabel(dateOfPruning: string | null | undefined): str
       pruningDate.getDate() + SEASON_LENGTH_DAYS,
     );
     return formatDate(harvest, { day: 'numeric', month: 'short' });
-  }, [dateOfPruning]);
+  }, [dateOfPruning, locale]);
 }
 
 export const FarmCard = React.memo(function FarmCard({
@@ -72,23 +76,35 @@ export const FarmCard = React.memo(function FarmCard({
 }: FarmCardProps) {
   const m3 = useM3();
   const colors = useThemeColors();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const daysSincePruning = useDaysSincePruning(farm.date_of_pruning, today);
-  const estimatedHarvestLabel = useEstimatedHarvestLabel(farm.date_of_pruning);
-  const lowWater = isLowWater(farm);
+  const estimatedHarvestLabel = useEstimatedHarvestLabel(
+    farm.date_of_pruning,
+    i18n?.resolvedLanguage || i18n?.language || 'en',
+  );
+  const hasWaterData =
+    typeof farm.remaining_water === 'number' &&
+    Number.isFinite(farm.remaining_water) &&
+    typeof farm.total_tank_capacity === 'number' &&
+    Number.isFinite(farm.total_tank_capacity) &&
+    farm.total_tank_capacity > 0;
+  const lowWater = hasWaterData && isLowWater(farm);
 
   const todayPct =
     daysSincePruning != null ? Math.min(100, (daysSincePruning / SEASON_LENGTH_DAYS) * 100) : null;
 
-  const accentColor = lowWater ? m3.colorScheme.error : colors.primary[500];
+  const primaryColor = colors.primary?.[500] ?? m3.colorScheme.primary;
+  const accentColor = lowWater ? m3.colorScheme.error : primaryColor;
 
   const waterStatusColor = lowWater ? m3.colorScheme.error : colors.surface[500];
 
   const waterLabel =
-    farm.remaining_water != null
+    typeof farm.remaining_water === 'number' && Number.isFinite(farm.remaining_water)
       ? t('farmCard.waterBalance.value', {
-          value: `${farm.remaining_water > 0 ? '+' : ''}${farm.remaining_water.toFixed(0)}`,
+          value: `${farm.remaining_water >= 0 ? '+' : ''}${formatNumber(farm.remaining_water, {
+            maximumFractionDigits: 0,
+          })}`,
         })
       : null;
 
@@ -178,14 +194,14 @@ export const FarmCard = React.memo(function FarmCard({
                       alignItems: 'center',
                       justifyContent: 'center',
                       backgroundColor: p
-                        ? colorWithOpacity(colors.primary[500], 0.24)
-                        : colorWithOpacity(colors.primary[500], 0.1),
+                        ? colorWithOpacity(primaryColor, 0.24)
+                        : colorWithOpacity(primaryColor, 0.1),
                     })}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityRole="button"
                     accessibilityLabel={t('farmCard.a11y.editFarm', { name: farm.name })}
                   >
-                    <UiSymbol name="pencil" size={14} color={colors.primary[500]} />
+                    <UiSymbol name="pencil" size={14} color={primaryColor} />
                   </Pressable>
                 )}
                 {onDelete && (
@@ -282,7 +298,7 @@ export const FarmCard = React.memo(function FarmCard({
                   width: `${todayPct}%`,
                   height: 4,
                   borderRadius: 99,
-                  backgroundColor: colors.primary[500],
+                  backgroundColor: primaryColor,
                 }}
               />
 
@@ -312,9 +328,9 @@ export const FarmCard = React.memo(function FarmCard({
                         width: 8,
                         height: 8,
                         borderRadius: 4,
-                        backgroundColor: passed ? colors.primary[500] : colors.surface[200],
+                        backgroundColor: passed ? primaryColor : colors.surface[200],
                         borderWidth: 2,
-                        borderColor: passed ? colors.primary[500] : colors.surface[300],
+                        borderColor: passed ? primaryColor : colors.surface[300],
                       }}
                     />
                     <Text
@@ -347,8 +363,8 @@ export const FarmCard = React.memo(function FarmCard({
                   borderRadius: 7,
                   backgroundColor: colors.surface[100],
                   borderWidth: 3,
-                  borderColor: colors.primary[500],
-                  shadowColor: '#000',
+                  borderColor: primaryColor,
+                  shadowColor: m3.colorScheme.shadow,
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.18,
                   shadowRadius: 3,
@@ -407,41 +423,43 @@ export const FarmCard = React.memo(function FarmCard({
           )}
 
           {/* Status badge */}
-          <View style={{ marginLeft: 'auto' }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 4,
-                height: 20,
-                paddingHorizontal: spacing[2],
-                borderRadius: borderRadius.full,
-                backgroundColor: lowWater
-                  ? colorWithOpacity(m3.colorScheme.error, 0.12)
-                  : colorWithOpacity(colors.primary[500], 0.12),
-              }}
-            >
+          {hasWaterData && (
+            <View style={{ marginLeft: 'auto' }}>
               <View
                 style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: 3,
-                  backgroundColor: lowWater ? m3.colorScheme.error : colors.primary[500],
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: 10,
-                  fontWeight: fontWeight.bold,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.3,
-                  color: lowWater ? m3.colorScheme.error : colors.primary[500],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                  height: 20,
+                  paddingHorizontal: spacing[2],
+                  borderRadius: borderRadius.full,
+                  backgroundColor: lowWater
+                    ? colorWithOpacity(m3.colorScheme.error, 0.12)
+                    : colorWithOpacity(primaryColor, 0.12),
                 }}
               >
-                {lowWater ? t('farmCard.status.needsAttention') : t('farmCard.status.healthy')}
-              </Text>
+                <View
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: 3,
+                    backgroundColor: lowWater ? m3.colorScheme.error : primaryColor,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: fontWeight.bold,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.3,
+                    color: lowWater ? m3.colorScheme.error : primaryColor,
+                  }}
+                >
+                  {lowWater ? t('farmCard.status.needsAttention') : t('farmCard.status.healthy')}
+                </Text>
+              </View>
             </View>
-          </View>
+          )}
         </View>
       </View>
 

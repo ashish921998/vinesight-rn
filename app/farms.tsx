@@ -25,6 +25,7 @@ import type { Farm } from '@/types';
 import { isLowWater } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { formatNumber } from '@/i18n/format';
 import { useM3 } from '@/styles/use-theme';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 
@@ -39,12 +40,12 @@ function FarmsSummaryLine({
   t: TFunction;
   style?: TextStyle;
 }) {
-  const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1);
+  const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0);
   const needsAttentionCount = farms.filter(isLowWater).length;
   return (
     <Text style={[{ fontSize: 13, fontWeight: fontWeight.medium, lineHeight: 16 }, style]}>
       <Text style={{ color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7) }}>
-        {`${t('farms.summary.count', { count: farms.length })} · ${t('farms.summary.area', { value: totalArea })}`}
+        {`${t('farms.summary.count', { count: farms.length })} · ${t('farms.summary.area', { value: formatNumber(totalArea, { maximumFractionDigits: 1 }) })}`}
       </Text>
       {needsAttentionCount > 0 && (
         <Text style={{ color: m3.colorScheme.error, fontWeight: fontWeight.semibold }}>
@@ -362,8 +363,7 @@ export default function FarmsScreen() {
         />
       </View>
     ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [today, handleEditFarm, handleDeleteFarm],
+    [today, handleFarmPress, handleEditFarm, handleDeleteFarm],
   );
 
   const renderEmpty = () => {

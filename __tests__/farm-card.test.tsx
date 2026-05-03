@@ -131,14 +131,14 @@ describe('FarmCard — low water urgency', () => {
     expect(getByText('farmCard.status.healthy')).toBeTruthy();
   });
 
-  it('shows Healthy status when water data is absent', () => {
+  it('does not show a Healthy status when water data is absent', () => {
     const farm: Farm = {
       ...BASE_FARM,
       remaining_water: null,
       total_tank_capacity: null,
     };
-    const { getByText } = render(<FarmCard farm={farm} />);
-    expect(getByText('farmCard.status.healthy')).toBeTruthy();
+    const { queryByText } = render(<FarmCard farm={farm} />);
+    expect(queryByText('farmCard.status.healthy')).toBeNull();
   });
 });
 
@@ -148,6 +148,12 @@ describe('FarmCard — water balance label', () => {
     const { getByText } = render(<FarmCard farm={farm} />);
     // t('farmCard.waterBalance.value', { value: '+42' }) → '+42' via our mock
     expect(getByText('+42')).toBeTruthy();
+  });
+
+  it('shows zero water balance with + prefix', () => {
+    const farm: Farm = { ...BASE_FARM, remaining_water: 0 };
+    const { getByText } = render(<FarmCard farm={farm} />);
+    expect(getByText('+0')).toBeTruthy();
   });
 
   it('shows negative water balance without double minus', () => {
