@@ -83,7 +83,9 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
 
   const waterLabel =
     farm.remaining_water != null
-      ? `${farm.remaining_water > 0 ? '+' : ''}${farm.remaining_water.toFixed(0)} mm`
+      ? t('farmCard.waterBalance.value', {
+          value: `${farm.remaining_water > 0 ? '+' : ''}${farm.remaining_water.toFixed(0)}`,
+        })
       : null;
 
   const renderCardContent = (pressed: boolean) => (
@@ -140,7 +142,11 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               }}
               numberOfLines={1}
             >
-              {[farm.region, farm.area != null ? `${farm.area} ac` : null, farm.crop_variety]
+              {[
+                farm.region,
+                farm.area != null ? t('farmCard.area.acres', { value: farm.area }) : null,
+                farm.crop_variety,
+              ]
                 .filter(Boolean)
                 .join(' · ')}
             </Text>
