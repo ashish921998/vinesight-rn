@@ -21,7 +21,7 @@ All notable changes to Vinesight are documented here.
 - Area display regressed to raw unformatted number — restored `formatNumber()` with 1-decimal and Latin digits
 - TypeScript type error: `FarmsSummaryLine` style prop typed as `ViewStyle` but passed to `<Text>` (now `TextStyle`)
 
-### Changed
+### For contributors
 - `FarmCard` wrapped in `React.memo`; `renderFarm` and action handlers stabilized with `useCallback` for FlatList render performance
 
 ## Completed
