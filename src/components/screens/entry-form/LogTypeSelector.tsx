@@ -13,6 +13,7 @@ interface LogTypeSelectorProps {
   selectedLogType: LogTypeId | null;
   onSelect: (type: LogTypeId) => void;
   hasPendingDrafts?: boolean;
+  pendingLogTypes?: LogTypeId[];
   hintText?: string;
 }
 
@@ -20,6 +21,7 @@ export function LogTypeSelector({
   selectedLogType,
   onSelect,
   hasPendingDrafts = false,
+  pendingLogTypes = [],
   hintText,
 }: LogTypeSelectorProps) {
   const m3 = useM3();
@@ -35,8 +37,8 @@ export function LogTypeSelector({
       targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_TYPE_SELECTOR}
       style={{
         backgroundColor: colors.surface[100],
-        borderRadius: 20,
-        padding: 18,
+        borderRadius: 18,
+        padding: 16,
         marginBottom: 16,
         borderWidth: showInlineGuidance ? 2 : 1,
         borderColor: showInlineGuidance
@@ -44,11 +46,25 @@ export function LogTypeSelector({
           : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
       }}
     >
-      <View style={{ marginBottom: 14 }}>
+      <View style={{ marginBottom: 12 }}>
         <Text
           selectable
           style={{
-            fontSize: 20,
+            fontSize: 11,
+            fontWeight: '700',
+            letterSpacing: 0.6,
+            textTransform: 'uppercase',
+            color: m3.colorScheme.onSurfaceVariant,
+          }}
+        >
+          {t('entryForm.whatDidYouDoToday', { defaultValue: 'What did you do today?' })}
+        </Text>
+        <Text
+          selectable
+          style={{
+            marginTop: 6,
+            fontSize: 19,
+            lineHeight: 24,
             fontWeight: '700',
             color: m3.colorScheme.onSurface,
           }}
@@ -64,19 +80,22 @@ export function LogTypeSelector({
             color: m3.colorScheme.onSurfaceVariant,
           }}
         >
-          {hintText ?? t('entryForm.selectActivityTypeHint')}
+          {hintText ??
+            t('entryForm.selectActivityTypeHint', {
+              defaultValue: 'Tap a chip to add it to today, then save the stack together.',
+            })}
         </Text>
       </View>
       <View
         style={{
           flexDirection: 'row',
           flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          rowGap: 8,
+          gap: 8,
         }}
       >
         {ACTIVITY_TYPES.map((logType: LogType) => {
           const isSelected = selectedLogType === logType.id;
+          const isAdded = pendingLogTypes.includes(logType.id as LogTypeId);
           const emphasizeSelectedGuidedCard = isGuidedAddLogStep && isSelected;
           const emphasizeAllGuidedCards = showInlineGuidance;
           return (
@@ -88,70 +107,66 @@ export function LogTypeSelector({
                 onSelect(selectedType);
               }}
               style={{
-                width: '31%',
-                minHeight: 72,
-                paddingHorizontal: 8,
+                minHeight: 42,
+                paddingLeft: 8,
+                paddingRight: 12,
                 paddingVertical: 8,
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: 12,
+                flexDirection: 'row',
+                borderRadius: 999,
                 borderWidth: emphasizeSelectedGuidedCard ? 2 : 1,
-                // Cellar Ledger spec: active chip uses category color bg with white text
                 backgroundColor: isSelected
                   ? logType.color
-                  : emphasizeAllGuidedCards
-                    ? colorWithOpacity(m3.colorScheme.primary, 0.03)
-                    : colors.surface[50],
+                  : isAdded
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                    : emphasizeAllGuidedCards
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.03)
+                      : colors.surface[50],
                 borderColor: isSelected
                   ? logType.color
-                  : emphasizeAllGuidedCards
-                    ? colorWithOpacity(m3.colorScheme.primary, 0.25)
-                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+                  : isAdded
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.35)
+                    : emphasizeAllGuidedCards
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.25)
+                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                 opacity: emphasizeAllGuidedCards ? 1 : undefined,
               }}
             >
-              {isSelected ? (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    width: 22,
-                    height: 22,
-                    borderRadius: 999,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#FFFFFF',
-                  }}
-                >
-                  <AppIcon name="checkmark-circle" size={14} color={logType.color} />
-                </View>
-              ) : null}
               <View
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 26,
+                  height: 26,
                   borderRadius: 999,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: 6,
-                  backgroundColor: isSelected ? '#FFFFFF30' : `${logType.color}12`,
+                  marginRight: 7,
+                  backgroundColor: isSelected
+                    ? '#FFFFFF30'
+                    : isAdded
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.14)
+                      : `${logType.color}12`,
                 }}
               >
                 <AppIcon
-                  name={logType.icon}
-                  size={16}
-                  color={isSelected ? '#FFFFFF' : logType.color}
+                  name={isAdded ? 'checkmark-circle' : 'add-circle'}
+                  size={14}
+                  color={isSelected ? '#FFFFFF' : isAdded ? m3.colorScheme.primary : logType.color}
                 />
               </View>
               <Text
                 selectable
                 style={[
-                  { fontSize: 12, fontWeight: '700', textAlign: 'center', lineHeight: 16 },
-                  // Cellar Ledger spec: active uses white text, inactive uses onSurface
-                  { color: isSelected ? '#FFFFFF' : m3.colorScheme.onSurface },
+                  { fontSize: 12, fontWeight: '700', lineHeight: 16 },
+                  {
+                    color: isSelected
+                      ? '#FFFFFF'
+                      : isAdded
+                        ? m3.colorScheme.primary
+                        : m3.colorScheme.onSurface,
+                  },
                 ]}
-                numberOfLines={2}
+                numberOfLines={1}
               >
                 {t(logType.labelKey)}
               </Text>

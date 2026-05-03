@@ -55,8 +55,8 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
     <View
       style={{
         backgroundColor: colors.surface[100],
-        borderRadius: 20,
-        padding: 18,
+        borderRadius: 18,
+        padding: 16,
         marginBottom: 16,
         borderWidth: 1,
         borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
@@ -74,7 +74,21 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
           <Text
             selectable
             style={{
-              fontSize: 20,
+              fontSize: 11,
+              fontWeight: '700',
+              letterSpacing: 0.6,
+              textTransform: 'uppercase',
+              color: m3.colorScheme.onSurfaceVariant,
+            }}
+          >
+            {t('entryForm.activityStack', { defaultValue: 'Activity stack' })}
+          </Text>
+          <Text
+            selectable
+            style={{
+              marginTop: 6,
+              fontSize: 19,
+              lineHeight: 24,
               fontWeight: '700',
               color: m3.colorScheme.onSurface,
             }}
@@ -170,7 +184,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
         contentContainerStyle={{ paddingBottom: 2 }}
         showsVerticalScrollIndicator={pendingLogs.length > 3}
       >
-        {pendingLogs.map((log) => {
+        {pendingLogs.map((log, index) => {
           const logType = LOG_TYPES.find((lt) => lt.id === log.type);
           const failure = failures[log.id];
           const iconName =
@@ -187,8 +201,8 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                 {
                   flexDirection: 'row',
                   alignItems: 'center',
-                  padding: 14,
-                  borderRadius: 16,
+                  padding: 12,
+                  borderRadius: 14,
                   marginBottom: 10,
                   borderWidth: 1,
                   borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
@@ -205,9 +219,9 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
             >
               <View
                 style={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 999,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 10,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: `${logType?.color ?? m3.colorScheme.primary}15`,
@@ -219,10 +233,10 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                   color={logType?.color ?? m3.colorScheme.primary}
                 />
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
+              <View style={{ flex: 1, marginLeft: 10 }}>
                 <Text
                   selectable
-                  style={{ fontSize: 16, fontWeight: '700', color: m3.colorScheme.onSurface }}
+                  style={{ fontSize: 14, fontWeight: '700', color: m3.colorScheme.onSurface }}
                 >
                   {logType ? t(logType.labelKey) : t('entryForm.addLog')}
                 </Text>
@@ -230,10 +244,11 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                   selectable
                   style={{
                     marginTop: 2,
-                    fontSize: 13,
-                    lineHeight: 18,
+                    fontSize: 12,
+                    lineHeight: 17,
                     color: m3.colorScheme.onSurfaceVariant,
                   }}
+                  numberOfLines={2}
                 >
                   {log.displayDescription}
                 </Text>
@@ -296,16 +311,55 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                   defaultValue: 'Removes this draft from the pending logs list.',
                 })}
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 999,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 10,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
+                  backgroundColor: failure
+                    ? colorWithOpacity(m3.colorScheme.error, 0.12)
+                    : colors.surface[100],
+                  borderWidth: failure ? 0 : 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
                 }}
               >
-                <AppIcon name="trash-outline" size={18} color={m3.colorScheme.error} />
+                <AppIcon
+                  name="close"
+                  size={18}
+                  color={
+                    failure
+                      ? m3.colorScheme.error
+                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+                  }
+                />
               </Pressable>
+              {pendingLogs.length > 1 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: 27,
+                    top: 2,
+                    minWidth: 18,
+                    height: 18,
+                    borderRadius: 999,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: colors.surface[100],
+                    borderWidth: 1,
+                    borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '700',
+                      color: m3.colorScheme.onSurfaceVariant,
+                    }}
+                  >
+                    {index + 1}
+                  </Text>
+                </View>
+              )}
             </View>
           );
         })}
