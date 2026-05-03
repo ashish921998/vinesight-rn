@@ -301,7 +301,6 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                         backgroundColor: passed ? colors.primary[500] : colors.surface[200],
                         borderWidth: 2,
                         borderColor: passed ? colors.primary[500] : colors.surface[300],
-                        marginLeft: milestone.pct === 0 ? 0 : milestone.pct === 100 ? 0 : 0,
                       }}
                     />
                     <Text

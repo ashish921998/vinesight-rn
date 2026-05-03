@@ -275,13 +275,14 @@ export default function FarmsScreen() {
   // Filter farms based on search query, sorted urgency-first (low water first)
   const filteredFarms = useMemo(() => {
     if (!farms) return [];
-    const filtered = searchQuery.trim()
+    const query = searchQuery.toLowerCase().trim();
+    const filtered = query
       ? farms.filter(
           (farm) =>
-            farm.name.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-            farm.crop?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-            farm.crop_variety?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-            farm.region?.toLowerCase().includes(searchQuery.toLowerCase().trim()),
+            farm.name.toLowerCase().includes(query) ||
+            farm.crop?.toLowerCase().includes(query) ||
+            farm.crop_variety?.toLowerCase().includes(query) ||
+            farm.region?.toLowerCase().includes(query),
         )
       : farms;
     return [...filtered].sort((a, b) => {
