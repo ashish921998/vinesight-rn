@@ -1,0 +1,85 @@
+__tests__/chat-screen.test.tsx
+  b9d0b35ca06767da 284,286,289,291-293,296,298-300,303,306,310-312
+src/components/assistant/MessageList.tsx
+  2a1113e940378827 17,22,25,42-45
+src/types/ai.ts
+  2a1113e940378827 60-100,120-123
+src/services/assistant-gateway.ts
+  2a1113e940378827 298-312
+supabase/functions/ai-gateway/types.ts
+  2a1113e940378827 115-127,155-158
+supabase/functions/ai-gateway/handlers/voice-log.ts
+  2a1113e940378827 61-64
+src/components/assistant/MessageActions.tsx
+  2a1113e940378827 1-8,10-20,22,24-92
+src/components/screens/entry-form.tsx
+  411baf43bdaed9e3 102,350,382,516-523,541,560
+src/components/assistant/ChatScreen.tsx
+  411baf43bdaed9e3 33,285,985-991
+  b9d0b35ca06767da 31,67-68,70-72,75-79,82-86,89-93,96-100,155-228,231-281,907-913,919,1106-1192
+  2a1113e940378827 229-230,386-396,914-918
+src/services/assistant-gateway-types.ts
+  2a1113e940378827 113-125
+supabase/functions/ai-gateway/handlers/main.ts
+  2a1113e940378827 56-57,187-188,202-204,211-213,217-219,315-317,333-335,356-358,498-499
+src/components/assistant/InputBar.tsx
+  411baf43bdaed9e3 205
+supabase/functions/ai-gateway/handlers/advisory.ts
+  2a1113e940378827 43-46
+src/components/assistant/RichMessageContent.tsx
+  411baf43bdaed9e3 181
+  2a1113e940378827 1-11,13-42,44-53,55-87,89-124,127-130,132-158,160-180,182-190,192-273
+src/components/assistant/MessageBubble.tsx
+  2a1113e940378827 18-21,26,29,171-182,184-203,206-209
+  b9d0b35ca06767da 46-47,49,156-157,169-170,183,210,246-256,277-278,290-292,294-303,306-307
+supabase/functions/ai-gateway/handlers/clarify.ts
+  2a1113e940378827 20-23
+supabase/functions/ai-gateway/handlers/farm-query.ts
+  2a1113e940378827 26-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "3a3fc133fbf1158872dff0427fc3f050df44f8c0",
+  "prompts": {
+    "2a1113e940378827": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_212a2cd7dffetBJYs01kXhL0we",
+        "model": "opencode-go/kimi-k2.6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 547,
+      "overriden_lines": 13
+    },
+    "411baf43bdaed9e3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dbf88b2c-0fb1-4a82-b64c-2f5ab2c460db",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 23,
+      "overriden_lines": 0
+    },
+    "b9d0b35ca06767da": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ded50-318c-731b-9606-df9251223b5e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1601,
+      "overriden_lines": 1
+    }
+  }
+}
