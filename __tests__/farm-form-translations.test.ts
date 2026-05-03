@@ -27,4 +27,20 @@ describe('farm form translation coverage', () => {
     expect(locale.farmForm.cropPicker.useCustomCrop).toContain('{{crop}}');
     expect(locale.farmForm.cropPicker.noResults).toBeTruthy();
   });
+
+  it.each(locales)('has farmCard season timeline keys for %s locale', (_code, locale) => {
+    expect(locale.farmCard.season.pruning).toBeTruthy();
+    expect(locale.farmCard.season.bloom).toBeTruthy();
+    expect(locale.farmCard.season.veraison).toBeTruthy();
+    expect(locale.farmCard.season.harvest).toBeTruthy();
+    expect(locale.farmCard.season.sincePruning).toBeTruthy();
+  });
+
+  it.each(locales)('has farms summary attention keys for %s locale', (_code, locale) => {
+    expect(locale.farms.summary.needsAttention_one).toContain('{{count}}');
+    expect(locale.farms.summary.needsAttention_other).toContain('{{count}}');
+    expect(locale.farms.summary.count_one).toContain('{{count}}');
+    expect(locale.farms.summary.count_other).toContain('{{count}}');
+    expect(locale.farms.summary.area).toContain('{{value}}');
+  });
 });
