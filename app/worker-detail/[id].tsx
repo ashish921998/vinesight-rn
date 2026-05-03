@@ -252,6 +252,8 @@ export default function WorkerDetailScreen() {
             onPress={() => router.back()}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.back', { defaultValue: 'Go back' })}
           >
             <UiSymbol name="chevron.left" size={18} color={colors.surface[500]} />
             <Text style={{ fontSize: 14, fontWeight: '600', color: colors.surface[500] }}>
@@ -264,6 +266,11 @@ export default function WorkerDetailScreen() {
               router.push('/add-worker');
             }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('workers.workerCard.editA11y', {
+              name: worker.name,
+              defaultValue: 'Edit {{name}}',
+            })}
           >
             <UiSymbol name="ellipsis" size={20} color={colors.surface[500]} />
           </Pressable>
@@ -391,6 +398,11 @@ export default function WorkerDetailScreen() {
                   opacity: pressed ? 0.85 : 1,
                   alignItems: 'center',
                   justifyContent: 'center',
+                })}
+                accessibilityRole="button"
+                accessibilityLabel={t('workers.actions.settleWorker', {
+                  name: worker.name,
+                  defaultValue: 'Settle wages for {{name}}',
                 })}
               >
                 <Text style={{ fontSize: 13, fontWeight: '600', color: m3.colorScheme.onPrimary }}>
@@ -803,7 +815,6 @@ export default function WorkerDetailScreen() {
                           </Text>
                         ) : null}
                       </View>
-                      <UiSymbol name="chevron.right" size={14} color={colors.surface[400]} />
                     </View>
                   );
                 })}
@@ -821,6 +832,10 @@ export default function WorkerDetailScreen() {
                   justifyContent: 'center',
                 })}
                 onPress={() => router.push(`/worker-analytics/${workerId}`)}
+                accessibilityRole="button"
+                accessibilityLabel={t('workers.detail.viewFullHistoryA11y', {
+                  defaultValue: 'View full attendance history',
+                })}
               >
                 <Text style={{ fontSize: 13, fontWeight: '600', color: colors.surface[500] }}>
                   {t('workers.detail.viewFullHistory', { defaultValue: 'View full history' })}

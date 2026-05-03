@@ -146,12 +146,15 @@ export function useAllWorkerAttendance() {
     queryKey: queryKeys.workerAttendance.listAll(),
     queryFn: async (): Promise<WorkerAttendance[]> => {
       const userId = await getUserId();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+      const cutoff = thirtyDaysAgo.toISOString().slice(0, 10);
 
-      // Use inner join through workers table to get attendance for user's workers
       const { data, error } = await supabase
         .from(TABLES.WORKER_ATTENDANCE)
         .select('*, workers!inner(user_id)')
         .eq('workers.user_id', userId)
+        .gte('date', cutoff)
         .order('date', { ascending: false });
 
       if (error) throw error;

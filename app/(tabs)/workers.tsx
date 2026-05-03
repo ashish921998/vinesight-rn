@@ -243,6 +243,10 @@ export default function WorkersScreen() {
               alignItems: 'center',
               justifyContent: 'center',
             })}
+            accessibilityRole="button"
+            accessibilityLabel={t('workers.actions.settleAll', {
+              defaultValue: 'Settle all workers',
+            })}
           >
             <Text
               style={{
