@@ -96,6 +96,9 @@ function formatDdMmmYyyy(date: Date, locale?: string): string {
   return `${day} ${month} ${year}`;
 }
 
+const NOW_TICK_MS = 60_000;
+const OPEN_TASKS_PREVIEW_LIMIT = 5;
+
 export default function FarmDetailScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
@@ -122,7 +125,7 @@ export default function FarmDetailScreen() {
     refetch: refetchRecords,
   } = useFarmRecords(farmId);
 
-  const { data: tasks, refetch: refetchTasks } = useTasks(farmId);
+  const { data: tasks, isLoading: isTasksLoading, refetch: refetchTasks } = useTasks(farmId);
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
   const { data: profile } = useProfile({ enabled: true });
   const {
@@ -177,7 +180,11 @@ export default function FarmDetailScreen() {
   const [activeSeasonTargetHarvestDraft, setActiveSeasonTargetHarvestDraft] = useState<Date>(
     new Date(),
   );
-  const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), NOW_TICK_MS);
+    return () => clearInterval(id);
+  }, []);
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
   const setGuidedTourSuspended = useGuidedTourStore((s) => s.setSuspended);
@@ -189,16 +196,6 @@ export default function FarmDetailScreen() {
   const guidedTourSeasonAutoOpenedRef = React.useRef(false);
   const isGuidedSeasonStep =
     guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && showSeasonForm;
-
-  useEffect(() => {
-    if (
-      guidedTourStatus === 'in_progress' &&
-      guidedTourStep === 'add_log' &&
-      selectedTab !== 'activities'
-    ) {
-      setSelectedTab('activities');
-    }
-  }, [guidedTourStatus, guidedTourStep, selectedTab]);
 
   useEffect(() => {
     const isGuidedAddLog = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
@@ -297,17 +294,6 @@ export default function FarmDetailScreen() {
     }
     return actions;
   }, [colors.fertigation, colors.task, m3, profile?.consultant_organization_id]);
-
-  // Calculate stats
-  const totalRecords = useMemo(
-    () =>
-      (irrigationRecords?.length || 0) +
-      (sprayRecords?.length || 0) +
-      (harvestRecords?.length || 0) +
-      (expenseRecords?.length || 0) +
-      (fertigationRecords?.length || 0),
-    [irrigationRecords, sprayRecords, harvestRecords, expenseRecords, fertigationRecords],
-  );
 
   const seasonEndDates = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return [];
@@ -417,16 +403,43 @@ export default function FarmDetailScreen() {
       return taskDateStr <= todayStr;
     });
   }, [tasks]);
+  const openTasks = useMemo(() => tasks?.filter((t) => !t.completed) ?? [], [tasks]);
+
+  const seasonProgressPct = useMemo(() => {
+    const start =
+      lockedSeasonStartDate ??
+      (farm?.date_of_pruning ? parseDbDateToLocalDate(farm.date_of_pruning) : null);
+    const raw = activeSeasonRecord?.target_harvest_date;
+    const end = raw ? parseDbDateToLocalDate(raw) : null;
+    if (!start || !end) return null;
+    const startTime = start.getTime();
+    const endTime = end.getTime();
+    if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) return null;
+    const total = endTime - startTime;
+    if (total <= 0) return null;
+    const elapsed = now - startTime;
+    return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
+  }, [now, lockedSeasonStartDate, farm?.date_of_pruning, activeSeasonRecord?.target_harvest_date]);
+
+  const hasPhiConflict = useMemo(() => {
+    if (!isGrapeFarm) return false;
+    if (!activeSeasonRecord?.target_harvest_date) return false;
+    if (!earliestSafeHarvest?.earliestDate) return false;
+    const target = parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date);
+    const safe = parseDbDateToLocalDate(earliestSafeHarvest.earliestDate);
+    if (!target || !safe) return false;
+    return safe.getTime() > target.getTime();
+  }, [isGrapeFarm, activeSeasonRecord?.target_harvest_date, earliestSafeHarvest?.earliestDate]);
 
   // "Days after pruning" should always be based on the pruning date.
   const daysSincePruning = useMemo(() => {
     if (!farm?.date_of_pruning) return null;
     const pruningDate = parseDbDateToLocalDate(farm.date_of_pruning);
     if (!pruningDate) return null;
-    const today = new Date();
+    const today = new Date(now);
     const diffTime = today.getTime() - pruningDate.getTime();
     return Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-  }, [farm?.date_of_pruning]);
+  }, [farm?.date_of_pruning, now]);
 
   const totalWaterUsed = useMemo(() => {
     if (!irrigationRecords) return null;
@@ -1011,29 +1024,6 @@ export default function FarmDetailScreen() {
       params: {
         farmId: farm.id.toString(),
         initialTab: 'log',
-        tabs: 'log,task',
-      },
-    });
-  };
-
-  const handleAddTask = () => {
-    if (!farm?.id) return;
-    if (!activeSeasonRecord) {
-      Alert.alert(
-        t('farmDetails.seasons.errors.noActiveSeason'),
-        t('farmDetails.seasons.actions.startSeasonToContinue'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('farmDetails.actions.startSeason'), onPress: openStartSeasonForm },
-        ],
-      );
-      return;
-    }
-    router.push({
-      pathname: '/add-entry',
-      params: {
-        farmId: farm.id.toString(),
-        initialTab: 'task',
         tabs: 'log,task',
       },
     });
@@ -1727,7 +1717,14 @@ export default function FarmDetailScreen() {
                     {t('farmDetails.riskBlock.urgentTasks', { count: urgentTasks.length })}
                   </Text>
                   <Pressable
-                    onPress={() => setSelectedTab('tasks')}
+                    onPress={() => {
+                      if (!farm?.id) return;
+                      router.push({ pathname: '/tasks', params: { farmId: farm.id.toString() } });
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('farmDetails.a11y.viewUrgentTasks', {
+                      defaultValue: 'View urgent tasks',
+                    })}
                     style={{
                       paddingHorizontal: spacing[2],
                       paddingVertical: 2,
@@ -1750,7 +1747,7 @@ export default function FarmDetailScreen() {
             </View>
 
             {/* Weather Strip - Horizontal with dividers */}
-            {weather && (
+            {weather?.current && (
               <View
                 style={{
                   flexDirection: 'row',
@@ -1845,69 +1842,178 @@ export default function FarmDetailScreen() {
             )}
           </View>
 
-          {/* Stats Grid - 2-column with 40x40 icon circles */}
-          <View style={{ paddingHorizontal: spacing[5], marginTop: spacing[6] }}>
-            <View style={{ flexDirection: 'row', gap: spacing[3] }}>
-              {/* Log Entries Card */}
-              <Pressable
-                style={({ pressed: _pressed }) => ({
-                  flex: 1,
+          {/* Season Strip Card — progress bar from pruning to target harvest */}
+          {activeSeasonRecord && seasonProgressPct !== null && (
+            <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
+              <View
+                style={{
                   backgroundColor: colors.surface[100],
                   borderWidth: 1,
                   borderColor: colors.surface[300],
                   borderRadius: borderRadius.md,
                   padding: spacing[4],
-                })}
-                onPress={() => {
-                  if (!farmIdParam) return;
-                  router.push(`/logs?farmId=${encodeURIComponent(farmIdParam)}`);
                 }}
-                accessibilityRole="button"
               >
                 <View
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: spacing[2],
                   }}
                 >
-                  <UiSymbol name="document-text" size={20} color={m3.colorScheme.primary} />
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: fontWeight.bold,
+                      letterSpacing: 0.8,
+                      textTransform: 'uppercase',
+                      color: colors.surface[500],
+                    }}
+                  >
+                    {t('farmDetails.seasonStrip.title', { defaultValue: 'Season' })}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.surface[500] }}>
+                    {100 - seasonProgressPct}%{' '}
+                    {t('farmDetails.seasonStrip.toHarvest', { defaultValue: 'to harvest' })}
+                  </Text>
                 </View>
-                <Text
-                  style={{
-                    color: colors.surface[900],
-                    fontSize: 20,
-                    fontWeight: fontWeight.bold,
-                    lineHeight: 26,
-                  }}
-                >
-                  {totalRecords}
-                </Text>
-                <Text
-                  style={{
-                    color: colors.surface[500],
-                    fontSize: 12,
-                    lineHeight: 16,
-                  }}
-                >
-                  {t('farmDetails.stats.logEntriesTitle')}
-                </Text>
-                <Text
-                  style={{
-                    color: colors.surface[400],
-                    fontSize: 11,
-                    lineHeight: 14,
-                    marginTop: 2,
-                  }}
-                >
-                  {t('farmDetails.stats.recordsSubtitle')}
-                </Text>
-              </Pressable>
 
+                {/* Progress track with dot marker */}
+                <View style={{ height: 20, marginTop: spacing[4], position: 'relative' }}>
+                  {/* Empty track */}
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: 7,
+                      height: 6,
+                      backgroundColor: colors.surface[200],
+                      borderRadius: borderRadius.full,
+                    }}
+                  />
+                  {/* Filled portion */}
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 7,
+                      height: 6,
+                      width: `${seasonProgressPct}%`,
+                      backgroundColor: m3.colorScheme.primary,
+                      borderRadius: borderRadius.full,
+                    }}
+                  />
+                  {/* Current day marker dot */}
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: `${Math.min(seasonProgressPct, 97)}%`,
+                      top: 3,
+                      transform: [{ translateX: -7 }],
+                      width: 14,
+                      height: 14,
+                      borderRadius: 7,
+                      backgroundColor: colors.surface[100],
+                      borderWidth: 2,
+                      borderColor: colors.warning,
+                    }}
+                  />
+                </View>
+
+                {/* Milestone labels */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginTop: spacing[2],
+                  }}
+                >
+                  <View>
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontWeight: fontWeight.bold,
+                        letterSpacing: 0.5,
+                        textTransform: 'uppercase',
+                        color: colors.surface[500],
+                      }}
+                    >
+                      {t('farmDetails.seasonStrip.pruning', { defaultValue: 'Pruning' })}
+                    </Text>
+                    <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, marginTop: 2 }}>
+                      {effectiveSeasonStartDate
+                        ? formatDate(effectiveSeasonStartDate, { month: 'short', day: 'numeric' })
+                        : '—'}
+                    </Text>
+                  </View>
+                  {daysSincePruning !== null && (
+                    <View style={{ alignItems: 'center' }}>
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          fontWeight: fontWeight.bold,
+                          letterSpacing: 0.5,
+                          textTransform: 'uppercase',
+                          color: colors.surface[500],
+                        }}
+                      >
+                        {t('farmDetails.seasonStrip.today', { defaultValue: 'Today' })}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: fontWeight.bold,
+                          marginTop: 2,
+                          color: colors.warning,
+                        }}
+                      >
+                        {t('farmDetails.pruning.daysShort', { count: daysSincePruning })}
+                      </Text>
+                    </View>
+                  )}
+                  {activeSeasonRecord.target_harvest_date && (
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          fontWeight: fontWeight.bold,
+                          letterSpacing: 0.5,
+                          textTransform: 'uppercase',
+                          color: colors.surface[500],
+                        }}
+                      >
+                        {t('farmDetails.seasonStrip.target', { defaultValue: 'Target' })}
+                      </Text>
+                      <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, marginTop: 2 }}>
+                        {formatDate(
+                          parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ??
+                            new Date(),
+                          { month: 'short', day: 'numeric' },
+                        )}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Vital Signs — Soil Water + Weather */}
+          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: fontWeight.bold,
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                color: colors.surface[500],
+                marginBottom: spacing[2],
+              }}
+            >
+              {t('farmDetails.vitalSigns.title', { defaultValue: 'Vital signs' })}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: spacing[3] }}>
               {/* Soil Water Card */}
               <Pressable
                 style={({ pressed: _pressed }) => ({
@@ -1916,7 +2022,7 @@ export default function FarmDetailScreen() {
                   borderWidth: 1,
                   borderColor: colors.surface[300],
                   borderRadius: borderRadius.md,
-                  padding: spacing[4],
+                  padding: spacing[3],
                 })}
                 onPress={() => {
                   if (!farm?.id) return;
@@ -1929,58 +2035,157 @@ export default function FarmDetailScreen() {
               >
                 <View
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: colorWithOpacity(colors.irrigation[500], 0.12),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: spacing[2],
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                   }}
                 >
-                  <UiSymbol name="water" size={20} color={colors.irrigation[500]} />
-                </View>
-                <Text
-                  style={{
-                    color: colors.surface[900],
-                    fontSize: 20,
-                    fontWeight: fontWeight.bold,
-                    lineHeight: 26,
-                  }}
-                >
-                  {farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
                   <Text
                     style={{
-                      fontSize: 14,
-                      fontWeight: fontWeight.medium,
+                      fontSize: 10,
+                      fontWeight: fontWeight.bold,
+                      letterSpacing: 0.6,
+                      textTransform: 'uppercase',
                       color: colors.surface[500],
                     }}
                   >
-                    mm
+                    {t('farmDetails.stats.soilWaterTitle')}
                   </Text>
-                </Text>
+                  <UiSymbol name="water" size={14} color={colors.irrigation[500]} />
+                </View>
                 <Text
                   style={{
-                    color: colors.surface[500],
-                    fontSize: 12,
-                    lineHeight: 16,
+                    color:
+                      farm.remaining_water != null && farm.remaining_water >= 0
+                        ? colors.irrigation[500]
+                        : m3.colorScheme.error,
+                    fontSize: 20,
+                    fontWeight: fontWeight.bold,
+                    marginTop: spacing[1],
                   }}
                 >
-                  {t('farmDetails.stats.soilWaterTitle')}
+                  {farm.remaining_water != null ? `${farm.remaining_water.toFixed(1)} mm` : '--'}
                 </Text>
                 <Text
                   style={{
                     color: colors.surface[400],
                     fontSize: 11,
                     lineHeight: 14,
-                    marginTop: 2,
+                    marginTop: spacing[1],
                   }}
                 >
                   {waterUsageCaption}
                 </Text>
               </Pressable>
+
+              {/* Weather Card */}
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: colors.surface[100],
+                  borderWidth: 1,
+                  borderColor: colors.surface[300],
+                  borderRadius: borderRadius.md,
+                  padding: spacing[3],
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: fontWeight.bold,
+                      letterSpacing: 0.6,
+                      textTransform: 'uppercase',
+                      color: colors.surface[500],
+                    }}
+                  >
+                    {t('farmDetails.vitalSigns.weather', { defaultValue: 'Weather' })}
+                  </Text>
+                  <UiSymbol name="partly-sunny" size={14} color={colors.warning} />
+                </View>
+                {weather?.current ? (
+                  <>
+                    <Text
+                      style={{
+                        color: colors.surface[900],
+                        fontSize: 20,
+                        fontWeight: fontWeight.bold,
+                        marginTop: spacing[1],
+                      }}
+                    >
+                      {weather.current.temperature}°C
+                    </Text>
+                    <Text
+                      style={{
+                        color: colors.surface[400],
+                        fontSize: 11,
+                        lineHeight: 14,
+                        marginTop: spacing[1],
+                      }}
+                    >
+                      {weather.current.condition}
+                    </Text>
+                  </>
+                ) : (
+                  <Text
+                    style={{
+                      color: colors.surface[500],
+                      fontSize: 20,
+                      fontWeight: fontWeight.bold,
+                      marginTop: spacing[1],
+                    }}
+                  >
+                    --
+                  </Text>
+                )}
+              </View>
             </View>
           </View>
+
+          {/* PHI Conflict Banner — only shown when spray PHI pushes earliest safe harvest past target */}
+          {hasPhiConflict && earliestSafeHarvestDateLabel && (
+            <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[3] }}>
+              <View
+                style={{
+                  padding: spacing[3],
+                  backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.error, 0.3),
+                  borderRadius: borderRadius.md,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                }}
+              >
+                <UiSymbol name="warning" size={16} color={m3.colorScheme.error} />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.colorScheme.error,
+                    }}
+                  >
+                    {t('farmDetails.phiConflict.title', {
+                      defaultValue: 'Spray PHI delays harvest',
+                    })}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.surface[500], marginTop: 2 }}>
+                    {t('farmDetails.phiConflict.subtitle', {
+                      defaultValue: 'Earliest safe: {{date}} — review spray schedule',
+                      date: earliestSafeHarvestDateLabel,
+                    })}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
 
           {/* Workboard Section */}
           <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
@@ -2080,514 +2285,412 @@ export default function FarmDetailScreen() {
             </View>
           </View>
 
-          {/* Tabs - Segmented Control */}
-          <View style={{ paddingHorizontal: spacing[5], marginTop: spacing[6] }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                backgroundColor: colors.surface[200],
-                borderRadius: borderRadius.sm,
-                borderWidth: 1,
-                borderColor: colors.surface[300],
-                padding: 3,
-              }}
-            >
-              {(['activities', 'tasks'] as const).map((tab) => (
-                <Pressable
-                  key={tab}
-                  style={{ flex: 1, minWidth: 0 }}
-                  onPress={() => setSelectedTab(tab)}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    tab === 'activities'
-                      ? t('farmDetails.a11y.showActivities')
-                      : t('farmDetails.a11y.showTasks')
-                  }
-                >
-                  {({ pressed }) => {
-                    const selected = selectedTab === tab;
-                    const isFirst = tab === 'activities';
-                    const isLast = tab === 'tasks';
-                    return (
-                      <View
-                        style={{
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          paddingVertical: spacing[2] + 1,
-                          paddingHorizontal: spacing[2],
-                          backgroundColor: selected
-                            ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                            : 'transparent',
-                          borderRadius:
-                            isFirst && isLast
-                              ? borderRadius.sm
-                              : isFirst
-                                ? borderRadius.sm - 1
-                                : isLast
-                                  ? borderRadius.sm - 1
-                                  : 0,
-                          ...(selected
-                            ? {
-                                borderTopLeftRadius: isFirst ? borderRadius.sm - 1 : 0,
-                                borderBottomLeftRadius: isFirst ? borderRadius.sm - 1 : 0,
-                                borderTopRightRadius: isLast ? borderRadius.sm - 1 : 0,
-                                borderBottomRightRadius: isLast ? borderRadius.sm - 1 : 0,
-                                overflow: 'hidden',
-                              }
-                            : null),
-                        }}
-                      >
-                        <Text
-                          numberOfLines={isAndroid ? 2 : 1}
-                          ellipsizeMode={isAndroid ? 'clip' : 'tail'}
-                          style={{
-                            width: '100%',
-                            flexShrink: 1,
-                            fontSize: 14,
-                            fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
-                            color: selected ? colors.surface[900] : colors.surface[500],
-                            textAlign: 'center',
-                            maxWidth: '100%',
-                            ...(isAndroid
-                              ? {
-                                  includeFontPadding: true,
-                                  paddingBottom: 2,
-                                  paddingRight: 3,
-                                }
-                              : null),
-                          }}
-                        >
-                          {tab === 'activities'
-                            ? t('farmDetails.tabs.activities')
-                            : t('farmDetails.tabs.tasks')}
-                        </Text>
-                        <View
-                          pointerEvents="none"
-                          style={[
-                            StyleSheet.absoluteFillObject,
-                            {
-                              backgroundColor: pressed
-                                ? colorWithOpacity(
-                                    m3.colorScheme.onSurface,
-                                    m3.stateLayerOpacity.pressed,
-                                  )
-                                : 'transparent',
-                            },
-                          ]}
-                        />
-                      </View>
-                    );
-                  }}
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          {/* Tab Content */}
+          {/* Open Tasks Section */}
           <View
             style={{
               paddingHorizontal: spacing[4],
-              marginTop: spacing[4],
+              marginTop: spacing[6],
+            }}
+          >
+            {/* Section header */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: spacing[3],
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: fontWeight.bold,
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase',
+                    color: colors.surface[500],
+                  }}
+                >
+                  {t('farmDetails.sections.openTasks', { defaultValue: 'Open tasks' })}
+                </Text>
+                {openTasks.length > 0 && (
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: fontWeight.bold,
+                      color: colors.surface[500],
+                      marginLeft: 4,
+                    }}
+                  >
+                    · {openTasks.length}
+                  </Text>
+                )}
+              </View>
+              {farm?.id ? (
+                <Pressable
+                  onPress={() => {
+                    if (!farm?.id) return;
+                    router.push({
+                      pathname: '/tasks',
+                      params: { farmId: farm.id.toString() },
+                    });
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
+                  style={({ pressed }) => ({
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: spacing[1],
+                    borderRadius: m3.shape.cornerSmall,
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                      : 'transparent',
+                  })}
+                >
+                  <Text
+                    style={{
+                      color: m3.colorScheme.primary,
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    {t('farmDetails.actions.seeAllTasks')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+
+            {/* Task rows */}
+            {openTasks.length > 0 ? (
+              <View
+                style={{
+                  borderRadius: m3.shape.cornerLarge,
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  gap: spacing[3],
+                  padding: spacing[2],
+                }}
+              >
+                {openTasks.slice(0, OPEN_TASKS_PREVIEW_LIMIT).map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    showFarmName={false}
+                    onComplete={(item) => {
+                      if (!item.id) return;
+                      handleCompleteTask(item.id);
+                    }}
+                    onEdit={(item) => {
+                      setAddEntry({
+                        tabs: ['task'],
+                        initialTab: 'task',
+                        editingTask: item,
+                      });
+                      router.push({
+                        pathname: '/add-entry',
+                        params: { tabs: 'task', initialTab: 'task' },
+                      });
+                    }}
+                    onDelete={(item) => {
+                      if (!item.id) return;
+                      handleDeleteTask(item.id, item.title);
+                    }}
+                    onLogFromTask={(item) => handleLogFromTask(item)}
+                  />
+                ))}
+              </View>
+            ) : !isTasksLoading ? (
+              <View
+                style={{
+                  borderRadius: m3.shape.cornerLarge,
+                  alignItems: 'center',
+                  padding: spacing[8],
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                }}
+              >
+                <UiSymbol
+                  name="checkbox-outline"
+                  size={28}
+                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
+                />
+                <Text
+                  style={{
+                    color: m3.colorScheme.onSurfaceVariant,
+                    fontSize: fontSize.sm,
+                    textAlign: 'center',
+                    marginTop: spacing[2],
+                  }}
+                >
+                  {t('farmDetails.tasks.empty.title')}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          {/* Recent Logs Section */}
+          <View
+            style={{
+              paddingHorizontal: spacing[4],
+              marginTop: spacing[6],
               paddingBottom: spacing[8] + (showFab ? spacing[16] : bottomBarHeight + spacing[6]),
             }}
           >
-            {selectedTab === 'activities' ? (
-              <>
-                <View
+            {/* Section header */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: spacing[3],
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: spacing[3],
+                    fontSize: 11,
+                    fontWeight: fontWeight.bold,
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase',
+                    color: colors.surface[500],
                   }}
                 >
-                  <View style={{ flexShrink: 1, paddingRight: spacing[3], flexDirection: 'row' }}>
-                    <Text
-                      style={{
-                        ...m3.typography.titleMedium,
-                        color: m3.colorScheme.onSurface,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {t('farmDetails.tabs.activities')}
-                    </Text>
-                    <View
-                      style={{
-                        marginLeft: spacing[2],
-                        alignSelf: 'center',
-                        borderRadius: borderRadius.full,
-                        backgroundColor: m3.surface.surfaceContainerHigh,
-                        paddingHorizontal: spacing[2],
-                        paddingVertical: 2,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          ...m3.typography.labelSmall,
-                          color: m3.colorScheme.onSurfaceVariant,
-                        }}
-                      >
-                        {hasActiveLogTypeFilters
-                          ? `${recentLogs.length} ${t('common.filtered', { defaultValue: 'filtered' })}`
-                          : `${recentLogs.length}`}
-                      </Text>
-                    </View>
-                  </View>
-                  <Pressable
-                    onPress={() => {
-                      if (!farm?.id) return;
-                      router.push({
-                        pathname: '/logs',
-                        params: { farmId: farm.id.toString() },
-                      });
+                  {t('farmDetails.sections.recentLogs', { defaultValue: 'Recent logs' })}
+                </Text>
+                {allLogs.length > 0 && (
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: fontWeight.bold,
+                      color: colors.surface[500],
+                      marginLeft: 4,
                     }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t('farmDetails.actions.seeAllLogs')}. ${allLogs.length}`}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: spacing[1],
-                      borderRadius: m3.shape.cornerSmall,
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
-                    })}
                   >
-                    <Text
-                      style={{
-                        color: m3.colorScheme.primary,
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {t('farmDetails.actions.seeAllLogs')}
-                    </Text>
-                  </Pressable>
-                </View>
+                    ·{' '}
+                    {hasActiveLogTypeFilters
+                      ? `${filteredLogs.length} ${t('common.filtered', { defaultValue: 'filtered' })}`
+                      : allLogs.length}
+                  </Text>
+                )}
+              </View>
+              <Pressable
+                onPress={() => {
+                  if (!farm?.id) return;
+                  router.push({
+                    pathname: '/logs',
+                    params: { farmId: farm.id.toString() },
+                  });
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('farmDetails.actions.seeAllLogs')}. ${allLogs.length}`}
+                style={({ pressed }) => ({
+                  paddingHorizontal: spacing[2],
+                  paddingVertical: spacing[1],
+                  borderRadius: m3.shape.cornerSmall,
+                  backgroundColor: pressed
+                    ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                    : 'transparent',
+                })}
+              >
+                <Text
+                  style={{
+                    color: m3.colorScheme.primary,
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  {t('farmDetails.actions.seeAllLogs')}
+                </Text>
+              </Pressable>
+            </View>
 
-                {/* Filter Chips */}
-                <View style={{ marginBottom: spacing[4] }}>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ gap: spacing[2], paddingRight: spacing[2] }}
+            {/* Filter chips */}
+            <View style={{ marginBottom: spacing[3] }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: spacing[2], paddingRight: spacing[2] }}
+              >
+                <Pressable
+                  onPress={() => setSelectedLogTypes([])}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('farmDetails.a11y.filterAllLogs', {
+                    defaultValue: 'Show all log types',
+                  })}
+                  accessibilityState={{ selected: !hasActiveLogTypeFilters }}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    minHeight: 32,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[1],
+                    borderRadius: m3.shape.cornerMedium,
+                    backgroundColor: !hasActiveLogTypeFilters
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.14)
+                      : m3.surface.surfaceContainer,
+                    borderWidth: 1,
+                    borderColor: !hasActiveLogTypeFilters
+                      ? m3.colorScheme.primary
+                      : m3.colorScheme.outlineVariant,
+                    opacity: pressed ? 0.8 : 1,
+                  })}
+                >
+                  <UiSymbol
+                    name="line.3.horizontal.decrease.circle"
+                    size={12}
+                    color={
+                      !hasActiveLogTypeFilters
+                        ? m3.colorScheme.primary
+                        : m3.colorScheme.onSurfaceVariant
+                    }
+                  />
+                  <Text
+                    style={{
+                      marginLeft: spacing[1],
+                      fontSize: fontSize.sm,
+                      fontWeight: !hasActiveLogTypeFilters
+                        ? fontWeight.semibold
+                        : fontWeight.medium,
+                      color: !hasActiveLogTypeFilters
+                        ? m3.colorScheme.primary
+                        : m3.colorScheme.onSurface,
+                    }}
                   >
+                    {t('common.all', { defaultValue: 'All' })}
+                  </Text>
+                </Pressable>
+                {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
+                  const isSelected = selectedLogTypes.includes(logType.id);
+                  return (
                     <Pressable
-                      onPress={() => setSelectedLogTypes([])}
+                      key={logType.id}
+                      onPress={() => toggleLogTypeFilter(logType.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t(logType.labelKey)}
+                      accessibilityState={{ selected: isSelected }}
                       style={({ pressed }) => ({
                         flexDirection: 'row',
                         alignItems: 'center',
-                        minHeight: 36,
+                        minHeight: 32,
                         paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[1] + 1,
+                        paddingVertical: spacing[1],
                         borderRadius: m3.shape.cornerMedium,
-                        backgroundColor: !hasActiveLogTypeFilters
-                          ? colorWithOpacity(m3.colorScheme.primary, 0.14)
+                        backgroundColor: isSelected
+                          ? colorWithOpacity(logType.color, 0.14)
                           : m3.surface.surfaceContainer,
                         borderWidth: 1,
-                        borderColor: !hasActiveLogTypeFilters
-                          ? m3.colorScheme.primary
-                          : m3.colorScheme.outlineVariant,
+                        borderColor: isSelected ? logType.color : m3.colorScheme.outlineVariant,
                         opacity: pressed ? 0.8 : 1,
                       })}
                     >
-                      <UiSymbol
-                        name="line.3.horizontal.decrease.circle"
-                        size={12}
-                        color={
-                          !hasActiveLogTypeFilters
-                            ? m3.colorScheme.primary
-                            : m3.colorScheme.onSurfaceVariant
-                        }
-                      />
+                      <UiSymbol name={logType.icon} size={12} color={logType.color} />
                       <Text
                         style={{
                           marginLeft: spacing[1],
                           fontSize: fontSize.sm,
-                          fontWeight: !hasActiveLogTypeFilters
-                            ? fontWeight.semibold
-                            : fontWeight.medium,
-                          color: !hasActiveLogTypeFilters
-                            ? m3.colorScheme.primary
-                            : m3.colorScheme.onSurface,
+                          fontWeight: isSelected ? fontWeight.semibold : fontWeight.medium,
+                          color: isSelected ? logType.color : m3.colorScheme.onSurface,
                         }}
                       >
-                        {t('common.all', { defaultValue: 'All' })}
+                        {t(logType.labelKey)}
                       </Text>
                     </Pressable>
-                    {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
-                      const isSelected = selectedLogTypes.includes(logType.id);
-                      return (
-                        <Pressable
-                          key={logType.id}
-                          onPress={() => toggleLogTypeFilter(logType.id)}
-                          style={({ pressed }) => ({
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            minHeight: 36,
-                            paddingHorizontal: spacing[3],
-                            paddingVertical: spacing[1] + 1,
-                            borderRadius: m3.shape.cornerMedium,
-                            backgroundColor: isSelected
-                              ? colorWithOpacity(logType.color, 0.14)
-                              : m3.surface.surfaceContainer,
-                            borderWidth: 1,
-                            borderColor: isSelected ? logType.color : m3.colorScheme.outlineVariant,
-                            opacity: pressed ? 0.8 : 1,
-                          })}
-                        >
-                          <UiSymbol name={logType.icon} size={12} color={logType.color} />
-                          <Text
-                            style={{
-                              marginLeft: spacing[1],
-                              fontSize: fontSize.sm,
-                              fontWeight: isSelected ? fontWeight.semibold : fontWeight.medium,
-                              color: isSelected ? logType.color : m3.colorScheme.onSurface,
-                            }}
-                          >
-                            {t(logType.labelKey)}
-                          </Text>
-                        </Pressable>
-                      );
+                  );
+                })}
+                {hasActiveLogTypeFilters ? (
+                  <Pressable
+                    onPress={() => setSelectedLogTypes([])}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('farmDetails.a11y.clearLogTypeFilter', {
+                      defaultValue: 'Clear log type filter',
                     })}
-                    {hasActiveLogTypeFilters ? (
-                      <Pressable
-                        onPress={() => setSelectedLogTypes([])}
-                        style={({ pressed }) => ({
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          minHeight: 36,
-                          paddingHorizontal: spacing[3],
-                          paddingVertical: spacing[1] + 1,
-                          borderRadius: m3.shape.cornerMedium,
-                          backgroundColor: colorWithOpacity(
-                            m3.colorScheme.onSurface,
-                            m3.stateLayerOpacity.hover,
-                          ),
-                          borderWidth: 1,
-                          borderColor: m3.colorScheme.outlineVariant,
-                          opacity: pressed ? 0.8 : 1,
-                        })}
-                      >
-                        <UiSymbol name="xmark" size={11} color={m3.colorScheme.onSurfaceVariant} />
-                        <Text
-                          style={{
-                            marginLeft: spacing[1],
-                            fontSize: fontSize.sm,
-                            fontWeight: fontWeight.medium,
-                            color: m3.colorScheme.onSurface,
-                          }}
-                        >
-                          {t('common.clear', { defaultValue: 'Clear' })}
-                        </Text>
-                      </Pressable>
-                    ) : null}
-                  </ScrollView>
-                </View>
-
-                {/* Recent Activity Rows */}
-                {recentLogs.length > 0 ? (
-                  <View
-                    style={{
-                      borderRadius: m3.shape.cornerLarge,
-                      padding: spacing[2],
-                      backgroundColor: m3.surface.surfaceContainerLow,
-                      borderWidth: 1,
-                      borderColor: m3.colorScheme.outlineVariant,
-                      gap: spacing[2],
-                    }}
-                  >
-                    {recentLogs.map((log) => (
-                      <TimelineLogCard
-                        key={log.id}
-                        type={log.type}
-                        date={log.date}
-                        data={log.data}
-                        farmName={farm?.name ?? undefined}
-                        onEdit={() => handleEditActivity(log)}
-                        onDelete={() => handleDeleteActivity(log)}
-                        onPress={() => handleEditActivity(log)}
-                      />
-                    ))}
-                  </View>
-                ) : (
-                  <View
-                    style={{
-                      borderRadius: m3.shape.cornerLarge,
-                      alignItems: 'center',
-                      padding: spacing[10],
-                      backgroundColor: m3.surface.surfaceContainerLow,
-                      borderWidth: 1,
-                      borderColor: m3.colorScheme.outlineVariant,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: borderRadius.full,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: spacing[4],
-                        backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-                      }}
-                    >
-                      <UiSymbol
-                        name="doc.text"
-                        size={32}
-                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                      />
-                    </View>
-                    <Text
-                      style={{
-                        color: m3.colorScheme.onSurface,
-                        fontSize: fontSize.base,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {selectedLogTypes.length > 0
-                        ? t('farmDetails.activities.empty.filteredTitle')
-                        : t('farmDetails.activities.empty.title')}
-                    </Text>
-                    <Text
-                      style={{
-                        color: m3.colorScheme.onSurfaceVariant,
-                        fontSize: fontSize.sm,
-                        textAlign: 'center',
-                        marginTop: spacing[1],
-                      }}
-                    >
-                      {selectedLogTypes.length > 0
-                        ? t('farmDetails.activities.empty.filteredSubtitle')
-                        : t('farmDetails.activities.empty.subtitle')}
-                    </Text>
-                  </View>
-                )}
-              </>
-            ) : (
-              <>
-                {farm?.id ? (
-                  <View
-                    style={{
+                    style={({ pressed }) => ({
                       flexDirection: 'row',
-                      justifyContent: 'flex-end',
-                      marginBottom: spacing[3],
-                    }}
-                  >
-                    <Pressable
-                      onPress={() => {
-                        if (!farm?.id) return;
-                        router.push({
-                          pathname: '/tasks',
-                          params: { farmId: farm.id.toString() },
-                        });
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
-                      style={({ pressed }) => ({
-                        paddingHorizontal: spacing[2],
-                        paddingVertical: spacing[1],
-                        borderRadius: m3.shape.cornerMedium,
-                        backgroundColor: pressed
-                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                          : 'transparent',
-                      })}
-                    >
-                      <Text
-                        style={{
-                          color: m3.colorScheme.primary,
-                          fontSize: fontSize.sm,
-                          fontWeight: fontWeight.semibold,
-                        }}
-                      >
-                        {t('farmDetails.actions.seeAllTasks')}
-                      </Text>
-                    </Pressable>
-                  </View>
-                ) : null}
-                {tasks && tasks.length > 0 ? (
-                  <View style={{ gap: spacing[3] }}>
-                    {tasks.map((task) => (
-                      <TaskRow
-                        key={task.id}
-                        task={task}
-                        showFarmName={false}
-                        onComplete={(item) => {
-                          if (!item.id) return;
-                          handleCompleteTask(item.id);
-                        }}
-                        onEdit={(item) => {
-                          setAddEntry({
-                            tabs: ['task'],
-                            initialTab: 'task',
-                            editingTask: item,
-                          });
-                          router.push({
-                            pathname: '/add-entry',
-                            params: { tabs: 'task', initialTab: 'task' },
-                          });
-                        }}
-                        onDelete={(item) => {
-                          if (!item.id) return;
-                          handleDeleteTask(item.id, item.title);
-                        }}
-                        onLogFromTask={(item) => handleLogFromTask(item)}
-                      />
-                    ))}
-                  </View>
-                ) : (
-                  <View
-                    style={{
-                      borderRadius: m3.shape.cornerLarge,
                       alignItems: 'center',
-                      padding: spacing[10],
-                      backgroundColor: m3.surface.surfaceContainerLow,
+                      minHeight: 32,
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[1],
+                      borderRadius: m3.shape.cornerMedium,
+                      backgroundColor: colorWithOpacity(
+                        m3.colorScheme.onSurface,
+                        m3.stateLayerOpacity.hover,
+                      ),
                       borderWidth: 1,
                       borderColor: m3.colorScheme.outlineVariant,
-                    }}
+                      opacity: pressed ? 0.8 : 1,
+                    })}
                   >
-                    <View
-                      style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: borderRadius.full,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: spacing[4],
-                        backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-                      }}
-                    >
-                      <UiSymbol
-                        name="checkbox-outline"
-                        size={32}
-                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                      />
-                    </View>
+                    <UiSymbol name="xmark" size={11} color={m3.colorScheme.onSurfaceVariant} />
                     <Text
                       style={{
-                        color: m3.colorScheme.onSurface,
-                        fontSize: fontSize.base,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {t('farmDetails.tasks.empty.title')}
-                    </Text>
-                    <Text
-                      style={{
-                        color: m3.colorScheme.onSurfaceVariant,
+                        marginLeft: spacing[1],
                         fontSize: fontSize.sm,
-                        textAlign: 'center',
-                        marginTop: spacing[1],
+                        fontWeight: fontWeight.medium,
+                        color: m3.colorScheme.onSurface,
                       }}
                     >
-                      {showFab
-                        ? t('farmDetails.tasks.empty.subtitleAndroid')
-                        : t('farmDetails.tasks.empty.subtitleIos')}
+                      {t('common.clear', { defaultValue: 'Clear' })}
                     </Text>
-                  </View>
-                )}
-              </>
+                  </Pressable>
+                ) : null}
+              </ScrollView>
+            </View>
+
+            {/* Log rows */}
+            {recentLogs.length > 0 ? (
+              <View
+                style={{
+                  borderRadius: m3.shape.cornerLarge,
+                  padding: spacing[2],
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  gap: spacing[2],
+                }}
+              >
+                {recentLogs.map((log) => (
+                  <TimelineLogCard
+                    key={log.id}
+                    type={log.type}
+                    date={log.date}
+                    data={log.data}
+                    farmName={farm?.name ?? undefined}
+                    onEdit={() => handleEditActivity(log)}
+                    onDelete={() => handleDeleteActivity(log)}
+                    onPress={() => handleEditActivity(log)}
+                  />
+                ))}
+              </View>
+            ) : (
+              <View
+                style={{
+                  borderRadius: m3.shape.cornerLarge,
+                  alignItems: 'center',
+                  padding: spacing[8],
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                }}
+              >
+                <UiSymbol
+                  name="doc.text"
+                  size={28}
+                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
+                />
+                <Text
+                  style={{
+                    color: m3.colorScheme.onSurfaceVariant,
+                    fontSize: fontSize.sm,
+                    textAlign: 'center',
+                    marginTop: spacing[2],
+                  }}
+                >
+                  {selectedLogTypes.length > 0
+                    ? t('farmDetails.activities.empty.filteredSubtitle')
+                    : t('farmDetails.activities.empty.subtitle')}
+                </Text>
+              </View>
             )}
           </View>
         </ScrollView>
@@ -3408,11 +3511,7 @@ export default function FarmDetailScreen() {
       {/* Primary action */}
       {showFab ? (
         <GuidedTourTarget
-          targetId={
-            selectedTab === 'activities'
-              ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY
-              : GUIDED_TOUR_TARGET_IDS.INACTIVE_TASK_TARGET
-          }
+          targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}
           style={{
             position: 'absolute',
             bottom: spacing[6] + insets.bottom,
@@ -3422,13 +3521,9 @@ export default function FarmDetailScreen() {
           }}
         >
           <Pressable
-            onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
+            onPress={handleAddActivity}
             accessibilityRole="button"
-            accessibilityLabel={
-              selectedTab === 'activities'
-                ? t('farmDetails.actions.addActivity')
-                : t('tasks.cta.addTask')
-            }
+            accessibilityLabel={t('farmDetails.actions.addActivity')}
             style={{
               width: '100%',
               height: '100%',
@@ -3472,21 +3567,8 @@ export default function FarmDetailScreen() {
             borderTopColor: m3.colorScheme.outlineVariant,
           }}
         >
-          <GuidedTourTarget
-            targetId={
-              selectedTab === 'activities'
-                ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY
-                : GUIDED_TOUR_TARGET_IDS.INACTIVE_TASK_TARGET
-            }
-          >
-            <Button
-              title={
-                selectedTab === 'activities'
-                  ? t('farmDetails.actions.addActivity')
-                  : t('tasks.cta.addTask')
-              }
-              onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
-            />
+          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}>
+            <Button title={t('farmDetails.actions.addActivity')} onPress={handleAddActivity} />
           </GuidedTourTarget>
         </View>
       )}

@@ -27,7 +27,6 @@ export const GUIDED_TOUR_TARGET_IDS = {
   ADD_LOG_FERTIGATION_DETAILS: 'guided_tour:add_log_fertigation_details',
   ADD_LOG_ADD_ENTRY: 'guided_tour:add_log_add_entry',
   ADD_LOG_SAVE: 'guided_tour:add_log_save',
-  INACTIVE_TASK_TARGET: 'guided_tour:inactive_task_target',
   START_SEASON_SHEET: 'guided_tour:start_season_sheet',
   START_SEASON_START_DATE: 'guided_tour:start_season_start_date',
   START_SEASON_TARGET_DATE: 'guided_tour:start_season_target_date',
