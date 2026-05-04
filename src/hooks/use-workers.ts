@@ -24,6 +24,7 @@ import {
   type TemporaryWorkerEntryInsert,
 } from '../types';
 import { resolveSeasonIdForDate } from '../lib/season-context';
+import { formatLocalDate } from '../utils/worker-analytics';
 
 // ============================================================
 // MARK: - Helper
@@ -146,12 +147,15 @@ export function useAllWorkerAttendance() {
     queryKey: queryKeys.workerAttendance.listAll(),
     queryFn: async (): Promise<WorkerAttendance[]> => {
       const userId = await getUserId();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+      const cutoff = formatLocalDate(thirtyDaysAgo);
 
-      // Use inner join through workers table to get attendance for user's workers
       const { data, error } = await supabase
         .from(TABLES.WORKER_ATTENDANCE)
         .select('*, workers!inner(user_id)')
         .eq('workers.user_id', userId)
+        .gte('date', cutoff)
         .order('date', { ascending: false });
 
       if (error) throw error;

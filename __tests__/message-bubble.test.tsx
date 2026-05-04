@@ -89,20 +89,20 @@ describe('MessageBubble', () => {
 
   it('renders typing indicator when isLoading is true (for assistant message)', () => {
     const message = makeMessage({ role: 'assistant', content: '' });
-    const { getByTestId } = render(<MessageBubble message={message} isLoading={true} />);
-    expect(getByTestId('typing-indicator')).toBeTruthy();
+    const { getByText } = render(<MessageBubble message={message} isLoading={true} />);
+    expect(getByText('assistant.chat.thinking')).toBeTruthy();
   });
 
   it('does not render typing indicator when isLoading is false', () => {
     const message = makeMessage({ role: 'assistant', content: 'Done' });
-    const { queryByTestId } = render(<MessageBubble message={message} isLoading={false} />);
-    expect(queryByTestId('typing-indicator')).toBeNull();
+    const { queryByText } = render(<MessageBubble message={message} isLoading={false} />);
+    expect(queryByText('assistant.chat.thinking')).toBeNull();
   });
 
   it('does not render typing indicator for user messages', () => {
     const message = makeMessage({ role: 'user', content: 'Still typing' });
-    const { queryByTestId } = render(<MessageBubble message={message} isLoading={true} />);
-    expect(queryByTestId('typing-indicator')).toBeNull();
+    const { queryByText } = render(<MessageBubble message={message} isLoading={true} />);
+    expect(queryByText('assistant.chat.thinking')).toBeNull();
   });
 
   it('renders user message without Markdown component', () => {
@@ -207,9 +207,9 @@ describe('MessageBubble safety warning (VAL-CROSS-012)', () => {
 });
 
 describe('LoadingBubble', () => {
-  it('renders typing indicator', () => {
-    const { getByTestId } = render(<LoadingBubble />);
-    expect(getByTestId('typing-indicator')).toBeTruthy();
+  it('renders loading indicator', () => {
+    const { getByLabelText } = render(<LoadingBubble />);
+    expect(getByLabelText('assistant.chat.thinking')).toBeTruthy();
   });
 
   it('has accessibility label', () => {
