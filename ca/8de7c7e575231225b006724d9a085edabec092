@@ -1,0 +1,23 @@
+src/utils/worker-analytics.ts
+  13b73779385df335 101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "ca8de7c7e575231225b006724d9a085edabec092",
+  "prompts": {
+    "13b73779385df335": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5c877c8-4d97-4420-9af6-8c6afd24f07f",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 31,
+      "total_deletions": 1,
+      "accepted_lines": 31,
+      "overriden_lines": 0
+    }
+  }
+}
