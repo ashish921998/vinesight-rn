@@ -1,0 +1,27 @@
+src/components/modals/worker-settlement-modal.tsx
+  13b73779385df335 284,289-292,295-298,336-342,363,384
+src/hooks/use-workers.ts
+  13b73779385df335 151-154
+app/(tabs)/workers.tsx
+  13b73779385df335 56-57,107,376-378
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "9d826acb6e14904e8d5911ce6c5fc2c8344cd3e2",
+  "prompts": {
+    "13b73779385df335": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a5c877c8-4d97-4420-9af6-8c6afd24f07f",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 9,
+      "accepted_lines": 28,
+      "overriden_lines": 2
+    }
+  }
+}
