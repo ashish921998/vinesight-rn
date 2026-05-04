@@ -72,6 +72,7 @@ export default function ExploreScreen() {
   // Global search state
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [today, setToday] = useState(() => new Date());
 
   useEffect(() => {
     if (
@@ -178,6 +179,7 @@ export default function ExploreScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      setToday(new Date());
       return () => {
         setSearchQuery('');
         setIsSearchFocused(false);
@@ -327,6 +329,7 @@ export default function ExploreScreen() {
       <View style={{ paddingHorizontal: spacing[4], marginBottom: spacing[3] }}>
         <FarmCard
           farm={item}
+          today={today}
           onPress={() => handleFarmPress(item)}
           onEdit={() => handleEditFarm(item)}
           onDelete={() => handleDeleteFarm(item)}

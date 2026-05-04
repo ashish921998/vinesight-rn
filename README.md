@@ -52,11 +52,13 @@ vinesight-rn/
 ├── src/
 │   ├── components/         # Reusable UI components
 │   ├── hooks/              # Custom React hooks
+│   ├── i18n/               # Localization strings (EN, HI, MR)
 │   ├── lib/                # Library configurations (Supabase client)
 │   ├── stores/             # Zustand stores
 │   ├── types/              # TypeScript types
 │   ├── utils/              # Utility functions
 │   └── styles/             # Design system tokens
+├── __tests__/              # Jest unit tests (components, i18n)
 ├── assets/                 # Static assets
 └── metro.config.js         # Metro bundler config
 ```
@@ -69,6 +71,7 @@ vinesight-rn/
 - **Attendance Tracking**: Worker attendance management.
 - **Task Management**: Farm-specific tasks and scheduling.
 - **Monitoring**: Water level monitoring and lab test tracking.
+- **Season Timeline**: Farm cards show a visual pruning-to-harvest progress bar with milestone dots, day counter, harvest estimate, and urgency accent (red/green) when water balance is low. Farms needing attention sort to the top.
 
 ## Development
 

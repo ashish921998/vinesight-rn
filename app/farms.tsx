@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,15 +16,45 @@ import {
 import { useRouter } from 'expo-router';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useFarms, useDeleteFarm, useFabBottomPosition } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import type { Farm } from '@/types';
+import { isLowWater } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { formatNumber } from '@/i18n/format';
 import { useM3 } from '@/styles/use-theme';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
+
+function FarmsSummaryLine({
+  farms,
+  m3,
+  t,
+  style,
+}: {
+  farms: Farm[];
+  m3: ReturnType<typeof useM3>;
+  t: TFunction;
+  style?: TextStyle;
+}) {
+  const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0);
+  const needsAttentionCount = farms.filter(isLowWater).length;
+  return (
+    <Text style={[{ fontSize: 13, fontWeight: fontWeight.medium, lineHeight: 16 }, style]}>
+      <Text style={{ color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7) }}>
+        {`${t('farms.summary.count', { count: farms.length })} · ${t('farms.summary.area', { value: formatNumber(totalArea, { maximumFractionDigits: 1 }) })}`}
+      </Text>
+      {needsAttentionCount > 0 && (
+        <Text style={{ color: m3.colorScheme.error, fontWeight: fontWeight.semibold }}>
+          {` · ${t('farms.summary.needsAttention', { count: needsAttentionCount })}`}
+        </Text>
+      )}
+    </Text>
+  );
+}
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -92,10 +122,11 @@ const SearchHeader = React.memo<SearchHeaderProps>(
           {/* Screen Title */}
           <Text
             style={{
-              fontSize: 26,
+              fontSize: 28,
               fontWeight: fontWeight.bold,
               color: m3.colorScheme.onSurface,
-              lineHeight: 32,
+              letterSpacing: -0.4,
+              lineHeight: 34,
             }}
           >
             {t('farms.title', { defaultValue: 'Farms' })}
@@ -147,20 +178,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
 
         {/* Summary Line */}
         {farms && farms.length > 0 && !showSearchBar && (
-          <Text
-            style={{
-              fontSize: 13,
-              color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
-              fontWeight: fontWeight.medium,
-              lineHeight: 16,
-              paddingBottom: spacing[3],
-            }}
-          >
-            {(() => {
-              const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1);
-              return `${t('farms.summary.count', { count: farms.length })} · ${t('farms.summary.area', { value: totalArea })}`;
-            })()}
-          </Text>
+          <FarmsSummaryLine farms={farms} m3={m3} t={t} style={{ paddingBottom: spacing[3] }} />
         )}
 
         {/* Search Bar (shown when focused or has query) */}
@@ -233,6 +251,7 @@ export default function FarmsScreen() {
   const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [today, setToday] = useState(() => new Date());
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchQuery(text);
@@ -248,6 +267,7 @@ export default function FarmsScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      setToday(new Date());
       return () => {
         setSearchQuery('');
         setIsSearchFocused(false);
@@ -255,77 +275,117 @@ export default function FarmsScreen() {
     }, []),
   );
 
-  // Filter farms based on search query
+  // Midnight tick — keeps `today` current if the screen stays open across midnight.
+  // useFocusEffect handles focus/resume; this handles the in-session day rollover.
+  useEffect(() => {
+    function msUntilMidnight(): number {
+      const now = new Date();
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+      return midnight.getTime() - now.getTime();
+    }
+
+    let timer: ReturnType<typeof setTimeout>;
+
+    function scheduleNextTick() {
+      timer = setTimeout(() => {
+        setToday(new Date());
+        scheduleNextTick();
+      }, msUntilMidnight());
+    }
+
+    scheduleNextTick();
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Filter farms based on search query, sorted urgency-first (low water first)
   const filteredFarms = useMemo(() => {
     if (!farms) return [];
-    if (!searchQuery.trim()) return farms;
-
     const query = searchQuery.toLowerCase().trim();
-    return farms.filter(
-      (farm) =>
-        farm.name.toLowerCase().includes(query) ||
-        farm.crop?.toLowerCase().includes(query) ||
-        farm.crop_variety?.toLowerCase().includes(query) ||
-        farm.region?.toLowerCase().includes(query),
-    );
+    const filtered = query
+      ? farms.filter(
+          (farm) =>
+            farm.name.toLowerCase().includes(query) ||
+            farm.crop?.toLowerCase().includes(query) ||
+            farm.crop_variety?.toLowerCase().includes(query) ||
+            farm.region?.toLowerCase().includes(query),
+        )
+      : farms;
+    return [...filtered].sort((a, b) => {
+      const aUrgent = isLowWater(a) ? 1 : 0;
+      const bUrgent = isLowWater(b) ? 1 : 0;
+      return bUrgent - aUrgent;
+    });
   }, [farms, searchQuery]);
 
-  const handleFarmPress = (farm: Farm) => {
-    if (typeof farm.id !== 'number') return;
-    router.push(`/farm/${farm.id}`);
-  };
+  const handleFarmPress = useCallback(
+    (farm: Farm) => {
+      if (typeof farm.id !== 'number') return;
+      router.push(`/farm/${farm.id}`);
+    },
+    [router],
+  );
 
-  const handleAddFarm = () => {
+  const handleAddFarm = useCallback(() => {
     router.push('/farm/add');
-  };
+  }, [router]);
 
-  const handleEditFarm = (farm: Farm) => {
-    if (typeof farm.id !== 'number') return;
-    router.push(`/farm/${farm.id}/edit`);
-  };
+  const handleEditFarm = useCallback(
+    (farm: Farm) => {
+      if (typeof farm.id !== 'number') return;
+      router.push(`/farm/${farm.id}/edit`);
+    },
+    [router],
+  );
 
-  const handleDeleteFarm = (farm: Farm) => {
-    const farmId = farm.id;
-    if (typeof farmId !== 'number') return;
-    Alert.alert(
-      t('farmDetails.deleteFarmTitle'),
-      t('farmDetails.deleteFarmBody', { name: farm.name }),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteFarm.mutateAsync(farmId);
-            } catch (error: unknown) {
-              const errorMessage =
-                error instanceof Error ? error.message : t('farmDetails.errors.deleteFarmFailed');
-              Alert.alert(t('common.error'), errorMessage);
-            }
+  const handleDeleteFarm = useCallback(
+    (farm: Farm) => {
+      const farmId = farm.id;
+      if (typeof farmId !== 'number') return;
+      Alert.alert(
+        t('farmDetails.deleteFarmTitle'),
+        t('farmDetails.deleteFarmBody', { name: farm.name }),
+        [
+          {
+            text: t('common.cancel'),
+            style: 'cancel',
           },
-        },
-      ],
-    );
-  };
+          {
+            text: t('common.delete'),
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteFarm.mutateAsync(farmId);
+              } catch (error: unknown) {
+                const errorMessage =
+                  error instanceof Error ? error.message : t('farmDetails.errors.deleteFarmFailed');
+                Alert.alert(t('common.error'), errorMessage);
+              }
+            },
+          },
+        ],
+      );
+    },
+    [t, deleteFarm],
+  );
 
-  const renderFarm = ({ item }: { item: Farm }) => (
-    <View
-      style={{
-        paddingHorizontal: spacing[4],
-        marginBottom: spacing[3],
-      }}
-    >
-      <FarmCard
-        farm={item}
-        onPress={() => handleFarmPress(item)}
-        onEdit={() => handleEditFarm(item)}
-        onDelete={() => handleDeleteFarm(item)}
-      />
-    </View>
+  const renderFarm = useCallback(
+    ({ item }: { item: Farm }) => (
+      <View
+        style={{
+          paddingHorizontal: spacing[4],
+          marginBottom: spacing[3],
+        }}
+      >
+        <FarmCard
+          farm={item}
+          today={today}
+          onPress={() => handleFarmPress(item)}
+          onEdit={() => handleEditFarm(item)}
+          onDelete={() => handleDeleteFarm(item)}
+        />
+      </View>
+    ),
+    [today, handleFarmPress, handleEditFarm, handleDeleteFarm],
   );
 
   const renderEmpty = () => {
