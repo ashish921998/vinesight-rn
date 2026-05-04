@@ -1,0 +1,23 @@
+app/farm/[id].tsx
+  abee3024cd8224f3 99-101,185,411-412,445,1893,1905,1912,2317,2326,2364,2376,2474-2475,2519-2520,2522-2523,2571-2573,2606-2607,2609
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "8f70e83b310af51fb53c96ef6a02e782de78d6c7",
+  "prompts": {
+    "abee3024cd8224f3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9df3fd3c-31d4-425c-a4f0-dcabbd7ad927",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 10,
+      "accepted_lines": 17,
+      "overriden_lines": 0
+    }
+  }
+}
