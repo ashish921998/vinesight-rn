@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -274,6 +274,28 @@ export default function FarmsScreen() {
       };
     }, []),
   );
+
+  // Midnight tick — keeps `today` current if the screen stays open across midnight.
+  // useFocusEffect handles focus/resume; this handles the in-session day rollover.
+  useEffect(() => {
+    function msUntilMidnight(): number {
+      const now = new Date();
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+      return midnight.getTime() - now.getTime();
+    }
+
+    let timer: ReturnType<typeof setTimeout>;
+
+    function scheduleNextTick() {
+      timer = setTimeout(() => {
+        setToday(new Date());
+        scheduleNextTick();
+      }, msUntilMidnight());
+    }
+
+    scheduleNextTick();
+    return () => clearTimeout(timer);
+  }, []);
 
   // Filter farms based on search query, sorted urgency-first (low water first)
   const filteredFarms = useMemo(() => {
