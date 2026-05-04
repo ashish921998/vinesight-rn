@@ -81,21 +81,6 @@ interface WorkboardAction {
   route?: string;
 }
 
-function formatDdMmmYyyy(date: Date, locale?: string): string {
-  const parts = new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).formatToParts(date);
-  const day =
-    parts.find((part) => part.type === 'day')?.value ?? String(date.getDate()).padStart(2, '0');
-  const month =
-    parts.find((part) => part.type === 'month')?.value ??
-    new Intl.DateTimeFormat(locale, { month: 'short' }).format(date);
-  const year = parts.find((part) => part.type === 'year')?.value ?? String(date.getFullYear());
-  return `${day} ${month} ${year}`;
-}
-
 const NOW_TICK_MS = 60_000;
 const OPEN_TASKS_PREVIEW_LIMIT = 5;
 
@@ -458,6 +443,49 @@ export default function FarmDetailScreen() {
       0,
     );
   }, [irrigationRecords, seasonMetricsStartDate]);
+
+  const seasonExpenseTotal = useMemo(() => {
+    if (!expenseRecords) return null;
+    const activeStartIso = seasonMetricsStartDate ? formatLocalDate(seasonMetricsStartDate) : null;
+    const scopedExpenseRecords =
+      activeStartIso === null
+        ? expenseRecords
+        : expenseRecords.filter((record) => {
+            const recordDate = parseDbDateToLocalDate(record.date);
+            if (!recordDate) return false;
+            return formatLocalDate(recordDate) >= activeStartIso;
+          });
+    return scopedExpenseRecords.reduce((sum, record) => sum + (record.cost || 0), 0);
+  }, [expenseRecords, seasonMetricsStartDate]);
+
+  const seasonHarvestQuantity = useMemo(() => {
+    if (!harvestRecords) return null;
+    const activeStartIso = seasonMetricsStartDate ? formatLocalDate(seasonMetricsStartDate) : null;
+    const scopedHarvestRecords =
+      activeStartIso === null
+        ? harvestRecords
+        : harvestRecords.filter((record) => {
+            const recordDate = parseDbDateToLocalDate(record.date);
+            if (!recordDate) return false;
+            return formatLocalDate(recordDate) >= activeStartIso;
+          });
+    return scopedHarvestRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+  }, [harvestRecords, seasonMetricsStartDate]);
+
+  const formatCurrencyCompact = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return '—';
+    return new Intl.NumberFormat(i18n.language, {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: value >= 1000 ? 0 : 2,
+    }).format(value);
+  };
+
+  const formatHarvestQuantity = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return '—';
+    if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)} t`;
+    return `${value.toFixed(value >= 100 ? 0 : 1)} kg`;
+  };
 
   const formatWaterUsage = (value: number | null | undefined) => {
     if (value === null || value === undefined) return t('farmDetails.water.noIrrigationLoggedYet');
@@ -1383,22 +1411,31 @@ export default function FarmDetailScreen() {
             >
               {farm.name}
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.xs }}>
-                {farm.crop_variety || farm.crop}
-              </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: 1,
+              }}
+            >
               <Text
-                style={{
-                  color: m3.colorScheme.onSurfaceVariant,
-                  fontSize: fontSize.xs,
-                  marginHorizontal: spacing[1],
-                }}
+                numberOfLines={1}
+                style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.xs }}
               >
-                •
+                {farm.region ||
+                  farm.location_name ||
+                  t('farmDetails.header.locationUnknown', { defaultValue: 'Location not set' })}
+                {' · '}
+                {farm.crop_variety || farm.crop}
+                {daysSincePruning !== null
+                  ? ` · ${t('farmDetails.pruning.daysShort', { count: daysSincePruning })}`
+                  : ''}
               </Text>
               <View
                 style={{
-                  backgroundColor: m3.colorScheme.primary,
+                  marginLeft: spacing[2],
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                   flexDirection: 'row',
                   alignItems: 'center',
                   paddingHorizontal: spacing[2],
@@ -1406,18 +1443,25 @@ export default function FarmDetailScreen() {
                   borderRadius: borderRadius.full,
                 }}
               >
-                <UiSymbol name="resize" size={10} color={m3.colorScheme.onPrimary} />
+                <View
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 2,
+                    backgroundColor: m3.colorScheme.primary,
+                    marginRight: spacing[1],
+                  }}
+                />
                 <Text
                   style={{
-                    color: m3.colorScheme.onPrimary,
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.bold,
-                    marginLeft: spacing[1],
+                    color: m3.colorScheme.primary,
+                    fontSize: 10,
+                    fontWeight: fontWeight.semibold,
                   }}
                 >
-                  {farm.area != null
-                    ? t('farmDetails.header.areaAcres', { value: farm.area.toFixed(1) })
-                    : t('farmDetails.header.areaAcresUnknown')}
+                  {activeSeasonRecord
+                    ? t('farmDetails.seasons.activeBadge', { defaultValue: 'Active' })
+                    : t('farmDetails.seasons.inactiveBadge', { defaultValue: 'No season' })}
                 </Text>
               </View>
             </View>
@@ -1484,364 +1528,6 @@ export default function FarmDetailScreen() {
           }
           showsVerticalScrollIndicator={false}
         >
-          {/* Farm Identity Card - Green Primary Background */}
-          <View
-            style={{
-              marginHorizontal: 0,
-              borderBottomLeftRadius: borderRadius.lg,
-              borderBottomRightRadius: borderRadius.lg,
-              overflow: 'hidden',
-              backgroundColor: m3.colorScheme.primary,
-              paddingHorizontal: spacing[5],
-              paddingTop: spacing[3],
-            }}
-          >
-            {/* Season + Pruning Summary */}
-            <View style={{ paddingBottom: spacing[4] }}>
-              {/* Season Status Row */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <UiSymbol
-                  name={
-                    activeSeasonRecord ? 'calendar.badge.clock' : 'calendar.badge.exclamationmark'
-                  }
-                  size={12}
-                  color={colorWithOpacity('#ffffff', 0.65)}
-                />
-                <Text
-                  style={{
-                    marginLeft: spacing[1],
-                    color: activeSeasonRecord ? colorWithOpacity('#ffffff', 0.65) : colors.warning,
-                    fontSize: 12,
-                  }}
-                >
-                  {activeSeasonRecord
-                    ? t('farmDetails.seasons.statusActive', {
-                        start: (() => {
-                          const parsed = parseDbDateToLocalDate(activeSeasonRecord.start_date);
-                          return parsed
-                            ? formatDate(parsed, {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              })
-                            : activeSeasonRecord.start_date;
-                        })(),
-                      })
-                    : t('farmDetails.seasons.statusNone')}
-                </Text>
-                {daysSincePruning !== null && (
-                  <View
-                    style={{
-                      marginLeft: spacing[2],
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: 2,
-                      borderRadius: borderRadius.full,
-                      backgroundColor: colorWithOpacity(colors.warning, 0.25),
-                    }}
-                  >
-                    <UiSymbol
-                      name="cut-outline"
-                      size={10}
-                      color={colorWithOpacity('#ffffff', 0.9)}
-                    />
-                    <Text
-                      style={{
-                        color: colorWithOpacity('#ffffff', 0.9),
-                        fontSize: 11,
-                        fontWeight: fontWeight.bold,
-                        marginLeft: spacing[1],
-                      }}
-                    >
-                      {t('farmDetails.pruning.daysShort', { count: daysSincePruning })}
-                    </Text>
-                  </View>
-                )}
-                {isBetweenSeasons && (
-                  <View
-                    style={{
-                      marginLeft: spacing[2],
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: 2,
-                      borderRadius: borderRadius.full,
-                      backgroundColor: colorWithOpacity('#ffffff', 0.14),
-                    }}
-                  >
-                    <UiSymbol name="calendar" size={10} color={colorWithOpacity('#ffffff', 0.85)} />
-                    <Text
-                      style={{
-                        color: colorWithOpacity('#ffffff', 0.85),
-                        fontSize: 11,
-                        fontWeight: fontWeight.bold,
-                        marginLeft: spacing[1],
-                      }}
-                    >
-                      {t('farmDetails.seasons.betweenSeasonsBadge')}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Target Harvest Date (for grape farms with active season) */}
-              {isGrapeFarm && activeSeasonRecord && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    marginTop: spacing[2],
-                  }}
-                >
-                  <UiSymbol name="calendar" size={12} color={colorWithOpacity('#ffffff', 0.65)} />
-                  <Text
-                    style={{
-                      marginLeft: spacing[1],
-                      color: colorWithOpacity('#ffffff', 0.65),
-                      fontSize: 12,
-                      flex: 1,
-                    }}
-                  >
-                    {t('farmDetails.header.targetLabel')}{' '}
-                    {(() => {
-                      const raw = activeSeasonRecord.target_harvest_date;
-                      if (!raw) return '—';
-                      const parsed = parseDbDateToLocalDate(raw);
-                      return parsed ? formatDdMmmYyyy(parsed, i18n.language) : raw;
-                    })()}
-                  </Text>
-                  <Pressable
-                    onPress={openActiveSeasonTargetEditor}
-                    style={{
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: 2,
-                      backgroundColor: colorWithOpacity('#ffffff', 0.14),
-                      borderRadius: borderRadius.full,
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('farmDetails.a11y.editTargetDate', {
-                      defaultValue: 'Edit target harvest date',
-                    })}
-                    disabled={isSavingActiveSeasonTargetDate}
-                  >
-                    <Text
-                      style={{
-                        color: colorWithOpacity('#ffffff', 0.85),
-                        fontSize: 11,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {t('common.edit')}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-
-              {/* Safe Harvest Date */}
-              {isGrapeFarm && earliestSafeHarvest?.earliestDate ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}>
-                  <UiSymbol
-                    name="shield.checkered"
-                    size={14}
-                    color={colorWithOpacity('#ffffff', 0.7)}
-                  />
-                  <Text
-                    style={{
-                      color: colorWithOpacity('#ffffff', 0.7),
-                      fontSize: 12,
-                      marginLeft: spacing[1],
-                    }}
-                  >
-                    {t('farmDetails.safeHarvest.inlineTitle')} {earliestSafeHarvestDateLabel}
-                  </Text>
-                </View>
-              ) : null}
-
-              {/* Review Required Badge */}
-              {needsSeasonReview ? (
-                <View
-                  style={{
-                    marginTop: spacing[2],
-                    alignSelf: 'flex-start',
-                    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.25),
-                    borderRadius: borderRadius.full,
-                    paddingHorizontal: spacing[2],
-                    paddingVertical: 2,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: colorWithOpacity('#ffffff', 0.9),
-                      fontSize: 11,
-                      fontWeight: fontWeight.bold,
-                    }}
-                  >
-                    {t('farmDetails.seasons.reviewRequiredBadge')}
-                  </Text>
-                </View>
-              ) : null}
-
-              {/* Urgent Tasks Risk Block */}
-              {urgentTasks.length > 0 && (
-                <View
-                  style={{
-                    marginTop: spacing[2],
-                    backgroundColor: 'rgba(0,0,0,0.15)',
-                    borderRadius: 16,
-                    paddingHorizontal: spacing[3],
-                    paddingVertical: spacing[2],
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  <UiSymbol
-                    name="exclamationmark.triangle.fill"
-                    size={14}
-                    color={colorWithOpacity('#ffffff', 0.9)}
-                  />
-                  <Text
-                    style={{
-                      marginLeft: spacing[2],
-                      color: colorWithOpacity('#ffffff', 0.9),
-                      fontSize: 12,
-                      fontWeight: fontWeight.medium,
-                      flex: 1,
-                    }}
-                  >
-                    {t('farmDetails.riskBlock.urgentTasks', { count: urgentTasks.length })}
-                  </Text>
-                  <Pressable
-                    onPress={() => {
-                      if (!farm?.id) return;
-                      router.push({ pathname: '/tasks', params: { farmId: farm.id.toString() } });
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('farmDetails.a11y.viewUrgentTasks', {
-                      defaultValue: 'View urgent tasks',
-                    })}
-                    style={{
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: 2,
-                      backgroundColor: colorWithOpacity('#ffffff', 0.2),
-                      borderRadius: borderRadius.full,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: colorWithOpacity('#ffffff', 0.95),
-                        fontSize: 11,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {t('common.view')}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
-
-            {/* Weather Strip - Horizontal with dividers */}
-            {weather?.current && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  borderTopWidth: 1,
-                  borderTopColor: colorWithOpacity('#ffffff', 0.12),
-                  paddingTop: spacing[3],
-                  paddingBottom: spacing[4],
-                }}
-              >
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', paddingRight: spacing[3] }}
-                >
-                  <UiSymbol name="calendar" size={14} color={colorWithOpacity('#ffffff', 0.65)} />
-                  <Text
-                    style={{
-                      marginLeft: spacing[1],
-                      color: colorWithOpacity('#ffffff', 0.75),
-                      fontSize: 13,
-                    }}
-                  >
-                    {t('farmDetails.weather.sinceLabel')}{' '}
-                    {(() => {
-                      if (farm?.date_of_pruning) {
-                        const parsed = parseDbDateToLocalDate(farm.date_of_pruning);
-                        return parsed ? formatDate(parsed, { month: 'short', day: 'numeric' }) : '';
-                      }
-                      return activeSeasonRecord
-                        ? formatDate(
-                            parseDbDateToLocalDate(activeSeasonRecord.start_date) ?? new Date(),
-                            { month: 'short', day: 'numeric' },
-                          )
-                        : '—';
-                    })()}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    width: 1,
-                    height: 16,
-                    backgroundColor: colorWithOpacity('#ffffff', 0.18),
-                  }}
-                />
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: spacing[3],
-                  }}
-                >
-                  <UiSymbol
-                    name="partly-sunny"
-                    size={14}
-                    color={colorWithOpacity('#ffffff', 0.65)}
-                  />
-                  <Text
-                    style={{
-                      marginLeft: spacing[1],
-                      color: colorWithOpacity('#ffffff', 0.75),
-                      fontSize: 13,
-                    }}
-                  >
-                    {weather.current.condition}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    width: 1,
-                    height: 16,
-                    backgroundColor: colorWithOpacity('#ffffff', 0.18),
-                  }}
-                />
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: spacing[3] }}
-                >
-                  <UiSymbol
-                    name="thermometer"
-                    size={14}
-                    color={colorWithOpacity('#ffffff', 0.65)}
-                  />
-                  <Text
-                    style={{
-                      marginLeft: spacing[1],
-                      color: colorWithOpacity('#ffffff', 0.75),
-                      fontSize: 13,
-                    }}
-                  >
-                    {weather.current.temperature}°C
-                  </Text>
-                </View>
-              </View>
-            )}
-          </View>
-
           {/* Season Strip Card — progress bar from pruning to target harvest */}
           {activeSeasonRecord && seasonProgressPct !== null && (
             <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
@@ -1985,13 +1671,22 @@ export default function FarmDetailScreen() {
                       >
                         {t('farmDetails.seasonStrip.target', { defaultValue: 'Target' })}
                       </Text>
-                      <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, marginTop: 2 }}>
-                        {formatDate(
-                          parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ??
-                            new Date(),
-                          { month: 'short', day: 'numeric' },
-                        )}
-                      </Text>
+                      <Pressable
+                        onPress={openActiveSeasonTargetEditor}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('farmDetails.a11y.editTargetDate', {
+                          defaultValue: 'Edit target harvest date',
+                        })}
+                        disabled={isSavingActiveSeasonTargetDate}
+                      >
+                        <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, marginTop: 2 }}>
+                          {formatDate(
+                            parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ??
+                              new Date(),
+                            { month: 'short', day: 'numeric' },
+                          )}
+                        </Text>
+                      </Pressable>
                     </View>
                   )}
                 </View>
@@ -2184,6 +1879,64 @@ export default function FarmDetailScreen() {
                   </Text>
                 </View>
               </View>
+            </View>
+          )}
+
+          {urgentTasks.length > 0 && (
+            <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[3] }}>
+              <Pressable
+                onPress={() => {
+                  if (!farm?.id) return;
+                  router.push({ pathname: '/tasks', params: { farmId: farm.id.toString() } });
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('farmDetails.a11y.viewUrgentTasks', {
+                  defaultValue: 'View urgent tasks',
+                })}
+                style={({ pressed }) => ({
+                  padding: spacing[3],
+                  backgroundColor: pressed
+                    ? colorWithOpacity(m3.colorScheme.warning, 0.16)
+                    : colorWithOpacity(m3.colorScheme.warning, 0.1),
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.warning, 0.3),
+                  borderRadius: borderRadius.md,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                })}
+              >
+                <UiSymbol
+                  name="exclamationmark.triangle.fill"
+                  size={16}
+                  color={m3.colorScheme.warning}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.colorScheme.warning,
+                    }}
+                  >
+                    {t('farmDetails.riskBlock.urgentTasks', { count: urgentTasks.length })}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.surface[500], marginTop: 2 }}>
+                    {t('farmDetails.tasks.urgentHint', {
+                      defaultValue: 'Review due and overdue work before logging more activity.',
+                    })}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    color: m3.colorScheme.primary,
+                    fontSize: 12,
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  {t('common.view')}
+                </Text>
+              </Pressable>
             </View>
           )}
 
@@ -2434,7 +2187,6 @@ export default function FarmDetailScreen() {
             style={{
               paddingHorizontal: spacing[4],
               marginTop: spacing[6],
-              paddingBottom: spacing[8] + (showFab ? spacing[16] : bottomBarHeight + spacing[6]),
             }}
           >
             {/* Section header */}
@@ -2692,6 +2444,192 @@ export default function FarmDetailScreen() {
                 </Text>
               </View>
             )}
+          </View>
+
+          {/* Season Totals */}
+          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: fontWeight.bold,
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                color: colors.surface[500],
+                marginBottom: spacing[2],
+              }}
+            >
+              {t('farmDetails.sections.seasonTotals', { defaultValue: 'Season totals' })}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: spacing[3] }}>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  borderRadius: borderRadius.md,
+                  padding: spacing[3],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: fontWeight.bold,
+                    letterSpacing: 0.6,
+                    textTransform: 'uppercase',
+                    color: m3.colorScheme.onSurfaceVariant,
+                  }}
+                >
+                  {t('farmDetails.seasonTotals.expenses', { defaultValue: 'Expenses' })}
+                </Text>
+                <Text
+                  style={{
+                    color: m3.colorScheme.onSurface,
+                    fontSize: 22,
+                    fontWeight: fontWeight.bold,
+                    marginTop: spacing[1],
+                  }}
+                >
+                  {formatCurrencyCompact(seasonExpenseTotal)}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  borderRadius: borderRadius.md,
+                  padding: spacing[3],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: fontWeight.bold,
+                    letterSpacing: 0.6,
+                    textTransform: 'uppercase',
+                    color: m3.colorScheme.onSurfaceVariant,
+                  }}
+                >
+                  {t('farmDetails.seasonTotals.harvest', { defaultValue: 'Harvest' })}
+                </Text>
+                <Text
+                  style={{
+                    color: m3.colorScheme.onSurface,
+                    fontSize: 22,
+                    fontWeight: fontWeight.bold,
+                    marginTop: spacing[1],
+                  }}
+                >
+                  {formatHarvestQuantity(seasonHarvestQuantity)}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* About */}
+          <View
+            style={{
+              paddingHorizontal: spacing[4],
+              marginTop: spacing[6],
+              paddingBottom: spacing[8] + (showFab ? spacing[16] : bottomBarHeight + spacing[6]),
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: fontWeight.bold,
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                color: colors.surface[500],
+                marginBottom: spacing[2],
+              }}
+            >
+              {t('farmDetails.sections.aboutFarm', { defaultValue: 'About this farm' })}
+            </Text>
+            <View
+              style={{
+                backgroundColor: m3.surface.surfaceContainerLow,
+                borderWidth: 1,
+                borderColor: m3.colorScheme.outlineVariant,
+                borderRadius: borderRadius.md,
+                padding: spacing[4],
+                rowGap: spacing[3],
+              }}
+            >
+              {[
+                [
+                  t('farmDetails.about.variety', { defaultValue: 'Variety' }),
+                  farm.crop_variety || farm.crop || '—',
+                ],
+                [
+                  t('farmDetails.about.area', { defaultValue: 'Area' }),
+                  farm.area != null
+                    ? t('farmDetails.header.areaAcres', { value: farm.area.toFixed(1) })
+                    : '—',
+                ],
+                [
+                  t('farmDetails.about.region', { defaultValue: 'Region' }),
+                  farm.region || farm.location_name || '—',
+                ],
+                [
+                  t('farmDetails.about.soilType', { defaultValue: 'Soil type' }),
+                  farm.soil_texture_class || '—',
+                ],
+                [
+                  t('farmDetails.about.spacing', { defaultValue: 'Spacing' }),
+                  farm.vine_spacing && farm.row_spacing
+                    ? `${farm.vine_spacing} × ${farm.row_spacing}`
+                    : '—',
+                ],
+                [
+                  t('farmDetails.about.planting', { defaultValue: 'Planting' }),
+                  farm.planting_date
+                    ? formatDate(
+                        parseDbDateToLocalDate(farm.planting_date) ?? new Date(farm.planting_date),
+                        { month: 'short', year: 'numeric' },
+                      )
+                    : '—',
+                ],
+              ].map(([label, value], index) => (
+                <View
+                  key={label}
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    borderTopWidth: index === 0 ? 0 : 1,
+                    borderTopColor: m3.colorScheme.outlineVariant,
+                    paddingTop: index === 0 ? 0 : spacing[3],
+                    gap: spacing[3],
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: fontWeight.bold,
+                      letterSpacing: 0.5,
+                      textTransform: 'uppercase',
+                      color: m3.colorScheme.onSurfaceVariant,
+                    }}
+                  >
+                    {label}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      flex: 1,
+                      color: m3.colorScheme.onSurface,
+                      fontSize: 13,
+                      fontWeight: fontWeight.semibold,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {value}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
         </ScrollView>
       </View>
