@@ -361,6 +361,13 @@ export function WorkerSettlementModal({
     }
   };
 
+  // When the modal is in the done state, closing via the header X should also fire
+  // onSuccess so the parent refreshes its data — same as the Done button path.
+  const handleClose = () => {
+    if (isDone) onSuccess();
+    onClose();
+  };
+
   const handleSettleNext = () => {
     onSuccess();
     const currentIndex = workers.findIndex((w) => w.id === selectedWorker?.id);
@@ -381,10 +388,7 @@ export function WorkerSettlementModal({
     <Modal
       visible={visible}
       animationType="slide"
-      onRequestClose={() => {
-        if (isDone) onSuccess();
-        onClose();
-      }}
+      onRequestClose={handleClose}
       presentationStyle="pageSheet"
     >
       <KeyboardAvoidingView
@@ -405,13 +409,7 @@ export function WorkerSettlementModal({
             borderBottomColor: m3.colorScheme.outlineVariant,
           }}
         >
-          <Pressable
-            onPress={() => {
-              if (isDone) onSuccess();
-              onClose();
-            }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
+          <Pressable onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <UiSymbol name="xmark" size={20} color={colors.surface[500]} />
           </Pressable>
           <Text style={{ fontSize: 15, fontWeight: '600', color: colors.surface[900] }}>
