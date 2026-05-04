@@ -98,7 +98,7 @@ export function computeWorkerMetrics(
   const payments = sumTransactions(transactions, 'payment', range);
   const advancesGiven = sumTransactions(transactions, 'advance_given', range);
   const advancesDeducted = sumTransactions(transactions, 'advance_deducted', range);
-  const netBalance = earnings - payments + advancesDeducted;
+  const netBalance = earnings - payments - advancesGiven + advancesDeducted;
 
   const totalDays = getDateRangeDays(range);
   const attendanceRate = totalDays > 0 ? workDaysEquivalent / totalDays : 0;
