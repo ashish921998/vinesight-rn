@@ -493,6 +493,12 @@ export default function FarmDetailScreen() {
     return t('farmDetails.water.mmUsed', { value: value.toFixed(digits) });
   };
 
+  const formatWaterDepth = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return '--';
+    const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+    return `${value.toFixed(digits)} mm`;
+  };
+
   const waterUsageCaption =
     isBetweenSeasons && minimumSeasonStartDate
       ? t('farmDetails.seasons.betweenSeasonsHint', {
@@ -1029,9 +1035,24 @@ export default function FarmDetailScreen() {
     }
   };
 
-  const handleAddActivity = () => {
+  const handleAddActivity = async () => {
     if (!farm?.id) return;
     if (!activeSeasonRecord) {
+      const refreshedSeasons = await refetchSeasons();
+      const refreshedActiveSeason =
+        refreshedSeasons.data?.find((season) => season.end_date === null) ?? null;
+      if (refreshedActiveSeason) {
+        router.push({
+          pathname: '/add-entry',
+          params: {
+            farmId: farm.id.toString(),
+            initialTab: 'log',
+            tabs: 'log,task',
+          },
+        });
+        return;
+      }
+
       if (guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log') {
         if (isSeasonsLoading) return;
         openStartSeasonForm();
@@ -1750,16 +1771,13 @@ export default function FarmDetailScreen() {
                 </View>
                 <Text
                   style={{
-                    color:
-                      farm.remaining_water != null && farm.remaining_water >= 0
-                        ? colors.irrigation[500]
-                        : m3.colorScheme.error,
+                    color: totalWaterUsed != null ? colors.irrigation[500] : m3.colorScheme.error,
                     fontSize: 20,
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
                   }}
                 >
-                  {farm.remaining_water != null ? `${farm.remaining_water.toFixed(1)} mm` : '--'}
+                  {formatWaterDepth(totalWaterUsed)}
                 </Text>
                 <Text
                   style={{

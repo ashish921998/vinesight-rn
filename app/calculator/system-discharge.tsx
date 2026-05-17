@@ -856,7 +856,7 @@ export default function SystemDischargeScreen() {
                         marginTop: spacing[1],
                       }}
                     >
-                      m³/hr System Discharge
+                      mm/hr System Discharge
                     </Text>
                   </View>
                   <Text
@@ -867,7 +867,7 @@ export default function SystemDischargeScreen() {
                       marginTop: spacing[2],
                     }}
                   >
-                    Equivalent: {(results.systemDischarge * 1000).toFixed(0)} L/hr
+                    Water depth applied per irrigation hour
                   </Text>
                   {/* Formula - italic style per wireframe */}
                   <Text
@@ -927,8 +927,8 @@ export default function SystemDischargeScreen() {
                       What this means
                     </Text>
                     <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                      Your system can deliver {(results.systemDischarge * 1000).toFixed(0)} liters
-                      per hour. Use this value for pump sizing and irrigation scheduling.
+                      Use this mm/hr value in the farm irrigation settings. Soil water added is
+                      irrigation hours × system discharge.
                     </Text>
                   </View>
                 </View>

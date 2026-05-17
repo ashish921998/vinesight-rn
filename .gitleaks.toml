@@ -1,0 +1,21 @@
+title = "vinesight-rn gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Generated and local-only directories are not repository secret sources"
+paths = [
+  '''^\.claude/''',
+  '''^\.gstack/''',
+  '''^android/''',
+  '''^ios/''',
+  '''^node_modules/''',
+  '''^dist/'''
+]
+
+[[allowlists]]
+description = "Irrigation discharge field names are false positives, not API keys"
+regexes = [
+  '''dischargePerHour[12]'''
+]

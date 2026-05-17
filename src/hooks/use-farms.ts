@@ -7,8 +7,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
-import type { Farm, FarmInsert, FarmUpdate } from '../types';
+import type { Farm, FarmInsert, FarmSeason, FarmUpdate } from '../types';
 import { TABLES, toSupabaseTimestampString } from '../types';
+import { formatLocalDate } from '../utils/date';
 
 // ============================================================
 // MARK: - Helper to get current user ID
@@ -23,6 +24,60 @@ async function getUserId(): Promise<string> {
     throw new Error('Please sign in to continue');
   }
   return session.user.id;
+}
+
+function isRpcFunctionMissing(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === '42883' || error.code === 'PGRST202') return true;
+  return typeof error.message === 'string' && /function .* does not exist/i.test(error.message);
+}
+
+async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void> {
+  if (typeof farm.id !== 'number') return;
+
+  const { data: existingSeason, error: existingSeasonError } = await supabase
+    .from(TABLES.FARM_SEASONS)
+    .select('id')
+    .eq('farm_id', farm.id)
+    .is('end_date', null)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingSeasonError && existingSeasonError.code !== '42P01') {
+    throw existingSeasonError;
+  }
+  if (existingSeason?.id) return;
+
+  const startDate = farm.date_of_pruning ?? formatLocalDate(new Date());
+  const seasonName = `Season ${new Date().getFullYear()}`;
+
+  const { error: rpcError } = await supabase.rpc('start_farm_season', {
+    p_farm_id: farm.id,
+    p_start_date: startDate,
+    p_template_key: null,
+    p_config_json: null,
+    p_season_name: seasonName,
+  });
+
+  if (!rpcError) return;
+  if (!isRpcFunctionMissing(rpcError)) {
+    throw rpcError;
+  }
+
+  const { error: insertError } = await supabase.from(TABLES.FARM_SEASONS).insert({
+    farm_id: farm.id,
+    user_id: userId,
+    start_date: startDate,
+    end_date: null,
+    season_name: seasonName,
+    crop_type_snapshot: farm.crop,
+  } satisfies Omit<FarmSeason, 'id' | 'created_at' | 'updated_at'>);
+
+  if (insertError) {
+    // A concurrent create or DB trigger may have created the active season after our check.
+    if (insertError.code === '23505') return;
+    throw insertError;
+  }
 }
 
 // ============================================================
@@ -90,6 +145,7 @@ export function useCreateFarm() {
         .single();
 
       if (error) throw error;
+      await ensureInitialFarmSeason(data, userId);
       return data;
     },
     onSuccess: (newFarm) => {
@@ -100,6 +156,11 @@ export function useCreateFarm() {
       });
       // Invalidate to ensure fresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.farms.all });
+      if (typeof newFarm.id === 'number') {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.farmSeasons.listByFarm(newFarm.id),
+        });
+      }
     },
   });
 }
