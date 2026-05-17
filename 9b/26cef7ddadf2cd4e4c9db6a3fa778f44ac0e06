@@ -1,0 +1,46 @@
+app/calculator/system-discharge.tsx
+  s_7283bcebaf8b43::t_d49bba35d3e225 859,870,930-931
+.github/workflows/ci.yml
+  s_f4d84386ff1cf9::t_f31167124971c3 18-19
+  s_f4d84386ff1cf9::t_0f86e3baf01fc1 20-21
+.gitignore
+  s_f4d84386ff1cf9::t_f31167124971c3 36-37
+.gitleaks.toml
+  s_f4d84386ff1cf9::t_0f86e3baf01fc1 1-21
+supabase/migrations/20260517120000_enable_rls_season_inference_audit.sql
+  s_098094a11fd2df::t_9b856728ffae55 1-21
+app/farm/[id].tsx
+  s_7283bcebaf8b43::t_fb79f9782ddd75 496-501,1038,1041-1055,1774,1780
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "9b26cef7ddadf2cd4e4c9db6a3fa778f44ac0e06",
+  "prompts": {},
+  "sessions": {
+    "s_098094a11fd2df": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e34ae-3c6e-7191-a8ea-bd1ee86ade3a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_7283bcebaf8b43": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2fb8-b852-7862-83b9-04a25d8b98bc",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_f4d84386ff1cf9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2fba-1736-7242-8858-80b6115c371d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
