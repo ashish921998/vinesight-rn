@@ -1,0 +1,29 @@
+app/farms.tsx
+  ai_agent 218,560,666
+supabase/migrations/20260520150000_add_farm_display_order.sql
+  s_2ae77bc7e8af7e::t_0c11ece2019716 7,9-10,12-26
+app/logs.tsx
+  s_2ae77bc7e8af7e::t_c9fe266d8d1d38 669
+  ai_agent 81,136
+app/add-note.tsx
+  s_2ae77bc7e8af7e::t_e9167a92dd8479 54-62
+src/hooks/use-farms.ts
+  ai_agent 232-234
+  s_2ae77bc7e8af7e::t_be5c5cd7ac74fa 56,88,170-172,224-231,235-237
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "3fb0ebc1fe13f4de6c61f67bd6daf1928e86f340",
+  "prompts": {},
+  "sessions": {
+    "s_2ae77bc7e8af7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e450e-8cb1-7a32-bf76-62ee9d2605d2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
