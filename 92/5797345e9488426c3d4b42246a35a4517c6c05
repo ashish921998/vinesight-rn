@@ -1,0 +1,57 @@
+src/hooks/use-farms.ts
+  s_1eb4f5d4bcda6b::t_3f3cd812feecaf 78,148-152
+supabase/migrations/20260517120000_enable_rls_season_inference_audit.sql
+  s_1eb4f5d4bcda6b::t_3f3cd812feecaf 6-7
+src/i18n/locales/mr.ts
+  s_1eb4f5d4bcda6b::t_8082b5fee68b71 181,203,207-209
+  s_4c08ede5da7286::t_49a1ca51e498b2 583
+src/i18n/locales/en.ts
+  s_1eb4f5d4bcda6b::t_8082b5fee68b71 180,201,205-207
+  s_4c08ede5da7286::t_49a1ca51e498b2 582
+.gitleaks.toml
+  s_1eb4f5d4bcda6b::t_3f3cd812feecaf 11-14
+app/farm/[id].tsx
+  s_1eb4f5d4bcda6b::t_682a58a9ee861c 91
+  s_7283bcebaf8b43::t_5dc049ee4e3315 520,1783-1784,1790
+  s_1eb4f5d4bcda6b::t_3f3cd812feecaf 41,58,92,479,481,486-493,505,1689-1718,1720-1721
+src/i18n/locales/hi.ts
+  s_4c08ede5da7286::t_49a1ca51e498b2 581
+  s_1eb4f5d4bcda6b::t_8082b5fee68b71 180,200,204-206
+app/farms.tsx
+  s_4c08ede5da7286::t_49a1ca51e498b2 37,43,174
+  s_1eb4f5d4bcda6b::t_3f3cd812feecaf 209
+.github/workflows/ci.yml
+  s_4c08ede5da7286::t_49a1ca51e498b2 19-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "925797345e9488426c3d4b42246a35a4517c6c05",
+  "prompts": {},
+  "sessions": {
+    "s_1eb4f5d4bcda6b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e35c0-225b-75c0-acc3-8095117d35e3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_4c08ede5da7286": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e442b-29d8-75b2-b274-6613bbfc2ff3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_7283bcebaf8b43": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2fb8-b852-7862-83b9-04a25d8b98bc",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
