@@ -4,15 +4,26 @@ begin
     alter table public.farms
       add column if not exists display_order integer;
 
-    with ordered as (
+    with current_max as (
       select
-        id,
-        row_number() over (
-          partition by user_id
-          order by created_at desc nulls last, id desc
-        ) - 1 as next_display_order
+        user_id,
+        max(display_order) as max_display_order
       from public.farms
-      where display_order is null
+      where display_order is not null
+      group by user_id
+    ),
+    ordered as (
+      select
+        farms.id,
+        coalesce(current_max.max_display_order, -1)
+          + row_number() over (
+              partition by farms.user_id
+              order by farms.created_at desc nulls last, farms.id desc
+            ) as next_display_order
+      from public.farms
+      left join current_max
+        on current_max.user_id = farms.user_id
+      where farms.display_order is null
     )
     update public.farms as farms
     set display_order = ordered.next_display_order

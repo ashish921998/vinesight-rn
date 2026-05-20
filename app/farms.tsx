@@ -215,9 +215,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                 onPress={onToggleReorderMode}
                 disabled={!canReorder && !isReorderMode}
                 accessibilityRole="button"
-                accessibilityLabel={t(
-                  isReorderMode ? 'farms.reorder.done' : 'farms.reorder.start',
-                )}
+                accessibilityLabel={t(isReorderMode ? 'farms.reorder.done' : 'farms.reorder.start')}
                 accessibilityState={{ selected: isReorderMode, disabled: !canReorder }}
               >
                 {isReorderMode ? (
@@ -262,9 +260,6 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                   justifyContent: 'center',
                 }}
                 onPress={() => onFilterChange(activeFilter === 'all' ? 'needs_attention' : 'all')}
-                onLongPress={() =>
-                  onFilterChange(activeFilter === 'all' ? 'needs_attention' : 'all')
-                }
                 accessibilityRole="button"
                 accessibilityLabel={t('farms.filter.label', { defaultValue: 'Filter farms' })}
                 accessibilityState={{ selected: isFilterActive }}
@@ -562,8 +557,7 @@ export default function FarmsScreen() {
       try {
         await reorderFarms.mutateAsync(orderedIds);
       } catch (error: unknown) {
-        const message =
-          error instanceof Error ? error.message : t('farms.reorder.error');
+        const message = error instanceof Error ? error.message : t('farms.reorder.error');
         Alert.alert(t('common.error'), message);
       }
     },
@@ -669,11 +663,7 @@ export default function FarmsScreen() {
                   opacity: control.disabled ? 0.38 : 1,
                 })}
               >
-                <SymbolIcon
-                  name={control.icon}
-                  size={18}
-                  color={m3.colorScheme.onSurfaceVariant}
-                />
+                <SymbolIcon name={control.icon} size={18} color={m3.colorScheme.onSurfaceVariant} />
               </Pressable>
             ))}
           </View>

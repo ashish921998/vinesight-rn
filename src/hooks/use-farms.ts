@@ -53,7 +53,7 @@ async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void
     .limit(1)
     .maybeSingle();
 
-  if (existingSeasonError && existingSeasonError.code !== '42P01') {
+  if (existingSeasonError) {
     throw existingSeasonError;
   }
   if (existingSeason?.id) return;
@@ -85,7 +85,7 @@ async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void
 
   if (insertError) {
     // A concurrent create or DB trigger may have created the active season after our check.
-    if (insertError.code === '23505' || insertError.code === '42P01') return;
+    if (insertError.code === '23505') return;
     throw insertError;
   }
 }
@@ -167,6 +167,9 @@ export function useCreateFarm() {
         .limit(1)
         .maybeSingle();
 
+      if (firstFarmError && !isMissingDisplayOrderColumn(firstFarmError)) {
+        throw firstFarmError;
+      }
       const supportsDisplayOrder = !isMissingDisplayOrderColumn(firstFarmError);
       const displayOrder =
         supportsDisplayOrder && typeof firstFarm?.display_order === 'number'
@@ -218,17 +221,20 @@ export function useReorderFarms() {
     mutationFn: async (orderedFarmIds: number[]): Promise<number[]> => {
       const userId = await getUserId();
 
-      await Promise.all(
-        orderedFarmIds.map(async (id, displayOrder) => {
-          const { error } = await supabase
-            .from(TABLES.FARMS)
-            .update({ display_order: displayOrder })
-            .eq('id', id)
-            .eq('user_id', userId);
+      for (const [displayOrder, id] of orderedFarmIds.entries()) {
+        const { error } = await supabase
+          .from(TABLES.FARMS)
+          .update({ display_order: displayOrder })
+          .eq('id', id)
+          .eq('user_id', userId);
 
-          if (error) throw error;
-        }),
-      );
+        if (isMissingDisplayOrderColumn(error)) {
+          throw new Error(
+            'Farm ordering is not available until the latest database migration runs.',
+          );
+        }
+        if (error) throw error;
+      }
 
       return orderedFarmIds;
     },

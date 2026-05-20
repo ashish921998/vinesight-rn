@@ -78,6 +78,7 @@ export default function LogsScreen() {
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const insets = useSafeAreaInsets();
   const currency = useCurrency();
+  const allLogTypeIds = useMemo(() => LOG_TYPES.map((logType) => logType.id as LogTypeId), []);
   // Cellar Ledger: No shadows on cards, use borders instead
   const filterCardStyle = Platform.select({
     ios: {},
@@ -132,9 +133,7 @@ export default function LogsScreen() {
   const allRecordsFertigation = useFertigationRecordsByFarms(
     selectedFarmId === undefined ? allFarmIds : [],
   );
-  const allRecordsDailyNotes = useDailyNotesByFarms(
-    selectedFarmId === undefined ? allFarmIds : [],
-  );
+  const allRecordsDailyNotes = useDailyNotesByFarms(selectedFarmId === undefined ? allFarmIds : []);
 
   const displayIrrigationRecords = useMemo(
     () => (selectedFarmId === undefined ? (allRecordsIrrigation.data ?? []) : irrigationRecords),
@@ -667,15 +666,7 @@ export default function LogsScreen() {
                 <Pressable
                   onPress={() => {
                     if (selectedLogTypes.size === 0) {
-                      setSelectedLogTypes(
-                        new Set([
-                          'irrigation',
-                          'spray',
-                          'harvest',
-                          'expense',
-                          'fertigation',
-                        ] as LogTypeId[]),
-                      );
+                      setSelectedLogTypes(new Set(allLogTypeIds));
                     } else {
                       setSelectedLogTypes(new Set());
                     }

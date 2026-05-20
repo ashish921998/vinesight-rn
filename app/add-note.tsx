@@ -51,7 +51,15 @@ export default function AddNoteRoute() {
     const rawDate = Array.isArray(params.date) ? params.date[0] : params.date;
     if (!rawDate || !/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) return new Date();
     const [year, month, day] = rawDate.split('-').map(Number);
-    return new Date(year, month - 1, day);
+    const parsedDate = new Date(year, month - 1, day);
+    if (
+      parsedDate.getFullYear() !== year ||
+      parsedDate.getMonth() !== month - 1 ||
+      parsedDate.getDate() !== day
+    ) {
+      return new Date();
+    }
+    return parsedDate;
   }, [params.date]);
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [showDatePicker, setShowDatePicker] = useState(false);
