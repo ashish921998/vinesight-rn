@@ -34,13 +34,13 @@ import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour
  * Returns the current growing-season label, e.g. "Season 2025–26".
  * Indian grape seasons run Oct–Mar, so Season 2025–26 starts Oct 2025.
  */
-function getCurrentSeasonLabel(): string {
+function getCurrentSeasonLabel(t: TFunction): string {
   const now = new Date();
   const month = now.getMonth(); // 0-indexed
   const year = now.getFullYear();
   const startYear = month >= 9 ? year : year - 1; // Oct+ → new season
   const endYY = String(startYear + 1).slice(-2);
-  return `Season ${startYear}–${endYY}`;
+  return t('farms.currentSeasonLabel', { startYear, endYY });
 }
 
 function FarmsSummaryLine({
@@ -171,7 +171,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                   marginBottom: 2,
                 }}
               >
-                {getCurrentSeasonLabel()}
+                {getCurrentSeasonLabel(t)}
               </Text>
             )}
             <Text
@@ -206,7 +206,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
-                onPress={() => onFilterChange('all')}
+                onPress={() => onFilterChange(activeFilter === 'all' ? 'needs_attention' : 'all')}
                 onLongPress={() =>
                   onFilterChange(activeFilter === 'all' ? 'needs_attention' : 'all')
                 }

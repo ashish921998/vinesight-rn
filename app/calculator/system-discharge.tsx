@@ -69,9 +69,9 @@ export default function SystemDischargeScreen() {
     refillTankValue: React.createRef<View>(),
     dbp: React.createRef<View>(),
     drippersPerPlant: React.createRef<View>(),
-    dischargePerHour1: React.createRef<View>(),
+    dripperFlowRate1: React.createRef<View>(),
     dbd: React.createRef<View>(),
-    dischargePerHour2: React.createRef<View>(),
+    dripperFlowRate2: React.createRef<View>(),
     numberOfLines: React.createRef<View>(),
   });
 
@@ -625,7 +625,7 @@ export default function SystemDischargeScreen() {
                     inputRowRefs={inputRowRefs}
                   />
                   <InputRow
-                    fieldKey="dischargePerHour1"
+                    fieldKey="dripperFlowRate1"
                     label="Discharge per Dripper"
                     value={dischargePerHour1}
                     onChangeText={setDischargePerHour1}
@@ -717,7 +717,7 @@ export default function SystemDischargeScreen() {
                     inputRowRefs={inputRowRefs}
                   />
                   <InputRow
-                    fieldKey="dischargePerHour2"
+                    fieldKey="dripperFlowRate2"
                     label="Discharge per Dripper"
                     value={dischargePerHour2}
                     onChangeText={setDischargePerHour2}

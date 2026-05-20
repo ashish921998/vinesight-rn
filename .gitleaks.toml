@@ -6,10 +6,13 @@ useDefault = true
 [[allowlists]]
 description = "Generated and local-only directories are not repository secret sources"
 paths = [
+  '''^\.git/''',
   '''^\.claude/''',
   '''^\.gstack/''',
-  '''^android/''',
-  '''^ios/''',
+  '''^android/app/build/''',
+  '''^android/\.gradle/''',
+  '''^ios/Pods/''',
+  '''^ios/build/''',
   '''^node_modules/''',
   '''^dist/'''
 ]

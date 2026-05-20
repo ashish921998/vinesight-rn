@@ -178,6 +178,7 @@ export const mr = {
       logEntriesTitle: 'नोंदी',
       recordsSubtitle: 'रेकॉर्ड्स',
       soilWaterTitle: '$t(glossary.soil)तील पाणी',
+      seasonalWaterAppliedTitle: 'हंगामी पाणी वापर',
     },
     safeHarvest: {
       title: 'लवकरात लवकर सुरक्षित $t(glossary.harvest)',
@@ -199,8 +200,13 @@ export const mr = {
     water: {
       noIrrigationLoggedYet: 'अजून $t(glossary.irrigation) नोंदवलेले नाही',
       mmUsed: '{{value}} mm वापरले',
+      mmDepth: '{{value}} mm',
       captionThisSeason: 'या हंगामात {{usage}}',
       captionLogIrrigation: 'पाणी वापर मॉनिटर करण्यासाठी $t(glossary.irrigation) नोंदवा',
+    },
+    harvest: {
+      quantityKg: '{{value}} kg',
+      quantityTon: '{{value}} t',
     },
     seasons: {
       title: 'हंगाम',
@@ -574,6 +580,7 @@ export const mr = {
   farms: {
     title: '$t(glossary.farm)',
     addFarm: '$t(glossary.farm) जोडा',
+    currentSeasonLabel: 'हंगाम {{startYear}}–{{endYY}}',
     empty: {
       title: 'अजून $t(glossary.farm) नाहीत',
       subtitle:

@@ -38,6 +38,7 @@ import {
   useEarliestSafeHarvestForSeason,
   isAndroid,
   isIOS,
+  useCurrency,
 } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
 import { TaskRow, TimelineLogCard } from '@/components/cards';
@@ -54,7 +55,7 @@ import type {
 import type { TaskReminder } from '@/types/task';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { formatDate } from '@/i18n/format';
+import { formatCurrency, formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { isGrapeCrop } from '@/utils/crop';
 
@@ -87,7 +88,8 @@ const OPEN_TASKS_PREVIEW_LIMIT = 5;
 export default function FarmDetailScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const currency = useCurrency();
 
   const router = useRouter();
   const isFocused = useIsFocused();
@@ -474,17 +476,21 @@ export default function FarmDetailScreen() {
 
   const formatCurrencyCompact = (value: number | null | undefined) => {
     if (value === null || value === undefined) return '—';
-    return new Intl.NumberFormat(i18n.language, {
-      style: 'currency',
-      currency: 'INR',
+    return formatCurrency(value, currency, {
       maximumFractionDigits: value >= 1000 ? 0 : 2,
-    }).format(value);
+    });
   };
 
   const formatHarvestQuantity = (value: number | null | undefined) => {
     if (value === null || value === undefined) return '—';
-    if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)} t`;
-    return `${value.toFixed(value >= 100 ? 0 : 1)} kg`;
+    if (value >= 1000) {
+      return t('farmDetails.harvest.quantityTon', {
+        value: (value / 1000).toFixed(value >= 10000 ? 0 : 1),
+      });
+    }
+    return t('farmDetails.harvest.quantityKg', {
+      value: value.toFixed(value >= 100 ? 0 : 1),
+    });
   };
 
   const formatWaterUsage = (value: number | null | undefined) => {
@@ -496,7 +502,7 @@ export default function FarmDetailScreen() {
   const formatWaterDepth = (value: number | null | undefined) => {
     if (value === null || value === undefined) return '--';
     const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
-    return `${value.toFixed(digits)} mm`;
+    return t('farmDetails.water.mmDepth', { value: value.toFixed(digits) });
   };
 
   const waterUsageCaption =
@@ -511,6 +517,7 @@ export default function FarmDetailScreen() {
       : totalWaterUsed !== null
         ? t('farmDetails.water.captionThisSeason', { usage: formatWaterUsage(totalWaterUsed) })
         : t('farmDetails.water.captionLogIrrigation');
+  const remainingSoilWater = farm?.remaining_water;
 
   const getInitialSeasonEndDate = React.useCallback((startDate: Date) => {
     const today = new Date();
@@ -1679,37 +1686,39 @@ export default function FarmDetailScreen() {
                       </Text>
                     </View>
                   )}
-                  {activeSeasonRecord.target_harvest_date && (
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text
-                        style={{
-                          fontSize: 10,
-                          fontWeight: fontWeight.bold,
-                          letterSpacing: 0.5,
-                          textTransform: 'uppercase',
-                          color: colors.surface[500],
-                        }}
-                      >
-                        {t('farmDetails.seasonStrip.target', { defaultValue: 'Target' })}
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontWeight: fontWeight.bold,
+                        letterSpacing: 0.5,
+                        textTransform: 'uppercase',
+                        color: colors.surface[500],
+                      }}
+                    >
+                      {t('farmDetails.seasonStrip.target', { defaultValue: 'Target' })}
+                    </Text>
+                    <Pressable
+                      onPress={openActiveSeasonTargetEditor}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('farmDetails.a11y.editTargetDate', {
+                        defaultValue: 'Edit target harvest date',
+                      })}
+                      disabled={isSavingActiveSeasonTargetDate}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, marginTop: 2 }}>
+                        {activeSeasonRecord.target_harvest_date
+                          ? formatDate(
+                              parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ??
+                                new Date(activeSeasonRecord.target_harvest_date),
+                              { month: 'short', day: 'numeric' },
+                            )
+                          : t('farmDetails.seasonStrip.setTarget', {
+                              defaultValue: 'Set target',
+                            })}
                       </Text>
-                      <Pressable
-                        onPress={openActiveSeasonTargetEditor}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('farmDetails.a11y.editTargetDate', {
-                          defaultValue: 'Edit target harvest date',
-                        })}
-                        disabled={isSavingActiveSeasonTargetDate}
-                      >
-                        <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, marginTop: 2 }}>
-                          {formatDate(
-                            parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ??
-                              new Date(),
-                            { month: 'short', day: 'numeric' },
-                          )}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  )}
+                    </Pressable>
+                  </View>
                 </View>
               </View>
             </View>
@@ -1771,13 +1780,14 @@ export default function FarmDetailScreen() {
                 </View>
                 <Text
                   style={{
-                    color: totalWaterUsed != null ? colors.irrigation[500] : m3.colorScheme.error,
+                    color:
+                      remainingSoilWater != null ? colors.irrigation[500] : m3.colorScheme.error,
                     fontSize: 20,
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
                   }}
                 >
-                  {formatWaterDepth(totalWaterUsed)}
+                  {formatWaterDepth(remainingSoilWater)}
                 </Text>
                 <Text
                   style={{
@@ -2134,12 +2144,7 @@ export default function FarmDetailScreen() {
             {openTasks.length > 0 ? (
               <View
                 style={{
-                  borderRadius: m3.shape.cornerLarge,
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
                   gap: spacing[3],
-                  padding: spacing[2],
                 }}
               >
                 {openTasks.slice(0, OPEN_TASKS_PREVIEW_LIMIT).map((task) => (

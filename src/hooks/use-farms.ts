@@ -75,7 +75,7 @@ async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void
 
   if (insertError) {
     // A concurrent create or DB trigger may have created the active season after our check.
-    if (insertError.code === '23505') return;
+    if (insertError.code === '23505' || insertError.code === '42P01') return;
     throw insertError;
   }
 }
@@ -145,7 +145,11 @@ export function useCreateFarm() {
         .single();
 
       if (error) throw error;
-      await ensureInitialFarmSeason(data, userId);
+      try {
+        await ensureInitialFarmSeason(data, userId);
+      } catch (seasonError) {
+        console.warn('[useCreateFarm] ensureInitialFarmSeason failed:', seasonError);
+      }
       return data;
     },
     onSuccess: (newFarm) => {
