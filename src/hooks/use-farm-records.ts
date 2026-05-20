@@ -9,6 +9,7 @@ import {
   useHarvestRecords,
   useExpenseRecords,
   useFertigationRecords,
+  useDailyNotes,
 } from './use-records';
 import { useTemporaryWorkerEntries } from './use-workers';
 
@@ -21,6 +22,7 @@ export function useFarmRecords(farmId: number | undefined) {
   const harvest = useHarvestRecords(farmId);
   const expense = useExpenseRecords(farmId);
   const fertigation = useFertigationRecords(farmId);
+  const dailyNotes = useDailyNotes(farmId);
   const tempWorkers = useTemporaryWorkerEntries(farmId);
 
   const isLoading =
@@ -29,6 +31,7 @@ export function useFarmRecords(farmId: number | undefined) {
     harvest.isLoading ||
     expense.isLoading ||
     fertigation.isLoading ||
+    dailyNotes.isLoading ||
     tempWorkers.isLoading;
 
   const isError =
@@ -37,6 +40,7 @@ export function useFarmRecords(farmId: number | undefined) {
     harvest.isError ||
     expense.isError ||
     fertigation.isError ||
+    dailyNotes.isError ||
     tempWorkers.isError;
 
   const refetch = async () => {
@@ -46,6 +50,7 @@ export function useFarmRecords(farmId: number | undefined) {
       harvest.refetch(),
       expense.refetch(),
       fertigation.refetch(),
+      dailyNotes.refetch(),
       tempWorkers.refetch(),
     ]);
   };
@@ -56,6 +61,7 @@ export function useFarmRecords(farmId: number | undefined) {
     harvestRecords: harvest.data,
     expenseRecords: expense.data,
     fertigationRecords: fertigation.data,
+    dailyNotes: dailyNotes.data,
     temporaryWorkerEntries: tempWorkers.data,
     isLoading,
     isError,

@@ -58,6 +58,7 @@ export default function AddEntryRoute() {
     entrySource?: string;
     onboarding?: string;
     onboardingActionType?: string;
+    lockFarmSelection?: string;
   }>();
   const { addEntry, setAddEntry } = useModalStore();
 
@@ -73,6 +74,10 @@ export default function AddEntryRoute() {
     if (parseBooleanParam(params.allFarms)) return true;
     return addEntry?.initialApplyToAllFarms ?? false;
   }, [params.allFarms, params.farmId, addEntry?.initialApplyToAllFarms]);
+  const lockFarmSelection = useMemo(
+    () => parseBooleanParam(params.lockFarmSelection),
+    [params.lockFarmSelection],
+  );
 
   const tabs = useMemo(
     () => parseTabs(params.tabs) ?? addEntry?.tabs,
@@ -137,6 +142,7 @@ export default function AddEntryRoute() {
         initialTab={initialTab}
         initialFarmId={initialFarmId ?? addEntry?.initialFarmId ?? null}
         initialApplyToAllFarms={initialApplyToAllFarms}
+        lockFarmSelection={lockFarmSelection}
         initialLogType={initialLogType ?? null}
         initialIrrigationDurationHours={initialIrrigationDurationHours}
         initialLogDate={initialLogDate}

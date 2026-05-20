@@ -376,7 +376,7 @@ export function useRecentActivities(limit: number = 5) {
       const farmMap = new Map(farms.map((f) => [f.id, f.name]));
 
       // Fetch recent records from each table
-      const [irrigation, spray, harvest, expense, fertigation] = await Promise.all([
+      const [irrigation, spray, harvest, expense, fertigation, dailyNotes] = await Promise.all([
         supabase
           .from(TABLES.IRRIGATION_RECORDS)
           .select('id, farm_id, date, duration')
@@ -404,6 +404,12 @@ export function useRecentActivities(limit: number = 5) {
         supabase
           .from(TABLES.FERTIGATION_RECORDS)
           .select('id, farm_id, date')
+          .in('farm_id', farmIds)
+          .order('date', { ascending: false })
+          .limit(limit),
+        supabase
+          .from(TABLES.DAILY_NOTES)
+          .select('id, farm_id, date, notes')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
@@ -471,6 +477,18 @@ export function useRecentActivities(limit: number = 5) {
           type: 'fertigation',
           date: r.date,
           description: 'Fertigation applied',
+          farmId: r.farm_id,
+          farmName: farmMap.get(r.farm_id) ?? 'Unknown',
+        });
+      });
+
+      // Map notes
+      dailyNotes.data?.forEach((r) => {
+        activities.push({
+          id: `note_${r.id}`,
+          type: 'note',
+          date: r.date,
+          description: r.notes ?? 'Note',
           farmId: r.farm_id,
           farmName: farmMap.get(r.farm_id) ?? 'Unknown',
         });

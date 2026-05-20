@@ -39,6 +39,7 @@ export interface Farm {
   clay_percentage?: number | null;
   date_of_pruning?: string | null;
   first_season_start_date?: string | null;
+  display_order?: number | null;
   created_at?: string | null;
   updated_at?: string | null;
 }

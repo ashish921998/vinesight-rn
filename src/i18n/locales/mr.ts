@@ -345,11 +345,11 @@ export const mr = {
       deleteFarm: '$t(glossary.farm) हटवा: {{name}}',
     },
     season: {
-      pruning: 'छाटणी',
+      pruning: '$t(glossary.pruning)',
       bloom: 'फुलणे',
       veraison: 'व्हेरेसन',
       harvest: 'काढणी',
-      sincePruning: 'छाटणीपासून',
+      sincePruning: '$t(glossary.pruning)पासून',
     },
   },
 
@@ -601,6 +601,13 @@ export const mr = {
       area: '{{value}} एकर एकूण',
       needsAttention_one: '{{count}} ला लक्ष हवे',
       needsAttention_other: '{{count}} ला लक्ष हवे',
+    },
+    reorder: {
+      start: '$t(glossary.farm) क्रम बदला',
+      done: 'पूर्ण',
+      moveUp: '{{name}} वर हलवा',
+      moveDown: '{{name}} खाली हलवा',
+      error: '$t(glossary.farm) क्रम अपडेट करता आला नाही. कृपया पुन्हा प्रयत्न करा.',
     },
   },
 

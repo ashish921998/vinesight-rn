@@ -29,6 +29,7 @@ import type {
   HarvestRecord,
   ExpenseRecord,
   FertigationRecord,
+  DailyNoteRecord,
 } from '../../types';
 
 type RecordData =
@@ -36,7 +37,8 @@ type RecordData =
   | SprayRecord
   | HarvestRecord
   | ExpenseRecord
-  | FertigationRecord;
+  | FertigationRecord
+  | DailyNoteRecord;
 
 interface TimelineLogCardProps {
   type: LogTypeId;
@@ -98,6 +100,10 @@ function getDescriptionFromData(
         countFormatted: formatNumber(fertCount, { maximumFractionDigits: 0 }),
       });
     }
+    case 'note': {
+      const note = data as DailyNoteRecord;
+      return note.notes || t('logs.types.note');
+    }
     default:
       return '';
   }
@@ -149,6 +155,8 @@ function getSecondaryDetail(
       if (waterVolume) parts.push(`${waterVolume}L water`);
       return parts.length > 0 ? parts.join(' • ') : null;
     }
+    case 'note':
+      return null;
     default:
       return null;
   }

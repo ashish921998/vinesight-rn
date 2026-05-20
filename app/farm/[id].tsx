@@ -51,6 +51,7 @@ import type {
   HarvestRecord,
   ExpenseRecord,
   FertigationRecord,
+  DailyNoteRecord,
 } from '@/types';
 import type { TaskReminder } from '@/types/task';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -109,6 +110,7 @@ export default function FarmDetailScreen() {
     harvestRecords,
     expenseRecords,
     fertigationRecords,
+    dailyNotes,
     refetch: refetchRecords,
   } = useFarmRecords(farmId);
 
@@ -961,7 +963,13 @@ export default function FarmDetailScreen() {
       id: string;
       type: LogTypeId;
       date: string;
-      data: IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
+      data:
+        | IrrigationRecord
+        | SprayRecord
+        | HarvestRecord
+        | ExpenseRecord
+        | FertigationRecord
+        | DailyNoteRecord;
     }> = [];
 
     irrigationRecords?.forEach((r) =>
@@ -1004,9 +1012,24 @@ export default function FarmDetailScreen() {
         data: r,
       }),
     );
+    dailyNotes?.forEach((r) =>
+      logs.push({
+        id: `note-${r.id}`,
+        type: 'note',
+        date: r.date,
+        data: r,
+      }),
+    );
 
     return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [irrigationRecords, sprayRecords, harvestRecords, expenseRecords, fertigationRecords]);
+  }, [
+    irrigationRecords,
+    sprayRecords,
+    harvestRecords,
+    expenseRecords,
+    fertigationRecords,
+    dailyNotes,
+  ]);
 
   // Filter logs by selected types
   const filteredLogs = useMemo(() => {
@@ -1055,6 +1078,7 @@ export default function FarmDetailScreen() {
             farmId: farm.id.toString(),
             initialTab: 'log',
             tabs: 'log,task',
+            lockFarmSelection: 'true',
           },
         });
         return;
@@ -1081,16 +1105,22 @@ export default function FarmDetailScreen() {
         farmId: farm.id.toString(),
         initialTab: 'log',
         tabs: 'log,task',
+        lockFarmSelection: 'true',
       },
     });
   };
 
   const handleEditActivity = (log: (typeof recentLogs)[number]) => {
     if (!farm) return;
+    if (log.type === 'note') {
+      router.push({ pathname: '/add-note', params: { farmId: String(farm.id), date: log.date } });
+      return;
+    }
+    const record = log.data as Exclude<typeof log.data, DailyNoteRecord>;
     setEditActivity({
       farm,
       logType: log.type,
-      record: log.data,
+      record,
     });
     router.push(`/log-entry/edit/${log.id}`);
   };
@@ -2335,7 +2365,7 @@ export default function FarmDetailScreen() {
                     {t('common.all', { defaultValue: 'All' })}
                   </Text>
                 </Pressable>
-                {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
+                {LOG_TYPES.map((logType) => {
                   const isSelected = selectedLogTypes.includes(logType.id);
                   return (
                     <Pressable
@@ -2432,7 +2462,7 @@ export default function FarmDetailScreen() {
                     data={log.data}
                     farmName={farm?.name ?? undefined}
                     onEdit={() => handleEditActivity(log)}
-                    onDelete={() => handleDeleteActivity(log)}
+                    onDelete={log.type === 'note' ? undefined : () => handleDeleteActivity(log)}
                     onPress={() => handleEditActivity(log)}
                   />
                 ))}

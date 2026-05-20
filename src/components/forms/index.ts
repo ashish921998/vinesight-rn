@@ -35,3 +35,10 @@ export {
   type FertilizerEntry,
   type FertigationQuickAddItem,
 } from './fertigation-form';
+
+export {
+  NoteForm,
+  validateNoteForm,
+  createEmptyNoteFormData,
+  type NoteFormData,
+} from './note-form';

@@ -11,6 +11,7 @@ import type {
   FertigationFormData,
   HarvestFormData,
   IrrigationFormData,
+  NoteFormData,
   SprayFormData,
 } from '@/components/forms';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
@@ -27,7 +28,8 @@ export interface EntryPendingLogSubmission {
     | SprayFormData
     | HarvestFormData
     | ExpenseFormData
-    | FertigationFormData;
+    | FertigationFormData
+    | NoteFormData;
 }
 
 export interface EntryLogFarmContext {
@@ -46,6 +48,11 @@ export interface EntryLogSubmitters {
   createHarvest: (payload: HarvestRecordInsert) => Promise<{ id?: number | null }>;
   createExpense: (payload: ExpenseRecordInsert) => Promise<{ id?: number | null }>;
   createFertigation: (payload: FertigationRecordInsert) => Promise<{ id?: number | null }>;
+  upsertDailyNote: (payload: {
+    farm_id: number;
+    date: string;
+    notes: string;
+  }) => Promise<{ id?: number | null }>;
   updateWaterLevel: (payload: { farmId: number; remainingWater: number }) => Promise<unknown>;
   deleteIrrigation?: (payload: { id: number; farmId: number }) => Promise<unknown>;
 }
@@ -271,7 +278,18 @@ export async function submitEntryPendingLog(params: {
       return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
     }
 
-    case 'note':
-      return { pendingLogId: log.id, type: log.type, recordId: null };
+    case 'note': {
+      const data = log.data as NoteFormData;
+      const notes = data.notes?.trim();
+      if (!notes) {
+        throw new Error('Invalid note');
+      }
+      const created = await submitters.upsertDailyNote({
+        farm_id: farmId,
+        date: dateStr,
+        notes,
+      });
+      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+    }
   }
 }

@@ -600,6 +600,13 @@ export const en = {
       needsAttention_one: '{{count}} needs attention',
       needsAttention_other: '{{count}} need attention',
     },
+    reorder: {
+      start: 'Reorder farms',
+      done: 'Done',
+      moveUp: 'Move {{name}} up',
+      moveDown: 'Move {{name}} down',
+      error: 'Could not update farm order. Please try again.',
+    },
   },
 
   entryForm: {

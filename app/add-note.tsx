@@ -36,6 +36,7 @@ export default function AddNoteRoute() {
 
   const params = useLocalSearchParams<{
     farmId?: string;
+    date?: string;
     onboarding?: string;
     onboardingActionType?: string;
   }>();
@@ -46,7 +47,13 @@ export default function AddNoteRoute() {
 
   const { data: farm } = useFarm(farmId ?? undefined);
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const initialDate = useMemo(() => {
+    const rawDate = Array.isArray(params.date) ? params.date[0] : params.date;
+    if (!rawDate || !/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) return new Date();
+    const [year, month, day] = rawDate.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }, [params.date]);
+  const [selectedDate, setSelectedDate] = useState(initialDate);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [draftNotesByDate, setDraftNotesByDate] = useState<Record<string, string>>({});
 

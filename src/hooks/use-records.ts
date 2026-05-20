@@ -644,6 +644,49 @@ export function useDailyNoteByDate(farmId: number | undefined, date: string | un
   });
 }
 
+export function useDailyNotes(farmId: number | undefined, seasonId?: number) {
+  return useQuery({
+    queryKey: [...queryKeys.dailyNotes.listByFarm(farmId!), { seasonId: seasonId ?? null }],
+    queryFn: async (): Promise<DailyNoteRecord[]> => {
+      let query = supabase
+        .from(TABLES.DAILY_NOTES)
+        .select('*')
+        .eq('farm_id', farmId)
+        .order('date', { ascending: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!farmId,
+  });
+}
+
+export function useDailyNotesByFarms(farmIds: number[]) {
+  const sortedFarmIds = [...farmIds].sort((a, b) => a - b);
+
+  return useQuery({
+    queryKey: [...queryKeys.dailyNotes.lists(), { farmIds: sortedFarmIds }],
+    queryFn: async (): Promise<DailyNoteRecord[]> => {
+      if (sortedFarmIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from(TABLES.DAILY_NOTES)
+        .select('*')
+        .in('farm_id', sortedFarmIds)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: sortedFarmIds.length > 0,
+  });
+}
+
 export function useUpsertDailyNote() {
   const queryClient = useQueryClient();
 
@@ -679,6 +722,9 @@ export function useUpsertDailyNote() {
     onSuccess: (savedNote) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.dailyNotes.listByFarm(savedNote.farm_id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dailyNotes.lists(),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.dailyNotes.byDate(savedNote.farm_id, savedNote.date),

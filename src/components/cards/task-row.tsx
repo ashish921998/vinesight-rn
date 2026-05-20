@@ -1,6 +1,6 @@
 /**
  * TaskRow Component
- * Apple Reminders-style compact row: severity bar, checkbox, type chip, title, kebab menu, single meta pill.
+ * Apple Reminders-style compact row: subtle severity rail, checkbox, type chip, title, kebab menu, single meta pill.
  */
 
 import React from 'react';
@@ -66,17 +66,15 @@ export function TaskRow({
   const formatDueDate = (): string => {
     if (!task.due_date) return '';
     const date = parseDbDateToLocalDate(task.due_date) ?? new Date(task.due_date);
-    const display = formatDate(date, { year: 'numeric', month: 'numeric', day: 'numeric' });
+    const display = formatDate(date, { month: 'short', day: 'numeric' });
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     if (date.toDateString() === today.toDateString()) return t('tasks.dueDate.today');
     if (date.toDateString() === tomorrow.toDateString()) return t('tasks.dueDate.tomorrow');
-    if (!task.completed && dueDate && dueDate < today) {
-      return t('tasks.dueDate.overdue', { date: display });
-    }
     return display;
   };
+  const isOverdue = !task.completed && dueDate != null && dueDate < today;
 
   const priorityTone =
     task.priority === 'high'
@@ -100,7 +98,13 @@ export function TaskRow({
 
   const dateText = formatDueDate();
   const priorityText = t(priorityInfo.labelKey);
-  const metaText = dateText ? `${dateText} · ${priorityText}` : priorityText;
+  const metaText = isOverdue
+    ? `${t('tasks.dueDate.overdueLabel', { defaultValue: 'Overdue' })} · ${priorityText}${
+        dateText ? ` · ${dateText}` : ''
+      }`
+    : dateText
+      ? `${dateText} · ${priorityText}`
+      : priorityText;
 
   // Build action sheet buttons. Hide kebab if no applicable actions.
   const buildActionButtons = (): AlertButton[] => {
@@ -138,19 +142,15 @@ export function TaskRow({
     Alert.alert(t('tasks.actions.menuTitle'), task.title, actionButtons);
   };
 
-  // Card with left severity bar via borderLeft, full perimeter via outer border tokens.
+  // Card with a subtle left severity rail and a single perimeter border.
   const containerStyle: ViewStyle = {
     borderRadius: borderRadius.sm, // 12px
     paddingVertical: spacing[3],
     paddingHorizontal: spacing[4],
     backgroundColor: colors.surface[100], // mist-1
-    borderTopWidth: 1,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderTopColor: colors.surface[300],
-    borderRightColor: colors.surface[300],
-    borderBottomColor: colors.surface[300],
-    borderLeftWidth: 4,
+    borderWidth: 1,
+    borderColor: colors.surface[300],
+    borderLeftWidth: 3,
     borderLeftColor: priorityTone.fg,
   };
 
@@ -177,7 +177,7 @@ export function TaskRow({
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: spacing[3],
-            marginTop: 2,
+            marginTop: 5,
             backgroundColor: task.completed
               ? colors.success
               : pressed
@@ -191,11 +191,11 @@ export function TaskRow({
 
         <View style={{ flex: 1 }}>
           {/* Title row: type chip + title + kebab */}
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 32 }}>
             <View
               style={{
-                width: 28,
-                height: 28,
+                width: 30,
+                height: 30,
                 borderRadius: borderRadius.sm,
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -214,6 +214,7 @@ export function TaskRow({
               style={{
                 fontSize: 15,
                 fontWeight: fontWeight.semibold,
+                lineHeight: 20,
                 flex: 1,
                 color: task.completed ? colors.surface[400] : colors.surface[900],
                 textDecorationLine: task.completed ? 'line-through' : 'none',
@@ -228,8 +229,8 @@ export function TaskRow({
                 accessibilityLabel={t('tasks.a11y.taskActions', { title: task.title })}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 style={({ pressed }) => ({
-                  width: 36,
-                  height: 36,
+                  width: 32,
+                  height: 32,
                   borderRadius: m3.shape.cornerMedium,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -251,6 +252,7 @@ export function TaskRow({
                 fontSize: fontSize.sm,
                 color: m3.colorScheme.onSurfaceVariant,
                 marginTop: spacing[1],
+                lineHeight: 18,
               }}
               numberOfLines={2}
             >
@@ -290,8 +292,8 @@ export function TaskRow({
               flexDirection: 'row',
               alignItems: 'center',
               alignSelf: 'flex-start',
-              paddingHorizontal: spacing[2] + 2,
-              paddingVertical: 2,
+              paddingHorizontal: spacing[2] + 1,
+              paddingVertical: 3,
               borderRadius: borderRadius.sm,
               backgroundColor: metaBg,
               marginTop: spacing[2],

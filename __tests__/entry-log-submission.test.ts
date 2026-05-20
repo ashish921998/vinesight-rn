@@ -25,6 +25,7 @@ function createSubmitters(): jest.Mocked<EntryLogSubmitters> {
     createHarvest: jest.fn().mockResolvedValue({ id: 13 }),
     createExpense: jest.fn().mockResolvedValue({ id: 14 }),
     createFertigation: jest.fn().mockResolvedValue({ id: 15 }),
+    upsertDailyNote: jest.fn().mockResolvedValue({ id: 16 }),
     updateWaterLevel: jest.fn().mockResolvedValue({}),
   };
 }
@@ -237,6 +238,27 @@ describe('submitEntryPendingLog', () => {
       }),
     );
     expect(result.recordId).toBe(15);
+  });
+
+  it('submits note log as a daily note', async () => {
+    const submitters = createSubmitters();
+    const result = await submitEntryPendingLog({
+      log: {
+        id: 'log-note',
+        type: 'note',
+        data: { notes: 'Removed dry leaves near row 4.' },
+      },
+      dateStr: '2026-02-11',
+      farm: baseFarm,
+      submitters,
+    });
+
+    expect(submitters.upsertDailyNote).toHaveBeenCalledWith({
+      farm_id: 7,
+      date: '2026-02-11',
+      notes: 'Removed dry leaves near row 4.',
+    });
+    expect(result.recordId).toBe(16);
   });
 
   it('normalizes per-area fertigation quantity from hectares to acres', async () => {

@@ -59,10 +59,12 @@ import {
   validateHarvestForm,
   validateExpenseForm,
   validateFertigationForm,
+  validateNoteForm,
   createEmptySprayFormData,
   createEmptyHarvestFormData,
   createEmptyExpenseFormData,
   createEmptyFertigationFormData,
+  createEmptyNoteFormData,
   type SprayQuickAddItem,
   type FertigationQuickAddItem,
   type IrrigationFormData,
@@ -70,6 +72,7 @@ import {
   type HarvestFormData,
   type ExpenseFormData,
   type FertigationFormData,
+  type NoteFormData,
 } from '@/components/forms';
 import {
   LOG_TYPES,
@@ -77,7 +80,6 @@ import {
   HARVEST_GRADES,
   CHEMICAL_UNITS,
   type FertilizerUnit,
-  ACTIVITY_TYPES as _ACTIVITY_TYPES,
 } from '@/constants/calculator-models';
 import {
   useCreateIrrigationRecord,
@@ -96,6 +98,7 @@ import {
   useWarehouseItems,
   useRecentSprayChemicals,
   useRecentFertigationItems,
+  useUpsertDailyNote,
   useFarmSeasonStatus,
   useChemicalMixSearch,
   usePhiComputation,
@@ -148,6 +151,7 @@ interface EntryFormProps {
   farm?: Farm;
   initialFarmId?: number | null;
   initialApplyToAllFarms?: boolean;
+  lockFarmSelection?: boolean;
   initialLogType?: LogTypeId | null;
   initialLogPrefill?: {
     sprayChemicals?: PlannedInputItem[];
@@ -317,6 +321,7 @@ export function EntryForm({
   farm,
   initialFarmId,
   initialApplyToAllFarms,
+  lockFarmSelection = false,
   initialLogType,
   initialLogPrefill,
   sourceTaskId,
@@ -441,6 +446,7 @@ export function EntryForm({
   const [fertigationData, setFertigationData] = useState<FertigationFormData>(() =>
     createEmptyFertigationFormData(),
   );
+  const [noteData, setNoteData] = useState<NoteFormData>(() => createEmptyNoteFormData());
   const selectedDateIso = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
   const { data: sprayPhiComputation } = usePhiComputation(
     sprayData.catalogMixId ?? null,
@@ -564,6 +570,7 @@ export function EntryForm({
   const createHarvest = useCreateHarvestRecord();
   const createExpense = useCreateExpenseRecord();
   const createFertigation = useCreateFertigationRecord();
+  const upsertDailyNote = useUpsertDailyNote();
   const deleteIrrigation = useDeleteIrrigationRecord();
   const deleteSpray = useDeleteSprayRecord();
   const deleteHarvest = useDeleteHarvestRecord();
@@ -806,10 +813,20 @@ export function EntryForm({
         return validateExpenseForm(expenseData);
       case 'fertigation':
         return validateFertigationForm(fertigationData);
+      case 'note':
+        return validateNoteForm(noteData);
       default:
         return false;
     }
-  }, [selectedLogType, irrigationData, sprayData, harvestData, expenseData, fertigationData]);
+  }, [
+    selectedLogType,
+    irrigationData,
+    sprayData,
+    harvestData,
+    expenseData,
+    fertigationData,
+    noteData,
+  ]);
 
   const hasFarmForCurrentLog = Boolean(
     activeFarm || (isAllFarmsSelected && selectedLogType === 'expense'),
@@ -854,6 +871,10 @@ export function EntryForm({
         const fertCount = fert.fertilizers.length;
         const waterText = fert.waterVolume ? `${fert.waterVolume}L water, ` : '';
         return `${waterText}${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
+      }
+      case 'note': {
+        const note = data as NoteFormData;
+        return note.notes?.trim() ?? '';
       }
       default:
         return '';
@@ -1013,6 +1034,10 @@ export function EntryForm({
         data = { ...fertigationData };
         setFertigationData(createEmptyFertigationFormData());
         break;
+      case 'note':
+        data = { ...noteData };
+        setNoteData(createEmptyNoteFormData());
+        break;
       default:
         return;
     }
@@ -1028,6 +1053,7 @@ export function EntryForm({
     harvestData,
     expenseData,
     fertigationData,
+    noteData,
     isGrapeFarm,
     activeSeason?.target_harvest_date,
     buildSprayPendingData,
@@ -1062,6 +1088,7 @@ export function EntryForm({
       createHarvest: async (payload) => createHarvest.mutateAsync(payload),
       createExpense: async (payload) => createExpense.mutateAsync(payload),
       createFertigation: async (payload) => createFertigation.mutateAsync(payload),
+      upsertDailyNote: async (payload) => upsertDailyNote.mutateAsync(payload),
       updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
       deleteIrrigation: async (payload) => deleteIrrigation.mutateAsync(payload),
     };
@@ -2034,11 +2061,13 @@ export function EntryForm({
                 harvestData={harvestData}
                 expenseData={expenseData}
                 fertigationData={fertigationData}
+                noteData={noteData}
                 onIrrigationChange={setIrrigationData}
                 onSprayChange={setSprayData}
                 onHarvestChange={setHarvestData}
                 onExpenseChange={setExpenseData}
                 onFertigationChange={setFertigationData}
+                onNoteChange={setNoteData}
                 onInputFocus={scrollToFocusedInput}
                 onAdd={addLogToSession}
                 isValid={isLogFormValid}
@@ -2092,11 +2121,13 @@ export function EntryForm({
           harvestData={harvestData}
           expenseData={expenseData}
           fertigationData={fertigationData}
+          noteData={noteData}
           onIrrigationChange={setIrrigationData}
           onSprayChange={setSprayData}
           onHarvestChange={setHarvestData}
           onExpenseChange={setExpenseData}
           onFertigationChange={setFertigationData}
+          onNoteChange={setNoteData}
           onInputFocus={scrollToFocusedInput}
           onAdd={addLogToSession}
           isValid={isLogFormValid}
@@ -2170,7 +2201,7 @@ export function EntryForm({
 
   const renderLogContent = () => (
     <>
-      {!farm && (
+      {!farm && !lockFarmSelection && (
         <View
           style={{
             backgroundColor: colors.surface[100],
@@ -2572,7 +2603,7 @@ export function EntryForm({
         </View>
       )}
 
-      {!farm && (
+      {!farm && !lockFarmSelection && (
         <View style={{ marginBottom: 16 }}>
           <Text
             selectable

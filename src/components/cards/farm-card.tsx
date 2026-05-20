@@ -43,6 +43,7 @@ interface FarmCardProps {
 }
 
 const SEASON_LENGTH_DAYS = 130;
+const MILESTONE_LABEL_WIDTH = 72;
 
 const MILESTONES = [
   { pct: 0, labelKey: 'farmCard.season.pruning' },
@@ -112,6 +113,9 @@ export const FarmCard = React.memo(function FarmCard({
 
   const todayPct =
     daysSincePruning != null ? Math.min(100, (daysSincePruning / SEASON_LENGTH_DAYS) * 100) : null;
+  const boundedTodayPct = todayPct != null ? Math.max(0, Math.min(100, todayPct)) : null;
+  const todayMarkerTranslateX =
+    boundedTodayPct == null ? -7 : boundedTodayPct >= 99 ? -14 : boundedTodayPct <= 1 ? 0 : -7;
 
   // Design D: each farm gets a stable identity colour from the palette;
   // low-water farms override the left strip with error red so urgency is
@@ -294,9 +298,9 @@ export const FarmCard = React.memo(function FarmCard({
         </View>
 
         {/* Season timeline — fill uses the farm's own accent colour */}
-        {todayPct != null && (
+        {boundedTodayPct != null && (
           <View style={{ marginTop: spacing[4] }}>
-            <View style={{ position: 'relative', height: 40 }}>
+            <View style={{ position: 'relative', height: 44 }}>
               {/* Track */}
               <View
                 style={{
@@ -318,7 +322,7 @@ export const FarmCard = React.memo(function FarmCard({
                   position: 'absolute',
                   left: 0,
                   top: 12,
-                  width: `${todayPct}%`,
+                  width: `${boundedTodayPct}%`,
                   height: 4,
                   borderRadius: 99,
                   backgroundColor: farmAccentColor,
@@ -327,7 +331,7 @@ export const FarmCard = React.memo(function FarmCard({
 
               {/* Milestone dots + labels */}
               {MILESTONES.map((milestone) => {
-                const passed = milestone.pct <= todayPct;
+                const passed = milestone.pct <= boundedTodayPct;
                 return (
                   <View
                     key={milestone.pct}
@@ -336,8 +340,16 @@ export const FarmCard = React.memo(function FarmCard({
                       left: `${milestone.pct}%`,
                       top: 8,
                       transform: [
-                        { translateX: milestone.pct === 0 ? 0 : milestone.pct === 100 ? -8 : -4 },
+                        {
+                          translateX:
+                            milestone.pct === 0
+                              ? 0
+                              : milestone.pct === 100
+                                ? -MILESTONE_LABEL_WIDTH
+                                : -MILESTONE_LABEL_WIDTH / 2,
+                        },
                       ],
+                      width: MILESTONE_LABEL_WIDTH,
                       alignItems:
                         milestone.pct === 0
                           ? 'flex-start'
@@ -364,9 +376,13 @@ export const FarmCard = React.memo(function FarmCard({
                         textTransform: 'uppercase',
                         color: colors.surface[500],
                         marginTop: 5,
+                        width: MILESTONE_LABEL_WIDTH,
                         textAlign:
                           milestone.pct === 0 ? 'left' : milestone.pct === 100 ? 'right' : 'center',
                       }}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.85}
                     >
                       {t(milestone.labelKey)}
                     </Text>
@@ -378,9 +394,9 @@ export const FarmCard = React.memo(function FarmCard({
               <View
                 style={{
                   position: 'absolute',
-                  left: `${todayPct}%`,
+                  left: `${boundedTodayPct}%`,
                   top: 6,
-                  transform: [{ translateX: -7 }],
+                  transform: [{ translateX: todayMarkerTranslateX }],
                   width: 14,
                   height: 14,
                   borderRadius: 7,

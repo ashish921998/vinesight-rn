@@ -33,6 +33,7 @@ import {
   useHarvestRecordsByFarms,
   useExpenseRecordsByFarms,
   useFertigationRecordsByFarms,
+  useDailyNotesByFarms,
 } from '@/hooks';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
@@ -43,6 +44,7 @@ import type {
   HarvestRecord,
   ExpenseRecord,
   FertigationRecord,
+  DailyNoteRecord,
 } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -55,7 +57,13 @@ interface CombinedLog {
   type: LogTypeId;
   date: string;
   description: string;
-  data: IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
+  data:
+    | IrrigationRecord
+    | SprayRecord
+    | HarvestRecord
+    | ExpenseRecord
+    | FertigationRecord
+    | DailyNoteRecord;
   searchableText?: string;
   daysAfterPruning?: number | null;
 }
@@ -102,6 +110,7 @@ export default function LogsScreen() {
     harvestRecords = [],
     expenseRecords = [],
     fertigationRecords = [],
+    dailyNotes = [],
     isLoading: recordsLoading,
   } = useFarmRecords(selectedFarmId);
 
@@ -121,6 +130,9 @@ export default function LogsScreen() {
     selectedFarmId === undefined ? allFarmIds : [],
   );
   const allRecordsFertigation = useFertigationRecordsByFarms(
+    selectedFarmId === undefined ? allFarmIds : [],
+  );
+  const allRecordsDailyNotes = useDailyNotesByFarms(
     selectedFarmId === undefined ? allFarmIds : [],
   );
 
@@ -144,6 +156,10 @@ export default function LogsScreen() {
     () => (selectedFarmId === undefined ? (allRecordsFertigation.data ?? []) : fertigationRecords),
     [selectedFarmId, allRecordsFertigation.data, fertigationRecords],
   );
+  const displayDailyNotes = useMemo(
+    () => (selectedFarmId === undefined ? (allRecordsDailyNotes.data ?? []) : dailyNotes),
+    [selectedFarmId, allRecordsDailyNotes.data, dailyNotes],
+  );
 
   const isLoadingAllRecords =
     selectedFarmId === undefined
@@ -151,7 +167,8 @@ export default function LogsScreen() {
         allRecordsSpray.isLoading ||
         allRecordsHarvest.isLoading ||
         allRecordsExpense.isLoading ||
-        allRecordsFertigation.isLoading
+        allRecordsFertigation.isLoading ||
+        allRecordsDailyNotes.isLoading
       : recordsLoading;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -293,6 +310,17 @@ export default function LogsScreen() {
       });
     });
 
+    displayDailyNotes.forEach((r) =>
+      logs.push({
+        id: `note-${r.id}`,
+        type: 'note',
+        date: r.date,
+        description: r.notes || t('logs.types.note'),
+        searchableText: r.notes?.toLowerCase() ?? '',
+        data: r,
+      }),
+    );
+
     return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [
     displayIrrigationRecords,
@@ -300,6 +328,7 @@ export default function LogsScreen() {
     displayHarvestRecords,
     displayExpenseRecords,
     displayFertigationRecords,
+    displayDailyNotes,
     t,
     currency,
     getFertigationDescription,
@@ -681,7 +710,7 @@ export default function LogsScreen() {
                   </Text>
                 </Pressable>
 
-                {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
+                {LOG_TYPES.map((logType) => {
                   const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
                   const categoryColorMap: Record<string, string> = {
                     irrigation: colors.irrigation[500] || '#3F6E78',
@@ -1229,23 +1258,41 @@ export default function LogsScreen() {
                                               buttons.push({
                                                 text: t('common.edit'),
                                                 onPress: () => {
+                                                  if (log.type === 'note') {
+                                                    router.push({
+                                                      pathname: '/add-note',
+                                                      params: {
+                                                        farmId: String(
+                                                          (log.data as DailyNoteRecord).farm_id,
+                                                        ),
+                                                        date: (log.data as DailyNoteRecord).date,
+                                                      },
+                                                    });
+                                                    return;
+                                                  }
+                                                  const record = log.data as Exclude<
+                                                    typeof log.data,
+                                                    DailyNoteRecord
+                                                  >;
                                                   setEditActivity({
                                                     farm: logFarm!,
                                                     logType: log.type,
-                                                    record: log.data,
+                                                    record,
                                                   });
                                                   router.push(`/log-entry/edit/${log.id}`);
                                                 },
                                               });
                                             }
-                                            buttons.push({
-                                              text: t('common.delete'),
-                                              style: 'destructive',
-                                              onPress: () => {
-                                                setDeletingLog(log);
-                                                setShowDeleteConfirmation(true);
-                                              },
-                                            });
+                                            if (log.type !== 'note') {
+                                              buttons.push({
+                                                text: t('common.delete'),
+                                                style: 'destructive',
+                                                onPress: () => {
+                                                  setDeletingLog(log);
+                                                  setShowDeleteConfirmation(true);
+                                                },
+                                              });
+                                            }
                                             buttons.push({
                                               text: t('common.cancel'),
                                               style: 'cancel',
@@ -1799,7 +1846,7 @@ export default function LogsScreen() {
                     {t('logs.filters.activityTypes')}
                   </Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-                    {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
+                    {LOG_TYPES.map((logType) => {
                       const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
                       return (
                         <Pressable
