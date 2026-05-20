@@ -10,6 +10,7 @@ const mockCreateSprayMutate = jest.fn();
 const mockCreateHarvestMutate = jest.fn();
 const mockCreateExpenseMutate = jest.fn();
 const mockCreateFertigationMutate = jest.fn();
+const mockUpsertDailyNoteMutate = jest.fn();
 const mockDeleteIrrigationMutate = jest.fn();
 const mockDeleteSprayMutate = jest.fn();
 const mockDeleteHarvestMutate = jest.fn();
@@ -60,6 +61,7 @@ jest.mock('@/hooks', () => ({
   useCreateHarvestRecord: () => ({ mutateAsync: mockCreateHarvestMutate }),
   useCreateExpenseRecord: () => ({ mutateAsync: mockCreateExpenseMutate }),
   useCreateFertigationRecord: () => ({ mutateAsync: mockCreateFertigationMutate }),
+  useUpsertDailyNote: () => ({ mutateAsync: mockUpsertDailyNoteMutate }),
   useDeleteIrrigationRecord: () => ({ mutateAsync: mockDeleteIrrigationMutate }),
   useDeleteSprayRecord: () => ({ mutateAsync: mockDeleteSprayMutate }),
   useDeleteHarvestRecord: () => ({ mutateAsync: mockDeleteHarvestMutate }),
@@ -154,6 +156,7 @@ describe('EntryForm UI integration', () => {
     mockCreateHarvestMutate.mockResolvedValue({ id: 103 });
     mockCreateExpenseMutate.mockResolvedValue({ id: 104 });
     mockCreateFertigationMutate.mockResolvedValue({ id: 105 });
+    mockUpsertDailyNoteMutate.mockResolvedValue({ id: 106 });
     mockDeleteIrrigationMutate.mockResolvedValue(undefined);
     mockDeleteSprayMutate.mockResolvedValue(undefined);
     mockDeleteHarvestMutate.mockResolvedValue(undefined);
