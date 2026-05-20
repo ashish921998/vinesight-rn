@@ -1,0 +1,19 @@
+__tests__/entry-form.integration.test.tsx
+  s_2ae77bc7e8af7e::t_80fe9cac5a990b 13,64,159
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "922601c63cc467f4b9fa3d72063b79bce76a44f0",
+  "prompts": {},
+  "sessions": {
+    "s_2ae77bc7e8af7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e450e-8cb1-7a32-bf76-62ee9d2605d2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
