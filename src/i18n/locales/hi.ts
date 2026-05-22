@@ -599,6 +599,13 @@ export const hi = {
       needsAttention_one: '{{count}} को ध्यान चाहिए',
       needsAttention_other: '{{count}} को ध्यान चाहिए',
     },
+    reorder: {
+      start: 'खेतों का क्रम बदलें',
+      done: 'हो गया',
+      moveUp: '{{name}} को ऊपर ले जाएं',
+      moveDown: '{{name}} को नीचे ले जाएं',
+      error: 'खेतों का क्रम अपडेट नहीं हो सका। कृपया फिर से प्रयास करें।',
+    },
   },
 
   entryForm: {
