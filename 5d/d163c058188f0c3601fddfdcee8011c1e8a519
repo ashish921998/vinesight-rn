@@ -1,0 +1,21 @@
+src/i18n/locales/hi.ts
+  s_eff1be85d45429::t_536fd65d397d0b 602-608
+src/hooks/use-records.ts
+  s_eff1be85d45429::t_2ae3557175477e 743-748
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "5dd163c058188f0c3601fddfdcee8011c1e8a519",
+  "prompts": {},
+  "sessions": {
+    "s_eff1be85d45429": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "972907aa-27c7-49d2-911e-ccb0447b4fe7",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
