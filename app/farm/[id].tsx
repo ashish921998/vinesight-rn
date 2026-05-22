@@ -1811,7 +1811,9 @@ export default function FarmDetailScreen() {
                 <Text
                   style={{
                     color:
-                      remainingSoilWater != null ? colors.irrigation[500] : m3.colorScheme.error,
+                      remainingSoilWater != null && remainingSoilWater >= 0
+                        ? colors.irrigation[500]
+                        : m3.colorScheme.error,
                     fontSize: 20,
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
