@@ -1,0 +1,28 @@
+__tests__/entry-form.integration.test.tsx
+  s_2ae77bc7e8af7e::t_052a8751ed0116 19,71,167,640-669,674-699
+  s_2ae77bc7e8af7e::t_f6f191e148b8fd 670-673
+src/hooks/use-records.ts
+  s_2ae77bc7e8af7e::t_b92ef382cceb4b 739-761
+src/hooks/use-farms.ts
+  s_2ae77bc7e8af7e::t_b92ef382cceb4b 40-41
+src/hooks/index.ts
+  s_2ae77bc7e8af7e::t_b92ef382cceb4b 68
+src/components/screens/entry-form.tsx
+  s_2ae77bc7e8af7e::t_b92ef382cceb4b 102,580,1194-1195
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "dea292e6e4e5d0636c212f19b9e2149f3df11c3e",
+  "prompts": {},
+  "sessions": {
+    "s_2ae77bc7e8af7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e450e-8cb1-7a32-bf76-62ee9d2605d2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
