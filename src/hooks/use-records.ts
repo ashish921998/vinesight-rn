@@ -757,6 +757,9 @@ export function useDeleteDailyNote() {
         queryKey: queryKeys.dailyNotes.lists(),
       });
       queryClient.invalidateQueries({
+        queryKey: queryKeys.dailyNotes.all,
+      });
+      queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.all,
       });
     },

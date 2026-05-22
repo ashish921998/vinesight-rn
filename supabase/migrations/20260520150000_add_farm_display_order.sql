@@ -34,3 +34,59 @@ begin
       on public.farms (user_id, display_order, created_at desc);
   end if;
 end $$;
+
+create or replace function public.reorder_farms(p_ordered_farm_ids integer[])
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid := auth.uid();
+  v_requested_count integer;
+  v_owned_count integer;
+begin
+  if v_user_id is null then
+    raise exception 'Not authenticated' using errcode = '42501';
+  end if;
+
+  if p_ordered_farm_ids is null or array_length(p_ordered_farm_ids, 1) is null then
+    return;
+  end if;
+
+  select count(*)
+  into v_requested_count
+  from unnest(p_ordered_farm_ids) as requested(id);
+
+  if v_requested_count <> (
+    select count(distinct requested.id)
+    from unnest(p_ordered_farm_ids) as requested(id)
+  ) then
+    raise exception 'Duplicate farm ids are not allowed' using errcode = '22000';
+  end if;
+
+  select count(*)
+  into v_owned_count
+  from public.farms
+  where user_id = v_user_id
+    and id = any(p_ordered_farm_ids);
+
+  if v_owned_count <> v_requested_count then
+    raise exception 'Cannot reorder farms outside the current user account' using errcode = '42501';
+  end if;
+
+  with ordered as (
+    select
+      requested.id,
+      requested.ordinality::integer - 1 as display_order
+    from unnest(p_ordered_farm_ids) with ordinality as requested(id, ordinality)
+  )
+  update public.farms
+  set display_order = ordered.display_order
+  from ordered
+  where farms.id = ordered.id
+    and farms.user_id = v_user_id;
+end;
+$$;
+
+grant execute on function public.reorder_farms(integer[]) to authenticated;

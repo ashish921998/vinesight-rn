@@ -34,6 +34,7 @@ import {
   useExpenseRecordsByFarms,
   useFertigationRecordsByFarms,
   useDailyNotesByFarms,
+  useDeleteDailyNote,
 } from '@/hooks';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
@@ -187,6 +188,7 @@ export default function LogsScreen() {
   const deleteHarvest = useDeleteHarvestRecord();
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
+  const deleteDailyNote = useDeleteDailyNote();
 
   const getFertigationDescription = useCallback(
     (record: FertigationRecord) => {
@@ -384,7 +386,8 @@ export default function LogsScreen() {
         | SprayRecord
         | HarvestRecord
         | ExpenseRecord
-        | FertigationRecord;
+        | FertigationRecord
+        | DailyNoteRecord;
       // Defensive: farm_id should be number per TypeScript types, but handle string
       // case in case Supabase returns strings (e.g., for certain database configs)
       const farmIdNum =
@@ -436,6 +439,13 @@ export default function LogsScreen() {
           }
           break;
         }
+        case 'note': {
+          const r = record as DailyNoteRecord;
+          if (r.id) {
+            await deleteDailyNote.mutateAsync({ id: r.id, farmId: farmIdNum });
+          }
+          break;
+        }
       }
       setShowDeleteConfirmation(false);
       setDeletingLog(undefined);
@@ -450,6 +460,7 @@ export default function LogsScreen() {
     deleteHarvest,
     deleteExpense,
     deleteFertigation,
+    deleteDailyNote,
     t,
   ]);
 
@@ -1274,16 +1285,14 @@ export default function LogsScreen() {
                                                 },
                                               });
                                             }
-                                            if (log.type !== 'note') {
-                                              buttons.push({
-                                                text: t('common.delete'),
-                                                style: 'destructive',
-                                                onPress: () => {
-                                                  setDeletingLog(log);
-                                                  setShowDeleteConfirmation(true);
-                                                },
-                                              });
-                                            }
+                                            buttons.push({
+                                              text: t('common.delete'),
+                                              style: 'destructive',
+                                              onPress: () => {
+                                                setDeletingLog(log);
+                                                setShowDeleteConfirmation(true);
+                                              },
+                                            });
                                             buttons.push({
                                               text: t('common.cancel'),
                                               style: 'cancel',

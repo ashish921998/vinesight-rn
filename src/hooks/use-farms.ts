@@ -219,22 +219,14 @@ export function useReorderFarms() {
 
   return useMutation({
     mutationFn: async (orderedFarmIds: number[]): Promise<number[]> => {
-      const userId = await getUserId();
+      const { error } = await supabase.rpc('reorder_farms', {
+        p_ordered_farm_ids: orderedFarmIds,
+      });
 
-      for (const [displayOrder, id] of orderedFarmIds.entries()) {
-        const { error } = await supabase
-          .from(TABLES.FARMS)
-          .update({ display_order: displayOrder })
-          .eq('id', id)
-          .eq('user_id', userId);
-
-        if (isMissingDisplayOrderColumn(error)) {
-          throw new Error(
-            'Farm ordering is not available until the latest database migration runs.',
-          );
-        }
-        if (error) throw error;
+      if (isRpcFunctionMissing(error) || isMissingDisplayOrderColumn(error)) {
+        throw new Error('Farm ordering is not available until the latest database migration runs.');
       }
+      if (error) throw error;
 
       return orderedFarmIds;
     },
