@@ -65,6 +65,7 @@ export {
   useDailyNotes,
   useDailyNotesByFarms,
   useUpsertDailyNote,
+  useDeleteDailyNote,
   // Recent inputs
   useRecentSprayChemicals,
   useRecentFertigationItems,

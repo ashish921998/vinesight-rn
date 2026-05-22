@@ -99,6 +99,7 @@ import {
   useRecentSprayChemicals,
   useRecentFertigationItems,
   useUpsertDailyNote,
+  useDeleteDailyNote,
   useFarmSeasonStatus,
   useChemicalMixSearch,
   usePhiComputation,
@@ -576,6 +577,7 @@ export function EntryForm({
   const deleteHarvest = useDeleteHarvestRecord();
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
+  const deleteDailyNote = useDeleteDailyNote();
   const updateWaterLevel = useUpdateFarmWaterLevel();
 
   const scrollToNode = useCallback(
@@ -1188,6 +1190,9 @@ export function EntryForm({
                 break;
               case 'fertigation':
                 await deleteFertigation.mutateAsync({ id, farmId: entry.farmId });
+                break;
+              case 'note':
+                await deleteDailyNote.mutateAsync({ id, farmId: entry.farmId });
                 break;
               default:
                 break;

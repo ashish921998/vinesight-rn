@@ -37,8 +37,8 @@ function isMissingDisplayOrderColumn(error: { code?: string; message?: string } 
   const message = error.message ?? '';
   return (
     error.code === '42703' ||
-    /display_order/i.test(message) ||
-    (/schema cache/i.test(message) && /display_order/i.test(message))
+    /column ["']?display_order["']? does not exist/i.test(message) ||
+    /could not find .*display_order.* schema cache/i.test(message)
   );
 }
 

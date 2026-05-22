@@ -16,6 +16,7 @@ const mockDeleteSprayMutate = jest.fn();
 const mockDeleteHarvestMutate = jest.fn();
 const mockDeleteExpenseMutate = jest.fn();
 const mockDeleteFertigationMutate = jest.fn();
+const mockDeleteDailyNoteMutate = jest.fn();
 const mockUpdateWaterLevelMutate = jest.fn();
 const mockTaskCreateMutate = jest.fn();
 const mockTaskUpdateMutate = jest.fn();
@@ -67,6 +68,7 @@ jest.mock('@/hooks', () => ({
   useDeleteHarvestRecord: () => ({ mutateAsync: mockDeleteHarvestMutate }),
   useDeleteExpenseRecord: () => ({ mutateAsync: mockDeleteExpenseMutate }),
   useDeleteFertigationRecord: () => ({ mutateAsync: mockDeleteFertigationMutate }),
+  useDeleteDailyNote: () => ({ mutateAsync: mockDeleteDailyNoteMutate }),
   useUpdateFarmWaterLevel: () => ({ mutateAsync: mockUpdateWaterLevelMutate }),
   useFarms: (...args: unknown[]) => mockUseFarms(...args),
   useProfile: () => ({ data: { area_unit_preference: 'acres' } }),
@@ -162,6 +164,7 @@ describe('EntryForm UI integration', () => {
     mockDeleteHarvestMutate.mockResolvedValue(undefined);
     mockDeleteExpenseMutate.mockResolvedValue(undefined);
     mockDeleteFertigationMutate.mockResolvedValue(undefined);
+    mockDeleteDailyNoteMutate.mockResolvedValue(undefined);
     mockUpdateWaterLevelMutate.mockResolvedValue({});
     mockTaskCreateMutate.mockResolvedValue({ id: 201 });
     mockTaskUpdateMutate.mockResolvedValue({ id: 202 });
@@ -628,6 +631,72 @@ describe('EntryForm UI integration', () => {
       // Rollback warning should be present because delete failed.
       expect(screen.getByText('entryForm.saveFailed.rollbackInlineWarning')).toBeTruthy();
     });
+    expect(alertSpy.mock.calls.some((call) => call[0] === 'entryForm.saveFailed.title')).toBe(
+      false,
+    );
+
+    alertSpy.mockRestore();
+  });
+
+  it('rolls back a saved note when a later draft fails', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const onClose = jest.fn();
+
+    mockCreateExpenseMutate.mockRejectedValue(new Error('Expense failed'));
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={onClose}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="note"
+        />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('dailyNoteForm.placeholders.note')).toBeTruthy();
+    });
+
+    fireEvent.changeText(
+      screen.getByPlaceholderText('dailyNoteForm.placeholders.note'),
+      'Scout row 3',
+    );
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '700');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('entryForm.saveLogs'));
+
+    await waitFor(() => {
+      expect(mockDeleteDailyNoteMutate).toHaveBeenCalledWith({ id: 106, farmId: 17 });
+    });
+    expect(screen.getByText('Expense failed')).toBeTruthy();
+    expect(onClose).not.toHaveBeenCalled();
     expect(alertSpy.mock.calls.some((call) => call[0] === 'entryForm.saveFailed.title')).toBe(
       false,
     );

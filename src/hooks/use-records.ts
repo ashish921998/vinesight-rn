@@ -736,6 +736,29 @@ export function useUpsertDailyNote() {
   });
 }
 
+export function useDeleteDailyNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
+      const { error } = await supabase.from(TABLES.DAILY_NOTES).delete().eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { farmId }) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dailyNotes.listByFarm(farmId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dailyNotes.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.all,
+      });
+    },
+  });
+}
+
 export interface RecentInputItem {
   name: string;
   unit: string;
