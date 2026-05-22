@@ -1,0 +1,19 @@
+app/farm/[id].tsx
+  s_2ae77bc7e8af7e::t_73c77d375ac25e 1814-1816
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "05878e8a372fe169f2dbb546fab081cd1cb7f0e4",
+  "prompts": {},
+  "sessions": {
+    "s_2ae77bc7e8af7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e450e-8cb1-7a32-bf76-62ee9d2605d2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
