@@ -107,64 +107,67 @@ async function rollbackCreatedRecords(
   dateStr: string,
 ): Promise<EntryLogRollbackFailure[]> {
   const failures: EntryLogRollbackFailure[] = [];
-  const tasks = created
-    .filter((entry) => entry.recordId !== null)
-    .map(async (entry) => {
-      try {
-        const id = entry.recordId as number;
-        switch (entry.type) {
-          case 'irrigation':
-            await adapters.deleteIrrigation({ id, farmId: entry.farmId });
-            if (entry.farmContext) {
-              const farm = entry.farmContext;
-              if (
-                farm.total_tank_capacity &&
-                farm.system_discharge &&
-                farm.total_tank_capacity > 0 &&
-                farm.system_discharge > 0
-              ) {
-                await adapters.updateWaterLevel({
-                  farmId: entry.farmId,
-                  remainingWater: farm.remaining_water ?? 0,
-                });
-              }
-            }
-            break;
-          case 'spray':
-            await adapters.deleteSpray({ id, farmId: entry.farmId });
-            break;
-          case 'harvest':
-            await adapters.deleteHarvest({ id, farmId: entry.farmId });
-            break;
-          case 'expense':
-            await adapters.deleteExpense({ id, farmId: entry.farmId });
-            break;
-          case 'fertigation':
-            await adapters.deleteFertigation({ id, farmId: entry.farmId });
-            break;
-          case 'note':
-            if (entry.previousDailyNote) {
-              await adapters.upsertDailyNote({
-                farm_id: entry.farmId,
-                date: dateStr,
-                notes: entry.previousDailyNote.notes ?? null,
+  const rollbackEntry = async (entry: EntryLogCreatedRecord) => {
+    try {
+      const id = entry.recordId as number;
+      switch (entry.type) {
+        case 'irrigation':
+          await adapters.deleteIrrigation({ id, farmId: entry.farmId });
+          if (entry.farmContext) {
+            const farm = entry.farmContext;
+            if (
+              farm.total_tank_capacity &&
+              farm.system_discharge &&
+              farm.total_tank_capacity > 0 &&
+              farm.system_discharge > 0
+            ) {
+              await adapters.updateWaterLevel({
+                farmId: entry.farmId,
+                remainingWater: farm.remaining_water ?? 0,
               });
-            } else {
-              await adapters.deleteDailyNote({ id, farmId: entry.farmId, date: dateStr });
             }
-            break;
-        }
-      } catch (rollbackError) {
-        failures.push({
-          pendingLogId: entry.pendingLogId,
-          type: entry.type,
-          recordId: entry.recordId as number,
-          farmId: entry.farmId,
-          error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
-        });
+          }
+          break;
+        case 'spray':
+          await adapters.deleteSpray({ id, farmId: entry.farmId });
+          break;
+        case 'harvest':
+          await adapters.deleteHarvest({ id, farmId: entry.farmId });
+          break;
+        case 'expense':
+          await adapters.deleteExpense({ id, farmId: entry.farmId });
+          break;
+        case 'fertigation':
+          await adapters.deleteFertigation({ id, farmId: entry.farmId });
+          break;
+        case 'note':
+          if (entry.previousDailyNote) {
+            await adapters.upsertDailyNote({
+              farm_id: entry.farmId,
+              date: dateStr,
+              notes: entry.previousDailyNote.notes ?? null,
+            });
+          } else {
+            await adapters.deleteDailyNote({ id, farmId: entry.farmId, date: dateStr });
+          }
+          break;
       }
-    });
-  await Promise.all(tasks);
+    } catch (rollbackError) {
+      failures.push({
+        pendingLogId: entry.pendingLogId,
+        type: entry.type,
+        recordId: entry.recordId as number,
+        farmId: entry.farmId,
+        error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+      });
+    }
+  };
+
+  const entries = created.filter((entry) => entry.recordId !== null);
+  await Promise.all(entries.filter((entry) => entry.type !== 'note').map(rollbackEntry));
+  for (const entry of entries.filter((item) => item.type === 'note').reverse()) {
+    await rollbackEntry(entry);
+  }
   return failures;
 }
 

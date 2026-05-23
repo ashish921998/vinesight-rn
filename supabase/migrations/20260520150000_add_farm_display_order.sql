@@ -30,8 +30,6 @@ begin
     from ordered
     where farms.id = ordered.id;
 
-    create index if not exists farms_user_display_order_idx
-      on public.farms (user_id, display_order, created_at desc);
   end if;
 end $$;
 

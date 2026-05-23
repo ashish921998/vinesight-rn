@@ -284,4 +284,64 @@ describe('saveEntryLogSession', () => {
       notes: 'Last note',
     });
   });
+
+  it('rolls back same-day note drafts in reverse queue order', async () => {
+    const adapters = createAdapters();
+    adapters.getDailyNote
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 501,
+        farm_id: 101,
+        date: '2026-02-11',
+        notes: 'First note',
+      });
+    adapters.upsertDailyNote.mockResolvedValue({ id: 501 });
+    adapters.createExpense.mockRejectedValue(new Error('Expense failed'));
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'note-1',
+          type: 'note',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { notes: 'First note' },
+          displayDescription: 'First note',
+        },
+        {
+          id: 'note-2',
+          type: 'note',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { notes: 'Last note' },
+          displayDescription: 'Last note',
+        },
+        expenseDraft({
+          id: 'expense-1',
+          scope: 'single_farm',
+          farmId: 101,
+        }),
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('failed');
+    expect(adapters.upsertDailyNote).toHaveBeenNthCalledWith(3, {
+      farm_id: 101,
+      date: '2026-02-11',
+      notes: 'First note',
+    });
+    expect(adapters.deleteDailyNote).toHaveBeenCalledWith({
+      id: 501,
+      farmId: 101,
+      date: '2026-02-11',
+    });
+    expect(adapters.upsertDailyNote.mock.invocationCallOrder[2]).toBeLessThan(
+      adapters.deleteDailyNote.mock.invocationCallOrder[0],
+    );
+  });
 });
