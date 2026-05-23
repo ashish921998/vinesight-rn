@@ -1,0 +1,32 @@
+src/features/entry-log-session/save-entry-log-session.ts
+  s_64640bcacde924::t_8a7ebc5b0be0c2 150
+src/hooks/use-records.ts
+  s_64640bcacde924::t_8a7ebc5b0be0c2 701,711
+__tests__/save-entry-log-session.test.ts
+  s_64640bcacde924::t_5d186569f765d7 202-215,217,221,225,228-244
+  s_64640bcacde924::t_f324dfb4bc64ea 216,218-220,222-224,226-227
+src/utils/entry-log-submission.ts
+  s_64640bcacde924::t_8a7ebc5b0be0c2 54
+src/i18n/locales/mr.ts
+  s_64640bcacde924::t_8a7ebc5b0be0c2 209
+app/farm/[id].tsx
+  s_64640bcacde924::t_2929c1f1d2484b 506-507
+src/i18n/locales/hi.ts
+  s_64640bcacde924::t_8a7ebc5b0be0c2 180,581
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "fa75b6cf8fd858c2bd381fe3be5acfba4d6b179c",
+  "prompts": {},
+  "sessions": {
+    "s_64640bcacde924": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5374-0f35-7e62-bf13-99af8fd67aef",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
