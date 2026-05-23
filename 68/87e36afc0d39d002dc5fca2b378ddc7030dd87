@@ -1,0 +1,21 @@
+src/features/entry-log-session/save-entry-log-session.ts
+  s_64640bcacde924::t_72e7316efa4c66 110-126,129-153,155-170
+__tests__/save-entry-log-session.test.ts
+  s_64640bcacde924::t_80cb92ffde03ae 287-346
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "6887e36afc0d39d002dc5fca2b378ddc7030dd87",
+  "prompts": {},
+  "sessions": {
+    "s_64640bcacde924": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5374-0f35-7e62-bf13-99af8fd67aef",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
