@@ -119,8 +119,8 @@ import {
   PRIORITY_INFO,
 } from '@/types/task';
 import { TASK_TEMPLATES } from '@/constants/task-templates';
-import { toSupabaseDateString } from '@/types/database';
-import type { Farm } from '@/types';
+import { TABLES, toSupabaseDateString } from '@/types/database';
+import type { DailyNoteRecord, Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useAuthStore, useNotificationStore } from '@/stores';
@@ -144,6 +144,7 @@ import {
   stripTaskPlanFromDescription,
 } from '@/utils/task-plan';
 import { isPhiConflict } from '@/services/phi-service';
+import { supabase } from '@/lib/supabase';
 
 interface EntryFormProps {
   visible?: boolean;
@@ -1088,6 +1089,16 @@ export function EntryForm({
       createExpense: async (payload) => createExpense.mutateAsync(payload),
       createFertigation: async (payload) => createFertigation.mutateAsync(payload),
       upsertDailyNote: async (payload) => upsertDailyNote.mutateAsync(payload),
+      getDailyNote: async ({ farmId, date }) => {
+        const { data, error } = await supabase
+          .from(TABLES.DAILY_NOTES)
+          .select('*')
+          .eq('farm_id', farmId)
+          .eq('date', date)
+          .maybeSingle();
+        if (error) throw error;
+        return (data ?? null) as DailyNoteRecord | null;
+      },
       updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
       deleteIrrigation: async (payload) => deleteIrrigation.mutateAsync(payload),
       deleteSpray: async (payload) => deleteSpray.mutateAsync(payload),
@@ -1237,6 +1248,26 @@ export function EntryForm({
               defaultValue:
                 'This draft session includes entries for multiple farms. Please save or remove entries so all drafts target one farm.',
             }),
+          );
+          return;
+        }
+        if (result.reason === 'missing_farm') {
+          Alert.alert(
+            t('common.error'),
+            t('entryForm.missingFarm', {
+              defaultValue:
+                'The selected farm could not be resolved. Please choose a farm again before saving.',
+            }),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('entryForm.selectFarm'),
+                onPress: () => {
+                  setSelectedFarmId(null);
+                  setShowLogFarmPicker(true);
+                },
+              },
+            ],
           );
           return;
         }

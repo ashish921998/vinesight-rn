@@ -41,6 +41,7 @@ function createAdapters(): jest.Mocked<EntryLogSessionAdapters> {
     createExpense: jest.fn().mockResolvedValue({ id: 14 }),
     createFertigation: jest.fn().mockResolvedValue({ id: 15 }),
     upsertDailyNote: jest.fn().mockResolvedValue({ id: 16 }),
+    getDailyNote: jest.fn().mockResolvedValue(null),
     updateWaterLevel: jest.fn().mockResolvedValue({}),
     deleteIrrigation: jest.fn().mockResolvedValue(undefined),
     deleteSpray: jest.fn().mockResolvedValue(undefined),
@@ -151,5 +152,51 @@ describe('saveEntryLogSession', () => {
         recordId: 909,
       });
     }
+  });
+
+  it('restores an existing daily note when a later draft fails', async () => {
+    const adapters = createAdapters();
+    adapters.getDailyNote.mockResolvedValue({
+      id: 501,
+      farm_id: 101,
+      season_id: 77,
+      date: '2026-02-11',
+      notes: 'Original note',
+      created_at: '2026-02-10T00:00:00Z',
+      updated_at: '2026-02-10T00:00:00Z',
+    });
+    adapters.upsertDailyNote.mockResolvedValue({ id: 501 });
+    adapters.createExpense.mockRejectedValue(new Error('Expense failed'));
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'note-draft',
+          type: 'note',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { notes: 'Updated note' },
+          displayDescription: 'Updated note',
+        },
+        expenseDraft({
+          id: 'expense-draft',
+          scope: 'single_farm',
+          farmId: 101,
+        }),
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('failed');
+    expect(adapters.deleteDailyNote).not.toHaveBeenCalled();
+    expect(adapters.upsertDailyNote).toHaveBeenLastCalledWith({
+      farm_id: 101,
+      date: '2026-02-11',
+      notes: 'Original note',
+    });
   });
 });

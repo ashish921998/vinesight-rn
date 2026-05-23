@@ -228,6 +228,7 @@ export function useCreateFarm() {
         await ensureInitialFarmSeason(data, userId);
       } catch (seasonError) {
         console.warn('[useCreateFarm] ensureInitialFarmSeason failed:', seasonError);
+        throw seasonError;
       }
       return data;
     },

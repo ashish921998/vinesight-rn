@@ -26,6 +26,7 @@ const mockUseFarms = jest.fn();
 const mockUseFarmSeasonStatus = jest.fn();
 const mockUseChemicalMixSearch = jest.fn();
 const mockUsePhiComputation = jest.fn();
+const mockDailyNoteMaybeSingle = jest.fn();
 
 jest.mock('react-i18next', () => {
   const actual = jest.requireActual('react-i18next');
@@ -92,6 +93,16 @@ jest.mock('@/hooks/use-tasks', () => ({
   useUpdateTask: () => ({ mutateAsync: mockTaskUpdateMutate, isPending: false }),
 }));
 
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: mockDailyNoteMaybeSingle,
+    })),
+  },
+}));
+
 jest.mock('@/stores', () => ({
   useAuthStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
@@ -153,6 +164,7 @@ describe('EntryForm UI integration', () => {
     });
     mockUseChemicalMixSearch.mockReturnValue({ data: [], isLoading: false });
     mockUsePhiComputation.mockReturnValue({ data: null, isLoading: false, error: null });
+    mockDailyNoteMaybeSingle.mockResolvedValue({ data: null, error: null });
     mockCreateIrrigationMutate.mockResolvedValue({ id: 101 });
     mockCreateSprayMutate.mockResolvedValue({ id: 102 });
     mockCreateHarvestMutate.mockResolvedValue({ id: 103 });

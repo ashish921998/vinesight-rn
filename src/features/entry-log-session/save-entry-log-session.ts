@@ -1,4 +1,4 @@
-import type { Farm } from '@/types';
+import type { DailyNoteRecord, Farm } from '@/types';
 import type { LogTypeId } from '@/constants/calculator-models';
 import {
   submitEntryPendingLog,
@@ -21,6 +21,7 @@ export type EntryLogCreatedRecord = {
   recordId: number | null;
   farmId: number;
   farmContext?: EntryLogFarmContext;
+  previousDailyNote?: DailyNoteRecord | null;
 };
 
 export type EntryLogRollbackFailure = {
@@ -70,6 +71,7 @@ export type SaveEntryLogSessionResult =
     };
 
 export interface EntryLogSessionAdapters extends Omit<EntryLogSubmitters, 'deleteIrrigation'> {
+  getDailyNote: (payload: { farmId: number; date: string }) => Promise<DailyNoteRecord | null>;
   deleteIrrigation: (payload: { id: number; farmId: number }) => Promise<unknown>;
   deleteSpray: (payload: { id: number; farmId: number }) => Promise<unknown>;
   deleteHarvest: (payload: { id: number; farmId: number }) => Promise<unknown>;
@@ -109,7 +111,7 @@ async function rollbackCreatedRecords(
     .filter((entry) => entry.recordId !== null)
     .map(async (entry) => {
       try {
-          const id = entry.recordId as number;
+        const id = entry.recordId as number;
         switch (entry.type) {
           case 'irrigation':
             await adapters.deleteIrrigation({ id, farmId: entry.farmId });
@@ -141,7 +143,15 @@ async function rollbackCreatedRecords(
             await adapters.deleteFertigation({ id, farmId: entry.farmId });
             break;
           case 'note':
-            await adapters.deleteDailyNote({ id, farmId: entry.farmId, date: dateStr });
+            if (entry.previousDailyNote) {
+              await adapters.upsertDailyNote({
+                farm_id: entry.farmId,
+                date: dateStr,
+                notes: entry.previousDailyNote.notes ?? '',
+              });
+            } else {
+              await adapters.deleteDailyNote({ id, farmId: entry.farmId, date: dateStr });
+            }
             break;
         }
       } catch (rollbackError) {
@@ -163,8 +173,9 @@ function collectCreatedRecordFromResult(params: {
   farmId: number;
   farmContext: EntryLogFarmContext;
   result: PromiseSettledResult<{ pendingLogId: string; type: LogTypeId; recordId: number | null }>;
+  previousDailyNote?: DailyNoteRecord | null;
 }): EntryLogCreatedRecord | null {
-  const { log, farmId, farmContext, result } = params;
+  const { log, farmId, farmContext, result, previousDailyNote } = params;
   if (result.status === 'fulfilled') {
     return {
       pendingLogId: log.id,
@@ -172,6 +183,7 @@ function collectCreatedRecordFromResult(params: {
       recordId: result.value.recordId,
       farmId,
       farmContext,
+      previousDailyNote,
     };
   }
 
@@ -184,7 +196,29 @@ function collectCreatedRecordFromResult(params: {
     recordId: orphanedRecordId,
     farmId,
     farmContext,
+    previousDailyNote,
   };
+}
+
+async function submitLogWithSnapshot(params: {
+  log: EntryLogSessionDraft;
+  dateStr: string;
+  farm: EntryLogFarmContext;
+  adapters: EntryLogSessionAdapters;
+}): Promise<{
+  result: { pendingLogId: string; type: LogTypeId; recordId: number | null };
+  previousDailyNote: DailyNoteRecord | null;
+}> {
+  const { log, dateStr, farm, adapters } = params;
+  const previousDailyNote =
+    log.type === 'note' ? await adapters.getDailyNote({ farmId: farm.id, date: dateStr }) : null;
+  const result = await submitEntryPendingLog({
+    log,
+    dateStr,
+    farm,
+    submitters: adapters,
+  });
+  return { result, previousDailyNote };
 }
 
 function buildFailedResult(params: {
@@ -235,11 +269,11 @@ export async function saveEntryLogSession(
           log,
           farmId,
           farmContext,
-          promise: submitEntryPendingLog({
+          promise: submitLogWithSnapshot({
             log,
             dateStr,
             farm: farmContext,
-            submitters: adapters,
+            adapters,
           }),
         };
       }),
@@ -252,7 +286,15 @@ export async function saveEntryLogSession(
     results.forEach((result, index) => {
       const submission = submissions[index];
       if (!submission) return;
-      const created = collectCreatedRecordFromResult({ ...submission, result });
+      const created = collectCreatedRecordFromResult({
+        ...submission,
+        result:
+          result.status === 'fulfilled'
+            ? { status: 'fulfilled', value: result.value.result }
+            : result,
+        previousDailyNote:
+          result.status === 'fulfilled' ? result.value.previousDailyNote : undefined,
+      });
       if (created) createdRecords.push(created);
       if (result.status === 'rejected') {
         failures.push({
@@ -301,11 +343,11 @@ export async function saveEntryLogSession(
   const farmContext = buildFarmContext(singleFarmContext, preferredAreaUnit);
   const results = await Promise.allSettled(
     pendingLogs.map((log) =>
-      submitEntryPendingLog({
+      submitLogWithSnapshot({
         log,
         dateStr,
         farm: farmContext,
-        submitters: adapters,
+        adapters,
       }),
     ),
   );
@@ -315,7 +357,14 @@ export async function saveEntryLogSession(
   results.forEach((result, index) => {
     const log = pendingLogs[index];
     if (!log) return;
-    const created = collectCreatedRecordFromResult({ log, farmId, farmContext, result });
+    const created = collectCreatedRecordFromResult({
+      log,
+      farmId,
+      farmContext,
+      result:
+        result.status === 'fulfilled' ? { status: 'fulfilled', value: result.value.result } : result,
+      previousDailyNote: result.status === 'fulfilled' ? result.value.previousDailyNote : undefined,
+    });
     if (created) createdRecords.push(created);
     if (result.status === 'rejected') {
       failures.push({

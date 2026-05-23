@@ -45,6 +45,7 @@ declare
   v_user_id uuid := auth.uid();
   v_requested_count integer;
   v_owned_count integer;
+  v_total_count integer;
 begin
   if v_user_id is null then
     raise exception 'Not authenticated' using errcode = '42501';
@@ -73,6 +74,15 @@ begin
 
   if v_owned_count <> v_requested_count then
     raise exception 'Cannot reorder farms outside the current user account' using errcode = '42501';
+  end if;
+
+  select count(*)
+  into v_total_count
+  from public.farms
+  where user_id = v_user_id;
+
+  if v_total_count <> v_requested_count then
+    raise exception 'Farm order must include every farm for the current user' using errcode = '22000';
   end if;
 
   update public.farms
