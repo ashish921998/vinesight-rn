@@ -442,7 +442,7 @@ export default function LogsScreen() {
         case 'note': {
           const r = record as DailyNoteRecord;
           if (r.id) {
-            await deleteDailyNote.mutateAsync({ id: r.id, farmId: farmIdNum });
+            await deleteDailyNote.mutateAsync({ id: r.id, farmId: farmIdNum, date: r.date });
           }
           break;
         }

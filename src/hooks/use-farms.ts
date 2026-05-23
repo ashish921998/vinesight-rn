@@ -42,6 +42,40 @@ function isMissingDisplayOrderColumn(error: { code?: string; message?: string } 
   );
 }
 
+function isUniqueDisplayOrderViolation(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const message = error.message ?? '';
+  return (
+    error.code === '23505' &&
+    (/farms_user_display_order_unique/i.test(message) || /display_order/i.test(message))
+  );
+}
+
+async function resolveNextFarmDisplayOrder(userId: string): Promise<{
+  supportsDisplayOrder: boolean;
+  displayOrder: number;
+}> {
+  const { data: firstFarm, error: firstFarmError } = await supabase
+    .from(TABLES.FARMS)
+    .select('display_order')
+    .eq('user_id', userId)
+    .order('display_order', { ascending: true, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (firstFarmError && !isMissingDisplayOrderColumn(firstFarmError)) {
+    throw firstFarmError;
+  }
+
+  const supportsDisplayOrder = !isMissingDisplayOrderColumn(firstFarmError);
+  const displayOrder =
+    supportsDisplayOrder && typeof firstFarm?.display_order === 'number'
+      ? firstFarm.display_order - 1
+      : 0;
+
+  return { supportsDisplayOrder, displayOrder };
+}
+
 async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void> {
   if (typeof farm.id !== 'number') return;
 
@@ -159,33 +193,37 @@ export function useCreateFarm() {
   return useMutation({
     mutationFn: async (farm: FarmInsert): Promise<Farm> => {
       const userId = await getUserId();
-      const { data: firstFarm, error: firstFarmError } = await supabase
-        .from(TABLES.FARMS)
-        .select('display_order')
-        .eq('user_id', userId)
-        .order('display_order', { ascending: true, nullsFirst: false })
-        .limit(1)
-        .maybeSingle();
+      let data: Farm | null = null;
+      let lastError: { code?: string; message?: string } | null = null;
+      const shouldAssignDisplayOrder = farm.display_order == null;
 
-      if (firstFarmError && !isMissingDisplayOrderColumn(firstFarmError)) {
-        throw firstFarmError;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const { supportsDisplayOrder, displayOrder } = await resolveNextFarmDisplayOrder(userId);
+        const insertPayload =
+          supportsDisplayOrder && shouldAssignDisplayOrder
+            ? { ...farm, user_id: userId, display_order: displayOrder }
+            : { ...farm, user_id: userId };
+
+        const { data: insertedFarm, error } = await supabase
+          .from(TABLES.FARMS)
+          .insert(insertPayload)
+          .select()
+          .single();
+
+        if (!error) {
+          data = insertedFarm;
+          break;
+        }
+
+        lastError = error;
+        if (!shouldAssignDisplayOrder || !isUniqueDisplayOrderViolation(error)) {
+          throw error;
+        }
       }
-      const supportsDisplayOrder = !isMissingDisplayOrderColumn(firstFarmError);
-      const displayOrder =
-        supportsDisplayOrder && typeof firstFarm?.display_order === 'number'
-          ? firstFarm.display_order - 1
-          : 0;
-      const insertPayload = supportsDisplayOrder
-        ? { ...farm, user_id: userId, display_order: farm.display_order ?? displayOrder }
-        : { ...farm, user_id: userId };
 
-      const { data, error } = await supabase
-        .from(TABLES.FARMS)
-        .insert(insertPayload)
-        .select()
-        .single();
-
-      if (error) throw error;
+      if (!data) {
+        throw lastError ?? new Error('Failed to create farm');
+      }
       try {
         await ensureInitialFarmSeason(data, userId);
       } catch (seasonError) {

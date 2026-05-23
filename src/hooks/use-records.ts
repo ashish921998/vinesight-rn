@@ -740,7 +740,14 @@ export function useDeleteDailyNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+    mutationFn: async ({
+      id,
+      farmId,
+    }: {
+      id: number;
+      farmId: number;
+      date: string;
+    }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.DAILY_NOTES)
         .delete()
@@ -749,12 +756,15 @@ export function useDeleteDailyNote() {
 
       if (error) throw error;
     },
-    onSuccess: (_, { farmId }) => {
+    onSuccess: (_, { farmId, date }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.dailyNotes.listByFarm(farmId),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.dailyNotes.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dailyNotes.byDate(farmId, date),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.dailyNotes.all,
