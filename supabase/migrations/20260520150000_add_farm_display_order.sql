@@ -75,6 +75,11 @@ begin
     raise exception 'Cannot reorder farms outside the current user account' using errcode = '42501';
   end if;
 
+  update public.farms
+  set display_order = null
+  where user_id = v_user_id
+    and id = any(p_ordered_farm_ids);
+
   with ordered as (
     select
       requested.id,

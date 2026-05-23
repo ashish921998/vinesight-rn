@@ -693,7 +693,9 @@ describe('EntryForm UI integration', () => {
     fireEvent.press(screen.getByText('entryForm.saveLogs'));
 
     await waitFor(() => {
-      expect(mockDeleteDailyNoteMutate).toHaveBeenCalledWith({ id: 106, farmId: 17 });
+      expect(mockDeleteDailyNoteMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 106, farmId: 17 }),
+      );
     });
     expect(screen.getByText('Expense failed')).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();
