@@ -698,7 +698,7 @@ export function useUpsertDailyNote() {
     }: {
       farm_id: number;
       date: string;
-      notes: string;
+      notes: string | null;
     }): Promise<DailyNoteRecord> => {
       const seasonId = await resolveSeasonIdForDate({ farmId: farm_id, date });
       const { data, error } = await supabase
@@ -708,7 +708,7 @@ export function useUpsertDailyNote() {
             farm_id,
             season_id: seasonId,
             date,
-            notes: notes.trim(),
+            notes: notes === null ? null : notes.trim(),
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'farm_id,date' },

@@ -147,7 +147,7 @@ async function rollbackCreatedRecords(
               await adapters.upsertDailyNote({
                 farm_id: entry.farmId,
                 date: dateStr,
-                notes: entry.previousDailyNote.notes ?? '',
+                notes: entry.previousDailyNote.notes ?? null,
               });
             } else {
               await adapters.deleteDailyNote({ id, farmId: entry.farmId, date: dateStr });

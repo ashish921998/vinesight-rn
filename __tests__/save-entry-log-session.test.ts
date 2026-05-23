@@ -199,4 +199,47 @@ describe('saveEntryLogSession', () => {
       notes: 'Original note',
     });
   });
+
+  it('preserves a null daily note body when rolling back an updated note', async () => {
+    const adapters = createAdapters();
+    adapters.getDailyNote.mockResolvedValue({
+      id: 501,
+      farm_id: 101,
+      date: '2026-02-11',
+      notes: null,
+    });
+    adapters.upsertDailyNote.mockResolvedValue({ id: 501 });
+    adapters.createExpense.mockRejectedValue(new Error('Expense failed'));
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'note-1',
+          type: 'note',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { notes: 'Updated note' },
+          displayDescription: 'Updated note',
+        },
+        expenseDraft({
+          id: 'expense-1',
+          scope: 'single_farm',
+          farmId: 101,
+        }),
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('failed');
+    expect(adapters.deleteDailyNote).not.toHaveBeenCalled();
+    expect(adapters.upsertDailyNote).toHaveBeenLastCalledWith({
+      farm_id: 101,
+      date: '2026-02-11',
+      notes: null,
+    });
+  });
 });

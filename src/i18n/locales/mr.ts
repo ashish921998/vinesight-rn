@@ -206,7 +206,7 @@ export const mr = {
     },
     harvest: {
       quantityKg: '{{value}} kg',
-      quantityTon: '{{value}} t',
+      quantityTon: '{{value}} टन',
     },
     seasons: {
       title: 'हंगाम',

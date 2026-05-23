@@ -177,7 +177,7 @@ export const hi = {
       logEntriesTitle: 'लॉग प्रविष्टियां',
       recordsSubtitle: 'रिकॉर्ड',
       soilWaterTitle: 'मिट्टी का पानी',
-      seasonalWaterAppliedTitle: 'मौसमी पानी उपयोग',
+      seasonalWaterAppliedTitle: 'मौसमी पानी का उपयोग',
     },
     safeHarvest: {
       title: 'सबसे पहले सुरक्षित कटाई',
@@ -578,7 +578,7 @@ export const hi = {
   farms: {
     title: 'खेत',
     addFarm: 'खेत जोड़ें',
-    currentSeasonLabel: 'सीजन {{startYear}}–{{endYY}}',
+    currentSeasonLabel: 'सीज़न {{startYear}}–{{endYY}}',
     empty: {
       title: 'अभी तक कोई खेत नहीं',
       subtitle: 'सिंचाई, छिड़काव और फसल को ट्रैक करने के लिए अपना पहला खेत जोड़ें।',

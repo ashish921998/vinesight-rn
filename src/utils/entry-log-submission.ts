@@ -51,7 +51,7 @@ export interface EntryLogSubmitters {
   upsertDailyNote: (payload: {
     farm_id: number;
     date: string;
-    notes: string;
+    notes: string | null;
   }) => Promise<{ id?: number | null }>;
   updateWaterLevel: (payload: { farmId: number; remainingWater: number }) => Promise<unknown>;
   deleteIrrigation?: (payload: { id: number; farmId: number }) => Promise<unknown>;

@@ -503,7 +503,8 @@ export default function FarmDetailScreen() {
 
   const formatWaterDepth = (value: number | null | undefined) => {
     if (value === null || value === undefined) return '--';
-    const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+    const abs = Math.abs(value);
+    const digits = abs >= 100 ? 0 : abs >= 10 ? 1 : 2;
     return t('farmDetails.water.mmDepth', { value: value.toFixed(digits) });
   };
 
