@@ -69,9 +69,9 @@ export default function SystemDischargeScreen() {
     refillTankValue: React.createRef<View>(),
     dbp: React.createRef<View>(),
     drippersPerPlant: React.createRef<View>(),
-    dischargePerHour1: React.createRef<View>(),
+    dripperFlowRate1: React.createRef<View>(),
     dbd: React.createRef<View>(),
-    dischargePerHour2: React.createRef<View>(),
+    dripperFlowRate2: React.createRef<View>(),
     numberOfLines: React.createRef<View>(),
   });
 
@@ -625,7 +625,7 @@ export default function SystemDischargeScreen() {
                     inputRowRefs={inputRowRefs}
                   />
                   <InputRow
-                    fieldKey="dischargePerHour1"
+                    fieldKey="dripperFlowRate1"
                     label="Discharge per Dripper"
                     value={dischargePerHour1}
                     onChangeText={setDischargePerHour1}
@@ -717,7 +717,7 @@ export default function SystemDischargeScreen() {
                     inputRowRefs={inputRowRefs}
                   />
                   <InputRow
-                    fieldKey="dischargePerHour2"
+                    fieldKey="dripperFlowRate2"
                     label="Discharge per Dripper"
                     value={dischargePerHour2}
                     onChangeText={setDischargePerHour2}
@@ -856,7 +856,7 @@ export default function SystemDischargeScreen() {
                         marginTop: spacing[1],
                       }}
                     >
-                      m³/hr System Discharge
+                      mm/hr System Discharge
                     </Text>
                   </View>
                   <Text
@@ -867,7 +867,7 @@ export default function SystemDischargeScreen() {
                       marginTop: spacing[2],
                     }}
                   >
-                    Equivalent: {(results.systemDischarge * 1000).toFixed(0)} L/hr
+                    Water depth applied per irrigation hour
                   </Text>
                   {/* Formula - italic style per wireframe */}
                   <Text
@@ -927,8 +927,8 @@ export default function SystemDischargeScreen() {
                       What this means
                     </Text>
                     <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                      Your system can deliver {(results.systemDischarge * 1000).toFixed(0)} liters
-                      per hour. Use this value for pump sizing and irrigation scheduling.
+                      Use this mm/hr value in the farm irrigation settings. Soil water added is
+                      irrigation hours × system discharge.
                     </Text>
                   </View>
                 </View>

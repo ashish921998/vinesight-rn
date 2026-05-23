@@ -59,10 +59,12 @@ import {
   validateHarvestForm,
   validateExpenseForm,
   validateFertigationForm,
+  validateNoteForm,
   createEmptySprayFormData,
   createEmptyHarvestFormData,
   createEmptyExpenseFormData,
   createEmptyFertigationFormData,
+  createEmptyNoteFormData,
   type SprayQuickAddItem,
   type FertigationQuickAddItem,
   type IrrigationFormData,
@@ -70,6 +72,7 @@ import {
   type HarvestFormData,
   type ExpenseFormData,
   type FertigationFormData,
+  type NoteFormData,
 } from '@/components/forms';
 import {
   LOG_TYPES,
@@ -77,7 +80,6 @@ import {
   HARVEST_GRADES,
   CHEMICAL_UNITS,
   type FertilizerUnit,
-  ACTIVITY_TYPES as _ACTIVITY_TYPES,
 } from '@/constants/calculator-models';
 import {
   useCreateIrrigationRecord,
@@ -96,6 +98,8 @@ import {
   useWarehouseItems,
   useRecentSprayChemicals,
   useRecentFertigationItems,
+  useUpsertDailyNote,
+  useDeleteDailyNote,
   useFarmSeasonStatus,
   useChemicalMixSearch,
   usePhiComputation,
@@ -115,18 +119,19 @@ import {
   PRIORITY_INFO,
 } from '@/types/task';
 import { TASK_TEMPLATES } from '@/constants/task-templates';
-import { toSupabaseDateString } from '@/types/database';
-import type { Farm } from '@/types';
+import { TABLES, toSupabaseDateString } from '@/types/database';
+import type { DailyNoteRecord, Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useAuthStore, useNotificationStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
 import { isGrapeCrop } from '@/utils/crop';
 import {
-  submitEntryPendingLog,
-  type EntryLogFarmContext,
-  type EntryLogSubmitters,
-} from '@/utils/entry-log-submission';
+  saveEntryLogSession,
+  type EntryLogRollbackFailure,
+  type EntryLogSessionAdapters,
+  type EntryLogSubmissionFailure,
+} from '@/features/entry-log-session';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import {
   ensureNotificationPermissions,
@@ -139,6 +144,7 @@ import {
   stripTaskPlanFromDescription,
 } from '@/utils/task-plan';
 import { isPhiConflict } from '@/services/phi-service';
+import { supabase } from '@/lib/supabase';
 
 interface EntryFormProps {
   visible?: boolean;
@@ -148,6 +154,7 @@ interface EntryFormProps {
   farm?: Farm;
   initialFarmId?: number | null;
   initialApplyToAllFarms?: boolean;
+  lockFarmSelection?: boolean;
   initialLogType?: LogTypeId | null;
   initialLogPrefill?: {
     sprayChemicals?: PlannedInputItem[];
@@ -317,6 +324,7 @@ export function EntryForm({
   farm,
   initialFarmId,
   initialApplyToAllFarms,
+  lockFarmSelection = false,
   initialLogType,
   initialLogPrefill,
   sourceTaskId,
@@ -420,7 +428,6 @@ export function EntryForm({
   const [pendingLogFailures, setPendingLogFailures] = useState<Record<string, PendingLogFailure>>(
     {},
   );
-  const allFarmsSucceededByLogRef = useRef<Map<string, Set<number>>>(new Map());
   const [isSubmittingLogs, setIsSubmittingLogs] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [footerHeight, setFooterHeight] = useState(112);
@@ -441,6 +448,7 @@ export function EntryForm({
   const [fertigationData, setFertigationData] = useState<FertigationFormData>(() =>
     createEmptyFertigationFormData(),
   );
+  const [noteData, setNoteData] = useState<NoteFormData>(() => createEmptyNoteFormData());
   const selectedDateIso = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
   const { data: sprayPhiComputation } = usePhiComputation(
     sprayData.catalogMixId ?? null,
@@ -564,11 +572,13 @@ export function EntryForm({
   const createHarvest = useCreateHarvestRecord();
   const createExpense = useCreateExpenseRecord();
   const createFertigation = useCreateFertigationRecord();
+  const upsertDailyNote = useUpsertDailyNote();
   const deleteIrrigation = useDeleteIrrigationRecord();
   const deleteSpray = useDeleteSprayRecord();
   const deleteHarvest = useDeleteHarvestRecord();
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
+  const deleteDailyNote = useDeleteDailyNote();
   const updateWaterLevel = useUpdateFarmWaterLevel();
 
   const scrollToNode = useCallback(
@@ -806,10 +816,20 @@ export function EntryForm({
         return validateExpenseForm(expenseData);
       case 'fertigation':
         return validateFertigationForm(fertigationData);
+      case 'note':
+        return validateNoteForm(noteData);
       default:
         return false;
     }
-  }, [selectedLogType, irrigationData, sprayData, harvestData, expenseData, fertigationData]);
+  }, [
+    selectedLogType,
+    irrigationData,
+    sprayData,
+    harvestData,
+    expenseData,
+    fertigationData,
+    noteData,
+  ]);
 
   const hasFarmForCurrentLog = Boolean(
     activeFarm || (isAllFarmsSelected && selectedLogType === 'expense'),
@@ -854,6 +874,10 @@ export function EntryForm({
         const fertCount = fert.fertilizers.length;
         const waterText = fert.waterVolume ? `${fert.waterVolume}L water, ` : '';
         return `${waterText}${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
+      }
+      case 'note': {
+        const note = data as NoteFormData;
+        return note.notes?.trim() ?? '';
       }
       default:
         return '';
@@ -1013,6 +1037,10 @@ export function EntryForm({
         data = { ...fertigationData };
         setFertigationData(createEmptyFertigationFormData());
         break;
+      case 'note':
+        data = { ...noteData };
+        setNoteData(createEmptyNoteFormData());
+        break;
       default:
         return;
     }
@@ -1028,6 +1056,7 @@ export function EntryForm({
     harvestData,
     expenseData,
     fertigationData,
+    noteData,
     isGrapeFarm,
     activeSeason?.target_harvest_date,
     buildSprayPendingData,
@@ -1036,7 +1065,6 @@ export function EntryForm({
   ]);
 
   const removeLogFromSession = useCallback((id: string) => {
-    allFarmsSucceededByLogRef.current.delete(id);
     setPendingLogFailures((prev) => {
       if (!prev[id]) return prev;
       const next = { ...prev };
@@ -1053,17 +1081,31 @@ export function EntryForm({
     setPendingLogFailures({});
     const dateStr = toSupabaseDateString(selectedDate);
     const createdFrom = entrySource === 'voice_ai' ? 'voice_ai' : 'manual';
-    const hasAllFarmsDrafts = pendingLogs.some((log) => log.scope === 'all_farms');
-    const hasSingleFarmDrafts = pendingLogs.some((log) => log.scope === 'single_farm');
 
-    const submitters: EntryLogSubmitters = {
+    const adapters: EntryLogSessionAdapters = {
       createIrrigation: async (payload) => createIrrigation.mutateAsync(payload),
       createSpray: async (payload) => createSpray.mutateAsync(payload),
       createHarvest: async (payload) => createHarvest.mutateAsync(payload),
       createExpense: async (payload) => createExpense.mutateAsync(payload),
       createFertigation: async (payload) => createFertigation.mutateAsync(payload),
+      upsertDailyNote: async (payload) => upsertDailyNote.mutateAsync(payload),
+      getDailyNote: async ({ farmId, date }) => {
+        const { data, error } = await supabase
+          .from(TABLES.DAILY_NOTES)
+          .select('*')
+          .eq('farm_id', farmId)
+          .eq('date', date)
+          .maybeSingle();
+        if (error) throw error;
+        return (data ?? null) as DailyNoteRecord | null;
+      },
       updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
       deleteIrrigation: async (payload) => deleteIrrigation.mutateAsync(payload),
+      deleteSpray: async (payload) => deleteSpray.mutateAsync(payload),
+      deleteHarvest: async (payload) => deleteHarvest.mutateAsync(payload),
+      deleteExpense: async (payload) => deleteExpense.mutateAsync(payload),
+      deleteFertigation: async (payload) => deleteFertigation.mutateAsync(payload),
+      deleteDailyNote: async (payload) => deleteDailyNote.mutateAsync(payload),
     };
 
     const buildPendingLogFailure = (
@@ -1087,115 +1129,12 @@ export function EntryForm({
       };
     };
 
-    const buildFarmContext = (farmItem: Farm): EntryLogFarmContext => ({
-      id: farmItem.id ?? 0,
-      area: farmItem.area,
-      areaUnit: preferredAreaUnit,
-      total_tank_capacity: farmItem.total_tank_capacity,
-      system_discharge: farmItem.system_discharge,
-      remaining_water: farmItem.remaining_water,
-      date_of_pruning: farmItem.date_of_pruning,
-    });
-
-    const saveLog = async (
-      log: (typeof pendingLogs)[number],
-      farmContext: EntryLogFarmContext,
-    ): Promise<{ pendingLogId: string; type: LogTypeId; recordId: number | null }> =>
-      submitEntryPendingLog({
-        log,
-        dateStr,
-        farm: farmContext,
-        submitters,
-      });
-
-    type CreatedRecord = {
-      pendingLogId: string;
-      type: LogTypeId;
-      recordId: number | null;
-      farmId: number;
-      farmContext?: EntryLogFarmContext;
-    };
-
-    type RollbackFailure = {
-      pendingLogId: string;
-      type: LogTypeId;
-      recordId: number;
-      farmId: number;
-      error: string;
-    };
-
-    const rollbackCreatedRecords = async (created: CreatedRecord[]) => {
-      const failures: RollbackFailure[] = [];
-      const tasks = created
-        .filter((entry) => entry.recordId !== null)
-        .map(async (entry) => {
-          try {
-            const id = entry.recordId as number;
-            switch (entry.type) {
-              case 'irrigation':
-                await deleteIrrigation.mutateAsync({ id, farmId: entry.farmId });
-                // Revert water level to pre-save state
-                if (entry.farmContext) {
-                  const farm = entry.farmContext;
-                  if (
-                    farm.total_tank_capacity &&
-                    farm.system_discharge &&
-                    farm.total_tank_capacity > 0 &&
-                    farm.system_discharge > 0
-                  ) {
-                    await updateWaterLevel.mutateAsync({
-                      farmId: entry.farmId,
-                      remainingWater: farm.remaining_water ?? 0,
-                    });
-                  }
-                }
-                break;
-              case 'spray':
-                await deleteSpray.mutateAsync({ id, farmId: entry.farmId });
-                break;
-              case 'harvest':
-                await deleteHarvest.mutateAsync({ id, farmId: entry.farmId });
-                break;
-              case 'expense':
-                await deleteExpense.mutateAsync({ id, farmId: entry.farmId });
-                break;
-              case 'fertigation':
-                await deleteFertigation.mutateAsync({ id, farmId: entry.farmId });
-                break;
-              default:
-                break;
-            }
-          } catch (rollbackError) {
-            const errorMsg =
-              rollbackError instanceof Error ? rollbackError.message : String(rollbackError);
-            failures.push({
-              pendingLogId: entry.pendingLogId,
-              type: entry.type,
-              recordId: entry.recordId as number,
-              farmId: entry.farmId,
-              error: errorMsg,
-            });
-            if (__DEV__) {
-              console.error('Failed to rollback created record', {
-                pendingLogId: entry.pendingLogId,
-                type: entry.type,
-                recordId: entry.recordId,
-                farmId: entry.farmId,
-                error: errorMsg,
-              });
-            }
-          }
-        });
-      await Promise.all(tasks);
-      return failures;
-    };
-
     const reportSaveFailure = (
       failedCount: number,
       firstFailedError: unknown,
       failedLogContext: (typeof pendingLogs)[number] | null,
-      failuresByLogId: Record<string, PendingLogFailure>,
-      rollbackFailures?: RollbackFailure[],
+      failures: EntryLogSubmissionFailure[],
+      rollbackFailures?: EntryLogRollbackFailure[],
     ) => {
       const errorMessage =
         firstFailedError instanceof Error
@@ -1235,9 +1174,30 @@ export function EntryForm({
         });
       }
 
-      const nextFailures = { ...failuresByLogId };
+      const nextFailures: Record<string, PendingLogFailure> = {};
+      failures.forEach((failure) => {
+        nextFailures[failure.pendingLogId] = buildPendingLogFailure(
+          failure.error,
+          nextFailures[failure.pendingLogId],
+        );
+        const error = failure.error;
+        const errorMeta = getFarmErrorMeta(error);
+        const errorName = error instanceof Error ? error.name : 'UnknownError';
+        console.error('Failed to save pending log', {
+          pendingLogId: failure.pendingLogId,
+          logType: failure.type,
+          farmId: failure.farmId,
+          errorName,
+          errorCode: errorMeta.code ?? null,
+          errorMessage: errorMeta.message ?? (error instanceof Error ? error.message : null),
+          ...(__DEV__ ? { errorHint: errorMeta.hint ?? null } : {}),
+        });
+      });
       if (rollbackFailures && rollbackFailures.length > 0) {
         rollbackFailures.forEach((failure) => {
+          if (__DEV__) {
+            console.error('Failed to rollback created record', failure);
+          }
           const existingFailure =
             nextFailures[failure.pendingLogId] ?? buildPendingLogFailure(failure.error);
           nextFailures[failure.pendingLogId] = {
@@ -1253,320 +1213,118 @@ export function EntryForm({
     };
 
     try {
-      if (hasAllFarmsDrafts && hasSingleFarmDrafts) {
-        Alert.alert(
-          t('common.error'),
-          t('entryForm.mixedDraftScopes', {
-            defaultValue:
-              'This draft session contains both all-farms and single-farm entries. Please save or remove one scope before continuing.',
-          }),
-        );
-        return;
-      }
+      const result = await saveEntryLogSession({
+        pendingLogs,
+        dateStr,
+        currentFarm: farm ?? null,
+        farms: farms ?? [],
+        preferredAreaUnit,
+        adapters,
+      });
 
-      if (hasAllFarmsDrafts) {
-        const farmsToUse = (farms ?? []).filter((farmItem) => typeof farmItem.id === 'number');
-        if (farmsToUse.length === 0) {
+      if (result.status === 'blocked') {
+        if (result.reason === 'mixed_scopes') {
+          Alert.alert(
+            t('common.error'),
+            t('entryForm.mixedDraftScopes', {
+              defaultValue:
+                'This draft session contains both all-farms and single-farm entries. Please save or remove one scope before continuing.',
+            }),
+          );
+          return;
+        }
+        if (result.reason === 'no_farms') {
           Alert.alert(t('common.error'), t('entryForm.allFarmsNoFarms'));
           return;
         }
-
-        const hasNonExpenseLogs = pendingLogs.some((log) => log.type !== 'expense');
-        if (hasNonExpenseLogs) {
+        if (result.reason === 'all_farms_expense_only') {
           Alert.alert(t('common.error'), t('entryForm.allFarmsExpenseOnly'));
           return;
         }
-
-        const successfulFarmIdsByLog = new Map<string, Set<number>>();
-        pendingLogs.forEach((log) => {
-          successfulFarmIdsByLog.set(
-            log.id,
-            new Set(allFarmsSucceededByLogRef.current.get(log.id) ?? []),
-          );
-        });
-
-        const submissions = farmsToUse.flatMap((farmItem) =>
-          pendingLogs.flatMap((log) => {
-            const farmId = farmItem.id as number;
-            if (successfulFarmIdsByLog.get(log.id)?.has(farmId)) {
-              return [];
-            }
-            const farmContext = buildFarmContext(farmItem);
-            return [
-              {
-                logId: log.id,
-                logType: log.type,
-                farmId,
-                promise: saveLog(log, farmContext),
-                farmContext,
-              },
-            ];
-          }),
-        );
-
-        const results = await Promise.allSettled(
-          submissions.map((submission) => submission.promise),
-        );
-        let failedCount = 0;
-        let firstFailedError: unknown = null;
-        let failedLogContext: (typeof pendingLogs)[number] | null = null;
-        const failuresByLogId: Record<string, PendingLogFailure> = {};
-        const createdRecords: CreatedRecord[] = [];
-
-        results.forEach((result, index) => {
-          const submission = submissions[index];
-          if (result.status === 'fulfilled') {
-            createdRecords.push({
-              pendingLogId: submission.logId,
-              type: submission.logType,
-              recordId: result.value.recordId,
-              farmId: submission.farmId,
-              farmContext: submission.farmContext,
-            });
-            return;
-          }
-
-          failedCount += 1;
-          failuresByLogId[submission.logId] = buildPendingLogFailure(
-            result.reason,
-            failuresByLogId[submission.logId],
-          );
-          if (!firstFailedError) {
-            firstFailedError = result.reason;
-            failedLogContext = pendingLogs.find((log) => log.id === submission.logId) ?? null;
-          }
-
-          if (submission.logType === 'irrigation') {
-            const orphanedRecordId =
-              (result.reason as { recordId?: number | null })?.recordId ?? null;
-            if (orphanedRecordId !== null) {
-              createdRecords.push({
-                pendingLogId: submission.logId,
-                type: submission.logType,
-                recordId: orphanedRecordId,
-                farmId: submission.farmId,
-                farmContext: submission.farmContext,
-              });
-            }
-          }
-
-          const error = result.reason;
-          const errorMeta = getFarmErrorMeta(error);
-          const errorName = error instanceof Error ? error.name : 'UnknownError';
-          console.error('Failed to save pending log', {
-            pendingLogId: submission.logId,
-            logType: submission.logType,
-            farmId: submission.farmId,
-            errorName,
-            errorCode: errorMeta.code ?? null,
-            errorMessage: errorMeta.message ?? (error instanceof Error ? error.message : null),
-            ...(__DEV__ ? { errorHint: errorMeta.hint ?? null } : {}),
-          });
-        });
-
-        if (failedCount > 0) {
-          // Atomic semantics: roll back any successfully created records so the
-          // session has no partial saves.
-          const rollbackFailures = await rollbackCreatedRecords(createdRecords);
-          allFarmsSucceededByLogRef.current.clear();
-          await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-          reportSaveFailure(
-            failedCount,
-            firstFailedError,
-            failedLogContext,
-            failuresByLogId,
-            rollbackFailures,
+        if (result.reason === 'mixed_farms') {
+          Alert.alert(
+            t('common.error'),
+            t('entryForm.mixedDraftFarms', {
+              defaultValue:
+                'This draft session includes entries for multiple farms. Please save or remove entries so all drafts target one farm.',
+            }),
           );
           return;
         }
-
-        // All farms x all logs succeeded -- emit telemetry + clear session.
-        submissions.forEach((submission) => {
-          try {
-            telemetry.capture('record_created', {
-              record_type: submission.logType,
-              created_from: createdFrom,
-              farm_id: submission.farmId,
-            });
-            telemetry.capture('meaningful_action', {
-              action_type: 'record_created',
-              feature_name: submission.logType,
-            });
-            if (typeof submission.farmId === 'number') {
-              guidedTourEmit('guidedTour.logCreated', {
-                farmId: submission.farmId,
-                recordType: submission.logType,
-              });
-            }
-          } catch (err) {
-            if (process.env.NODE_ENV === 'development') {
-              console.error('[Telemetry] failed to send:', err);
-            }
-          }
-        });
-        allFarmsSucceededByLogRef.current.clear();
-        setPendingLogs([]);
-        setPendingLogFailures({});
-        await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-        triggerHapticSuccess();
-        onLogSaveSuccess?.();
-
-        onClose();
-        return;
-      }
-
-      const singleFarmIds = Array.from(
-        new Set(
-          pendingLogs
-            .filter((log) => log.scope === 'single_farm')
-            .map((log) => log.farmId)
-            .filter((farmId): farmId is number => typeof farmId === 'number'),
-        ),
-      );
-      if (singleFarmIds.length !== 1) {
-        Alert.alert(
-          t('common.error'),
-          t('entryForm.mixedDraftFarms', {
-            defaultValue:
-              'This draft session includes entries for multiple farms. Please save or remove entries so all drafts target one farm.',
-          }),
-        );
-        return;
-      }
-      const farmId = singleFarmIds[0] ?? null;
-      const singleFarmContext =
-        (farm && farm.id === farmId ? farm : null) ??
-        farms?.find((farmItem) => farmItem.id === farmId) ??
-        null;
-      if (!farmId || !singleFarmContext) return;
-
-      const results = await Promise.allSettled(
-        pendingLogs.map((log) => saveLog(log, buildFarmContext(singleFarmContext))),
-      );
-      const failedCount = results.filter((result) => result.status === 'rejected').length;
-      const failuresByLogId: Record<string, PendingLogFailure> = {};
-
-      results.forEach((result, index) => {
-        if (result.status === 'rejected') {
-          const failedLog = pendingLogs[index];
-          const error = result.reason;
-          if (failedLog) {
-            failuresByLogId[failedLog.id] = buildPendingLogFailure(
-              error,
-              failuresByLogId[failedLog.id],
-            );
-          }
-          const errorMeta = getFarmErrorMeta(error);
-          const errorName = error instanceof Error ? error.name : 'UnknownError';
-          console.error('Failed to save pending log', {
-            pendingLogId: failedLog?.id ?? null,
-            logType: failedLog?.type ?? null,
-            errorName,
-            errorCode: errorMeta.code ?? null,
-            errorMessage: errorMeta.message ?? (error instanceof Error ? error.message : null),
-            ...(__DEV__ ? { errorHint: errorMeta.hint ?? null } : {}),
-          });
+        if (result.reason === 'missing_farm') {
+          Alert.alert(
+            t('common.error'),
+            t('entryForm.missingFarm', {
+              defaultValue:
+                'The selected farm could not be resolved. Please choose a farm again before saving.',
+            }),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('entryForm.selectFarm'),
+                onPress: () => {
+                  setSelectedFarmId(null);
+                  setShowLogFarmPicker(true);
+                },
+              },
+            ],
+          );
+          return;
         }
-      });
+        return;
+      }
 
-      if (failedCount > 0) {
-        // Atomic semantics: roll back any successfully created records so the
-        // session has no partial saves.
-        const singleFarmCtx = buildFarmContext(singleFarmContext);
-        const createdRecords = results.flatMap((result, index) => {
-          const log = pendingLogs[index];
-          if (!log) return [];
-          let recordId: number | null = null;
-          if (result.status === 'fulfilled') {
-            recordId = result.value.recordId;
-          } else if (log.type === 'irrigation') {
-            const reason = (result as PromiseRejectedResult).reason;
-            recordId = reason?.recordId ?? null;
-          }
-          if (recordId == null) return [];
-          return [
-            {
-              pendingLogId: log.id,
-              type: log.type,
-              recordId,
-              farmId,
-              farmContext: singleFarmCtx,
-            },
-          ];
-        });
-        const rollbackFailures = await rollbackCreatedRecords(createdRecords);
+      if (result.status === 'failed') {
         await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-
-        const firstFailedIndex = results.findIndex((result) => result.status === 'rejected');
-        const failedLogContext = firstFailedIndex >= 0 ? pendingLogs[firstFailedIndex] : null;
-        const firstFailedError =
-          results[firstFailedIndex]?.status === 'rejected'
-            ? (results[firstFailedIndex] as PromiseRejectedResult).reason
-            : null;
         reportSaveFailure(
-          failedCount,
-          firstFailedError,
-          failedLogContext,
-          failuresByLogId,
-          rollbackFailures,
+          result.failedCount,
+          result.firstFailedError,
+          result.firstFailedLog,
+          result.failures,
+          result.rollbackFailures,
         );
         return;
       }
 
       // All saves succeeded -- emit telemetry, update task, clear pending.
-      const sourceTaskLogId = pendingLogs.find((log) => log.isSourceTaskLog)?.id;
-      const matchingSuccessfulRecord =
-        sourceTaskLogId === undefined
-          ? null
-          : results.find(
-              (
-                result,
-              ): result is PromiseFulfilledResult<{
-                pendingLogId: string;
-                type: LogTypeId;
-                recordId: number | null;
-              }> => result.status === 'fulfilled' && result.value.pendingLogId === sourceTaskLogId,
-            )?.value;
       let taskCompletionUpdateFailed = false;
 
-      pendingLogs.forEach((log) => {
-        allFarmsSucceededByLogRef.current.delete(log.id);
+      result.createdRecords.forEach((record) => {
+        const log = pendingLogs.find((item) => item.id === record.pendingLogId);
         try {
           telemetry.capture('record_created', {
-            record_type: log.type,
+            record_type: record.type,
             created_from: createdFrom,
-            farm_id: farmId,
+            farm_id: record.farmId,
           });
-          if (entrySource === 'voice_ai') {
+          if (entrySource === 'voice_ai' && log) {
             telemetry.capture('voice_log_submitted', {
-              farm_id: farmId,
-              record_type: log.type,
+              farm_id: record.farmId,
+              record_type: record.type,
               duration_hours:
-                log.type === 'irrigation'
+                record.type === 'irrigation'
                   ? ((log.data as IrrigationFormData).duration ?? null)
                   : null,
             });
           }
           telemetry.capture('meaningful_action', {
             action_type: 'record_created',
-            feature_name: log.type,
+            feature_name: record.type,
           });
         } catch (err) {
           if (process.env.NODE_ENV === 'development') {
             console.error('[Telemetry] failed to send:', err);
           }
         }
-        if (typeof farmId === 'number') {
-          guidedTourEmit('guidedTour.logCreated', {
-            farmId,
-            recordType: log.type,
-          });
-        }
+        guidedTourEmit('guidedTour.logCreated', {
+          farmId: record.farmId,
+          recordType: record.type,
+        });
       });
       setPendingLogs([]);
       setPendingLogFailures({});
 
-      if (sourceTaskId && matchingSuccessfulRecord && matchingSuccessfulRecord.recordId !== null) {
+      if (sourceTaskId && result.sourceTaskRecord) {
         try {
           await updateTask.mutateAsync({
             id: sourceTaskId,
@@ -1574,8 +1332,8 @@ export function EntryForm({
               status: 'completed',
               completed: true,
               completed_at: new Date().toISOString(),
-              linked_record_type: matchingSuccessfulRecord.type,
-              linked_record_id: matchingSuccessfulRecord.recordId,
+              linked_record_type: result.sourceTaskRecord.type,
+              linked_record_id: result.sourceTaskRecord.recordId,
             },
           });
         } catch (taskUpdateError) {
@@ -1902,7 +1660,6 @@ export function EntryForm({
             text: t('entryForm.discardChanges.discard'),
             style: 'destructive',
             onPress: () => {
-              allFarmsSucceededByLogRef.current.clear();
               setPendingLogs([]);
               setPendingLogFailures({});
               resetTaskForm();
@@ -2034,11 +1791,13 @@ export function EntryForm({
                 harvestData={harvestData}
                 expenseData={expenseData}
                 fertigationData={fertigationData}
+                noteData={noteData}
                 onIrrigationChange={setIrrigationData}
                 onSprayChange={setSprayData}
                 onHarvestChange={setHarvestData}
                 onExpenseChange={setExpenseData}
                 onFertigationChange={setFertigationData}
+                onNoteChange={setNoteData}
                 onInputFocus={scrollToFocusedInput}
                 onAdd={addLogToSession}
                 isValid={isLogFormValid}
@@ -2092,11 +1851,13 @@ export function EntryForm({
           harvestData={harvestData}
           expenseData={expenseData}
           fertigationData={fertigationData}
+          noteData={noteData}
           onIrrigationChange={setIrrigationData}
           onSprayChange={setSprayData}
           onHarvestChange={setHarvestData}
           onExpenseChange={setExpenseData}
           onFertigationChange={setFertigationData}
+          onNoteChange={setNoteData}
           onInputFocus={scrollToFocusedInput}
           onAdd={addLogToSession}
           isValid={isLogFormValid}
@@ -2170,7 +1931,7 @@ export function EntryForm({
 
   const renderLogContent = () => (
     <>
-      {!farm && (
+      {!farm && !lockFarmSelection && (
         <View
           style={{
             backgroundColor: colors.surface[100],
@@ -2572,7 +2333,7 @@ export function EntryForm({
         </View>
       )}
 
-      {!farm && (
+      {!farm && !lockFarmSelection && (
         <View style={{ marginBottom: 16 }}>
           <Text
             selectable

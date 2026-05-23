@@ -13,6 +13,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('@/styles/use-theme', () => ({
+  useIsDark: () => false,
   useThemeColors: () => ({
     surface: { 100: '#fff', 200: '#ddd', 300: '#ccc', 400: '#aaa', 500: '#888', 900: '#111' },
     primary: { 500: '#357047' },
@@ -121,14 +122,14 @@ describe('FarmCard — low water urgency', () => {
     expect(getByText('farmCard.status.needsAttention')).toBeTruthy();
   });
 
-  it('shows Healthy status when water is sufficient', () => {
+  it('does not show an urgency status when water is sufficient', () => {
     const farm: Farm = {
       ...BASE_FARM,
       remaining_water: 500, // 50% — above 30% threshold
       total_tank_capacity: 1000,
     };
-    const { getByText } = render(<FarmCard farm={farm} />);
-    expect(getByText('farmCard.status.healthy')).toBeTruthy();
+    const { queryByText } = render(<FarmCard farm={farm} />);
+    expect(queryByText('farmCard.status.needsAttention')).toBeNull();
   });
 
   it('does not show a Healthy status when water data is absent', () => {

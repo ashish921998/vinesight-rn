@@ -5,6 +5,7 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   TextInput,
   ActivityIndicator,
   Alert,
@@ -17,7 +18,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { useFarms, useDeleteFarm, useFabBottomPosition } from '@/hooks';
+import { useFarms, useDeleteFarm, useFabBottomPosition, useReorderFarms } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
@@ -28,6 +29,19 @@ import { colorWithOpacity } from '@/utils/color';
 import { formatNumber } from '@/i18n/format';
 import { useM3 } from '@/styles/use-theme';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
+
+/**
+ * Returns the current growing-season label, e.g. "Season 2025–26".
+ * Indian grape seasons run Oct–Mar, so Season 2025–26 starts Oct 2025.
+ */
+function getCurrentSeasonLabel(t: TFunction): string {
+  const now = new Date();
+  const month = now.getMonth(); // 0-indexed
+  const year = now.getFullYear();
+  const startYear = month >= 9 ? year : year - 1; // Oct+ → new season
+  const endYY = String(startYear + 1).slice(-2);
+  return t('farms.currentSeasonLabel', { startYear, endYY });
+}
 
 function FarmsSummaryLine({
   farms,
@@ -56,6 +70,8 @@ function FarmsSummaryLine({
   );
 }
 
+type FarmFilter = 'all' | 'healthy' | 'needs_attention';
+
 interface SearchHeaderProps {
   searchQuery: string;
   isSearchFocused: boolean;
@@ -65,6 +81,11 @@ interface SearchHeaderProps {
   filteredFarms: Farm[];
   farms: Farm[] | undefined;
   onAddFarm: () => void;
+  activeFilter: FarmFilter;
+  onFilterChange: (filter: FarmFilter) => void;
+  isReorderMode: boolean;
+  canReorder: boolean;
+  onToggleReorderMode: () => void;
 }
 
 const SearchHeader = React.memo<SearchHeaderProps>(
@@ -77,6 +98,11 @@ const SearchHeader = React.memo<SearchHeaderProps>(
     filteredFarms,
     farms,
     onAddFarm,
+    activeFilter,
+    onFilterChange,
+    isReorderMode,
+    canReorder,
+    onToggleReorderMode,
   }) => {
     const m3 = useM3();
     const { t } = useTranslation();
@@ -99,8 +125,27 @@ const SearchHeader = React.memo<SearchHeaderProps>(
       color: m3.colorScheme.onSurface,
     };
 
-    // Header area matching wireframe-farms-list.html
     const showSearchBar = searchQuery.trim() || isSearchFocused;
+    const isFilterActive = activeFilter !== 'all';
+
+    // Chip counts derived from the full farm list (not the filtered subset)
+    const allCount = farms?.length ?? 0;
+    const healthyCount = farms?.filter((f) => !isLowWater(f)).length ?? 0;
+    const needsAttentionCount = farms?.filter(isLowWater).length ?? 0;
+
+    const FILTER_CHIPS: { key: FarmFilter; label: string; count: number }[] = [
+      { key: 'all', label: t('farms.filter.all', { defaultValue: 'All' }), count: allCount },
+      {
+        key: 'healthy',
+        label: t('farms.filter.healthy', { defaultValue: 'Healthy' }),
+        count: healthyCount,
+      },
+      {
+        key: 'needs_attention',
+        label: t('farms.filter.needsAttention', { defaultValue: 'Needs attention' }),
+        count: needsAttentionCount,
+      },
+    ];
 
     return (
       <View
@@ -119,21 +164,118 @@ const SearchHeader = React.memo<SearchHeaderProps>(
             paddingBottom: spacing[3],
           }}
         >
-          {/* Screen Title */}
-          <Text
-            style={{
-              fontSize: 28,
-              fontWeight: fontWeight.bold,
-              color: m3.colorScheme.onSurface,
-              letterSpacing: -0.4,
-              lineHeight: 34,
-            }}
-          >
-            {t('farms.title', { defaultValue: 'Farms' })}
-          </Text>
+          {/* Screen Title with season eyebrow (Design D) */}
+          <View>
+            {farms && farms.length > 0 && !showSearchBar && (
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: fontWeight.semibold,
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                  color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
+                  marginBottom: 2,
+                }}
+              >
+                {getCurrentSeasonLabel(t)}
+              </Text>
+            )}
+            <Text
+              style={{
+                fontSize: 28,
+                fontWeight: fontWeight.bold,
+                color: m3.colorScheme.onSurface,
+                letterSpacing: -0.4,
+                lineHeight: 34,
+              }}
+            >
+              {t('farms.title', { defaultValue: 'Farms' })}
+            </Text>
+          </View>
 
-          {/* Header Actions: Search + Add */}
+          {/* Header Actions: Filter + Search + Add */}
           <View style={{ flexDirection: 'row', gap: spacing[3] }}>
+            {farms && farms.length > 1 && !showSearchBar && (
+              <Pressable
+                style={{
+                  minWidth: 40,
+                  height: 40,
+                  borderRadius: borderRadius.sm,
+                  borderWidth: 1,
+                  borderColor: isReorderMode
+                    ? m3.colorScheme.primary
+                    : m3.colorScheme.outlineVariant,
+                  backgroundColor: isReorderMode
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.1)
+                    : m3.surface.surfaceContainerLow,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: isReorderMode ? spacing[3] : 0,
+                }}
+                onPress={onToggleReorderMode}
+                disabled={!canReorder && !isReorderMode}
+                accessibilityRole="button"
+                accessibilityLabel={t(isReorderMode ? 'farms.reorder.done' : 'farms.reorder.start')}
+                accessibilityState={{ selected: isReorderMode, disabled: !canReorder }}
+              >
+                {isReorderMode ? (
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.colorScheme.primary,
+                    }}
+                  >
+                    {t('farms.reorder.done')}
+                  </Text>
+                ) : (
+                  <SymbolIcon
+                    name="chevron.up.chevron.down"
+                    size={18}
+                    color={
+                      canReorder
+                        ? m3.colorScheme.onSurfaceVariant
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.38)
+                    }
+                  />
+                )}
+              </Pressable>
+            )}
+
+            {/* Filter Icon Button */}
+            {farms && farms.length > 0 && !showSearchBar && (
+              <Pressable
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.sm,
+                  borderWidth: 1,
+                  borderColor: isFilterActive
+                    ? m3.colorScheme.primary
+                    : m3.colorScheme.outlineVariant,
+                  backgroundColor: isFilterActive
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.1)
+                    : m3.surface.surfaceContainerLow,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => onFilterChange(activeFilter === 'all' ? 'needs_attention' : 'all')}
+                accessibilityRole="button"
+                accessibilityLabel={t('farms.filter.label', { defaultValue: 'Filter farms' })}
+                accessibilityState={{ selected: isFilterActive }}
+              >
+                <SymbolIcon
+                  name="line.3.horizontal.decrease"
+                  size={18}
+                  color={
+                    isFilterActive
+                      ? m3.colorScheme.primary
+                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+                  }
+                />
+              </Pressable>
+            )}
+
             {/* Search Icon Button */}
             <Pressable
               style={{
@@ -176,8 +318,57 @@ const SearchHeader = React.memo<SearchHeaderProps>(
           </View>
         </View>
 
-        {/* Summary Line */}
+        {/* Filter chips strip — Design C (always visible when farms exist, hides during search) */}
         {farms && farms.length > 0 && !showSearchBar && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing[2], paddingBottom: spacing[3] }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {FILTER_CHIPS.map((chip) => {
+              const isActive = activeFilter === chip.key;
+              return (
+                <Pressable
+                  key={chip.key}
+                  onPress={() => onFilterChange(chip.key)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: isActive }}
+                  accessibilityLabel={`${chip.label}, ${chip.count}`}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    height: 30,
+                    paddingHorizontal: spacing[3],
+                    borderRadius: borderRadius.full,
+                    backgroundColor: isActive
+                      ? m3.colorScheme.primary
+                      : pressed
+                        ? m3.surface.surfaceContainer
+                        : m3.surface.surfaceContainerLow,
+                    borderWidth: 1,
+                    borderColor: isActive ? m3.colorScheme.primary : m3.colorScheme.outlineVariant,
+                  })}
+                >
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: fontWeight.semibold,
+                      color: isActive
+                        ? m3.colorScheme.onPrimary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.85),
+                    }}
+                  >
+                    {chip.count > 0 ? `${chip.label} · ${chip.count}` : chip.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        )}
+
+        {/* Summary Line — shown only during search (chips are hidden then) */}
+        {farms && farms.length > 0 && showSearchBar && (
           <FarmsSummaryLine farms={farms} m3={m3} t={t} style={{ paddingBottom: spacing[3] }} />
         )}
 
@@ -249,12 +440,21 @@ export default function FarmsScreen() {
   const fabBottom = useFabBottomPosition();
   const { data: farms, isLoading, refetch } = useFarms();
   const deleteFarm = useDeleteFarm();
+  const reorderFarms = useReorderFarms();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [today, setToday] = useState(() => new Date());
+  const [activeFilter, setActiveFilter] = useState<FarmFilter>('all');
+  const [isReorderMode, setIsReorderMode] = useState(false);
+
+  const handleFilterChange = useCallback((filter: FarmFilter) => {
+    setActiveFilter(filter);
+    setIsReorderMode(false);
+  }, []);
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchQuery(text);
+    if (text.trim()) setIsReorderMode(false);
   }, []);
 
   const handleSearchFocus = useCallback(() => {
@@ -271,9 +471,12 @@ export default function FarmsScreen() {
       return () => {
         setSearchQuery('');
         setIsSearchFocused(false);
+        setIsReorderMode(false);
       };
     }, []),
   );
+
+  const canReorder = !searchQuery.trim() && activeFilter === 'all';
 
   // Midnight tick — keeps `today` current if the screen stays open across midnight.
   // useFocusEffect handles focus/resume; this handles the in-session day rollover.
@@ -297,11 +500,13 @@ export default function FarmsScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Filter farms based on search query, sorted urgency-first (low water first)
+  // Filter farms by search query + active filter chip; base farm order comes from useFarms().
   const filteredFarms = useMemo(() => {
     if (!farms) return [];
     const query = searchQuery.toLowerCase().trim();
-    const filtered = query
+
+    // 1. Text search
+    const afterSearch = query
       ? farms.filter(
           (farm) =>
             farm.name.toLowerCase().includes(query) ||
@@ -310,12 +515,54 @@ export default function FarmsScreen() {
             farm.region?.toLowerCase().includes(query),
         )
       : farms;
-    return [...filtered].sort((a, b) => {
-      const aUrgent = isLowWater(a) ? 1 : 0;
-      const bUrgent = isLowWater(b) ? 1 : 0;
-      return bUrgent - aUrgent;
-    });
-  }, [farms, searchQuery]);
+
+    // 2. Filter chip
+    const afterFilter =
+      activeFilter === 'healthy'
+        ? afterSearch.filter((f) => !isLowWater(f))
+        : activeFilter === 'needs_attention'
+          ? afterSearch.filter(isLowWater)
+          : afterSearch;
+
+    return afterFilter;
+  }, [farms, searchQuery, activeFilter]);
+
+  const handleToggleReorderMode = useCallback(() => {
+    if (isReorderMode) {
+      setIsReorderMode(false);
+      return;
+    }
+    if (!canReorder) return;
+    setIsReorderMode(true);
+  }, [canReorder, isReorderMode]);
+
+  const handleMoveFarm = useCallback(
+    async (farm: Farm, direction: 'up' | 'down') => {
+      if (!farms || typeof farm.id !== 'number' || reorderFarms.isPending) return;
+      const currentIndex = farms.findIndex((item) => item.id === farm.id);
+      if (currentIndex < 0) return;
+
+      const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      if (nextIndex < 0 || nextIndex >= farms.length) return;
+
+      const nextFarms = [...farms];
+      [nextFarms[currentIndex], nextFarms[nextIndex]] = [
+        nextFarms[nextIndex],
+        nextFarms[currentIndex],
+      ];
+      const orderedIds = nextFarms
+        .map((item) => item.id)
+        .filter((id): id is number => typeof id === 'number');
+
+      try {
+        await reorderFarms.mutateAsync(orderedIds);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : t('farms.reorder.error');
+        Alert.alert(t('common.error'), message);
+      }
+    },
+    [farms, reorderFarms, t],
+  );
 
   const handleFarmPress = useCallback(
     (farm: Farm) => {
@@ -369,23 +616,81 @@ export default function FarmsScreen() {
   );
 
   const renderFarm = useCallback(
-    ({ item }: { item: Farm }) => (
+    ({ item, index }: { item: Farm; index: number }) => (
       <View
         style={{
           paddingHorizontal: spacing[4],
           marginBottom: spacing[3],
+          flexDirection: isReorderMode ? 'row' : 'column',
+          alignItems: isReorderMode ? 'stretch' : undefined,
+          gap: isReorderMode ? spacing[3] : 0,
         }}
       >
-        <FarmCard
-          farm={item}
-          today={today}
-          onPress={() => handleFarmPress(item)}
-          onEdit={() => handleEditFarm(item)}
-          onDelete={() => handleDeleteFarm(item)}
-        />
+        {isReorderMode && (
+          <View style={{ justifyContent: 'center', gap: spacing[2] }}>
+            {[
+              {
+                direction: 'up' as const,
+                icon: 'chevron.up',
+                disabled: index === 0 || reorderFarms.isPending,
+                label: t('farms.reorder.moveUp', { name: item.name }),
+              },
+              {
+                direction: 'down' as const,
+                icon: 'chevron.down',
+                disabled: index === filteredFarms.length - 1 || reorderFarms.isPending,
+                label: t('farms.reorder.moveDown', { name: item.name }),
+              },
+            ].map((control) => (
+              <Pressable
+                key={control.direction}
+                onPress={() => handleMoveFarm(item, control.direction)}
+                disabled={control.disabled}
+                accessibilityRole="button"
+                accessibilityLabel={control.label}
+                accessibilityState={{ disabled: control.disabled }}
+                style={({ pressed }) => ({
+                  width: 36,
+                  height: 36,
+                  borderRadius: borderRadius.sm,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  backgroundColor: pressed
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                    : m3.surface.surfaceContainerLow,
+                  opacity: control.disabled ? 0.38 : 1,
+                })}
+              >
+                <SymbolIcon name={control.icon} size={18} color={m3.colorScheme.onSurfaceVariant} />
+              </Pressable>
+            ))}
+          </View>
+        )}
+        <View style={{ flex: 1 }}>
+          <FarmCard
+            farm={item}
+            today={today}
+            onPress={isReorderMode ? undefined : () => handleFarmPress(item)}
+            onEdit={isReorderMode ? undefined : () => handleEditFarm(item)}
+            onDelete={isReorderMode ? undefined : () => handleDeleteFarm(item)}
+          />
+        </View>
       </View>
     ),
-    [today, handleFarmPress, handleEditFarm, handleDeleteFarm],
+    [
+      filteredFarms.length,
+      handleDeleteFarm,
+      handleEditFarm,
+      handleFarmPress,
+      handleMoveFarm,
+      isReorderMode,
+      m3,
+      reorderFarms.isPending,
+      t,
+      today,
+    ],
   );
 
   const renderEmpty = () => {
@@ -582,6 +887,11 @@ export default function FarmsScreen() {
             filteredFarms={filteredFarms}
             farms={farms}
             onAddFarm={handleAddFarm}
+            activeFilter={activeFilter}
+            onFilterChange={handleFilterChange}
+            isReorderMode={isReorderMode}
+            canReorder={canReorder}
+            onToggleReorderMode={handleToggleReorderMode}
           />
         }
         ListEmptyComponent={renderEmpty}

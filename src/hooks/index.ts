@@ -13,6 +13,7 @@ export {
   useCreateFarm,
   useUpdateFarm,
   useUpdateFarmWaterLevel,
+  useReorderFarms,
   useDeleteFarm,
   usePrefetchFarm,
 } from './use-farms';
@@ -61,7 +62,10 @@ export {
   useDeleteExpenseRecord,
   // Daily Notes
   useDailyNoteByDate,
+  useDailyNotes,
+  useDailyNotesByFarms,
   useUpsertDailyNote,
+  useDeleteDailyNote,
   // Recent inputs
   useRecentSprayChemicals,
   useRecentFertigationItems,

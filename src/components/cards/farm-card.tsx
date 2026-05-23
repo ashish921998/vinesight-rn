@@ -1,7 +1,7 @@
 /**
  * FarmCard Component
- * Design D (Season Timeline) with Design A urgency signals.
- * Shows: season progress bar, day counter, water status, harvest estimate.
+ * Design D (Season Timeline): per-farm accent colour, dashed stat strip,
+ * season progress bar, day counter, water status, harvest estimate.
  */
 
 import React, { useMemo } from 'react';
@@ -14,7 +14,25 @@ import { spacing, borderRadius, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { parseDbDateToLocalDate } from '@/utils/date';
 import { formatNumber, formatDate } from '@/i18n/format';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
+
+// ── Per-farm accent palette ──────────────────────────────────────────────────
+// Light and dark variants of 4 distinct brand colours:
+//   0 → primary green  1 → terracotta  2 → ochre  3 → success green
+const LIGHT_ACCENTS = ['#355847', '#A56B4F', '#D0A14A', '#4F7A5A'] as const;
+const DARK_ACCENTS = ['#4A8B6B', '#9A6A52', '#C49843', '#5A8B65'] as const;
+
+/**
+ * Returns a stable, visually-distinct accent colour for a given farm.
+ * The colour is derived from the farm's numeric id so it never changes
+ * between renders or sessions.
+ */
+function getFarmAccentColor(farmId: number | undefined, isDark: boolean): string {
+  const palette = isDark ? DARK_ACCENTS : LIGHT_ACCENTS;
+  // Use unsigned 32-bit Knuth multiplicative hash so nearby IDs scatter well.
+  const idx = farmId != null ? ((farmId * 2654435761) >>> 0) % palette.length : 0;
+  return palette[idx];
+}
 
 interface FarmCardProps {
   farm: Farm;
@@ -25,6 +43,7 @@ interface FarmCardProps {
 }
 
 const SEASON_LENGTH_DAYS = 130;
+const MILESTONE_LABEL_WIDTH = 72;
 
 const MILESTONES = [
   { pct: 0, labelKey: 'farmCard.season.pruning' },
@@ -76,6 +95,7 @@ export const FarmCard = React.memo(function FarmCard({
 }: FarmCardProps) {
   const m3 = useM3();
   const colors = useThemeColors();
+  const isDark = useIsDark();
   const { t, i18n } = useTranslation();
 
   const daysSincePruning = useDaysSincePruning(farm.date_of_pruning, today);
@@ -93,11 +113,18 @@ export const FarmCard = React.memo(function FarmCard({
 
   const todayPct =
     daysSincePruning != null ? Math.min(100, (daysSincePruning / SEASON_LENGTH_DAYS) * 100) : null;
+  const boundedTodayPct = todayPct != null ? Math.max(0, Math.min(100, todayPct)) : null;
+  const todayMarkerTranslateX =
+    boundedTodayPct == null ? -7 : boundedTodayPct >= 99 ? -14 : boundedTodayPct <= 1 ? 0 : -7;
 
-  const primaryColor = colors.primary?.[500] ?? m3.colorScheme.primary;
-  const accentColor = lowWater ? m3.colorScheme.error : primaryColor;
+  // Design D: each farm gets a stable identity colour from the palette;
+  // low-water farms override the left strip with error red so urgency is
+  // immediately visible without sacrificing the per-farm accent on the timeline.
+  const farmAccentColor = getFarmAccentColor(farm.id, isDark);
+  const leftStripColor = lowWater ? m3.colorScheme.error : farmAccentColor;
 
-  const waterStatusColor = lowWater ? m3.colorScheme.error : colors.surface[500];
+  // Water label uses the accent colour (green) when OK, error red when low.
+  const waterLabelColor = lowWater ? m3.colorScheme.error : colors.success;
 
   const waterLabel =
     typeof farm.remaining_water === 'number' && Number.isFinite(farm.remaining_water)
@@ -118,7 +145,7 @@ export const FarmCard = React.memo(function FarmCard({
         overflow: 'hidden',
       }}
     >
-      {/* Left accent strip */}
+      {/* Left accent strip — farm identity colour or error when low water */}
       <View
         style={{
           position: 'absolute',
@@ -126,7 +153,7 @@ export const FarmCard = React.memo(function FarmCard({
           top: 0,
           bottom: 0,
           width: 3,
-          backgroundColor: accentColor,
+          backgroundColor: leftStripColor,
           borderTopLeftRadius: borderRadius.md,
           borderBottomLeftRadius: borderRadius.md,
         }}
@@ -194,14 +221,14 @@ export const FarmCard = React.memo(function FarmCard({
                       alignItems: 'center',
                       justifyContent: 'center',
                       backgroundColor: p
-                        ? colorWithOpacity(primaryColor, 0.24)
-                        : colorWithOpacity(primaryColor, 0.1),
+                        ? colorWithOpacity(farmAccentColor, 0.24)
+                        : colorWithOpacity(farmAccentColor, 0.1),
                     })}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityRole="button"
                     accessibilityLabel={t('farmCard.a11y.editFarm', { name: farm.name })}
                   >
-                    <UiSymbol name="pencil" size={14} color={primaryColor} />
+                    <UiSymbol name="pencil" size={14} color={farmAccentColor} />
                   </Pressable>
                 )}
                 {onDelete && (
@@ -270,10 +297,10 @@ export const FarmCard = React.memo(function FarmCard({
           </View>
         </View>
 
-        {/* Season timeline */}
-        {todayPct != null && (
+        {/* Season timeline — fill uses the farm's own accent colour */}
+        {boundedTodayPct != null && (
           <View style={{ marginTop: spacing[4] }}>
-            <View style={{ position: 'relative', height: 40 }}>
+            <View style={{ position: 'relative', height: 44 }}>
               {/* Track */}
               <View
                 style={{
@@ -289,22 +316,22 @@ export const FarmCard = React.memo(function FarmCard({
                 }}
               />
 
-              {/* Fill */}
+              {/* Fill — farm accent colour */}
               <View
                 style={{
                   position: 'absolute',
                   left: 0,
                   top: 12,
-                  width: `${todayPct}%`,
+                  width: `${boundedTodayPct}%`,
                   height: 4,
                   borderRadius: 99,
-                  backgroundColor: primaryColor,
+                  backgroundColor: farmAccentColor,
                 }}
               />
 
               {/* Milestone dots + labels */}
               {MILESTONES.map((milestone) => {
-                const passed = milestone.pct <= todayPct;
+                const passed = milestone.pct <= boundedTodayPct;
                 return (
                   <View
                     key={milestone.pct}
@@ -313,8 +340,16 @@ export const FarmCard = React.memo(function FarmCard({
                       left: `${milestone.pct}%`,
                       top: 8,
                       transform: [
-                        { translateX: milestone.pct === 0 ? 0 : milestone.pct === 100 ? -8 : -4 },
+                        {
+                          translateX:
+                            milestone.pct === 0
+                              ? 0
+                              : milestone.pct === 100
+                                ? -MILESTONE_LABEL_WIDTH
+                                : -MILESTONE_LABEL_WIDTH / 2,
+                        },
                       ],
+                      width: MILESTONE_LABEL_WIDTH,
                       alignItems:
                         milestone.pct === 0
                           ? 'flex-start'
@@ -328,9 +363,9 @@ export const FarmCard = React.memo(function FarmCard({
                         width: 8,
                         height: 8,
                         borderRadius: 4,
-                        backgroundColor: passed ? primaryColor : colors.surface[200],
+                        backgroundColor: passed ? farmAccentColor : colors.surface[200],
                         borderWidth: 2,
-                        borderColor: passed ? primaryColor : colors.surface[300],
+                        borderColor: passed ? farmAccentColor : colors.surface[300],
                       }}
                     />
                     <Text
@@ -341,9 +376,13 @@ export const FarmCard = React.memo(function FarmCard({
                         textTransform: 'uppercase',
                         color: colors.surface[500],
                         marginTop: 5,
+                        width: MILESTONE_LABEL_WIDTH,
                         textAlign:
                           milestone.pct === 0 ? 'left' : milestone.pct === 100 ? 'right' : 'center',
                       }}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.85}
                     >
                       {t(milestone.labelKey)}
                     </Text>
@@ -351,19 +390,19 @@ export const FarmCard = React.memo(function FarmCard({
                 );
               })}
 
-              {/* Today marker */}
+              {/* Today marker — matches farm accent colour */}
               <View
                 style={{
                   position: 'absolute',
-                  left: `${todayPct}%`,
+                  left: `${boundedTodayPct}%`,
                   top: 6,
-                  transform: [{ translateX: -7 }],
+                  transform: [{ translateX: todayMarkerTranslateX }],
                   width: 14,
                   height: 14,
                   borderRadius: 7,
                   backgroundColor: colors.surface[100],
                   borderWidth: 3,
-                  borderColor: primaryColor,
+                  borderColor: farmAccentColor,
                   shadowColor: m3.colorScheme.shadow,
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.18,
@@ -375,11 +414,12 @@ export const FarmCard = React.memo(function FarmCard({
           </View>
         )}
 
-        {/* Stat strip */}
+        {/* Stat strip — dashed separator (Design D) */}
         <View
           style={{
-            height: 1,
-            backgroundColor: colorWithOpacity(colors.surface[300], 0.6),
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderColor: colorWithOpacity(colors.surface[300], 0.8),
+            borderStyle: 'dashed',
             marginTop: spacing[3],
           }}
         />
@@ -391,15 +431,18 @@ export const FarmCard = React.memo(function FarmCard({
             paddingTop: spacing[3],
           }}
         >
-          {/* Water status */}
+          {/* Water status — coloured drop icon + mm value */}
           {waterLabel != null && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <UiSymbol name="drop.fill" size={12} color={waterStatusColor} />
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              accessibilityLabel={waterLabel}
+            >
+              <UiSymbol name="drop.fill" size={12} color={waterLabelColor} />
               <Text
                 style={{
                   fontSize: 12,
                   fontWeight: fontWeight.semibold,
-                  color: waterStatusColor,
+                  color: waterLabelColor,
                 }}
               >
                 {waterLabel}
@@ -407,10 +450,10 @@ export const FarmCard = React.memo(function FarmCard({
             </View>
           )}
 
-          {/* Harvest estimate */}
+          {/* Est. harvest date — leaf icon + date */}
           {estimatedHarvestLabel != null && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <UiSymbol name="calendar" size={12} color={colors.surface[500]} />
+              <UiSymbol name="leaf.fill" size={11} color={colors.surface[500]} />
               <Text
                 style={{
                   fontSize: 12,
@@ -422,8 +465,8 @@ export const FarmCard = React.memo(function FarmCard({
             </View>
           )}
 
-          {/* Status badge */}
-          {hasWaterData && (
+          {/* Low-water badge — trailing, only when urgency exists */}
+          {lowWater && (
             <View style={{ marginLeft: 'auto' }}>
               <View
                 style={{
@@ -433,9 +476,7 @@ export const FarmCard = React.memo(function FarmCard({
                   height: 20,
                   paddingHorizontal: spacing[2],
                   borderRadius: borderRadius.full,
-                  backgroundColor: lowWater
-                    ? colorWithOpacity(m3.colorScheme.error, 0.12)
-                    : colorWithOpacity(primaryColor, 0.12),
+                  backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
                 }}
               >
                 <View
@@ -443,7 +484,7 @@ export const FarmCard = React.memo(function FarmCard({
                     width: 5,
                     height: 5,
                     borderRadius: 3,
-                    backgroundColor: lowWater ? m3.colorScheme.error : primaryColor,
+                    backgroundColor: m3.colorScheme.error,
                   }}
                 />
                 <Text
@@ -452,10 +493,10 @@ export const FarmCard = React.memo(function FarmCard({
                     fontWeight: fontWeight.bold,
                     textTransform: 'uppercase',
                     letterSpacing: 0.3,
-                    color: lowWater ? m3.colorScheme.error : primaryColor,
+                    color: m3.colorScheme.error,
                   }}
                 >
-                  {lowWater ? t('farmCard.status.needsAttention') : t('farmCard.status.healthy')}
+                  {t('farmCard.status.needsAttention')}
                 </Text>
               </View>
             </View>

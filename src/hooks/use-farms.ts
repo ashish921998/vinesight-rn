@@ -7,8 +7,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
-import type { Farm, FarmInsert, FarmUpdate } from '../types';
+import type { Farm, FarmInsert, FarmSeason, FarmUpdate } from '../types';
 import { TABLES, toSupabaseTimestampString } from '../types';
+import { formatLocalDate } from '../utils/date';
 
 // ============================================================
 // MARK: - Helper to get current user ID
@@ -23,6 +24,104 @@ async function getUserId(): Promise<string> {
     throw new Error('Please sign in to continue');
   }
   return session.user.id;
+}
+
+function isRpcFunctionMissing(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === '42883' || error.code === 'PGRST202') return true;
+  return typeof error.message === 'string' && /function .* does not exist/i.test(error.message);
+}
+
+function isMissingDisplayOrderColumn(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const message = error.message ?? '';
+  return (
+    error.code === '42703' ||
+    /column ["']?display_order["']? does not exist/i.test(message) ||
+    /could not find .*display_order.* schema cache/i.test(message)
+  );
+}
+
+function isUniqueDisplayOrderViolation(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const message = error.message ?? '';
+  return (
+    error.code === '23505' &&
+    (/farms_user_display_order_unique/i.test(message) || /display_order/i.test(message))
+  );
+}
+
+async function resolveNextFarmDisplayOrder(userId: string): Promise<{
+  supportsDisplayOrder: boolean;
+  displayOrder: number;
+}> {
+  const { data: firstFarm, error: firstFarmError } = await supabase
+    .from(TABLES.FARMS)
+    .select('display_order')
+    .eq('user_id', userId)
+    .order('display_order', { ascending: true, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (firstFarmError && !isMissingDisplayOrderColumn(firstFarmError)) {
+    throw firstFarmError;
+  }
+
+  const supportsDisplayOrder = !isMissingDisplayOrderColumn(firstFarmError);
+  const displayOrder =
+    supportsDisplayOrder && typeof firstFarm?.display_order === 'number'
+      ? firstFarm.display_order - 1
+      : 0;
+
+  return { supportsDisplayOrder, displayOrder };
+}
+
+async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void> {
+  if (typeof farm.id !== 'number') return;
+
+  const { data: existingSeason, error: existingSeasonError } = await supabase
+    .from(TABLES.FARM_SEASONS)
+    .select('id')
+    .eq('farm_id', farm.id)
+    .is('end_date', null)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingSeasonError) {
+    throw existingSeasonError;
+  }
+  if (existingSeason?.id) return;
+
+  const startDate = farm.date_of_pruning ?? formatLocalDate(new Date());
+  const seasonName = `Season ${new Date().getFullYear()}`;
+
+  const { error: rpcError } = await supabase.rpc('start_farm_season', {
+    p_farm_id: farm.id,
+    p_start_date: startDate,
+    p_template_key: null,
+    p_config_json: null,
+    p_season_name: seasonName,
+  });
+
+  if (!rpcError) return;
+  if (!isRpcFunctionMissing(rpcError)) {
+    throw rpcError;
+  }
+
+  const { error: insertError } = await supabase.from(TABLES.FARM_SEASONS).insert({
+    farm_id: farm.id,
+    user_id: userId,
+    start_date: startDate,
+    end_date: null,
+    season_name: seasonName,
+    crop_type_snapshot: farm.crop,
+  } satisfies Omit<FarmSeason, 'id' | 'created_at' | 'updated_at'>);
+
+  if (insertError) {
+    // A concurrent create or DB trigger may have created the active season after our check.
+    if (insertError.code === '23505') return;
+    throw insertError;
+  }
 }
 
 // ============================================================
@@ -42,7 +141,19 @@ export function useFarms() {
         .from(TABLES.FARMS)
         .select('*')
         .eq('user_id', userId)
+        .order('display_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
+
+      if (isMissingDisplayOrderColumn(error)) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from(TABLES.FARMS)
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        if (fallbackError) throw fallbackError;
+        return fallbackData ?? [];
+      }
 
       if (error) throw error;
       return data ?? [];
@@ -82,14 +193,42 @@ export function useCreateFarm() {
   return useMutation({
     mutationFn: async (farm: FarmInsert): Promise<Farm> => {
       const userId = await getUserId();
+      let data: Farm | null = null;
+      let lastError: { code?: string; message?: string } | null = null;
+      const shouldAssignDisplayOrder = farm.display_order == null;
 
-      const { data, error } = await supabase
-        .from(TABLES.FARMS)
-        .insert({ ...farm, user_id: userId })
-        .select()
-        .single();
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const { supportsDisplayOrder, displayOrder } = await resolveNextFarmDisplayOrder(userId);
+        const insertPayload =
+          supportsDisplayOrder && shouldAssignDisplayOrder
+            ? { ...farm, user_id: userId, display_order: displayOrder }
+            : { ...farm, user_id: userId };
 
-      if (error) throw error;
+        const { data: insertedFarm, error } = await supabase
+          .from(TABLES.FARMS)
+          .insert(insertPayload)
+          .select()
+          .single();
+
+        if (!error) {
+          data = insertedFarm;
+          break;
+        }
+
+        lastError = error;
+        if (!shouldAssignDisplayOrder || !isUniqueDisplayOrderViolation(error)) {
+          throw error;
+        }
+      }
+
+      if (!data) {
+        throw lastError ?? new Error('Failed to create farm');
+      }
+      try {
+        await ensureInitialFarmSeason(data, userId);
+      } catch (seasonError) {
+        console.warn('[useCreateFarm] ensureInitialFarmSeason failed:', seasonError);
+      }
       return data;
     },
     onSuccess: (newFarm) => {
@@ -100,6 +239,69 @@ export function useCreateFarm() {
       });
       // Invalidate to ensure fresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.farms.all });
+      if (typeof newFarm.id === 'number') {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.farmSeasons.listByFarm(newFarm.id),
+        });
+      }
+    },
+  });
+}
+
+// ============================================================
+// MARK: - Reorder Farms Mutation
+// ============================================================
+
+export function useReorderFarms() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (orderedFarmIds: number[]): Promise<number[]> => {
+      const { error } = await supabase.rpc('reorder_farms', {
+        p_ordered_farm_ids: orderedFarmIds,
+      });
+
+      if (isRpcFunctionMissing(error) || isMissingDisplayOrderColumn(error)) {
+        throw new Error('Farm ordering is not available until the latest database migration runs.');
+      }
+      if (error) throw error;
+
+      return orderedFarmIds;
+    },
+    onMutate: async (orderedFarmIds) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.farms.lists() });
+      const previousFarms = queryClient.getQueryData<Farm[]>(queryKeys.farms.lists());
+
+      queryClient.setQueryData<Farm[]>(queryKeys.farms.lists(), (old) => {
+        if (!old) return old;
+        const orderById = new Map(orderedFarmIds.map((id, index) => [id, index]));
+        return old
+          .map((farm) => ({
+            ...farm,
+            display_order:
+              typeof farm.id === 'number' && orderById.has(farm.id)
+                ? orderById.get(farm.id)
+                : farm.display_order,
+          }))
+          .sort((a, b) => {
+            const aOrder =
+              typeof a.display_order === 'number' ? a.display_order : Number.MAX_SAFE_INTEGER;
+            const bOrder =
+              typeof b.display_order === 'number' ? b.display_order : Number.MAX_SAFE_INTEGER;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
+          });
+      });
+
+      return { previousFarms };
+    },
+    onError: (_error, _orderedFarmIds, context) => {
+      if (context?.previousFarms) {
+        queryClient.setQueryData(queryKeys.farms.lists(), context.previousFarms);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.farms.lists() });
     },
   });
 }

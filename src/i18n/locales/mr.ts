@@ -178,6 +178,7 @@ export const mr = {
       logEntriesTitle: 'नोंदी',
       recordsSubtitle: 'रेकॉर्ड्स',
       soilWaterTitle: '$t(glossary.soil)तील पाणी',
+      seasonalWaterAppliedTitle: 'हंगामी पाणी वापर',
     },
     safeHarvest: {
       title: 'लवकरात लवकर सुरक्षित $t(glossary.harvest)',
@@ -199,8 +200,13 @@ export const mr = {
     water: {
       noIrrigationLoggedYet: 'अजून $t(glossary.irrigation) नोंदवलेले नाही',
       mmUsed: '{{value}} mm वापरले',
+      mmDepth: '{{value}} mm',
       captionThisSeason: 'या हंगामात {{usage}}',
       captionLogIrrigation: 'पाणी वापर मॉनिटर करण्यासाठी $t(glossary.irrigation) नोंदवा',
+    },
+    harvest: {
+      quantityKg: '{{value}} kg',
+      quantityTon: '{{value}} टन',
     },
     seasons: {
       title: 'हंगाम',
@@ -339,11 +345,11 @@ export const mr = {
       deleteFarm: '$t(glossary.farm) हटवा: {{name}}',
     },
     season: {
-      pruning: 'छाटणी',
+      pruning: '$t(glossary.pruning)',
       bloom: 'फुलणे',
       veraison: 'व्हेरेसन',
       harvest: 'काढणी',
-      sincePruning: 'छाटणीपासून',
+      sincePruning: '$t(glossary.pruning)पासून',
     },
   },
 
@@ -574,6 +580,7 @@ export const mr = {
   farms: {
     title: '$t(glossary.farm)',
     addFarm: '$t(glossary.farm) जोडा',
+    currentSeasonLabel: 'हंगाम {{startYear}}–{{endYY}}',
     empty: {
       title: 'अजून $t(glossary.farm) नाहीत',
       subtitle:
@@ -594,6 +601,13 @@ export const mr = {
       area: '{{value}} एकर एकूण',
       needsAttention_one: '{{count}} ला लक्ष हवे',
       needsAttention_other: '{{count}} ला लक्ष हवे',
+    },
+    reorder: {
+      start: '$t(glossary.farm) क्रम बदला',
+      done: 'पूर्ण',
+      moveUp: '{{name}} वर हलवा',
+      moveDown: '{{name}} खाली हलवा',
+      error: '$t(glossary.farm) क्रम अपडेट करता आला नाही. कृपया पुन्हा प्रयत्न करा.',
     },
   },
 

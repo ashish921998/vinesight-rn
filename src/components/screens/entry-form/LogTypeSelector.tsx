@@ -1,4 +1,4 @@
-import { ACTIVITY_TYPES, type LogTypeId, type LogType } from '@/constants/calculator-models';
+import { LOG_TYPES, type LogTypeId, type LogType } from '@/constants/calculator-models';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { AppIcon } from '@/components/ui/app-icon';
@@ -93,7 +93,7 @@ export function LogTypeSelector({
           gap: 8,
         }}
       >
-        {ACTIVITY_TYPES.map((logType: LogType) => {
+        {LOG_TYPES.map((logType: LogType) => {
           const isSelected = selectedLogType === logType.id;
           const isAdded = pendingLogTypes.includes(logType.id as LogTypeId);
           const emphasizeSelectedGuidedCard = isGuidedAddLogStep && isSelected;

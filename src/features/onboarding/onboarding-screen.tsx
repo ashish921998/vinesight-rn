@@ -426,6 +426,7 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
   },
   skipContainer: {
+    width: 104,
     alignItems: 'flex-end',
     justifyContent: 'flex-start',
   },

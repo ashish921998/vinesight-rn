@@ -33,6 +33,8 @@ import {
   useHarvestRecordsByFarms,
   useExpenseRecordsByFarms,
   useFertigationRecordsByFarms,
+  useDailyNotesByFarms,
+  useDeleteDailyNote,
 } from '@/hooks';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
@@ -43,6 +45,7 @@ import type {
   HarvestRecord,
   ExpenseRecord,
   FertigationRecord,
+  DailyNoteRecord,
 } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -55,7 +58,13 @@ interface CombinedLog {
   type: LogTypeId;
   date: string;
   description: string;
-  data: IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
+  data:
+    | IrrigationRecord
+    | SprayRecord
+    | HarvestRecord
+    | ExpenseRecord
+    | FertigationRecord
+    | DailyNoteRecord;
   searchableText?: string;
   daysAfterPruning?: number | null;
 }
@@ -70,6 +79,7 @@ export default function LogsScreen() {
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const insets = useSafeAreaInsets();
   const currency = useCurrency();
+  const allLogTypeIds = useMemo(() => LOG_TYPES.map((logType) => logType.id as LogTypeId), []);
   // Cellar Ledger: No shadows on cards, use borders instead
   const filterCardStyle = Platform.select({
     ios: {},
@@ -102,6 +112,7 @@ export default function LogsScreen() {
     harvestRecords = [],
     expenseRecords = [],
     fertigationRecords = [],
+    dailyNotes = [],
     isLoading: recordsLoading,
   } = useFarmRecords(selectedFarmId);
 
@@ -123,6 +134,7 @@ export default function LogsScreen() {
   const allRecordsFertigation = useFertigationRecordsByFarms(
     selectedFarmId === undefined ? allFarmIds : [],
   );
+  const allRecordsDailyNotes = useDailyNotesByFarms(selectedFarmId === undefined ? allFarmIds : []);
 
   const displayIrrigationRecords = useMemo(
     () => (selectedFarmId === undefined ? (allRecordsIrrigation.data ?? []) : irrigationRecords),
@@ -144,6 +156,10 @@ export default function LogsScreen() {
     () => (selectedFarmId === undefined ? (allRecordsFertigation.data ?? []) : fertigationRecords),
     [selectedFarmId, allRecordsFertigation.data, fertigationRecords],
   );
+  const displayDailyNotes = useMemo(
+    () => (selectedFarmId === undefined ? (allRecordsDailyNotes.data ?? []) : dailyNotes),
+    [selectedFarmId, allRecordsDailyNotes.data, dailyNotes],
+  );
 
   const isLoadingAllRecords =
     selectedFarmId === undefined
@@ -151,7 +167,8 @@ export default function LogsScreen() {
         allRecordsSpray.isLoading ||
         allRecordsHarvest.isLoading ||
         allRecordsExpense.isLoading ||
-        allRecordsFertigation.isLoading
+        allRecordsFertigation.isLoading ||
+        allRecordsDailyNotes.isLoading
       : recordsLoading;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -171,6 +188,7 @@ export default function LogsScreen() {
   const deleteHarvest = useDeleteHarvestRecord();
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
+  const deleteDailyNote = useDeleteDailyNote();
 
   const getFertigationDescription = useCallback(
     (record: FertigationRecord) => {
@@ -293,6 +311,17 @@ export default function LogsScreen() {
       });
     });
 
+    displayDailyNotes.forEach((r) =>
+      logs.push({
+        id: `note-${r.id}`,
+        type: 'note',
+        date: r.date,
+        description: r.notes || t('logs.types.note'),
+        searchableText: r.notes?.toLowerCase() ?? '',
+        data: r,
+      }),
+    );
+
     return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [
     displayIrrigationRecords,
@@ -300,6 +329,7 @@ export default function LogsScreen() {
     displayHarvestRecords,
     displayExpenseRecords,
     displayFertigationRecords,
+    displayDailyNotes,
     t,
     currency,
     getFertigationDescription,
@@ -356,7 +386,8 @@ export default function LogsScreen() {
         | SprayRecord
         | HarvestRecord
         | ExpenseRecord
-        | FertigationRecord;
+        | FertigationRecord
+        | DailyNoteRecord;
       // Defensive: farm_id should be number per TypeScript types, but handle string
       // case in case Supabase returns strings (e.g., for certain database configs)
       const farmIdNum =
@@ -408,6 +439,13 @@ export default function LogsScreen() {
           }
           break;
         }
+        case 'note': {
+          const r = record as DailyNoteRecord;
+          if (r.id) {
+            await deleteDailyNote.mutateAsync({ id: r.id, farmId: farmIdNum, date: r.date });
+          }
+          break;
+        }
       }
       setShowDeleteConfirmation(false);
       setDeletingLog(undefined);
@@ -422,6 +460,7 @@ export default function LogsScreen() {
     deleteHarvest,
     deleteExpense,
     deleteFertigation,
+    deleteDailyNote,
     t,
   ]);
 
@@ -638,15 +677,7 @@ export default function LogsScreen() {
                 <Pressable
                   onPress={() => {
                     if (selectedLogTypes.size === 0) {
-                      setSelectedLogTypes(
-                        new Set([
-                          'irrigation',
-                          'spray',
-                          'harvest',
-                          'expense',
-                          'fertigation',
-                        ] as LogTypeId[]),
-                      );
+                      setSelectedLogTypes(new Set(allLogTypeIds));
                     } else {
                       setSelectedLogTypes(new Set());
                     }
@@ -681,7 +712,7 @@ export default function LogsScreen() {
                   </Text>
                 </Pressable>
 
-                {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
+                {LOG_TYPES.map((logType) => {
                   const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
                   const categoryColorMap: Record<string, string> = {
                     irrigation: colors.irrigation[500] || '#3F6E78',
@@ -1229,10 +1260,26 @@ export default function LogsScreen() {
                                               buttons.push({
                                                 text: t('common.edit'),
                                                 onPress: () => {
+                                                  if (log.type === 'note') {
+                                                    router.push({
+                                                      pathname: '/add-note',
+                                                      params: {
+                                                        farmId: String(
+                                                          (log.data as DailyNoteRecord).farm_id,
+                                                        ),
+                                                        date: (log.data as DailyNoteRecord).date,
+                                                      },
+                                                    });
+                                                    return;
+                                                  }
+                                                  const record = log.data as Exclude<
+                                                    typeof log.data,
+                                                    DailyNoteRecord
+                                                  >;
                                                   setEditActivity({
                                                     farm: logFarm!,
                                                     logType: log.type,
-                                                    record: log.data,
+                                                    record,
                                                   });
                                                   router.push(`/log-entry/edit/${log.id}`);
                                                 },
@@ -1799,7 +1846,7 @@ export default function LogsScreen() {
                     {t('logs.filters.activityTypes')}
                   </Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-                    {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
+                    {LOG_TYPES.map((logType) => {
                       const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
                       return (
                         <Pressable

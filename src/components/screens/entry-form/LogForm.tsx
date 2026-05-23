@@ -5,10 +5,11 @@ import type {
   HarvestFormData,
   ExpenseFormData,
   FertigationFormData,
+  NoteFormData,
   SprayQuickAddItem,
   FertigationQuickAddItem,
 } from '@/components/forms';
-import { SprayForm, HarvestForm, ExpenseForm, FertigationForm } from '@/components/forms';
+import { SprayForm, HarvestForm, ExpenseForm, FertigationForm, NoteForm } from '@/components/forms';
 import { NumericInput, type NumericInputHandle } from '@/components/forms/form-field';
 import type { LogTypeId } from '@/constants/calculator-models';
 import type { TextInputProps } from 'react-native';
@@ -30,11 +31,13 @@ interface LogFormProps {
   harvestData: HarvestFormData;
   expenseData: ExpenseFormData;
   fertigationData: FertigationFormData;
+  noteData: NoteFormData;
   onIrrigationChange: (data: IrrigationFormData) => void;
   onSprayChange: (data: SprayFormData) => void;
   onHarvestChange: (data: HarvestFormData) => void;
   onExpenseChange: (data: ExpenseFormData) => void;
   onFertigationChange: (data: FertigationFormData) => void;
+  onNoteChange: (data: NoteFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
   onAdd: () => void;
   isValid: boolean;
@@ -52,11 +55,13 @@ export function LogForm({
   harvestData,
   expenseData,
   fertigationData,
+  noteData,
   onIrrigationChange,
   onSprayChange,
   onHarvestChange,
   onExpenseChange,
   onFertigationChange,
+  onNoteChange,
   onInputFocus,
   onAdd,
   isValid,
@@ -239,6 +244,9 @@ export function LogForm({
           onInputFocus={onInputFocus}
           quickAddItems={fertigationQuickAddItems}
         />
+      )}
+      {selectedLogType === 'note' && (
+        <NoteForm data={noteData} onChange={onNoteChange} onInputFocus={onInputFocus} />
       )}
       {addEntryButton}
     </View>

@@ -20,6 +20,8 @@ const SYMBOL_TO_MATERIAL_ICON: Record<string, keyof typeof MaterialCommunityIcon
   'house.fill': 'barn',
   spraycan: 'spray-bottle',
   'spraycan.fill': 'spray-bottle',
+  'indianrupeesign.circle': 'currency-inr',
+  'indianrupeesign.circle.fill': 'currency-inr',
   brain: 'brain',
   'brain.fill': 'brain',
 };

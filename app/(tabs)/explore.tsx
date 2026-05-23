@@ -285,6 +285,14 @@ export default function ExploreScreen() {
       sprays: warehouseItems.filter((item) => item.type === 'spray').length,
     };
   }, [warehouseItems]);
+  const formattedWarehouseValue = useMemo(
+    () =>
+      formatCurrency(warehouseTotals.value, currency, {
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+      }),
+    [currency, warehouseTotals.value],
+  );
 
   const handleDeleteWarehouseItem = (item: WarehouseItem) => {
     Alert.alert(
@@ -750,16 +758,25 @@ export default function ExploreScreen() {
                 backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
               }}
             >
-              <Icon name="dollarsign.circle.fill" size={24} color={m3.colorScheme.primary} />
+              <Icon
+                name={
+                  currency === 'INR' ? 'indianrupeesign.circle.fill' : 'dollarsign.circle.fill'
+                }
+                size={24}
+                color={m3.colorScheme.primary}
+              />
               <Text
                 style={{
                   color: colors.surface[900],
-                  fontSize: fontSize['2xl'],
+                  fontSize: fontSize.xl,
                   fontWeight: fontWeight.bold,
                   marginTop: spacing[2],
                 }}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
               >
-                {formatCurrency(warehouseTotals.value, currency)}
+                {formattedWarehouseValue}
               </Text>
               <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
                 {t('common.labels.value')}

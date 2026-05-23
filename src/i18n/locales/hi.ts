@@ -177,6 +177,7 @@ export const hi = {
       logEntriesTitle: 'लॉग प्रविष्टियां',
       recordsSubtitle: 'रिकॉर्ड',
       soilWaterTitle: 'मिट्टी का पानी',
+      seasonalWaterAppliedTitle: 'मौसमी पानी का उपयोग',
     },
     safeHarvest: {
       title: 'सबसे पहले सुरक्षित कटाई',
@@ -196,8 +197,13 @@ export const hi = {
     water: {
       noIrrigationLoggedYet: 'अभी तक कोई सिंचाई लॉग नहीं की गई',
       mmUsed: '{{value}} मिमी उपयोग किया गया',
+      mmDepth: '{{value}} मिमी',
       captionThisSeason: 'इस मौसम में {{usage}}',
       captionLogIrrigation: 'पानी के उपयोग की निगरानी के लिए सिंचाई लॉग करें',
+    },
+    harvest: {
+      quantityKg: '{{value}} किग्रा',
+      quantityTon: '{{value}} टन',
     },
     seasons: {
       title: 'सीज़न',
@@ -572,6 +578,7 @@ export const hi = {
   farms: {
     title: 'खेत',
     addFarm: 'खेत जोड़ें',
+    currentSeasonLabel: 'सीज़न {{startYear}}–{{endYY}}',
     empty: {
       title: 'अभी तक कोई खेत नहीं',
       subtitle: 'सिंचाई, छिड़काव और फसल को ट्रैक करने के लिए अपना पहला खेत जोड़ें।',
@@ -591,6 +598,13 @@ export const hi = {
       area: '{{value}} एकड़ कुल',
       needsAttention_one: '{{count}} को ध्यान चाहिए',
       needsAttention_other: '{{count}} को ध्यान चाहिए',
+    },
+    reorder: {
+      start: 'खेतों का क्रम बदलें',
+      done: 'हो गया',
+      moveUp: '{{name}} को ऊपर ले जाएं',
+      moveDown: '{{name}} को नीचे ले जाएं',
+      error: 'खेतों का क्रम अपडेट नहीं हो सका। कृपया फिर से प्रयास करें।',
     },
   },
 

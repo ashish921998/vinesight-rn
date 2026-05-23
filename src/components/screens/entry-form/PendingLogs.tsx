@@ -7,6 +7,7 @@ import type {
   SprayFormData,
   HarvestFormData,
   FertigationFormData,
+  NoteFormData,
 } from '@/components/forms';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -25,7 +26,8 @@ export interface PendingLog {
     | SprayFormData
     | HarvestFormData
     | ExpenseFormData
-    | FertigationFormData;
+    | FertigationFormData
+    | NoteFormData;
   displayDescription: string;
   isSourceTaskLog?: boolean;
 }

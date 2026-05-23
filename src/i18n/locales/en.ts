@@ -177,6 +177,7 @@ export const en = {
       logEntriesTitle: 'Log Entries',
       recordsSubtitle: 'Records',
       soilWaterTitle: 'Soil Water',
+      seasonalWaterAppliedTitle: 'Seasonal Water Applied',
     },
     safeHarvest: {
       title: 'Earliest Safe Harvest',
@@ -197,8 +198,13 @@ export const en = {
     water: {
       noIrrigationLoggedYet: 'No irrigation logged yet',
       mmUsed: '{{value}} mm used',
+      mmDepth: '{{value}} mm',
       captionThisSeason: '{{usage}} this season',
       captionLogIrrigation: 'Log irrigation to monitor water use',
+    },
+    harvest: {
+      quantityKg: '{{value}} kg',
+      quantityTon: '{{value}} t',
     },
     seasons: {
       title: 'SEASONS',
@@ -573,6 +579,7 @@ export const en = {
   farms: {
     title: 'Farms',
     addFarm: 'Add Farm',
+    currentSeasonLabel: 'Season {{startYear}}–{{endYY}}',
     empty: {
       title: 'No farms yet',
       subtitle: 'Add your first farm to start tracking irrigation, sprays, and harvests.',
@@ -592,6 +599,13 @@ export const en = {
       area: '{{value}} acres total',
       needsAttention_one: '{{count}} needs attention',
       needsAttention_other: '{{count}} need attention',
+    },
+    reorder: {
+      start: 'Reorder farms',
+      done: 'Done',
+      moveUp: 'Move {{name}} up',
+      moveDown: 'Move {{name}} down',
+      error: 'Could not update farm order. Please try again.',
     },
   },
 

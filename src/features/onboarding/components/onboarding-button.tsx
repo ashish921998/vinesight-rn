@@ -82,9 +82,9 @@ export function OnboardingButton({
 const styles = StyleSheet.create({
   primaryButton: {
     width: '100%',
-    height: 48,
+    minHeight: 52,
     borderRadius: borderRadius.md,
-    paddingVertical: spacing[4],
+    paddingVertical: spacing[3],
     paddingHorizontal: spacing[6],
     alignItems: 'center',
     justifyContent: 'center',
@@ -99,7 +99,9 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.lg,
+    lineHeight: 24,
     fontWeight: fontWeight.semibold,
+    textAlign: 'center',
   },
   primaryLabel: {
     color: '#ffffff',
