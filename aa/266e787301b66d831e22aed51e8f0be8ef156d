@@ -1,0 +1,21 @@
+__tests__/entry-form.integration.test.tsx
+  s_64640bcacde924::t_74a97b40a2d7fa 696-698
+supabase/migrations/20260520150000_add_farm_display_order.sql
+  s_64640bcacde924::t_d81b0df1e2acd4 78-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "aa266e787301b66d831e22aed51e8f0be8ef156d",
+  "prompts": {},
+  "sessions": {
+    "s_64640bcacde924": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5374-0f35-7e62-bf13-99af8fd67aef",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
