@@ -242,4 +242,46 @@ describe('saveEntryLogSession', () => {
       notes: null,
     });
   });
+
+  it('saves same-day note drafts in queue order for a single farm', async () => {
+    const adapters = createAdapters();
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'note-1',
+          type: 'note',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { notes: 'First note' },
+          displayDescription: 'First note',
+        },
+        {
+          id: 'note-2',
+          type: 'note',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { notes: 'Last note' },
+          displayDescription: 'Last note',
+        },
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('saved');
+    expect(adapters.upsertDailyNote).toHaveBeenNthCalledWith(1, {
+      farm_id: 101,
+      date: '2026-02-11',
+      notes: 'First note',
+    });
+    expect(adapters.upsertDailyNote).toHaveBeenNthCalledWith(2, {
+      farm_id: 101,
+      date: '2026-02-11',
+      notes: 'Last note',
+    });
+  });
 });

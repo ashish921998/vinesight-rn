@@ -221,6 +221,20 @@ async function submitLogWithSnapshot(params: {
   return { result, previousDailyNote };
 }
 
+async function settleSequentially<T>(
+  tasks: Array<() => Promise<T>>,
+): Promise<PromiseSettledResult<T>[]> {
+  const results: PromiseSettledResult<T>[] = [];
+  for (const task of tasks) {
+    try {
+      results.push({ status: 'fulfilled', value: await task() });
+    } catch (reason) {
+      results.push({ status: 'rejected', reason });
+    }
+  }
+  return results;
+}
+
 function buildFailedResult(params: {
   pendingLogs: EntryLogSessionDraft[];
   failures: EntryLogSubmissionFailure[];
@@ -341,9 +355,9 @@ export async function saveEntryLogSession(
   }
 
   const farmContext = buildFarmContext(singleFarmContext, preferredAreaUnit);
-  const results = await Promise.allSettled(
+  const results = await settleSequentially(
     pendingLogs.map((log) =>
-      submitLogWithSnapshot({
+      () => submitLogWithSnapshot({
         log,
         dateStr,
         farm: farmContext,
