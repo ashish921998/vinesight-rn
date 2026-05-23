@@ -1,0 +1,31 @@
+src/features/entry-log-session/save-entry-log-session.ts
+  s_64640bcacde924::t_1a501d11fee82f 1,24,74,114,146-154,176,178,186,199,203-223,272,276,289-297,346,350,360-367
+src/components/screens/entry-form.tsx
+  s_64640bcacde924::t_c8f24d5d295fa4 122-123,147
+  s_64640bcacde924::t_7a4e8d97254389 1092-1101
+  s_64640bcacde924::t_ab28a9b5b04b11 1254-1273
+supabase/migrations/20260520150000_add_farm_display_order.sql
+  s_64640bcacde924::t_3ba3a1c0af4a26 48,79-85
+src/hooks/use-farms.ts
+  s_64640bcacde924::t_cc8271df830d34 231
+__tests__/save-entry-log-session.test.ts
+  s_64640bcacde924::t_6a111c0f3320ea 44,156-200
+__tests__/entry-form.integration.test.tsx
+  s_64640bcacde924::t_51f96d6b0bde5e 29,96-105,167
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "1c1c5899224b9e39c69831a1f32b28a190663246",
+  "prompts": {},
+  "sessions": {
+    "s_64640bcacde924": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5374-0f35-7e62-bf13-99af8fd67aef",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
