@@ -609,6 +609,50 @@ export const mr = {
       moveDown: '{{name}} खाली हलवा',
       error: '$t(glossary.farm) क्रम अपडेट करता आला नाही. कृपया पुन्हा प्रयत्न करा.',
     },
+    filter: {
+      all: 'सर्व',
+      healthy: 'निरोगी',
+      needsAttention: 'पाणी हवे',
+    },
+  },
+
+  explore: {
+    farms: {
+      heroLabel: 'हंगाम · {{count}} शेते · {{area}} हेक्टर',
+      heroValue: 'दिवस {{day}} / {{total}}',
+      todayFlag: 'आज',
+      noPruningDate: '$t(glossary.pruning) नाही',
+      harvestIn: 'काढणी ',
+      pastHarvest: 'D130 नंतर',
+      water: {
+        ok: 'ठीक',
+        low: 'कमी',
+      },
+      stage: {
+        notStarted: 'सुरू नाही',
+      },
+    },
+    warehouse: {
+      heroLabel: 'साठा · {{count}} वस्तू · {{value}}',
+      heroValueLow: '{{count}} कमी',
+      heroValueOk: 'सर्व ठीक',
+      reorderFlag: '⚠ पुनःऑर्डर · {{count}}',
+      reorderAt: 'पुनःऑर्डर ≤ ',
+      legendLow: '{{count}} कमी',
+      stockOk: 'ठीक',
+      stockLow: 'कमी',
+      cat: {
+        spray: '$t(glossary.spray)',
+        fertilizer: '$t(glossary.fertilizer)',
+        equipment: 'साधने',
+      },
+      filter: {
+        all: 'सर्व',
+        spray: '$t(glossary.spray)',
+        fertilizer: '$t(glossary.fertilizer)',
+        equipment: 'साधने',
+      },
+    },
   },
 
   entryForm: {
