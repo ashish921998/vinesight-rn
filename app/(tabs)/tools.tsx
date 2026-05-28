@@ -213,7 +213,11 @@ export default function ToolsScreen() {
 
   return (
     <ScrollView
-      contentContainerStyle={{ padding: spacing[4], paddingBottom: bottomPadding }}
+      contentContainerStyle={{
+        paddingHorizontal: spacing[4],
+        paddingTop: insets.top + spacing[3],
+        paddingBottom: bottomPadding,
+      }}
       style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
     >
       {/* Header */}

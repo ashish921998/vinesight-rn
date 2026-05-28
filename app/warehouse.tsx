@@ -320,7 +320,14 @@ export default function WarehouseScreen() {
               marginBottom: spacing[4],
             }}
           >
-            {(['all', 'spray', 'fertilizer', 'equipment'] as FilterType[]).map((type) => {
+            {(
+              [
+                'all',
+                'spray',
+                'fertilizer',
+                ...(totals.equipment > 0 || filter === 'equipment' ? ['equipment'] : []),
+              ] as FilterType[]
+            ).map((type) => {
               const isActive = filter === type;
               const count =
                 type === 'all'

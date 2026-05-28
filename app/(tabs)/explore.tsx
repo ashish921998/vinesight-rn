@@ -1,40 +1,28 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  RefreshControl,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-  Animated,
-  ScrollView,
-} from 'react-native';
+import { View, Text, Pressable, RefreshControl, TextInput, Alert, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
-import { formatCurrency } from '@/i18n/format';
 import {
   useFarms,
-  useDeleteFarm,
   useWarehouseItems,
   useDeleteWarehouseItem,
   useFabBottomPosition,
   useCurrency,
 } from '@/hooks';
-import { FarmCard } from '@/components/cards';
 import { useModalStore } from '@/stores';
 import type { Farm, WarehouseItem } from '@/types';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { FarmsPaneB, type FarmFilter } from '@/components/screens/farms-pane-b';
+import { WarehousePaneB, type WarehouseFilter } from '@/components/screens/warehouse-pane-b';
 
 type ExploreTab = 'farms' | 'warehouse';
-type WarehouseFilter = 'all' | 'fertilizer' | 'spray';
 
 export default function ExploreScreen() {
   const colors = useThemeColors();
@@ -51,13 +39,12 @@ export default function ExploreScreen() {
       ] as const,
     [t],
   );
-  const { setAddWarehouseItem, setAddStock } = useModalStore();
+  const { setAddWarehouseItem } = useModalStore();
   const insets = useSafeAreaInsets();
   const fabBottom = useFabBottomPosition();
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
-  const isTourScrollLocked = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_farm';
   const isAddFarmTargetEnabled = isScreenFocused && selectedTab === 'farms';
 
   const tabSwitchAnim = useMemo(() => new Animated.Value(1), []);
@@ -69,9 +56,9 @@ export default function ExploreScreen() {
     [],
   );
 
-  // Global search state
+  // Global search state — collapsed by default; tap the search icon to expand.
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [today, setToday] = useState(() => new Date());
 
   useEffect(() => {
@@ -83,12 +70,17 @@ export default function ExploreScreen() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTab('farms');
       setSearchQuery('');
+      setIsSearchExpanded(false);
     }
   }, [guidedTourStatus, guidedTourStep, selectedTab]);
 
   // Farms state & hooks
-  const { data: farms, isLoading: farmsLoading, refetch: refetchFarms } = useFarms();
-  const deleteFarm = useDeleteFarm();
+  const {
+    data: farms,
+    isLoading: farmsLoading,
+    refetch: refetchFarms,
+    isRefetching: farmsRefetching,
+  } = useFarms();
 
   // Warehouse state & hooks
   const {
@@ -99,24 +91,13 @@ export default function ExploreScreen() {
   } = useWarehouseItems();
   const deleteItemMutation = useDeleteWarehouseItem();
   const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilter>('all');
+  const [farmFilter, setFarmFilter] = useState<FarmFilter>('all');
 
   const currency = useCurrency();
-  const metricCardBaseStyle = {
-    flex: 1,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[3],
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-  };
 
   const openWarehouseItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });
     router.push('/add-warehouse-item');
-  };
-
-  const openAddStock = (item: WarehouseItem) => {
-    setAddStock({ item });
-    router.push('/add-stock');
   };
 
   // ============================================================
@@ -150,6 +131,7 @@ export default function ExploreScreen() {
         setSelectedTab(newTab);
         // Reset search on tab switch
         setSearchQuery('');
+        setIsSearchExpanded(false);
         // Fade in new content
         Animated.timing(tabSwitchAnim, {
           toValue: 1,
@@ -169,12 +151,12 @@ export default function ExploreScreen() {
     setSearchQuery(text);
   }, []);
 
-  const handleSearchFocus = useCallback(() => {
-    setIsSearchFocused(true);
-  }, []);
-
-  const handleSearchBlur = useCallback(() => {
-    setIsSearchFocused(false);
+  const handleSearchToggle = useCallback(() => {
+    setIsSearchExpanded((prev) => {
+      // Collapsing: clear any active query so we don't filter invisibly.
+      if (prev) setSearchQuery('');
+      return !prev;
+    });
   }, []);
 
   useFocusEffect(
@@ -182,24 +164,10 @@ export default function ExploreScreen() {
       setToday(new Date());
       return () => {
         setSearchQuery('');
-        setIsSearchFocused(false);
+        setIsSearchExpanded(false);
       };
     }, []),
   );
-
-  const filteredFarms = useMemo(() => {
-    if (!farms) return [];
-    if (!searchQuery.trim()) return farms;
-
-    const query = searchQuery.toLowerCase().trim();
-    return farms.filter(
-      (farm) =>
-        farm.name.toLowerCase().includes(query) ||
-        farm.crop?.toLowerCase().includes(query) ||
-        farm.crop_variety?.toLowerCase().includes(query) ||
-        farm.region?.toLowerCase().includes(query),
-    );
-  }, [farms, searchQuery]);
 
   const handleFarmPress = (farm: Farm) => {
     if (typeof farm.id !== 'number') return;
@@ -215,84 +183,17 @@ export default function ExploreScreen() {
     router.push(`/farm/${farm.id}/edit`);
   };
 
-  const handleDeleteFarm = (farm: Farm) => {
-    const farmId = farm.id;
-    if (typeof farmId !== 'number') return;
-    Alert.alert(
-      t('farmDetails.deleteFarmTitle'),
-      t('farmDetails.deleteFarmBody', { name: farm.name }),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteFarm.mutateAsync(farmId);
-            } catch (error: unknown) {
-              const errorMessage =
-                error instanceof Error ? error.message : t('farmDetails.errors.deleteFarmFailed');
-              Alert.alert(t('common.error'), errorMessage);
-            }
-          },
-        },
-      ],
-    );
-  };
-
   // ============================================================
   // WAREHOUSE TAB LOGIC
   // ============================================================
 
-  const filteredWarehouseItems = useMemo(() => {
-    if (!warehouseItems) return [];
-
-    let items = warehouseItems;
-
-    // Filter by type
-    if (warehouseFilter !== 'all') {
-      items = items.filter((item) => item.type === warehouseFilter);
-    }
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      items = items.filter(
-        (item) =>
-          item.name.toLowerCase().includes(query) || item.notes?.toLowerCase().includes(query),
-      );
-    }
-
-    return items;
-  }, [warehouseItems, warehouseFilter, searchQuery]);
-
-  const lowStockItems = useMemo(() => {
-    if (!warehouseItems) return [];
+  // Low-stock count drives the amber badge on the inactive Warehouse tab.
+  const lowStockCount = useMemo(() => {
+    if (!warehouseItems) return 0;
     return warehouseItems.filter(
-      (item) => item.reorder_quantity && item.quantity <= item.reorder_quantity,
-    );
+      (item) => typeof item.reorder_quantity === 'number' && item.quantity <= item.reorder_quantity,
+    ).length;
   }, [warehouseItems]);
-
-  const warehouseTotals = useMemo(() => {
-    if (!warehouseItems) return { count: 0, value: 0, fertilizers: 0, sprays: 0 };
-    return {
-      count: warehouseItems.length,
-      value: warehouseItems.reduce((sum, item) => sum + item.quantity * item.unit_price, 0),
-      fertilizers: warehouseItems.filter((item) => item.type === 'fertilizer').length,
-      sprays: warehouseItems.filter((item) => item.type === 'spray').length,
-    };
-  }, [warehouseItems]);
-  const formattedWarehouseValue = useMemo(
-    () =>
-      formatCurrency(warehouseTotals.value, currency, {
-        maximumFractionDigits: 0,
-        minimumFractionDigits: 0,
-      }),
-    [currency, warehouseTotals.value],
-  );
 
   const handleDeleteWarehouseItem = (item: WarehouseItem) => {
     Alert.alert(
@@ -320,10 +221,6 @@ export default function ExploreScreen() {
     );
   };
 
-  const handleAddStock = (item: WarehouseItem) => {
-    openAddStock(item);
-  };
-
   const handleEditWarehouseItem = (item: WarehouseItem) => {
     openWarehouseItem(item);
   };
@@ -332,980 +229,101 @@ export default function ExploreScreen() {
   // RENDER FUNCTIONS
   // ============================================================
 
-  const renderFarmsTab = () => {
-    const renderFarm = ({ item }: { item: Farm }) => (
-      <View style={{ paddingHorizontal: spacing[4], marginBottom: spacing[3] }}>
-        <FarmCard
-          farm={item}
-          today={today}
-          onPress={() => handleFarmPress(item)}
-          onEdit={() => handleEditFarm(item)}
-          onDelete={() => handleDeleteFarm(item)}
-        />
-      </View>
-    );
-
-    const renderEmpty = () => {
-      if (farmsLoading) {
-        return (
-          <View
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: spacing[8],
-            }}
-          >
-            <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-            <Text
-              style={{ color: colors.surface[500], fontSize: fontSize.base, marginTop: spacing[4] }}
-            >
-              {t('common.loading')}
-            </Text>
-          </View>
-        );
-      }
-
-      if (searchQuery.trim()) {
-        return (
-          <View
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: spacing[8],
-            }}
-          >
-            <View
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: borderRadius.full,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: spacing[4],
-                backgroundColor: colors.surface[50],
-              }}
-            >
-              <Icon
-                name="magnifyingglass"
-                size={36}
-                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-              />
-            </View>
-            <Text
-              style={{
-                color: m3.colorScheme.onSurface,
-                fontSize: fontSize.lg,
-                fontWeight: fontWeight.semibold,
-                textAlign: 'center',
-              }}
-            >
-              {t('common.noResultsFound')}
-            </Text>
-            <Text
-              style={{
-                color: colors.surface[500],
-                fontSize: fontSize.base,
-                textAlign: 'center',
-                marginTop: spacing[2],
-              }}
-            >
-              {t('common.tryDifferentSearchTerm')}
-            </Text>
-            <Pressable onPress={() => setSearchQuery('')} style={{ marginTop: spacing[4] }}>
-              <Text style={{ color: colors.primary[500], fontWeight: fontWeight.medium }}>
-                {t('common.clearSearch')}
-              </Text>
-            </Pressable>
-          </View>
-        );
-      }
-
-      return (
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: spacing[8],
-          }}
-        >
-          <View
-            style={{
-              width: 96,
-              height: 96,
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: spacing[6],
-              backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-            }}
-          >
-            <Icon name="leaf.fill" size={48} color={m3.colorScheme.primary} />
-          </View>
-          <Text
-            style={{
-              color: m3.colorScheme.onSurface,
-              fontSize: fontSize.xl,
-              fontWeight: fontWeight.semibold,
-              textAlign: 'center',
-            }}
-          >
-            {t('farms.empty.title')}
-          </Text>
-          <Text
-            style={{
-              color: colors.surface[500],
-              fontSize: fontSize.base,
-              textAlign: 'center',
-              marginTop: spacing[2],
-            }}
-          >
-            {t('farms.empty.subtitle')}
-          </Text>
-          <View style={{ marginTop: spacing[6] }}>
-            <GuidedTourTarget
-              targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
-              enabled={isAddFarmTargetEnabled}
-            >
-              <Pressable
-                style={{
-                  paddingHorizontal: spacing[6],
-                  paddingVertical: spacing[3],
-                  borderRadius: borderRadius.xl,
-                  backgroundColor: colors.primary[500],
-                }}
-                onPress={handleAddFarm}
-              >
-                <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
-                  {t('farms.addFarm')}
-                </Text>
-              </Pressable>
-            </GuidedTourTarget>
-          </View>
-        </View>
-      );
-    };
-
-    const StatsHeader = () => (
-      <View style={{ paddingHorizontal: spacing[4], paddingBottom: spacing[2] }}>
-        {/* Results Count */}
-        {searchQuery.trim() && (
-          <Text
-            style={{ color: colors.surface[500], fontSize: fontSize.sm, marginTop: spacing[2] }}
-          >
-            {t('farms.search.found', { count: filteredFarms.length })}
-          </Text>
-        )}
-
-        {/* Quick Stats */}
-        {!searchQuery.trim() && farms && farms.length > 0 && (
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: spacing[4],
-              gap: spacing[3],
-            }}
-          >
-            <View
-              style={{
-                flex: 1,
-                borderRadius: borderRadius.xl,
-                borderCurve: 'continuous',
-                minHeight: 84,
-                paddingHorizontal: spacing[4],
-                paddingVertical: spacing[3],
-                justifyContent: 'center',
-                backgroundColor: colors.surface[100],
-                borderWidth: 1,
-                borderColor: colors.surface[200],
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: borderRadius.full,
-                    borderCurve: 'continuous',
-                    overflow: 'hidden',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                  }}
-                >
-                  <Icon name="leaf.fill" size={16} color={m3.colorScheme.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      color: m3.colorScheme.onSurface,
-                      fontSize: fontSize.lg,
-                      fontWeight: fontWeight.bold,
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    {farms.length}
-                  </Text>
-                  <Text
-                    style={{
-                      color: colors.surface[500],
-                      fontSize: fontSize.xs,
-                    }}
-                  >
-                    {t('farms.stats.totalFarms')}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            <View
-              style={{
-                flex: 1,
-                borderRadius: borderRadius.xl,
-                borderCurve: 'continuous',
-                minHeight: 84,
-                paddingHorizontal: spacing[4],
-                paddingVertical: spacing[3],
-                justifyContent: 'center',
-                backgroundColor: colors.surface[100],
-                borderWidth: 1,
-                borderColor: colors.surface[200],
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: borderRadius.full,
-                    borderCurve: 'continuous',
-                    overflow: 'hidden',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                  }}
-                >
-                  <Icon
-                    name="arrow.up.left.and.arrow.down.right"
-                    size={16}
-                    color={m3.colorScheme.primary}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      color: m3.colorScheme.onSurface,
-                      fontSize: fontSize.lg,
-                      fontWeight: fontWeight.bold,
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}
-                  </Text>
-                  <Text
-                    style={{
-                      color: colors.surface[500],
-                      fontSize: fontSize.xs,
-                    }}
-                  >
-                    {t('farms.stats.totalArea')}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
-      </View>
-    );
-
-    return (
-      <>
-        <Animated.FlatList
-          data={filteredFarms}
-          renderItem={renderFarm}
-          keyExtractor={(item) => String(item.id)}
-          scrollEnabled={!isTourScrollLocked}
-          contentContainerStyle={{
-            paddingTop: 16,
-            paddingBottom: 100,
-            flexGrow: 1,
-          }}
-          ListHeaderComponent={<StatsHeader />}
-          ListEmptyComponent={renderEmpty}
-          refreshControl={
-            <RefreshControl
-              refreshing={farmsLoading && !searchQuery}
-              onRefresh={refetchFarms}
-              tintColor={m3.colorScheme.primary}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        />
-
-        {/* FAB */}
-        {(farms?.length || 0) > 0 && (
-          <GuidedTourTarget
-            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
-            enabled={isAddFarmTargetEnabled}
-            style={{
-              position: 'absolute',
-              bottom: fabBottom,
-              right: spacing[6],
-              width: 56,
-              height: 56,
-            }}
-          >
-            <Pressable
-              onPress={handleAddFarm}
-              accessibilityRole="button"
-              accessibilityLabel={t('farms.addFarm')}
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: borderRadius.full,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: colors.primary[500],
-              }}
-            >
-              <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
-            </Pressable>
-          </GuidedTourTarget>
-        )}
-      </>
-    );
-  };
-
-  const renderWarehouseTab = () => {
-    if (warehouseLoading) {
-      return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-          <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
-            {t('warehouse.loading.inventory')}
-          </Text>
-        </View>
-      );
-    }
-
-    return (
-      <>
-        <Animated.ScrollView
-          scrollEnabled={!isTourScrollLocked}
-          contentContainerStyle={{
-            paddingTop: spacing[4],
-            paddingHorizontal: spacing[4],
-            paddingBottom: 100,
-          }}
-          refreshControl={
-            <RefreshControl
-              refreshing={warehouseRefetching}
-              onRefresh={refetchWarehouse}
-              tintColor={m3.colorScheme.primary}
-            />
-          }
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
-          {/* Summary Cards */}
-          <View
-            style={{
-              flexDirection: 'row',
-              marginBottom: spacing[4],
-              marginTop: spacing[4],
-              gap: 12,
-            }}
-          >
-            <View
-              style={{
-                flex: 1,
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
-              }}
-            >
-              <Icon
-                name={
-                  lowStockItems.length > 0
-                    ? 'exclamationmark.triangle.fill'
-                    : 'checkmark.circle.fill'
-                }
-                size={24}
-                color={lowStockItems.length > 0 ? colors.warning : m3.colorScheme.primary}
-              />
-              <Text
-                style={{
-                  color: colors.surface[900],
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  marginTop: spacing[2],
-                }}
-              >
-                {lowStockItems.length}
-              </Text>
-              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                {t('warehouse.labels.lowStock')}
-              </Text>
-            </View>
-            <View
-              style={{
-                flex: 1,
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
-              }}
-            >
-              <Icon
-                name={
-                  currency === 'INR' ? 'indianrupeesign.circle.fill' : 'dollarsign.circle.fill'
-                }
-                size={24}
-                color={m3.colorScheme.primary}
-              />
-              <Text
-                style={{
-                  color: colors.surface[900],
-                  fontSize: fontSize.xl,
-                  fontWeight: fontWeight.bold,
-                  marginTop: spacing[2],
-                }}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
-                {formattedWarehouseValue}
-              </Text>
-              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                {t('common.labels.value')}
-              </Text>
-            </View>
-          </View>
-
-          {/* Low Stock Alert */}
-          {lowStockItems.length > 0 && (
-            <View
-              style={{
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                marginBottom: spacing[4],
-                backgroundColor: colorWithOpacity(colors.warning, 0.12),
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginBottom: spacing[3],
-                }}
-              >
-                <Icon name="exclamationmark.triangle.fill" size={20} color={colors.warning} />
-                <Text
-                  style={{
-                    color: colors.warning,
-                    fontSize: fontSize.base,
-                    fontWeight: fontWeight.semibold,
-                    marginLeft: spacing[2],
-                  }}
-                >
-                  {t('warehouse.labels.lowStockAlerts')}
-                </Text>
-                <View
-                  style={{
-                    paddingHorizontal: spacing[2],
-                    paddingVertical: 2,
-                    borderRadius: borderRadius.full,
-                    marginLeft: 'auto',
-                    backgroundColor: colorWithOpacity(colors.warning, 0.2),
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: colors.warning,
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.medium,
-                    }}
-                  >
-                    {t('warehouse.itemsCount', { count: lowStockItems.length })}
-                  </Text>
-                </View>
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                  {lowStockItems.map((item) => (
-                    <Pressable
-                      key={item.id}
-                      onPress={() => handleAddStock(item)}
-                      accessibilityRole="button"
-                      accessibilityLabel={item.name}
-                      style={{ width: 160 }}
-                    >
-                      <View
-                        style={{
-                          borderRadius: borderRadius.xl,
-                          padding: spacing[3],
-                          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
-                        }}
-                      >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Icon
-                            name={item.type === 'fertilizer' ? 'leaf.fill' : 'spraycan.fill'}
-                            size={16}
-                            color={colors.warning}
-                          />
-                          <Text
-                            style={{
-                              color: colors.surface[900],
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.semibold,
-                              marginLeft: spacing[2],
-                              flexShrink: 1,
-                            }}
-                            numberOfLines={2}
-                            accessibilityLabel={item.name}
-                          >
-                            {item.name}
-                          </Text>
-                        </View>
-                        <Text
-                          style={{
-                            color: colors.surface[600],
-                            fontSize: fontSize.xs,
-                            marginTop: spacing[1],
-                          }}
-                        >
-                          {item.quantity} {item.unit}
-                        </Text>
-                        {item.reorder_quantity && (
-                          <Text
-                            style={{
-                              color: colors.surface[500],
-                              fontSize: fontSize.xs,
-                              marginTop: 2,
-                            }}
-                          >
-                            {t('warehouse.reorderAt', {
-                              quantity: item.reorder_quantity,
-                              unit: item.unit,
-                            })}
-                          </Text>
-                        )}
-                        <View
-                          style={{
-                            marginTop: spacing[2],
-                            paddingVertical: 6,
-                            paddingHorizontal: spacing[3],
-                            borderRadius: borderRadius.full,
-                            alignItems: 'center',
-                            alignSelf: 'flex-start',
-                            backgroundColor: m3.colorScheme.primary,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: m3.colorScheme.onPrimary,
-                              fontSize: fontSize.xs,
-                              fontWeight: fontWeight.medium,
-                            }}
-                          >
-                            {t('warehouse.stockForm.title')}
-                          </Text>
-                        </View>
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
-          )}
-
-          {/* Search Results Count */}
-          {searchQuery.trim() && (
-            <Text
-              style={{
-                color: colors.surface[500],
-                fontSize: fontSize.sm,
-                marginBottom: spacing[3],
-              }}
-            >
-              {t('warehouse.search.found', { count: filteredWarehouseItems.length })}
-            </Text>
-          )}
-
-          {/* Filter Tabs */}
-          <View
-            style={{
-              flexDirection: 'row',
-              borderRadius: borderRadius.xl,
-              padding: spacing[1],
-              marginBottom: spacing[4],
-              backgroundColor: colors.surface[200],
-            }}
-          >
-            {(['all', 'fertilizer', 'spray'] as WarehouseFilter[]).map((type) => (
-              <Pressable
-                key={type}
-                onPress={() => setWarehouseFilter(type)}
-                accessibilityRole="tab"
-                accessibilityLabel={
-                  type === 'all'
-                    ? t('warehouse.filters.all', { count: warehouseTotals.count })
-                    : type === 'fertilizer'
-                      ? t('warehouse.filters.fertilizer', { count: warehouseTotals.fertilizers })
-                      : t('warehouse.filters.spray', { count: warehouseTotals.sprays })
-                }
-                accessibilityState={{ selected: warehouseFilter === type }}
-                style={{
-                  flex: 1,
-                  paddingVertical: 10,
-                  borderRadius: borderRadius.lg,
-                  backgroundColor: warehouseFilter === type ? colors.surface[100] : 'transparent',
-                }}
-              >
-                <Text
-                  style={{
-                    textAlign: 'center',
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.medium,
-                    color: warehouseFilter === type ? colors.surface[900] : colors.surface[600],
-                  }}
-                >
-                  {type === 'all'
-                    ? t('warehouse.filters.all', { count: warehouseTotals.count })
-                    : type === 'fertilizer'
-                      ? t('warehouse.filters.fertilizer', { count: warehouseTotals.fertilizers })
-                      : t('warehouse.filters.spray', { count: warehouseTotals.sprays })}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {/* Inventory List */}
-          {filteredWarehouseItems.length === 0 ? (
-            <View
-              style={{
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[8],
-                alignItems: 'center',
-                backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
-              }}
-            >
-              <View
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: borderRadius.full,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: colorWithOpacity(colors.primary[500], 0.2),
-                }}
-              >
-                <Icon name="cube" size={32} color={colors.primary[500]} />
-              </View>
-              <Text
-                style={{
-                  color: colors.surface[900],
-                  fontWeight: fontWeight.semibold,
-                  marginTop: spacing[4],
-                  textAlign: 'center',
-                }}
-              >
-                {t('warehouse.empty.title')}
-              </Text>
-              <Text
-                style={{
-                  color: colors.surface[500],
-                  fontSize: fontSize.sm,
-                  marginTop: spacing[1],
-                  textAlign: 'center',
-                }}
-              >
-                {t('warehouse.empty.subtitle')}
-              </Text>
-              <Pressable
-                onPress={() => {
-                  openWarehouseItem(null);
-                }}
-                style={{
-                  marginTop: spacing[4],
-                  paddingHorizontal: spacing[6],
-                  paddingVertical: spacing[3],
-                  borderRadius: borderRadius.xl,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: colors.primary[500],
-                }}
-              >
-                <Icon name="plus.circle.fill" size={20} color={m3.colorScheme.onPrimary} />
-                <Text
-                  style={{
-                    color: m3.colorScheme.onPrimary,
-                    fontWeight: fontWeight.semibold,
-                    marginLeft: spacing[2],
-                  }}
-                >
-                  {t('warehouse.actions.addItem')}
-                </Text>
-              </Pressable>
-            </View>
-          ) : (
-            filteredWarehouseItems.map((item) => {
-              const isLowStock = item.reorder_quantity && item.quantity <= item.reorder_quantity;
-              const itemValue = item.quantity * item.unit_price;
-              const itemColor =
-                item.type === 'fertilizer' ? colors.secondary[500] : colors.primary[500];
-
-              return (
-                <View
-                  key={item.id}
-                  accessibilityLabel={item.name}
-                  style={{
-                    borderRadius: borderRadius['2xl'],
-                    padding: spacing[4],
-                    marginBottom: spacing[3],
-                    backgroundColor: isLowStock
-                      ? colorWithOpacity(colors.warning, 0.08)
-                      : colorWithOpacity(colors.surface[100], 0.85),
-                    borderColor: isLowStock
-                      ? colorWithOpacity(colors.warning, 0.3)
-                      : colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
-                    borderWidth: 1,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: spacing[3],
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                      <View
-                        style={{
-                          paddingHorizontal: 12,
-                          paddingVertical: spacing[1],
-                          borderRadius: borderRadius.full,
-                          backgroundColor:
-                            item.type === 'fertilizer'
-                              ? colorWithOpacity(colors.secondary[500], 0.16)
-                              : colorWithOpacity(colors.primary[500], 0.16),
-                          borderWidth: 1,
-                          borderColor: colorWithOpacity(itemColor, 0.18),
-                        }}
-                      >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Icon
-                            name={item.type === 'fertilizer' ? 'leaf.fill' : 'spraycan.fill'}
-                            size={12}
-                            color={itemColor}
-                          />
-                          <Text
-                            style={{
-                              color: itemColor,
-                              fontSize: fontSize.xs,
-                              fontWeight: fontWeight.semibold,
-                              marginLeft: spacing[1],
-                            }}
-                          >
-                            {item.type === 'fertilizer'
-                              ? t('warehouse.itemTypes.fertilizer')
-                              : t('warehouse.itemTypes.spray')}
-                          </Text>
-                        </View>
-                      </View>
-                      {isLowStock && (
-                        <View
-                          style={{
-                            paddingHorizontal: spacing[2],
-                            paddingVertical: 3,
-                            borderRadius: borderRadius.full,
-                            backgroundColor: colorWithOpacity(colors.warning, 0.16),
-                            borderWidth: 1,
-                            borderColor: colorWithOpacity(colors.warning, 0.24),
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: colors.warning,
-                              fontSize: fontSize.xs,
-                              fontWeight: fontWeight.semibold,
-                            }}
-                          >
-                            {t('common.labels.low')}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-                      <Pressable
-                        onPress={() => handleEditWarehouseItem(item)}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('common.a11y.editWithName', { name: item.name })}
-                        style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: borderRadius.full,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-                        }}
-                      >
-                        <Icon name="pencil" size={17} color={m3.colorScheme.primary} />
-                      </Pressable>
-                      <Pressable
-                        onPress={() => handleDeleteWarehouseItem(item)}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('common.a11y.deleteWithName', {
-                          name: item.name,
-                        })}
-                        style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: borderRadius.full,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
-                        }}
-                      >
-                        <Icon name="trash" size={17} color={m3.colorScheme.error} />
-                      </Pressable>
-                    </View>
-                  </View>
-                  <Text
-                    style={{
-                      color: colors.surface[900],
-                      fontSize: fontSize.lg,
-                      fontWeight: fontWeight.semibold,
-                      marginTop: spacing[3],
-                      flexShrink: 1,
-                    }}
-                    numberOfLines={2}
-                    accessibilityLabel={item.name}
-                  >
-                    {item.name}
-                  </Text>
-
-                  <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[3] }}>
-                    <View
-                      style={[
-                        metricCardBaseStyle,
-                        {
-                          backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.5),
-                          borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
-                        },
-                      ]}
-                    >
-                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        {t('common.labels.quantity')}
-                      </Text>
-                      <Text
-                        style={{
-                          color: colors.surface[900],
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.semibold,
-                          marginTop: 2,
-                        }}
-                      >
-                        {item.quantity} {item.unit}
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        metricCardBaseStyle,
-                        {
-                          backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.5),
-                          borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
-                        },
-                      ]}
-                    >
-                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        {t('common.labels.unitPrice')}
-                      </Text>
-                      <Text
-                        style={{
-                          color: colors.surface[900],
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.medium,
-                          marginTop: 2,
-                        }}
-                        numberOfLines={1}
-                      >
-                        {formatCurrency(item.unit_price, currency)}/{item.unit}
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        metricCardBaseStyle,
-                        {
-                          backgroundColor: colorWithOpacity(itemColor, 0.08),
-                          borderColor: colorWithOpacity(itemColor, 0.16),
-                        },
-                      ]}
-                    >
-                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        {t('common.labels.totalValue')}
-                      </Text>
-                      <Text
-                        style={{
-                          color: itemColor,
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.semibold,
-                          marginTop: 2,
-                        }}
-                        numberOfLines={1}
-                      >
-                        {formatCurrency(itemValue, currency)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {item.notes && (
-                    <Text
-                      style={{
-                        color: colors.surface[600],
-                        fontSize: fontSize.xs,
-                        marginTop: spacing[2],
-                      }}
-                      numberOfLines={2}
-                    >
-                      {item.notes}
-                    </Text>
-                  )}
-                </View>
-              );
-            })
-          )}
-        </Animated.ScrollView>
-
-        {/* FAB */}
-        <Pressable
-          onPress={() => {
-            openWarehouseItem(null);
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={t('warehouse.actions.addItem')}
+  const renderFarmsTab = () => (
+    <View style={{ flex: 1 }}>
+      <FarmsPaneB
+        farms={farms}
+        isLoading={farmsLoading}
+        today={today}
+        searchQuery={searchQuery}
+        activeFilter={farmFilter}
+        onFilterChange={setFarmFilter}
+        onAddFarm={handleAddFarm}
+        onFarmPress={handleFarmPress}
+        onEditFarm={handleEditFarm}
+        addFarmTargetEnabled={isAddFarmTargetEnabled}
+        listBottomPadding={Math.max(spacing[16], fabBottom + 56 + spacing[8])}
+        refreshControl={
+          <RefreshControl
+            refreshing={farmsRefetching && !searchQuery}
+            onRefresh={refetchFarms}
+            tintColor={m3.colorScheme.primary}
+          />
+        }
+      />
+      {(farms?.length || 0) > 0 && (
+        <GuidedTourTarget
+          targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+          enabled={isAddFarmTargetEnabled}
           style={{
             position: 'absolute',
             bottom: fabBottom,
             right: spacing[6],
             width: 56,
             height: 56,
-            borderRadius: borderRadius.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: colors.primary[500],
           }}
         >
-          <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
-        </Pressable>
-      </>
-    );
-  };
+          <Pressable
+            onPress={handleAddFarm}
+            accessibilityRole="button"
+            accessibilityLabel={t('farms.addFarm')}
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: colors.primary[500],
+            }}
+          >
+            <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
+          </Pressable>
+        </GuidedTourTarget>
+      )}
+    </View>
+  );
+
+  const renderWarehouseTab = () => (
+    <View style={{ flex: 1 }}>
+      <WarehousePaneB
+        items={warehouseItems}
+        isLoading={warehouseLoading}
+        searchQuery={searchQuery}
+        activeFilter={warehouseFilter}
+        currency={currency}
+        onFilterChange={setWarehouseFilter}
+        onAddItem={() => openWarehouseItem(null)}
+        onItemPress={handleEditWarehouseItem}
+        onItemLongPress={handleDeleteWarehouseItem}
+        listBottomPadding={Math.max(spacing[16], fabBottom + 56 + spacing[8])}
+        refreshControl={
+          <RefreshControl
+            refreshing={warehouseRefetching}
+            onRefresh={refetchWarehouse}
+            tintColor={m3.colorScheme.primary}
+          />
+        }
+      />
+      <Pressable
+        onPress={() => openWarehouseItem(null)}
+        accessibilityRole="button"
+        accessibilityLabel={t('warehouse.actions.addItem')}
+        style={{
+          position: 'absolute',
+          bottom: fabBottom,
+          right: spacing[6],
+          width: 56,
+          height: 56,
+          borderRadius: borderRadius.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.primary[500],
+        }}
+      >
+        <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
+      </Pressable>
+    </View>
+  );
 
   // Get dynamic search placeholder
   const searchPlaceholder = useMemo(() => {
@@ -1321,76 +339,15 @@ export default function ExploreScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-      {/* Global Search Bar */}
+      {/* Compact header — segmented toggle + search icon on a single row.
+          Toggle ~32px tall, search icon button 32px. Search field expands inline
+          below the row only when the icon is tapped. Spec: explore-toggle-B-v2-compact. */}
       <View
         style={{
           backgroundColor: colors.surface[100],
-          paddingHorizontal: spacing[4],
-          paddingBottom: spacing[3],
-          paddingTop: insets.top + spacing[3],
-        }}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: colors.surface[50],
-            borderRadius: borderRadius['2xl'],
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[2],
-            borderWidth: 1,
-            borderColor: isSearchFocused ? colors.primary[500] : 'transparent',
-          }}
-        >
-          <Icon
-            name="magnifyingglass"
-            size={20}
-            color={
-              isSearchFocused
-                ? m3.colorScheme.primary
-                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
-            }
-          />
-          <TextInput
-            style={{
-              flex: 1,
-              marginLeft: spacing[3],
-              fontSize: fontSize.base,
-              color: m3.colorScheme.onSurface,
-            }}
-            placeholder={searchPlaceholder}
-            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-            value={searchQuery}
-            onChangeText={handleSearchChange}
-            onFocus={handleSearchFocus}
-            onBlur={handleSearchBlur}
-            returnKeyType="search"
-            accessibilityRole="search"
-            accessibilityLabel={searchPlaceholder}
-          />
-          {searchQuery.length > 0 && (
-            <Pressable
-              onPress={() => handleSearchChange('')}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.clearSearch')}
-            >
-              <Icon
-                name="xmark.circle.fill"
-                size={20}
-                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-              />
-            </Pressable>
-          )}
-        </View>
-      </View>
-
-      {/* Refined Classic Tabs */}
-      <View
-        style={{
-          backgroundColor: colors.surface[100],
-          paddingHorizontal: spacing[4],
+          paddingTop: insets.top + spacing[2],
           paddingBottom: spacing[2],
+          paddingHorizontal: spacing[4],
           ...shadows.sm,
         }}
       >
@@ -1398,86 +355,180 @@ export default function ExploreScreen() {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            gap: spacing[2],
           }}
         >
-          {exploreTabs.map((tab) => {
-            const isSelected = selectedTab === tab.id;
-            return (
-              <Animated.View
-                key={tab.id}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  transform: [{ scale: tabScaleAnims[tab.id] }],
-                }}
-              >
-                <Pressable
-                  onPress={() => handleTabChange(tab.id)}
-                  accessibilityRole="tab"
-                  accessibilityLabel={tab.label}
-                  accessibilityState={{ selected: isSelected }}
-                  style={({ pressed }) => ({
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: borderRadius.xl,
-                    paddingTop: spacing[1],
-                    paddingBottom: spacing[2],
-                    marginHorizontal: spacing[1],
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                      : 'transparent',
-                  })}
+          {/* Segmented pill toggle */}
+          <View
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.surface[50],
+              borderRadius: 18,
+              padding: 2,
+              height: 36,
+            }}
+          >
+            {exploreTabs.map((tab) => {
+              const isSelected = selectedTab === tab.id;
+              return (
+                <Animated.View
+                  key={tab.id}
+                  style={{
+                    flex: 1,
+                    transform: [{ scale: tabScaleAnims[tab.id] }],
+                  }}
                 >
-                  <View
+                  <Pressable
+                    onPress={() => handleTabChange(tab.id)}
+                    accessibilityRole="tab"
+                    accessibilityLabel={tab.label}
+                    accessibilityState={{ selected: isSelected }}
                     style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: borderRadius.full,
+                      flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: isSelected
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                        : 'transparent',
+                      gap: 6,
+                      borderRadius: 16,
+                      height: 32,
+                      paddingHorizontal: spacing[2],
+                      backgroundColor: isSelected ? m3.colorScheme.primary : 'transparent',
                     }}
                   >
                     <Icon
                       name={tab.icon}
-                      size={20}
+                      size={14}
                       color={
                         isSelected
-                          ? m3.colorScheme.primary
-                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.75)
+                          ? m3.colorScheme.onPrimary
+                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.85)
                       }
                     />
-                  </View>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      marginTop: spacing[1],
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                      color: isSelected
-                        ? m3.colorScheme.primary
-                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
-                    }}
-                  >
-                    {tab.label}
-                  </Text>
-                  <View
-                    style={{
-                      marginTop: spacing[1],
-                      height: 3,
-                      width: 64,
-                      borderRadius: borderRadius.full,
-                      backgroundColor: isSelected ? m3.colorScheme.primary : 'transparent',
-                    }}
-                  />
-                </Pressable>
-              </Animated.View>
-            );
-          })}
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        fontSize: 13,
+                        fontWeight: fontWeight.semibold,
+                        color: isSelected
+                          ? m3.colorScheme.onPrimary
+                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.95),
+                      }}
+                    >
+                      {tab.label}
+                    </Text>
+                    {tab.id === 'warehouse' && lowStockCount > 0 && !isSelected ? (
+                      <View
+                        style={{
+                          minWidth: 16,
+                          height: 16,
+                          paddingHorizontal: 4,
+                          borderRadius: 8,
+                          backgroundColor: '#D97706',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: '#fff',
+                            fontSize: 10,
+                            fontWeight: fontWeight.bold,
+                            fontVariant: ['tabular-nums'],
+                          }}
+                        >
+                          {lowStockCount > 99 ? '99+' : lowStockCount}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </Pressable>
+                </Animated.View>
+              );
+            })}
+          </View>
+
+          {/* Search icon button */}
+          <Pressable
+            onPress={handleSearchToggle}
+            accessibilityRole="button"
+            accessibilityLabel={searchPlaceholder}
+            accessibilityState={{ expanded: isSearchExpanded }}
+            hitSlop={6}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: isSearchExpanded
+                ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                : colors.surface[50],
+            }}
+          >
+            <Icon
+              name={isSearchExpanded ? 'xmark' : 'magnifyingglass'}
+              size={16}
+              color={
+                isSearchExpanded
+                  ? m3.colorScheme.primary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.85)
+              }
+            />
+          </Pressable>
         </View>
+
+        {/* Expandable search field (only mounted when expanded so the closed
+            state stays at one row). */}
+        {isSearchExpanded ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.surface[50],
+              borderRadius: borderRadius.xl,
+              paddingHorizontal: spacing[3],
+              height: 36,
+              marginTop: spacing[2],
+            }}
+          >
+            <Icon
+              name="magnifyingglass"
+              size={16}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            />
+            <TextInput
+              autoFocus
+              style={{
+                flex: 1,
+                marginLeft: spacing[2],
+                fontSize: fontSize.sm,
+                color: m3.colorScheme.onSurface,
+                paddingVertical: 0,
+              }}
+              placeholder={searchPlaceholder}
+              placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              returnKeyType="search"
+              accessibilityRole="search"
+              accessibilityLabel={searchPlaceholder}
+            />
+            {searchQuery.length > 0 ? (
+              <Pressable
+                onPress={() => handleSearchChange('')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.clearSearch')}
+              >
+                <Icon
+                  name="xmark.circle.fill"
+                  size={16}
+                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
 
       {/* Tab Content with Fade Animation */}

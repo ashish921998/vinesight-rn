@@ -607,6 +607,50 @@ export const en = {
       moveDown: 'Move {{name}} down',
       error: 'Could not update farm order. Please try again.',
     },
+    filter: {
+      all: 'All',
+      healthy: 'Healthy',
+      needsAttention: 'Needs water',
+    },
+  },
+
+  explore: {
+    farms: {
+      heroLabel: 'Season · {{count}} farms · {{area}} ha',
+      heroValue: 'Day {{day}} / {{total}}',
+      todayFlag: 'TODAY',
+      noPruningDate: 'No pruning',
+      harvestIn: 'Harvest ',
+      pastHarvest: 'Past D130',
+      water: {
+        ok: 'OK',
+        low: 'Low',
+      },
+      stage: {
+        notStarted: 'Not started',
+      },
+    },
+    warehouse: {
+      heroLabel: 'Inventory · {{count}} items · {{value}}',
+      heroValueLow: '{{count}} LOW',
+      heroValueOk: 'All OK',
+      reorderFlag: '⚠ REORDER · {{count}}',
+      reorderAt: 'Reorder ≤ ',
+      legendLow: '{{count}} low',
+      stockOk: 'OK',
+      stockLow: 'Low',
+      cat: {
+        spray: 'Spray',
+        fertilizer: 'Fert',
+        equipment: 'Equip',
+      },
+      filter: {
+        all: 'All',
+        spray: 'Spray',
+        fertilizer: 'Fert',
+        equipment: 'Equip',
+      },
+    },
   },
 
   entryForm: {

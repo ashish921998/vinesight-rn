@@ -606,6 +606,50 @@ export const hi = {
       moveDown: '{{name}} को नीचे ले जाएं',
       error: 'खेतों का क्रम अपडेट नहीं हो सका। कृपया फिर से प्रयास करें।',
     },
+    filter: {
+      all: 'सभी',
+      healthy: 'स्वस्थ',
+      needsAttention: 'पानी की ज़रूरत',
+    },
+  },
+
+  explore: {
+    farms: {
+      heroLabel: 'सीज़न · {{count}} खेत · {{area}} हेक्टेयर',
+      heroValue: 'दिन {{day}} / {{total}}',
+      todayFlag: 'आज',
+      noPruningDate: 'छंटाई नहीं',
+      harvestIn: 'कटाई ',
+      pastHarvest: 'D130 के बाद',
+      water: {
+        ok: 'ठीक',
+        low: 'कम',
+      },
+      stage: {
+        notStarted: 'शुरू नहीं',
+      },
+    },
+    warehouse: {
+      heroLabel: 'इन्वेंट्री · {{count}} वस्तुएं · {{value}}',
+      heroValueLow: '{{count}} कम',
+      heroValueOk: 'सब ठीक',
+      reorderFlag: '⚠ पुनः ऑर्डर · {{count}}',
+      reorderAt: 'पुनः ऑर्डर ≤ ',
+      legendLow: '{{count}} कम',
+      stockOk: 'ठीक',
+      stockLow: 'कम',
+      cat: {
+        spray: 'स्प्रे',
+        fertilizer: 'खाद',
+        equipment: 'उपकरण',
+      },
+      filter: {
+        all: 'सभी',
+        spray: 'स्प्रे',
+        fertilizer: 'खाद',
+        equipment: 'उपकरण',
+      },
+    },
   },
 
   entryForm: {

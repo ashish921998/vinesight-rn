@@ -642,7 +642,10 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     <SafeAreaView
       style={[
         styles.safeArea,
-        { backgroundColor: m3.colorScheme.surface, paddingBottom: tabBarInset },
+        {
+          backgroundColor: m3.colorScheme.surface,
+          paddingBottom: Platform.OS === 'ios' ? tabBarInset : 0,
+        },
       ]}
       edges={['top', 'left', 'right']}
     >

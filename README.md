@@ -59,6 +59,8 @@ vinesight-rn/
 │   ├── utils/              # Utility functions
 │   └── styles/             # Design system tokens
 ├── __tests__/              # Jest unit tests (components, i18n)
+├── supabase/
+│   └── migrations/         # Supabase SQL migration files
 ├── assets/                 # Static assets
 └── metro.config.js         # Metro bundler config
 ```
@@ -71,13 +73,23 @@ vinesight-rn/
 - **Attendance Tracking**: Worker attendance management.
 - **Task Management**: Farm-specific tasks and scheduling.
 - **Monitoring**: Water level monitoring and lab test tracking.
-- **Season Timeline**: Farm cards show a visual pruning-to-harvest progress bar with milestone dots, day counter, harvest estimate, and urgency accent (red/green) when water balance is low. Farms needing attention sort to the top.
+- **Explore Screen**: Dedicated Farms and Warehouse panes with per-tab filter chips and animated search expansion. Farm cards show a visual pruning-to-harvest timeline with milestone dots, day counter, harvest estimate, and urgency accent when water balance is low. Farms needing attention sort to the top.
+- **Seasonal Water Use**: Farm detail screen shows running water total vs. season budget for the active season.
+- **Farm Ordering**: Farms can be manually reordered and the order persists across sessions.
 
 ## Development
 
 - **Linting**: `npm run lint`
 - **Type Checking**: `npm run typecheck`
 - **Testing**: `npm run test`
+- **Version**: Current version is tracked in `VERSION` (semver format `X.Y.Z.W`).
+
+## Further Reading
+
+- [CONTEXT.md](./CONTEXT.md) — Core concepts (Activity stack, rollback semantics)
+- [TODOS.md](./TODOS.md) — Open work items and backlog
+- [docs/product-roadmap.md](./docs/product-roadmap.md) — Product phases and epics
+- [CHANGELOG.md](./CHANGELOG.md) — Release history
 
 ## Chemical Catalog Data
 

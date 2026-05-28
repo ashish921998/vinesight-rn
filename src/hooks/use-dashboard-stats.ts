@@ -124,10 +124,10 @@ export function useTodayNeedsAttention(limit: number = 10) {
       if (overdueTasksResult.error) throw overdueTasksResult.error;
       if (phiDeadlinesResult.error) throw phiDeadlinesResult.error;
       // RPC may not be deployed in all environments — degrade gracefully rather than
-      // surfacing a dev error overlay on every screen.
+      // surfacing a dev warning overlay on every screen.
       if (recentLogFarmsResult.error) {
         if (__DEV__) {
-          console.warn(
+          console.info(
             '[useTodayNeedsAttention] recentLogFarms RPC unavailable:',
             recentLogFarmsResult.error.message,
           );
@@ -484,11 +484,12 @@ export function useRecentActivities(limit: number = 5) {
 
       // Map notes
       dailyNotes.data?.forEach((r) => {
+        const noteText = r.notes?.trim();
         activities.push({
           id: `note_${r.id}`,
           type: 'note',
           date: r.date,
-          description: r.notes ?? 'Note',
+          description: noteText && noteText.length > 0 ? noteText : 'Note',
           farmId: r.farm_id,
           farmName: farmMap.get(r.farm_id) ?? 'Unknown',
         });

@@ -369,6 +369,10 @@ export default function FarmDetailScreen() {
     if (farm?.date_of_pruning) return parseDbDateToLocalDate(farm.date_of_pruning);
     return null;
   }, [farm?.date_of_pruning, lastEndedSeasonStartDate, lockedSeasonStartDate]);
+  const seasonMetricsEndDate = useMemo(() => {
+    if (activeSeasonRecord) return null;
+    return lastSeasonEndDate ? parseDbDateToLocalDate(lastSeasonEndDate) : null;
+  }, [activeSeasonRecord, lastSeasonEndDate]);
   const isBetweenSeasons = useMemo(() => {
     if (activeSeasonRecord) return false;
     if (!minimumSeasonStartDate) return false;
@@ -451,30 +455,40 @@ export default function FarmDetailScreen() {
   const seasonExpenseTotal = useMemo(() => {
     if (!expenseRecords) return null;
     const activeStartIso = seasonMetricsStartDate ? formatLocalDate(seasonMetricsStartDate) : null;
+    const activeEndIso = seasonMetricsEndDate ? formatLocalDate(seasonMetricsEndDate) : null;
     const scopedExpenseRecords =
-      activeStartIso === null
+      activeStartIso === null && activeEndIso === null
         ? expenseRecords
         : expenseRecords.filter((record) => {
             const recordDate = parseDbDateToLocalDate(record.date);
             if (!recordDate) return false;
-            return formatLocalDate(recordDate) >= activeStartIso;
+            const recordIso = formatLocalDate(recordDate);
+            return (
+              (activeStartIso === null || recordIso >= activeStartIso) &&
+              (activeEndIso === null || recordIso <= activeEndIso)
+            );
           });
     return scopedExpenseRecords.reduce((sum, record) => sum + (record.cost || 0), 0);
-  }, [expenseRecords, seasonMetricsStartDate]);
+  }, [expenseRecords, seasonMetricsEndDate, seasonMetricsStartDate]);
 
   const seasonHarvestQuantity = useMemo(() => {
     if (!harvestRecords) return null;
     const activeStartIso = seasonMetricsStartDate ? formatLocalDate(seasonMetricsStartDate) : null;
+    const activeEndIso = seasonMetricsEndDate ? formatLocalDate(seasonMetricsEndDate) : null;
     const scopedHarvestRecords =
-      activeStartIso === null
+      activeStartIso === null && activeEndIso === null
         ? harvestRecords
         : harvestRecords.filter((record) => {
             const recordDate = parseDbDateToLocalDate(record.date);
             if (!recordDate) return false;
-            return formatLocalDate(recordDate) >= activeStartIso;
+            const recordIso = formatLocalDate(recordDate);
+            return (
+              (activeStartIso === null || recordIso >= activeStartIso) &&
+              (activeEndIso === null || recordIso <= activeEndIso)
+            );
           });
     return scopedHarvestRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-  }, [harvestRecords, seasonMetricsStartDate]);
+  }, [harvestRecords, seasonMetricsEndDate, seasonMetricsStartDate]);
 
   const formatCurrencyCompact = (value: number | null | undefined) => {
     if (value === null || value === undefined) return '—';

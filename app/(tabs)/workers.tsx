@@ -407,7 +407,7 @@ export default function WorkersScreen() {
         style={{
           flex: 1,
           backgroundColor: m3.colorScheme.background,
-          paddingTop: (isAndroid ? 0 : insets.top) + spacing[2],
+          paddingTop: insets.top + spacing[2],
         }}
       >
         {/* Tab Selector */}
@@ -415,7 +415,7 @@ export default function WorkersScreen() {
           style={{
             backgroundColor: m3.colorScheme.background,
             paddingHorizontal: spacing[4],
-            paddingTop: isAndroid ? spacing[1] : spacing[2],
+            paddingTop: spacing[2],
             paddingBottom: spacing[2],
           }}
         >

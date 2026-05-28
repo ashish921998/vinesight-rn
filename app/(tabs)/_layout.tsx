@@ -155,6 +155,7 @@ export default function TabLayout() {
             name="workers"
             options={{
               title: t('tabs.workers'),
+              headerShown: false,
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('person.2', focused),
             }}
           />
@@ -162,6 +163,7 @@ export default function TabLayout() {
             name="tools"
             options={{
               title: t('tabs.tools'),
+              headerShown: false,
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('wrench.and.screwdriver', focused),
             }}
           />

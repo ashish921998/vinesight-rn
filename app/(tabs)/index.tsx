@@ -304,7 +304,7 @@ export default function DashboardScreen() {
         <View
           style={{
             backgroundColor: m3.colorScheme.primary,
-            paddingVertical: spacing[4],
+            paddingTop: insets.top + spacing[3],
             paddingHorizontal: spacing[5],
             paddingBottom: spacing[5],
             borderBottomLeftRadius: borderRadius.lg,
