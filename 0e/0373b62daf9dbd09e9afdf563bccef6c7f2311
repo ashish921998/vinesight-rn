@@ -1,0 +1,21 @@
+supabase/migrations/20260520150000_add_farm_display_order.sql
+  s_2cbb2770aea23b::t_307f43dd9035cb 52,56-57
+src/hooks/use-farms.ts
+  s_2cbb2770aea23b::t_307f43dd9035cb 198,202-204,218
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "0e0373b62daf9dbd09e9afdf563bccef6c7f2311",
+  "prompts": {},
+  "sessions": {
+    "s_2cbb2770aea23b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6366-6786-7801-8a60-42f66c8d3728",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
