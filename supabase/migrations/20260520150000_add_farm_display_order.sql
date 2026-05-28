@@ -49,8 +49,12 @@ begin
     raise exception 'Not authenticated' using errcode = '42501';
   end if;
 
-  if p_ordered_farm_ids is null or array_length(p_ordered_farm_ids, 1) is null then
+  if p_ordered_farm_ids is null then
     return;
+  end if;
+
+  if array_length(p_ordered_farm_ids, 1) is null then
+    raise exception 'ordered_farm_ids cannot be empty' using errcode = '22000';
   end if;
 
   select count(*)

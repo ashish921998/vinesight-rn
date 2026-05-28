@@ -195,14 +195,13 @@ export function useCreateFarm() {
       const userId = await getUserId();
       let data: Farm | null = null;
       let lastError: { code?: string; message?: string } | null = null;
-      const shouldAssignDisplayOrder = farm.display_order == null;
+      const { display_order: _ignoredDisplayOrder, ...farmPayload } = farm;
 
       for (let attempt = 0; attempt < 3; attempt += 1) {
         const { supportsDisplayOrder, displayOrder } = await resolveNextFarmDisplayOrder(userId);
-        const insertPayload =
-          supportsDisplayOrder && shouldAssignDisplayOrder
-            ? { ...farm, user_id: userId, display_order: displayOrder }
-            : { ...farm, user_id: userId };
+        const insertPayload = supportsDisplayOrder
+          ? { ...farmPayload, user_id: userId, display_order: displayOrder }
+          : { ...farmPayload, user_id: userId };
 
         const { data: insertedFarm, error } = await supabase
           .from(TABLES.FARMS)
@@ -216,7 +215,7 @@ export function useCreateFarm() {
         }
 
         lastError = error;
-        if (!shouldAssignDisplayOrder || !isUniqueDisplayOrderViolation(error)) {
+        if (!isUniqueDisplayOrderViolation(error)) {
           throw error;
         }
       }
