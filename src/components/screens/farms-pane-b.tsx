@@ -7,7 +7,7 @@
  * Receives data + handlers as props; owns no fetching state.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
+import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 import {
   HeroPanel,
   StatStrip,
@@ -76,6 +77,8 @@ interface FarmsPaneBProps {
   listBottomPadding?: number;
   /** Refresh control passed through to the FlatList. */
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  /** Enables the Add Farm guided-tour anchor in the empty state. */
+  addFarmTargetEnabled?: boolean;
 }
 
 export function FarmsPaneB({
@@ -90,6 +93,7 @@ export function FarmsPaneB({
   onEditFarm,
   listBottomPadding,
   refreshControl,
+  addFarmTargetEnabled = false,
 }: FarmsPaneBProps) {
   const m3 = useM3();
   const isDark = useIsDark();
@@ -141,20 +145,8 @@ export function FarmsPaneB({
 
   const seasonRatio = Math.max(0, Math.min(1, seasonDay / SEASON_LENGTH_DAYS));
 
-  // ── Hero label ──────────────────────────────────────────────────────────
-  const heroLabel = t('explore.farms.heroLabel', {
-    defaultValue: 'Season · {{count}} farms · {{area}} ha',
-    count: counts.all,
-    area: formatNumber(totalArea, { maximumFractionDigits: 1 }),
-  });
-  const heroValue = t('explore.farms.heroValue', {
-    defaultValue: 'Day {{day}} / {{total}}',
-    day: seasonDay,
-    total: SEASON_LENGTH_DAYS,
-  });
-
   // ── Empty + loading ─────────────────────────────────────────────────────
-  const renderEmpty = () => {
+  const renderEmpty = useCallback(() => {
     if (isLoading) {
       return (
         <View style={emptyContainerStyle}>
@@ -228,152 +220,199 @@ export function FarmsPaneB({
         >
           {t('farms.empty.subtitle')}
         </Text>
-        <View style={{ marginTop: spacing[6], alignSelf: 'center' }}>
+        <GuidedTourTarget
+          targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+          enabled={addFarmTargetEnabled}
+          style={{ marginTop: spacing[6], alignSelf: 'center' }}
+        >
           <Button title={t('farms.addFarm')} onPress={onAddFarm} fullWidth={false} />
-        </View>
+        </GuidedTourTarget>
       </View>
     );
-  };
+  }, [isLoading, searchQuery, t, m3, addFarmTargetEnabled, onAddFarm]);
 
   // ── Row render ──────────────────────────────────────────────────────────
-  const renderFarm = ({ item }: { item: Farm }) => {
-    const accent = getFarmAccentColor(item.id, isDark);
-    const days = getDaysSincePruning(item.date_of_pruning, today);
-    const ratio = days != null ? Math.min(1, days / SEASON_LENGTH_DAYS) : 0;
-    const pastHarvest = days != null && days >= SEASON_LENGTH_DAYS;
-    const daysToHarvest = days != null && !pastHarvest ? SEASON_LENGTH_DAYS - days : null;
-    const lowWater = isLowWater(item);
+  const renderFarm = useCallback(
+    ({ item }: { item: Farm }) => {
+      const accent = getFarmAccentColor(item.id, isDark);
+      const days = getDaysSincePruning(item.date_of_pruning, today);
+      const ratio = days != null ? Math.min(1, days / SEASON_LENGTH_DAYS) : 0;
+      const pastHarvest = days != null && days >= SEASON_LENGTH_DAYS;
+      const daysToHarvest = days != null && !pastHarvest ? SEASON_LENGTH_DAYS - days : null;
+      const lowWater = isLowWater(item);
 
-    const stage =
-      days == null
-        ? t('explore.farms.stage.notStarted', { defaultValue: 'Not started' })
-        : days < SEASON_LENGTH_DAYS * 0.35
-          ? t('farmCard.season.pruning', { defaultValue: 'Pruning' })
-          : days < SEASON_LENGTH_DAYS * 0.65
-            ? t('farmCard.season.bloom', { defaultValue: 'Bloom' })
-            : !pastHarvest
-              ? t('farmCard.season.veraison', { defaultValue: 'Veraison' })
-              : t('farmCard.season.harvest', { defaultValue: 'Harvest' });
+      const stage =
+        days == null
+          ? t('explore.farms.stage.notStarted', { defaultValue: 'Not started' })
+          : days < SEASON_LENGTH_DAYS * 0.35
+            ? t('farmCard.season.pruning', { defaultValue: 'Pruning' })
+            : days < SEASON_LENGTH_DAYS * 0.65
+              ? t('farmCard.season.bloom', { defaultValue: 'Bloom' })
+              : !pastHarvest
+                ? t('farmCard.season.veraison', { defaultValue: 'Veraison' })
+                : t('farmCard.season.harvest', { defaultValue: 'Harvest' });
 
-    const subtitleParts = [
-      item.crop_variety,
-      `${formatNumber(item.area, { maximumFractionDigits: 1 })} ha`,
-      item.region,
-    ].filter(Boolean);
+      const area = Number(item.area);
+      const subtitleParts = [
+        item.crop_variety,
+        Number.isFinite(area)
+          ? `${formatNumber(area, { maximumFractionDigits: 1 })} ha`
+          : undefined,
+        item.region,
+      ].filter(Boolean);
 
-    return (
-      <ListRowB
-        accentColor={accent}
-        accessibilityLabel={`${item.name}, ${stage}`}
-        onPress={() => onFarmPress(item)}
-        onLongPress={() => onEditFarm(item)}
-        body={
-          <View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      return (
+        <ListRowB
+          accentColor={accent}
+          accessibilityLabel={`${item.name}, ${stage}`}
+          onPress={() => onFarmPress(item)}
+          onLongPress={() => onEditFarm(item)}
+          body={
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 15,
+                    fontWeight: fontWeight.bold,
+                    color: m3.colorScheme.onSurface,
+                    flexShrink: 1,
+                  }}
+                >
+                  {item.name}
+                </Text>
+                {lowWater ? <AttentionDot /> : null}
+              </View>
               <Text
                 numberOfLines={1}
                 style={{
-                  fontSize: 15,
-                  fontWeight: fontWeight.bold,
-                  color: m3.colorScheme.onSurface,
-                  flexShrink: 1,
+                  fontSize: 11,
+                  color: m3.colorScheme.onSurfaceVariant,
+                  marginTop: 2,
                 }}
               >
-                {item.name}
+                {subtitleParts.join(' · ')}
               </Text>
-              {lowWater ? <AttentionDot /> : null}
-            </View>
-            <Text
-              numberOfLines={1}
-              style={{
-                fontSize: 11,
-                color: m3.colorScheme.onSurfaceVariant,
-                marginTop: 2,
-              }}
-            >
-              {subtitleParts.join(' · ')}
-            </Text>
-            <StatStrip
-              stats={[
-                {
-                  icon: '💧',
-                  label: lowWater
-                    ? t('explore.farms.water.low', { defaultValue: 'Low' })
-                    : t('explore.farms.water.ok', { defaultValue: 'OK' }),
-                  tone: lowWater ? 'low' : 'ok',
-                },
-                days != null
-                  ? {
-                      icon: '⏱',
-                      label: 'D',
-                      number: days,
-                      suffix: `/${SEASON_LENGTH_DAYS}`,
-                    }
-                  : {
-                      icon: '⏱',
-                      label: t('explore.farms.noPruningDate', { defaultValue: 'No pruning' }),
-                    },
-                pastHarvest
-                  ? {
-                      icon: '⚑',
-                      label: t('explore.farms.pastHarvest', { defaultValue: 'Past D130' }),
-                    }
-                  : daysToHarvest != null
+              <StatStrip
+                stats={[
+                  {
+                    icon: '💧',
+                    label: lowWater
+                      ? t('explore.farms.water.low', { defaultValue: 'Low' })
+                      : t('explore.farms.water.ok', { defaultValue: 'OK' }),
+                    tone: lowWater ? 'low' : 'ok',
+                  },
+                  days != null
+                    ? {
+                        icon: '⏱',
+                        label: 'D',
+                        number: days,
+                        suffix: `/${SEASON_LENGTH_DAYS}`,
+                      }
+                    : {
+                        icon: '⏱',
+                        label: t('explore.farms.noPruningDate', { defaultValue: 'No pruning' }),
+                      },
+                  pastHarvest
                     ? {
                         icon: '⚑',
-                        label: t('explore.farms.harvestIn', { defaultValue: 'Harvest ' }),
-                        number: daysToHarvest,
-                        suffix: 'd',
+                        label: t('explore.farms.pastHarvest', { defaultValue: 'Past D130' }),
                       }
-                    : { icon: '⚑', label: '—' },
-              ]}
+                    : daysToHarvest != null
+                      ? {
+                          icon: '⚑',
+                          label: t('explore.farms.harvestIn', { defaultValue: 'Harvest ' }),
+                          number: daysToHarvest,
+                          suffix: 'd',
+                        }
+                      : { icon: '⚑', label: '—' },
+                ]}
+              />
+            </View>
+          }
+          meta={
+            <MetaColumn
+              label={stage}
+              tone="default"
+              gauge={{ value: ratio, fill: accent, width: 72 }}
             />
-          </View>
-        }
-        meta={
-          <MetaColumn
-            label={stage}
-            tone="default"
-            gauge={{ value: ratio, fill: accent, width: 72 }}
-          />
-        }
-      />
-    );
-  };
+          }
+        />
+      );
+    },
+    [onFarmPress, onEditFarm, isDark, today, t, m3],
+  );
 
   // ── Filter chips ───────────────────────────────────────────────────────
-  const chips: ChipDef<FarmFilter>[] = [
-    {
-      key: 'all',
-      label: t('farms.filter.all', { defaultValue: 'All' }),
-      count: counts.all,
-    },
-    {
-      key: 'healthy',
-      label: t('farms.filter.healthy', { defaultValue: 'Healthy' }),
-      count: counts.healthy,
-    },
-    {
-      key: 'needs_attention',
-      label: t('farms.filter.needsAttention', { defaultValue: 'Needs water' }),
-      count: counts.needs,
-    },
-  ];
+  const chips: ChipDef<FarmFilter>[] = useMemo(
+    () => [
+      {
+        key: 'all',
+        label: t('farms.filter.all', { defaultValue: 'All' }),
+        count: counts.all,
+      },
+      {
+        key: 'healthy',
+        label: t('farms.filter.healthy', { defaultValue: 'Healthy' }),
+        count: counts.healthy,
+      },
+      {
+        key: 'needs_attention',
+        label: t('farms.filter.needsAttention', { defaultValue: 'Needs water' }),
+        count: counts.needs,
+      },
+    ],
+    [t, counts.all, counts.healthy, counts.needs],
+  );
+
+  const heroLabelMemo = useMemo(
+    () =>
+      t('explore.farms.heroLabel', {
+        defaultValue: 'Season · {{count}} farms · {{area}} ha',
+        count: counts.all,
+        area: formatNumber(totalArea, { maximumFractionDigits: 1 }),
+      }),
+    [t, counts.all, totalArea],
+  );
+  const heroValueMemo = useMemo(
+    () =>
+      t('explore.farms.heroValue', {
+        defaultValue: 'Day {{day}} / {{total}}',
+        day: seasonDay,
+        total: SEASON_LENGTH_DAYS,
+      }),
+    [t, seasonDay],
+  );
 
   // ── Header ─────────────────────────────────────────────────────────────
-  const header = (
-    <View>
-      <HeroPanel label={heroLabel} value={heroValue}>
-        <SeasonTimeline
-          farms={farms ?? []}
-          today={today}
-          seasonRatio={seasonRatio}
-          isDark={isDark}
-          t={t}
-        />
-      </HeroPanel>
-      <ChipRow chips={chips} active={activeFilter} onChange={onFilterChange} />
-    </View>
+  const header = useMemo(
+    () => (
+      <View>
+        <HeroPanel label={heroLabelMemo} value={heroValueMemo}>
+          <SeasonTimeline
+            farms={farms ?? []}
+            today={today}
+            seasonRatio={seasonRatio}
+            isDark={isDark}
+            t={t}
+          />
+        </HeroPanel>
+        <ChipRow chips={chips} active={activeFilter} onChange={onFilterChange} />
+      </View>
+    ),
+
+    [
+      heroLabelMemo,
+      heroValueMemo,
+      farms,
+      today,
+      seasonRatio,
+      isDark,
+      t,
+      chips,
+      activeFilter,
+      onFilterChange,
+    ],
   );
 
   return (

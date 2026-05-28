@@ -7,7 +7,7 @@
  * Receives data + handlers as props; owns no fetching state.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -80,11 +80,14 @@ export function WarehousePaneB({
   const { t } = useTranslation();
 
   // ── Category color helpers ─────────────────────────────────────────────
-  function accentFor(category: WarehouseCategory): string {
-    if (category === 'spray') return colors.accent[500];
-    if (category === 'fertilizer') return m3.colorScheme.primary;
-    return colors.secondary[500];
-  }
+  const accentFor = useCallback(
+    (category: WarehouseCategory): string => {
+      if (category === 'spray') return colors.accent[500];
+      if (category === 'fertilizer') return m3.colorScheme.primary;
+      return colors.secondary[500];
+    },
+    [colors.accent, colors.secondary, m3.colorScheme.primary],
+  );
 
   // ── Filter + search ────────────────────────────────────────────────────
   const filteredItems = useMemo<WarehouseItem[]>(() => {
@@ -133,48 +136,64 @@ export function WarehousePaneB({
   );
 
   // ── Hero label + value ─────────────────────────────────────────────────
-  const heroLabel = t('explore.warehouse.heroLabel', {
-    defaultValue: 'Inventory · {{count}} items · {{value}}',
-    count: buckets.all,
-    value: formattedValue,
-  });
-  const heroValue =
-    buckets.lowTotal > 0
-      ? t('explore.warehouse.heroValueLow', {
-          defaultValue: '{{count}} LOW',
-          count: buckets.lowTotal,
-        })
-      : t('explore.warehouse.heroValueOk', { defaultValue: 'All OK' });
+  const heroLabel = useMemo(
+    () =>
+      t('explore.warehouse.heroLabel', {
+        defaultValue: 'Inventory · {{count}} items · {{value}}',
+        count: buckets.all,
+        value: formattedValue,
+      }),
+    [t, buckets.all, formattedValue],
+  );
+  const heroValue = useMemo(
+    () =>
+      buckets.lowTotal > 0
+        ? t('explore.warehouse.heroValueLow', {
+            defaultValue: '{{count}} LOW',
+            count: buckets.lowTotal,
+          })
+        : t('explore.warehouse.heroValueOk', { defaultValue: 'All OK' }),
+    [t, buckets.lowTotal],
+  );
 
   // ── Filter chips ───────────────────────────────────────────────────────
-  const chips: ChipDef<WarehouseFilter>[] = [
-    {
-      key: 'all',
-      label: t('explore.warehouse.filter.all', { defaultValue: 'All' }),
-      count: buckets.all,
-    },
-    {
-      key: 'spray',
-      label: t('explore.warehouse.filter.spray', { defaultValue: 'Spray' }),
-      count: buckets.groups.spray,
-    },
-    {
-      key: 'fertilizer',
-      label: t('explore.warehouse.filter.fertilizer', { defaultValue: 'Fert' }),
-      count: buckets.groups.fertilizer,
-    },
-  ];
-
-  if (buckets.groups.equipment > 0 || activeFilter === 'equipment') {
-    chips.push({
-      key: 'equipment',
-      label: t('explore.warehouse.filter.equipment', { defaultValue: 'Equip' }),
-      count: buckets.groups.equipment,
-    });
-  }
+  const chips = useMemo<ChipDef<WarehouseFilter>[]>(() => {
+    const base: ChipDef<WarehouseFilter>[] = [
+      {
+        key: 'all',
+        label: t('explore.warehouse.filter.all', { defaultValue: 'All' }),
+        count: buckets.all,
+      },
+      {
+        key: 'spray',
+        label: t('explore.warehouse.filter.spray', { defaultValue: 'Spray' }),
+        count: buckets.groups.spray,
+      },
+      {
+        key: 'fertilizer',
+        label: t('explore.warehouse.filter.fertilizer', { defaultValue: 'Fert' }),
+        count: buckets.groups.fertilizer,
+      },
+    ];
+    if (buckets.groups.equipment > 0 || activeFilter === 'equipment') {
+      base.push({
+        key: 'equipment',
+        label: t('explore.warehouse.filter.equipment', { defaultValue: 'Equip' }),
+        count: buckets.groups.equipment,
+      });
+    }
+    return base;
+  }, [
+    t,
+    buckets.all,
+    buckets.groups.spray,
+    buckets.groups.fertilizer,
+    buckets.groups.equipment,
+    activeFilter,
+  ]);
 
   // ── Empty + loading ────────────────────────────────────────────────────
-  const renderEmpty = () => {
+  const renderEmpty = useCallback(() => {
     if (isLoading) {
       return (
         <View style={emptyContainerStyle}>
@@ -253,125 +272,130 @@ export function WarehousePaneB({
         </View>
       </View>
     );
-  };
+  }, [isLoading, searchQuery, t, m3, onAddItem]);
 
   // ── Row render ─────────────────────────────────────────────────────────
-  const renderItem = ({ item }: { item: WarehouseItem }) => {
-    const cat = classifyType(item.type);
-    const accent = accentFor(cat);
-    const reorder = item.reorder_quantity ?? 0;
-    const low = isLowStock(item);
-    // Gauge fills relative to "comfortable" stock = reorder * 3 floor, so the
-    // threshold tick lands at ~33% and there is visible room above it.
-    const denom = Math.max(1, reorder * 3, item.quantity);
-    const ratio = Math.min(1, item.quantity / denom);
-    const thresholdRatio = reorder > 0 ? Math.min(1, reorder / denom) : undefined;
+  const renderItem = useCallback(
+    ({ item }: { item: WarehouseItem }) => {
+      const cat = classifyType(item.type);
+      const accent = accentFor(cat);
+      const reorder = item.reorder_quantity ?? 0;
+      const low = isLowStock(item);
+      // Gauge fills relative to "comfortable" stock = reorder * 3 floor, so the
+      // threshold tick lands at ~33% and there is visible room above it.
+      const denom = Math.max(1, reorder * 3, item.quantity);
+      const ratio = Math.min(1, item.quantity / denom);
+      const thresholdRatio = reorder > 0 ? Math.min(1, reorder / denom) : undefined;
 
-    const formattedUnitPrice = formatCurrency(item.unit_price, currency, {
-      maximumFractionDigits: 0,
-      minimumFractionDigits: 0,
-    });
-
-    const stockNumber = Math.round(item.quantity * 10) / 10;
-
-    const stats: StatItem[] = [
-      {
-        icon: '📦',
-        number: stockNumber,
-        suffix: ` ${item.unit}`,
-        tone: low ? 'low' : 'ok',
-      },
-    ];
-
-    if (reorder > 0) {
-      stats.push({
-        icon: '⚠',
-        label: t('explore.warehouse.reorderAt', { defaultValue: 'Reorder ≤ ' }),
-        number: reorder,
+      const formattedUnitPrice = formatCurrency(item.unit_price, currency, {
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
       });
-    }
 
-    stats.push({
-      icon: '₹',
-      number: formattedUnitPrice.replace(/[^\d.,]/g, ''),
-      suffix: ` /${item.unit}`,
-    });
+      const stockNumber = Math.round(item.quantity * 10) / 10;
 
-    const subtitleParts = [
-      item.manufacturer,
-      t(`warehouse.itemTypes.${cat}` as const, {
-        defaultValue: cat === 'spray' ? 'Spray' : cat === 'fertilizer' ? 'Fertilizer' : 'Equipment',
-      }),
-      item.composition && item.composition.length > 0
-        ? item.composition
-            .slice(0, 3)
-            .map((c) => `${c.nutrient_code}${c.percent}`)
-            .join(' ')
-        : undefined,
-    ].filter(Boolean);
+      const stats: StatItem[] = [
+        {
+          icon: '📦',
+          number: stockNumber,
+          suffix: ` ${item.unit}`,
+          tone: low ? 'low' : 'ok',
+        },
+      ];
 
-    const stageLabel = low
-      ? t('explore.warehouse.stockLow', { defaultValue: 'Low' })
-      : t('explore.warehouse.stockOk', { defaultValue: 'OK' });
+      if (reorder > 0) {
+        stats.push({
+          icon: '⚠',
+          label: t('explore.warehouse.reorderAt', { defaultValue: 'Reorder ≤ ' }),
+          number: reorder,
+        });
+      }
 
-    return (
-      <ListRowB
-        accentColor={accent}
-        accessibilityLabel={`${item.name}, ${stageLabel}`}
-        onPress={() => onItemPress(item)}
-        onLongPress={onItemLongPress ? () => onItemLongPress(item) : undefined}
-        body={
-          <View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      stats.push({
+        label: `${formattedUnitPrice} /${item.unit}`,
+      });
+
+      const subtitleParts = [
+        item.manufacturer,
+        t(`warehouse.itemTypes.${cat}` as const, {
+          defaultValue:
+            cat === 'spray' ? 'Spray' : cat === 'fertilizer' ? 'Fertilizer' : 'Equipment',
+        }),
+        item.composition && item.composition.length > 0
+          ? item.composition
+              .slice(0, 3)
+              .map((c) => `${c.nutrient_code}${c.percent}`)
+              .join(' ')
+          : undefined,
+      ].filter(Boolean);
+
+      const stageLabel = low
+        ? t('explore.warehouse.stockLow', { defaultValue: 'Low' })
+        : t('explore.warehouse.stockOk', { defaultValue: 'OK' });
+
+      return (
+        <ListRowB
+          accentColor={accent}
+          accessibilityLabel={`${item.name}, ${stageLabel}`}
+          onPress={() => onItemPress(item)}
+          onLongPress={onItemLongPress ? () => onItemLongPress(item) : undefined}
+          body={
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 15,
+                    fontWeight: fontWeight.bold,
+                    color: m3.colorScheme.onSurface,
+                    flexShrink: 1,
+                  }}
+                >
+                  {item.name}
+                </Text>
+                {low ? <AttentionDot /> : null}
+              </View>
               <Text
                 numberOfLines={1}
                 style={{
-                  fontSize: 15,
-                  fontWeight: fontWeight.bold,
-                  color: m3.colorScheme.onSurface,
-                  flexShrink: 1,
+                  fontSize: 11,
+                  color: m3.colorScheme.onSurfaceVariant,
+                  marginTop: 2,
                 }}
               >
-                {item.name}
+                {subtitleParts.join(' · ')}
               </Text>
-              {low ? <AttentionDot /> : null}
+              <StatStrip stats={stats} />
             </View>
-            <Text
-              numberOfLines={1}
-              style={{
-                fontSize: 11,
-                color: m3.colorScheme.onSurfaceVariant,
-                marginTop: 2,
+          }
+          meta={
+            <MetaColumn
+              label={stageLabel}
+              tone={low ? 'low' : 'default'}
+              gauge={{
+                value: ratio,
+                fill: low ? m3.colorScheme.error : accent,
+                threshold: thresholdRatio,
               }}
-            >
-              {subtitleParts.join(' · ')}
-            </Text>
-            <StatStrip stats={stats} />
-          </View>
-        }
-        meta={
-          <MetaColumn
-            label={stageLabel}
-            tone={low ? 'low' : 'default'}
-            gauge={{
-              value: ratio,
-              fill: low ? m3.colorScheme.error : accent,
-              threshold: thresholdRatio,
-            }}
-          />
-        }
-      />
-    );
-  };
+            />
+          }
+        />
+      );
+    },
+    [onItemPress, onItemLongPress, currency, t, m3, accentFor],
+  );
 
   // ── Header ─────────────────────────────────────────────────────────────
-  const header = (
-    <View>
-      <HeroPanel label={heroLabel} value={heroValue}>
-        <StockHealthBar buckets={buckets} accentFor={accentFor} t={t} />
-      </HeroPanel>
-      <ChipRow chips={chips} active={activeFilter} onChange={onFilterChange} />
-    </View>
+  const header = useMemo(
+    () => (
+      <View>
+        <HeroPanel label={heroLabel} value={heroValue}>
+          <StockHealthBar buckets={buckets} accentFor={accentFor} t={t} />
+        </HeroPanel>
+        <ChipRow chips={chips} active={activeFilter} onChange={onFilterChange} />
+      </View>
+    ),
+    [heroLabel, heroValue, buckets, accentFor, t, chips, activeFilter, onFilterChange],
   );
 
   return (

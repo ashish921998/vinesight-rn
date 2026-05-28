@@ -182,6 +182,7 @@ export function OnboardingScreen() {
   const handleSkip = useCallback(() => {
     const latestActivation = useOnboardingStore.getState().activation;
     setHasManuallyNavigatedBack(false);
+    useNotificationStore.getState().setNotificationPermissionPrompted(true);
     useAuthStore.getState().setHasSeenOnboarding(true);
     useOnboardingStore.getState().completeOnboarding();
     telemetry.capture('onboarding_skipped', {

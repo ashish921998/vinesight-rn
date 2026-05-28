@@ -70,11 +70,17 @@ export default function ExploreScreen() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTab('farms');
       setSearchQuery('');
+      setIsSearchExpanded(false);
     }
   }, [guidedTourStatus, guidedTourStep, selectedTab]);
 
   // Farms state & hooks
-  const { data: farms, isLoading: farmsLoading, refetch: refetchFarms } = useFarms();
+  const {
+    data: farms,
+    isLoading: farmsLoading,
+    refetch: refetchFarms,
+    isRefetching: farmsRefetching,
+  } = useFarms();
 
   // Warehouse state & hooks
   const {
@@ -125,6 +131,7 @@ export default function ExploreScreen() {
         setSelectedTab(newTab);
         // Reset search on tab switch
         setSearchQuery('');
+        setIsSearchExpanded(false);
         // Fade in new content
         Animated.timing(tabSwitchAnim, {
           toValue: 1,
@@ -234,10 +241,11 @@ export default function ExploreScreen() {
         onAddFarm={handleAddFarm}
         onFarmPress={handleFarmPress}
         onEditFarm={handleEditFarm}
+        addFarmTargetEnabled={isAddFarmTargetEnabled}
         listBottomPadding={Math.max(spacing[16], fabBottom + 56 + spacing[8])}
         refreshControl={
           <RefreshControl
-            refreshing={farmsLoading && !searchQuery}
+            refreshing={farmsRefetching && !searchQuery}
             onRefresh={refetchFarms}
             tintColor={m3.colorScheme.primary}
           />

@@ -99,9 +99,7 @@ export function TaskRow({
   const dateText = formatDueDate();
   const priorityText = t(priorityInfo.labelKey);
   const metaText = isOverdue
-    ? `${t('tasks.dueDate.overdueLabel', { defaultValue: 'Overdue' })} · ${priorityText}${
-        dateText ? ` · ${dateText}` : ''
-      }`
+    ? `${t('tasks.sections.overdue')} · ${priorityText}${dateText ? ` · ${dateText}` : ''}`
     : dateText
       ? `${dateText} · ${priorityText}`
       : priorityText;

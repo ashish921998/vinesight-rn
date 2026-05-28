@@ -89,7 +89,10 @@ export interface SaveEntryLogSessionParams {
   adapters: EntryLogSessionAdapters;
 }
 
-function buildFarmContext(farmItem: Farm, preferredAreaUnit: AreaUnitPreference): EntryLogFarmContext {
+function buildFarmContext(
+  farmItem: Farm,
+  preferredAreaUnit: AreaUnitPreference,
+): EntryLogFarmContext {
   return {
     id: farmItem.id ?? 0,
     area: farmItem.area,
@@ -147,8 +150,10 @@ async function rollbackCreatedRecords(
               date: dateStr,
               notes: entry.previousDailyNote.notes ?? null,
             });
-          } else {
+          } else if (typeof id === 'number') {
             await adapters.deleteDailyNote({ id, farmId: entry.farmId, date: dateStr });
+          } else {
+            throw new Error('Cannot roll back note: no record ID and no previous note to restore');
           }
           break;
       }
@@ -163,7 +168,7 @@ async function rollbackCreatedRecords(
     }
   };
 
-  const entries = created.filter((entry) => entry.recordId !== null);
+  const entries = created.filter((entry) => entry.recordId !== null || entry.type === 'note');
   await Promise.all(entries.filter((entry) => entry.type !== 'note').map(rollbackEntry));
   for (const entry of entries.filter((item) => item.type === 'note').reverse()) {
     await rollbackEntry(entry);
@@ -359,13 +364,14 @@ export async function saveEntryLogSession(
 
   const farmContext = buildFarmContext(singleFarmContext, preferredAreaUnit);
   const results = await settleSequentially(
-    pendingLogs.map((log) =>
-      () => submitLogWithSnapshot({
-        log,
-        dateStr,
-        farm: farmContext,
-        adapters,
-      }),
+    pendingLogs.map(
+      (log) => () =>
+        submitLogWithSnapshot({
+          log,
+          dateStr,
+          farm: farmContext,
+          adapters,
+        }),
     ),
   );
   const failures: EntryLogSubmissionFailure[] = [];
@@ -379,7 +385,9 @@ export async function saveEntryLogSession(
       farmId,
       farmContext,
       result:
-        result.status === 'fulfilled' ? { status: 'fulfilled', value: result.value.result } : result,
+        result.status === 'fulfilled'
+          ? { status: 'fulfilled', value: result.value.result }
+          : result,
       previousDailyNote: result.status === 'fulfilled' ? result.value.previousDailyNote : undefined,
     });
     if (created) createdRecords.push(created);

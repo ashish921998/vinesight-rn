@@ -285,16 +285,93 @@ describe('saveEntryLogSession', () => {
     });
   });
 
-  it('rolls back same-day note drafts in reverse queue order', async () => {
+  it('records a rollback failure when a note has no recordId and no previous note', async () => {
     const adapters = createAdapters();
-    adapters.getDailyNote
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 501,
+    // upsertDailyNote returns no id — recordId becomes null
+    adapters.upsertDailyNote.mockResolvedValue({} as never);
+    adapters.createExpense.mockRejectedValue(new Error('Expense failed'));
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'note-draft',
+          type: 'note',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { notes: 'A note' },
+          displayDescription: 'A note',
+        },
+        expenseDraft({ id: 'expense-draft', scope: 'single_farm', farmId: 101 }),
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('failed');
+    if (result.status === 'failed') {
+      expect(result.rollbackFailures).toHaveLength(1);
+      expect(result.rollbackFailures[0]).toMatchObject({
+        pendingLogId: 'note-draft',
+        type: 'note',
+        farmId: 101,
+      });
+      expect(result.rollbackFailures[0]!.error).toMatch(/Cannot roll back note/);
+    }
+  });
+
+  it('restores previous note content when note has no recordId but previousDailyNote exists', async () => {
+    const adapters = createAdapters();
+    adapters.getDailyNote.mockResolvedValue({
+      id: 501,
+      farm_id: 101,
+      date: '2026-02-11',
+      notes: 'Previous content',
+    });
+    // upsertDailyNote returns no id — recordId becomes null
+    adapters.upsertDailyNote.mockResolvedValue({} as never);
+    adapters.createExpense.mockRejectedValue(new Error('Expense failed'));
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'note-draft',
+          type: 'note',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { notes: 'Updated note' },
+          displayDescription: 'Updated note',
+        },
+        expenseDraft({ id: 'expense-draft', scope: 'single_farm', farmId: 101 }),
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('failed');
+    if (result.status === 'failed') {
+      expect(result.rollbackFailures).toHaveLength(0);
+      expect(adapters.upsertDailyNote).toHaveBeenLastCalledWith({
         farm_id: 101,
         date: '2026-02-11',
-        notes: 'First note',
+        notes: 'Previous content',
       });
+    }
+  });
+
+  it('rolls back same-day note drafts in reverse queue order', async () => {
+    const adapters = createAdapters();
+    adapters.getDailyNote.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 501,
+      farm_id: 101,
+      date: '2026-02-11',
+      notes: 'First note',
+    });
     adapters.upsertDailyNote.mockResolvedValue({ id: 501 });
     adapters.createExpense.mockRejectedValue(new Error('Expense failed'));
 
