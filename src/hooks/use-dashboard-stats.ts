@@ -484,11 +484,12 @@ export function useRecentActivities(limit: number = 5) {
 
       // Map notes
       dailyNotes.data?.forEach((r) => {
+        const noteText = r.notes?.trim();
         activities.push({
           id: `note_${r.id}`,
           type: 'note',
           date: r.date,
-          description: r.notes ?? 'Note',
+          description: noteText && noteText.length > 0 ? noteText : 'Note',
           farmId: r.farm_id,
           farmName: farmMap.get(r.farm_id) ?? 'Unknown',
         });
