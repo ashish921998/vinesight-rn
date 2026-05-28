@@ -163,12 +163,15 @@ export function WarehousePaneB({
       label: t('explore.warehouse.filter.fertilizer', { defaultValue: 'Fert' }),
       count: buckets.groups.fertilizer,
     },
-    {
+  ];
+
+  if (buckets.groups.equipment > 0 || activeFilter === 'equipment') {
+    chips.push({
       key: 'equipment',
       label: t('explore.warehouse.filter.equipment', { defaultValue: 'Equip' }),
       count: buckets.groups.equipment,
-    },
-  ];
+    });
+  }
 
   // ── Empty + loading ────────────────────────────────────────────────────
   const renderEmpty = () => {

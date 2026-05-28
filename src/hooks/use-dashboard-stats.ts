@@ -124,10 +124,10 @@ export function useTodayNeedsAttention(limit: number = 10) {
       if (overdueTasksResult.error) throw overdueTasksResult.error;
       if (phiDeadlinesResult.error) throw phiDeadlinesResult.error;
       // RPC may not be deployed in all environments — degrade gracefully rather than
-      // surfacing a dev error overlay on every screen.
+      // surfacing a dev warning overlay on every screen.
       if (recentLogFarmsResult.error) {
         if (__DEV__) {
-          console.warn(
+          console.info(
             '[useTodayNeedsAttention] recentLogFarms RPC unavailable:',
             recentLogFarmsResult.error.message,
           );

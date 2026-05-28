@@ -7,6 +7,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useFarms } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
 import { useM3 } from '@/styles/use-theme';
@@ -42,6 +43,7 @@ const pageIndexForStep = (step: OnboardingStep): number => {
 };
 
 export function OnboardingScreen() {
+  const { t } = useTranslation();
   const m3 = useM3();
   const { width } = useWindowDimensions();
   const { data: farms = [] } = useFarms();
@@ -178,11 +180,18 @@ export function OnboardingScreen() {
   );
 
   const handleSkip = useCallback(() => {
-    if (currentPageIndex < FIRST_FARM_PAGE_INDEX) {
-      telemetry.capture('onboarding_jump_to_farm_step');
-      jumpToPage(FIRST_FARM_PAGE_INDEX);
-    }
-  }, [currentPageIndex, jumpToPage]);
+    const latestActivation = useOnboardingStore.getState().activation;
+    setHasManuallyNavigatedBack(false);
+    useAuthStore.getState().setHasSeenOnboarding(true);
+    useOnboardingStore.getState().completeOnboarding();
+    telemetry.capture('onboarding_skipped', {
+      slide: currentPageIndex,
+      farm_id: latestActivation.farmId,
+      first_action_type: latestActivation.firstActionType,
+      has_completed_first_action: latestActivation.firstActionCompletedAt !== null,
+    });
+    router.replace('/(tabs)');
+  }, [currentPageIndex]);
 
   const handleFarmResolved = useCallback(
     (farmId: number | null) => {
@@ -318,13 +327,9 @@ export function OnboardingScreen() {
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: m3.colorScheme.onSurface }]}>VineSight</Text>
         </View>
-        {currentPageIndex < FIRST_FARM_PAGE_INDEX ? (
-          <View style={styles.skipContainer}>
-            <OnboardingButton label="Skip" onPress={handleSkip} variant="ghost" />
-          </View>
-        ) : (
-          <View style={styles.skipPlaceholder} />
-        )}
+        <View style={styles.skipContainer}>
+          <OnboardingButton label={t('common.skip')} onPress={handleSkip} variant="ghost" />
+        </View>
       </View>
 
       <Animated.ScrollView
@@ -429,9 +434,6 @@ const styles = StyleSheet.create({
     width: 104,
     alignItems: 'flex-end',
     justifyContent: 'flex-start',
-  },
-  skipPlaceholder: {
-    width: 104,
   },
   scrollView: {
     flex: 1,
