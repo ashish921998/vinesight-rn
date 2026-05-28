@@ -1,0 +1,25 @@
+TODOS.md
+  s_81d59a27818a17::t_451c9401dbe627 1-28
+VERSION
+  s_81d59a27818a17::t_98abcd12eace50 1
+package.json
+  s_81d59a27818a17::t_98abcd12eace50 4
+CHANGELOG.md
+  s_81d59a27818a17::t_ab6a3754e23512 1-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "94c241d43fcc32c88644f9967b8084b5c59a41c6",
+  "prompts": {},
+  "sessions": {
+    "s_81d59a27818a17": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "faeba2e3-08dd-4aa7-8533-4fb1e74ae8f0",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
