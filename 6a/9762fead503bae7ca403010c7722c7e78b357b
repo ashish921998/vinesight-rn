@@ -1,0 +1,36 @@
+src/components/assistant/ChatScreen.tsx
+  s_2cbb2770aea23b::t_2223c0ad8f7bbb 645-648
+app/(tabs)/_layout.tsx
+  s_2cbb2770aea23b::t_7a93d4b52c5dba 158,166
+app/warehouse.tsx
+  s_2cbb2770aea23b::t_8c7eb3c2573736 323-330
+src/features/onboarding/onboarding-screen.tsx
+  s_2cbb2770aea23b::t_92649ba7f9f9c5 10,46,183-194,330-332
+app/(tabs)/workers.tsx
+  s_2cbb2770aea23b::t_8a99f23f5ab5ef 410,418
+src/components/screens/warehouse-pane-b.tsx
+  s_2cbb2770aea23b::t_8bc9eb74587bc3 166-167,169,173-174
+  s_2cbb2770aea23b::t_2ecd22ca55cff3 168
+src/hooks/use-dashboard-stats.ts
+  s_2cbb2770aea23b::t_a727822b6b51d9 127,130
+app/(tabs)/index.tsx
+  s_2cbb2770aea23b::t_6dab81654165bc 307
+app/(tabs)/tools.tsx
+  s_2cbb2770aea23b::t_97904501e806d9 216-220
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "6a9762fead503bae7ca403010c7722c7e78b357b",
+  "prompts": {},
+  "sessions": {
+    "s_2cbb2770aea23b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6366-6786-7801-8a60-42f66c8d3728",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
