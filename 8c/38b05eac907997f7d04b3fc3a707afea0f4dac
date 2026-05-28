@@ -1,0 +1,24 @@
+README.md
+  s_81d59a27818a17::t_464e6b9e1fe441 62-63
+  s_81d59a27818a17::t_4318b552a6601e 76-78
+  s_81d59a27818a17::t_9a93769c398428 85
+  s_81d59a27818a17::t_151adbe9d4dc5d 87-92
+CONTEXT.md
+  s_81d59a27818a17::t_df1c443cbf74b4 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "8c38b05eac907997f7d04b3fc3a707afea0f4dac",
+  "prompts": {},
+  "sessions": {
+    "s_81d59a27818a17": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "faeba2e3-08dd-4aa7-8533-4fb1e74ae8f0",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
