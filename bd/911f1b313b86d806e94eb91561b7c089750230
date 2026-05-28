@@ -1,0 +1,21 @@
+app/farm/[id].tsx
+  s_2cbb2770aea23b::t_307f43dd9035cb 372-375,458,460,465-469,472,477,479,484-488,491
+src/hooks/use-dashboard-stats.ts
+  s_2cbb2770aea23b::t_307f43dd9035cb 487,492
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "bd911f1b313b86d806e94eb91561b7c089750230",
+  "prompts": {},
+  "sessions": {
+    "s_2cbb2770aea23b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6366-6786-7801-8a60-42f66c8d3728",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
