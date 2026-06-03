@@ -1,0 +1,19 @@
+src/features/onboarding/onboarding-screen.tsx
+  s_4ba012a5302f32::t_39180e146e0287 10,278-281
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "ab8e826c7be0c8cefcbad5e1191da511f2aca9d6",
+  "prompts": {},
+  "sessions": {
+    "s_4ba012a5302f32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e8cbd-a948-7d22-9457-3b60ad43dfed",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
