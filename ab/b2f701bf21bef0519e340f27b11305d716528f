@@ -1,0 +1,110 @@
+src/i18n/locales/mr.ts
+  s_b029d7a85672d2::t_0acc7d052886aa 584
+src/stores/onboarding-store.ts
+  s_f518cc65897fca::t_511b6118ed06e1 27
+  s_bbb75dff27a5b9::t_19266280ab0f1f 150-158
+  s_9a67fe8a80a2ec::t_db3bc87f0e729e 66
+src/features/onboarding/onboarding-screen.tsx
+  s_b6c16745eb7725::t_9be807680307ca 66
+  s_527ffd58c72816::t_1edbb621ffba95 270
+src/i18n/locales/hi.ts
+  s_8360f5c19f6891::t_1e01baeb654406 582
+src/i18n/locales/en.ts
+  s_d8c8b1f6f950be::t_2aa4ca697a3442 583
+src/types/onboarding.ts
+  s_ada8461eab342a::t_d4a571d67dd839 22
+  s_e030177016e514::t_2c61853f356be4 61
+src/hooks/use-farms.ts
+  s_b029d7a85672d2::t_ea98bde3989b15 199
+  s_b029d7a85672d2::t_ce386c5d63cc58 8
+  s_b029d7a85672d2::t_c91902c1d7d166 234-235
+  s_b029d7a85672d2::t_3e4cd16dada15d 80-84,102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "abb2f701bf21bef0519e340f27b11305d716528f",
+  "prompts": {},
+  "sessions": {
+    "s_527ffd58c72816": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033RuPOmoTFPvXIrQXTx8c",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_8360f5c19f6891": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033RuQNKZmpUXjiIk2bWqn",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_9a67fe8a80a2ec": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033RuOowSiMa2ziqpp4uAr",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_ada8461eab342a": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033RuOPvACNvM5jytEWITv",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_b029d7a85672d2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a49e9459-48fd-4570-baf4-71797a9eb6b1",
+        "model": "custom:GLM-5.1-0"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_b6c16745eb7725": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033RuPE5AU6R2KYOydd7Pj",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_bbb75dff27a5b9": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033RuOz90jjzOlk6hQPASu",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_d8c8b1f6f950be": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033RuQ8W7RN9F9iS4VdY7E",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_e030177016e514": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033RuOYrL1IdW9SdLD3BFI",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_f518cc65897fca": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033RuOgWMLNGvKMxvO46k8",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
