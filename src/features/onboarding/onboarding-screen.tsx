@@ -7,6 +7,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { ensureInitialFarmSeasonForFarmId, useFarms } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
@@ -272,6 +273,12 @@ export function OnboardingScreen() {
       }
     },
     [resolvedFirstActionFarmId, t],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      firstActionStartInFlightRef.current = false;
+    }, []),
   );
 
   const handleContinueFromFirstAction = useCallback(() => {
