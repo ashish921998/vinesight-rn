@@ -6,6 +6,7 @@ export interface FarmDbErrorMeta {
 }
 
 export const EXPECTED_FARM_DB_ERROR_CODES = new Set([
+  'P0001', // custom RAISE EXCEPTION (e.g. no active season found for farm)
   '22003', // numeric field overflow
   '22P02', // invalid text representation
   '23502', // not-null violation

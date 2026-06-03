@@ -1154,7 +1154,9 @@ export function EntryForm({
             scope.setExtra('rollbackFailures', rollbackFailures);
           }
           Sentry.captureException(
-            firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),
+            firstFailedError instanceof Error
+              ? firstFailedError
+              : new Error(errorMeta.message ?? errorMessage),
           );
         });
       }
