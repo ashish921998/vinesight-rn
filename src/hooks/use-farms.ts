@@ -77,7 +77,7 @@ async function resolveNextFarmDisplayOrder(userId: string): Promise<{
   return { supportsDisplayOrder, displayOrder };
 }
 
-async function ensureInitialFarmSeason(
+export async function ensureInitialFarmSeason(
   farm: Farm,
   userId: string,
   seasonNameOverride?: string,
@@ -129,6 +129,22 @@ async function ensureInitialFarmSeason(
     if (insertError.code === '23505') return;
     throw insertError;
   }
+}
+
+export async function ensureInitialFarmSeasonForFarmId(
+  farmId: number,
+  seasonNameOverride?: string,
+): Promise<void> {
+  const userId = await getUserId();
+  const { data: farm, error } = await supabase
+    .from(TABLES.FARMS)
+    .select('*')
+    .eq('id', farmId)
+    .eq('user_id', userId)
+    .single();
+
+  if (error) throw error;
+  await ensureInitialFarmSeason(farm, userId, seasonNameOverride);
 }
 
 // ============================================================

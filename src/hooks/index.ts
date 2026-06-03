@@ -8,6 +8,7 @@ export { queryKeys } from './query-keys';
 
 // Farm Hooks
 export {
+  ensureInitialFarmSeasonForFarmId,
   useFarms,
   useFarm,
   useCreateFarm,

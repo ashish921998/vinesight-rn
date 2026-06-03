@@ -77,6 +77,18 @@ export async function resolveSeasonIdForDate({
   return null;
 }
 
+export async function resolveOptionalSeasonIdForDate(args: {
+  farmId: number;
+  date: string | Date;
+}): Promise<number | null> {
+  try {
+    return await resolveSeasonIdForDate(args);
+  } catch (error) {
+    console.warn('[season-context] resolveSeasonIdForDate failed:', error);
+    return null;
+  }
+}
+
 interface SeasonAssignmentTableConfig {
   table: string;
   dateColumn: string;

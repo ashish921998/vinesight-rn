@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useFarms } from '@/hooks';
+import { ensureInitialFarmSeasonForFarmId, useFarms } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
@@ -210,7 +210,7 @@ export function OnboardingScreen() {
   );
 
   const handleStartFirstAction = useCallback(
-    (actionType: OnboardingActionType) => {
+    async (actionType: OnboardingActionType) => {
       const resolvedFarmId = resolvedFirstActionFarmId;
       if (resolvedFarmId === null) {
         return;
@@ -221,6 +221,15 @@ export function OnboardingScreen() {
         action_type: actionType,
         farm_id: resolvedFarmId,
       });
+
+      try {
+        await ensureInitialFarmSeasonForFarmId(
+          resolvedFarmId,
+          t('farms.defaultSeasonName', { year: new Date().getFullYear() }),
+        );
+      } catch (seasonError) {
+        console.warn('[OnboardingScreen] ensureInitialFarmSeasonForFarmId failed:', seasonError);
+      }
 
       if (actionType === 'log') {
         router.push({
@@ -257,7 +266,7 @@ export function OnboardingScreen() {
         },
       });
     },
-    [resolvedFirstActionFarmId],
+    [resolvedFirstActionFarmId, t],
   );
 
   const handleContinueFromFirstAction = useCallback(() => {
