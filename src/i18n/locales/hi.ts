@@ -1619,6 +1619,7 @@ export const hi = {
       pendingHint: 'आगे बढ़ने के लिए एक कार्य पूरा करें।',
       completedHint: 'बहुत बढ़िया — सक्रियण पूरा हुआ।',
       continue: 'जारी रखें',
+      skip: 'अभी छोड़ें',
     },
     complete: {
       title: 'आप सभी सेट हैं!',

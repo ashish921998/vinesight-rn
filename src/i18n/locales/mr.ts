@@ -1627,6 +1627,7 @@ export const mr = {
       pendingHint: 'पुढे जाण्यासाठी एक कृती पूर्ण करा.',
       completedHint: 'छान — सक्रियण पूर्ण झाले.',
       continue: 'पुढे चला',
+      skip: 'आत्ता वगळा',
     },
     complete: {
       title: 'सर्व तयार!',

@@ -19,7 +19,9 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
         console.log('Signing out...');
       }
 
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      // 'local' scope signs out only this device. Other devices logged in
+      // with the same account keep their sessions alive.
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
       if (error) throw error;
 
       if (__DEV__) {

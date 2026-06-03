@@ -1,0 +1,20 @@
+.claude/
+.expo/
+.gstack/
+.kotlin/
+.metro-health-check*
+.rnstorybook/
+.env
+.env.*
+!.env.example
+android/**/build/
+android/.kotlin/
+android/* 2*
+android/**/* 2*
+dist/
+web-build/
+google-service-account.json
+node_modules/
+npm-debug.*
+yarn-debug.*
+yarn-error.*

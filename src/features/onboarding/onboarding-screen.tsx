@@ -58,6 +58,7 @@ export function OnboardingScreen() {
   const [activatedSlides, setActivatedSlides] = useState(new Set<number>([0]));
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [hasManuallyNavigatedBack, setHasManuallyNavigatedBack] = useState(false);
+  const [hasSkippedFirstAction, setHasSkippedFirstAction] = useState(false);
   const [createdFarmId, setCreatedFarmId] = useState<number | null>(
     onboardingActivation.farmId ?? null,
   );
@@ -105,7 +106,7 @@ export function OnboardingScreen() {
         handleSlideChange(FIRST_FARM_PAGE_INDEX);
         return;
       }
-      if (page > FIRST_ACTION_PAGE_INDEX && !hasCompletedFirstAction) {
+      if (page > FIRST_ACTION_PAGE_INDEX && !hasCompletedFirstAction && !hasSkippedFirstAction) {
         scrollRef.current?.scrollTo({ x: FIRST_ACTION_PAGE_INDEX * width, animated: true });
         setCurrentPageIndex(FIRST_ACTION_PAGE_INDEX);
         handleSlideChange(FIRST_ACTION_PAGE_INDEX);
@@ -119,7 +120,14 @@ export function OnboardingScreen() {
       setCurrentPageIndex(page);
       handleSlideChange(page);
     },
-    [currentPageIndex, handleSlideChange, hasAtLeastOneFarm, hasCompletedFirstAction, width],
+    [
+      currentPageIndex,
+      handleSlideChange,
+      hasAtLeastOneFarm,
+      hasCompletedFirstAction,
+      hasSkippedFirstAction,
+      width,
+    ],
   );
 
   const handleNext = useCallback(() => {
@@ -134,12 +142,6 @@ export function OnboardingScreen() {
   const finishOnboarding = useCallback(
     async (notificationsEnabled: boolean) => {
       const latestActivation = useOnboardingStore.getState().activation;
-      if (!latestActivation.firstActionCompletedAt) {
-        scrollRef.current?.scrollTo({ x: FIRST_ACTION_PAGE_INDEX * width, animated: true });
-        setCurrentPageIndex(FIRST_ACTION_PAGE_INDEX);
-        handleSlideChange(FIRST_ACTION_PAGE_INDEX);
-        return;
-      }
       useOnboardingStore.getState().setPreferences({ notificationsEnabled });
 
       if (notificationsEnabled && (language === 'en' || language === 'hi' || language === 'mr')) {
@@ -167,7 +169,7 @@ export function OnboardingScreen() {
       }
       router.replace('/(tabs)');
     },
-    [createdFarmId, handleSlideChange, language, width],
+    [createdFarmId, language],
   );
 
   const jumpToPage = useCallback(
@@ -262,6 +264,18 @@ export function OnboardingScreen() {
     if (!hasCompletedFirstAction) return;
     jumpToPage(NOTIFICATIONS_PAGE_INDEX);
   }, [hasCompletedFirstAction, jumpToPage]);
+
+  const handleSkipFirstAction = useCallback(() => {
+    const latestActivation = useOnboardingStore.getState().activation;
+    setHasSkippedFirstAction(true);
+    useOnboardingStore.getState().setCurrentStep('notifications');
+    telemetry.capture('onboarding_first_action_skipped', {
+      farm_id: latestActivation.farmId,
+      first_action_type: latestActivation.firstActionType,
+      first_action_started: latestActivation.firstActionStartedAt !== null,
+    });
+    jumpToPage(NOTIFICATIONS_PAGE_INDEX);
+  }, [jumpToPage]);
 
   React.useEffect(() => {
     if (createdFarmId === null && onboardingActivation.farmId !== null) {
@@ -358,6 +372,7 @@ export function OnboardingScreen() {
             isCompleted={hasCompletedFirstAction}
             canStartAction={resolvedFirstActionFarmId !== null}
             onContinue={handleContinueFromFirstAction}
+            onSkip={handleSkipFirstAction}
             onSelectAction={handleStartFirstAction}
             selectedActionType={onboardingActivation.firstActionType}
           />

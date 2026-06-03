@@ -17,7 +17,7 @@ module.exports = {
       supportsTablet: true,
       bundleIdentifier: 'com.vinesight.ios',
       usesAppleSignIn: true,
-      buildNumber: '1.3.1',
+      buildNumber: '1.3.2',
       entitlements: {
         'com.apple.security.application-groups': ['group.com.vinesight.app'],
       },
@@ -58,7 +58,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 32,
+      versionCode: 33,
       permissions: ['android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS'],
       config: {
         googleMaps: {
@@ -98,6 +98,8 @@ module.exports = {
     },
     plugins: [
       'expo-router',
+      'expo-asset',
+      'expo-system-ui',
       'expo-audio',
       'expo-notifications',
       [

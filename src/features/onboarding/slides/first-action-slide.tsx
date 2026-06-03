@@ -16,6 +16,7 @@ interface FirstActionSlideProps {
   selectedActionType: OnboardingActionType | null;
   onSelectAction: (actionType: OnboardingActionType) => void;
   onContinue: () => void;
+  onSkip: () => void;
 }
 
 const ACTIONS: Array<{
@@ -51,6 +52,7 @@ export function FirstActionSlide({
   selectedActionType,
   onSelectAction,
   onContinue,
+  onSkip,
 }: FirstActionSlideProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -184,6 +186,13 @@ export function FirstActionSlide({
           disabled={!isCompleted}
           variant="primary"
         />
+        {!isCompleted && (
+          <OnboardingButton
+            label={t('onboarding.firstAction.skip')}
+            onPress={onSkip}
+            variant="ghost"
+          />
+        )}
       </View>
     </View>
   );

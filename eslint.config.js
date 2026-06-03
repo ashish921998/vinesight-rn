@@ -81,6 +81,7 @@ module.exports = [
   {
     ignores: [
       'node_modules/',
+      '.claude/',
       '.expo/',
       '.rnstorybook/',
       'dist/',

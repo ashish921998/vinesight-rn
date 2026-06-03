@@ -1614,6 +1614,7 @@ export const en = {
       pendingHint: 'Complete one action to continue.',
       completedHint: 'Great — activation is complete.',
       continue: 'Continue',
+      skip: 'Skip for now',
     },
     complete: {
       title: "You're all set!",
