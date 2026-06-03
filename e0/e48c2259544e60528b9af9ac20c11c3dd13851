@@ -1,0 +1,21 @@
+src/hooks/use-farms.ts
+  s_4ba012a5302f32::t_dff81777a27073 235-239
+src/stores/onboarding-store.ts
+  s_4ba012a5302f32::t_dff81777a27073 197-201
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "e0e48c2259544e60528b9af9ac20c11c3dd13851",
+  "prompts": {},
+  "sessions": {
+    "s_4ba012a5302f32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e8cbd-a948-7d22-9457-3b60ad43dfed",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
