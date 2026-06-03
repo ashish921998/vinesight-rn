@@ -194,7 +194,11 @@ export const useOnboardingStore = create<OnboardingStore>()(
 
         if (version <= 1) {
           // v1 → v2: insert firstAction as required step before notifications.
-          if (currentStep === 'notifications' && activation.firstActionCompletedAt === null) {
+          if (
+            currentStep === 'notifications' &&
+            activation.firstActionCompletedAt === null &&
+            !activation.firstActionSkipped
+          ) {
             currentStep = 'firstAction';
           }
           if (currentStep === 'complete' && state.isComplete !== true) {

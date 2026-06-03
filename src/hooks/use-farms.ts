@@ -232,7 +232,11 @@ export function useCreateFarm() {
         throw lastError ?? new Error('Failed to create farm');
       }
       const seasonName = t('farms.defaultSeasonName', { year: new Date().getFullYear() });
-      await ensureInitialFarmSeason(data, userId, seasonName);
+      try {
+        await ensureInitialFarmSeason(data, userId, seasonName);
+      } catch (seasonError) {
+        console.warn('[useCreateFarm] ensureInitialFarmSeason failed:', seasonError);
+      }
       return data;
     },
     onSuccess: (newFarm) => {
