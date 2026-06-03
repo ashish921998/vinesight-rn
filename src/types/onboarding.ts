@@ -62,7 +62,8 @@ export const DEFAULT_ONBOARDING_ACTIVATION_STATE: OnboardingActivationState = {
 };
 
 export const isOnboardingActivationComplete = (activation: OnboardingActivationState): boolean =>
-  activation.farmCreated && activation.firstActionCompletedAt !== null;
+  activation.farmCreated &&
+  (activation.firstActionCompletedAt !== null || activation.firstActionSkipped);
 
 export const ONBOARDING_FEATURES: OnboardingFeature[] = [
   {

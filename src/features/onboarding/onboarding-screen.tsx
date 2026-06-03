@@ -55,6 +55,7 @@ export function OnboardingScreen() {
   const viewedSlides = useRef(new Set<number>());
   const farmCreatedRef = useRef(false);
   const hasAppliedResumeStepRef = useRef(false);
+  const firstActionStartInFlightRef = useRef(false);
   const [activatedSlides, setActivatedSlides] = useState(new Set<number>([0]));
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [hasManuallyNavigatedBack, setHasManuallyNavigatedBack] = useState(false);
@@ -210,11 +211,12 @@ export function OnboardingScreen() {
   );
 
   const handleStartFirstAction = useCallback(
-    async (actionType: OnboardingActionType) => {
+    (actionType: OnboardingActionType) => {
       const resolvedFarmId = resolvedFirstActionFarmId;
-      if (resolvedFarmId === null) {
+      if (resolvedFarmId === null || firstActionStartInFlightRef.current) {
         return;
       }
+      firstActionStartInFlightRef.current = true;
 
       useOnboardingStore.getState().markFirstActionStarted(actionType);
       telemetry.capture('onboarding_first_action_started', {
@@ -222,49 +224,52 @@ export function OnboardingScreen() {
         farm_id: resolvedFarmId,
       });
 
-      try {
-        await ensureInitialFarmSeasonForFarmId(
-          resolvedFarmId,
-          t('farms.defaultSeasonName', { year: new Date().getFullYear() }),
-        );
-      } catch (seasonError) {
+      void ensureInitialFarmSeasonForFarmId(
+        resolvedFarmId,
+        t('farms.defaultSeasonName', { year: new Date().getFullYear() }),
+      ).catch((seasonError) => {
         console.warn('[OnboardingScreen] ensureInitialFarmSeasonForFarmId failed:', seasonError);
-      }
-
-      if (actionType === 'log') {
-        router.push({
-          pathname: '/add-entry',
-          params: {
-            tabs: 'log',
-            initialTab: 'log',
-            farmId: String(resolvedFarmId),
-            onboarding: 'true',
-            onboardingActionType: actionType,
-          },
-        });
-        return;
-      }
-
-      if (actionType === 'note') {
-        router.push({
-          pathname: '/add-note',
-          params: {
-            farmId: String(resolvedFarmId),
-            onboarding: 'true',
-            onboardingActionType: actionType,
-          },
-        });
-        return;
-      }
-
-      router.push({
-        pathname: '/add-task',
-        params: {
-          farmId: String(resolvedFarmId),
-          onboarding: 'true',
-          onboardingActionType: actionType,
-        },
       });
+
+      try {
+        if (actionType === 'log') {
+          router.push({
+            pathname: '/add-entry',
+            params: {
+              tabs: 'log',
+              initialTab: 'log',
+              farmId: String(resolvedFarmId),
+              onboarding: 'true',
+              onboardingActionType: actionType,
+            },
+          });
+          return;
+        }
+
+        if (actionType === 'note') {
+          router.push({
+            pathname: '/add-note',
+            params: {
+              farmId: String(resolvedFarmId),
+              onboarding: 'true',
+              onboardingActionType: actionType,
+            },
+          });
+          return;
+        }
+
+        router.push({
+          pathname: '/add-task',
+          params: {
+            farmId: String(resolvedFarmId),
+            onboarding: 'true',
+            onboardingActionType: actionType,
+          },
+        });
+      } catch (navigationError) {
+        firstActionStartInFlightRef.current = false;
+        throw navigationError;
+      }
     },
     [resolvedFirstActionFarmId, t],
   );
