@@ -19,6 +19,15 @@ function extractSeasonIdFromRpc(data: unknown): number | null {
   return null;
 }
 
+function isPostgrestErrorWithCode(error: unknown, code: string): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === code
+  );
+}
+
 export async function getActiveFarmSeason(farmId: number): Promise<FarmSeason | null> {
   const { data, error } = await supabase
     .from(TABLES.FARM_SEASONS)
@@ -75,6 +84,20 @@ export async function resolveSeasonIdForDate({
 
   if (matched?.id) return matched.id;
   return null;
+}
+
+export async function resolveOptionalSeasonIdForDate(args: {
+  farmId: number;
+  date: string | Date;
+}): Promise<number | null> {
+  try {
+    return await resolveSeasonIdForDate(args);
+  } catch (error) {
+    if (isPostgrestErrorWithCode(error, '42P01')) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 interface SeasonAssignmentTableConfig {

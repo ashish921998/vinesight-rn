@@ -5,6 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmSeason, FarmUpdate } from '../types';
@@ -76,7 +77,11 @@ async function resolveNextFarmDisplayOrder(userId: string): Promise<{
   return { supportsDisplayOrder, displayOrder };
 }
 
-async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void> {
+export async function ensureInitialFarmSeason(
+  farm: Farm,
+  userId: string,
+  seasonNameOverride?: string,
+): Promise<void> {
   if (typeof farm.id !== 'number') return;
 
   const { data: existingSeason, error: existingSeasonError } = await supabase
@@ -88,12 +93,13 @@ async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void
     .maybeSingle();
 
   if (existingSeasonError) {
+    if (existingSeasonError.code === '42P01') return;
     throw existingSeasonError;
   }
   if (existingSeason?.id) return;
 
   const startDate = farm.date_of_pruning ?? formatLocalDate(new Date());
-  const seasonName = `Season ${new Date().getFullYear()}`;
+  const seasonName = seasonNameOverride ?? `Season ${new Date().getFullYear()}`;
 
   const { error: rpcError } = await supabase.rpc('start_farm_season', {
     p_farm_id: farm.id,
@@ -118,10 +124,27 @@ async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void
   } satisfies Omit<FarmSeason, 'id' | 'created_at' | 'updated_at'>);
 
   if (insertError) {
+    if (insertError.code === '42P01') return;
     // A concurrent create or DB trigger may have created the active season after our check.
     if (insertError.code === '23505') return;
     throw insertError;
   }
+}
+
+export async function ensureInitialFarmSeasonForFarmId(
+  farmId: number,
+  seasonNameOverride?: string,
+): Promise<void> {
+  const userId = await getUserId();
+  const { data: farm, error } = await supabase
+    .from(TABLES.FARMS)
+    .select('*')
+    .eq('id', farmId)
+    .eq('user_id', userId)
+    .single();
+
+  if (error) throw error;
+  await ensureInitialFarmSeason(farm, userId, seasonNameOverride);
 }
 
 // ============================================================
@@ -189,6 +212,7 @@ export function useFarm(id: number | undefined) {
 
 export function useCreateFarm() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (farm: FarmInsert): Promise<Farm> => {
@@ -223,8 +247,9 @@ export function useCreateFarm() {
       if (!data) {
         throw lastError ?? new Error('Failed to create farm');
       }
+      const seasonName = t('farms.defaultSeasonName', { year: new Date().getFullYear() });
       try {
-        await ensureInitialFarmSeason(data, userId);
+        await ensureInitialFarmSeason(data, userId, seasonName);
       } catch (seasonError) {
         console.warn('[useCreateFarm] ensureInitialFarmSeason failed:', seasonError);
       }

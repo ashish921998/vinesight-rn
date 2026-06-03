@@ -7,8 +7,9 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useFarms } from '@/hooks';
+import { ensureInitialFarmSeasonForFarmId, useFarms } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
@@ -55,6 +56,7 @@ export function OnboardingScreen() {
   const viewedSlides = useRef(new Set<number>());
   const farmCreatedRef = useRef(false);
   const hasAppliedResumeStepRef = useRef(false);
+  const firstActionStartInFlightRef = useRef(false);
   const [activatedSlides, setActivatedSlides] = useState(new Set<number>([0]));
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [hasManuallyNavigatedBack, setHasManuallyNavigatedBack] = useState(false);
@@ -63,6 +65,7 @@ export function OnboardingScreen() {
   );
   const hasAtLeastOneFarm = farms.length > 0 || onboardingActivation.farmCreated;
   const hasCompletedFirstAction = onboardingActivation.firstActionCompletedAt !== null;
+  const hasSkippedFirstAction = onboardingActivation.firstActionSkipped;
   const firstAvailableFarmId = farms.find((farm) => typeof farm.id === 'number')?.id ?? null;
   const resolvedFirstActionFarmId =
     createdFarmId ?? onboardingActivation.farmId ?? firstAvailableFarmId;
@@ -105,7 +108,7 @@ export function OnboardingScreen() {
         handleSlideChange(FIRST_FARM_PAGE_INDEX);
         return;
       }
-      if (page > FIRST_ACTION_PAGE_INDEX && !hasCompletedFirstAction) {
+      if (page > FIRST_ACTION_PAGE_INDEX && !hasCompletedFirstAction && !hasSkippedFirstAction) {
         scrollRef.current?.scrollTo({ x: FIRST_ACTION_PAGE_INDEX * width, animated: true });
         setCurrentPageIndex(FIRST_ACTION_PAGE_INDEX);
         handleSlideChange(FIRST_ACTION_PAGE_INDEX);
@@ -119,7 +122,14 @@ export function OnboardingScreen() {
       setCurrentPageIndex(page);
       handleSlideChange(page);
     },
-    [currentPageIndex, handleSlideChange, hasAtLeastOneFarm, hasCompletedFirstAction, width],
+    [
+      currentPageIndex,
+      handleSlideChange,
+      hasAtLeastOneFarm,
+      hasCompletedFirstAction,
+      hasSkippedFirstAction,
+      width,
+    ],
   );
 
   const handleNext = useCallback(() => {
@@ -134,12 +144,6 @@ export function OnboardingScreen() {
   const finishOnboarding = useCallback(
     async (notificationsEnabled: boolean) => {
       const latestActivation = useOnboardingStore.getState().activation;
-      if (!latestActivation.firstActionCompletedAt) {
-        scrollRef.current?.scrollTo({ x: FIRST_ACTION_PAGE_INDEX * width, animated: true });
-        setCurrentPageIndex(FIRST_ACTION_PAGE_INDEX);
-        handleSlideChange(FIRST_ACTION_PAGE_INDEX);
-        return;
-      }
       useOnboardingStore.getState().setPreferences({ notificationsEnabled });
 
       if (notificationsEnabled && (language === 'en' || language === 'hi' || language === 'mr')) {
@@ -167,7 +171,7 @@ export function OnboardingScreen() {
       }
       router.replace('/(tabs)');
     },
-    [createdFarmId, handleSlideChange, language, width],
+    [createdFarmId, language],
   );
 
   const jumpToPage = useCallback(
@@ -210,9 +214,10 @@ export function OnboardingScreen() {
   const handleStartFirstAction = useCallback(
     (actionType: OnboardingActionType) => {
       const resolvedFarmId = resolvedFirstActionFarmId;
-      if (resolvedFarmId === null) {
+      if (resolvedFarmId === null || firstActionStartInFlightRef.current) {
         return;
       }
+      firstActionStartInFlightRef.current = true;
 
       useOnboardingStore.getState().markFirstActionStarted(actionType);
       telemetry.capture('onboarding_first_action_started', {
@@ -220,48 +225,78 @@ export function OnboardingScreen() {
         farm_id: resolvedFarmId,
       });
 
-      if (actionType === 'log') {
-        router.push({
-          pathname: '/add-entry',
-          params: {
-            tabs: 'log',
-            initialTab: 'log',
-            farmId: String(resolvedFarmId),
-            onboarding: 'true',
-            onboardingActionType: actionType,
-          },
-        });
-        return;
-      }
-
-      if (actionType === 'note') {
-        router.push({
-          pathname: '/add-note',
-          params: {
-            farmId: String(resolvedFarmId),
-            onboarding: 'true',
-            onboardingActionType: actionType,
-          },
-        });
-        return;
-      }
-
-      router.push({
-        pathname: '/add-task',
-        params: {
-          farmId: String(resolvedFarmId),
-          onboarding: 'true',
-          onboardingActionType: actionType,
-        },
+      void ensureInitialFarmSeasonForFarmId(
+        resolvedFarmId,
+        t('farms.defaultSeasonName', { year: new Date().getFullYear() }),
+      ).catch((seasonError) => {
+        console.warn('[OnboardingScreen] ensureInitialFarmSeasonForFarmId failed:', seasonError);
       });
+
+      try {
+        if (actionType === 'log') {
+          router.push({
+            pathname: '/add-entry',
+            params: {
+              tabs: 'log',
+              initialTab: 'log',
+              farmId: String(resolvedFarmId),
+              onboarding: 'true',
+              onboardingActionType: actionType,
+            },
+          });
+          return;
+        }
+
+        if (actionType === 'note') {
+          router.push({
+            pathname: '/add-note',
+            params: {
+              farmId: String(resolvedFarmId),
+              onboarding: 'true',
+              onboardingActionType: actionType,
+            },
+          });
+          return;
+        }
+
+        router.push({
+          pathname: '/add-task',
+          params: {
+            farmId: String(resolvedFarmId),
+            onboarding: 'true',
+            onboardingActionType: actionType,
+          },
+        });
+      } catch (navigationError) {
+        firstActionStartInFlightRef.current = false;
+        throw navigationError;
+      }
     },
-    [resolvedFirstActionFarmId],
+    [resolvedFirstActionFarmId, t],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      firstActionStartInFlightRef.current = false;
+    }, []),
   );
 
   const handleContinueFromFirstAction = useCallback(() => {
     if (!hasCompletedFirstAction) return;
     jumpToPage(NOTIFICATIONS_PAGE_INDEX);
   }, [hasCompletedFirstAction, jumpToPage]);
+
+  const handleSkipFirstAction = useCallback(() => {
+    const latestActivation = useOnboardingStore.getState().activation;
+    useOnboardingStore.getState().markFirstActionSkipped();
+    useOnboardingStore.getState().setCurrentStep('notifications');
+    telemetry.capture('onboarding_first_action_skipped', {
+      farm_id: latestActivation.farmId,
+      first_action_type: latestActivation.firstActionType,
+      first_action_started: latestActivation.firstActionStartedAt !== null,
+    });
+    jumpToPage(NOTIFICATIONS_PAGE_INDEX);
+  }, [jumpToPage]);
 
   React.useEffect(() => {
     if (createdFarmId === null && onboardingActivation.farmId !== null) {
@@ -358,6 +393,7 @@ export function OnboardingScreen() {
             isCompleted={hasCompletedFirstAction}
             canStartAction={resolvedFirstActionFarmId !== null}
             onContinue={handleContinueFromFirstAction}
+            onSkip={handleSkipFirstAction}
             onSelectAction={handleStartFirstAction}
             selectedActionType={onboardingActivation.firstActionType}
           />

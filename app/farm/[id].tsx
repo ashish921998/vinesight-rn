@@ -1505,38 +1505,6 @@ export default function FarmDetailScreen() {
                   ? ` · ${t('farmDetails.pruning.daysShort', { count: daysSincePruning })}`
                   : ''}
               </Text>
-              <View
-                style={{
-                  marginLeft: spacing[2],
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingHorizontal: spacing[2],
-                  paddingVertical: 2,
-                  borderRadius: borderRadius.full,
-                }}
-              >
-                <View
-                  style={{
-                    width: 4,
-                    height: 4,
-                    borderRadius: 2,
-                    backgroundColor: m3.colorScheme.primary,
-                    marginRight: spacing[1],
-                  }}
-                />
-                <Text
-                  style={{
-                    color: m3.colorScheme.primary,
-                    fontSize: 10,
-                    fontWeight: fontWeight.semibold,
-                  }}
-                >
-                  {activeSeasonRecord
-                    ? t('farmDetails.seasons.activeBadge', { defaultValue: 'Active' })
-                    : t('farmDetails.seasons.inactiveBadge', { defaultValue: 'No season' })}
-                </Text>
-              </View>
             </View>
           </View>
 

@@ -580,6 +580,7 @@ export const en = {
     title: 'Farms',
     addFarm: 'Add Farm',
     currentSeasonLabel: 'Season {{startYear}}–{{endYY}}',
+    defaultSeasonName: 'Season {{year}}',
     empty: {
       title: 'No farms yet',
       subtitle: 'Add your first farm to start tracking irrigation, sprays, and harvests.',
@@ -1614,6 +1615,7 @@ export const en = {
       pendingHint: 'Complete one action to continue.',
       completedHint: 'Great — activation is complete.',
       continue: 'Continue',
+      skip: 'Skip for now',
     },
     complete: {
       title: "You're all set!",

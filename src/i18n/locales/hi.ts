@@ -579,6 +579,7 @@ export const hi = {
     title: 'खेत',
     addFarm: 'खेत जोड़ें',
     currentSeasonLabel: 'सीज़न {{startYear}}–{{endYY}}',
+    defaultSeasonName: 'सीज़न {{year}}',
     empty: {
       title: 'अभी तक कोई खेत नहीं',
       subtitle: 'सिंचाई, छिड़काव और फसल को ट्रैक करने के लिए अपना पहला खेत जोड़ें।',
@@ -1619,6 +1620,7 @@ export const hi = {
       pendingHint: 'आगे बढ़ने के लिए एक कार्य पूरा करें।',
       completedHint: 'बहुत बढ़िया — सक्रियण पूरा हुआ।',
       continue: 'जारी रखें',
+      skip: 'अभी छोड़ें',
     },
     complete: {
       title: 'आप सभी सेट हैं!',
