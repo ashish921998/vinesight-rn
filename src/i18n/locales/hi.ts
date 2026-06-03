@@ -579,6 +579,7 @@ export const hi = {
     title: 'खेत',
     addFarm: 'खेत जोड़ें',
     currentSeasonLabel: 'सीज़न {{startYear}}–{{endYY}}',
+    defaultSeasonName: 'सीज़न {{year}}',
     empty: {
       title: 'अभी तक कोई खेत नहीं',
       subtitle: 'सिंचाई, छिड़काव और फसल को ट्रैक करने के लिए अपना पहला खेत जोड़ें।',

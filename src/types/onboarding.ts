@@ -19,6 +19,7 @@ export interface OnboardingActivationState {
   firstActionType: OnboardingActionType | null;
   firstActionStartedAt: string | null;
   firstActionCompletedAt: string | null;
+  firstActionSkipped: boolean;
 }
 
 export interface OnboardingState {
@@ -57,6 +58,7 @@ export const DEFAULT_ONBOARDING_ACTIVATION_STATE: OnboardingActivationState = {
   firstActionType: null,
   firstActionStartedAt: null,
   firstActionCompletedAt: null,
+  firstActionSkipped: false,
 };
 
 export const isOnboardingActivationComplete = (activation: OnboardingActivationState): boolean =>

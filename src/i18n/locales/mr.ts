@@ -581,6 +581,7 @@ export const mr = {
     title: '$t(glossary.farm)',
     addFarm: '$t(glossary.farm) जोडा',
     currentSeasonLabel: 'हंगाम {{startYear}}–{{endYY}}',
+    defaultSeasonName: 'हंगाम {{year}}',
     empty: {
       title: 'अजून $t(glossary.farm) नाहीत',
       subtitle:

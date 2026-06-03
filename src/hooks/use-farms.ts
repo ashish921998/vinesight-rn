@@ -5,6 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmSeason, FarmUpdate } from '../types';
@@ -76,7 +77,11 @@ async function resolveNextFarmDisplayOrder(userId: string): Promise<{
   return { supportsDisplayOrder, displayOrder };
 }
 
-async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void> {
+async function ensureInitialFarmSeason(
+  farm: Farm,
+  userId: string,
+  seasonNameOverride?: string,
+): Promise<void> {
   if (typeof farm.id !== 'number') return;
 
   const { data: existingSeason, error: existingSeasonError } = await supabase
@@ -94,7 +99,7 @@ async function ensureInitialFarmSeason(farm: Farm, userId: string): Promise<void
   if (existingSeason?.id) return;
 
   const startDate = farm.date_of_pruning ?? formatLocalDate(new Date());
-  const seasonName = `Season ${new Date().getFullYear()}`;
+  const seasonName = seasonNameOverride ?? `Season ${new Date().getFullYear()}`;
 
   const { error: rpcError } = await supabase.rpc('start_farm_season', {
     p_farm_id: farm.id,
@@ -191,6 +196,7 @@ export function useFarm(id: number | undefined) {
 
 export function useCreateFarm() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (farm: FarmInsert): Promise<Farm> => {
@@ -225,7 +231,8 @@ export function useCreateFarm() {
       if (!data) {
         throw lastError ?? new Error('Failed to create farm');
       }
-      await ensureInitialFarmSeason(data, userId);
+      const seasonName = t('farms.defaultSeasonName', { year: new Date().getFullYear() });
+      await ensureInitialFarmSeason(data, userId, seasonName);
       return data;
     },
     onSuccess: (newFarm) => {

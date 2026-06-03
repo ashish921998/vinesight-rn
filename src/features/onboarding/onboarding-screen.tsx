@@ -58,12 +58,12 @@ export function OnboardingScreen() {
   const [activatedSlides, setActivatedSlides] = useState(new Set<number>([0]));
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [hasManuallyNavigatedBack, setHasManuallyNavigatedBack] = useState(false);
-  const [hasSkippedFirstAction, setHasSkippedFirstAction] = useState(false);
   const [createdFarmId, setCreatedFarmId] = useState<number | null>(
     onboardingActivation.farmId ?? null,
   );
   const hasAtLeastOneFarm = farms.length > 0 || onboardingActivation.farmCreated;
   const hasCompletedFirstAction = onboardingActivation.firstActionCompletedAt !== null;
+  const hasSkippedFirstAction = onboardingActivation.firstActionSkipped;
   const firstAvailableFarmId = farms.find((farm) => typeof farm.id === 'number')?.id ?? null;
   const resolvedFirstActionFarmId =
     createdFarmId ?? onboardingActivation.farmId ?? firstAvailableFarmId;
@@ -267,7 +267,7 @@ export function OnboardingScreen() {
 
   const handleSkipFirstAction = useCallback(() => {
     const latestActivation = useOnboardingStore.getState().activation;
-    setHasSkippedFirstAction(true);
+    useOnboardingStore.getState().markFirstActionSkipped();
     useOnboardingStore.getState().setCurrentStep('notifications');
     telemetry.capture('onboarding_first_action_skipped', {
       farm_id: latestActivation.farmId,

@@ -24,6 +24,7 @@ interface OnboardingStore extends OnboardingState {
   markFarmCreated: (farmId: number | null) => void;
   markFirstActionStarted: (actionType: OnboardingActionType) => void;
   markFirstActionCompleted: (actionType: OnboardingActionType) => void;
+  markFirstActionSkipped: () => void;
   resetActivation: () => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
@@ -62,6 +63,7 @@ const parsePersistedActivation = (value: unknown): OnboardingActivationState => 
       typeof raw.firstActionStartedAt === 'string' ? raw.firstActionStartedAt : null,
     firstActionCompletedAt:
       typeof raw.firstActionCompletedAt === 'string' ? raw.firstActionCompletedAt : null,
+    firstActionSkipped: raw.firstActionSkipped === true,
   };
 };
 
@@ -145,6 +147,15 @@ export const useOnboardingStore = create<OnboardingStore>()(
             ...state.activation,
             firstActionType: actionType,
             firstActionCompletedAt: new Date().toISOString(),
+            firstActionSkipped: false,
+          },
+        })),
+
+      markFirstActionSkipped: () =>
+        set((state) => ({
+          activation: {
+            ...state.activation,
+            firstActionSkipped: true,
           },
         })),
 
