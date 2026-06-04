@@ -60,6 +60,7 @@ import {
   type FertigationFormData,
   type NoteFormData,
 } from '@/components/forms';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useFarm,
   useProfile,
@@ -71,6 +72,7 @@ import {
   useDeleteDailyNote,
   useUpsertDailyNote,
   useUpdateFarmWaterLevel,
+  queryKeys,
 } from '@/hooks';
 import { useSaveSingleLog } from '@/features/entry-log-session';
 import { useAuthStore } from '@/stores';
@@ -184,6 +186,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const dateStr = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
 
+  const queryClient = useQueryClient();
   const saveLog = useSaveSingleLog();
   const deleteIrrigation = useDeleteIrrigationRecord();
   const deleteSpray = useDeleteSprayRecord();
@@ -350,6 +353,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
             }
             break;
         }
+        await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       } catch {
         // Restore the row at its original position so the list order is unchanged.
         setEntries((prev) => {
@@ -365,6 +369,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
       }
     },
     [
+      queryClient,
       deleteIrrigation,
       deleteSpray,
       deleteHarvest,
