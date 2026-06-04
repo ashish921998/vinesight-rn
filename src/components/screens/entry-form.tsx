@@ -586,20 +586,23 @@ export function EntryForm({
       if (!keyboardHeightRef.current) return;
       const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
       if (typeof resolvedHandle !== 'number') return;
+      // In screen/inline mode the focused input lives inside the main content
+      // ScrollView; in modal mode it lives inside the dedicated log-form ScrollView.
+      const activeScrollView = isInlineComposerMode ? contentScrollViewRef : logFormScrollViewRef;
       UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
         const keyboardTop = windowHeight - keyboardHeightRef.current;
         const inputBottom = y + height;
         const buffer = 24;
         if (inputBottom > keyboardTop - buffer) {
           const scrollBy = inputBottom - (keyboardTop - buffer);
-          logFormScrollViewRef.current?.scrollTo({
+          activeScrollView.current?.scrollTo({
             y: Math.max(0, scrollOffsetRef.current + scrollBy),
             animated: true,
           });
         }
       });
     },
-    [windowHeight],
+    [windowHeight, isInlineComposerMode],
   );
 
   // Track keyboard visibility
@@ -3323,6 +3326,10 @@ export function EntryForm({
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
           showsVerticalScrollIndicator={true}
+          onScroll={(event) => {
+            scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
         >
           {activeTab === 'log' ? renderLogContent() : renderTaskContent()}
         </ScrollView>
