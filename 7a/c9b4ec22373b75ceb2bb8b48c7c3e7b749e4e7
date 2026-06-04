@@ -1,0 +1,106 @@
+app/log-entry/quick.tsx
+  s_46d90796ba01c9::t_2cdae066cb9139 2,4,12,16
+src/hooks/use-safe-back.ts
+  s_46d90796ba01c9::t_57a1d1c283e910 21
+  s_67d58f15ac44a7::t_a3162d923505b4 2
+  s_46d90796ba01c9::t_b055a68ce36fcb 1,3-20,22-30
+src/features/entry-log-session/use-save-single-log.ts
+  s_aabeee06d78d28::t_d358d700f654d9 32
+  s_89dd4008305d2d::t_57582c2366f77d 49-54
+  s_aabeee06d78d28::t_8d60cba13a430b 118-120,130
+  s_89dd4008305d2d::t_1863cb6382e4d0 110-117
+  s_aabeee06d78d28::t_9990a67aeccdc5 14
+  s_aabeee06d78d28::t_e46d1303327e93 55-60
+app/edit-activity/[id].tsx
+  s_46d90796ba01c9::t_a92c07d4fb09d6 5,8,13,16,25
+src/components/screens/receipt-log-screen.tsx
+  s_aabeee06d78d28::t_0f05701a44a84b 72
+  s_aabeee06d78d28::t_4a96ac2ff7e630 303-310,338-346
+  s_aabeee06d78d28::t_2bf7bb9544148e 34
+  s_89dd4008305d2d::t_17d4330e7e2a96 99-100
+  s_aabeee06d78d28::t_78e0a253f809d5 101-102
+  s_89dd4008305d2d::t_ff661f0e90a577 256
+  s_aabeee06d78d28::t_a816a7596bcf6a 194
+  s_aabeee06d78d28::t_35033420d1f19e 257
+  s_89dd4008305d2d::t_a411f04c848c28 350-352,355-356
+  ai_agent 353-354
+  s_aabeee06d78d28::t_a337e9ab6e13b2 370
+  s_89dd4008305d2d::t_5fdfce5c876742 195
+  s_89dd4008305d2d::t_df27e4865a855e 318-323
+  s_89dd4008305d2d::t_8fead430126c6b 295-299
+  s_89dd4008305d2d::t_bc46c5ce914814 371
+  s_89dd4008305d2d::t_752fcf65e19199 73
+src/hooks/index.ts
+  s_aabeee06d78d28::t_7143320b4c6f1f 65
+src/hooks/use-records.ts
+  s_aabeee06d78d28::t_38e726d05324f5 629-642
+src/components/ui/symbol.tsx
+  s_05526fda88abf2::t_2de6cefb04324c 153-158
+  s_2a2eec74e4d24d::t_3b979c34e7e6e3 93
+app/add-entry.tsx
+  s_46d90796ba01c9::t_b3626fef272770 49
+  s_46d90796ba01c9::t_f453fcc73e3417 2,6
+  s_46d90796ba01c9::t_c3bff5ceca16bb 140
+app/log-entry/add.tsx
+  s_46d90796ba01c9::t_cb64a752235adc 2,4,12,18
+app/add-activity.tsx
+  s_46d90796ba01c9::t_d7f47e6389f62e 1,4,8,16
+app/log-entry/edit/[id].tsx
+  s_46d90796ba01c9::t_d6fe2b1f5aeac6 4,7,13,16,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "7ac9b4ec22373b75ceb2bb8b48c7c3e7b749e4e7",
+  "prompts": {},
+  "sessions": {
+    "s_05526fda88abf2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eee4eba2-365c-4c3a-b98f-afe5a77f648b",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_2a2eec74e4d24d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1eac5a36-cb9b-4a0f-8f7d-64ad6c83e9ef",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_46d90796ba01c9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e77b88db-480b-452d-a0dc-2f7876da2821",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_67d58f15ac44a7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9123-1c4e-7092-8159-246fa45f2756",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_89dd4008305d2d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e930a026-97b2-43a8-860b-2982ec9b0adc",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_aabeee06d78d28": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "94cc369d-d36f-447a-8d37-1c1a3c188770",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
