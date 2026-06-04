@@ -1,0 +1,19 @@
+app/logs.tsx
+  s_89dd4008305d2d::t_31388490397d36 1226
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "881e53891a8047e234a4a766ec901787413ddac1",
+  "prompts": {},
+  "sessions": {
+    "s_89dd4008305d2d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e930a026-97b2-43a8-860b-2982ec9b0adc",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
