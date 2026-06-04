@@ -592,39 +592,41 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
         </View>
       </ScrollView>
 
-      {/* Footer */}
-      <View
-        style={{
-          paddingHorizontal: spacing[4],
-          paddingTop: spacing[3],
-          paddingBottom: Math.max(spacing[4], insets.bottom),
-          backgroundColor: m3.surface.s100,
-          borderTopWidth: 1,
-          borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
-        }}
-      >
-        <Pressable
-          onPress={onClose}
+      {/* Footer — hidden while the entry sheet is open so only one CTA is visible */}
+      {activeType === null && (
+        <View
           style={{
-            paddingVertical: 14,
-            borderRadius: borderRadius.xl,
-            alignItems: 'center',
-            backgroundColor: entries.length > 0 ? m3.colorScheme.primary : m3.surface.s50,
-            borderWidth: entries.length > 0 ? 0 : 1,
-            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+            paddingHorizontal: spacing[4],
+            paddingTop: spacing[3],
+            paddingBottom: Math.max(spacing[4], insets.bottom),
+            backgroundColor: m3.surface.s100,
+            borderTopWidth: 1,
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
           }}
         >
-          <Text
+          <Pressable
+            onPress={onClose}
             style={{
-              fontWeight: '700',
-              color:
-                entries.length > 0 ? m3.colorScheme.onPrimary : m3.colorScheme.onSurfaceVariant,
+              paddingVertical: 14,
+              borderRadius: borderRadius.xl,
+              alignItems: 'center',
+              backgroundColor: entries.length > 0 ? m3.colorScheme.primary : m3.surface.s50,
+              borderWidth: entries.length > 0 ? 0 : 1,
+              borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
             }}
           >
-            {t('receiptLog.done', { defaultValue: 'Done' })}
-          </Text>
-        </Pressable>
-      </View>
+            <Text
+              style={{
+                fontWeight: '700',
+                color:
+                  entries.length > 0 ? m3.colorScheme.onPrimary : m3.colorScheme.onSurfaceVariant,
+              }}
+            >
+              {t('receiptLog.done', { defaultValue: 'Done' })}
+            </Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Entry sheet */}
       <Modal
