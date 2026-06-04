@@ -1223,7 +1223,7 @@ export default function LogsScreen() {
                                                   style={{
                                                     width: 3,
                                                     height: 3,
-                                                    borderRadius: radius.none,
+                                                    borderRadius: radius.full,
                                                     backgroundColor: m3.surface.s400,
                                                   }}
                                                 />
