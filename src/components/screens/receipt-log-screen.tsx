@@ -21,6 +21,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { spacing, borderRadius } from '@/styles/theme';
@@ -70,6 +72,12 @@ import {
 } from '@/hooks';
 import { useSaveSingleLog } from '@/features/entry-log-session';
 import { useAuthStore } from '@/stores';
+import { telemetry } from '@/services/telemetry';
+import { guidedTourEmit } from '@/features/guided-tour';
+
+/** Types whose forms need PHI checks / quick-add context — handed to the existing
+ * EntryForm composer until that context is wired into the receipt sheet. */
+const COMPOSER_TYPES: ReadonlySet<LogTypeId> = new Set<LogTypeId>(['spray', 'fertigation']);
 
 interface ReceiptLogScreenProps {
   farmId?: number | null;
@@ -163,6 +171,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
   const m3 = useM3();
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const { data: farm } = useFarm(farmId ?? undefined);
   const { data: profile } = useProfile({ enabled: false });
@@ -171,8 +180,9 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
     profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
   );
 
-  const today = useMemo(() => new Date(), []);
-  const dateStr = useMemo(() => toSupabaseDateString(today), [today]);
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const dateStr = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
 
   const saveLog = useSaveSingleLog();
   const deleteIrrigation = useDeleteIrrigationRecord();
@@ -191,6 +201,29 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
     setActiveType(type);
     setDraft(emptyDataFor(type));
   }, []);
+
+  // Spray/fertigation need PHI checks + quick-add, which live in the existing
+  // composer — hand those off to it; the rest open the in-screen sheet.
+  const handlePickType = useCallback(
+    (type: LogTypeId) => {
+      if (COMPOSER_TYPES.has(type)) {
+        router.push({
+          pathname: '/add-entry',
+          params: {
+            farmId: farmId != null ? String(farmId) : undefined,
+            initialLogType: type,
+            tabs: 'log',
+            initialTab: 'log',
+            lockFarmSelection: 'true',
+            ...(dateStr ? { initialLogDate: dateStr } : {}),
+          },
+        });
+        return;
+      }
+      openSheet(type);
+    },
+    [router, farmId, dateStr, openSheet],
+  );
 
   const closeSheet = useCallback(() => {
     setActiveType(null);
@@ -219,6 +252,23 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
           summary: describeEntry(activeType, draft),
         },
       ]);
+      try {
+        telemetry.capture('record_created', {
+          record_type: activeType,
+          created_from: 'manual',
+          farm_id: result.farmId,
+        });
+        telemetry.capture('meaningful_action', {
+          action_type: 'record_created',
+          feature_name: activeType,
+        });
+      } catch {
+        // telemetry is best-effort
+      }
+      guidedTourEmit('guidedTour.logCreated', {
+        farmId: result.farmId,
+        recordType: activeType,
+      });
       triggerHapticSuccess();
       setActiveType(null);
     } catch (error) {
@@ -308,16 +358,27 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
       >
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 20, fontWeight: '700', color: m3.colorScheme.onSurface }}>
-            {farm?.name
-              ? t('receiptLog.titleWithFarm', {
-                  defaultValue: 'Today on {{farm}}',
-                  farm: farm.name,
-                })
-              : t('receiptLog.title', { defaultValue: "Today's activities" })}
+            {farm?.name ?? t('receiptLog.title', { defaultValue: 'Add activity' })}
           </Text>
-          <Text style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant, marginTop: 2 }}>
-            {formatDate(today)}
-          </Text>
+          <Pressable
+            onPress={() => setShowDatePicker(true)}
+            hitSlop={6}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}
+          >
+            <AppIcon
+              name="calendar"
+              size={13}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)}
+            />
+            <Text style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}>
+              {formatDate(selectedDate)}
+            </Text>
+            <AppIcon
+              name="chevron-down"
+              size={13}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            />
+          </Pressable>
         </View>
         <Pressable onPress={onClose} hitSlop={8} style={{ padding: 4 }}>
           <AppIcon
@@ -327,6 +388,19 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
           />
         </Pressable>
       </View>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          maximumDate={new Date()}
+          display={Platform.OS === 'ios' ? 'inline' : 'default'}
+          onChange={(_event, date) => {
+            setShowDatePicker(false);
+            if (date) setSelectedDate(date);
+          }}
+        />
+      )}
 
       <ScrollView
         style={{ flex: 1 }}
@@ -436,7 +510,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
           {LOG_TYPES.map((lt: LogType) => (
             <Pressable
               key={lt.id}
-              onPress={() => openSheet(lt.id as LogTypeId)}
+              onPress={() => handlePickType(lt.id as LogTypeId)}
               style={{
                 width: '31.5%',
                 minHeight: 84,
