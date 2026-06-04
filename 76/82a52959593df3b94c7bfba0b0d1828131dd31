@@ -1,0 +1,48 @@
+DESIGN.md
+  s_60f805d4168778::t_e49eec323658e1 151-156,158-161
+  s_60f805d4168778::t_73cd629f9c4777 19
+  s_60f805d4168778::t_762325906ae898 162-165,167-170,178
+  s_60f805d4168778::t_ec74e9c7e2d377 192-196
+  s_60f805d4168778::t_1695f9e6b73e5f 197-201
+  s_60f805d4168778::t_7625a2f4eaf8be 171-177,179-182
+  s_60f805d4168778::t_498ecca99cdf24 1-17,20-139,183-190,202-217
+  s_60f805d4168778::t_889b9c77da2576 140-150,157,166
+  s_60f805d4168778::t_fbfa288e5e90cf 18
+  s_60f805d4168778::t_c4fc3d00fd8288 191
+src/styles/use-domain-colors.ts
+  s_60f805d4168778::t_bfc0a2efd946e2 1-44
+eslint.config.js
+  s_60f805d4168778::t_a31880ebbab2d7 81
+  s_60f805d4168778::t_fbd9629c75b0a6 73-80,82-92
+  s_60f805d4168778::t_1365ecb9383d4e 128-135
+  s_60f805d4168778::t_046cf12719279f 120-127
+  s_60f805d4168778::t_8f295a5cb9582a 57-59,61
+  s_60f805d4168778::t_a1747c23a8a374 55-56,60,62-72
+src/styles/theme.ts
+  s_60f805d4168778::t_3aa5b6c25c22a7 540
+  s_60f805d4168778::t_09d802dbca3edf 312,321
+  s_60f805d4168778::t_440052df1019c4 498,504,511
+  s_60f805d4168778::t_fe1ab7be95b637 523
+  s_60f805d4168778::t_e28c62cfbd7e8c 399-401
+  s_60f805d4168778::t_c15cf803b396cd 469-481
+  s_60f805d4168778::t_27e57b33bc44b6 576-577
+  s_60f805d4168778::t_8f8038ba138c57 243-249,253-256,259-296
+docs/theming-consolidation-proposal.md
+  s_60f805d4168778::t_cc714c0d25361e 1-205
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "7682a52959593df3b94c7bfba0b0d1828131dd31",
+  "prompts": {},
+  "sessions": {
+    "s_60f805d4168778": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "863d0dec-6ecd-4e84-9473-c0d39a6839b5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
