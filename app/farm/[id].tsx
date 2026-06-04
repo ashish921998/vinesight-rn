@@ -17,6 +17,7 @@ import { useIsFocused } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui';
 import {
   useFarm,
@@ -54,7 +55,7 @@ import type {
   DailyNoteRecord,
 } from '@/types';
 import type { TaskReminder } from '@/types/task';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
@@ -767,7 +768,7 @@ export default function FarmDetailScreen() {
         onPress: async () => {
           try {
             await recomputeSeasonAssignments.mutateAsync({ farmId: reviewFarmId });
-            Alert.alert(t('common.success'), t('farmDetails.seasons.alerts.reviewQueuedSuccess'));
+            toast.success(t('farmDetails.seasons.alerts.reviewQueuedSuccess'));
           } catch (error) {
             const message =
               error instanceof Error
@@ -1427,7 +1428,7 @@ export default function FarmDetailScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -1452,7 +1453,7 @@ export default function FarmDetailScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -1503,7 +1504,7 @@ export default function FarmDetailScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -1528,7 +1529,7 @@ export default function FarmDetailScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -1580,7 +1581,7 @@ export default function FarmDetailScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 11,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.8,
                       textTransform: 'uppercase',
@@ -1589,7 +1590,7 @@ export default function FarmDetailScreen() {
                   >
                     {t('farmDetails.seasonStrip.title', { defaultValue: 'Season' })}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                     {100 - seasonProgressPct}%{' '}
                     {t('farmDetails.seasonStrip.toHarvest', { defaultValue: 'to harvest' })}
                   </Text>
@@ -1630,7 +1631,7 @@ export default function FarmDetailScreen() {
                       transform: [{ translateX: -7 }],
                       width: 14,
                       height: 14,
-                      borderRadius: 7,
+                      borderRadius: radius.sm,
                       backgroundColor: colors.surface[100],
                       borderWidth: 2,
                       borderColor: colors.warning,
@@ -1649,7 +1650,7 @@ export default function FarmDetailScreen() {
                   <View>
                     <Text
                       style={{
-                        fontSize: 10,
+                        fontSize: fontSize['2xs'],
                         fontWeight: fontWeight.bold,
                         letterSpacing: 0.5,
                         textTransform: 'uppercase',
@@ -1658,7 +1659,9 @@ export default function FarmDetailScreen() {
                     >
                       {t('farmDetails.seasonStrip.pruning', { defaultValue: 'Pruning' })}
                     </Text>
-                    <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, marginTop: 2 }}>
+                    <Text
+                      style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, marginTop: 2 }}
+                    >
                       {effectiveSeasonStartDate
                         ? formatDate(effectiveSeasonStartDate, { month: 'short', day: 'numeric' })
                         : '—'}
@@ -1668,7 +1671,7 @@ export default function FarmDetailScreen() {
                     <View style={{ alignItems: 'center' }}>
                       <Text
                         style={{
-                          fontSize: 10,
+                          fontSize: fontSize['2xs'],
                           fontWeight: fontWeight.bold,
                           letterSpacing: 0.5,
                           textTransform: 'uppercase',
@@ -1679,7 +1682,7 @@ export default function FarmDetailScreen() {
                       </Text>
                       <Text
                         style={{
-                          fontSize: 13,
+                          fontSize: fontSize.sm,
                           fontWeight: fontWeight.bold,
                           marginTop: 2,
                           color: colors.warning,
@@ -1692,7 +1695,7 @@ export default function FarmDetailScreen() {
                   <View style={{ alignItems: 'flex-end' }}>
                     <Text
                       style={{
-                        fontSize: 10,
+                        fontSize: fontSize['2xs'],
                         fontWeight: fontWeight.bold,
                         letterSpacing: 0.5,
                         textTransform: 'uppercase',
@@ -1709,7 +1712,9 @@ export default function FarmDetailScreen() {
                       })}
                       disabled={isSavingActiveSeasonTargetDate}
                     >
-                      <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, marginTop: 2 }}>
+                      <Text
+                        style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, marginTop: 2 }}
+                      >
                         {activeSeasonRecord.target_harvest_date
                           ? formatDate(
                               parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ??
@@ -1731,7 +1736,7 @@ export default function FarmDetailScreen() {
           <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
             <Text
               style={{
-                fontSize: 11,
+                fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
@@ -1770,7 +1775,7 @@ export default function FarmDetailScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 10,
+                      fontSize: fontSize['2xs'],
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.6,
                       textTransform: 'uppercase',
@@ -1787,7 +1792,7 @@ export default function FarmDetailScreen() {
                       remainingSoilWater != null && remainingSoilWater >= 0
                         ? colors.irrigation[500]
                         : m3.colorScheme.error,
-                    fontSize: 20,
+                    fontSize: fontSize.xl,
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
                   }}
@@ -1797,7 +1802,7 @@ export default function FarmDetailScreen() {
                 <Text
                   style={{
                     color: colors.surface[400],
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     lineHeight: 14,
                     marginTop: spacing[1],
                   }}
@@ -1826,7 +1831,7 @@ export default function FarmDetailScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 10,
+                      fontSize: fontSize['2xs'],
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.6,
                       textTransform: 'uppercase',
@@ -1842,7 +1847,7 @@ export default function FarmDetailScreen() {
                     <Text
                       style={{
                         color: colors.surface[900],
-                        fontSize: 20,
+                        fontSize: fontSize.xl,
                         fontWeight: fontWeight.bold,
                         marginTop: spacing[1],
                       }}
@@ -1852,7 +1857,7 @@ export default function FarmDetailScreen() {
                     <Text
                       style={{
                         color: colors.surface[400],
-                        fontSize: 11,
+                        fontSize: fontSize.xs,
                         lineHeight: 14,
                         marginTop: spacing[1],
                       }}
@@ -1864,7 +1869,7 @@ export default function FarmDetailScreen() {
                   <Text
                     style={{
                       color: colors.surface[500],
-                      fontSize: 20,
+                      fontSize: fontSize.xl,
                       fontWeight: fontWeight.bold,
                       marginTop: spacing[1],
                     }}
@@ -1895,7 +1900,7 @@ export default function FarmDetailScreen() {
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      fontSize: 12,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
                       color: m3.colorScheme.error,
                     }}
@@ -1904,7 +1909,7 @@ export default function FarmDetailScreen() {
                       defaultValue: 'Spray PHI delays harvest',
                     })}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.surface[500], marginTop: 2 }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: 2 }}>
                     {t('farmDetails.phiConflict.subtitle', {
                       defaultValue: 'Earliest safe: {{date}} — review spray schedule',
                       date: earliestSafeHarvestDateLabel,
@@ -1947,14 +1952,14 @@ export default function FarmDetailScreen() {
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      fontSize: 12,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
                       color: m3.colorScheme.warning,
                     }}
                   >
                     {t('farmDetails.riskBlock.urgentTasks', { count: urgentTasks.length })}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.surface[500], marginTop: 2 }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: 2 }}>
                     {t('farmDetails.tasks.urgentHint', {
                       defaultValue: 'Review due and overdue work before logging more activity.',
                     })}
@@ -1963,7 +1968,7 @@ export default function FarmDetailScreen() {
                 <Text
                   style={{
                     color: m3.colorScheme.primary,
-                    fontSize: 12,
+                    fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
                   }}
                 >
@@ -2027,7 +2032,7 @@ export default function FarmDetailScreen() {
                       >
                         <View
                           style={{
-                            borderRadius: 20,
+                            borderRadius: radius.xl,
                             alignItems: 'center',
                             justifyContent: 'center',
                             marginBottom: spacing[1] + 1,
@@ -2041,7 +2046,7 @@ export default function FarmDetailScreen() {
                         <Text
                           style={{
                             color: colors.surface[500],
-                            fontSize: 11,
+                            fontSize: fontSize.xs,
                             fontWeight: fontWeight.medium,
                             textAlign: 'center',
                             lineHeight: 14,
@@ -2090,7 +2095,7 @@ export default function FarmDetailScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: fontWeight.bold,
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
@@ -2102,7 +2107,7 @@ export default function FarmDetailScreen() {
                 {openTasks.length > 0 && (
                   <Text
                     style={{
-                      fontSize: 11,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
                       color: colors.surface[500],
                       marginLeft: 4,
@@ -2229,7 +2234,7 @@ export default function FarmDetailScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: fontWeight.bold,
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
@@ -2241,7 +2246,7 @@ export default function FarmDetailScreen() {
                 {allLogs.length > 0 && (
                   <Text
                     style={{
-                      fontSize: 11,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
                       color: colors.surface[500],
                       marginLeft: 4,
@@ -2478,7 +2483,7 @@ export default function FarmDetailScreen() {
           <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
             <Text
               style={{
-                fontSize: 11,
+                fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
@@ -2501,7 +2506,7 @@ export default function FarmDetailScreen() {
               >
                 <Text
                   style={{
-                    fontSize: 10,
+                    fontSize: fontSize['2xs'],
                     fontWeight: fontWeight.bold,
                     letterSpacing: 0.6,
                     textTransform: 'uppercase',
@@ -2513,7 +2518,7 @@ export default function FarmDetailScreen() {
                 <Text
                   style={{
                     color: m3.colorScheme.onSurface,
-                    fontSize: 22,
+                    fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
                   }}
@@ -2533,7 +2538,7 @@ export default function FarmDetailScreen() {
               >
                 <Text
                   style={{
-                    fontSize: 10,
+                    fontSize: fontSize['2xs'],
                     fontWeight: fontWeight.bold,
                     letterSpacing: 0.6,
                     textTransform: 'uppercase',
@@ -2545,7 +2550,7 @@ export default function FarmDetailScreen() {
                 <Text
                   style={{
                     color: m3.colorScheme.onSurface,
-                    fontSize: 22,
+                    fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
                   }}
@@ -2566,7 +2571,7 @@ export default function FarmDetailScreen() {
           >
             <Text
               style={{
-                fontSize: 11,
+                fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
@@ -2634,7 +2639,7 @@ export default function FarmDetailScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 10,
+                      fontSize: fontSize['2xs'],
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.5,
                       textTransform: 'uppercase',
@@ -2648,7 +2653,7 @@ export default function FarmDetailScreen() {
                     style={{
                       flex: 1,
                       color: m3.colorScheme.onSurface,
-                      fontSize: 13,
+                      fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
                       textAlign: 'right',
                     }}
@@ -2784,10 +2789,7 @@ export default function FarmDetailScreen() {
                   const reviewFarmId = farm.id;
                   try {
                     await recomputeSeasonAssignments.mutateAsync({ farmId: reviewFarmId });
-                    Alert.alert(
-                      t('common.success'),
-                      t('farmDetails.seasons.alerts.reviewQueuedSuccess'),
-                    );
+                    toast.success(t('farmDetails.seasons.alerts.reviewQueuedSuccess'));
                   } catch (error) {
                     const message =
                       error instanceof Error

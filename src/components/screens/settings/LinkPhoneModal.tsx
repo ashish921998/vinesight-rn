@@ -9,11 +9,11 @@ import {
   ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
-  Alert,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
+import { toast } from '@/components/ui/toast';
 import { spacing } from '@/styles/theme';
 import { isIOS } from '@/hooks';
 import type { ThemeColors } from '@/styles/theme';
@@ -248,7 +248,7 @@ export function LinkPhoneModal({
       setLinkPhoneCode('');
       setLinkPhoneInput('');
       refetchProfile();
-      Alert.alert(t('settings.linkPhone.success'));
+      toast.success(t('settings.linkPhone.success'));
     }
   };
 

@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, Modal, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { toast } from '@/components/ui/toast';
 import {
   FormModal,
   SectionHeader,
@@ -25,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { formatNumber, formatDate } from '@/i18n/format';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { triggerHapticMedium, triggerHapticSuccess } from '@/utils/haptics';
+import { triggerHapticMedium } from '@/utils/haptics';
 
 interface WaterLevelSheetProps {
   visible?: boolean;
@@ -160,9 +161,7 @@ export function WaterLevelSheet({
         }
       }
       // Keep the success message numeric display in Latin digits.
-      triggerHapticSuccess();
-      Alert.alert(
-        t('waterLevelSheet.alerts.successTitle'),
+      toast.success(
         t('waterLevelSheet.alerts.successUpdated', {
           valueMm: formatNumber(calculatedWaterLevel, { maximumFractionDigits: 1 }),
         }),

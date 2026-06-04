@@ -8,6 +8,7 @@ import { View, Text, Pressable, Alert, ActivityIndicator, Platform, Modal } from
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -276,10 +277,8 @@ export default function LabTestForm({
         setNotes(parsedData.notes);
       }
 
-      Alert.alert(
-        t('labTests.upload.successTitle'),
+      toast.success(
         t('labTests.upload.successBody', { count: Object.keys(parsedData.parameters).length }),
-        [{ text: t('common.ok') }],
       );
     } catch (parseError) {
       console.error('Parsing error:', parseError);
