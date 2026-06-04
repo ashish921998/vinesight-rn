@@ -1,0 +1,58 @@
+src/components/cards/task-row.tsx
+  s_60f805d4168778::t_326380eceb86b0 212
+  s_60f805d4168778::t_83c3bd4511b65a 81-82,86-87,90-91,147,149,179,181,183,216
+  s_60f805d4168778::t_602d5caf6c6ea9 21
+src/components/cards/stats-card.tsx
+  s_60f805d4168778::t_48f0d5f96329e5 62,64,88,103,109,118,127,176
+  s_60f805d4168778::t_326380eceb86b0 115
+  s_60f805d4168778::t_7e435a14508f1e 20
+app/spray-catalog.tsx
+  s_60f805d4168778::t_ad67ec6605c71d 8,10-11
+  s_60f805d4168778::t_f49ba307177f45 68-69
+  s_60f805d4168778::t_bf9f53bc152352 132,166,183,391,416
+  s_60f805d4168778::t_326380eceb86b0 145,159,176,191,198
+__tests__/farm-card.test.tsx
+  s_60f805d4168778::t_a0dfca8d4f389d 22-30
+src/components/cards/activity-log-card.tsx
+  s_60f805d4168778::t_692646d1e98cfb 107
+  ai_agent 262,281
+  s_60f805d4168778::t_29f288a0f95ec0 127,129,151,163,169,175,209,217,265,284
+  s_60f805d4168778::t_093ca6ae92a43b 17
+src/components/cards/quick-action-button.tsx
+  s_60f805d4168778::t_776bad92ba26ab 49
+  s_60f805d4168778::t_bd2d83c6bee65d 22
+  s_60f805d4168778::t_ac9a3852223eb3 12
+  ai_agent 72
+src/styles/utils.ts
+  s_60f805d4168778::t_b3e5f84cc5a49e 6
+src/components/cards/farm-card.tsx
+  s_60f805d4168778::t_d10981dda40a74 126,141,143,175,186,266,276,288,312,314,365,367,376,402,417,452,456
+  s_60f805d4168778::t_0010b4a28c31ae 17
+  s_60f805d4168778::t_1cfa7de3694bb2 405
+  s_60f805d4168778::t_8a5d0230fd6648 185,264,274,311,326,364,401,439,455,482
+  s_60f805d4168778::t_dace7cbebf05c3 13
+  s_60f805d4168778::t_326380eceb86b0 173,284,372,488
+src/components/cards/worker-card.tsx
+  ai_agent 170-177
+  s_60f805d4168778::t_8a5d0230fd6648 5,271,289,298,368
+  s_60f805d4168778::t_817623d09e6868 108-112
+  s_60f805d4168778::t_6e00afb5b13d1d 137
+  s_60f805d4168778::t_326380eceb86b0 194,304
+  s_60f805d4168778::t_f11d2fa75b6908 121-122,140,143,149,152,196,202,257,275,325,332-333,339,341,363,370
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "6374fa002e1a2b8241e7ac192b903d295142aa05",
+  "prompts": {},
+  "sessions": {
+    "s_60f805d4168778": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "863d0dec-6ecd-4e84-9473-c0d39a6839b5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
