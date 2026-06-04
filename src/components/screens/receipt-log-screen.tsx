@@ -306,8 +306,12 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 date: dateStr,
                 notes: entry.previousDailyNote.notes ?? null,
               });
+            } else {
+              // No previous note — delete the newly created record by farm+date
+              // (id is 0 because notes' recordId is always null here; the mutation
+              // handles this by falling back to the farm_id+date key).
+              await deleteDailyNote.mutateAsync({ id: 0, farmId: entry.farmId, date: dateStr });
             }
-            // No recordId and no previous note means nothing to clean up.
           }
           return;
         }

@@ -83,12 +83,20 @@ export function ToastHost() {
 
   if (!current) return null;
 
-  const palette: Record<ToastVariant, { bg: string; icon: string }> = {
-    success: { bg: m3.colorScheme.success, icon: 'checkmark.circle.fill' },
-    error: { bg: m3.colorScheme.error, icon: 'exclamationmark.circle.fill' },
-    info: { bg: m3.colorScheme.primary, icon: 'info.circle.fill' },
+  const palette: Record<ToastVariant, { bg: string; fg: string; icon: string }> = {
+    success: {
+      bg: m3.colorScheme.success,
+      fg: m3.colorScheme.onSuccess,
+      icon: 'checkmark.circle.fill',
+    },
+    error: {
+      bg: m3.colorScheme.error,
+      fg: m3.colorScheme.onError,
+      icon: 'exclamationmark.circle.fill',
+    },
+    info: { bg: m3.colorScheme.primary, fg: m3.colorScheme.onPrimary, icon: 'info.circle.fill' },
   };
-  const { bg, icon } = palette[current.variant];
+  const { bg, fg, icon } = palette[current.variant];
 
   return (
     <Animated.View
@@ -120,11 +128,11 @@ export function ToastHost() {
           ...shadows.lg,
         }}
       >
-        <Symbol name={icon} size={20} color={m3.colorScheme.onPrimary} />
+        <Symbol name={icon} size={20} color={fg} />
         <Text
           style={{
             flexShrink: 1,
-            color: m3.colorScheme.onPrimary,
+            color: fg,
             fontSize: fontSize.sm,
             fontWeight: fontWeight.medium,
           }}
