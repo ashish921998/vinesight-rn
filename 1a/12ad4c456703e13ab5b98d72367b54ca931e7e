@@ -1,0 +1,19 @@
+src/components/screens/receipt-log-screen.tsx
+  s_2a2eec74e4d24d::t_951f9dda1edb73 595-597,599-604,607-608,610-615,618-629
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "1a12ad4c456703e13ab5b98d72367b54ca931e7e",
+  "prompts": {},
+  "sessions": {
+    "s_2a2eec74e4d24d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1eac5a36-cb9b-4a0f-8f7d-64ad6c83e9ef",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
