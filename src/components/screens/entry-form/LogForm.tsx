@@ -156,37 +156,6 @@ export function LogForm({
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
           }}
         >
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: '700',
-              color: m3.colorScheme.primary,
-              marginBottom: 6,
-            }}
-          >
-            {t('irrigationForm.title')}
-          </Text>
-          <Text
-            style={{
-              fontSize: 24,
-              lineHeight: 30,
-              fontWeight: '700',
-              color: m3.colorScheme.onSurface,
-              marginBottom: 6,
-            }}
-          >
-            {t('irrigationForm.durationLabel')}
-          </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              lineHeight: 20,
-              color: m3.colorScheme.onSurfaceVariant,
-              marginBottom: 16,
-            }}
-          >
-            {t('irrigationForm.durationHint')}
-          </Text>
           <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_IRRIGATION_DURATION}>
             <NumericInput
               ref={irrigationDurationRef}
@@ -229,13 +198,24 @@ export function LogForm({
           quickAddItems={sprayQuickAddItems}
           catalogOnly={sprayCatalogOnly}
           catalogMixes={sprayCatalogMixes}
+          compact
         />
       )}
       {selectedLogType === 'harvest' && (
-        <HarvestForm data={harvestData} onChange={onHarvestChange} onInputFocus={onInputFocus} />
+        <HarvestForm
+          data={harvestData}
+          onChange={onHarvestChange}
+          onInputFocus={onInputFocus}
+          compact
+        />
       )}
       {selectedLogType === 'expense' && (
-        <ExpenseForm data={expenseData} onChange={onExpenseChange} onInputFocus={onInputFocus} />
+        <ExpenseForm
+          data={expenseData}
+          onChange={onExpenseChange}
+          onInputFocus={onInputFocus}
+          compact
+        />
       )}
       {selectedLogType === 'fertigation' && (
         <FertigationForm
@@ -243,6 +223,7 @@ export function LogForm({
           onChange={onFertigationChange}
           onInputFocus={onInputFocus}
           quickAddItems={fertigationQuickAddItems}
+          compact
         />
       )}
       {selectedLogType === 'note' && (

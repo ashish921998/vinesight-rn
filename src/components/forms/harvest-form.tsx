@@ -25,9 +25,11 @@ interface HarvestFormProps {
   data: HarvestFormData;
   onChange: (data: HarvestFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
+  /** Hide the decorative header + summary/validation chrome (inline log composer). */
+  compact?: boolean;
 }
 
-export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) {
+export function HarvestForm({ data, onChange, onInputFocus, compact = false }: HarvestFormProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
@@ -66,39 +68,41 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
   return (
     <View>
       {/* Header with icon */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: borderRadius.full,
-            backgroundColor: colorWithOpacity(colors.warning, 0.2),
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: spacing[3],
-          }}
-        >
-          <Icon
-            name={resolveSymbolIconName(ICON_REGISTRY.harvest)}
-            size={20}
-            color={colors.warning}
-          />
-        </View>
-        <View>
-          <Text
+      {!compact && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+          <View
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[900],
+              width: 40,
+              height: 40,
+              borderRadius: borderRadius.full,
+              backgroundColor: colorWithOpacity(colors.warning, 0.2),
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: spacing[3],
             }}
           >
-            {t('harvestForm.title')}
-          </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            {t('harvestForm.subtitle')}
-          </Text>
+            <Icon
+              name={resolveSymbolIconName(ICON_REGISTRY.harvest)}
+              size={20}
+              color={colors.warning}
+            />
+          </View>
+          <View>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[900],
+              }}
+            >
+              {t('harvestForm.title')}
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+              {t('harvestForm.subtitle')}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_HARVEST_DETAILS}>
         <View
@@ -235,7 +239,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       </View>
 
       {/* Summary Card */}
-      {(totalValue || data.grade) && (
+      {!compact && (totalValue || data.grade) && (
         <View
           style={{
             backgroundColor: colorWithOpacity(colors.warning, 0.12),
@@ -323,30 +327,36 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       )}
 
       {/* Validation indicator */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingTop: spacing[4],
-          borderTopWidth: 1,
-          borderTopColor: colors.surface[100],
-        }}
-      >
-        <Icon
-          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
-          size={16}
-          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-        />
-        <Text
+      {!compact && (
+        <View
           style={{
-            fontSize: fontSize.sm,
-            marginLeft: spacing[2],
-            color: isValid ? colors.success : colors.surface[500],
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingTop: spacing[4],
+            borderTopWidth: 1,
+            borderTopColor: colors.surface[100],
           }}
         >
-          {isValid ? t('common.labels.readyToAdd') : t('common.labels.enterQuantityAndSelectGrade')}
-        </Text>
-      </View>
+          <Icon
+            name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
+            size={16}
+            color={
+              isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+            }
+          />
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              marginLeft: spacing[2],
+              color: isValid ? colors.success : colors.surface[500],
+            }}
+          >
+            {isValid
+              ? t('common.labels.readyToAdd')
+              : t('common.labels.enterQuantityAndSelectGrade')}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

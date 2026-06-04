@@ -120,6 +120,8 @@ interface SprayFormProps {
   quickAddItems?: SprayQuickAddItem[];
   catalogOnly?: boolean;
   catalogMixes?: ChemicalMix[];
+  /** Hide the decorative header (inline log composer). */
+  compact?: boolean;
 }
 
 export function SprayForm({
@@ -129,6 +131,7 @@ export function SprayForm({
   quickAddItems = [],
   catalogOnly = false,
   catalogMixes = [],
+  compact = false,
 }: SprayFormProps) {
   const colors = useThemeColors();
   const m3 = useM3();
@@ -400,39 +403,41 @@ export function SprayForm({
   return (
     <View>
       {/* Header with icon */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: borderRadius.full,
-            backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.12),
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: spacing[3],
-          }}
-        >
-          <Symbol
-            name={resolveSymbolIconName(ICON_REGISTRY.spray)}
-            size={20}
-            color={m3.colorScheme.tertiary}
-          />
-        </View>
-        <View>
-          <Text
+      {!compact && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+          <View
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[900],
+              width: 40,
+              height: 40,
+              borderRadius: borderRadius.full,
+              backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.12),
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: spacing[3],
             }}
           >
-            {t('sprayForm.title')}
-          </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            {t('sprayForm.subtitle')}
-          </Text>
+            <Symbol
+              name={resolveSymbolIconName(ICON_REGISTRY.spray)}
+              size={20}
+              color={m3.colorScheme.tertiary}
+            />
+          </View>
+          <View>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[900],
+              }}
+            >
+              {t('sprayForm.title')}
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+              {t('sprayForm.subtitle')}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_SPRAY_DETAILS}>
         <View

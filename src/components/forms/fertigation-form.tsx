@@ -84,6 +84,8 @@ interface FertigationFormProps {
   onInputFocus?: TextInputProps['onFocus'];
   quickAddItems?: FertigationQuickAddItem[];
   perAreaLabel?: string;
+  /** Hide the decorative header + summary/validation chrome (inline log composer). */
+  compact?: boolean;
 }
 
 export function FertigationForm({
@@ -92,6 +94,7 @@ export function FertigationForm({
   onInputFocus,
   quickAddItems = [],
   perAreaLabel = 'Per acre',
+  compact = false,
 }: FertigationFormProps) {
   const colors = useThemeColors();
   const m3 = useM3();
@@ -214,39 +217,41 @@ export function FertigationForm({
   return (
     <View>
       {/* Header with icon */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: borderRadius.full,
-            backgroundColor: colorWithOpacity(colors.success, 0.16),
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: spacing[3],
-          }}
-        >
-          <IconSymbol
-            name={resolveSymbolIconName(ICON_REGISTRY.fertigation)}
-            size={20}
-            color={colors.success}
-          />
-        </View>
-        <View>
-          <Text
+      {!compact && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+          <View
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[900],
+              width: 40,
+              height: 40,
+              borderRadius: borderRadius.full,
+              backgroundColor: colorWithOpacity(colors.success, 0.16),
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: spacing[3],
             }}
           >
-            {t('fertigationForm.title')}
-          </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            {t('fertigationForm.subtitle')}
-          </Text>
+            <IconSymbol
+              name={resolveSymbolIconName(ICON_REGISTRY.fertigation)}
+              size={20}
+              color={colors.success}
+            />
+          </View>
+          <View>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[900],
+              }}
+            >
+              {t('fertigationForm.title')}
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+              {t('fertigationForm.subtitle')}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Water Volume Input */}
       <NumericInput
@@ -405,7 +410,7 @@ export function FertigationForm({
       </GuidedTourTarget>
 
       {/* Summary */}
-      {totalInputs > 0 && (
+      {!compact && totalInputs > 0 && (
         <View
           style={{
             backgroundColor: colorWithOpacity(colors.success, 0.12),
@@ -455,31 +460,35 @@ export function FertigationForm({
       )}
 
       {/* Validation indicator */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginTop: spacing[4],
-          paddingTop: spacing[4],
-          borderTopWidth: 1,
-          borderTopColor: colors.surface[100],
-        }}
-      >
-        <IconSymbol
-          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
-          size={16}
-          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-        />
-        <Text
+      {!compact && (
+        <View
           style={{
-            fontSize: fontSize.sm,
-            marginLeft: spacing[2],
-            color: isValid ? colors.success : colors.surface[500],
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: spacing[4],
+            paddingTop: spacing[4],
+            borderTopWidth: 1,
+            borderTopColor: colors.surface[100],
           }}
         >
-          {isValid ? 'Ready to add' : 'Add at least one fertilizer with quantity'}
-        </Text>
-      </View>
+          <IconSymbol
+            name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
+            size={16}
+            color={
+              isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+            }
+          />
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              marginLeft: spacing[2],
+              color: isValid ? colors.success : colors.surface[500],
+            }}
+          >
+            {isValid ? 'Ready to add' : 'Add at least one fertilizer with quantity'}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
