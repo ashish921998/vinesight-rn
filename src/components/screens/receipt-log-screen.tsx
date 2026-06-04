@@ -19,6 +19,7 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -176,6 +177,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
 
   const { data: farm } = useFarm(farmId ?? undefined);
   const { data: profile } = useProfile({ enabled: false });
@@ -665,8 +667,8 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 backgroundColor: m3.colorScheme.background,
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
-                minHeight: '60%',
-                maxHeight: '92%',
+                minHeight: screenHeight * 0.6,
+                maxHeight: screenHeight * 0.92,
                 marginBottom: keyboardHeight,
               }}
             >
@@ -719,7 +721,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
               </View>
 
               <ScrollView
-                style={{ flexGrow: 0 }}
+                style={{ flex: 1 }}
                 contentContainerStyle={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}
                 keyboardShouldPersistTaps="handled"
               >
