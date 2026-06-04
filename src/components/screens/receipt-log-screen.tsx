@@ -1,0 +1,669 @@
+/**
+ * Receipt Add-Log screen.
+ *
+ * Rethink of the activity-logging UX as a "today's activities" receipt:
+ * the screen is a list of what you logged, tapping an activity opens a
+ * content-sized sheet with just that form, and each Save persists immediately
+ * (per-entry, via {@link useSaveSingleLog}) and drops a row into the list.
+ * No drafts, no "Save N logs", no stacked scroll — one short form at a time.
+ */
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  Modal,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { spacing, borderRadius } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
+import { AppIcon } from '@/components/ui/app-icon';
+import { Symbol } from '@/components/ui/symbol';
+import { LOG_TYPES, type LogType, type LogTypeId } from '@/constants/calculator-models';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
+import { toSupabaseDateString } from '@/types/database';
+import { triggerHapticSuccess } from '@/utils/haptics';
+import { resolveAreaUnitPreference } from '@/utils/preferences';
+import { formatDate } from '@/i18n/format';
+import {
+  IrrigationForm,
+  SprayForm,
+  HarvestForm,
+  ExpenseForm,
+  FertigationForm,
+  NoteForm,
+  validateIrrigationForm,
+  validateSprayForm,
+  validateHarvestForm,
+  validateExpenseForm,
+  validateFertigationForm,
+  validateNoteForm,
+  createEmptySprayFormData,
+  createEmptyHarvestFormData,
+  createEmptyExpenseFormData,
+  createEmptyFertigationFormData,
+  createEmptyNoteFormData,
+  type IrrigationFormData,
+  type SprayFormData,
+  type HarvestFormData,
+  type ExpenseFormData,
+  type FertigationFormData,
+  type NoteFormData,
+} from '@/components/forms';
+import {
+  useFarm,
+  useProfile,
+  useDeleteIrrigationRecord,
+  useDeleteSprayRecord,
+  useDeleteHarvestRecord,
+  useDeleteExpenseRecord,
+  useDeleteFertigationRecord,
+  useDeleteDailyNote,
+} from '@/hooks';
+import { useSaveSingleLog } from '@/features/entry-log-session';
+import { useAuthStore } from '@/stores';
+
+interface ReceiptLogScreenProps {
+  farmId?: number | null;
+  onClose: () => void;
+}
+
+type AnyLogData =
+  | IrrigationFormData
+  | SprayFormData
+  | HarvestFormData
+  | ExpenseFormData
+  | FertigationFormData
+  | NoteFormData;
+
+interface SavedEntry {
+  key: string;
+  type: LogTypeId;
+  recordId: number | null;
+  farmId: number;
+  summary: string;
+}
+
+let entryKeySeq = 0;
+const nextKey = () => `entry_${++entryKeySeq}`;
+
+function emptyDataFor(type: LogTypeId): AnyLogData {
+  switch (type) {
+    case 'irrigation':
+      return { duration: undefined } as IrrigationFormData;
+    case 'spray':
+      return createEmptySprayFormData();
+    case 'harvest':
+      return createEmptyHarvestFormData();
+    case 'expense':
+      return createEmptyExpenseFormData();
+    case 'fertigation':
+      return createEmptyFertigationFormData();
+    case 'note':
+      return createEmptyNoteFormData();
+  }
+}
+
+function isDataValid(type: LogTypeId, data: AnyLogData): boolean {
+  switch (type) {
+    case 'irrigation':
+      return validateIrrigationForm(data as IrrigationFormData);
+    case 'spray':
+      return validateSprayForm(data as SprayFormData);
+    case 'harvest':
+      return validateHarvestForm(data as HarvestFormData);
+    case 'expense':
+      return validateExpenseForm(data as ExpenseFormData);
+    case 'fertigation':
+      return validateFertigationForm(data as FertigationFormData);
+    case 'note':
+      return validateNoteForm(data as NoteFormData);
+  }
+}
+
+function describeEntry(type: LogTypeId, data: AnyLogData): string {
+  switch (type) {
+    case 'irrigation':
+      return `${(data as IrrigationFormData).duration ?? 0} hr`;
+    case 'spray': {
+      const d = data as SprayFormData;
+      const mix = d.catalogMixName?.trim();
+      if (mix) return `${mix} · ${d.waterVolume ?? 0}L`;
+      const n = d.chemicals.filter((c) => c.name.trim()).length;
+      return `${d.waterVolume ?? 0}L · ${n} chemical${n === 1 ? '' : 's'}`;
+    }
+    case 'harvest': {
+      const d = data as HarvestFormData;
+      return `${d.quantity ?? 0} kg · ${d.grade || '—'}`;
+    }
+    case 'expense': {
+      const d = data as ExpenseFormData;
+      return `₹${d.cost ?? 0} · ${d.type || '—'}`;
+    }
+    case 'fertigation': {
+      const d = data as FertigationFormData;
+      const n = d.fertilizers.filter((f) => f.name.trim()).length;
+      return `${n} fertilizer${n === 1 ? '' : 's'}`;
+    }
+    case 'note':
+      return (data as NoteFormData).notes?.trim() || '';
+  }
+}
+
+export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
+  const { t } = useTranslation();
+  const m3 = useM3();
+  const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
+
+  const { data: farm } = useFarm(farmId ?? undefined);
+  const { data: profile } = useProfile({ enabled: false });
+  const user = useAuthStore((s) => s.user);
+  const preferredAreaUnit = resolveAreaUnitPreference(
+    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
+  );
+
+  const today = useMemo(() => new Date(), []);
+  const dateStr = useMemo(() => toSupabaseDateString(today), [today]);
+
+  const saveLog = useSaveSingleLog();
+  const deleteIrrigation = useDeleteIrrigationRecord();
+  const deleteSpray = useDeleteSprayRecord();
+  const deleteHarvest = useDeleteHarvestRecord();
+  const deleteExpense = useDeleteExpenseRecord();
+  const deleteFertigation = useDeleteFertigationRecord();
+  const deleteDailyNote = useDeleteDailyNote();
+
+  const [entries, setEntries] = useState<SavedEntry[]>([]);
+  const [activeType, setActiveType] = useState<LogTypeId | null>(null);
+  const [draft, setDraft] = useState<AnyLogData>(() => emptyDataFor('irrigation'));
+  const [saving, setSaving] = useState(false);
+
+  const openSheet = useCallback((type: LogTypeId) => {
+    setActiveType(type);
+    setDraft(emptyDataFor(type));
+  }, []);
+
+  const closeSheet = useCallback(() => {
+    setActiveType(null);
+  }, []);
+
+  const draftValid = activeType ? isDataValid(activeType, draft) : false;
+
+  const handleSave = useCallback(async () => {
+    if (!activeType || !farm || !draftValid || saving) return;
+    setSaving(true);
+    try {
+      const result = await saveLog({
+        type: activeType,
+        data: draft,
+        farm,
+        dateStr,
+        preferredAreaUnit,
+      });
+      setEntries((prev) => [
+        ...prev,
+        {
+          key: nextKey(),
+          type: activeType,
+          recordId: result.recordId,
+          farmId: result.farmId,
+          summary: describeEntry(activeType, draft),
+        },
+      ]);
+      triggerHapticSuccess();
+      setActiveType(null);
+    } catch (error) {
+      Alert.alert(
+        t('common.error', { defaultValue: 'Something went wrong' }),
+        error instanceof Error
+          ? error.message
+          : t('common.errors.failedToSaveLogs', { defaultValue: 'Could not save. Please retry.' }),
+      );
+    } finally {
+      setSaving(false);
+    }
+  }, [activeType, farm, draftValid, saving, saveLog, draft, dateStr, preferredAreaUnit, t]);
+
+  const handleRemove = useCallback(
+    async (entry: SavedEntry) => {
+      // Optimistically drop the row; the record is already persisted, so removing
+      // means deleting it.
+      setEntries((prev) => prev.filter((e) => e.key !== entry.key));
+      try {
+        if (entry.recordId == null) {
+          if (entry.type === 'note') {
+            await deleteDailyNote.mutateAsync({ id: 0, farmId: entry.farmId, date: dateStr });
+          }
+          return;
+        }
+        const id = entry.recordId;
+        switch (entry.type) {
+          case 'irrigation':
+            await deleteIrrigation.mutateAsync({ id, farmId: entry.farmId });
+            break;
+          case 'spray':
+            await deleteSpray.mutateAsync({ id, farmId: entry.farmId });
+            break;
+          case 'harvest':
+            await deleteHarvest.mutateAsync({ id, farmId: entry.farmId });
+            break;
+          case 'expense':
+            await deleteExpense.mutateAsync({ id, farmId: entry.farmId });
+            break;
+          case 'fertigation':
+            await deleteFertigation.mutateAsync({ id, farmId: entry.farmId });
+            break;
+          case 'note':
+            await deleteDailyNote.mutateAsync({ id, farmId: entry.farmId, date: dateStr });
+            break;
+        }
+      } catch {
+        // Restore the row if the delete failed so the user knows it's still saved.
+        setEntries((prev) =>
+          prev.some((e) => e.key === entry.key) ? prev : [...prev, entry].sort(),
+        );
+        Alert.alert(
+          t('common.error', { defaultValue: 'Something went wrong' }),
+          t('common.errors.failedToDelete', { defaultValue: 'Could not remove that entry.' }),
+        );
+      }
+    },
+    [
+      deleteIrrigation,
+      deleteSpray,
+      deleteHarvest,
+      deleteExpense,
+      deleteFertigation,
+      deleteDailyNote,
+      dateStr,
+      t,
+    ],
+  );
+
+  const activeLogType = activeType ? LOG_TYPES.find((lt) => lt.id === activeType) : undefined;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+      {/* Header */}
+      <View
+        style={{
+          paddingTop: insets.top + spacing[2],
+          paddingHorizontal: spacing[4],
+          paddingBottom: spacing[3],
+          backgroundColor: colors.surface[100],
+          borderBottomWidth: 1,
+          borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: m3.colorScheme.onSurface }}>
+            {farm?.name
+              ? t('receiptLog.titleWithFarm', {
+                  defaultValue: 'Today on {{farm}}',
+                  farm: farm.name,
+                })
+              : t('receiptLog.title', { defaultValue: "Today's activities" })}
+          </Text>
+          <Text style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant, marginTop: 2 }}>
+            {formatDate(today)}
+          </Text>
+        </View>
+        <Pressable onPress={onClose} hitSlop={8} style={{ padding: 4 }}>
+          <AppIcon
+            name="close-circle"
+            size={26}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+          />
+        </Pressable>
+      </View>
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[6] }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Receipt list */}
+        {entries.length > 0 && (
+          <View style={{ marginBottom: spacing[5] }}>
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: '700',
+                letterSpacing: 0.5,
+                textTransform: 'uppercase',
+                color: m3.colorScheme.onSurfaceVariant,
+                marginBottom: spacing[2],
+              }}
+            >
+              {t('receiptLog.loggedToday', { defaultValue: 'Logged today' })} · {entries.length}
+            </Text>
+            <View style={{ gap: spacing[2] }}>
+              {entries.map((entry) => {
+                const lt = LOG_TYPES.find((l) => l.id === entry.type);
+                return (
+                  <View
+                    key={entry.key}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: spacing[3],
+                      backgroundColor: colors.surface[100],
+                      borderWidth: 1,
+                      borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
+                      borderRadius: borderRadius.lg,
+                      padding: spacing[3],
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 9,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: lt ? `${lt.color}1f` : colors.surface[50],
+                      }}
+                    >
+                      <Symbol
+                        name={resolveSymbolIconName(
+                          ICON_REGISTRY[entry.type as keyof typeof ICON_REGISTRY] ??
+                            ICON_REGISTRY.note,
+                        )}
+                        size={16}
+                        color={lt?.color ?? m3.colorScheme.primary}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{ fontSize: 14, fontWeight: '600', color: m3.colorScheme.onSurface }}
+                      >
+                        {lt ? t(lt.labelKey) : entry.type}
+                      </Text>
+                      {entry.summary ? (
+                        <Text
+                          numberOfLines={1}
+                          style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
+                        >
+                          {entry.summary}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <Pressable
+                      onPress={() => handleRemove(entry)}
+                      hitSlop={8}
+                      style={{ padding: 4 }}
+                    >
+                      <AppIcon
+                        name="close"
+                        size={18}
+                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
+                      />
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Activity picker */}
+        <Text
+          style={{
+            fontSize: 11,
+            fontWeight: '700',
+            letterSpacing: 0.5,
+            textTransform: 'uppercase',
+            color: m3.colorScheme.onSurfaceVariant,
+            marginBottom: spacing[3],
+          }}
+        >
+          {entries.length > 0
+            ? t('receiptLog.addAnother', { defaultValue: 'Add another' })
+            : t('receiptLog.whatDidYouDo', { defaultValue: 'What did you do?' })}
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+          {LOG_TYPES.map((lt: LogType) => (
+            <Pressable
+              key={lt.id}
+              onPress={() => openSheet(lt.id as LogTypeId)}
+              style={{
+                width: '31.5%',
+                minHeight: 84,
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+                borderRadius: borderRadius.lg,
+                paddingVertical: spacing[3],
+              }}
+            >
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 999,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: `${lt.color}1f`,
+                }}
+              >
+                <Symbol name={resolveSymbolIconName(lt.icon)} size={20} color={lt.color} />
+              </View>
+              <Text
+                numberOfLines={1}
+                style={{ fontSize: 12, fontWeight: '600', color: m3.colorScheme.onSurface }}
+              >
+                {t(lt.labelKey)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+
+      {/* Footer */}
+      <View
+        style={{
+          paddingHorizontal: spacing[4],
+          paddingTop: spacing[3],
+          paddingBottom: Math.max(spacing[4], insets.bottom),
+          backgroundColor: colors.surface[100],
+          borderTopWidth: 1,
+          borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
+        }}
+      >
+        <Pressable
+          onPress={onClose}
+          style={{
+            paddingVertical: 14,
+            borderRadius: borderRadius.xl,
+            alignItems: 'center',
+            backgroundColor: entries.length > 0 ? m3.colorScheme.primary : colors.surface[50],
+            borderWidth: entries.length > 0 ? 0 : 1,
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+          }}
+        >
+          <Text
+            style={{
+              fontWeight: '700',
+              color:
+                entries.length > 0 ? m3.colorScheme.onPrimary : m3.colorScheme.onSurfaceVariant,
+            }}
+          >
+            {t('receiptLog.done', { defaultValue: 'Done' })}
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* Entry sheet */}
+      <Modal
+        visible={activeType !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={closeSheet}
+      >
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <Pressable
+            onPress={closeSheet}
+            style={{ flex: 1, backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.45) }}
+          />
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View
+              style={{
+                backgroundColor: m3.colorScheme.background,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                maxHeight: '88%',
+                paddingBottom: Math.max(spacing[4], insets.bottom),
+              }}
+            >
+              {/* Sheet header */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[3],
+                  paddingHorizontal: spacing[4],
+                  paddingTop: spacing[4],
+                  paddingBottom: spacing[2],
+                }}
+              >
+                {activeLogType ? (
+                  <View
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 999,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: `${activeLogType.color}1f`,
+                    }}
+                  >
+                    <Symbol
+                      name={resolveSymbolIconName(activeLogType.icon)}
+                      size={18}
+                      color={activeLogType.color}
+                    />
+                  </View>
+                ) : null}
+                <Text
+                  style={{
+                    flex: 1,
+                    fontSize: 17,
+                    fontWeight: '700',
+                    color: m3.colorScheme.onSurface,
+                  }}
+                >
+                  {activeLogType ? t(activeLogType.labelKey) : ''}
+                </Text>
+                <Pressable onPress={closeSheet} hitSlop={8} style={{ padding: 4 }}>
+                  <AppIcon
+                    name="close-circle"
+                    size={24}
+                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                  />
+                </Pressable>
+              </View>
+
+              <ScrollView
+                style={{ flexGrow: 0 }}
+                contentContainerStyle={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}
+                keyboardShouldPersistTaps="handled"
+              >
+                {activeType === 'irrigation' && (
+                  <IrrigationForm
+                    data={draft as IrrigationFormData}
+                    onChange={setDraft}
+                    farmArea={farm?.area ?? undefined}
+                    systemDischarge={farm?.system_discharge ?? undefined}
+                    showHeader={false}
+                  />
+                )}
+                {activeType === 'spray' && (
+                  <SprayForm data={draft as SprayFormData} onChange={setDraft} compact />
+                )}
+                {activeType === 'harvest' && (
+                  <HarvestForm data={draft as HarvestFormData} onChange={setDraft} compact />
+                )}
+                {activeType === 'expense' && (
+                  <ExpenseForm data={draft as ExpenseFormData} onChange={setDraft} compact />
+                )}
+                {activeType === 'fertigation' && (
+                  <FertigationForm
+                    data={draft as FertigationFormData}
+                    onChange={setDraft}
+                    compact
+                  />
+                )}
+                {activeType === 'note' && (
+                  <NoteForm data={draft as NoteFormData} onChange={setDraft} />
+                )}
+              </ScrollView>
+
+              {/* Sheet save */}
+              <View style={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}>
+                <Pressable
+                  onPress={handleSave}
+                  disabled={!draftValid || saving}
+                  style={{
+                    paddingVertical: 14,
+                    borderRadius: borderRadius.xl,
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    gap: 8,
+                    backgroundColor:
+                      draftValid && !saving ? m3.colorScheme.primary : colors.surface[50],
+                  }}
+                >
+                  {saving ? (
+                    <ActivityIndicator size="small" color={m3.colorScheme.onSurfaceVariant} />
+                  ) : (
+                    <AppIcon
+                      name="checkmark-circle"
+                      size={20}
+                      color={
+                        draftValid
+                          ? m3.colorScheme.onPrimary
+                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+                      }
+                    />
+                  )}
+                  <Text
+                    style={{
+                      fontWeight: '700',
+                      color: draftValid
+                        ? m3.colorScheme.onPrimary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                    }}
+                  >
+                    {saving
+                      ? t('common.saving', { defaultValue: 'Saving…' })
+                      : activeLogType
+                        ? t('receiptLog.saveType', {
+                            defaultValue: 'Save {{type}}',
+                            type: t(activeLogType.labelKey),
+                          })
+                        : t('receiptLog.save', { defaultValue: 'Save' })}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+    </View>
+  );
+}
