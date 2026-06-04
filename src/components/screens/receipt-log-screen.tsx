@@ -22,10 +22,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
@@ -75,10 +74,6 @@ import { useSaveSingleLog } from '@/features/entry-log-session';
 import { useAuthStore } from '@/stores';
 import { telemetry } from '@/services/telemetry';
 import { guidedTourEmit } from '@/features/guided-tour';
-
-/** Types whose forms need PHI checks / quick-add context — handed to the existing
- * EntryForm composer until that context is wired into the receipt sheet. */
-const COMPOSER_TYPES: ReadonlySet<LogTypeId> = new Set<LogTypeId>(['spray', 'fertigation']);
 
 interface ReceiptLogScreenProps {
   farmId?: number | null;
@@ -170,9 +165,7 @@ function describeEntry(type: LogTypeId, data: AnyLogData): string {
 export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const colors = useThemeColors();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
 
   const { data: farm } = useFarm(farmId ?? undefined);
   const { data: profile } = useProfile({ enabled: false });
@@ -219,28 +212,13 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
     setDraft(emptyDataFor(type));
   }, []);
 
-  // Spray/fertigation need PHI checks + quick-add, which live in the existing
-  // composer — hand those off to it; the rest open the in-screen sheet.
-  const handlePickType = useCallback(
-    (type: LogTypeId) => {
-      if (COMPOSER_TYPES.has(type)) {
-        router.push({
-          pathname: '/add-entry',
-          params: {
-            farmId: farmId != null ? String(farmId) : undefined,
-            initialLogType: type,
-            tabs: 'log',
-            initialTab: 'log',
-            lockFarmSelection: 'true',
-            ...(dateStr ? { initialLogDate: dateStr } : {}),
-          },
-        });
-        return;
-      }
-      openSheet(type);
-    },
-    [router, farmId, dateStr, openSheet],
-  );
+  // Every activity type now opens the in-screen sheet — including spray and
+  // fertigation, which previously handed off to the full EntryForm composer.
+  // FOLLOW-UP (PHI): catalog-mix sprays need the harvest-safety check
+  // (usePhiComputation + the "unsafe until DATE — add anyway?" warning on Save)
+  // wired into the sheet before catalog mixes are offered here. Free-text
+  // sprays carry no PHI and save cleanly.
+  const handlePickType = openSheet;
 
   const closeSheet = useCallback(() => {
     setActiveType(null);
@@ -366,7 +344,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
           paddingTop: insets.top + spacing[2],
           paddingHorizontal: spacing[4],
           paddingBottom: spacing[3],
-          backgroundColor: colors.surface[100],
+          backgroundColor: m3.surface.s100,
           borderBottomWidth: 1,
           borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
           flexDirection: 'row',
@@ -451,7 +429,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: spacing[3],
-                      backgroundColor: colors.surface[100],
+                      backgroundColor: m3.surface.s100,
                       borderWidth: 1,
                       borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
                       borderRadius: borderRadius.lg,
@@ -465,7 +443,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                         borderRadius: radius.sm,
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: lt ? `${lt.color}1f` : colors.surface[50],
+                        backgroundColor: lt ? `${lt.color}1f` : m3.surface.s50,
                       }}
                     >
                       <Symbol
@@ -540,7 +518,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 6,
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 1,
                 borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
                 borderRadius: borderRadius.lg,
@@ -580,7 +558,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
           paddingHorizontal: spacing[4],
           paddingTop: spacing[3],
           paddingBottom: Math.max(spacing[4], insets.bottom),
-          backgroundColor: colors.surface[100],
+          backgroundColor: m3.surface.s100,
           borderTopWidth: 1,
           borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
         }}
@@ -591,7 +569,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
             paddingVertical: 14,
             borderRadius: borderRadius.xl,
             alignItems: 'center',
-            backgroundColor: entries.length > 0 ? m3.colorScheme.primary : colors.surface[50],
+            backgroundColor: entries.length > 0 ? m3.colorScheme.primary : m3.surface.s50,
             borderWidth: entries.length > 0 ? 0 : 1,
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
           }}
@@ -728,7 +706,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                     justifyContent: 'center',
                     gap: 8,
                     backgroundColor:
-                      draftValid && !saving ? m3.colorScheme.primary : colors.surface[50],
+                      draftValid && !saving ? m3.colorScheme.primary : m3.surface.s50,
                   }}
                 >
                   {saving ? (
