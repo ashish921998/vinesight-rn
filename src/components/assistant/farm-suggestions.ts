@@ -22,9 +22,11 @@ const HARVEST_WINDOW_MAX_DAYS = 150;
 
 function daysSince(dateStr: string | null | undefined, now: Date): number | null {
   if (!dateStr) return null;
-  const ms = new Date(dateStr).getTime();
+  const ms = new Date(dateStr).getTime(); // YYYY-MM-DD parses as UTC midnight
   if (Number.isNaN(ms)) return null;
-  return Math.floor((now.getTime() - ms) / DAY_MS);
+  // Normalise `now` to UTC midnight so local-timezone offset doesn't cause off-by-one
+  const nowUtcMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.floor((nowUtcMs - ms) / DAY_MS);
 }
 
 export function buildFarmSuggestions(
