@@ -240,18 +240,60 @@ export const androidTextPadding = {
   right: 3,
 } as const;
 
+/**
+ * @deprecated Use `radius` (the deduped scale) or `componentRadius` (the
+ * semantic layer) instead. These values are FROZEN at their historical
+ * numbers so existing call sites keep rendering identically — do NOT
+ * renumber them. Migrate usages to `radius.*` / `componentRadius.*` and
+ * delete a rung here once it has zero references. See DESIGN.md › Radius.
+ */
 export const borderRadius = {
   none: 0,
   xs: 8,
-  sm: 12, // was 4
-  md: 16, // was 12
-  lg: 24, // was 16
-  xl: 24, // keep for backwards compat, same as lg
+  sm: 12,
+  md: 16,
+  lg: 24,
+  xl: 24, // legacy alias of lg
   '2xl': 28,
   '3xl': 32,
-  '4xl': 32, // was 40
-  full: 9999, // was 999
-  pill: 9999,
+  '4xl': 32,
+  full: 9999,
+  pill: 9999, // legacy alias of full
+} as const;
+
+/**
+ * The canonical border-radius scale. Every rung is a distinct value — no
+ * aliases. Reach for `componentRadius` first; use a raw rung only for a
+ * genuine one-off the semantic layer doesn't cover. See DESIGN.md › Radius.
+ */
+export const radius = {
+  none: 0,
+  xs: 4, // inline tags, tiny insets
+  sm: 8, // chips, badges, segmented controls
+  md: 12, // dense controls, small inset surfaces
+  lg: 16, // inputs, buttons, cards, list tiles (default surface radius)
+  xl: 24, // modals, bottom sheets, hero surfaces
+  '2xl': 28, // large feature surfaces
+  full: 9999, // pills, avatars, circular FABs
+} as const;
+
+/**
+ * Semantic radius layer — reference INTENT, not a number. This is the
+ * single source of truth for how each kind of element is rounded. Change a
+ * value here once and every matching element updates. See DESIGN.md › Radius.
+ */
+export const componentRadius = {
+  input: radius.lg, // 16 — text fields, selects, steppers
+  button: radius.lg, // 16 — matches inputs so controls feel like one family
+  card: radius.lg, // 16 — content cards, list tiles
+  tile: radius.lg, // 16
+  sheet: radius.xl, // 24 — bottom sheets, full surfaces (one step up from cards)
+  modal: radius.xl, // 24
+  chip: radius.sm, // 8 — filter chips, tags, badges
+  badge: radius.sm, // 8
+  pill: radius.full, // fully rounded pill controls
+  avatar: radius.full, // circular avatars
+  fab: radius.full, // circular floating action buttons
 } as const;
 
 export const size = {
@@ -267,6 +309,7 @@ export const size = {
 } as const;
 
 export const fontSize = {
+  '2xs': 10, // tiny labels, badges, captions (floor — avoid going smaller)
   xs: 12,
   sm: 14,
   base: 16,
@@ -275,6 +318,7 @@ export const fontSize = {
   '2xl': 24,
   '3xl': 30,
   '4xl': 36,
+  '5xl': 48, // display / hero numerics
 } as const;
 
 export const fontWeight = {
@@ -352,9 +396,9 @@ const m3Base = {
     },
   },
   shape: {
-    cornerSmall: borderRadius.md,
-    cornerMedium: borderRadius.xl,
-    cornerLarge: borderRadius['2xl'],
+    cornerSmall: radius.sm, // 8 — chips, small controls
+    cornerMedium: radius.lg, // 16 — inputs, cards (default surface)
+    cornerLarge: radius.xl, // 24 — sheets, large surfaces
   },
 } as const;
 
@@ -422,6 +466,19 @@ const createM3Theme = (isDark: boolean) => {
       surfaceContainer: themeColors.surface[200],
       surfaceContainerHigh: themeColors.surface[300],
       surfaceContainerHighest: themeColors.surface[400],
+      // Explicit dark-aware ramp: an exact 1:1 of every legacy `colors.surface[N]`
+      // rung, so each legacy reference has a value-preserving M3 target. See
+      // docs/theming-consolidation-proposal.md §4.1.
+      s50: themeColors.surface[50],
+      s100: themeColors.surface[100],
+      s200: themeColors.surface[200],
+      s300: themeColors.surface[300],
+      s400: themeColors.surface[400],
+      s500: themeColors.surface[500],
+      s600: themeColors.surface[600],
+      s700: themeColors.surface[700],
+      s800: themeColors.surface[800],
+      s900: themeColors.surface[900],
     },
     ...m3Base,
   } as const;
@@ -438,20 +495,20 @@ export const commonStyles = {
   // Glass effect cards - using border instead of heavy shadow
   glassCard: {
     backgroundColor: colors.surface[100],
-    borderRadius: borderRadius.xl,
+    borderRadius: componentRadius.card,
     borderWidth: 1,
     borderColor: colors.surface[300],
   },
   glassCardDark: {
     backgroundColor: darkColors.surface[100],
-    borderRadius: borderRadius.xl,
+    borderRadius: componentRadius.card,
     borderWidth: 1,
     borderColor: darkColors.surface[300],
   },
   // Buttons - use primary token
   primaryButton: {
     backgroundColor: colors.primary[500], // #355847
-    borderRadius: borderRadius.xl,
+    borderRadius: componentRadius.button,
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[6],
   },
@@ -463,7 +520,7 @@ export const commonStyles = {
   },
   secondaryButton: {
     backgroundColor: colors.surface[100],
-    borderRadius: borderRadius.xl,
+    borderRadius: componentRadius.button,
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[6],
     borderWidth: 1,
@@ -480,7 +537,7 @@ export const commonStyles = {
     backgroundColor: colors.surface[100],
     borderWidth: 1,
     borderColor: colors.surface[300],
-    borderRadius: borderRadius.xl,
+    borderRadius: componentRadius.input,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3] + 2, // 14px
     fontSize: fontSize.base,
@@ -516,6 +573,8 @@ export const theme = {
   getM3Theme,
   spacing,
   borderRadius,
+  radius,
+  componentRadius,
   size,
   fontSize,
   fontWeight,
