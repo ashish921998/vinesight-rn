@@ -7,7 +7,7 @@
  * (per-entry, via {@link useSaveSingleLog}) and drops a row into the list.
  * No drafts, no "Save N logs", no stacked scroll — one short form at a time.
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   Modal,
   ScrollView,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   ActivityIndicator,
   Alert,
@@ -25,7 +26,7 @@ import { useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useM3, useThemeColors } from '@/styles/use-theme';
-import { spacing, borderRadius } from '@/styles/theme';
+import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
@@ -197,6 +198,22 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
   const [draft, setDraft] = useState<AnyLogData>(() => emptyDataFor('irrigation'));
   const [saving, setSaving] = useState(false);
 
+  // Android Modals don't resize for the soft keyboard, so the bottom-anchored
+  // entry sheet would sit behind it. Track the keyboard height and lift the
+  // sheet by that amount. (iOS uses KeyboardAvoidingView padding instead.)
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const show = Keyboard.addListener('keyboardDidShow', (e) =>
+      setKeyboardHeight(e.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardHeight(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
   const openSheet = useCallback((type: LogTypeId) => {
     setActiveType(type);
     setDraft(emptyDataFor(type));
@@ -357,7 +374,9 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
         }}
       >
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: m3.colorScheme.onSurface }}>
+          <Text
+            style={{ fontSize: fontSize.xl, fontWeight: '700', color: m3.colorScheme.onSurface }}
+          >
             {farm?.name ?? t('receiptLog.title', { defaultValue: 'Add activity' })}
           </Text>
           <Pressable
@@ -370,7 +389,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
               size={13}
               color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)}
             />
-            <Text style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}>
+            <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
               {formatDate(selectedDate)}
             </Text>
             <AppIcon
@@ -443,7 +462,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                       style={{
                         width: 32,
                         height: 32,
-                        borderRadius: 9,
+                        borderRadius: radius.sm,
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: lt ? `${lt.color}1f` : colors.surface[50],
@@ -460,14 +479,18 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text
-                        style={{ fontSize: 14, fontWeight: '600', color: m3.colorScheme.onSurface }}
+                        style={{
+                          fontSize: fontSize.sm,
+                          fontWeight: '600',
+                          color: m3.colorScheme.onSurface,
+                        }}
                       >
                         {lt ? t(lt.labelKey) : entry.type}
                       </Text>
                       {entry.summary ? (
                         <Text
                           numberOfLines={1}
-                          style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
+                          style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
                         >
                           {entry.summary}
                         </Text>
@@ -528,7 +551,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 style={{
                   width: 40,
                   height: 40,
-                  borderRadius: 999,
+                  borderRadius: radius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: `${lt.color}1f`,
@@ -538,7 +561,11 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
               </View>
               <Text
                 numberOfLines={1}
-                style={{ fontSize: 12, fontWeight: '600', color: m3.colorScheme.onSurface }}
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: '600',
+                  color: m3.colorScheme.onSurface,
+                }}
               >
                 {t(lt.labelKey)}
               </Text>
@@ -600,7 +627,9 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
                 maxHeight: '88%',
-                paddingBottom: Math.max(spacing[4], insets.bottom),
+                marginBottom: keyboardHeight,
+                paddingBottom:
+                  keyboardHeight > 0 ? spacing[3] : Math.max(spacing[4], insets.bottom),
               }}
             >
               {/* Sheet header */}
@@ -619,7 +648,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                     style={{
                       width: 34,
                       height: 34,
-                      borderRadius: 999,
+                      borderRadius: radius.full,
                       alignItems: 'center',
                       justifyContent: 'center',
                       backgroundColor: `${activeLogType.color}1f`,
