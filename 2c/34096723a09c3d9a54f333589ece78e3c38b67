@@ -1,0 +1,41 @@
+src/components/screens/lab-test-form.tsx
+  s_60f805d4168778::t_25b6eddaff02e6 280
+  s_60f805d4168778::t_3f13035103c01d 11
+app/_layout.tsx
+  s_60f805d4168778::t_bf9f53bc152352 34,684
+  s_60f805d4168778::t_3e202636664467 791
+  s_60f805d4168778::t_b12f72218daa0a 23
+src/components/screens/water-level-sheet.tsx
+  s_60f805d4168778::t_a4d9adf136a82a 10
+  s_60f805d4168778::t_8f43084bb482cf 164
+  s_60f805d4168778::t_3368edd19987df 29
+src/components/screens/settings/LinkPhoneModal.tsx
+  s_60f805d4168778::t_806903ee5e37ab 251
+app/farm/[id].tsx
+  s_60f805d4168778::t_326380eceb86b0 1584,1593,1653,1674,1685,1698,1739,1778,1805,1834,1860,1912,1962,2049,2098,2110,2237,2249,2486,2509,2521,2541,2553,2574,2642,2656
+  s_60f805d4168778::t_78e8145384b36e 2792
+  s_60f805d4168778::t_d90a38a2fc4472 771
+  ai_agent 1662-1664,1715-1717
+  s_60f805d4168778::t_9fa395932ec4de 20
+  s_60f805d4168778::t_bf9f53bc152352 58,1431,1456,1507,1532,1634,1795,1850,1872,1903,1955,1971,2035
+src/components/ui/toast.tsx
+  ai_agent 68-73
+  s_60f805d4168778::t_b63eeec27a9cb4 38-41
+  s_60f805d4168778::t_6171337e94945a 1-37,42-67,74-137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "2c34096723a09c3d9a54f333589ece78e3c38b67",
+  "prompts": {},
+  "sessions": {
+    "s_60f805d4168778": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "863d0dec-6ecd-4e84-9473-c0d39a6839b5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
