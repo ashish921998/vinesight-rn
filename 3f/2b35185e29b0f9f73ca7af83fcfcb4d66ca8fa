@@ -1,0 +1,21 @@
+src/features/entry-log-session/use-save-single-log.ts
+  s_46d90796ba01c9::t_140cac5569df02 1-119
+src/features/entry-log-session/index.ts
+  s_46d90796ba01c9::t_05901c917bfebc 12-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "3f2b35185e29b0f9f73ca7af83fcfcb4d66ca8fa",
+  "prompts": {},
+  "sessions": {
+    "s_46d90796ba01c9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e77b88db-480b-452d-a0dc-2f7876da2821",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
