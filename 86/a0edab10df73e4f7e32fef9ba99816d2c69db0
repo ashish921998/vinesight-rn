@@ -1,0 +1,25 @@
+app/farm/[id].tsx
+  s_46d90796ba01c9::t_43224c954699bb 1113-1114
+  s_46d90796ba01c9::t_4c589b54f04780 1091-1092
+src/components/screens/receipt-log-screen.tsx
+  s_46d90796ba01c9::t_339725b867c5de 26
+  s_46d90796ba01c9::t_06731b3914c8e0 1-25,27-287,289-669
+app/log-entry/quick.tsx
+  s_46d90796ba01c9::t_4df41c21800279 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "86a0edab10df73e4f7e32fef9ba99816d2c69db0",
+  "prompts": {},
+  "sessions": {
+    "s_46d90796ba01c9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e77b88db-480b-452d-a0dc-2f7876da2821",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
