@@ -740,6 +740,10 @@ export default Sentry.wrap(function RootLayout() {
                   options={{ presentation: 'fullScreenModal', headerShown: false }}
                 />
                 <Stack.Screen
+                  name="log-entry/quick"
+                  options={{ presentation: 'modal', headerShown: false }}
+                />
+                <Stack.Screen
                   name="edit-activity/[id]"
                   options={{ presentation: 'fullScreenModal', headerShown: false }}
                 />
