@@ -1,0 +1,25 @@
+src/hooks/use-records.ts
+  s_2a2eec74e4d24d::t_83766ba814b2f9 760,766-774
+src/components/screens/receipt-log-screen.tsx
+  s_2a2eec74e4d24d::t_e3865970c2e2b8 309-313
+src/components/ui/toast.tsx
+  ai_agent 87-96
+  s_2a2eec74e4d24d::t_65e4891b047f9c 131,135
+  s_2a2eec74e4d24d::t_f7a5b12456acd5 86,97,99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e000414006c6871b4898c3e5368bc50144bac287",
+  "prompts": {},
+  "sessions": {
+    "s_2a2eec74e4d24d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1eac5a36-cb9b-4a0f-8f7d-64ad6c83e9ef",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
