@@ -1,0 +1,195 @@
+src/components/assistant/VoiceMode/AnimatedOrb.tsx
+  ai_agent 493-497
+  s_60f805d4168778::t_8a5d0230fd6648 15,536,546
+app/warehouse.tsx
+  ai_agent 403-407,412-417,419-425,429-434,437-441
+  s_60f805d4168778::t_bf9f53bc152352 20,202,227,347,397,540,574,621,645,654,665,701,718
+  s_60f805d4168778::t_326380eceb86b0 358,373,560,595,631,675
+src/components/screens/farm-log-form.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 7,50
+src/components/assistant/ActivityConfirmCard.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 20,332,369,378
+app/calculator/nutrients.tsx
+  s_60f805d4168778::t_326380eceb86b0 390
+  s_60f805d4168778::t_bf9f53bc152352 23,108,133,564
+src/components/assistant/SuggestionChips.tsx
+  s_60f805d4168778::t_326380eceb86b0 12,79,115
+  s_60f805d4168778::t_8a5d0230fd6648 64,107
+app/(tabs)/_layout.tsx
+  s_60f805d4168778::t_bf9f53bc152352 2,33
+  s_60f805d4168778::t_326380eceb86b0 129,195
+app/(tabs)/tools.tsx
+  s_60f805d4168778::t_326380eceb86b0 63,74,85
+app/soil-trends.tsx
+  s_60f805d4168778::t_bf9f53bc152352 19,100,126
+src/components/screens/entry-form/PendingLogs.tsx
+  s_60f805d4168778::t_326380eceb86b0 80,93,105,154,258
+  ai_agent 271-275
+  s_60f805d4168778::t_8a5d0230fd6648 2,61,118,126,143,172,208,228,248,283,296,314,326,352
+src/components/screens/entry-form/LogTypeSelector.tsx
+  s_60f805d4168778::t_326380eceb86b0 54,67
+  s_60f805d4168778::t_8a5d0230fd6648 2,41,79,118,141,161
+app/calculator/mad.tsx
+  s_60f805d4168778::t_bf9f53bc152352 25,132,157
+app/weather.tsx
+  s_60f805d4168778::t_326380eceb86b0 705
+  s_60f805d4168778::t_bf9f53bc152352 22,184,209
+app/lab-tests.tsx
+  s_60f805d4168778::t_bf9f53bc152352 33,179,293,300,343,360,517,543
+  s_60f805d4168778::t_326380eceb86b0 190,204
+src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 25,1123,1331
+app/tasks.tsx
+  s_60f805d4168778::t_bf9f53bc152352 20,310,335,773
+  s_60f805d4168778::t_326380eceb86b0 428,447,466,558,600,643,686,754
+src/components/screens/warehouse-item-form.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 44,760
+app/(tabs)/workers.tsx
+  s_60f805d4168778::t_bf9f53bc152352 23,207,238,242,252
+  s_60f805d4168778::t_326380eceb86b0 218,230,264
+src/features/guided-tour/workers-tour-coachmark.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 16,92
+app/worker-detail/[id].tsx
+  s_60f805d4168778::t_bf9f53bc152352 10,262,329,353,393,406,462,500,540,599,639,664,671,694,712,750,804,826,864
+  ai_agent 303-308,337-339,418-424,605-607,780-784,810-816,841-845,876-878
+  s_60f805d4168778::t_326380eceb86b0 316,369,382,469,480,514,523,550,560,618,681,702,735,790,831
+app/soil-profiling.tsx
+  s_60f805d4168778::t_bf9f53bc152352 34,617,642
+  s_60f805d4168778::t_326380eceb86b0 191
+src/components/ui/form-components.tsx
+  ai_agent 23-30
+  s_60f805d4168778::t_7da709d87b9025 139,359
+  s_60f805d4168778::t_c86a32e6bb94c8 105,325
+  s_60f805d4168778::t_326380eceb86b0 488,830
+src/components/assistant/VoiceMode/VoiceModeModal.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 38,321
+app/spray-safe-checker.tsx
+  s_60f805d4168778::t_bf9f53bc152352 17,121,146
+src/components/screens/trends-table.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 11,290,302,377,402,448,464
+  s_60f805d4168778::t_326380eceb86b0 318,321,344,348,352,367,385,418,443,453,458
+src/components/assistant/VoiceMode/VoiceThread.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 26,203
+src/features/onboarding/slides/hero-slide.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 21,238
+  s_60f805d4168778::t_326380eceb86b0 138
+app/analytics.tsx
+  s_60f805d4168778::t_bf9f53bc152352 8,82,107,218,250,256,281,287,314,320,346,439,475,484
+  s_60f805d4168778::t_326380eceb86b0 36,226
+  ai_agent 260-266,291-297,300-302,324-330,367-369,453-457,462-466
+src/components/forms/form-field.tsx
+  s_60f805d4168778::t_ac3fe84b3ac302 11
+  s_60f805d4168778::t_77e1e08c19e342 70,233
+src/components/modals/lab-tests-fab-sheet.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 6,178
+app/widgets-showcase.tsx
+  s_60f805d4168778::t_bf9f53bc152352 12,98,123
+app/farms.tsx
+  s_60f805d4168778::t_bf9f53bc152352 355
+  s_60f805d4168778::t_326380eceb86b0 60,172,185
+app/worker-analytics/[id].tsx
+  s_60f805d4168778::t_bf9f53bc152352 26,157,182
+app/(tabs)/index.tsx
+  s_60f805d4168778::t_326380eceb86b0 268,509,561,613,665
+  s_60f805d4168778::t_bf9f53bc152352 28,343,353,366,387,405,418,432,445,487,498,539,550,591,602,643,654,1026,1036,1057,1067,1088,1098,1119,1129,1192,1208,1218,1229,1325
+src/components/assistant/InputBar.tsx
+  s_60f805d4168778::t_3aa224ea82e7bc 309
+  s_60f805d4168778::t_b7a63f00aaaac9 288
+  s_60f805d4168778::t_6440b2ac21798d 269
+  s_60f805d4168778::t_326380eceb86b0 27,279,312
+  s_60f805d4168778::t_89f018463e5b1b 183,188
+  s_60f805d4168778::t_73e700d51fc8c7 318
+src/components/modals/worker-settlement-modal.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 15,106,428,449,471,477,487,506,529,562,592,670,699,763,794,883,948,1008,1035,1058,1064,1079
+  ai_agent 480-482,490-492,513-519,537-543,569-574,587-589,771-775,872-878,922-924,1013-1017,1021-1027
+  s_60f805d4168778::t_326380eceb86b0 97,415,439,656,709,809,913,931,969,1095
+app/widget-configuration.tsx
+  s_60f805d4168778::t_bf9f53bc152352 29,290,315
+src/components/screens/attendance-subcomponents/calendar-attendance-tab.tsx
+  s_60f805d4168778::t_326380eceb86b0 292
+src/components/screens/entry-form/LogForm.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 2,110,154,188
+src/components/screens/entry-form.tsx
+  s_60f805d4168778::t_326380eceb86b0 2107,2175,2231,2656,2758,3012,3058,3511
+  s_60f805d4168778::t_fea4f07080da3c 2463,2495,2673,2690,2706
+  s_60f805d4168778::t_79dbeb051195cd 1648
+  ai_agent 37-45,1732-1736,2333-2337,2653-2655,2882-2886,2915-2920,3125-3129,3152-3157,3198-3202,3289-3293
+  s_60f805d4168778::t_e2275393154242 1380
+  s_60f805d4168778::t_8a5d0230fd6648 1742,1781,1842,1909,1933,1954,1964,1981,1996,2013,2088,2120,2137,2145,2164,2220,2243,2270,2296,2322,2343,2361,2373,2387,2402,2449,2466,2479,2498,2514,2526,2544,2561,2573,2585,2592,2612,2622,2647,2722,2750,2761,2784,2796,2819,3001,3329,3339,3502,3533,3553
+  s_60f805d4168778::t_f20af84bc0e2bf 35
+app/fertilizer-plans.tsx
+  s_60f805d4168778::t_326380eceb86b0 415
+  s_60f805d4168778::t_bf9f53bc152352 16,69,94
+app/reports.tsx
+  s_1ce5e44716bdc1::t_4ffcecc562c57c 27
+  s_60f805d4168778::t_326380eceb86b0 662
+  s_1ce5e44716bdc1::t_b8a76538c821ae 553
+  s_60f805d4168778::t_bf9f53bc152352 24,409,434
+  ai_agent 126-131
+src/components/screens/trends-chart.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 12,69,186,271,329
+src/components/modals/workers-fab-sheet.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 6,195
+app/(tabs)/explore.tsx
+  s_60f805d4168778::t_326380eceb86b0 411,435
+  s_60f805d4168778::t_bf9f53bc152352 8,368,393,426,460
+app/calculator/tank-mix.tsx
+  s_60f805d4168778::t_bf9f53bc152352 8,78,103
+app/logs.tsx
+  s_60f805d4168778::t_326380eceb86b0 860
+  s_60f805d4168778::t_bf9f53bc152352 50,538,563,757,852,1225,1458
+app/calculator/system-discharge.tsx
+  s_60f805d4168778::t_326380eceb86b0 845,875
+  s_60f805d4168778::t_bf9f53bc152352 23,312,337
+src/components/screens/farm-form/date-picker-modal.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 8,64,95
+app/language-selection.tsx
+  s_60f805d4168778::t_bf9f53bc152352 9,199
+src/components/screens/receipt-log-screen.tsx
+  s_60f805d4168778::t_326380eceb86b0 434,520,667
+src/components/screens/entry-form/Tabs.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 2,28,47,54,76
+src/components/ui/explore-primitives.tsx
+  s_60f805d4168778::t_326380eceb86b0 78,90,449
+  s_60f805d4168778::t_0173e17f7d897f 158,168
+  s_60f805d4168778::t_8a5d0230fd6648 25,226,239,315,398
+src/components/screens/settings/settings-styles.tsx
+  ai_agent 7-9
+  s_60f805d4168778::t_8a5d0230fd6648 30,289
+app/calculator/lai.tsx
+  s_60f805d4168778::t_bf9f53bc152352 21,150,175,346,353,374,381
+src/features/onboarding/slides/value-props-slide.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 6,226
+app/petiole-trends.tsx
+  ai_agent 447-449
+  s_60f805d4168778::t_bf9f53bc152352 20,166,192
+app/add-note.tsx
+  s_60f805d4168778::t_bf9f53bc152352 20,294
+src/components/ui/input.tsx
+  s_60f805d4168778::t_ed9b70b38b2cf2 12
+  s_60f805d4168778::t_043874cabe40be 70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "754c64d9585797b2e5961e4084c3be61217a740f",
+  "prompts": {},
+  "sessions": {
+    "s_1ce5e44716bdc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6561701c-8cca-4dcc-9d74-69f775e83a7c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_60f805d4168778": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "863d0dec-6ecd-4e84-9473-c0d39a6839b5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
