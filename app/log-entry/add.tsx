@@ -1,6 +1,7 @@
 import React from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { FarmLogForm } from '@/components/screens/farm-log-form';
+import { useSafeBack } from '@/hooks/use-safe-back';
 
 export const screenOptions = {
   presentation: 'modal',
@@ -8,13 +9,13 @@ export const screenOptions = {
 };
 
 export default function AddLogEntryRoute() {
-  const router = useRouter();
+  const goBack = useSafeBack();
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const farmIdNum = farmId && !isNaN(Number(farmId)) ? parseInt(farmId, 10) : undefined;
 
   return (
     <>
-      <FarmLogForm mode="add" farmId={farmIdNum} onClose={() => router.back()} />
+      <FarmLogForm mode="add" farmId={farmIdNum} onClose={goBack} />
     </>
   );
 }

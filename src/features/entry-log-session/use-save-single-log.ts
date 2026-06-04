@@ -11,6 +11,7 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { Farm } from '@/types';
+import type { DailyNoteRecord } from '@/types/database';
 import type { LogTypeId } from '@/constants/calculator-models';
 import {
   submitEntryPendingLog,
@@ -28,6 +29,7 @@ import {
   useUpsertDailyNote,
   useUpdateFarmWaterLevel,
   useDeleteIrrigationRecord,
+  fetchDailyNoteByDate,
   queryKeys,
 } from '@/hooks';
 
@@ -44,6 +46,18 @@ export interface SaveSingleLogResult {
   /** Record id from the insert. `null` for notes (daily-note upsert is keyed by farm+date). */
   recordId: number | null;
   farmId: number;
+  /**
+   * The farm's `remaining_water` value immediately before this save. Only set for
+   * irrigation entries on farms with tank capacity configured. Used by the receipt
+   * screen to restore the water level if the user removes the entry.
+   */
+  waterLevelBefore?: number;
+  /**
+   * Snapshot of the daily note that existed before this save. Only set for note entries.
+   * Used by the receipt screen to restore the original text if the user removes the row,
+   * rather than deleting the whole record (which would lose a pre-existing note).
+   */
+  previousDailyNote?: DailyNoteRecord | null;
 }
 
 function buildFarmContext(farm: Farm, preferredAreaUnit: AreaUnitPreference): EntryLogFarmContext {
@@ -93,6 +107,17 @@ export function useSaveSingleLog() {
         deleteIrrigation: (payload) => deleteIrrigation.mutateAsync(payload),
       };
 
+      const willUpdateWaterLevel =
+        type === 'irrigation' &&
+        farm.total_tank_capacity != null &&
+        farm.total_tank_capacity > 0 &&
+        farm.system_discharge != null &&
+        farm.system_discharge > 0;
+      const waterLevelBefore = willUpdateWaterLevel ? (farm.remaining_water ?? 0) : undefined;
+
+      const previousDailyNote =
+        type === 'note' ? await fetchDailyNoteByDate(farmId, dateStr) : undefined;
+
       const result = await submitEntryPendingLog({
         log: { id: `single_${type}`, type, data },
         dateStr,
@@ -102,7 +127,7 @@ export function useSaveSingleLog() {
 
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
 
-      return { type, recordId: result.recordId, farmId };
+      return { type, recordId: result.recordId, farmId, waterLevelBefore, previousDailyNote };
     },
     [
       queryClient,

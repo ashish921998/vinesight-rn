@@ -1,19 +1,19 @@
 import React, { useEffect } from 'react';
-import { useRouter } from 'expo-router';
 import { FarmLogForm } from '@/components/screens/farm-log-form';
 import { useModalStore } from '@/stores';
+import { useSafeBack } from '@/hooks/use-safe-back';
 
 export default function EditLogEntryRoute() {
-  const router = useRouter();
+  const goBack = useSafeBack();
   const { editActivity, setEditActivity } = useModalStore();
   const initialEditActivityRef = React.useRef(editActivity);
 
   useEffect(() => {
     if (!initialEditActivityRef.current) {
-      router.back();
+      goBack();
     }
     return () => setEditActivity(null);
-  }, [router, setEditActivity]);
+  }, [goBack, setEditActivity]);
 
   if (!editActivity) {
     return null;
@@ -21,7 +21,7 @@ export default function EditLogEntryRoute() {
 
   return (
     <>
-      <FarmLogForm mode="edit" onClose={() => router.back()} />
+      <FarmLogForm mode="edit" onClose={goBack} />
     </>
   );
 }

@@ -31,7 +31,7 @@ import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
 import { LOG_TYPES, type LogType, type LogTypeId } from '@/constants/calculator-models';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
-import { toSupabaseDateString } from '@/types/database';
+import { toSupabaseDateString, type DailyNoteRecord } from '@/types/database';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import { formatDate } from '@/i18n/format';
@@ -69,6 +69,8 @@ import {
   useDeleteExpenseRecord,
   useDeleteFertigationRecord,
   useDeleteDailyNote,
+  useUpsertDailyNote,
+  useUpdateFarmWaterLevel,
 } from '@/hooks';
 import { useSaveSingleLog } from '@/features/entry-log-session';
 import { useAuthStore } from '@/stores';
@@ -94,6 +96,10 @@ interface SavedEntry {
   recordId: number | null;
   farmId: number;
   summary: string;
+  /** Pre-save `remaining_water` for irrigations that updated the tank level. Used to undo the level change on remove. */
+  waterLevelBefore?: number;
+  /** Snapshot of the daily note that existed before this save. Used to restore the original text on remove instead of deleting the record. */
+  previousDailyNote?: DailyNoteRecord | null;
 }
 
 let entryKeySeq = 0;
@@ -185,6 +191,8 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
   const deleteDailyNote = useDeleteDailyNote();
+  const upsertDailyNote = useUpsertDailyNote();
+  const updateWaterLevel = useUpdateFarmWaterLevel();
 
   const [entries, setEntries] = useState<SavedEntry[]>([]);
   const [activeType, setActiveType] = useState<LogTypeId | null>(null);
@@ -245,6 +253,8 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
           recordId: result.recordId,
           farmId: result.farmId,
           summary: describeEntry(activeType, draft),
+          waterLevelBefore: result.waterLevelBefore,
+          previousDailyNote: result.previousDailyNote,
         },
       ]);
       try {
@@ -282,11 +292,22 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
     async (entry: SavedEntry) => {
       // Optimistically drop the row; the record is already persisted, so removing
       // means deleting it.
-      setEntries((prev) => prev.filter((e) => e.key !== entry.key));
+      let originalIndex = -1;
+      setEntries((prev) => {
+        originalIndex = prev.findIndex((e) => e.key === entry.key);
+        return prev.filter((e) => e.key !== entry.key);
+      });
       try {
         if (entry.recordId == null) {
           if (entry.type === 'note') {
-            await deleteDailyNote.mutateAsync({ id: 0, farmId: entry.farmId, date: dateStr });
+            if (entry.previousDailyNote) {
+              await upsertDailyNote.mutateAsync({
+                farm_id: entry.farmId,
+                date: dateStr,
+                notes: entry.previousDailyNote.notes ?? null,
+              });
+            }
+            // No recordId and no previous note means nothing to clean up.
           }
           return;
         }
@@ -294,6 +315,12 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
         switch (entry.type) {
           case 'irrigation':
             await deleteIrrigation.mutateAsync({ id, farmId: entry.farmId });
+            if (entry.waterLevelBefore != null) {
+              await updateWaterLevel.mutateAsync({
+                farmId: entry.farmId,
+                remainingWater: entry.waterLevelBefore,
+              });
+            }
             break;
           case 'spray':
             await deleteSpray.mutateAsync({ id, farmId: entry.farmId });
@@ -308,14 +335,25 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
             await deleteFertigation.mutateAsync({ id, farmId: entry.farmId });
             break;
           case 'note':
-            await deleteDailyNote.mutateAsync({ id, farmId: entry.farmId, date: dateStr });
+            if (entry.previousDailyNote) {
+              await upsertDailyNote.mutateAsync({
+                farm_id: entry.farmId,
+                date: dateStr,
+                notes: entry.previousDailyNote.notes ?? null,
+              });
+            } else {
+              await deleteDailyNote.mutateAsync({ id, farmId: entry.farmId, date: dateStr });
+            }
             break;
         }
       } catch {
-        // Restore the row if the delete failed so the user knows it's still saved.
-        setEntries((prev) =>
-          prev.some((e) => e.key === entry.key) ? prev : [...prev, entry].sort(),
-        );
+        // Restore the row at its original position so the list order is unchanged.
+        setEntries((prev) => {
+          if (prev.some((e) => e.key === entry.key)) return prev;
+          const idx =
+            originalIndex >= 0 && originalIndex <= prev.length ? originalIndex : prev.length;
+          return [...prev.slice(0, idx), entry, ...prev.slice(idx)];
+        });
         Alert.alert(
           t('common.error', { defaultValue: 'Something went wrong' }),
           t('common.errors.failedToDelete', { defaultValue: 'Could not remove that entry.' }),
@@ -329,6 +367,8 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
       deleteExpense,
       deleteFertigation,
       deleteDailyNote,
+      upsertDailyNote,
+      updateWaterLevel,
       dateStr,
       t,
     ],

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import { EntryForm } from '@/components/screens/entry-form';
 import { useModalStore } from '@/stores';
+import { useSafeBack } from '@/hooks/use-safe-back';
 import type { LogTypeId } from '@/constants/calculator-models';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import {
@@ -45,7 +46,7 @@ const parseBooleanParam = (value?: string | string[]) => {
 };
 
 export default function AddEntryRoute() {
-  const router = useRouter();
+  const goBack = useSafeBack();
   const params = useLocalSearchParams<{
     farmId?: string;
     allFarms?: string;
@@ -136,7 +137,7 @@ export default function AddEntryRoute() {
   return (
     <>
       <EntryForm
-        onClose={() => router.back()}
+        onClose={goBack}
         presentation="screen"
         tabs={tabs}
         initialTab={initialTab}

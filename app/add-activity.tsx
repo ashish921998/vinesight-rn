@@ -1,10 +1,11 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import { EntryForm } from '@/components/screens/entry-form';
+import { useSafeBack } from '@/hooks/use-safe-back';
 import type { LogTypeId } from '@/constants/calculator-models';
 
 export default function AddActivityRoute() {
-  const router = useRouter();
+  const goBack = useSafeBack();
   const params = useLocalSearchParams<{ farmId?: string; logType?: LogTypeId }>();
   const farmId =
     params.farmId && !isNaN(Number(params.farmId)) ? parseInt(params.farmId, 10) : undefined;
@@ -12,7 +13,7 @@ export default function AddActivityRoute() {
   return (
     <>
       <EntryForm
-        onClose={() => router.back()}
+        onClose={goBack}
         presentation="screen"
         tabs={['log', 'task']}
         initialTab="log"

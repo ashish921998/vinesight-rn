@@ -1,19 +1,19 @@
 import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
 
 import { ActivityEditForm } from '@/components/screens/activity-edit-form';
 import { useModalStore } from '@/stores';
+import { useSafeBack } from '@/hooks/use-safe-back';
 
 export default function EditActivityRoute() {
-  const router = useRouter();
+  const goBack = useSafeBack();
   const { editActivity, setEditActivity } = useModalStore();
 
   useEffect(() => {
     if (!editActivity) {
-      router.back();
+      goBack();
     }
     return () => setEditActivity(null);
-  }, [editActivity, router, setEditActivity]);
+  }, [editActivity, goBack, setEditActivity]);
 
   if (!editActivity) {
     return null;
@@ -22,7 +22,7 @@ export default function EditActivityRoute() {
   return (
     <>
       <ActivityEditForm
-        onClose={() => router.back()}
+        onClose={goBack}
         presentation="screen"
         farm={editActivity.farm}
         logType={editActivity.logType}

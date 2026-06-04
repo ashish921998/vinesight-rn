@@ -626,6 +626,20 @@ export function useDeleteExpenseRecord() {
 // MARK: - DAILY NOTES
 // ============================================================
 
+export async function fetchDailyNoteByDate(
+  farmId: number,
+  date: string,
+): Promise<DailyNoteRecord | null> {
+  const { data, error } = await supabase
+    .from(TABLES.DAILY_NOTES)
+    .select('*')
+    .eq('farm_id', farmId)
+    .eq('date', date)
+    .maybeSingle();
+  if (error) throw error;
+  return data ?? null;
+}
+
 export function useDailyNoteByDate(farmId: number | undefined, date: string | undefined) {
   return useQuery({
     queryKey: queryKeys.dailyNotes.byDate(farmId!, date!),
