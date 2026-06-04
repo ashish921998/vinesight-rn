@@ -98,6 +98,8 @@ interface SavedEntry {
   recordId: number | null;
   farmId: number;
   summary: string;
+  /** The date this entry was saved on. Stored here so handleRemove uses the correct date even if the picker is changed afterwards. */
+  savedDateStr: string;
   /** Pre-save `remaining_water` for irrigations that updated the tank level. Used to undo the level change on remove. */
   waterLevelBefore?: number;
   /** Snapshot of the daily note that existed before this save. Used to restore the original text on remove instead of deleting the record. */
@@ -256,6 +258,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
           recordId: result.recordId,
           farmId: result.farmId,
           summary: describeEntry(activeType, draft),
+          savedDateStr: dateStr,
           waterLevelBefore: result.waterLevelBefore,
           previousDailyNote: result.previousDailyNote,
         },
@@ -306,14 +309,18 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
             if (entry.previousDailyNote) {
               await upsertDailyNote.mutateAsync({
                 farm_id: entry.farmId,
-                date: dateStr,
+                date: entry.savedDateStr,
                 notes: entry.previousDailyNote.notes ?? null,
               });
             } else {
               // No previous note — delete the newly created record by farm+date
               // (id is 0 because notes' recordId is always null here; the mutation
               // handles this by falling back to the farm_id+date key).
-              await deleteDailyNote.mutateAsync({ id: 0, farmId: entry.farmId, date: dateStr });
+              await deleteDailyNote.mutateAsync({
+                id: 0,
+                farmId: entry.farmId,
+                date: entry.savedDateStr,
+              });
             }
           }
           return;
@@ -345,11 +352,15 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
             if (entry.previousDailyNote) {
               await upsertDailyNote.mutateAsync({
                 farm_id: entry.farmId,
-                date: dateStr,
+                date: entry.savedDateStr,
                 notes: entry.previousDailyNote.notes ?? null,
               });
             } else {
-              await deleteDailyNote.mutateAsync({ id, farmId: entry.farmId, date: dateStr });
+              await deleteDailyNote.mutateAsync({
+                id,
+                farmId: entry.farmId,
+                date: entry.savedDateStr,
+              });
             }
             break;
         }
@@ -378,7 +389,6 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
       deleteDailyNote,
       upsertDailyNote,
       updateWaterLevel,
-      dateStr,
       t,
     ],
   );
