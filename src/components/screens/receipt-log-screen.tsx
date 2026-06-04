@@ -667,7 +667,6 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 backgroundColor: m3.colorScheme.background,
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
-                minHeight: screenHeight * 0.6,
                 maxHeight: screenHeight - insets.top,
                 marginBottom: keyboardHeight,
               }}
@@ -721,7 +720,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
               </View>
 
               <ScrollView
-                style={{ flex: 1 }}
+                style={{ flexShrink: 1 }}
                 contentContainerStyle={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}
                 keyboardShouldPersistTaps="handled"
               >
