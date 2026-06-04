@@ -10,11 +10,11 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { Farm } from '../../types';
 import { isLowWater } from '../../types';
-import { spacing, borderRadius, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { parseDbDateToLocalDate } from '@/utils/date';
 import { formatNumber, formatDate } from '@/i18n/format';
-import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 
 // ── Per-farm accent palette ──────────────────────────────────────────────────
 // Light and dark variants of 4 distinct brand colours:
@@ -94,7 +94,6 @@ export const FarmCard = React.memo(function FarmCard({
   onDelete,
 }: FarmCardProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const isDark = useIsDark();
   const { t, i18n } = useTranslation();
 
@@ -124,7 +123,7 @@ export const FarmCard = React.memo(function FarmCard({
   const leftStripColor = lowWater ? m3.colorScheme.error : farmAccentColor;
 
   // Water label uses the accent colour (green) when OK, error red when low.
-  const waterLabelColor = lowWater ? m3.colorScheme.error : colors.success;
+  const waterLabelColor = lowWater ? m3.colorScheme.error : m3.colorScheme.success;
 
   const waterLabel =
     typeof farm.remaining_water === 'number' && Number.isFinite(farm.remaining_water)
@@ -139,9 +138,9 @@ export const FarmCard = React.memo(function FarmCard({
     <View
       style={{
         borderRadius: borderRadius.md,
-        backgroundColor: colors.surface[100],
+        backgroundColor: m3.surface.s100,
         borderWidth: 1,
-        borderColor: colors.surface[300],
+        borderColor: m3.surface.s300,
         overflow: 'hidden',
       }}
     >
@@ -171,9 +170,9 @@ export const FarmCard = React.memo(function FarmCard({
           <View style={{ flex: 1, marginRight: spacing[3] }}>
             <Text
               style={{
-                fontSize: 17,
+                fontSize: fontSize.lg,
                 fontWeight: fontWeight.bold,
-                color: colors.surface[900],
+                color: m3.surface.s900,
                 letterSpacing: -0.2,
                 lineHeight: 22,
               }}
@@ -183,8 +182,8 @@ export const FarmCard = React.memo(function FarmCard({
             </Text>
             <Text
               style={{
-                fontSize: 12,
-                color: colors.surface[500],
+                fontSize: fontSize.xs,
+                color: m3.surface.s500,
                 marginTop: 2,
               }}
               numberOfLines={1}
@@ -262,9 +261,9 @@ export const FarmCard = React.memo(function FarmCard({
               <View style={{ alignItems: 'flex-end' }}>
                 <Text
                   style={{
-                    fontSize: 24,
+                    fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                     lineHeight: 26,
                     letterSpacing: -0.5,
                   }}
@@ -272,9 +271,9 @@ export const FarmCard = React.memo(function FarmCard({
                   {daysSincePruning}
                   <Text
                     style={{
-                      fontSize: 12,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                     }}
                   >
                     d
@@ -282,11 +281,11 @@ export const FarmCard = React.memo(function FarmCard({
                 </Text>
                 <Text
                   style={{
-                    fontSize: 9,
+                    fontSize: fontSize['2xs'],
                     fontWeight: fontWeight.semibold,
                     letterSpacing: 0.5,
                     textTransform: 'uppercase',
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                     marginTop: 2,
                   }}
                 >
@@ -309,10 +308,10 @@ export const FarmCard = React.memo(function FarmCard({
                   right: 0,
                   top: 12,
                   height: 4,
-                  borderRadius: 99,
-                  backgroundColor: colors.surface[200],
+                  borderRadius: radius.full,
+                  backgroundColor: m3.surface.s200,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
+                  borderColor: m3.surface.s300,
                 }}
               />
 
@@ -324,7 +323,7 @@ export const FarmCard = React.memo(function FarmCard({
                   top: 12,
                   width: `${boundedTodayPct}%`,
                   height: 4,
-                  borderRadius: 99,
+                  borderRadius: radius.full,
                   backgroundColor: farmAccentColor,
                 }}
               />
@@ -362,19 +361,19 @@ export const FarmCard = React.memo(function FarmCard({
                       style={{
                         width: 8,
                         height: 8,
-                        borderRadius: 4,
-                        backgroundColor: passed ? farmAccentColor : colors.surface[200],
+                        borderRadius: radius.xs,
+                        backgroundColor: passed ? farmAccentColor : m3.surface.s200,
                         borderWidth: 2,
-                        borderColor: passed ? farmAccentColor : colors.surface[300],
+                        borderColor: passed ? farmAccentColor : m3.surface.s300,
                       }}
                     />
                     <Text
                       style={{
-                        fontSize: 9,
+                        fontSize: fontSize['2xs'],
                         fontWeight: fontWeight.semibold,
                         letterSpacing: 0.3,
                         textTransform: 'uppercase',
-                        color: colors.surface[500],
+                        color: m3.surface.s500,
                         marginTop: 5,
                         width: MILESTONE_LABEL_WIDTH,
                         textAlign:
@@ -399,14 +398,11 @@ export const FarmCard = React.memo(function FarmCard({
                   transform: [{ translateX: todayMarkerTranslateX }],
                   width: 14,
                   height: 14,
-                  borderRadius: 7,
-                  backgroundColor: colors.surface[100],
+                  borderRadius: radius.sm,
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 3,
                   borderColor: farmAccentColor,
-                  shadowColor: m3.colorScheme.shadow,
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.18,
-                  shadowRadius: 3,
+                  ...shadows.sm,
                   elevation: 2,
                 }}
               />
@@ -418,7 +414,7 @@ export const FarmCard = React.memo(function FarmCard({
         <View
           style={{
             borderTopWidth: StyleSheet.hairlineWidth,
-            borderColor: colorWithOpacity(colors.surface[300], 0.8),
+            borderColor: colorWithOpacity(m3.surface.s300, 0.8),
             borderStyle: 'dashed',
             marginTop: spacing[3],
           }}
@@ -440,7 +436,7 @@ export const FarmCard = React.memo(function FarmCard({
               <UiSymbol name="drop.fill" size={12} color={waterLabelColor} />
               <Text
                 style={{
-                  fontSize: 12,
+                  fontSize: fontSize.xs,
                   fontWeight: fontWeight.semibold,
                   color: waterLabelColor,
                 }}
@@ -453,11 +449,11 @@ export const FarmCard = React.memo(function FarmCard({
           {/* Est. harvest date — leaf icon + date */}
           {estimatedHarvestLabel != null && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <UiSymbol name="leaf.fill" size={11} color={colors.surface[500]} />
+              <UiSymbol name="leaf.fill" size={11} color={m3.surface.s500} />
               <Text
                 style={{
-                  fontSize: 12,
-                  color: colors.surface[500],
+                  fontSize: fontSize.xs,
+                  color: m3.surface.s500,
                 }}
               >
                 {estimatedHarvestLabel}
@@ -483,13 +479,13 @@ export const FarmCard = React.memo(function FarmCard({
                   style={{
                     width: 5,
                     height: 5,
-                    borderRadius: 3,
+                    borderRadius: radius.xs,
                     backgroundColor: m3.colorScheme.error,
                   }}
                 />
                 <Text
                   style={{
-                    fontSize: 10,
+                    fontSize: fontSize['2xs'],
                     fontWeight: fontWeight.bold,
                     textTransform: 'uppercase',
                     letterSpacing: 0.3,

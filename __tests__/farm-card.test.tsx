@@ -19,7 +19,15 @@ jest.mock('@/styles/use-theme', () => ({
     primary: { 500: '#357047' },
   }),
   useM3: () => ({
-    colorScheme: { error: '#c00', onSurface: '#111' },
+    colorScheme: { error: '#c00', success: '#4F7A5A', onSurface: '#111' },
+    surface: {
+      s100: '#fff',
+      s200: '#ddd',
+      s300: '#ccc',
+      s400: '#aaa',
+      s500: '#888',
+      s900: '#111',
+    },
     stateLayerOpacity: { pressed: 0.12 },
     typography: { labelSmall: {} },
   }),

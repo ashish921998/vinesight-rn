@@ -14,7 +14,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
-import { useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -104,7 +104,7 @@ export function ActivityLogCard({
   onEdit,
   onDelete,
 }: ActivityLogCardProps) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
   const currency = useCurrency();
 
@@ -124,9 +124,9 @@ export function ActivityLogCard({
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[3],
-    backgroundColor: colors.surface[100], // mist-1
+    backgroundColor: m3.surface.s100, // mist-1
     borderWidth: 1,
-    borderColor: colors.surface[300], // stone-3
+    borderColor: m3.surface.s300, // stone-3
     overflow: 'hidden',
   };
 
@@ -148,7 +148,7 @@ export function ActivityLogCard({
   const descriptionTextStyle: TextStyle = {
     fontSize: fontSize.sm, // 14px
     fontWeight: fontWeight.medium, // 500
-    color: colors.surface[900], // ink
+    color: m3.surface.s900, // ink
   };
 
   const metaContainerStyle: ViewStyle = {
@@ -160,19 +160,19 @@ export function ActivityLogCard({
   // Cellar Ledger: secondary text 12px/bark
   const farmTextStyle: TextStyle = {
     fontSize: fontSize.xs, // 12px
-    color: colors.surface[500], // bark
+    color: m3.surface.s500, // bark
   };
 
   const separatorTextStyle: TextStyle = {
     fontSize: fontSize.xs, // 12px
     marginHorizontal: 4,
-    color: colors.surface[400], // stone-5
+    color: m3.surface.s400, // stone-5
   };
 
   // Cellar Ledger: time 12px/stone-5
   const dateTextStyle: TextStyle = {
     fontSize: fontSize.xs, // 12px
-    color: colors.surface[400], // stone-5
+    color: m3.surface.s400, // stone-5
   };
 
   if (isInteractive) {
@@ -206,7 +206,7 @@ export function ActivityLogCard({
             <UiSymbol
               name="chevron.right"
               size={16}
-              color={colors.surface[400]} // stone-5
+              color={m3.surface.s400} // stone-5
             />
             <View
               pointerEvents="none"
@@ -214,7 +214,7 @@ export function ActivityLogCard({
                 StyleSheet.absoluteFillObject,
                 {
                   backgroundColor: pressed
-                    ? colorWithOpacity(colors.surface[900], 0.12)
+                    ? colorWithOpacity(m3.surface.s900, 0.12)
                     : 'transparent',
                 },
               ]}
@@ -259,12 +259,10 @@ export function ActivityLogCard({
                 borderRadius: borderRadius.md,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: pressed
-                  ? colorWithOpacity(colors.surface[900], 0.12)
-                  : 'transparent',
+                backgroundColor: pressed ? colorWithOpacity(m3.surface.s900, 0.12) : 'transparent',
               })}
             >
-              <UiSymbol name="pencil" size={16} color={colors.primary[500]} />
+              <UiSymbol name="pencil" size={16} color={m3.colorScheme.primary} />
             </Pressable>
           )}
           {onDelete && (
@@ -280,12 +278,10 @@ export function ActivityLogCard({
                 borderRadius: borderRadius.md,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: pressed
-                  ? colorWithOpacity(colors.surface[900], 0.12)
-                  : 'transparent',
+                backgroundColor: pressed ? colorWithOpacity(m3.surface.s900, 0.12) : 'transparent',
               })}
             >
-              <UiSymbol name="trash" size={16} color={colors.error} />
+              <UiSymbol name="trash" size={16} color={m3.colorScheme.error} />
             </Pressable>
           )}
         </View>
