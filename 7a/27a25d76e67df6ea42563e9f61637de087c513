@@ -1,0 +1,36 @@
+src/components/animated-splash.tsx
+  s_60f805d4168778::t_016ab33f5cc75e 26
+  s_60f805d4168778::t_844170791bf18e 13-14
+src/features/guided-tour/welcome-card.tsx
+  s_60f805d4168778::t_c39dca42f9ee66 15
+  s_60f805d4168778::t_3f557ff967b426 84
+src/features/guided-tour/completion-card.tsx
+  s_60f805d4168778::t_090b8203ae37d3 15
+  s_60f805d4168778::t_1015edbd2ebf1b 67
+src/features/guided-tour/coachmark.tsx
+  s_60f805d4168778::t_6c53cf21b077d3 17
+  s_60f805d4168778::t_eaf85d099e9a09 784
+  s_60f805d4168778::t_1597d1f5fe1ae4 536
+src/components/assistant/ConversationSidebar.tsx
+  s_60f805d4168778::t_17d0384fc4aa81 381
+  s_60f805d4168778::t_57b8fbd85ee9ab 32
+src/components/screens/activity-edit-form.tsx
+  s_60f805d4168778::t_d31055c3b73004 97
+  s_60f805d4168778::t_8721f4f8a7a804 23,27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "7a27a25d76e67df6ea42563e9f61637de087c513",
+  "prompts": {},
+  "sessions": {
+    "s_60f805d4168778": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "863d0dec-6ecd-4e84-9473-c0d39a6839b5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
