@@ -5,7 +5,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol } from '@/components/ui/symbol';
 import { useM3, useThemeColors } from '@/styles/use-theme';
-import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useChemicalCatalog } from '@/hooks';
 import { computeTankMixQuantities } from '@/services/phi-service';
@@ -75,7 +75,7 @@ export default function TankMixCalculatorScreen() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 22,
+                borderRadius: radius.xl,
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
@@ -100,7 +100,7 @@ export default function TankMixCalculatorScreen() {
                     style={[
                       StyleSheet.absoluteFillObject,
                       {
-                        borderRadius: 22,
+                        borderRadius: radius.xl,
                         backgroundColor: pressed
                           ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                           : 'transparent',

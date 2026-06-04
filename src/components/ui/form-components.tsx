@@ -20,7 +20,14 @@ import {
 } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import {
+  spacing,
+  borderRadius,
+  radius,
+  componentRadius,
+  fontSize,
+  fontWeight,
+} from '@/styles/theme';
 import { useIsDark, useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHaptic } from '@/utils/haptics';
@@ -95,7 +102,7 @@ export function FormModal({
     alignSelf: 'center',
     width: 48,
     height: 6,
-    borderRadius: 999,
+    borderRadius: radius.full,
     backgroundColor: colors.surface[100],
     marginBottom: 8,
   };
@@ -129,7 +136,7 @@ export function FormModal({
   const saveButtonStyle: ViewStyle = {
     paddingHorizontal: spacing[8],
     paddingVertical: spacing[3],
-    borderRadius: borderRadius.sm, // 12px radius per Cellar Ledger spec
+    borderRadius: componentRadius.button, // unified control radius — see DESIGN.md › Radius
     backgroundColor: isSaveDisabled || isLoading ? colors.surface[200] : colors.primary[500],
     minHeight: 48,
   };
@@ -315,7 +322,7 @@ export function FullScreenForm({
     alignSelf: 'center',
     width: 48,
     height: 6,
-    borderRadius: 999,
+    borderRadius: radius.full,
     backgroundColor: colors.surface[100],
     marginBottom: 8,
   };
@@ -349,7 +356,7 @@ export function FullScreenForm({
   const saveButtonStyle: ViewStyle = {
     paddingHorizontal: spacing[8],
     paddingVertical: spacing[3],
-    borderRadius: borderRadius.sm, // 12px radius per Cellar Ledger spec
+    borderRadius: componentRadius.button, // unified control radius — see DESIGN.md › Radius
     backgroundColor: isSaveDisabled || isLoading ? colors.surface[200] : colors.primary[500],
     minHeight: 48,
   };
@@ -478,7 +485,7 @@ export function SectionHeader({ title, subtitle, style }: SectionHeaderProps) {
 
   // Cellar Ledger spec: 11px/600/uppercase/stone-5
   const titleTextStyle: TextStyle = {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
     color: colors.surface[400], // stone-5
     textTransform: 'uppercase',
@@ -820,7 +827,7 @@ export function FormInput({
 
   // Cellar Ledger spec: label 12px/500/#5C584F
   const labelStyle: TextStyle = {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
     color: colors.surface[500], // #5C584F
     marginBottom: spacing[2],

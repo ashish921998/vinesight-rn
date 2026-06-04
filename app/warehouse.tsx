@@ -17,7 +17,7 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { useWarehouseItems, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import { useModalStore } from '@/stores';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatDate } from '@/i18n/format';
@@ -199,7 +199,7 @@ export default function WarehouseScreen() {
           style={{
             width: 44,
             height: 44,
-            borderRadius: 22,
+            borderRadius: radius.xl,
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
@@ -224,7 +224,7 @@ export default function WarehouseScreen() {
                 style={[
                   StyleSheet.absoluteFillObject,
                   {
-                    borderRadius: 22,
+                    borderRadius: radius.xl,
                     backgroundColor: pressed
                       ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                       : 'transparent',
@@ -344,7 +344,7 @@ export default function WarehouseScreen() {
                   style={{
                     height: 34,
                     paddingHorizontal: 14,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     borderWidth: 1,
                     borderColor: isActive ? m3.colorScheme.primary : colors.surface[300],
                     backgroundColor: isActive ? m3.colorScheme.primary : 'transparent',
@@ -355,7 +355,7 @@ export default function WarehouseScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 13,
+                      fontSize: fontSize.sm,
                       fontWeight: fontWeight.medium,
                       color: isActive ? m3.colorScheme.onPrimary : colors.surface[500],
                     }}
@@ -370,7 +370,7 @@ export default function WarehouseScreen() {
                   </Text>
                   <Text
                     style={{
-                      fontSize: 11,
+                      fontSize: fontSize.xs,
                       color: isActive
                         ? colorWithOpacity(m3.colorScheme.onPrimary, 0.7)
                         : colors.surface[400],
@@ -394,27 +394,51 @@ export default function WarehouseScreen() {
               backgroundColor: glassSurface,
               borderWidth: 1,
               borderColor: colors.surface[300],
-              borderRadius: 12,
+              borderRadius: radius.md,
               marginBottom: spacing[4],
               flexDirection: 'row',
             }}
           >
             <Text
-              style={{ fontSize: 13, color: colors.surface[500], fontWeight: fontWeight.medium }}
+              style={{
+                fontSize: fontSize.sm,
+                color: colors.surface[500],
+                fontWeight: fontWeight.medium,
+              }}
             >
               {t('warehouse.labels.itemsCount', { count: totals.count })}
             </Text>
             <View
-              style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.surface[400] }}
+              style={{
+                width: 4,
+                height: 4,
+                borderRadius: radius.xs,
+                backgroundColor: colors.surface[400],
+              }}
             />
-            <Text style={{ fontSize: 13, color: colors.warning, fontWeight: fontWeight.semibold }}>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                color: colors.warning,
+                fontWeight: fontWeight.semibold,
+              }}
+            >
               {t('warehouse.labels.lowStockCount', { count: lowStockItems.length })}
             </Text>
             <View
-              style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.surface[400] }}
+              style={{
+                width: 4,
+                height: 4,
+                borderRadius: radius.xs,
+                backgroundColor: colors.surface[400],
+              }}
             />
             <Text
-              style={{ fontSize: 13, color: colors.surface[500], fontWeight: fontWeight.medium }}
+              style={{
+                fontSize: fontSize.sm,
+                color: colors.surface[500],
+                fontWeight: fontWeight.medium,
+              }}
             >
               {t('warehouse.labels.totalValue', { value: formatCurrency(totals.value, currency) })}
             </Text>
@@ -513,7 +537,7 @@ export default function WarehouseScreen() {
                 <View
                   key={item.id}
                   style={{
-                    borderRadius: 16,
+                    borderRadius: radius.lg,
                     padding: 16,
                     marginBottom: 12,
                     backgroundColor: glassSurface,
@@ -533,7 +557,7 @@ export default function WarehouseScreen() {
                   >
                     <Text
                       style={{
-                        fontSize: 15,
+                        fontSize: fontSize.base,
                         fontWeight: fontWeight.semibold,
                         color: colors.surface[800],
                         lineHeight: 20,
@@ -547,7 +571,7 @@ export default function WarehouseScreen() {
                       style={{
                         height: 24,
                         paddingHorizontal: 10,
-                        borderRadius: 999,
+                        borderRadius: radius.full,
                         backgroundColor:
                           item.type === 'spray'
                             ? colorWithOpacity(getCategoryColors('spray'), 0.08)
@@ -568,7 +592,7 @@ export default function WarehouseScreen() {
                     >
                       <Text
                         style={{
-                          fontSize: 11,
+                          fontSize: fontSize.xs,
                           fontWeight: fontWeight.semibold,
                           color: itemColor,
                         }}
@@ -594,7 +618,7 @@ export default function WarehouseScreen() {
                     <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
                       <Text
                         style={{
-                          fontSize: 20,
+                          fontSize: fontSize.xl,
                           fontWeight: fontWeight.bold,
                           color: colors.surface[800],
                           fontVariant: ['tabular-nums'],
@@ -604,7 +628,7 @@ export default function WarehouseScreen() {
                       </Text>
                       <Text
                         style={{
-                          fontSize: 13,
+                          fontSize: fontSize.sm,
                           fontWeight: fontWeight.medium,
                           color: colors.surface[500],
                         }}
@@ -618,7 +642,7 @@ export default function WarehouseScreen() {
                         style={{
                           width: 56,
                           height: 5,
-                          borderRadius: 3,
+                          borderRadius: radius.xs,
                           backgroundColor: isDark ? '#242A24' : '#EEE7DD',
                           overflow: 'hidden',
                         }}
@@ -627,7 +651,7 @@ export default function WarehouseScreen() {
                           style={{
                             width: `${Math.min(stockPercentage, 100)}%`,
                             height: '100%',
-                            borderRadius: 3,
+                            borderRadius: radius.xs,
                             backgroundColor: stockBarColor,
                           }}
                         />
@@ -638,7 +662,7 @@ export default function WarehouseScreen() {
                           style={{
                             height: 22,
                             paddingHorizontal: 8,
-                            borderRadius: 999,
+                            borderRadius: radius.full,
                             backgroundColor: colorWithOpacity(colors.warning, 0.12),
                             borderWidth: 1,
                             borderColor: colorWithOpacity(colors.warning, 0.25),
@@ -648,7 +672,7 @@ export default function WarehouseScreen() {
                         >
                           <Text
                             style={{
-                              fontSize: 11,
+                              fontSize: fontSize.xs,
                               fontWeight: fontWeight.semibold,
                               color: colors.warning,
                             }}
@@ -674,7 +698,7 @@ export default function WarehouseScreen() {
                   >
                     <Text
                       style={{
-                        fontSize: 12,
+                        fontSize: fontSize.xs,
                         color: colors.surface[400],
                         fontWeight: fontWeight.normal,
                       }}
@@ -691,7 +715,7 @@ export default function WarehouseScreen() {
                     </Text>
                     <Text
                       style={{
-                        fontSize: 12,
+                        fontSize: fontSize.xs,
                         color: colors.surface[500],
                         fontWeight: fontWeight.medium,
                         fontVariant: ['tabular-nums'],

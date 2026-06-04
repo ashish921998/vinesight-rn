@@ -32,9 +32,17 @@ import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { triggerHapticSuccess } from '@/utils/haptics';
+import { toast } from '@/components/ui/toast';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
-import { androidTextPadding, spacing, borderRadius, fontWeight } from '@/styles/theme';
+import {
+  androidTextPadding,
+  borderRadius,
+  componentRadius,
+  fontSize,
+  fontWeight,
+  radius,
+  spacing,
+} from '@/styles/theme';
 import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
 import {
   PendingLogs,
@@ -1369,7 +1377,7 @@ export function EntryForm({
       }
 
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-      triggerHapticSuccess();
+      toast.success(t('entryForm.logSaved'));
       onLogSaveSuccess?.();
 
       if (taskCompletionUpdateFailed) {
@@ -1637,6 +1645,7 @@ export function EntryForm({
     }
 
     await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    toast.success(t('entryForm.taskSaved'));
     onTaskSaveSuccess?.(resolvedFarmId);
     onClose();
   };
@@ -1720,13 +1729,17 @@ export function EntryForm({
                 <View style={{ flex: 1 }}>
                   <Text
                     selectable
-                    style={{ fontSize: 18, fontWeight: '600', color: m3.colorScheme.onSurface }}
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: '600',
+                      color: m3.colorScheme.onSurface,
+                    }}
                   >
                     {logType ? t(logType.labelKey) : t('entryForm.addLog')}
                   </Text>
                   <Text
                     selectable
-                    style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
+                    style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
                     numberOfLines={1}
                   >
                     {activeFarm?.name}
@@ -1765,7 +1778,7 @@ export function EntryForm({
                     marginTop: 16,
                     marginBottom: 4,
                     padding: 12,
-                    borderRadius: 12,
+                    borderRadius: radius.md,
                     backgroundColor: colorWithOpacity(m3.colorScheme.secondaryContainer, 0.5),
                   }}
                 >
@@ -1826,7 +1839,7 @@ export function EntryForm({
             style={{
               marginBottom: 10,
               padding: 12,
-              borderRadius: 12,
+              borderRadius: radius.md,
               backgroundColor: colorWithOpacity(m3.colorScheme.secondaryContainer, 0.5),
             }}
           >
@@ -1893,7 +1906,7 @@ export function EntryForm({
           style={[
             {
               paddingVertical: 14,
-              borderRadius: 12,
+              borderRadius: radius.md,
               alignItems: 'center',
               flexDirection: 'row',
               justifyContent: 'center',
@@ -1917,7 +1930,7 @@ export function EntryForm({
           <Text
             selectable
             style={[
-              { marginLeft: 8, fontWeight: '600', fontSize: 16 },
+              { marginLeft: 8, fontWeight: '600', fontSize: fontSize.base },
               {
                 color: canSubmitLog
                   ? m3.colorScheme.onPrimary
@@ -1938,7 +1951,7 @@ export function EntryForm({
         <View
           style={{
             backgroundColor: colors.surface[100],
-            borderRadius: 18,
+            borderRadius: radius.lg,
             padding: 16,
             marginBottom: 16,
             borderWidth: 1,
@@ -1948,7 +1961,7 @@ export function EntryForm({
           <Text
             selectable
             style={{
-              fontSize: 14,
+              fontSize: fontSize.sm,
               fontWeight: '500',
               color: m3.colorScheme.onSurfaceVariant,
               marginBottom: 8,
@@ -1965,7 +1978,7 @@ export function EntryForm({
             }}
             style={{
               backgroundColor: colors.surface[50],
-              borderRadius: 12,
+              borderRadius: radius.md,
               paddingHorizontal: 16,
               paddingVertical: 12,
               flexDirection: 'row',
@@ -1980,7 +1993,7 @@ export function EntryForm({
               <AppIcon name="leaf" size={18} color={m3.colorScheme.primary} />
               <Text
                 selectable
-                style={{ fontSize: 16, color: m3.colorScheme.onSurface, marginLeft: 8 }}
+                style={{ fontSize: fontSize.base, color: m3.colorScheme.onSurface, marginLeft: 8 }}
               >
                 {isAllFarmsSelected
                   ? t('entryForm.allFarms')
@@ -1997,7 +2010,7 @@ export function EntryForm({
             <View
               style={{
                 backgroundColor: colors.surface[100],
-                borderRadius: 12,
+                borderRadius: radius.md,
                 marginTop: 8,
                 borderWidth: 1,
                 borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
@@ -2072,7 +2085,7 @@ export function EntryForm({
       <View
         style={{
           backgroundColor: colors.surface[100],
-          borderRadius: 16,
+          borderRadius: radius.lg,
           padding: 14,
           marginBottom: 16,
           borderWidth: 1,
@@ -2091,7 +2104,7 @@ export function EntryForm({
             <Text
               selectable
               style={{
-                fontSize: 11,
+                fontSize: fontSize.xs,
                 fontWeight: '700',
                 letterSpacing: 0.6,
                 textTransform: 'uppercase',
@@ -2104,7 +2117,7 @@ export function EntryForm({
             <Text
               selectable
               style={{
-                fontSize: 20,
+                fontSize: fontSize.xl,
                 fontWeight: '700',
                 color: m3.colorScheme.onSurface,
               }}
@@ -2121,7 +2134,7 @@ export function EntryForm({
                 backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                 paddingHorizontal: 12,
                 paddingVertical: 8,
-                borderRadius: 999,
+                borderRadius: radius.full,
               }}
             >
               <AppIcon name="document-text" size={14} color={m3.colorScheme.primary} />
@@ -2129,7 +2142,7 @@ export function EntryForm({
                 selectable
                 style={{
                   marginLeft: 6,
-                  fontSize: 12,
+                  fontSize: fontSize.xs,
                   fontWeight: '700',
                   color: m3.colorScheme.primary,
                 }}
@@ -2148,7 +2161,7 @@ export function EntryForm({
             backgroundColor: colors.surface[50],
             paddingHorizontal: 14,
             paddingVertical: 12,
-            borderRadius: 12,
+            borderRadius: radius.md,
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
           }}
@@ -2159,7 +2172,7 @@ export function EntryForm({
               selectable
               style={{
                 marginLeft: 8,
-                fontSize: 15,
+                fontSize: fontSize.base,
                 fontWeight: '600',
                 color: m3.colorScheme.onSurface,
               }}
@@ -2204,7 +2217,7 @@ export function EntryForm({
             borderWidth: 1,
             borderStyle: 'dashed',
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-            borderRadius: 14,
+            borderRadius: radius.lg,
             paddingHorizontal: 16,
             paddingVertical: 18,
             marginBottom: 16,
@@ -2215,7 +2228,7 @@ export function EntryForm({
           <Text
             selectable
             style={{
-              fontSize: 13,
+              fontSize: fontSize.sm,
               fontWeight: '700',
               color: m3.colorScheme.onSurface,
               textAlign: 'center',
@@ -2227,7 +2240,7 @@ export function EntryForm({
             selectable
             style={{
               marginTop: 4,
-              fontSize: 12,
+              fontSize: fontSize.xs,
               lineHeight: 17,
               color: m3.colorScheme.onSurfaceVariant,
               textAlign: 'center',
@@ -2254,7 +2267,7 @@ export function EntryForm({
           onPress={() => setShowTemplates(!showTemplates)}
           style={{
             backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
-            borderRadius: 12,
+            borderRadius: radius.md,
             padding: 16,
             marginBottom: 16,
             flexDirection: 'row',
@@ -2280,7 +2293,7 @@ export function EntryForm({
         <View
           style={{
             backgroundColor: colors.surface[100],
-            borderRadius: 12,
+            borderRadius: radius.md,
             marginBottom: 16,
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
@@ -2306,7 +2319,7 @@ export function EntryForm({
                     style={{
                       width: 32,
                       height: 32,
-                      borderRadius: 10,
+                      borderRadius: radius.md,
                       alignItems: 'center',
                       justifyContent: 'center',
                       backgroundColor: `${typeInfo.color}20`,
@@ -2317,13 +2330,17 @@ export function EntryForm({
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text
                       selectable
-                      style={{ fontSize: 14, fontWeight: '500', color: m3.colorScheme.onSurface }}
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: '500',
+                        color: m3.colorScheme.onSurface,
+                      }}
                     >
                       {template.title}
                     </Text>
                     <Text
                       selectable
-                      style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
+                      style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
                       numberOfLines={1}
                     >
                       {template.description}
@@ -2341,7 +2358,7 @@ export function EntryForm({
           <Text
             selectable
             style={{
-              fontSize: 14,
+              fontSize: fontSize.sm,
               fontWeight: '500',
               color: m3.colorScheme.onSurfaceVariant,
               marginBottom: 8,
@@ -2353,7 +2370,7 @@ export function EntryForm({
             onPress={() => setShowTaskFarmPicker(!showTaskFarmPicker)}
             style={{
               backgroundColor: colors.surface[100],
-              borderRadius: 12,
+              borderRadius: radius.md,
               paddingHorizontal: 16,
               paddingVertical: 12,
               flexDirection: 'row',
@@ -2367,7 +2384,7 @@ export function EntryForm({
               <AppIcon name="leaf" size={20} color={m3.colorScheme.primary} />
               <Text
                 selectable
-                style={{ fontSize: 16, color: m3.colorScheme.onSurface, marginLeft: 8 }}
+                style={{ fontSize: fontSize.base, color: m3.colorScheme.onSurface, marginLeft: 8 }}
               >
                 {selectedTaskFarm?.name || t('entryForm.selectFarm')}
               </Text>
@@ -2382,7 +2399,7 @@ export function EntryForm({
             <View
               style={{
                 backgroundColor: colors.surface[100],
-                borderRadius: 12,
+                borderRadius: radius.md,
                 marginTop: 8,
                 borderWidth: 1,
                 borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
@@ -2429,7 +2446,7 @@ export function EntryForm({
         <Text
           selectable
           style={{
-            fontSize: 14,
+            fontSize: fontSize.sm,
             fontWeight: '500',
             color: m3.colorScheme.onSurfaceVariant,
             marginBottom: 8,
@@ -2443,10 +2460,10 @@ export function EntryForm({
           placeholder={t('entryForm.taskForm.titlePlaceholder')}
           style={{
             backgroundColor: colors.surface[100],
-            borderRadius: 12,
+            borderRadius: componentRadius.input,
             paddingHorizontal: 16,
             paddingVertical: 12,
-            fontSize: 16,
+            fontSize: fontSize.base,
             color: m3.colorScheme.onSurface,
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
@@ -2459,7 +2476,7 @@ export function EntryForm({
         <Text
           selectable
           style={{
-            fontSize: 14,
+            fontSize: fontSize.sm,
             fontWeight: '500',
             color: m3.colorScheme.onSurfaceVariant,
             marginBottom: 8,
@@ -2475,10 +2492,10 @@ export function EntryForm({
           numberOfLines={3}
           style={{
             backgroundColor: colors.surface[100],
-            borderRadius: 12,
+            borderRadius: componentRadius.input,
             paddingHorizontal: 16,
             paddingVertical: 12,
-            fontSize: 16,
+            fontSize: fontSize.base,
             color: m3.colorScheme.onSurface,
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
@@ -2494,7 +2511,7 @@ export function EntryForm({
           <Text
             selectable
             style={{
-              fontSize: 14,
+              fontSize: fontSize.sm,
               fontWeight: '500',
               color: m3.colorScheme.onSurfaceVariant,
               marginBottom: 8,
@@ -2506,7 +2523,7 @@ export function EntryForm({
             onPress={() => setShowTypePicker(true)}
             style={{
               backgroundColor: colors.surface[100],
-              borderRadius: 12,
+              borderRadius: radius.md,
               paddingHorizontal: 16,
               flexDirection: 'row',
               alignItems: 'center',
@@ -2524,7 +2541,7 @@ export function EntryForm({
               />
               <Text
                 selectable
-                style={{ fontSize: 14, color: m3.colorScheme.onSurface, marginLeft: 8 }}
+                style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface, marginLeft: 8 }}
               >
                 {t(TASK_TYPE_INFO[type].labelKey)}
               </Text>
@@ -2541,7 +2558,7 @@ export function EntryForm({
           <Text
             selectable
             style={{
-              fontSize: 14,
+              fontSize: fontSize.sm,
               fontWeight: '500',
               color: m3.colorScheme.onSurfaceVariant,
               marginBottom: 8,
@@ -2553,7 +2570,7 @@ export function EntryForm({
             onPress={() => setShowPriorityPicker(true)}
             style={{
               backgroundColor: colors.surface[100],
-              borderRadius: 12,
+              borderRadius: radius.md,
               paddingHorizontal: 16,
               flexDirection: 'row',
               alignItems: 'center',
@@ -2565,14 +2582,14 @@ export function EntryForm({
           >
             <View
               style={[
-                { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+                { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.sm },
                 { backgroundColor: PRIORITY_INFO[priority].bgColor },
               ]}
             >
               <Text
                 selectable
                 style={[
-                  { fontSize: 14, fontWeight: '500' },
+                  { fontSize: fontSize.sm, fontWeight: '500' },
                   { color: PRIORITY_INFO[priority].color },
                 ]}
               >
@@ -2592,7 +2609,7 @@ export function EntryForm({
         <View
           style={{
             backgroundColor: colors.surface[100],
-            borderRadius: 12,
+            borderRadius: radius.md,
             padding: 12,
             marginBottom: 16,
             borderWidth: 1,
@@ -2602,7 +2619,7 @@ export function EntryForm({
           <Text
             selectable
             style={{
-              fontSize: 14,
+              fontSize: fontSize.sm,
               fontWeight: '600',
               color: m3.colorScheme.onSurface,
               marginBottom: 10,
@@ -2627,14 +2644,16 @@ export function EntryForm({
                     marginRight: 8,
                     paddingHorizontal: 10,
                     paddingVertical: 6,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     backgroundColor: colors.surface[50],
                     borderWidth: 1,
                     borderColor: colors.surface[200],
                   }}
                 >
-                  <Text style={{ fontSize: 12, color: m3.colorScheme.onSurface }}>{item.name}</Text>
-                  <Text style={{ fontSize: 11, color: m3.colorScheme.onSurfaceVariant }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurface }}>
+                    {item.name}
+                  </Text>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
                     {item.quantity ? `${item.quantity} ` : ''}
                     {item.unit ?? (type === 'spray' ? 'gm/L' : 'kg')}
                   </Text>
@@ -2651,7 +2670,7 @@ export function EntryForm({
               style={{
                 flex: 2,
                 backgroundColor: colors.surface[50],
-                borderRadius: 10,
+                borderRadius: componentRadius.input,
                 paddingHorizontal: 12,
                 paddingVertical: 10,
                 borderWidth: 1,
@@ -2668,7 +2687,7 @@ export function EntryForm({
               style={{
                 flex: 1,
                 backgroundColor: colors.surface[50],
-                borderRadius: 10,
+                borderRadius: componentRadius.input,
                 paddingHorizontal: 12,
                 paddingVertical: 10,
                 borderWidth: 1,
@@ -2684,7 +2703,7 @@ export function EntryForm({
               style={{
                 flex: 1,
                 backgroundColor: colors.surface[50],
-                borderRadius: 10,
+                borderRadius: componentRadius.input,
                 paddingHorizontal: 12,
                 paddingVertical: 10,
                 borderWidth: 1,
@@ -2700,7 +2719,7 @@ export function EntryForm({
                 alignItems: 'center',
                 justifyContent: 'center',
                 paddingHorizontal: 10,
-                borderRadius: 10,
+                borderRadius: radius.md,
                 backgroundColor: plannedItemName.trim()
                   ? m3.colorScheme.primary
                   : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
@@ -2728,7 +2747,7 @@ export function EntryForm({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     backgroundColor: colors.surface[50],
-                    borderRadius: 10,
+                    borderRadius: radius.md,
                     borderWidth: 1,
                     borderColor: colors.surface[200],
                     paddingHorizontal: 10,
@@ -2736,10 +2755,10 @@ export function EntryForm({
                   }}
                 >
                   <View>
-                    <Text style={{ fontSize: 13, color: m3.colorScheme.onSurface }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
                       {item.name}
                     </Text>
-                    <Text style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}>
+                    <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
                       {item.quantity ? `${item.quantity} ` : ''}
                       {item.unit ?? ''}
                     </Text>
@@ -2762,7 +2781,7 @@ export function EntryForm({
         <Text
           selectable
           style={{
-            fontSize: 14,
+            fontSize: fontSize.sm,
             fontWeight: '500',
             color: m3.colorScheme.onSurfaceVariant,
             marginBottom: 8,
@@ -2774,7 +2793,7 @@ export function EntryForm({
           onPress={() => setShowDueDatePicker(true)}
           style={{
             backgroundColor: colors.surface[100],
-            borderRadius: 12,
+            borderRadius: radius.md,
             paddingHorizontal: 16,
             paddingVertical: 12,
             flexDirection: 'row',
@@ -2797,7 +2816,7 @@ export function EntryForm({
             <Text
               selectable
               style={[
-                { marginLeft: 8, fontSize: 16 },
+                { marginLeft: 8, fontSize: fontSize.base },
                 {
                   color: dueDate
                     ? m3.colorScheme.onSurface
@@ -2860,7 +2879,11 @@ export function EntryForm({
                 >
                   <Text
                     selectable
-                    style={{ fontSize: 18, fontWeight: '700', color: m3.colorScheme.onSurface }}
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: '700',
+                      color: m3.colorScheme.onSurface,
+                    }}
                   >
                     {t('entryForm.taskForm.selectDueDateTitle')}
                   </Text>
@@ -2889,7 +2912,12 @@ export function EntryForm({
                 <Pressable
                   onPress={() => setShowDueDatePicker(false)}
                   style={[
-                    { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+                    {
+                      marginTop: 16,
+                      paddingVertical: 12,
+                      borderRadius: componentRadius.button,
+                      alignItems: 'center',
+                    },
                     { backgroundColor: m3.colorScheme.primary },
                   ]}
                 >
@@ -2970,7 +2998,7 @@ export function EntryForm({
                 style={{
                   width: 42,
                   height: 5,
-                  borderRadius: 999,
+                  borderRadius: radius.full,
                   backgroundColor: colors.surface[50],
                 }}
               />
@@ -2981,7 +3009,7 @@ export function EntryForm({
               <Text
                 selectable
                 style={{
-                  fontSize: 22,
+                  fontSize: fontSize['2xl'],
                   lineHeight: 28,
                   fontWeight: '700',
                   color: m3.colorScheme.onSurface,
@@ -3027,7 +3055,7 @@ export function EntryForm({
             <Text
               selectable
               style={{
-                fontSize: 13,
+                fontSize: fontSize.sm,
                 lineHeight: 18,
                 color: m3.colorScheme.onSurfaceVariant,
                 textAlign: 'center',
@@ -3094,7 +3122,11 @@ export function EntryForm({
               >
                 <Text
                   selectable
-                  style={{ fontSize: 18, fontWeight: '700', color: m3.colorScheme.onSurface }}
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: '700',
+                    color: m3.colorScheme.onSurface,
+                  }}
                 >
                   {t('entryForm.selectDate')}
                 </Text>
@@ -3117,7 +3149,12 @@ export function EntryForm({
               <Pressable
                 onPress={() => setShowDatePicker(false)}
                 style={[
-                  { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+                  {
+                    marginTop: 16,
+                    paddingVertical: 12,
+                    borderRadius: componentRadius.button,
+                    alignItems: 'center',
+                  },
                   { backgroundColor: m3.colorScheme.primary },
                 ]}
               >
@@ -3158,7 +3195,11 @@ export function EntryForm({
               >
                 <Text
                   selectable
-                  style={{ fontSize: 18, fontWeight: '700', color: m3.colorScheme.onSurface }}
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: '700',
+                    color: m3.colorScheme.onSurface,
+                  }}
                 >
                   {t('entryForm.selectTaskType')}
                 </Text>
@@ -3245,7 +3286,11 @@ export function EntryForm({
               >
                 <Text
                   selectable
-                  style={{ fontSize: 18, fontWeight: '700', color: m3.colorScheme.onSurface }}
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: '700',
+                    color: m3.colorScheme.onSurface,
+                  }}
                 >
                   {t('entryForm.selectPriority')}
                 </Text>
@@ -3281,7 +3326,7 @@ export function EntryForm({
                       {
                         width: 28,
                         height: 28,
-                        borderRadius: 6,
+                        borderRadius: radius.sm,
                         alignItems: 'center',
                         justifyContent: 'center',
                       },
@@ -3291,7 +3336,7 @@ export function EntryForm({
                     <Text
                       selectable
                       style={[
-                        { fontSize: 12, fontWeight: '700' },
+                        { fontSize: fontSize.xs, fontWeight: '700' },
                         { color: PRIORITY_INFO[p].color },
                       ]}
                     >
@@ -3454,7 +3499,7 @@ export function EntryForm({
                               marginLeft: 8,
                               minWidth: 24,
                               height: 22,
-                              borderRadius: 999,
+                              borderRadius: radius.full,
                               paddingHorizontal: 7,
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -3463,7 +3508,7 @@ export function EntryForm({
                           >
                             <Text
                               style={{
-                                fontSize: 11,
+                                fontSize: fontSize.xs,
                                 fontWeight: '700',
                                 color: m3.colorScheme.onPrimary,
                               }}
@@ -3485,7 +3530,7 @@ export function EntryForm({
                 style={{
                   flex: 1,
                   paddingVertical: 14,
-                  borderRadius: 12,
+                  borderRadius: radius.md,
                   borderWidth: 1,
                   borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                   alignItems: 'center',
@@ -3505,7 +3550,7 @@ export function EntryForm({
                   {
                     flex: 1,
                     paddingVertical: 14,
-                    borderRadius: 12,
+                    borderRadius: radius.md,
                     alignItems: 'center',
                     flexDirection: 'row',
                     justifyContent: 'center',

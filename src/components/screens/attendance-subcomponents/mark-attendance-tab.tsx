@@ -22,7 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
-import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTabBarInset, isAndroid, isIOS } from '@/hooks';
@@ -1120,7 +1120,7 @@ export function MarkAttendanceTab({
                                 bottom: 4,
                                 width: 5,
                                 height: 5,
-                                borderRadius: 3,
+                                borderRadius: radius.xs,
                                 backgroundColor: m3.colorScheme.primary,
                               }}
                             />
@@ -1328,7 +1328,7 @@ export function MarkAttendanceTab({
               style={{
                 width: 6,
                 height: 6,
-                borderRadius: 3,
+                borderRadius: radius.xs,
                 backgroundColor: m3.colorScheme.warning,
               }}
             />

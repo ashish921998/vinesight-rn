@@ -3,7 +3,7 @@ import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useM3 } from '@/styles/use-theme';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 
@@ -192,7 +192,7 @@ export function WorkersFabSheet({
               style={{
                 width: 36,
                 height: 4,
-                borderRadius: 2,
+                borderRadius: radius.xs,
                 backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.25),
               }}
             />

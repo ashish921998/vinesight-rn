@@ -60,7 +60,7 @@ const ToolCard: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onP
           <Text
             style={{
               color: m3.colorScheme.onSurface,
-              fontSize: 15,
+              fontSize: fontSize.base,
               fontWeight: fontWeight.semibold,
               marginBottom: 2,
             }}
@@ -71,7 +71,7 @@ const ToolCard: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onP
           <Text
             style={{
               color: colors.surface[500],
-              fontSize: 13,
+              fontSize: fontSize.sm,
               lineHeight: 18,
             }}
             numberOfLines={2}
@@ -82,7 +82,7 @@ const ToolCard: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onP
             <Text
               style={{
                 color: colors.surface[500],
-                fontSize: 10,
+                fontSize: fontSize['2xs'],
                 fontWeight: fontWeight.semibold,
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,

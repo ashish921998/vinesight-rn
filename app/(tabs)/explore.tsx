@@ -5,7 +5,7 @@ import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
 import {
   useFarms,
   useWarehouseItems,
@@ -365,7 +365,7 @@ export default function ExploreScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               backgroundColor: colors.surface[50],
-              borderRadius: 18,
+              borderRadius: radius.lg,
               padding: 2,
               height: 36,
             }}
@@ -390,7 +390,7 @@ export default function ExploreScreen() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 6,
-                      borderRadius: 16,
+                      borderRadius: radius.lg,
                       height: 32,
                       paddingHorizontal: spacing[2],
                       backgroundColor: isSelected ? m3.colorScheme.primary : 'transparent',
@@ -408,7 +408,7 @@ export default function ExploreScreen() {
                     <Text
                       numberOfLines={1}
                       style={{
-                        fontSize: 13,
+                        fontSize: fontSize.sm,
                         fontWeight: fontWeight.semibold,
                         color: isSelected
                           ? m3.colorScheme.onPrimary
@@ -423,7 +423,7 @@ export default function ExploreScreen() {
                           minWidth: 16,
                           height: 16,
                           paddingHorizontal: 4,
-                          borderRadius: 8,
+                          borderRadius: radius.sm,
                           backgroundColor: '#D97706',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -432,7 +432,7 @@ export default function ExploreScreen() {
                         <Text
                           style={{
                             color: '#fff',
-                            fontSize: 10,
+                            fontSize: fontSize['2xs'],
                             fontWeight: fontWeight.bold,
                             fontVariant: ['tabular-nums'],
                           }}
@@ -457,7 +457,7 @@ export default function ExploreScreen() {
             style={{
               width: 36,
               height: 36,
-              borderRadius: 18,
+              borderRadius: radius.lg,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: isSearchExpanded

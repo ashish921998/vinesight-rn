@@ -21,10 +21,10 @@ import { useTranslation } from 'react-i18next';
 import Animated, { FadeInUp, Layout } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol } from '@/components/ui/symbol';
-import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useFarms, useProfile } from '@/hooks';
 import {
-  useReportData,
+  useReportComparison,
   useReportExport,
   getDefaultDateRange,
   clampDateRangeToSeasonBounds,
@@ -123,7 +123,12 @@ export default function ReportsScreen() {
     [dateRange, selectedFarmId, selectedSeasonId],
   );
 
-  const { preview, isLoading: dataLoading, seasons } = useReportData(reportFilters);
+  const {
+    preview,
+    isLoading: dataLoading,
+    seasons,
+    comparison,
+  } = useReportComparison(reportFilters);
   const { isExporting, exportReport, downloadReport } = useReportExport();
 
   React.useEffect(() => {
@@ -401,7 +406,7 @@ export default function ReportsScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -426,7 +431,7 @@ export default function ReportsScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -545,6 +550,7 @@ export default function ReportsScreen() {
                   preview={preview}
                   reportType={reportType}
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
+                  comparison={comparison}
                 />
 
                 <ReportDocumentBody
@@ -653,7 +659,7 @@ export default function ReportsScreen() {
                 style={{
                   color: m3.colorScheme.onSurface,
                   fontWeight: '600',
-                  fontSize: 17,
+                  fontSize: fontSize.lg,
                 }}
               >
                 {showFromPicker ? t('reports.selectFromDate') : t('reports.selectToDate')}

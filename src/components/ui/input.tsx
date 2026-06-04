@@ -9,7 +9,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, componentRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
 
@@ -67,7 +67,7 @@ export function Input({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing[4],
-    borderRadius: borderRadius.xl,
+    borderRadius: componentRadius.input,
     borderWidth: isFocused ? 2 : 1,
     borderColor: getBorderColor(),
     backgroundColor: getBackgroundColor(),

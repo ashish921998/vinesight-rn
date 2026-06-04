@@ -30,7 +30,7 @@ import {
   getParameterUnit,
 } from '../src/hooks/use-lab-tests';
 import { SoilTestRecord, PetioleTestRecord } from '../src/types/database';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getParamOption, getParamStatus, selectDisplayParams } from '@/utils/lab-test-utils';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -176,7 +176,7 @@ export default function LabTestsScreen() {
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 20,
+                borderRadius: radius.xl,
                 backgroundColor: colorWithOpacity(accentColor, 0.12),
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -187,7 +187,7 @@ export default function LabTestsScreen() {
             <View style={{ marginLeft: spacing[3] }}>
               <Text
                 style={{
-                  fontSize: 11,
+                  fontSize: fontSize.xs,
                   fontWeight: '700',
                   color: accentColor,
                   textTransform: 'uppercase',
@@ -201,7 +201,7 @@ export default function LabTestsScreen() {
               </Text>
               <Text
                 style={{
-                  fontSize: 15,
+                  fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
                   color: m3.colorScheme.onSurface,
                 }}
@@ -290,14 +290,14 @@ export default function LabTestsScreen() {
                         style={{
                           width: 8,
                           height: 8,
-                          borderRadius: 4,
+                          borderRadius: radius.xs,
                           backgroundColor: colorWithOpacity(statusColor, 0.78),
                           marginRight: spacing[1],
                         }}
                       />
                       <Text
                         style={{
-                          fontSize: 12,
+                          fontSize: fontSize.xs,
                           fontWeight: '700',
                           color: m3.colorScheme.onSurface,
                         }}
@@ -340,7 +340,7 @@ export default function LabTestsScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 12,
+                      fontSize: fontSize.xs,
                       fontWeight: '700',
                       color: m3.colorScheme.onSurfaceVariant,
                     }}
@@ -357,7 +357,7 @@ export default function LabTestsScreen() {
         {test.notes && (
           <Text
             style={{
-              fontSize: 12,
+              fontSize: fontSize.xs,
               color: m3.colorScheme.onSurfaceVariant,
               marginTop: 4,
             }}
@@ -514,7 +514,7 @@ export default function LabTestsScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -540,7 +540,7 @@ export default function LabTestsScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',

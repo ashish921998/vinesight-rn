@@ -1,4 +1,5 @@
 import { useM3, useThemeColors } from '@/styles/use-theme';
+import { fontSize, radius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { View, Text, Pressable } from 'react-native';
@@ -24,7 +25,7 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
       <View
         style={{
           backgroundColor: colors.surface[50],
-          borderRadius: 999,
+          borderRadius: radius.full,
           padding: 5,
           flexDirection: 'row',
           borderWidth: 1,
@@ -43,14 +44,14 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
               accessibilityState={{ selected: isActive }}
               accessibilityLabel={`${label} tab${isActive ? ', selected' : ''}`}
               style={[
-                { flex: 1, borderRadius: 999, overflow: 'hidden' },
+                { flex: 1, borderRadius: radius.full, overflow: 'hidden' },
                 { marginHorizontal: 1.5 },
               ]}
             >
               <View
                 style={{
                   width: '100%',
-                  borderRadius: 999,
+                  borderRadius: radius.full,
                   paddingVertical: 12,
                   paddingHorizontal: 12,
                   flexDirection: 'row',
@@ -72,7 +73,7 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
                 />
                 <Text
                   style={[
-                    { marginLeft: 8, fontSize: 14, fontWeight: '700' },
+                    { marginLeft: 8, fontSize: fontSize.sm, fontWeight: '700' },
                     {
                       color: isActive ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant,
                     },

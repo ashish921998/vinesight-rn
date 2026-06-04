@@ -20,7 +20,7 @@ import { WorkerSettlementModal } from '@/components/modals/worker-settlement-mod
 import { Button, SegmentedControl } from '@/components/ui';
 import type { Worker, WorkerAttendance, WorkerTransaction } from '@/types';
 import { WorkerCard } from '@/components/cards';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
@@ -204,7 +204,7 @@ export default function WorkersScreen() {
             backgroundColor: colors.surface[100],
             borderWidth: 1,
             borderColor: colors.surface[300],
-            borderRadius: 14,
+            borderRadius: radius.lg,
             padding: 12,
             flexDirection: 'row',
             justifyContent: 'space-between',
@@ -215,7 +215,7 @@ export default function WorkersScreen() {
           <View>
             <Text
               style={{
-                fontSize: 11,
+                fontSize: fontSize.xs,
                 fontWeight: '600',
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
@@ -227,7 +227,7 @@ export default function WorkersScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
               <Text
                 style={{
-                  fontSize: 22,
+                  fontSize: fontSize['2xl'],
                   fontWeight: '700',
                   color: colors.surface[900],
                   fontVariant: ['tabular-nums'],
@@ -235,11 +235,11 @@ export default function WorkersScreen() {
               >
                 ₹{periodSummary.totalPending.toLocaleString('en-IN')}
               </Text>
-              <Text style={{ fontSize: 12, color: colors.surface[500] }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                 {t('workers.period.pendingAcrossTeam', { defaultValue: 'pending across team' })}
               </Text>
             </View>
-            <Text style={{ fontSize: 12, color: colors.surface[500], marginTop: 4 }}>
+            <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: 4 }}>
               {periodSummary.totalDays} {t('workers.period.days', { defaultValue: 'days' })} ·{' '}
               {activeWorkers.length} {t('workers.period.workers', { defaultValue: 'workers' })}
             </Text>
@@ -249,7 +249,7 @@ export default function WorkersScreen() {
             style={({ pressed }) => ({
               height: 38,
               paddingHorizontal: 14,
-              borderRadius: 10,
+              borderRadius: radius.md,
               backgroundColor: colorWithOpacity(m3.colorScheme.primary, pressed ? 0.9 : 1),
               alignItems: 'center',
               justifyContent: 'center',
@@ -261,7 +261,7 @@ export default function WorkersScreen() {
           >
             <Text
               style={{
-                fontSize: 13,
+                fontSize: fontSize.sm,
                 fontWeight: '600',
                 color: m3.colorScheme.onPrimary,
               }}

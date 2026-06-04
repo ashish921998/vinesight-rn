@@ -17,7 +17,7 @@ import { useFertigationRecords } from '@/hooks';
 import ParameterSelector from '@/components/screens/parameter-selector';
 import TrendsTable from '@/components/screens/trends-table';
 import TrendsChart from '@/components/screens/trends-chart';
-import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { aggregateNutrientsBetweenPetioleTests } from '@/services/nutrient-flow-service';
@@ -163,7 +163,7 @@ export default function PetioleTrendsScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -189,7 +189,7 @@ export default function PetioleTrendsScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -444,7 +444,9 @@ export default function PetioleTrendsScreen() {
                             month: 'short',
                           })}
                         </Text>
-                        <Text style={{ fontSize: 11, color: m3.colorScheme.onSurfaceVariant }}>
+                        <Text
+                          style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
+                        >
                           {t('trends.nutrientFlow.coverage', {
                             value: interval.coveragePercent.toFixed(0),
                           })}

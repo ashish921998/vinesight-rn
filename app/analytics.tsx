@@ -5,7 +5,7 @@ import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useAnalytics } from '../src/hooks/use-analytics';
 import { TimeRange } from '../src/types/analytics';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
@@ -33,7 +33,7 @@ const CATEGORY_COLORS = {
 
 // Section header style - 11px/600/uppercase/stone-5
 const SECTION_HEADER_STYLE = {
-  fontSize: 11,
+  fontSize: fontSize.xs,
   fontWeight: '600' as const,
   textTransform: 'uppercase' as const,
   letterSpacing: 0.8,
@@ -79,7 +79,7 @@ export default function AnalyticsScreen() {
           style={{
             width: 44,
             height: 44,
-            borderRadius: 22,
+            borderRadius: radius.xl,
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
@@ -104,7 +104,7 @@ export default function AnalyticsScreen() {
                 style={[
                   StyleSheet.absoluteFillObject,
                   {
-                    borderRadius: 22,
+                    borderRadius: radius.xl,
                     backgroundColor: pressed
                       ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                       : 'transparent',
@@ -215,7 +215,7 @@ export default function AnalyticsScreen() {
                   style={{
                     paddingHorizontal: 14,
                     paddingVertical: 6,
-                    borderRadius: 999, // Pill shape per wireframe
+                    borderRadius: radius.full, // Pill shape per wireframe
                     backgroundColor: isActive ? m3.colorScheme.primary : colors.surface[100],
                     borderWidth: isActive ? 0 : 1,
                     borderColor: colors.surface[300],
@@ -223,7 +223,7 @@ export default function AnalyticsScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 13,
+                      fontSize: fontSize.sm,
                       fontWeight: fontWeight.medium,
                       color: isActive ? '#FFFFFF' : colors.surface[500],
                     }}
@@ -247,17 +247,23 @@ export default function AnalyticsScreen() {
                 backgroundColor: colors.surface[100],
                 borderWidth: 1,
                 borderColor: colors.surface[300],
-                borderRadius: 12,
+                borderRadius: radius.md,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 minWidth: 130,
               }}
             >
-              <Text style={{ fontSize: 12, color: colors.surface[500], marginBottom: 4 }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginBottom: 4 }}>
                 {t('analytics.labels.totalExpenses')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
+                <Text
+                  style={{
+                    fontSize: fontSize['2xl'],
+                    fontWeight: '700',
+                    color: colors.surface[900],
+                  }}
+                >
                   {formatCurrency(costAnalysis?.totalCosts || 0, currency, {
                     notation: 'compact',
                     maximumFractionDigits: 0,
@@ -272,20 +278,28 @@ export default function AnalyticsScreen() {
                 backgroundColor: colors.surface[100],
                 borderWidth: 1,
                 borderColor: colors.surface[300],
-                borderRadius: 12,
+                borderRadius: radius.md,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 minWidth: 130,
               }}
             >
-              <Text style={{ fontSize: 12, color: colors.surface[500], marginBottom: 4 }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginBottom: 4 }}>
                 {t('analytics.labels.harvestYield')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
+                <Text
+                  style={{
+                    fontSize: fontSize['2xl'],
+                    fontWeight: '700',
+                    color: colors.surface[900],
+                  }}
+                >
                   {(analytics.totalHarvestQuantity / 1000).toFixed(1)}
                 </Text>
-                <Text style={{ fontSize: 13, fontWeight: '500', color: colors.surface[500] }}>
+                <Text
+                  style={{ fontSize: fontSize.sm, fontWeight: '500', color: colors.surface[500] }}
+                >
                   {t('analytics.units.tons')}
                 </Text>
               </View>
@@ -297,17 +311,23 @@ export default function AnalyticsScreen() {
                 backgroundColor: colors.surface[100],
                 borderWidth: 1,
                 borderColor: colors.surface[300],
-                borderRadius: 12,
+                borderRadius: radius.md,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 minWidth: 130,
               }}
             >
-              <Text style={{ fontSize: 12, color: colors.surface[500], marginBottom: 4 }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginBottom: 4 }}>
                 {t('analytics.labels.activitiesLogged')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                <Text style={{ fontSize: 22, fontWeight: '700', color: colors.surface[900] }}>
+                <Text
+                  style={{
+                    fontSize: fontSize['2xl'],
+                    fontWeight: '700',
+                    color: colors.surface[900],
+                  }}
+                >
                   {analytics.irrigationsByMonth.reduce((sum, m) => sum + m.count, 0) +
                     analytics.totalSprayCount +
                     analytics.totalHarvestCount +
@@ -323,7 +343,7 @@ export default function AnalyticsScreen() {
               backgroundColor: colors.surface[100],
               borderWidth: 1,
               borderColor: colors.surface[300],
-              borderRadius: 12,
+              borderRadius: radius.md,
               padding: spacing[4],
               marginBottom: spacing[6],
             }}
@@ -344,7 +364,9 @@ export default function AnalyticsScreen() {
               >
                 {t('analytics.sections.categoryBreakdown')}
               </Text>
-              <Text style={{ fontSize: 13, fontWeight: '500', color: colors.surface[500] }}>
+              <Text
+                style={{ fontSize: fontSize.sm, fontWeight: '500', color: colors.surface[500] }}
+              >
                 {analytics.irrigationsByMonth.reduce((sum, m) => sum + m.count, 0) +
                   analytics.totalSprayCount +
                   analytics.totalHarvestCount +
@@ -414,7 +436,7 @@ export default function AnalyticsScreen() {
                       style={{
                         width: 10,
                         height: 10,
-                        borderRadius: 3,
+                        borderRadius: radius.xs,
                         backgroundColor: cat.color,
                       }}
                     />
@@ -428,12 +450,20 @@ export default function AnalyticsScreen() {
                         }}
                       >
                         <Text
-                          style={{ fontSize: 14, fontWeight: '500', color: colors.surface[900] }}
+                          style={{
+                            fontSize: fontSize.sm,
+                            fontWeight: '500',
+                            color: colors.surface[900],
+                          }}
                         >
                           {cat.name}
                         </Text>
                         <Text
-                          style={{ fontSize: 13, fontWeight: '600', color: colors.surface[900] }}
+                          style={{
+                            fontSize: fontSize.sm,
+                            fontWeight: '600',
+                            color: colors.surface[900],
+                          }}
                         >
                           {count}
                         </Text>
@@ -442,7 +472,7 @@ export default function AnalyticsScreen() {
                         style={{
                           width: '100%',
                           height: 6,
-                          borderRadius: 3,
+                          borderRadius: radius.xs,
                           backgroundColor: colors.surface[200], // Track #EEE7DD
                           overflow: 'hidden',
                         }}
@@ -451,7 +481,7 @@ export default function AnalyticsScreen() {
                           style={{
                             width: `${percentage}%`,
                             height: '100%',
-                            borderRadius: 3,
+                            borderRadius: radius.xs,
                             backgroundColor: cat.color,
                           }}
                         />

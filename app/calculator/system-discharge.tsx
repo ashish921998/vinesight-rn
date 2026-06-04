@@ -20,7 +20,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
@@ -309,7 +309,7 @@ export default function SystemDischargeScreen() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 22,
+                borderRadius: radius.xl,
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
@@ -334,7 +334,7 @@ export default function SystemDischargeScreen() {
                     style={[
                       StyleSheet.absoluteFillObject,
                       {
-                        borderRadius: 22,
+                        borderRadius: radius.xl,
                         backgroundColor: pressed
                           ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                           : 'transparent',
@@ -842,7 +842,7 @@ export default function SystemDischargeScreen() {
                   >
                     <Text
                       style={{
-                        fontSize: 28,
+                        fontSize: fontSize['3xl'],
                         fontWeight: fontWeight.bold,
                         color: m3.colorScheme.primary,
                       }}
@@ -872,7 +872,7 @@ export default function SystemDischargeScreen() {
                   {/* Formula - italic style per wireframe */}
                   <Text
                     style={{
-                      fontSize: 10,
+                      fontSize: fontSize['2xs'],
                       color: colors.surface[500],
                       fontStyle: 'italic',
                       textAlign: 'center',

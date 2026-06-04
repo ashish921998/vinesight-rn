@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ComponentProps } from 'react';
+import { fontSize } from '@/styles/theme';
 import { Tabs, useRouter } from 'expo-router';
 import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
@@ -29,7 +30,7 @@ export default function TabLayout() {
       },
       headerTitleStyle: {
         fontWeight: '600',
-        fontSize: 18,
+        fontSize: fontSize.lg,
         color: m3.colorScheme.onSurface,
       },
       headerTintColor: m3.colorScheme.primary,
@@ -125,7 +126,7 @@ export default function TabLayout() {
               height: Math.max(insets.bottom + 56, 72),
             },
             tabBarLabelStyle: {
-              fontSize: 11,
+              fontSize: fontSize.xs,
               fontWeight: '600',
               marginTop: 4,
             },
@@ -191,7 +192,7 @@ export default function TabLayout() {
         }}
         labelStyle={{
           default: {
-            fontSize: 11,
+            fontSize: fontSize.xs,
             fontWeight: '500',
             color: m3.colorScheme.onSurfaceVariant,
           },

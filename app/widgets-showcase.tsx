@@ -9,7 +9,7 @@ import { VineyardHealthWidget } from '@widgets/dashboard/VineyardHealthWidget';
 import { TaskSummaryWidget } from '@widgets/dashboard/TaskSummaryWidget';
 import { QuickStatsWidget } from '@widgets/dashboard/QuickStatsWidget';
 import { Symbol } from '@/components/ui/symbol';
-import { fontSize, fontWeight, spacing } from '@/styles/theme';
+import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -95,7 +95,7 @@ export default function WidgetsShowcaseScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -120,7 +120,7 @@ export default function WidgetsShowcaseScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',

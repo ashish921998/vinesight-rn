@@ -22,7 +22,7 @@ import {
   type StyleProp,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { spacing, borderRadius, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3, useIsDark } from '@/styles/use-theme';
 
@@ -75,7 +75,7 @@ export function HeroPanel({ label, value, children, style }: HeroPanelProps) {
           numberOfLines={1}
           style={{
             flex: 1,
-            fontSize: 10,
+            fontSize: fontSize['2xs'],
             letterSpacing: 0.8,
             textTransform: 'uppercase',
             color: m3.colorScheme.onSurfaceVariant,
@@ -87,7 +87,7 @@ export function HeroPanel({ label, value, children, style }: HeroPanelProps) {
         {value ? (
           <Text
             style={{
-              fontSize: 11,
+              fontSize: fontSize.xs,
               color: m3.colorScheme.onSurface,
               fontWeight: fontWeight.bold,
               fontVariant: ['tabular-nums'],
@@ -155,7 +155,7 @@ export function StatStrip({ stats, style }: StatStripProps) {
             {index > 0 ? (
               <Text
                 style={{
-                  fontSize: 10.5,
+                  fontSize: fontSize['2xs'],
                   color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.45),
                   fontWeight: fontWeight.normal,
                 }}
@@ -165,7 +165,7 @@ export function StatStrip({ stats, style }: StatStripProps) {
             ) : null}
             <Text
               style={{
-                fontSize: 10.5,
+                fontSize: fontSize['2xs'],
                 fontWeight: fontWeight.semibold,
                 color,
                 flexShrink: 0,
@@ -223,7 +223,7 @@ export function Gauge({ value, fill, trackColor, threshold, width = 72, style }:
         {
           width,
           height: 5,
-          borderRadius: 999,
+          borderRadius: radius.full,
           backgroundColor: track,
           overflow: 'hidden',
           position: 'relative',
@@ -236,7 +236,7 @@ export function Gauge({ value, fill, trackColor, threshold, width = 72, style }:
           width: `${ratio * 100}%`,
           height: '100%',
           backgroundColor: fill,
-          borderRadius: 999,
+          borderRadius: radius.full,
         }}
       />
       {threshold != null ? (
@@ -312,7 +312,7 @@ export function ChipRow<T extends string = string>({ chips, active, onChange }: 
           >
             <Text
               style={{
-                fontSize: 12,
+                fontSize: fontSize.xs,
                 fontWeight: fontWeight.semibold,
                 color: isActive
                   ? m3.colorScheme.onPrimary
@@ -395,7 +395,7 @@ export function ListRowB({
           width: 4,
           alignSelf: 'stretch',
           backgroundColor: accentColor,
-          borderRadius: 2,
+          borderRadius: radius.xs,
           minHeight: 56,
         }}
       />
@@ -446,7 +446,7 @@ export function MetaColumn({ label, tone = 'default', gauge }: MetaColumnProps) 
         : m3.colorScheme.onSurface;
 
   const labelStyle: TextStyle = {
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
     fontWeight: fontWeight.bold,
     color,
     letterSpacing: 0.5,

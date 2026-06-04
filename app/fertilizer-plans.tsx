@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol } from '@/components/ui/symbol';
 import { useFarm, useFertilizerPlan, useProfile, useFarms } from '@/hooks';
-import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
@@ -66,7 +66,7 @@ export default function FertilizerPlansScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -91,7 +91,7 @@ export default function FertilizerPlansScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -412,7 +412,7 @@ export default function FertilizerPlansScreen() {
         <Text
           style={{
             color: colors.surface[100],
-            fontSize: 28,
+            fontSize: fontSize['3xl'],
             fontWeight: '300',
             lineHeight: 32,
           }}

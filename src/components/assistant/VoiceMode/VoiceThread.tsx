@@ -23,7 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { useThemeTokens } from '@/styles/use-theme';
-import { spacing } from '@/styles/theme';
+import { radius, spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 
 export interface VoiceModeMessage {
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     maxWidth: '82%',
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
-    borderRadius: 16,
+    borderRadius: radius.lg,
   },
   bubbleUser: {
     borderBottomRightRadius: 4,

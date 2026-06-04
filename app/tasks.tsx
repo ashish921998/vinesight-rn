@@ -17,7 +17,7 @@ import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/use-tasks';
 import { TaskReminder } from '../src/types/task';
 import { useModalStore, useNotificationStore } from '@/stores';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
@@ -307,7 +307,7 @@ export default function TasksScreen() {
           style={{
             width: 44,
             height: 44,
-            borderRadius: 22,
+            borderRadius: radius.xl,
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
@@ -332,7 +332,7 @@ export default function TasksScreen() {
                 style={[
                   StyleSheet.absoluteFillObject,
                   {
-                    borderRadius: 22,
+                    borderRadius: radius.xl,
                     backgroundColor: pressed
                       ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                       : 'transparent',
@@ -425,7 +425,7 @@ export default function TasksScreen() {
             >
               <Text
                 style={{
-                  fontSize: 13,
+                  fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
                   color: colors.surface[900],
                 }}
@@ -444,7 +444,7 @@ export default function TasksScreen() {
               />
               <Text
                 style={{
-                  fontSize: 13,
+                  fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
                   color: colors.warning,
                 }}
@@ -463,7 +463,7 @@ export default function TasksScreen() {
               />
               <Text
                 style={{
-                  fontSize: 13,
+                  fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
                   color: colors.error,
                 }}
@@ -555,7 +555,7 @@ export default function TasksScreen() {
                 <>
                   <Text
                     style={{
-                      fontSize: 11,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
                       color: colors.error,
                       textTransform: 'uppercase',
@@ -597,7 +597,7 @@ export default function TasksScreen() {
               <>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
                     color: colors.surface[400],
                     textTransform: 'uppercase',
@@ -640,7 +640,7 @@ export default function TasksScreen() {
               <>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
                     color: colors.surface[400],
                     textTransform: 'uppercase',
@@ -683,7 +683,7 @@ export default function TasksScreen() {
               <>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
                     color: colors.surface[400],
                     textTransform: 'uppercase',
@@ -751,7 +751,7 @@ export default function TasksScreen() {
                   {/* Completed Label */}
                   <Text
                     style={{
-                      fontSize: 13,
+                      fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
                       color: colors.surface[700],
                       flex: 1,
@@ -770,7 +770,7 @@ export default function TasksScreen() {
                   >
                     <Text
                       style={{
-                        fontSize: 12,
+                        fontSize: fontSize.xs,
                         fontWeight: fontWeight.medium,
                         color: colors.surface[600],
                       }}

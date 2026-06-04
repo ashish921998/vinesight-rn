@@ -8,7 +8,7 @@ import { View, Text, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '@/constants/lab-test-parameters';
-import { spacing, fontSize, fontWeight } from '@/styles/theme';
+import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -287,7 +287,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
   container: {
     backgroundColor: colors.surface[100],
     margin: 16,
-    borderRadius: 12,
+    borderRadius: radius.md,
     overflow: 'hidden' as const,
   },
   headerRow: {
@@ -299,7 +299,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
   },
   headerCell: {
     flex: 1,
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700' as const,
     color: m3.colorScheme.onSurface,
     textAlign: 'center' as const,
@@ -315,10 +315,10 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
   nutrientLabel: {
     fontWeight: '600' as const,
     color: m3.colorScheme.onSurface,
-    fontSize: 13,
+    fontSize: fontSize.sm,
   },
   nutrientRange: {
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
     color: m3.colorScheme.onSurfaceVariant,
     fontWeight: '400' as const,
   },
@@ -341,15 +341,15 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
   },
   increase: {
     color: colors.success,
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
   },
   decrease: {
     color: m3.colorScheme.error,
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
   },
   stable: {
     color: m3.colorScheme.onSurfaceVariant,
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
   },
   cellGray: {
     backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
@@ -364,7 +364,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
   },
   cellText: {
-    fontSize: 13,
+    fontSize: fontSize.sm,
     textAlign: 'center' as const,
     color: m3.colorScheme.onSurface,
   },
@@ -374,7 +374,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     marginTop: 0,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
   },
@@ -382,7 +382,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     gap: 6,
   },
   legendTitle: {
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
     fontWeight: '600' as const,
     color: m3.colorScheme.onSurface,
   },
@@ -399,7 +399,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
   colorBox: {
     width: 12,
     height: 12,
-    borderRadius: 2,
+    borderRadius: radius.xs,
     borderWidth: 1,
   },
   colorBoxOptimal: {
@@ -415,7 +415,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     borderColor: colorWithOpacity(m3.colorScheme.error, 0.4),
   },
   legendText: {
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
     color: m3.colorScheme.onSurface,
   },
   trendGuide: {
@@ -440,28 +440,28 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     paddingVertical: 4,
   },
   headerDateMonth: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600' as const,
     color: m3.colorScheme.onSurface,
   },
   headerDateDay: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700' as const,
     color: m3.colorScheme.onSurface,
   },
   headerDateYear: {
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
     fontWeight: '500' as const,
     color: m3.colorScheme.onSurfaceVariant,
   },
   headerDateLabel: {
-    fontSize: 9,
+    fontSize: fontSize['2xs'],
     fontWeight: '600' as const,
     color: m3.colorScheme.onSurfaceVariant,
     textTransform: 'uppercase' as const,
   },
   headerMetaValue: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700' as const,
     color: m3.colorScheme.onSurface,
   },

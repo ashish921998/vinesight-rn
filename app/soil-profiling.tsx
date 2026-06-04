@@ -31,7 +31,7 @@ import {
   SECTION_NAMES,
 } from '../src/hooks/use-soil-profiles';
 import { SoilProfile } from '../src/types/database';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -188,7 +188,7 @@ export default function SoilProfilingScreen() {
             </Text>
             <Text
               style={{
-                fontSize: 48,
+                fontSize: fontSize['5xl'],
                 fontWeight: fontWeight.bold,
                 color: m3.colorScheme.primary,
               }}
@@ -614,7 +614,7 @@ export default function SoilProfilingScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -639,7 +639,7 @@ export default function SoilProfilingScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',

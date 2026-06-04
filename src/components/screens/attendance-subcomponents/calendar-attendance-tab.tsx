@@ -289,7 +289,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                   <View key={`day-${index}`} style={{ flex: 1 }}>
                     <Text
                       style={{
-                        fontSize: 11,
+                        fontSize: fontSize.xs,
                         fontWeight: fontWeight.bold,
                         textTransform: 'uppercase',
                         textAlign: 'center',

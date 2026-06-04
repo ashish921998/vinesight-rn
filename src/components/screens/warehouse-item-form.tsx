@@ -41,7 +41,7 @@ import {
 } from '../ui/form-components';
 import { ModalBackdrop } from '../ui/modal-backdrop';
 import { useM3, useThemeColors } from '@/styles/use-theme';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { ICON_REGISTRY } from '@/constants/icon-registry';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
@@ -757,7 +757,7 @@ export default function WarehouseItemForm({
             marginBottom: 20,
             paddingHorizontal: 12,
             paddingVertical: 8,
-            borderRadius: 999,
+            borderRadius: radius.full,
             backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.14),
           }}
         >

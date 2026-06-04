@@ -19,7 +19,7 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { useFarms } from '../src/hooks';
 import { useWeatherData } from '../src/hooks/use-weather';
 import { GrapeGrowthStage, SoilType } from '../src/types/weather';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -181,7 +181,7 @@ export default function WeatherScreen() {
           style={{
             width: 44,
             height: 44,
-            borderRadius: 22,
+            borderRadius: radius.xl,
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
@@ -206,7 +206,7 @@ export default function WeatherScreen() {
                 style={[
                   StyleSheet.absoluteFillObject,
                   {
-                    borderRadius: 22,
+                    borderRadius: radius.xl,
                     backgroundColor: pressed
                       ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                       : 'transparent',
@@ -702,7 +702,7 @@ export default function WeatherScreen() {
                 <Text
                   style={{
                     color: m3.colorScheme.onPrimary,
-                    fontSize: 48,
+                    fontSize: fontSize['5xl'],
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
                   }}

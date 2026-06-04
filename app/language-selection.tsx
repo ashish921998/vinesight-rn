@@ -6,7 +6,7 @@ import { useLanguageStore } from '@/stores';
 import { setAppLanguage } from '@/i18n';
 import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@/i18n/languages';
 import { useIsDark, useM3 } from '@/styles/use-theme';
-import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import appLogoDark from '../assets/icons/ios-dark.png';
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   logoCircle: {
     width: 84,
     height: 84,
-    borderRadius: 28,
+    borderRadius: radius['2xl'],
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

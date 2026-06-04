@@ -22,7 +22,7 @@ import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { LinearGradient } from 'expo-linear-gradient';
 import { REFILL_SPANS, type RefillSpanId } from '@/constants/calculator-models';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
@@ -129,7 +129,7 @@ export default function MADCalculatorScreen() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 22,
+                borderRadius: radius.xl,
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
@@ -154,7 +154,7 @@ export default function MADCalculatorScreen() {
                     style={[
                       StyleSheet.absoluteFillObject,
                       {
-                        borderRadius: 22,
+                        borderRadius: radius.xl,
                         backgroundColor: pressed
                           ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                           : 'transparent',

@@ -18,7 +18,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
@@ -147,7 +147,7 @@ export default function LAICalculatorScreen() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 22,
+                borderRadius: radius.xl,
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
@@ -172,7 +172,7 @@ export default function LAICalculatorScreen() {
                     style={[
                       StyleSheet.absoluteFillObject,
                       {
-                        borderRadius: 22,
+                        borderRadius: radius.xl,
                         backgroundColor: pressed
                           ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                           : 'transparent',
@@ -343,14 +343,14 @@ export default function LAICalculatorScreen() {
                       style={{
                         flex: 1,
                         backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
-                        borderRadius: 14,
+                        borderRadius: radius.lg,
                         padding: spacing[4],
                         alignItems: 'center',
                       }}
                     >
                       <Text
                         style={{
-                          fontSize: 24,
+                          fontSize: fontSize['2xl'],
                           fontWeight: fontWeight.bold,
                           color: m3.colorScheme.primary,
                         }}
@@ -371,14 +371,14 @@ export default function LAICalculatorScreen() {
                       style={{
                         flex: 1,
                         backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
-                        borderRadius: 14,
+                        borderRadius: radius.lg,
                         padding: spacing[4],
                         alignItems: 'center',
                       }}
                     >
                       <Text
                         style={{
-                          fontSize: 24,
+                          fontSize: fontSize['2xl'],
                           fontWeight: fontWeight.bold,
                           color: m3.colorScheme.primary,
                         }}

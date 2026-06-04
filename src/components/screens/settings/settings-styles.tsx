@@ -1,11 +1,12 @@
 import { StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import {
-  spacing,
   borderRadius,
   fontSize,
   fontWeight,
-  type ThemeColors,
   getM3Theme,
+  radius,
+  spacing,
+  type ThemeColors,
 } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
@@ -26,7 +27,7 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
     width: 64,
     height: 64,
     backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-    borderRadius: 32,
+    borderRadius: radius['2xl'],
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -285,7 +286,7 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 4,
+    borderRadius: radius.xs,
     borderWidth: 2,
     borderColor: colors.surface[300],
     alignItems: 'center',

@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { fontSize, radius } from '@/styles/theme';
 import { View, Text, Pressable } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
@@ -60,7 +61,7 @@ export function DatePickerModal({
         >
           <Text
             selectable
-            style={{ fontSize: 18, fontWeight: '700', color: m3.colorScheme.onSurface }}
+            style={{ fontSize: fontSize.lg, fontWeight: '700', color: m3.colorScheme.onSurface }}
           >
             {title}
           </Text>
@@ -91,7 +92,7 @@ export function DatePickerModal({
         <Pressable
           onPress={onConfirm}
           style={[
-            { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+            { marginTop: 16, paddingVertical: 12, borderRadius: radius.md, alignItems: 'center' },
             { backgroundColor: m3.colorScheme.primary },
           ]}
         >

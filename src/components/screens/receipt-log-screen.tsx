@@ -431,7 +431,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
           <View style={{ marginBottom: spacing[5] }}>
             <Text
               style={{
-                fontSize: 11,
+                fontSize: fontSize.xs,
                 fontWeight: '700',
                 letterSpacing: 0.5,
                 textTransform: 'uppercase',
@@ -517,7 +517,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
         {/* Activity picker */}
         <Text
           style={{
-            fontSize: 11,
+            fontSize: fontSize.xs,
             fontWeight: '700',
             letterSpacing: 0.5,
             textTransform: 'uppercase',
@@ -664,7 +664,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 <Text
                   style={{
                     flex: 1,
-                    fontSize: 17,
+                    fontSize: fontSize.lg,
                     fontWeight: '700',
                     color: m3.colorScheme.onSurface,
                   }}

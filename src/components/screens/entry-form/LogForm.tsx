@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { radius } from '@/styles/theme';
 import type {
   IrrigationFormData,
   SprayFormData,
@@ -106,7 +107,7 @@ export function LogForm({
         style={{
           marginTop: isIrrigationEntry ? 0 : 20,
           paddingVertical: 14,
-          borderRadius: 16,
+          borderRadius: radius.lg,
           alignItems: 'center',
           flexDirection: 'row',
           justifyContent: 'center',
@@ -150,7 +151,7 @@ export function LogForm({
         <View
           style={{
             backgroundColor: colors.surface[100],
-            borderRadius: 22,
+            borderRadius: radius.xl,
             padding: 20,
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
@@ -184,7 +185,7 @@ export function LogForm({
     <View
       style={{
         backgroundColor: colors.surface[100],
-        borderRadius: 20,
+        borderRadius: radius.xl,
         padding: 20,
         borderWidth: 1,
         borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),

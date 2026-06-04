@@ -13,7 +13,7 @@ import { useWorkersTourStore, type WorkersTourStep } from './workers-tour-store'
 import type { GuidedTourStep } from './types';
 import type { GuidedTourTargetId } from './constants';
 import { colorWithOpacity } from '@/utils/color';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 
 function AttendanceLegend() {
   const { t } = useTranslation();
@@ -89,7 +89,7 @@ function AttendanceLegend() {
             style={{
               width: 10,
               height: 10,
-              borderRadius: 5,
+              borderRadius: radius.xs,
               backgroundColor: s.dot,
             }}
           />

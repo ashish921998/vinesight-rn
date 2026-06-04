@@ -8,7 +8,7 @@ import {
   type TextInputSubmitEditingEventData,
 } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, componentRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useThemeColors } from '@/styles/use-theme';
 
 interface FormFieldProps extends TextInputProps {
@@ -67,7 +67,7 @@ export function FormField({
           alignItems: 'center',
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[3],
-          borderRadius: borderRadius.xl,
+          borderRadius: componentRadius.input,
           borderWidth: 1,
           borderColor,
           backgroundColor,
@@ -230,7 +230,7 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
           alignItems: 'center',
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[2],
-          borderRadius: borderRadius.xl,
+          borderRadius: componentRadius.input,
           borderWidth: 1,
           borderColor,
           backgroundColor,

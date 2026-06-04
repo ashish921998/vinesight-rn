@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { LineChart } from 'react-native-chart-kit';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { PARAMETER_COLORS } from '../../hooks/use-lab-tests';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -66,7 +66,7 @@ export default function TrendsChart({
     color: (opacity: number) => colorWithOpacity(m3.colorScheme.onSurface, opacity),
     labelColor: (opacity: number) => colorWithOpacity(m3.colorScheme.onSurfaceVariant, opacity),
     style: {
-      borderRadius: 16,
+      borderRadius: radius.lg,
     },
     propsForDots: {
       r: '4',
@@ -183,7 +183,7 @@ export default function TrendsChart({
         bezier
         style={{
           marginVertical: 8,
-          borderRadius: 16,
+          borderRadius: radius.lg,
         }}
         onDataPointClick={(data) => {
           if (
@@ -268,7 +268,7 @@ export default function TrendsChart({
                   style={{
                     width: 12,
                     height: 12,
-                    borderRadius: 6,
+                    borderRadius: radius.sm,
                     backgroundColor: color,
                   }}
                 />
@@ -326,7 +326,7 @@ export default function TrendsChart({
                   style={{
                     width: 8,
                     height: 8,
-                    borderRadius: 4,
+                    borderRadius: radius.xs,
                     backgroundColor: color,
                   }}
                 />

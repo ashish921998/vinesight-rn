@@ -7,7 +7,7 @@ import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useWorker, useWorkerAttendance, useFarms, isAndroid } from '@/hooks';
 import { useModalStore } from '@/stores';
 import { WorkerSettlementModal } from '@/components/modals/worker-settlement-modal';
-import { spacing, borderRadius, fontSize } from '@/styles/theme';
+import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
 import { calculateWorkerEarnings } from '@/types';
@@ -259,7 +259,7 @@ export default function WorkerDetailScreen() {
             accessibilityLabel={t('common.back', { defaultValue: 'Go back' })}
           >
             <UiSymbol name="chevron.left" size={18} color={colors.surface[500]} />
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.surface[500] }}>
+            <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.surface[500] }}>
               {t('workers.title', { defaultValue: 'Workers' })}
             </Text>
           </Pressable>
@@ -300,7 +300,12 @@ export default function WorkerDetailScreen() {
               }}
             >
               <Text
-                style={{ fontSize: 20, fontWeight: '700', color: '#F7F3ED', letterSpacing: -0.3 }}
+                style={{
+                  fontSize: fontSize.xl,
+                  fontWeight: '700',
+                  color: '#F7F3ED',
+                  letterSpacing: -0.3,
+                }}
               >
                 {initials}
               </Text>
@@ -308,7 +313,7 @@ export default function WorkerDetailScreen() {
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text
                 style={{
-                  fontSize: 22,
+                  fontSize: fontSize['2xl'],
                   fontWeight: '700',
                   color: colors.surface[900],
                   letterSpacing: -0.3,
@@ -321,7 +326,7 @@ export default function WorkerDetailScreen() {
                   style={{
                     height: 22,
                     paddingHorizontal: 9,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     backgroundColor: colors.surface[200],
                     borderWidth: 1,
                     borderColor: colors.surface[300],
@@ -329,7 +334,9 @@ export default function WorkerDetailScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.surface[500] }}>
+                  <Text
+                    style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.surface[500] }}
+                  >
                     ₹{worker.daily_rate}/day
                   </Text>
                 </View>
@@ -343,7 +350,7 @@ export default function WorkerDetailScreen() {
               backgroundColor: colors.surface[100],
               borderWidth: 1,
               borderColor: colors.surface[300],
-              borderRadius: 16,
+              borderRadius: radius.lg,
               padding: 14,
               marginBottom: 12,
             }}
@@ -359,7 +366,7 @@ export default function WorkerDetailScreen() {
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: '600',
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
@@ -372,7 +379,7 @@ export default function WorkerDetailScreen() {
                 </Text>
                 <Text
                   style={{
-                    fontSize: 28,
+                    fontSize: fontSize['3xl'],
                     fontWeight: '700',
                     color: colors.surface[900],
                     letterSpacing: -0.4,
@@ -383,7 +390,7 @@ export default function WorkerDetailScreen() {
                   ₹{metrics.earnings.toLocaleString('en-IN')}
                 </Text>
                 {worker.advance_balance > 0 && (
-                  <Text style={{ fontSize: 12, color: colors.surface[500], marginTop: 4 }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: 4 }}>
                     {t('workers.settlement.advanceBalance', {
                       defaultValue: 'Advance: ₹{{amount}}',
                       amount: worker.advance_balance.toLocaleString('en-IN'),
@@ -396,7 +403,7 @@ export default function WorkerDetailScreen() {
                 style={({ pressed }) => ({
                   height: 40,
                   paddingHorizontal: 14,
-                  borderRadius: 11,
+                  borderRadius: radius.md,
                   backgroundColor: m3.colorScheme.primary,
                   opacity: pressed ? 0.85 : 1,
                   alignItems: 'center',
@@ -408,7 +415,13 @@ export default function WorkerDetailScreen() {
                   defaultValue: 'Settle wages for {{name}}',
                 })}
               >
-                <Text style={{ fontSize: 13, fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: '600',
+                    color: m3.colorScheme.onPrimary,
+                  }}
+                >
                   {t('workers.actions.settle', { defaultValue: 'Settle' })}
                 </Text>
               </Pressable>
@@ -446,14 +459,14 @@ export default function WorkerDetailScreen() {
                   backgroundColor: colors.surface[100],
                   borderWidth: 1,
                   borderColor: colors.surface[300],
-                  borderRadius: 12,
+                  borderRadius: radius.md,
                   padding: 10,
                   alignItems: 'center',
                 }}
               >
                 <Text
                   style={{
-                    fontSize: 22,
+                    fontSize: fontSize['2xl'],
                     fontWeight: '700',
                     color: s.color,
                     fontVariant: ['tabular-nums'],
@@ -464,7 +477,7 @@ export default function WorkerDetailScreen() {
                 </Text>
                 <Text
                   style={{
-                    fontSize: 10,
+                    fontSize: fontSize['2xs'],
                     fontWeight: '600',
                     letterSpacing: 0.6,
                     textTransform: 'uppercase',
@@ -484,7 +497,7 @@ export default function WorkerDetailScreen() {
               backgroundColor: colors.surface[100],
               borderWidth: 1,
               borderColor: colors.surface[300],
-              borderRadius: 16,
+              borderRadius: radius.lg,
               padding: 14,
               marginBottom: 12,
             }}
@@ -498,7 +511,7 @@ export default function WorkerDetailScreen() {
             >
               <Text
                 style={{
-                  fontSize: 11,
+                  fontSize: fontSize.xs,
                   fontWeight: '600',
                   letterSpacing: 0.8,
                   textTransform: 'uppercase',
@@ -507,7 +520,7 @@ export default function WorkerDetailScreen() {
               >
                 {t('workers.detail.last30Days', { defaultValue: 'Last 30 days' })}
               </Text>
-              <Text style={{ fontSize: 11, color: colors.surface[500] }}>
+              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                 {calendarDays.length} days
               </Text>
             </View>
@@ -524,7 +537,7 @@ export default function WorkerDetailScreen() {
                     style={{
                       width: '14.5%',
                       aspectRatio: 1,
-                      borderRadius: 8,
+                      borderRadius: radius.sm,
                       backgroundColor: bg,
                       borderWidth: isOff ? 1 : 0,
                       borderColor: colors.surface[300],
@@ -534,7 +547,7 @@ export default function WorkerDetailScreen() {
                   >
                     <Text
                       style={{
-                        fontSize: 9,
+                        fontSize: fontSize['2xs'],
                         opacity: 0.85,
                         fontWeight: '500',
                         color: isOff ? colors.surface[400] : '#F7F3ED',
@@ -544,7 +557,7 @@ export default function WorkerDetailScreen() {
                     </Text>
                     <Text
                       style={{
-                        fontSize: 11,
+                        fontSize: fontSize.xs,
                         fontWeight: '700',
                         color: isOff ? colors.surface[400] : '#F7F3ED',
                         lineHeight: 13,
@@ -583,13 +596,15 @@ export default function WorkerDetailScreen() {
                     style={{
                       width: 10,
                       height: 10,
-                      borderRadius: 3,
+                      borderRadius: radius.xs,
                       backgroundColor: s.color,
                       borderWidth: s.border ? 1 : 0,
                       borderColor: colors.surface[300],
                     }}
                   />
-                  <Text style={{ fontSize: 11, color: colors.surface[500] }}>{s.label}</Text>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    {s.label}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -600,7 +615,7 @@ export default function WorkerDetailScreen() {
             <>
               <Text
                 style={{
-                  fontSize: 11,
+                  fontSize: fontSize.xs,
                   fontWeight: '600',
                   letterSpacing: 0.8,
                   textTransform: 'uppercase',
@@ -621,7 +636,7 @@ export default function WorkerDetailScreen() {
                         backgroundColor: colors.surface[100],
                         borderWidth: 1,
                         borderColor: colors.surface[300],
-                        borderRadius: 14,
+                        borderRadius: radius.lg,
                         padding: 12,
                       }}
                     >
@@ -646,14 +661,14 @@ export default function WorkerDetailScreen() {
                             style={{
                               width: 10,
                               height: 10,
-                              borderRadius: 999,
+                              borderRadius: radius.full,
                               backgroundColor: f.accent,
                             }}
                           />
                           <View style={{ flex: 1 }}>
                             <Text
                               style={{
-                                fontSize: 14,
+                                fontSize: fontSize.sm,
                                 fontWeight: '600',
                                 color: colors.surface[900],
                               }}
@@ -663,7 +678,7 @@ export default function WorkerDetailScreen() {
                             </Text>
                             <Text
                               style={{
-                                fontSize: 11,
+                                fontSize: fontSize.xs,
                                 color: colors.surface[500],
                                 marginTop: 2,
                                 fontVariant: ['tabular-nums'],
@@ -676,7 +691,7 @@ export default function WorkerDetailScreen() {
                         <View style={{ alignItems: 'flex-end' }}>
                           <Text
                             style={{
-                              fontSize: 14,
+                              fontSize: fontSize.sm,
                               fontWeight: '700',
                               color: colors.surface[900],
                               fontVariant: ['tabular-nums'],
@@ -684,7 +699,7 @@ export default function WorkerDetailScreen() {
                           >
                             {total} d
                           </Text>
-                          <Text style={{ fontSize: 10, color: colors.surface[500] }}>
+                          <Text style={{ fontSize: fontSize['2xs'], color: colors.surface[500] }}>
                             {Math.round(pct * 100)}%
                           </Text>
                         </View>
@@ -694,7 +709,7 @@ export default function WorkerDetailScreen() {
                         style={{
                           marginTop: 10,
                           height: 6,
-                          borderRadius: 999,
+                          borderRadius: radius.full,
                           backgroundColor: colors.surface[200],
                           overflow: 'hidden',
                           flexDirection: 'row',
@@ -717,7 +732,7 @@ export default function WorkerDetailScreen() {
             <>
               <Text
                 style={{
-                  fontSize: 11,
+                  fontSize: fontSize.xs,
                   fontWeight: '600',
                   letterSpacing: 0.8,
                   textTransform: 'uppercase',
@@ -732,7 +747,7 @@ export default function WorkerDetailScreen() {
                   backgroundColor: colors.surface[100],
                   borderWidth: 1,
                   borderColor: colors.surface[300],
-                  borderRadius: 16,
+                  borderRadius: radius.lg,
                   overflow: 'hidden',
                   marginBottom: 14,
                 }}
@@ -762,13 +777,17 @@ export default function WorkerDetailScreen() {
                     >
                       <View style={{ width: 50 }}>
                         <Text
-                          style={{ fontSize: 13, fontWeight: '600', color: colors.surface[900] }}
+                          style={{
+                            fontSize: fontSize.sm,
+                            fontWeight: '600',
+                            color: colors.surface[900],
+                          }}
                         >
                           {dl.short}
                         </Text>
                         <Text
                           style={{
-                            fontSize: 11,
+                            fontSize: fontSize.xs,
                             color: colors.surface[500],
                             fontVariant: ['tabular-nums'],
                           }}
@@ -782,13 +801,19 @@ export default function WorkerDetailScreen() {
                             style={{
                               height: 20,
                               paddingHorizontal: 8,
-                              borderRadius: 999,
+                              borderRadius: radius.full,
                               backgroundColor: badge.bg,
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
                           >
-                            <Text style={{ fontSize: 10, fontWeight: '700', color: badge.color }}>
+                            <Text
+                              style={{
+                                fontSize: fontSize['2xs'],
+                                fontWeight: '700',
+                                color: badge.color,
+                              }}
+                            >
                               {badge.label}
                             </Text>
                           </View>
@@ -798,12 +823,12 @@ export default function WorkerDetailScreen() {
                                 style={{
                                   width: 6,
                                   height: 6,
-                                  borderRadius: 999,
+                                  borderRadius: radius.full,
                                   backgroundColor: farmAccent,
                                 }}
                               />
                               <Text
-                                style={{ fontSize: 11, color: colors.surface[500] }}
+                                style={{ fontSize: fontSize.xs, color: colors.surface[500] }}
                                 numberOfLines={1}
                               >
                                 {farm.name}
@@ -813,7 +838,11 @@ export default function WorkerDetailScreen() {
                         </View>
                         {r.work_type ? (
                           <Text
-                            style={{ fontSize: 11, color: colors.surface[400], marginTop: 3 }}
+                            style={{
+                              fontSize: fontSize.xs,
+                              color: colors.surface[400],
+                              marginTop: 3,
+                            }}
                             numberOfLines={1}
                           >
                             {r.work_type}
@@ -832,7 +861,7 @@ export default function WorkerDetailScreen() {
                   backgroundColor: pressed ? colors.surface[200] : colors.surface[100],
                   borderWidth: 1,
                   borderColor: colors.surface[300],
-                  borderRadius: 12,
+                  borderRadius: radius.md,
                   alignItems: 'center',
                   justifyContent: 'center',
                 })}
@@ -844,7 +873,9 @@ export default function WorkerDetailScreen() {
                   defaultValue: 'View full attendance history',
                 })}
               >
-                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.surface[500] }}>
+                <Text
+                  style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.surface[500] }}
+                >
                   {t('workers.detail.viewFullHistory', { defaultValue: 'View full history' })}
                 </Text>
               </Pressable>

@@ -12,6 +12,7 @@
  */
 
 import React, { useEffect, useMemo, useRef } from 'react';
+import { radius } from '@/styles/theme';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -489,7 +490,11 @@ function WaveformBar({
 
   return (
     <Animated.View
-      style={[styles.waveBar, { backgroundColor: color, width: 4, borderRadius: 2 }, barStyle]}
+      style={[
+        styles.waveBar,
+        { backgroundColor: color, width: 4, borderRadius: radius.xs },
+        barStyle,
+      ]}
     />
   );
 }
@@ -528,7 +533,7 @@ const styles = StyleSheet.create({
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: radius.xs,
   },
   waveformRow: {
     flexDirection: 'row',
@@ -538,7 +543,7 @@ const styles = StyleSheet.create({
   },
   waveBar: {
     width: 4,
-    borderRadius: 2,
+    borderRadius: radius.xs,
     minHeight: 8,
   },
 });

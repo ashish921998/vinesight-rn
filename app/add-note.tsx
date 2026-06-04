@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { AppIcon } from '@/components/ui/app-icon';
 import { useFarm, useDailyNoteByDate, useUpsertDailyNote } from '@/hooks';
 import { useM3, useThemeColors } from '@/styles/use-theme';
-import { spacing, borderRadius } from '@/styles/theme';
+import { borderRadius, fontSize, spacing } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate } from '@/utils/date';
 import { colorWithOpacity } from '@/utils/color';
@@ -291,7 +291,7 @@ export default function AddNoteRoute() {
                     >
                       <Text
                         style={{
-                          fontSize: 18,
+                          fontSize: fontSize.lg,
                           fontWeight: '700',
                           color: m3.colorScheme.onSurface,
                         }}

@@ -47,7 +47,7 @@ import type {
   FertigationRecord,
   DailyNoteRecord,
 } from '@/types';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getExpenseIconName } from '@/utils/expense-icons';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -535,7 +535,7 @@ export default function LogsScreen() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 22,
+                borderRadius: radius.xl,
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
@@ -560,7 +560,7 @@ export default function LogsScreen() {
                     style={[
                       StyleSheet.absoluteFillObject,
                       {
-                        borderRadius: 22,
+                        borderRadius: radius.xl,
                         backgroundColor: pressed
                           ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                           : 'transparent',
@@ -754,7 +754,7 @@ export default function LogsScreen() {
                         style={{
                           width: 8,
                           height: 8,
-                          borderRadius: 4,
+                          borderRadius: radius.xs,
                           backgroundColor: chipColor,
                           marginRight: spacing[1],
                         }}
@@ -849,7 +849,7 @@ export default function LogsScreen() {
                         minWidth: 18,
                         height: 18,
                         paddingHorizontal: 5,
-                        borderRadius: 9,
+                        borderRadius: radius.sm,
                         backgroundColor: m3.colorScheme.primary,
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -857,7 +857,7 @@ export default function LogsScreen() {
                     >
                       <Text
                         style={{
-                          fontSize: 10,
+                          fontSize: fontSize['2xs'],
                           fontWeight: fontWeight.bold,
                           color: m3.colorScheme.onPrimary,
                         }}
@@ -1222,7 +1222,7 @@ export default function LogsScreen() {
                                                   style={{
                                                     width: 3,
                                                     height: 3,
-                                                    borderRadius: 1.5,
+                                                    borderRadius: radius.none,
                                                     backgroundColor: colors.surface[400],
                                                   }}
                                                 />
@@ -1455,7 +1455,7 @@ export default function LogsScreen() {
                 width: 56,
                 height: 56,
                 backgroundColor: m3.colorScheme.primary,
-                borderRadius: 18,
+                borderRadius: radius.lg,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
