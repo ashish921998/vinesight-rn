@@ -10,7 +10,7 @@ import type {
   FertigationFormData,
   NoteFormData,
 } from '@/components/forms';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -48,7 +48,6 @@ interface PendingLogsProps {
 
 export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLogsProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
   const failedDraftCount = pendingLogs.filter((log) => failures[log.id]).length;
 
@@ -57,7 +56,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
   return (
     <View
       style={{
-        backgroundColor: colors.surface[100],
+        backgroundColor: m3.surface.s100,
         borderRadius: radius.lg,
         padding: 16,
         marginBottom: 16,
@@ -213,7 +212,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                 {
                   backgroundColor: failure
                     ? colorWithOpacity(m3.colorScheme.error, 0.08)
-                    : colors.surface[50],
+                    : m3.surface.s50,
                   borderColor: failure
                     ? colorWithOpacity(m3.colorScheme.error, 0.42)
                     : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
@@ -248,7 +247,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                       borderRadius: radius.full,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: colors.surface[100],
+                      backgroundColor: m3.surface.s100,
                       borderWidth: 1,
                       borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
                     }}
@@ -354,7 +353,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                   justifyContent: 'center',
                   backgroundColor: failure
                     ? colorWithOpacity(m3.colorScheme.error, 0.12)
-                    : colors.surface[100],
+                    : m3.surface.s100,
                   borderWidth: failure ? 0 : 1,
                   borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
                 }}

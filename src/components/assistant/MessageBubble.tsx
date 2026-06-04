@@ -12,23 +12,36 @@ import { Animated, Easing, View, Text, StyleSheet } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { useTranslation } from 'react-i18next';
 import { formatTime } from '@/i18n/format';
-import { useThemeTokens } from '@/styles/use-theme';
-import { spacing } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
+import { fontSize, radius, spacing } from '@/styles/theme';
 import { CitationFooter } from './CitationFooter';
 import { RichMessageContent } from './RichMessageContent';
 import { MessageActions } from './MessageActions';
 import { AIAvatar } from './AIAvatar';
+import { useTypewriter } from '@/hooks/use-typewriter';
 import type { ChatMessage, AssistantMessageAction } from '@/types/ai';
 
 interface MessageBubbleProps {
   message: ChatMessage;
   isLoading?: boolean;
+  /** When true, the assistant text reveals progressively (streaming feel). */
+  isStreaming?: boolean;
   onActionPress?: (action: AssistantMessageAction) => void;
 }
 
-export function MessageBubble({ message, isLoading = false, onActionPress }: MessageBubbleProps) {
-  const { m3 } = useThemeTokens();
+export function MessageBubble({
+  message,
+  isLoading = false,
+  isStreaming = false,
+  onActionPress,
+}: MessageBubbleProps) {
+  const m3 = useM3();
   const { t } = useTranslation();
+
+  const { text: revealedText, isRevealing } = useTypewriter(
+    message.content,
+    isStreaming && message.role === 'assistant',
+  );
 
   if (message.role !== 'user' && message.role !== 'assistant') {
     return null;
@@ -40,7 +53,7 @@ export function MessageBubble({ message, isLoading = false, onActionPress }: Mes
   // Use surfaceContainerLow which maps to mist-1 (surface[100])
   const bubbleStyle = {
     backgroundColor: isUser ? m3.colorScheme.primary : m3.surface.surfaceContainerLow,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     borderBottomRightRadius: isUser ? 4 : 16,
     borderBottomLeftRadius: isUser ? 16 : 4,
     borderTopLeftRadius: 16,
@@ -62,7 +75,7 @@ export function MessageBubble({ message, isLoading = false, onActionPress }: Mes
   const markdownStyles = {
     body: {
       color: textColor,
-      fontSize: 15,
+      fontSize: fontSize.base,
       lineHeight: 22,
     },
     strong: {
@@ -85,21 +98,21 @@ export function MessageBubble({ message, isLoading = false, onActionPress }: Mes
     code_inline: {
       backgroundColor: m3.surface.surfaceContainerHigh,
       color: textColor,
-      borderRadius: 4,
+      borderRadius: radius.xs,
       paddingHorizontal: 4,
       fontFamily: 'monospace',
-      fontSize: 13,
+      fontSize: fontSize.sm,
     },
     fence: {
       backgroundColor: m3.surface.surfaceContainer,
-      borderRadius: 8,
+      borderRadius: radius.sm,
       padding: spacing[3],
       marginVertical: spacing[1],
     },
     code_block: {
       color: textColor,
       fontFamily: 'monospace',
-      fontSize: 13,
+      fontSize: fontSize.sm,
     },
     blockquote: {
       borderLeftWidth: 3,
@@ -109,26 +122,26 @@ export function MessageBubble({ message, isLoading = false, onActionPress }: Mes
     },
     paragraph: {
       color: textColor,
-      fontSize: 15,
+      fontSize: fontSize.base,
       lineHeight: 22,
       marginTop: 0,
       marginBottom: spacing[1],
     },
     heading1: {
       color: textColor,
-      fontSize: 20,
+      fontSize: fontSize.xl,
       fontWeight: '700' as const,
       marginBottom: spacing[2],
     },
     heading2: {
       color: textColor,
-      fontSize: 18,
+      fontSize: fontSize.lg,
       fontWeight: '600' as const,
       marginBottom: spacing[2],
     },
     heading3: {
       color: textColor,
-      fontSize: 16,
+      fontSize: fontSize.base,
       fontWeight: '600' as const,
       marginBottom: spacing[1],
     },
@@ -160,7 +173,7 @@ export function MessageBubble({ message, isLoading = false, onActionPress }: Mes
             accessibilityLabel={a11yLabel}
             style={{
               color: textColor,
-              fontSize: 15,
+              fontSize: fontSize.base,
               lineHeight: 22,
             }}
           >
@@ -179,12 +192,14 @@ export function MessageBubble({ message, isLoading = false, onActionPress }: Mes
                   isSafetyBlocked ? `${t('assistant.safety.blockedA11y')} ${a11yLabel}` : a11yLabel
                 }
               >
-                <Markdown style={markdownStyles}>{message.content}</Markdown>
+                <Markdown style={markdownStyles}>
+                  {isRevealing ? `${revealedText} ▍` : message.content}
+                </Markdown>
               </View>
-              {!isLoading && message.cards && message.cards.length > 0 && (
+              {!isLoading && !isRevealing && message.cards && message.cards.length > 0 && (
                 <RichMessageContent cards={message.cards} />
               )}
-              {!isLoading && message.citations && message.citations.length > 0 && (
+              {!isLoading && !isRevealing && message.citations && message.citations.length > 0 && (
                 <CitationFooter citations={message.citations} />
               )}
               {isLoading && (
@@ -193,7 +208,7 @@ export function MessageBubble({ message, isLoading = false, onActionPress }: Mes
                   <Text
                     style={{
                       color: m3.colorScheme.onSurfaceVariant,
-                      fontSize: 13,
+                      fontSize: fontSize.sm,
                       marginLeft: spacing[2],
                     }}
                   >
@@ -203,7 +218,7 @@ export function MessageBubble({ message, isLoading = false, onActionPress }: Mes
               )}
             </View>
           </View>
-          {message.actions && message.actions.length > 0 && (
+          {!isRevealing && message.actions && message.actions.length > 0 && (
             <MessageActions actions={message.actions} onActionPress={onActionPress} />
           )}
         </React.Fragment>
@@ -238,7 +253,7 @@ const styles = StyleSheet.create({
     marginTop: spacing[2],
   },
   timestamp: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     marginTop: 4,
   },
   timestampLeft: {
@@ -263,12 +278,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing[2],
     paddingVertical: spacing[1],
-    borderRadius: 8,
+    borderRadius: radius.sm,
     marginBottom: 4,
     alignSelf: 'flex-start',
   },
   safetyBadgeText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600' as const,
   },
 });
@@ -278,7 +293,7 @@ const styles = StyleSheet.create({
  * Matches the AITyping primitive in the design.
  */
 export function LoadingBubble() {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   return (
@@ -292,7 +307,7 @@ export function LoadingBubble() {
         <View
           style={{
             backgroundColor: m3.surface.surfaceContainerLow,
-            borderRadius: 16,
+            borderRadius: radius.lg,
             borderBottomLeftRadius: 4,
             paddingHorizontal: spacing[3] + 2,
             paddingVertical: spacing[2] + 2,
@@ -352,7 +367,7 @@ function TypingDots({ color }: { color: string }) {
   const dotStyle = (value: Animated.Value) => ({
     width: 7,
     height: 7,
-    borderRadius: 4,
+    borderRadius: radius.xs,
     backgroundColor: color,
     opacity: value.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }),
     transform: [

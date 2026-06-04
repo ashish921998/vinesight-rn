@@ -11,7 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 interface UnitPickerModalProps<T extends string> {
@@ -31,7 +31,6 @@ export function UnitPickerModal<T extends string>({
   options,
   title,
 }: UnitPickerModalProps<T>) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
   const handleSelect = (unit: T) => {
@@ -47,7 +46,7 @@ export function UnitPickerModal<T extends string>({
   };
 
   const containerStyle: ViewStyle = {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     width: '100%',
     borderTopLeftRadius: borderRadius['3xl'],
     borderTopRightRadius: borderRadius['3xl'],
@@ -57,7 +56,7 @@ export function UnitPickerModal<T extends string>({
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: colors.surface[300],
+    borderBottomColor: m3.surface.s300,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -76,7 +75,7 @@ export function UnitPickerModal<T extends string>({
   const titleTextStyle: TextStyle = {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.surface[900],
+    color: m3.surface.s900,
     flex: 1,
     textAlign: 'center',
     paddingRight: 48,
@@ -86,7 +85,7 @@ export function UnitPickerModal<T extends string>({
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: colors.surface[50],
+    borderBottomColor: m3.surface.s50,
     backgroundColor: isSelected ? colorWithOpacity(m3.colorScheme.primary, 0.08) : 'transparent',
   });
 
@@ -99,7 +98,7 @@ export function UnitPickerModal<T extends string>({
   const getOptionTextStyle = (isSelected: boolean): TextStyle => ({
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: isSelected ? m3.colorScheme.primary : colors.surface[900],
+    color: isSelected ? m3.colorScheme.primary : m3.surface.s900,
   });
 
   return (

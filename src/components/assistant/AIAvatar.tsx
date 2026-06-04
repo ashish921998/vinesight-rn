@@ -11,7 +11,7 @@ import React from 'react';
 import { View, StyleSheet, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 
 interface AIAvatarProps {
   size?: number;
@@ -25,7 +25,8 @@ const GRADIENT_END_LIGHT = '#4E7384';
 const GRADIENT_END_DARK = '#5A8090';
 
 export function AIAvatar({ size = 28, iconSize, style }: AIAvatarProps) {
-  const { m3, isDark } = useThemeTokens();
+  const m3 = useM3();
+  const isDark = useIsDark();
   const glyphSize = iconSize ?? Math.round(size * 0.5);
   const radius = size / 2;
   const end = isDark ? GRADIENT_END_DARK : GRADIENT_END_LIGHT;

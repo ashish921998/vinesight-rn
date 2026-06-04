@@ -33,7 +33,8 @@ import { SoilTestRecord, PetioleTestRecord } from '../src/types/database';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getParamOption, getParamStatus, selectDisplayParams } from '@/utils/lab-test-utils';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 
 type TestType = 'soil' | 'petiole';
 
@@ -51,8 +52,8 @@ const formatDate = (dateString: string): string => {
 };
 
 export default function LabTestsScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
+  const domain = useDomainColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -136,7 +137,7 @@ export default function LabTestsScreen() {
       selected = selected.slice(0, 5);
       remainingCount += 1;
     }
-    const accentColor = isSoil ? colors.labTest.soil : colors.labTest.petiole;
+    const accentColor = isSoil ? domain.labTest.soil : domain.labTest.petiole;
     const surfaceColor = colorWithOpacity(accentColor, 0.08);
     const surfaceBorder = colorWithOpacity(accentColor, 0.25);
     const statusLine =
@@ -371,7 +372,7 @@ export default function LabTestsScreen() {
   };
 
   const renderEmptyState = (type: TestType) => {
-    const accentColor = type === 'soil' ? colors.labTest.soil : colors.labTest.petiole;
+    const accentColor = type === 'soil' ? domain.labTest.soil : domain.labTest.petiole;
 
     return (
       <View
@@ -476,7 +477,7 @@ export default function LabTestsScreen() {
             onPress={() => router.back()}
             style={{
               marginTop: spacing[4],
-              backgroundColor: colors.surface[200],
+              backgroundColor: m3.surface.s200,
               paddingHorizontal: spacing[6],
               paddingVertical: spacing[2],
               borderRadius: borderRadius.lg,
@@ -638,11 +639,11 @@ export default function LabTestsScreen() {
       <View
         style={{
           flexDirection: 'row',
-          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+          backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[3],
           borderBottomWidth: 1,
-          borderBottomColor: colors.surface[200],
+          borderBottomColor: m3.surface.s200,
         }}
       >
         <Pressable
@@ -652,7 +653,7 @@ export default function LabTestsScreen() {
             paddingVertical: spacing[2],
             marginRight: spacing[2],
             borderBottomWidth: selectedTab === 'soil' ? 2 : 0,
-            borderBottomColor: selectedTab === 'soil' ? colors.labTest.soil : 'transparent',
+            borderBottomColor: selectedTab === 'soil' ? domain.labTest.soil : 'transparent',
           }}
         >
           <Text
@@ -661,7 +662,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'soil' ? colors.labTest.soil : colors.surface[400],
+              color: selectedTab === 'soil' ? domain.labTest.soil : m3.surface.s400,
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
@@ -676,7 +677,7 @@ export default function LabTestsScreen() {
             paddingVertical: spacing[2],
             marginLeft: spacing[2],
             borderBottomWidth: selectedTab === 'petiole' ? 2 : 0,
-            borderBottomColor: selectedTab === 'petiole' ? colors.labTest.petiole : 'transparent',
+            borderBottomColor: selectedTab === 'petiole' ? domain.labTest.petiole : 'transparent',
           }}
         >
           <Text
@@ -685,7 +686,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'petiole' ? colors.labTest.petiole : colors.surface[400],
+              color: selectedTab === 'petiole' ? domain.labTest.petiole : m3.surface.s400,
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
@@ -717,7 +718,7 @@ export default function LabTestsScreen() {
               <IconSymbol
                 name={getTestTypeIcon(selectedTab)}
                 size={18}
-                color={selectedTab === 'soil' ? colors.labTest.soil : colors.labTest.petiole}
+                color={selectedTab === 'soil' ? domain.labTest.soil : domain.labTest.petiole}
               />
               <Text
                 style={{

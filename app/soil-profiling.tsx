@@ -32,13 +32,12 @@ import {
 } from '../src/hooks/use-soil-profiles';
 import { SoilProfile } from '../src/types/database';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 type TabType = 'history' | 'trends';
 
 export default function SoilProfilingScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
 
@@ -110,7 +109,7 @@ export default function SoilProfilingScreen() {
       <View
         key={profile.id}
         style={{
-          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+          backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
           borderRadius: borderRadius.xl,
           padding: spacing[4],
           marginBottom: spacing[3],
@@ -129,13 +128,13 @@ export default function SoilProfilingScreen() {
               style={{
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.semibold,
-                color: colors.surface[900],
+                color: m3.surface.s900,
               }}
             >
               {formatProfileDate(profile.created_at)}
             </Text>
             {profile.fusarium_pct !== null && profile.fusarium_pct !== undefined && (
-              <Text style={{ fontSize: fontSize.xs, color: colors.warning }}>
+              <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.warning }}>
                 {t('soilProfiling.fusarium', { value: profile.fusarium_pct })}
               </Text>
             )}
@@ -200,7 +199,7 @@ export default function SoilProfilingScreen() {
           <View
             style={{
               height: 8,
-              backgroundColor: colors.surface[200],
+              backgroundColor: m3.surface.s200,
               borderRadius: borderRadius.xs,
               overflow: 'hidden',
             }}
@@ -209,7 +208,7 @@ export default function SoilProfilingScreen() {
               style={{
                 height: '100%',
                 width: `${Math.min(avgMoisture, 100)}%`,
-                backgroundColor: colors.success,
+                backgroundColor: m3.colorScheme.success,
                 borderRadius: borderRadius.xs,
               }}
             />
@@ -223,12 +222,12 @@ export default function SoilProfilingScreen() {
             const info = SECTION_INFO[name];
             // Distinct colors per section: T=#355847, B=#A56B4F, R=#D0A14A, L=#4E7384
             const sectionColors: Record<string, string> = {
-              top: colors.primary[500],
-              bottom: colors.secondary[500],
-              right: colors.accent[500],
-              left: colors.info,
+              top: m3.primary.p500,
+              bottom: m3.colorScheme.secondary,
+              right: m3.colorScheme.accent,
+              left: m3.colorScheme.info,
             };
-            const sectionColor = sectionColors[name] || colors.primary[500];
+            const sectionColor = sectionColors[name] || m3.primary.p500;
             return (
               <View key={name} style={{ flex: 1, flexDirection: 'row', alignItems: 'stretch' }}>
                 <View
@@ -264,7 +263,7 @@ export default function SoilProfilingScreen() {
                   <View
                     style={{
                       width: 1,
-                      backgroundColor: colors.surface[300],
+                      backgroundColor: m3.surface.s300,
                       marginHorizontal: spacing[1],
                     }}
                   />
@@ -303,7 +302,7 @@ export default function SoilProfilingScreen() {
           fontSize: fontSize.lg,
           fontWeight: fontWeight.semibold,
           marginTop: spacing[4],
-          color: colors.surface[900],
+          color: m3.surface.s900,
         }}
       >
         {t('soilProfiling.noProfiles')}
@@ -313,7 +312,7 @@ export default function SoilProfilingScreen() {
           textAlign: 'center',
           marginTop: spacing[2],
           paddingHorizontal: spacing[8],
-          color: colors.surface[500],
+          color: m3.surface.s500,
         }}
       >
         {t('soilProfiling.noProfilesDescription')}
@@ -367,7 +366,7 @@ export default function SoilProfilingScreen() {
               fontSize: fontSize.lg,
               fontWeight: fontWeight.semibold,
               marginTop: spacing[4],
-              color: colors.surface[900],
+              color: m3.surface.s900,
             }}
           >
             {t('soilProfiling.notEnoughData')}
@@ -377,7 +376,7 @@ export default function SoilProfilingScreen() {
               textAlign: 'center',
               marginTop: spacing[2],
               paddingHorizontal: spacing[8],
-              color: colors.surface[500],
+              color: m3.surface.s500,
             }}
           >
             {t('soilProfiling.notEnoughDataDescription')}
@@ -392,7 +391,7 @@ export default function SoilProfilingScreen() {
         <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[4] }}>
           <View
             style={{
-              backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+              backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
               flex: 1,
               borderRadius: borderRadius.xl,
               padding: spacing[4],
@@ -402,7 +401,7 @@ export default function SoilProfilingScreen() {
               style={{
                 fontSize: fontSize.xs,
                 marginBottom: spacing[1],
-                color: colors.surface[500],
+                color: m3.surface.s500,
               }}
             >
               {t('soilProfiling.avgMoisture')}
@@ -419,7 +418,7 @@ export default function SoilProfilingScreen() {
           </View>
           <View
             style={{
-              backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+              backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
               flex: 1,
               borderRadius: borderRadius.xl,
               padding: spacing[4],
@@ -429,7 +428,7 @@ export default function SoilProfilingScreen() {
               style={{
                 fontSize: fontSize.xs,
                 marginBottom: spacing[1],
-                color: colors.surface[500],
+                color: m3.surface.s500,
               }}
             >
               {t('soilProfiling.totalProfiles')}
@@ -448,7 +447,7 @@ export default function SoilProfilingScreen() {
 
         <View
           style={{
-            backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
+            backgroundColor: colorWithOpacity(m3.surface.s100, 0.9),
             borderRadius: borderRadius['3xl'],
             padding: spacing[4],
             marginBottom: spacing[4],
@@ -459,7 +458,7 @@ export default function SoilProfilingScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               marginBottom: spacing[2],
-              color: colors.surface[500],
+              color: m3.surface.s500,
             }}
           >
             {t('soilProfiling.recentChange')}
@@ -476,10 +475,10 @@ export default function SoilProfilingScreen() {
               size={24}
               color={
                 trendsData.moistureChange !== null && trendsData.moistureChange > 0
-                  ? colors.success
+                  ? m3.colorScheme.success
                   : trendsData.moistureChange !== null && trendsData.moistureChange < 0
                     ? m3.colorScheme.error
-                    : colors.surface[500]
+                    : m3.surface.s500
               }
             />
             <Text
@@ -489,10 +488,10 @@ export default function SoilProfilingScreen() {
                 marginLeft: spacing[2],
                 color:
                   trendsData.moistureChange !== null && trendsData.moistureChange > 0
-                    ? colors.success
+                    ? m3.colorScheme.success
                     : trendsData.moistureChange !== null && trendsData.moistureChange < 0
                       ? m3.colorScheme.error
-                      : colors.surface[500],
+                      : m3.surface.s500,
               }}
             >
               {trendsData.moistureChange !== null
@@ -500,7 +499,7 @@ export default function SoilProfilingScreen() {
                 : '0.0'}
               %
             </Text>
-            <Text style={{ marginLeft: spacing[2], color: colors.surface[500] }}>
+            <Text style={{ marginLeft: spacing[2], color: m3.surface.s500 }}>
               {t('soilProfiling.fromLastProfile')}
             </Text>
           </View>
@@ -509,14 +508,12 @@ export default function SoilProfilingScreen() {
         {/* Latest Profile */}
         <View
           style={{
-            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+            backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
             borderRadius: borderRadius.xl,
             padding: spacing[4],
           }}
         >
-          <Text
-            style={{ fontSize: fontSize.sm, marginBottom: spacing[2], color: colors.surface[500] }}
-          >
+          <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[2], color: m3.surface.s500 }}>
             {t('soilProfiling.latestMoisture')}
           </Text>
           <Text
@@ -528,9 +525,7 @@ export default function SoilProfilingScreen() {
           >
             {trendsData.latestMoisture}%
           </Text>
-          <Text
-            style={{ fontSize: fontSize.xs, marginTop: spacing[1], color: colors.surface[500] }}
-          >
+          <Text style={{ fontSize: fontSize.xs, marginTop: spacing[1], color: m3.surface.s500 }}>
             {profiles[0] && formatProfileDate(profiles[0].created_at)}
           </Text>
         </View>
@@ -561,14 +556,12 @@ export default function SoilProfilingScreen() {
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.semibold,
                 marginTop: spacing[4],
-                color: colors.surface[900],
+                color: m3.surface.s900,
               }}
             >
               {t('soilProfiling.noFarm.title')}
             </Text>
-            <Text
-              style={{ textAlign: 'center', marginTop: spacing[2], color: colors.surface[500] }}
-            >
+            <Text style={{ textAlign: 'center', marginTop: spacing[2], color: m3.surface.s500 }}>
               {t('soilProfiling.noFarm.subtitle')}
             </Text>
             <Pressable
@@ -674,7 +667,7 @@ export default function SoilProfilingScreen() {
           paddingHorizontal: spacing[4],
           paddingTop: spacing[3],
           paddingBottom: spacing[2],
-          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+          backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
         }}
       >
         <Pressable
@@ -732,7 +725,7 @@ export default function SoilProfilingScreen() {
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-          <Text style={{ marginTop: spacing[2], color: colors.surface[500] }}>
+          <Text style={{ marginTop: spacing[2], color: m3.surface.s500 }}>
             {t('soilProfiling.loading')}
           </Text>
         </View>

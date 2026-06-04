@@ -50,7 +50,8 @@ import type {
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getExpenseIconName } from '@/utils/expense-icons';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 import { getDaysAfterPruning } from '@/utils/date';
 
 interface CombinedLog {
@@ -70,8 +71,8 @@ interface CombinedLog {
 }
 
 export default function LogsScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
+  const domain = useDomainColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -502,7 +503,7 @@ export default function LogsScreen() {
           }}
         >
           <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-          <Text style={{ marginTop: spacing[4], color: colors.surface[500] }}>
+          <Text style={{ marginTop: spacing[4], color: m3.surface.s500 }}>
             {t('common.loading')}
           </Text>
         </View>
@@ -639,7 +640,7 @@ export default function LogsScreen() {
                         style={{
                           fontSize: fontSize.base,
                           fontWeight: fontWeight.semibold,
-                          color: colors.surface[900],
+                          color: m3.surface.s900,
                         }}
                       >
                         {selectedFarmId === undefined
@@ -647,12 +648,12 @@ export default function LogsScreen() {
                           : selectedFarm?.name || t('logs.farmPicker.selectFarm')}
                       </Text>
                       {selectedFarm && (
-                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                           {selectedFarm.crop} • {selectedFarm.area.toFixed(1)} {t('units.acres')}
                         </Text>
                       )}
                       {selectedFarmId === undefined && (
-                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                           {t('logs.farmPicker.farmsCount', { count: farms.length })}
                         </Text>
                       )}
@@ -715,11 +716,11 @@ export default function LogsScreen() {
                 {LOG_TYPES.map((logType) => {
                   const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
                   const categoryColorMap: Record<string, string> = {
-                    irrigation: colors.irrigation[500] || '#3F6E78',
-                    spray: colors.spray[500] || '#6C7C46',
-                    harvest: colors.harvest[500] || '#A9752F',
-                    expense: colors.expense[500] || '#598066',
-                    fertigation: colors.fertigation[500] || '#56704E',
+                    irrigation: domain.category.irrigation || '#3F6E78',
+                    spray: domain.category.spray || '#6C7C46',
+                    harvest: domain.category.harvest || '#A9752F',
+                    expense: domain.category.expense || '#598066',
+                    fertigation: domain.category.fertigation || '#56704E',
                   };
                   const chipColor = categoryColorMap[logType.id] || m3.colorScheme.primary;
                   return (
@@ -958,7 +959,7 @@ export default function LogsScreen() {
                       style={{
                         height: 80,
                         borderRadius: borderRadius['2xl'],
-                        backgroundColor: colorWithOpacity(colors.surface[100], 0.7),
+                        backgroundColor: colorWithOpacity(m3.surface.s100, 0.7),
                       }}
                     />
                   ))}
@@ -969,7 +970,7 @@ export default function LogsScreen() {
                     borderRadius: borderRadius['2xl'],
                     alignItems: 'center',
                     padding: spacing[10],
-                    backgroundColor: colorWithOpacity(colors.surface[100], 0.7),
+                    backgroundColor: colorWithOpacity(m3.surface.s100, 0.7),
                   }}
                 >
                   <View
@@ -993,7 +994,7 @@ export default function LogsScreen() {
                     style={{
                       fontSize: fontSize.base,
                       fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                     }}
                   >
                     {t('logs.empty.title')}
@@ -1001,7 +1002,7 @@ export default function LogsScreen() {
                   <Text
                     style={{
                       fontSize: fontSize.sm,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       textAlign: 'center',
                       marginTop: spacing[1],
                     }}
@@ -1040,7 +1041,7 @@ export default function LogsScreen() {
                       paddingHorizontal: spacing[1],
                     }}
                   >
-                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                       {t('logs.pagination.showing', {
                         start: (currentPage - 1) * itemsPerPage + 1,
                         end: Math.min(currentPage * itemsPerPage, filteredLogs.length),
@@ -1052,7 +1053,7 @@ export default function LogsScreen() {
                       style={({ pressed }) => ({
                         flexDirection: 'row',
                         alignItems: 'center',
-                        backgroundColor: pressed ? colors.surface[200] : colors.surface[50],
+                        backgroundColor: pressed ? m3.surface.s200 : m3.surface.s50,
                         paddingHorizontal: spacing[3],
                         paddingVertical: spacing[2],
                         borderRadius: borderRadius.lg,
@@ -1061,7 +1062,7 @@ export default function LogsScreen() {
                       <Text
                         style={{
                           fontSize: fontSize.xs,
-                          color: colors.surface[500],
+                          color: m3.surface.s500,
                         }}
                       >
                         {t('logs.pagination.perPage', { count: itemsPerPage })}
@@ -1113,7 +1114,7 @@ export default function LogsScreen() {
                                   fontWeight: fontWeight.semibold,
                                   textTransform: 'uppercase',
                                   letterSpacing: 0.8,
-                                  color: colors.surface[400],
+                                  color: m3.surface.s400,
                                   marginBottom: spacing[2],
                                   paddingLeft: spacing[1],
                                 }}
@@ -1127,11 +1128,11 @@ export default function LogsScreen() {
                                   const logType = LOG_TYPES.find((lt) => lt.id === log.type);
                                   // Category colors for left strip - using Cellar Ledger palette
                                   const categoryColorMap: Record<string, string> = {
-                                    irrigation: colors.irrigation[500] || '#3F6E78',
-                                    spray: colors.spray[500] || '#6C7C46',
-                                    harvest: colors.harvest[500] || '#A9752F',
-                                    expense: colors.expense[500] || '#598066',
-                                    fertigation: colors.fertigation[500] || '#56704E',
+                                    irrigation: domain.category.irrigation || '#3F6E78',
+                                    spray: domain.category.spray || '#6C7C46',
+                                    harvest: domain.category.harvest || '#A9752F',
+                                    expense: domain.category.expense || '#598066',
+                                    fertigation: domain.category.fertigation || '#56704E',
                                   };
                                   const categoryColor =
                                     categoryColorMap[log.type] || m3.colorScheme.primary;
@@ -1191,7 +1192,7 @@ export default function LogsScreen() {
                                             style={{
                                               fontSize: fontSize.base,
                                               fontWeight: fontWeight.semibold,
-                                              color: colors.surface[900],
+                                              color: m3.surface.s900,
                                             }}
                                             numberOfLines={1}
                                           >
@@ -1208,7 +1209,7 @@ export default function LogsScreen() {
                                             <Text
                                               style={{
                                                 fontSize: fontSize.xs,
-                                                color: colors.surface[500],
+                                                color: m3.surface.s500,
                                               }}
                                             >
                                               {formatDate(parsedDate, {
@@ -1223,14 +1224,14 @@ export default function LogsScreen() {
                                                     width: 3,
                                                     height: 3,
                                                     borderRadius: radius.none,
-                                                    backgroundColor: colors.surface[400],
+                                                    backgroundColor: m3.surface.s400,
                                                   }}
                                                 />
                                                 <Text
                                                   style={{
                                                     fontSize: fontSize.xs,
                                                     fontWeight: fontWeight.medium,
-                                                    color: colors.surface[500],
+                                                    color: m3.surface.s500,
                                                   }}
                                                 >
                                                   {t('farmDetails.pruning.daysShort', {
@@ -1354,7 +1355,7 @@ export default function LogsScreen() {
                           paddingVertical: spacing[2],
                           borderRadius: borderRadius.xl,
                           backgroundColor:
-                            currentPage === 1 ? colors.surface[50] : m3.colorScheme.primary,
+                            currentPage === 1 ? m3.surface.s50 : m3.colorScheme.primary,
                           opacity: currentPage === 1 ? 0.5 : 1,
                         }}
                       >
@@ -1393,9 +1394,7 @@ export default function LogsScreen() {
                                 justifyContent: 'center',
                                 marginHorizontal: 2,
                                 backgroundColor:
-                                  currentPage === pageNum
-                                    ? m3.colorScheme.primary
-                                    : colors.surface[50],
+                                  currentPage === pageNum ? m3.colorScheme.primary : m3.surface.s50,
                               }}
                             >
                               <Text
@@ -1405,7 +1404,7 @@ export default function LogsScreen() {
                                   color:
                                     currentPage === pageNum
                                       ? m3.colorScheme.onPrimary
-                                      : colors.gray[700],
+                                      : m3.neutral.n700,
                                 }}
                               >
                                 {pageNum}
@@ -1423,9 +1422,7 @@ export default function LogsScreen() {
                           paddingVertical: spacing[2],
                           borderRadius: borderRadius.xl,
                           backgroundColor:
-                            currentPage === totalPages
-                              ? colors.surface[50]
-                              : m3.colorScheme.primary,
+                            currentPage === totalPages ? m3.surface.s50 : m3.colorScheme.primary,
                           opacity: currentPage === totalPages ? 0.5 : 1,
                         }}
                       >
@@ -1481,7 +1478,7 @@ export default function LogsScreen() {
               style={{
                 flex: 1,
                 marginTop: 'auto',
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: borderRadius['3xl'],
                 borderTopRightRadius: borderRadius['3xl'],
                 overflow: 'hidden',
@@ -1493,7 +1490,7 @@ export default function LogsScreen() {
                 style={{
                   width: 48,
                   height: 4,
-                  backgroundColor: colors.surface[200],
+                  backgroundColor: m3.surface.s200,
                   borderRadius: borderRadius.full,
                   marginHorizontal: 'auto',
                   marginTop: spacing[3],
@@ -1504,7 +1501,7 @@ export default function LogsScreen() {
                 style={{
                   fontSize: fontSize.lg,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   paddingHorizontal: spacing[6],
                   paddingTop: spacing[2],
                   paddingBottom: spacing[4],
@@ -1528,7 +1525,7 @@ export default function LogsScreen() {
                     borderRadius: borderRadius['2xl'],
                     marginBottom: spacing[2],
                     backgroundColor:
-                      selectedFarmId === undefined ? m3.colorScheme.primary : colors.surface[50],
+                      selectedFarmId === undefined ? m3.colorScheme.primary : m3.surface.s50,
                   }}
                 >
                   <View
@@ -1560,9 +1557,7 @@ export default function LogsScreen() {
                         fontSize: fontSize.base,
                         fontWeight: fontWeight.semibold,
                         color:
-                          selectedFarmId === undefined
-                            ? m3.colorScheme.onPrimary
-                            : colors.surface[900],
+                          selectedFarmId === undefined ? m3.colorScheme.onPrimary : m3.surface.s900,
                       }}
                     >
                       {t('logs.farmPicker.allFarms')}
@@ -1573,7 +1568,7 @@ export default function LogsScreen() {
                         color:
                           selectedFarmId === undefined
                             ? colorWithOpacity(m3.colorScheme.onPrimary, 0.8)
-                            : colors.surface[500],
+                            : m3.surface.s500,
                       }}
                     >
                       {t('logs.farmPicker.farmsCount', { count: farms.length })}
@@ -1603,7 +1598,7 @@ export default function LogsScreen() {
                       borderRadius: borderRadius['2xl'],
                       marginBottom: spacing[2],
                       backgroundColor:
-                        selectedFarmId === farm.id ? m3.colorScheme.primary : colors.surface[50],
+                        selectedFarmId === farm.id ? m3.colorScheme.primary : m3.surface.s50,
                     }}
                   >
                     <View
@@ -1635,9 +1630,7 @@ export default function LogsScreen() {
                           fontSize: fontSize.base,
                           fontWeight: fontWeight.semibold,
                           color:
-                            selectedFarmId === farm.id
-                              ? m3.colorScheme.onPrimary
-                              : colors.surface[900],
+                            selectedFarmId === farm.id ? m3.colorScheme.onPrimary : m3.surface.s900,
                         }}
                       >
                         {farm.name}
@@ -1648,7 +1641,7 @@ export default function LogsScreen() {
                           color:
                             selectedFarmId === farm.id
                               ? colorWithOpacity(m3.colorScheme.onPrimary, 0.8)
-                              : colors.surface[500],
+                              : m3.surface.s500,
                         }}
                       >
                         {farm.crop} • {farm.area.toFixed(1)} {t('units.acres')}
@@ -1672,10 +1665,10 @@ export default function LogsScreen() {
                   paddingVertical: spacing[3],
                   borderRadius: borderRadius.xl,
                   alignItems: 'center',
-                  backgroundColor: colors.surface[50],
+                  backgroundColor: m3.surface.s50,
                 }}
               >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.gray[700] }}>
+                <Text style={{ fontWeight: fontWeight.semibold, color: m3.neutral.n700 }}>
                   {t('common.cancel')}
                 </Text>
               </Pressable>
@@ -1704,7 +1697,7 @@ export default function LogsScreen() {
               style={{
                 width: '80%',
                 maxWidth: 320,
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[6],
               }}
@@ -1722,7 +1715,7 @@ export default function LogsScreen() {
                   style={{
                     fontSize: fontSize.lg,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                   }}
                 >
                   {t('logs.pagination.recordsPerPage')}
@@ -1745,14 +1738,14 @@ export default function LogsScreen() {
                     justifyContent: 'space-between',
                     padding: spacing[3],
                     borderRadius: borderRadius.xl,
-                    backgroundColor: pressed ? colors.surface[100] : 'transparent',
+                    backgroundColor: pressed ? m3.surface.s100 : 'transparent',
                     marginBottom: spacing[2],
                   })}
                 >
                   <Text
                     style={{
                       fontSize: fontSize.base,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                     }}
                   >
                     {value}
@@ -1789,7 +1782,7 @@ export default function LogsScreen() {
           >
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: borderRadius['3xl'],
                 borderTopRightRadius: borderRadius['3xl'],
                 overflow: 'hidden',
@@ -1801,7 +1794,7 @@ export default function LogsScreen() {
                   style={{
                     width: 48,
                     height: 4,
-                    backgroundColor: colors.surface[200],
+                    backgroundColor: m3.surface.s200,
                     borderRadius: borderRadius.full,
                     marginHorizontal: 'auto',
                     marginTop: spacing[3],
@@ -1839,7 +1832,7 @@ export default function LogsScreen() {
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginBottom: spacing[2],
                     }}
                   >
@@ -1886,7 +1879,7 @@ export default function LogsScreen() {
                               marginLeft: spacing[1],
                               fontSize: fontSize.xs,
                               fontWeight: fontWeight.semibold,
-                              color: isSelected ? m3.colorScheme.onPrimary : colors.gray[700],
+                              color: isSelected ? m3.colorScheme.onPrimary : m3.neutral.n700,
                             }}
                           >
                             {t(logType.labelKey)}
@@ -1900,7 +1893,7 @@ export default function LogsScreen() {
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginTop: spacing[5],
                       marginBottom: spacing[2],
                     }}
@@ -1924,14 +1917,14 @@ export default function LogsScreen() {
                             borderColor: m3.colorScheme.outlineVariant,
                           }}
                         >
-                          <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                             {t('common.from')}
                           </Text>
                           <Text
                             style={{
                               fontSize: fontSize.sm,
                               fontWeight: fontWeight.semibold,
-                              color: colors.surface[900],
+                              color: m3.surface.s900,
                             }}
                           >
                             {dateFrom
@@ -1955,14 +1948,14 @@ export default function LogsScreen() {
                             borderColor: m3.colorScheme.outlineVariant,
                           }}
                         >
-                          <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                             {t('common.to')}
                           </Text>
                           <Text
                             style={{
                               fontSize: fontSize.sm,
                               fontWeight: fontWeight.semibold,
-                              color: colors.surface[900],
+                              color: m3.surface.s900,
                             }}
                           >
                             {dateTo
@@ -1983,7 +1976,7 @@ export default function LogsScreen() {
                           backgroundColor: m3.surface.surfaceContainerLow,
                         }}
                       >
-                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                           {t('common.from')}
                         </Text>
                         <DateTimePicker
@@ -2005,7 +1998,7 @@ export default function LogsScreen() {
                           backgroundColor: m3.surface.surfaceContainerLow,
                         }}
                       >
-                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                           {t('common.to')}
                         </Text>
                         <DateTimePicker
@@ -2030,7 +2023,7 @@ export default function LogsScreen() {
                     paddingTop: spacing[3],
                     paddingBottom: Math.max(insets.bottom, spacing[4]),
                     borderTopWidth: 1,
-                    borderTopColor: colors.surface[200],
+                    borderTopColor: m3.surface.s200,
                   }}
                 >
                   <Pressable
@@ -2044,10 +2037,10 @@ export default function LogsScreen() {
                       borderRadius: borderRadius.xl,
                       alignItems: 'center',
                       borderWidth: 1,
-                      borderColor: colors.surface[200],
+                      borderColor: m3.surface.s200,
                     }}
                   >
-                    <Text style={{ fontWeight: fontWeight.semibold, color: colors.gray[700] }}>
+                    <Text style={{ fontWeight: fontWeight.semibold, color: m3.neutral.n700 }}>
                       {t('common.clearAll')}
                     </Text>
                   </Pressable>
@@ -2092,7 +2085,7 @@ export default function LogsScreen() {
           <View
             style={{
               width: '100%',
-              backgroundColor: colorWithOpacity(colors.surface[100], 0.95),
+              backgroundColor: colorWithOpacity(m3.surface.s100, 0.95),
               borderRadius: borderRadius['2xl'],
               padding: spacing[6],
             }}
@@ -2119,7 +2112,7 @@ export default function LogsScreen() {
               style={{
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.bold,
-                color: colors.surface[900],
+                color: m3.surface.s900,
                 textAlign: 'center',
                 marginBottom: spacing[2],
               }}
@@ -2129,7 +2122,7 @@ export default function LogsScreen() {
             <Text
               style={{
                 fontSize: fontSize.sm,
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 textAlign: 'center',
                 marginBottom: spacing[6],
               }}
@@ -2150,10 +2143,10 @@ export default function LogsScreen() {
                   borderRadius: borderRadius.xl,
                   alignItems: 'center',
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
+                  borderColor: m3.surface.s200,
                 }}
               >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.gray[700] }}>
+                <Text style={{ fontWeight: fontWeight.semibold, color: m3.neutral.n700 }}>
                   {t('common.cancel')}
                 </Text>
               </Pressable>

@@ -6,7 +6,7 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView } from 'react-native';
 import { ModalBackdrop } from '@/components/ui';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { isIOS } from '@/hooks';
 import { colorWithOpacity } from '@/utils/color';
@@ -56,7 +56,6 @@ export function CropPickerSheet({
   renderCropVisual,
 }: CropPickerSheetProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
 
   if (!visible) return null;
@@ -77,7 +76,7 @@ export function CropPickerSheet({
           targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP_SHEET}
           onStartShouldSetResponder={() => true}
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderTopLeftRadius: borderRadius['3xl'],
             borderTopRightRadius: borderRadius['3xl'],
             height: cropSheetHeight,
@@ -92,7 +91,7 @@ export function CropPickerSheet({
               paddingHorizontal: spacing[6],
               paddingVertical: spacing[4],
               borderBottomWidth: 1,
-              borderBottomColor: colors.surface[100],
+              borderBottomColor: m3.surface.s100,
             }}
           >
             <View style={{ width: 40 }} />
@@ -100,7 +99,7 @@ export function CropPickerSheet({
               style={{
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.semibold,
-                color: colors.surface[900],
+                color: m3.surface.s900,
               }}
             >
               {t('farmForm.cropPicker.modalTitle')}
@@ -111,7 +110,7 @@ export function CropPickerSheet({
                 width: 40,
                 height: 40,
                 borderRadius: borderRadius.full,
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -135,9 +134,9 @@ export function CropPickerSheet({
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
+                  borderColor: m3.surface.s200,
                   borderRadius: borderRadius.xl,
-                  backgroundColor: colors.surface[50],
+                  backgroundColor: m3.surface.s50,
                   paddingHorizontal: spacing[3],
                   minHeight: 48,
                 }}
@@ -151,11 +150,11 @@ export function CropPickerSheet({
                   value={cropSearchQuery}
                   onChangeText={onSearchChange}
                   placeholder={t('farmForm.cropPicker.searchPlaceholder')}
-                  placeholderTextColor={colors.surface[400]}
+                  placeholderTextColor={m3.surface.s400}
                   style={{
                     flex: 1,
                     marginLeft: spacing[2],
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                     fontSize: fontSize.base,
                   }}
                   autoCapitalize="words"
@@ -175,8 +174,8 @@ export function CropPickerSheet({
                       paddingHorizontal: spacing[6],
                       paddingVertical: spacing[4],
                       borderBottomWidth: 1,
-                      borderBottomColor: colors.surface[100],
-                      backgroundColor: isSelected ? colors.surface[50] : colors.surface[100],
+                      borderBottomColor: m3.surface.s100,
+                      backgroundColor: isSelected ? m3.surface.s50 : m3.surface.s100,
                     }}
                     onPress={() => onSelectCrop(cropOption.value)}
                   >
@@ -197,8 +196,8 @@ export function CropPickerSheet({
                             justifyContent: 'center',
                             marginRight: spacing[3],
                             backgroundColor: isSelected
-                              ? colorWithOpacity(colors.primary[500], 0.16)
-                              : colorWithOpacity(colors.surface[600], 0.1),
+                              ? colorWithOpacity(m3.primary.p500, 0.16)
+                              : colorWithOpacity(m3.surface.s600, 0.1),
                           }}
                         >
                           {renderCropVisual(cropOption.value, 22, isSelected)}
@@ -207,7 +206,7 @@ export function CropPickerSheet({
                           <Text
                             style={{
                               fontSize: fontSize.base,
-                              color: isSelected ? colors.surface[900] : colors.surface[700],
+                              color: isSelected ? m3.surface.s900 : m3.surface.s700,
                               fontWeight: isSelected ? fontWeight.semibold : fontWeight.medium,
                             }}
                           >
@@ -217,7 +216,7 @@ export function CropPickerSheet({
                             style={{
                               marginTop: 2,
                               fontSize: fontSize.sm,
-                              color: colors.surface[500],
+                              color: m3.surface.s500,
                             }}
                           >
                             {cropOption.sublabel}
@@ -225,7 +224,7 @@ export function CropPickerSheet({
                         </View>
                       </View>
                       {isSelected && (
-                        <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                        <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
                       )}
                     </View>
                   </Pressable>
@@ -240,12 +239,12 @@ export function CropPickerSheet({
                     paddingHorizontal: spacing[6],
                     paddingVertical: spacing[4],
                     borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
+                    borderBottomColor: m3.surface.s100,
                     backgroundColor:
                       selectedCrop === 'Other' &&
                       customCropName.trim().toLowerCase() === cropSearchQueryLower
-                        ? colors.surface[50]
-                        : colors.surface[100],
+                        ? m3.surface.s50
+                        : m3.surface.s100,
                   }}
                 >
                   <View
@@ -256,12 +255,12 @@ export function CropPickerSheet({
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                      <UISymbol name="plus.circle.fill" size={20} color={colors.primary[500]} />
+                      <UISymbol name="plus.circle.fill" size={20} color={m3.primary.p500} />
                       <Text
                         style={{
                           marginLeft: spacing[2],
                           fontSize: fontSize.base,
-                          color: colors.surface[900],
+                          color: m3.surface.s900,
                           fontWeight: fontWeight.semibold,
                         }}
                       >
@@ -276,7 +275,7 @@ export function CropPickerSheet({
 
               {filteredCropOptions.length === 0 && !canCreateCustomCrop && (
                 <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
                     {t('farmForm.cropPicker.noResults')}
                   </Text>
                 </View>

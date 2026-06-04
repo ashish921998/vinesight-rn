@@ -12,20 +12,27 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { SuggestionChips } from '@/components/assistant/SuggestionChips';
 
-jest.mock('@/styles/use-theme', () => ({
-  useThemeTokens: () => ({
-    m3: {
-      colorScheme: {
-        primary: '#408059',
-        onPrimary: '#ffffff',
-        secondaryContainer: '#e1ebe5',
-        onSecondaryContainer: '#1f412b',
-        onSurfaceVariant: '#6b7280',
-        outlineVariant: '#e5e7eb',
+jest.mock('@/styles/use-theme', () => {
+  const __mod = {
+    useThemeTokens: () => ({
+      m3: {
+        colorScheme: {
+          primary: '#408059',
+          onPrimary: '#ffffff',
+          secondaryContainer: '#e1ebe5',
+          onSecondaryContainer: '#1f412b',
+          onSurfaceVariant: '#6b7280',
+          outlineVariant: '#e5e7eb',
+        },
       },
-    },
-  }),
-}));
+    }),
+  };
+  return {
+    ...__mod,
+    useM3: () => __mod.useThemeTokens().m3,
+    useIsDark: () => (__mod.useThemeTokens() as { isDark?: boolean }).isDark ?? false,
+  };
+});
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({

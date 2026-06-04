@@ -4,7 +4,7 @@ import { Symbol } from '@/components/ui/symbol';
 import { useFarms } from '@/hooks';
 import type { Worker } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { MarkAttendanceTab, CalendarAttendanceTab } from './attendance-subcomponents';
 import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
@@ -23,13 +23,12 @@ export function AttendanceView({
   onBottomActionBarVisibilityChange,
 }: AttendanceViewProps) {
   const { data: farms } = useFarms();
-  const colors = useThemeColors();
   const m3 = useM3();
   const UI = useMemo(
     () => ({
       bg: m3.colorScheme.background,
-      surface: colors.surface[100],
-      surfaceSoft: colorWithOpacity(colors.surface[100], 0.9),
+      surface: m3.surface.s100,
+      surfaceSoft: colorWithOpacity(m3.surface.s100, 0.9),
       border: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
       primary: m3.colorScheme.primary,
       primarySoft: colorWithOpacity(m3.colorScheme.primary, 0.12),
@@ -37,7 +36,7 @@ export function AttendanceView({
       muted: m3.colorScheme.onSurfaceVariant,
       accent: m3.colorScheme.secondary,
     }),
-    [colors, m3],
+    [m3],
   );
   const [activeTab, setActiveTab] = useState<AttendanceTab>('mark');
   const [selectedWorkerIndex, setSelectedWorkerIndex] = useState(0);

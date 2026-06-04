@@ -15,7 +15,7 @@ import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import type { NutrientCompositionItem, QuantityBasis } from '@/types';
 import type { ChemicalMix } from '@/types/phi';
@@ -133,7 +133,6 @@ export function SprayForm({
   catalogMixes = [],
   compact = false,
 }: SprayFormProps) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
   const onChangeRef = useRef(onChange);
@@ -427,12 +426,12 @@ export function SprayForm({
               style={{
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.semibold,
-                color: colors.surface[900],
+                color: m3.surface.s900,
               }}
             >
               {t('sprayForm.title')}
             </Text>
-            <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+            <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
               {t('sprayForm.subtitle')}
             </Text>
           </View>
@@ -479,7 +478,7 @@ export function SprayForm({
                   style={{
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                     marginBottom: spacing[2],
                     textTransform: 'uppercase',
                     letterSpacing: 0.4,
@@ -501,9 +500,9 @@ export function SprayForm({
                   accessibilityState={{ expanded: showCatalogMixPicker }}
                   style={{
                     borderRadius: borderRadius.lg,
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     borderWidth: 1,
-                    borderColor: selectedCatalogMix ? m3.colorScheme.tertiary : colors.surface[200],
+                    borderColor: selectedCatalogMix ? m3.colorScheme.tertiary : m3.surface.s200,
                     paddingHorizontal: spacing[3],
                     paddingVertical: spacing[3],
                     flexDirection: 'row',
@@ -515,27 +514,27 @@ export function SprayForm({
                     <Text
                       style={{
                         fontSize: fontSize.sm,
-                        color: selectedCatalogMix ? colors.surface[900] : colors.surface[500],
+                        color: selectedCatalogMix ? m3.surface.s900 : m3.surface.s500,
                       }}
                     >
                       {selectedCatalogMix?.name ??
                         t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })}
                     </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                       {selectedCatalogMix?.target_problem ??
                         t('sprayForm.catalogOnly.fallbackLabel', {
                           defaultValue: 'Catalog mix',
                         })}
                     </Text>
                   </View>
-                  <Symbol name="chevron.right" size={18} color={colors.surface[600]} />
+                  <Symbol name="chevron.right" size={18} color={m3.surface.s600} />
                 </Pressable>
                 {selectedCatalogMix ? (
                   <Text
                     style={{
                       marginTop: spacing[2],
                       fontSize: fontSize.xs,
-                      color: colors.surface[600],
+                      color: m3.surface.s600,
                     }}
                   >
                     {t('sprayForm.catalogOnly.selectedMix', {
@@ -548,7 +547,7 @@ export function SprayForm({
                     style={{
                       marginTop: spacing[2],
                       fontSize: fontSize.xs,
-                      color: colors.surface[600],
+                      color: m3.surface.s600,
                     }}
                   >
                     {catalogOnly
@@ -569,7 +568,7 @@ export function SprayForm({
                   style={{
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                     marginBottom: spacing[2],
                     textTransform: 'uppercase',
                     letterSpacing: 0.4,
@@ -587,15 +586,15 @@ export function SprayForm({
                         paddingHorizontal: spacing[3],
                         paddingVertical: spacing[2],
                         borderRadius: borderRadius.full,
-                        backgroundColor: colors.surface[100],
+                        backgroundColor: m3.surface.s100,
                         borderWidth: 1,
-                        borderColor: colors.surface[200],
+                        borderColor: m3.surface.s200,
                       }}
                     >
-                      <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
                         {item.name}
                       </Text>
-                      <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                         {item.quantity ? `${item.quantity} ` : ''}
                         {item.unit ?? 'gm/L'}
                       </Text>
@@ -607,16 +606,17 @@ export function SprayForm({
 
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
               <View style={{ marginRight: 6 }}>
-                <Symbol name="flask" size={16} color={colors.primary[600]} />
+                <Symbol name="flask" size={16} color={m3.primary.p600} />
               </View>
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[800],
+                  color: m3.surface.s800,
                 }}
               >
-                {t('sprayForm.chemicals.label')} <Text style={{ color: colors.error }}>*</Text>
+                {t('sprayForm.chemicals.label')}{' '}
+                <Text style={{ color: m3.colorScheme.error }}>*</Text>
               </Text>
             </View>
 
@@ -691,19 +691,23 @@ export function SprayForm({
           marginTop: spacing[4],
           paddingTop: spacing[4],
           borderTopWidth: 1,
-          borderTopColor: colors.surface[100],
+          borderTopColor: m3.surface.s100,
         }}
       >
         <Symbol
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
-          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+          color={
+            isValid
+              ? m3.colorScheme.success
+              : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+          }
         />
         <Text
           style={{
             fontSize: fontSize.sm,
             marginLeft: spacing[2],
-            color: isValid ? colors.success : colors.surface[500],
+            color: isValid ? m3.colorScheme.success : m3.surface.s500,
           }}
         >
           {isValid ? t('sprayForm.validation.ready') : t('sprayForm.validation.incomplete')}
@@ -740,14 +744,14 @@ export function SprayForm({
               style={{
                 padding: spacing[4],
                 borderBottomWidth: 1,
-                borderBottomColor: colors.surface[100],
+                borderBottomColor: m3.surface.s100,
               }}
             >
               <Text
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                 }}
               >
                 {t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })}
@@ -766,9 +770,9 @@ export function SprayForm({
                   marginTop: spacing[3],
                   borderRadius: borderRadius.lg,
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
-                  backgroundColor: colors.surface[100],
-                  color: colors.surface[900],
+                  borderColor: m3.surface.s200,
+                  backgroundColor: m3.surface.s100,
+                  color: m3.surface.s900,
                   paddingHorizontal: spacing[3],
                   paddingVertical: spacing[3],
                 }}
@@ -786,7 +790,7 @@ export function SprayForm({
                       paddingHorizontal: spacing[4],
                       paddingVertical: spacing[3],
                       borderTopWidth: 1,
-                      borderTopColor: colors.surface[100],
+                      borderTopColor: m3.surface.s100,
                       backgroundColor: isSelected
                         ? colorWithOpacity(m3.colorScheme.tertiary, 0.08)
                         : 'transparent',
@@ -795,15 +799,13 @@ export function SprayForm({
                     <Text
                       style={{
                         fontSize: fontSize.sm,
-                        color: colors.surface[900],
+                        color: m3.surface.s900,
                         fontWeight: fontWeight.semibold,
                       }}
                     >
                       {mix.name}
                     </Text>
-                    <Text
-                      style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: 2 }}
-                    >
+                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 2 }}>
                       {mix.target_problem ??
                         t('sprayForm.catalogOnly.fallbackLabel', {
                           defaultValue: 'Catalog mix',
@@ -818,7 +820,7 @@ export function SprayForm({
                     paddingHorizontal: spacing[4],
                     paddingVertical: spacing[4],
                     fontSize: fontSize.sm,
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                   }}
                 >
                   {t('common.noResultsFound', { defaultValue: 'No results found' })}
@@ -830,7 +832,7 @@ export function SprayForm({
               style={{
                 padding: spacing[3],
                 borderTopWidth: 1,
-                borderTopColor: colors.surface[100],
+                borderTopColor: m3.surface.s100,
                 alignItems: 'flex-end',
               }}
             >
@@ -894,7 +896,6 @@ function ChemicalRow({
   readOnly = false,
 }: ChemicalRowProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [quantityText, setQuantityText] = useState(
@@ -973,7 +974,7 @@ function ChemicalRow({
         borderWidth: 1,
         backgroundColor: isRowComplete
           ? colorWithOpacity(m3.colorScheme.tertiary, 0.12)
-          : colors.surface[50],
+          : m3.surface.s50,
         borderColor: isRowComplete ? colorWithOpacity(m3.colorScheme.tertiary, 0.3) : 'transparent',
       }}
     >
@@ -987,10 +988,10 @@ function ChemicalRow({
               paddingHorizontal: spacing[3],
               paddingVertical: 10,
               fontSize: fontSize.base,
-              color: colors.surface[900],
-              backgroundColor: colors.surface[100],
+              color: m3.surface.s900,
+              backgroundColor: m3.surface.s100,
               borderWidth: 1,
-              borderColor: isNameFocused ? m3.colorScheme.tertiary : colors.surface[200],
+              borderColor: isNameFocused ? m3.colorScheme.tertiary : m3.surface.s200,
             }}
             placeholder={t('sprayForm.chemicals.namePlaceholder')}
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
@@ -1015,10 +1016,10 @@ function ChemicalRow({
                 top: 52,
                 left: 0,
                 right: 0,
-                backgroundColor: colors.white,
+                backgroundColor: '#ffffff',
                 borderRadius: borderRadius.lg,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 maxHeight: 208,
                 overflow: 'hidden',
                 zIndex: 20,
@@ -1033,13 +1034,13 @@ function ChemicalRow({
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[2],
                       borderTopWidth: suggestionIndex === 0 ? 0 : 1,
-                      borderTopColor: colors.surface[100],
+                      borderTopColor: m3.surface.s100,
                     }}
                   >
-                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
                       {item.name}
                     </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                       {item.quantity ? `${item.quantity} ` : ''}
                       {item.unit ?? 'gm/L'}
                     </Text>
@@ -1055,7 +1056,7 @@ function ChemicalRow({
                 marginTop: spacing[1],
                 marginLeft: spacing[1],
                 fontSize: fontSize.xs,
-                color: colors.surface[600],
+                color: m3.surface.s600,
               }}
             >
               {t('sprayForm.noMatchesHint')}
@@ -1087,11 +1088,11 @@ function ChemicalRow({
             paddingHorizontal: spacing[3],
             paddingVertical: 10,
             fontSize: fontSize.base,
-            color: colors.surface[900],
+            color: m3.surface.s900,
             textAlign: 'center',
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderWidth: 1,
-            borderColor: isQuantityFocused ? m3.colorScheme.tertiary : colors.surface[200],
+            borderColor: isQuantityFocused ? m3.colorScheme.tertiary : m3.surface.s200,
           }}
           placeholder={t('sprayForm.chemicals.qtyPlaceholder')}
           placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
@@ -1120,19 +1121,17 @@ function ChemicalRow({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: borderRadius.lg,
             paddingHorizontal: spacing[3],
             paddingVertical: 10,
             marginLeft: spacing[2],
             borderWidth: 1,
-            borderColor: colors.surface[200],
+            borderColor: m3.surface.s200,
           }}
         >
-          <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
-            {chemical.unit}
-          </Text>
-          <Symbol name="chevron.right" size={18} color={colors.surface[600]} />
+          <Text style={{ fontSize: fontSize.base, color: m3.surface.s900 }}>{chemical.unit}</Text>
+          <Symbol name="chevron.right" size={18} color={m3.surface.s600} />
         </Pressable>
       </View>
 
@@ -1147,12 +1146,12 @@ function ChemicalRow({
               backgroundColor:
                 (chemical.quantityBasis ?? 'total') === 'total'
                   ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
-                  : colors.surface[100],
+                  : m3.surface.s100,
               borderWidth: 1,
               borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
             }}
           >
-            <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
+            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
               {t('sprayForm.chemicals.totalQty', { defaultValue: 'Total Qty' })}
             </Text>
           </Pressable>
@@ -1165,12 +1164,12 @@ function ChemicalRow({
               backgroundColor:
                 chemical.quantityBasis === 'per_acre'
                   ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
-                  : colors.surface[100],
+                  : m3.surface.s100,
               borderWidth: 1,
               borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
             }}
           >
-            <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
+            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
               {t('sprayForm.chemicals.perAcre', { defaultValue: 'Per acre' })}
             </Text>
           </Pressable>

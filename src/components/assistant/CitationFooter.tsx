@@ -11,7 +11,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { spacing } from '@/styles/theme';
 import { normalizeAssistantCitations } from '@/services/rag-citations';
 import type { AssistantCitation } from '@/types/ai';
@@ -23,7 +23,7 @@ interface CitationFooterProps {
 }
 
 export function CitationFooter({ citations }: CitationFooterProps) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
@@ -87,7 +87,7 @@ interface CitationItemProps {
 }
 
 function CitationItem({ citation, index }: CitationItemProps) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const confidenceText =

@@ -62,7 +62,8 @@ import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { isGrapeCrop } from '@/utils/crop';
 
 import { useModalStore } from '@/stores';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from '@/utils/haptics';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
@@ -88,8 +89,8 @@ const NOW_TICK_MS = 60_000;
 const OPEN_TASKS_PREVIEW_LIMIT = 5;
 
 export default function FarmDetailScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
+  const domain = useDomainColors();
   const { t } = useTranslation();
   const currency = useCurrency();
 
@@ -271,7 +272,7 @@ export default function FarmDetailScreen() {
         id: 'soil',
         titleKey: 'farmDetails.workboard.actions.soilMoisture',
         icon: 'square.stack.3d.up.fill',
-        color: colors.task[500],
+        color: domain.category.task,
       },
     ];
     if (profile?.consultant_organization_id) {
@@ -279,11 +280,11 @@ export default function FarmDetailScreen() {
         id: 'fertilizer-plans',
         titleKey: 'farmDetails.fertilizerPlan.title',
         icon: 'leaf.fill',
-        color: colors.fertigation[500],
+        color: domain.category.fertigation,
       });
     }
     return actions;
-  }, [colors.fertigation, colors.task, m3, profile?.consultant_organization_id]);
+  }, [domain.category.fertigation, domain.category.task, m3, profile?.consultant_organization_id]);
 
   const seasonEndDates = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return [];
@@ -1565,9 +1566,9 @@ export default function FarmDetailScreen() {
             <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
               <View
                 style={{
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
+                  borderColor: m3.surface.s300,
                   borderRadius: borderRadius.md,
                   padding: spacing[4],
                 }}
@@ -1585,12 +1586,12 @@ export default function FarmDetailScreen() {
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.8,
                       textTransform: 'uppercase',
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                     }}
                   >
                     {t('farmDetails.seasonStrip.title', { defaultValue: 'Season' })}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {100 - seasonProgressPct}%{' '}
                     {t('farmDetails.seasonStrip.toHarvest', { defaultValue: 'to harvest' })}
                   </Text>
@@ -1606,7 +1607,7 @@ export default function FarmDetailScreen() {
                       right: 0,
                       top: 7,
                       height: 6,
-                      backgroundColor: colors.surface[200],
+                      backgroundColor: m3.surface.s200,
                       borderRadius: borderRadius.full,
                     }}
                   />
@@ -1632,9 +1633,9 @@ export default function FarmDetailScreen() {
                       width: 14,
                       height: 14,
                       borderRadius: radius.sm,
-                      backgroundColor: colors.surface[100],
+                      backgroundColor: m3.surface.s100,
                       borderWidth: 2,
-                      borderColor: colors.warning,
+                      borderColor: m3.colorScheme.warning,
                     }}
                   />
                 </View>
@@ -1654,7 +1655,7 @@ export default function FarmDetailScreen() {
                         fontWeight: fontWeight.bold,
                         letterSpacing: 0.5,
                         textTransform: 'uppercase',
-                        color: colors.surface[500],
+                        color: m3.surface.s500,
                       }}
                     >
                       {t('farmDetails.seasonStrip.pruning', { defaultValue: 'Pruning' })}
@@ -1675,7 +1676,7 @@ export default function FarmDetailScreen() {
                           fontWeight: fontWeight.bold,
                           letterSpacing: 0.5,
                           textTransform: 'uppercase',
-                          color: colors.surface[500],
+                          color: m3.surface.s500,
                         }}
                       >
                         {t('farmDetails.seasonStrip.today', { defaultValue: 'Today' })}
@@ -1685,7 +1686,7 @@ export default function FarmDetailScreen() {
                           fontSize: fontSize.sm,
                           fontWeight: fontWeight.bold,
                           marginTop: 2,
-                          color: colors.warning,
+                          color: m3.colorScheme.warning,
                         }}
                       >
                         {t('farmDetails.pruning.daysShort', { count: daysSincePruning })}
@@ -1699,7 +1700,7 @@ export default function FarmDetailScreen() {
                         fontWeight: fontWeight.bold,
                         letterSpacing: 0.5,
                         textTransform: 'uppercase',
-                        color: colors.surface[500],
+                        color: m3.surface.s500,
                       }}
                     >
                       {t('farmDetails.seasonStrip.target', { defaultValue: 'Target' })}
@@ -1740,7 +1741,7 @@ export default function FarmDetailScreen() {
                 fontWeight: fontWeight.bold,
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 marginBottom: spacing[2],
               }}
             >
@@ -1751,9 +1752,9 @@ export default function FarmDetailScreen() {
               <Pressable
                 style={({ pressed: _pressed }) => ({
                   flex: 1,
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
+                  borderColor: m3.surface.s300,
                   borderRadius: borderRadius.md,
                   padding: spacing[3],
                 })}
@@ -1779,18 +1780,18 @@ export default function FarmDetailScreen() {
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.6,
                       textTransform: 'uppercase',
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                     }}
                   >
                     {t('farmDetails.stats.soilWaterTitle')}
                   </Text>
-                  <UiSymbol name="water" size={14} color={colors.irrigation[500]} />
+                  <UiSymbol name="water" size={14} color={domain.category.irrigation} />
                 </View>
                 <Text
                   style={{
                     color:
                       remainingSoilWater != null && remainingSoilWater >= 0
-                        ? colors.irrigation[500]
+                        ? domain.category.irrigation
                         : m3.colorScheme.error,
                     fontSize: fontSize.xl,
                     fontWeight: fontWeight.bold,
@@ -1801,7 +1802,7 @@ export default function FarmDetailScreen() {
                 </Text>
                 <Text
                   style={{
-                    color: colors.surface[400],
+                    color: m3.surface.s400,
                     fontSize: fontSize.xs,
                     lineHeight: 14,
                     marginTop: spacing[1],
@@ -1815,9 +1816,9 @@ export default function FarmDetailScreen() {
               <View
                 style={{
                   flex: 1,
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
+                  borderColor: m3.surface.s300,
                   borderRadius: borderRadius.md,
                   padding: spacing[3],
                 }}
@@ -1835,18 +1836,18 @@ export default function FarmDetailScreen() {
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.6,
                       textTransform: 'uppercase',
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                     }}
                   >
                     {t('farmDetails.vitalSigns.weather', { defaultValue: 'Weather' })}
                   </Text>
-                  <UiSymbol name="partly-sunny" size={14} color={colors.warning} />
+                  <UiSymbol name="partly-sunny" size={14} color={m3.colorScheme.warning} />
                 </View>
                 {weather?.current ? (
                   <>
                     <Text
                       style={{
-                        color: colors.surface[900],
+                        color: m3.surface.s900,
                         fontSize: fontSize.xl,
                         fontWeight: fontWeight.bold,
                         marginTop: spacing[1],
@@ -1856,7 +1857,7 @@ export default function FarmDetailScreen() {
                     </Text>
                     <Text
                       style={{
-                        color: colors.surface[400],
+                        color: m3.surface.s400,
                         fontSize: fontSize.xs,
                         lineHeight: 14,
                         marginTop: spacing[1],
@@ -1868,7 +1869,7 @@ export default function FarmDetailScreen() {
                 ) : (
                   <Text
                     style={{
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       fontSize: fontSize.xl,
                       fontWeight: fontWeight.bold,
                       marginTop: spacing[1],
@@ -1909,7 +1910,7 @@ export default function FarmDetailScreen() {
                       defaultValue: 'Spray PHI delays harvest',
                     })}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: 2 }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 2 }}>
                     {t('farmDetails.phiConflict.subtitle', {
                       defaultValue: 'Earliest safe: {{date}} — review spray schedule',
                       date: earliestSafeHarvestDateLabel,
@@ -1959,7 +1960,7 @@ export default function FarmDetailScreen() {
                   >
                     {t('farmDetails.riskBlock.urgentTasks', { count: urgentTasks.length })}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: 2 }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 2 }}>
                     {t('farmDetails.tasks.urgentHint', {
                       defaultValue: 'Review due and overdue work before logging more activity.',
                     })}
@@ -2045,7 +2046,7 @@ export default function FarmDetailScreen() {
                         </View>
                         <Text
                           style={{
-                            color: colors.surface[500],
+                            color: m3.surface.s500,
                             fontSize: fontSize.xs,
                             fontWeight: fontWeight.medium,
                             textAlign: 'center',
@@ -2099,7 +2100,7 @@ export default function FarmDetailScreen() {
                     fontWeight: fontWeight.bold,
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                   }}
                 >
                   {t('farmDetails.sections.openTasks', { defaultValue: 'Open tasks' })}
@@ -2109,7 +2110,7 @@ export default function FarmDetailScreen() {
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginLeft: 4,
                     }}
                   >
@@ -2238,7 +2239,7 @@ export default function FarmDetailScreen() {
                     fontWeight: fontWeight.bold,
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                   }}
                 >
                   {t('farmDetails.sections.recentLogs', { defaultValue: 'Recent logs' })}
@@ -2248,7 +2249,7 @@ export default function FarmDetailScreen() {
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginLeft: 4,
                     }}
                   >
@@ -2487,7 +2488,7 @@ export default function FarmDetailScreen() {
                 fontWeight: fontWeight.bold,
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 marginBottom: spacing[2],
               }}
             >
@@ -2575,7 +2576,7 @@ export default function FarmDetailScreen() {
                 fontWeight: fontWeight.bold,
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 marginBottom: spacing[2],
               }}
             >

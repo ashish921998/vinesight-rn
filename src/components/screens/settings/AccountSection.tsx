@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import type { ThemeColors, getM3Theme } from '@/styles/theme';
+import type { getM3Theme } from '@/styles/theme';
 import type { SettingsStyles } from './settings-styles';
 
 interface AccountSectionProps {
@@ -10,7 +10,6 @@ interface AccountSectionProps {
   phoneActionValue: string | null;
   authLoading: boolean;
   styles: SettingsStyles;
-  colors: ThemeColors;
   m3: ReturnType<typeof getM3Theme>;
   onOpenLinkPhone: () => void;
   onSignOut: () => void;
@@ -22,7 +21,6 @@ export function AccountSection({
   phoneActionValue,
   authLoading,
   styles,
-  colors,
   m3,
   onOpenLinkPhone,
   onSignOut,
@@ -64,7 +62,7 @@ export function AccountSection({
           >
             {phoneActionValue ?? t('settings.linkPhone.sendCode')}
           </Text>
-          <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
+          <UISymbol name="chevron.right" size={16} color={m3.surface.s400} />
         </Pressable>
         <Pressable
           onPress={onSignOut}
@@ -74,7 +72,11 @@ export function AccountSection({
           style={[styles.settingsItem, styles.borderBottom]}
         >
           <View style={styles.signOutIcon}>
-            <UISymbol name="rectangle.portrait.and.arrow.right" size={20} color={colors.error} />
+            <UISymbol
+              name="rectangle.portrait.and.arrow.right"
+              size={20}
+              color={m3.colorScheme.error}
+            />
           </View>
           <Text
             style={styles.signOutText}
@@ -93,7 +95,7 @@ export function AccountSection({
           style={styles.settingsItem}
         >
           <View style={styles.deleteIcon}>
-            <UISymbol name="trash" size={20} color={colors.error} />
+            <UISymbol name="trash" size={20} color={m3.colorScheme.error} />
           </View>
           <Text
             style={styles.deleteText}

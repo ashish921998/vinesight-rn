@@ -14,21 +14,28 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { CitationFooter } from '@/components/assistant/CitationFooter';
 import type { AssistantCitation } from '@/types/ai';
 
-jest.mock('@/styles/use-theme', () => ({
-  useThemeTokens: () => ({
-    m3: {
-      colorScheme: {
-        primary: '#408059',
-        onSurface: '#111827',
-        onSurfaceVariant: '#6b7280',
-        outlineVariant: '#e5e7eb',
+jest.mock('@/styles/use-theme', () => {
+  const __mod = {
+    useThemeTokens: () => ({
+      m3: {
+        colorScheme: {
+          primary: '#408059',
+          onSurface: '#111827',
+          onSurfaceVariant: '#6b7280',
+          outlineVariant: '#e5e7eb',
+        },
+        typography: {
+          labelSmall: { fontSize: 11 },
+        },
       },
-      typography: {
-        labelSmall: { fontSize: 11 },
-      },
-    },
-  }),
-}));
+    }),
+  };
+  return {
+    ...__mod,
+    useM3: () => __mod.useThemeTokens().m3,
+    useIsDark: () => (__mod.useThemeTokens() as { isDark?: boolean }).isDark ?? false,
+  };
+});
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({

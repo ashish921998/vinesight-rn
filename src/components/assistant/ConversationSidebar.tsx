@@ -28,7 +28,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { borderRadius, shadows, spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { assistantMemoryService } from '@/services/assistant-memory';
@@ -53,7 +53,7 @@ export function ConversationSidebar({
   onSelectConversation,
   onNewChat,
 }: ConversationSidebarProps) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 

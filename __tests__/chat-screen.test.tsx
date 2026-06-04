@@ -76,6 +76,10 @@ jest.mock('@/components/assistant/ConversationSidebar', () => ({
   },
 }));
 
+jest.mock('@/components/modals/farm-select-modal', () => ({
+  FarmSelectModal: () => null,
+}));
+
 // Mock useVoiceMode to prevent expo-audio transitive import in tests
 jest.mock('@/hooks/use-voice-mode', () => ({
   useVoiceMode: () => ({
@@ -90,42 +94,49 @@ jest.mock('@/hooks/use-voice-mode', () => ({
   }),
 }));
 
-jest.mock('@/styles/use-theme', () => ({
-  useThemeTokens: () => ({
-    isDark: false,
-    m3: {
-      colorScheme: {
-        primary: '#408059',
-        onPrimary: '#ffffff',
-        primaryContainer: '#e1ebe5',
-        onPrimaryContainer: '#1f412b',
-        surface: '#f9fafb',
-        onSurface: '#111827',
-        onSurfaceVariant: '#6b7280',
-        surfaceVariant: '#f3f4f6',
-        outlineVariant: '#e5e7eb',
-        secondaryContainer: '#f0f5f2',
-        onSecondaryContainer: '#1f412b',
-        errorContainer: '#fde8e8',
-        onErrorContainer: '#7f1d1d',
-        error: '#dc2626',
-        onError: '#ffffff',
-        outline: '#9ca3af',
+jest.mock('@/styles/use-theme', () => {
+  const __mod = {
+    useThemeTokens: () => ({
+      isDark: false,
+      m3: {
+        colorScheme: {
+          primary: '#408059',
+          onPrimary: '#ffffff',
+          primaryContainer: '#e1ebe5',
+          onPrimaryContainer: '#1f412b',
+          surface: '#f9fafb',
+          onSurface: '#111827',
+          onSurfaceVariant: '#6b7280',
+          surfaceVariant: '#f3f4f6',
+          outlineVariant: '#e5e7eb',
+          secondaryContainer: '#f0f5f2',
+          onSecondaryContainer: '#1f412b',
+          errorContainer: '#fde8e8',
+          onErrorContainer: '#7f1d1d',
+          error: '#dc2626',
+          onError: '#ffffff',
+          outline: '#9ca3af',
+        },
+        surface: {
+          surfaceContainer: '#e5e7eb',
+          surfaceContainerHigh: '#d1d5db',
+        },
+        typography: {
+          titleMedium: { fontSize: 16, fontWeight: '600' },
+          headlineSmall: { fontSize: 24, fontWeight: '700' },
+          bodyMedium: { fontSize: 14 },
+          labelSmall: { fontSize: 11 },
+          labelLarge: { fontSize: 14 },
+        },
       },
-      surface: {
-        surfaceContainer: '#e5e7eb',
-        surfaceContainerHigh: '#d1d5db',
-      },
-      typography: {
-        titleMedium: { fontSize: 16, fontWeight: '600' },
-        headlineSmall: { fontSize: 24, fontWeight: '700' },
-        bodyMedium: { fontSize: 14 },
-        labelSmall: { fontSize: 11 },
-        labelLarge: { fontSize: 14 },
-      },
-    },
-  }),
-}));
+    }),
+  };
+  return {
+    ...__mod,
+    useM3: () => __mod.useThemeTokens().m3,
+    useIsDark: () => (__mod.useThemeTokens() as { isDark?: boolean }).isDark ?? false,
+  };
+});
 
 jest.mock('@/stores/language-store', () => ({
   useLanguageStore: (fn: (s: { language: string }) => unknown) => fn({ language: 'en' }),
@@ -181,7 +192,12 @@ jest.mock('react-i18next', () => ({
         'assistant.error.a11y.retryButton': 'Retry last request',
         'assistant.error.a11y.dismissButton': 'Dismiss error',
         'assistant.noFarm.banner': 'No farms added.',
-        'assistant.noFarm.noFarmSelected': 'No farm selected.',
+        'assistant.home.greeting': 'How can I help on your farm today?',
+        'assistant.home.greetingFarm': `How can I help with ${params?.name ?? ''} today?`,
+        'assistant.home.subtitle': 'Ask in your own words.',
+        'assistant.home.suggestions.today': 'What should I do today?',
+        'assistant.home.suggestions.water': 'How much water does this farm need?',
+        'assistant.home.suggestions.spray': 'Is it safe to spray now?',
         'assistant.attachments.removeA11y': 'Remove attachment',
         'assistant.attachments.thumbnailA11y': 'Attached image',
         'assistant.attachments.imageTooLarge': 'Image too large',
@@ -281,35 +297,27 @@ describe('ChatScreen', () => {
     expect(getByText('AI Assistant')).toBeTruthy();
   });
 
-  it('shows assistant landing title when no messages', () => {
+  it('shows a single friendly greeting when no messages and no farm', () => {
     const { getByText } = render(<ChatScreen />);
-    expect(getByText('Assistant')).toBeTruthy();
+    expect(getByText('How can I help on your farm today?')).toBeTruthy();
+    expect(getByText('Ask in your own words.')).toBeTruthy();
   });
 
-  it('shows the daily briefing when no messages', () => {
+  it('shows example question suggestions in the assistant landing', () => {
     const { getByText } = render(<ChatScreen />);
-    expect(
-      getByText('Sunset needs irrigation before 11 AM. North Field is 14 mm below target.'),
-    ).toBeTruthy();
+    expect(getByText('What should I do today?')).toBeTruthy();
+    expect(getByText('How much water does this farm need?')).toBeTruthy();
+    expect(getByText('Is it safe to spray now?')).toBeTruthy();
   });
 
-  it('shows quick actions in the assistant landing', () => {
-    const { getByText } = render(<ChatScreen />);
-    expect(getByText('Ask me')).toBeTruthy();
-    expect(getByText('Water status')).toBeTruthy();
-    expect(getByText('Wage summary')).toBeTruthy();
-  });
-
-  it('tapping a quick action calls sendMessage', async () => {
+  it('tapping a suggestion sends it verbatim as the message', async () => {
     mockSendMessage.mockResolvedValue(undefined);
     const { getByText } = render(<ChatScreen />);
-    const chip = getByText('Water status');
+    const suggestion = getByText('How much water does this farm need?');
     await act(async () => {
-      fireEvent.press(chip);
+      fireEvent.press(suggestion);
     });
-    expect(mockSendMessage).toHaveBeenCalledWith(
-      'What is the water situation across all my farms this week?',
-    );
+    expect(mockSendMessage).toHaveBeenCalledWith('How much water does this farm need?');
   });
 
   it('shows input bar', () => {
@@ -486,7 +494,10 @@ describe('ChatScreen farm context', () => {
     );
   });
 
-  it('clears farmContext when switching to a general conversation', async () => {
+  it('keeps the active farm context when opening a conversation without its own farm', async () => {
+    // The assistant always operates with a sensible default farm when farms
+    // exist, so opening a farmless conversation does not strand the user on an
+    // empty "pick a farm" state.
     mockFarmsData = [mockFarm];
     const { getByTestId } = render(<ChatScreen initialFarmId="1" />);
 
@@ -501,7 +512,9 @@ describe('ChatScreen farm context', () => {
     });
 
     expect(mockUseAssistantCapture).toHaveBeenLastCalledWith(
-      expect.objectContaining({ farmContext: undefined }),
+      expect.objectContaining({
+        farmContext: expect.objectContaining({ farmId: 1 }),
+      }),
     );
   });
 });

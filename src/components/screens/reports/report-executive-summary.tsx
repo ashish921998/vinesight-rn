@@ -1,25 +1,56 @@
-import React, { useCallback, useRef, useState } from 'react';
-import {
-  Dimensions,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import React from 'react';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatNumber } from '@/i18n/format';
-import { getSectionsForReportType, type ReportPreview, type ReportType } from '@/types/report';
+import {
+  getSectionsForReportType,
+  type MetricDelta,
+  type ReportComparison,
+  type ReportPreview,
+  type ReportType,
+} from '@/types/report';
 import { Symbol as Icon } from '@/components/ui/symbol';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const CARD_WIDTH = SCREEN_WIDTH * 0.42;
-const CARD_GAP = spacing[2];
-const CARD_HEIGHT = 88;
-const HORIZONTAL_PADDING = spacing[4];
+const CARD_MIN_HEIGHT = 92;
+
+/**
+ * Small period-over-period chip shown top-right of each tile.
+ * Renders nothing for sub-1% / unchanged so we don't show "↑ 0%" noise.
+ */
+function DeltaChip({ delta, color }: { delta: MetricDelta | undefined; color: string }) {
+  if (!delta) return null;
+
+  const rounded = delta.deltaPct == null ? 0 : Math.round(Math.abs(delta.deltaPct));
+  if (!delta.isNew && rounded < 1) return null;
+
+  const label = delta.isNew ? 'New' : `${delta.direction > 0 ? '↑' : '↓'} ${rounded}%`;
+
+  return (
+    <View
+      style={{
+        paddingHorizontal: spacing[1] + 2,
+        paddingVertical: 1,
+        borderRadius: borderRadius.full,
+        borderCurve: 'continuous',
+        backgroundColor: colorWithOpacity(color, 0.14),
+      }}
+    >
+      <Text
+        style={{
+          fontSize: fontSize['2xs'],
+          fontWeight: fontWeight.semibold,
+          color,
+          fontVariant: ['tabular-nums'],
+        }}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
 
 const ICON_MAP: Record<string, string> = {
   records: 'doc.text.fill',
@@ -33,45 +64,50 @@ const ICON_MAP: Record<string, string> = {
   'stock-coverage': 'chart.bar.fill',
 };
 
-/** Curated card palette — distinct hues that stay harmonious with the vineyard theme. */
+/**
+ * KPI tile palette — drawn from the Cellar Ledger design system so the summary
+ * reads as part of VineSight, not a separate dashboard. These map to the same
+ * category/semantic tokens used elsewhere in the app.
+ */
 const CARD_COLORS = {
-  /** Indigo-blue — neutral "count" feel */
-  records: '#5856D6',
-  /** Teal — water / flow */
-  water: '#30B0C7',
-  /** Warm amber — harvest / yield */
-  harvest: '#E8952E',
-  /** Positive green — profit ≥ 0 */
-  profitPositive: '#2AA45B',
-  /** Rose — profit < 0 / expenses */
-  profitNegative: '#E5484D',
-  /** Emerald — revenue */
-  revenue: '#2AA45B',
-  /** Rose-red — expenses */
-  expenses: '#E5484D',
-  /** Slate-blue — stock usage */
-  stockUsage: '#6366F1',
-  /** Teal — stock matched */
-  stockMatched: '#0EA5A0',
-  /** Amber — coverage */
-  stockCoverage: '#D97706',
+  /** Muted slate-blue (note category) — neutral "count" feel */
+  records: '#5C6D91',
+  /** Irrigation blue — water / flow */
+  water: '#3F6E78',
+  /** Harvest amber — yield */
+  harvest: '#A9752F',
+  /** Success green — profit ≥ 0 */
+  profitPositive: '#4F7A5A',
+  /** Error clay-red — profit < 0 */
+  profitNegative: '#B84C3A',
+  /** Success green — revenue */
+  revenue: '#4F7A5A',
+  /** Error clay-red — expenses */
+  expenses: '#B84C3A',
+  /** Secondary terracotta — stock usage */
+  stockUsage: '#A56B4F',
+  /** Success green — stock matched */
+  stockMatched: '#4F7A5A',
+  /** Accent gold — coverage */
+  stockCoverage: '#D0A14A',
 } as const;
 
 interface ReportExecutiveSummaryProps {
   preview: ReportPreview;
   reportType: ReportType;
   preferredCurrency: string;
+  /** Period-over-period deltas, keyed by tile key. Omit to hide all chips. */
+  comparison?: ReportComparison | null;
 }
 
 export function ReportExecutiveSummary({
   preview,
   reportType,
   preferredCurrency,
+  comparison,
 }: ReportExecutiveSummaryProps) {
   const m3 = useM3();
   const { t } = useTranslation();
-  const [activeIndex, setActiveIndex] = useState(0);
-  const scrollViewRef = useRef<ScrollView>(null);
 
   const visibleSections = new Set(getSectionsForReportType(reportType));
   const showOperations =
@@ -175,17 +211,6 @@ export function ReportExecutiveSummary({
           },
         ];
 
-  const snapInterval = CARD_WIDTH + CARD_GAP;
-
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const offsetX = event.nativeEvent.contentOffset.x;
-      const index = Math.round(offsetX / snapInterval);
-      setActiveIndex(Math.min(Math.max(index, 0), summaryTiles.length - 1));
-    },
-    [snapInterval, summaryTiles.length],
-  );
-
   return (
     <View style={{ gap: spacing[3] }}>
       {/* Section header — iOS small-caps feel */}
@@ -197,131 +222,78 @@ export function ReportExecutiveSummary({
           fontSize: fontSize.xs,
           letterSpacing: 0.8,
           textTransform: 'uppercase',
-          paddingHorizontal: HORIZONTAL_PADDING,
         }}
       >
         {t('reports.formal.executiveTitle')}
       </Text>
 
-      {/* Horizontally scrollable hero cards */}
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={snapInterval}
-        decelerationRate="fast"
-        contentContainerStyle={{
-          paddingHorizontal: HORIZONTAL_PADDING,
-          gap: CARD_GAP,
-        }}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
+      {/* 2×2 KPI grid — every metric visible at a glance, no carousel */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
         {summaryTiles.map((tile) => (
           <View
             key={tile.key}
             style={{
-              width: CARD_WIDTH,
-              height: CARD_HEIGHT,
+              flexBasis: '47%',
+              flexGrow: 1,
+              minHeight: CARD_MIN_HEIGHT,
               borderRadius: borderRadius['2xl'],
               borderCurve: 'continuous',
-              backgroundColor: colorWithOpacity(tile.color, 0.12),
-              overflow: 'hidden',
+              backgroundColor: colorWithOpacity(tile.color, 0.1),
               borderWidth: 1,
               borderColor: colorWithOpacity(tile.color, 0.18),
+              padding: spacing[3],
+              justifyContent: 'space-between',
+              gap: spacing[2],
             }}
           >
-            {/* Card content */}
+            {/* Icon + period-over-period delta */}
             <View
               style={{
-                flex: 1,
-                paddingHorizontal: spacing[3],
-                paddingTop: spacing[2],
-                paddingBottom: spacing[2] + 2,
+                flexDirection: 'row',
+                alignItems: 'center',
                 justifyContent: 'space-between',
               }}
             >
-              {/* Icon */}
               <Icon
                 name={ICON_MAP[tile.key] ?? 'info.circle.fill'}
                 size={18}
                 color={tile.color}
                 weight="semibold"
               />
-
-              {/* Value + Label */}
-              <View style={{ gap: 1 }}>
-                <Text
-                  selectable
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.6}
-                  style={{
-                    color: tile.color,
-                    fontSize: fontSize.lg,
-                    fontWeight: fontWeight.bold,
-                    fontVariant: ['tabular-nums'],
-                    lineHeight: 22,
-                  }}
-                >
-                  {tile.value}
-                </Text>
-                <Text
-                  numberOfLines={2}
-                  selectable
-                  style={{
-                    color: colorWithOpacity(tile.color, 0.7),
-                    fontSize: 11,
-                    fontWeight: fontWeight.medium,
-                    lineHeight: 14,
-                  }}
-                >
-                  {tile.label}
-                </Text>
-              </View>
+              <DeltaChip delta={comparison?.deltas[tile.key]} color={tile.color} />
             </View>
 
-            {/* Bottom gradient-like overlay for depth */}
-            <View
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: CARD_HEIGHT * 0.4,
-                backgroundColor: colorWithOpacity(tile.color, 0.06),
-                borderBottomLeftRadius: borderRadius['2xl'],
-                borderBottomRightRadius: borderRadius['2xl'],
-              }}
-              pointerEvents="none"
-            />
+            {/* Value + Label */}
+            <View style={{ gap: 1 }}>
+              <Text
+                selectable
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.6}
+                style={{
+                  color: tile.color,
+                  fontSize: fontSize.xl,
+                  fontWeight: fontWeight.bold,
+                  fontVariant: ['tabular-nums'],
+                  lineHeight: 26,
+                }}
+              >
+                {tile.value}
+              </Text>
+              <Text
+                numberOfLines={2}
+                selectable
+                style={{
+                  color: colorWithOpacity(tile.color, 0.75),
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.medium,
+                  lineHeight: 14,
+                }}
+              >
+                {tile.label}
+              </Text>
+            </View>
           </View>
-        ))}
-      </ScrollView>
-
-      {/* Page indicator dots */}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: spacing[2],
-        }}
-      >
-        {summaryTiles.map((tile, index) => (
-          <View
-            key={tile.key}
-            style={{
-              width: index === activeIndex ? 18 : 6,
-              height: 6,
-              borderRadius: borderRadius.full,
-              borderCurve: 'continuous',
-              backgroundColor:
-                index === activeIndex
-                  ? m3.colorScheme.primary
-                  : colorWithOpacity(m3.colorScheme.onSurface, 0.18),
-            }}
-          />
         ))}
       </View>
     </View>

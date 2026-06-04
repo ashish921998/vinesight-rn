@@ -15,29 +15,36 @@ import { ActivityConfirmCard } from '@/components/assistant/ActivityConfirmCard'
 import type { AssistantVoiceLogAction } from '@/types/ai';
 import type { VoiceLogDraft } from '@/types/voice-log';
 
-jest.mock('@/styles/use-theme', () => ({
-  useThemeTokens: () => ({
-    m3: {
-      colorScheme: {
-        primary: '#408059',
-        onPrimary: '#ffffff',
-        onSurface: '#111827',
-        onSurfaceVariant: '#6b7280',
-        surfaceVariant: '#f3f4f6',
-        outlineVariant: '#e5e7eb',
-        outline: '#9ca3af',
-        error: '#dc2626',
-        onError: '#ffffff',
+jest.mock('@/styles/use-theme', () => {
+  const __mod = {
+    useThemeTokens: () => ({
+      m3: {
+        colorScheme: {
+          primary: '#408059',
+          onPrimary: '#ffffff',
+          onSurface: '#111827',
+          onSurfaceVariant: '#6b7280',
+          surfaceVariant: '#f3f4f6',
+          outlineVariant: '#e5e7eb',
+          outline: '#9ca3af',
+          error: '#dc2626',
+          onError: '#ffffff',
+        },
+        typography: {
+          titleSmall: { fontSize: 14, fontWeight: '600' },
+          labelLarge: { fontSize: 14 },
+          labelMedium: { fontSize: 12 },
+          bodyMedium: { fontSize: 14 },
+        },
       },
-      typography: {
-        titleSmall: { fontSize: 14, fontWeight: '600' },
-        labelLarge: { fontSize: 14 },
-        labelMedium: { fontSize: 12 },
-        bodyMedium: { fontSize: 14 },
-      },
-    },
-  }),
-}));
+    }),
+  };
+  return {
+    ...__mod,
+    useM3: () => __mod.useThemeTokens().m3,
+    useIsDark: () => (__mod.useThemeTokens() as { isDark?: boolean }).isDark ?? false,
+  };
+});
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({

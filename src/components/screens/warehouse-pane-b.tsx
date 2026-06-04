@@ -24,7 +24,7 @@ import {
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import type { WarehouseItem } from '@/types';
 
 export type WarehouseFilter = 'all' | 'spray' | 'fertilizer' | 'equipment';
@@ -68,17 +68,16 @@ export function WarehousePaneB({
   refreshControl,
 }: WarehousePaneBProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
 
   // ── Category color helpers ─────────────────────────────────────────────
   const accentFor = useCallback(
     (category: WarehouseCategory): string => {
-      if (category === 'spray') return colors.accent[500];
+      if (category === 'spray') return m3.colorScheme.accent;
       if (category === 'fertilizer') return m3.colorScheme.primary;
-      return colors.secondary[500];
+      return m3.colorScheme.secondary;
     },
-    [colors.accent, colors.secondary, m3.colorScheme.primary],
+    [m3.colorScheme.accent, m3.colorScheme.secondary, m3.colorScheme.primary],
   );
 
   // ── Filter + search ────────────────────────────────────────────────────

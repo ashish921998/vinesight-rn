@@ -10,7 +10,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { FlatList, View, Text, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { MessageBubble, LoadingBubble } from './MessageBubble';
@@ -19,11 +19,18 @@ import type { ChatMessage, AssistantMessageAction } from '@/types/ai';
 interface MessageListProps {
   messages: ChatMessage[];
   isLoading: boolean;
+  /** Id of the assistant message that should reveal progressively (streaming feel). */
+  streamingMessageId?: string | null;
   onActionPress?: (action: AssistantMessageAction) => void;
 }
 
-export function MessageList({ messages, isLoading, onActionPress }: MessageListProps) {
-  const { m3 } = useThemeTokens();
+export function MessageList({
+  messages,
+  isLoading,
+  streamingMessageId,
+  onActionPress,
+}: MessageListProps) {
+  const m3 = useM3();
   const flatListRef = useRef<FlatList<ChatMessage>>(null);
 
   // Auto-scroll to bottom when messages change or loading state changes
@@ -40,9 +47,13 @@ export function MessageList({ messages, isLoading, onActionPress }: MessageListP
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<ChatMessage>) => (
-      <MessageBubble message={item} onActionPress={onActionPress} />
+      <MessageBubble
+        message={item}
+        isStreaming={item.id === streamingMessageId}
+        onActionPress={onActionPress}
+      />
     ),
-    [onActionPress],
+    [onActionPress, streamingMessageId],
   );
 
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
@@ -78,7 +89,7 @@ export function MessageList({ messages, isLoading, onActionPress }: MessageListP
 }
 
 function WelcomeState() {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   return (

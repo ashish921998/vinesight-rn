@@ -23,7 +23,7 @@ import { formatNumber } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
 import { cancelNotification } from '@/services/notifications';
 import { TaskRow } from '@/components/cards';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 import { parseDbDateToLocalDate } from '@/utils/date';
@@ -99,7 +99,6 @@ const computeSummaryCounts = (tasks: TaskReminder[] | null | undefined) => {
 };
 
 export default function TasksScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
 
@@ -380,7 +379,7 @@ export default function TasksScreen() {
           }}
         >
           <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-          <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+          <Text style={{ color: m3.surface.s600, marginTop: spacing[4] }}>
             {t('common.loading')}
           </Text>
         </View>
@@ -415,10 +414,10 @@ export default function TasksScreen() {
                 marginBottom: spacing[4],
                 paddingVertical: spacing[2],
                 paddingHorizontal: spacing[4],
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius.xs,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 flexDirection: 'row',
                 alignItems: 'center',
               }}
@@ -427,7 +426,7 @@ export default function TasksScreen() {
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                 }}
               >
                 {formatNumber(summary.pending, { maximumFractionDigits: 0 })}{' '}
@@ -438,7 +437,7 @@ export default function TasksScreen() {
                   width: 3,
                   height: 3,
                   borderRadius: borderRadius.full,
-                  backgroundColor: colors.surface[400],
+                  backgroundColor: m3.surface.s400,
                   marginHorizontal: spacing[3],
                 }}
               />
@@ -446,7 +445,7 @@ export default function TasksScreen() {
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: colors.warning,
+                  color: m3.colorScheme.warning,
                 }}
               >
                 {formatNumber(summary.dueToday, { maximumFractionDigits: 0 })}{' '}
@@ -457,7 +456,7 @@ export default function TasksScreen() {
                   width: 3,
                   height: 3,
                   borderRadius: borderRadius.full,
-                  backgroundColor: colors.surface[400],
+                  backgroundColor: m3.surface.s400,
                   marginHorizontal: spacing[3],
                 }}
               />
@@ -465,7 +464,7 @@ export default function TasksScreen() {
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: colors.error,
+                  color: m3.colorScheme.error,
                 }}
               >
                 {formatNumber(summary.overdue, { maximumFractionDigits: 0 })}{' '}
@@ -496,7 +495,7 @@ export default function TasksScreen() {
         ) ? (
           <View
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: borderRadius['2xl'],
               padding: spacing[8],
               alignItems: 'center',
@@ -509,7 +508,7 @@ export default function TasksScreen() {
             />
             <Text
               style={{
-                color: colors.surface[600],
+                color: m3.surface.s600,
                 marginTop: spacing[4],
                 textAlign: 'center',
               }}
@@ -518,7 +517,7 @@ export default function TasksScreen() {
             </Text>
             <Text
               style={{
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 fontSize: fontSize.sm,
                 marginTop: spacing[1],
                 textAlign: 'center',
@@ -557,7 +556,7 @@ export default function TasksScreen() {
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
-                      color: colors.error,
+                      color: m3.colorScheme.error,
                       textTransform: 'uppercase',
                       letterSpacing: 0.8,
                       marginBottom: spacing[2],
@@ -599,7 +598,7 @@ export default function TasksScreen() {
                   style={{
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[400],
+                    color: m3.surface.s400,
                     textTransform: 'uppercase',
                     letterSpacing: 0.8,
                     marginBottom: spacing[2],
@@ -642,7 +641,7 @@ export default function TasksScreen() {
                   style={{
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[400],
+                    color: m3.surface.s400,
                     textTransform: 'uppercase',
                     letterSpacing: 0.8,
                     marginTop: spacing[4],
@@ -685,7 +684,7 @@ export default function TasksScreen() {
                   style={{
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[400],
+                    color: m3.surface.s400,
                     textTransform: 'uppercase',
                     letterSpacing: 0.8,
                     marginTop: spacing[4],
@@ -732,10 +731,10 @@ export default function TasksScreen() {
                     alignItems: 'center',
                     paddingVertical: spacing[3],
                     paddingHorizontal: spacing[2],
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     borderRadius: borderRadius.md,
                     borderWidth: 1,
-                    borderColor: colors.surface[300],
+                    borderColor: m3.surface.s300,
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={t('tasks.sections.completed')}
@@ -745,7 +744,7 @@ export default function TasksScreen() {
                   <SFSymbol
                     name={completedExpanded ? 'chevron.down' : 'chevron.right'}
                     size={16}
-                    color={colors.surface[500]}
+                    color={m3.surface.s500}
                     style={{ marginRight: spacing[2] }}
                   />
                   {/* Completed Label */}
@@ -753,7 +752,7 @@ export default function TasksScreen() {
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.surface[700],
+                      color: m3.surface.s700,
                       flex: 1,
                     }}
                   >
@@ -762,7 +761,7 @@ export default function TasksScreen() {
                   {/* Count Badge */}
                   <View
                     style={{
-                      backgroundColor: colors.surface[200],
+                      backgroundColor: m3.surface.s200,
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[1],
                       borderRadius: borderRadius.pill,
@@ -772,7 +771,7 @@ export default function TasksScreen() {
                       style={{
                         fontSize: fontSize.xs,
                         fontWeight: fontWeight.medium,
-                        color: colors.surface[600],
+                        color: m3.surface.s600,
                       }}
                     >
                       {formatNumber(completedTasks.length, { maximumFractionDigits: 0 })}

@@ -30,14 +30,14 @@ import { guidedTourEmit } from '@/features/guided-tour';
 
 export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const form = useFarmForm(mode, farmId, onClose);
-  const { t, colors, m3 } = form;
+  const { t, m3 } = form;
 
   if (form.isEdit && form.farmLoading) {
     return (
       <View
         style={{ flex: 1, backgroundColor: m3.colorScheme.background, justifyContent: 'center' }}
       >
-        <ActivityIndicator size="large" color={colors.primary[500]} />
+        <ActivityIndicator size="large" color={m3.primary.p500} />
       </View>
     );
   }
@@ -46,9 +46,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const cropTrigger = (
     <Pressable
       style={{
-        backgroundColor: colors.surface[100],
+        backgroundColor: m3.surface.s100,
         borderWidth: 2,
-        borderColor: colors.surface[200],
+        borderColor: m3.surface.s200,
         borderRadius: borderRadius.xl,
         paddingHorizontal: spacing[4],
         paddingVertical: spacing[4],
@@ -78,7 +78,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         <Text
           style={{
             fontSize: fontSize.base,
-            color: colors.surface[900],
+            color: m3.surface.s900,
             fontWeight: fontWeight.medium,
             marginLeft: spacing[3],
           }}
@@ -254,12 +254,12 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   flexDirection: 'row',
                   alignItems: 'center',
                   backgroundColor: isSelected
-                    ? colorWithOpacity(colors.primary[500], 0.14)
-                    : colors.surface[100],
+                    ? colorWithOpacity(m3.primary.p500, 0.14)
+                    : m3.surface.s100,
                   borderWidth: 1,
                   borderColor: isSelected
-                    ? colorWithOpacity(colors.primary[500], 0.4)
-                    : colors.surface[200],
+                    ? colorWithOpacity(m3.primary.p500, 0.4)
+                    : m3.surface.s200,
                 }}
               >
                 <View
@@ -271,15 +271,15 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                     justifyContent: 'center',
                     marginRight: spacing[2],
                     backgroundColor: isSelected
-                      ? colorWithOpacity(colors.primary[500], 0.15)
-                      : colorWithOpacity(colors.surface[600], 0.12),
+                      ? colorWithOpacity(m3.primary.p500, 0.15)
+                      : colorWithOpacity(m3.surface.s600, 0.12),
                   }}
                 >
                   {form.renderCropVisual(cropOption.value, 14, isSelected)}
                 </View>
                 <Text
                   style={{
-                    color: isSelected ? colors.primary[700] : colors.surface[700],
+                    color: isSelected ? m3.primary.p700 : m3.surface.s700,
                     fontWeight: isSelected ? fontWeight.semibold : fontWeight.medium,
                     fontSize: fontSize.sm,
                   }}
@@ -319,9 +319,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY}>
             <Pressable
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 2,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
                 borderRadius: borderRadius.xl,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[4],
@@ -339,7 +339,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               <Text
                 style={{
                   fontSize: fontSize.base,
-                  color: form.formState.cropVariety ? colors.surface[900] : colors.surface[400],
+                  color: form.formState.cropVariety ? m3.surface.s900 : m3.surface.s400,
                   fontWeight: form.formState.cropVariety ? fontWeight.medium : fontWeight.normal,
                 }}
               >
@@ -379,9 +379,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <Pressable
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderWidth: 2,
-            borderColor: colors.surface[200],
+            borderColor: m3.surface.s200,
             borderRadius: borderRadius.xl,
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[4],
@@ -395,7 +395,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           <Text
             style={{
               fontSize: fontSize.base,
-              color: colors.surface[900],
+              color: m3.surface.s900,
               fontWeight: fontWeight.medium,
               marginLeft: spacing[3],
             }}
@@ -491,9 +491,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <Pressable
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderWidth: 2,
-            borderColor: colors.surface[200],
+            borderColor: m3.surface.s200,
             borderRadius: borderRadius.xl,
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[4],
@@ -507,13 +507,13 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
             <UISymbol name="cut-outline" size={24} color={m3.colorScheme.onSurfaceVariant} />
             <View style={{ marginLeft: spacing[3], flex: 1 }}>
-              <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+              <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
                 {t('farmForm.fields.pruningDate.label')}
               </Text>
               <Text
                 style={{
                   fontSize: fontSize.base,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   fontWeight: fontWeight.medium,
                   marginTop: 2,
                 }}
@@ -564,7 +564,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           title={t('farmForm.location.selectOnMap')}
           variant="outline"
           size="sm"
-          leftIcon={<UISymbol name="location.fill" size={20} color={colors.primary[500]} />}
+          leftIcon={<UISymbol name="location.fill" size={20} color={m3.primary.p500} />}
           onPress={form.handleOpenMapPicker}
           style={{ marginBottom: 12 }}
         />
@@ -667,9 +667,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <Pressable
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderWidth: 2,
-            borderColor: colors.surface[200],
+            borderColor: m3.surface.s200,
             borderRadius: borderRadius.xl,
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[4],
@@ -683,7 +683,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           <Text
             style={{
               fontSize: fontSize.base,
-              color: form.formState.soilTextureClass ? colors.surface[900] : colors.surface[400],
+              color: form.formState.soilTextureClass ? m3.surface.s900 : m3.surface.s400,
               fontWeight: form.formState.soilTextureClass ? fontWeight.medium : fontWeight.normal,
             }}
           >
@@ -745,8 +745,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         {form.soilCompositionWarning && (
           <InfoCard
             icon="exclamationmark.triangle.fill"
-            iconColor={colors.warning}
-            backgroundColor={colorWithOpacity(colors.warning, 0.2)}
+            iconColor={m3.colorScheme.warning}
+            backgroundColor={colorWithOpacity(m3.colorScheme.warning, 0.2)}
             message={form.soilCompositionWarning}
             style={{ marginBottom: 20 }}
           />
@@ -754,8 +754,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <InfoCard
           icon="information-circle"
-          iconColor={colors.success}
-          backgroundColor={colorWithOpacity(colors.success, 0.2)}
+          iconColor={m3.colorScheme.success}
+          backgroundColor={colorWithOpacity(m3.colorScheme.success, 0.2)}
           message={t('farmForm.infoCardMessage')}
         />
       </FullScreenForm>

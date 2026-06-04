@@ -29,7 +29,8 @@ import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/th
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatNumber } from '@/i18n/format';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
 import { guidedTourEmit } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
@@ -54,7 +55,8 @@ function getGreetingKey(): GreetingKey {
 // ============================================================
 
 export default function DashboardScreen() {
-  const { m3, colors } = useThemeTokens();
+  const m3 = useM3();
+  const domain = useDomainColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -268,7 +270,7 @@ export default function DashboardScreen() {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
     marginBottom: spacing[3],
-    color: colors.surface[900],
+    color: m3.surface.s900,
   };
 
   const bottomPadding = Math.max(insets.bottom + spacing[12], spacing[16]);
@@ -472,9 +474,9 @@ export default function DashboardScreen() {
               style={({ pressed }) => ({
                 flex: 1,
                 minWidth: '45%',
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 borderRadius: borderRadius.md,
                 padding: spacing[4],
                 opacity: pressed ? 0.85 : 1,
@@ -485,19 +487,19 @@ export default function DashboardScreen() {
                   width: 36,
                   height: 36,
                   borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(colors.primary[500], 0.12),
+                  backgroundColor: colorWithOpacity(m3.primary.p500, 0.12),
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: spacing[3],
                 }}
               >
-                <SymbolIcon name="leaf" size={18} color={colors.primary[500]} />
+                <SymbolIcon name="leaf" size={18} color={m3.primary.p500} />
               </View>
               <Text
                 style={{
                   fontSize: fontSize['2xl'],
                   fontWeight: fontWeight.bold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   lineHeight: 28,
                   marginBottom: spacing[1],
                 }}
@@ -508,7 +510,7 @@ export default function DashboardScreen() {
                 style={{
                   fontSize: fontSize.xs,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                   letterSpacing: 0,
                 }}
               >
@@ -524,9 +526,9 @@ export default function DashboardScreen() {
               style={({ pressed }) => ({
                 flex: 1,
                 minWidth: '45%',
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 borderRadius: borderRadius.md,
                 padding: spacing[4],
                 opacity: pressed ? 0.85 : 1,
@@ -537,19 +539,19 @@ export default function DashboardScreen() {
                   width: 36,
                   height: 36,
                   borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(colors.secondary[500], 0.12),
+                  backgroundColor: colorWithOpacity(m3.colorScheme.secondary, 0.12),
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: spacing[3],
                 }}
               >
-                <SymbolIcon name="person.2" size={18} color={colors.secondary[500]} />
+                <SymbolIcon name="person.2" size={18} color={m3.colorScheme.secondary} />
               </View>
               <Text
                 style={{
                   fontSize: fontSize['2xl'],
                   fontWeight: fontWeight.bold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   lineHeight: 28,
                   marginBottom: spacing[1],
                 }}
@@ -560,7 +562,7 @@ export default function DashboardScreen() {
                 style={{
                   fontSize: fontSize.xs,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                   letterSpacing: 0,
                 }}
               >
@@ -576,9 +578,9 @@ export default function DashboardScreen() {
               style={({ pressed }) => ({
                 flex: 1,
                 minWidth: '45%',
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 borderRadius: borderRadius.md,
                 padding: spacing[4],
                 opacity: pressed ? 0.85 : 1,
@@ -589,19 +591,19 @@ export default function DashboardScreen() {
                   width: 36,
                   height: 36,
                   borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(colors.accent[500], 0.12),
+                  backgroundColor: colorWithOpacity(m3.colorScheme.accent, 0.12),
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: spacing[3],
                 }}
               >
-                <SymbolIcon name="checklist" size={18} color={colors.accent[500]} />
+                <SymbolIcon name="checklist" size={18} color={m3.colorScheme.accent} />
               </View>
               <Text
                 style={{
                   fontSize: fontSize['2xl'],
                   fontWeight: fontWeight.bold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   lineHeight: 28,
                   marginBottom: spacing[1],
                 }}
@@ -612,7 +614,7 @@ export default function DashboardScreen() {
                 style={{
                   fontSize: fontSize.xs,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                   letterSpacing: 0,
                 }}
               >
@@ -628,9 +630,9 @@ export default function DashboardScreen() {
               style={({ pressed }) => ({
                 flex: 1,
                 minWidth: '45%',
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 borderRadius: borderRadius.md,
                 padding: spacing[4],
                 opacity: pressed ? 0.85 : 1,
@@ -641,19 +643,19 @@ export default function DashboardScreen() {
                   width: 36,
                   height: 36,
                   borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(colors.info, 0.12),
+                  backgroundColor: colorWithOpacity(m3.colorScheme.info, 0.12),
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: spacing[3],
                 }}
               >
-                <SymbolIcon name="chart.bar" size={18} color={colors.info} />
+                <SymbolIcon name="chart.bar" size={18} color={m3.colorScheme.info} />
               </View>
               <Text
                 style={{
                   fontSize: fontSize['2xl'],
                   fontWeight: fontWeight.bold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   lineHeight: 28,
                   marginBottom: spacing[1],
                 }}
@@ -664,7 +666,7 @@ export default function DashboardScreen() {
                 style={{
                   fontSize: fontSize.xs,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                   letterSpacing: 0,
                 }}
               >
@@ -1001,9 +1003,9 @@ export default function DashboardScreen() {
                 borderRadius: borderRadius.md,
                 padding: spacing[4],
                 paddingHorizontal: spacing[3],
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
               }}
             >
               <View
@@ -1024,18 +1026,18 @@ export default function DashboardScreen() {
                       width: 44,
                       height: 44,
                       borderRadius: radius.md,
-                      backgroundColor: colorWithOpacity(colors.irrigation[500], 0.12),
+                      backgroundColor: colorWithOpacity(domain.category.irrigation, 0.12),
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <AppIcon name="water" size={20} color={colors.irrigation[500]} />
+                    <AppIcon name="water" size={20} color={domain.category.irrigation} />
                   </View>
                   <Text
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginTop: spacing[1] + 2,
                     }}
                   >
@@ -1055,18 +1057,18 @@ export default function DashboardScreen() {
                       width: 44,
                       height: 44,
                       borderRadius: radius.md,
-                      backgroundColor: colorWithOpacity(colors.spray[500], 0.12),
+                      backgroundColor: colorWithOpacity(domain.category.spray, 0.12),
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <AppIcon name="spraycan" size={20} color={colors.spray[500]} />
+                    <AppIcon name="spraycan" size={20} color={domain.category.spray} />
                   </View>
                   <Text
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginTop: spacing[1] + 2,
                     }}
                   >
@@ -1086,18 +1088,18 @@ export default function DashboardScreen() {
                       width: 44,
                       height: 44,
                       borderRadius: radius.md,
-                      backgroundColor: colorWithOpacity(colors.expense[500], 0.12),
+                      backgroundColor: colorWithOpacity(domain.category.expense, 0.12),
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <AppIcon name="receipt" size={20} color={colors.expense[500]} />
+                    <AppIcon name="receipt" size={20} color={domain.category.expense} />
                   </View>
                   <Text
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginTop: spacing[1] + 2,
                     }}
                   >
@@ -1117,18 +1119,18 @@ export default function DashboardScreen() {
                       width: 44,
                       height: 44,
                       borderRadius: radius.md,
-                      backgroundColor: colorWithOpacity(colors.labour[500], 0.12),
+                      backgroundColor: colorWithOpacity(domain.category.labour, 0.12),
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <AppIcon name="document-text" size={20} color={colors.labour[500]} />
+                    <AppIcon name="document-text" size={20} color={domain.category.labour} />
                   </View>
                   <Text
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginTop: spacing[1] + 2,
                     }}
                   >
@@ -1151,9 +1153,9 @@ export default function DashboardScreen() {
                   padding: spacing[8],
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
+                  borderColor: m3.surface.s300,
                 }}
               >
                 <ActivityIndicator color={m3.colorScheme.primary} />
@@ -1162,7 +1164,7 @@ export default function DashboardScreen() {
               <View
                 style={{
                   borderTopWidth: 1,
-                  borderTopColor: colors.surface[200],
+                  borderTopColor: m3.surface.s200,
                 }}
               >
                 {recentActivities.map((activity, index) => (
@@ -1181,7 +1183,7 @@ export default function DashboardScreen() {
                       gap: spacing[3],
                       paddingVertical: spacing[3],
                       borderBottomWidth: index < recentActivities.length - 1 ? 1 : 0,
-                      borderBottomColor: colors.surface[200],
+                      borderBottomColor: m3.surface.s200,
                     }}
                   >
                     {/* Colored dot */}
@@ -1192,11 +1194,11 @@ export default function DashboardScreen() {
                         borderRadius: radius.xs,
                         backgroundColor:
                           activity.type === 'irrigation'
-                            ? colors.irrigation[500]
+                            ? domain.category.irrigation
                             : activity.type === 'expense'
-                              ? colors.expense[500]
+                              ? domain.category.expense
                               : activity.type === 'note'
-                                ? colors.labour[500]
+                                ? domain.category.labour
                                 : m3.colorScheme.primary,
                         flexShrink: 0,
                       }}
@@ -1207,7 +1209,7 @@ export default function DashboardScreen() {
                         style={{
                           fontSize: fontSize.sm,
                           fontWeight: fontWeight.medium,
-                          color: colors.surface[900],
+                          color: m3.surface.s900,
                           lineHeight: 20,
                         }}
                       >
@@ -1216,7 +1218,7 @@ export default function DashboardScreen() {
                       <Text
                         style={{
                           fontSize: fontSize.xs,
-                          color: colors.surface[500],
+                          color: m3.surface.s500,
                           lineHeight: 16,
                         }}
                       >
@@ -1227,7 +1229,7 @@ export default function DashboardScreen() {
                     <Text
                       style={{
                         fontSize: fontSize.xs,
-                        color: colors.surface[400],
+                        color: m3.surface.s400,
                         flexShrink: 0,
                       }}
                     >
@@ -1242,18 +1244,18 @@ export default function DashboardScreen() {
                   borderRadius: borderRadius.md,
                   padding: spacing[6],
                   alignItems: 'center',
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
+                  borderColor: m3.surface.s300,
                 }}
               >
-                <SymbolIcon name="clock" size={48} color={colors.surface[400]} />
+                <SymbolIcon name="clock" size={48} color={m3.surface.s400} />
                 <Text
                   style={{
                     textAlign: 'center',
                     marginTop: spacing[4],
                     fontSize: fontSize.sm,
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                   }}
                 >
                   {farms && farms.length > 0
@@ -1351,7 +1353,7 @@ export default function DashboardScreen() {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
                   >
-                    <SymbolIcon name="xmark" size={24} color={colors.gray[400]} />
+                    <SymbolIcon name="xmark" size={24} color={m3.neutral.n400} />
                   </Pressable>
                 </View>
 
@@ -1394,7 +1396,7 @@ export default function DashboardScreen() {
                             {t('dashboard.farmPicker.allFarms')}
                           </Text>
                         </View>
-                        <SymbolIcon name="chevron.right" size={20} color={colors.gray[300]} />
+                        <SymbolIcon name="chevron.right" size={20} color={m3.neutral.n300} />
                       </Pressable>
                     ) : null
                   ) : null}
@@ -1444,7 +1446,7 @@ export default function DashboardScreen() {
                             </Text>
                           )}
                         </View>
-                        <SymbolIcon name="chevron.right" size={20} color={colors.gray[300]} />
+                        <SymbolIcon name="chevron.right" size={20} color={m3.neutral.n300} />
                       </Pressable>
                     ))
                   ) : (

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { AppIcon } from '@/components/ui/app-icon';
 import { useFarm, useDailyNoteByDate, useUpsertDailyNote } from '@/hooks';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, spacing } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate } from '@/utils/date';
@@ -31,7 +31,6 @@ export default function AddNoteRoute() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const params = useLocalSearchParams<{
@@ -137,7 +136,7 @@ export default function AddNoteRoute() {
             paddingTop: insets.top + spacing[2],
             paddingHorizontal: spacing[4],
             paddingBottom: spacing[3],
-            backgroundColor: colors.white,
+            backgroundColor: '#ffffff',
             borderBottomWidth: 1,
             borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
           }}
@@ -168,7 +167,7 @@ export default function AddNoteRoute() {
         <ScrollView contentContainerStyle={{ padding: spacing[4], gap: spacing[4] }}>
           <View
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: borderRadius.xl,
               padding: spacing[4],
               borderWidth: 1,
@@ -200,7 +199,7 @@ export default function AddNoteRoute() {
 
           <View
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: borderRadius.xl,
               padding: spacing[4],
               borderWidth: 1,
@@ -227,7 +226,7 @@ export default function AddNoteRoute() {
                 borderRadius: borderRadius.lg,
                 borderWidth: 1,
                 borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                backgroundColor: colors.surface[50],
+                backgroundColor: m3.surface.s50,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -274,7 +273,7 @@ export default function AddNoteRoute() {
                 >
                   <View
                     style={{
-                      backgroundColor: colors.surface[100],
+                      backgroundColor: m3.surface.s100,
                       borderTopLeftRadius: borderRadius['2xl'],
                       borderTopRightRadius: borderRadius['2xl'],
                       padding: spacing[4],
@@ -343,7 +342,7 @@ export default function AddNoteRoute() {
 
           <View
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: borderRadius.xl,
               padding: spacing[4],
               borderWidth: 1,
@@ -379,7 +378,7 @@ export default function AddNoteRoute() {
                 paddingVertical: spacing[3],
                 paddingHorizontal: spacing[3],
                 color: m3.colorScheme.onSurface,
-                backgroundColor: colors.surface[50],
+                backgroundColor: m3.surface.s50,
               }}
             />
             {!isLoadingNote && existingNote?.updated_at ? (

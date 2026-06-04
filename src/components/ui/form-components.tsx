@@ -28,7 +28,7 @@ import {
   fontSize,
   fontWeight,
 } from '@/styles/theme';
-import { useIsDark, useM3, useThemeColors } from '@/styles/use-theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHaptic } from '@/utils/haptics';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
@@ -53,11 +53,10 @@ interface FormModalProps {
 }
 
 function useCloseIconColor() {
-  const colors = useThemeColors();
   const isDark = useIsDark();
   const m3 = useM3();
 
-  return isDark ? colorWithOpacity(m3.colorScheme.onSurface, 0.92) : colors.surface[300];
+  return isDark ? colorWithOpacity(m3.colorScheme.onSurface, 0.92) : m3.surface.s300;
 }
 
 export function FormModal({
@@ -80,7 +79,7 @@ export function FormModal({
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const colors = useThemeColors();
+  const m3 = useM3();
   const closeIconColor = useCloseIconColor();
   const resolvedSaveLabel = saveLabel ?? t('common.next');
   const {
@@ -91,11 +90,11 @@ export function FormModal({
 
   const headerStyle: ViewStyle = {
     borderBottomWidth: 1,
-    borderBottomColor: colors.surface[100],
+    borderBottomColor: m3.surface.s100,
     paddingTop: Math.max(insets.top, 12),
     paddingBottom: 12,
     paddingHorizontal: spacing[6],
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
   };
 
   const handleStyle: ViewStyle = {
@@ -103,21 +102,21 @@ export function FormModal({
     width: 48,
     height: 6,
     borderRadius: radius.full,
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     marginBottom: 8,
   };
 
   const titleStyle: TextStyle = {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[900],
+    color: m3.surface.s900,
     textAlign: 'center',
   };
 
   const footerStyle: ViewStyle = {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     borderTopWidth: 1,
-    borderTopColor: colors.surface[100],
+    borderTopColor: m3.surface.s100,
     paddingHorizontal: spacing[6],
     flexDirection: 'row',
     alignItems: 'center',
@@ -129,7 +128,7 @@ export function FormModal({
   const resetTextStyle: TextStyle = {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[900],
+    color: m3.surface.s900,
     textDecorationLine: 'underline',
   };
 
@@ -137,14 +136,14 @@ export function FormModal({
     paddingHorizontal: spacing[8],
     paddingVertical: spacing[3],
     borderRadius: componentRadius.button, // unified control radius — see DESIGN.md › Radius
-    backgroundColor: isSaveDisabled || isLoading ? colors.surface[200] : colors.primary[500],
+    backgroundColor: isSaveDisabled || isLoading ? m3.surface.s200 : m3.primary.p500,
     minHeight: 48,
   };
 
   const saveTextStyle: TextStyle = {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: isSaveDisabled || isLoading ? colors.surface[500] : colors.white,
+    color: isSaveDisabled || isLoading ? m3.surface.s500 : '#ffffff',
   };
 
   useEffect(() => {
@@ -160,7 +159,7 @@ export function FormModal({
   const content = (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: colors.surface[100] }}
+      style={{ flex: 1, backgroundColor: m3.surface.s100 }}
     >
       <View style={headerStyle}>
         <View style={handleStyle} />
@@ -300,7 +299,7 @@ export function FullScreenForm({
 }: FullScreenFormProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const colors = useThemeColors();
+  const m3 = useM3();
   const closeIconColor = useCloseIconColor();
   const resolvedSaveLabel = saveLabel ?? t('common.next');
   const {
@@ -311,11 +310,11 @@ export function FullScreenForm({
 
   const headerStyle: ViewStyle = {
     borderBottomWidth: 1,
-    borderBottomColor: colors.surface[100],
+    borderBottomColor: m3.surface.s100,
     paddingTop: Math.max(insets.top, 12),
     paddingBottom: 12,
     paddingHorizontal: spacing[6],
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
   };
 
   const handleStyle: ViewStyle = {
@@ -323,21 +322,21 @@ export function FullScreenForm({
     width: 48,
     height: 6,
     borderRadius: radius.full,
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     marginBottom: 8,
   };
 
   const titleStyle: TextStyle = {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[900],
+    color: m3.surface.s900,
     textAlign: 'center',
   };
 
   const footerStyle: ViewStyle = {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     borderTopWidth: 1,
-    borderTopColor: colors.surface[100],
+    borderTopColor: m3.surface.s100,
     paddingHorizontal: spacing[6],
     flexDirection: 'row',
     alignItems: 'center',
@@ -349,7 +348,7 @@ export function FullScreenForm({
   const resetTextStyle: TextStyle = {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[900],
+    color: m3.surface.s900,
     textDecorationLine: 'underline',
   };
 
@@ -357,14 +356,14 @@ export function FullScreenForm({
     paddingHorizontal: spacing[8],
     paddingVertical: spacing[3],
     borderRadius: componentRadius.button, // unified control radius — see DESIGN.md › Radius
-    backgroundColor: isSaveDisabled || isLoading ? colors.surface[200] : colors.primary[500],
+    backgroundColor: isSaveDisabled || isLoading ? m3.surface.s200 : m3.primary.p500,
     minHeight: 48,
   };
 
   const saveTextStyle: TextStyle = {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: isSaveDisabled || isLoading ? colors.surface[500] : colors.white,
+    color: isSaveDisabled || isLoading ? m3.surface.s500 : '#ffffff',
   };
 
   useEffect(() => {
@@ -378,7 +377,7 @@ export function FullScreenForm({
   }, [onClose]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.surface[100] }}>
+    <View style={{ flex: 1, backgroundColor: m3.surface.s100 }}>
       <View style={headerStyle}>
         <View style={handleStyle} />
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -478,7 +477,7 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, subtitle, style }: SectionHeaderProps) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   const containerStyle: ViewStyle = {
     marginBottom: spacing[4],
   };
@@ -487,14 +486,14 @@ export function SectionHeader({ title, subtitle, style }: SectionHeaderProps) {
   const titleTextStyle: TextStyle = {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[400], // stone-5
+    color: m3.surface.s400, // stone-5
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   };
 
   const subtitleTextStyle: TextStyle = {
     fontSize: fontSize.base,
-    color: colors.surface[500],
+    color: m3.surface.s500,
     marginTop: spacing[1],
   };
 
@@ -529,7 +528,7 @@ export function PillSelector({
   selectedValues = [],
   style,
 }: PillSelectorProps) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   const isSelected = (value: string) => {
     if (multiSelect) {
       return selectedValues.includes(value);
@@ -551,14 +550,14 @@ export function PillSelector({
     borderWidth: 2,
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: selected ? colors.primary[600] : colors.surface[200],
-    backgroundColor: selected ? colors.surface[100] : colors.surface[50],
+    borderColor: selected ? m3.primary.p600 : m3.surface.s200,
+    backgroundColor: selected ? m3.surface.s100 : m3.surface.s50,
   });
 
   const getPillTextStyle = (selected: boolean): TextStyle => ({
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: selected ? colors.surface[900] : colors.surface[600],
+    color: selected ? m3.surface.s900 : m3.surface.s600,
   });
 
   return (
@@ -576,7 +575,7 @@ export function PillSelector({
                 <IconSymbol
                   name={option.icon}
                   size={18}
-                  color={selected ? colors.surface[900] : colors.surface[600]}
+                  color={selected ? m3.surface.s900 : m3.surface.s600}
                 />
               </View>
             )}
@@ -606,11 +605,11 @@ export function SegmentedControl({
   onSelect,
   selectedTextColor,
 }: SegmentedControlProps) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
-    backgroundColor: colors.surface[200],
-    borderColor: colors.surface[300],
+    backgroundColor: m3.surface.s200,
+    borderColor: m3.surface.s300,
     borderWidth: Platform.OS === 'ios' ? 0.5 : 1,
     borderRadius: borderRadius.full,
     padding: spacing[1],
@@ -626,7 +625,7 @@ export function SegmentedControl({
     borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: selected ? '#FFFFFF' : pressed ? colors.surface[300] : 'transparent',
+    backgroundColor: selected ? '#FFFFFF' : pressed ? m3.surface.s300 : 'transparent',
     borderWidth: 0,
     borderCurve: 'continuous',
   });
@@ -642,7 +641,7 @@ export function SegmentedControl({
         : selected
           ? fontWeight.semibold
           : fontWeight.medium,
-    color: selected ? (selectedTextColor ?? colors.gray[900]) : colors.gray[500],
+    color: selected ? (selectedTextColor ?? m3.neutral.n900) : m3.neutral.n500,
     textAlign: 'center',
     ...(Platform.OS === 'android'
       ? {
@@ -700,7 +699,7 @@ export function CardSelector({
   columns = 2,
   style,
 }: CardSelectorProps) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -715,8 +714,8 @@ export function CardSelector({
     padding: spacing[3],
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: selected ? colors.primary[600] : colors.surface[200],
-    backgroundColor: selected ? colors.surface[100] : colors.surface[50],
+    borderColor: selected ? m3.primary.p600 : m3.surface.s200,
+    backgroundColor: selected ? m3.surface.s100 : m3.surface.s50,
   });
 
   const iconContainerStyle: ViewStyle = {
@@ -732,12 +731,12 @@ export function CardSelector({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
     textAlign: 'center',
-    color: selected ? colors.surface[900] : colors.surface[600],
+    color: selected ? m3.surface.s900 : m3.surface.s600,
   });
 
   const sublabelTextStyle: TextStyle = {
     fontSize: fontSize.xs,
-    color: colors.surface[500],
+    color: m3.surface.s500,
     textAlign: 'center',
     marginTop: 2,
   };
@@ -753,25 +752,22 @@ export function CardSelector({
             style={getCardStyle(selected)}
           >
             <View
-              style={[
-                iconContainerStyle,
-                { backgroundColor: option.iconColor || colors.surface[200] },
-              ]}
+              style={[iconContainerStyle, { backgroundColor: option.iconColor || m3.surface.s200 }]}
             >
               {option.renderIcon ? (
                 option.renderIcon({
                   size: 24,
-                  color: selected ? colors.surface[900] : colors.surface[600],
+                  color: selected ? m3.surface.s900 : m3.surface.s600,
                   selected,
                 })
               ) : option.icon ? (
                 <IconSymbol
                   name={option.icon}
                   size={24}
-                  color={selected ? colors.surface[900] : colors.surface[600]}
+                  color={selected ? m3.surface.s900 : m3.surface.s600}
                 />
               ) : (
-                <IconSymbol name="questionmark.circle" size={24} color={colors.surface[400]} />
+                <IconSymbol name="questionmark.circle" size={24} color={m3.surface.s400} />
               )}
             </View>
             <Text style={getLabelTextStyle(selected)}>{option.label}</Text>
@@ -820,7 +816,7 @@ export function FormInput({
   returnKeyType = multiline ? 'default' : 'done',
   blurOnSubmit = true,
 }: FormInputProps) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   const containerStyle: ViewStyle = {
     marginBottom: spacing[6],
   };
@@ -829,21 +825,21 @@ export function FormInput({
   const labelStyle: TextStyle = {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
-    color: colors.surface[500], // #5C584F
+    color: m3.surface.s500, // #5C584F
     marginBottom: spacing[2],
   };
 
   const requiredStyle: TextStyle = {
-    color: colors.error, // red asterisk for required fields
+    color: m3.colorScheme.error, // red asterisk for required fields
   };
 
   // Cellar Ledger spec: card bg (#F7F3ED), 1px border (#D9D0C4), 12px radius, 48px height
   const inputContainerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: multiline ? 'flex-start' : 'center',
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     borderWidth: 1,
-    borderColor: colors.surface[300],
+    borderColor: m3.surface.s300,
     borderRadius: borderRadius.sm,
     minHeight: 48,
     overflow: 'hidden',
@@ -851,7 +847,7 @@ export function FormInput({
 
   const prefixSuffixStyle: TextStyle = {
     fontSize: fontSize.base,
-    color: colors.surface[500],
+    color: m3.surface.s500,
   };
 
   const inputStyle: TextStyle = {
@@ -859,7 +855,7 @@ export function FormInput({
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     fontSize: fontSize.base,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   };
 
   return (
@@ -875,7 +871,7 @@ export function FormInput({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={colors.gray[400]}
+          placeholderTextColor={m3.neutral.n400}
           keyboardType={keyboardType}
           multiline={multiline}
           numberOfLines={numberOfLines}
@@ -903,7 +899,7 @@ interface ToggleProps {
 }
 
 export function Toggle({ label, description, value, onValueChange, style }: ToggleProps) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   const translateXAnimRef = useRef(new Animated.Value(value ? 22 : 0));
 
   useEffect(() => {
@@ -930,12 +926,12 @@ export function Toggle({ label, description, value, onValueChange, style }: Togg
   const labelTextStyle: TextStyle = {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   };
 
   const descriptionTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: colors.surface[500],
+    color: m3.surface.s500,
     marginTop: spacing[1],
   };
 
@@ -945,14 +941,14 @@ export function Toggle({ label, description, value, onValueChange, style }: Togg
     borderRadius: borderRadius.full,
     padding: spacing[1],
     justifyContent: 'center',
-    backgroundColor: value ? colors.primary[600] : colors.surface[300],
+    backgroundColor: value ? m3.primary.p600 : m3.surface.s300,
   };
 
   const toggleCircleStyle: ViewStyle = {
     width: 24,
     height: 24,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
   };
 
   return (
@@ -1058,7 +1054,6 @@ interface PreviewCardProps {
 }
 
 export function PreviewCard({ title, items, backgroundColor }: PreviewCardProps) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const resolvedBackground = backgroundColor ?? colorWithOpacity(m3.colorScheme.primary, 0.08);
   const containerStyle: ViewStyle = {
@@ -1072,7 +1067,7 @@ export function PreviewCard({ title, items, backgroundColor }: PreviewCardProps)
     fontSize: fontSize.xs,
     fontWeight: fontWeight.bold,
     letterSpacing: 1.2,
-    color: colors.surface[600],
+    color: m3.surface.s600,
     marginBottom: spacing[4],
   };
 
@@ -1088,19 +1083,19 @@ export function PreviewCard({ title, items, backgroundColor }: PreviewCardProps)
 
   const labelTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: colors.surface[600],
+    color: m3.surface.s600,
   };
 
   const valueTextStyle: TextStyle = {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   };
 
   const compactValueTextStyle: TextStyle = {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   };
 
   return (

@@ -1,7 +1,7 @@
 import { LOG_TYPES, type LogTypeId, type LogType } from '@/constants/calculator-models';
 import { fontSize, radius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { AppIcon } from '@/components/ui/app-icon';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
@@ -26,7 +26,6 @@ export function LogTypeSelector({
   hintText,
 }: LogTypeSelectorProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
@@ -37,7 +36,7 @@ export function LogTypeSelector({
     <GuidedTourTarget
       targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_TYPE_SELECTOR}
       style={{
-        backgroundColor: colors.surface[100],
+        backgroundColor: m3.surface.s100,
         borderRadius: radius.lg,
         padding: 16,
         marginBottom: 16,
@@ -123,7 +122,7 @@ export function LogTypeSelector({
                     ? colorWithOpacity(m3.colorScheme.primary, 0.08)
                     : emphasizeAllGuidedCards
                       ? colorWithOpacity(m3.colorScheme.primary, 0.03)
-                      : colors.surface[50],
+                      : m3.surface.s50,
                 borderColor: isSelected
                   ? logType.color
                   : isAdded

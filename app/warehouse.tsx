@@ -18,7 +18,7 @@ import { useWarehouseItems, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import { useModalStore } from '@/stores';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
-import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
@@ -37,11 +37,10 @@ const CATEGORY_COLORS = {
 
 export default function WarehouseScreen() {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
 
-  const glassSurface = colorWithOpacity(colors.surface[100], 0.85);
-  const _lowStockColor = colors.warning;
+  const glassSurface = colorWithOpacity(m3.surface.s100, 0.85);
+  const _lowStockColor = m3.colorScheme.warning;
   const _fertilizerColor = m3.colorScheme.tertiary;
   const _sprayColor = m3.colorScheme.primary;
 
@@ -284,7 +283,7 @@ export default function WarehouseScreen() {
           }}
         >
           <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-          <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+          <Text style={{ color: m3.surface.s600, marginTop: spacing[4] }}>
             {t('warehouse.loading.inventory')}
           </Text>
         </View>
@@ -346,7 +345,7 @@ export default function WarehouseScreen() {
                     paddingHorizontal: 14,
                     borderRadius: radius.full,
                     borderWidth: 1,
-                    borderColor: isActive ? m3.colorScheme.primary : colors.surface[300],
+                    borderColor: isActive ? m3.colorScheme.primary : m3.surface.s300,
                     backgroundColor: isActive ? m3.colorScheme.primary : 'transparent',
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -357,7 +356,7 @@ export default function WarehouseScreen() {
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.medium,
-                      color: isActive ? m3.colorScheme.onPrimary : colors.surface[500],
+                      color: isActive ? m3.colorScheme.onPrimary : m3.surface.s500,
                     }}
                   >
                     {type === 'all'
@@ -373,7 +372,7 @@ export default function WarehouseScreen() {
                       fontSize: fontSize.xs,
                       color: isActive
                         ? colorWithOpacity(m3.colorScheme.onPrimary, 0.7)
-                        : colors.surface[400],
+                        : m3.surface.s400,
                     }}
                   >
                     {count}
@@ -393,7 +392,7 @@ export default function WarehouseScreen() {
               paddingVertical: 10,
               backgroundColor: glassSurface,
               borderWidth: 1,
-              borderColor: colors.surface[300],
+              borderColor: m3.surface.s300,
               borderRadius: radius.md,
               marginBottom: spacing[4],
               flexDirection: 'row',
@@ -402,7 +401,7 @@ export default function WarehouseScreen() {
             <Text
               style={{
                 fontSize: fontSize.sm,
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 fontWeight: fontWeight.medium,
               }}
             >
@@ -413,13 +412,13 @@ export default function WarehouseScreen() {
                 width: 4,
                 height: 4,
                 borderRadius: radius.xs,
-                backgroundColor: colors.surface[400],
+                backgroundColor: m3.surface.s400,
               }}
             />
             <Text
               style={{
                 fontSize: fontSize.sm,
-                color: colors.warning,
+                color: m3.colorScheme.warning,
                 fontWeight: fontWeight.semibold,
               }}
             >
@@ -430,13 +429,13 @@ export default function WarehouseScreen() {
                 width: 4,
                 height: 4,
                 borderRadius: radius.xs,
-                backgroundColor: colors.surface[400],
+                backgroundColor: m3.surface.s400,
               }}
             />
             <Text
               style={{
                 fontSize: fontSize.sm,
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 fontWeight: fontWeight.medium,
               }}
             >
@@ -468,7 +467,7 @@ export default function WarehouseScreen() {
               </View>
               <Text
                 style={{
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   fontWeight: fontWeight.semibold,
                   marginTop: spacing[4],
                   textAlign: 'center',
@@ -478,7 +477,7 @@ export default function WarehouseScreen() {
               </Text>
               <Text
                 style={{
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                   fontSize: fontSize.sm,
                   marginTop: spacing[1],
                   textAlign: 'center',
@@ -526,9 +525,9 @@ export default function WarehouseScreen() {
 
               // Determine stock bar color based on percentage
               const getStockBarColor = () => {
-                if (stockPercentage <= 30) return colors.warning as string; // low - amber
-                if (stockPercentage <= 60) return colors.accent[500]; // mid - gold
-                return colors.success as string; // ok - green
+                if (stockPercentage <= 30) return m3.colorScheme.warning as string; // low - amber
+                if (stockPercentage <= 60) return m3.colorScheme.accent; // mid - gold
+                return m3.colorScheme.success as string; // ok - green
               };
 
               const stockBarColor = getStockBarColor();
@@ -542,7 +541,7 @@ export default function WarehouseScreen() {
                     marginBottom: 12,
                     backgroundColor: glassSurface,
                     borderWidth: 1,
-                    borderColor: isLowStock ? colors.warning : colors.surface[300],
+                    borderColor: isLowStock ? m3.colorScheme.warning : m3.surface.s300,
                   }}
                 >
                   {/* Card Top: Name and Badge */}
@@ -559,7 +558,7 @@ export default function WarehouseScreen() {
                       style={{
                         fontSize: fontSize.base,
                         fontWeight: fontWeight.semibold,
-                        color: colors.surface[800],
+                        color: m3.surface.s800,
                         lineHeight: 20,
                         flex: 1,
                       }}
@@ -620,7 +619,7 @@ export default function WarehouseScreen() {
                         style={{
                           fontSize: fontSize.xl,
                           fontWeight: fontWeight.bold,
-                          color: colors.surface[800],
+                          color: m3.surface.s800,
                           fontVariant: ['tabular-nums'],
                         }}
                       >
@@ -630,7 +629,7 @@ export default function WarehouseScreen() {
                         style={{
                           fontSize: fontSize.sm,
                           fontWeight: fontWeight.medium,
-                          color: colors.surface[500],
+                          color: m3.surface.s500,
                         }}
                       >
                         {item.unit}
@@ -663,9 +662,9 @@ export default function WarehouseScreen() {
                             height: 22,
                             paddingHorizontal: 8,
                             borderRadius: radius.full,
-                            backgroundColor: colorWithOpacity(colors.warning, 0.12),
+                            backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.12),
                             borderWidth: 1,
-                            borderColor: colorWithOpacity(colors.warning, 0.25),
+                            borderColor: colorWithOpacity(m3.colorScheme.warning, 0.25),
                             alignItems: 'center',
                             justifyContent: 'center',
                           }}
@@ -674,7 +673,7 @@ export default function WarehouseScreen() {
                             style={{
                               fontSize: fontSize.xs,
                               fontWeight: fontWeight.semibold,
-                              color: colors.warning,
+                              color: m3.colorScheme.warning,
                             }}
                           >
                             {t('warehouse.labels.lowStock')}
@@ -699,7 +698,7 @@ export default function WarehouseScreen() {
                     <Text
                       style={{
                         fontSize: fontSize.xs,
-                        color: colors.surface[400],
+                        color: m3.surface.s400,
                         fontWeight: fontWeight.normal,
                       }}
                     >
@@ -716,7 +715,7 @@ export default function WarehouseScreen() {
                     <Text
                       style={{
                         fontSize: fontSize.xs,
-                        color: colors.surface[500],
+                        color: m3.surface.s500,
                         fontWeight: fontWeight.medium,
                         fontVariant: ['tabular-nums'],
                       }}

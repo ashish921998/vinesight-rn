@@ -14,7 +14,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { FormModal, SectionHeader, FormInput } from '@/components/ui/form-components';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import {
@@ -43,7 +43,6 @@ export default function LabTestForm({
   presentation = 'modal',
 }: LabTestFormProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
 
   const isVisible = visible ?? true;
@@ -306,12 +305,12 @@ export default function LabTestForm({
         onPress={handleUploadFile}
         disabled={isParsingPDF || isLoading}
         style={{
-          backgroundColor: colors.surface[100],
+          backgroundColor: m3.surface.s100,
           borderRadius: borderRadius.xl,
           padding: spacing[4],
           borderWidth: 2,
           borderStyle: 'dashed',
-          borderColor: colors.surface[300],
+          borderColor: m3.surface.s300,
           marginBottom: spacing[6],
         }}
       >
@@ -322,7 +321,7 @@ export default function LabTestForm({
               style={{
                 fontSize: fontSize.base,
                 fontWeight: fontWeight.medium,
-                color: colors.primary[500],
+                color: m3.primary.p500,
                 marginLeft: spacing[2],
               }}
               textBreakStrategy="highQuality"
@@ -338,7 +337,7 @@ export default function LabTestForm({
               style={{
                 fontSize: fontSize.base,
                 fontWeight: fontWeight.medium,
-                color: colors.primary[500],
+                color: m3.primary.p500,
                 marginLeft: spacing[2],
               }}
               textBreakStrategy="highQuality"
@@ -357,10 +356,10 @@ export default function LabTestForm({
           setShowDatePicker(true);
         }}
         style={{
-          backgroundColor: colors.surface[100],
+          backgroundColor: m3.surface.s100,
           borderRadius: borderRadius.xl,
           borderWidth: 2,
-          borderColor: colors.surface[200],
+          borderColor: m3.surface.s200,
           paddingVertical: 14,
           paddingHorizontal: spacing[4],
           flexDirection: 'row',
@@ -370,11 +369,11 @@ export default function LabTestForm({
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <IconSymbol name="calendar" size={18} color={colors.surface[500]} />
+          <IconSymbol name="calendar" size={18} color={m3.surface.s500} />
           <Text
             style={{
               fontSize: fontSize.base,
-              color: colors.surface[900],
+              color: m3.surface.s900,
               marginLeft: spacing[2],
             }}
             textBreakStrategy="highQuality"
@@ -383,7 +382,7 @@ export default function LabTestForm({
             {formatDate(date, { year: 'numeric', month: 'short', day: 'numeric' })}
           </Text>
         </View>
-        <IconSymbol name="chevron.down" size={18} color={colors.surface[500]} />
+        <IconSymbol name="chevron.down" size={18} color={m3.surface.s500} />
       </Pressable>
 
       <SectionHeader
@@ -445,7 +444,7 @@ export default function LabTestForm({
           >
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: borderRadius['2xl'],
                 borderTopRightRadius: borderRadius['2xl'],
                 padding: spacing[4],
@@ -474,7 +473,7 @@ export default function LabTestForm({
                   accessibilityLabel={t('common.close')}
                   accessibilityRole="button"
                 >
-                  <IconSymbol name="xmark.circle.fill" size={24} color={colors.surface[500]} />
+                  <IconSymbol name="xmark.circle.fill" size={24} color={m3.surface.s500} />
                 </Pressable>
               </View>
               <DateTimePicker

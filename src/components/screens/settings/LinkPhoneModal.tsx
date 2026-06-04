@@ -16,7 +16,6 @@ import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { toast } from '@/components/ui/toast';
 import { spacing } from '@/styles/theme';
 import { isIOS } from '@/hooks';
-import type { ThemeColors } from '@/styles/theme';
 import type { getM3Theme } from '@/styles/theme';
 import type { SettingsStyles } from './settings-styles';
 import { useAuthStore } from '@/stores';
@@ -63,7 +62,6 @@ interface LinkPhoneModalProps {
   linkedAuthPhone: string | null;
   hasSavedPhoneToVerify: boolean;
   styles: SettingsStyles;
-  colors: ThemeColors;
   m3: ReturnType<typeof getM3Theme>;
   onClose: () => void;
   onSuccess: () => void;
@@ -75,7 +73,6 @@ export function LinkPhoneModal({
   linkedAuthPhone,
   hasSavedPhoneToVerify,
   styles,
-  colors,
   m3,
   onClose,
   onSuccess,
@@ -313,7 +310,7 @@ export function LinkPhoneModal({
                   accessibilityRole="button"
                   accessibilityLabel={t('common.close')}
                 >
-                  <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+                  <UISymbol name="xmark.circle.fill" size={28} color={m3.neutral.n400} />
                 </Pressable>
               </View>
             </View>
@@ -371,7 +368,7 @@ export function LinkPhoneModal({
                         >
                           {selectedCountry.dialCode}
                         </Text>
-                        <UISymbol name="chevron.down" size={14} color={colors.surface[500]} />
+                        <UISymbol name="chevron.down" size={14} color={m3.surface.s500} />
                       </Pressable>
                       <TextInput
                         value={linkPhoneInput}
@@ -383,7 +380,7 @@ export function LinkPhoneModal({
                           setLinkPhoneInput(sanitizeLocalPhoneInput(value));
                         }}
                         placeholder={t('settings.linkPhone.phonePlaceholder')}
-                        placeholderTextColor={colors.gray[400]}
+                        placeholderTextColor={m3.neutral.n400}
                         keyboardType="phone-pad"
                         maxLength={15}
                         autoCapitalize="none"
@@ -405,7 +402,7 @@ export function LinkPhoneModal({
                       value={linkPhoneCode}
                       onChangeText={(text) => setLinkPhoneCode(text.replace(/[^0-9]/g, ''))}
                       placeholder={t('settings.linkPhone.codePlaceholder')}
-                      placeholderTextColor={colors.gray[400]}
+                      placeholderTextColor={m3.neutral.n400}
                       keyboardType="number-pad"
                       maxLength={6}
                       style={styles.input}
@@ -463,7 +460,7 @@ export function LinkPhoneModal({
                   return [
                     styles.saveButton,
                     {
-                      backgroundColor: colors.primary[600],
+                      backgroundColor: m3.primary.p600,
                       marginBottom: spacing[3],
                       opacity: isDisabled ? 0.5 : pressed ? 0.8 : 1,
                     },
@@ -491,10 +488,7 @@ export function LinkPhoneModal({
                 style={styles.saveButton}
               >
                 <Text
-                  style={[
-                    styles.settingsTitle,
-                    { flex: 0, marginLeft: 0, color: colors.surface[700] },
-                  ]}
+                  style={[styles.settingsTitle, { flex: 0, marginLeft: 0, color: m3.surface.s700 }]}
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
@@ -530,7 +524,7 @@ export function LinkPhoneModal({
                 onPress={() => setShowCountryPicker(false)}
                 accessibilityLabel={t('authPhone.closeA11y')}
               >
-                <UISymbol name="xmark.circle.fill" size={24} color={colors.gray[400]} />
+                <UISymbol name="xmark.circle.fill" size={24} color={m3.neutral.n400} />
               </Pressable>
             </View>
 
@@ -538,7 +532,7 @@ export function LinkPhoneModal({
               value={countrySearch}
               onChangeText={setCountrySearch}
               placeholder={t('authPhone.searchCountry')}
-              placeholderTextColor={colors.gray[400]}
+              placeholderTextColor={m3.neutral.n400}
               style={styles.countrySearchInput}
               autoCapitalize="none"
               autoCorrect={false}

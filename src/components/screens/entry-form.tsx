@@ -30,7 +30,7 @@ import { LinearGradient as _LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { toast } from '@/components/ui/toast';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
@@ -346,7 +346,6 @@ export function EntryForm({
   presentation = 'modal',
 }: EntryFormProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
   const { data: profile } = useProfile({ enabled: false });
   const user = useAuthStore((state) => state.user);
@@ -1717,9 +1716,9 @@ export function EntryForm({
           >
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderBottomWidth: 1,
-                borderColor: colors.surface[100],
+                borderColor: m3.surface.s100,
                 paddingHorizontal: 16,
                 paddingBottom: 12,
                 paddingTop: 8 + insets.top,
@@ -1893,11 +1892,11 @@ export function EntryForm({
     return (
       <View
         style={{
-          backgroundColor: colors.surface[100],
+          backgroundColor: m3.surface.s100,
           paddingHorizontal: 16,
           paddingVertical: 12,
           borderTopWidth: 1,
-          borderColor: colors.surface[300],
+          borderColor: m3.surface.s300,
         }}
       >
         <Pressable
@@ -1950,7 +1949,7 @@ export function EntryForm({
       {!farm && !lockFarmSelection && (
         <View
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: radius.lg,
             padding: 16,
             marginBottom: 16,
@@ -1977,7 +1976,7 @@ export function EntryForm({
               setShowLogFarmPicker(!showLogFarmPicker);
             }}
             style={{
-              backgroundColor: colors.surface[50],
+              backgroundColor: m3.surface.s50,
               borderRadius: radius.md,
               paddingHorizontal: 16,
               paddingVertical: 12,
@@ -2009,7 +2008,7 @@ export function EntryForm({
           {showLogFarmPicker && farms && (
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: radius.md,
                 marginTop: 8,
                 borderWidth: 1,
@@ -2027,10 +2026,10 @@ export function EntryForm({
                   style={{
                     padding: 16,
                     borderBottomWidth: 1,
-                    borderColor: colors.surface[100],
+                    borderColor: m3.surface.s100,
                     backgroundColor: isAllFarmsSelected
                       ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                      : colors.surface[100],
+                      : m3.surface.s100,
                   }}
                 >
                   <Text
@@ -2056,11 +2055,11 @@ export function EntryForm({
                   style={{
                     padding: 16,
                     borderBottomWidth: 1,
-                    borderColor: colors.surface[100],
+                    borderColor: m3.surface.s100,
                     backgroundColor:
                       activeFarm?.id === f.id
                         ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                        : colors.surface[100],
+                        : m3.surface.s100,
                   }}
                 >
                   <Text
@@ -2084,7 +2083,7 @@ export function EntryForm({
 
       <View
         style={{
-          backgroundColor: colors.surface[100],
+          backgroundColor: m3.surface.s100,
           borderRadius: radius.lg,
           padding: 14,
           marginBottom: 16,
@@ -2158,7 +2157,7 @@ export function EntryForm({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: colors.surface[50],
+            backgroundColor: m3.surface.s50,
             paddingHorizontal: 14,
             paddingVertical: 12,
             borderRadius: radius.md,
@@ -2222,7 +2221,7 @@ export function EntryForm({
             paddingVertical: 18,
             marginBottom: 16,
             alignItems: 'center',
-            backgroundColor: colorWithOpacity(colors.surface[100], 0.72),
+            backgroundColor: colorWithOpacity(m3.surface.s100, 0.72),
           }}
         >
           <Text
@@ -2292,7 +2291,7 @@ export function EntryForm({
       {showTemplates && (
         <View
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: radius.md,
             marginBottom: 16,
             borderWidth: 1,
@@ -2310,7 +2309,7 @@ export function EntryForm({
                   style={{
                     padding: 16,
                     borderBottomWidth: 1,
-                    borderColor: colors.surface[100],
+                    borderColor: m3.surface.s100,
                     flexDirection: 'row',
                     alignItems: 'center',
                   }}
@@ -2369,7 +2368,7 @@ export function EntryForm({
           <Pressable
             onPress={() => setShowTaskFarmPicker(!showTaskFarmPicker)}
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: radius.md,
               paddingHorizontal: 16,
               paddingVertical: 12,
@@ -2398,7 +2397,7 @@ export function EntryForm({
           {showTaskFarmPicker && farms && (
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: radius.md,
                 marginTop: 8,
                 borderWidth: 1,
@@ -2416,11 +2415,11 @@ export function EntryForm({
                   style={{
                     padding: 16,
                     borderBottomWidth: 1,
-                    borderColor: colors.surface[100],
+                    borderColor: m3.surface.s100,
                     backgroundColor:
                       taskFarmId === f.id
                         ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                        : colors.surface[100],
+                        : m3.surface.s100,
                   }}
                 >
                   <Text
@@ -2459,7 +2458,7 @@ export function EntryForm({
           onChangeText={setTitle}
           placeholder={t('entryForm.taskForm.titlePlaceholder')}
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: componentRadius.input,
             paddingHorizontal: 16,
             paddingVertical: 12,
@@ -2491,7 +2490,7 @@ export function EntryForm({
           multiline
           numberOfLines={3}
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: componentRadius.input,
             paddingHorizontal: 16,
             paddingVertical: 12,
@@ -2522,7 +2521,7 @@ export function EntryForm({
           <Pressable
             onPress={() => setShowTypePicker(true)}
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: radius.md,
               paddingHorizontal: 16,
               flexDirection: 'row',
@@ -2569,7 +2568,7 @@ export function EntryForm({
           <Pressable
             onPress={() => setShowPriorityPicker(true)}
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: radius.md,
               paddingHorizontal: 16,
               flexDirection: 'row',
@@ -2608,7 +2607,7 @@ export function EntryForm({
       {(type === 'spray' || type === 'fertigation') && (
         <View
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: radius.md,
             padding: 12,
             marginBottom: 16,
@@ -2645,9 +2644,9 @@ export function EntryForm({
                     paddingHorizontal: 10,
                     paddingVertical: 6,
                     borderRadius: radius.full,
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                     borderWidth: 1,
-                    borderColor: colors.surface[200],
+                    borderColor: m3.surface.s200,
                   }}
                 >
                   <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurface }}>
@@ -2669,12 +2668,12 @@ export function EntryForm({
               placeholder={t('entryForm.plannedItemNamePlaceholder')}
               style={{
                 flex: 2,
-                backgroundColor: colors.surface[50],
+                backgroundColor: m3.surface.s50,
                 borderRadius: componentRadius.input,
                 paddingHorizontal: 12,
                 paddingVertical: 10,
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
                 color: m3.colorScheme.onSurface,
               }}
               placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
@@ -2686,12 +2685,12 @@ export function EntryForm({
               keyboardType="decimal-pad"
               style={{
                 flex: 1,
-                backgroundColor: colors.surface[50],
+                backgroundColor: m3.surface.s50,
                 borderRadius: componentRadius.input,
                 paddingHorizontal: 12,
                 paddingVertical: 10,
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
                 color: m3.colorScheme.onSurface,
               }}
               placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
@@ -2702,12 +2701,12 @@ export function EntryForm({
               placeholder={type === 'spray' ? t('units.gmPerLiter') : t('units.kgPerAcre')}
               style={{
                 flex: 1,
-                backgroundColor: colors.surface[50],
+                backgroundColor: m3.surface.s50,
                 borderRadius: componentRadius.input,
                 paddingHorizontal: 12,
                 paddingVertical: 10,
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
                 color: m3.colorScheme.onSurface,
               }}
               placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
@@ -2746,10 +2745,10 @@ export function EntryForm({
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                     borderRadius: radius.md,
                     borderWidth: 1,
-                    borderColor: colors.surface[200],
+                    borderColor: m3.surface.s200,
                     paddingHorizontal: 10,
                     paddingVertical: 8,
                   }}
@@ -2792,7 +2791,7 @@ export function EntryForm({
         <Pressable
           onPress={() => setShowDueDatePicker(true)}
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: radius.md,
             paddingHorizontal: 16,
             paddingVertical: 12,
@@ -2861,7 +2860,7 @@ export function EntryForm({
             >
               <View
                 style={{
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderTopLeftRadius: 24,
                   borderTopRightRadius: 24,
                   padding: 16,
@@ -2984,7 +2983,7 @@ export function EntryForm({
       >
         <View
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderBottomWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
             paddingHorizontal: 16,
@@ -2999,7 +2998,7 @@ export function EntryForm({
                   width: 42,
                   height: 5,
                   borderRadius: radius.full,
-                  backgroundColor: colors.surface[50],
+                  backgroundColor: m3.surface.s50,
                 }}
               />
             </View>
@@ -3105,7 +3104,7 @@ export function EntryForm({
                 bottom: 0,
                 left: 0,
                 right: 0,
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
                 padding: 16,
@@ -3178,7 +3177,7 @@ export function EntryForm({
                 bottom: 0,
                 left: 0,
                 right: 0,
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
                 padding: 16,
@@ -3224,11 +3223,11 @@ export function EntryForm({
                       flexDirection: 'row',
                       alignItems: 'center',
                       borderBottomWidth: 1,
-                      borderColor: colors.surface[100],
+                      borderColor: m3.surface.s100,
                       backgroundColor:
                         type === taskType
                           ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                          : colors.surface[100],
+                          : m3.surface.s100,
                     }}
                   >
                     <AppIcon
@@ -3269,7 +3268,7 @@ export function EntryForm({
                 bottom: 0,
                 left: 0,
                 right: 0,
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
                 padding: 16,
@@ -3314,11 +3313,11 @@ export function EntryForm({
                     flexDirection: 'row',
                     alignItems: 'center',
                     borderBottomWidth: 1,
-                    borderColor: colors.surface[100],
+                    borderColor: m3.surface.s100,
                     backgroundColor:
                       priority === p
                         ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                        : colors.surface[100],
+                        : m3.surface.s100,
                   }}
                 >
                   <View
@@ -3395,7 +3394,7 @@ export function EntryForm({
           }}
           style={{
             flexShrink: 0,
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             paddingHorizontal: spacing[4],
             paddingTop: spacing[4],
             paddingBottom: Math.max(spacing[4], insets.bottom),
@@ -3415,7 +3414,7 @@ export function EntryForm({
                     borderWidth: 1,
                     borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                     alignItems: 'center',
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                   }}
                 >
                   <Text

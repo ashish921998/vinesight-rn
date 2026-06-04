@@ -8,7 +8,7 @@
 import React from 'react';
 import { ScrollView, TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { fontSize, radius, spacing } from '@/styles/theme';
 
 interface SuggestionChipsProps {
@@ -22,7 +22,7 @@ export function SuggestionChips({
   onSendSuggestion,
   disabled = false,
 }: SuggestionChipsProps) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t } = useTranslation();
   const chipBackgroundColor =
     m3.surface?.surfaceContainerLow ??

@@ -26,7 +26,7 @@ import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
 import { SoilSectionData } from '../../types/database';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 
@@ -46,7 +46,6 @@ export default function SoilProfileForm({
   const isVisible = visible ?? true;
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const colors = useThemeColors();
   const m3 = useM3();
   const createProfile = useCreateSoilProfile();
 
@@ -159,13 +158,13 @@ export default function SoilProfileForm({
           paddingHorizontal: spacing[4],
           paddingTop: spacing[4] + insets.top,
           paddingBottom: spacing[4],
-          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+          backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
           borderBottomWidth: 0.5,
           borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
         }}
       >
         <Pressable onPress={onClose}>
-          <Text style={{ color: colors.surface[500], fontSize: fontSize.base }}>
+          <Text style={{ color: m3.surface.s500, fontSize: fontSize.base }}>
             {t('common.cancel')}
           </Text>
         </Pressable>
@@ -173,7 +172,7 @@ export default function SoilProfileForm({
           style={{
             fontSize: fontSize.lg,
             fontWeight: fontWeight.bold,
-            color: colors.surface[900],
+            color: m3.surface.s900,
           }}
         >
           {t('soilProfileForm.titleAdd')}
@@ -212,14 +211,14 @@ export default function SoilProfileForm({
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginTop: spacing[4],
-            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+            backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
           }}
         >
           <Text
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: colors.surface[500],
+              color: m3.surface.s500,
               marginBottom: spacing[1],
             }}
           >
@@ -228,7 +227,7 @@ export default function SoilProfileForm({
           <Text
             style={{
               fontSize: fontSize.xs,
-              color: colors.surface[500],
+              color: m3.surface.s500,
               marginBottom: spacing[3],
             }}
           >
@@ -251,7 +250,7 @@ export default function SoilProfileForm({
               }
             }}
             style={{
-              backgroundColor: colors.surface[50],
+              backgroundColor: m3.surface.s50,
               borderWidth: 1,
               borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
               borderRadius: borderRadius.xl,
@@ -262,7 +261,7 @@ export default function SoilProfileForm({
               justifyContent: 'space-between',
             }}
           >
-            <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
+            <Text style={{ fontSize: fontSize.base, color: m3.surface.s900 }}>
               {formatDate(selectedDate, { year: 'numeric', month: 'short', day: 'numeric' })}
             </Text>
             <IconSymbol name="calendar" size={20} color={m3.colorScheme.onSurfaceVariant} />
@@ -312,7 +311,7 @@ export default function SoilProfileForm({
             >
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: '#ffffff',
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   width: '85%',
@@ -322,7 +321,7 @@ export default function SoilProfileForm({
                   style={{
                     fontSize: fontSize.lg,
                     fontWeight: fontWeight.bold,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                     marginBottom: spacing[4],
                     textAlign: 'center',
                   }}
@@ -352,14 +351,14 @@ export default function SoilProfileForm({
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginTop: spacing[4],
-            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+            backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
           }}
         >
           <Text
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: colors.surface[500],
+              color: m3.surface.s500,
               marginBottom: spacing[1],
             }}
           >
@@ -368,7 +367,7 @@ export default function SoilProfileForm({
           <Text
             style={{
               fontSize: fontSize.xs,
-              color: colors.surface[500],
+              color: m3.surface.s500,
               marginBottom: spacing[4],
             }}
           >
@@ -409,25 +408,25 @@ export default function SoilProfileForm({
                         style={{
                           fontSize: fontSize.xs,
                           fontWeight: fontWeight.bold,
-                          color: colors.primary[500],
+                          color: m3.primary.p500,
                         }}
                       >
                         {info.abbr}
                       </Text>
                     </View>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
                       {t(info.labelKey)}
                     </Text>
                   </View>
                   <TextInput
                     style={{
-                      backgroundColor: colors.surface[50],
+                      backgroundColor: m3.surface.s50,
                       borderWidth: 1,
                       borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                       borderRadius: borderRadius.xl,
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[3],
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                       fontSize: fontSize.base,
                     }}
                     placeholder="0.0"
@@ -449,14 +448,14 @@ export default function SoilProfileForm({
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginTop: spacing[4],
-            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+            backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
           }}
         >
           <Text
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: colors.surface[500],
+              color: m3.surface.s500,
               marginBottom: spacing[1],
             }}
           >
@@ -465,7 +464,7 @@ export default function SoilProfileForm({
           <Text
             style={{
               fontSize: fontSize.xs,
-              color: colors.surface[500],
+              color: m3.surface.s500,
               marginBottom: spacing[4],
             }}
           >
@@ -487,7 +486,7 @@ export default function SoilProfileForm({
                   <Text
                     style={{
                       fontSize: fontSize.xs,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginBottom: spacing[1],
                     }}
                   >
@@ -495,13 +494,13 @@ export default function SoilProfileForm({
                   </Text>
                   <TextInput
                     style={{
-                      backgroundColor: colors.surface[50],
+                      backgroundColor: m3.surface.s50,
                       borderWidth: 1,
                       borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                       borderRadius: borderRadius.xl,
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[2],
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                       fontSize: fontSize.base,
                     }}
                     placeholder="0.0"
@@ -524,7 +523,7 @@ export default function SoilProfileForm({
             padding: spacing[4],
             marginTop: spacing[4],
             marginBottom: spacing[8],
-            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+            backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
           }}
           onLayout={(event) => recordFieldPosition('fusarium', event.nativeEvent.layout.y ?? 0)}
         >
@@ -532,7 +531,7 @@ export default function SoilProfileForm({
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: colors.surface[500],
+              color: m3.surface.s500,
               marginBottom: spacing[1],
             }}
           >
@@ -541,7 +540,7 @@ export default function SoilProfileForm({
           <Text
             style={{
               fontSize: fontSize.xs,
-              color: colors.surface[500],
+              color: m3.surface.s500,
               marginBottom: spacing[3],
             }}
           >
@@ -549,13 +548,13 @@ export default function SoilProfileForm({
           </Text>
           <TextInput
             style={{
-              backgroundColor: colors.surface[50],
+              backgroundColor: m3.surface.s50,
               borderWidth: 1,
               borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
               borderRadius: borderRadius.xl,
               paddingHorizontal: spacing[3],
               paddingVertical: spacing[3],
-              color: colors.surface[900],
+              color: m3.surface.s900,
               fontSize: fontSize.base,
             }}
             placeholder="0.0"

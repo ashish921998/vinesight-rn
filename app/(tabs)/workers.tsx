@@ -22,7 +22,7 @@ import type { Worker, WorkerAttendance, WorkerTransaction } from '@/types';
 import { WorkerCard } from '@/components/cards';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { WorkersTourCoachmark } from '@/features/guided-tour/workers-tour-coachmark';
 import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
@@ -44,7 +44,6 @@ const TAB_DATA: WorkersTabMeta[] = [
 
 export default function WorkersScreen() {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -201,9 +200,9 @@ export default function WorkersScreen() {
       <View style={{ marginHorizontal: spacing[4], marginBottom: spacing[3] }}>
         <View
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderWidth: 1,
-            borderColor: colors.surface[300],
+            borderColor: m3.surface.s300,
             borderRadius: radius.lg,
             padding: 12,
             flexDirection: 'row',
@@ -219,7 +218,7 @@ export default function WorkersScreen() {
                 fontWeight: '600',
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
-                color: colors.surface[500],
+                color: m3.surface.s500,
               }}
             >
               {t('workers.period.thisMonth', { defaultValue: 'This period · last 30 days' })}
@@ -229,17 +228,17 @@ export default function WorkersScreen() {
                 style={{
                   fontSize: fontSize['2xl'],
                   fontWeight: '700',
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   fontVariant: ['tabular-nums'],
                 }}
               >
                 ₹{periodSummary.totalPending.toLocaleString('en-IN')}
               </Text>
-              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+              <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                 {t('workers.period.pendingAcrossTeam', { defaultValue: 'pending across team' })}
               </Text>
             </View>
-            <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: 4 }}>
+            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 4 }}>
               {periodSummary.totalDays} {t('workers.period.days', { defaultValue: 'days' })} ·{' '}
               {activeWorkers.length} {t('workers.period.workers', { defaultValue: 'workers' })}
             </Text>
@@ -423,7 +422,7 @@ export default function WorkersScreen() {
             targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_TAB_SELECTOR}
             enabled={isTourActive}
             style={{
-              backgroundColor: colors.surface[200],
+              backgroundColor: m3.surface.s200,
               borderRadius: borderRadius.full,
               padding: 3,
             }}
@@ -436,7 +435,7 @@ export default function WorkersScreen() {
                 options={TAB_DATA.map((tab) => ({ value: tab.id, label: t(tab.labelKey) }))}
                 selectedValue={selectedTab}
                 onSelect={(value) => setSelectedTab(value as WorkersTab)}
-                selectedTextColor={colors.black}
+                selectedTextColor={'#000000'}
               />
             </GuidedTourTarget>
           </GuidedTourTarget>

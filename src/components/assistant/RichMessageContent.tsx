@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 // import { colorWithOpacity } from '@/utils/color';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
@@ -24,7 +24,7 @@ interface RichMessageContentProps {
 }
 
 export function RichMessageContent({ cards }: RichMessageContentProps) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
 
   return (
     <View style={styles.container}>
@@ -70,7 +70,7 @@ function renderCardContent(card: AssistantMessageCard, _cardIndex: number) {
 
 // ── Data Table / Key-Value ────────────────────────────────────
 function DataTableCard({ rows }: { rows: DataTableRow[] }) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   return (
     <View style={styles.rowsContainer}>
       {rows.map((row, i) => (
@@ -107,7 +107,7 @@ function DataTableCard({ rows }: { rows: DataTableRow[] }) {
 
 // ── Worker List ───────────────────────────────────────────────
 function WorkerListCard({ rows }: { rows: WorkerListRow[] }) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   return (
     <View style={styles.rowsContainer}>
       {rows.map((row, i) => (
@@ -141,7 +141,7 @@ function WorkerListCard({ rows }: { rows: WorkerListRow[] }) {
 
 // ── PHI Conflict ──────────────────────────────────────────────
 function PhiConflictCard({ rows }: { rows: PhiConflictRow[] }) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   return (
     <View style={styles.rowsContainer}>
       {rows.map((row, i) => (
@@ -178,7 +178,7 @@ function PhiConflictCard({ rows }: { rows: PhiConflictRow[] }) {
 
 // ── Alert List ────────────────────────────────────────────────
 function AlertListCard({ rows }: { rows: AlertListRow[] }) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   return (
     <View style={styles.rowsContainer}>
       {rows.map((row, i) => {

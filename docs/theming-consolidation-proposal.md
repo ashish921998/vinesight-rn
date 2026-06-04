@@ -201,5 +201,17 @@ Introduce derived state-layer tokens / a `withState(role, state)` helper and mig
 
 ---
 
+## 6b. Execution status (COMPLETE)
+
+Direction A is fully landed. The legacy `colors`/`darkColors` palette and the
+`useThemeColors`/`useThemeTokens` hooks are retired across **`src/` and `app/`**.
+
+- **Phase 0–1** — token foundation + dead-code/static-risk removal (commits `7682a52`, `6374fa0`).
+- **Phase 2** — surface ramp: every `colors.surface[N]` → `m3.surface.sN` (value-preserving 1:1, `s100===surface[100]`). Pixel-identical light + dark.
+- **Phase 3** — `primary[N]` → `m3.primary.pN`, `gray[N]` → `m3.neutral.nN`, `secondary[500]` → `m3.colorScheme.secondary`, `accent[500]` → new `m3.colorScheme.accent`, `info` → new `m3.colorScheme.info`, `error/success/warning` → existing roles, `white/black` → literals, category/`labTest` → `useDomainColors()`. The `primary`/`neutral` ramps and `accent`/`info` roles were added to `getM3Theme` as exact dark-aware, value-preserving tokens (the chosen strategy — see §5 Direction A).
+- **Phase 4** — `useThemeColors`/`useThemeTokens` deleted from `use-theme.ts`; `colors`/`darkColors` made non-exported internals of `theme.ts` (and dropped from the `theme` aggregate). The `app/` scope (31 route files, not in the original `src`-only inventory) was migrated as part of this. Class component `error-boundary.tsx` was repointed at the static `getM3Theme` accessor (kept dark-aware). ESLint `no-restricted-imports` is now a hard **`error`** banning `colors`/`darkColors` from `@/styles/theme` and `useThemeColors`/`useThemeTokens` from `@/styles/use-theme`.
+
+End state verified: `rg "\bcolors\.[a-zA-Z]"` is empty outside `theme.ts`; `tsc`, `eslint .`, and the full jest suite (811 tests) are green. `getThemeColors` remains exported (sole consumer: `useDomainColors`).
+
 ## 7. Why A over B/C (one paragraph)
 B does ~80% of A's churn (the 709 surface refs migrate either way) but stops short of the deletion that actually prevents backsliding — you keep two hooks forever. C inverts onto the *less* semantic, *minority* system and rewrites the 85 files the design system is already converging on. A is the only option that ends with **one** generic color hook, a **single dark-aware** source for category colors (fixing a real latent bug), and a **lint guard** that makes the consolidation permanent — at a churn (~62 files) that is fully containable by the phased, screenshot-verified, independently-shippable plan above.

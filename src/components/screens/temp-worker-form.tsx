@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useCreateTemporaryWorkerEntry, useFarms, useCurrency } from '@/hooks';
 import { FormModal, SectionHeader, FormInput, PreviewCard, Button } from '@/components/ui';
 import { FarmSelectModal } from '@/components/modals/farm-select-modal';
-import { useThemeColors, useM3 } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate, formatCurrency } from '@/i18n/format';
 import { formatLocalDate } from '@/utils/date';
@@ -29,7 +29,6 @@ export function TempWorkerForm({
   presentation = 'modal',
 }: TempWorkerFormProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
   const { data: farms } = useFarms();
   const currency = useCurrency();
@@ -138,7 +137,7 @@ export function TempWorkerForm({
         style={{
           fontSize: fontSize.sm,
           fontWeight: fontWeight.medium,
-          color: colors.surface[700],
+          color: m3.surface.s700,
           marginBottom: spacing[2],
         }}
       >
@@ -149,10 +148,10 @@ export function TempWorkerForm({
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: colors.surface[100],
+          backgroundColor: m3.surface.s100,
           borderRadius: borderRadius.xl,
           borderWidth: 2,
-          borderColor: colors.surface[200],
+          borderColor: m3.surface.s200,
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[3],
           marginBottom: spacing[3],
@@ -192,7 +191,7 @@ export function TempWorkerForm({
           <Text
             style={{
               fontSize: fontSize.sm,
-              color: colors.surface[600],
+              color: m3.surface.s600,
               marginBottom: spacing[2],
             }}
           >
@@ -201,10 +200,10 @@ export function TempWorkerForm({
           <Pressable
             onPress={() => setShowFarmModal(true)}
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: borderRadius.xl,
               borderWidth: 2,
-              borderColor: selectedFarmId ? m3.colorScheme.primary : colors.surface[200],
+              borderColor: selectedFarmId ? m3.colorScheme.primary : m3.surface.s200,
               paddingVertical: spacing[3] + 2,
               paddingHorizontal: spacing[4],
               flexDirection: 'row',
@@ -217,12 +216,12 @@ export function TempWorkerForm({
               <IconSymbol
                 name="leaf.fill"
                 size={18}
-                color={selectedFarmId ? m3.colorScheme.primary : colors.surface[500]}
+                color={selectedFarmId ? m3.colorScheme.primary : m3.surface.s500}
               />
               <Text
                 style={{
                   fontSize: fontSize.base,
-                  color: selectedFarmId ? colors.surface[900] : colors.surface[500],
+                  color: selectedFarmId ? m3.surface.s900 : m3.surface.s500,
                   marginLeft: spacing[2],
                 }}
               >
@@ -232,7 +231,7 @@ export function TempWorkerForm({
                   : t('workers.tempWorkers.form.fields.farm.placeholder')}
               </Text>
             </View>
-            <IconSymbol name="chevron.right" size={18} color={colors.surface[500]} />
+            <IconSymbol name="chevron.right" size={18} color={m3.surface.s500} />
           </Pressable>
         </>
       )}
@@ -308,7 +307,7 @@ export function TempWorkerForm({
               bottom: 0,
               left: 0,
               right: 0,
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderTopLeftRadius: borderRadius['2xl'],
               borderTopRightRadius: borderRadius['2xl'],
               padding: spacing[4],
@@ -337,7 +336,7 @@ export function TempWorkerForm({
                 accessibilityLabel="Close date picker"
                 accessible={true}
               >
-                <IconSymbol name="xmark.circle.fill" size={24} color={colors.surface[500]} />
+                <IconSymbol name="xmark.circle.fill" size={24} color={m3.surface.s500} />
               </Pressable>
             </View>
             <DateTimePicker

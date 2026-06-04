@@ -44,6 +44,8 @@ export interface UseAssistantReturn {
   isLoading: boolean;
   inputText: string;
   suggestions: string[];
+  /** Id of the latest assistant message, which should reveal progressively. */
+  streamingMessageId: string | null;
   error: AssistantGatewayError | Error | null;
   voiceLogAction: AssistantVoiceLogAction | null;
   attachments: AIMessageAttachmentInput[];
@@ -77,6 +79,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [inputText, setInputText] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [error, setError] = useState<AssistantGatewayError | Error | null>(null);
   const [voiceLogAction, setVoiceLogAction] = useState<AssistantVoiceLogAction | null>(null);
   const [attachments, setAttachments] = useState<AIMessageAttachmentInput[]>([]);
@@ -106,6 +109,8 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
       lastUserMessageRef.current = messageText;
       setInputText('');
       setError(null);
+      // Stop revealing any prior assistant message the moment a new turn starts.
+      setStreamingMessageId(null);
 
       // Capture attachments snapshot and clear them for next message
       const pendingAttachments = attachments.slice();
@@ -149,6 +154,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
         }
 
         setMessages((prev) => [...prev, response.message]);
+        setStreamingMessageId(response.message.id);
         setSuggestions(response.suggestions ?? []);
 
         // Extract voiceLogAction if present and ready
@@ -197,6 +203,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
 
     setError(null);
     setIsLoading(true);
+    setStreamingMessageId(null);
 
     try {
       const response = await sendAssistantTurn(
@@ -221,6 +228,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
       }
 
       setMessages((prev) => [...prev, response.message]);
+      setStreamingMessageId(response.message.id);
       setSuggestions(response.suggestions ?? []);
 
       if (response.voiceLogAction != null) {
@@ -271,6 +279,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     setIsLoading(false);
     setInputText('');
     setSuggestions([]);
+    setStreamingMessageId(null);
     setError(null);
     setVoiceLogAction(null);
     setAttachments([]);
@@ -299,6 +308,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     setIsLoading(true);
     setInputText('');
     setSuggestions([]);
+    setStreamingMessageId(null);
     setError(null);
     setVoiceLogAction(null);
     setAttachments([]);
@@ -327,6 +337,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
     isLoading,
     inputText,
     suggestions,
+    streamingMessageId,
     error,
     voiceLogAction,
     attachments,

@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
 
@@ -21,7 +21,8 @@ export default function TabLayout() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const [hasRedirected, setHasRedirected] = useState(false);
   const insets = useSafeAreaInsets();
-  const { m3, isDark } = useThemeTokens();
+  const m3 = useM3();
+  const isDark = useIsDark();
   const defaultHeaderOptions = useMemo(
     () => ({
       headerStyle: {

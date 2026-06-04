@@ -1,4 +1,4 @@
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { fontSize, radius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
@@ -15,7 +15,6 @@ interface TabsProps {
 
 export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
 
   if (tabs.length < 2) return null;
@@ -24,7 +23,7 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
     <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10 }}>
       <View
         style={{
-          backgroundColor: colors.surface[50],
+          backgroundColor: m3.surface.s50,
           borderRadius: radius.full,
           padding: 5,
           flexDirection: 'row',

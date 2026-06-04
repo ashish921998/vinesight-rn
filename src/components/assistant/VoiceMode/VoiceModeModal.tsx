@@ -34,7 +34,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 import { radius, spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { triggerHapticMedium } from '@/utils/haptics';
@@ -70,7 +70,8 @@ export function VoiceModeModal({
   onClearError: _onClearError,
   noSpeechLabel,
 }: VoiceModeModalProps) {
-  const { m3, isDark } = useThemeTokens();
+  const m3 = useM3();
+  const isDark = useIsDark();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();

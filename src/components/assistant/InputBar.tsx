@@ -23,7 +23,7 @@ import {
   Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 import { componentRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import type { AIMessageAttachmentInput } from '@/types/ai';
@@ -54,7 +54,8 @@ export function InputBar({
   attachments = [],
   onRemoveAttachment,
 }: InputBarProps) {
-  const { m3, isDark } = useThemeTokens();
+  const m3 = useM3();
+  const isDark = useIsDark();
   const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
 

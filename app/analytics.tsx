@@ -10,7 +10,7 @@ import { useAnalytics } from '../src/hooks/use-analytics';
 import { TimeRange } from '../src/types/analytics';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -40,7 +40,6 @@ const SECTION_HEADER_STYLE = {
 };
 
 export default function AnalyticsScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
   const router = useRouter();
@@ -56,11 +55,11 @@ export default function AnalyticsScreen() {
     () => ({
       irrigation: { icon: 'drop.fill', color: m3.colorScheme.primary },
       spray: { icon: 'flask.fill', color: m3.colorScheme.tertiary },
-      harvest: { icon: 'basket.fill', color: colors.warning },
+      harvest: { icon: 'basket.fill', color: m3.colorScheme.warning },
       expense: { icon: 'dollarsign.circle.fill', color: m3.colorScheme.error },
-      fertigation: { icon: 'leaf.fill', color: colors.success },
+      fertigation: { icon: 'leaf.fill', color: m3.colorScheme.success },
     }),
-    [colors.success, colors.warning, m3],
+    [m3],
   );
 
   // Custom JS header (avoids iOS 26 native bar-button glass capsule)
@@ -140,7 +139,7 @@ export default function AnalyticsScreen() {
         {analyticsHeader}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-          <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+          <Text style={{ color: m3.surface.s600, marginTop: spacing[4] }}>
             {t('analytics.loading')}
           </Text>
         </View>
@@ -168,7 +167,7 @@ export default function AnalyticsScreen() {
           />
           <Text
             style={{
-              color: colors.surface[600],
+              color: m3.surface.s600,
               marginTop: spacing[4],
               textAlign: 'center',
             }}
@@ -177,7 +176,7 @@ export default function AnalyticsScreen() {
           </Text>
           <Text
             style={{
-              color: colors.surface[500],
+              color: m3.surface.s500,
               fontSize: fontSize.sm,
               marginTop: spacing[2],
               textAlign: 'center',
@@ -216,16 +215,16 @@ export default function AnalyticsScreen() {
                     paddingHorizontal: 14,
                     paddingVertical: 6,
                     borderRadius: radius.full, // Pill shape per wireframe
-                    backgroundColor: isActive ? m3.colorScheme.primary : colors.surface[100],
+                    backgroundColor: isActive ? m3.colorScheme.primary : m3.surface.s100,
                     borderWidth: isActive ? 0 : 1,
-                    borderColor: colors.surface[300],
+                    borderColor: m3.surface.s300,
                   }}
                 >
                   <Text
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.medium,
-                      color: isActive ? '#FFFFFF' : colors.surface[500],
+                      color: isActive ? '#FFFFFF' : m3.surface.s500,
                     }}
                   >
                     {t(range.labelKey)}
@@ -244,16 +243,16 @@ export default function AnalyticsScreen() {
             {/* Total Expenses Card */}
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 borderRadius: radius.md,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 minWidth: 130,
               }}
             >
-              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginBottom: 4 }}>
+              <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginBottom: 4 }}>
                 {t('analytics.labels.totalExpenses')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
@@ -261,7 +260,7 @@ export default function AnalyticsScreen() {
                   style={{
                     fontSize: fontSize['2xl'],
                     fontWeight: '700',
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                   }}
                 >
                   {formatCurrency(costAnalysis?.totalCosts || 0, currency, {
@@ -275,16 +274,16 @@ export default function AnalyticsScreen() {
             {/* Harvest Yield Card */}
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 borderRadius: radius.md,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 minWidth: 130,
               }}
             >
-              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginBottom: 4 }}>
+              <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginBottom: 4 }}>
                 {t('analytics.labels.harvestYield')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
@@ -292,14 +291,12 @@ export default function AnalyticsScreen() {
                   style={{
                     fontSize: fontSize['2xl'],
                     fontWeight: '700',
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                   }}
                 >
                   {(analytics.totalHarvestQuantity / 1000).toFixed(1)}
                 </Text>
-                <Text
-                  style={{ fontSize: fontSize.sm, fontWeight: '500', color: colors.surface[500] }}
-                >
+                <Text style={{ fontSize: fontSize.sm, fontWeight: '500', color: m3.surface.s500 }}>
                   {t('analytics.units.tons')}
                 </Text>
               </View>
@@ -308,16 +305,16 @@ export default function AnalyticsScreen() {
             {/* Activities Logged Card */}
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 borderRadius: radius.md,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 minWidth: 130,
               }}
             >
-              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginBottom: 4 }}>
+              <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginBottom: 4 }}>
                 {t('analytics.labels.activitiesLogged')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
@@ -325,7 +322,7 @@ export default function AnalyticsScreen() {
                   style={{
                     fontSize: fontSize['2xl'],
                     fontWeight: '700',
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                   }}
                 >
                   {analytics.irrigationsByMonth.reduce((sum, m) => sum + m.count, 0) +
@@ -340,9 +337,9 @@ export default function AnalyticsScreen() {
           {/* Category Breakdown - Colored progress bars with category colors */}
           <View
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderWidth: 1,
-              borderColor: colors.surface[300],
+              borderColor: m3.surface.s300,
               borderRadius: radius.md,
               padding: spacing[4],
               marginBottom: spacing[6],
@@ -359,14 +356,12 @@ export default function AnalyticsScreen() {
               <Text
                 style={{
                   ...SECTION_HEADER_STYLE,
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                 }}
               >
                 {t('analytics.sections.categoryBreakdown')}
               </Text>
-              <Text
-                style={{ fontSize: fontSize.sm, fontWeight: '500', color: colors.surface[500] }}
-              >
+              <Text style={{ fontSize: fontSize.sm, fontWeight: '500', color: m3.surface.s500 }}>
                 {analytics.irrigationsByMonth.reduce((sum, m) => sum + m.count, 0) +
                   analytics.totalSprayCount +
                   analytics.totalHarvestCount +
@@ -429,7 +424,7 @@ export default function AnalyticsScreen() {
                       gap: spacing[3],
                       paddingVertical: spacing[3],
                       borderTopWidth: index > 0 ? 1 : 0,
-                      borderTopColor: colors.surface[200],
+                      borderTopColor: m3.surface.s200,
                     }}
                   >
                     <View
@@ -453,7 +448,7 @@ export default function AnalyticsScreen() {
                           style={{
                             fontSize: fontSize.sm,
                             fontWeight: '500',
-                            color: colors.surface[900],
+                            color: m3.surface.s900,
                           }}
                         >
                           {cat.name}
@@ -462,7 +457,7 @@ export default function AnalyticsScreen() {
                           style={{
                             fontSize: fontSize.sm,
                             fontWeight: '600',
-                            color: colors.surface[900],
+                            color: m3.surface.s900,
                           }}
                         >
                           {count}
@@ -473,7 +468,7 @@ export default function AnalyticsScreen() {
                           width: '100%',
                           height: 6,
                           borderRadius: radius.xs,
-                          backgroundColor: colors.surface[200], // Track #EEE7DD
+                          backgroundColor: m3.surface.s200, // Track #EEE7DD
                           overflow: 'hidden',
                         }}
                       >
@@ -497,7 +492,7 @@ export default function AnalyticsScreen() {
           {performanceMetrics && (
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -515,7 +510,7 @@ export default function AnalyticsScreen() {
                   style={{
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                   }}
                 >
                   {t('analytics.labels.performanceScore')}
@@ -544,7 +539,7 @@ export default function AnalyticsScreen() {
                   <View
                     key={key}
                     style={{
-                      backgroundColor: colors.surface[50],
+                      backgroundColor: m3.surface.s50,
                       borderRadius: borderRadius.xl,
                       padding: spacing[3],
                       width: '47%',
@@ -560,7 +555,7 @@ export default function AnalyticsScreen() {
                       <Text
                         style={{
                           fontSize: fontSize.xs,
-                          color: colors.surface[500],
+                          color: m3.surface.s500,
                           textTransform: 'capitalize',
                         }}
                       >
@@ -577,7 +572,7 @@ export default function AnalyticsScreen() {
                         size={14}
                         color={
                           value.trend === 'up'
-                            ? colors.success
+                            ? m3.colorScheme.success
                             : value.trend === 'down'
                               ? m3.colorScheme.error
                               : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)
@@ -588,13 +583,13 @@ export default function AnalyticsScreen() {
                       style={{
                         fontSize: fontSize.lg,
                         fontWeight: fontWeight.bold,
-                        color: colors.surface[900],
+                        color: m3.surface.s900,
                       }}
                     >
                       {value.score}
                     </Text>
                     <Text
-                      style={{ fontSize: fontSize.xs, color: colors.surface[500] }}
+                      style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}
                       numberOfLines={1}
                     >
                       {value.description}
@@ -609,7 +604,7 @@ export default function AnalyticsScreen() {
           {costAnalysis && (
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -619,7 +614,7 @@ export default function AnalyticsScreen() {
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   marginBottom: spacing[3],
                 }}
               >
@@ -629,19 +624,19 @@ export default function AnalyticsScreen() {
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: colorWithOpacity(colors.success, 0.12),
+                    backgroundColor: colorWithOpacity(m3.colorScheme.success, 0.12),
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: colors.success }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.success }}>
                     {t('analytics.metrics.revenue')}
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: colors.success,
+                      color: m3.colorScheme.success,
                     }}
                   >
                     {formatCurrency(costAnalysis.totalRevenue, currency)}
@@ -673,19 +668,22 @@ export default function AnalyticsScreen() {
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {t('analytics.metrics.profitMargin')}
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: costAnalysis.profitMargin >= 0 ? colors.success : m3.colorScheme.error,
+                      color:
+                        costAnalysis.profitMargin >= 0
+                          ? m3.colorScheme.success
+                          : m3.colorScheme.error,
                     }}
                   >
                     {costAnalysis.profitMargin.toFixed(1)}%
@@ -694,19 +692,19 @@ export default function AnalyticsScreen() {
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {t('analytics.metrics.roi')}
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: costAnalysis.roi >= 0 ? colors.success : m3.colorScheme.error,
+                      color: costAnalysis.roi >= 0 ? m3.colorScheme.success : m3.colorScheme.error,
                     }}
                   >
                     {costAnalysis.roi.toFixed(1)}%
@@ -720,7 +718,7 @@ export default function AnalyticsScreen() {
           {yieldAnalysis && (
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -730,7 +728,7 @@ export default function AnalyticsScreen() {
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   marginBottom: spacing[3],
                 }}
               >
@@ -739,20 +737,20 @@ export default function AnalyticsScreen() {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
                 <View
                   style={{
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     width: '47%',
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {t('analytics.labels.totalYield')}
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                     }}
                   >
                     {formatNumber(yieldAnalysis.currentYield)} kg
@@ -760,20 +758,20 @@ export default function AnalyticsScreen() {
                 </View>
                 <View
                   style={{
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     width: '47%',
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {t('analytics.labels.yieldPerAcre')}
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                     }}
                   >
                     {yieldAnalysis.yieldPerAcre.toFixed(1)} kg
@@ -781,20 +779,20 @@ export default function AnalyticsScreen() {
                 </View>
                 <View
                   style={{
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     width: '47%',
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {t('analytics.labels.avgPrice')}
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                     }}
                   >
                     {formatCurrency(yieldAnalysis.avgPricePerKg, currency)}/kg
@@ -802,20 +800,20 @@ export default function AnalyticsScreen() {
                 </View>
                 <View
                   style={{
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     width: '47%',
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {t('analytics.labels.totalArea')}
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                     }}
                   >
                     {yieldAnalysis.totalArea.toFixed(1)} {t('units.acres')}
@@ -829,7 +827,7 @@ export default function AnalyticsScreen() {
           {analytics.expensesByType.length > 0 && (
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -839,7 +837,7 @@ export default function AnalyticsScreen() {
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   marginBottom: spacing[3],
                 }}
               >
@@ -857,7 +855,7 @@ export default function AnalyticsScreen() {
                       paddingVertical: spacing[2],
                       borderBottomWidth: index < displayed.length - 1 ? 1 : 0,
                       borderBottomColor:
-                        index < displayed.length - 1 ? colors.surface[100] : 'transparent',
+                        index < displayed.length - 1 ? m3.surface.s100 : 'transparent',
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -865,7 +863,7 @@ export default function AnalyticsScreen() {
                         style={{
                           width: 32,
                           height: 32,
-                          backgroundColor: colors.surface[100],
+                          backgroundColor: m3.surface.s100,
                           borderRadius: borderRadius.lg,
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -880,7 +878,7 @@ export default function AnalyticsScreen() {
                       <Text
                         style={{
                           fontSize: fontSize.sm,
-                          color: colors.surface[700],
+                          color: m3.surface.s700,
                           marginLeft: spacing[2],
                           textTransform: 'capitalize',
                         }}
@@ -892,7 +890,7 @@ export default function AnalyticsScreen() {
                       style={{
                         fontSize: fontSize.sm,
                         fontWeight: fontWeight.semibold,
-                        color: colors.surface[900],
+                        color: m3.surface.s900,
                       }}
                     >
                       {formatCurrency(expense.amount, currency)}
@@ -961,7 +959,7 @@ export default function AnalyticsScreen() {
           {analytics.recentActivity.length > 0 && (
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -970,7 +968,7 @@ export default function AnalyticsScreen() {
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   marginBottom: spacing[3],
                 }}
               >
@@ -992,7 +990,7 @@ export default function AnalyticsScreen() {
                         paddingVertical: spacing[3],
                         borderBottomWidth: index < recentItems.length - 1 ? 1 : 0,
                         borderBottomColor:
-                          index < recentItems.length - 1 ? colors.surface[100] : 'transparent',
+                          index < recentItems.length - 1 ? m3.surface.s100 : 'transparent',
                       }}
                     >
                       <View
@@ -1012,19 +1010,19 @@ export default function AnalyticsScreen() {
                           style={{
                             fontSize: fontSize.sm,
                             fontWeight: fontWeight.medium,
-                            color: colors.surface[900],
+                            color: m3.surface.s900,
                           }}
                         >
                           {activity.farmName}
                         </Text>
                         <Text
-                          style={{ fontSize: fontSize.xs, color: colors.surface[500] }}
+                          style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}
                           numberOfLines={1}
                         >
                           {activity.details}
                         </Text>
                       </View>
-                      <Text style={{ fontSize: fontSize.xs, color: colors.surface[400] }}>
+                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s400 }}>
                         {formatDate(new Date(activity.date), {
                           year: 'numeric',
                           month: 'short',

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Multi-Device Write Safety — VineSight</title>
+<style>
+  :root{
+    --bg:#0f1419; --panel:#171d26; --panel2:#1d2530; --ink:#e6edf3; --muted:#9aa7b5;
+    --line:#2a333f; --accent:#5aa9ff; --green:#3fb950; --amber:#d29922;
+    --red:#f85149; --purple:#a371f7; --code:#0b0f14;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:30px;line-height:1.2;margin:0 0 6px}
+  h2{font-size:21px;margin:42px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font-size:16px;margin:26px 0 8px}
+  p{margin:10px 0}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 28px}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;
+    background:#222b36;padding:2px 6px;border-radius:5px;color:#cfe3ff}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;
+    padding:14px 16px;overflow:auto;font-size:12.5px;line-height:1.5}
+  pre code{background:none;padding:0;color:#c9d6e2}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:18px 20px;margin:16px 0}
+  .tldr{background:linear-gradient(135deg,#16202b,#172230);border:1px solid #284055}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;
+    letter-spacing:.03em;white-space:nowrap}
+  .b-crit{background:#3d1517;color:#ff8580;border:1px solid #6e2a2a}
+  .b-med{background:#3a2f0e;color:#e8c46a;border:1px solid #6b551a}
+  .b-low{background:#16302a;color:#6cd6a8;border:1px solid #265544}
+  .b-ok{background:#13321d;color:#67d97c;border:1px solid #265c32}
+  .b-info{background:#16263d;color:#7fb5ff;border:1px solid #2a4d77}
+  .file{font-family:"SF Mono",Menlo,monospace;font-size:12px;color:#9ecbff}
+  ul{margin:8px 0;padding-left:22px}
+  li{margin:5px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+  .risk{border-left:3px solid var(--line);padding-left:16px;margin:22px 0}
+  .risk.crit{border-color:var(--red)}
+  .risk.med{border-color:var(--amber)}
+  .risk.low{border-color:var(--green)}
+  .meta{color:var(--muted);font-size:12.5px;margin:4px 0 0}
+  .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0}
+  .phase{display:flex;gap:14px;align-items:flex-start;margin:14px 0}
+  .pnum{flex:0 0 30px;height:30px;border-radius:50%;background:#1f2b3a;color:#7fb5ff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;border:1px solid #2a4d77}
+  .foot{color:var(--muted);font-size:12px;margin-top:48px;border-top:1px solid var(--line);padding-top:16px}
+  .scenario{background:#141a22;border:1px dashed #33414f;border-radius:8px;padding:12px 14px;margin:10px 0;font-size:13.5px}
+  .scenario b{color:#ffd9a0}
+  .check{list-style:none;padding-left:0}
+  .check li{padding-left:26px;position:relative}
+  .check li:before{content:"☐";position:absolute;left:0;color:#7fb5ff;font-size:15px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="kicker">VineSight · Architecture Plan</p>
+<h1>Multi-Device Write Safety</h1>
+<p class="sub">Goal: same user account (one phone number) signed into <b>4+ mobile devices simultaneously</b>, working correctly. &nbsp;·&nbsp; Stack: React Native (Expo) + Supabase phone OTP + React Query. &nbsp;·&nbsp; 2026-06-03</p>
+
+<div class="panel tldr">
+  <h3 style="margin-top:0">TL;DR</h3>
+  <p style="margin-bottom:6px"><span class="badge b-ok">AUTH</span> &nbsp;<b>Already works.</b> Supabase allows unlimited concurrent sessions per user by default. No code change needed — just verify a few dashboard settings (Part 1). The recent logout change to <code>scope:&nbsp;'local'</code> was the one prerequisite, and it's done.</p>
+  <p style="margin-bottom:0"><span class="badge b-crit">DATA</span> &nbsp;<b>Not safe yet.</b> The app uses client-side <i>read-modify-write</i> on shared fields. With 4 concurrent editors this silently loses updates and corrupts farm water levels. Fix is server-side atomic writes (Part 2 &amp; 3) — realtime sync is <i>not</i> required for correctness.</p>
+</div>
+
+<h2>Part 1 — Authentication: already supports 4+ devices</h2>
+<p>Auth is user-centric. Each device that completes OTP sign-in gets its own independent session + refresh token; there is no client-side device cap, and SecureStore is per-install so the four phones never share token storage.</p>
+
+<table>
+  <tr><th>Check</th><th>Where</th><th>Status</th></tr>
+  <tr><td>Per-device session on OTP verify</td><td class="file">auth-phone.ts:188</td><td><span class="badge b-ok">OK</span></td></tr>
+  <tr><td>Token storage key <code>sb-${projectRef}-auth-token</code> (per-install, not shared)</td><td class="file">supabase.ts:120</td><td><span class="badge b-ok">OK</span></td></tr>
+  <tr><td>autoRefreshToken / persistSession / PKCE</td><td class="file">supabase.ts:139</td><td><span class="badge b-ok">OK</span></td></tr>
+  <tr><td>Logout no longer kills other devices (<code>scope:&nbsp;'local'</code>)</td><td class="file">auth-account.ts:24</td><td><span class="badge b-ok">DONE</span></td></tr>
+  <tr><td>Delete-account intentionally signs out everywhere (<code>scope:&nbsp;'global'</code>)</td><td class="file">auth-account.ts:97</td><td><span class="badge b-info">BY DESIGN</span></td></tr>
+</table>
+
+<h3>Dashboard settings to verify (server-side, not in repo)</h3>
+<p>There is no <code>supabase/config.toml</code> in the repo, so these live only in the Supabase Dashboard. If any are misconfigured, the 4-device requirement breaks regardless of code. Source: <span class="file">supabase.com/docs/guides/auth/sessions</span></p>
+<ul class="check">
+  <li><b>Enforce single session per user</b> → must be <b>OFF</b>. If ON, only the newest login survives; the other 3 devices get kicked.</li>
+  <li><b>Time-box user sessions</b> → <code>never</code>/<code>0</code> or long enough for your usage.</li>
+  <li><b>Inactivity timeout</b> → <code>never</code>/<code>0</code> or long; otherwise an idle device gets logged out.</li>
+  <li><b>Refresh token reuse interval</b> → keep default <code>10s</code>; do not lower aggressively or rotation false-positives can log devices out.</li>
+  <li><b>JWT expiry</b> → keep sane (≥ 5 min, default 1h).</li>
+</ul>
+
+<h2>Part 2 — The four write-safety risks</h2>
+<p>All collisions live in two patterns: <b>read-modify-write</b> (read a value into the client, compute, write absolute result back) and <b>upsert last-writer-wins</b>. Pure inserts are safe. Severity reflects how silent and how damaging the corruption is.</p>
+
+<table>
+  <tr><th>#</th><th>Risk</th><th>Table / field</th><th>Pattern</th><th>Severity</th></tr>
+  <tr><td>1</td><td>Farm water level</td><td class="file">farms.remaining_water</td><td>read-modify-write</td><td><span class="badge b-crit">CRITICAL</span></td></tr>
+  <tr><td>2</td><td>Daily note overwrite</td><td class="file">daily_notes (farm_id,date)</td><td>upsert LWW</td><td><span class="badge b-med">MEDIUM</span></td></tr>
+  <tr><td>3</td><td>Farm create ordering</td><td class="file">farms.display_order</td><td>insert + retry</td><td><span class="badge b-low">LOW</span></td></tr>
+  <tr><td>4</td><td>Farm reorder</td><td class="file">farms.display_order</td><td>bulk update LWW</td><td><span class="badge b-low">LOW</span></td></tr>
+  <tr><td>—</td><td>Spray / fertigation / harvest / expense logs</td><td class="file">*_records</td><td>append-only insert</td><td><span class="badge b-ok">SAFE</span></td></tr>
+  <tr><td>—</td><td>Seeing other devices' writes promptly</td><td>React Query cache</td><td>5-min staleTime, no realtime</td><td><span class="badge b-info">UX ONLY</span></td></tr>
+</table>
+
+<div class="risk crit">
+  <h3 style="margin-top:0">1. Farm water level — silent corruption <span class="badge b-crit">CRITICAL</span></h3>
+  <p>Irrigation logging reads <code>remaining_water</code> from a stale client snapshot, adds a delta, and writes back the <b>absolute</b> result. Two devices reading the same starting value each overwrite the other — the tank level ends up reflecting only one irrigation, not both.</p>
+  <p class="meta">Snapshot built once per session: <span class="file">save-entry-log-session.ts:365</span></p>
+  <pre><code>// entry-log-submission.ts:105-112  (read-modify-write)
+const waterAdded     = duration * farm.system_discharge;
+const currentWater   = farm.remaining_water ?? 0;            // ← stale read
+const newWaterLevel  = Math.min(farm.total_tank_capacity, currentWater + waterAdded);
+await submitters.updateWaterLevel({ farmId, remainingWater: newWaterLevel }); // ← absolute write</code></pre>
+  <pre><code>// use-farms.ts:384  (the absolute UPDATE — no concurrency guard)
+.from(TABLES.FARMS)
+.update({ remaining_water: remainingWater,
+          water_calculation_updated_at: toSupabaseTimestampString(new Date()) })
+.eq('id', farmId)</code></pre>
+  <div class="scenario"><b>Failure:</b> Tank at 1000 L. Device A logs irrigation +200; Device B simultaneously logs +150, both read 1000. A writes 1200, B writes 1150 (or vice versa). True value should be 1350. One irrigation is silently lost, and the running tank balance drifts permanently.</div>
+  <p>Same stale-read flaw also in the manual water sheet (<span class="file">water-level-sheet.tsx:122</span>) and the failure rollback restores the stale value (<span class="file">save-entry-log-session.ts:127</span>).</p>
+</div>
+
+<div class="risk med">
+  <h3 style="margin-top:0">2. Daily note overwrite <span class="badge b-med">MEDIUM</span></h3>
+  <p>Daily notes upsert on <code>(farm_id, date)</code>. If two devices edit the same day's note, the second save replaces the first device's text wholesale — no merge, no warning.</p>
+  <pre><code>// use-records.ts:704-714
+.from(TABLES.DAILY_NOTES)
+.upsert({ farm_id, season_id, date, notes: notes?.trim(), updated_at: ... },
+        { onConflict: 'farm_id,date' })   // ← last writer wins, clobbers prior text</code></pre>
+  <p class="meta">Less dangerous than #1 because it's visible — the user can notice the missing text and re-type. But it's the most <i>likely</i> day-to-day collision for 4 people on one farm.</p>
+</div>
+
+<div class="risk low">
+  <h3 style="margin-top:0">3. Farm create — display_order collision <span class="badge b-low">LOW</span></h3>
+  <p>New farms compute <code>display_order</code> client-side. There's retry logic, but four simultaneous creates can exhaust retries. Low impact: ordering glitch, not data loss.</p>
+</div>
+
+<div class="risk low">
+  <h3 style="margin-top:0">4. Farm reorder — last-writer-wins <span class="badge b-low">LOW</span></h3>
+  <p>Bulk reorder writes are inherently last-writer-wins unless the <code>reorder_farms</code> RPC carries a version check. Two devices reordering at once: one wins. Low impact: cosmetic, user-correctable.</p>
+</div>
+
+<h2>Part 3 — Minimum fix to make 4 concurrent writers correct</h2>
+<p>The fix is <b>not</b> a React Query tweak and <b>not</b> realtime. It's moving stateful mutations server-side so the database does the read-modify-write atomically. Realtime would only improve <i>freshness</i>, which is a separate, optional nicety.</p>
+
+<div class="phase"><div class="pnum">1</div><div>
+  <h3 style="margin:0">Atomic irrigation RPC <span class="badge b-crit">fixes #1, highest value</span></h3>
+  <p>Add a Postgres function that inserts the irrigation record and updates the water level as a <b>delta</b>, in one transaction. The DB computes the new level from its own current row, never a client snapshot.</p>
+  <pre><code>create or replace function log_irrigation(
+  p_farm_id bigint, p_date date, p_duration numeric, p_area numeric, ...)
+returns jsonb language plpgsql security definer as $$
+declare v_record irrigation_records; v_farm farms;
+begin
+  -- ownership enforced by RLS / auth.uid() = user_id
+  insert into irrigation_records(farm_id, date, duration, area, ...)
+    values (p_farm_id, p_date, p_duration, p_area, ...) returning * into v_record;
+
+  update farms
+     set remaining_water = least(total_tank_capacity,
+                                 coalesce(remaining_water,0) + p_duration * system_discharge),
+         water_calculation_updated_at = now()
+   where id = p_farm_id
+   returning * into v_farm;                          -- atomic delta, no stale read
+
+  return jsonb_build_object('record', to_jsonb(v_record), 'farm', to_jsonb(v_farm));
+end $$;</code></pre>
+  <p class="meta">Then replace the insert-then-update path at <span class="file">entry-log-submission.ts:86-138</span> with a single <code>supabase.rpc('log_irrigation', …)</code>. Drop the client-side compensating-delete and the stale rollback at <span class="file">save-entry-log-session.ts:127</span> — atomicity is now the DB's job. On success, invalidate <code>queryKeys.farms.*</code>.</p>
+</div></div>
+
+<div class="phase"><div class="pnum">2</div><div>
+  <h3 style="margin:0">Compare-and-swap for manual water set + daily notes <span class="badge b-med">fixes #2 and manual #1</span></h3>
+  <p>For absolute writes that can't be expressed as a delta (manual water-level set, note edits), add an optimistic-concurrency guard: a <code>water_version</code> column (or reuse <code>water_calculation_updated_at</code>) and reject the write if it changed since the client read.</p>
+  <pre><code>update farms set remaining_water = $new, water_calculation_updated_at = now()
+ where id = $farmId and water_calculation_updated_at = $expectedTs;   -- 0 rows ⇒ stale, reject & refetch</code></pre>
+  <p class="meta">For daily notes: same idea on <code>daily_notes.updated_at</code>, or merge instead of clobber. At minimum, detect the conflict and warn the user rather than silently overwriting (<span class="file">use-records.ts:704</span>).</p>
+</div></div>
+
+<div class="phase"><div class="pnum">3</div><div>
+  <h3 style="margin:0">Version-checked reorder + create <span class="badge b-low">fixes #3, #4</span></h3>
+  <p>Move <code>display_order</code> assignment fully server-side (sequence or RPC computing max+1 in-transaction) so concurrent creates can't collide; add a version guard to <code>reorder_farms</code>. Low priority — ordering glitches, not data loss.</p>
+</div></div>
+
+<div class="phase"><div class="pnum">4</div><div>
+  <h3 style="margin:0">(Optional) Realtime freshness <span class="badge b-info">UX, not correctness</span></h3>
+  <p>Subscribe to Supabase Realtime on the user's rows and invalidate React Query caches on change, so devices see each other's writes in seconds instead of up to 5 min (<span class="file">query-cache.ts:11</span>). Pure UX — once Phases 1-3 land, writes are already correct without it.</p>
+</div></div>
+
+<h2>Scope summary</h2>
+<table>
+  <tr><th>Item</th><th>Effort</th><th>Blocks "flawless"?</th></tr>
+  <tr><td>Verify dashboard session settings</td><td>~10 min, no code</td><td>Yes — hard prerequisite</td></tr>
+  <tr><td>Phase 1 — irrigation atomic RPC</td><td>Small (1 migration + 1 call site)</td><td>Yes — the critical corruption</td></tr>
+  <tr><td>Phase 2 — CAS for manual water + notes</td><td>Small–medium</td><td>Yes for those fields</td></tr>
+  <tr><td>Phase 3 — reorder/create versioning</td><td>Small</td><td>No — cosmetic</td></tr>
+  <tr><td>Phase 4 — Realtime sync</td><td>Medium</td><td>No — UX only</td></tr>
+</table>
+
+<div class="panel">
+  <p style="margin:0"><b>Recommendation:</b> Confirm the dashboard settings first (unblocks auth instantly), then ship <b>Phase 1</b> as the first PR — <code>farms.remaining_water</code> corruption is silent and the hardest to detect post-ship. Phase 2 next. Phases 3-4 are follow-ups that don't block the core requirement.</p>
+</div>
+
+<p class="foot">Generated for VineSight · multi-device write-safety review · cross-checked with Codex against installed <code>@supabase/auth-js 2.95.3</code>. File/line references reflect <code>main</code> at the time of writing.</p>
+
+</div>
+</body>
+</html>

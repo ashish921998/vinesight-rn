@@ -19,13 +19,12 @@ import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
 import { useTranslation } from 'react-i18next';
 
 export default function LAICalculatorScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -104,13 +103,13 @@ export default function LAICalculatorScreen() {
     if (lai < 1.0) {
       return {
         label: 'Low',
-        color: colors.warning,
+        color: m3.colorScheme.warning,
         message: 'Canopy underdeveloped. May need more shoots or improved vigor.',
       };
     } else if (lai < 2.5) {
       return {
         label: 'Optimal',
-        color: colors.success,
+        color: m3.colorScheme.success,
         message: 'Good balance between vegetative growth and fruit exposure.',
       };
     } else if (lai < 4.0) {
@@ -217,7 +216,7 @@ export default function LAICalculatorScreen() {
             {/* Calculator Card */}
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -235,13 +234,13 @@ export default function LAICalculatorScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="leaf.fill" size={18} color={colors.success} />
+                  <Icon name="leaf.fill" size={18} color={m3.colorScheme.success} />
                 </View>
                 <Text
                   style={{
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                     marginLeft: spacing[2],
                   }}
                 >
@@ -452,12 +451,12 @@ export default function LAICalculatorScreen() {
               <Pressable
                 onPress={reset}
                 style={{
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderRadius: borderRadius['2xl'],
                   paddingVertical: spacing[4],
                   alignItems: 'center',
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
+                  borderColor: m3.surface.s200,
                   marginTop: spacing[4],
                 }}
               >
@@ -465,7 +464,7 @@ export default function LAICalculatorScreen() {
                   <Icon name="refresh" size={18} color={m3.colorScheme.onSurfaceVariant} />
                   <Text
                     style={{
-                      color: colors.surface[600],
+                      color: m3.surface.s600,
                       fontWeight: fontWeight.medium,
                       marginLeft: spacing[2],
                     }}
@@ -496,7 +495,6 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const handleChangeText = (text: string) => {
     if (text === '.') {
@@ -508,14 +506,14 @@ function InputRow({
 
   return (
     <View style={{ marginBottom: spacing[3] }}>
-      <Text style={{ fontSize: fontSize.sm, color: colors.surface[600], marginBottom: spacing[1] }}>
+      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s600, marginBottom: spacing[1] }}>
         {label}
       </Text>
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: colors.surface[50],
+          backgroundColor: m3.surface.s50,
           borderRadius: borderRadius.xl,
         }}
       >
@@ -530,13 +528,11 @@ function InputRow({
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[3],
             fontSize: fontSize.base,
-            color: colors.surface[900],
+            color: m3.surface.s900,
           }}
         />
         {unit ? (
-          <Text
-            style={{ fontSize: fontSize.sm, color: colors.surface[500], paddingRight: spacing[4] }}
-          >
+          <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500, paddingRight: spacing[4] }}>
             {unit}
           </Text>
         ) : null}

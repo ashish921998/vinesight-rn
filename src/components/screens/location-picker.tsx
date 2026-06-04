@@ -17,7 +17,7 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { EmptyState } from '@/components/ui';
 
@@ -78,9 +78,8 @@ export default function LocationPicker({
   initialLongitude,
 }: LocationPickerProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
-  const styles = createStyles(colors, m3);
+  const styles = createStyles(m3);
 
   const [selectedCoordinate, setSelectedCoordinate] = useState<{
     latitude: number;
@@ -354,18 +353,18 @@ export default function LocationPicker({
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t('locationPicker.title')}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color={colors.gray[500]} />
+            <Ionicons name="close" size={24} color={m3.neutral.n500} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.searchContainer}>
           <View style={styles.searchInputWrapper}>
-            <Ionicons name="search" size={20} color={colors.gray[500]} style={styles.searchIcon} />
+            <Ionicons name="search" size={20} color={m3.neutral.n500} style={styles.searchIcon} />
             <TextInput
               ref={searchInputRef}
               style={styles.searchInput}
               placeholder={t('locationPicker.searchPlaceholder')}
-              placeholderTextColor={colors.gray[500]}
+              placeholderTextColor={m3.neutral.n500}
               value={searchQuery}
               onChangeText={handleSearchChange}
               onSubmitEditing={handleSearchSubmit}
@@ -382,7 +381,7 @@ export default function LocationPicker({
             )}
             {searchQuery.length > 0 && !isSearching && (
               <TouchableOpacity onPress={handleClearSearch} style={styles.clearButton}>
-                <Ionicons name="close-circle" size={18} color={colors.gray[500]} />
+                <Ionicons name="close-circle" size={18} color={m3.neutral.n500} />
               </TouchableOpacity>
             )}
           </View>
@@ -434,7 +433,7 @@ export default function LocationPicker({
           fallback={
             <View style={styles.mapFallback}>
               <View style={styles.mapFallbackIcon}>
-                <Ionicons name="map" size={32} color={colors.gray[600]} />
+                <Ionicons name="map" size={32} color={m3.neutral.n600} />
               </View>
               <Text style={styles.mapFallbackTitle}>
                 {t('locationPicker.mapsUnavailableTitle')}
@@ -488,10 +487,10 @@ export default function LocationPicker({
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={colors.success} />
+              <ActivityIndicator color={m3.colorScheme.success} />
             ) : (
               <>
-                <Ionicons name="navigate" size={20} color={colors.success} />
+                <Ionicons name="navigate" size={20} color={m3.colorScheme.success} />
                 <Text style={styles.locationButtonText}>{t('locationPicker.useCurrent')}</Text>
               </>
             )}
@@ -514,7 +513,7 @@ export default function LocationPicker({
   );
 }
 
-const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<typeof useM3>) =>
+const createStyles = (m3: ReturnType<typeof useM3>) =>
   StyleSheet.create({
     modalContainer: {
       position: 'absolute',
@@ -531,7 +530,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     modalContent: {
       width: '90%',
       height: '80%',
-      backgroundColor: colors.surface[100],
+      backgroundColor: m3.surface.s100,
       borderRadius: borderRadius['2xl'],
       overflow: 'hidden',
     },
@@ -553,13 +552,13 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     },
     searchContainer: {
       padding: spacing[3],
-      backgroundColor: colors.surface[100],
+      backgroundColor: m3.surface.s100,
       zIndex: 10,
     },
     searchInputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.surface[50],
+      backgroundColor: m3.surface.s50,
       borderRadius: borderRadius.lg,
       borderWidth: 1,
       borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.8),
@@ -583,7 +582,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     },
     resultsContainer: {
       marginTop: spacing[2],
-      backgroundColor: colors.surface[100],
+      backgroundColor: m3.surface.s100,
       borderRadius: borderRadius.lg,
       borderWidth: 1,
       borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.5),
@@ -627,7 +626,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
       paddingHorizontal: spacing[6],
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surface[50],
+      backgroundColor: m3.surface.s50,
     },
     mapFallbackIcon: {
       width: 72,
@@ -635,7 +634,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
       borderRadius: borderRadius.full,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surface[100],
+      backgroundColor: m3.surface.s100,
       marginBottom: spacing[4],
     },
     mapFallbackTitle: {

@@ -14,7 +14,7 @@ import { SprayForm, HarvestForm, ExpenseForm, FertigationForm, NoteForm } from '
 import { NumericInput, type NumericInputHandle } from '@/components/forms/form-field';
 import type { LogTypeId } from '@/constants/calculator-models';
 import type { TextInputProps } from 'react-native';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
@@ -73,7 +73,6 @@ export function LogForm({
   sprayCatalogMixes = [],
 }: LogFormProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
@@ -111,7 +110,7 @@ export function LogForm({
           alignItems: 'center',
           flexDirection: 'row',
           justifyContent: 'center',
-          backgroundColor: isValid && hasFarm ? m3.colorScheme.primary : colors.surface[50],
+          backgroundColor: isValid && hasFarm ? m3.colorScheme.primary : m3.surface.s50,
           borderColor: showAddEntryGuidance
             ? colorWithOpacity(m3.colorScheme.primary, 0.7)
             : isValid && hasFarm
@@ -150,7 +149,7 @@ export function LogForm({
       <View style={{ gap: 16 }}>
         <View
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: radius.xl,
             padding: 20,
             borderWidth: 1,
@@ -184,7 +183,7 @@ export function LogForm({
   return (
     <View
       style={{
-        backgroundColor: colors.surface[100],
+        backgroundColor: m3.surface.s100,
         borderRadius: radius.xl,
         padding: 20,
         borderWidth: 1,

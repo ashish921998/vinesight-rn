@@ -27,7 +27,7 @@ import Animated, {
   interpolateColor,
   useReducedMotion,
 } from 'react-native-reanimated';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 
 export type VoiceModeState = 'idle' | 'listening' | 'processing' | 'speaking' | 'error';
@@ -61,7 +61,7 @@ export function AnimatedOrb({
   accessibilityLabel,
   testID,
 }: AnimatedOrbProps) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const reduceMotion = useReducedMotion();
 
   // Core orb scale

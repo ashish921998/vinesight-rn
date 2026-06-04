@@ -37,38 +37,45 @@ jest.mock('@/utils/haptics', () => ({
   triggerHaptic: jest.fn(),
 }));
 
-jest.mock('@/styles/use-theme', () => ({
-  useThemeTokens: () => ({
-    isDark: false,
-    m3: {
-      colorScheme: {
-        primary: '#408059',
-        onPrimary: '#ffffff',
-        primaryContainer: '#e1ebe5',
-        onPrimaryContainer: '#1f412b',
-        secondary: '#5a7a6a',
-        onSecondary: '#ffffff',
-        secondaryContainer: '#d5e8de',
-        onSecondaryContainer: '#1a3829',
-        tertiary: '#3a6a8a',
-        onTertiary: '#ffffff',
-        surface: '#f9fafb',
-        onSurface: '#111827',
-        onSurfaceVariant: '#6b7280',
-        outlineVariant: '#e5e7eb',
-        outline: '#9ca3af',
-        surfaceVariant: '#f3f4f6',
-        error: '#dc2626',
-        onError: '#ffffff',
+jest.mock('@/styles/use-theme', () => {
+  const __mod = {
+    useThemeTokens: () => ({
+      isDark: false,
+      m3: {
+        colorScheme: {
+          primary: '#408059',
+          onPrimary: '#ffffff',
+          primaryContainer: '#e1ebe5',
+          onPrimaryContainer: '#1f412b',
+          secondary: '#5a7a6a',
+          onSecondary: '#ffffff',
+          secondaryContainer: '#d5e8de',
+          onSecondaryContainer: '#1a3829',
+          tertiary: '#3a6a8a',
+          onTertiary: '#ffffff',
+          surface: '#f9fafb',
+          onSurface: '#111827',
+          onSurfaceVariant: '#6b7280',
+          outlineVariant: '#e5e7eb',
+          outline: '#9ca3af',
+          surfaceVariant: '#f3f4f6',
+          error: '#dc2626',
+          onError: '#ffffff',
+        },
+        typography: {
+          titleMedium: { fontSize: 16, fontWeight: '600' },
+          bodyMedium: { fontSize: 14 },
+          labelSmall: { fontSize: 11 },
+        },
       },
-      typography: {
-        titleMedium: { fontSize: 16, fontWeight: '600' },
-        bodyMedium: { fontSize: 14 },
-        labelSmall: { fontSize: 11 },
-      },
-    },
-  }),
-}));
+    }),
+  };
+  return {
+    ...__mod,
+    useM3: () => __mod.useThemeTokens().m3,
+    useIsDark: () => (__mod.useThemeTokens() as { isDark?: boolean }).isDark ?? false,
+  };
+});
 
 jest.mock('@/components/ui/symbol', () => ({
   Symbol: ({ name }: { name: string }) => {

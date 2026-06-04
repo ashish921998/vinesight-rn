@@ -21,7 +21,7 @@ import { useWeatherData } from '../src/hooks/use-weather';
 import { GrapeGrowthStage, SoilType } from '../src/types/weather';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 // Growth stages
@@ -79,7 +79,6 @@ export default function WeatherScreen() {
   const insets = useSafeAreaInsets();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoadingAuth = useAuthStore((state) => state.isLoading);
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
   const { farmId: farmIdParam } = useLocalSearchParams<{ farmId?: string }>();
@@ -114,11 +113,11 @@ export default function WeatherScreen() {
 
   const urgencyColors = useMemo(
     () => ({
-      low: { bg: colorWithOpacity(colors.success, 0.16), text: colors.success },
-      medium: { bg: colorWithOpacity(colors.warning, 0.18), text: colors.warning },
+      low: { bg: colorWithOpacity(m3.colorScheme.success, 0.16), text: m3.colorScheme.success },
+      medium: { bg: colorWithOpacity(m3.colorScheme.warning, 0.18), text: m3.colorScheme.warning },
       high: { bg: colorWithOpacity(m3.colorScheme.error, 0.16), text: m3.colorScheme.error },
     }),
-    [colors.success, colors.warning, m3.colorScheme.error],
+    [m3.colorScheme.success, m3.colorScheme.warning, m3.colorScheme.error],
   );
 
   const requestedFarmId = useMemo(() => {
@@ -237,7 +236,7 @@ export default function WeatherScreen() {
 
   if (farmsLoading || isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+      <View style={{ flex: 1, backgroundColor: m3.surface.s50 }}>
         <Stack.Screen options={{ headerShown: false }} />
         {weatherHeader}
         <View
@@ -248,7 +247,7 @@ export default function WeatherScreen() {
           }}
         >
           <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-          <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+          <Text style={{ color: m3.surface.s600, marginTop: spacing[4] }}>
             {t('common.loading')}
           </Text>
         </View>
@@ -258,7 +257,7 @@ export default function WeatherScreen() {
 
   if (error) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+      <View style={{ flex: 1, backgroundColor: m3.surface.s50 }}>
         <Stack.Screen options={{ headerShown: false }} />
         {weatherHeader}
         <View
@@ -276,7 +275,7 @@ export default function WeatherScreen() {
           />
           <Text
             style={{
-              color: colors.surface[600],
+              color: m3.surface.s600,
               marginTop: spacing[4],
               textAlign: 'center',
             }}
@@ -285,7 +284,7 @@ export default function WeatherScreen() {
           </Text>
           <Text
             style={{
-              color: colors.surface[500],
+              color: m3.surface.s500,
               fontSize: fontSize.sm,
               marginTop: spacing[2],
               textAlign: 'center',
@@ -297,7 +296,7 @@ export default function WeatherScreen() {
             onPress={() => refetch()}
             style={{
               marginTop: spacing[4],
-              backgroundColor: colors.primary[600],
+              backgroundColor: m3.primary.p600,
               paddingHorizontal: spacing[6],
               paddingVertical: spacing[3],
               borderRadius: borderRadius.xl,
@@ -314,7 +313,7 @@ export default function WeatherScreen() {
 
   if (!farms || farms.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+      <View style={{ flex: 1, backgroundColor: m3.surface.s50 }}>
         <Stack.Screen options={{ headerShown: false }} />
         {weatherHeader}
         <View
@@ -332,7 +331,7 @@ export default function WeatherScreen() {
           />
           <Text
             style={{
-              color: colors.surface[600],
+              color: m3.surface.s600,
               marginTop: spacing[4],
               textAlign: 'center',
             }}
@@ -341,7 +340,7 @@ export default function WeatherScreen() {
           </Text>
           <Text
             style={{
-              color: colors.surface[500],
+              color: m3.surface.s500,
               fontSize: fontSize.sm,
               marginTop: spacing[2],
               textAlign: 'center',
@@ -381,7 +380,7 @@ export default function WeatherScreen() {
             style={{
               fontSize: fontSize.xs,
               fontWeight: fontWeight.bold,
-              color: colors.surface[500],
+              color: m3.surface.s500,
               letterSpacing: 1,
               marginBottom: spacing[2],
             }}
@@ -391,7 +390,7 @@ export default function WeatherScreen() {
           <Pressable
             onPress={() => setShowFarmPicker(!showFarmPicker)}
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: borderRadius.xl,
               padding: spacing[4],
               flexDirection: 'row',
@@ -417,13 +416,13 @@ export default function WeatherScreen() {
                   style={{
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                   }}
                 >
                   {selectedFarm?.name || t('dashboard.farmPicker.title')}
                 </Text>
                 {hasCoordinates && (
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {selectedFarm?.latitude?.toFixed(4)}, {selectedFarm?.longitude?.toFixed(4)}
                   </Text>
                 )}
@@ -438,7 +437,7 @@ export default function WeatherScreen() {
           {showFarmPicker && (
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius.xl,
                 marginTop: spacing[2],
                 overflow: 'hidden',
@@ -454,13 +453,13 @@ export default function WeatherScreen() {
                   style={{
                     padding: spacing[4],
                     borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[200],
+                    borderBottomColor: m3.surface.s200,
                     flexDirection: 'row',
                     alignItems: 'center',
                     backgroundColor:
                       effectiveSelectedFarmId === farm.id
                         ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                        : colors.surface[100],
+                        : m3.surface.s100,
                   }}
                 >
                   <Text
@@ -469,7 +468,7 @@ export default function WeatherScreen() {
                       color:
                         effectiveSelectedFarmId === farm.id
                           ? m3.colorScheme.primary
-                          : colors.surface[700],
+                          : m3.surface.s700,
                       fontWeight:
                         effectiveSelectedFarmId === farm.id
                           ? fontWeight.semibold
@@ -491,7 +490,7 @@ export default function WeatherScreen() {
         {!hasCoordinates && (
           <View
             style={{
-              backgroundColor: colorWithOpacity(colors.warning, 0.18),
+              backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
               borderRadius: borderRadius.xl,
               padding: spacing[4],
               marginBottom: spacing[4],
@@ -499,10 +498,10 @@ export default function WeatherScreen() {
               alignItems: 'flex-start',
             }}
           >
-            <Icon name="exclamationmark.triangle.fill" size={20} color={colors.warning} />
+            <Icon name="exclamationmark.triangle.fill" size={20} color={m3.colorScheme.warning} />
             <Text
               style={{
-                color: colors.warning,
+                color: m3.colorScheme.warning,
                 fontSize: fontSize.sm,
                 marginLeft: spacing[3],
                 flex: 1,
@@ -521,7 +520,7 @@ export default function WeatherScreen() {
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 letterSpacing: 1,
                 marginBottom: spacing[2],
               }}
@@ -531,7 +530,7 @@ export default function WeatherScreen() {
             <Pressable
               onPress={() => setShowGrowthPicker(!showGrowthPicker)}
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius.xl,
                 padding: spacing[3],
                 flexDirection: 'row',
@@ -539,7 +538,7 @@ export default function WeatherScreen() {
                 justifyContent: 'space-between',
               }}
             >
-              <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }} numberOfLines={1}>
+              <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }} numberOfLines={1}>
                 {growthStage}
               </Text>
               <Icon
@@ -551,7 +550,7 @@ export default function WeatherScreen() {
             {showGrowthPicker && (
               <View
                 style={{
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderRadius: borderRadius.xl,
                   marginTop: spacing[2],
                   position: 'absolute',
@@ -560,7 +559,7 @@ export default function WeatherScreen() {
                   right: 0,
                   zIndex: 10,
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
+                  borderColor: m3.surface.s200,
                 }}
               >
                 <ScrollView style={{ maxHeight: 200 }}>
@@ -574,17 +573,16 @@ export default function WeatherScreen() {
                       style={{
                         padding: spacing[3],
                         borderBottomWidth: 1,
-                        borderBottomColor: colors.surface[200],
+                        borderBottomColor: m3.surface.s200,
                         backgroundColor:
                           growthStage === stage
                             ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                            : colors.surface[100],
+                            : m3.surface.s100,
                       }}
                     >
                       <Text
                         style={{
-                          color:
-                            growthStage === stage ? m3.colorScheme.primary : colors.surface[700],
+                          color: growthStage === stage ? m3.colorScheme.primary : m3.surface.s700,
                           fontWeight: growthStage === stage ? fontWeight.medium : fontWeight.normal,
                         }}
                       >
@@ -603,7 +601,7 @@ export default function WeatherScreen() {
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 letterSpacing: 1,
                 marginBottom: spacing[2],
               }}
@@ -613,7 +611,7 @@ export default function WeatherScreen() {
             <Pressable
               onPress={() => setShowSoilPicker(!showSoilPicker)}
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius.xl,
                 padding: spacing[3],
                 flexDirection: 'row',
@@ -621,7 +619,7 @@ export default function WeatherScreen() {
                 justifyContent: 'space-between',
               }}
             >
-              <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }} numberOfLines={1}>
+              <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }} numberOfLines={1}>
                 {SOIL_TYPES.find((s) => s.value === soilType)?.label}
               </Text>
               <Icon
@@ -633,7 +631,7 @@ export default function WeatherScreen() {
             {showSoilPicker && (
               <View
                 style={{
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderRadius: borderRadius.xl,
                   marginTop: spacing[2],
                   position: 'absolute',
@@ -642,7 +640,7 @@ export default function WeatherScreen() {
                   right: 0,
                   zIndex: 10,
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
+                  borderColor: m3.surface.s200,
                 }}
               >
                 {SOIL_TYPES.map((type) => (
@@ -655,17 +653,16 @@ export default function WeatherScreen() {
                     style={{
                       padding: spacing[3],
                       borderBottomWidth: 1,
-                      borderBottomColor: colors.surface[200],
+                      borderBottomColor: m3.surface.s200,
                       backgroundColor:
                         soilType === type.value
                           ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                          : colors.surface[100],
+                          : m3.surface.s100,
                     }}
                   >
                     <Text
                       style={{
-                        color:
-                          soilType === type.value ? m3.colorScheme.primary : colors.surface[700],
+                        color: soilType === type.value ? m3.colorScheme.primary : m3.surface.s700,
                         fontWeight: soilType === type.value ? fontWeight.medium : fontWeight.normal,
                       }}
                     >
@@ -856,7 +853,7 @@ export default function WeatherScreen() {
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 letterSpacing: 1,
                 marginBottom: spacing[3],
               }}
@@ -873,7 +870,7 @@ export default function WeatherScreen() {
                   key={day.date}
                   style={{
                     width: 80,
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     alignItems: 'center',
@@ -885,7 +882,7 @@ export default function WeatherScreen() {
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
-                      color: index === 0 ? m3.colorScheme.primary : colors.surface[600],
+                      color: index === 0 ? m3.colorScheme.primary : m3.surface.s600,
                     }}
                   >
                     {getDayName(day.date, t)}
@@ -904,12 +901,12 @@ export default function WeatherScreen() {
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                     }}
                   >
                     {day.maxTemp}°
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {day.minTemp}°
                   </Text>
                   {day.precipitationProbability > 0 && (
@@ -938,7 +935,7 @@ export default function WeatherScreen() {
         {etc && (
           <View
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: borderRadius['2xl'],
               padding: spacing[4],
               marginBottom: spacing[4],
@@ -965,7 +962,7 @@ export default function WeatherScreen() {
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   marginLeft: spacing[3],
                 }}
               >
@@ -975,21 +972,21 @@ export default function WeatherScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
               <View
                 style={{
-                  backgroundColor: colors.surface[50],
+                  backgroundColor: m3.surface.s50,
                   borderRadius: borderRadius.xl,
                   padding: spacing[3],
                   flex: 1,
                   minWidth: '45%',
                 }}
               >
-                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                   {t('weather.labels.dailyEtc')}
                 </Text>
                 <Text
                   style={{
                     fontSize: fontSize.xl,
                     fontWeight: fontWeight.bold,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                   }}
                 >
                   {etc.dailyETc} mm
@@ -997,21 +994,21 @@ export default function WeatherScreen() {
               </View>
               <View
                 style={{
-                  backgroundColor: colors.surface[50],
+                  backgroundColor: m3.surface.s50,
                   borderRadius: borderRadius.xl,
                   padding: spacing[3],
                   flex: 1,
                   minWidth: '45%',
                 }}
               >
-                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                   {t('weather.labels.weeklyNeed')}
                 </Text>
                 <Text
                   style={{
                     fontSize: fontSize.xl,
                     fontWeight: fontWeight.bold,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                   }}
                 >
                   {etc.weeklyETc} mm
@@ -1057,7 +1054,7 @@ export default function WeatherScreen() {
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 letterSpacing: 1,
                 marginBottom: spacing[3],
               }}
@@ -1068,7 +1065,7 @@ export default function WeatherScreen() {
             {/* Irrigation Alert */}
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[3],
@@ -1103,7 +1100,7 @@ export default function WeatherScreen() {
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                       marginLeft: spacing[2],
                     }}
                   >
@@ -1129,7 +1126,7 @@ export default function WeatherScreen() {
                   </Text>
                 </View>
               </View>
-              <Text style={{ fontSize: fontSize.sm, color: colors.surface[700] }}>
+              <Text style={{ fontSize: fontSize.sm, color: m3.surface.s700 }}>
                 {alerts.irrigation.reason}
               </Text>
               {alerts.irrigation.recommendations.map((rec, i) => (
@@ -1141,7 +1138,7 @@ export default function WeatherScreen() {
                   <Text
                     style={{
                       fontSize: fontSize.xs,
-                      color: colors.surface[600],
+                      color: m3.surface.s600,
                       marginLeft: spacing[2],
                       flex: 1,
                     }}
@@ -1155,7 +1152,7 @@ export default function WeatherScreen() {
             {/* Pest Alert */}
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[3],
@@ -1175,18 +1172,18 @@ export default function WeatherScreen() {
                       width: 32,
                       height: 32,
                       borderRadius: borderRadius.lg,
-                      backgroundColor: colorWithOpacity(colors.warning, 0.18),
+                      backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Icon name="ant.fill" size={16} color={colors.warning} />
+                    <Icon name="ant.fill" size={16} color={m3.colorScheme.warning} />
                   </View>
                   <Text
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                       marginLeft: spacing[2],
                     }}
                   >
@@ -1215,7 +1212,7 @@ export default function WeatherScreen() {
                 </View>
               </View>
               {alerts.pest.conditions.map((cond, i) => (
-                <Text key={i} style={{ fontSize: fontSize.sm, color: colors.surface[700] }}>
+                <Text key={i} style={{ fontSize: fontSize.sm, color: m3.surface.s700 }}>
                   {cond}
                 </Text>
               ))}
@@ -1224,11 +1221,11 @@ export default function WeatherScreen() {
                   key={i}
                   style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
                 >
-                  <Icon name="checkmark.shield.fill" size={14} color={colors.warning} />
+                  <Icon name="checkmark.shield.fill" size={14} color={m3.colorScheme.warning} />
                   <Text
                     style={{
                       fontSize: fontSize.xs,
-                      color: colors.surface[600],
+                      color: m3.surface.s600,
                       marginLeft: spacing[2],
                       flex: 1,
                     }}
@@ -1242,7 +1239,7 @@ export default function WeatherScreen() {
             {/* Harvest Alert */}
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -1276,7 +1273,7 @@ export default function WeatherScreen() {
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                       marginLeft: spacing[2],
                     }}
                   >
@@ -1289,13 +1286,15 @@ export default function WeatherScreen() {
                     paddingVertical: spacing[1],
                     borderRadius: borderRadius.full,
                     backgroundColor: alerts.harvest.isOptimal
-                      ? colorWithOpacity(colors.success, 0.16)
-                      : colorWithOpacity(colors.warning, 0.18),
+                      ? colorWithOpacity(m3.colorScheme.success, 0.16)
+                      : colorWithOpacity(m3.colorScheme.warning, 0.18),
                   }}
                 >
                   <Text
                     style={{
-                      color: alerts.harvest.isOptimal ? colors.success : colors.warning,
+                      color: alerts.harvest.isOptimal
+                        ? m3.colorScheme.success
+                        : m3.colorScheme.warning,
                     }}
                   >
                     {alerts.harvest.isOptimal
@@ -1304,7 +1303,7 @@ export default function WeatherScreen() {
                   </Text>
                 </View>
               </View>
-              <Text style={{ fontSize: fontSize.sm, color: colors.surface[700] }}>
+              <Text style={{ fontSize: fontSize.sm, color: m3.surface.s700 }}>
                 {alerts.harvest.conditions}
               </Text>
               {alerts.harvest.recommendations.map((rec, i) => (
@@ -1316,7 +1315,7 @@ export default function WeatherScreen() {
                   <Text
                     style={{
                       fontSize: fontSize.xs,
-                      color: colors.surface[600],
+                      color: m3.surface.s600,
                       marginLeft: spacing[2],
                       flex: 1,
                     }}
@@ -1336,7 +1335,7 @@ export default function WeatherScreen() {
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 letterSpacing: 1,
                 marginBottom: spacing[3],
               }}
@@ -1347,7 +1346,7 @@ export default function WeatherScreen() {
               <View
                 key={i}
                 style={{
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderRadius: borderRadius.xl,
                   padding: spacing[4],
                   marginBottom: spacing[2],
@@ -1376,12 +1375,12 @@ export default function WeatherScreen() {
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                     }}
                   >
                     {getDayName(item.date, t)} - {item.amount} mm
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {item.duration.toFixed(1)} {t('common.units.hours')} • {item.reason}
                   </Text>
                 </View>
@@ -1411,7 +1410,7 @@ export default function WeatherScreen() {
         {/* Last Updated */}
         {weather && (
           <View style={{ alignItems: 'center', marginTop: spacing[2] }}>
-            <Text style={{ fontSize: fontSize.xs, color: colors.surface[400] }}>
+            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s400 }}>
               {t('weather.lastUpdated', {
                 time: new Date(weather.lastUpdated).toLocaleTimeString(),
               })}

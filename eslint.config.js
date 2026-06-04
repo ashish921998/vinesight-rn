@@ -70,22 +70,29 @@ module.exports = [
             'Use the fontSize scale or m3.typography tokens instead of a raw fontSize number. See DESIGN.md › Typography.',
         },
       ],
-      // Theming guard: ban the light-only static `colors`/`darkColors` named
-      // imports from '@/styles/theme'. These are the dark-mode-UNSAFE path —
-      // they render a single fixed palette regardless of theme. Use useM3()
-      // (generic UI) or useThemeColors() (dark-aware legacy ramp, Phase 4
-      // target) instead. The theme module itself is exempted below.
-      // See docs/theming-consolidation-proposal.md.
-      // TODO(theming Phase 4): also ban useThemeColors once all 54 consumers migrate.
+      // Theming guard (consolidation Phase 4 — COMPLETE): the legacy `colors`/
+      // `darkColors` palette and the `useThemeColors`/`useThemeTokens` hooks are
+      // RETIRED. `colors`/`darkColors` are now non-exported internals of
+      // theme.ts, and the hooks have been deleted from use-theme.ts. This guard
+      // is a hard `error` so the consolidation can't silently regress. Use
+      // useM3() (generic UI) or useDomainColors() (category/water/lab). The
+      // theme layer (src/styles/**) is exempted below.
+      // See docs/theming-consolidation-proposal.md §6.
       'no-restricted-imports': [
-        'warn',
+        'error',
         {
           paths: [
             {
               name: '@/styles/theme',
               importNames: ['colors', 'darkColors'],
               message:
-                'Do not import the static light-only `colors`/`darkColors` palette — it is not dark-aware. Use useM3() (generic UI) or useDomainColors() (category/water/lab), or useThemeColors() for the dark-aware legacy ramp. See docs/theming-consolidation-proposal.md.',
+                'The legacy `colors`/`darkColors` palette is retired (non-exported). Use useM3() (generic UI) or useDomainColors() (category/water/lab). See docs/theming-consolidation-proposal.md §6.',
+            },
+            {
+              name: '@/styles/use-theme',
+              importNames: ['useThemeColors', 'useThemeTokens'],
+              message:
+                'useThemeColors()/useThemeTokens() are retired. Use useM3() (generic UI), useDomainColors() (category/water/lab), and useIsDark() for the dark flag. See docs/theming-consolidation-proposal.md §6.',
             },
           ],
         },

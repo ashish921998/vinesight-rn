@@ -14,7 +14,7 @@ import {
 import { telemetry } from '@/services/telemetry';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
   title: string;
@@ -40,7 +40,7 @@ export function Button({
   onPress,
   ...props
 }: ButtonProps) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   const isInteractionDisabled = Boolean(disabled) || isLoading;
   const isVisuallyDisabled = Boolean(disabled);
 
@@ -65,18 +65,18 @@ export function Button({
     primary: {
       // Primary: bg #355847 (primary[500]), white text, borderRadius 12-16, height 48
       backgroundColor: isVisuallyDisabled
-        ? colors.surface[300] // disabled state
-        : colors.primary[500], // #355847
+        ? m3.surface.s300 // disabled state
+        : m3.primary.p500, // #355847
     },
     secondary: {
       // Secondary: mist-1 bg, 1px stone-3 border
-      backgroundColor: isVisuallyDisabled ? colors.surface[200] : colors.surface[100], // mist-1
+      backgroundColor: isVisuallyDisabled ? m3.surface.s200 : m3.surface.s100, // mist-1
       borderWidth: 1,
-      borderColor: isVisuallyDisabled ? colors.surface[300] : colors.surface[300], // stone-3
+      borderColor: isVisuallyDisabled ? m3.surface.s300 : m3.surface.s300, // stone-3
     },
     outline: {
       borderWidth: 1,
-      borderColor: isVisuallyDisabled ? colors.surface[300] : colors.primary[500],
+      borderColor: isVisuallyDisabled ? m3.surface.s300 : m3.primary.p500,
       backgroundColor: 'transparent',
     },
     ghost: {
@@ -94,19 +94,19 @@ export function Button({
   // Cellar Ledger text variant styles
   const textVariantStyles: Record<string, TextStyle> = {
     primary: {
-      color: isVisuallyDisabled ? colors.surface[400] : '#FFFFFF', // white for primary
+      color: isVisuallyDisabled ? m3.surface.s400 : '#FFFFFF', // white for primary
       fontWeight: fontWeight.semibold,
     },
     secondary: {
-      color: isVisuallyDisabled ? colors.surface[400] : colors.surface[900], // ink
+      color: isVisuallyDisabled ? m3.surface.s400 : m3.surface.s900, // ink
       fontWeight: fontWeight.semibold,
     },
     outline: {
-      color: isVisuallyDisabled ? colors.surface[400] : colors.primary[500],
+      color: isVisuallyDisabled ? m3.surface.s400 : m3.primary.p500,
       fontWeight: fontWeight.semibold,
     },
     ghost: {
-      color: isVisuallyDisabled ? colors.surface[400] : colors.primary[500],
+      color: isVisuallyDisabled ? m3.surface.s400 : m3.primary.p500,
       fontWeight: fontWeight.medium,
     },
   };
@@ -124,7 +124,7 @@ export function Button({
   };
 
   // Cellar Ledger: pressed state color
-  const stateLayerColor = variant === 'primary' ? '#FFFFFF' : colors.surface[900]; // white for primary, ink for others
+  const stateLayerColor = variant === 'primary' ? '#FFFFFF' : m3.surface.s900; // white for primary, ink for others
   const stateLayerOpacity = 0.12;
 
   return (

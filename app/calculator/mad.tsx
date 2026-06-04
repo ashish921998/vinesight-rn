@@ -23,15 +23,16 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { LinearGradient } from 'expo-linear-gradient';
 import { REFILL_SPANS, type RefillSpanId } from '@/constants/calculator-models';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
 import { useTranslation } from 'react-i18next';
 
 export default function MADCalculatorScreen() {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
+  const domain = useDomainColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   // Step 1: MAD Calculation inputs
@@ -202,7 +203,7 @@ export default function MADCalculatorScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 overflow: 'hidden',
-                backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+                backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
               }}
             >
               <View
@@ -328,7 +329,7 @@ export default function MADCalculatorScreen() {
                       borderRadius: borderRadius.xl,
                       padding: spacing[3],
                       marginTop: spacing[3],
-                      backgroundColor: colors.surface[50],
+                      backgroundColor: m3.surface.s50,
                     }}
                   >
                     <Text
@@ -356,7 +357,7 @@ export default function MADCalculatorScreen() {
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   overflow: 'hidden',
-                  backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+                  backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
                   marginTop: spacing[4],
                 }}
               >
@@ -409,12 +410,12 @@ export default function MADCalculatorScreen() {
                       marginBottom: spacing[2],
                       backgroundColor:
                         selectedRefillSpan === span.id
-                          ? colorWithOpacity(colors.irrigation[500], 0.08)
-                          : colors.surface[50],
+                          ? colorWithOpacity(domain.category.irrigation, 0.08)
+                          : m3.surface.s50,
                       borderWidth: 1,
                       borderColor:
                         selectedRefillSpan === span.id
-                          ? colors.irrigation[500]
+                          ? domain.category.irrigation
                           : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                     }}
                   >
@@ -427,7 +428,7 @@ export default function MADCalculatorScreen() {
                       <IconSymbol
                         name="checkmark.circle.fill"
                         size={20}
-                        color={colors.irrigation[500]}
+                        color={domain.category.irrigation}
                       />
                     )}
                   </Pressable>
@@ -439,7 +440,7 @@ export default function MADCalculatorScreen() {
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     marginTop: spacing[2],
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                   }}
                 >
                   <Text
@@ -499,14 +500,14 @@ export default function MADCalculatorScreen() {
                         borderRadius: borderRadius.xl,
                         padding: spacing[4],
                         alignItems: 'center',
-                        backgroundColor: colorWithOpacity(colors.irrigation[500], 0.1),
+                        backgroundColor: colorWithOpacity(domain.category.irrigation, 0.1),
                       }}
                     >
                       <Text
                         style={{
                           fontSize: fontSize['3xl'],
                           fontWeight: fontWeight.bold,
-                          color: colors.irrigation[500],
+                          color: domain.category.irrigation,
                         }}
                       >
                         {refillTankResult.toFixed(4)}
@@ -526,7 +527,7 @@ export default function MADCalculatorScreen() {
                         borderRadius: borderRadius.xl,
                         padding: spacing[3],
                         marginTop: spacing[3],
-                        backgroundColor: colors.surface[50],
+                        backgroundColor: m3.surface.s50,
                       }}
                     >
                       <Text
@@ -565,7 +566,7 @@ export default function MADCalculatorScreen() {
                   paddingVertical: spacing[4],
                   alignItems: 'center',
                   overflow: 'hidden',
-                  backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+                  backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
                   marginTop: spacing[4],
                 }}
               >
@@ -604,7 +605,6 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const handleChangeText = (text: string) => {
     if (text === '.') {
@@ -630,7 +630,7 @@ function InputRow({
           flexDirection: 'row',
           alignItems: 'center',
           borderRadius: borderRadius.xl,
-          backgroundColor: colors.surface[50],
+          backgroundColor: m3.surface.s50,
         }}
       >
         <TextInput

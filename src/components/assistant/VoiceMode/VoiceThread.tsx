@@ -22,7 +22,7 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { radius, spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 
@@ -81,7 +81,7 @@ export function VoiceThread({ messages, testID }: VoiceThreadProps) {
 }
 
 function EmptyState({ testID }: { testID?: string }) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t } = useTranslation();
   const pulseScale = useSharedValue(1);
   const reduceMotion = useReducedMotion();
@@ -126,7 +126,7 @@ function EmptyState({ testID }: { testID?: string }) {
 }
 
 function VoiceMessageBubble({ message }: { message: VoiceModeMessage }) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t } = useTranslation();
   const isUser = message.role === 'user';
 

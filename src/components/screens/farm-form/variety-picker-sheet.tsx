@@ -6,7 +6,7 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView } from 'react-native';
 import { ModalBackdrop } from '@/components/ui';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { isIOS } from '@/hooks';
 import { useTranslation } from 'react-i18next';
@@ -43,7 +43,6 @@ export function VarietyPickerSheet({
   getVarietyLabel,
 }: VarietyPickerSheetProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
 
   if (!visible) return null;
@@ -64,7 +63,7 @@ export function VarietyPickerSheet({
           targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
           onStartShouldSetResponder={() => true}
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderTopLeftRadius: borderRadius['3xl'],
             borderTopRightRadius: borderRadius['3xl'],
             height: varietySheetHeight,
@@ -79,7 +78,7 @@ export function VarietyPickerSheet({
               paddingHorizontal: spacing[6],
               paddingVertical: spacing[4],
               borderBottomWidth: 1,
-              borderBottomColor: colors.surface[100],
+              borderBottomColor: m3.surface.s100,
             }}
           >
             <View style={{ width: 40 }} />
@@ -87,7 +86,7 @@ export function VarietyPickerSheet({
               style={{
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.semibold,
-                color: colors.surface[900],
+                color: m3.surface.s900,
               }}
             >
               {t('farmForm.variety.modalTitle')}
@@ -101,7 +100,7 @@ export function VarietyPickerSheet({
                 width: 40,
                 height: 40,
                 borderRadius: borderRadius.full,
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -125,9 +124,9 @@ export function VarietyPickerSheet({
                   flexDirection: 'row',
                   alignItems: 'center',
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
+                  borderColor: m3.surface.s200,
                   borderRadius: borderRadius.xl,
-                  backgroundColor: colors.surface[50],
+                  backgroundColor: m3.surface.s50,
                   paddingHorizontal: spacing[3],
                   minHeight: 48,
                 }}
@@ -141,11 +140,11 @@ export function VarietyPickerSheet({
                   value={varietySearchQuery}
                   onChangeText={onSearchChange}
                   placeholder={t('farmForm.variety.searchPlaceholder')}
-                  placeholderTextColor={colors.surface[400]}
+                  placeholderTextColor={m3.surface.s400}
                   style={{
                     flex: 1,
                     marginLeft: spacing[2],
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                     fontSize: fontSize.base,
                   }}
                   autoCapitalize="words"
@@ -162,15 +161,15 @@ export function VarietyPickerSheet({
                     paddingHorizontal: spacing[6],
                     paddingVertical: spacing[4],
                     borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
-                    backgroundColor: colors.surface[50],
+                    borderBottomColor: m3.surface.s100,
+                    backgroundColor: m3.surface.s50,
                   }}
                   onPress={() => onSelectVariety(varietySearchQueryTrimmed)}
                 >
                   <Text
                     style={{
                       fontSize: fontSize.base,
-                      color: colors.primary[600],
+                      color: m3.primary.p600,
                       fontWeight: fontWeight.semibold,
                     }}
                   >
@@ -190,8 +189,8 @@ export function VarietyPickerSheet({
                       paddingHorizontal: spacing[6],
                       paddingVertical: spacing[4],
                       borderBottomWidth: 1,
-                      borderBottomColor: colors.surface[100],
-                      backgroundColor: isSelected ? colors.surface[50] : colors.surface[100],
+                      borderBottomColor: m3.surface.s100,
+                      backgroundColor: isSelected ? m3.surface.s50 : m3.surface.s100,
                     }}
                     onPress={() => onSelectVariety(variety)}
                   >
@@ -205,14 +204,14 @@ export function VarietyPickerSheet({
                       <Text
                         style={{
                           fontSize: fontSize.base,
-                          color: isSelected ? colors.surface[900] : colors.surface[700],
+                          color: isSelected ? m3.surface.s900 : m3.surface.s700,
                           fontWeight: isSelected ? fontWeight.semibold : fontWeight.normal,
                         }}
                       >
                         {getVarietyLabel(variety)}
                       </Text>
                       {isSelected && (
-                        <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                        <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
                       )}
                     </View>
                   </Pressable>
@@ -220,7 +219,7 @@ export function VarietyPickerSheet({
               })}
               {filteredVarieties.length === 0 && !canCreateCustomVariety && (
                 <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
                     {t('common.noResultsFound')}
                   </Text>
                 </View>

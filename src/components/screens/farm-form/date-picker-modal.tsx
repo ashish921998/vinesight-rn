@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { ModalBackdrop } from '@/components/ui';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { ensureValidDate } from './utils';
 
 interface DatePickerModalProps {
@@ -33,7 +33,6 @@ export function DatePickerModal({
   onConfirm,
 }: DatePickerModalProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
 
   return (
@@ -44,7 +43,7 @@ export function DatePickerModal({
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: colors.surface[100],
+          backgroundColor: m3.surface.s100,
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
           padding: 16,

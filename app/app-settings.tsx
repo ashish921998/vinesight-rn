@@ -9,7 +9,7 @@ import { useAuthStore, useLanguageStore, useThemeStore } from '@/stores';
 import { useProfile, useUpdateProfile, useCurrency, isIOS } from '@/hooks';
 import { setAppLanguage } from '@/i18n';
 import type { SupportedLanguageCode } from '@/i18n/languages';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { getDefaultCurrency } from '@/i18n/currency';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import { telemetry } from '@/services/telemetry';
@@ -35,9 +35,8 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { linkPhone } = useLocalSearchParams() as LinkPhoneParams;
   const linkPhoneValue = Array.isArray(linkPhone) ? linkPhone[0] : linkPhone;
-  const colors = useThemeColors();
   const m3 = useM3();
-  const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
+  const styles = useMemo(() => createStyles(m3), [m3]);
   const { t } = useTranslation();
   const appVersion =
     Application.nativeApplicationVersion ?? Constants.expoConfig?.version ?? 'unknown';
@@ -358,7 +357,6 @@ export default function SettingsScreen() {
         linkedAuthPhone={linkedAuthPhone}
         hasSavedPhoneToVerify={hasSavedPhoneToVerify}
         styles={styles}
-        colors={colors}
         m3={m3}
         profile={profile ?? { full_name: userName === 'User' ? '' : userName }}
         onSaveProfile={handleSaveProfile}
@@ -372,7 +370,6 @@ export default function SettingsScreen() {
         selectedAreaUnit={selectedAreaUnit}
         isResettingGuidedTour={isResettingGuidedTour}
         styles={styles}
-        colors={colors}
         m3={m3}
         onLanguageChange={handleLanguageChange}
         onThemeChange={setThemeMode}
@@ -386,7 +383,6 @@ export default function SettingsScreen() {
         phoneActionValue={phoneActionValue}
         authLoading={authLoading}
         styles={styles}
-        colors={colors}
         m3={m3}
         onOpenLinkPhone={handleOpenLinkPhone}
         onSignOut={handleSignOut}
@@ -434,7 +430,6 @@ export default function SettingsScreen() {
         linkedAuthPhone={linkedAuthPhone}
         hasSavedPhoneToVerify={hasSavedPhoneToVerify}
         styles={styles}
-        colors={colors}
         m3={m3}
         onClose={handleCloseLinkPhone}
         onSuccess={handleCloseLinkPhone}
@@ -450,7 +445,6 @@ export default function SettingsScreen() {
         requireEmailOtpForDelete={requireEmailOtpForDelete}
         onDeleteAccount={handleConfirmDeleteAccount}
         styles={styles}
-        colors={colors}
         m3={m3}
       />
     </ScrollView>

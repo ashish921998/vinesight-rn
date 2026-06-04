@@ -32,7 +32,7 @@ import { addDays } from '@/utils/date';
 import { usePetioleTestReminders } from '@/hooks/use-petiole-reminders';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding, fontSize } from '@/styles/theme';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 import { queryClient, queryPersister, QUERY_CACHE_MAX_AGE_MS } from '@/lib/query-cache';
 import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
 import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
@@ -134,7 +134,8 @@ export default Sentry.wrap(function RootLayout() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const needsProfileCompletion = useAuthStore((state) => state.needsProfileCompletion);
   const themeHydrated = useThemeStore((state) => state.hasHydrated);
-  const { isDark, m3 } = useThemeTokens();
+  const m3 = useM3();
+  const isDark = useIsDark();
 
   const pathname = usePathname();
   const segments = useSegments();

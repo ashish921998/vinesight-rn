@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 
 interface ToolItem {
   id: string;
@@ -21,7 +22,6 @@ interface ToolItem {
 const ToolCard: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onPress }) => {
   const { t } = useTranslation();
   const m3 = useM3();
-  const colors = useThemeColors();
   const title = t(item.titleKey);
   const description = t(item.descriptionKey);
   const category = item.categoryKey ? t(item.categoryKey) : '';
@@ -32,13 +32,13 @@ const ToolCard: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onP
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${description}`}
       style={{
-        backgroundColor: colors.surface[100],
+        backgroundColor: m3.surface.s100,
         borderRadius: borderRadius.md,
         padding: spacing[4],
         flexDirection: 'column',
         alignItems: 'flex-start',
         borderWidth: 1,
-        borderColor: colors.surface[300],
+        borderColor: m3.surface.s300,
         overflow: 'hidden',
       }}
     >
@@ -70,7 +70,7 @@ const ToolCard: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onP
           </Text>
           <Text
             style={{
-              color: colors.surface[500],
+              color: m3.surface.s500,
               fontSize: fontSize.sm,
               lineHeight: 18,
             }}
@@ -81,7 +81,7 @@ const ToolCard: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onP
           {category ? (
             <Text
               style={{
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 fontSize: fontSize['2xs'],
                 fontWeight: fontWeight.semibold,
                 textTransform: 'uppercase',
@@ -110,8 +110,8 @@ const ToolCard: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onP
 };
 
 export default function ToolsScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
+  const domain = useDomainColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -124,7 +124,7 @@ export default function ToolsScreen() {
         titleKey: 'tools.items.madCalculator',
         descriptionKey: 'tools.descriptions.madCalculator',
         icon: 'gauge',
-        color: colors.irrigation[500],
+        color: domain.category.irrigation,
         route: '/calculator/mad',
         categoryKey: 'tools.categories.irrigation',
       },
@@ -133,7 +133,7 @@ export default function ToolsScreen() {
         titleKey: 'tools.items.systemDischarge',
         descriptionKey: 'tools.descriptions.systemDischarge',
         icon: 'drop.fill',
-        color: colors.irrigation[500],
+        color: domain.category.irrigation,
         route: '/calculator/system-discharge',
         categoryKey: 'tools.categories.irrigation',
       },
@@ -142,7 +142,7 @@ export default function ToolsScreen() {
         titleKey: 'tools.items.laiCalculator',
         descriptionKey: 'tools.descriptions.laiCalculator',
         icon: 'leaf.fill',
-        color: colors.success,
+        color: m3.colorScheme.success,
         route: '/calculator/lai',
         categoryKey: 'tools.categories.crop',
       },
@@ -151,7 +151,7 @@ export default function ToolsScreen() {
         titleKey: 'tools.items.nutrientCalculator',
         descriptionKey: 'tools.descriptions.nutrientCalculator',
         icon: 'flask.fill',
-        color: colors.fertigation[500],
+        color: domain.category.fertigation,
         route: '/calculator/nutrients',
         categoryKey: 'tools.categories.fertility',
       },
@@ -160,7 +160,7 @@ export default function ToolsScreen() {
         titleKey: 'tools.items.tankMixCalculator',
         descriptionKey: 'tools.descriptions.tankMixCalculator',
         icon: 'spraycan.fill',
-        color: colors.spray[500],
+        color: domain.category.spray,
         route: '/calculator/tank-mix' as Href,
         categoryKey: 'tools.categories.spray',
       },
@@ -169,7 +169,7 @@ export default function ToolsScreen() {
         titleKey: 'tools.items.safeToSprayChecker',
         descriptionKey: 'tools.descriptions.safeToSprayChecker',
         icon: 'checkmark.shield.fill',
-        color: colors.warning,
+        color: m3.colorScheme.warning,
         route: '/spray-safe-checker' as Href,
         categoryKey: 'tools.categories.spray',
       },
@@ -178,7 +178,7 @@ export default function ToolsScreen() {
         titleKey: 'tools.items.weatherIrrigation',
         descriptionKey: 'tools.descriptions.weatherIrrigation',
         icon: 'sun.max.fill',
-        color: colors.warning,
+        color: m3.colorScheme.warning,
         route: '/weather',
         categoryKey: 'tools.categories.weather',
       },
@@ -187,12 +187,12 @@ export default function ToolsScreen() {
         titleKey: 'tools.items.sprayCatalog',
         descriptionKey: 'tools.descriptions.sprayCatalog',
         icon: 'list.bullet.rectangle.portrait.fill',
-        color: colors.observation[500],
+        color: domain.category.observation,
         route: '/spray-catalog' as Href,
         categoryKey: 'tools.categories.spray',
       },
     ],
-    [colors],
+    [domain, m3],
   );
   const developerTools = useMemo(
     (): ToolItem[] =>
@@ -203,12 +203,12 @@ export default function ToolsScreen() {
               titleKey: 'developerTools.widgetShowcase.title',
               descriptionKey: 'developerTools.widgetShowcase.description',
               icon: 'square.grid.2x2.fill',
-              color: colors.primary[500],
+              color: m3.primary.p500,
               route: '/widgets-showcase',
             },
           ]
         : [],
-    [colors],
+    [m3],
   );
 
   return (
@@ -231,7 +231,7 @@ export default function ToolsScreen() {
       <View style={{ marginBottom: spacing[6] }}>
         <Text
           style={{
-            color: colors.surface[400],
+            color: m3.surface.s400,
             fontSize: fontSize.xs,
             fontWeight: fontWeight.semibold,
             textTransform: 'uppercase',
@@ -254,7 +254,7 @@ export default function ToolsScreen() {
         <View>
           <Text
             style={{
-              color: colors.surface[400],
+              color: m3.surface.s400,
               fontSize: fontSize.xs,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',

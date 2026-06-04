@@ -32,7 +32,7 @@ import {
 } from '@/hooks/use-reports';
 import { DateRange, ReportFormat, ReportType } from '@/types/report';
 import { useAuthStore } from '@/stores';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
@@ -88,7 +88,6 @@ function getSeasonBounds(
 }
 
 export default function ReportsScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -375,12 +374,12 @@ export default function ReportsScreen() {
   const toMaximumDate = parseDbDateToLocalDate(toMaximumIso) ?? new Date();
 
   const panelStyle = {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     borderRadius: borderRadius.xl,
     borderCurve: 'continuous' as const,
     padding: spacing[3],
     borderWidth: 1,
-    borderColor: colors.surface[300],
+    borderColor: m3.surface.s300,
   };
 
   const showStickyExport = Boolean(farms && farms.length > 0);
@@ -631,7 +630,7 @@ export default function ReportsScreen() {
           >
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: borderRadius['3xl'],
                 borderTopRightRadius: borderRadius['3xl'],
                 borderCurve: 'continuous',

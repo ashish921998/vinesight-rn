@@ -10,7 +10,7 @@ import { TaskSummaryWidget } from '@widgets/dashboard/TaskSummaryWidget';
 import { QuickStatsWidget } from '@widgets/dashboard/QuickStatsWidget';
 import { Symbol } from '@/components/ui/symbol';
 import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 const SHOWCASE_WEATHER = {
@@ -49,7 +49,7 @@ const ScaffoldingCard: React.FC<{ title: string; children: React.ReactNode }> = 
   title,
   children,
 }) => {
-  const m3 = useThemeTokens().m3;
+  const m3 = useM3();
   return (
     <View
       style={{
@@ -70,7 +70,7 @@ const ScaffoldingCard: React.FC<{ title: string; children: React.ReactNode }> = 
 
 export default function WidgetsShowcaseScreen() {
   const insets = useSafeAreaInsets();
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const router = useRouter();
 
   if (!__DEV__) {

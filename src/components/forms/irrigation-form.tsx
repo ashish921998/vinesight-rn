@@ -4,7 +4,7 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput } from './form-field';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
@@ -34,7 +34,6 @@ export function IrrigationForm({
   showHeader = true,
 }: IrrigationFormProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
   const isValid = data.duration !== undefined && data.duration > 0;
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
@@ -74,12 +73,12 @@ export function IrrigationForm({
               style={{
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.semibold,
-                color: colors.surface[900],
+                color: m3.surface.s900,
               }}
             >
               {t('irrigationForm.title')}
             </Text>
-            <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+            <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
               {t('irrigationForm.subtitle')}
             </Text>
           </View>
@@ -126,7 +125,7 @@ export function IrrigationForm({
               style={{
                 flex: 1,
                 minWidth: 140,
-                backgroundColor: colors.surface[50],
+                backgroundColor: m3.surface.s50,
                 borderRadius: borderRadius.xl,
                 padding: spacing[3],
               }}
@@ -137,12 +136,12 @@ export function IrrigationForm({
                 <SymbolIcon
                   name="arrow.up.left.and.arrow.down.right"
                   size={14}
-                  color={colors.surface[600]}
+                  color={m3.surface.s600}
                 />
                 <Text
                   style={{
                     fontSize: fontSize.xs,
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                     marginLeft: spacing[1],
                   }}
                 >
@@ -153,7 +152,7 @@ export function IrrigationForm({
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                 }}
               >
                 {farmArea.toFixed(2)} {t('units.acres')}

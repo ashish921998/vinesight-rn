@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 
 interface SafeScreenProps extends ComponentProps<typeof SafeAreaView> {
   backgroundColor?: string;
@@ -14,8 +14,8 @@ export function SafeScreen({
   children,
   ...props
 }: SafeScreenProps) {
-  const colors = useThemeColors();
-  const resolvedBackground = backgroundColor ?? colors.gray[50];
+  const m3 = useM3();
+  const resolvedBackground = backgroundColor ?? m3.neutral.n50;
   return (
     <SafeAreaView
       style={[{ flex: 1, backgroundColor: resolvedBackground }, style]}

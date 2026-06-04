@@ -13,7 +13,7 @@ import { formatNumber } from '@/i18n/format';
 import * as Haptics from 'expo-haptics';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { convertAreaFromAcres } from '@/utils/preferences';
 import type { ReportFormat, ReportType } from '@/types/report';
@@ -85,7 +85,6 @@ function SegmentedControl({
   activeValue: ReportType;
   onChange: (value: ReportType) => void;
 }) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
 
@@ -136,11 +135,11 @@ function SegmentedControl({
               top: SEGMENT_INSET,
               bottom: SEGMENT_INSET,
               left: SEGMENT_INSET,
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: borderRadius.lg - SEGMENT_INSET,
               borderCurve: 'continuous',
               borderWidth: 1,
-              borderColor: colors.surface[300],
+              borderColor: m3.surface.s300,
             },
             pillStyle,
           ]}
@@ -201,7 +200,7 @@ function SegmentedControl({
         containerWidth.value = e.nativeEvent.layout.width;
       }}
       style={{
-        backgroundColor: colors.surface[200],
+        backgroundColor: m3.surface.s200,
         borderRadius: borderRadius.lg,
         borderCurve: 'continuous',
         padding: SEGMENT_INSET,
@@ -260,7 +259,6 @@ export function ReportFiltersPanel({
   onSelectExportFormat,
   panelStyle,
 }: ReportFiltersPanelProps) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
 
@@ -291,9 +289,9 @@ export function ReportFiltersPanel({
   /* ── Compact selector style ── */
   const compactSelectorStyle = useMemo(
     () => ({
-      backgroundColor: colors.surface[50],
+      backgroundColor: m3.surface.s50,
       borderWidth: 1,
-      borderColor: colors.surface[200],
+      borderColor: m3.surface.s200,
       borderRadius: borderRadius.lg,
       borderCurve: 'continuous' as const,
       minHeight: 44,
@@ -302,7 +300,7 @@ export function ReportFiltersPanel({
       alignItems: 'center' as const,
       justifyContent: 'space-between' as const,
     }),
-    [colors],
+    [m3],
   );
 
   return (
@@ -326,7 +324,7 @@ export function ReportFiltersPanel({
                 color: m3.colorScheme.onSurface,
               }}
             >
-              {t('reports.reportType.label', 'Filters')}
+              {t('reports.filters.title', 'Filters')}
             </Text>
           </View>
           <Icon
@@ -529,10 +527,10 @@ export function ReportFiltersPanel({
                       justifyContent: 'center',
                       borderWidth: 1,
                       borderColor: preset.disabled
-                        ? colors.surface[200]
+                        ? m3.surface.s200
                         : colorWithOpacity(m3.colorScheme.primary, 0.3),
                       backgroundColor: preset.disabled
-                        ? colors.surface[50]
+                        ? m3.surface.s50
                         : colorWithOpacity(m3.colorScheme.primary, 0.06),
                     }}
                   >
@@ -598,9 +596,9 @@ export function ReportFiltersPanel({
                   onPress={onOpenFromDate}
                   style={{
                     flex: 1,
-                    backgroundColor: colors.surface[100], // mist-1 bg
+                    backgroundColor: m3.surface.s100, // mist-1 bg
                     borderWidth: 1,
-                    borderColor: colors.surface[300], // 1px border
+                    borderColor: m3.surface.s300, // 1px border
                     borderRadius: borderRadius.sm, // 10px radius
                     borderCurve: 'continuous',
                     minHeight: 44,
@@ -647,9 +645,9 @@ export function ReportFiltersPanel({
                   onPress={onOpenToDate}
                   style={{
                     flex: 1,
-                    backgroundColor: colors.surface[100], // mist-1 bg
+                    backgroundColor: m3.surface.s100, // mist-1 bg
                     borderWidth: 1,
-                    borderColor: colors.surface[300], // 1px border
+                    borderColor: m3.surface.s300, // 1px border
                     borderRadius: borderRadius.sm, // 10px radius
                     borderCurve: 'continuous',
                     minHeight: 44,
@@ -704,9 +702,9 @@ export function ReportFiltersPanel({
                     borderRadius: borderRadius.pill,
                     borderWidth: 1,
                     borderColor:
-                      activeExportFormat === 'pdf' ? m3.colorScheme.primary : colors.surface[300],
+                      activeExportFormat === 'pdf' ? m3.colorScheme.primary : m3.surface.s300,
                     backgroundColor:
-                      activeExportFormat === 'pdf' ? m3.colorScheme.primary : colors.surface[100],
+                      activeExportFormat === 'pdf' ? m3.colorScheme.primary : m3.surface.s100,
                   }}
                 >
                   <Text
@@ -730,9 +728,9 @@ export function ReportFiltersPanel({
                     borderRadius: borderRadius.pill,
                     borderWidth: 1,
                     borderColor:
-                      activeExportFormat === 'csv' ? m3.colorScheme.primary : colors.surface[300],
+                      activeExportFormat === 'csv' ? m3.colorScheme.primary : m3.surface.s300,
                     backgroundColor:
-                      activeExportFormat === 'csv' ? m3.colorScheme.primary : colors.surface[100],
+                      activeExportFormat === 'csv' ? m3.colorScheme.primary : m3.surface.s100,
                   }}
                 >
                   <Text
@@ -794,7 +792,7 @@ export function ReportFiltersPanel({
             entering={FadeIn.duration(200)}
             style={{
               maxHeight: '55%',
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderTopLeftRadius: borderRadius['3xl'],
               borderTopRightRadius: borderRadius['3xl'],
               borderCurve: 'continuous',
@@ -844,8 +842,8 @@ export function ReportFiltersPanel({
                       backgroundColor: selected
                         ? colorWithOpacity(m3.colorScheme.primary, 0.1)
                         : pressed
-                          ? colors.surface[200]
-                          : colors.surface[50],
+                          ? m3.surface.s200
+                          : m3.surface.s50,
                     })}
                   >
                     <Icon
@@ -903,7 +901,7 @@ export function ReportFiltersPanel({
             entering={FadeIn.duration(200)}
             style={{
               maxHeight: '55%',
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderTopLeftRadius: borderRadius['3xl'],
               borderTopRightRadius: borderRadius['3xl'],
               borderCurve: 'continuous',
@@ -963,8 +961,8 @@ export function ReportFiltersPanel({
                       backgroundColor: selected
                         ? colorWithOpacity(m3.colorScheme.primary, 0.1)
                         : pressed
-                          ? colors.surface[200]
-                          : colors.surface[50],
+                          ? m3.surface.s200
+                          : m3.surface.s50,
                     })}
                   >
                     <Icon

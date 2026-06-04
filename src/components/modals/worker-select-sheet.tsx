@@ -4,7 +4,7 @@ import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import type { Worker } from '@/types';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 interface WorkerSelectSheetProps {
@@ -27,20 +27,19 @@ export function WorkerSelectSheet({
   onClose,
 }: WorkerSelectSheetProps) {
   const insets = useSafeAreaInsets();
-  const colors = useThemeColors();
   const m3 = useM3();
   const ui = useMemo(
     () => ({
-      surface: colors.surface[100],
-      surfaceSoft: colorWithOpacity(colors.surface[100], 0.9),
-      border: colors.surface[200],
+      surface: m3.surface.s100,
+      surfaceSoft: colorWithOpacity(m3.surface.s100, 0.9),
+      border: m3.surface.s200,
       primary: m3.colorScheme.primary,
       primarySoft: colorWithOpacity(m3.colorScheme.primary, 0.12),
-      text: colors.surface[900],
-      muted: colors.surface[500],
-      overlay: colorWithOpacity(colors.black, 0.35),
+      text: m3.surface.s900,
+      muted: m3.surface.s500,
+      overlay: colorWithOpacity('#000000', 0.35),
     }),
-    [colors, m3],
+    [m3],
   );
 
   return (
@@ -108,7 +107,7 @@ export function WorkerSelectSheet({
                     style={{
                       backgroundColor: isSelected
                         ? m3.colorScheme.primaryContainer
-                        : colors.surface[50],
+                        : m3.surface.s50,
                       borderColor: isSelected
                         ? colorWithOpacity(m3.colorScheme.primary, 0.35)
                         : ui.border,
@@ -147,7 +146,7 @@ export function WorkerSelectSheet({
                     <UiSymbol
                       name={isSelected ? 'checkmark.circle.fill' : 'circle'}
                       size={20}
-                      color={isSelected ? ui.primary : colors.surface[500]}
+                      color={isSelected ? ui.primary : m3.surface.s500}
                     />
                   </Pressable>
                 );

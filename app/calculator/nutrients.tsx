@@ -21,7 +21,8 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculator-models';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
 
@@ -32,8 +33,8 @@ interface NutrientResult {
 }
 
 export default function NutrientCalculatorScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
+  const domain = useDomainColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [area, setArea] = useState(''); // acres
@@ -175,7 +176,7 @@ export default function NutrientCalculatorScreen() {
             {/* Calculator Card */}
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -203,7 +204,7 @@ export default function NutrientCalculatorScreen() {
                   style={{
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                     marginLeft: spacing[2],
                   }}
                 >
@@ -231,7 +232,7 @@ export default function NutrientCalculatorScreen() {
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: colors.surface[700],
+                  color: m3.surface.s700,
                   marginBottom: spacing[2],
                   marginTop: spacing[2],
                 }}
@@ -255,7 +256,7 @@ export default function NutrientCalculatorScreen() {
                       paddingVertical: spacing[2],
                       borderRadius: borderRadius.lg,
                       backgroundColor:
-                        selectedStage === stage.id ? m3.colorScheme.primary : colors.surface[100],
+                        selectedStage === stage.id ? m3.colorScheme.primary : m3.surface.s100,
                     }}
                   >
                     <Text
@@ -333,7 +334,7 @@ export default function NutrientCalculatorScreen() {
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.surface[700],
+                      color: m3.surface.s700,
                       marginBottom: spacing[3],
                     }}
                   >
@@ -343,9 +344,9 @@ export default function NutrientCalculatorScreen() {
                     <NutrientRow
                       label="Nitrogen (N)"
                       value={result.nitrogen}
-                      color={colors.fertigation[500]}
-                      bgColor={colorWithOpacity(colors.fertigation[500], 0.12)}
-                      dotColor={colors.fertigation[500]}
+                      color={domain.category.fertigation}
+                      bgColor={colorWithOpacity(domain.category.fertigation, 0.12)}
+                      dotColor={domain.category.fertigation}
                     />
                     <NutrientRow
                       label="Phosphorus (P₂O₅)"
@@ -372,7 +373,7 @@ export default function NutrientCalculatorScreen() {
                       paddingTop: spacing[3],
                       marginTop: spacing[2],
                       borderTopWidth: 1,
-                      borderTopColor: colors.surface[300],
+                      borderTopColor: m3.surface.s300,
                     }}
                   >
                     <Text
@@ -398,7 +399,7 @@ export default function NutrientCalculatorScreen() {
                         style={{
                           fontSize: fontSize.sm,
                           fontWeight: fontWeight.normal,
-                          color: colors.surface[500],
+                          color: m3.surface.s500,
                           marginLeft: spacing[1],
                         }}
                       >
@@ -409,7 +410,7 @@ export default function NutrientCalculatorScreen() {
 
                   <View
                     style={{
-                      backgroundColor: colors.surface[50],
+                      backgroundColor: m3.surface.s50,
                       borderRadius: borderRadius.xl,
                       padding: spacing[3],
                       marginTop: spacing[3],
@@ -419,13 +420,13 @@ export default function NutrientCalculatorScreen() {
                       style={{
                         fontSize: fontSize.xs,
                         fontWeight: fontWeight.medium,
-                        color: colors.surface[600],
+                        color: m3.surface.s600,
                         marginBottom: spacing[1],
                       }}
                     >
                       Note
                     </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                       These are estimated values. For precise recommendations, conduct soil and
                       petiole tests and consult an agronomist.
                     </Text>
@@ -439,12 +440,12 @@ export default function NutrientCalculatorScreen() {
               <Pressable
                 onPress={reset}
                 style={{
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderRadius: borderRadius['2xl'],
                   paddingVertical: spacing[4],
                   alignItems: 'center',
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
+                  borderColor: m3.surface.s200,
                   marginTop: spacing[4],
                 }}
               >
@@ -452,7 +453,7 @@ export default function NutrientCalculatorScreen() {
                   <Icon name="refresh" size={18} color={m3.colorScheme.onSurfaceVariant} />
                   <Text
                     style={{
-                      color: colors.surface[600],
+                      color: m3.surface.s600,
                       fontWeight: fontWeight.medium,
                       marginLeft: spacing[2],
                     }}
@@ -483,7 +484,6 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const handleChangeText = (text: string) => {
     if (text === '.') {
@@ -495,14 +495,14 @@ function InputRow({
 
   return (
     <View style={{ marginBottom: spacing[3] }}>
-      <Text style={{ fontSize: fontSize.sm, color: colors.surface[600], marginBottom: spacing[1] }}>
+      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s600, marginBottom: spacing[1] }}>
         {label}
       </Text>
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: colors.surface[50],
+          backgroundColor: m3.surface.s50,
           borderRadius: borderRadius.xl,
         }}
       >
@@ -517,12 +517,10 @@ function InputRow({
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[3],
             fontSize: fontSize.base,
-            color: colors.surface[900],
+            color: m3.surface.s900,
           }}
         />
-        <Text
-          style={{ fontSize: fontSize.sm, color: colors.surface[500], paddingRight: spacing[4] }}
-        >
+        <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500, paddingRight: spacing[4] }}>
           {unit}
         </Text>
       </View>
@@ -544,7 +542,7 @@ function NutrientRow({
   bgColor: string;
   dotColor: string;
 }) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   return (
     <View
       style={{
@@ -565,7 +563,7 @@ function NutrientRow({
             backgroundColor: dotColor,
           }}
         />
-        <Text style={{ fontSize: fontSize.sm, color: colors.surface[700] }}>{label}</Text>
+        <Text style={{ fontSize: fontSize.sm, color: m3.surface.s700 }}>{label}</Text>
       </View>
       <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color }}>
         {value.toFixed(1)} kg

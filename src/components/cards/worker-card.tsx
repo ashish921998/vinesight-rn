@@ -5,7 +5,7 @@ import type { Worker, WorkerAttendance, WorkStatus } from '../../types';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
-import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 import { calculateWorkerEarnings } from '@/types';
 
 interface WorkerCardProps {
@@ -59,7 +59,6 @@ export function WorkerCard({
   attendance,
 }: WorkerCardProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const isDark = useIsDark();
   const { t } = useTranslation();
 
@@ -105,12 +104,10 @@ export function WorkerCard({
       .toUpperCase()
       .slice(0, 2) || '?';
 
-  // TODO(theming): primary[400]/primary[600] have no value-equivalent M3 token
-  // (M3 only exposes primary[500] as colorScheme.primary, primary[100/800] as
-  // primaryContainer, primary[300] as inversePrimary, primary[900] as
-  // onPrimaryContainer). Keeping useThemeColors here to preserve exact pixels.
-  // Resolve in Phase 3 when primary shades get migrated/added.
-  const avatarTint = isDark ? colors.primary[400] : colors.primary[600];
+  // Avatar tint uses the explicit dark-aware primary ramp (m3.primary.pN),
+  // value-equal to the retired colors.primary[N]. See Phase 3 in
+  // docs/theming-consolidation-proposal.md.
+  const avatarTint = isDark ? m3.primary.p400 : m3.primary.p600;
   const inactiveAvatarTint = isDark ? '#7A756D' : '#A89E92';
 
   const todayStatusConfig = useMemo(() => {

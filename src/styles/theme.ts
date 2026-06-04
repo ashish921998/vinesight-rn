@@ -200,13 +200,18 @@ const darkModeColors = {
   },
 } as const;
 
-export const colors = {
+// Internal palette source of truth. NOT exported — the legacy `colors` /
+// `darkColors` / `useThemeColors` API is retired (see
+// docs/theming-consolidation-proposal.md §6, Phase 4). Reach for `useM3()`
+// (generic UI) or `useDomainColors()` (category/water/lab) instead. These two
+// objects exist only to build the M3 theme and `getThemeColors` below.
+const colors = {
   ...baseColors,
   gray: lightGray,
   surface: lightSurface,
 } as const;
 
-export const darkColors = {
+const darkColors = {
   ...darkModeColors,
   gray: darkGray,
   surface: darkSurface,
@@ -457,6 +462,14 @@ const createM3Theme = (isDark: boolean) => {
       // Not an official role; used for "Needs attention" affordances.
       warning: isDark ? darkColors.warning : colors.warning,
       onWarning: onAccent,
+
+      // Not an official M3 role; Cellar Ledger gold accent (value-preserving
+      // target for legacy `colors.accent[500]`).
+      accent: isDark ? darkColors.accent[500] : colors.accent[500],
+
+      // Not an official M3 role; informational blue (value-preserving target
+      // for legacy `colors.info`).
+      info: isDark ? darkColors.info : colors.info,
     },
     surface: {
       surfaceDim: themeColors.surface[200],
@@ -479,6 +492,36 @@ const createM3Theme = (isDark: boolean) => {
       s700: themeColors.surface[700],
       s800: themeColors.surface[800],
       s900: themeColors.surface[900],
+    },
+    // Explicit dark-aware primary ramp: an exact 1:1 of every legacy
+    // `colors.primary[N]` rung, so each legacy reference has a value-preserving
+    // M3 target (Phase 3). See docs/theming-consolidation-proposal.md §6.
+    primary: {
+      p50: themeColors.primary[50],
+      p100: themeColors.primary[100],
+      p200: themeColors.primary[200],
+      p300: themeColors.primary[300],
+      p400: themeColors.primary[400],
+      p500: themeColors.primary[500],
+      p600: themeColors.primary[600],
+      p700: themeColors.primary[700],
+      p800: themeColors.primary[800],
+      p900: themeColors.primary[900],
+      p950: themeColors.primary[950],
+    },
+    // Explicit dark-aware neutral ramp: value-preserving target for the legacy
+    // `colors.gray[N]` cool-gray ramp (Phase 3).
+    neutral: {
+      n50: themeColors.gray[50],
+      n100: themeColors.gray[100],
+      n200: themeColors.gray[200],
+      n300: themeColors.gray[300],
+      n400: themeColors.gray[400],
+      n500: themeColors.gray[500],
+      n600: themeColors.gray[600],
+      n700: themeColors.gray[700],
+      n800: themeColors.gray[800],
+      n900: themeColors.gray[900],
     },
     ...m3Base,
   } as const;
@@ -565,8 +608,6 @@ export const commonStyles = {
 } as const;
 
 export const theme = {
-  colors,
-  darkColors,
   getThemeColors,
   m3,
   m3Dark,

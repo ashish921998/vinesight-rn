@@ -201,6 +201,26 @@ export interface ReportSummary {
   stockUsageCount: number;
 }
 
+/** Period-over-period change for a single KPI tile. */
+export interface MetricDelta {
+  /**
+   * Signed percentage change vs the baseline, computed as
+   * (current - baseline) / |baseline| * 100. The |baseline| denominator keeps
+   * the sign aligned to the real direction even for signed metrics like net
+   * profit (e.g. -1000 → -500 reads as a positive change). Null when `isNew`.
+   */
+  deltaPct: number | null;
+  /** Direction of (current - baseline): 1 up, -1 down, 0 unchanged. */
+  direction: -1 | 0 | 1;
+  /** Baseline was 0 and current > 0, so a percentage is meaningless. */
+  isNew: boolean;
+}
+
+/** Per-tile deltas for the executive-summary grid, keyed by tile key. */
+export interface ReportComparison {
+  deltas: Record<string, MetricDelta>;
+}
+
 export interface ReportPreview {
   data: ReportData;
   summary: ReportSummary;

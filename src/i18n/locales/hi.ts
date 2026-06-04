@@ -654,6 +654,8 @@ export const hi = {
   },
 
   entryForm: {
+    logSaved: 'लॉग सहेजा गया',
+    taskSaved: 'कार्य सहेजा गया',
     activityType: 'गतिविधि प्रकार',
     selectActivityTypeHint: 'पूर्ण-स्क्रीन फॉर्म खोलने के लिए गतिविधि प्रकार चुनें।',
     useTemplate: 'टेम्पलेट उपयोग करें',
@@ -1267,6 +1269,9 @@ export const hi = {
     searchPlaceholder: 'पता खोजें...',
     unknownLocation: 'अज्ञात स्थान',
     noResultsFound: 'कोई परिणाम नहीं मिला',
+    noResultsHint: 'कोई दूसरा पता या स्थान का नाम आज़माएँ।',
+    searchFailedTitle: 'खोज विफल',
+    searchFailedBody: 'अभी खोज नहीं हो सकी। अपना कनेक्शन जाँचें और पुनः प्रयास करें।',
     unableToGetLocationDetails: 'स्थान का विवरण प्राप्त करने में असमर्थ',
   },
 
@@ -1432,21 +1437,32 @@ export const hi = {
       },
       guidance: {
         addFarm: 'पहले एक खेत जोड़ें, फिर अपना सवाल दोबारा पूछें।',
-        selectFarm: 'खेत संदर्भ चुनें ताकि मैं खेत-विशिष्ट सुझाव दे सकूं।',
         provideContext: 'खेत का नाम, तारीख और ऑपरेशन जोड़कर फिर प्रयास करें।',
         retryWithDetails: 'छोटे ऑपरेशनल प्रश्न के साथ फिर प्रयास करें, जैसे “आज क्या करना चाहिए?”',
       },
     },
     noFarm: {
       banner: 'कोई खेत नहीं जोड़ा गया। व्यक्तिगत सलाह के लिए खेत जोड़ें।',
-      noFarmSelected: 'कोई खेत नहीं चुना गया। व्यक्तिगत सलाह के लिए कोई खेत चुनें।',
       addFarmButton: 'खेत जोड़ें',
-      selectFarmButton: 'खेत चुनें',
     },
     context: {
       activeFarmLabel: 'सक्रिय खेत',
       openFarm: 'खेत खोलें',
       fallbackMeta: 'खेत संदर्भ तैयार है',
+      changeFarm: 'खेत बदलें',
+      pickFarm: 'खेत चुनें',
+    },
+    home: {
+      greeting: 'आज मैं आपके खेत में कैसे मदद करूँ?',
+      greetingFarm: 'आज {{name}} के लिए मैं कैसे मदद करूँ?',
+      subtitle: 'अपने शब्दों में पूछें।',
+      suggestions: {
+        today: 'आज मुझे क्या करना चाहिए?',
+        water: 'इस खेत को कितने पानी की ज़रूरत है?',
+        spray: 'क्या अभी छिड़काव करना सुरक्षित है?',
+        harvest: 'क्या फसल कटाई के लिए तैयार है?',
+        weather: 'इस सप्ताह मौसम कैसा रहेगा?',
+      },
     },
     jobs: {
       title: 'मुख्य कार्य',
@@ -2311,6 +2327,10 @@ export const hi = {
       title: 'श्रमिक विश्लेषण',
       subtitle: 'श्रमिक प्रदर्शन, उपस्थिति और भुगतान ट्रैक करें।',
       comingSoon: 'जल्द आ रहा है',
+    },
+    analyticsEmpty: {
+      title: 'अभी कोई श्रमिक डेटा नहीं',
+      subtitle: 'विश्लेषण देखने के लिए उपस्थिति दर्ज करें या अस्थायी श्रमिक जोड़ें।',
     },
     ratePerDayShort: ' /दिन',
     edit: 'संपादित करें',

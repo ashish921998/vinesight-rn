@@ -27,7 +27,7 @@ import type { WeatherWidgetData } from '@/types/widget';
 import type { WeatherData } from '@/types/weather';
 
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
 
@@ -35,7 +35,7 @@ type ServiceWeatherData = Pick<WeatherData, 'current' | 'forecast'>;
 
 export default function WidgetConfigurationScreen() {
   const { t } = useTranslation();
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { data: farms, isLoading: farmsLoading } = useFarms();

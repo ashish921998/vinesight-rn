@@ -8,7 +8,7 @@ import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '@/constants/lab-test-parameters';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 
@@ -20,7 +20,6 @@ interface Props {
 
 export default function ParameterSelector({ testType, selected, onChange }: Props) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
   const parameters = testType === 'soil' ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
 
@@ -45,7 +44,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
   return (
     <View
       style={{
-        backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
+        backgroundColor: colorWithOpacity(m3.surface.s100, 0.9),
         paddingHorizontal: spacing[4],
         paddingVertical: spacing[4],
         borderBottomWidth: 1,
@@ -117,7 +116,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
                 paddingVertical: spacing[2],
                 borderRadius: borderRadius.full,
                 borderWidth: 1,
-                backgroundColor: isSelected ? m3.colorScheme.primary : colors.surface[100],
+                backgroundColor: isSelected ? m3.colorScheme.primary : m3.surface.s100,
                 borderColor: isSelected
                   ? m3.colorScheme.primary
                   : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.35),

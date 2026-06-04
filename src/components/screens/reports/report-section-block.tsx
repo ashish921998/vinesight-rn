@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { View, Text, FlatList, type ListRenderItemInfo, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol as Icon } from '@/components/ui/symbol';
 
@@ -54,24 +54,23 @@ export function ReportSectionBlock({
   icon,
   accentColor,
 }: ReportSectionBlockProps) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
 
   /* ── Shared inset-grouped container style ── */
   const insetGroupedContainer = useMemo<ViewStyle>(
     () => ({
-      backgroundColor: colors.surface[100],
+      backgroundColor: m3.surface.s100,
       borderRadius: borderRadius.xl,
       borderCurve: 'continuous',
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: colors.surface[300],
+      borderColor: m3.surface.s300,
     }),
-    [colors],
+    [m3],
   );
 
-  const separatorColor = colors.surface[300];
+  const separatorColor = m3.surface.s300;
 
   /* ── Compact two-col header ── */
   const renderTwoColHeader = useCallback(() => {
@@ -84,7 +83,7 @@ export function ReportSectionBlock({
           flexDirection: 'row',
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[2],
-          backgroundColor: colors.surface[200],
+          backgroundColor: m3.surface.s200,
           borderBottomWidth: 1,
           borderBottomColor: separatorColor,
         }}
@@ -116,7 +115,7 @@ export function ReportSectionBlock({
         </Text>
       </View>
     );
-  }, [rows, colors, m3, separatorColor]);
+  }, [rows, m3, separatorColor]);
 
   /* ── Compact inline header ── */
   const renderInlineHeader = useCallback(() => {
@@ -127,7 +126,7 @@ export function ReportSectionBlock({
         style={{
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[2],
-          backgroundColor: colors.surface[200],
+          backgroundColor: m3.surface.s200,
           borderBottomWidth: 1,
           borderBottomColor: separatorColor,
         }}
@@ -165,7 +164,7 @@ export function ReportSectionBlock({
         </View>
       </View>
     );
-  }, [rows, colors, m3, separatorColor, t]);
+  }, [rows, m3, separatorColor, t]);
 
   /* ── Render items ── */
 
@@ -292,14 +291,14 @@ export function ReportSectionBlock({
       return (
         <View
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: borderRadius.lg,
             borderCurve: 'continuous',
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[3],
             gap: spacing[2],
             borderWidth: 1,
-            borderColor: colors.surface[300],
+            borderColor: m3.surface.s300,
           }}
         >
           {primaryLine ? (
@@ -310,7 +309,7 @@ export function ReportSectionBlock({
                 justifyContent: 'space-between',
                 gap: spacing[2],
                 borderBottomWidth: detailLines.length > 0 ? 1 : 0,
-                borderBottomColor: colors.surface[200],
+                borderBottomColor: m3.surface.s200,
                 paddingBottom: detailLines.length > 0 ? spacing[2] : 0,
               }}
             >
@@ -347,7 +346,7 @@ export function ReportSectionBlock({
                 justifyContent: 'space-between',
                 gap: spacing[2],
                 borderTopWidth: index === 0 ? 0 : 1,
-                borderTopColor: colors.surface[200],
+                borderTopColor: m3.surface.s200,
                 paddingTop: index === 0 ? 0 : spacing[1],
               }}
             >
@@ -381,7 +380,7 @@ export function ReportSectionBlock({
         </View>
       );
     },
-    [colors, m3],
+    [m3],
   );
 
   const keyExtractor = useCallback((item: ReportSectionRow) => item.id, []);

@@ -6,7 +6,7 @@ import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { spacing } from '@/styles/theme';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { isIOS } from '@/hooks';
-import type { ThemeColors, getM3Theme } from '@/styles/theme';
+import type { getM3Theme } from '@/styles/theme';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import type { ThemeMode } from '@/stores/theme-store';
 import type { SettingsStyles } from './settings-styles';
@@ -19,7 +19,6 @@ interface PreferencesSectionProps {
   selectedAreaUnit: 'acres' | 'hectares';
   isResettingGuidedTour: boolean;
   styles: SettingsStyles;
-  colors: ThemeColors;
   m3: ReturnType<typeof getM3Theme>;
   onLanguageChange: (code: SupportedLanguageCode) => void;
   onThemeChange: (mode: ThemeMode) => void;
@@ -35,7 +34,6 @@ export function PreferencesSection({
   selectedAreaUnit,
   isResettingGuidedTour,
   styles,
-  colors,
   m3,
   onLanguageChange,
   onThemeChange,
@@ -95,7 +93,7 @@ export function PreferencesSection({
               value={getLanguageLabel(language)}
               isLast={false}
               styles={styles}
-              colors={colors}
+              m3={m3}
             />
           </Pressable>
           <Pressable
@@ -110,7 +108,7 @@ export function PreferencesSection({
               value={getThemeLabel(themeMode)}
               isLast={false}
               styles={styles}
-              colors={colors}
+              m3={m3}
             />
           </Pressable>
           <Pressable
@@ -125,7 +123,7 @@ export function PreferencesSection({
               value={getAreaUnitLabel(selectedAreaUnit)}
               isLast={false}
               styles={styles}
-              colors={colors}
+              m3={m3}
             />
           </Pressable>
           <Pressable
@@ -140,7 +138,7 @@ export function PreferencesSection({
               value={getCurrencyLabel(selectedCurrency)}
               isLast={false}
               styles={styles}
-              colors={colors}
+              m3={m3}
             />
           </Pressable>
           <Pressable
@@ -156,7 +154,7 @@ export function PreferencesSection({
               isLast
               disabled={isResettingGuidedTour}
               styles={styles}
-              colors={colors}
+              m3={m3}
             />
           </Pressable>
         </View>
@@ -184,7 +182,7 @@ export function PreferencesSection({
                 accessibilityRole="button"
                 accessibilityLabel={t('common.close')}
               >
-                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+                <UISymbol name="xmark.circle.fill" size={28} color={m3.neutral.n400} />
               </Pressable>
             </View>
           </View>
@@ -257,7 +255,7 @@ export function PreferencesSection({
                 accessibilityRole="button"
                 accessibilityLabel={t('common.close')}
               >
-                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+                <UISymbol name="xmark.circle.fill" size={28} color={m3.neutral.n400} />
               </Pressable>
             </View>
           </View>
@@ -330,7 +328,7 @@ export function PreferencesSection({
                 accessibilityRole="button"
                 accessibilityLabel={t('common.close')}
               >
-                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+                <UISymbol name="xmark.circle.fill" size={28} color={m3.neutral.n400} />
               </Pressable>
             </View>
           </View>
@@ -400,7 +398,7 @@ export function PreferencesSection({
                 accessibilityRole="button"
                 accessibilityLabel={t('common.close')}
               >
-                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+                <UISymbol name="xmark.circle.fill" size={28} color={m3.neutral.n400} />
               </Pressable>
             </View>
           </View>

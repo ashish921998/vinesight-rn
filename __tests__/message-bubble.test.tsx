@@ -18,34 +18,41 @@ jest.mock('@/i18n/format', () => ({
   formatTime: () => '10:00',
 }));
 
-jest.mock('@/styles/use-theme', () => ({
-  useThemeTokens: () => ({
-    isDark: false,
-    m3: {
-      colorScheme: {
-        primary: '#408059',
-        onPrimary: '#ffffff',
-        primaryContainer: '#e1ebe5',
-        onPrimaryContainer: '#1f412b',
-        surface: '#f9fafb',
-        onSurface: '#111827',
-        onSurfaceVariant: '#6b7280',
-        surfaceVariant: '#f3f4f6',
-        outlineVariant: '#e5e7eb',
-        errorContainer: '#fde8e8',
-        onErrorContainer: '#7f1d1d',
-        error: '#dc2626',
+jest.mock('@/styles/use-theme', () => {
+  const __mod = {
+    useThemeTokens: () => ({
+      isDark: false,
+      m3: {
+        colorScheme: {
+          primary: '#408059',
+          onPrimary: '#ffffff',
+          primaryContainer: '#e1ebe5',
+          onPrimaryContainer: '#1f412b',
+          surface: '#f9fafb',
+          onSurface: '#111827',
+          onSurfaceVariant: '#6b7280',
+          surfaceVariant: '#f3f4f6',
+          outlineVariant: '#e5e7eb',
+          errorContainer: '#fde8e8',
+          onErrorContainer: '#7f1d1d',
+          error: '#dc2626',
+        },
+        surface: {
+          surfaceContainer: '#e5e7eb',
+          surfaceContainerHigh: '#d1d5db',
+        },
+        typography: {
+          bodyMedium: { fontSize: 14 },
+        },
       },
-      surface: {
-        surfaceContainer: '#e5e7eb',
-        surfaceContainerHigh: '#d1d5db',
-      },
-      typography: {
-        bodyMedium: { fontSize: 14 },
-      },
-    },
-  }),
-}));
+    }),
+  };
+  return {
+    ...__mod,
+    useM3: () => __mod.useThemeTokens().m3,
+    useIsDark: () => (__mod.useThemeTokens() as { isDark?: boolean }).isDark ?? false,
+  };
+});
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({

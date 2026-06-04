@@ -31,41 +31,48 @@ jest.mock('@/services/assistant-memory', () => ({
   },
 }));
 
-jest.mock('@/styles/use-theme', () => ({
-  useThemeTokens: () => ({
-    isDark: false,
-    m3: {
-      colorScheme: {
-        primary: '#408059',
-        onPrimary: '#ffffff',
-        primaryContainer: '#e1ebe5',
-        onPrimaryContainer: '#1f412b',
-        surface: '#f9fafb',
-        onSurface: '#111827',
-        onSurfaceVariant: '#6b7280',
-        surfaceVariant: '#f3f4f6',
-        outlineVariant: '#e5e7eb',
-        secondaryContainer: '#f0f5f2',
-        onSecondaryContainer: '#1f412b',
-        scrim: '#000000',
-        error: '#ba1a1a',
-        onError: '#ffffff',
-        errorContainer: '#ffdad6',
-        onErrorContainer: '#410002',
+jest.mock('@/styles/use-theme', () => {
+  const __mod = {
+    useThemeTokens: () => ({
+      isDark: false,
+      m3: {
+        colorScheme: {
+          primary: '#408059',
+          onPrimary: '#ffffff',
+          primaryContainer: '#e1ebe5',
+          onPrimaryContainer: '#1f412b',
+          surface: '#f9fafb',
+          onSurface: '#111827',
+          onSurfaceVariant: '#6b7280',
+          surfaceVariant: '#f3f4f6',
+          outlineVariant: '#e5e7eb',
+          secondaryContainer: '#f0f5f2',
+          onSecondaryContainer: '#1f412b',
+          scrim: '#000000',
+          error: '#ba1a1a',
+          onError: '#ffffff',
+          errorContainer: '#ffdad6',
+          onErrorContainer: '#410002',
+        },
+        surface: {
+          surfaceContainerLow: '#f3f4f6',
+          surfaceContainer: '#e5e7eb',
+          surfaceContainerHigh: '#d1d5db',
+        },
+        typography: {
+          titleMedium: { fontSize: 16, fontWeight: '600' },
+          bodyMedium: { fontSize: 14 },
+          labelSmall: { fontSize: 11 },
+        },
       },
-      surface: {
-        surfaceContainerLow: '#f3f4f6',
-        surfaceContainer: '#e5e7eb',
-        surfaceContainerHigh: '#d1d5db',
-      },
-      typography: {
-        titleMedium: { fontSize: 16, fontWeight: '600' },
-        bodyMedium: { fontSize: 14 },
-        labelSmall: { fontSize: 11 },
-      },
-    },
-  }),
-}));
+    }),
+  };
+  return {
+    ...__mod,
+    useM3: () => __mod.useThemeTokens().m3,
+    useIsDark: () => (__mod.useThemeTokens() as { isDark?: boolean }).isDark ?? false,
+  };
+});
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({

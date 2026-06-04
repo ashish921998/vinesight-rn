@@ -655,6 +655,8 @@ export const en = {
   },
 
   entryForm: {
+    logSaved: 'Log saved',
+    taskSaved: 'Task saved',
     activityType: 'Activity type',
     selectActivityTypeHint: 'Select an activity type to open the full-screen form.',
     useTemplate: 'Use template',
@@ -1269,6 +1271,9 @@ export const en = {
     searchPlaceholder: 'Search for an address...',
     unknownLocation: 'Unknown location',
     noResultsFound: 'No results found',
+    noResultsHint: 'Try a different address or place name.',
+    searchFailedTitle: 'Search failed',
+    searchFailedBody: 'Could not search right now. Check your connection and try again.',
     unableToGetLocationDetails: 'Unable to get location details',
   },
 
@@ -1435,21 +1440,32 @@ export const en = {
       },
       guidance: {
         addFarm: 'Add a farm first, then ask your question again.',
-        selectFarm: 'Select a farm context so I can give farm-specific steps.',
         provideContext: 'Try adding the farm name, date, and the operation you want help with.',
         retryWithDetails: 'Retry with a short operational request like “what should I do today?”',
       },
     },
     noFarm: {
       banner: 'No farms added. Add a farm for personalized advice.',
-      noFarmSelected: 'No farm selected. Select a farm for personalized advice.',
       addFarmButton: 'Add Farm',
-      selectFarmButton: 'Select farm',
     },
     context: {
       activeFarmLabel: 'Active farm',
       openFarm: 'Open farm',
       fallbackMeta: 'Farm context ready',
+      changeFarm: 'Change farm',
+      pickFarm: 'Choose a farm',
+    },
+    home: {
+      greeting: 'How can I help on your farm today?',
+      greetingFarm: 'How can I help with {{name}} today?',
+      subtitle: 'Ask in your own words.',
+      suggestions: {
+        today: 'What should I do today?',
+        water: 'How much water does this farm need?',
+        spray: 'Is it safe to spray now?',
+        harvest: 'Is the crop ready to harvest?',
+        weather: "What's the weather this week?",
+      },
     },
     jobs: {
       title: 'Top jobs',
@@ -2307,6 +2323,10 @@ export const en = {
       subtitle: 'Track worker performance, attendance, and payments.',
       comingSoon: 'Coming soon',
     },
+    analyticsEmpty: {
+      title: 'No worker data yet',
+      subtitle: 'Mark attendance or add temporary workers to start seeing analytics.',
+    },
     ratePerDayShort: ' /day',
     edit: 'Edit',
     delete: 'Delete',
@@ -2905,6 +2925,9 @@ export const en = {
     selectToDate: 'Select To Date',
     reportType: {
       label: 'Report Type',
+    },
+    filters: {
+      title: 'Filters',
     },
     loading: {
       preview: 'Generating preview...',

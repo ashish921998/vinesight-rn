@@ -6,7 +6,7 @@ import { useUpdateWarehouseItem } from '../../hooks';
 import { WarehouseItem } from '../../types';
 import { FormModal, SectionHeader, FormInput, PreviewCard } from '../ui/form-components';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatNumber } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
@@ -20,7 +20,6 @@ interface Props {
 
 export default function StockForm({ visible, onClose, item, presentation = 'modal' }: Props) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
 
   const isVisible = visible ?? true;
@@ -106,7 +105,7 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
       {/* Item Info Card */}
       <View
         style={{
-          backgroundColor: colors.surface[50],
+          backgroundColor: m3.surface.s50,
           borderRadius: borderRadius['2xl'],
           padding: spacing[5],
           marginBottom: spacing[5],
@@ -122,7 +121,7 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
               justifyContent: 'center',
               backgroundColor:
                 item.type === 'fertilizer'
-                  ? colorWithOpacity(colors.success, 0.12)
+                  ? colorWithOpacity(m3.colorScheme.success, 0.12)
                   : colorWithOpacity(m3.colorScheme.primary, 0.12),
             }}
           >
@@ -135,7 +134,7 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
                     : 'drop.fill'
               }
               size={24}
-              color={item.type === 'fertilizer' ? colors.success : m3.colorScheme.primary}
+              color={item.type === 'fertilizer' ? m3.colorScheme.success : m3.colorScheme.primary}
             />
           </View>
           <View style={{ flex: 1, marginLeft: spacing[3] }}>
@@ -143,12 +142,12 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
               style={{
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.bold,
-                color: colors.surface[900],
+                color: m3.surface.s900,
               }}
             >
               {item.name}
             </Text>
-            <Text style={{ fontSize: fontSize.sm, color: colors.surface[500], marginTop: 2 }}>
+            <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500, marginTop: 2 }}>
               {t('warehouse.stockForm.currentLabel', {
                 quantity: formatNumber(item.quantity),
                 unit: item.unit,

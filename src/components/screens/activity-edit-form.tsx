@@ -24,7 +24,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
 import {
@@ -94,7 +94,6 @@ export function ActivityEditForm({
 }: ActivityEditFormProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const colors = useThemeColors();
   const isVisible = visible ?? true;
   const { windowHeight } = useResponsiveHeight();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -522,8 +521,8 @@ export function ActivityEditForm({
             paddingVertical: spacing[10],
           }}
         >
-          <ActivityIndicator size="large" color={colors.primary[500]} />
-          <Text selectable style={{ marginTop: spacing[4], color: colors.surface[500] }}>
+          <ActivityIndicator size="large" color={m3.primary.p500} />
+          <Text selectable style={{ marginTop: spacing[4], color: m3.surface.s500 }}>
             {t('common.loading')}
           </Text>
         </View>
@@ -597,7 +596,7 @@ export function ActivityEditForm({
           style={{
             fontSize: fontSize.sm,
             fontWeight: fontWeight.medium,
-            color: colors.surface[700],
+            color: m3.surface.s700,
             marginBottom: spacing[2],
           }}
         >
@@ -608,10 +607,10 @@ export function ActivityEditForm({
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: borderRadius.xl,
             borderWidth: 2,
-            borderColor: colors.surface[200],
+            borderColor: m3.surface.s200,
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[3],
           }}
@@ -623,11 +622,11 @@ export function ActivityEditForm({
               borderRadius: borderRadius.full,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: colors.primary[50],
+              backgroundColor: m3.primary.p50,
               marginRight: spacing[3],
             }}
           >
-            <UISymbol name="calendar" size={16} color={colors.primary[600]} />
+            <UISymbol name="calendar" size={16} color={m3.primary.p600} />
           </View>
           <Text style={{ fontSize: fontSize.base, fontWeight: fontWeight.medium }}>
             {formatDate(selectedDate, {
@@ -672,7 +671,7 @@ export function ActivityEditForm({
               bottom: 0,
               left: 0,
               right: 0,
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderTopLeftRadius: borderRadius['2xl'],
               borderTopRightRadius: borderRadius['2xl'],
               padding: spacing[4],
@@ -690,7 +689,7 @@ export function ActivityEditForm({
                 {t('common.selectDate')}
               </Text>
               <Pressable onPress={() => setShowDatePicker(false)}>
-                <UISymbol name="xmark.circle.fill" size={24} color={colors.surface[500]} />
+                <UISymbol name="xmark.circle.fill" size={24} color={m3.surface.s500} />
               </Pressable>
             </View>
             <DateTimePicker
