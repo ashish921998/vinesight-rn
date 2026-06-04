@@ -665,10 +665,9 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 backgroundColor: m3.colorScheme.background,
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
-                maxHeight: '88%',
+                minHeight: '60%',
+                maxHeight: '92%',
                 marginBottom: keyboardHeight,
-                paddingBottom:
-                  keyboardHeight > 0 ? spacing[3] : Math.max(spacing[4], insets.bottom),
               }}
             >
               {/* Sheet header */}
@@ -754,14 +753,17 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 )}
               </ScrollView>
 
-              {/* Sheet CTA — save this entry and close the screen */}
-              <View style={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}>
+              {/* Sheet CTA — saves this entry and returns to the receipt list */}
+              <View
+                style={{
+                  paddingHorizontal: spacing[4],
+                  paddingTop: spacing[2],
+                  paddingBottom: Math.max(spacing[4], insets.bottom),
+                }}
+              >
                 <Pressable
                   disabled={!draftValid || saving}
-                  onPress={async () => {
-                    await handleSave();
-                    onClose();
-                  }}
+                  onPress={handleSave}
                   style={{
                     paddingVertical: 14,
                     borderRadius: borderRadius.xl,
@@ -797,7 +799,12 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                   >
                     {saving
                       ? t('common.saving', { defaultValue: 'Saving…' })
-                      : t('receiptLog.saveAndDone', { defaultValue: 'Save & Done' })}
+                      : activeLogType
+                        ? t('receiptLog.saveType', {
+                            defaultValue: 'Save {{type}}',
+                            type: t(activeLogType.labelKey),
+                          })
+                        : t('receiptLog.save', { defaultValue: 'Save' })}
                   </Text>
                 </Pressable>
               </View>
