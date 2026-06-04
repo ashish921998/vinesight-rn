@@ -12,7 +12,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, shadows, spacing } from '@/styles/theme';
 import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import appLogoDark from '../../../assets/icons/ios-dark.png';
@@ -64,10 +64,7 @@ export function GuidedTourCompletionCard({ onDone }: { onDone: () => void }) {
             width: '100%',
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.outline, 0.24),
-            shadowColor: '#000',
-            shadowOpacity: 0.2,
-            shadowRadius: 16,
-            shadowOffset: { width: 0, height: 8 },
+            ...shadows.xl,
             elevation: 8,
             overflow: 'hidden',
             opacity: cardOpacity,

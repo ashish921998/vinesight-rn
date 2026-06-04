@@ -20,11 +20,11 @@ import {
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { Button, FormModal, SectionHeader } from '@/components/ui';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3 } from '@/styles/use-theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
 import {
@@ -94,6 +94,7 @@ export function ActivityEditForm({
 }: ActivityEditFormProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const colors = useThemeColors();
   const isVisible = visible ?? true;
   const { windowHeight } = useResponsiveHeight();
   const [selectedDate, setSelectedDate] = useState(new Date());

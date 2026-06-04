@@ -10,7 +10,8 @@ import Animated, {
   runOnJS,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { colors, spacing, size, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, size, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import appLogoLight from '../../assets/icons/ios-light.png';
 
@@ -22,6 +23,7 @@ interface SplashProps {
 }
 
 export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
+  const colors = useThemeColors();
   const [isMounted, setIsMounted] = useState(true);
 
   const scale = useSharedValue(0);
