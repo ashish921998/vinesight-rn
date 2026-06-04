@@ -1,0 +1,54 @@
+src/components/ui/empty-state.tsx
+  s_60f805d4168778::t_9984ed14aee163 32-37,40-47
+  s_60f805d4168778::t_34e98f99c3edd6 88-90
+  s_60f805d4168778::t_f3c13617de9b3d 1-31,38-39,48-87,91-110
+src/components/screens/location-picker.tsx
+  s_60f805d4168778::t_dec6ad7a814a34 619-620
+  s_60f805d4168778::t_acfeb86aa577fe 272
+  s_60f805d4168778::t_4b4f32bf8fb25b 159
+  s_60f805d4168778::t_817510c96fdf58 221
+  s_60f805d4168778::t_8b942e8bb7f485 94
+  s_60f805d4168778::t_79e36c6c73cbcc 129,136-137,143
+  s_60f805d4168778::t_ad9b2fbdf5dd83 179
+  s_60f805d4168778::t_f57d96c4a89832 22
+  s_60f805d4168778::t_e7cb8b85f1a863 106
+  s_60f805d4168778::t_6ea0a6b6f23923 389,409-427
+src/components/screens/farms-pane-b.tsx
+  s_60f805d4168778::t_357e4a82a356da 13
+  s_60f805d4168778::t_8a5d0230fd6648 24,443,493,547
+  s_60f805d4168778::t_6a1ac8ad4b0ec1 143,146,164
+  s_60f805d4168778::t_326380eceb86b0 208,221
+  s_60f805d4168778::t_46a577b61318d3 149-162
+  s_60f805d4168778::t_314dad8f3993e6 11
+  s_60f805d4168778::t_0173e17f7d897f 466,523
+src/components/screens/worker-analytics-view.tsx
+  s_60f805d4168778::t_7a0bfeeeaed986 2
+  s_60f805d4168778::t_2227e3f7b5d266 24
+  s_60f805d4168778::t_1dcbd95e5aeec2 99,104-108
+src/components/ui/loading-state.tsx
+  s_60f805d4168778::t_31f1c3bcd516cf 1-45
+src/components/ui/index.ts
+  s_60f805d4168778::t_8e6ff14524ce0a 3-4
+src/components/screens/warehouse-pane-b.tsx
+  s_60f805d4168778::t_8a5d0230fd6648 24,376,412,499
+  s_60f805d4168778::t_326380eceb86b0 277,290,471,505
+  s_60f805d4168778::t_ce53852e3b4080 190,193,196-202,204
+  s_60f805d4168778::t_0173e17f7d897f 431
+  s_60f805d4168778::t_fa17a8f5a41bf3 11,13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "6e155d54acf16a3eb5a8a179315d0f0291bccb1c",
+  "prompts": {},
+  "sessions": {
+    "s_60f805d4168778": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "863d0dec-6ecd-4e84-9473-c0d39a6839b5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
