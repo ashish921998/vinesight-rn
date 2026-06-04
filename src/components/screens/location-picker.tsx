@@ -19,6 +19,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { EmptyState } from '@/components/ui';
 
 const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
@@ -90,6 +91,7 @@ export default function LocationPicker({
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [searchError, setSearchError] = useState(false);
   const searchInputRef = useRef<TextInput>(null);
   const mapRef = useRef<MapView>(null);
   const wasVisibleRef = useRef(false);
@@ -101,6 +103,7 @@ export default function LocationPicker({
       setSearchQuery('');
       setSearchResults([]);
       setShowResults(false);
+      setSearchError(false);
       return;
     }
 
@@ -123,18 +126,21 @@ export default function LocationPicker({
     if (!query.trim()) {
       setSearchResults([]);
       setShowResults(false);
+      setSearchError(false);
       return;
     }
 
     if (!GOOGLE_PLACES_API_KEY) {
       console.error('Google Places API key not configured');
       setSearchResults([]);
-      setShowResults(false);
+      setShowResults(true);
+      setSearchError(true);
       return;
     }
 
     setIsSearching(true);
     setShowResults(true);
+    setSearchError(false);
 
     try {
       const response = await fetch(
@@ -150,6 +156,7 @@ export default function LocationPicker({
       if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
         console.error('Google Places API error:', data.status, data.error_message);
         setSearchResults([]);
+        setSearchError(true);
         return;
       }
 
@@ -169,6 +176,7 @@ export default function LocationPicker({
     } catch (error) {
       console.error('Error searching location:', error);
       setSearchResults([]);
+      setSearchError(true);
     } finally {
       setIsSearching(false);
     }
@@ -210,6 +218,7 @@ export default function LocationPicker({
     if (!text.trim()) {
       setSearchResults([]);
       setShowResults(false);
+      setSearchError(false);
       return;
     }
 
@@ -260,6 +269,7 @@ export default function LocationPicker({
     setSearchQuery('');
     setSearchResults([]);
     setShowResults(false);
+    setSearchError(false);
     searchInputRef.current?.focus();
   };
 
@@ -376,7 +386,7 @@ export default function LocationPicker({
               </TouchableOpacity>
             )}
           </View>
-          {showResults && searchResults.length > 0 && (
+          {showResults && (
             <View style={styles.resultsContainer}>
               <FlatList
                 data={searchResults}
@@ -396,12 +406,26 @@ export default function LocationPicker({
                   );
                 }}
                 ItemSeparatorComponent={() => <View style={styles.resultSeparator} />}
+                ListEmptyComponent={
+                  isSearching ? null : (
+                    <View style={styles.emptyResultsWrap}>
+                      <EmptyState
+                        icon={searchError ? 'exclamationmark.triangle' : 'magnifyingglass'}
+                        title={
+                          searchError
+                            ? t('locationPicker.searchFailedTitle')
+                            : t('locationPicker.noResultsFound')
+                        }
+                        description={
+                          searchError
+                            ? t('locationPicker.searchFailedBody')
+                            : t('locationPicker.noResultsHint')
+                        }
+                      />
+                    </View>
+                  )
+                }
               />
-            </View>
-          )}
-          {showResults && searchQuery.trim() && searchResults.length === 0 && !isSearching && (
-            <View style={styles.noResultsContainer}>
-              <Text style={styles.noResultsText}>{t('locationPicker.noResultsFound')}</Text>
             </View>
           )}
         </View>
@@ -592,16 +616,8 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
       backgroundColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.3),
       marginLeft: spacing[3] + 18 + spacing[2],
     },
-    noResultsContainer: {
-      marginTop: spacing[2],
-      padding: spacing[4],
-      backgroundColor: colors.surface[50],
-      borderRadius: borderRadius.lg,
-      alignItems: 'center',
-    },
-    noResultsText: {
-      fontSize: fontSize.sm,
-      color: m3.colorScheme.onSurfaceVariant,
+    emptyResultsWrap: {
+      height: 188,
     },
     map: {
       flex: 1,
