@@ -34,11 +34,7 @@
     ]
   },
   "overrides": {
-    "@xmldom/xmldom": "0.8.13",
-    "brace-expansion": {
-      ".": "1.1.13",
-      "balanced-match": "^1.0.2"
-    }
+    "@xmldom/xmldom": "0.8.13"
   },
   "dependencies": {
     "@bacons/apple-targets": "^4.0.3",
