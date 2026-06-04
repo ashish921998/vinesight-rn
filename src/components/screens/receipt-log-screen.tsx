@@ -611,41 +611,62 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
         </View>
       </ScrollView>
 
-      {/* Footer — hidden while the entry sheet is open so only one CTA is visible */}
-      {activeType === null && (
-        <View
+      {/* Single footer CTA — saves the open entry (if valid) then closes */}
+      <View
+        style={{
+          paddingHorizontal: spacing[4],
+          paddingTop: spacing[3],
+          paddingBottom: Math.max(spacing[4], insets.bottom),
+          backgroundColor: m3.surface.s100,
+          borderTopWidth: 1,
+          borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
+        }}
+      >
+        <Pressable
+          disabled={saving}
+          onPress={
+            draftValid
+              ? async () => {
+                  await handleSave();
+                  onClose();
+                }
+              : activeType !== null
+                ? closeSheet
+                : onClose
+          }
           style={{
-            paddingHorizontal: spacing[4],
-            paddingTop: spacing[3],
-            paddingBottom: Math.max(spacing[4], insets.bottom),
-            backgroundColor: m3.surface.s100,
-            borderTopWidth: 1,
-            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
+            paddingVertical: 14,
+            borderRadius: borderRadius.xl,
+            alignItems: 'center',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: 8,
+            backgroundColor:
+              (draftValid || entries.length > 0) && !saving
+                ? m3.colorScheme.primary
+                : m3.surface.s50,
+            borderWidth: (draftValid || entries.length > 0) && !saving ? 0 : 1,
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
           }}
         >
-          <Pressable
-            onPress={onClose}
+          {saving && <ActivityIndicator size="small" color={m3.colorScheme.onSurfaceVariant} />}
+          <Text
             style={{
-              paddingVertical: 14,
-              borderRadius: borderRadius.xl,
-              alignItems: 'center',
-              backgroundColor: entries.length > 0 ? m3.colorScheme.primary : m3.surface.s50,
-              borderWidth: entries.length > 0 ? 0 : 1,
-              borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+              fontWeight: '700',
+              color:
+                (draftValid || entries.length > 0) && !saving
+                  ? m3.colorScheme.onPrimary
+                  : m3.colorScheme.onSurfaceVariant,
             }}
           >
-            <Text
-              style={{
-                fontWeight: '700',
-                color:
-                  entries.length > 0 ? m3.colorScheme.onPrimary : m3.colorScheme.onSurfaceVariant,
-              }}
-            >
-              {t('receiptLog.done', { defaultValue: 'Done' })}
-            </Text>
-          </Pressable>
-        </View>
-      )}
+            {saving
+              ? t('common.saving', { defaultValue: 'Saving…' })
+              : draftValid
+                ? t('receiptLog.saveAndDone', { defaultValue: 'Save & Done' })
+                : t('receiptLog.done', { defaultValue: 'Done' })}
+          </Text>
+        </Pressable>
+      </View>
 
       {/* Entry sheet */}
       <Modal
@@ -753,55 +774,6 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                   <NoteForm data={draft as NoteFormData} onChange={setDraft} />
                 )}
               </ScrollView>
-
-              {/* Sheet save */}
-              <View style={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}>
-                <Pressable
-                  onPress={handleSave}
-                  disabled={!draftValid || saving}
-                  style={{
-                    paddingVertical: 14,
-                    borderRadius: borderRadius.xl,
-                    alignItems: 'center',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    gap: 8,
-                    backgroundColor:
-                      draftValid && !saving ? m3.colorScheme.primary : m3.surface.s50,
-                  }}
-                >
-                  {saving ? (
-                    <ActivityIndicator size="small" color={m3.colorScheme.onSurfaceVariant} />
-                  ) : (
-                    <AppIcon
-                      name="checkmark-circle"
-                      size={20}
-                      color={
-                        draftValid
-                          ? m3.colorScheme.onPrimary
-                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
-                      }
-                    />
-                  )}
-                  <Text
-                    style={{
-                      fontWeight: '700',
-                      color: draftValid
-                        ? m3.colorScheme.onPrimary
-                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-                    }}
-                  >
-                    {saving
-                      ? t('common.saving', { defaultValue: 'Saving…' })
-                      : activeLogType
-                        ? t('receiptLog.saveType', {
-                            defaultValue: 'Save {{type}}',
-                            type: t(activeLogType.labelKey),
-                          })
-                        : t('receiptLog.save', { defaultValue: 'Save' })}
-                  </Text>
-                </Pressable>
-              </View>
             </View>
           </KeyboardAvoidingView>
         </View>
