@@ -668,7 +668,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
                 minHeight: screenHeight * 0.6,
-                maxHeight: screenHeight * 0.92,
+                maxHeight: screenHeight - insets.top,
                 marginBottom: keyboardHeight,
               }}
             >
