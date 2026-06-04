@@ -1,0 +1,23 @@
+app.config.js
+  s_b6f9a1a3afbb4a::t_fa6743a0eed067 61
+package.json
+  s_b6f9a1a3afbb4a::t_8f76013eb60412 37
+eas.json
+  s_b6f9a1a3afbb4a::t_56851546f1a749 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e27d577a39286f11441bf3002ec7c0466cd30b90",
+  "prompts": {},
+  "sessions": {
+    "s_b6f9a1a3afbb4a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e8d24-696f-7f62-ab8d-ea8e3e20e6a5",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
