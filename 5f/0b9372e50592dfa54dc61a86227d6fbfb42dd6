@@ -1,0 +1,20 @@
+src/components/screens/entry-form.tsx
+  s_46d90796ba01c9::t_1069a6d9f0cc0c 3329-3332
+  s_46d90796ba01c9::t_ad44848e14ce97 589-591,598,605
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "5f0b9372e50592dfa54dc61a86227d6fbfb42dd6",
+  "prompts": {},
+  "sessions": {
+    "s_46d90796ba01c9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e77b88db-480b-452d-a0dc-2f7876da2821",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
