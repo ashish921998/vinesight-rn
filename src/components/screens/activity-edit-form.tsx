@@ -28,6 +28,11 @@ import { useM3 } from '@/styles/use-theme';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
 import {
+  mapAppliedItems,
+  buildChemicalSummary,
+  buildWaterDoseString,
+} from '@/utils/applied-input-mapper';
+import {
   IrrigationForm,
   SprayForm,
   HarvestForm,
@@ -390,22 +395,15 @@ export function ActivityEditForm({
           if (r.id == null) {
             throw new Error('Record ID is missing');
           }
-          const chemicalStr = sprayData.chemicals
-            .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
-            .join(', ');
-          const doseStr = `Water: ${sprayData.waterVolume}L`;
-          const chemicalItems = sprayData.chemicals
-            .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
-            .map((c) => ({
-              name: c.name.trim(),
-              unit: c.unit,
-              quantity: c.quantity!,
-              quantity_basis: c.quantityBasis ?? 'total',
-              warehouse_item_id: c.warehouseItemId ?? null,
-              catalog_product_id: c.catalogProductId ?? null,
-              composition_snapshot: c.compositionSnapshot ?? null,
-              density_kg_per_l: c.densityKgPerL ?? null,
-            }));
+          const chemicalStr = buildChemicalSummary(sprayData.chemicals);
+          const doseStr = buildWaterDoseString(sprayData.waterVolume);
+          // Edit path stores quantities verbatim (factor 1): the form is hydrated
+          // from already-normalized stored values, so re-applying the create path's
+          // per-acre area-unit conversion here would double-count. The create path
+          // (entry-log-submission) passes the real farm-derived factor instead.
+          const chemicalItems = mapAppliedItems(sprayData.chemicals, {
+            perAreaToPerAcreFactor: 1,
+          });
           const nutrientTotals = calculateNutrientTotalsForLog({
             items: chemicalItems,
             areaAcre: farm.area ?? 0,
