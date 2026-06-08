@@ -1,0 +1,78 @@
+src/components/screens/receipt-log-screen.tsx
+  s_31dfee1b33c80c::t_5a4174aae8466f 10
+  s_31dfee1b33c80c::t_d173b293f4c955 305,311,318
+  s_31dfee1b33c80c::t_8e6cc9c5a2e4d9 228-242
+  s_46d90796ba01c9::t_2b92cea527cb99 469-470
+  s_31dfee1b33c80c::t_16d5f4ffa7a7d7 36
+  s_31dfee1b33c80c::t_3f831e87648b83 209-210
+  s_46d90796ba01c9::t_5767d40bc1aeda 700-701
+  s_46d90796ba01c9::t_5c71edaa6a6a62 894-903
+  s_31dfee1b33c80c::t_017c7d36967038 331,333
+  s_46d90796ba01c9::t_2a7e07aa708515 514-515,794-795
+  s_31dfee1b33c80c::t_2a4f92a5ae3e1a 105-106
+  s_46d90796ba01c9::t_88232eec65d2df 497-513,516-531,533-574,579
+  s_31dfee1b33c80c::t_85c10efbd0f4f6 370-373,375-379,382
+  s_31dfee1b33c80c::t_888c91587279c9 259-263,265,268,274-275,277,280,282,284-302
+__tests__/use-delete-daily-note.test.tsx
+  s_46d90796ba01c9::t_49fab73b4ccf80 67
+  s_46d90796ba01c9::t_3ebfbf1566d3f8 1,3-48,53-63,68-79,86-87
+  s_46d90796ba01c9::t_a6c9582f1ac49b 80-84
+  s_46d90796ba01c9::t_9f3732c8720fbc 52
+  s_46d90796ba01c9::t_466d28ef2221f7 64-66
+  s_46d90796ba01c9::t_e32c7e8c712de7 85
+  s_46d90796ba01c9::t_ad6ab1cea67c9a 2
+  s_46d90796ba01c9::t_45a06c196e0d3a 49-51
+src/components/screens/entry-form.tsx
+  s_2a2eec74e4d24d::t_1ed3de85ac44d8 1767,1823,1826-1878
+src/components/screens/entry-form/LogForm.tsx
+  s_2a2eec74e4d24d::t_f2ab67e45e731a 180
+  s_2a2eec74e4d24d::t_319dd74d2fb2bc 75
+  s_2a2eec74e4d24d::t_009d82bd413170 234
+  s_2a2eec74e4d24d::t_3cfcd57045f533 50
+src/features/entry-log-session/use-save-single-log.ts
+  s_31dfee1b33c80c::t_1f319b104dbc12 50-54,56
+  s_31dfee1b33c80c::t_9e648fb734c0ea 118-128
+  s_31dfee1b33c80c::t_ed56951d0844fc 142
+__tests__/use-save-single-log.test.tsx
+  s_cdd0a42efc93ae::t_f01a11c2253c5c 1-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "afd8aeaea9ce5809d23ec1b0f5eacfff0b699d30",
+  "prompts": {},
+  "sessions": {
+    "s_2a2eec74e4d24d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1eac5a36-cb9b-4a0f-8f7d-64ad6c83e9ef",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_31dfee1b33c80c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "52c807ea-b98e-41f2-a163-258f84fb59ab",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_46d90796ba01c9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e77b88db-480b-452d-a0dc-2f7876da2821",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_cdd0a42efc93ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5e1909bb-b3cf-49b2-9155-b6e5d98ad8b1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
