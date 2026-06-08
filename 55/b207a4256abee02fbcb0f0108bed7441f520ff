@@ -1,0 +1,62 @@
+src/lib/auth-utils.ts
+  s_be8dca7d737822::t_42f977a2289749 17-29
+__tests__/pending-logs-reducer.test.ts
+  s_be8dca7d737822::t_b427245715be6c 1-142
+src/components/screens/entry-form.tsx
+  s_be8dca7d737822::t_ddc5af5ae641f8 1613
+  s_be8dca7d737822::t_eb70d056849552 52-55
+  s_be8dca7d737822::t_5a9f10bcfabc3d 56
+  s_be8dca7d737822::t_b9a41ff63bd076 889
+  s_be8dca7d737822::t_d14425c15629bf 438-445
+  s_be8dca7d737822::t_f1cd5f3f9fa5c5 1023-1026
+  s_be8dca7d737822::t_7f8cfa932452f7 1274
+  s_be8dca7d737822::t_0b58877544c528 949-952
+  s_be8dca7d737822::t_48947b84dc0b7e 882
+  s_be8dca7d737822::t_3417a8db4c7a91 982
+  s_be8dca7d737822::t_bcd71f25c5c28f 1633
+src/utils/applied-input-mapper.ts
+  s_be8dca7d737822::t_6dc8c1e0f4a001 1-87
+src/utils/entry-log-submission.ts
+  s_be8dca7d737822::t_254577e3ad2da6 204
+  s_be8dca7d737822::t_3aadc16b6c5555 18-22
+  s_be8dca7d737822::t_3d4e0f3b51e87c 156
+  s_be8dca7d737822::t_958ba9391bd7d0 125-126
+src/components/screens/entry-form/draft-mappers.ts
+  s_be8dca7d737822::t_8800d9e1503148 1-80
+src/components/screens/entry-form/use-pending-logs.ts
+  s_be8dca7d737822::t_4731e310559c33 20-21
+  s_be8dca7d737822::t_70fa9a16bbdb82 1-19,22-39
+src/components/screens/entry-form/pending-logs-reducer.ts
+  s_be8dca7d737822::t_142a3a60d106a7 13
+  s_be8dca7d737822::t_72a01b7994f362 36-37
+src/components/screens/activity-edit-form.tsx
+  s_be8dca7d737822::t_a247117bd54742 398-406
+  s_be8dca7d737822::t_0a57f9ab956ed5 31-34
+src/services/assistant-gateway.ts
+  s_be8dca7d737822::t_743c1e64282427 2
+  s_be8dca7d737822::t_f41c08192f7802 73
+src/components/screens/settings/DeleteAccountModal.tsx
+  s_be8dca7d737822::t_9f636c0cba4aed 261,382
+  s_be8dca7d737822::t_3a2f12c8ea5a2a 19
+__tests__/applied-input-mapper.test.ts
+  s_be8dca7d737822::t_0fd326f6c7fa05 1-120
+__tests__/draft-mappers.test.ts
+  s_be8dca7d737822::t_aff1aae45c6838 1-2,4-13,16-31,34-65,67-70,77-107
+  s_be8dca7d737822::t_e768e43e177d47 66,71-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "55b207a4256abee02fbcb0f0108bed7441f520ff",
+  "prompts": {},
+  "sessions": {
+    "s_be8dca7d737822": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d7749114-f5e3-4e75-9310-f1c52335bd50",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
