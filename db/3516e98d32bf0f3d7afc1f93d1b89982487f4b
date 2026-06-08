@@ -1,0 +1,45 @@
+src/components/assistant/MessageBubble.tsx
+  s_31dfee1b33c80c::t_257beaddf0412d 195-204
+src/i18n/locales/en.ts
+  s_46d90796ba01c9::t_b4c4d05e069f70 302
+src/i18n/locales/mr.ts
+  s_46d90796ba01c9::t_e4637d4b38460c 303
+src/services/report-comparison.ts
+  s_46d90796ba01c9::t_09c0dca5abd36d 41,46
+src/constants/calculator-models.ts
+  s_2a2eec74e4d24d::t_c30030dbd210de 296
+src/i18n/locales/hi.ts
+  s_46d90796ba01c9::t_76715f480e1905 301
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "db3516e98d32bf0f3d7afc1f93d1b89982487f4b",
+  "prompts": {},
+  "sessions": {
+    "s_2a2eec74e4d24d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1eac5a36-cb9b-4a0f-8f7d-64ad6c83e9ef",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_31dfee1b33c80c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "52c807ea-b98e-41f2-a163-258f84fb59ab",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_46d90796ba01c9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e77b88db-480b-452d-a0dc-2f7876da2821",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
