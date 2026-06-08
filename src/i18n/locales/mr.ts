@@ -300,6 +300,7 @@ export const mr = {
     },
     actions: {
       addActivity: 'नोंद जोडा',
+      addTask: '$t(glossary.task) जोडा',
       seeAllLogs: 'सर्व नोंदी पहा',
       seeAllTasks: 'सर्व $t(glossary.task) पहा',
       menuTitle: '$t(glossary.farm) क्रिया',

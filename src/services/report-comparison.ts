@@ -38,12 +38,12 @@ function toLocalDate(iso: string): Date {
   return parseDbDateToLocalDate(iso) ?? new Date();
 }
 
-export function daysBetween(fromIso: string, toIso: string): number {
+function daysBetween(fromIso: string, toIso: string): number {
   const ms = toLocalDate(toIso).getTime() - toLocalDate(fromIso).getTime();
   return Math.max(0, Math.round(ms / 86_400_000));
 }
 
-export function addDaysIso(iso: string, days: number): string {
+function addDaysIso(iso: string, days: number): string {
   const d = toLocalDate(iso);
   d.setDate(d.getDate() + days);
   return formatLocalDate(d);

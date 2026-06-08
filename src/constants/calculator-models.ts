@@ -293,7 +293,7 @@ export const LOG_TYPES: LogType[] = [
     icon: ICON_REGISTRY.fertigation,
     color: '#408059',
   },
-  { id: 'note', labelKey: 'logs.types.note', icon: ICON_REGISTRY.note, color: '#5C6D91' },
+  { id: 'note', labelKey: 'logs.types.note', icon: ICON_REGISTRY.note, color: '#5E7B72' },
 ];
 
 export function getLogType(id: LogTypeId): LogType {

@@ -299,6 +299,7 @@ export const en = {
     },
     actions: {
       addActivity: 'Add activity',
+      addTask: 'Add task',
       seeAllLogs: 'See all logs',
       seeAllTasks: 'See all tasks',
       menuTitle: 'Farm actions',

@@ -192,9 +192,16 @@ export function MessageBubble({
                   isSafetyBlocked ? `${t('assistant.safety.blockedA11y')} ${a11yLabel}` : a11yLabel
                 }
               >
-                <Markdown style={markdownStyles}>
-                  {isRevealing ? `${revealedText} ▍` : message.content}
-                </Markdown>
+                {/* While revealing, render plain <Text> rather than <Markdown>:
+                    react-native-markdown-display re-parses the whole AST on every
+                    change, so feeding it the growing string at ~60fps re-parses an
+                    ever-larger document each tick (jank on low-end Android). Mount
+                    <Markdown> once, after the reveal completes. */}
+                {isRevealing ? (
+                  <Text style={markdownStyles.body}>{`${revealedText} ▍`}</Text>
+                ) : (
+                  <Markdown style={markdownStyles}>{message.content}</Markdown>
+                )}
               </View>
               {!isLoading && !isRevealing && message.cards && message.cards.length > 0 && (
                 <RichMessageContent cards={message.cards} />
