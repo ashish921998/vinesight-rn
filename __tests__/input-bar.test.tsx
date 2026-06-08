@@ -17,31 +17,38 @@ import { InputBar } from '@/components/assistant/InputBar';
 
 let mockIsDark = false;
 
-jest.mock('@/styles/use-theme', () => ({
-  useThemeTokens: () => ({
-    isDark: mockIsDark,
-    m3: {
-      colorScheme: {
-        primary: '#408059',
-        onPrimary: '#ffffff',
-        primaryContainer: '#e1ebe5',
-        onPrimaryContainer: '#1f412b',
-        surface: '#f9fafb',
-        onSurface: '#111827',
-        onSurfaceVariant: '#6b7280',
-        outlineVariant: '#e5e7eb',
-        surfaceVariant: '#f3f4f6',
+jest.mock('@/styles/use-theme', () => {
+  const __mod = {
+    useThemeTokens: () => ({
+      isDark: mockIsDark,
+      m3: {
+        colorScheme: {
+          primary: '#408059',
+          onPrimary: '#ffffff',
+          primaryContainer: '#e1ebe5',
+          onPrimaryContainer: '#1f412b',
+          surface: '#f9fafb',
+          onSurface: '#111827',
+          onSurfaceVariant: '#6b7280',
+          outlineVariant: '#e5e7eb',
+          surfaceVariant: '#f3f4f6',
+        },
+        surface: {
+          surfaceContainer: '#e5e7eb',
+          surfaceContainerHigh: '#d1d5db',
+        },
+        typography: {
+          bodyMedium: { fontSize: 14 },
+        },
       },
-      surface: {
-        surfaceContainer: '#e5e7eb',
-        surfaceContainerHigh: '#d1d5db',
-      },
-      typography: {
-        bodyMedium: { fontSize: 14 },
-      },
-    },
-  }),
-}));
+    }),
+  };
+  return {
+    ...__mod,
+    useM3: () => __mod.useThemeTokens().m3,
+    useIsDark: () => (__mod.useThemeTokens() as { isDark?: boolean }).isDark ?? false,
+  };
+});
 
 jest.mock('@/components/ui/symbol', () => ({
   Symbol: ({ name }: { name: string }) => {

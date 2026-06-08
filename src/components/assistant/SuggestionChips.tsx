@@ -8,8 +8,8 @@
 import React from 'react';
 import { ScrollView, TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
-import { spacing } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
+import { fontSize, radius, spacing } from '@/styles/theme';
 
 interface SuggestionChipsProps {
   suggestions: readonly string[];
@@ -22,7 +22,7 @@ export function SuggestionChips({
   onSendSuggestion,
   disabled = false,
 }: SuggestionChipsProps) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t } = useTranslation();
   const chipBackgroundColor =
     m3.surface?.surfaceContainerLow ??
@@ -61,7 +61,7 @@ export function SuggestionChips({
                   // Use surfaceContainerLow which maps to mist-1 (surface[100])
                   backgroundColor: chipBackgroundColor,
                   borderColor: chipBorderColor,
-                  borderRadius: 999,
+                  borderRadius: radius.full,
                 },
                 disabled && styles.chipDisabled,
               ]}
@@ -76,7 +76,7 @@ export function SuggestionChips({
                   {
                     // Cellar Ledger: 13px/500 text with dark ink color
                     color: disabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onSurface,
-                    fontSize: 13,
+                    fontSize: fontSize.sm,
                     fontWeight: '500',
                   },
                 ]}
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: spacing[4],
     paddingVertical: 7, // ~14px - matches wireframe padding
-    borderRadius: 999, // Pill shape - set inline but also here for base
+    borderRadius: radius.full, // Pill shape - set inline but also here for base
     borderWidth: 1, // 1px border - stone-3
     maxWidth: 220,
   },
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   chipText: {
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '500',
     lineHeight: 18,
   },

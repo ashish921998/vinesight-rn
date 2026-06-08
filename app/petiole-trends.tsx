@@ -17,8 +17,9 @@ import { useFertigationRecords } from '@/hooks';
 import ParameterSelector from '@/components/screens/parameter-selector';
 import TrendsTable from '@/components/screens/trends-table';
 import TrendsChart from '@/components/screens/trends-chart';
-import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 import { colorWithOpacity } from '@/utils/color';
 import { aggregateNutrientsBetweenPetioleTests } from '@/services/nutrient-flow-service';
 import { formatDate } from '@/i18n/format';
@@ -67,8 +68,8 @@ function mapPetioleParamToElement(paramKey: string): string | null {
 
 export default function PetioleTrendsScreen() {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
+  const domain = useDomainColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
@@ -130,7 +131,7 @@ export default function PetioleTrendsScreen() {
       <SafeScreen backgroundColor={m3.colorScheme.background}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={colors.labTest.petiole} />
+          <ActivityIndicator size="large" color={domain.labTest.petiole} />
           <Text
             style={{
               color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8),
@@ -163,7 +164,7 @@ export default function PetioleTrendsScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -189,7 +190,7 @@ export default function PetioleTrendsScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -228,7 +229,7 @@ export default function PetioleTrendsScreen() {
           <Symbol
             name={resolveSymbolIconName(ICON_REGISTRY.petioleTest)}
             size={20}
-            color={colors.labTest.petiole}
+            color={domain.labTest.petiole}
           />
           <Text
             style={{
@@ -257,7 +258,7 @@ export default function PetioleTrendsScreen() {
         <View
           style={{
             flexDirection: 'row',
-            backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
+            backgroundColor: colorWithOpacity(m3.surface.s100, 0.9),
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[2],
             borderBottomWidth: 1,
@@ -271,7 +272,7 @@ export default function PetioleTrendsScreen() {
               paddingVertical: spacing[2],
               marginRight: spacing[2],
               borderBottomWidth: viewMode === 'table' ? 2 : 0,
-              borderBottomColor: viewMode === 'table' ? colors.labTest.petiole : 'transparent',
+              borderBottomColor: viewMode === 'table' ? domain.labTest.petiole : 'transparent',
             }}
           >
             <Text
@@ -282,7 +283,7 @@ export default function PetioleTrendsScreen() {
                 textTransform: 'uppercase',
                 color:
                   viewMode === 'table'
-                    ? colors.labTest.petiole
+                    ? domain.labTest.petiole
                     : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55),
               }}
             >
@@ -296,7 +297,7 @@ export default function PetioleTrendsScreen() {
               paddingVertical: spacing[2],
               marginLeft: spacing[2],
               borderBottomWidth: viewMode === 'chart' ? 2 : 0,
-              borderBottomColor: viewMode === 'chart' ? colors.labTest.petiole : 'transparent',
+              borderBottomColor: viewMode === 'chart' ? domain.labTest.petiole : 'transparent',
             }}
           >
             <Text
@@ -307,7 +308,7 @@ export default function PetioleTrendsScreen() {
                 textTransform: 'uppercase',
                 color:
                   viewMode === 'chart'
-                    ? colors.labTest.petiole
+                    ? domain.labTest.petiole
                     : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55),
               }}
             >
@@ -350,7 +351,7 @@ export default function PetioleTrendsScreen() {
             marginBottom: spacing[8],
             padding: spacing[4],
             borderRadius: borderRadius.xl,
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
           }}
@@ -444,7 +445,9 @@ export default function PetioleTrendsScreen() {
                             month: 'short',
                           })}
                         </Text>
-                        <Text style={{ fontSize: 11, color: m3.colorScheme.onSurfaceVariant }}>
+                        <Text
+                          style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
+                        >
                           {t('trends.nutrientFlow.coverage', {
                             value: interval.coveragePercent.toFixed(0),
                           })}

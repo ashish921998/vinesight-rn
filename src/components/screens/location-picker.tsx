@@ -17,8 +17,9 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { EmptyState } from '@/components/ui';
 
 const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
@@ -77,9 +78,8 @@ export default function LocationPicker({
   initialLongitude,
 }: LocationPickerProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
-  const styles = createStyles(colors, m3);
+  const styles = createStyles(m3);
 
   const [selectedCoordinate, setSelectedCoordinate] = useState<{
     latitude: number;
@@ -90,6 +90,7 @@ export default function LocationPicker({
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [searchError, setSearchError] = useState(false);
   const searchInputRef = useRef<TextInput>(null);
   const mapRef = useRef<MapView>(null);
   const wasVisibleRef = useRef(false);
@@ -101,6 +102,7 @@ export default function LocationPicker({
       setSearchQuery('');
       setSearchResults([]);
       setShowResults(false);
+      setSearchError(false);
       return;
     }
 
@@ -123,18 +125,21 @@ export default function LocationPicker({
     if (!query.trim()) {
       setSearchResults([]);
       setShowResults(false);
+      setSearchError(false);
       return;
     }
 
     if (!GOOGLE_PLACES_API_KEY) {
       console.error('Google Places API key not configured');
       setSearchResults([]);
-      setShowResults(false);
+      setShowResults(true);
+      setSearchError(true);
       return;
     }
 
     setIsSearching(true);
     setShowResults(true);
+    setSearchError(false);
 
     try {
       const response = await fetch(
@@ -150,6 +155,7 @@ export default function LocationPicker({
       if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
         console.error('Google Places API error:', data.status, data.error_message);
         setSearchResults([]);
+        setSearchError(true);
         return;
       }
 
@@ -169,6 +175,7 @@ export default function LocationPicker({
     } catch (error) {
       console.error('Error searching location:', error);
       setSearchResults([]);
+      setSearchError(true);
     } finally {
       setIsSearching(false);
     }
@@ -210,6 +217,7 @@ export default function LocationPicker({
     if (!text.trim()) {
       setSearchResults([]);
       setShowResults(false);
+      setSearchError(false);
       return;
     }
 
@@ -260,6 +268,7 @@ export default function LocationPicker({
     setSearchQuery('');
     setSearchResults([]);
     setShowResults(false);
+    setSearchError(false);
     searchInputRef.current?.focus();
   };
 
@@ -344,18 +353,18 @@ export default function LocationPicker({
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t('locationPicker.title')}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color={colors.gray[500]} />
+            <Ionicons name="close" size={24} color={m3.neutral.n500} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.searchContainer}>
           <View style={styles.searchInputWrapper}>
-            <Ionicons name="search" size={20} color={colors.gray[500]} style={styles.searchIcon} />
+            <Ionicons name="search" size={20} color={m3.neutral.n500} style={styles.searchIcon} />
             <TextInput
               ref={searchInputRef}
               style={styles.searchInput}
               placeholder={t('locationPicker.searchPlaceholder')}
-              placeholderTextColor={colors.gray[500]}
+              placeholderTextColor={m3.neutral.n500}
               value={searchQuery}
               onChangeText={handleSearchChange}
               onSubmitEditing={handleSearchSubmit}
@@ -372,11 +381,11 @@ export default function LocationPicker({
             )}
             {searchQuery.length > 0 && !isSearching && (
               <TouchableOpacity onPress={handleClearSearch} style={styles.clearButton}>
-                <Ionicons name="close-circle" size={18} color={colors.gray[500]} />
+                <Ionicons name="close-circle" size={18} color={m3.neutral.n500} />
               </TouchableOpacity>
             )}
           </View>
-          {showResults && searchResults.length > 0 && (
+          {showResults && (
             <View style={styles.resultsContainer}>
               <FlatList
                 data={searchResults}
@@ -396,12 +405,26 @@ export default function LocationPicker({
                   );
                 }}
                 ItemSeparatorComponent={() => <View style={styles.resultSeparator} />}
+                ListEmptyComponent={
+                  isSearching ? null : (
+                    <View style={styles.emptyResultsWrap}>
+                      <EmptyState
+                        icon={searchError ? 'exclamationmark.triangle' : 'magnifyingglass'}
+                        title={
+                          searchError
+                            ? t('locationPicker.searchFailedTitle')
+                            : t('locationPicker.noResultsFound')
+                        }
+                        description={
+                          searchError
+                            ? t('locationPicker.searchFailedBody')
+                            : t('locationPicker.noResultsHint')
+                        }
+                      />
+                    </View>
+                  )
+                }
               />
-            </View>
-          )}
-          {showResults && searchQuery.trim() && searchResults.length === 0 && !isSearching && (
-            <View style={styles.noResultsContainer}>
-              <Text style={styles.noResultsText}>{t('locationPicker.noResultsFound')}</Text>
             </View>
           )}
         </View>
@@ -410,7 +433,7 @@ export default function LocationPicker({
           fallback={
             <View style={styles.mapFallback}>
               <View style={styles.mapFallbackIcon}>
-                <Ionicons name="map" size={32} color={colors.gray[600]} />
+                <Ionicons name="map" size={32} color={m3.neutral.n600} />
               </View>
               <Text style={styles.mapFallbackTitle}>
                 {t('locationPicker.mapsUnavailableTitle')}
@@ -464,10 +487,10 @@ export default function LocationPicker({
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={colors.success} />
+              <ActivityIndicator color={m3.colorScheme.success} />
             ) : (
               <>
-                <Ionicons name="navigate" size={20} color={colors.success} />
+                <Ionicons name="navigate" size={20} color={m3.colorScheme.success} />
                 <Text style={styles.locationButtonText}>{t('locationPicker.useCurrent')}</Text>
               </>
             )}
@@ -490,7 +513,7 @@ export default function LocationPicker({
   );
 }
 
-const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<typeof useM3>) =>
+const createStyles = (m3: ReturnType<typeof useM3>) =>
   StyleSheet.create({
     modalContainer: {
       position: 'absolute',
@@ -507,7 +530,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     modalContent: {
       width: '90%',
       height: '80%',
-      backgroundColor: colors.surface[100],
+      backgroundColor: m3.surface.s100,
       borderRadius: borderRadius['2xl'],
       overflow: 'hidden',
     },
@@ -529,13 +552,13 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     },
     searchContainer: {
       padding: spacing[3],
-      backgroundColor: colors.surface[100],
+      backgroundColor: m3.surface.s100,
       zIndex: 10,
     },
     searchInputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.surface[50],
+      backgroundColor: m3.surface.s50,
       borderRadius: borderRadius.lg,
       borderWidth: 1,
       borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.8),
@@ -559,7 +582,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     },
     resultsContainer: {
       marginTop: spacing[2],
-      backgroundColor: colors.surface[100],
+      backgroundColor: m3.surface.s100,
       borderRadius: borderRadius.lg,
       borderWidth: 1,
       borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.5),
@@ -592,16 +615,8 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
       backgroundColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.3),
       marginLeft: spacing[3] + 18 + spacing[2],
     },
-    noResultsContainer: {
-      marginTop: spacing[2],
-      padding: spacing[4],
-      backgroundColor: colors.surface[50],
-      borderRadius: borderRadius.lg,
-      alignItems: 'center',
-    },
-    noResultsText: {
-      fontSize: fontSize.sm,
-      color: m3.colorScheme.onSurfaceVariant,
+    emptyResultsWrap: {
+      height: 188,
     },
     map: {
       flex: 1,
@@ -611,7 +626,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
       paddingHorizontal: spacing[6],
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surface[50],
+      backgroundColor: m3.surface.s50,
     },
     mapFallbackIcon: {
       width: 72,
@@ -619,7 +634,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
       borderRadius: borderRadius.full,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surface[100],
+      backgroundColor: m3.surface.s100,
       marginBottom: spacing[4],
     },
     mapFallbackTitle: {

@@ -7,7 +7,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 // import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import type { AssistantMessageAction } from '@/types/ai';
@@ -19,7 +19,7 @@ interface MessageActionsProps {
 }
 
 export function MessageActions({ actions, onActionPress, disabled = false }: MessageActionsProps) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   // const { t } = useTranslation();
 
   if (!actions || actions.length === 0) return null;

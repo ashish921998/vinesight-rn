@@ -10,7 +10,8 @@ import Animated, {
   runOnJS,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { colors, spacing, size, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, size, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import appLogoLight from '../../assets/icons/ios-light.png';
 
@@ -22,6 +23,7 @@ interface SplashProps {
 }
 
 export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
+  const m3 = useM3();
   const [isMounted, setIsMounted] = useState(true);
 
   const scale = useSharedValue(0);
@@ -94,7 +96,7 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: colors.surface[50],
+          backgroundColor: m3.surface.s50,
         }}
       >
         <Animated.View style={[logoContainerStyle, { alignItems: 'center' }]}>
@@ -125,7 +127,7 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
               {
                 fontSize: fontSize['4xl'],
                 fontWeight: fontWeight.bold,
-                color: colors.surface[900],
+                color: m3.surface.s900,
                 marginBottom: spacing[2],
               },
             ]}
@@ -136,7 +138,7 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
           <Animated.Text
             style={[
               textOpacity,
-              { color: colorWithOpacity(colors.surface[700], 0.9), fontSize: fontSize.lg },
+              { color: colorWithOpacity(m3.surface.s700, 0.9), fontSize: fontSize.lg },
             ]}
           >
             Farm Management

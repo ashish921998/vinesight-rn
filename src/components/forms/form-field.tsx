@@ -8,8 +8,8 @@ import {
   type TextInputSubmitEditingEventData,
 } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useThemeColors } from '@/styles/use-theme';
+import { spacing, componentRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 
 interface FormFieldProps extends TextInputProps {
   label: string;
@@ -30,34 +30,34 @@ export function FormField({
   editable = true,
   ...props
 }: FormFieldProps) {
-  const colors = useThemeColors();
-  const resolvedIconColor = iconColor ?? colors.gray[500];
+  const m3 = useM3();
+  const resolvedIconColor = iconColor ?? m3.neutral.n500;
   const [isFocused, setIsFocused] = useState(false);
   const hasError = !!error;
   const borderColor = hasError
-    ? colors.error
+    ? m3.colorScheme.error
     : isFocused
-      ? colors.primary[500]
-      : colors.surface[300];
-  const backgroundColor = colors.surface[100];
+      ? m3.primary.p500
+      : m3.surface.s300;
+  const backgroundColor = m3.surface.s100;
 
   return (
     <View style={{ marginBottom: spacing[4] }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
         {icon && (
           <View style={{ marginRight: 6 }}>
-            <Symbol name={icon} size={16} color={colors.primary[600]} />
+            <Symbol name={icon} size={16} color={m3.primary.p600} />
           </View>
         )}
         <Text
           style={{
             fontSize: fontSize.sm,
             fontWeight: fontWeight.semibold,
-            color: colors.surface[800],
+            color: m3.surface.s800,
           }}
         >
           {label}
-          {required && <Text style={{ color: colors.error }}> *</Text>}
+          {required && <Text style={{ color: m3.colorScheme.error }}> *</Text>}
         </Text>
       </View>
 
@@ -67,7 +67,7 @@ export function FormField({
           alignItems: 'center',
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[3],
-          borderRadius: borderRadius.xl,
+          borderRadius: componentRadius.input,
           borderWidth: 1,
           borderColor,
           backgroundColor,
@@ -80,8 +80,8 @@ export function FormField({
         )}
 
         <TextInput
-          style={[{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }, props.style]}
-          placeholderTextColor={colors.gray[400]}
+          style={[{ flex: 1, fontSize: fontSize.base, color: m3.surface.s900 }, props.style]}
+          placeholderTextColor={m3.neutral.n400}
           editable={editable}
           onFocus={(e) => {
             setIsFocused(true);
@@ -96,15 +96,17 @@ export function FormField({
       </View>
 
       {hint && !hasError && (
-        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
+        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: spacing[1] }}>
           {hint}
         </Text>
       )}
 
       {hasError && (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-          <Symbol name="exclamationmark.circle.fill" size={14} color={colors.error} />
-          <Text style={{ fontSize: fontSize.xs, color: colors.error, marginLeft: spacing[1] }}>
+          <Symbol name="exclamationmark.circle.fill" size={14} color={m3.colorScheme.error} />
+          <Text
+            style={{ fontSize: fontSize.xs, color: m3.colorScheme.error, marginLeft: spacing[1] }}
+          >
             {error}
           </Text>
         </View>
@@ -151,18 +153,18 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
   }: NumericInputProps,
   ref,
 ) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   const [textValue, setTextValue] = useState(value != null ? String(value) : '');
   const [isFocused, setIsFocused] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const internalRef = useRef<TextInput>(null);
   const hasError = !!props.error;
   const borderColor = hasError
-    ? colors.error
+    ? m3.colorScheme.error
     : isFocused
-      ? colors.primary[500]
-      : colors.surface[300];
-  const backgroundColor = colors.surface[100];
+      ? m3.primary.p500
+      : m3.surface.s300;
+  const backgroundColor = m3.surface.s100;
 
   useEffect(() => {
     if (!isEditing) {
@@ -209,18 +211,18 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
         {props.icon && (
           <View style={{ marginRight: 6 }}>
-            <Symbol name={props.icon} size={16} color={colors.primary[600]} />
+            <Symbol name={props.icon} size={16} color={m3.primary.p600} />
           </View>
         )}
         <Text
           style={{
             fontSize: fontSize.sm,
             fontWeight: fontWeight.semibold,
-            color: colors.surface[800],
+            color: m3.surface.s800,
           }}
         >
           {props.label}
-          {props.required && <Text style={{ color: colors.error }}> *</Text>}
+          {props.required && <Text style={{ color: m3.colorScheme.error }}> *</Text>}
         </Text>
       </View>
 
@@ -230,7 +232,7 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
           alignItems: 'center',
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[2],
-          borderRadius: borderRadius.xl,
+          borderRadius: componentRadius.input,
           borderWidth: 1,
           borderColor,
           backgroundColor,
@@ -238,14 +240,14 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
       >
         {props.icon && (
           <View style={{ marginRight: 10 }}>
-            <Symbol name={props.icon} size={20} color={props.iconColor ?? colors.gray[500]} />
+            <Symbol name={props.icon} size={20} color={props.iconColor ?? m3.neutral.n500} />
           </View>
         )}
 
         <TextInput
           ref={internalRef}
-          style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
-          placeholderTextColor={colors.gray[400]}
+          style={{ flex: 1, fontSize: fontSize.base, color: m3.surface.s900 }}
+          placeholderTextColor={m3.neutral.n400}
           keyboardType="decimal-pad"
           value={textValue}
           onChangeText={handleChangeText}
@@ -267,24 +269,24 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
         />
 
         {unit && (
-          <Text
-            style={{ fontSize: fontSize.sm, color: colors.surface[500], marginLeft: spacing[2] }}
-          >
+          <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500, marginLeft: spacing[2] }}>
             {unit}
           </Text>
         )}
       </View>
 
       {props.hint && !props.error && (
-        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
+        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: spacing[1] }}>
           {props.hint}
         </Text>
       )}
 
       {props.error && (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-          <Symbol name="exclamationmark.circle.fill" size={14} color={colors.error} />
-          <Text style={{ fontSize: fontSize.xs, color: colors.error, marginLeft: spacing[1] }}>
+          <Symbol name="exclamationmark.circle.fill" size={14} color={m3.colorScheme.error} />
+          <Text
+            style={{ fontSize: fontSize.xs, color: m3.colorScheme.error, marginLeft: spacing[1] }}
+          >
             {props.error}
           </Text>
         </View>

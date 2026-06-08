@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, Modal, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { toast } from '@/components/ui/toast';
 import {
   FormModal,
   SectionHeader,
@@ -23,9 +24,9 @@ import { useNotificationStore } from '@/stores';
 import { ensureNotificationPermissions, notifyLowWaterAlert } from '@/services/notifications';
 import { useTranslation } from 'react-i18next';
 import { formatNumber, formatDate } from '@/i18n/format';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { triggerHapticMedium, triggerHapticSuccess } from '@/utils/haptics';
+import { triggerHapticMedium } from '@/utils/haptics';
 
 interface WaterLevelSheetProps {
   visible?: boolean;
@@ -43,7 +44,6 @@ export function WaterLevelSheet({
   presentation = 'modal',
 }: WaterLevelSheetProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
 
   const isVisible = visible ?? true;
@@ -160,9 +160,7 @@ export function WaterLevelSheet({
         }
       }
       // Keep the success message numeric display in Latin digits.
-      triggerHapticSuccess();
-      Alert.alert(
-        t('waterLevelSheet.alerts.successTitle'),
+      toast.success(
         t('waterLevelSheet.alerts.successUpdated', {
           valueMm: formatNumber(calculatedWaterLevel, { maximumFractionDigits: 1 }),
         }),
@@ -217,7 +215,7 @@ export function WaterLevelSheet({
       <Text
         style={{
           fontSize: fontSize.base,
-          color: colors.surface[500],
+          color: m3.surface.s500,
           marginBottom: spacing[4],
         }}
       >
@@ -241,7 +239,7 @@ export function WaterLevelSheet({
             compactValue: true,
           },
         ]}
-        backgroundColor={colors.surface[100]}
+        backgroundColor={m3.surface.s100}
       />
 
       {calculatedWaterLevel !== null && (
@@ -261,7 +259,7 @@ export function WaterLevelSheet({
               } mm`,
             },
           ]}
-          backgroundColor={colors.primary[50]}
+          backgroundColor={m3.primary.p50}
         />
       )}
 
@@ -305,12 +303,12 @@ export function WaterLevelSheet({
               style={{
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.medium,
-                color: colors.surface[700],
+                color: m3.surface.s700,
                 marginBottom: spacing[2],
               }}
             >
               {t('waterLevelSheet.growthStage.label')}
-              <Text style={{ color: colors.error }}> *</Text>
+              <Text style={{ color: m3.colorScheme.error }}> *</Text>
             </Text>
             <Pressable
               onPress={() => setShowGrowthStagePicker(true)}
@@ -318,9 +316,9 @@ export function WaterLevelSheet({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 2,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
                 borderRadius: borderRadius.xl,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
@@ -330,7 +328,7 @@ export function WaterLevelSheet({
                 style={{
                   fontSize: fontSize.base,
                   color: selectedGrowthStage
-                    ? colors.surface[900]
+                    ? m3.surface.s900
                     : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
                 }}
               >
@@ -342,7 +340,7 @@ export function WaterLevelSheet({
                     })
                   : t('waterLevelSheet.growthStage.placeholder')}
               </Text>
-              <SymbolIcon name="chevron.down" size={18} color={colors.surface[400]} />
+              <SymbolIcon name="chevron.down" size={18} color={m3.surface.s400} />
             </Pressable>
           </View>
         </>
@@ -375,14 +373,14 @@ export function WaterLevelSheet({
         style={{
           borderRadius: borderRadius.xl,
           borderWidth: 2,
-          borderColor: colors.surface[300],
-          backgroundColor: colors.surface[100],
+          borderColor: m3.surface.s300,
+          backgroundColor: m3.surface.s100,
           paddingVertical: spacing[3],
           alignItems: 'center',
           marginBottom: spacing[6],
         }}
       >
-        <Text style={{ fontWeight: fontWeight.semibold, color: colors.surface[900] }}>
+        <Text style={{ fontWeight: fontWeight.semibold, color: m3.surface.s900 }}>
           {t('waterLevelSheet.calculate')}
         </Text>
       </Pressable>
@@ -405,7 +403,7 @@ export function WaterLevelSheet({
         >
           <View
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderRadius: borderRadius['2xl'],
               width: '100%',
               maxHeight: '70%',
@@ -424,7 +422,7 @@ export function WaterLevelSheet({
                 style={{
                   fontSize: fontSize.lg,
                   fontWeight: fontWeight.bold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   textAlign: 'center',
                 }}
               >
@@ -446,7 +444,7 @@ export function WaterLevelSheet({
                     borderBottomWidth: 1,
                     borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.15),
                     backgroundColor:
-                      selectedGrowthStage?.id === stage.id ? colors.primary[50] : 'transparent',
+                      selectedGrowthStage?.id === stage.id ? m3.primary.p50 : 'transparent',
                   }}
                 >
                   <View
@@ -463,8 +461,8 @@ export function WaterLevelSheet({
                           fontWeight: fontWeight.medium,
                           color:
                             selectedGrowthStage?.id === stage.id
-                              ? colors.primary[600]
-                              : colors.surface[900],
+                              ? m3.primary.p600
+                              : m3.surface.s900,
                         }}
                       >
                         {t(`waterLevelSheet.growthStagePicker.stages.${stage.id}`)}
@@ -472,7 +470,7 @@ export function WaterLevelSheet({
                       <Text
                         style={{
                           fontSize: fontSize.sm,
-                          color: colors.surface[500],
+                          color: m3.surface.s500,
                           marginTop: spacing[1],
                         }}
                       >
@@ -480,11 +478,7 @@ export function WaterLevelSheet({
                       </Text>
                     </View>
                     {selectedGrowthStage?.id === stage.id && (
-                      <SymbolIcon
-                        name="checkmark.circle.fill"
-                        size={24}
-                        color={colors.primary[500]}
-                      />
+                      <SymbolIcon name="checkmark.circle.fill" size={24} color={m3.primary.p500} />
                     )}
                   </View>
                 </Pressable>
@@ -502,7 +496,7 @@ export function WaterLevelSheet({
                 style={{
                   textAlign: 'center',
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                 }}
               >
                 {t('common.cancel')}

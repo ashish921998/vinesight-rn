@@ -9,3 +9,8 @@ export {
   type SaveEntryLogSessionParams,
   type SaveEntryLogSessionResult,
 } from './save-entry-log-session';
+export {
+  useSaveSingleLog,
+  type SaveSingleLogInput,
+  type SaveSingleLogResult,
+} from './use-save-single-log';

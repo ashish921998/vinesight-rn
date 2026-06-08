@@ -24,7 +24,7 @@ import {
 } from '../../types/task';
 import { TASK_TEMPLATES } from '../../constants/task-templates';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useNotificationStore } from '@/stores';
 import {
@@ -70,7 +70,6 @@ export default function TaskForm({
   presentation = 'modal',
 }: Props) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
 
   const isVisible = visible ?? true;
@@ -279,9 +278,9 @@ export default function TaskForm({
         {/* Header */}
         <View
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: '#ffffff',
             borderBottomWidth: 1,
-            borderBottomColor: colors.surface[200],
+            borderBottomColor: m3.surface.s200,
             paddingHorizontal: spacing[4],
             paddingBottom: spacing[3],
             paddingTop: spacing[2],
@@ -293,7 +292,7 @@ export default function TaskForm({
                 width: 48,
                 height: 6,
                 borderRadius: borderRadius.full,
-                backgroundColor: colors.surface[200],
+                backgroundColor: m3.surface.s200,
               }}
             />
           </View>
@@ -304,7 +303,7 @@ export default function TaskForm({
             }}
           >
             <Pressable onPress={onClose} disabled={isLoading} style={{ minWidth: 72 }}>
-              <Text style={{ color: colors.primary[600], fontSize: fontSize.base }}>
+              <Text style={{ color: m3.primary.p600, fontSize: fontSize.base }}>
                 {t('common.cancel')}
               </Text>
             </Pressable>
@@ -315,7 +314,7 @@ export default function TaskForm({
                 style={{
                   fontSize: fontSize.lg,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   textAlign: 'center',
                 }}
                 numberOfLines={1}
@@ -333,7 +332,7 @@ export default function TaskForm({
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: isLoading ? colors.surface[400] : colors.primary[600],
+                  color: isLoading ? m3.surface.s400 : m3.primary.p600,
                 }}
               >
                 {isLoading ? t('tasks.form.saving') : t('common.save')}
@@ -354,7 +353,7 @@ export default function TaskForm({
             <Pressable
               onPress={() => setShowTemplates(!showTemplates)}
               style={{
-                backgroundColor: colors.primary[50],
+                backgroundColor: m3.primary.p50,
                 borderRadius: borderRadius.xl,
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -365,7 +364,7 @@ export default function TaskForm({
               <IconSymbol name="bolt.fill" size={20} color={m3.colorScheme.primary} />
               <Text
                 style={{
-                  color: colors.primary[700],
+                  color: m3.primary.p700,
                   fontWeight: fontWeight.medium,
                   marginLeft: spacing[2],
                   flex: 1,
@@ -385,11 +384,11 @@ export default function TaskForm({
           {showTemplates && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: '#ffffff',
                 borderRadius: borderRadius.xl,
                 marginBottom: spacing[4],
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
                 overflow: 'hidden',
               }}
             >
@@ -403,7 +402,7 @@ export default function TaskForm({
                       style={{
                         padding: spacing[4],
                         borderBottomWidth: 1,
-                        borderBottomColor: colors.surface[100],
+                        borderBottomColor: m3.surface.s100,
                         flexDirection: 'row',
                         alignItems: 'center',
                       }}
@@ -425,13 +424,13 @@ export default function TaskForm({
                           style={{
                             fontSize: fontSize.sm,
                             fontWeight: fontWeight.medium,
-                            color: colors.surface[900],
+                            color: m3.surface.s900,
                           }}
                         >
                           {template.title}
                         </Text>
                         <Text
-                          style={{ fontSize: fontSize.xs, color: colors.surface[500] }}
+                          style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}
                           numberOfLines={1}
                         >
                           {template.description}
@@ -450,7 +449,7 @@ export default function TaskForm({
               style={{
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.medium,
-                color: colors.surface[700],
+                color: m3.surface.s700,
                 marginBottom: spacing[2],
               }}
             >
@@ -459,7 +458,7 @@ export default function TaskForm({
             <Pressable
               onPress={() => setShowFarmPicker(!showFarmPicker)}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: '#ffffff',
                 borderRadius: borderRadius.xl,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
@@ -467,7 +466,7 @@ export default function TaskForm({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -475,7 +474,7 @@ export default function TaskForm({
                 <Text
                   style={{
                     fontSize: fontSize.base,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                     marginLeft: spacing[2],
                   }}
                 >
@@ -487,11 +486,11 @@ export default function TaskForm({
             {showFarmPicker && farms && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: '#ffffff',
                   borderRadius: borderRadius.xl,
                   marginTop: spacing[2],
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
+                  borderColor: m3.surface.s200,
                   overflow: 'hidden',
                 }}
               >
@@ -505,13 +504,13 @@ export default function TaskForm({
                     style={{
                       padding: spacing[4],
                       borderBottomWidth: 1,
-                      borderBottomColor: colors.surface[100],
-                      backgroundColor: farmId === farm.id ? colors.primary[50] : 'transparent',
+                      borderBottomColor: m3.surface.s100,
+                      backgroundColor: farmId === farm.id ? m3.primary.p50 : 'transparent',
                     }}
                   >
                     <Text
                       style={{
-                        color: farmId === farm.id ? colors.primary[700] : colors.surface[700],
+                        color: farmId === farm.id ? m3.primary.p700 : m3.surface.s700,
                         fontWeight: farmId === farm.id ? fontWeight.medium : fontWeight.normal,
                       }}
                     >
@@ -529,7 +528,7 @@ export default function TaskForm({
               style={{
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.medium,
-                color: colors.surface[700],
+                color: m3.surface.s700,
                 marginBottom: spacing[2],
               }}
             >
@@ -540,14 +539,14 @@ export default function TaskForm({
               onChangeText={setTitle}
               placeholder={t('tasks.form.placeholders.title')}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: '#ffffff',
                 borderRadius: borderRadius.xl,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 fontSize: fontSize.base,
-                color: colors.surface[900],
+                color: m3.surface.s900,
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
               }}
               placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
@@ -559,7 +558,7 @@ export default function TaskForm({
               style={{
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.medium,
-                color: colors.surface[700],
+                color: m3.surface.s700,
                 marginBottom: spacing[2],
               }}
             >
@@ -572,14 +571,14 @@ export default function TaskForm({
               multiline
               numberOfLines={3}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: '#ffffff',
                 borderRadius: borderRadius.xl,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 fontSize: fontSize.base,
-                color: colors.surface[900],
+                color: m3.surface.s900,
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
                 minHeight: 80,
                 textAlignVertical: 'top',
               }}
@@ -595,7 +594,7 @@ export default function TaskForm({
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: colors.surface[700],
+                  color: m3.surface.s700,
                   marginBottom: spacing[2],
                 }}
               >
@@ -604,7 +603,7 @@ export default function TaskForm({
               <Pressable
                 onPress={() => setShowTypePicker(!showTypePicker)}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: '#ffffff',
                   borderRadius: borderRadius.xl,
                   paddingHorizontal: spacing[4],
                   paddingVertical: spacing[3],
@@ -612,7 +611,7 @@ export default function TaskForm({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
+                  borderColor: m3.surface.s200,
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -624,7 +623,7 @@ export default function TaskForm({
                   <Text
                     style={{
                       fontSize: fontSize.sm,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                       marginLeft: spacing[2],
                     }}
                   >
@@ -641,7 +640,7 @@ export default function TaskForm({
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: colors.surface[700],
+                  color: m3.surface.s700,
                   marginBottom: spacing[2],
                 }}
               >
@@ -650,7 +649,7 @@ export default function TaskForm({
               <Pressable
                 onPress={() => setShowPriorityPicker(!showPriorityPicker)}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: '#ffffff',
                   borderRadius: borderRadius.xl,
                   paddingHorizontal: spacing[4],
                   paddingVertical: spacing[3],
@@ -658,7 +657,7 @@ export default function TaskForm({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   borderWidth: 1,
-                  borderColor: colors.surface[200],
+                  borderColor: m3.surface.s200,
                 }}
               >
                 <View
@@ -688,11 +687,11 @@ export default function TaskForm({
           {showTypePicker && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: '#ffffff',
                 borderRadius: borderRadius.xl,
                 marginBottom: spacing[4],
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
                 overflow: 'hidden',
               }}
             >
@@ -708,8 +707,8 @@ export default function TaskForm({
                     flexDirection: 'row',
                     alignItems: 'center',
                     borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
-                    backgroundColor: type === taskType ? colors.primary[50] : 'transparent',
+                    borderBottomColor: m3.surface.s100,
+                    backgroundColor: type === taskType ? m3.primary.p50 : 'transparent',
                   }}
                 >
                   <IconSymbol
@@ -720,7 +719,7 @@ export default function TaskForm({
                   <Text
                     style={{
                       marginLeft: spacing[3],
-                      color: type === taskType ? colors.primary[700] : colors.surface[700],
+                      color: type === taskType ? m3.primary.p700 : m3.surface.s700,
                       fontWeight: type === taskType ? fontWeight.medium : fontWeight.normal,
                     }}
                   >
@@ -735,11 +734,11 @@ export default function TaskForm({
           {showPriorityPicker && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: '#ffffff',
                 borderRadius: borderRadius.xl,
                 marginBottom: spacing[4],
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.surface.s200,
                 overflow: 'hidden',
               }}
             >
@@ -755,8 +754,8 @@ export default function TaskForm({
                     flexDirection: 'row',
                     alignItems: 'center',
                     borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
-                    backgroundColor: priority === p ? colors.primary[50] : 'transparent',
+                    borderBottomColor: m3.surface.s100,
+                    backgroundColor: priority === p ? m3.primary.p50 : 'transparent',
                   }}
                 >
                   <View
@@ -782,7 +781,7 @@ export default function TaskForm({
                   <Text
                     style={{
                       marginLeft: spacing[3],
-                      color: priority === p ? colors.primary[700] : colors.surface[700],
+                      color: priority === p ? m3.primary.p700 : m3.surface.s700,
                       fontWeight: priority === p ? fontWeight.medium : fontWeight.normal,
                     }}
                   >
@@ -799,7 +798,7 @@ export default function TaskForm({
               style={{
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.medium,
-                color: colors.surface[700],
+                color: m3.surface.s700,
                 marginBottom: spacing[2],
               }}
             >
@@ -815,25 +814,29 @@ export default function TaskForm({
               }}
               placeholder={t('tasks.form.placeholders.dueDate')}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: '#ffffff',
                 borderRadius: borderRadius.xl,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 fontSize: fontSize.base,
-                color: colors.surface[900],
+                color: m3.surface.s900,
                 borderWidth: 1,
-                borderColor: dueDateError ? colors.error : colors.surface[200],
+                borderColor: dueDateError ? m3.colorScheme.error : m3.surface.s200,
               }}
               placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
             {dueDateError ? (
-              <Text style={{ fontSize: fontSize.xs, color: colors.error, marginTop: spacing[1] }}>
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  color: m3.colorScheme.error,
+                  marginTop: spacing[1],
+                }}
+              >
                 {dueDateError}
               </Text>
             ) : null}
-            <Text
-              style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}
-            >
+            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: spacing[1] }}>
               {t('tasks.form.dueDateHint')}
             </Text>
           </View>

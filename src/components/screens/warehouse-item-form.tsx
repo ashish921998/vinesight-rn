@@ -40,8 +40,8 @@ import {
   PreviewCard,
 } from '../ui/form-components';
 import { ModalBackdrop } from '../ui/modal-backdrop';
-import { useM3, useThemeColors } from '@/styles/use-theme';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { ICON_REGISTRY } from '@/constants/icon-registry';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
@@ -209,7 +209,6 @@ export default function WarehouseItemForm({
   editingItem,
   presentation = 'modal',
 }: WarehouseItemFormProps) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { windowHeight } = useResponsiveHeight();
   const insets = useSafeAreaInsets();
@@ -639,9 +638,9 @@ export default function WarehouseItemForm({
 
         <Pressable
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderWidth: 2,
-            borderColor: colors.surface[200],
+            borderColor: m3.surface.s200,
             borderRadius: borderRadius.xl,
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[4],
@@ -658,7 +657,7 @@ export default function WarehouseItemForm({
           <Text
             style={{
               fontSize: fontSize.base,
-              color: selectedCatalogProductId ? colors.surface[900] : colors.surface[400],
+              color: selectedCatalogProductId ? m3.surface.s900 : m3.surface.s400,
               fontWeight: selectedCatalogProductId ? fontWeight.medium : fontWeight.normal,
               flex: 1,
             }}
@@ -757,7 +756,7 @@ export default function WarehouseItemForm({
             marginBottom: 20,
             paddingHorizontal: 12,
             paddingVertical: 8,
-            borderRadius: 999,
+            borderRadius: radius.full,
             backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.14),
           }}
         >
@@ -784,7 +783,7 @@ export default function WarehouseItemForm({
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.medium,
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 marginBottom: 6,
               }}
             >
@@ -848,7 +847,7 @@ export default function WarehouseItemForm({
                 value: String(validComposition.length),
               },
             ]}
-            backgroundColor={colorWithOpacity(colors.success, 0.12)}
+            backgroundColor={colorWithOpacity(m3.colorScheme.success, 0.12)}
           />
         )}
       </FormModal>
@@ -869,7 +868,7 @@ export default function WarehouseItemForm({
             <Pressable
               onPress={() => {}}
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: borderRadius['3xl'],
                 borderTopRightRadius: borderRadius['3xl'],
                 height: catalogueSheetHeight,
@@ -884,7 +883,7 @@ export default function WarehouseItemForm({
                   paddingHorizontal: spacing[6],
                   paddingVertical: spacing[4],
                   borderBottomWidth: 1,
-                  borderBottomColor: colors.surface[200],
+                  borderBottomColor: m3.surface.s200,
                 }}
               >
                 <View style={{ width: 40 }} />
@@ -892,7 +891,7 @@ export default function WarehouseItemForm({
                   style={{
                     fontSize: fontSize.lg,
                     fontWeight: fontWeight.semibold,
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                   }}
                 >
                   Select from Catalogue
@@ -903,7 +902,7 @@ export default function WarehouseItemForm({
                     width: 40,
                     height: 40,
                     borderRadius: borderRadius.full,
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
@@ -925,9 +924,9 @@ export default function WarehouseItemForm({
                     flexDirection: 'row',
                     alignItems: 'center',
                     borderWidth: 1,
-                    borderColor: colors.surface[200],
+                    borderColor: m3.surface.s200,
                     borderRadius: borderRadius.xl,
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.s50,
                     paddingHorizontal: spacing[3],
                     minHeight: 48,
                   }}
@@ -941,11 +940,11 @@ export default function WarehouseItemForm({
                     value={catalogueSearchQuery}
                     onChangeText={setCatalogueSearchQuery}
                     placeholder="Search by product, grade, or manufacturer"
-                    placeholderTextColor={colors.surface[400]}
+                    placeholderTextColor={m3.surface.s400}
                     style={{
                       flex: 1,
                       marginLeft: spacing[2],
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                       fontSize: fontSize.base,
                     }}
                     autoCapitalize="none"
@@ -962,10 +961,8 @@ export default function WarehouseItemForm({
                     paddingLeft: spacing[8],
                     paddingRight: spacing[6],
                     borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
-                    backgroundColor: !selectedCatalogProductId
-                      ? colors.surface[50]
-                      : colors.surface[100],
+                    borderBottomColor: m3.surface.s100,
+                    backgroundColor: !selectedCatalogProductId ? m3.surface.s50 : m3.surface.s100,
                   }}
                   onPress={() => {
                     clearCatalogSelection();
@@ -981,7 +978,7 @@ export default function WarehouseItemForm({
                     <Text
                       style={{
                         fontSize: fontSize.base,
-                        color: colors.surface[900],
+                        color: m3.surface.s900,
                         fontWeight: !selectedCatalogProductId
                           ? fontWeight.semibold
                           : fontWeight.medium,
@@ -991,7 +988,7 @@ export default function WarehouseItemForm({
                       Skip (manual entry)
                     </Text>
                     {!selectedCatalogProductId && (
-                      <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                      <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
                     )}
                   </View>
                 </Pressable>
@@ -1005,11 +1002,9 @@ export default function WarehouseItemForm({
                       paddingLeft: spacing[8],
                       paddingRight: spacing[6],
                       borderBottomWidth: 1,
-                      borderBottomColor: colors.surface[100],
+                      borderBottomColor: m3.surface.s100,
                       backgroundColor:
-                        selectedCatalogProductId === product.id
-                          ? colors.surface[50]
-                          : colors.surface[100],
+                        selectedCatalogProductId === product.id ? m3.surface.s50 : m3.surface.s100,
                     }}
                     onPress={() => {
                       applyCatalogProduct(product);
@@ -1027,7 +1022,7 @@ export default function WarehouseItemForm({
                         <Text
                           style={{
                             fontSize: fontSize.base,
-                            color: colors.surface[900],
+                            color: m3.surface.s900,
                             fontWeight:
                               selectedCatalogProductId === product.id
                                 ? fontWeight.semibold
@@ -1040,7 +1035,7 @@ export default function WarehouseItemForm({
                         <Text
                           style={{
                             fontSize: fontSize.xs,
-                            color: colors.surface[600],
+                            color: m3.surface.s600,
                             marginTop: 2,
                           }}
                           numberOfLines={1}
@@ -1049,7 +1044,7 @@ export default function WarehouseItemForm({
                         </Text>
                       </View>
                       {selectedCatalogProductId === product.id && (
-                        <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                        <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
                       )}
                     </View>
                   </Pressable>
@@ -1057,7 +1052,7 @@ export default function WarehouseItemForm({
 
                 {catalogProductsLoading && (
                   <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
                       Loading catalogue items...
                     </Text>
                   </View>
@@ -1065,7 +1060,7 @@ export default function WarehouseItemForm({
 
                 {!catalogProductsLoading && catalogProductsError && (
                   <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.error[500] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.error }}>
                       Could not load catalogue items. Please try again later.
                     </Text>
                   </View>
@@ -1075,7 +1070,7 @@ export default function WarehouseItemForm({
                   !catalogProductsError &&
                   visibleCatalogueItems.length === 0 && (
                     <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                      <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
                         {catalogProducts.length === 0
                           ? 'No catalogue items available yet. PHI catalog may not be seeded in this environment.'
                           : 'No catalogue matches found.'}

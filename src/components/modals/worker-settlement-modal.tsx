@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
-import { spacing, borderRadius, fontSize } from '@/styles/theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
+import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { useCurrency } from '@/hooks';
 import { Input } from '@/components/ui';
@@ -79,7 +79,7 @@ interface LedgerRowProps {
 }
 
 function LedgerRow({ label, value, bold }: LedgerRowProps) {
-  const colors = useThemeColors();
+  const m3 = useM3();
   return (
     <View
       style={{
@@ -89,13 +89,13 @@ function LedgerRow({ label, value, bold }: LedgerRowProps) {
         paddingVertical: 11,
         paddingHorizontal: 14,
         borderBottomWidth: 1,
-        borderBottomColor: colors.surface[300],
+        borderBottomColor: m3.surface.s300,
       }}
     >
       <Text
         style={{
-          fontSize: 13,
-          color: bold ? colors.surface[900] : colors.surface[500],
+          fontSize: fontSize.sm,
+          color: bold ? m3.surface.s900 : m3.surface.s500,
           fontWeight: bold ? '700' : '500',
         }}
       >
@@ -103,8 +103,8 @@ function LedgerRow({ label, value, bold }: LedgerRowProps) {
       </Text>
       <Text
         style={{
-          fontSize: 14,
-          color: colors.surface[900],
+          fontSize: fontSize.sm,
+          color: m3.surface.s900,
           fontWeight: bold ? '700' : '600',
           fontVariant: ['tabular-nums'],
         }}
@@ -123,7 +123,6 @@ export function WorkerSettlementModal({
   onSuccess,
 }: WorkerSettlementModalProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const isDark = useIsDark();
   const { t } = useTranslation();
   const currency = useCurrency();
@@ -410,9 +409,9 @@ export function WorkerSettlementModal({
           }}
         >
           <Pressable onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <UiSymbol name="xmark" size={20} color={colors.surface[500]} />
+            <UiSymbol name="xmark" size={20} color={m3.surface.s500} />
           </Pressable>
-          <Text style={{ fontSize: 15, fontWeight: '600', color: colors.surface[900] }}>
+          <Text style={{ fontSize: fontSize.base, fontWeight: '600', color: m3.surface.s900 }}>
             {t('settlePayment', { defaultValue: 'Settle wages' })}
           </Text>
           <View style={{ width: 20 }} />
@@ -425,20 +424,20 @@ export function WorkerSettlementModal({
               style={{
                 width: 76,
                 height: 76,
-                borderRadius: 999,
-                backgroundColor: colorWithOpacity(colors.success, isDark ? 0.18 : 0.14),
+                borderRadius: radius.full,
+                backgroundColor: colorWithOpacity(m3.colorScheme.success, isDark ? 0.18 : 0.14),
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: 18,
               }}
             >
-              <UiSymbol name="checkmark" size={36} color={colors.success} />
+              <UiSymbol name="checkmark" size={36} color={m3.colorScheme.success} />
             </View>
             <Text
               style={{
-                fontSize: 22,
+                fontSize: fontSize['2xl'],
                 fontWeight: '700',
-                color: colors.surface[900],
+                color: m3.surface.s900,
                 letterSpacing: -0.3,
               }}
             >
@@ -446,8 +445,8 @@ export function WorkerSettlementModal({
             </Text>
             <Text
               style={{
-                fontSize: 14,
-                color: colors.surface[500],
+                fontSize: fontSize.sm,
+                color: m3.surface.s500,
                 marginTop: 8,
                 lineHeight: 22,
                 textAlign: 'center',
@@ -465,27 +464,27 @@ export function WorkerSettlementModal({
               style={{
                 marginTop: 22,
                 width: '100%',
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
-                borderRadius: 14,
+                borderColor: m3.surface.s300,
+                borderRadius: radius.lg,
                 paddingHorizontal: 16,
                 paddingVertical: 14,
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 12, color: colors.surface[500] }}>
+                <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                   {t('daysWorked', { defaultValue: 'Days worked' })}
                 </Text>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.surface[900] }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: m3.surface.s900 }}>
                   {settlementCalculation?.days_worked.toFixed(1)}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-                <Text style={{ fontSize: 12, color: colors.surface[500] }}>
+                <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                   {t('settlement.netPayment', { defaultValue: 'Net paid' })}
                 </Text>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.surface[900] }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: m3.surface.s900 }}>
                   {formatMoney(settledAmount)}
                 </Text>
               </View>
@@ -499,14 +498,20 @@ export function WorkerSettlementModal({
                 }}
                 style={({ pressed }) => ({
                   height: 48,
-                  borderRadius: 14,
+                  borderRadius: radius.lg,
                   backgroundColor: m3.colorScheme.primary,
                   opacity: pressed ? 0.85 : 1,
                   alignItems: 'center',
                   justifyContent: 'center',
                 })}
               >
-                <Text style={{ fontSize: 15, fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: '600',
+                    color: m3.colorScheme.onPrimary,
+                  }}
+                >
                   {t('common.done', { defaultValue: 'Done' })}
                 </Text>
               </Pressable>
@@ -516,15 +521,21 @@ export function WorkerSettlementModal({
                   onPress={handleSettleNext}
                   style={({ pressed }) => ({
                     height: 48,
-                    borderRadius: 14,
-                    backgroundColor: pressed ? colors.surface[200] : 'transparent',
+                    borderRadius: radius.lg,
+                    backgroundColor: pressed ? m3.surface.s200 : 'transparent',
                     borderWidth: 1,
-                    borderColor: colors.surface[300],
+                    borderColor: m3.surface.s300,
                     alignItems: 'center',
                     justifyContent: 'center',
                   })}
                 >
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.surface[900] }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.base,
+                      fontWeight: '600',
+                      color: m3.surface.s900,
+                    }}
+                  >
                     {t('settlement.settleNext', { defaultValue: 'Settle next worker' })}
                   </Text>
                 </Pressable>
@@ -543,14 +554,19 @@ export function WorkerSettlementModal({
                 style={{
                   width: 48,
                   height: 48,
-                  borderRadius: 999,
-                  backgroundColor: isDark ? colors.primary[400] : colors.primary[600],
+                  borderRadius: radius.full,
+                  backgroundColor: isDark ? m3.primary.p400 : m3.primary.p600,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
                 <Text
-                  style={{ fontSize: 17, fontWeight: '700', color: '#F7F3ED', letterSpacing: -0.2 }}
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: '700',
+                    color: '#F7F3ED',
+                    letterSpacing: -0.2,
+                  }}
                 >
                   {selectedWorker.name
                     .trim()
@@ -563,10 +579,10 @@ export function WorkerSettlementModal({
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 17, fontWeight: '700', color: colors.surface[900] }}>
+                <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: m3.surface.s900 }}>
                   {selectedWorker.name}
                 </Text>
-                <Text style={{ fontSize: 12, color: colors.surface[500], marginTop: 2 }}>
+                <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 2 }}>
                   {periodDates.start
                     ? formatDate(parseYYYYMMDDToLocalDate(periodDates.start), {
                         month: 'short',
@@ -630,11 +646,11 @@ export function WorkerSettlementModal({
               <View>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: '600',
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                     marginBottom: 8,
                   }}
                 >
@@ -643,12 +659,12 @@ export function WorkerSettlementModal({
                 <View
                   style={{
                     flexDirection: 'row',
-                    backgroundColor: colors.surface[200],
-                    borderRadius: 12,
+                    backgroundColor: m3.surface.s200,
+                    borderRadius: radius.md,
                     padding: 3,
                     gap: 2,
                     borderWidth: 1,
-                    borderColor: colors.surface[300],
+                    borderColor: m3.surface.s300,
                   }}
                 >
                   {[
@@ -673,19 +689,19 @@ export function WorkerSettlementModal({
                         style={{
                           flex: 1,
                           height: 34,
-                          borderRadius: 9,
-                          backgroundColor: on ? colors.surface[100] : 'transparent',
+                          borderRadius: radius.sm,
+                          backgroundColor: on ? m3.surface.s100 : 'transparent',
                           borderWidth: 1,
-                          borderColor: on ? colors.surface[300] : 'transparent',
+                          borderColor: on ? m3.surface.s300 : 'transparent',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}
                       >
                         <Text
                           style={{
-                            fontSize: 13,
+                            fontSize: fontSize.sm,
                             fontWeight: on ? '700' : '500',
-                            color: on ? colors.surface[900] : colors.surface[500],
+                            color: on ? m3.surface.s900 : m3.surface.s500,
                           }}
                         >
                           {period.l}
@@ -737,7 +753,7 @@ export function WorkerSettlementModal({
                   }
                   style={({ pressed }) => ({
                     height: 48,
-                    borderRadius: 14,
+                    borderRadius: radius.lg,
                     backgroundColor: m3.colorScheme.primary,
                     opacity: pressed || isCalculating ? 0.8 : 1,
                     alignItems: 'center',
@@ -745,7 +761,11 @@ export function WorkerSettlementModal({
                   })}
                 >
                   <Text
-                    style={{ fontSize: 15, fontWeight: '600', color: m3.colorScheme.onPrimary }}
+                    style={{
+                      fontSize: fontSize.base,
+                      fontWeight: '600',
+                      color: m3.colorScheme.onPrimary,
+                    }}
                   >
                     {isCalculating
                       ? t('calculating', { defaultValue: 'Calculating…' })
@@ -761,10 +781,10 @@ export function WorkerSettlementModal({
                 {/* Calculation card */}
                 <View
                   style={{
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     borderWidth: 1,
-                    borderColor: colors.surface[300],
-                    borderRadius: 16,
+                    borderColor: m3.surface.s300,
+                    borderRadius: radius.lg,
                     marginBottom: 12,
                     overflow: 'hidden',
                   }}
@@ -774,16 +794,16 @@ export function WorkerSettlementModal({
                       paddingHorizontal: 14,
                       paddingVertical: 12,
                       borderBottomWidth: 1,
-                      borderBottomColor: colors.surface[300],
+                      borderBottomColor: m3.surface.s300,
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 11,
+                        fontSize: fontSize.xs,
                         fontWeight: '600',
                         letterSpacing: 0.8,
                         textTransform: 'uppercase',
-                        color: colors.surface[500],
+                        color: m3.surface.s500,
                       }}
                     >
                       {t('settlement.summary', { defaultValue: 'Calculation' })}
@@ -839,15 +859,21 @@ export function WorkerSettlementModal({
                         paddingVertical: 11,
                         paddingHorizontal: 14,
                         borderBottomWidth: 1,
-                        borderBottomColor: colors.surface[300],
+                        borderBottomColor: m3.surface.s300,
                       }}
                     >
-                      <Text style={{ fontSize: 13, color: colors.surface[500], fontWeight: '500' }}>
+                      <Text
+                        style={{
+                          fontSize: fontSize.sm,
+                          color: m3.surface.s500,
+                          fontWeight: '500',
+                        }}
+                      >
                         {t('settlement.cutFromAdvance', { defaultValue: 'Advance deducted' })}
                       </Text>
                       <Text
                         style={{
-                          fontSize: 14,
+                          fontSize: fontSize.sm,
                           fontWeight: '600',
                           color: m3.colorScheme.error,
                           fontVariant: ['tabular-nums'],
@@ -868,7 +894,7 @@ export function WorkerSettlementModal({
                         isDark ? 0.1 : 0.06,
                       ),
                       borderTopWidth: 1,
-                      borderTopColor: colors.surface[300],
+                      borderTopColor: m3.surface.s300,
                       flexDirection: 'row',
                       justifyContent: 'space-between',
                       alignItems: 'baseline',
@@ -877,25 +903,25 @@ export function WorkerSettlementModal({
                     <View>
                       <Text
                         style={{
-                          fontSize: 11,
+                          fontSize: fontSize.xs,
                           fontWeight: '600',
                           letterSpacing: 0.6,
                           textTransform: 'uppercase',
-                          color: colors.surface[500],
+                          color: m3.surface.s500,
                         }}
                       >
                         {t('settlement.netPayment', { defaultValue: 'Net to pay' })}
                       </Text>
-                      <Text style={{ fontSize: 11, color: colors.surface[500], marginTop: 2 }}>
+                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 2 }}>
                         {settlementCalculation.days_worked.toFixed(1)}{' '}
                         {t('daysWorked', { defaultValue: 'days worked' })}
                       </Text>
                     </View>
                     <Text
                       style={{
-                        fontSize: 26,
+                        fontSize: fontSize['2xl'],
                         fontWeight: '700',
-                        color: colors.surface[900],
+                        color: m3.surface.s900,
                         letterSpacing: -0.4,
                         fontVariant: ['tabular-nums'],
                       }}
@@ -910,9 +936,9 @@ export function WorkerSettlementModal({
                   <View style={{ marginBottom: 12 }}>
                     <Text
                       style={{
-                        fontSize: 12,
+                        fontSize: fontSize.xs,
                         fontWeight: '600',
-                        color: colors.surface[500],
+                        color: m3.surface.s500,
                         marginBottom: 6,
                       }}
                     >
@@ -931,11 +957,11 @@ export function WorkerSettlementModal({
                 {/* Payment method */}
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: '600',
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                     marginBottom: 8,
                   }}
                 >
@@ -967,19 +993,29 @@ export function WorkerSettlementModal({
                           paddingHorizontal: 14,
                           backgroundColor: on
                             ? colorWithOpacity(m3.colorScheme.primary, isDark ? 0.1 : 0.06)
-                            : colors.surface[100],
+                            : m3.surface.s100,
                           borderWidth: on ? 2 : 1,
-                          borderColor: on ? m3.colorScheme.primary : colors.surface[300],
-                          borderRadius: 12,
+                          borderColor: on ? m3.colorScheme.primary : m3.surface.s300,
+                          borderRadius: radius.md,
                         }}
                       >
                         <View style={{ flex: 1 }}>
                           <Text
-                            style={{ fontSize: 14, fontWeight: '600', color: colors.surface[900] }}
+                            style={{
+                              fontSize: fontSize.sm,
+                              fontWeight: '600',
+                              color: m3.surface.s900,
+                            }}
                           >
                             {opt.l}
                           </Text>
-                          <Text style={{ fontSize: 11, color: colors.surface[500], marginTop: 2 }}>
+                          <Text
+                            style={{
+                              fontSize: fontSize.xs,
+                              color: m3.surface.s500,
+                              marginTop: 2,
+                            }}
+                          >
                             {opt.sub}
                           </Text>
                         </View>
@@ -987,9 +1023,9 @@ export function WorkerSettlementModal({
                           style={{
                             width: 20,
                             height: 20,
-                            borderRadius: 999,
+                            borderRadius: radius.full,
                             borderWidth: 2,
-                            borderColor: on ? m3.colorScheme.primary : colors.surface[300],
+                            borderColor: on ? m3.colorScheme.primary : m3.surface.s300,
                             backgroundColor: on ? m3.colorScheme.primary : 'transparent',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1007,16 +1043,16 @@ export function WorkerSettlementModal({
                 {/* Confirm note */}
                 <View
                   style={{
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     borderWidth: 1,
-                    borderColor: colors.surface[300],
-                    borderRadius: 12,
+                    borderColor: m3.surface.s300,
+                    borderRadius: radius.md,
                     padding: 10,
                     paddingHorizontal: 12,
                     marginBottom: 14,
                   }}
                 >
-                  <Text style={{ fontSize: 12, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {t('settlement.confirmNote', {
                       defaultValue:
                         'Settling this period for {{name}} — a new period starts tomorrow. You can edit any day before settling.',
@@ -1031,8 +1067,8 @@ export function WorkerSettlementModal({
                   disabled={isConfirming || netPayment < 0}
                   style={({ pressed }) => ({
                     height: 48,
-                    borderRadius: 14,
-                    backgroundColor: netPayment < 0 ? colors.surface[300] : m3.colorScheme.primary,
+                    borderRadius: radius.lg,
+                    backgroundColor: netPayment < 0 ? m3.surface.s300 : m3.colorScheme.primary,
                     opacity: pressed || isConfirming ? 0.8 : 1,
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -1043,13 +1079,13 @@ export function WorkerSettlementModal({
                   <UiSymbol
                     name="checkmark"
                     size={16}
-                    color={netPayment < 0 ? colors.surface[500] : m3.colorScheme.onPrimary}
+                    color={netPayment < 0 ? m3.surface.s500 : m3.colorScheme.onPrimary}
                   />
                   <Text
                     style={{
-                      fontSize: 15,
+                      fontSize: fontSize.base,
                       fontWeight: '600',
-                      color: netPayment < 0 ? colors.surface[500] : m3.colorScheme.onPrimary,
+                      color: netPayment < 0 ? m3.surface.s500 : m3.colorScheme.onPrimary,
                     }}
                   >
                     {isConfirming

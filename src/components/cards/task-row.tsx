@@ -18,7 +18,7 @@ import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { TaskReminder } from '@/types/task';
 import { PRIORITY_INFO, TASK_TYPE_INFO } from '@/types/task';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
@@ -53,7 +53,6 @@ export function TaskRow({
 }: TaskRowProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const colors = useThemeColors();
   const typeInfo = TASK_TYPE_INFO[task.type];
   const priorityInfo = PRIORITY_INFO[task.priority];
   const cleanDescription = stripTaskPlanFromDescription(task.description);
@@ -79,17 +78,17 @@ export function TaskRow({
   const priorityTone =
     task.priority === 'high'
       ? {
-          fg: colors.error,
-          bg: colorWithOpacity(colors.error, 0.12),
+          fg: m3.colorScheme.error,
+          bg: colorWithOpacity(m3.colorScheme.error, 0.12),
         }
       : task.priority === 'medium'
         ? {
-            fg: colors.warning,
-            bg: colorWithOpacity(colors.warning, 0.18),
+            fg: m3.colorScheme.warning,
+            bg: colorWithOpacity(m3.colorScheme.warning, 0.18),
           }
         : {
-            fg: colors.primary[500],
-            bg: colorWithOpacity(colors.primary[500], 0.12),
+            fg: m3.colorScheme.primary,
+            bg: colorWithOpacity(m3.colorScheme.primary, 0.12),
           };
 
   // Dim meta pill colors when task is completed
@@ -145,9 +144,9 @@ export function TaskRow({
     borderRadius: borderRadius.sm, // 12px
     paddingVertical: spacing[3],
     paddingHorizontal: spacing[4],
-    backgroundColor: colors.surface[100], // mist-1
+    backgroundColor: m3.surface.s100, // mist-1
     borderWidth: 1,
-    borderColor: colors.surface[300],
+    borderColor: m3.surface.s300,
     borderLeftWidth: 3,
     borderLeftColor: priorityTone.fg,
   };
@@ -177,11 +176,11 @@ export function TaskRow({
             marginRight: spacing[3],
             marginTop: 5,
             backgroundColor: task.completed
-              ? colors.success
+              ? m3.colorScheme.success
               : pressed
-                ? colorWithOpacity(colors.surface[900], 0.12)
+                ? colorWithOpacity(m3.surface.s900, 0.12)
                 : 'transparent',
-            borderColor: task.completed ? colors.success : colors.surface[300],
+            borderColor: task.completed ? m3.colorScheme.success : m3.surface.s300,
           })}
         >
           {task.completed && <UiSymbol name="checkmark" size={12} color="#FFFFFF" />}
@@ -210,11 +209,11 @@ export function TaskRow({
             <Text
               numberOfLines={1}
               style={{
-                fontSize: 15,
+                fontSize: fontSize.base,
                 fontWeight: fontWeight.semibold,
                 lineHeight: 20,
                 flex: 1,
-                color: task.completed ? colors.surface[400] : colors.surface[900],
+                color: task.completed ? m3.surface.s400 : m3.surface.s900,
                 textDecorationLine: task.completed ? 'line-through' : 'none',
               }}
             >

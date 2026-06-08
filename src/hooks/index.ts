@@ -62,6 +62,7 @@ export {
   useUpdateExpenseRecord,
   useDeleteExpenseRecord,
   // Daily Notes
+  fetchDailyNoteByDate,
   useDailyNoteByDate,
   useDailyNotes,
   useDailyNotesByFarms,

@@ -5,7 +5,7 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
@@ -25,11 +25,12 @@ interface HarvestFormProps {
   data: HarvestFormData;
   onChange: (data: HarvestFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
+  /** Hide the decorative header + summary/validation chrome (inline log composer). */
+  compact?: boolean;
 }
 
-export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) {
+export function HarvestForm({ data, onChange, onInputFocus, compact = false }: HarvestFormProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
   const isValid = data.quantity !== undefined && data.quantity > 0 && data.grade !== '';
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
@@ -63,42 +64,84 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
     return gradeTranslations[grade] || grade;
   };
 
+  const renderGradeChip = (grade: HarvestGrade) => {
+    const selected = data.grade === grade;
+    return (
+      <Pressable
+        key={grade}
+        onPress={() => onChange({ ...data, grade })}
+        accessibilityRole="button"
+        accessibilityState={{ selected }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing[4],
+          paddingVertical: 10,
+          borderRadius: borderRadius.xl,
+          borderWidth: 1,
+          backgroundColor: selected ? m3.colorScheme.primary : m3.surface.s100,
+          borderColor: selected ? m3.colorScheme.primary : m3.surface.s200,
+        }}
+      >
+        {selected && (
+          <Icon
+            name="checkmark"
+            size={13}
+            color={m3.colorScheme.onPrimary}
+            style={{ marginRight: 6 }}
+          />
+        )}
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.medium,
+            color: selected ? m3.colorScheme.onPrimary : m3.surface.s700,
+          }}
+        >
+          {localizeHarvestGrade(grade)}
+        </Text>
+      </Pressable>
+    );
+  };
+
   return (
     <View>
       {/* Header with icon */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: borderRadius.full,
-            backgroundColor: colorWithOpacity(colors.warning, 0.2),
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: spacing[3],
-          }}
-        >
-          <Icon
-            name={resolveSymbolIconName(ICON_REGISTRY.harvest)}
-            size={20}
-            color={colors.warning}
-          />
-        </View>
-        <View>
-          <Text
+      {!compact && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+          <View
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[900],
+              width: 40,
+              height: 40,
+              borderRadius: borderRadius.full,
+              backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.2),
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: spacing[3],
             }}
           >
-            {t('harvestForm.title')}
-          </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            {t('harvestForm.subtitle')}
-          </Text>
+            <Icon
+              name={resolveSymbolIconName(ICON_REGISTRY.harvest)}
+              size={20}
+              color={m3.colorScheme.warning}
+            />
+          </View>
+          <View>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: m3.surface.s900,
+              }}
+            >
+              {t('harvestForm.title')}
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
+              {t('harvestForm.subtitle')}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_HARVEST_DETAILS}>
         <View
@@ -131,49 +174,18 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
 
           {/* Grade Selection */}
           <View style={{ marginBottom: spacing[4] }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-              <View style={{ marginRight: 6 }}>
-                <Icon name="star" size={16} color={colors.primary[600]} />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.surface[800],
-                }}
-              >
-                {t('common.labels.grade')} <Text style={{ color: colors.error }}>*</Text>
-              </Text>
-            </View>
-
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: m3.surface.s800,
+                marginBottom: spacing[3],
+              }}
+            >
+              {t('common.labels.grade')} <Text style={{ color: m3.colorScheme.error }}>*</Text>
+            </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-              {HARVEST_GRADES.map((grade) => (
-                <Pressable
-                  key={grade}
-                  onPress={() => onChange({ ...data, grade })}
-                  style={{
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: 10,
-                    borderRadius: borderRadius.xl,
-                    borderWidth: 1,
-                    backgroundColor:
-                      data.grade === grade
-                        ? colorWithOpacity(colors.warning, 0.9)
-                        : colors.surface[100],
-                    borderColor: data.grade === grade ? colors.warning : colors.surface[200],
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.medium,
-                      color: data.grade === grade ? m3.colorScheme.onWarning : colors.surface[700],
-                    }}
-                  >
-                    {localizeHarvestGrade(grade)}
-                  </Text>
-                </Pressable>
-              ))}
+              {HARVEST_GRADES.map(renderGradeChip)}
             </View>
           </View>
         </View>
@@ -195,13 +207,13 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ marginRight: 6 }}>
-            <Icon name="person" size={16} color={colors.primary[600]} />
+            <Icon name="person" size={16} color={m3.primary.p600} />
           </View>
           <Text
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: colors.surface[800],
+              color: m3.surface.s800,
             }}
           >
             {t('harvestForm.buyerLabel')}
@@ -216,12 +228,12 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             paddingVertical: spacing[3],
             borderRadius: borderRadius.xl,
             borderWidth: 1,
-            borderColor: colors.surface[200],
-            backgroundColor: colors.surface[100],
+            borderColor: m3.surface.s200,
+            backgroundColor: m3.surface.s100,
           }}
         >
           <TextInput
-            style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
+            style={{ flex: 1, fontSize: fontSize.base, color: m3.surface.s900 }}
             placeholder={t('harvestForm.buyerPlaceholder')}
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             value={data.buyer || ''}
@@ -229,16 +241,16 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             onFocus={onInputFocus}
           />
         </View>
-        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
+        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: spacing[1] }}>
           {t('harvestForm.buyerHint')}
         </Text>
       </View>
 
       {/* Summary Card */}
-      {(totalValue || data.grade) && (
+      {!compact && (totalValue || data.grade) && (
         <View
           style={{
-            backgroundColor: colorWithOpacity(colors.warning, 0.12),
+            backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.12),
             borderRadius: borderRadius.xl,
             padding: spacing[4],
             marginBottom: spacing[4],
@@ -248,7 +260,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: colors.warning,
+              color: m3.colorScheme.warning,
               marginBottom: spacing[2],
             }}
           >
@@ -260,7 +272,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                 <Text
                   style={{
                     fontSize: fontSize.xs,
-                    color: colorWithOpacity(colors.warning, 0.9),
+                    color: colorWithOpacity(m3.colorScheme.warning, 0.9),
                   }}
                 >
                   {t('common.labels.quantity')}
@@ -281,7 +293,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                 <Text
                   style={{
                     fontSize: fontSize.xs,
-                    color: colorWithOpacity(colors.warning, 0.9),
+                    color: colorWithOpacity(m3.colorScheme.warning, 0.9),
                   }}
                 >
                   {t('common.labels.grade')}
@@ -302,7 +314,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                 <Text
                   style={{
                     fontSize: fontSize.xs,
-                    color: colorWithOpacity(colors.warning, 0.9),
+                    color: colorWithOpacity(m3.colorScheme.warning, 0.9),
                   }}
                 >
                   {t('common.labels.totalValue')}
@@ -323,30 +335,38 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       )}
 
       {/* Validation indicator */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingTop: spacing[4],
-          borderTopWidth: 1,
-          borderTopColor: colors.surface[100],
-        }}
-      >
-        <Icon
-          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
-          size={16}
-          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-        />
-        <Text
+      {!compact && (
+        <View
           style={{
-            fontSize: fontSize.sm,
-            marginLeft: spacing[2],
-            color: isValid ? colors.success : colors.surface[500],
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingTop: spacing[4],
+            borderTopWidth: 1,
+            borderTopColor: m3.surface.s100,
           }}
         >
-          {isValid ? t('common.labels.readyToAdd') : t('common.labels.enterQuantityAndSelectGrade')}
-        </Text>
-      </View>
+          <Icon
+            name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
+            size={16}
+            color={
+              isValid
+                ? m3.colorScheme.success
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+            }
+          />
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              marginLeft: spacing[2],
+              color: isValid ? m3.colorScheme.success : m3.surface.s500,
+            }}
+          >
+            {isValid
+              ? t('common.labels.readyToAdd')
+              : t('common.labels.enterQuantityAndSelectGrade')}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

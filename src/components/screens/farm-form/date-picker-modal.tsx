@@ -5,13 +5,14 @@
  */
 
 import React from 'react';
+import { fontSize, radius } from '@/styles/theme';
 import { View, Text, Pressable } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { ModalBackdrop } from '@/components/ui';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { ensureValidDate } from './utils';
 
 interface DatePickerModalProps {
@@ -32,7 +33,6 @@ export function DatePickerModal({
   onConfirm,
 }: DatePickerModalProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
 
   return (
@@ -43,7 +43,7 @@ export function DatePickerModal({
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: colors.surface[100],
+          backgroundColor: m3.surface.s100,
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
           padding: 16,
@@ -60,7 +60,7 @@ export function DatePickerModal({
         >
           <Text
             selectable
-            style={{ fontSize: 18, fontWeight: '700', color: m3.colorScheme.onSurface }}
+            style={{ fontSize: fontSize.lg, fontWeight: '700', color: m3.colorScheme.onSurface }}
           >
             {title}
           </Text>
@@ -91,7 +91,7 @@ export function DatePickerModal({
         <Pressable
           onPress={onConfirm}
           style={[
-            { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+            { marginTop: 16, paddingVertical: 12, borderRadius: radius.md, alignItems: 'center' },
             { backgroundColor: m3.colorScheme.primary },
           ]}
         >

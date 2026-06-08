@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol } from '@/components/ui/symbol';
-import { useM3, useThemeColors } from '@/styles/use-theme';
-import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useChemicalCatalog } from '@/hooks';
 import { computeTankMixQuantities } from '@/services/phi-service';
@@ -16,7 +17,7 @@ export default function TankMixCalculatorScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ mixId?: string }>();
   const m3 = useM3();
-  const colors = useThemeColors();
+  const domain = useDomainColors();
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom + spacing[8], spacing[12]);
   const [query, setQuery] = useState('');
@@ -75,7 +76,7 @@ export default function TankMixCalculatorScreen() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 22,
+                borderRadius: radius.xl,
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
@@ -100,7 +101,7 @@ export default function TankMixCalculatorScreen() {
                     style={[
                       StyleSheet.absoluteFillObject,
                       {
-                        borderRadius: 22,
+                        borderRadius: radius.xl,
                         backgroundColor: pressed
                           ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                           : 'transparent',
@@ -165,7 +166,7 @@ export default function TankMixCalculatorScreen() {
               style={{
                 borderRadius: borderRadius.lg,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 backgroundColor: m3.surface.surfaceContainerLow,
                 color: m3.colorScheme.onSurface,
                 paddingHorizontal: spacing[3],
@@ -204,7 +205,7 @@ export default function TankMixCalculatorScreen() {
               style={{
                 borderRadius: borderRadius.lg,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 backgroundColor: m3.surface.surfaceContainerLow,
                 color: m3.colorScheme.onSurface,
                 paddingHorizontal: spacing[3],
@@ -246,7 +247,7 @@ export default function TankMixCalculatorScreen() {
                       style={{
                         borderRadius: borderRadius.sm,
                         borderWidth: 1,
-                        borderColor: selected ? m3.colorScheme.primary : colors.surface[300],
+                        borderColor: selected ? m3.colorScheme.primary : m3.surface.s300,
                         backgroundColor: selected
                           ? colorWithOpacity(m3.colorScheme.primary, 0.08)
                           : m3.surface.surfaceContainerLow,
@@ -319,7 +320,7 @@ export default function TankMixCalculatorScreen() {
               style={{
                 borderRadius: borderRadius.xl,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 backgroundColor: m3.surface.surfaceContainerLow,
                 padding: spacing[4],
               }}
@@ -344,7 +345,7 @@ export default function TankMixCalculatorScreen() {
                     padding: spacing[3],
                     paddingVertical: spacing[3],
                     marginBottom: spacing[2],
-                    backgroundColor: colorWithOpacity(colors.spray[500], 0.08),
+                    backgroundColor: colorWithOpacity(domain.category.spray, 0.08),
                   }}
                 >
                   <Text
@@ -372,7 +373,7 @@ export default function TankMixCalculatorScreen() {
                   </Text>
                   <Text
                     style={{
-                      color: colors.spray[500],
+                      color: domain.category.spray,
                       marginTop: spacing[1],
                       fontWeight: fontWeight.semibold,
                       fontSize: fontSize.sm,

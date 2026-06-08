@@ -8,8 +8,8 @@ import { View, Text, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '@/constants/lab-test-parameters';
-import { spacing, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 import { formatDate } from '@/i18n/format';
@@ -28,9 +28,8 @@ export default function TrendsTable({
   testType,
 }: Props) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
-  const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
+  const styles = useMemo(() => createStyles(m3), [m3]);
   if (trendData.length === 0) {
     return (
       <View
@@ -45,14 +44,14 @@ export default function TrendsTable({
           style={{
             fontSize: fontSize.lg,
             fontWeight: fontWeight.semibold,
-            color: colors.gray[800],
+            color: m3.neutral.n800,
           }}
         >
           {t('trends.table.empty.noDataTitle')}
         </Text>
         <Text
           style={{
-            color: colors.gray[500],
+            color: m3.neutral.n500,
             textAlign: 'center',
             marginTop: spacing[2],
             paddingHorizontal: spacing[8],
@@ -78,14 +77,14 @@ export default function TrendsTable({
           style={{
             fontSize: fontSize.lg,
             fontWeight: fontWeight.semibold,
-            color: colors.gray[800],
+            color: m3.neutral.n800,
           }}
         >
           {t('trends.table.empty.noParamsTitle')}
         </Text>
         <Text
           style={{
-            color: colors.gray[500],
+            color: m3.neutral.n500,
             textAlign: 'center',
             marginTop: spacing[2],
             paddingHorizontal: spacing[8],
@@ -283,23 +282,23 @@ export default function TrendsTable({
   );
 }
 
-const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<typeof useM3>) => ({
+const createStyles = (m3: ReturnType<typeof useM3>) => ({
   container: {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     margin: 16,
-    borderRadius: 12,
+    borderRadius: radius.md,
     overflow: 'hidden' as const,
   },
   headerRow: {
     flexDirection: 'row' as const,
-    backgroundColor: colors.surface[50],
+    backgroundColor: m3.surface.s50,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
   },
   headerCell: {
     flex: 1,
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700' as const,
     color: m3.colorScheme.onSurface,
     textAlign: 'center' as const,
@@ -315,10 +314,10 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
   nutrientLabel: {
     fontWeight: '600' as const,
     color: m3.colorScheme.onSurface,
-    fontSize: 13,
+    fontSize: fontSize.sm,
   },
   nutrientRange: {
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
     color: m3.colorScheme.onSurfaceVariant,
     fontWeight: '400' as const,
   },
@@ -328,7 +327,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.15),
   },
   rowEven: {
-    backgroundColor: colors.surface[50],
+    backgroundColor: m3.surface.s50,
   },
   cell: {
     flex: 1,
@@ -340,41 +339,41 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
   },
   increase: {
-    color: colors.success,
-    fontSize: 10,
+    color: m3.colorScheme.success,
+    fontSize: fontSize['2xs'],
   },
   decrease: {
     color: m3.colorScheme.error,
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
   },
   stable: {
     color: m3.colorScheme.onSurfaceVariant,
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
   },
   cellGray: {
     backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
   },
   cellOptimal: {
-    backgroundColor: colorWithOpacity(colors.success, 0.12),
+    backgroundColor: colorWithOpacity(m3.colorScheme.success, 0.12),
   },
   cellWarning: {
-    backgroundColor: colorWithOpacity(colors.warning, 0.12),
+    backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.12),
   },
   cellCritical: {
     backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
   },
   cellText: {
-    fontSize: 13,
+    fontSize: fontSize.sm,
     textAlign: 'center' as const,
     color: m3.colorScheme.onSurface,
   },
   legendContainer: {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     margin: 16,
     marginTop: 0,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
   },
@@ -382,7 +381,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     gap: 6,
   },
   legendTitle: {
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
     fontWeight: '600' as const,
     color: m3.colorScheme.onSurface,
   },
@@ -399,23 +398,23 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
   colorBox: {
     width: 12,
     height: 12,
-    borderRadius: 2,
+    borderRadius: radius.xs,
     borderWidth: 1,
   },
   colorBoxOptimal: {
-    backgroundColor: colorWithOpacity(colors.success, 0.12),
-    borderColor: colorWithOpacity(colors.success, 0.4),
+    backgroundColor: colorWithOpacity(m3.colorScheme.success, 0.12),
+    borderColor: colorWithOpacity(m3.colorScheme.success, 0.4),
   },
   colorBoxWarning: {
-    backgroundColor: colorWithOpacity(colors.warning, 0.12),
-    borderColor: colorWithOpacity(colors.warning, 0.4),
+    backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.12),
+    borderColor: colorWithOpacity(m3.colorScheme.warning, 0.4),
   },
   colorBoxCritical: {
     backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
     borderColor: colorWithOpacity(m3.colorScheme.error, 0.4),
   },
   legendText: {
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
     color: m3.colorScheme.onSurface,
   },
   trendGuide: {
@@ -440,28 +439,28 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     paddingVertical: 4,
   },
   headerDateMonth: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600' as const,
     color: m3.colorScheme.onSurface,
   },
   headerDateDay: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700' as const,
     color: m3.colorScheme.onSurface,
   },
   headerDateYear: {
-    fontSize: 10,
+    fontSize: fontSize['2xs'],
     fontWeight: '500' as const,
     color: m3.colorScheme.onSurfaceVariant,
   },
   headerDateLabel: {
-    fontSize: 9,
+    fontSize: fontSize['2xs'],
     fontWeight: '600' as const,
     color: m3.colorScheme.onSurfaceVariant,
     textTransform: 'uppercase' as const,
   },
   headerMetaValue: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700' as const,
     color: m3.colorScheme.onSurface,
   },

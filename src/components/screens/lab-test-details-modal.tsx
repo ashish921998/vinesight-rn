@@ -3,7 +3,8 @@ import { Modal, View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 import { colorWithOpacity } from '@/utils/color';
 import { formatParameterKey } from '@/hooks/use-lab-tests';
 import { useTranslation } from 'react-i18next';
@@ -183,7 +184,7 @@ export function LabTestDetailsModal({
   onClose,
 }: LabTestDetailsModalProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
+  const domain = useDomainColors();
   const m3 = useM3();
   if (!test) {
     return null;
@@ -192,7 +193,7 @@ export function LabTestDetailsModal({
   const rawParameters = (test.parameters ?? {}) as Record<string, unknown>;
   const parameters = normalizeParameters(rawParameters);
   const sections = getSections(t, testType, parameters);
-  const accentColor = testType === 'soil' ? colors.labTest.soil : colors.labTest.petiole;
+  const accentColor = testType === 'soil' ? domain.labTest.soil : domain.labTest.petiole;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>

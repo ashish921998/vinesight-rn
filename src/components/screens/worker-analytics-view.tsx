@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import {
   useAllWorkerAttendance,
@@ -21,7 +21,7 @@ import {
   normalizeDate,
   type WorkerAnalyticsMetrics,
 } from '@/utils/worker-analytics';
-import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { EmptyState, LoadingState } from '@/components/ui';
 import { useTranslation } from 'react-i18next';
 
 // Helper function to check if a date is in range
@@ -96,57 +96,16 @@ export function WorkerAnalyticsView() {
   }, [metricsByWorker]);
 
   if (isLoading) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   if (!hasAttendance && !hasTempWorkers) {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: spacing[8],
-        }}
-      >
-        <View
-          style={{
-            width: 80,
-            height: 80,
-            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-            borderRadius: borderRadius.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: spacing[4],
-          }}
-        >
-          <UiSymbol name="calendar.badge.clock" size={40} color={m3.colorScheme.primary} />
-        </View>
-        <Text
-          style={{
-            fontSize: fontSize.lg,
-            fontWeight: fontWeight.semibold,
-            color: m3.colorScheme.onSurface,
-            textAlign: 'center',
-          }}
-        >
-          No worker data yet
-        </Text>
-        <Text
-          style={{
-            fontSize: fontSize.sm,
-            color: m3.colorScheme.onSurfaceVariant,
-            textAlign: 'center',
-            marginTop: spacing[2],
-          }}
-        >
-          Mark attendance or add temporary workers to start seeing analytics.
-        </Text>
-      </View>
+      <EmptyState
+        icon="calendar.badge.clock"
+        title={t('workers.analyticsEmpty.title')}
+        description={t('workers.analyticsEmpty.subtitle')}
+      />
     );
   }
 

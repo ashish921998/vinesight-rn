@@ -5,7 +5,7 @@ import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
 import {
   useFarms,
   useWarehouseItems,
@@ -15,7 +15,7 @@ import {
 } from '@/hooks';
 import { useModalStore } from '@/stores';
 import type { Farm, WarehouseItem } from '@/types';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
@@ -25,7 +25,6 @@ import { WarehousePaneB, type WarehouseFilter } from '@/components/screens/wareh
 type ExploreTab = 'farms' | 'warehouse';
 
 export default function ExploreScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
 
@@ -273,7 +272,7 @@ export default function ExploreScreen() {
               borderRadius: borderRadius.full,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: colors.primary[500],
+              backgroundColor: m3.primary.p500,
             }}
           >
             <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
@@ -317,7 +316,7 @@ export default function ExploreScreen() {
           borderRadius: borderRadius.full,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: colors.primary[500],
+          backgroundColor: m3.primary.p500,
         }}
       >
         <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
@@ -344,7 +343,7 @@ export default function ExploreScreen() {
           below the row only when the icon is tapped. Spec: explore-toggle-B-v2-compact. */}
       <View
         style={{
-          backgroundColor: colors.surface[100],
+          backgroundColor: m3.surface.s100,
           paddingTop: insets.top + spacing[2],
           paddingBottom: spacing[2],
           paddingHorizontal: spacing[4],
@@ -364,8 +363,8 @@ export default function ExploreScreen() {
               flex: 1,
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: colors.surface[50],
-              borderRadius: 18,
+              backgroundColor: m3.surface.s50,
+              borderRadius: radius.lg,
               padding: 2,
               height: 36,
             }}
@@ -390,7 +389,7 @@ export default function ExploreScreen() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 6,
-                      borderRadius: 16,
+                      borderRadius: radius.lg,
                       height: 32,
                       paddingHorizontal: spacing[2],
                       backgroundColor: isSelected ? m3.colorScheme.primary : 'transparent',
@@ -408,7 +407,7 @@ export default function ExploreScreen() {
                     <Text
                       numberOfLines={1}
                       style={{
-                        fontSize: 13,
+                        fontSize: fontSize.sm,
                         fontWeight: fontWeight.semibold,
                         color: isSelected
                           ? m3.colorScheme.onPrimary
@@ -423,7 +422,7 @@ export default function ExploreScreen() {
                           minWidth: 16,
                           height: 16,
                           paddingHorizontal: 4,
-                          borderRadius: 8,
+                          borderRadius: radius.sm,
                           backgroundColor: '#D97706',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -432,7 +431,7 @@ export default function ExploreScreen() {
                         <Text
                           style={{
                             color: '#fff',
-                            fontSize: 10,
+                            fontSize: fontSize['2xs'],
                             fontWeight: fontWeight.bold,
                             fontVariant: ['tabular-nums'],
                           }}
@@ -457,12 +456,12 @@ export default function ExploreScreen() {
             style={{
               width: 36,
               height: 36,
-              borderRadius: 18,
+              borderRadius: radius.lg,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: isSearchExpanded
                 ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                : colors.surface[50],
+                : m3.surface.s50,
             }}
           >
             <Icon
@@ -484,7 +483,7 @@ export default function ExploreScreen() {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: colors.surface[50],
+              backgroundColor: m3.surface.s50,
               borderRadius: borderRadius.xl,
               paddingHorizontal: spacing[3],
               height: 36,

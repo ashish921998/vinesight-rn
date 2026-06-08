@@ -7,9 +7,9 @@ import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useWorker, useWorkerAttendance, useFarms, isAndroid } from '@/hooks';
 import { useModalStore } from '@/stores';
 import { WorkerSettlementModal } from '@/components/modals/worker-settlement-modal';
-import { spacing, borderRadius, fontSize } from '@/styles/theme';
+import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 import { calculateWorkerEarnings } from '@/types';
 import type { WorkStatus } from '@/types';
 import { getDefaultDateRange, isDateInRange } from '@/utils/worker-analytics';
@@ -52,7 +52,6 @@ export default function WorkerDetailScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const m3 = useM3();
-  const colors = useThemeColors();
   const isDark = useIsDark();
   const { setAddWorker } = useModalStore();
 
@@ -142,10 +141,10 @@ export default function WorkerDetailScreen() {
   const totalFarmDays = byFarm.reduce((a, f) => a + f.full + f.half, 0);
 
   const cellColor = (status: WorkStatus | null) => {
-    if (status === 'full_day') return colors.success;
+    if (status === 'full_day') return m3.colorScheme.success;
     if (status === 'half_day') return isDark ? '#C49843' : '#D0A14A';
     if (status === 'absent') return m3.colorScheme.error;
-    return isDark ? colors.surface[200] : colors.surface[200];
+    return isDark ? m3.surface.s200 : m3.surface.s200;
   };
 
   const cellLabel = (status: WorkStatus | null) => {
@@ -159,8 +158,8 @@ export default function WorkerDetailScreen() {
     if (status === 'full_day')
       return {
         label: t('attendance.status.fullDay', { defaultValue: 'Full' }),
-        color: colors.success,
-        bg: colorWithOpacity(colors.success, isDark ? 0.18 : 0.14),
+        color: m3.colorScheme.success,
+        bg: colorWithOpacity(m3.colorScheme.success, isDark ? 0.18 : 0.14),
       };
     if (status === 'half_day')
       return {
@@ -176,8 +175,8 @@ export default function WorkerDetailScreen() {
       };
     return {
       label: t('attendance.status.off', { defaultValue: 'Off' }),
-      color: colors.surface[400],
-      bg: colors.surface[200],
+      color: m3.surface.s400,
+      bg: m3.surface.s200,
     };
   };
 
@@ -228,7 +227,7 @@ export default function WorkerDetailScreen() {
       .join('')
       .toUpperCase()
       .slice(0, 2) || '?';
-  const avatarTint = isDark ? colors.primary[400] : colors.primary[600];
+  const avatarTint = isDark ? m3.primary.p400 : m3.primary.p600;
 
   return (
     <>
@@ -258,8 +257,8 @@ export default function WorkerDetailScreen() {
             accessibilityRole="button"
             accessibilityLabel={t('common.back', { defaultValue: 'Go back' })}
           >
-            <UiSymbol name="chevron.left" size={18} color={colors.surface[500]} />
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.surface[500] }}>
+            <UiSymbol name="chevron.left" size={18} color={m3.surface.s500} />
+            <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: m3.surface.s500 }}>
               {t('workers.title', { defaultValue: 'Workers' })}
             </Text>
           </Pressable>
@@ -275,7 +274,7 @@ export default function WorkerDetailScreen() {
               defaultValue: 'Edit {{name}}',
             })}
           >
-            <UiSymbol name="ellipsis" size={20} color={colors.surface[500]} />
+            <UiSymbol name="ellipsis" size={20} color={m3.surface.s500} />
           </Pressable>
         </View>
 
@@ -300,7 +299,12 @@ export default function WorkerDetailScreen() {
               }}
             >
               <Text
-                style={{ fontSize: 20, fontWeight: '700', color: '#F7F3ED', letterSpacing: -0.3 }}
+                style={{
+                  fontSize: fontSize.xl,
+                  fontWeight: '700',
+                  color: '#F7F3ED',
+                  letterSpacing: -0.3,
+                }}
               >
                 {initials}
               </Text>
@@ -308,9 +312,9 @@ export default function WorkerDetailScreen() {
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text
                 style={{
-                  fontSize: 22,
+                  fontSize: fontSize['2xl'],
                   fontWeight: '700',
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                   letterSpacing: -0.3,
                 }}
               >
@@ -321,15 +325,17 @@ export default function WorkerDetailScreen() {
                   style={{
                     height: 22,
                     paddingHorizontal: 9,
-                    borderRadius: 999,
-                    backgroundColor: colors.surface[200],
+                    borderRadius: radius.full,
+                    backgroundColor: m3.surface.s200,
                     borderWidth: 1,
-                    borderColor: colors.surface[300],
+                    borderColor: m3.surface.s300,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.surface[500] }}>
+                  <Text
+                    style={{ fontSize: fontSize.xs, fontWeight: '600', color: m3.surface.s500 }}
+                  >
                     ₹{worker.daily_rate}/day
                   </Text>
                 </View>
@@ -340,10 +346,10 @@ export default function WorkerDetailScreen() {
           {/* Settlement summary card */}
           <View
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderWidth: 1,
-              borderColor: colors.surface[300],
-              borderRadius: 16,
+              borderColor: m3.surface.s300,
+              borderRadius: radius.lg,
               padding: 14,
               marginBottom: 12,
             }}
@@ -359,11 +365,11 @@ export default function WorkerDetailScreen() {
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: '600',
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                   }}
                 >
                   {t('workers.settlement.earnedWages', {
@@ -372,9 +378,9 @@ export default function WorkerDetailScreen() {
                 </Text>
                 <Text
                   style={{
-                    fontSize: 28,
+                    fontSize: fontSize['3xl'],
                     fontWeight: '700',
-                    color: colors.surface[900],
+                    color: m3.surface.s900,
                     letterSpacing: -0.4,
                     marginTop: 4,
                     fontVariant: ['tabular-nums'],
@@ -383,7 +389,7 @@ export default function WorkerDetailScreen() {
                   ₹{metrics.earnings.toLocaleString('en-IN')}
                 </Text>
                 {worker.advance_balance > 0 && (
-                  <Text style={{ fontSize: 12, color: colors.surface[500], marginTop: 4 }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 4 }}>
                     {t('workers.settlement.advanceBalance', {
                       defaultValue: 'Advance: ₹{{amount}}',
                       amount: worker.advance_balance.toLocaleString('en-IN'),
@@ -396,7 +402,7 @@ export default function WorkerDetailScreen() {
                 style={({ pressed }) => ({
                   height: 40,
                   paddingHorizontal: 14,
-                  borderRadius: 11,
+                  borderRadius: radius.md,
                   backgroundColor: m3.colorScheme.primary,
                   opacity: pressed ? 0.85 : 1,
                   alignItems: 'center',
@@ -408,7 +414,13 @@ export default function WorkerDetailScreen() {
                   defaultValue: 'Settle wages for {{name}}',
                 })}
               >
-                <Text style={{ fontSize: 13, fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: '600',
+                    color: m3.colorScheme.onPrimary,
+                  }}
+                >
                   {t('workers.actions.settle', { defaultValue: 'Settle' })}
                 </Text>
               </Pressable>
@@ -421,7 +433,7 @@ export default function WorkerDetailScreen() {
               {
                 label: t('attendance.status.full', { defaultValue: 'Full' }),
                 value: metrics.full,
-                color: colors.success,
+                color: m3.colorScheme.success,
               },
               {
                 label: t('attendance.status.half', { defaultValue: 'Half' }),
@@ -436,24 +448,24 @@ export default function WorkerDetailScreen() {
               {
                 label: t('attendance.status.off', { defaultValue: 'Off' }),
                 value: Math.max(0, 30 - metrics.full - metrics.half - metrics.absent),
-                color: colors.surface[400],
+                color: m3.surface.s400,
               },
             ].map((s) => (
               <View
                 key={s.label}
                 style={{
                   flex: 1,
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
-                  borderRadius: 12,
+                  borderColor: m3.surface.s300,
+                  borderRadius: radius.md,
                   padding: 10,
                   alignItems: 'center',
                 }}
               >
                 <Text
                   style={{
-                    fontSize: 22,
+                    fontSize: fontSize['2xl'],
                     fontWeight: '700',
                     color: s.color,
                     fontVariant: ['tabular-nums'],
@@ -464,11 +476,11 @@ export default function WorkerDetailScreen() {
                 </Text>
                 <Text
                   style={{
-                    fontSize: 10,
+                    fontSize: fontSize['2xs'],
                     fontWeight: '600',
                     letterSpacing: 0.6,
                     textTransform: 'uppercase',
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                     marginTop: 4,
                   }}
                 >
@@ -481,10 +493,10 @@ export default function WorkerDetailScreen() {
           {/* Month calendar */}
           <View
             style={{
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderWidth: 1,
-              borderColor: colors.surface[300],
-              borderRadius: 16,
+              borderColor: m3.surface.s300,
+              borderRadius: radius.lg,
               padding: 14,
               marginBottom: 12,
             }}
@@ -498,16 +510,16 @@ export default function WorkerDetailScreen() {
             >
               <Text
                 style={{
-                  fontSize: 11,
+                  fontSize: fontSize.xs,
                   fontWeight: '600',
                   letterSpacing: 0.8,
                   textTransform: 'uppercase',
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                 }}
               >
                 {t('workers.detail.last30Days', { defaultValue: 'Last 30 days' })}
               </Text>
-              <Text style={{ fontSize: 11, color: colors.surface[500] }}>
+              <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                 {calendarDays.length} days
               </Text>
             </View>
@@ -524,29 +536,29 @@ export default function WorkerDetailScreen() {
                     style={{
                       width: '14.5%',
                       aspectRatio: 1,
-                      borderRadius: 8,
+                      borderRadius: radius.sm,
                       backgroundColor: bg,
                       borderWidth: isOff ? 1 : 0,
-                      borderColor: colors.surface[300],
+                      borderColor: m3.surface.s300,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 9,
+                        fontSize: fontSize['2xs'],
                         opacity: 0.85,
                         fontWeight: '500',
-                        color: isOff ? colors.surface[400] : '#F7F3ED',
+                        color: isOff ? m3.surface.s400 : '#F7F3ED',
                       }}
                     >
                       {num}
                     </Text>
                     <Text
                       style={{
-                        fontSize: 11,
+                        fontSize: fontSize.xs,
                         fontWeight: '700',
-                        color: isOff ? colors.surface[400] : '#F7F3ED',
+                        color: isOff ? m3.surface.s400 : '#F7F3ED',
                         lineHeight: 13,
                       }}
                     >
@@ -561,7 +573,7 @@ export default function WorkerDetailScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
               {[
                 {
-                  color: colors.success,
+                  color: m3.colorScheme.success,
                   label: t('attendance.status.full', { defaultValue: 'Full' }),
                 },
                 {
@@ -573,7 +585,7 @@ export default function WorkerDetailScreen() {
                   label: t('attendance.status.absent', { defaultValue: 'Absent' }),
                 },
                 {
-                  color: colors.surface[200],
+                  color: m3.surface.s200,
                   label: t('attendance.status.noRecord', { defaultValue: 'No record' }),
                   border: true,
                 },
@@ -583,13 +595,13 @@ export default function WorkerDetailScreen() {
                     style={{
                       width: 10,
                       height: 10,
-                      borderRadius: 3,
+                      borderRadius: radius.xs,
                       backgroundColor: s.color,
                       borderWidth: s.border ? 1 : 0,
-                      borderColor: colors.surface[300],
+                      borderColor: m3.surface.s300,
                     }}
                   />
-                  <Text style={{ fontSize: 11, color: colors.surface[500] }}>{s.label}</Text>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>{s.label}</Text>
                 </View>
               ))}
             </View>
@@ -600,11 +612,11 @@ export default function WorkerDetailScreen() {
             <>
               <Text
                 style={{
-                  fontSize: 11,
+                  fontSize: fontSize.xs,
                   fontWeight: '600',
                   letterSpacing: 0.8,
                   textTransform: 'uppercase',
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                   marginBottom: 8,
                 }}
               >
@@ -618,10 +630,10 @@ export default function WorkerDetailScreen() {
                     <View
                       key={f.farmId}
                       style={{
-                        backgroundColor: colors.surface[100],
+                        backgroundColor: m3.surface.s100,
                         borderWidth: 1,
-                        borderColor: colors.surface[300],
-                        borderRadius: 14,
+                        borderColor: m3.surface.s300,
+                        borderRadius: radius.lg,
                         padding: 12,
                       }}
                     >
@@ -646,16 +658,16 @@ export default function WorkerDetailScreen() {
                             style={{
                               width: 10,
                               height: 10,
-                              borderRadius: 999,
+                              borderRadius: radius.full,
                               backgroundColor: f.accent,
                             }}
                           />
                           <View style={{ flex: 1 }}>
                             <Text
                               style={{
-                                fontSize: 14,
+                                fontSize: fontSize.sm,
                                 fontWeight: '600',
-                                color: colors.surface[900],
+                                color: m3.surface.s900,
                               }}
                               numberOfLines={1}
                             >
@@ -663,8 +675,8 @@ export default function WorkerDetailScreen() {
                             </Text>
                             <Text
                               style={{
-                                fontSize: 11,
-                                color: colors.surface[500],
+                                fontSize: fontSize.xs,
+                                color: m3.surface.s500,
                                 marginTop: 2,
                                 fontVariant: ['tabular-nums'],
                               }}
@@ -676,15 +688,15 @@ export default function WorkerDetailScreen() {
                         <View style={{ alignItems: 'flex-end' }}>
                           <Text
                             style={{
-                              fontSize: 14,
+                              fontSize: fontSize.sm,
                               fontWeight: '700',
-                              color: colors.surface[900],
+                              color: m3.surface.s900,
                               fontVariant: ['tabular-nums'],
                             }}
                           >
                             {total} d
                           </Text>
-                          <Text style={{ fontSize: 10, color: colors.surface[500] }}>
+                          <Text style={{ fontSize: fontSize['2xs'], color: m3.surface.s500 }}>
                             {Math.round(pct * 100)}%
                           </Text>
                         </View>
@@ -694,13 +706,13 @@ export default function WorkerDetailScreen() {
                         style={{
                           marginTop: 10,
                           height: 6,
-                          borderRadius: 999,
-                          backgroundColor: colors.surface[200],
+                          borderRadius: radius.full,
+                          backgroundColor: m3.surface.s200,
                           overflow: 'hidden',
                           flexDirection: 'row',
                         }}
                       >
-                        <View style={{ flex: f.full, backgroundColor: colors.success }} />
+                        <View style={{ flex: f.full, backgroundColor: m3.colorScheme.success }} />
                         <View
                           style={{ flex: f.half, backgroundColor: isDark ? '#C49843' : '#D0A14A' }}
                         />
@@ -717,11 +729,11 @@ export default function WorkerDetailScreen() {
             <>
               <Text
                 style={{
-                  fontSize: 11,
+                  fontSize: fontSize.xs,
                   fontWeight: '600',
                   letterSpacing: 0.8,
                   textTransform: 'uppercase',
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                   marginBottom: 8,
                 }}
               >
@@ -729,10 +741,10 @@ export default function WorkerDetailScreen() {
               </Text>
               <View
                 style={{
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
-                  borderRadius: 16,
+                  borderColor: m3.surface.s300,
+                  borderRadius: radius.lg,
                   overflow: 'hidden',
                   marginBottom: 14,
                 }}
@@ -757,19 +769,23 @@ export default function WorkerDetailScreen() {
                         padding: 11,
                         paddingHorizontal: 14,
                         borderBottomWidth: i < recentDays.length - 1 ? 1 : 0,
-                        borderBottomColor: colors.surface[300],
+                        borderBottomColor: m3.surface.s300,
                       }}
                     >
                       <View style={{ width: 50 }}>
                         <Text
-                          style={{ fontSize: 13, fontWeight: '600', color: colors.surface[900] }}
+                          style={{
+                            fontSize: fontSize.sm,
+                            fontWeight: '600',
+                            color: m3.surface.s900,
+                          }}
                         >
                           {dl.short}
                         </Text>
                         <Text
                           style={{
-                            fontSize: 11,
-                            color: colors.surface[500],
+                            fontSize: fontSize.xs,
+                            color: m3.surface.s500,
                             fontVariant: ['tabular-nums'],
                           }}
                         >
@@ -782,13 +798,19 @@ export default function WorkerDetailScreen() {
                             style={{
                               height: 20,
                               paddingHorizontal: 8,
-                              borderRadius: 999,
+                              borderRadius: radius.full,
                               backgroundColor: badge.bg,
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
                           >
-                            <Text style={{ fontSize: 10, fontWeight: '700', color: badge.color }}>
+                            <Text
+                              style={{
+                                fontSize: fontSize['2xs'],
+                                fontWeight: '700',
+                                color: badge.color,
+                              }}
+                            >
                               {badge.label}
                             </Text>
                           </View>
@@ -798,12 +820,12 @@ export default function WorkerDetailScreen() {
                                 style={{
                                   width: 6,
                                   height: 6,
-                                  borderRadius: 999,
+                                  borderRadius: radius.full,
                                   backgroundColor: farmAccent,
                                 }}
                               />
                               <Text
-                                style={{ fontSize: 11, color: colors.surface[500] }}
+                                style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}
                                 numberOfLines={1}
                               >
                                 {farm.name}
@@ -813,7 +835,11 @@ export default function WorkerDetailScreen() {
                         </View>
                         {r.work_type ? (
                           <Text
-                            style={{ fontSize: 11, color: colors.surface[400], marginTop: 3 }}
+                            style={{
+                              fontSize: fontSize.xs,
+                              color: m3.surface.s400,
+                              marginTop: 3,
+                            }}
                             numberOfLines={1}
                           >
                             {r.work_type}
@@ -829,10 +855,10 @@ export default function WorkerDetailScreen() {
                 style={({ pressed }) => ({
                   width: '100%',
                   height: 44,
-                  backgroundColor: pressed ? colors.surface[200] : colors.surface[100],
+                  backgroundColor: pressed ? m3.surface.s200 : m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
-                  borderRadius: 12,
+                  borderColor: m3.surface.s300,
+                  borderRadius: radius.md,
                   alignItems: 'center',
                   justifyContent: 'center',
                 })}
@@ -844,7 +870,7 @@ export default function WorkerDetailScreen() {
                   defaultValue: 'View full attendance history',
                 })}
               >
-                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.surface[500] }}>
+                <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: m3.surface.s500 }}>
                   {t('workers.detail.viewFullHistory', { defaultValue: 'View full history' })}
                 </Text>
               </Pressable>
@@ -853,9 +879,7 @@ export default function WorkerDetailScreen() {
 
           {periodAttendance.length === 0 && !isLoading && (
             <View style={{ alignItems: 'center', padding: spacing[8] }}>
-              <Text
-                style={{ fontSize: fontSize.sm, color: colors.surface[500], textAlign: 'center' }}
-              >
+              <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500, textAlign: 'center' }}>
                 {t('workers.detail.noAttendanceYet', {
                   defaultValue: 'No attendance recorded in the last 30 days.',
                 })}

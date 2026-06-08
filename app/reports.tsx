@@ -21,10 +21,10 @@ import { useTranslation } from 'react-i18next';
 import Animated, { FadeInUp, Layout } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol } from '@/components/ui/symbol';
-import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useFarms, useProfile } from '@/hooks';
 import {
-  useReportData,
+  useReportComparison,
   useReportExport,
   getDefaultDateRange,
   clampDateRangeToSeasonBounds,
@@ -32,7 +32,7 @@ import {
 } from '@/hooks/use-reports';
 import { DateRange, ReportFormat, ReportType } from '@/types/report';
 import { useAuthStore } from '@/stores';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
@@ -88,7 +88,6 @@ function getSeasonBounds(
 }
 
 export default function ReportsScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -123,7 +122,12 @@ export default function ReportsScreen() {
     [dateRange, selectedFarmId, selectedSeasonId],
   );
 
-  const { preview, isLoading: dataLoading, seasons } = useReportData(reportFilters);
+  const {
+    preview,
+    isLoading: dataLoading,
+    seasons,
+    comparison,
+  } = useReportComparison(reportFilters);
   const { isExporting, exportReport, downloadReport } = useReportExport();
 
   React.useEffect(() => {
@@ -370,12 +374,12 @@ export default function ReportsScreen() {
   const toMaximumDate = parseDbDateToLocalDate(toMaximumIso) ?? new Date();
 
   const panelStyle = {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     borderRadius: borderRadius.xl,
     borderCurve: 'continuous' as const,
     padding: spacing[3],
     borderWidth: 1,
-    borderColor: colors.surface[300],
+    borderColor: m3.surface.s300,
   };
 
   const showStickyExport = Boolean(farms && farms.length > 0);
@@ -401,7 +405,7 @@ export default function ReportsScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -426,7 +430,7 @@ export default function ReportsScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -545,6 +549,7 @@ export default function ReportsScreen() {
                   preview={preview}
                   reportType={reportType}
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
+                  comparison={comparison}
                 />
 
                 <ReportDocumentBody
@@ -625,7 +630,7 @@ export default function ReportsScreen() {
           >
             <View
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: borderRadius['3xl'],
                 borderTopRightRadius: borderRadius['3xl'],
                 borderCurve: 'continuous',
@@ -653,7 +658,7 @@ export default function ReportsScreen() {
                 style={{
                   color: m3.colorScheme.onSurface,
                   fontWeight: '600',
-                  fontSize: 17,
+                  fontSize: fontSize.lg,
                 }}
               >
                 {showFromPicker ? t('reports.selectFromDate') : t('reports.selectToDate')}

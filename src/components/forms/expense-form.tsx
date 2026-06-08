@@ -7,7 +7,7 @@ import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculator-mo
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { EXPENSE_TYPE_ICONS } from '@/utils/expense-icons';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
@@ -28,11 +28,18 @@ interface ExpenseFormProps {
   onChange: (data: ExpenseFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
   preferredCurrency?: string;
+  /** Hide the decorative header + summary/validation chrome (inline log composer). */
+  compact?: boolean;
 }
 
-export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }: ExpenseFormProps) {
+export function ExpenseForm({
+  data,
+  onChange,
+  onInputFocus,
+  preferredCurrency,
+  compact = false,
+}: ExpenseFormProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
@@ -72,42 +79,82 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
     return unsubscribe;
   }, []);
 
+  const renderCategoryChip = (type: ExpenseTypeId) => {
+    const selected = data.type === type;
+    return (
+      <Pressable
+        key={type}
+        onPress={() => onChange({ ...data, type })}
+        accessibilityRole="button"
+        accessibilityState={{ selected }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing[3],
+          paddingVertical: spacing[3],
+          borderRadius: borderRadius.xl,
+          borderWidth: 1,
+          backgroundColor: selected ? m3.colorScheme.primary : m3.surface.s100,
+          borderColor: selected ? m3.colorScheme.primary : m3.surface.s200,
+        }}
+      >
+        <SymbolIcon
+          name={EXPENSE_TYPE_ICONS[type]}
+          size={16}
+          color={selected ? m3.colorScheme.onPrimary : m3.surface.s500}
+          style={{ marginRight: 6 }}
+        />
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.medium,
+            color: selected ? m3.colorScheme.onPrimary : m3.surface.s700,
+          }}
+        >
+          {t(`expenseForm.types.${type}`)}
+        </Text>
+      </Pressable>
+    );
+  };
+
   return (
     <View>
       {/* Header with icon */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: borderRadius.full,
-            backgroundColor: colorWithOpacity(colors.error, 0.12),
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: spacing[3],
-          }}
-        >
-          <SymbolIcon
-            name={resolveSymbolIconName(ICON_REGISTRY.expense)}
-            size={20}
-            color={m3.colorScheme.error}
-          />
-        </View>
-        <View>
-          <Text
+      {!compact && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+          <View
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[900],
+              width: 40,
+              height: 40,
+              borderRadius: borderRadius.full,
+              backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: spacing[3],
             }}
           >
-            {t('expenseForm.title')}
-          </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            {t('expenseForm.subtitle')}
-          </Text>
+            <SymbolIcon
+              name={resolveSymbolIconName(ICON_REGISTRY.expense)}
+              size={20}
+              color={m3.colorScheme.error}
+            />
+          </View>
+          <View>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: m3.surface.s900,
+              }}
+            >
+              {t('expenseForm.title')}
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
+              {t('expenseForm.subtitle')}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_EXPENSE_DETAILS}>
         <View
@@ -126,57 +173,18 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
         >
           {/* Category Selection */}
           <View style={{ marginBottom: spacing[4] }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-              <View style={{ marginRight: spacing[2] }}>
-                <SymbolIcon name="list.bullet" size={16} color={colors.primary[600]} />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.surface[800],
-                }}
-              >
-                {t('expenseForm.category')} <Text style={{ color: colors.error }}>*</Text>
-              </Text>
-            </View>
-
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: m3.surface.s800,
+                marginBottom: spacing[3],
+              }}
+            >
+              {t('expenseForm.category')} <Text style={{ color: m3.colorScheme.error }}>*</Text>
+            </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-              {EXPENSE_TYPES.map((type) => (
-                <Pressable
-                  key={type}
-                  onPress={() => onChange({ ...data, type })}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: spacing[3],
-                    paddingVertical: spacing[3],
-                    borderRadius: borderRadius.xl,
-                    borderWidth: 1,
-                    backgroundColor:
-                      data.type === type
-                        ? colorWithOpacity(m3.colorScheme.error, 0.12)
-                        : colors.surface[100],
-                    borderColor: data.type === type ? m3.colorScheme.error : colors.surface[200],
-                  }}
-                >
-                  <SymbolIcon
-                    name={EXPENSE_TYPE_ICONS[type]}
-                    size={16}
-                    color={data.type === type ? m3.colorScheme.error : colors.surface[500]}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.medium,
-                      color: data.type === type ? m3.colorScheme.error : colors.surface[700],
-                    }}
-                  >
-                    {t(`expenseForm.types.${type}`)}
-                  </Text>
-                </Pressable>
-              ))}
+              {EXPENSE_TYPES.map(renderCategoryChip)}
             </View>
           </View>
 
@@ -200,13 +208,13 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ marginRight: 6 }}>
-            <SymbolIcon name="doc.text" size={16} color={colors.primary[600]} />
+            <SymbolIcon name="doc.text" size={16} color={m3.primary.p600} />
           </View>
           <Text
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: colors.surface[800],
+              color: m3.surface.s800,
             }}
           >
             {t('expenseForm.remarks.label')}
@@ -219,12 +227,12 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             paddingVertical: spacing[3],
             borderRadius: borderRadius.xl,
             borderWidth: 1,
-            borderColor: colors.surface[200],
-            backgroundColor: colors.surface[100],
+            borderColor: m3.surface.s200,
+            backgroundColor: m3.surface.s100,
           }}
         >
           <TextInput
-            style={{ fontSize: fontSize.base, color: colors.surface[900] }}
+            style={{ fontSize: fontSize.base, color: m3.surface.s900 }}
             placeholder={t('expenseForm.remarks.placeholder')}
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             value={data.remarks || ''}
@@ -235,13 +243,13 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             onFocus={onInputFocus}
           />
         </View>
-        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
+        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: spacing[1] }}>
           {t('expenseForm.remarks.hint')}
         </Text>
       </View>
 
       {/* Summary */}
-      {data.type && data.cost !== undefined && data.cost > 0 && (
+      {!compact && data.type && data.cost !== undefined && data.cost > 0 && (
         <View
           style={{
             backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
@@ -284,32 +292,38 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
       )}
 
       {/* Validation indicator */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingTop: spacing[4],
-          borderTopWidth: 1,
-          borderTopColor: colors.surface[100],
-        }}
-      >
-        <SymbolIcon
-          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
-          size={16}
-          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-        />
-        <Text
+      {!compact && (
+        <View
           style={{
-            fontSize: fontSize.sm,
-            marginLeft: spacing[2],
-            color: isValid ? colors.success : colors.surface[500],
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingTop: spacing[4],
+            borderTopWidth: 1,
+            borderTopColor: m3.surface.s100,
           }}
         >
-          {isValid
-            ? t('common.labels.readyToAdd')
-            : t('expenseForm.validation.selectCategoryAndEnterAmount')}
-        </Text>
-      </View>
+          <SymbolIcon
+            name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
+            size={16}
+            color={
+              isValid
+                ? m3.colorScheme.success
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+            }
+          />
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              marginLeft: spacing[2],
+              color: isValid ? m3.colorScheme.success : m3.surface.s500,
+            }}
+          >
+            {isValid
+              ? t('common.labels.readyToAdd')
+              : t('expenseForm.validation.selectCategoryAndEnterAmount')}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

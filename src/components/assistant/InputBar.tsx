@@ -23,8 +23,8 @@ import {
   Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
-import { spacing } from '@/styles/theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
+import { componentRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import type { AIMessageAttachmentInput } from '@/types/ai';
 
@@ -54,7 +54,8 @@ export function InputBar({
   attachments = [],
   onRemoveAttachment,
 }: InputBarProps) {
-  const { m3, isDark } = useThemeTokens();
+  const m3 = useM3();
+  const isDark = useIsDark();
   const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
 
@@ -180,12 +181,12 @@ export function InputBar({
           style={[
             styles.textInput,
             {
-              // Cellar Ledger: mist-0 bg, 1px stone-3 border, borderRadius 24
+              // Cellar Ledger: mist-0 bg, 1px stone-3 border
               backgroundColor: inputBg,
               color: m3.colorScheme.onSurface,
               borderColor: m3.colorScheme.outline,
               borderWidth: 1,
-              borderRadius: 24,
+              borderRadius: componentRadius.input,
               ...Platform.select({
                 ios: {
                   maxHeight: INPUT_MAX_HEIGHT,
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: 60,
     height: 60,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
   },
   documentThumbnail: {
@@ -276,7 +277,7 @@ const styles = StyleSheet.create({
     gap: spacing[1],
   },
   documentText: {
-    fontSize: 9,
+    fontSize: fontSize['2xs'],
     textAlign: 'center',
   },
   thumbnailRemoveBtn: {
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
     right: -6,
     width: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -306,16 +307,16 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 24, // Cellar Ledger: 24px radius (rounded)
+    borderRadius: componentRadius.input, // unified control radius — see DESIGN.md › Radius
     paddingHorizontal: spacing[4],
     paddingVertical: Platform.OS === 'ios' ? spacing[2] : spacing[1],
-    fontSize: 15,
+    fontSize: fontSize.base,
     lineHeight: 20,
   },
   sendButton: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },

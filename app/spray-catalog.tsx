@@ -5,9 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Symbol } from '@/components/ui/symbol';
-import { borderRadius, colors, darkColors, fontSize, fontWeight, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useIsDark, useM3 } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 import { ProductDetailSheet } from '@/components/sheets/product-detail-sheet';
 import { useChemicalCatalog } from '@/hooks';
 import type { ChemicalMix, ChemicalMixComponent } from '@/types/phi';
@@ -64,9 +65,8 @@ export default function SprayCatalogScreen() {
     ).length;
   }, [mixes, selectedComponent]);
 
-  // Get spray color based on dark mode
-  const isDark = useIsDark();
-  const sprayColor = isDark ? darkColors.spray[500] : colors.spray[500];
+  // Dark-aware spray category color (value-identical to the old isDark ternary)
+  const sprayColor = useDomainColors().category.spray;
 
   const renderChip = useCallback(
     (key: string, label: string, selected: boolean, onPress: () => void) => (
@@ -129,7 +129,7 @@ export default function SprayCatalogScreen() {
             style={{
               width: 3,
               backgroundColor: sprayColor,
-              borderRadius: 3,
+              borderRadius: radius.xs,
               borderTopLeftRadius: borderRadius.sm,
               borderBottomLeftRadius: borderRadius.sm,
             }}
@@ -142,7 +142,7 @@ export default function SprayCatalogScreen() {
               <Text
                 style={{
                   color: m3.colorScheme.onSurface,
-                  fontSize: 15,
+                  fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
                   flex: 1,
                   lineHeight: 20,
@@ -156,14 +156,14 @@ export default function SprayCatalogScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
               {phiDays != null && (
                 <>
-                  <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: 13 }}>
+                  <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.sm }}>
                     PHI: {phiDays} days
                   </Text>
                   <View
                     style={{
                       width: 3,
                       height: 3,
-                      borderRadius: 1.5,
+                      borderRadius: radius.none,
                       backgroundColor: m3.colorScheme.onSurfaceVariant,
                       marginHorizontal: spacing[2],
                       opacity: 0.6,
@@ -173,14 +173,14 @@ export default function SprayCatalogScreen() {
               )}
               {firstComponent && (
                 <>
-                  <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: 13 }}>
+                  <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.sm }}>
                     Dose: {getDoseDisplay(firstComponent)}
                   </Text>
                   <View
                     style={{
                       width: 3,
                       height: 3,
-                      borderRadius: 1.5,
+                      borderRadius: radius.none,
                       backgroundColor: m3.colorScheme.onSurfaceVariant,
                       marginHorizontal: spacing[2],
                       opacity: 0.6,
@@ -188,14 +188,14 @@ export default function SprayCatalogScreen() {
                   />
                 </>
               )}
-              <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: 13 }}>
+              <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.sm }}>
                 {mix.target_problem ??
                   t('sprayCatalog.genericProblem', { defaultValue: 'General protection' })}
               </Text>
             </View>
 
             {/* Last used - placeholder since we don't have this data */}
-            <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: 13 }}>
+            <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.sm }}>
               {mix.source_page
                 ? t('sprayCatalog.sourcePage', {
                     defaultValue: 'Page {{page}}',
@@ -388,7 +388,7 @@ export default function SprayCatalogScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -413,7 +413,7 @@ export default function SprayCatalogScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',

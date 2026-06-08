@@ -6,7 +6,7 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { ModalBackdrop } from '@/components/ui';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { isIOS } from '@/hooks';
 import { useTranslation } from 'react-i18next';
@@ -30,7 +30,6 @@ export function TexturePickerSheet({
   onSelectTexture,
 }: TexturePickerSheetProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
 
   if (!visible) return null;
@@ -50,7 +49,7 @@ export function TexturePickerSheet({
         <View
           onStartShouldSetResponder={() => true}
           style={{
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderTopLeftRadius: borderRadius['3xl'],
             borderTopRightRadius: borderRadius['3xl'],
             height: textureSheetHeight,
@@ -65,7 +64,7 @@ export function TexturePickerSheet({
               paddingHorizontal: spacing[6],
               paddingVertical: spacing[4],
               borderBottomWidth: 1,
-              borderBottomColor: colors.surface[100],
+              borderBottomColor: m3.surface.s100,
             }}
           >
             <View style={{ width: 40 }} />
@@ -73,7 +72,7 @@ export function TexturePickerSheet({
               style={{
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.semibold,
-                color: colors.surface[900],
+                color: m3.surface.s900,
               }}
             >
               {t('farmForm.soilTexture.modalTitle')}
@@ -88,7 +87,7 @@ export function TexturePickerSheet({
                 width: 40,
                 height: 40,
                 borderRadius: borderRadius.full,
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -108,8 +107,8 @@ export function TexturePickerSheet({
                     paddingHorizontal: spacing[6],
                     paddingVertical: spacing[4],
                     borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
-                    backgroundColor: isSelected ? colors.surface[50] : colors.surface[100],
+                    borderBottomColor: m3.surface.s100,
+                    backgroundColor: isSelected ? m3.surface.s50 : m3.surface.s100,
                   }}
                   onPress={() => onSelectTexture(texture.value)}
                 >
@@ -123,15 +122,13 @@ export function TexturePickerSheet({
                     <Text
                       style={{
                         fontSize: fontSize.base,
-                        color: isSelected ? colors.surface[900] : colors.surface[700],
+                        color: isSelected ? m3.surface.s900 : m3.surface.s700,
                         fontWeight: isSelected ? fontWeight.semibold : fontWeight.normal,
                       }}
                     >
                       {t(texture.labelKey)}
                     </Text>
-                    {isSelected && (
-                      <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
-                    )}
+                    {isSelected && <UISymbol name="checkmark" size={20} color={m3.primary.p500} />}
                   </View>
                 </Pressable>
               );

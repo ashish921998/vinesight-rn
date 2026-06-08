@@ -18,7 +18,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useIsDark, useM3 } from '@/styles/use-theme';
-import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHaptic } from '@/utils/haptics';
 import appLogoDark from '../../../../assets/icons/ios-dark.png';
@@ -135,7 +135,7 @@ export function HeroSlide({ isActive }: HeroSlideProps) {
                 {
                   color: m3.colorScheme.onSurface,
                   fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
-                  fontSize: 28,
+                  fontSize: fontSize['3xl'],
                   fontWeight: '400',
                 },
               ]}
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   logoCircle: {
     width: 84,
     height: 84,
-    borderRadius: 28,
+    borderRadius: radius['2xl'],
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

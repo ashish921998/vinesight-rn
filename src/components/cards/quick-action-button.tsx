@@ -9,7 +9,7 @@ import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } fro
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontWeight, fontSize } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 
 interface QuickActionButtonProps {
   title: string;
@@ -19,7 +19,7 @@ interface QuickActionButtonProps {
 }
 
 export function QuickActionButton({ title, icon, color, onPress }: QuickActionButtonProps) {
-  const colors = useThemeColors();
+  const m3 = useM3();
 
   const containerStyle: ViewStyle = {
     alignItems: 'center',
@@ -46,7 +46,7 @@ export function QuickActionButton({ title, icon, color, onPress }: QuickActionBu
     fontSize: fontSize.xs, // 12px
     fontWeight: fontWeight.medium, // 500
     textAlign: 'center',
-    color: colors.surface[500], // bark
+    color: m3.surface.s500, // bark
   };
 
   return (
@@ -69,9 +69,7 @@ export function QuickActionButton({ title, icon, color, onPress }: QuickActionBu
             style={[
               StyleSheet.absoluteFillObject,
               {
-                backgroundColor: pressed
-                  ? colorWithOpacity(colors.surface[900], 0.12)
-                  : 'transparent',
+                backgroundColor: pressed ? colorWithOpacity(m3.surface.s900, 0.12) : 'transparent',
               },
             ]}
           />

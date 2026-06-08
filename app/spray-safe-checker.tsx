@@ -14,7 +14,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
@@ -118,7 +118,7 @@ export default function SpraySafeCheckerScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -143,7 +143,7 @@ export default function SpraySafeCheckerScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',

@@ -17,7 +17,7 @@ import {
 import type { FarmInsert, FarmUpdate } from '@/types';
 import type { CropType } from '@/constants/crop-varieties';
 import { CROP_VARIETIES } from '@/constants/crop-varieties';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { spacing } from '@/styles/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { telemetry } from '@/services/telemetry';
@@ -76,7 +76,6 @@ function getFarmPayloadMetadata(payload: Record<string, unknown>) {
 
 export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onClose: () => void) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
   const { windowHeight } = useResponsiveHeight();
@@ -1150,7 +1149,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   return {
     // Theme
     t,
-    colors,
     m3,
 
     // Loading state

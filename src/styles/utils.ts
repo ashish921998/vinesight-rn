@@ -3,7 +3,7 @@
  */
 
 import type { ViewStyle, TextStyle } from 'react-native';
-import { colors, getThemeColors, spacing, borderRadius, shadows } from './theme';
+import { getThemeColors, spacing, borderRadius, shadows } from './theme';
 import { colorWithOpacity } from '@/utils/color';
 
 /**
@@ -90,35 +90,6 @@ export const space = {
   ml: (value: keyof typeof spacing) => ({ marginLeft: spacing[value] }),
   mr: (value: keyof typeof spacing) => ({ marginRight: spacing[value] }),
 } as const;
-
-/**
- * Activity type color helper
- */
-export const getActivityColor = (type: string): string => {
-  const typeMap: Record<string, string> = {
-    irrigation: colors.irrigation[500],
-    spray: colors.spray[500],
-    fertigation: colors.fertigation[500],
-    harvest: colors.harvest[500],
-    observation: colors.observation[500],
-    task: colors.task[500],
-    expense: colors.expense[500],
-  };
-  return typeMap[type.toLowerCase()] ?? colors.primary[500];
-};
-
-/**
- * Water status color helper
- */
-export const getWaterStatusColor = (status: string): string => {
-  const statusMap: Record<string, string> = {
-    critical: colors.water.critical,
-    low: colors.water.low,
-    medium: colors.water.medium,
-    good: colors.water.good,
-  };
-  return statusMap[status.toLowerCase()] ?? colors.water.medium;
-};
 
 /**
  * Combine multiple style objects (type-safe)

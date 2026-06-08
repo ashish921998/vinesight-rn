@@ -4,13 +4,12 @@ import { useTranslation } from 'react-i18next';
 
 import SoilProfileForm from '@/components/screens/soil-profile-form';
 import { spacing, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 
 export default function AddSoilProfileRoute() {
   const router = useRouter();
   const { t } = useTranslation();
   const m3 = useM3();
-  const colors = useThemeColors();
   const params = useLocalSearchParams<{ farmId?: string }>();
   const farmId = params.farmId ? parseInt(params.farmId, 10) : NaN;
 
@@ -30,7 +29,7 @@ export default function AddSoilProfileRoute() {
           style={{
             fontSize: fontSize.lg,
             fontWeight: fontWeight.semibold,
-            color: colors.surface[900],
+            color: m3.surface.s900,
             textAlign: 'center',
           }}
         >
@@ -39,7 +38,7 @@ export default function AddSoilProfileRoute() {
         <Text
           style={{
             fontSize: fontSize.base,
-            color: colors.surface[600],
+            color: m3.surface.s600,
             textAlign: 'center',
             marginTop: spacing[2],
           }}
@@ -52,11 +51,11 @@ export default function AddSoilProfileRoute() {
             marginTop: spacing[4],
             paddingHorizontal: spacing[6],
             paddingVertical: spacing[3],
-            backgroundColor: colors.primary[500],
+            backgroundColor: m3.primary.p500,
             borderRadius: spacing[3],
           }}
         >
-          <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
+          <Text style={{ color: '#ffffff', fontWeight: fontWeight.semibold }}>
             {t('common.back')}
           </Text>
         </Pressable>

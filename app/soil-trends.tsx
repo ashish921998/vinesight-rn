@@ -16,16 +16,17 @@ import { useSoilTestTrends, SOIL_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
 import ParameterSelector from '@/components/screens/parameter-selector';
 import TrendsTable from '@/components/screens/trends-table';
 import TrendsChart from '@/components/screens/trends-chart';
-import { spacing, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 import { colorWithOpacity } from '@/utils/color';
 
 type ViewMode = 'table' | 'chart';
 
 export default function SoilTrendsScreen() {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
+  const domain = useDomainColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
@@ -64,7 +65,7 @@ export default function SoilTrendsScreen() {
       <SafeScreen backgroundColor={m3.colorScheme.background}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={colors.labTest.soil} />
+          <ActivityIndicator size="large" color={domain.labTest.soil} />
           <Text
             style={{
               color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8),
@@ -97,7 +98,7 @@ export default function SoilTrendsScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -123,7 +124,7 @@ export default function SoilTrendsScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -162,7 +163,7 @@ export default function SoilTrendsScreen() {
           <IconSymbol
             name={resolveSymbolIconName(ICON_REGISTRY.soilTest)}
             size={20}
-            color={colors.labTest.soil}
+            color={domain.labTest.soil}
           />
           <Text
             style={{
@@ -191,7 +192,7 @@ export default function SoilTrendsScreen() {
         <View
           style={{
             flexDirection: 'row',
-            backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
+            backgroundColor: colorWithOpacity(m3.surface.s100, 0.9),
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[2],
             borderBottomWidth: 1,
@@ -205,7 +206,7 @@ export default function SoilTrendsScreen() {
               paddingVertical: spacing[2],
               marginRight: spacing[2],
               borderBottomWidth: viewMode === 'table' ? 2 : 0,
-              borderBottomColor: viewMode === 'table' ? colors.labTest.soil : 'transparent',
+              borderBottomColor: viewMode === 'table' ? domain.labTest.soil : 'transparent',
             }}
           >
             <Text
@@ -216,7 +217,7 @@ export default function SoilTrendsScreen() {
                 textTransform: 'uppercase',
                 color:
                   viewMode === 'table'
-                    ? colors.labTest.soil
+                    ? domain.labTest.soil
                     : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55),
               }}
             >
@@ -230,7 +231,7 @@ export default function SoilTrendsScreen() {
               paddingVertical: spacing[2],
               marginLeft: spacing[2],
               borderBottomWidth: viewMode === 'chart' ? 2 : 0,
-              borderBottomColor: viewMode === 'chart' ? colors.labTest.soil : 'transparent',
+              borderBottomColor: viewMode === 'chart' ? domain.labTest.soil : 'transparent',
             }}
           >
             <Text
@@ -241,7 +242,7 @@ export default function SoilTrendsScreen() {
                 textTransform: 'uppercase',
                 color:
                   viewMode === 'chart'
-                    ? colors.labTest.soil
+                    ? domain.labTest.soil
                     : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55),
               }}
             >

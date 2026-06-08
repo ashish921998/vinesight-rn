@@ -2,7 +2,7 @@ import { View, Text, TextInput, type TextInputProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 export interface NoteFormData {
@@ -17,20 +17,19 @@ interface NoteFormProps {
 
 export function NoteForm({ data, onChange, onInputFocus }: NoteFormProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
 
   return (
     <View style={{ marginBottom: spacing[4] }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
         <View style={{ marginRight: 6 }}>
-          <SymbolIcon name="note.text" size={16} color={colors.primary[600]} />
+          <SymbolIcon name="note.text" size={16} color={m3.primary.p600} />
         </View>
         <Text
           style={{
             fontSize: fontSize.sm,
             fontWeight: fontWeight.semibold,
-            color: colors.surface[800],
+            color: m3.surface.s800,
           }}
         >
           {t('dailyNoteForm.fields.note')}
@@ -44,8 +43,8 @@ export function NoteForm({ data, onChange, onInputFocus }: NoteFormProps) {
           paddingVertical: spacing[3],
           borderRadius: borderRadius.xl,
           borderWidth: 1,
-          borderColor: colors.surface[200],
-          backgroundColor: colors.surface[100],
+          borderColor: m3.surface.s200,
+          backgroundColor: m3.surface.s100,
         }}
       >
         <TextInput
@@ -54,7 +53,7 @@ export function NoteForm({ data, onChange, onInputFocus }: NoteFormProps) {
             padding: 0,
             fontSize: fontSize.base,
             lineHeight: 22,
-            color: colors.surface[900],
+            color: m3.surface.s900,
           }}
           placeholder={t('dailyNoteForm.placeholders.note')}
           placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}

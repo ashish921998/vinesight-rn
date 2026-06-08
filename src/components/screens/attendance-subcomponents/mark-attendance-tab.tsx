@@ -22,8 +22,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
-import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTabBarInset, isAndroid, isIOS } from '@/hooks';
 import { WorkerSelectSheet, FarmSelectSheet } from '@/components/modals';
@@ -61,7 +61,6 @@ const getStatusDisplay = (
   status: AttendanceStatus,
   t: (key: string) => string,
   m3Theme: ReturnType<typeof useM3>,
-  colors: ReturnType<typeof useThemeColors>,
 ): {
   label: string;
   bgColor: string;
@@ -83,10 +82,10 @@ const getStatusDisplay = (
     case 'half_day':
       return {
         label: t('attendance.status.halfDayShort'),
-        bgColor: colorWithOpacity(colors.warning, 0.18),
-        badgeColor: colors.warning,
+        bgColor: colorWithOpacity(m3Theme.colorScheme.warning, 0.18),
+        badgeColor: m3Theme.colorScheme.warning,
         badgeTextColor: m3Theme.colorScheme.onWarning,
-        textColor: colors.warning,
+        textColor: m3Theme.colorScheme.warning,
         fullLabel: t('attendance.status.halfDay'),
       };
     case 'absent':
@@ -131,7 +130,6 @@ export function MarkAttendanceTab({
 }: MarkAttendanceTabProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const colors = useThemeColors();
 
   const tabBarInset = useTabBarInset();
   const bottomActionBarHeight = 88;
@@ -1006,7 +1004,7 @@ export function MarkAttendanceTab({
                     const dateStr = formatDate(date);
                     const key = getCellKey(workerId, dateStr);
                     const cell = cellData.get(key);
-                    const statusInfo = getStatusDisplay(cell?.status ?? null, t, m3, colors);
+                    const statusInfo = getStatusDisplay(cell?.status ?? null, t, m3);
                     const isTodayDate = isToday(date);
                     const hasStatus = cell?.status !== null;
                     const isIdleToday = isTodayDate && !hasStatus;
@@ -1120,7 +1118,7 @@ export function MarkAttendanceTab({
                                 bottom: 4,
                                 width: 5,
                                 height: 5,
-                                borderRadius: 3,
+                                borderRadius: radius.xs,
                                 backgroundColor: m3.colorScheme.primary,
                               }}
                             />
@@ -1214,16 +1212,16 @@ export function MarkAttendanceTab({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: spacing[1],
-                backgroundColor: colorWithOpacity(colors.warning, 0.12),
+                backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.12),
                 opacity: pressed ? 0.7 : 1,
               })}
             >
-              <UiSymbol name="clock.fill" size={15} color={colors.warning} />
+              <UiSymbol name="clock.fill" size={15} color={m3.colorScheme.warning} />
               <Text
                 style={{
                   fontSize: fontSize.xs,
                   fontWeight: fontWeight.bold,
-                  color: colors.warning,
+                  color: m3.colorScheme.warning,
                 }}
               >
                 {t('attendance.quickActions.allHalf')}
@@ -1328,7 +1326,7 @@ export function MarkAttendanceTab({
               style={{
                 width: 6,
                 height: 6,
-                borderRadius: 3,
+                borderRadius: radius.xs,
                 backgroundColor: m3.colorScheme.warning,
               }}
             />

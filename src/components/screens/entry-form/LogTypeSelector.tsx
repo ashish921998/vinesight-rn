@@ -1,6 +1,7 @@
 import { LOG_TYPES, type LogTypeId, type LogType } from '@/constants/calculator-models';
+import { fontSize, radius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { AppIcon } from '@/components/ui/app-icon';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
@@ -25,7 +26,6 @@ export function LogTypeSelector({
   hintText,
 }: LogTypeSelectorProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
@@ -36,8 +36,8 @@ export function LogTypeSelector({
     <GuidedTourTarget
       targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_TYPE_SELECTOR}
       style={{
-        backgroundColor: colors.surface[100],
-        borderRadius: 18,
+        backgroundColor: m3.surface.s100,
+        borderRadius: radius.lg,
         padding: 16,
         marginBottom: 16,
         borderWidth: showInlineGuidance ? 2 : 1,
@@ -50,7 +50,7 @@ export function LogTypeSelector({
         <Text
           selectable
           style={{
-            fontSize: 11,
+            fontSize: fontSize.xs,
             fontWeight: '700',
             letterSpacing: 0.6,
             textTransform: 'uppercase',
@@ -63,7 +63,7 @@ export function LogTypeSelector({
           selectable
           style={{
             marginTop: 6,
-            fontSize: 19,
+            fontSize: fontSize.xl,
             lineHeight: 24,
             fontWeight: '700',
             color: m3.colorScheme.onSurface,
@@ -75,7 +75,7 @@ export function LogTypeSelector({
           selectable
           style={{
             marginTop: 6,
-            fontSize: 14,
+            fontSize: fontSize.sm,
             lineHeight: 20,
             color: m3.colorScheme.onSurfaceVariant,
           }}
@@ -114,7 +114,7 @@ export function LogTypeSelector({
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexDirection: 'row',
-                borderRadius: 999,
+                borderRadius: radius.full,
                 borderWidth: emphasizeSelectedGuidedCard ? 2 : 1,
                 backgroundColor: isSelected
                   ? logType.color
@@ -122,7 +122,7 @@ export function LogTypeSelector({
                     ? colorWithOpacity(m3.colorScheme.primary, 0.08)
                     : emphasizeAllGuidedCards
                       ? colorWithOpacity(m3.colorScheme.primary, 0.03)
-                      : colors.surface[50],
+                      : m3.surface.s50,
                 borderColor: isSelected
                   ? logType.color
                   : isAdded
@@ -137,7 +137,7 @@ export function LogTypeSelector({
                 style={{
                   width: 26,
                   height: 26,
-                  borderRadius: 999,
+                  borderRadius: radius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginRight: 7,
@@ -157,7 +157,7 @@ export function LogTypeSelector({
               <Text
                 selectable
                 style={[
-                  { fontSize: 12, fontWeight: '700', lineHeight: 16 },
+                  { fontSize: fontSize.xs, fontWeight: '700', lineHeight: 16 },
                   {
                     color: isSelected
                       ? '#FFFFFF'

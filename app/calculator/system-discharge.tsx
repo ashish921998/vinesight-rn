@@ -20,8 +20,8 @@ import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +39,6 @@ interface SystemDischargeResults {
 const INPUT_FOCUS_SCROLL_OFFSET = 140;
 
 export default function SystemDischargeScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -309,7 +308,7 @@ export default function SystemDischargeScreen() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 22,
+                borderRadius: radius.xl,
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
@@ -334,7 +333,7 @@ export default function SystemDischargeScreen() {
                     style={[
                       StyleSheet.absoluteFillObject,
                       {
-                        borderRadius: 22,
+                        borderRadius: radius.xl,
                         backgroundColor: pressed
                           ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                           : 'transparent',
@@ -378,7 +377,7 @@ export default function SystemDischargeScreen() {
             <View ref={scrollContentRef} collapsable={false}>
               <View
                 style={{
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   marginTop: spacing[4],
@@ -403,7 +402,7 @@ export default function SystemDischargeScreen() {
                     style={{
                       fontSize: fontSize.base,
                       fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
+                      color: m3.surface.s900,
                       marginLeft: spacing[2],
                     }}
                   >
@@ -437,7 +436,7 @@ export default function SystemDischargeScreen() {
                 <Text
                   style={{
                     fontSize: fontSize.xs,
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                     marginTop: spacing[2],
                   }}
                 >
@@ -448,7 +447,7 @@ export default function SystemDischargeScreen() {
               {canSelectMethod && (
                 <View
                   style={{
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[4],
                     marginTop: spacing[4],
@@ -473,7 +472,7 @@ export default function SystemDischargeScreen() {
                       style={{
                         fontSize: fontSize.base,
                         fontWeight: fontWeight.semibold,
-                        color: colors.surface[900],
+                        color: m3.surface.s900,
                         marginLeft: spacing[2],
                       }}
                     >
@@ -493,7 +492,7 @@ export default function SystemDischargeScreen() {
                       backgroundColor:
                         selectedMethod === 1
                           ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                          : colors.surface[100],
+                          : m3.surface.s100,
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -502,12 +501,12 @@ export default function SystemDischargeScreen() {
                           style={{
                             fontSize: fontSize.sm,
                             fontWeight: fontWeight.medium,
-                            color: colors.surface[900],
+                            color: m3.surface.s900,
                           }}
                         >
                           System Discharge 1
                         </Text>
-                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                           Using plants per hectare and drippers
                         </Text>
                       </View>
@@ -532,7 +531,7 @@ export default function SystemDischargeScreen() {
                       backgroundColor:
                         selectedMethod === 2
                           ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                          : colors.surface[100],
+                          : m3.surface.s100,
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -541,12 +540,12 @@ export default function SystemDischargeScreen() {
                           style={{
                             fontSize: fontSize.sm,
                             fontWeight: fontWeight.medium,
-                            color: colors.surface[900],
+                            color: m3.surface.s900,
                           }}
                         >
                           System Discharge 2
                         </Text>
-                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                           Using dripper spacing
                         </Text>
                       </View>
@@ -565,7 +564,7 @@ export default function SystemDischargeScreen() {
               {selectedMethod === 1 && (
                 <View
                   style={{
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[4],
                     marginTop: spacing[4],
@@ -594,7 +593,7 @@ export default function SystemDischargeScreen() {
                       style={{
                         fontSize: fontSize.base,
                         fontWeight: fontWeight.semibold,
-                        color: colors.surface[900],
+                        color: m3.surface.s900,
                         marginLeft: spacing[2],
                       }}
                     >
@@ -668,7 +667,7 @@ export default function SystemDischargeScreen() {
               {selectedMethod === 2 && (
                 <View
                   style={{
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[4],
                     marginTop: spacing[4],
@@ -697,7 +696,7 @@ export default function SystemDischargeScreen() {
                       style={{
                         fontSize: fontSize.base,
                         fontWeight: fontWeight.semibold,
-                        color: colors.surface[900],
+                        color: m3.surface.s900,
                         marginLeft: spacing[2],
                       }}
                     >
@@ -771,7 +770,7 @@ export default function SystemDischargeScreen() {
               {results && (
                 <View
                   style={{
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[4],
                     marginTop: spacing[4],
@@ -800,7 +799,7 @@ export default function SystemDischargeScreen() {
                       style={{
                         fontSize: fontSize.base,
                         fontWeight: fontWeight.semibold,
-                        color: colors.surface[900],
+                        color: m3.surface.s900,
                         marginLeft: spacing[2],
                       }}
                     >
@@ -811,20 +810,20 @@ export default function SystemDischargeScreen() {
                   {results.plantsPerHectare ? (
                     <View
                       style={{
-                        backgroundColor: colors.surface[50],
+                        backgroundColor: m3.surface.s50,
                         borderRadius: borderRadius.xl,
                         padding: spacing[3],
                         marginBottom: spacing[3],
                       }}
                     >
-                      <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                         Plants per Hectare (P/H)
                       </Text>
                       <Text
                         style={{
                           fontSize: fontSize.lg,
                           fontWeight: fontWeight.semibold,
-                          color: colors.surface[900],
+                          color: m3.surface.s900,
                         }}
                       >
                         {results.plantsPerHectare.toFixed(2)}
@@ -842,7 +841,7 @@ export default function SystemDischargeScreen() {
                   >
                     <Text
                       style={{
-                        fontSize: 28,
+                        fontSize: fontSize['3xl'],
                         fontWeight: fontWeight.bold,
                         color: m3.colorScheme.primary,
                       }}
@@ -862,7 +861,7 @@ export default function SystemDischargeScreen() {
                   <Text
                     style={{
                       fontSize: fontSize.xs,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       textAlign: 'center',
                       marginTop: spacing[2],
                     }}
@@ -872,8 +871,8 @@ export default function SystemDischargeScreen() {
                   {/* Formula - italic style per wireframe */}
                   <Text
                     style={{
-                      fontSize: 10,
-                      color: colors.surface[500],
+                      fontSize: fontSize['2xs'],
+                      color: m3.surface.s500,
                       fontStyle: 'italic',
                       textAlign: 'center',
                       marginTop: spacing[2],
@@ -887,20 +886,20 @@ export default function SystemDischargeScreen() {
                   {results.irrigationHours ? (
                     <View
                       style={{
-                        backgroundColor: colors.surface[50],
+                        backgroundColor: m3.surface.s50,
                         borderRadius: borderRadius.xl,
                         padding: spacing[3],
                         marginTop: spacing[3],
                       }}
                     >
-                      <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                         Irrigation Duration
                       </Text>
                       <Text
                         style={{
                           fontSize: fontSize.lg,
                           fontWeight: fontWeight.semibold,
-                          color: colors.surface[900],
+                          color: m3.surface.s900,
                         }}
                       >
                         {formatDuration(results.irrigationHours)}
@@ -910,7 +909,7 @@ export default function SystemDischargeScreen() {
 
                   <View
                     style={{
-                      backgroundColor: colors.surface[50],
+                      backgroundColor: m3.surface.s50,
                       borderRadius: borderRadius.xl,
                       padding: spacing[3],
                       marginTop: spacing[3],
@@ -920,13 +919,13 @@ export default function SystemDischargeScreen() {
                       style={{
                         fontSize: fontSize.xs,
                         fontWeight: fontWeight.medium,
-                        color: colors.surface[600],
+                        color: m3.surface.s600,
                         marginBottom: spacing[1],
                       }}
                     >
                       What this means
                     </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                       Use this mm/hr value in the farm irrigation settings. Soil water added is
                       irrigation hours × system discharge.
                     </Text>
@@ -938,12 +937,12 @@ export default function SystemDischargeScreen() {
                 <Pressable
                   onPress={reset}
                   style={{
-                    backgroundColor: colors.surface[100],
+                    backgroundColor: m3.surface.s100,
                     borderRadius: borderRadius['2xl'],
                     paddingVertical: spacing[4],
                     alignItems: 'center',
                     borderWidth: 1,
-                    borderColor: colors.surface[200],
+                    borderColor: m3.surface.s200,
                     marginTop: spacing[4],
                   }}
                 >
@@ -951,7 +950,7 @@ export default function SystemDischargeScreen() {
                     <UISymbol name="refresh" size={18} color={m3.colorScheme.onSurfaceVariant} />
                     <Text
                       style={{
-                        color: colors.surface[600],
+                        color: m3.surface.s600,
                         fontWeight: fontWeight.medium,
                         marginLeft: spacing[2],
                       }}
@@ -993,7 +992,6 @@ function InputRow({
   onInputFocus,
   inputRowRefs,
 }: InputRowProps) {
-  const colors = useThemeColors();
   const m3 = useM3();
 
   // Use the pre-initialized ref from parent
@@ -1010,14 +1008,14 @@ function InputRow({
       onLayout={handleLayout}
       collapsable={false}
     >
-      <Text style={{ fontSize: fontSize.sm, color: colors.surface[600], marginBottom: spacing[1] }}>
+      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s600, marginBottom: spacing[1] }}>
         {label}
       </Text>
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: colors.surface[50],
+          backgroundColor: m3.surface.s50,
           borderRadius: borderRadius.xl,
         }}
       >
@@ -1034,13 +1032,11 @@ function InputRow({
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[3],
             fontSize: fontSize.base,
-            color: colors.surface[900],
+            color: m3.surface.s900,
           }}
         />
         {unit ? (
-          <Text
-            style={{ fontSize: fontSize.sm, color: colors.surface[500], paddingRight: spacing[4] }}
-          >
+          <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500, paddingRight: spacing[4] }}>
             {unit}
           </Text>
         ) : null}

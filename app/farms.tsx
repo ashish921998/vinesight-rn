@@ -57,7 +57,7 @@ function FarmsSummaryLine({
   const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0);
   const needsAttentionCount = farms.filter(isLowWater).length;
   return (
-    <Text style={[{ fontSize: 13, fontWeight: fontWeight.medium, lineHeight: 16 }, style]}>
+    <Text style={[{ fontSize: fontSize.sm, fontWeight: fontWeight.medium, lineHeight: 16 }, style]}>
       <Text style={{ color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7) }}>
         {`${t('farms.summary.count', { count: farms.length })} · ${t('farms.summary.area', { value: formatNumber(totalArea, { maximumFractionDigits: 1 }) })}`}
       </Text>
@@ -169,7 +169,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
             {farms && farms.length > 0 && !showSearchBar && (
               <Text
                 style={{
-                  fontSize: 11,
+                  fontSize: fontSize.xs,
                   fontWeight: fontWeight.semibold,
                   letterSpacing: 0.8,
                   textTransform: 'uppercase',
@@ -182,7 +182,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
             )}
             <Text
               style={{
-                fontSize: 28,
+                fontSize: fontSize['3xl'],
                 fontWeight: fontWeight.bold,
                 color: m3.colorScheme.onSurface,
                 letterSpacing: -0.4,
@@ -352,7 +352,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                 >
                   <Text
                     style={{
-                      fontSize: 12,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
                       color: isActive
                         ? m3.colorScheme.onPrimary

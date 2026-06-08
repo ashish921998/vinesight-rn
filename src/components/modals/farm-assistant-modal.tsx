@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AssistantAnswerCard } from '@/components/cards/assistant-answer-card';
 import { AssistantAnswerSkeleton } from '@/components/cards/assistant-answer-skeleton';
@@ -47,7 +47,6 @@ interface FarmAssistantModalProps {
 export function FarmAssistantModal({ visible, onClose, controller }: FarmAssistantModalProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const colors = useThemeColors();
   const m3 = useM3();
   const [inputText, setInputText] = useState('');
   const hasAutoStartedRef = useRef(false);
@@ -106,16 +105,16 @@ export function FarmAssistantModal({ visible, onClose, controller }: FarmAssista
 
   const ui = useMemo(
     () => ({
-      surface: colors.surface[100],
-      border: colors.surface[200],
+      surface: m3.surface.s100,
+      border: m3.surface.s200,
       primary: m3.colorScheme.primary,
       primarySoft: colorWithOpacity(m3.colorScheme.primary, 0.12),
-      text: colors.surface[900],
-      muted: colors.surface[500],
-      overlay: colorWithOpacity(colors.black, 0.35),
+      text: m3.surface.s900,
+      muted: m3.surface.s500,
+      overlay: colorWithOpacity('#000000', 0.35),
       error: m3.colorScheme.error,
     }),
-    [colors, m3],
+    [m3],
   );
 
   const handleSubmit = () => {
@@ -414,7 +413,7 @@ export function FarmAssistantModal({ visible, onClose, controller }: FarmAssista
                   alignItems: 'center',
                   gap: spacing[2],
                   marginTop: spacing[4],
-                  backgroundColor: colors.surface[50],
+                  backgroundColor: m3.surface.s50,
                   borderRadius: borderRadius.xl,
                   borderWidth: 1,
                   borderColor: ui.border,

@@ -17,7 +17,7 @@ import {
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 
 interface StatsCardProps {
   title: string;
@@ -49,7 +49,6 @@ export function StatsCard({
   isLoading = false,
 }: StatsCardProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const resolvedColor = color ?? m3.colorScheme.primary;
   const finalColor = iconColor || resolvedColor;
   const a11yValue = isLoading
@@ -60,9 +59,9 @@ export function StatsCard({
   const containerStyle: ViewStyle = {
     borderRadius: borderRadius.md, // 16px
     padding: spacing[4],
-    backgroundColor: colors.surface[100], // mist-1
+    backgroundColor: m3.surface.s100, // mist-1
     borderWidth: 1,
-    borderColor: colors.surface[300], // stone-3
+    borderColor: m3.surface.s300, // stone-3
     overflow: 'hidden',
   };
 
@@ -86,7 +85,7 @@ export function StatsCard({
   const valueTextStyle: TextStyle = {
     fontSize: fontSize['2xl'], // 24px
     fontWeight: fontWeight.bold, // 700
-    color: colors.surface[900], // ink
+    color: m3.surface.s900, // ink
   };
 
   const valueRowStyle: ViewStyle = {
@@ -101,22 +100,22 @@ export function StatsCard({
   const valueUnitTextStyle: TextStyle = {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
-    color: colorWithOpacity(colors.surface[500], 0.8), // bark
+    color: colorWithOpacity(m3.surface.s500, 0.8), // bark
   };
 
   const valueSuffixTextStyle: TextStyle = {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
-    color: colorWithOpacity(colors.surface[500], 0.8), // bark
+    color: colorWithOpacity(m3.surface.s500, 0.8), // bark
     marginLeft: spacing[1],
   };
 
   // Cellar Ledger: uppercase label (11px/600, letterSpacing 0.8)
   const titleTextStyle: TextStyle = {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold, // 600
     marginTop: spacing[3],
-    color: colors.surface[500], // bark
+    color: m3.surface.s500, // bark
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   };
@@ -125,7 +124,7 @@ export function StatsCard({
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
     marginTop: spacing[1],
-    color: colorWithOpacity(colors.surface[500], 0.8), // bark
+    color: colorWithOpacity(m3.surface.s500, 0.8), // bark
     lineHeight: fontSize.sm * 1.3,
   };
 
@@ -174,7 +173,7 @@ export function StatsCard({
                 StyleSheet.absoluteFillObject,
                 {
                   backgroundColor: pressed
-                    ? colorWithOpacity(colors.surface[900], 0.12)
+                    ? colorWithOpacity(m3.surface.s900, 0.12)
                     : 'transparent',
                 },
               ]}

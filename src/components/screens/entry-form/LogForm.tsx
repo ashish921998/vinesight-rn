@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { radius } from '@/styles/theme';
 import type {
   IrrigationFormData,
   SprayFormData,
@@ -13,7 +14,7 @@ import { SprayForm, HarvestForm, ExpenseForm, FertigationForm, NoteForm } from '
 import { NumericInput, type NumericInputHandle } from '@/components/forms/form-field';
 import type { LogTypeId } from '@/constants/calculator-models';
 import type { TextInputProps } from 'react-native';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
@@ -46,6 +47,7 @@ interface LogFormProps {
   fertigationQuickAddItems: FertigationQuickAddItem[];
   sprayCatalogOnly?: boolean;
   sprayCatalogMixes?: ChemicalMix[];
+  showSaveButton?: boolean;
 }
 
 export function LogForm({
@@ -70,9 +72,9 @@ export function LogForm({
   fertigationQuickAddItems,
   sprayCatalogOnly = false,
   sprayCatalogMixes = [],
+  showSaveButton = true,
 }: LogFormProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
@@ -106,11 +108,11 @@ export function LogForm({
         style={{
           marginTop: isIrrigationEntry ? 0 : 20,
           paddingVertical: 14,
-          borderRadius: 16,
+          borderRadius: radius.lg,
           alignItems: 'center',
           flexDirection: 'row',
           justifyContent: 'center',
-          backgroundColor: isValid && hasFarm ? m3.colorScheme.primary : colors.surface[50],
+          backgroundColor: isValid && hasFarm ? m3.colorScheme.primary : m3.surface.s50,
           borderColor: showAddEntryGuidance
             ? colorWithOpacity(m3.colorScheme.primary, 0.7)
             : isValid && hasFarm
@@ -149,44 +151,13 @@ export function LogForm({
       <View style={{ gap: 16 }}>
         <View
           style={{
-            backgroundColor: colors.surface[100],
-            borderRadius: 22,
+            backgroundColor: m3.surface.s100,
+            borderRadius: radius.xl,
             padding: 20,
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
           }}
         >
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: '700',
-              color: m3.colorScheme.primary,
-              marginBottom: 6,
-            }}
-          >
-            {t('irrigationForm.title')}
-          </Text>
-          <Text
-            style={{
-              fontSize: 24,
-              lineHeight: 30,
-              fontWeight: '700',
-              color: m3.colorScheme.onSurface,
-              marginBottom: 6,
-            }}
-          >
-            {t('irrigationForm.durationLabel')}
-          </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              lineHeight: 20,
-              color: m3.colorScheme.onSurfaceVariant,
-              marginBottom: 16,
-            }}
-          >
-            {t('irrigationForm.durationHint')}
-          </Text>
           <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_IRRIGATION_DURATION}>
             <NumericInput
               ref={irrigationDurationRef}
@@ -206,7 +177,7 @@ export function LogForm({
             />
           </GuidedTourTarget>
         </View>
-        {addEntryButton}
+        {showSaveButton && addEntryButton}
       </View>
     );
   }
@@ -214,8 +185,8 @@ export function LogForm({
   return (
     <View
       style={{
-        backgroundColor: colors.surface[100],
-        borderRadius: 20,
+        backgroundColor: m3.surface.s100,
+        borderRadius: radius.xl,
         padding: 20,
         borderWidth: 1,
         borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
@@ -229,13 +200,24 @@ export function LogForm({
           quickAddItems={sprayQuickAddItems}
           catalogOnly={sprayCatalogOnly}
           catalogMixes={sprayCatalogMixes}
+          compact
         />
       )}
       {selectedLogType === 'harvest' && (
-        <HarvestForm data={harvestData} onChange={onHarvestChange} onInputFocus={onInputFocus} />
+        <HarvestForm
+          data={harvestData}
+          onChange={onHarvestChange}
+          onInputFocus={onInputFocus}
+          compact
+        />
       )}
       {selectedLogType === 'expense' && (
-        <ExpenseForm data={expenseData} onChange={onExpenseChange} onInputFocus={onInputFocus} />
+        <ExpenseForm
+          data={expenseData}
+          onChange={onExpenseChange}
+          onInputFocus={onInputFocus}
+          compact
+        />
       )}
       {selectedLogType === 'fertigation' && (
         <FertigationForm
@@ -243,12 +225,13 @@ export function LogForm({
           onChange={onFertigationChange}
           onInputFocus={onInputFocus}
           quickAddItems={fertigationQuickAddItems}
+          compact
         />
       )}
       {selectedLogType === 'note' && (
         <NoteForm data={noteData} onChange={onNoteChange} onInputFocus={onInputFocus} />
       )}
-      {addEntryButton}
+      {showSaveButton && addEntryButton}
     </View>
   );
 }

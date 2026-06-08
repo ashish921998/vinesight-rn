@@ -13,7 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { spacing, type ThemeColors, getM3Theme } from '@/styles/theme';
+import { spacing, getM3Theme } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { supabase } from '@/lib/supabase';
 import { telemetry } from '@/services/telemetry';
@@ -29,7 +29,6 @@ export interface DeleteAccountModalProps {
   requireEmailOtpForDelete: boolean;
   onDeleteAccount: (reason: string) => Promise<void>;
   styles: SettingsStyles;
-  colors: ThemeColors;
   m3: ReturnType<typeof getM3Theme>;
 }
 
@@ -42,7 +41,6 @@ export function DeleteAccountModal({
   requireEmailOtpForDelete,
   onDeleteAccount,
   styles,
-  colors,
   m3,
 }: DeleteAccountModalProps) {
   const { t } = useTranslation();
@@ -565,7 +563,7 @@ export function DeleteAccountModal({
                 accessibilityRole="button"
                 accessibilityLabel={t('common.close')}
               >
-                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+                <UISymbol name="xmark.circle.fill" size={28} color={m3.neutral.n400} />
               </Pressable>
             </View>
           </View>
@@ -579,7 +577,11 @@ export function DeleteAccountModal({
             keyboardDismissMode="on-drag"
           >
             <View style={[styles.alertBox, styles.dangerAlert]}>
-              <UISymbol name="exclamationmark.triangle.fill" size={20} color={colors.error} />
+              <UISymbol
+                name="exclamationmark.triangle.fill"
+                size={20}
+                color={m3.colorScheme.error}
+              />
               <Text
                 style={styles.alertTitle}
                 textBreakStrategy="highQuality"
@@ -675,7 +677,7 @@ export function DeleteAccountModal({
                       placeholder={t('settings.deleteAccountModal.enterOtp', {
                         defaultValue: 'Enter OTP',
                       })}
-                      placeholderTextColor={colors.gray[400]}
+                      placeholderTextColor={m3.neutral.n400}
                       keyboardType="number-pad"
                       maxLength={6}
                       style={styles.input}
@@ -769,7 +771,7 @@ export function DeleteAccountModal({
                         placeholder={t('settings.deleteAccountModal.enterOtp', {
                           defaultValue: 'Enter OTP',
                         })}
-                        placeholderTextColor={colors.gray[400]}
+                        placeholderTextColor={m3.neutral.n400}
                         keyboardType="number-pad"
                         maxLength={6}
                         style={styles.input}
@@ -781,7 +783,7 @@ export function DeleteAccountModal({
                           styles.verifyPhoneCta,
                           {
                             marginTop: spacing[2],
-                            backgroundColor: colorWithOpacity(colors.primary[600], 0.2),
+                            backgroundColor: colorWithOpacity(m3.primary.p600, 0.2),
                           },
                         ]}
                       >
@@ -816,7 +818,7 @@ export function DeleteAccountModal({
                   value={deleteReason}
                   onChangeText={setDeleteReason}
                   placeholder={t('settings.deleteAccountModal.reason.placeholder')}
-                  placeholderTextColor={colors.gray[400]}
+                  placeholderTextColor={m3.neutral.n400}
                   multiline
                   numberOfLines={3}
                   style={[styles.input, { height: 80 }]}
@@ -868,7 +870,10 @@ export function DeleteAccountModal({
               disabled={!canSubmitDeleteAccount}
               style={[
                 styles.deleteButton,
-                { backgroundColor: colors.error, opacity: canSubmitDeleteAccount ? 1 : 0.5 },
+                {
+                  backgroundColor: m3.colorScheme.error,
+                  opacity: canSubmitDeleteAccount ? 1 : 0.5,
+                },
               ]}
             >
               {isDeleting ? (

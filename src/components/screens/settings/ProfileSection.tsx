@@ -14,7 +14,6 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { spacing } from '@/styles/theme';
 import { isIOS } from '@/hooks';
-import type { ThemeColors } from '@/styles/theme';
 import type { getM3Theme } from '@/styles/theme';
 import type { SettingsStyles } from './settings-styles';
 
@@ -24,7 +23,6 @@ interface ProfileSectionProps {
   linkedAuthPhone: string | null;
   hasSavedPhoneToVerify: boolean;
   styles: SettingsStyles;
-  colors: ThemeColors;
   m3: ReturnType<typeof getM3Theme>;
   profile: { full_name?: string | null } | undefined;
   onSaveProfile: (name: string) => Promise<void>;
@@ -37,7 +35,6 @@ export function ProfileSection({
   linkedAuthPhone,
   hasSavedPhoneToVerify,
   styles,
-  colors,
   m3,
   profile,
   onSaveProfile,
@@ -130,7 +127,7 @@ export function ProfileSection({
                   accessibilityRole="button"
                   accessibilityLabel={t('common.close')}
                 >
-                  <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+                  <UISymbol name="xmark.circle.fill" size={28} color={m3.neutral.n400} />
                 </Pressable>
               </View>
             </View>
@@ -182,7 +179,7 @@ export function ProfileSection({
                     value={editName}
                     onChangeText={setEditName}
                     placeholder={t('settings.enterName')}
-                    placeholderTextColor={colors.gray[400]}
+                    placeholderTextColor={m3.neutral.n400}
                     style={styles.input}
                   />
                 </View>
@@ -240,7 +237,7 @@ export function ProfileSection({
               <Pressable
                 onPress={handleSave}
                 disabled={isSaving}
-                style={[styles.saveButton, { backgroundColor: colors.primary[600] }]}
+                style={[styles.saveButton, { backgroundColor: m3.primary.p600 }]}
               >
                 {isSaving ? (
                   <ActivityIndicator color={m3.colorScheme.onPrimary} />

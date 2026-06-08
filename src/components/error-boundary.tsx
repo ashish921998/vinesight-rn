@@ -2,7 +2,7 @@ import React, { Component, ReactNode } from 'react';
 import { View, Text, Pressable, ScrollView, Platform, Appearance } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
-import { getThemeColors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { getM3Theme, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useThemeStore } from '@/stores';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -75,13 +75,13 @@ export class ErrorBoundary extends Component<Props, State> {
       const systemScheme = Appearance.getColorScheme();
       const resolvedMode =
         themeMode === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : themeMode;
-      const colors = getThemeColors(resolvedMode === 'dark');
+      const m3 = getM3Theme(resolvedMode === 'dark');
 
       return (
         <View
           style={{
             flex: 1,
-            backgroundColor: colors.gray[50],
+            backgroundColor: m3.neutral.n50,
             alignItems: 'center',
             justifyContent: 'center',
             padding: spacing[6],
@@ -95,17 +95,17 @@ export class ErrorBoundary extends Component<Props, State> {
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: spacing[6],
-              backgroundColor: colorWithOpacity(colors.error, 0.12),
+              backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
             }}
           >
-            <IconSymbol name="exclamationmark.circle.fill" size={56} color={colors.error} />
+            <IconSymbol name="exclamationmark.circle.fill" size={56} color={m3.colorScheme.error} />
           </View>
 
           <Text
             style={{
               fontSize: fontSize['2xl'],
               fontWeight: fontWeight.bold,
-              color: colors.gray[900],
+              color: m3.neutral.n900,
               textAlign: 'center',
               marginBottom: spacing[2],
             }}
@@ -116,7 +116,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <Text
             style={{
               fontSize: fontSize.base,
-              color: colors.gray[600],
+              color: m3.neutral.n600,
               textAlign: 'center',
               marginBottom: spacing[6],
             }}
@@ -130,7 +130,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 width: '100%',
                 maxHeight: 192,
                 marginBottom: spacing[6],
-                backgroundColor: colorWithOpacity(colors.error, 0.12),
+                backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -139,7 +139,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 style={{
                   fontSize: fontSize.xs,
                   fontFamily: monospaceFont,
-                  color: colors.error,
+                  color: m3.colorScheme.error,
                   marginBottom: spacing[2],
                 }}
               >
@@ -147,7 +147,11 @@ export class ErrorBoundary extends Component<Props, State> {
               </Text>
               {this.state.errorInfo && (
                 <Text
-                  style={{ fontSize: fontSize.xs, fontFamily: monospaceFont, color: colors.error }}
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontFamily: monospaceFont,
+                    color: m3.colorScheme.error,
+                  }}
                 >
                   {this.state.errorInfo}
                 </Text>
@@ -158,7 +162,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <Pressable
             onPress={this.handleReset}
             style={{
-              backgroundColor: colors.primary[600],
+              backgroundColor: m3.primary.p600,
               paddingHorizontal: spacing[8],
               paddingVertical: spacing[4],
               borderRadius: borderRadius['2xl'],
@@ -166,7 +170,7 @@ export class ErrorBoundary extends Component<Props, State> {
           >
             <Text
               style={{
-                color: colors.white,
+                color: '#ffffff',
                 fontSize: fontSize.base,
                 fontWeight: fontWeight.semibold,
               }}

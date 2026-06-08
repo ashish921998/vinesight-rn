@@ -22,7 +22,9 @@ import {
   ReportFormat,
   ReportFilters,
   ReportSeasonContext,
+  ReportComparison,
 } from '../types/report';
+import { resolveBaselineFilters, computeReportDeltas } from '../services/report-comparison';
 import { useCurrency } from './use-currency';
 import type { AreaUnitPreference } from '@/utils/preferences';
 import { formatLocalDate } from '@/utils/date';
@@ -96,36 +98,45 @@ export function formatReportSeasonLabel(season: FarmSeason): string {
 /**
  * Hook to get report data for a specific farm
  */
-export function useReportData(filters: ReportFilters) {
+export function useReportData(filters: ReportFilters, options?: { enabled?: boolean }) {
   const { farmId, dateRange } = filters;
   const seasonId = filters.seasonId;
   const includeUnassigned = shouldIncludeUnassigned(filters);
 
+  // When disabled (e.g. a comparison baseline that doesn't apply), pass an
+  // undefined farmId so every record query gates off via its `enabled: !!farmId`
+  // guard — no fetches, no preview. Hook order stays stable.
+  const enabled = options?.enabled !== false;
+  const effectiveFarmId = enabled ? (farmId ?? undefined) : undefined;
+
   const { data: farms } = useFarms();
-  const { data: farmSeasons, isLoading: farmSeasonsLoading } = useFarmSeasons(farmId ?? undefined);
+  const { data: farmSeasons, isLoading: farmSeasonsLoading } = useFarmSeasons(effectiveFarmId);
   const { data: irrigationsRaw, isLoading: irrigationsLoading } = useIrrigationRecords(
-    farmId ?? 0,
+    effectiveFarmId ?? 0,
     seasonId,
   );
-  const { data: spraysRaw, isLoading: spraysLoading } = useSprayRecords(farmId ?? 0, seasonId);
+  const { data: spraysRaw, isLoading: spraysLoading } = useSprayRecords(
+    effectiveFarmId ?? 0,
+    seasonId,
+  );
   const { data: fertigationsRaw, isLoading: fertigationsLoading } = useFertigationRecords(
-    farmId ?? 0,
+    effectiveFarmId ?? 0,
     seasonId,
   );
   const { data: harvestsRaw, isLoading: harvestsLoading } = useHarvestRecords(
-    farmId ?? 0,
+    effectiveFarmId ?? 0,
     seasonId,
   );
   const { data: expensesRaw, isLoading: expensesLoading } = useExpenseRecords(
-    farmId ?? 0,
+    effectiveFarmId ?? 0,
     seasonId,
   );
   const { data: warehouseItems, isLoading: warehouseItemsLoading } = useWarehouseItems();
 
   const farm = useMemo(() => {
-    if (!farms || !farmId) return null;
-    return farms.find((f) => f.id === farmId) || null;
-  }, [farms, farmId]);
+    if (!farms || !effectiveFarmId) return null;
+    return farms.find((f) => f.id === effectiveFarmId) || null;
+  }, [farms, effectiveFarmId]);
 
   const selectedSeason = useMemo(() => {
     if (!farmSeasons || typeof seasonId !== 'number') return null;
@@ -270,6 +281,36 @@ export function useReportData(filters: ReportFilters) {
     harvests: harvests ?? [],
     expenses: expenses ?? [],
   };
+}
+
+/**
+ * Wraps useReportData to add period-over-period deltas. Calls useReportData a
+ * second time for the baseline (gated off when no baseline applies), then
+ * subtracts. Deltas are dropped when the baseline window holds no records, so
+ * an empty prior period never produces phantom "New" badges.
+ *
+ * Baseline resolution + delta math live in services/report-comparison.ts (pure,
+ * unit-tested there).
+ */
+export function useReportComparison(filters: ReportFilters) {
+  const current = useReportData(filters);
+  const todayIso = useMemo(() => formatLocalDate(new Date()), []);
+
+  const baselineFilters = useMemo(
+    () => resolveBaselineFilters(filters, current.seasons, current.selectedSeason, todayIso),
+    [filters, current.seasons, current.selectedSeason, todayIso],
+  );
+
+  const baseline = useReportData(baselineFilters ?? filters, { enabled: baselineFilters != null });
+
+  const comparison = useMemo<ReportComparison | null>(() => {
+    if (!baselineFilters || !current.preview || !baseline.preview) return null;
+    // Must-have-records: an empty prior window is not an honest baseline.
+    if (baseline.preview.summary.totalRecords === 0) return null;
+    return { deltas: computeReportDeltas(current.preview.summary, baseline.preview.summary) };
+  }, [baselineFilters, current.preview, baseline.preview]);
+
+  return { ...current, comparison };
 }
 
 /**

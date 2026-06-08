@@ -9,8 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { LineChart } from 'react-native-chart-kit';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { PARAMETER_COLORS } from '../../hooks/use-lab-tests';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 import { formatDate } from '@/i18n/format';
@@ -29,7 +29,6 @@ export default function TrendsChart({
   onToggleParam,
 }: Props) {
   const { t, i18n } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
   const { width: screenWidth } = useWindowDimensions();
   const [selectedPoint, setSelectedPoint] = useState<{ index: number; date: string } | null>(null);
@@ -59,14 +58,14 @@ export default function TrendsChart({
   }, [params, trendData]);
 
   const chartConfig = {
-    backgroundColor: colors.surface[100],
-    backgroundGradientFrom: colors.surface[100],
-    backgroundGradientTo: colors.surface[100],
+    backgroundColor: m3.surface.s100,
+    backgroundGradientFrom: m3.surface.s100,
+    backgroundGradientTo: m3.surface.s100,
     decimalPlaces: 2,
     color: (opacity: number) => colorWithOpacity(m3.colorScheme.onSurface, opacity),
     labelColor: (opacity: number) => colorWithOpacity(m3.colorScheme.onSurfaceVariant, opacity),
     style: {
-      borderRadius: 16,
+      borderRadius: radius.lg,
     },
     propsForDots: {
       r: '4',
@@ -183,7 +182,7 @@ export default function TrendsChart({
         bezier
         style={{
           marginVertical: 8,
-          borderRadius: 16,
+          borderRadius: radius.lg,
         }}
         onDataPointClick={(data) => {
           if (
@@ -259,7 +258,7 @@ export default function TrendsChart({
                   paddingHorizontal: spacing[3],
                   paddingVertical: spacing[2],
                   borderRadius: borderRadius.lg,
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
                   borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                 }}
@@ -268,7 +267,7 @@ export default function TrendsChart({
                   style={{
                     width: 12,
                     height: 12,
-                    borderRadius: 6,
+                    borderRadius: radius.sm,
                     backgroundColor: color,
                   }}
                 />
@@ -313,7 +312,7 @@ export default function TrendsChart({
             <View
               key={param.key}
               style={{
-                backgroundColor: colors.surface[100],
+                backgroundColor: m3.surface.s100,
                 borderRadius: borderRadius.xl,
                 padding: spacing[4],
                 marginBottom: spacing[3],
@@ -326,7 +325,7 @@ export default function TrendsChart({
                   style={{
                     width: 8,
                     height: 8,
-                    borderRadius: 4,
+                    borderRadius: radius.xs,
                     backgroundColor: color,
                   }}
                 />
@@ -349,7 +348,7 @@ export default function TrendsChart({
                       trend.change === null
                         ? colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
                         : trend.change > 0
-                          ? colors.success
+                          ? m3.colorScheme.success
                           : trend.change < 0
                             ? m3.colorScheme.error
                             : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
@@ -407,7 +406,7 @@ export default function TrendsChart({
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.success,
+                      color: m3.colorScheme.success,
                     }}
                   >
                     {trend.min.toFixed(2)}

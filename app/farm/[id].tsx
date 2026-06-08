@@ -17,6 +17,7 @@ import { useIsFocused } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui';
 import {
   useFarm,
@@ -54,14 +55,15 @@ import type {
   DailyNoteRecord,
 } from '@/types';
 import type { TaskReminder } from '@/types/task';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { isGrapeCrop } from '@/utils/crop';
 
 import { useModalStore } from '@/stores';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
 import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from '@/utils/haptics';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
@@ -87,8 +89,8 @@ const NOW_TICK_MS = 60_000;
 const OPEN_TASKS_PREVIEW_LIMIT = 5;
 
 export default function FarmDetailScreen() {
-  const colors = useThemeColors();
   const m3 = useM3();
+  const domain = useDomainColors();
   const { t } = useTranslation();
   const currency = useCurrency();
 
@@ -224,8 +226,6 @@ export default function FarmDetailScreen() {
   const seasonSuccessScale = React.useRef(new Animated.Value(0.92)).current;
   const seasonSuccessOpacity = React.useRef(new Animated.Value(0)).current;
   const seasonSuccessTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const showFab = isAndroid;
-  const bottomBarHeight = showFab ? 0 : 72 + insets.bottom;
   const handleBackNavigation = React.useCallback(() => {
     if (router.canGoBack()) {
       router.back();
@@ -270,7 +270,7 @@ export default function FarmDetailScreen() {
         id: 'soil',
         titleKey: 'farmDetails.workboard.actions.soilMoisture',
         icon: 'square.stack.3d.up.fill',
-        color: colors.task[500],
+        color: domain.category.task,
       },
     ];
     if (profile?.consultant_organization_id) {
@@ -278,11 +278,11 @@ export default function FarmDetailScreen() {
         id: 'fertilizer-plans',
         titleKey: 'farmDetails.fertilizerPlan.title',
         icon: 'leaf.fill',
-        color: colors.fertigation[500],
+        color: domain.category.fertigation,
       });
     }
     return actions;
-  }, [colors.fertigation, colors.task, m3, profile?.consultant_organization_id]);
+  }, [domain.category.fertigation, domain.category.task, m3, profile?.consultant_organization_id]);
 
   const seasonEndDates = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return [];
@@ -767,7 +767,7 @@ export default function FarmDetailScreen() {
         onPress: async () => {
           try {
             await recomputeSeasonAssignments.mutateAsync({ farmId: reviewFarmId });
-            Alert.alert(t('common.success'), t('farmDetails.seasons.alerts.reviewQueuedSuccess'));
+            toast.success(t('farmDetails.seasons.alerts.reviewQueuedSuccess'));
           } catch (error) {
             const message =
               error instanceof Error
@@ -1088,13 +1088,8 @@ export default function FarmDetailScreen() {
         refreshedSeasons.data?.find((season) => season.end_date === null) ?? null;
       if (refreshedActiveSeason) {
         router.push({
-          pathname: '/add-entry',
-          params: {
-            farmId: farm.id.toString(),
-            initialTab: 'log',
-            tabs: 'log,task',
-            lockFarmSelection: 'true',
-          },
+          pathname: '/log-entry/quick',
+          params: { farmId: farm.id.toString() },
         });
         return;
       }
@@ -1115,11 +1110,24 @@ export default function FarmDetailScreen() {
       return;
     }
     router.push({
+      pathname: '/log-entry/quick',
+      params: { farmId: farm.id.toString() },
+    });
+  };
+
+  const handleAddTask = () => {
+    if (!farm?.id) return;
+    setAddEntry({
+      tabs: ['task'],
+      initialTab: 'task',
+      initialFarmId: farm.id,
+    });
+    router.push({
       pathname: '/add-entry',
       params: {
+        tabs: 'task',
+        initialTab: 'task',
         farmId: farm.id.toString(),
-        initialTab: 'log',
-        tabs: 'log,task',
         lockFarmSelection: 'true',
       },
     });
@@ -1437,7 +1445,7 @@ export default function FarmDetailScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -1462,7 +1470,7 @@ export default function FarmDetailScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -1513,7 +1521,7 @@ export default function FarmDetailScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -1538,7 +1546,7 @@ export default function FarmDetailScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -1557,7 +1565,7 @@ export default function FarmDetailScreen() {
           scrollEnabled={!isGuidedAddLogStep}
           contentContainerStyle={{
             paddingTop: 0,
-            paddingBottom: bottomBarHeight + spacing[6],
+            paddingBottom: spacing[6],
           }}
           contentInsetAdjustmentBehavior="never"
           refreshControl={
@@ -1574,9 +1582,9 @@ export default function FarmDetailScreen() {
             <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
               <View
                 style={{
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
+                  borderColor: m3.surface.s300,
                   borderRadius: borderRadius.md,
                   padding: spacing[4],
                 }}
@@ -1590,16 +1598,16 @@ export default function FarmDetailScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 11,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.8,
                       textTransform: 'uppercase',
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                     }}
                   >
                     {t('farmDetails.seasonStrip.title', { defaultValue: 'Season' })}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.surface[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {100 - seasonProgressPct}%{' '}
                     {t('farmDetails.seasonStrip.toHarvest', { defaultValue: 'to harvest' })}
                   </Text>
@@ -1615,7 +1623,7 @@ export default function FarmDetailScreen() {
                       right: 0,
                       top: 7,
                       height: 6,
-                      backgroundColor: colors.surface[200],
+                      backgroundColor: m3.surface.s200,
                       borderRadius: borderRadius.full,
                     }}
                   />
@@ -1640,10 +1648,10 @@ export default function FarmDetailScreen() {
                       transform: [{ translateX: -7 }],
                       width: 14,
                       height: 14,
-                      borderRadius: 7,
-                      backgroundColor: colors.surface[100],
+                      borderRadius: radius.sm,
+                      backgroundColor: m3.surface.s100,
                       borderWidth: 2,
-                      borderColor: colors.warning,
+                      borderColor: m3.colorScheme.warning,
                     }}
                   />
                 </View>
@@ -1659,16 +1667,18 @@ export default function FarmDetailScreen() {
                   <View>
                     <Text
                       style={{
-                        fontSize: 10,
+                        fontSize: fontSize['2xs'],
                         fontWeight: fontWeight.bold,
                         letterSpacing: 0.5,
                         textTransform: 'uppercase',
-                        color: colors.surface[500],
+                        color: m3.surface.s500,
                       }}
                     >
                       {t('farmDetails.seasonStrip.pruning', { defaultValue: 'Pruning' })}
                     </Text>
-                    <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, marginTop: 2 }}>
+                    <Text
+                      style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, marginTop: 2 }}
+                    >
                       {effectiveSeasonStartDate
                         ? formatDate(effectiveSeasonStartDate, { month: 'short', day: 'numeric' })
                         : '—'}
@@ -1678,21 +1688,21 @@ export default function FarmDetailScreen() {
                     <View style={{ alignItems: 'center' }}>
                       <Text
                         style={{
-                          fontSize: 10,
+                          fontSize: fontSize['2xs'],
                           fontWeight: fontWeight.bold,
                           letterSpacing: 0.5,
                           textTransform: 'uppercase',
-                          color: colors.surface[500],
+                          color: m3.surface.s500,
                         }}
                       >
                         {t('farmDetails.seasonStrip.today', { defaultValue: 'Today' })}
                       </Text>
                       <Text
                         style={{
-                          fontSize: 13,
+                          fontSize: fontSize.sm,
                           fontWeight: fontWeight.bold,
                           marginTop: 2,
-                          color: colors.warning,
+                          color: m3.colorScheme.warning,
                         }}
                       >
                         {t('farmDetails.pruning.daysShort', { count: daysSincePruning })}
@@ -1702,11 +1712,11 @@ export default function FarmDetailScreen() {
                   <View style={{ alignItems: 'flex-end' }}>
                     <Text
                       style={{
-                        fontSize: 10,
+                        fontSize: fontSize['2xs'],
                         fontWeight: fontWeight.bold,
                         letterSpacing: 0.5,
                         textTransform: 'uppercase',
-                        color: colors.surface[500],
+                        color: m3.surface.s500,
                       }}
                     >
                       {t('farmDetails.seasonStrip.target', { defaultValue: 'Target' })}
@@ -1719,7 +1729,9 @@ export default function FarmDetailScreen() {
                       })}
                       disabled={isSavingActiveSeasonTargetDate}
                     >
-                      <Text style={{ fontSize: 13, fontWeight: fontWeight.bold, marginTop: 2 }}>
+                      <Text
+                        style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, marginTop: 2 }}
+                      >
                         {activeSeasonRecord.target_harvest_date
                           ? formatDate(
                               parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ??
@@ -1741,11 +1753,11 @@ export default function FarmDetailScreen() {
           <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
             <Text
               style={{
-                fontSize: 11,
+                fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 marginBottom: spacing[2],
               }}
             >
@@ -1756,9 +1768,9 @@ export default function FarmDetailScreen() {
               <Pressable
                 style={({ pressed: _pressed }) => ({
                   flex: 1,
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
+                  borderColor: m3.surface.s300,
                   borderRadius: borderRadius.md,
                   padding: spacing[3],
                 })}
@@ -1780,24 +1792,24 @@ export default function FarmDetailScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 10,
+                      fontSize: fontSize['2xs'],
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.6,
                       textTransform: 'uppercase',
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                     }}
                   >
                     {t('farmDetails.stats.soilWaterTitle')}
                   </Text>
-                  <UiSymbol name="water" size={14} color={colors.irrigation[500]} />
+                  <UiSymbol name="water" size={14} color={domain.category.irrigation} />
                 </View>
                 <Text
                   style={{
                     color:
                       remainingSoilWater != null && remainingSoilWater >= 0
-                        ? colors.irrigation[500]
+                        ? domain.category.irrigation
                         : m3.colorScheme.error,
-                    fontSize: 20,
+                    fontSize: fontSize.xl,
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
                   }}
@@ -1806,8 +1818,8 @@ export default function FarmDetailScreen() {
                 </Text>
                 <Text
                   style={{
-                    color: colors.surface[400],
-                    fontSize: 11,
+                    color: m3.surface.s400,
+                    fontSize: fontSize.xs,
                     lineHeight: 14,
                     marginTop: spacing[1],
                   }}
@@ -1820,9 +1832,9 @@ export default function FarmDetailScreen() {
               <View
                 style={{
                   flex: 1,
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: m3.surface.s100,
                   borderWidth: 1,
-                  borderColor: colors.surface[300],
+                  borderColor: m3.surface.s300,
                   borderRadius: borderRadius.md,
                   padding: spacing[3],
                 }}
@@ -1836,23 +1848,23 @@ export default function FarmDetailScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 10,
+                      fontSize: fontSize['2xs'],
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.6,
                       textTransform: 'uppercase',
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                     }}
                   >
                     {t('farmDetails.vitalSigns.weather', { defaultValue: 'Weather' })}
                   </Text>
-                  <UiSymbol name="partly-sunny" size={14} color={colors.warning} />
+                  <UiSymbol name="partly-sunny" size={14} color={m3.colorScheme.warning} />
                 </View>
                 {weather?.current ? (
                   <>
                     <Text
                       style={{
-                        color: colors.surface[900],
-                        fontSize: 20,
+                        color: m3.surface.s900,
+                        fontSize: fontSize.xl,
                         fontWeight: fontWeight.bold,
                         marginTop: spacing[1],
                       }}
@@ -1861,8 +1873,8 @@ export default function FarmDetailScreen() {
                     </Text>
                     <Text
                       style={{
-                        color: colors.surface[400],
-                        fontSize: 11,
+                        color: m3.surface.s400,
+                        fontSize: fontSize.xs,
                         lineHeight: 14,
                         marginTop: spacing[1],
                       }}
@@ -1873,8 +1885,8 @@ export default function FarmDetailScreen() {
                 ) : (
                   <Text
                     style={{
-                      color: colors.surface[500],
-                      fontSize: 20,
+                      color: m3.surface.s500,
+                      fontSize: fontSize.xl,
                       fontWeight: fontWeight.bold,
                       marginTop: spacing[1],
                     }}
@@ -1905,7 +1917,7 @@ export default function FarmDetailScreen() {
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      fontSize: 12,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
                       color: m3.colorScheme.error,
                     }}
@@ -1914,7 +1926,7 @@ export default function FarmDetailScreen() {
                       defaultValue: 'Spray PHI delays harvest',
                     })}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.surface[500], marginTop: 2 }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 2 }}>
                     {t('farmDetails.phiConflict.subtitle', {
                       defaultValue: 'Earliest safe: {{date}} — review spray schedule',
                       date: earliestSafeHarvestDateLabel,
@@ -1957,14 +1969,14 @@ export default function FarmDetailScreen() {
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      fontSize: 12,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
                       color: m3.colorScheme.warning,
                     }}
                   >
                     {t('farmDetails.riskBlock.urgentTasks', { count: urgentTasks.length })}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.surface[500], marginTop: 2 }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 2 }}>
                     {t('farmDetails.tasks.urgentHint', {
                       defaultValue: 'Review due and overdue work before logging more activity.',
                     })}
@@ -1973,7 +1985,7 @@ export default function FarmDetailScreen() {
                 <Text
                   style={{
                     color: m3.colorScheme.primary,
-                    fontSize: 12,
+                    fontSize: fontSize.xs,
                     fontWeight: fontWeight.semibold,
                   }}
                 >
@@ -2037,7 +2049,7 @@ export default function FarmDetailScreen() {
                       >
                         <View
                           style={{
-                            borderRadius: 20,
+                            borderRadius: radius.xl,
                             alignItems: 'center',
                             justifyContent: 'center',
                             marginBottom: spacing[1] + 1,
@@ -2050,8 +2062,8 @@ export default function FarmDetailScreen() {
                         </View>
                         <Text
                           style={{
-                            color: colors.surface[500],
-                            fontSize: 11,
+                            color: m3.surface.s500,
+                            fontSize: fontSize.xs,
                             fontWeight: fontWeight.medium,
                             textAlign: 'center',
                             lineHeight: 14,
@@ -2100,11 +2112,11 @@ export default function FarmDetailScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: fontWeight.bold,
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                   }}
                 >
                   {t('farmDetails.sections.openTasks', { defaultValue: 'Open tasks' })}
@@ -2112,9 +2124,9 @@ export default function FarmDetailScreen() {
                 {openTasks.length > 0 && (
                   <Text
                     style={{
-                      fontSize: 11,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginLeft: 4,
                     }}
                   >
@@ -2123,35 +2135,66 @@ export default function FarmDetailScreen() {
                 )}
               </View>
               {farm?.id ? (
-                <Pressable
-                  onPress={() => {
-                    if (!farm?.id) return;
-                    router.push({
-                      pathname: '/tasks',
-                      params: { farmId: farm.id.toString() },
-                    });
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
-                  style={({ pressed }) => ({
-                    paddingHorizontal: spacing[2],
-                    paddingVertical: spacing[1],
-                    borderRadius: m3.shape.cornerSmall,
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                      : 'transparent',
-                  })}
-                >
-                  <Text
-                    style={{
-                      color: m3.colorScheme.primary,
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                    }}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[1] }}>
+                  <Pressable
+                    onPress={handleAddTask}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('farmDetails.actions.addTask')}
+                    hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
+                    style={({ pressed }) => ({
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 2,
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: spacing[1],
+                      borderRadius: m3.shape.cornerSmall,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    })}
                   >
-                    {t('farmDetails.actions.seeAllTasks')}
-                  </Text>
-                </Pressable>
+                    <UiSymbol name="plus" size={13} color={m3.colorScheme.primary} />
+                    <Text
+                      style={{
+                        color: m3.colorScheme.primary,
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {t('farmDetails.actions.addTask')}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      if (!farm?.id) return;
+                      router.push({
+                        pathname: '/tasks',
+                        params: { farmId: farm.id.toString() },
+                      });
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
+                    hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
+                    style={({ pressed }) => ({
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: spacing[1],
+                      borderRadius: m3.shape.cornerSmall,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    })}
+                  >
+                    <Text
+                      style={{
+                        color: m3.colorScheme.primary,
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {t('farmDetails.actions.seeAllTasks')}
+                    </Text>
+                  </Pressable>
+                </View>
               ) : null}
             </View>
 
@@ -2216,6 +2259,36 @@ export default function FarmDetailScreen() {
                 >
                   {t('farmDetails.tasks.empty.title')}
                 </Text>
+                <Pressable
+                  onPress={handleAddTask}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('farmDetails.actions.addTask')}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing[1],
+                    marginTop: spacing[4],
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[2],
+                    borderRadius: m3.shape.cornerMedium,
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.22)
+                      : colorWithOpacity(m3.colorScheme.primary, 0.14),
+                    borderWidth: 1,
+                    borderColor: m3.colorScheme.primary,
+                  })}
+                >
+                  <UiSymbol name="plus" size={15} color={m3.colorScheme.primary} />
+                  <Text
+                    style={{
+                      color: m3.colorScheme.primary,
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    {t('farmDetails.actions.addTask')}
+                  </Text>
+                </Pressable>
               </View>
             ) : null}
           </View>
@@ -2239,11 +2312,11 @@ export default function FarmDetailScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: fontSize.xs,
                     fontWeight: fontWeight.bold,
                     letterSpacing: 0.8,
                     textTransform: 'uppercase',
-                    color: colors.surface[500],
+                    color: m3.surface.s500,
                   }}
                 >
                   {t('farmDetails.sections.recentLogs', { defaultValue: 'Recent logs' })}
@@ -2251,9 +2324,9 @@ export default function FarmDetailScreen() {
                 {allLogs.length > 0 && (
                   <Text
                     style={{
-                      fontSize: 11,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
-                      color: colors.surface[500],
+                      color: m3.surface.s500,
                       marginLeft: 4,
                     }}
                   >
@@ -2488,11 +2561,11 @@ export default function FarmDetailScreen() {
           <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
             <Text
               style={{
-                fontSize: 11,
+                fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 marginBottom: spacing[2],
               }}
             >
@@ -2511,7 +2584,7 @@ export default function FarmDetailScreen() {
               >
                 <Text
                   style={{
-                    fontSize: 10,
+                    fontSize: fontSize['2xs'],
                     fontWeight: fontWeight.bold,
                     letterSpacing: 0.6,
                     textTransform: 'uppercase',
@@ -2523,7 +2596,7 @@ export default function FarmDetailScreen() {
                 <Text
                   style={{
                     color: m3.colorScheme.onSurface,
-                    fontSize: 22,
+                    fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
                   }}
@@ -2543,7 +2616,7 @@ export default function FarmDetailScreen() {
               >
                 <Text
                   style={{
-                    fontSize: 10,
+                    fontSize: fontSize['2xs'],
                     fontWeight: fontWeight.bold,
                     letterSpacing: 0.6,
                     textTransform: 'uppercase',
@@ -2555,7 +2628,7 @@ export default function FarmDetailScreen() {
                 <Text
                   style={{
                     color: m3.colorScheme.onSurface,
-                    fontSize: 22,
+                    fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
                   }}
@@ -2571,16 +2644,16 @@ export default function FarmDetailScreen() {
             style={{
               paddingHorizontal: spacing[4],
               marginTop: spacing[6],
-              paddingBottom: spacing[8] + (showFab ? spacing[16] : bottomBarHeight + spacing[6]),
+              paddingBottom: spacing[8] + spacing[16],
             }}
           >
             <Text
               style={{
-                fontSize: 11,
+                fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
                 letterSpacing: 0.8,
                 textTransform: 'uppercase',
-                color: colors.surface[500],
+                color: m3.surface.s500,
                 marginBottom: spacing[2],
               }}
             >
@@ -2644,7 +2717,7 @@ export default function FarmDetailScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 10,
+                      fontSize: fontSize['2xs'],
                       fontWeight: fontWeight.bold,
                       letterSpacing: 0.5,
                       textTransform: 'uppercase',
@@ -2658,7 +2731,7 @@ export default function FarmDetailScreen() {
                     style={{
                       flex: 1,
                       color: m3.colorScheme.onSurface,
-                      fontSize: 13,
+                      fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
                       textAlign: 'right',
                     }}
@@ -2794,10 +2867,7 @@ export default function FarmDetailScreen() {
                   const reviewFarmId = farm.id;
                   try {
                     await recomputeSeasonAssignments.mutateAsync({ farmId: reviewFarmId });
-                    Alert.alert(
-                      t('common.success'),
-                      t('farmDetails.seasons.alerts.reviewQueuedSuccess'),
-                    );
+                    toast.success(t('farmDetails.seasons.alerts.reviewQueuedSuccess'));
                   } catch (error) {
                     const message =
                       error instanceof Error
@@ -3484,70 +3554,49 @@ export default function FarmDetailScreen() {
         </Pressable>
       )}
 
-      {/* Primary action */}
-      {showFab ? (
-        <GuidedTourTarget
-          targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}
+      {/* Primary action — Material 3 floating action button (both platforms) */}
+      <GuidedTourTarget
+        targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}
+        style={{
+          position: 'absolute',
+          bottom: spacing[6] + insets.bottom,
+          right: spacing[6],
+          width: 56,
+          height: 56,
+        }}
+      >
+        <Pressable
+          onPress={handleAddActivity}
+          accessibilityRole="button"
+          accessibilityLabel={t('farmDetails.actions.addActivity')}
           style={{
-            position: 'absolute',
-            bottom: spacing[6] + insets.bottom,
-            right: spacing[6],
-            width: 56,
-            height: 56,
+            width: '100%',
+            height: '100%',
+            backgroundColor: m3.colorScheme.primary,
+            borderRadius: borderRadius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
           }}
         >
-          <Pressable
-            onPress={handleAddActivity}
-            accessibilityRole="button"
-            accessibilityLabel={t('farmDetails.actions.addActivity')}
-            style={{
-              width: '100%',
-              height: '100%',
-              backgroundColor: m3.colorScheme.primary,
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-            }}
-          >
-            {({ pressed }) => (
-              <>
-                <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
-                <View
-                  pointerEvents="none"
-                  style={[
-                    StyleSheet.absoluteFillObject,
-                    {
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
-                    },
-                  ]}
-                />
-              </>
-            )}
-          </Pressable>
-        </GuidedTourTarget>
-      ) : (
-        <View
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            paddingHorizontal: spacing[4],
-            paddingTop: spacing[3],
-            paddingBottom: Math.max(insets.bottom, spacing[3]),
-            backgroundColor: m3.surface.surfaceContainerLow,
-            borderTopWidth: 1,
-            borderTopColor: m3.colorScheme.outlineVariant,
-          }}
-        >
-          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}>
-            <Button title={t('farmDetails.actions.addActivity')} onPress={handleAddActivity} />
-          </GuidedTourTarget>
-        </View>
-      )}
+          {({ pressed }) => (
+            <>
+              <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                      : 'transparent',
+                  },
+                ]}
+              />
+            </>
+          )}
+        </Pressable>
+      </GuidedTourTarget>
 
       {/* Add Entry + Water Level handled via routes */}
     </>

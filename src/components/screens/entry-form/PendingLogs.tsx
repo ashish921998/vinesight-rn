@@ -1,4 +1,5 @@
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
+import { fontSize, radius } from '@/styles/theme';
 import { getExpenseIconName } from '@/utils/expense-icons';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
 import type {
@@ -9,7 +10,7 @@ import type {
   FertigationFormData,
   NoteFormData,
 } from '@/components/forms';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -47,7 +48,6 @@ interface PendingLogsProps {
 
 export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLogsProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
   const failedDraftCount = pendingLogs.filter((log) => failures[log.id]).length;
 
@@ -56,8 +56,8 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
   return (
     <View
       style={{
-        backgroundColor: colors.surface[100],
-        borderRadius: 18,
+        backgroundColor: m3.surface.s100,
+        borderRadius: radius.lg,
         padding: 16,
         marginBottom: 16,
         borderWidth: 1,
@@ -76,7 +76,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
           <Text
             selectable
             style={{
-              fontSize: 11,
+              fontSize: fontSize.xs,
               fontWeight: '700',
               letterSpacing: 0.6,
               textTransform: 'uppercase',
@@ -89,7 +89,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
             selectable
             style={{
               marginTop: 6,
-              fontSize: 19,
+              fontSize: fontSize.xl,
               lineHeight: 24,
               fontWeight: '700',
               color: m3.colorScheme.onSurface,
@@ -101,7 +101,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
             selectable
             style={{
               marginTop: 4,
-              fontSize: 13,
+              fontSize: fontSize.sm,
               lineHeight: 18,
               color: m3.colorScheme.onSurfaceVariant,
             }}
@@ -114,7 +114,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
         <View
           style={{
             backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-            borderRadius: 999,
+            borderRadius: radius.full,
             paddingHorizontal: 10,
             paddingVertical: 6,
           }}
@@ -122,7 +122,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
           <Text
             selectable
             style={{
-              fontSize: 12,
+              fontSize: fontSize.xs,
               fontWeight: '700',
               color: m3.colorScheme.primary,
             }}
@@ -139,7 +139,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
             gap: 10,
             marginBottom: 12,
             padding: 12,
-            borderRadius: 14,
+            borderRadius: radius.lg,
             backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.error, 0.22),
@@ -150,7 +150,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
             <Text
               selectable
               style={{
-                fontSize: 13,
+                fontSize: fontSize.sm,
                 lineHeight: 18,
                 fontWeight: '700',
                 color: m3.colorScheme.error,
@@ -168,7 +168,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
               selectable
               style={{
                 marginTop: 2,
-                fontSize: 12,
+                fontSize: fontSize.xs,
                 lineHeight: 17,
                 color: m3.colorScheme.onSurfaceVariant,
               }}
@@ -204,7 +204,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                   flexDirection: 'row',
                   alignItems: 'center',
                   padding: 12,
-                  borderRadius: 14,
+                  borderRadius: radius.lg,
                   marginBottom: 10,
                   borderWidth: 1,
                   borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
@@ -212,7 +212,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                 {
                   backgroundColor: failure
                     ? colorWithOpacity(m3.colorScheme.error, 0.08)
-                    : colors.surface[50],
+                    : m3.surface.s50,
                   borderColor: failure
                     ? colorWithOpacity(m3.colorScheme.error, 0.42)
                     : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
@@ -224,7 +224,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                   style={{
                     width: 34,
                     height: 34,
-                    borderRadius: 10,
+                    borderRadius: radius.md,
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: `${logType?.color ?? m3.colorScheme.primary}15`,
@@ -244,17 +244,17 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                       top: -5,
                       minWidth: 18,
                       height: 18,
-                      borderRadius: 999,
+                      borderRadius: radius.full,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: colors.surface[100],
+                      backgroundColor: m3.surface.s100,
                       borderWidth: 1,
                       borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 10,
+                        fontSize: fontSize['2xs'],
                         fontWeight: '700',
                         color: m3.colorScheme.onSurfaceVariant,
                       }}
@@ -267,7 +267,11 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
               <View style={{ flex: 1, marginLeft: 10 }}>
                 <Text
                   selectable
-                  style={{ fontSize: 14, fontWeight: '700', color: m3.colorScheme.onSurface }}
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: '700',
+                    color: m3.colorScheme.onSurface,
+                  }}
                 >
                   {logType ? t(logType.labelKey) : t('entryForm.addLog')}
                 </Text>
@@ -275,7 +279,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                   selectable
                   style={{
                     marginTop: 2,
-                    fontSize: 12,
+                    fontSize: fontSize.xs,
                     lineHeight: 17,
                     color: m3.colorScheme.onSurfaceVariant,
                   }}
@@ -288,7 +292,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                     <Text
                       selectable
                       style={{
-                        fontSize: 12,
+                        fontSize: fontSize.xs,
                         lineHeight: 17,
                         fontWeight: '700',
                         color: m3.colorScheme.error,
@@ -306,7 +310,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                       selectable
                       style={{
                         marginTop: 2,
-                        fontSize: 12,
+                        fontSize: fontSize.xs,
                         lineHeight: 17,
                         color: m3.colorScheme.onSurfaceVariant,
                       }}
@@ -318,7 +322,7 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                         selectable
                         style={{
                           marginTop: 2,
-                          fontSize: 12,
+                          fontSize: fontSize.xs,
                           lineHeight: 17,
                           color: m3.colorScheme.error,
                         }}
@@ -344,12 +348,12 @@ export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLog
                 style={{
                   width: 34,
                   height: 34,
-                  borderRadius: 10,
+                  borderRadius: radius.md,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: failure
                     ? colorWithOpacity(m3.colorScheme.error, 0.12)
-                    : colors.surface[100],
+                    : m3.surface.s100,
                   borderWidth: failure ? 0 : 1,
                   borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
                 }}

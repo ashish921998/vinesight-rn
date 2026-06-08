@@ -7,7 +7,7 @@ import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import type { NutrientCompositionItem, QuantityBasis } from '@/types';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
@@ -84,6 +84,8 @@ interface FertigationFormProps {
   onInputFocus?: TextInputProps['onFocus'];
   quickAddItems?: FertigationQuickAddItem[];
   perAreaLabel?: string;
+  /** Hide the decorative header + summary/validation chrome (inline log composer). */
+  compact?: boolean;
 }
 
 export function FertigationForm({
@@ -92,8 +94,8 @@ export function FertigationForm({
   onInputFocus,
   quickAddItems = [],
   perAreaLabel = 'Per acre',
+  compact = false,
 }: FertigationFormProps) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
   const isValid =
@@ -214,39 +216,41 @@ export function FertigationForm({
   return (
     <View>
       {/* Header with icon */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: borderRadius.full,
-            backgroundColor: colorWithOpacity(colors.success, 0.16),
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: spacing[3],
-          }}
-        >
-          <IconSymbol
-            name={resolveSymbolIconName(ICON_REGISTRY.fertigation)}
-            size={20}
-            color={colors.success}
-          />
-        </View>
-        <View>
-          <Text
+      {!compact && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+          <View
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[900],
+              width: 40,
+              height: 40,
+              borderRadius: borderRadius.full,
+              backgroundColor: colorWithOpacity(m3.colorScheme.success, 0.16),
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: spacing[3],
             }}
           >
-            {t('fertigationForm.title')}
-          </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            {t('fertigationForm.subtitle')}
-          </Text>
+            <IconSymbol
+              name={resolveSymbolIconName(ICON_REGISTRY.fertigation)}
+              size={20}
+              color={m3.colorScheme.success}
+            />
+          </View>
+          <View>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: m3.surface.s900,
+              }}
+            >
+              {t('fertigationForm.title')}
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
+              {t('fertigationForm.subtitle')}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Water Volume Input */}
       <NumericInput
@@ -283,7 +287,7 @@ export function FertigationForm({
                 style={{
                   fontSize: fontSize.xs,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[500],
+                  color: m3.surface.s500,
                   marginBottom: spacing[2],
                   textTransform: 'uppercase',
                   letterSpacing: 0.4,
@@ -301,15 +305,15 @@ export function FertigationForm({
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[2],
                       borderRadius: borderRadius.full,
-                      backgroundColor: colors.surface[100],
+                      backgroundColor: m3.surface.s100,
                       borderWidth: 1,
-                      borderColor: colors.surface[200],
+                      borderColor: m3.surface.s200,
                     }}
                   >
-                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
                       {item.name}
                     </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                       {item.quantity ? `${item.quantity} ` : ''}
                       {item.unit ?? 'kg'}
                     </Text>
@@ -329,22 +333,22 @@ export function FertigationForm({
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ marginRight: 6 }}>
-                <IconSymbol name="flask" size={16} color={colors.primary[600]} />
+                <IconSymbol name="flask" size={16} color={m3.primary.p600} />
               </View>
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[800],
+                  color: m3.surface.s800,
                 }}
               >
-                Fertilizers <Text style={{ color: colors.error }}>*</Text>
+                Fertilizers <Text style={{ color: m3.colorScheme.error }}>*</Text>
               </Text>
             </View>
             {totalInputs > 0 && (
               <View
                 style={{
-                  backgroundColor: colorWithOpacity(colors.success, 0.16),
+                  backgroundColor: colorWithOpacity(m3.colorScheme.success, 0.16),
                   paddingHorizontal: 10,
                   paddingVertical: 4,
                   borderRadius: borderRadius.full,
@@ -354,7 +358,7 @@ export function FertigationForm({
                   style={{
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.medium,
-                    color: colors.success,
+                    color: m3.colorScheme.success,
                   }}
                 >
                   {totalInputs} input{totalInputs !== 1 ? 's' : ''}
@@ -388,12 +392,12 @@ export function FertigationForm({
                 marginTop: spacing[2],
               }}
             >
-              <IconSymbol name="plus.circle.fill" size={20} color={colors.success} />
+              <IconSymbol name="plus.circle.fill" size={20} color={m3.colorScheme.success} />
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: colors.success,
+                  color: m3.colorScheme.success,
                   marginLeft: spacing[2],
                 }}
               >
@@ -405,10 +409,10 @@ export function FertigationForm({
       </GuidedTourTarget>
 
       {/* Summary */}
-      {totalInputs > 0 && (
+      {!compact && totalInputs > 0 && (
         <View
           style={{
-            backgroundColor: colorWithOpacity(colors.success, 0.12),
+            backgroundColor: colorWithOpacity(m3.colorScheme.success, 0.12),
             borderRadius: borderRadius.xl,
             padding: spacing[4],
             marginTop: spacing[4],
@@ -418,7 +422,7 @@ export function FertigationForm({
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: colors.success,
+              color: m3.colorScheme.success,
               marginBottom: spacing[2],
             }}
           >
@@ -443,7 +447,7 @@ export function FertigationForm({
                   style={{
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.medium,
-                    color: colors.success,
+                    color: m3.colorScheme.success,
                   }}
                 >
                   {f.quantity ?? 0} {f.unit}
@@ -455,31 +459,37 @@ export function FertigationForm({
       )}
 
       {/* Validation indicator */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginTop: spacing[4],
-          paddingTop: spacing[4],
-          borderTopWidth: 1,
-          borderTopColor: colors.surface[100],
-        }}
-      >
-        <IconSymbol
-          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
-          size={16}
-          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-        />
-        <Text
+      {!compact && (
+        <View
           style={{
-            fontSize: fontSize.sm,
-            marginLeft: spacing[2],
-            color: isValid ? colors.success : colors.surface[500],
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: spacing[4],
+            paddingTop: spacing[4],
+            borderTopWidth: 1,
+            borderTopColor: m3.surface.s100,
           }}
         >
-          {isValid ? 'Ready to add' : 'Add at least one fertilizer with quantity'}
-        </Text>
-      </View>
+          <IconSymbol
+            name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
+            size={16}
+            color={
+              isValid
+                ? m3.colorScheme.success
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+            }
+          />
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              marginLeft: spacing[2],
+              color: isValid ? m3.colorScheme.success : m3.surface.s500,
+            }}
+          >
+            {isValid ? 'Ready to add' : 'Add at least one fertilizer with quantity'}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -505,7 +515,6 @@ function FertilizerRow({
   perAreaLabel,
 }: FertilizerRowProps) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const m3 = useM3();
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [isNameFocused, setIsNameFocused] = useState(false);
@@ -585,9 +594,9 @@ function FertilizerRow({
         marginBottom: spacing[3],
         borderWidth: 1,
         backgroundColor: isRowComplete
-          ? colorWithOpacity(colors.success, 0.12)
-          : colors.surface[50],
-        borderColor: isRowComplete ? colorWithOpacity(colors.success, 0.3) : 'transparent',
+          ? colorWithOpacity(m3.colorScheme.success, 0.12)
+          : m3.surface.s50,
+        borderColor: isRowComplete ? colorWithOpacity(m3.colorScheme.success, 0.3) : 'transparent',
       }}
     >
       {/* Fertilizer Name Row */}
@@ -599,10 +608,10 @@ function FertilizerRow({
               paddingHorizontal: spacing[3],
               paddingVertical: 10,
               fontSize: fontSize.base,
-              color: colors.surface[900],
-              backgroundColor: colors.surface[100],
+              color: m3.surface.s900,
+              backgroundColor: m3.surface.s100,
               borderWidth: 1,
-              borderColor: isNameFocused ? colors.success : colors.surface[200],
+              borderColor: isNameFocused ? m3.colorScheme.success : m3.surface.s200,
             }}
             placeholder="Fertilizer name"
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
@@ -622,10 +631,10 @@ function FertilizerRow({
                 top: 52,
                 left: 0,
                 right: 0,
-                backgroundColor: colors.white,
+                backgroundColor: '#ffffff',
                 borderRadius: borderRadius.lg,
                 borderWidth: 1,
-                borderColor: colors.surface[300],
+                borderColor: m3.surface.s300,
                 maxHeight: 208,
                 overflow: 'hidden',
                 zIndex: 20,
@@ -640,13 +649,13 @@ function FertilizerRow({
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[2],
                       borderTopWidth: suggestionIndex === 0 ? 0 : 1,
-                      borderTopColor: colors.surface[100],
+                      borderTopColor: m3.surface.s100,
                     }}
                   >
-                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
                       {item.name}
                     </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                       {item.quantity ? `${item.quantity} ` : ''}
                       {item.unit ?? 'kg'}
                     </Text>
@@ -662,7 +671,7 @@ function FertilizerRow({
                 marginTop: spacing[1],
                 marginLeft: spacing[1],
                 fontSize: fontSize.xs,
-                color: colors.surface[600],
+                color: m3.surface.s600,
               }}
             >
               {t('fertigationForm.noMatchesHint')}
@@ -694,11 +703,11 @@ function FertilizerRow({
             paddingHorizontal: spacing[3],
             paddingVertical: 10,
             fontSize: fontSize.base,
-            color: colors.surface[900],
+            color: m3.surface.s900,
             textAlign: 'center',
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderWidth: 1,
-            borderColor: isQuantityFocused ? colors.success : colors.surface[200],
+            borderColor: isQuantityFocused ? m3.colorScheme.success : m3.surface.s200,
           }}
           placeholder="Qty"
           placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
@@ -724,19 +733,17 @@ function FertilizerRow({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: colors.surface[100],
+            backgroundColor: m3.surface.s100,
             borderRadius: borderRadius.lg,
             paddingHorizontal: spacing[3],
             paddingVertical: 10,
             marginLeft: spacing[2],
             borderWidth: 1,
-            borderColor: colors.surface[200],
+            borderColor: m3.surface.s200,
           }}
         >
-          <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
-            {fertilizer.unit}
-          </Text>
-          <IconSymbol name="chevron.right" size={18} color={colors.surface[600]} />
+          <Text style={{ fontSize: fontSize.base, color: m3.surface.s900 }}>{fertilizer.unit}</Text>
+          <IconSymbol name="chevron.right" size={18} color={m3.surface.s600} />
         </Pressable>
       </View>
 
@@ -749,13 +756,13 @@ function FertilizerRow({
             paddingVertical: spacing[1],
             backgroundColor:
               (fertilizer.quantityBasis ?? 'total') === 'total'
-                ? colorWithOpacity(colors.success, 0.2)
-                : colors.surface[100],
+                ? colorWithOpacity(m3.colorScheme.success, 0.2)
+                : m3.surface.s100,
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
           }}
         >
-          <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
+          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
             Total Qty
           </Text>
         </Pressable>
@@ -767,13 +774,13 @@ function FertilizerRow({
             paddingVertical: spacing[1],
             backgroundColor:
               fertilizer.quantityBasis === 'per_acre'
-                ? colorWithOpacity(colors.success, 0.2)
-                : colors.surface[100],
+                ? colorWithOpacity(m3.colorScheme.success, 0.2)
+                : m3.surface.s100,
             borderWidth: 1,
             borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
           }}
         >
-          <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
+          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
             {perAreaLabel}
           </Text>
         </Pressable>

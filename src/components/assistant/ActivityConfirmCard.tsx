@@ -16,8 +16,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '@/styles/use-theme';
-import { spacing } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
+import { radius, spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import type { AssistantVoiceLogAction } from '@/types/ai';
 import type { VoiceLogActivityType } from '@/types/voice-log';
@@ -41,7 +41,7 @@ export function ActivityConfirmCard({
   onConfirm,
   onCancel,
 }: ActivityConfirmCardProps) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t, i18n } = useTranslation();
 
   const { draft } = voiceLogAction;
@@ -265,7 +265,7 @@ interface FieldRowProps {
 }
 
 function FieldRow({ label, value }: FieldRowProps) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
 
   return (
     <View style={styles.fieldRow}>
@@ -329,7 +329,7 @@ function formatDraftDate(date: string | null | undefined, locale: string): strin
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     padding: spacing[4],
     marginHorizontal: spacing[4],
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   cancelButton: {
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
-    borderRadius: 8,
+    borderRadius: radius.sm,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
   confirmButton: {
     paddingHorizontal: spacing[5],
     paddingVertical: spacing[2],
-    borderRadius: 8,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },

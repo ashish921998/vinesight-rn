@@ -8,17 +8,9 @@
  */
 
 import React, { useMemo, useCallback } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  ActivityIndicator,
-  type ViewStyle,
-  type RefreshControlProps,
-} from 'react-native';
+import { View, Text, FlatList, type RefreshControlProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { Button } from '@/components/ui';
+import { Button, EmptyState, LoadingState } from '@/components/ui';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 import {
   HeroPanel,
@@ -29,7 +21,7 @@ import {
   AttentionDot,
   type ChipDef,
 } from '@/components/ui/explore-primitives';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { parseDbDateToLocalDate } from '@/utils/date';
 import { formatNumber } from '@/i18n/format';
@@ -148,88 +140,28 @@ export function FarmsPaneB({
   // ── Empty + loading ─────────────────────────────────────────────────────
   const renderEmpty = useCallback(() => {
     if (isLoading) {
-      return (
-        <View style={emptyContainerStyle}>
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-          <Text
-            style={{
-              fontSize: fontSize.base,
-              marginTop: spacing[4],
-              color: m3.colorScheme.onSurfaceVariant,
-            }}
-          >
-            {t('common.loading')}
-          </Text>
-        </View>
-      );
+      return <LoadingState label={t('common.loading')} />;
     }
     if (searchQuery.trim()) {
-      return (
-        <View style={emptyContainerStyle}>
-          <SymbolIcon
-            name="magnifyingglass"
-            size={36}
-            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-          />
-          <Text
-            style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              textAlign: 'center',
-              color: m3.colorScheme.onSurface,
-              marginTop: spacing[3],
-            }}
-          >
-            {t('common.noResultsFound')}
-          </Text>
-        </View>
-      );
+      return <EmptyState icon="magnifyingglass" title={t('common.noResultsFound')} />;
     }
     return (
-      <View style={emptyContainerStyle}>
-        <View
-          style={{
-            width: 96,
-            height: 96,
-            borderRadius: borderRadius.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: spacing[6],
-            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-          }}
-        >
-          <SymbolIcon name="leaf.fill" size={48} color={m3.colorScheme.primary} />
-        </View>
-        <Text
-          style={{
-            fontSize: fontSize.xl,
-            fontWeight: fontWeight.semibold,
-            textAlign: 'center',
-            color: m3.colorScheme.onSurface,
-          }}
-        >
-          {t('farms.empty.title')}
-        </Text>
-        <Text
-          style={{
-            fontSize: fontSize.base,
-            textAlign: 'center',
-            marginTop: spacing[2],
-            color: m3.colorScheme.onSurfaceVariant,
-          }}
-        >
-          {t('farms.empty.subtitle')}
-        </Text>
-        <GuidedTourTarget
-          targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
-          enabled={addFarmTargetEnabled}
-          style={{ marginTop: spacing[6], alignSelf: 'center' }}
-        >
-          <Button title={t('farms.addFarm')} onPress={onAddFarm} fullWidth={false} />
-        </GuidedTourTarget>
-      </View>
+      <EmptyState
+        icon="leaf.fill"
+        title={t('farms.empty.title')}
+        description={t('farms.empty.subtitle')}
+        action={
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+            enabled={addFarmTargetEnabled}
+            style={{ alignSelf: 'center' }}
+          >
+            <Button title={t('farms.addFarm')} onPress={onAddFarm} fullWidth={false} />
+          </GuidedTourTarget>
+        }
+      />
     );
-  }, [isLoading, searchQuery, t, m3, addFarmTargetEnabled, onAddFarm]);
+  }, [isLoading, searchQuery, t, addFarmTargetEnabled, onAddFarm]);
 
   // ── Row render ──────────────────────────────────────────────────────────
   const renderFarm = useCallback(
@@ -273,7 +205,7 @@ export function FarmsPaneB({
                 <Text
                   numberOfLines={1}
                   style={{
-                    fontSize: 15,
+                    fontSize: fontSize.base,
                     fontWeight: fontWeight.bold,
                     color: m3.colorScheme.onSurface,
                     flexShrink: 1,
@@ -286,7 +218,7 @@ export function FarmsPaneB({
               <Text
                 numberOfLines={1}
                 style={{
-                  fontSize: 11,
+                  fontSize: fontSize.xs,
                   color: m3.colorScheme.onSurfaceVariant,
                   marginTop: 2,
                 }}
@@ -508,7 +440,7 @@ function SeasonTimeline({ farms, today, seasonRatio, isDark, t }: SeasonTimeline
           top: AXIS_Y,
           height: 2,
           backgroundColor: railColor,
-          borderRadius: 1,
+          borderRadius: radius.none,
         }}
       />
 
@@ -531,7 +463,7 @@ function SeasonTimeline({ farms, today, seasonRatio, isDark, t }: SeasonTimeline
               style={{
                 position: 'absolute',
                 top: TICK_LABEL_Y,
-                fontSize: 8.5,
+                fontSize: fontSize['2xs'],
                 fontWeight: fontWeight.semibold,
                 letterSpacing: 0.5,
                 textTransform: 'uppercase',
@@ -558,7 +490,7 @@ function SeasonTimeline({ farms, today, seasonRatio, isDark, t }: SeasonTimeline
               height: TODAY_HEIGHT,
               width: 2,
               backgroundColor: todayColor,
-              borderRadius: 1,
+              borderRadius: radius.none,
               left: todayX - 1,
             }}
           />
@@ -588,7 +520,7 @@ function SeasonTimeline({ farms, today, seasonRatio, isDark, t }: SeasonTimeline
               <Text
                 numberOfLines={1}
                 style={{
-                  fontSize: 8.5,
+                  fontSize: fontSize['2xs'],
                   fontWeight: fontWeight.bold,
                   color: '#fff',
                   letterSpacing: 0.4,
@@ -612,7 +544,7 @@ function SeasonTimeline({ farms, today, seasonRatio, isDark, t }: SeasonTimeline
                 position: 'absolute',
                 width: 10,
                 height: 10,
-                borderRadius: 5,
+                borderRadius: radius.xs,
                 borderWidth: 2,
                 borderColor: m3.surface.surfaceContainerHighest,
                 backgroundColor: dot.color,
@@ -625,10 +557,3 @@ function SeasonTimeline({ farms, today, seasonRatio, isDark, t }: SeasonTimeline
     </View>
   );
 }
-
-const emptyContainerStyle: ViewStyle = {
-  flex: 1,
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: spacing[8],
-};

@@ -300,6 +300,7 @@ export const mr = {
     },
     actions: {
       addActivity: 'नोंद जोडा',
+      addTask: '$t(glossary.task) जोडा',
       seeAllLogs: 'सर्व नोंदी पहा',
       seeAllTasks: 'सर्व $t(glossary.task) पहा',
       menuTitle: '$t(glossary.farm) क्रिया',
@@ -657,6 +658,8 @@ export const mr = {
   },
 
   entryForm: {
+    logSaved: 'नोंद जतन केली',
+    taskSaved: 'कार्य जतन केले',
     activityType: 'क्रियाकलाप प्रकार',
     selectActivityTypeHint: 'पूर्ण फॉर्म उघडण्यासाठी क्रियाकलाप प्रकार निवडा.',
     useTemplate: 'टेम्पलेट वापरा',
@@ -1273,6 +1276,9 @@ export const mr = {
     searchPlaceholder: 'पत्ता शोधा...',
     unknownLocation: 'अज्ञात ठिकाण',
     noResultsFound: 'कोणतेही परिणाम आढळले नाहीत',
+    noResultsHint: 'वेगळा पत्ता किंवा ठिकाणाचे नाव वापरून पहा.',
+    searchFailedTitle: 'शोध अयशस्वी',
+    searchFailedBody: 'आत्ता शोध करता आला नाही. तुमचे कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.',
     unableToGetLocationDetails: 'ठिकाणाचे तपशील मिळवण्यात अक्षम',
   },
 
@@ -1439,8 +1445,6 @@ export const mr = {
       },
       guidance: {
         addFarm: 'आधी एक $t(glossary.farm) जोडा, मग प्रश्न पुन्हा विचारा.',
-        selectFarm:
-          '$t(glossary.farm) संदर्भ निवडा म्हणजे मी त्या शेतासाठी योग्य मार्गदर्शन देऊ शकेन.',
         provideContext: '$t(glossary.farm) नाव, तारीख आणि कामाचा प्रकार देऊन पुन्हा प्रयत्न करा.',
         retryWithDetails: '“आज काय करावे?” सारख्या छोट्या ऑपरेशनल प्रश्नाने पुन्हा विचारा.',
       },
@@ -1448,15 +1452,26 @@ export const mr = {
     noFarm: {
       banner:
         'कोणताही $t(glossary.farm) जोडलेला नाही. वैयक्तिक सल्ल्यासाठी $t(glossary.farm) जोडा.',
-      noFarmSelected:
-        'कोणताही $t(glossary.farm) निवडलेला नाही. वैयक्तिक सल्ल्यासाठी $t(glossary.farm) निवडा.',
       addFarmButton: '$t(glossary.farm) जोडा',
-      selectFarmButton: '$t(glossary.farm) निवडा',
     },
     context: {
       activeFarmLabel: 'सक्रिय $t(glossary.farm)',
       openFarm: '$t(glossary.farm) उघडा',
       fallbackMeta: '$t(glossary.farm) संदर्भ तयार आहे',
+      changeFarm: '$t(glossary.farm) बदला',
+      pickFarm: '$t(glossary.farm) निवडा',
+    },
+    home: {
+      greeting: 'आज मी तुमच्या $t(glossary.farm)मध्ये कशी मदत करू?',
+      greetingFarm: 'आज {{name}} साठी मी कशी मदत करू?',
+      subtitle: 'तुमच्या शब्दांत विचारा.',
+      suggestions: {
+        today: 'आज मी काय करावे?',
+        water: 'या $t(glossary.farm)ला किती पाणी लागेल?',
+        spray: 'आता फवारणी करणे सुरक्षित आहे का?',
+        harvest: 'पीक काढणीसाठी तयार आहे का?',
+        weather: 'या आठवड्यात हवामान कसे राहील?',
+      },
     },
     jobs: {
       title: 'मुख्य कामे',
@@ -2325,6 +2340,11 @@ export const mr = {
       title: '$t(glossary.worker) विश्लेषण',
       subtitle: '$t(glossary.worker) कामगिरी, $t(glossary.attendance) आणि देयके ट्रॅक करा.',
       comingSoon: 'लवकरच येत आहे',
+    },
+    analyticsEmpty: {
+      title: 'अद्याप $t(glossary.worker) डेटा नाही',
+      subtitle:
+        'विश्लेषण पाहण्यासाठी $t(glossary.attendance) नोंदवा किंवा तात्पुरते $t(glossary.worker) जोडा.',
     },
     ratePerDayShort: ' /दिवस',
     edit: 'संपादित करा',

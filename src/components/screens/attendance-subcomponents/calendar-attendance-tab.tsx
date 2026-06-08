@@ -4,7 +4,7 @@ import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Worker, WorkerAttendance, WorkStatus } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { WorkerSelectSheet } from '@/components/modals';
 import i18n from '@/i18n';
@@ -23,13 +23,12 @@ interface CalendarAttendanceTabProps {
 }
 
 export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
-  const colors = useThemeColors();
   const m3 = useM3();
   const UI = useMemo(
     () => ({
       bg: m3.colorScheme.background,
-      surface: colors.surface[100],
-      surfaceSoft: colorWithOpacity(colors.surface[100], 0.9),
+      surface: m3.surface.s100,
+      surfaceSoft: colorWithOpacity(m3.surface.s100, 0.9),
       border: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
       primary: m3.colorScheme.primary,
       primarySoft: colorWithOpacity(m3.colorScheme.primary, 0.12),
@@ -37,7 +36,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
       muted: m3.colorScheme.onSurfaceVariant,
       accent: m3.colorScheme.secondary,
     }),
-    [colors, m3],
+    [m3],
   );
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | null>(
     workers.length > 0 && workers[0].id !== undefined ? workers[0].id : null,
@@ -289,7 +288,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                   <View key={`day-${index}`} style={{ flex: 1 }}>
                     <Text
                       style={{
-                        fontSize: 11,
+                        fontSize: fontSize.xs,
                         fontWeight: fontWeight.bold,
                         textTransform: 'uppercase',
                         textAlign: 'center',
@@ -350,7 +349,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                                       width: 6,
                                       height: 6,
                                       borderRadius: borderRadius.full,
-                                      backgroundColor: colors.success,
+                                      backgroundColor: m3.colorScheme.success,
                                     }}
                                   />
                                 )}
@@ -360,7 +359,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                                       width: 6,
                                       height: 6,
                                       borderRadius: borderRadius.full,
-                                      backgroundColor: colors.warning,
+                                      backgroundColor: m3.colorScheme.warning,
                                     }}
                                   />
                                 )}
@@ -399,7 +398,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                       width: 10,
                       height: 10,
                       borderRadius: borderRadius.full,
-                      backgroundColor: colors.success,
+                      backgroundColor: m3.colorScheme.success,
                     }}
                   />
                   <Text
@@ -418,7 +417,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                       width: 10,
                       height: 10,
                       borderRadius: borderRadius.full,
-                      backgroundColor: colors.warning,
+                      backgroundColor: m3.colorScheme.warning,
                     }}
                   />
                   <Text

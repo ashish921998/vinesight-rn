@@ -90,6 +90,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'dollarsign.circle': 'cash-outline',
   'dollarsign.circle.fill': 'cash',
   receipt: 'receipt',
+  'receipt.fill': 'receipt',
   'wallet.pass': 'wallet-outline',
 
   // People
@@ -149,6 +150,12 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'square.stack.3d.up.fill': 'cube',
   'wrench.and.screwdriver': 'build-outline',
   'wrench.and.screwdriver.fill': 'build',
+  car: 'car-outline',
+  'car.fill': 'car',
+  bus: 'bus-outline',
+  'bus.fill': 'bus',
+  hammer: 'hammer-outline',
+  'hammer.fill': 'hammer',
 
   // Settings
   gearshape: 'settings-outline',

@@ -1,21 +1,14 @@
 import { StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
-import {
-  spacing,
-  borderRadius,
-  fontSize,
-  fontWeight,
-  type ThemeColors,
-  getM3Theme,
-} from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, getM3Theme, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { View, Text } from 'react-native';
 import React from 'react';
 
-export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) => ({
-  container: { flex: 1, backgroundColor: colors.surface[50] } as ViewStyle,
+export const createStyles = (m3: ReturnType<typeof getM3Theme>) => ({
+  container: { flex: 1, backgroundColor: m3.surface.s50 } as ViewStyle,
   profileCard: {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     marginHorizontal: spacing[4],
     marginTop: spacing[4],
     borderRadius: borderRadius['2xl'],
@@ -26,35 +19,35 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
     width: 64,
     height: 64,
     backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-    borderRadius: 32,
+    borderRadius: radius['2xl'],
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
   profileInitial: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.primary[600],
+    color: m3.primary.p600,
   } as TextStyle,
   profileInfo: { flex: 1, marginLeft: spacing[4] } as ViewStyle,
   profileName: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   } as TextStyle,
-  profileEmail: { fontSize: fontSize.sm, color: colors.surface[500] } as TextStyle,
-  profilePhone: { fontSize: fontSize.xs, color: colors.surface[400], marginTop: 2 } as TextStyle,
+  profileEmail: { fontSize: fontSize.sm, color: m3.surface.s500 } as TextStyle,
+  profilePhone: { fontSize: fontSize.xs, color: m3.surface.s400, marginTop: 2 } as TextStyle,
 
   section: { marginTop: spacing[6], paddingHorizontal: spacing[4] } as ViewStyle,
   sectionHeader: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.bold,
-    color: colors.surface[500],
+    color: m3.surface.s500,
     letterSpacing: 0.5,
     marginBottom: spacing[2],
     paddingHorizontal: spacing[2],
   } as TextStyle,
   sectionContent: {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     borderRadius: borderRadius['2xl'],
     overflow: 'hidden',
   } as ViewStyle,
@@ -69,7 +62,7 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
     width: 36,
     height: 36,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.surface[50],
+    backgroundColor: m3.surface.s50,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -77,7 +70,7 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
     width: 36,
     height: 36,
     borderRadius: borderRadius.lg,
-    backgroundColor: colorWithOpacity(colors.error, 0.12),
+    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -85,7 +78,7 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
     width: 36,
     height: 36,
     borderRadius: borderRadius.lg,
-    backgroundColor: colorWithOpacity(colors.error, 0.2),
+    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.2),
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -93,26 +86,26 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
     flex: 1,
     marginLeft: spacing[3],
     fontSize: fontSize.base,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   } as TextStyle,
   signOutText: {
     flex: 1,
     marginLeft: spacing[3],
     fontSize: fontSize.base,
-    color: colors.error,
+    color: m3.colorScheme.error,
   } as TextStyle,
   deleteText: {
     flex: 1,
     marginLeft: spacing[3],
     fontSize: fontSize.base,
-    color: colors.error,
+    color: m3.colorScheme.error,
   } as TextStyle,
   settingsValue: {
     fontSize: fontSize.sm,
-    color: colors.surface[500],
+    color: m3.surface.s500,
     marginRight: spacing[2],
   } as TextStyle,
-  borderBottom: { borderBottomWidth: 1, borderBottomColor: colors.surface[200] } as ViewStyle,
+  borderBottom: { borderBottomWidth: 1, borderBottomColor: m3.surface.s200 } as ViewStyle,
   disabledItem: {
     opacity: 0.6,
   } as ViewStyle,
@@ -120,31 +113,31 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
   flex1: { flex: 1 } as ViewStyle,
 
   appVersionContainer: { alignItems: 'center', marginTop: spacing[8] } as ViewStyle,
-  appVersion: { fontSize: fontSize.sm, color: colors.surface[400] } as TextStyle,
+  appVersion: { fontSize: fontSize.sm, color: m3.surface.s400 } as TextStyle,
   appVersionSubtitle: {
     fontSize: fontSize.xs,
-    color: colors.surface[500],
+    color: m3.surface.s500,
     marginTop: spacing[1],
   } as TextStyle,
   sentryTestButton: {
     marginTop: spacing[3],
-    backgroundColor: colorWithOpacity(colors.primary[600], 0.14),
+    backgroundColor: colorWithOpacity(m3.primary.p600, 0.14),
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
   } as ViewStyle,
   sentryTestButtonText: {
-    color: colors.primary[700],
+    color: m3.primary.p700,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
   } as TextStyle,
 
   modalHeader: {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: colors.surface[200],
+    borderBottomColor: m3.surface.s200,
   } as ViewStyle,
   modalHeaderInner: {
     flexDirection: 'row',
@@ -154,11 +147,11 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
   modalTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   } as TextStyle,
 
   formCard: {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     borderRadius: borderRadius['2xl'],
     padding: spacing[4],
   } as ViewStyle,
@@ -166,28 +159,28 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
   inputLabel: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.surface[700],
+    color: m3.surface.s700,
     marginBottom: spacing[2],
   } as TextStyle,
   inputDisabled: {
-    backgroundColor: colors.surface[50],
+    backgroundColor: m3.surface.s50,
     borderRadius: borderRadius.xl,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
   } as ViewStyle,
-  inputDisabledText: { fontSize: fontSize.base, color: colors.surface[500] } as TextStyle,
+  inputDisabledText: { fontSize: fontSize.base, color: m3.surface.s500 } as TextStyle,
   inputHint: {
     fontSize: fontSize.xs,
-    color: colors.surface[400],
+    color: m3.surface.s400,
     marginTop: spacing[1],
   } as TextStyle,
   input: {
-    backgroundColor: colors.surface[50],
+    backgroundColor: m3.surface.s50,
     borderRadius: borderRadius.xl,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     fontSize: fontSize.base,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   } as ViewStyle & TextStyle,
   linkPhoneInputRow: {
     flexDirection: 'row',
@@ -198,7 +191,7 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[1],
-    backgroundColor: colors.surface[50],
+    backgroundColor: m3.surface.s50,
     borderRadius: borderRadius.xl,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[3],
@@ -206,16 +199,16 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
   linkPhoneCountryCode: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   } as TextStyle,
   linkPhoneInputField: {
     flex: 1,
-    backgroundColor: colors.surface[50],
+    backgroundColor: m3.surface.s50,
     borderRadius: borderRadius.xl,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     fontSize: fontSize.base,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   } as ViewStyle & TextStyle,
   verifyPhoneCta: {
     marginTop: spacing[3],
@@ -223,20 +216,20 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: borderRadius.lg,
-    backgroundColor: colorWithOpacity(colors.primary[600], 0.12),
+    backgroundColor: colorWithOpacity(m3.primary.p600, 0.12),
   } as ViewStyle,
   verifyPhoneCtaText: {
-    color: colors.primary[700],
+    color: m3.primary.p700,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
   } as TextStyle,
 
   modalFooter: {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[4],
     borderTopWidth: 1,
-    borderTopColor: colors.surface[200],
+    borderTopColor: m3.surface.s200,
   } as ViewStyle,
   saveButton: {
     paddingVertical: 14,
@@ -245,27 +238,27 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
   } as ViewStyle,
   saveButtonText: { color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold } as TextStyle,
 
-  pickerItemText: { flex: 1, fontSize: fontSize.base, color: colors.surface[900] } as TextStyle,
+  pickerItemText: { flex: 1, fontSize: fontSize.base, color: m3.surface.s900 } as TextStyle,
 
   alertBox: {
-    backgroundColor: colorWithOpacity(colors.error, 0.08),
+    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.08),
     borderRadius: borderRadius['2xl'],
     padding: spacing[4],
     marginBottom: spacing[4],
   } as ViewStyle,
   dangerAlert: {
     borderLeftWidth: 4,
-    borderLeftColor: colors.error,
+    borderLeftColor: m3.colorScheme.error,
   } as ViewStyle,
   alertTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
-    color: colors.error,
+    color: m3.colorScheme.error,
     marginTop: spacing[2],
   } as TextStyle,
   alertText: {
     fontSize: fontSize.sm,
-    color: colors.surface[700],
+    color: m3.surface.s700,
     marginTop: spacing[1],
   } as TextStyle,
   deleteWarnings: {
@@ -273,7 +266,7 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
   } as ViewStyle,
   deleteWarningItem: {
     fontSize: fontSize.sm,
-    color: colors.surface[600],
+    color: m3.surface.s600,
     marginBottom: spacing[2],
     paddingLeft: spacing[1],
   } as TextStyle,
@@ -285,26 +278,26 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 4,
+    borderRadius: radius.xs,
     borderWidth: 2,
-    borderColor: colors.surface[300],
+    borderColor: m3.surface.s300,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
   } as ViewStyle,
   checkboxChecked: {
-    backgroundColor: colors.error,
-    borderColor: colors.error,
+    backgroundColor: m3.colorScheme.error,
+    borderColor: m3.colorScheme.error,
   } as ViewStyle,
   checkboxText: {
     flex: 1,
     fontSize: fontSize.sm,
-    color: colors.surface[700],
+    color: m3.surface.s700,
     lineHeight: 20,
   } as TextStyle,
   checkboxBold: {
     fontWeight: fontWeight.bold,
-    color: colors.error,
+    color: m3.colorScheme.error,
   } as TextStyle,
   deleteButton: {
     paddingVertical: 14,
@@ -318,10 +311,10 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
   } as ViewStyle,
   countryPickerBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colorWithOpacity(colors.surface[900], 0.35),
+    backgroundColor: colorWithOpacity(m3.surface.s900, 0.35),
   } as ViewStyle,
   countryPickerSheet: {
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.s100,
     borderTopLeftRadius: borderRadius['2xl'],
     borderTopRightRadius: borderRadius['2xl'],
     maxHeight: '72%',
@@ -335,17 +328,17 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
     paddingTop: spacing[4],
     paddingBottom: spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: colors.surface[200],
+    borderBottomColor: m3.surface.s200,
   } as ViewStyle,
   countrySearchInput: {
-    backgroundColor: colors.surface[50],
+    backgroundColor: m3.surface.s50,
     borderRadius: borderRadius.xl,
     marginHorizontal: spacing[4],
     marginVertical: spacing[3],
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     fontSize: fontSize.base,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   } as ViewStyle & TextStyle,
   countryRow: {
     flexDirection: 'row',
@@ -354,16 +347,16 @@ export const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3The
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: colors.surface[200],
+    borderBottomColor: m3.surface.s200,
   } as ViewStyle,
   countryName: {
     fontSize: fontSize.base,
-    color: colors.surface[900],
+    color: m3.surface.s900,
   } as TextStyle,
   countryDialCode: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[600],
+    color: m3.surface.s600,
   } as TextStyle,
 });
 
@@ -376,7 +369,7 @@ export function SettingsItem({
   isLast,
   disabled,
   styles,
-  colors,
+  m3,
 }: {
   icon: string;
   title: string;
@@ -384,12 +377,12 @@ export function SettingsItem({
   isLast?: boolean;
   disabled?: boolean;
   styles: SettingsStyles;
-  colors: ThemeColors;
+  m3: ReturnType<typeof getM3Theme>;
 }) {
   return (
     <View style={[styles.settingsItem, !isLast && styles.borderBottom]}>
       <View style={styles.settingsIcon}>
-        <UISymbol name={icon} size={20} color={colors.gray[500]} />
+        <UISymbol name={icon} size={20} color={m3.neutral.n500} />
       </View>
       <Text
         style={styles.settingsTitle}
@@ -407,7 +400,7 @@ export function SettingsItem({
           {value}
         </Text>
       )}
-      {!disabled && <UISymbol name="chevron.right" size={18} color={colors.surface[500]} />}
+      {!disabled && <UISymbol name="chevron.right" size={18} color={m3.surface.s500} />}
     </View>
   );
 }

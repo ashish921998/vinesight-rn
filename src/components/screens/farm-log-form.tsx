@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { fontSize } from '@/styles/theme';
 import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { EntryForm } from '@/components/screens/entry-form';
@@ -46,7 +47,7 @@ export function FarmLogForm({ mode, farmId, onClose }: FarmLogFormProps) {
         >
           <Text
             style={{
-              fontSize: 16,
+              fontSize: fontSize.base,
               fontWeight: '600',
               textAlign: 'center',
               color: m3.colorScheme.onSurfaceVariant,

@@ -1,9 +1,10 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 
 export default function AuthLayout() {
-  const { m3, isDark } = useThemeTokens();
+  const m3 = useM3();
+  const isDark = useIsDark();
 
   return (
     <>

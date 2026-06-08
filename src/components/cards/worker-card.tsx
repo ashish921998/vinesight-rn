@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Symbol as CardSymbol } from '@/components/ui/symbol';
 import type { Worker, WorkerAttendance, WorkStatus } from '../../types';
-import { spacing, borderRadius, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
-import { useM3, useThemeColors, useIsDark } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 import { calculateWorkerEarnings } from '@/types';
 
 interface WorkerCardProps {
@@ -59,7 +59,6 @@ export function WorkerCard({
   attendance,
 }: WorkerCardProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const isDark = useIsDark();
   const { t } = useTranslation();
 
@@ -105,7 +104,10 @@ export function WorkerCard({
       .toUpperCase()
       .slice(0, 2) || '?';
 
-  const avatarTint = isDark ? colors.primary[400] : colors.primary[600];
+  // Avatar tint uses the explicit dark-aware primary ramp (m3.primary.pN),
+  // value-equal to the retired colors.primary[N]. See Phase 3 in
+  // docs/theming-consolidation-proposal.md.
+  const avatarTint = isDark ? m3.primary.p400 : m3.primary.p600;
   const inactiveAvatarTint = isDark ? '#7A756D' : '#A89E92';
 
   const todayStatusConfig = useMemo(() => {
@@ -113,8 +115,8 @@ export function WorkerCard({
     if (todayStatusValue === 'full_day') {
       return {
         label: t('attendance.status.fullDay', { defaultValue: 'Present' }),
-        color: colors.success,
-        bg: colorWithOpacity(colors.success, isDark ? 0.16 : 0.12),
+        color: m3.colorScheme.success,
+        bg: colorWithOpacity(m3.colorScheme.success, isDark ? 0.16 : 0.12),
       };
     }
     if (todayStatusValue === 'half_day') {
@@ -129,22 +131,22 @@ export function WorkerCard({
       color: m3.colorScheme.error,
       bg: colorWithOpacity(m3.colorScheme.error, isDark ? 0.16 : 0.1),
     };
-  }, [todayStatusValue, colors, isDark, m3, t]);
+  }, [todayStatusValue, isDark, m3, t]);
 
   const stripCellColor = (status: WorkStatus | null): string => {
-    if (status === 'full_day') return colors.success;
+    if (status === 'full_day') return m3.colorScheme.success;
     if (status === 'half_day') return isDark ? '#C49843' : '#D0A14A';
     if (status === 'absent') return m3.colorScheme.error;
-    return isDark ? colors.surface[300] : colors.surface[200];
+    return isDark ? m3.surface.s300 : m3.surface.s200;
   };
 
   const renderCardContent = (pressed: boolean) => (
     <View
       style={{
-        backgroundColor: colors.surface[100],
+        backgroundColor: m3.surface.s100,
         borderRadius: borderRadius.md,
         borderWidth: 1,
-        borderColor: colors.surface[300],
+        borderColor: m3.surface.s300,
         overflow: 'hidden',
         padding: 14,
       }}
@@ -162,7 +164,14 @@ export function WorkerCard({
             flexShrink: 0,
           }}
         >
-          <Text style={{ fontSize: 14, fontWeight: '700', color: '#F7F3ED', letterSpacing: -0.2 }}>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: '700',
+              color: '#F7F3ED',
+              letterSpacing: -0.2,
+            }}
+          >
             {initials}
           </Text>
         </View>
@@ -179,15 +188,15 @@ export function WorkerCard({
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text
                 style={{
-                  fontSize: 15,
+                  fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  color: m3.surface.s900,
                 }}
                 numberOfLines={1}
               >
                 {worker.name}
               </Text>
-              <Text style={{ fontSize: 12, color: colors.surface[500], marginTop: 2 }}>
+              <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 2 }}>
                 {t('workers.card.dailyRate', {
                   defaultValue: '₹{{rate}}/day',
                   rate: worker.daily_rate,
@@ -242,7 +251,7 @@ export function WorkerCard({
                 )}
               </View>
             ) : (
-              <CardSymbol name="chevron.right" size={14} color={colors.surface[400]} />
+              <CardSymbol name="chevron.right" size={14} color={m3.surface.s400} />
             )}
           </View>
 
@@ -256,11 +265,11 @@ export function WorkerCard({
                     style={{
                       flex: 1,
                       height: 14,
-                      borderRadius: 2,
+                      borderRadius: radius.xs,
                       backgroundColor: stripCellColor(s),
                       opacity: s === null ? 0.5 : 1,
                       borderWidth: s === null ? 1 : 0,
-                      borderColor: colors.surface[300],
+                      borderColor: m3.surface.s300,
                     }}
                   />
                 ))}
@@ -274,7 +283,7 @@ export function WorkerCard({
                     gap: 4,
                     height: 22,
                     paddingHorizontal: 9,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     backgroundColor: todayStatusConfig.bg,
                     flexShrink: 0,
                   }}
@@ -283,13 +292,13 @@ export function WorkerCard({
                     style={{
                       width: 5,
                       height: 5,
-                      borderRadius: 999,
+                      borderRadius: radius.full,
                       backgroundColor: todayStatusConfig.color,
                     }}
                   />
                   <Text
                     style={{
-                      fontSize: 11,
+                      fontSize: fontSize.xs,
                       fontWeight: '600',
                       color: todayStatusConfig.color,
                     }}
@@ -310,23 +319,23 @@ export function WorkerCard({
             marginTop: 12,
             paddingTop: 10,
             borderTopWidth: 1,
-            borderTopColor: colors.surface[300],
+            borderTopColor: m3.surface.s300,
             borderStyle: 'dashed',
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontSize: 12, color: colors.surface[500] }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.surface[900] }}>
+          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
+            <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: m3.surface.s900 }}>
               {periodSummary.full}F · {periodSummary.half}H · {periodSummary.absent}A
             </Text>
             {'  '}
             {t('workers.card.thisPeriod', { defaultValue: 'this period' })}
           </Text>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.surface[900] }}>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: m3.surface.s900 }}>
             ₹{periodSummary.pending.toLocaleString('en-IN')}{' '}
-            <Text style={{ fontSize: 10, fontWeight: '500', color: colors.surface[500] }}>
+            <Text style={{ fontSize: fontSize['2xs'], fontWeight: '500', color: m3.surface.s500 }}>
               {t('workers.card.earned', { defaultValue: 'earned' })}
             </Text>
           </Text>
@@ -348,14 +357,14 @@ export function WorkerCard({
               width: 7,
               height: 7,
               borderRadius: borderRadius.full,
-              backgroundColor: isActive ? colors.success : colors.surface[400],
+              backgroundColor: isActive ? m3.colorScheme.success : m3.surface.s400,
             }}
           />
           <Text
             style={{
-              fontSize: 12,
+              fontSize: fontSize.xs,
               fontWeight: fontWeight.medium,
-              color: isActive ? colors.success : colors.surface[400],
+              color: isActive ? m3.colorScheme.success : m3.surface.s400,
             }}
           >
             {isActive ? t('workers.status.active') : t('workers.status.inactive')}

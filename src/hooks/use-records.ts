@@ -626,6 +626,20 @@ export function useDeleteExpenseRecord() {
 // MARK: - DAILY NOTES
 // ============================================================
 
+export async function fetchDailyNoteByDate(
+  farmId: number,
+  date: string,
+): Promise<DailyNoteRecord | null> {
+  const { data, error } = await supabase
+    .from(TABLES.DAILY_NOTES)
+    .select('*')
+    .eq('farm_id', farmId)
+    .eq('date', date)
+    .maybeSingle();
+  if (error) throw error;
+  return data ?? null;
+}
+
 export function useDailyNoteByDate(farmId: number | undefined, date: string | undefined) {
   return useQuery({
     queryKey: queryKeys.dailyNotes.byDate(farmId!, date!),
@@ -743,17 +757,21 @@ export function useDeleteDailyNote() {
     mutationFn: async ({
       id,
       farmId,
+      date,
     }: {
       id: number;
       farmId: number;
       date: string;
     }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.DAILY_NOTES)
-        .delete()
-        .eq('id', id)
-        .eq('farm_id', farmId);
-
+      // Notes are uniquely keyed by farm_id+date; when the caller has no real id
+      // (id === 0 for notes saved via the receipt screen) fall back to that key.
+      let query = supabase.from(TABLES.DAILY_NOTES).delete().eq('farm_id', farmId);
+      if (id > 0) {
+        query = query.eq('id', id);
+      } else {
+        query = query.eq('date', date);
+      }
+      const { error } = await query;
       if (error) throw error;
     },
     onSuccess: (_, { farmId, date }) => {

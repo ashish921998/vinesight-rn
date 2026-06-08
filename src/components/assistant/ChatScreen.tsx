@@ -17,7 +17,7 @@
  * M3 themed, i18n for all strings.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   KeyboardAvoidingView,
@@ -36,11 +36,11 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { useLanguageStore } from '@/stores/language-store';
 import { useModalStore } from '@/stores/modal-store';
 import { useFarms } from '@/hooks/use-farms';
-import { spacing, borderRadius } from '@/styles/theme';
+import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { AIAvatar } from './AIAvatar';
@@ -52,6 +52,10 @@ import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
 import { SuggestionChips } from './SuggestionChips';
 import { ConversationSidebar } from './ConversationSidebar';
+import { FarmSelectModal } from '@/components/modals/farm-select-modal';
+import { useAssistantFarmStore } from '@/stores/assistant-farm-store';
+import { buildFarmSuggestions } from './farm-suggestions';
+import type { Farm } from '@/types';
 import { ActivityConfirmCard } from './ActivityConfirmCard';
 import { VoiceModeModal } from './VoiceMode/VoiceModeModal';
 import { useVoiceMode } from '@/hooks/use-voice-mode';
@@ -63,43 +67,6 @@ const MAX_INLINE_TEXT_BYTES = 100_000;
 interface ChatScreenProps {
   initialFarmId?: string;
 }
-
-const ASSISTANT_QUICK_ACTIONS: ReadonlyArray<{
-  id: 'waterStatus' | 'wageSummary' | 'weatherOutlook' | 'harvestReadiness';
-  icon: string;
-  title: string;
-  description: string;
-  prompt: string;
-}> = [
-  {
-    id: 'waterStatus',
-    icon: 'drop.fill',
-    title: 'Water status',
-    description: 'All farms this week',
-    prompt: 'What is the water situation across all my farms this week?',
-  },
-  {
-    id: 'wageSummary',
-    icon: 'chart.bar.fill',
-    title: 'Wage summary',
-    description: 'This period',
-    prompt: 'Summarize worker wages due this period.',
-  },
-  {
-    id: 'weatherOutlook',
-    icon: 'sun.max.fill',
-    title: 'Weather outlook',
-    description: 'Next 7 days',
-    prompt: 'Show me the weather outlook for the next 7 days.',
-  },
-  {
-    id: 'harvestReadiness',
-    icon: 'basket.fill',
-    title: 'Harvest readiness',
-    description: 'Across all farms',
-    prompt: 'Check harvest readiness across all my farms.',
-  },
-];
 
 function getSafeErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim()) {
@@ -153,134 +120,91 @@ function ensureUtf8ByteLimit(text: string, maxBytes: number): string {
 }
 
 function AssistantHomeLanding({
-  activeFarmName,
+  farm,
   onQuickActionPress,
   disabled,
 }: {
-  activeFarmName?: string;
+  farm?: { name?: string } | null;
   onQuickActionPress: (text: string) => void;
   disabled?: boolean;
 }) {
-  const { m3 } = useThemeTokens();
-  const briefingText = activeFarmName
-    ? `${activeFarmName} is ready for today. Ask for water, wages, weather, or harvest next steps.`
-    : 'Sunset needs irrigation before 11 AM. North Field is 14 mm below target.';
+  const m3 = useM3();
+  const { t } = useTranslation();
+  const activeFarmName = farm?.name;
+  const greeting = activeFarmName
+    ? t('assistant.home.greetingFarm', { name: activeFarmName })
+    : t('assistant.home.greeting');
+  const suggestions = buildFarmSuggestions(farm as Farm | null | undefined, t);
 
   return (
     <ScrollView
       style={[styles.homeScroll, { backgroundColor: m3.colorScheme.surface }]}
       contentContainerStyle={styles.homeContent}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.homeHeroRow}>
-        <View>
-          <Text
-            style={[
-              styles.homeEyebrow,
-              { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall },
-            ]}
-          >
-            Good morning
-          </Text>
-          <View style={styles.homeTitleRow}>
-            <Text
-              style={[
-                styles.homeTitle,
-                { color: m3.colorScheme.onSurface, ...m3.typography.headlineSmall },
-              ]}
-            >
-              Assistant
-            </Text>
-            <View
-              style={[
-                styles.aiBadge,
-                {
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-                  borderColor: colorWithOpacity(m3.colorScheme.primary, 0.22),
-                },
-              ]}
-            >
-              <SymbolIcon name="sparkles" size={11} color={m3.colorScheme.primary} />
-              <Text style={[styles.aiBadgeText, { color: m3.colorScheme.primary }]}>AI</Text>
-            </View>
-          </View>
-        </View>
-        <AIAvatar size={38} iconSize={18} />
-      </View>
-
-      <View
-        style={[
-          styles.briefingBand,
-          {
-            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.06),
-            borderColor: colorWithOpacity(m3.colorScheme.primary, 0.16),
-          },
-        ]}
-      >
-        <AIAvatar size={30} iconSize={14} />
+      {/* Centered greeting — single, friendly, ChatGPT/Claude style */}
+      <View style={styles.homeGreetingBlock}>
+        <AIAvatar size={48} iconSize={22} />
         <Text
           style={[
-            styles.briefingText,
-            { color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium },
+            styles.homeGreeting,
+            { color: m3.colorScheme.onSurface, ...m3.typography.headlineSmall },
           ]}
         >
-          {briefingText}
+          {greeting}
+        </Text>
+        <Text
+          style={[
+            styles.homeSubtitle,
+            { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium },
+          ]}
+        >
+          {t('assistant.home.subtitle')}
         </Text>
       </View>
 
-      <Text
-        style={[
-          styles.quickActionLabel,
-          { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall },
-        ]}
-      >
-        Ask me
-      </Text>
-      <View style={styles.quickActionGrid}>
-        {ASSISTANT_QUICK_ACTIONS.map((action) => (
-          <TouchableOpacity
-            key={action.id}
-            style={[
-              styles.quickActionCard,
-              {
-                backgroundColor: m3.surface.surfaceContainerLow ?? m3.colorScheme.surfaceVariant,
-                borderColor: m3.colorScheme.outlineVariant,
-              },
-              disabled && styles.jobCardDisabled,
-            ]}
-            onPress={() => onQuickActionPress(action.prompt)}
-            disabled={disabled}
-            accessibilityLabel={action.title}
-            accessibilityRole="button"
-          >
-            <View style={styles.quickActionTitleRow}>
-              <SymbolIcon name={action.icon} size={15} color={m3.colorScheme.primary} />
+      {/* A few tappable example questions, tailored to the active farm */}
+      <View style={styles.suggestionList}>
+        {suggestions.map((item) => {
+          const text = item.text;
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[
+                styles.suggestionRow,
+                {
+                  backgroundColor: m3.surface.surfaceContainerLow ?? m3.colorScheme.surfaceVariant,
+                  borderColor: m3.colorScheme.outlineVariant,
+                },
+                disabled && styles.suggestionRowDisabled,
+              ]}
+              onPress={() => onQuickActionPress(text)}
+              disabled={disabled}
+              accessibilityLabel={text}
+              accessibilityRole="button"
+            >
+              <SymbolIcon name={item.icon} size={18} color={m3.colorScheme.primary} />
               <Text
                 style={[
-                  styles.quickActionTitle,
-                  { color: m3.colorScheme.onSurface, ...m3.typography.labelLarge },
+                  styles.suggestionText,
+                  { color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium },
                 ]}
+                numberOfLines={2}
               >
-                {action.title}
+                {text}
               </Text>
-            </View>
-            <Text
-              style={[
-                styles.quickActionDescription,
-                { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall },
-              ]}
-            >
-              {action.description}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <SymbolIcon name="arrow.up.right" size={14} color={m3.colorScheme.onSurfaceVariant} />
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </ScrollView>
   );
 }
 
 export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
-  const { m3 } = useThemeTokens();
+  const m3 = useM3();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const language = useLanguageStore((s) => s.language) ?? 'en';
@@ -291,30 +215,36 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [attachModalVisible, setAttachModalVisible] = useState(false);
-  // Tracks the effective farmId override and the prop value it was derived from.
-  const [farmSelectionState, setFarmSelectionState] = useState<{
-    overrideFarmId: string | null | undefined;
-    sourceInitialFarmId?: string;
-  }>({
-    overrideFarmId: undefined,
-    sourceInitialFarmId: initialFarmId,
-  });
-  const syncedOverrideFarmId =
-    farmSelectionState.sourceInitialFarmId === initialFarmId
-      ? farmSelectionState.overrideFarmId
-      : undefined;
-  const effectiveFarmId =
-    syncedOverrideFarmId === undefined ? initialFarmId : (syncedOverrideFarmId ?? undefined);
+  const [farmModalVisible, setFarmModalVisible] = useState(false);
+  // The farm the user explicitly picked this session (via the picker or by
+  // opening a past conversation). null until they make a choice.
+  const [pickedFarmId, setPickedFarmId] = useState<number | null>(null);
+  const lastFarmId = useAssistantFarmStore((s) => s.lastFarmId);
+  const setLastFarmId = useAssistantFarmStore((s) => s.setLastFarmId);
 
-  // Use the farm matching effectiveFarmId if provided, otherwise return null
-  // No implicit fallback to first farm - explicit user selection required
+  const initialFarmIdNum =
+    initialFarmId != null && initialFarmId !== '' ? Number(initialFarmId) : null;
+
+  // Resolve the active farm with sensible defaults so a farmer never lands on
+  // an empty "pick a farm" screen: explicit pick → route param → last used →
+  // first farm. Only a user with zero farms ends up with no active farm.
   const activeFarm = useMemo(() => {
-    if (effectiveFarmId && farms) {
-      const match = farms.find((f) => String(f.id) === effectiveFarmId);
+    if (!farms || farms.length === 0) return null;
+    const candidates = [pickedFarmId, initialFarmIdNum, lastFarmId];
+    for (const id of candidates) {
+      if (id == null) continue;
+      const match = farms.find((f) => f.id === id);
       if (match) return match;
     }
-    return null;
-  }, [farms, effectiveFarmId]);
+    return farms[0] ?? null;
+  }, [farms, pickedFarmId, initialFarmIdNum, lastFarmId]);
+
+  // Remember the resolved farm so the next visit opens straight into it.
+  useEffect(() => {
+    if (activeFarm?.id != null && activeFarm.id !== lastFarmId) {
+      setLastFarmId(activeFarm.id);
+    }
+  }, [activeFarm?.id, lastFarmId, setLastFarmId]);
 
   // Build farm context from the active farm to include in assistant requests.
   // daysSincePruning is omitted here — it requires Date.now() which is impure in useMemo;
@@ -337,6 +267,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     inputText,
     setInputText,
     suggestions,
+    streamingMessageId,
     error,
     voiceLogAction,
     attachments,
@@ -402,23 +333,29 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     setSidebarVisible(false);
   }, []);
 
+  // Keep the current farm context for the new chat — farmers usually keep
+  // asking about the same farm, and they can switch any time via the picker.
   const handleStartNewConversation = useCallback(() => {
-    setFarmSelectionState({
-      overrideFarmId: null,
-      sourceInitialFarmId: initialFarmId,
-    });
     startNewConversation();
-  }, [initialFarmId, startNewConversation]);
+  }, [startNewConversation]);
 
   const handleSelectConversation = useCallback(
     (conversationId: string, conversationFarmId?: number | null) => {
-      setFarmSelectionState({
-        overrideFarmId: conversationFarmId != null ? String(conversationFarmId) : null,
-        sourceInitialFarmId: initialFarmId,
-      });
+      if (conversationFarmId != null) {
+        setPickedFarmId(conversationFarmId);
+      }
       void loadConversation(conversationId);
     },
-    [initialFarmId, loadConversation],
+    [loadConversation],
+  );
+
+  const handlePickFarm = useCallback(
+    (farmId: number) => {
+      setPickedFarmId(farmId);
+      setLastFarmId(farmId);
+      setFarmModalVisible(false);
+    },
+    [setLastFarmId],
   );
 
   const handleRetry = useCallback(() => {
@@ -596,15 +533,14 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     openVoiceMode();
   }, [openVoiceMode]);
 
-  // No-farm detection — distinguish between no farms existing vs no farm selected
+  // Only genuinely-farmless users get the "add a farm" prompt; everyone else
+  // gets an auto-resolved active farm.
   const hasNoFarms = farms !== undefined && farms.length === 0;
-  const hasNoFarmSelected = farms !== undefined && farms.length > 0 && activeFarm === null;
   const hasMessages = messages.length > 0;
 
   const errorGuidance = useMemo(() => {
     if (error == null) return null;
     if (hasNoFarms) return t('assistant.error.guidance.addFarm');
-    if (hasNoFarmSelected) return t('assistant.error.guidance.selectFarm');
 
     if (error instanceof AssistantGatewayError) {
       if (
@@ -634,7 +570,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     }
 
     return t('assistant.error.guidance.retryWithDetails');
-  }, [error, hasNoFarmSelected, hasNoFarms, t]);
+  }, [error, hasNoFarms, t]);
 
   const showSuggestionsBelow = hasMessages && suggestions.length > 0;
 
@@ -725,119 +661,47 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
           </View>
         )}
 
-        {/* No-farm-selected banner — shown when farms exist but none is active */}
-        {hasNoFarmSelected && (
-          <View
-            style={[
-              styles.noFarmBanner,
-              {
-                backgroundColor: m3.colorScheme.secondaryContainer,
-                borderBottomColor: m3.colorScheme.outlineVariant,
-              },
-            ]}
-            testID="no-farm-selected-banner"
-          >
-            <SymbolIcon name="info.circle" size={16} color={m3.colorScheme.onSecondaryContainer} />
-            <Text
-              style={[
-                styles.noFarmBannerText,
-                {
-                  color: m3.colorScheme.onSecondaryContainer,
-                  ...m3.typography.labelSmall,
-                },
-              ]}
-            >
-              {t('assistant.noFarm.noFarmSelected')}
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push('/(tabs)/explore')}
-              style={[
-                styles.noFarmBannerAction,
-                { backgroundColor: colorWithOpacity(m3.colorScheme.onSecondaryContainer, 0.16) },
-              ]}
-              accessibilityLabel={t('assistant.noFarm.selectFarmButton')}
-              accessibilityRole="button"
-            >
-              <Text
-                style={[
-                  styles.noFarmBannerActionText,
-                  { color: m3.colorScheme.onSecondaryContainer },
-                ]}
-              >
-                {t('assistant.noFarm.selectFarmButton')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
+        {/* Farm picker pill — one tap to switch the farm in context */}
         {activeFarm && (
-          <View
+          <TouchableOpacity
             style={[
-              styles.farmContextBanner,
+              styles.farmPill,
               {
                 backgroundColor: m3.surface.surfaceContainerLow,
                 borderBottomColor: m3.colorScheme.outlineVariant,
               },
             ]}
-            testID="assistant-farm-context-banner"
+            onPress={() => setFarmModalVisible(true)}
+            disabled={farms == null || farms.length < 2}
+            accessibilityRole="button"
+            accessibilityLabel={`${t('assistant.context.activeFarmLabel')}: ${activeFarm.name}. ${t('assistant.context.changeFarm')}`}
+            testID="assistant-farm-pill"
           >
             <View
               style={[
-                styles.farmContextIconWrap,
+                styles.farmPillIconWrap,
                 { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14) },
               ]}
             >
-              <SymbolIcon name="leaf.fill" size={16} color={m3.colorScheme.primary} />
+              <SymbolIcon name="leaf.fill" size={15} color={m3.colorScheme.primary} />
             </View>
-            <View style={styles.farmContextBody}>
-              <Text
-                style={[
-                  styles.farmContextLabel,
-                  { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall },
-                ]}
-              >
-                {t('assistant.context.activeFarmLabel')}
-              </Text>
-              <Text
-                style={[
-                  styles.farmContextTitle,
-                  { color: m3.colorScheme.onSurface, ...m3.typography.labelLarge },
-                ]}
-              >
-                {activeFarm.name}
-              </Text>
-              <Text
-                style={[
-                  styles.farmContextMeta,
-                  { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall },
-                ]}
-                numberOfLines={1}
-              >
-                {[activeFarm.crop_variety, activeFarm.region].filter(Boolean).join(' • ') ||
-                  t('assistant.context.fallbackMeta')}
-              </Text>
-            </View>
-            {activeFarm.id != null && (
-              <TouchableOpacity
-                onPress={() => router.push(`/farm/${activeFarm.id}`)}
-                style={[
-                  styles.farmContextAction,
-                  { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14) },
-                ]}
-                accessibilityLabel={t('assistant.context.openFarm')}
-                accessibilityRole="button"
-              >
-                <Text
-                  style={[
-                    styles.farmContextActionText,
-                    { color: m3.colorScheme.primary, ...m3.typography.labelSmall },
-                  ]}
-                >
-                  {t('assistant.context.openFarm')}
-                </Text>
-              </TouchableOpacity>
+            <Text
+              style={[
+                styles.farmPillName,
+                { color: m3.colorScheme.onSurface, ...m3.typography.labelLarge },
+              ]}
+              numberOfLines={1}
+            >
+              {activeFarm.name}
+            </Text>
+            {farms != null && farms.length > 1 && (
+              <SymbolIcon
+                name="chevron.up.chevron.down"
+                size={13}
+                color={m3.colorScheme.onSurfaceVariant}
+              />
             )}
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* Error banner */}
@@ -909,7 +773,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
         <View style={styles.messageArea}>
           {!hasMessages && !isLoading ? (
             <AssistantHomeLanding
-              activeFarmName={activeFarm?.name}
+              farm={activeFarm}
               onQuickActionPress={handleSendSuggestion}
               disabled={isLoading}
             />
@@ -917,6 +781,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
             <MessageList
               messages={messages}
               isLoading={isLoading}
+              streamingMessageId={streamingMessageId}
               onActionPress={handleMessageAction}
             />
           )}
@@ -961,6 +826,16 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
         onClose={handleCloseSidebar}
         onSelectConversation={handleSelectConversation}
         onNewChat={handleStartNewConversation}
+      />
+
+      {/* Farm picker */}
+      <FarmSelectModal
+        visible={farmModalVisible}
+        title={t('assistant.context.pickFarm')}
+        farms={farms ?? []}
+        selectedFarmId={activeFarm?.id ?? null}
+        onSelect={handlePickFarm}
+        onClose={() => setFarmModalVisible(false)}
       />
 
       {/* Voice mode modal */}
@@ -1110,88 +985,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   homeContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: spacing[4],
-    paddingTop: spacing[1],
-    paddingBottom: spacing[4],
+    paddingVertical: spacing[6],
   },
-  homeHeroRow: {
-    flexDirection: 'row',
+  homeGreetingBlock: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: spacing[1],
-    paddingBottom: spacing[3],
+    gap: spacing[3],
+    marginBottom: spacing[6],
   },
-  homeEyebrow: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    fontWeight: '600' as const,
-  },
-  homeTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-    marginTop: 2,
-  },
-  homeTitle: {
+  homeGreeting: {
+    textAlign: 'center',
     letterSpacing: -0.4,
   },
-  aiBadge: {
-    height: 22,
-    paddingHorizontal: 9,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[1],
+  homeSubtitle: {
+    textAlign: 'center',
   },
-  aiBadgeText: {
-    fontSize: 10,
-    fontWeight: '700' as const,
-    letterSpacing: 0.4,
-  },
-  briefingBand: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  suggestionList: {
     gap: spacing[2],
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2] + 2,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    marginBottom: spacing[4],
   },
-  briefingText: {
+  suggestionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3] + 2,
+  },
+  suggestionRowDisabled: {
+    opacity: 0.55,
+  },
+  suggestionText: {
     flex: 1,
     lineHeight: 20,
-  },
-  quickActionLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    fontWeight: '600' as const,
-    marginBottom: spacing[2],
-  },
-  quickActionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing[2],
-  },
-  quickActionCard: {
-    width: '48.7%',
-    borderWidth: 1,
-    borderRadius: borderRadius.md,
-    padding: spacing[3],
-    gap: spacing[1],
-  },
-  quickActionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-  },
-  quickActionTitle: {
-    flex: 1,
-    fontWeight: '600' as const,
-  },
-  quickActionDescription: {
-    lineHeight: 16,
   },
   noFarmBanner: {
     flexDirection: 'row',
@@ -1204,16 +1032,7 @@ const styles = StyleSheet.create({
   noFarmBannerText: {
     flex: 1,
   },
-  noFarmBannerAction: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
-    borderRadius: borderRadius.full,
-  },
-  noFarmBannerActionText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-  },
-  farmContextBanner: {
+  farmPill: {
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -1221,33 +1040,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
   },
-  farmContextIconWrap: {
-    width: 30,
-    height: 30,
+  farmPillIconWrap: {
+    width: 28,
+    height: 28,
     borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  farmContextBody: {
+  farmPillName: {
     flex: 1,
-  },
-  farmContextLabel: {
-    fontSize: 11,
-    marginBottom: 2,
-  },
-  farmContextTitle: {
-    marginBottom: 1,
-  },
-  farmContextMeta: {
-    fontSize: 11,
-  },
-  farmContextAction: {
-    paddingHorizontal: spacing[2],
-    paddingVertical: spacing[1],
-    borderRadius: borderRadius.full,
-  },
-  farmContextActionText: {
-    fontSize: 11,
     fontWeight: '600' as const,
   },
   errorBanner: {
@@ -1270,14 +1071,11 @@ const styles = StyleSheet.create({
   errorBannerButton: {
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1],
-    borderRadius: 6,
+    borderRadius: radius.sm,
   },
   errorBannerButtonText: {
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '600' as const,
-  },
-  jobCardDisabled: {
-    opacity: 0.55,
   },
   attachModalOverlay: {
     flex: 1,
@@ -1296,7 +1094,7 @@ const styles = StyleSheet.create({
   attachModalHandleBar: {
     width: 36,
     height: 4,
-    borderRadius: 2,
+    borderRadius: radius.xs,
   },
   attachModalTitle: {
     textAlign: 'center',

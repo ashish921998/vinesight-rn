@@ -18,6 +18,16 @@
   Expenses and harvests entered after a season end date are excluded from farm totals when the farm is between seasons, with no UI indication. Decide if this is intended and document or surface it.
   **Priority:** P3
 
+## Add Log / Receipt Logging
+
+- **Test: Component coverage for receipt-screen water restore across multiple irrigations**
+  `ReceiptLogScreen` save→remove water-restore logic is verified correct by manual trace but has no automated test. Add a component/integration test that saves two irrigations then removes the earlier one, asserting the final `updateWaterLevel` value (later irrigations are not wiped). Complements the new `use-save-single-log.test.tsx` unit coverage of the delta math.
+  **Priority:** P2
+
+- **Test: Component coverage for receipt-screen note replace-in-place + restore**
+  Saving a daily note, re-editing, saving again, then removing the row should restore the original pre-session text (or delete via the farm_id+date fallback when none existed). The underlying delete fallback is covered by `use-delete-daily-note.test.tsx`, but the screen-level replace/restore flow is untested.
+  **Priority:** P2
+
 ## Completed
 
 - Farm display order implemented and migration landed — v1.2.0 (2026-05-28)

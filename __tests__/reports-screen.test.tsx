@@ -40,6 +40,18 @@ jest.mock('@/styles/use-theme', () => ({
       onSurfaceVariant: '#555',
       shadow: '#000',
     },
+    surface: {
+      s50: '#fff',
+      s100: '#fff',
+      s200: '#eee',
+      s300: '#ddd',
+      s400: '#ccc',
+      s500: '#888',
+      s600: '#666',
+      s700: '#444',
+      s800: '#222',
+      s900: '#111',
+    },
   }),
 }));
 

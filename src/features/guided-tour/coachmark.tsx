@@ -14,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, shadows, spacing } from '@/styles/theme';
 import { useIsDark, useM3 } from '@/styles/use-theme';
 import { telemetry } from '@/services/telemetry';
 import { colorWithOpacity } from '@/utils/color';
@@ -533,10 +533,7 @@ export function GuidedTourCoachmark({
               paddingHorizontal: compact ? spacing[3] : spacing[4],
               paddingTop: compact ? spacing[3] : spacing[4],
               paddingBottom: compact ? spacing[3] : spacing[4],
-              shadowColor: '#000',
-              shadowOpacity: 0.18,
-              shadowRadius: 24,
-              shadowOffset: { width: 0, height: 12 },
+              ...shadows.xl,
               elevation: 8,
             }}
           >
@@ -784,10 +781,7 @@ export function GuidedTourCoachmark({
                 isDark ? m3.colorScheme.outline : '#FFF',
                 isDark ? 0.34 : 0.18,
               ),
-              shadowColor: '#000',
-              shadowOpacity: 0.18,
-              shadowRadius: 14,
-              shadowOffset: { width: 0, height: 8 },
+              ...shadows.lg,
               elevation: 4,
             }}
           >

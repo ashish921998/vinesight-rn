@@ -13,15 +13,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol } from '@/components/ui/symbol';
 import { useFarm, useFertilizerPlan, useProfile, useFarms } from '@/hooks';
-import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 
 export default function FertilizerPlansScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
-  const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ farmId?: string }>();
@@ -66,7 +65,7 @@ export default function FertilizerPlansScreen() {
             style={{
               width: 44,
               height: 44,
-              borderRadius: 22,
+              borderRadius: radius.xl,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -91,7 +90,7 @@ export default function FertilizerPlansScreen() {
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
-                      borderRadius: 22,
+                      borderRadius: radius.xl,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -137,9 +136,9 @@ export default function FertilizerPlansScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               gap: spacing[1],
-              backgroundColor: colors.surface[100],
+              backgroundColor: m3.surface.s100,
               borderWidth: 1,
-              borderColor: colors.surface[300],
+              borderColor: m3.surface.s300,
               borderRadius: borderRadius.pill,
               paddingHorizontal: spacing[3],
               paddingVertical: spacing[1] + 2,
@@ -148,7 +147,7 @@ export default function FertilizerPlansScreen() {
           >
             <Text
               style={{
-                color: colors.primary[500],
+                color: m3.primary.p500,
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.medium,
               }}
@@ -317,9 +316,9 @@ export default function FertilizerPlansScreen() {
                     <View
                       key={`${input.name}-${index}`}
                       style={{
-                        backgroundColor: colors.surface[100],
+                        backgroundColor: m3.surface.s100,
                         borderWidth: 1,
-                        borderColor: colors.surface[300],
+                        borderColor: m3.surface.s300,
                         borderRadius: borderRadius.md, // 14px = md(16) - close enough
                         marginBottom: spacing[3],
                         flexDirection: 'row',
@@ -330,7 +329,7 @@ export default function FertilizerPlansScreen() {
                       <View
                         style={{
                           width: 5,
-                          backgroundColor: colors.primary[500],
+                          backgroundColor: m3.primary.p500,
                           flexShrink: 0,
                         }}
                       />
@@ -345,7 +344,7 @@ export default function FertilizerPlansScreen() {
                             style={{
                               fontSize: fontSize.sm,
                               fontWeight: fontWeight.semibold,
-                              color: colors.surface[900],
+                              color: m3.surface.s900,
                             }}
                           >
                             {input.name || t('farmDetails.fertilizerPlan.unknownInput')}
@@ -357,7 +356,7 @@ export default function FertilizerPlansScreen() {
                             style={{
                               fontSize: fontSize.sm,
                               fontWeight: fontWeight.medium,
-                              color: colors.surface[900],
+                              color: m3.surface.s900,
                               marginBottom: spacing[1],
                             }}
                           >
@@ -371,7 +370,7 @@ export default function FertilizerPlansScreen() {
                           <Text
                             style={{
                               fontSize: fontSize.xs,
-                              color: colors.surface[500],
+                              color: m3.surface.s500,
                             }}
                           >
                             {t('farmDetails.fertilizerPlan.week', 'Week')} {index + 1}
@@ -399,11 +398,11 @@ export default function FertilizerPlansScreen() {
           width: 52,
           height: 52,
           borderRadius: borderRadius.md, // 16px radius
-          backgroundColor: colors.primary[500],
+          backgroundColor: m3.primary.p500,
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: 1,
-          borderColor: colorWithOpacity(colors.primary[500], 0.3),
+          borderColor: colorWithOpacity(m3.primary.p500, 0.3),
         }}
         accessibilityRole="button"
         accessibilityLabel={t('farmDetails.fertilizerPlan.addPlan', 'Add Plan')}
@@ -411,8 +410,8 @@ export default function FertilizerPlansScreen() {
       >
         <Text
           style={{
-            color: colors.surface[100],
-            fontSize: 28,
+            color: m3.surface.s100,
+            fontSize: fontSize['3xl'],
             fontWeight: '300',
             lineHeight: 32,
           }}

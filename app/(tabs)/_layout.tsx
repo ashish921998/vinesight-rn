@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ComponentProps } from 'react';
+import { fontSize } from '@/styles/theme';
 import { Tabs, useRouter } from 'expo-router';
 import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
@@ -9,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { useThemeTokens } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
 
@@ -20,7 +21,8 @@ export default function TabLayout() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const [hasRedirected, setHasRedirected] = useState(false);
   const insets = useSafeAreaInsets();
-  const { m3, isDark } = useThemeTokens();
+  const m3 = useM3();
+  const isDark = useIsDark();
   const defaultHeaderOptions = useMemo(
     () => ({
       headerStyle: {
@@ -29,7 +31,7 @@ export default function TabLayout() {
       },
       headerTitleStyle: {
         fontWeight: '600',
-        fontSize: 18,
+        fontSize: fontSize.lg,
         color: m3.colorScheme.onSurface,
       },
       headerTintColor: m3.colorScheme.primary,
@@ -125,7 +127,7 @@ export default function TabLayout() {
               height: Math.max(insets.bottom + 56, 72),
             },
             tabBarLabelStyle: {
-              fontSize: 11,
+              fontSize: fontSize.xs,
               fontWeight: '600',
               marginTop: 4,
             },
@@ -191,7 +193,7 @@ export default function TabLayout() {
         }}
         labelStyle={{
           default: {
-            fontSize: 11,
+            fontSize: fontSize.xs,
             fontWeight: '500',
             color: m3.colorScheme.onSurfaceVariant,
           },

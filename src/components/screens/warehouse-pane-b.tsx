@@ -8,17 +8,9 @@
  */
 
 import React, { useMemo, useCallback } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  ActivityIndicator,
-  type ViewStyle,
-  type RefreshControlProps,
-} from 'react-native';
+import { View, Text, FlatList, type RefreshControlProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { Button } from '@/components/ui';
+import { EmptyState, LoadingState } from '@/components/ui';
 import {
   HeroPanel,
   StatStrip,
@@ -29,10 +21,10 @@ import {
   type ChipDef,
   type StatItem,
 } from '@/components/ui/explore-primitives';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import type { WarehouseItem } from '@/types';
 
 export type WarehouseFilter = 'all' | 'spray' | 'fertilizer' | 'equipment';
@@ -76,17 +68,16 @@ export function WarehousePaneB({
   refreshControl,
 }: WarehousePaneBProps) {
   const m3 = useM3();
-  const colors = useThemeColors();
   const { t } = useTranslation();
 
   // ── Category color helpers ─────────────────────────────────────────────
   const accentFor = useCallback(
     (category: WarehouseCategory): string => {
-      if (category === 'spray') return colors.accent[500];
+      if (category === 'spray') return m3.colorScheme.accent;
       if (category === 'fertilizer') return m3.colorScheme.primary;
-      return colors.secondary[500];
+      return m3.colorScheme.secondary;
     },
-    [colors.accent, colors.secondary, m3.colorScheme.primary],
+    [m3.colorScheme.accent, m3.colorScheme.secondary, m3.colorScheme.primary],
   );
 
   // ── Filter + search ────────────────────────────────────────────────────
@@ -195,84 +186,21 @@ export function WarehousePaneB({
   // ── Empty + loading ────────────────────────────────────────────────────
   const renderEmpty = useCallback(() => {
     if (isLoading) {
-      return (
-        <View style={emptyContainerStyle}>
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
-          <Text
-            style={{
-              fontSize: fontSize.base,
-              marginTop: spacing[4],
-              color: m3.colorScheme.onSurfaceVariant,
-            }}
-          >
-            {t('warehouse.loading.inventory')}
-          </Text>
-        </View>
-      );
+      return <LoadingState label={t('warehouse.loading.inventory')} />;
     }
     if (searchQuery.trim()) {
-      return (
-        <View style={emptyContainerStyle}>
-          <SymbolIcon
-            name="magnifyingglass"
-            size={36}
-            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-          />
-          <Text
-            style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              textAlign: 'center',
-              color: m3.colorScheme.onSurface,
-              marginTop: spacing[3],
-            }}
-          >
-            {t('common.noResultsFound')}
-          </Text>
-        </View>
-      );
+      return <EmptyState icon="magnifyingglass" title={t('common.noResultsFound')} />;
     }
     return (
-      <View style={emptyContainerStyle}>
-        <View
-          style={{
-            width: 96,
-            height: 96,
-            borderRadius: borderRadius.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: spacing[6],
-            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-          }}
-        >
-          <SymbolIcon name="cube.fill" size={48} color={m3.colorScheme.primary} />
-        </View>
-        <Text
-          style={{
-            fontSize: fontSize.xl,
-            fontWeight: fontWeight.semibold,
-            textAlign: 'center',
-            color: m3.colorScheme.onSurface,
-          }}
-        >
-          {t('warehouse.empty.title')}
-        </Text>
-        <Text
-          style={{
-            fontSize: fontSize.base,
-            textAlign: 'center',
-            marginTop: spacing[2],
-            color: m3.colorScheme.onSurfaceVariant,
-          }}
-        >
-          {t('warehouse.empty.subtitle')}
-        </Text>
-        <View style={{ marginTop: spacing[6], alignSelf: 'center' }}>
-          <Button title={t('warehouse.actions.addItem')} onPress={onAddItem} fullWidth={false} />
-        </View>
-      </View>
+      <EmptyState
+        icon="cube.fill"
+        title={t('warehouse.empty.title')}
+        description={t('warehouse.empty.subtitle')}
+        actionLabel={t('warehouse.actions.addItem')}
+        onAction={onAddItem}
+      />
     );
-  }, [isLoading, searchQuery, t, m3, onAddItem]);
+  }, [isLoading, searchQuery, t, onAddItem]);
 
   // ── Row render ─────────────────────────────────────────────────────────
   const renderItem = useCallback(
@@ -345,7 +273,7 @@ export function WarehousePaneB({
                 <Text
                   numberOfLines={1}
                   style={{
-                    fontSize: 15,
+                    fontSize: fontSize.base,
                     fontWeight: fontWeight.bold,
                     color: m3.colorScheme.onSurface,
                     flexShrink: 1,
@@ -358,7 +286,7 @@ export function WarehousePaneB({
               <Text
                 numberOfLines={1}
                 style={{
-                  fontSize: 11,
+                  fontSize: fontSize.xs,
                   color: m3.colorScheme.onSurfaceVariant,
                   marginTop: 2,
                 }}
@@ -444,7 +372,7 @@ function StockHealthBar({ buckets, accentFor, t }: StockHealthBarProps) {
         <View
           style={{
             flex: 1,
-            borderRadius: 6,
+            borderRadius: radius.sm,
             backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
           }}
         />
@@ -480,7 +408,7 @@ function StockHealthBar({ buckets, accentFor, t }: StockHealthBarProps) {
         style={{
           flexDirection: 'row',
           height: 22,
-          borderRadius: 6,
+          borderRadius: radius.sm,
           overflow: 'hidden',
         }}
       >
@@ -499,7 +427,7 @@ function StockHealthBar({ buckets, accentFor, t }: StockHealthBarProps) {
             >
               <Text
                 style={{
-                  fontSize: 10.5,
+                  fontSize: fontSize['2xs'],
                   fontWeight: fontWeight.bold,
                   color: '#fff',
                   letterSpacing: 0.3,
@@ -539,7 +467,7 @@ function StockHealthBar({ buckets, accentFor, t }: StockHealthBarProps) {
           >
             <Text
               style={{
-                fontSize: 9,
+                fontSize: fontSize['2xs'],
                 fontWeight: fontWeight.bold,
                 color: '#fff',
                 letterSpacing: 0.4,
@@ -567,13 +495,13 @@ function StockHealthBar({ buckets, accentFor, t }: StockHealthBarProps) {
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: 2,
+                  borderRadius: radius.xs,
                   backgroundColor: accentFor(cat),
                 }}
               />
               <Text
                 style={{
-                  fontSize: 10,
+                  fontSize: fontSize['2xs'],
                   color: m3.colorScheme.onSurfaceVariant,
                   fontWeight: fontWeight.semibold,
                 }}
@@ -614,10 +542,3 @@ function StockHealthBar({ buckets, accentFor, t }: StockHealthBarProps) {
     </View>
   );
 }
-
-const emptyContainerStyle: ViewStyle = {
-  flex: 1,
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: spacing[8],
-};
