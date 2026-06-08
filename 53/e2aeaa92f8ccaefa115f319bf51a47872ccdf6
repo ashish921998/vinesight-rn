@@ -1,0 +1,26 @@
+app.config.js
+  h_fcdce7b1b8bf31 5,20,61
+.gitignore
+  s_96a99256494878::t_392ccd6fe95c11 66-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "53e2aeaa92f8ccaefa115f319bf51a47872ccdf6",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_96a99256494878": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "257224cc-0060-41cb-96d9-bae2318d3b1b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
