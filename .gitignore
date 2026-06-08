@@ -63,3 +63,6 @@ storybook-static
 .claude/
 agent-orchestrator.yaml
 .gstack/
+
+# Xcode local env (machine-specific paths)
+ios/.xcode.env.local
