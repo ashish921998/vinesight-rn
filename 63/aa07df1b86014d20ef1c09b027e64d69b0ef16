@@ -1,0 +1,28 @@
+app/farm/[id].tsx
+  s_46d90796ba01c9::t_1c4786246a6904 3557-3571,3573-3579,3582-3599
+  s_46d90796ba01c9::t_1b559d796f0327 2143
+  s_46d90796ba01c9::t_4a4606e39e1579 2177
+  s_46d90796ba01c9::t_725f623315a42c 1118-1135
+  s_46d90796ba01c9::t_e183850a081b97 2262-2291
+  s_46d90796ba01c9::t_c96608eac4f258 1568
+  s_46d90796ba01c9::t_5488e005640f22 2647
+  s_46d90796ba01c9::t_3af1c11eedd82d 2138-2142,2144-2173,2175-2176,2178-2185,2187-2197
+__tests__/use-safe-back.test.ts
+  s_46d90796ba01c9::t_31888a36bc1fa9 1-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "63aa07df1b86014d20ef1c09b027e64d69b0ef16",
+  "prompts": {},
+  "sessions": {
+    "s_46d90796ba01c9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e77b88db-480b-452d-a0dc-2f7876da2821",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
