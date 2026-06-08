@@ -226,8 +226,6 @@ export default function FarmDetailScreen() {
   const seasonSuccessScale = React.useRef(new Animated.Value(0.92)).current;
   const seasonSuccessOpacity = React.useRef(new Animated.Value(0)).current;
   const seasonSuccessTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const showFab = isAndroid;
-  const bottomBarHeight = showFab ? 0 : 72 + insets.bottom;
   const handleBackNavigation = React.useCallback(() => {
     if (router.canGoBack()) {
       router.back();
@@ -1117,6 +1115,24 @@ export default function FarmDetailScreen() {
     });
   };
 
+  const handleAddTask = () => {
+    if (!farm?.id) return;
+    setAddEntry({
+      tabs: ['task'],
+      initialTab: 'task',
+      initialFarmId: farm.id,
+    });
+    router.push({
+      pathname: '/add-entry',
+      params: {
+        tabs: 'task',
+        initialTab: 'task',
+        farmId: farm.id.toString(),
+        lockFarmSelection: 'true',
+      },
+    });
+  };
+
   const handleEditActivity = (log: (typeof recentLogs)[number]) => {
     if (!farm) return;
     if (log.type === 'note') {
@@ -1549,7 +1565,7 @@ export default function FarmDetailScreen() {
           scrollEnabled={!isGuidedAddLogStep}
           contentContainerStyle={{
             paddingTop: 0,
-            paddingBottom: bottomBarHeight + spacing[6],
+            paddingBottom: spacing[6],
           }}
           contentInsetAdjustmentBehavior="never"
           refreshControl={
@@ -2119,35 +2135,66 @@ export default function FarmDetailScreen() {
                 )}
               </View>
               {farm?.id ? (
-                <Pressable
-                  onPress={() => {
-                    if (!farm?.id) return;
-                    router.push({
-                      pathname: '/tasks',
-                      params: { farmId: farm.id.toString() },
-                    });
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
-                  style={({ pressed }) => ({
-                    paddingHorizontal: spacing[2],
-                    paddingVertical: spacing[1],
-                    borderRadius: m3.shape.cornerSmall,
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                      : 'transparent',
-                  })}
-                >
-                  <Text
-                    style={{
-                      color: m3.colorScheme.primary,
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                    }}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[1] }}>
+                  <Pressable
+                    onPress={handleAddTask}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('farmDetails.actions.addTask')}
+                    hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
+                    style={({ pressed }) => ({
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 2,
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: spacing[1],
+                      borderRadius: m3.shape.cornerSmall,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    })}
                   >
-                    {t('farmDetails.actions.seeAllTasks')}
-                  </Text>
-                </Pressable>
+                    <UiSymbol name="plus" size={13} color={m3.colorScheme.primary} />
+                    <Text
+                      style={{
+                        color: m3.colorScheme.primary,
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {t('farmDetails.actions.addTask')}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      if (!farm?.id) return;
+                      router.push({
+                        pathname: '/tasks',
+                        params: { farmId: farm.id.toString() },
+                      });
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
+                    hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
+                    style={({ pressed }) => ({
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: spacing[1],
+                      borderRadius: m3.shape.cornerSmall,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    })}
+                  >
+                    <Text
+                      style={{
+                        color: m3.colorScheme.primary,
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {t('farmDetails.actions.seeAllTasks')}
+                    </Text>
+                  </Pressable>
+                </View>
               ) : null}
             </View>
 
@@ -2212,6 +2259,36 @@ export default function FarmDetailScreen() {
                 >
                   {t('farmDetails.tasks.empty.title')}
                 </Text>
+                <Pressable
+                  onPress={handleAddTask}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('farmDetails.actions.addTask')}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing[1],
+                    marginTop: spacing[4],
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[2],
+                    borderRadius: m3.shape.cornerMedium,
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.22)
+                      : colorWithOpacity(m3.colorScheme.primary, 0.14),
+                    borderWidth: 1,
+                    borderColor: m3.colorScheme.primary,
+                  })}
+                >
+                  <UiSymbol name="plus" size={15} color={m3.colorScheme.primary} />
+                  <Text
+                    style={{
+                      color: m3.colorScheme.primary,
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    {t('farmDetails.actions.addTask')}
+                  </Text>
+                </Pressable>
               </View>
             ) : null}
           </View>
@@ -2567,7 +2644,7 @@ export default function FarmDetailScreen() {
             style={{
               paddingHorizontal: spacing[4],
               marginTop: spacing[6],
-              paddingBottom: spacing[8] + (showFab ? spacing[16] : bottomBarHeight + spacing[6]),
+              paddingBottom: spacing[8] + spacing[16],
             }}
           >
             <Text
@@ -3477,70 +3554,49 @@ export default function FarmDetailScreen() {
         </Pressable>
       )}
 
-      {/* Primary action */}
-      {showFab ? (
-        <GuidedTourTarget
-          targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}
+      {/* Primary action — Material 3 floating action button (both platforms) */}
+      <GuidedTourTarget
+        targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}
+        style={{
+          position: 'absolute',
+          bottom: spacing[6] + insets.bottom,
+          right: spacing[6],
+          width: 56,
+          height: 56,
+        }}
+      >
+        <Pressable
+          onPress={handleAddActivity}
+          accessibilityRole="button"
+          accessibilityLabel={t('farmDetails.actions.addActivity')}
           style={{
-            position: 'absolute',
-            bottom: spacing[6] + insets.bottom,
-            right: spacing[6],
-            width: 56,
-            height: 56,
+            width: '100%',
+            height: '100%',
+            backgroundColor: m3.colorScheme.primary,
+            borderRadius: borderRadius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
           }}
         >
-          <Pressable
-            onPress={handleAddActivity}
-            accessibilityRole="button"
-            accessibilityLabel={t('farmDetails.actions.addActivity')}
-            style={{
-              width: '100%',
-              height: '100%',
-              backgroundColor: m3.colorScheme.primary,
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-            }}
-          >
-            {({ pressed }) => (
-              <>
-                <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
-                <View
-                  pointerEvents="none"
-                  style={[
-                    StyleSheet.absoluteFillObject,
-                    {
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
-                    },
-                  ]}
-                />
-              </>
-            )}
-          </Pressable>
-        </GuidedTourTarget>
-      ) : (
-        <View
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            paddingHorizontal: spacing[4],
-            paddingTop: spacing[3],
-            paddingBottom: Math.max(insets.bottom, spacing[3]),
-            backgroundColor: m3.surface.surfaceContainerLow,
-            borderTopWidth: 1,
-            borderTopColor: m3.colorScheme.outlineVariant,
-          }}
-        >
-          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}>
-            <Button title={t('farmDetails.actions.addActivity')} onPress={handleAddActivity} />
-          </GuidedTourTarget>
-        </View>
-      )}
+          {({ pressed }) => (
+            <>
+              <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                      : 'transparent',
+                  },
+                ]}
+              />
+            </>
+          )}
+        </Pressable>
+      </GuidedTourTarget>
 
       {/* Add Entry + Water Level handled via routes */}
     </>
