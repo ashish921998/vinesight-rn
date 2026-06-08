@@ -1,0 +1,19 @@
+CLAUDE.md
+  s_96a99256494878::t_bcb6fdba968dbf 19-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "44be030e165ac7d274203c6d8930ee84940f34e9",
+  "prompts": {},
+  "sessions": {
+    "s_96a99256494878": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "257224cc-0060-41cb-96d9-bae2318d3b1b",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
