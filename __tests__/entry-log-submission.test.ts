@@ -20,18 +20,18 @@ const baseFarm = {
 
 function createSubmitters(): jest.Mocked<EntryLogSubmitters> {
   return {
-    createIrrigation: jest.fn().mockResolvedValue({ id: 11 }),
+    // Atomic irrigation: returns the new record id + the exact applied water delta.
+    logIrrigation: jest.fn().mockResolvedValue({ id: 11, waterDelta: 100 }),
     createSpray: jest.fn().mockResolvedValue({ id: 12 }),
     createHarvest: jest.fn().mockResolvedValue({ id: 13 }),
     createExpense: jest.fn().mockResolvedValue({ id: 14 }),
     createFertigation: jest.fn().mockResolvedValue({ id: 15 }),
     upsertDailyNote: jest.fn().mockResolvedValue({ id: 16 }),
-    updateWaterLevel: jest.fn().mockResolvedValue({}),
   };
 }
 
 describe('submitEntryPendingLog', () => {
-  it('submits irrigation log and updates water level', async () => {
+  it('submits irrigation log via the atomic water-ledger RPC', async () => {
     const submitters = createSubmitters();
     const result = await submitEntryPendingLog({
       log: {
@@ -44,7 +44,7 @@ describe('submitEntryPendingLog', () => {
       submitters,
     });
 
-    expect(submitters.createIrrigation).toHaveBeenCalledWith({
+    expect(submitters.logIrrigation).toHaveBeenCalledWith({
       farm_id: 7,
       date: '2026-02-11',
       duration: 2,
@@ -54,14 +54,13 @@ describe('submitEntryPendingLog', () => {
       system_discharge: 50,
       date_of_pruning: '2026-01-01',
     });
-    expect(submitters.updateWaterLevel).toHaveBeenCalledWith({
-      farmId: 7,
-      remainingWater: 200,
-    });
+    // The client no longer computes/writes the absolute water level; the RPC does,
+    // and reports back the exact delta it applied.
     expect(result).toEqual({
       pendingLogId: 'log-irrigation',
       type: 'irrigation',
       recordId: 11,
+      waterDelta: 100,
     });
   });
 

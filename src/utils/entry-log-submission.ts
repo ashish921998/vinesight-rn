@@ -43,7 +43,14 @@ export interface EntryLogFarmContext {
 }
 
 export interface EntryLogSubmitters {
-  createIrrigation: (payload: IrrigationRecordInsert) => Promise<{ id?: number | null }>;
+  /**
+   * Atomically inserts an irrigation record and applies its water-balance delta
+   * (server-side). Returns the new record id plus the exact amount added to
+   * remaining_water so a rollback can subtract it precisely.
+   */
+  logIrrigation: (
+    payload: IrrigationRecordInsert,
+  ) => Promise<{ id?: number | null; waterDelta?: number }>;
   createSpray: (payload: SprayRecordInsert) => Promise<{ id?: number | null }>;
   createHarvest: (payload: HarvestRecordInsert) => Promise<{ id?: number | null }>;
   createExpense: (payload: ExpenseRecordInsert) => Promise<{ id?: number | null }>;
@@ -53,14 +60,14 @@ export interface EntryLogSubmitters {
     date: string;
     notes: string | null;
   }) => Promise<{ id?: number | null }>;
-  updateWaterLevel: (payload: { farmId: number; remainingWater: number }) => Promise<unknown>;
-  deleteIrrigation?: (payload: { id: number; farmId: number }) => Promise<unknown>;
 }
 
 export interface EntryLogSubmissionResult {
   pendingLogId: string;
   type: LogTypeId;
   recordId: number | null;
+  /** Exact water delta applied by an irrigation log; used for precise rollback. */
+  waterDelta?: number;
 }
 
 export async function submitEntryPendingLog(params: {
@@ -83,7 +90,10 @@ export async function submitEntryPendingLog(params: {
       if (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0) {
         throw new Error('Invalid irrigation duration');
       }
-      const created = await submitters.createIrrigation({
+      // Atomic server-side insert + water-balance delta (water-ledger / log_irrigation):
+      // either both the record and the water update land, or neither does. No client
+      // read-modify-write of remaining_water, so no orphaned record to compensate for.
+      const created = await submitters.logIrrigation({
         farm_id: farmId,
         date: dateStr,
         duration,
@@ -94,50 +104,12 @@ export async function submitEntryPendingLog(params: {
         date_of_pruning: farm.date_of_pruning,
       });
 
-      const recordId = created.id ?? null;
-
-      if (
-        farm.total_tank_capacity &&
-        farm.system_discharge &&
-        farm.total_tank_capacity > 0 &&
-        farm.system_discharge > 0
-      ) {
-        const waterAdded = duration * farm.system_discharge;
-        const currentWater = farm.remaining_water ?? 0;
-        const newWaterLevel = Math.min(farm.total_tank_capacity, currentWater + waterAdded);
-        try {
-          await submitters.updateWaterLevel({
-            farmId,
-            remainingWater: newWaterLevel,
-          });
-        } catch (waterLevelError) {
-          // Water-level update failed but irrigation record already exists.
-          // Attempt compensating delete to keep atomic semantics.
-          let orphaned = false;
-          if (recordId !== null && submitters.deleteIrrigation) {
-            try {
-              await submitters.deleteIrrigation({ id: recordId, farmId });
-            } catch {
-              orphaned = true;
-              // Compensating delete failed; record is orphaned. Attach the
-              // recordId to the error so the caller can roll it back too.
-            }
-          } else if (recordId !== null) {
-            orphaned = true;
-          }
-          if (
-            orphaned &&
-            waterLevelError &&
-            typeof waterLevelError === 'object' &&
-            recordId !== null
-          ) {
-            (waterLevelError as { recordId?: number | null }).recordId = recordId;
-          }
-          throw waterLevelError;
-        }
-      }
-
-      return { pendingLogId: log.id, type: log.type, recordId };
+      return {
+        pendingLogId: log.id,
+        type: log.type,
+        recordId: created.id ?? null,
+        waterDelta: created.waterDelta ?? 0,
+      };
     }
 
     case 'spray': {

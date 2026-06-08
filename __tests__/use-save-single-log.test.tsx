@@ -8,28 +8,26 @@ import type { Farm } from '@/types';
 import type { AreaUnitPreference } from '@/utils/preferences';
 
 /**
- * The receipt screen undoes a removed irrigation by subtracting the saved
- * `waterDelta` from the *live* tank level. That only stays correct if the hook's
- * precomputed delta exactly equals the clamp `submitEntryPendingLog` actually
- * applies. These tests pin that math (capacity clamp, duration fallback, and the
- * non-irrigation / no-capacity no-op) so the save and undo paths can't drift apart.
+ * Irrigation's water delta is now computed server-side by the log_irrigation RPC
+ * (clamped to tank capacity there) and reported back through submitEntryPendingLog's
+ * result. The receipt screen subtracts that exact delta from the live tank level on
+ * undo. These tests pin that the hook PASSES THROUGH whatever delta the submission
+ * reports (rather than recomputing it from a stale client snapshot).
  */
 
-// Boundary mock: the real submission writes to the DB; we only care that the hook
-// returns the delta it computed before submitting, so resolve with a fixed record.
+// Boundary mock: the real submission hits the DB/RPC; we only care that the hook
+// surfaces the recordId + waterDelta the submission returns.
 jest.mock('@/utils/entry-log-submission', () => ({
-  submitEntryPendingLog: jest.fn().mockResolvedValue({ recordId: 123 }),
+  submitEntryPendingLog: jest.fn(),
 }));
 
 jest.mock('@/hooks', () => ({
-  useCreateIrrigationRecord: () => ({ mutateAsync: jest.fn().mockResolvedValue({ id: 1 }) }),
+  useLogIrrigation: () => ({ mutateAsync: jest.fn().mockResolvedValue({ id: 1, waterDelta: 0 }) }),
   useCreateSprayRecord: () => ({ mutateAsync: jest.fn().mockResolvedValue({ id: 1 }) }),
   useCreateHarvestRecord: () => ({ mutateAsync: jest.fn().mockResolvedValue({ id: 1 }) }),
   useCreateExpenseRecord: () => ({ mutateAsync: jest.fn().mockResolvedValue({ id: 1 }) }),
   useCreateFertigationRecord: () => ({ mutateAsync: jest.fn().mockResolvedValue({ id: 1 }) }),
   useUpsertDailyNote: () => ({ mutateAsync: jest.fn().mockResolvedValue({ id: 1 }) }),
-  useUpdateFarmWaterLevel: () => ({ mutateAsync: jest.fn().mockResolvedValue(undefined) }),
-  useDeleteIrrigationRecord: () => ({ mutateAsync: jest.fn().mockResolvedValue(undefined) }),
   fetchDailyNoteByDate: jest.fn().mockResolvedValue(null),
   queryKeys: { dashboard: { all: ['dashboard'] } },
 }));
@@ -73,47 +71,25 @@ async function save(farm: Farm, type: string, data: Record<string, unknown>) {
   return out!;
 }
 
-describe('useSaveSingleLog — waterDelta', () => {
+describe('useSaveSingleLog — waterDelta passthrough', () => {
   beforeEach(() => {
-    (submitEntryPendingLog as jest.Mock).mockClear();
+    (submitEntryPendingLog as jest.Mock).mockReset();
+    (submitEntryPendingLog as jest.Mock).mockResolvedValue({ recordId: 123 });
   });
 
-  it('returns the amount added (after − before) for a tank-capacity irrigation', async () => {
-    // before=100, +duration(5)*discharge(10)=50, after=min(1000,150)=150 → delta 50
+  it('passes through the exact waterDelta the atomic submission reports', async () => {
+    (submitEntryPendingLog as jest.Mock).mockResolvedValueOnce({ recordId: 123, waterDelta: 50 });
     const out = await save(makeFarm({}), 'irrigation', { duration: 5 });
     expect(out.waterDelta).toBe(50);
   });
 
-  it('clamps the delta at tank capacity (never overfills)', async () => {
-    // before=990, +50 would be 1040, clamps to 1000 → delta is only 10, not 50
-    const out = await save(
-      makeFarm({ remaining_water: 990, total_tank_capacity: 1000, system_discharge: 10 }),
-      'irrigation',
-      { duration: 5 },
-    );
-    expect(out.waterDelta).toBe(10);
-  });
-
-  it('treats a missing duration as 0 (delta 0, not NaN)', async () => {
-    const out = await save(makeFarm({}), 'irrigation', {});
-    expect(out.waterDelta).toBe(0);
-  });
-
-  it('leaves waterDelta undefined when the farm has no tank capacity', async () => {
-    const out = await save(
-      makeFarm({ total_tank_capacity: 0, system_discharge: 0 }),
-      'irrigation',
-      { duration: 5 },
-    );
-    expect(out.waterDelta).toBeUndefined();
-  });
-
-  it('leaves waterDelta undefined for non-irrigation entries', async () => {
+  it('leaves waterDelta undefined when the submission reports none (non-irrigation)', async () => {
     const out = await save(makeFarm({}), 'expense', { type: 'Fuel', cost: 500 });
     expect(out.waterDelta).toBeUndefined();
   });
 
   it('still returns the record id and farm id from the submission', async () => {
+    (submitEntryPendingLog as jest.Mock).mockResolvedValueOnce({ recordId: 123, waterDelta: 50 });
     const out = await save(makeFarm({ id: 42 }), 'irrigation', { duration: 5 });
     expect(out.recordId).toBe(123);
     expect(out.farmId).toBe(42);

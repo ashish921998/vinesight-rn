@@ -5,19 +5,18 @@ import { Alert } from 'react-native';
 import { EntryForm } from '@/components/screens/entry-form';
 import type { Farm } from '@/types';
 
-const mockCreateIrrigationMutate = jest.fn();
+const mockLogIrrigationMutate = jest.fn();
 const mockCreateSprayMutate = jest.fn();
 const mockCreateHarvestMutate = jest.fn();
 const mockCreateExpenseMutate = jest.fn();
 const mockCreateFertigationMutate = jest.fn();
 const mockUpsertDailyNoteMutate = jest.fn();
-const mockDeleteIrrigationMutate = jest.fn();
+const mockRevertIrrigationMutate = jest.fn();
 const mockDeleteSprayMutate = jest.fn();
 const mockDeleteHarvestMutate = jest.fn();
 const mockDeleteExpenseMutate = jest.fn();
 const mockDeleteFertigationMutate = jest.fn();
 const mockDeleteDailyNoteMutate = jest.fn();
-const mockUpdateWaterLevelMutate = jest.fn();
 const mockTaskCreateMutate = jest.fn();
 const mockTaskUpdateMutate = jest.fn();
 const mockUpsertTaskSchedule = jest.fn();
@@ -58,19 +57,18 @@ jest.mock('expo-linear-gradient', () => {
 });
 
 jest.mock('@/hooks', () => ({
-  useCreateIrrigationRecord: () => ({ mutateAsync: mockCreateIrrigationMutate }),
+  useLogIrrigation: () => ({ mutateAsync: mockLogIrrigationMutate }),
   useCreateSprayRecord: () => ({ mutateAsync: mockCreateSprayMutate }),
   useCreateHarvestRecord: () => ({ mutateAsync: mockCreateHarvestMutate }),
   useCreateExpenseRecord: () => ({ mutateAsync: mockCreateExpenseMutate }),
   useCreateFertigationRecord: () => ({ mutateAsync: mockCreateFertigationMutate }),
   useUpsertDailyNote: () => ({ mutateAsync: mockUpsertDailyNoteMutate }),
-  useDeleteIrrigationRecord: () => ({ mutateAsync: mockDeleteIrrigationMutate }),
+  useRevertIrrigation: () => ({ mutateAsync: mockRevertIrrigationMutate }),
   useDeleteSprayRecord: () => ({ mutateAsync: mockDeleteSprayMutate }),
   useDeleteHarvestRecord: () => ({ mutateAsync: mockDeleteHarvestMutate }),
   useDeleteExpenseRecord: () => ({ mutateAsync: mockDeleteExpenseMutate }),
   useDeleteFertigationRecord: () => ({ mutateAsync: mockDeleteFertigationMutate }),
   useDeleteDailyNote: () => ({ mutateAsync: mockDeleteDailyNoteMutate }),
-  useUpdateFarmWaterLevel: () => ({ mutateAsync: mockUpdateWaterLevelMutate }),
   useFarms: (...args: unknown[]) => mockUseFarms(...args),
   useProfile: () => ({ data: { area_unit_preference: 'acres' } }),
   useResponsiveHeight: () => ({ windowHeight: 800 }),
@@ -165,19 +163,18 @@ describe('EntryForm UI integration', () => {
     mockUseChemicalMixSearch.mockReturnValue({ data: [], isLoading: false });
     mockUsePhiComputation.mockReturnValue({ data: null, isLoading: false, error: null });
     mockDailyNoteMaybeSingle.mockResolvedValue({ data: null, error: null });
-    mockCreateIrrigationMutate.mockResolvedValue({ id: 101 });
+    mockLogIrrigationMutate.mockResolvedValue({ id: 101, waterDelta: 0 });
     mockCreateSprayMutate.mockResolvedValue({ id: 102 });
     mockCreateHarvestMutate.mockResolvedValue({ id: 103 });
     mockCreateExpenseMutate.mockResolvedValue({ id: 104 });
     mockCreateFertigationMutate.mockResolvedValue({ id: 105 });
     mockUpsertDailyNoteMutate.mockResolvedValue({ id: 106 });
-    mockDeleteIrrigationMutate.mockResolvedValue(undefined);
+    mockRevertIrrigationMutate.mockResolvedValue(undefined);
     mockDeleteSprayMutate.mockResolvedValue(undefined);
     mockDeleteHarvestMutate.mockResolvedValue(undefined);
     mockDeleteExpenseMutate.mockResolvedValue(undefined);
     mockDeleteFertigationMutate.mockResolvedValue(undefined);
     mockDeleteDailyNoteMutate.mockResolvedValue(undefined);
-    mockUpdateWaterLevelMutate.mockResolvedValue({});
     mockTaskCreateMutate.mockResolvedValue({ id: 201 });
     mockTaskUpdateMutate.mockResolvedValue({ id: 202 });
   });

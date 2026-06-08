@@ -73,6 +73,15 @@ export {
   useRecentFertigationItems,
 } from './use-records';
 
+// Water Ledger (atomic irrigation + water-balance RPCs)
+export {
+  logIrrigation,
+  revertIrrigation,
+  useLogIrrigation,
+  useRevertIrrigation,
+  type LogIrrigationResult,
+} from './water-ledger';
+
 // Worker Hooks
 export {
   // Workers

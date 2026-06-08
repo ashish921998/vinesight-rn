@@ -6,6 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { requireUserId } from '@/lib/auth-utils';
 import { queryKeys } from './query-keys';
 import {
   TABLES,
@@ -27,21 +28,6 @@ import { resolveSeasonIdForDate } from '../lib/season-context';
 import { formatLocalDate } from '../utils/worker-analytics';
 
 // ============================================================
-// MARK: - Helper
-// ============================================================
-
-async function getUserId(): Promise<string> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error || !session) {
-    throw new Error('Please sign in to continue');
-  }
-  return session.user.id;
-}
-
-// ============================================================
 // MARK: - WORKERS
 // ============================================================
 
@@ -49,7 +35,7 @@ export function useWorkers() {
   return useQuery({
     queryKey: queryKeys.workers.lists(),
     queryFn: async (): Promise<Worker[]> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.WORKERS)
@@ -81,7 +67,7 @@ export function useCreateWorker() {
 
   return useMutation({
     mutationFn: async (worker: WorkerInsert): Promise<Worker> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.WORKERS)
@@ -146,7 +132,7 @@ export function useAllWorkerAttendance() {
   return useQuery({
     queryKey: queryKeys.workerAttendance.listAll(),
     queryFn: async (): Promise<WorkerAttendance[]> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
       const cutoff = formatLocalDate(thirtyDaysAgo);
@@ -289,7 +275,7 @@ export function useAllWorkerTransactions() {
   return useQuery({
     queryKey: queryKeys.workerTransactions.listAll(),
     queryFn: async (): Promise<WorkerTransaction[]> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.WORKER_TRANSACTIONS)
@@ -432,7 +418,7 @@ export function useWorkTypes() {
   return useQuery({
     queryKey: queryKeys.workTypes.lists(),
     queryFn: async (): Promise<WorkType[]> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       // Fetch both user-specific and default work types
       const { data, error } = await supabase
@@ -453,7 +439,7 @@ export function useCreateWorkType() {
 
   return useMutation({
     mutationFn: async (name: string): Promise<WorkType> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.WORK_TYPES)
@@ -521,7 +507,7 @@ export function useAllTemporaryWorkerEntries() {
   return useQuery({
     queryKey: queryKeys.temporaryWorkerEntries.listAll(),
     queryFn: async (): Promise<TemporaryWorkerEntry[]> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       // Join through farms table to get entries for user's farms
       const { data, error } = await supabase
@@ -541,7 +527,7 @@ export function useCreateTemporaryWorkerEntry() {
 
   return useMutation({
     mutationFn: async (entry: TemporaryWorkerEntryInsert): Promise<TemporaryWorkerEntry> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
       const seasonId =
         entry.season_id ??
         (await resolveSeasonIdForDate({

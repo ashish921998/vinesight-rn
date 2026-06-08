@@ -35,15 +35,14 @@ const farmB: Farm = {
 
 function createAdapters(): jest.Mocked<EntryLogSessionAdapters> {
   return {
-    createIrrigation: jest.fn().mockResolvedValue({ id: 11 }),
+    logIrrigation: jest.fn().mockResolvedValue({ id: 11, waterDelta: 100 }),
     createSpray: jest.fn().mockResolvedValue({ id: 12 }),
     createHarvest: jest.fn().mockResolvedValue({ id: 13 }),
     createExpense: jest.fn().mockResolvedValue({ id: 14 }),
     createFertigation: jest.fn().mockResolvedValue({ id: 15 }),
     upsertDailyNote: jest.fn().mockResolvedValue({ id: 16 }),
     getDailyNote: jest.fn().mockResolvedValue(null),
-    updateWaterLevel: jest.fn().mockResolvedValue({}),
-    deleteIrrigation: jest.fn().mockResolvedValue(undefined),
+    revertIrrigation: jest.fn().mockResolvedValue(undefined),
     deleteSpray: jest.fn().mockResolvedValue(undefined),
     deleteHarvest: jest.fn().mockResolvedValue(undefined),
     deleteExpense: jest.fn().mockResolvedValue(undefined),
@@ -123,7 +122,7 @@ describe('saveEntryLogSession', () => {
 
   it('returns the source task record for a saved single-farm stack', async () => {
     const adapters = createAdapters();
-    adapters.createIrrigation.mockResolvedValue({ id: 909 });
+    adapters.logIrrigation.mockResolvedValue({ id: 909, waterDelta: 100 });
 
     const result = await saveEntryLogSession({
       pendingLogs: [
@@ -151,6 +150,39 @@ describe('saveEntryLogSession', () => {
         type: 'irrigation',
         recordId: 909,
       });
+    }
+  });
+
+  it('reverts a logged irrigation via revert_irrigation when a later draft fails', async () => {
+    const adapters = createAdapters();
+    adapters.logIrrigation.mockResolvedValue({ id: 711, waterDelta: 100 });
+    adapters.createExpense.mockRejectedValue(new Error('Expense failed'));
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'irrigation-draft',
+          type: 'irrigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { duration: 2 },
+          displayDescription: '2 hours',
+        },
+        expenseDraft({ id: 'expense-draft', scope: 'single_farm', farmId: 101 }),
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('failed');
+    // Concurrency-safe rollback: delete the record + subtract the EXACT applied delta,
+    // never a stale snapshot restore.
+    expect(adapters.revertIrrigation).toHaveBeenCalledWith({ recordId: 711, waterDelta: 100 });
+    if (result.status === 'failed') {
+      expect(result.rollbackFailures).toEqual([]);
     }
   });
 

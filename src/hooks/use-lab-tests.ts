@@ -16,14 +16,11 @@ import i18n from '@/i18n';
 import { normalizeParameterKey } from '@/utils/lab-test-utils';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
 import { resolveSeasonIdForDate } from '../lib/season-context';
+import { queryKeys } from './query-keys';
 
-// Query keys
-export const labTestQueryKeys = {
-  soilTests: (farmId: number) => ['soil-tests', farmId] as const,
-  petioleTests: (farmId: number) => ['petiole-tests', farmId] as const,
-  soilTrends: (farmId: number) => ['soil-trends', farmId] as const,
-  petioleTrends: (farmId: number) => ['petiole-trends', farmId] as const,
-};
+// Lab-test query keys now live in the central factory (query-keys.ts);
+// re-exported here for backward compatibility with existing importers.
+export const labTestQueryKeys = queryKeys.labTests;
 
 async function backfillMissingPetiolePruningDates(
   farmId: number,

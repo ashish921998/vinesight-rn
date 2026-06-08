@@ -90,17 +90,16 @@ import {
   type FertilizerUnit,
 } from '@/constants/calculator-models';
 import {
-  useCreateIrrigationRecord,
+  useLogIrrigation,
   useCreateSprayRecord,
   useCreateHarvestRecord,
   useCreateExpenseRecord,
   useCreateFertigationRecord,
-  useDeleteIrrigationRecord,
+  useRevertIrrigation,
   useDeleteSprayRecord,
   useDeleteHarvestRecord,
   useDeleteExpenseRecord,
   useDeleteFertigationRecord,
-  useUpdateFarmWaterLevel,
   useFarms,
   useProfile,
   useWarehouseItems,
@@ -574,19 +573,18 @@ export function EntryForm({
     return Array.from(deduped.values()).slice(0, 15);
   }, [fertilizerPlan, fertilizerWarehouseItems, recentFertigationItems]);
 
-  const createIrrigation = useCreateIrrigationRecord();
+  const logIrrigation = useLogIrrigation();
   const createSpray = useCreateSprayRecord();
   const createHarvest = useCreateHarvestRecord();
   const createExpense = useCreateExpenseRecord();
   const createFertigation = useCreateFertigationRecord();
   const upsertDailyNote = useUpsertDailyNote();
-  const deleteIrrigation = useDeleteIrrigationRecord();
+  const revertIrrigation = useRevertIrrigation();
   const deleteSpray = useDeleteSprayRecord();
   const deleteHarvest = useDeleteHarvestRecord();
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
   const deleteDailyNote = useDeleteDailyNote();
-  const updateWaterLevel = useUpdateFarmWaterLevel();
 
   const scrollToNode = useCallback(
     (nodeHandle: number) => {
@@ -1093,7 +1091,7 @@ export function EntryForm({
     const createdFrom = entrySource === 'voice_ai' ? 'voice_ai' : 'manual';
 
     const adapters: EntryLogSessionAdapters = {
-      createIrrigation: async (payload) => createIrrigation.mutateAsync(payload),
+      logIrrigation: async (payload) => logIrrigation.mutateAsync(payload),
       createSpray: async (payload) => createSpray.mutateAsync(payload),
       createHarvest: async (payload) => createHarvest.mutateAsync(payload),
       createExpense: async (payload) => createExpense.mutateAsync(payload),
@@ -1109,8 +1107,7 @@ export function EntryForm({
         if (error) throw error;
         return (data ?? null) as DailyNoteRecord | null;
       },
-      updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
-      deleteIrrigation: async (payload) => deleteIrrigation.mutateAsync(payload),
+      revertIrrigation: async (payload) => revertIrrigation.mutateAsync(payload),
       deleteSpray: async (payload) => deleteSpray.mutateAsync(payload),
       deleteHarvest: async (payload) => deleteHarvest.mutateAsync(payload),
       deleteExpense: async (payload) => deleteExpense.mutateAsync(payload),

@@ -220,4 +220,12 @@ export const queryKeys = {
     safeToSprayMatrix: (farmId: number, seasonId: number | null, targetHarvestDate: string) =>
       [...queryKeys.phi.all, 'safeToSprayMatrix', { farmId, seasonId, targetHarvestDate }] as const,
   },
+
+  // Lab tests (soil & petiole) — flat keys kept stable for cache compatibility
+  labTests: {
+    soilTests: (farmId: number) => ['soil-tests', farmId] as const,
+    petioleTests: (farmId: number) => ['petiole-tests', farmId] as const,
+    soilTrends: (farmId: number) => ['soil-trends', farmId] as const,
+    petioleTrends: (farmId: number) => ['petiole-trends', farmId] as const,
+  },
 } as const;

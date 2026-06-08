@@ -23,6 +23,13 @@ import {
   type FertilizerItem,
 } from '../types';
 import { resolveOptionalSeasonIdForDate } from '../lib/season-context';
+import {
+  listFarmRecords,
+  listFarmRecordsByFarms,
+  createFarmRecord,
+  updateFarmRecord,
+  deleteFarmRecord,
+} from './record-crud';
 
 // ============================================================
 // MARK: - IRRIGATION RECORDS
@@ -31,21 +38,7 @@ import { resolveOptionalSeasonIdForDate } from '../lib/season-context';
 export function useIrrigationRecords(farmId: number | undefined, seasonId?: number) {
   return useQuery({
     queryKey: [...queryKeys.irrigationRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
-    queryFn: async (): Promise<IrrigationRecord[]> => {
-      let query = supabase
-        .from(TABLES.IRRIGATION_RECORDS)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFarmRecords<IrrigationRecord>(TABLES.IRRIGATION_RECORDS, farmId!, seasonId),
     enabled: !!farmId,
   });
 }
@@ -53,18 +46,7 @@ export function useIrrigationRecords(farmId: number | undefined, seasonId?: numb
 export function useIrrigationRecordsByFarms(farmIds: number[]) {
   return useQuery({
     queryKey: queryKeys.irrigationRecords.listByFarms(farmIds),
-    queryFn: async (): Promise<IrrigationRecord[]> => {
-      if (farmIds.length === 0) return [];
-
-      const { data, error } = await supabase
-        .from(TABLES.IRRIGATION_RECORDS)
-        .select('*')
-        .in('farm_id', farmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFarmRecordsByFarms<IrrigationRecord>(TABLES.IRRIGATION_RECORDS, farmIds),
     enabled: farmIds.length > 0,
   });
 }
@@ -73,22 +55,8 @@ export function useCreateIrrigationRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (record: IrrigationRecordInsert): Promise<IrrigationRecord> => {
-      const seasonId =
-        record.season_id ??
-        (await resolveOptionalSeasonIdForDate({
-          farmId: record.farm_id,
-          date: record.date,
-        }));
-      const { data, error } = await supabase
-        .from(TABLES.IRRIGATION_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (record: IrrigationRecordInsert) =>
+      createFarmRecord<IrrigationRecord, IrrigationRecordInsert>(TABLES.IRRIGATION_RECORDS, record),
     onSuccess: (newRecord) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.irrigationRecords.listByFarm(newRecord.farm_id),
@@ -104,23 +72,8 @@ export function useUpdateIrrigationRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<IrrigationRecord>;
-    }): Promise<IrrigationRecord> => {
-      const { data, error } = await supabase
-        .from(TABLES.IRRIGATION_RECORDS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: ({ id, updates }: { id: number; updates: Partial<IrrigationRecord> }) =>
+      updateFarmRecord<IrrigationRecord>(TABLES.IRRIGATION_RECORDS, id, updates),
     onSuccess: (updatedRecord) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.irrigationRecords.listByFarm(updatedRecord.farm_id),
@@ -133,11 +86,8 @@ export function useDeleteIrrigationRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.IRRIGATION_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
-    },
+    mutationFn: ({ id }: { id: number; farmId: number }) =>
+      deleteFarmRecord(TABLES.IRRIGATION_RECORDS, id),
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.irrigationRecords.listByFarm(farmId),
@@ -153,21 +103,7 @@ export function useDeleteIrrigationRecord() {
 export function useSprayRecords(farmId: number | undefined, seasonId?: number) {
   return useQuery({
     queryKey: [...queryKeys.sprayRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
-    queryFn: async (): Promise<SprayRecord[]> => {
-      let query = supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFarmRecords<SprayRecord>(TABLES.SPRAY_RECORDS, farmId!, seasonId),
     enabled: !!farmId,
   });
 }
@@ -175,18 +111,7 @@ export function useSprayRecords(farmId: number | undefined, seasonId?: number) {
 export function useSprayRecordsByFarms(farmIds: number[]) {
   return useQuery({
     queryKey: queryKeys.sprayRecords.listByFarms(farmIds),
-    queryFn: async (): Promise<SprayRecord[]> => {
-      if (farmIds.length === 0) return [];
-
-      const { data, error } = await supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .select('*')
-        .in('farm_id', farmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFarmRecordsByFarms<SprayRecord>(TABLES.SPRAY_RECORDS, farmIds),
     enabled: farmIds.length > 0,
   });
 }
@@ -195,22 +120,8 @@ export function useCreateSprayRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (record: SprayRecordInsert): Promise<SprayRecord> => {
-      const seasonId =
-        record.season_id ??
-        (await resolveOptionalSeasonIdForDate({
-          farmId: record.farm_id,
-          date: record.date,
-        }));
-      const { data, error } = await supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (record: SprayRecordInsert) =>
+      createFarmRecord<SprayRecord, SprayRecordInsert>(TABLES.SPRAY_RECORDS, record),
     onSuccess: (newRecord) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.sprayRecords.listByFarm(newRecord.farm_id),
@@ -223,23 +134,8 @@ export function useUpdateSprayRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<SprayRecord>;
-    }): Promise<SprayRecord> => {
-      const { data, error } = await supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: ({ id, updates }: { id: number; updates: Partial<SprayRecord> }) =>
+      updateFarmRecord<SprayRecord>(TABLES.SPRAY_RECORDS, id, updates),
     onSuccess: (updatedRecord) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.sprayRecords.listByFarm(updatedRecord.farm_id),
@@ -252,11 +148,8 @@ export function useDeleteSprayRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.SPRAY_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
-    },
+    mutationFn: ({ id }: { id: number; farmId: number }) =>
+      deleteFarmRecord(TABLES.SPRAY_RECORDS, id),
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.sprayRecords.listByFarm(farmId),
@@ -272,21 +165,8 @@ export function useDeleteSprayRecord() {
 export function useFertigationRecords(farmId: number | undefined, seasonId?: number) {
   return useQuery({
     queryKey: [...queryKeys.fertigationRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
-    queryFn: async (): Promise<FertigationRecord[]> => {
-      let query = supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () =>
+      listFarmRecords<FertigationRecord>(TABLES.FERTIGATION_RECORDS, farmId!, seasonId),
     enabled: !!farmId,
   });
 }
@@ -294,18 +174,7 @@ export function useFertigationRecords(farmId: number | undefined, seasonId?: num
 export function useFertigationRecordsByFarms(farmIds: number[]) {
   return useQuery({
     queryKey: queryKeys.fertigationRecords.listByFarms(farmIds),
-    queryFn: async (): Promise<FertigationRecord[]> => {
-      if (farmIds.length === 0) return [];
-
-      const { data, error } = await supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .select('*')
-        .in('farm_id', farmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFarmRecordsByFarms<FertigationRecord>(TABLES.FERTIGATION_RECORDS, farmIds),
     enabled: farmIds.length > 0,
   });
 }
@@ -314,22 +183,11 @@ export function useCreateFertigationRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (record: FertigationRecordInsert): Promise<FertigationRecord> => {
-      const seasonId =
-        record.season_id ??
-        (await resolveOptionalSeasonIdForDate({
-          farmId: record.farm_id,
-          date: record.date,
-        }));
-      const { data, error } = await supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (record: FertigationRecordInsert) =>
+      createFarmRecord<FertigationRecord, FertigationRecordInsert>(
+        TABLES.FERTIGATION_RECORDS,
+        record,
+      ),
     onSuccess: (newRecord) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.fertigationRecords.listByFarm(newRecord.farm_id),
@@ -342,23 +200,8 @@ export function useUpdateFertigationRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<FertigationRecord>;
-    }): Promise<FertigationRecord> => {
-      const { data, error } = await supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: ({ id, updates }: { id: number; updates: Partial<FertigationRecord> }) =>
+      updateFarmRecord<FertigationRecord>(TABLES.FERTIGATION_RECORDS, id, updates),
     onSuccess: (updatedRecord) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.fertigationRecords.listByFarm(updatedRecord.farm_id),
@@ -371,11 +214,8 @@ export function useDeleteFertigationRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.FERTIGATION_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
-    },
+    mutationFn: ({ id }: { id: number; farmId: number }) =>
+      deleteFarmRecord(TABLES.FERTIGATION_RECORDS, id),
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.fertigationRecords.listByFarm(farmId),
@@ -391,21 +231,7 @@ export function useDeleteFertigationRecord() {
 export function useHarvestRecords(farmId: number | undefined, seasonId?: number) {
   return useQuery({
     queryKey: [...queryKeys.harvestRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
-    queryFn: async (): Promise<HarvestRecord[]> => {
-      let query = supabase
-        .from(TABLES.HARVEST_RECORDS)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFarmRecords<HarvestRecord>(TABLES.HARVEST_RECORDS, farmId!, seasonId),
     enabled: !!farmId,
   });
 }
@@ -413,18 +239,7 @@ export function useHarvestRecords(farmId: number | undefined, seasonId?: number)
 export function useHarvestRecordsByFarms(farmIds: number[]) {
   return useQuery({
     queryKey: queryKeys.harvestRecords.listByFarms(farmIds),
-    queryFn: async (): Promise<HarvestRecord[]> => {
-      if (farmIds.length === 0) return [];
-
-      const { data, error } = await supabase
-        .from(TABLES.HARVEST_RECORDS)
-        .select('*')
-        .in('farm_id', farmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFarmRecordsByFarms<HarvestRecord>(TABLES.HARVEST_RECORDS, farmIds),
     enabled: farmIds.length > 0,
   });
 }
@@ -433,22 +248,8 @@ export function useCreateHarvestRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (record: HarvestRecordInsert): Promise<HarvestRecord> => {
-      const seasonId =
-        record.season_id ??
-        (await resolveOptionalSeasonIdForDate({
-          farmId: record.farm_id,
-          date: record.date,
-        }));
-      const { data, error } = await supabase
-        .from(TABLES.HARVEST_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (record: HarvestRecordInsert) =>
+      createFarmRecord<HarvestRecord, HarvestRecordInsert>(TABLES.HARVEST_RECORDS, record),
     onSuccess: (newRecord) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.harvestRecords.listByFarm(newRecord.farm_id),
@@ -461,23 +262,8 @@ export function useUpdateHarvestRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<HarvestRecord>;
-    }): Promise<HarvestRecord> => {
-      const { data, error } = await supabase
-        .from(TABLES.HARVEST_RECORDS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: ({ id, updates }: { id: number; updates: Partial<HarvestRecord> }) =>
+      updateFarmRecord<HarvestRecord>(TABLES.HARVEST_RECORDS, id, updates),
     onSuccess: (updatedRecord) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.harvestRecords.listByFarm(updatedRecord.farm_id),
@@ -490,11 +276,8 @@ export function useDeleteHarvestRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.HARVEST_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
-    },
+    mutationFn: ({ id }: { id: number; farmId: number }) =>
+      deleteFarmRecord(TABLES.HARVEST_RECORDS, id),
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.harvestRecords.listByFarm(farmId),
@@ -510,21 +293,7 @@ export function useDeleteHarvestRecord() {
 export function useExpenseRecords(farmId: number | undefined, seasonId?: number) {
   return useQuery({
     queryKey: [...queryKeys.expenseRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
-    queryFn: async (): Promise<ExpenseRecord[]> => {
-      let query = supabase
-        .from(TABLES.EXPENSE_RECORDS)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFarmRecords<ExpenseRecord>(TABLES.EXPENSE_RECORDS, farmId!, seasonId),
     enabled: !!farmId,
   });
 }
@@ -532,18 +301,7 @@ export function useExpenseRecords(farmId: number | undefined, seasonId?: number)
 export function useExpenseRecordsByFarms(farmIds: number[]) {
   return useQuery({
     queryKey: queryKeys.expenseRecords.listByFarms(farmIds),
-    queryFn: async (): Promise<ExpenseRecord[]> => {
-      if (farmIds.length === 0) return [];
-
-      const { data, error } = await supabase
-        .from(TABLES.EXPENSE_RECORDS)
-        .select('*')
-        .in('farm_id', farmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFarmRecordsByFarms<ExpenseRecord>(TABLES.EXPENSE_RECORDS, farmIds),
     enabled: farmIds.length > 0,
   });
 }
@@ -552,22 +310,8 @@ export function useCreateExpenseRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (record: ExpenseRecordInsert): Promise<ExpenseRecord> => {
-      const seasonId =
-        record.season_id ??
-        (await resolveOptionalSeasonIdForDate({
-          farmId: record.farm_id,
-          date: record.date,
-        }));
-      const { data, error } = await supabase
-        .from(TABLES.EXPENSE_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (record: ExpenseRecordInsert) =>
+      createFarmRecord<ExpenseRecord, ExpenseRecordInsert>(TABLES.EXPENSE_RECORDS, record),
     onSuccess: (newRecord) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.expenseRecords.listByFarm(newRecord.farm_id),
@@ -580,23 +324,8 @@ export function useUpdateExpenseRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<ExpenseRecord>;
-    }): Promise<ExpenseRecord> => {
-      const { data, error } = await supabase
-        .from(TABLES.EXPENSE_RECORDS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: ({ id, updates }: { id: number; updates: Partial<ExpenseRecord> }) =>
+      updateFarmRecord<ExpenseRecord>(TABLES.EXPENSE_RECORDS, id, updates),
     onSuccess: (updatedRecord) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.expenseRecords.listByFarm(updatedRecord.farm_id),
@@ -609,11 +338,8 @@ export function useDeleteExpenseRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.EXPENSE_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
-    },
+    mutationFn: ({ id }: { id: number; farmId: number }) =>
+      deleteFarmRecord(TABLES.EXPENSE_RECORDS, id),
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.expenseRecords.listByFarm(farmId),
