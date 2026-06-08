@@ -1,0 +1,112 @@
+src/hooks/use-lab-tests.ts
+  s_be8dca7d737822::t_07d7933c3930ec 19,21-23
+__tests__/water-ledger.test.ts
+  s_be8dca7d737822::t_94dc7fcd94da92 1-54,65-73,83-91,101-122
+  s_be8dca7d737822::t_29c7bcabbf7ae5 55-64,74-82,92-100
+src/hooks/use-records.ts
+  s_be8dca7d737822::t_ead1b26c73e426 26-32
+  s_be8dca7d737822::t_3d09c8810faf62 41,49,58,75-76,89-90
+  s_be8dca7d737822::t_e5ef31231ed6dd 296,304,313-314,327-328,341-342
+  s_be8dca7d737822::t_586ab900039909 59,168-169
+  s_be8dca7d737822::t_47597e3d9424eb 106,114,123-124,137-138,151-152
+  s_be8dca7d737822::t_0c0c73b8fca6b8 177,186-190,203-204,217-218
+  s_be8dca7d737822::t_c443d2beb7a702 234,242,251-252,265-266,279-280
+src/hooks/use-farms.ts
+  s_be8dca7d737822::t_2ace2dcb1710d6 10
+  s_be8dca7d737822::t_4c625bcb091101 124,147,180,205,328,405
+supabase/rollbacks/20260608120000_log_irrigation_atomic_water_rollback.sql
+  s_be8dca7d737822::t_2aa128b2b5b837 1-8
+src/hooks/index.ts
+  s_be8dca7d737822::t_d3d679a34764a8 76-84
+src/hooks/water-ledger.ts
+  s_be8dca7d737822::t_9bff859b567025 1-103
+src/features/guided-tour/service.ts
+  s_be8dca7d737822::t_4f2f629053a509 5
+__tests__/entry-log-submission.test.ts
+  s_be8dca7d737822::t_0c102b2daa76bf 34,47,57-58,63
+  s_be8dca7d737822::t_25125f5e08dbe0 23-24
+src/hooks/use-tasks.ts
+  s_be8dca7d737822::t_500421c8538cc6 99
+  s_be8dca7d737822::t_26de32b62013ac 44
+  s_be8dca7d737822::t_4bd6ee377548ad 73
+  s_be8dca7d737822::t_6c15fd2ece5415 8
+__tests__/unit-conversion.test.ts
+  s_be8dca7d737822::t_eff6962995e87b 1-80
+src/hooks/use-workers.ts
+  s_be8dca7d737822::t_3fdbfbc46e4e2b 38,70,135,278,421,442,510,530
+  s_be8dca7d737822::t_a17ffbd5f4d982 9
+src/services/report-service.ts
+  s_be8dca7d737822::t_e961c7e96a5129 270-272
+  s_be8dca7d737822::t_90b4562b0d3fba 653
+  s_be8dca7d737822::t_881727f09953f7 31-36
+src/utils/entry-log-submission.ts
+  s_be8dca7d737822::t_c4bf8b5048fad1 46-53,69-70
+  s_be8dca7d737822::t_8268253ecb8a2c 93-96,107-112
+src/services/nutrient-flow-service.ts
+  s_be8dca7d737822::t_b4b426dbda7bf8 89
+  s_be8dca7d737822::t_94f15525a4d96a 118
+  s_be8dca7d737822::t_8590ffaf6dea66 67
+  s_be8dca7d737822::t_3f59a56a9d2265 14-18
+src/hooks/use-profile.ts
+  s_be8dca7d737822::t_7b0d8348cec19a 38,62,88,113
+  s_be8dca7d737822::t_ad181d7d51608b 8
+src/components/screens/entry-form.tsx
+  s_be8dca7d737822::t_a066ba909b3452 93
+  s_be8dca7d737822::t_9d705d7a026b46 98
+  s_be8dca7d737822::t_53e7edefe27762 576
+  s_be8dca7d737822::t_51cfa035bf780a 1110
+  s_be8dca7d737822::t_3b063b7771fc8f 582
+  s_be8dca7d737822::t_bbb0ca06e48fc8 1094
+__tests__/record-crud.test.ts
+  s_be8dca7d737822::t_586ab900039909 64-66,80-82
+  s_be8dca7d737822::t_07755ad557ce09 1-63,67-79,83-169
+__tests__/save-entry-log-session.test.ts
+  s_be8dca7d737822::t_bccfbd67b882e4 38,45
+  s_be8dca7d737822::t_df58572fe522cd 125
+  s_be8dca7d737822::t_157716e51b411c 156-188
+__tests__/entry-form.integration.test.tsx
+  s_be8dca7d737822::t_19ff5e7f58e714 8
+  s_be8dca7d737822::t_acab68f03b8022 14
+  s_be8dca7d737822::t_c913eb8b3df912 166
+  s_be8dca7d737822::t_25ea32b5958e02 66
+  s_be8dca7d737822::t_c3a2453eb05dc3 60
+  s_be8dca7d737822::t_fa93c57c90058f 172
+supabase/migrations/20260608120000_log_irrigation_atomic_water.sql
+  s_be8dca7d737822::t_6f3dfcf82f3ad0 1-119
+src/hooks/record-crud.ts
+  s_be8dca7d737822::t_b79d74a5efa7d1 1-95,97-109
+  s_be8dca7d737822::t_586ab900039909 96
+__tests__/use-save-single-log.test.tsx
+  s_be8dca7d737822::t_9510e369031457 11-15,18-19,21,25,74,76-77,80-81,86,92
+src/features/entry-log-session/use-save-single-log.ts
+  s_be8dca7d737822::t_5663321361f3c3 24
+  s_be8dca7d737822::t_67a9a5f160baff 98,118-126,130
+  s_be8dca7d737822::t_bf5f574b076871 82
+src/hooks/query-keys.ts
+  s_be8dca7d737822::t_1cbea3399aa590 223-230
+src/features/entry-log-session/save-entry-log-session.ts
+  s_be8dca7d737822::t_749e722ba61ea5 25-26
+  s_be8dca7d737822::t_1ec9da9468daf7 75,77-78
+  s_be8dca7d737822::t_044bb064c31460 174-179,191,195-197
+  s_be8dca7d737822::t_8d97a8d8aea9dc 121-123
+src/utils/unit-conversion.ts
+  s_be8dca7d737822::t_1108b284f3d68e 1-54
+CONTEXT.md
+  s_be8dca7d737822::t_1ef53e563b8f3f 10-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "607778b26465760aac3a3ef292d8ae031f2c2913",
+  "prompts": {},
+  "sessions": {
+    "s_be8dca7d737822": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d7749114-f5e3-4e75-9310-f1c52335bd50",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
