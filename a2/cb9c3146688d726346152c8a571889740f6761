@@ -1,0 +1,20 @@
+.github/workflows/ci.yml
+  s_8aae8fbdd743a4::t_d8fa487ffe812f 25
+  s_8aae8fbdd743a4::t_7666abd8040840 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "a2cb9c3146688d726346152c8a571889740f6761",
+  "prompts": {},
+  "sessions": {
+    "s_8aae8fbdd743a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "921def53-ffef-458a-a3ef-2210cda8770c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
