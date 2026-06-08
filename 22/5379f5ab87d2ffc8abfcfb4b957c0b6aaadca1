@@ -1,0 +1,27 @@
+src/components/forms/expense-form.tsx
+  s_cdd0a42efc93ae::t_01e5ea3a757eae 187
+  s_cdd0a42efc93ae::t_73111ceaebe732 97-98,102,104
+  s_cdd0a42efc93ae::t_1d12110eb32b85 82-96,99-101,103,105-119
+  s_cdd0a42efc93ae::t_373fb564277d2d 176-185
+src/components/forms/harvest-form.tsx
+  s_cdd0a42efc93ae::t_138919b88184a1 67-81,84-85,92-97,99-106
+  s_cdd0a42efc93ae::t_459af7562ccec9 177-186
+  s_cdd0a42efc93ae::t_6da64aa5834bfc 82-83,86-91,98
+  s_cdd0a42efc93ae::t_5b7f593902d741 188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "225379f5ab87d2ffc8abfcfb4b957c0b6aaadca1",
+  "prompts": {},
+  "sessions": {
+    "s_cdd0a42efc93ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5e1909bb-b3cf-49b2-9155-b6e5d98ad8b1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
