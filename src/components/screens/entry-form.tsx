@@ -1764,7 +1764,7 @@ export function EntryForm({
               contentInsetAdjustmentBehavior="automatic"
               ref={logFormScrollViewRef}
               style={{ flex: 1 }}
-              contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
+              contentContainerStyle={{ padding: 16, paddingBottom: 16 }}
               keyboardShouldPersistTaps="handled"
               onScroll={(event) => {
                 scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
@@ -1820,8 +1820,62 @@ export function EntryForm({
                 sprayQuickAddItems={sprayQuickAddItems}
                 fertigationQuickAddItems={fertigationQuickAddItems}
                 sprayCatalogMixes={catalogMixes}
+                showSaveButton={false}
               />
             </ScrollView>
+            <View
+              style={{
+                flexShrink: 0,
+                backgroundColor: m3.surface.s100,
+                paddingHorizontal: spacing[4],
+                paddingTop: spacing[3],
+                paddingBottom: Math.max(spacing[3], insets.bottom),
+                borderTopWidth: 1,
+                borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
+              }}
+            >
+              <GuidedTourTarget
+                targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY}
+                style={{ alignSelf: 'stretch' }}
+              >
+                <Pressable
+                  onPress={addLogToSession}
+                  disabled={!canSubmitLog}
+                  style={{
+                    paddingVertical: 14,
+                    borderRadius: radius.lg,
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    backgroundColor: canSubmitLog
+                      ? m3.colorScheme.primary
+                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+                  }}
+                >
+                  <AppIcon
+                    name="add-circle"
+                    size={20}
+                    color={
+                      canSubmitLog
+                        ? m3.colorScheme.onPrimary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+                    }
+                  />
+                  <Text
+                    style={{
+                      marginLeft: 8,
+                      fontWeight: '600',
+                      fontSize: fontSize.base,
+                      color: canSubmitLog
+                        ? m3.colorScheme.onPrimary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                    }}
+                  >
+                    {t('entryForm.addEntry')}
+                  </Text>
+                </Pressable>
+              </GuidedTourTarget>
+            </View>
           </KeyboardAvoidingView>
         </View>
       </Modal>

@@ -47,6 +47,7 @@ interface LogFormProps {
   fertigationQuickAddItems: FertigationQuickAddItem[];
   sprayCatalogOnly?: boolean;
   sprayCatalogMixes?: ChemicalMix[];
+  showSaveButton?: boolean;
 }
 
 export function LogForm({
@@ -71,6 +72,7 @@ export function LogForm({
   fertigationQuickAddItems,
   sprayCatalogOnly = false,
   sprayCatalogMixes = [],
+  showSaveButton = true,
 }: LogFormProps) {
   const m3 = useM3();
   const { t } = useTranslation();
@@ -175,7 +177,7 @@ export function LogForm({
             />
           </GuidedTourTarget>
         </View>
-        {addEntryButton}
+        {showSaveButton && addEntryButton}
       </View>
     );
   }
@@ -229,7 +231,7 @@ export function LogForm({
       {selectedLogType === 'note' && (
         <NoteForm data={noteData} onChange={onNoteChange} onInputFocus={onInputFocus} />
       )}
-      {addEntryButton}
+      {showSaveButton && addEntryButton}
     </View>
   );
 }

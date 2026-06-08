@@ -47,11 +47,13 @@ export interface SaveSingleLogResult {
   recordId: number | null;
   farmId: number;
   /**
-   * The farm's `remaining_water` value immediately before this save. Only set for
-   * irrigation entries on farms with tank capacity configured. Used by the receipt
-   * screen to restore the water level if the user removes the entry.
+   * The exact amount this irrigation added to the farm's `remaining_water`
+   * (clamped to tank capacity). Only set for irrigation entries on tank-capacity
+   * farms. The receipt screen undoes a removed irrigation by subtracting this from
+   * the *current* level, so removal stays correct regardless of how many
+   * irrigations were logged in the session or the order they're removed in.
    */
-  waterLevelBefore?: number;
+  waterDelta?: number;
   /**
    * Snapshot of the daily note that existed before this save. Only set for note entries.
    * Used by the receipt screen to restore the original text if the user removes the row,
@@ -113,7 +115,17 @@ export function useSaveSingleLog() {
         farm.total_tank_capacity > 0 &&
         farm.system_discharge != null &&
         farm.system_discharge > 0;
-      const waterLevelBefore = willUpdateWaterLevel ? (farm.remaining_water ?? 0) : undefined;
+      // The amount this irrigation adds to `remaining_water`, mirroring the clamp
+      // in submitEntryPendingLog. Stored (not the absolute pre-save level) so undo
+      // can subtract it from the live level — correct across multiple irrigations.
+      let waterDelta: number | undefined;
+      if (willUpdateWaterLevel) {
+        const duration = (data as { duration?: number | null }).duration ?? 0;
+        const before = farm.remaining_water ?? 0;
+        const capacity = farm.total_tank_capacity as number;
+        const after = Math.min(capacity, before + duration * (farm.system_discharge as number));
+        waterDelta = after - before;
+      }
 
       const previousDailyNote =
         type === 'note' ? await fetchDailyNoteByDate(farmId, dateStr) : undefined;
@@ -127,7 +139,7 @@ export function useSaveSingleLog() {
 
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
 
-      return { type, recordId: result.recordId, farmId, waterLevelBefore, previousDailyNote };
+      return { type, recordId: result.recordId, farmId, waterDelta, previousDailyNote };
     },
     [
       queryClient,

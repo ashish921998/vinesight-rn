@@ -7,7 +7,7 @@
  * (per-entry, via {@link useSaveSingleLog}) and drops a row into the list.
  * No drafts, no "Save N logs", no stacked scroll — one short form at a time.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -33,6 +33,7 @@ import { Symbol } from '@/components/ui/symbol';
 import { LOG_TYPES, type LogType, type LogTypeId } from '@/constants/calculator-models';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { toSupabaseDateString, type DailyNoteRecord } from '@/types/database';
+import type { Farm } from '@/types';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import { formatDate } from '@/i18n/format';
@@ -101,8 +102,8 @@ interface SavedEntry {
   summary: string;
   /** The date this entry was saved on. Stored here so handleRemove uses the correct date even if the picker is changed afterwards. */
   savedDateStr: string;
-  /** Pre-save `remaining_water` for irrigations that updated the tank level. Used to undo the level change on remove. */
-  waterLevelBefore?: number;
+  /** Amount this irrigation added to the tank level. Subtracted from the live level on remove (composes across multiple irrigations). */
+  waterDelta?: number;
   /** Snapshot of the daily note that existed before this save. Used to restore the original text on remove instead of deleting the record. */
   previousDailyNote?: DailyNoteRecord | null;
 }
@@ -205,6 +206,8 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
   const [activeType, setActiveType] = useState<LogTypeId | null>(null);
   const [draft, setDraft] = useState<AnyLogData>(() => emptyDataFor('irrigation'));
   const [saving, setSaving] = useState(false);
+  // Synchronous re-entrancy guard for handleSave (the `saving` state flips a tick later).
+  const savingRef = useRef(false);
 
   // Android Modals don't resize for the soft keyboard, so the bottom-anchored
   // entry sheet would sit behind it. Track the keyboard height and lift the
@@ -222,10 +225,21 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
     };
   }, []);
 
-  const openSheet = useCallback((type: LogTypeId) => {
-    setActiveType(type);
-    setDraft(emptyDataFor(type));
-  }, []);
+  const openSheet = useCallback(
+    (type: LogTypeId) => {
+      setActiveType(type);
+      // A day has a single daily-note row (keyed by farm+date). Re-opening "note"
+      // edits the existing entry rather than starting a second one that the shared
+      // upsert would silently overwrite on save.
+      if (type === 'note') {
+        const existingNote = entries.find((e) => e.type === 'note');
+        setDraft(existingNote ? { notes: existingNote.summary } : emptyDataFor('note'));
+      } else {
+        setDraft(emptyDataFor(type));
+      }
+    },
+    [entries],
+  );
 
   // Every activity type now opens the in-screen sheet — including spray and
   // fertigation, which previously handed off to the full EntryForm composer.
@@ -242,45 +256,66 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
   const draftValid = activeType ? isDataValid(activeType, draft) : false;
 
   const handleSave = useCallback(async () => {
-    if (!activeType || !farm || !draftValid || saving) return;
+    // Guard with a ref, not the `saving` state: state updates are async, so two
+    // taps in the same render frame would both pass a `saving` check and submit
+    // duplicate records (and race the same water snapshot).
+    if (!activeType || !farm || !draftValid || savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
+    const savedType = activeType;
     try {
       const result = await saveLog({
-        type: activeType,
+        type: savedType,
         data: draft,
         farm,
         dateStr,
         preferredAreaUnit,
       });
-      setEntries((prev) => [
-        ...prev,
-        {
+      setEntries((prev) => {
+        const newEntry: SavedEntry = {
           key: nextKey(),
-          type: activeType,
+          type: savedType,
           recordId: result.recordId,
           farmId: result.farmId,
-          summary: describeEntry(activeType, draft),
+          summary: describeEntry(savedType, draft),
           savedDateStr: dateStr,
-          waterLevelBefore: result.waterLevelBefore,
+          waterDelta: result.waterDelta,
           previousDailyNote: result.previousDailyNote,
-        },
-      ]);
+        };
+        // Notes are one-per-day (shared farm+date row). If a note row already
+        // exists this session, replace it in place — keeping its original key and
+        // pre-session snapshot — instead of appending a second row that the upsert
+        // already silently merged into the same DB record.
+        if (savedType === 'note') {
+          const idx = prev.findIndex((e) => e.type === 'note');
+          if (idx >= 0) {
+            const next = [...prev];
+            next[idx] = {
+              ...newEntry,
+              key: prev[idx].key,
+              previousDailyNote: prev[idx].previousDailyNote,
+            };
+            return next;
+          }
+        }
+        return [...prev, newEntry];
+      });
       try {
         telemetry.capture('record_created', {
-          record_type: activeType,
+          record_type: savedType,
           created_from: 'manual',
           farm_id: result.farmId,
         });
         telemetry.capture('meaningful_action', {
           action_type: 'record_created',
-          feature_name: activeType,
+          feature_name: savedType,
         });
       } catch {
         // telemetry is best-effort
       }
       guidedTourEmit('guidedTour.logCreated', {
         farmId: result.farmId,
-        recordType: activeType,
+        recordType: savedType,
       });
       triggerHapticSuccess();
       setActiveType(null);
@@ -293,8 +328,9 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
       );
     } finally {
       setSaving(false);
+      savingRef.current = false;
     }
-  }, [activeType, farm, draftValid, saving, saveLog, draft, dateStr, preferredAreaUnit, t]);
+  }, [activeType, farm, draftValid, saveLog, draft, dateStr, preferredAreaUnit, t]);
 
   const handleRemove = useCallback(
     async (entry: SavedEntry) => {
@@ -331,10 +367,19 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
         switch (entry.type) {
           case 'irrigation':
             await deleteIrrigation.mutateAsync({ id, farmId: entry.farmId });
-            if (entry.waterLevelBefore != null) {
+            if (entry.waterDelta != null && entry.waterDelta !== 0) {
+              // Subtract this irrigation's contribution from the *current* tank
+              // level (read fresh from cache — each save writes it via setQueryData)
+              // so removing an earlier irrigation doesn't wipe out later ones.
+              const liveFarm = queryClient.getQueryData<Farm>(queryKeys.farms.detail(entry.farmId));
+              const current = liveFarm?.remaining_water ?? 0;
+              const capacity = liveFarm?.total_tank_capacity ?? undefined;
+              let target = current - entry.waterDelta;
+              if (target < 0) target = 0;
+              if (capacity != null && target > capacity) target = capacity;
               await updateWaterLevel.mutateAsync({
                 farmId: entry.farmId,
-                remainingWater: entry.waterLevelBefore,
+                remainingWater: target,
               });
             }
             break;
@@ -421,6 +466,8 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
           <Pressable
             onPress={() => setShowDatePicker(true)}
             hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel={t('receiptLog.selectDate', { defaultValue: 'Select date' })}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}
           >
             <AppIcon
@@ -447,12 +494,89 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
         </Pressable>
       </View>
 
-      {showDatePicker && (
+      {/* iOS: spinner picker inside a bottom-sheet modal with a Done button
+          (matches the rest of the app). Android: native date dialog. */}
+      {showDatePicker && Platform.OS === 'ios' && (
+        <Modal
+          transparent
+          animationType="slide"
+          visible
+          onRequestClose={() => setShowDatePicker(false)}
+        >
+          <Pressable
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
+            onPress={() => setShowDatePicker(false)}
+          >
+            <Pressable
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: m3.colorScheme.surface,
+                borderTopLeftRadius: radius.xl,
+                borderTopRightRadius: radius.xl,
+                padding: spacing[4],
+                paddingBottom: spacing[6] + insets.bottom,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[2],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: '700',
+                    color: m3.colorScheme.onSurface,
+                  }}
+                >
+                  {t('receiptLog.selectDate', { defaultValue: 'Select date' })}
+                </Text>
+                <Pressable onPress={() => setShowDatePicker(false)} hitSlop={8}>
+                  <AppIcon
+                    name="close-circle"
+                    size={24}
+                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                  />
+                </Pressable>
+              </View>
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                maximumDate={new Date()}
+                display="spinner"
+                textColor={m3.colorScheme.onSurface}
+                onChange={(_event, date) => {
+                  if (date) setSelectedDate(date);
+                }}
+                style={{ height: 200 }}
+              />
+              <Pressable
+                onPress={() => setShowDatePicker(false)}
+                style={{
+                  marginTop: spacing[2],
+                  paddingVertical: spacing[3],
+                  borderRadius: radius.md,
+                  alignItems: 'center',
+                  backgroundColor: m3.colorScheme.primary,
+                }}
+              >
+                <Text style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                  {t('entryForm.done')}
+                </Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
+      {showDatePicker && Platform.OS !== 'ios' && (
         <DateTimePicker
           value={selectedDate}
           mode="date"
           maximumDate={new Date()}
-          display={Platform.OS === 'ios' ? 'inline' : 'default'}
+          display="default"
           onChange={(_event, date) => {
             setShowDatePicker(false);
             if (date) setSelectedDate(date);
@@ -573,6 +697,8 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
             <Pressable
               key={lt.id}
               onPress={() => handlePickType(lt.id as LogTypeId)}
+              accessibilityRole="button"
+              accessibilityLabel={t(lt.labelKey)}
               style={{
                 width: '31.5%',
                 minHeight: 84,
@@ -665,8 +791,8 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
             <View
               style={{
                 backgroundColor: m3.colorScheme.background,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
+                borderTopLeftRadius: radius.xl,
+                borderTopRightRadius: radius.xl,
                 maxHeight: screenHeight - insets.top,
                 marginBottom: keyboardHeight,
               }}
@@ -765,6 +891,16 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
                 <Pressable
                   disabled={!draftValid || saving}
                   onPress={handleSave}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: !draftValid || saving }}
+                  accessibilityLabel={
+                    activeLogType
+                      ? t('receiptLog.saveType', {
+                          defaultValue: 'Save {{type}}',
+                          type: t(activeLogType.labelKey),
+                        })
+                      : t('receiptLog.save', { defaultValue: 'Save' })
+                  }
                   style={{
                     paddingVertical: 14,
                     borderRadius: borderRadius.xl,
