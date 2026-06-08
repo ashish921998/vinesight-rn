@@ -28,12 +28,11 @@ Key routing rules:
 
 ### Custom deploy hooks
 - Pre-merge: `npm run lint && npm run typecheck && npm run test -- --ci`
-- Deploy trigger: `eas update --branch production --message "Release $(git describe --tags --abbrev=0 2>/dev/null || git log -1 --format=%s)"`
-- Deploy platforms: `--platform all` (Android + iOS)
+- Deploy trigger: `eas update --branch production --platform all --message "Release $(git describe --tags --abbrev=0 2>/dev/null || git log -1 --format=%s)"`
 - Deploy status: check EAS dashboard at https://expo.dev/accounts/vinesight/projects/vinesight-rn/updates
 - Health check: none (mobile app — no HTTP endpoint; verify via EAS dashboard)
 
 ### Notes
-- `expo-updates` package must be installed and `runtimeVersion` set in app.config.js before OTA updates work
+- **OTA not yet active** — `expo-updates` is not installed and `runtimeVersion` is not set in app.config.js. Run `npx expo install expo-updates && eas update:configure` before using the deploy trigger above.
 - For native code changes (new plugins, SDK upgrades): use `eas build --profile production --platform all` + `eas submit` instead
 - Build locally: `npm run build:android:production:local` (AAB) or `npm run build:android:preview:local` (APK)
