@@ -79,6 +79,44 @@ export function ExpenseForm({
     return unsubscribe;
   }, []);
 
+  const renderCategoryChip = (type: ExpenseTypeId) => {
+    const selected = data.type === type;
+    return (
+      <Pressable
+        key={type}
+        onPress={() => onChange({ ...data, type })}
+        accessibilityRole="button"
+        accessibilityState={{ selected }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing[3],
+          paddingVertical: spacing[3],
+          borderRadius: borderRadius.xl,
+          borderWidth: 1,
+          backgroundColor: selected ? m3.colorScheme.primary : m3.surface.s100,
+          borderColor: selected ? m3.colorScheme.primary : m3.surface.s200,
+        }}
+      >
+        <SymbolIcon
+          name={EXPENSE_TYPE_ICONS[type]}
+          size={16}
+          color={selected ? m3.colorScheme.onPrimary : m3.surface.s500}
+          style={{ marginRight: 6 }}
+        />
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.medium,
+            color: selected ? m3.colorScheme.onPrimary : m3.surface.s700,
+          }}
+        >
+          {t(`expenseForm.types.${type}`)}
+        </Text>
+      </Pressable>
+    );
+  };
+
   return (
     <View>
       {/* Header with icon */}
@@ -135,57 +173,18 @@ export function ExpenseForm({
         >
           {/* Category Selection */}
           <View style={{ marginBottom: spacing[4] }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-              <View style={{ marginRight: spacing[2] }}>
-                <SymbolIcon name="list.bullet" size={16} color={m3.primary.p600} />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s800,
-                }}
-              >
-                {t('expenseForm.category')} <Text style={{ color: m3.colorScheme.error }}>*</Text>
-              </Text>
-            </View>
-
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: m3.surface.s800,
+                marginBottom: spacing[3],
+              }}
+            >
+              {t('expenseForm.category')} <Text style={{ color: m3.colorScheme.error }}>*</Text>
+            </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-              {EXPENSE_TYPES.map((type) => (
-                <Pressable
-                  key={type}
-                  onPress={() => onChange({ ...data, type })}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: spacing[3],
-                    paddingVertical: spacing[3],
-                    borderRadius: borderRadius.xl,
-                    borderWidth: 1,
-                    backgroundColor:
-                      data.type === type
-                        ? colorWithOpacity(m3.colorScheme.error, 0.12)
-                        : m3.surface.s100,
-                    borderColor: data.type === type ? m3.colorScheme.error : m3.surface.s200,
-                  }}
-                >
-                  <SymbolIcon
-                    name={EXPENSE_TYPE_ICONS[type]}
-                    size={16}
-                    color={data.type === type ? m3.colorScheme.error : m3.surface.s500}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.medium,
-                      color: data.type === type ? m3.colorScheme.error : m3.surface.s700,
-                    }}
-                  >
-                    {t(`expenseForm.types.${type}`)}
-                  </Text>
-                </Pressable>
-              ))}
+              {EXPENSE_TYPES.map(renderCategoryChip)}
             </View>
           </View>
 

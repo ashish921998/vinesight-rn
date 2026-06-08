@@ -64,6 +64,46 @@ export function HarvestForm({ data, onChange, onInputFocus, compact = false }: H
     return gradeTranslations[grade] || grade;
   };
 
+  const renderGradeChip = (grade: HarvestGrade) => {
+    const selected = data.grade === grade;
+    return (
+      <Pressable
+        key={grade}
+        onPress={() => onChange({ ...data, grade })}
+        accessibilityRole="button"
+        accessibilityState={{ selected }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing[4],
+          paddingVertical: 10,
+          borderRadius: borderRadius.xl,
+          borderWidth: 1,
+          backgroundColor: selected ? m3.colorScheme.primary : m3.surface.s100,
+          borderColor: selected ? m3.colorScheme.primary : m3.surface.s200,
+        }}
+      >
+        {selected && (
+          <Icon
+            name="checkmark"
+            size={13}
+            color={m3.colorScheme.onPrimary}
+            style={{ marginRight: 6 }}
+          />
+        )}
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.medium,
+            color: selected ? m3.colorScheme.onPrimary : m3.surface.s700,
+          }}
+        >
+          {localizeHarvestGrade(grade)}
+        </Text>
+      </Pressable>
+    );
+  };
+
   return (
     <View>
       {/* Header with icon */}
@@ -134,49 +174,18 @@ export function HarvestForm({ data, onChange, onInputFocus, compact = false }: H
 
           {/* Grade Selection */}
           <View style={{ marginBottom: spacing[4] }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-              <View style={{ marginRight: 6 }}>
-                <Icon name="star" size={16} color={m3.primary.p600} />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s800,
-                }}
-              >
-                {t('common.labels.grade')} <Text style={{ color: m3.colorScheme.error }}>*</Text>
-              </Text>
-            </View>
-
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: m3.surface.s800,
+                marginBottom: spacing[3],
+              }}
+            >
+              {t('common.labels.grade')} <Text style={{ color: m3.colorScheme.error }}>*</Text>
+            </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-              {HARVEST_GRADES.map((grade) => (
-                <Pressable
-                  key={grade}
-                  onPress={() => onChange({ ...data, grade })}
-                  style={{
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: 10,
-                    borderRadius: borderRadius.xl,
-                    borderWidth: 1,
-                    backgroundColor:
-                      data.grade === grade
-                        ? colorWithOpacity(m3.colorScheme.warning, 0.9)
-                        : m3.surface.s100,
-                    borderColor: data.grade === grade ? m3.colorScheme.warning : m3.surface.s200,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.medium,
-                      color: data.grade === grade ? m3.colorScheme.onWarning : m3.surface.s700,
-                    }}
-                  >
-                    {localizeHarvestGrade(grade)}
-                  </Text>
-                </Pressable>
-              ))}
+              {HARVEST_GRADES.map(renderGradeChip)}
             </View>
           </View>
         </View>
