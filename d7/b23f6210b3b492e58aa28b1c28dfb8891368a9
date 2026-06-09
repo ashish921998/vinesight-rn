@@ -1,0 +1,34 @@
+supabase/rollbacks/20260609120000_settle_worker_atomic_balance_rollback.sql
+  s_be8dca7d737822::t_8fead9f6eb1cd8 1-7
+supabase/migrations/20260609120000_settle_worker_atomic_balance.sql
+  s_be8dca7d737822::t_ebe41789f824d2 1-102
+CONTEXT.md
+  s_be8dca7d737822::t_3e79942424e868 14-17
+src/components/modals/worker-settlement-modal.tsx
+  s_be8dca7d737822::t_736d3bbc5c411e 21-25
+  s_be8dca7d737822::t_4c3c213cb16de6 202-208
+  s_be8dca7d737822::t_40c17a0034aea0 331
+src/services/worker-service.ts
+  s_be8dca7d737822::t_0bda41472b2d82 9,21-53
+  s_be8dca7d737822::t_3baa6939177fb0 120-124,126-131,133,135,137-151
+__tests__/worker-service.test.ts
+  s_be8dca7d737822::t_9ea92a86b19d9e 2
+__tests__/worker-ledger.test.ts
+  s_be8dca7d737822::t_2086272f9ef76b 1-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "d7b23f6210b3b492e58aa28b1c28dfb8891368a9",
+  "prompts": {},
+  "sessions": {
+    "s_be8dca7d737822": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d7749114-f5e3-4e75-9310-f1c52335bd50",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
