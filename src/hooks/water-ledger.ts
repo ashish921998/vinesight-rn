@@ -15,7 +15,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase as defaultClient } from '../lib/supabase';
 import { resolveOptionalSeasonIdForDate as defaultResolveSeasonId } from '../lib/season-context';
 import { queryKeys } from './query-keys';
-import type { IrrigationRecordInsert } from '../types';
+import type { Farm, IrrigationRecordInsert } from '../types';
 
 type LedgerClient = typeof defaultClient;
 
@@ -76,6 +76,61 @@ export async function revertIrrigation(
   if (error) throw error;
 }
 
+/**
+ * Postgres errcode raised by `set_water_level` when the stored level drifted since the
+ * caller read it (serialization_failure). Surfaced as {@link WaterLevelConflictError}.
+ */
+const WATER_LEVEL_CONFLICT_CODE = '40001';
+
+/**
+ * Thrown when a compare-and-swap water-level set is refused because the farm's
+ * remaining_water changed since the caller read it. The UI should re-read the fresh
+ * value and recompute rather than retrying the same (now stale) target.
+ */
+export class WaterLevelConflictError extends Error {
+  constructor(message?: string) {
+    super(message ?? 'Water level changed since it was read');
+    this.name = 'WaterLevelConflictError';
+  }
+}
+
+export interface SetWaterLevelPayload {
+  farmId: number;
+  /** Absolute level to set (pre-clamp); the server clamps to [0, tank capacity]. */
+  newLevel: number;
+  /**
+   * The level the caller computed from. When provided, the set is a compare-and-swap:
+   * the server refuses (throwing {@link WaterLevelConflictError}) if the stored value has
+   * since drifted. Pass null/omit to force the set with no concurrency guard.
+   */
+  expectedLevel?: number | null;
+}
+
+/**
+ * Atomically set a farm's water level via the `set_water_level` compare-and-swap RPC.
+ * Replaces the manual water sheet's client-side absolute write of remaining_water: the
+ * server clamps to tank capacity and, when `expectedLevel` is given, rejects the write if
+ * the row drifted since it was read — so a concurrent irrigation or another device's
+ * update is never silently clobbered (see docs/multi-device-write-safety.html).
+ */
+export async function setWaterLevel(
+  payload: SetWaterLevelPayload,
+  { client = defaultClient }: WaterLedgerDeps = {},
+): Promise<Farm> {
+  const { data, error } = await client.rpc('set_water_level', {
+    p_farm_id: payload.farmId,
+    p_new_level: payload.newLevel,
+    p_expected_level: payload.expectedLevel ?? null,
+  });
+  if (error) {
+    if ((error as { code?: string }).code === WATER_LEVEL_CONFLICT_CODE) {
+      throw new WaterLevelConflictError(error.message);
+    }
+    throw error;
+  }
+  return data as Farm;
+}
+
 export function useLogIrrigation() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -98,6 +153,21 @@ export function useRevertIrrigation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.irrigationRecords.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.farms.all });
+    },
+  });
+}
+
+export function useSetWaterLevel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: SetWaterLevelPayload) => setWaterLevel(payload),
+    onSuccess: (updatedFarm) => {
+      queryClient.setQueryData<Farm[]>(queryKeys.farms.lists(), (old) =>
+        old ? old.map((f) => (f.id === updatedFarm.id ? updatedFarm : f)) : [updatedFarm],
+      );
+      if (updatedFarm.id) {
+        queryClient.setQueryData(queryKeys.farms.detail(updatedFarm.id), updatedFarm);
+      }
     },
   });
 }

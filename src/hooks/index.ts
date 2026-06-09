@@ -13,7 +13,6 @@ export {
   useFarm,
   useCreateFarm,
   useUpdateFarm,
-  useUpdateFarmWaterLevel,
   useReorderFarms,
   useDeleteFarm,
   usePrefetchFarm,
@@ -77,9 +76,13 @@ export {
 export {
   logIrrigation,
   revertIrrigation,
+  setWaterLevel,
   useLogIrrigation,
   useRevertIrrigation,
+  useSetWaterLevel,
+  WaterLevelConflictError,
   type LogIrrigationResult,
+  type SetWaterLevelPayload,
 } from './water-ledger';
 
 // Worker Hooks

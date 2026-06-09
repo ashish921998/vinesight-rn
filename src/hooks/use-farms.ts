@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabase';
 import { requireUserId } from '@/lib/auth-utils';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmSeason, FarmUpdate } from '../types';
-import { TABLES, toSupabaseTimestampString } from '../types';
+import { TABLES } from '../types';
 import { formatLocalDate } from '../utils/date';
 
 function isRpcFunctionMissing(error: { code?: string; message?: string } | null): boolean {
@@ -345,47 +345,6 @@ export function useUpdateFarm() {
         return old.map((f) => (f.id === updatedFarm.id ? updatedFarm : f));
       });
       // Update detail cache
-      if (updatedFarm.id) {
-        queryClient.setQueryData(queryKeys.farms.detail(updatedFarm.id), updatedFarm);
-      }
-    },
-  });
-}
-
-// ============================================================
-// MARK: - Update Farm Water Level Mutation
-// ============================================================
-
-export function useUpdateFarmWaterLevel() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      farmId,
-      remainingWater,
-    }: {
-      farmId: number;
-      remainingWater: number;
-    }): Promise<Farm> => {
-      const { data, error } = await supabase
-        .from(TABLES.FARMS)
-        .update({
-          remaining_water: remainingWater,
-          water_calculation_updated_at: toSupabaseTimestampString(new Date()),
-        })
-        .eq('id', farmId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (updatedFarm) => {
-      // Update in cache
-      queryClient.setQueryData<Farm[]>(queryKeys.farms.lists(), (old) => {
-        if (!old) return [updatedFarm];
-        return old.map((f) => (f.id === updatedFarm.id ? updatedFarm : f));
-      });
       if (updatedFarm.id) {
         queryClient.setQueryData(queryKeys.farms.detail(updatedFarm.id), updatedFarm);
       }

@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Modal, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { toast } from '@/components/ui/toast';
 import {
@@ -16,7 +17,12 @@ import {
   PreviewCard,
 } from '@/components/ui';
 import type { Farm } from '@/types';
-import { useIrrigationRecords, useUpdateFarmWaterLevel } from '@/hooks';
+import {
+  useIrrigationRecords,
+  useSetWaterLevel,
+  WaterLevelConflictError,
+  queryKeys,
+} from '@/hooks';
 import { WATER_GROWTH_STAGES } from '@/constants/calculator-models';
 import type { WaterGrowthStage } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -55,7 +61,8 @@ export function WaterLevelSheet({
   const [showGrowthStagePicker, setShowGrowthStagePicker] = useState(false);
   const [calculatedWaterLevel, setCalculatedWaterLevel] = useState<number | null>(null);
 
-  const updateWaterLevel = useUpdateFarmWaterLevel();
+  const setWaterLevel = useSetWaterLevel();
+  const queryClient = useQueryClient();
   const { data: irrigationRecords } = useIrrigationRecords(farm.id);
 
   const lowWaterAlertsEnabled = useNotificationStore((s) => s.lowWaterAlertsEnabled);
@@ -141,9 +148,12 @@ export function WaterLevelSheet({
 
     setIsSaving(true);
     try {
-      await updateWaterLevel.mutateAsync({
+      await setWaterLevel.mutateAsync({
         farmId: farm.id,
-        remainingWater: calculatedWaterLevel,
+        newLevel: calculatedWaterLevel,
+        // Compare-and-swap against the level this sheet computed from, so a concurrent
+        // irrigation or another device's update isn't silently overwritten.
+        expectedLevel: farm.remaining_water ?? null,
       });
       // If user enabled low-water alerts, notify immediately when the new level is critical.
       if (lowWaterAlertsEnabled && farm.total_tank_capacity && farm.total_tank_capacity > 0) {
@@ -171,11 +181,26 @@ export function WaterLevelSheet({
       setSelectedGrowthStage(null);
       setCalculatedWaterLevel(null);
       setUseManual(false);
-    } catch (_error) {
-      Alert.alert(
-        t('waterLevelSheet.alerts.errorTitle'),
-        t('waterLevelSheet.alerts.failedToUpdate'),
-      );
+    } catch (error) {
+      if (error instanceof WaterLevelConflictError) {
+        // Another writer changed the level since this sheet opened. Refresh the farm so
+        // the displayed "current" and the next calculation use the true value, and make
+        // the user recalculate rather than clobbering the newer level.
+        setCalculatedWaterLevel(null);
+        queryClient.invalidateQueries({ queryKey: queryKeys.farms.all });
+        Alert.alert(
+          t('waterLevelSheet.alerts.conflictTitle', { defaultValue: 'Water level changed' }),
+          t('waterLevelSheet.alerts.conflictMessage', {
+            defaultValue:
+              'The water level was updated on another device while this was open. We refreshed it — please recalculate and save again.',
+          }),
+        );
+      } else {
+        Alert.alert(
+          t('waterLevelSheet.alerts.errorTitle'),
+          t('waterLevelSheet.alerts.failedToUpdate'),
+        );
+      }
     } finally {
       setIsSaving(false);
     }

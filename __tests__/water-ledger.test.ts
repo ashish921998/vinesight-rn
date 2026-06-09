@@ -1,4 +1,9 @@
-import { logIrrigation, revertIrrigation } from '@/hooks/water-ledger';
+import {
+  logIrrigation,
+  revertIrrigation,
+  setWaterLevel,
+  WaterLevelConflictError,
+} from '@/hooks/water-ledger';
 
 type Result = { data?: unknown; error?: unknown };
 
@@ -117,6 +122,48 @@ describe('water-ledger', () => {
       await expect(
         revertIrrigation({ recordId: 1, waterDelta: 0 }, { client: client as never }),
       ).rejects.toThrow('revert boom');
+    });
+  });
+
+  describe('setWaterLevel', () => {
+    it('maps the payload to set_water_level args and returns the farm row', async () => {
+      const { client, calls } = makeRpcClient({
+        data: { id: 3, remaining_water: 42, total_tank_capacity: 100 },
+        error: null,
+      });
+      const result = await setWaterLevel(
+        { farmId: 3, newLevel: 42, expectedLevel: 50 },
+        { client: client as never },
+      );
+      expect(calls[0].fn).toBe('set_water_level');
+      expect(calls[0].args).toEqual({ p_farm_id: 3, p_new_level: 42, p_expected_level: 50 });
+      expect(result).toMatchObject({ id: 3, remaining_water: 42 });
+    });
+
+    it('defaults expectedLevel to null when omitted (force set)', async () => {
+      const { client, calls } = makeRpcClient({ data: { id: 1 }, error: null });
+      await setWaterLevel({ farmId: 1, newLevel: 10 }, { client: client as never });
+      expect(calls[0].args.p_expected_level).toBeNull();
+    });
+
+    it('throws WaterLevelConflictError when the RPC reports a 40001 conflict', async () => {
+      const { client } = makeRpcClient({
+        data: null,
+        error: { code: '40001', message: 'Water level changed since read' },
+      });
+      await expect(
+        setWaterLevel({ farmId: 1, newLevel: 10, expectedLevel: 5 }, { client: client as never }),
+      ).rejects.toBeInstanceOf(WaterLevelConflictError);
+    });
+
+    it('rethrows a non-conflict RPC error unchanged', async () => {
+      const { client } = makeRpcClient({
+        data: null,
+        error: Object.assign(new Error('set boom'), { code: '42501' }),
+      });
+      await expect(
+        setWaterLevel({ farmId: 1, newLevel: 10 }, { client: client as never }),
+      ).rejects.toThrow('set boom');
     });
   });
 });
