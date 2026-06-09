@@ -29,9 +29,12 @@ import { triggerHapticSuccess } from '@/utils/haptics';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
 import {
   mapAppliedItems,
+  formQuantityFromStored,
   buildChemicalSummary,
   buildWaterDoseString,
 } from '@/utils/applied-input-mapper';
+import { useAuthStore } from '@/stores';
+import { resolveAreaUnitPreference, perAcreNormalizationFactor } from '@/utils/preferences';
 import {
   IrrigationForm,
   SprayForm,
@@ -60,6 +63,7 @@ import {
   useUpdateHarvestRecord,
   useUpdateExpenseRecord,
   useUpdateFertigationRecord,
+  useProfile,
   isIOS,
   useResponsiveHeight,
 } from '@/hooks';
@@ -101,6 +105,19 @@ export function ActivityEditForm({
   const m3 = useM3();
   const isVisible = visible ?? true;
   const { windowHeight } = useResponsiveHeight();
+
+  // Same per-area conversion the create path (entry-log-submission) applies, derived
+  // from the same source (user profile preference, not the farm row). `per_acre`
+  // quantities are stored normalized to a canonical per-acre value; the form is
+  // hydrated in the user's display unit (back-converted) and re-normalized on save,
+  // so a hectare-farm round trip is stable and matches what the user originally typed.
+  const { data: profile } = useProfile({ enabled: false });
+  const authUser = useAuthStore((state) => state.user);
+  const perAreaToPerAcreFactor = perAcreNormalizationFactor(
+    resolveAreaUnitPreference(
+      profile?.area_unit_preference ?? authUser?.user_metadata?.area_unit,
+    ),
+  );
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -244,21 +261,30 @@ export function ActivityEditForm({
           data.phiStatus = r.phi_status ?? null;
 
           if (r.chemical_items && r.chemical_items.length > 0) {
-            data.chemicals = r.chemical_items.map((item) => ({
-              ...(item.unit?.trim().toLowerCase().includes('/acre')
-                ? ({ quantityBasis: item.quantity_basis ?? 'per_acre' } as const)
-                : ({ quantityBasis: item.quantity_basis ?? 'total' } as const)),
-              id: generateId(),
-              name: item.name,
-              quantity: item.quantity ?? 0,
-              unit:
-                (item.unit ? normalizeLegacySprayUnit(item.unit) : null) ??
-                ('ml/L' as SprayFormData['chemicals'][number]['unit']),
-              warehouseItemId: item.warehouse_item_id ?? null,
-              catalogProductId: item.catalog_product_id ?? null,
-              compositionSnapshot: item.composition_snapshot ?? null,
-              densityKgPerL: item.density_kg_per_l ?? null,
-            }));
+            data.chemicals = r.chemical_items.map((item) => {
+              const quantityBasis =
+                item.quantity_basis ??
+                (item.unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total');
+              return {
+                id: generateId(),
+                name: item.name,
+                // Back-convert per-acre quantities into the user's display unit so the
+                // form shows what they originally typed (handleSave re-normalizes).
+                quantity: formQuantityFromStored(
+                  item.quantity ?? 0,
+                  quantityBasis,
+                  perAreaToPerAcreFactor,
+                ),
+                unit:
+                  (item.unit ? normalizeLegacySprayUnit(item.unit) : null) ??
+                  ('ml/L' as SprayFormData['chemicals'][number]['unit']),
+                quantityBasis,
+                warehouseItemId: item.warehouse_item_id ?? null,
+                catalogProductId: item.catalog_product_id ?? null,
+                compositionSnapshot: item.composition_snapshot ?? null,
+                densityKgPerL: item.density_kg_per_l ?? null,
+              };
+            });
           } else if (r.chemical) {
             const chemicalParts = r.chemical.split(',').map((part) => part.trim());
             const chemicals = chemicalParts.map((part) => {
@@ -348,16 +374,25 @@ export function ActivityEditForm({
             data.waterVolume = r.water_volume;
           }
           if (r.fertilizers && r.fertilizers.length > 0) {
-            data.fertilizers = r.fertilizers.map((f) => ({
-              name: f.name,
-              quantity: f.quantity ?? 0,
-              unit: f.unit as FertigationFormData['fertilizers'][number]['unit'],
-              quantityBasis: f.quantity_basis ?? 'total',
-              warehouseItemId: f.warehouse_item_id ?? null,
-              catalogProductId: f.catalog_product_id ?? null,
-              compositionSnapshot: f.composition_snapshot ?? null,
-              densityKgPerL: f.density_kg_per_l ?? null,
-            }));
+            data.fertilizers = r.fertilizers.map((f) => {
+              const quantityBasis = f.quantity_basis ?? 'total';
+              return {
+                name: f.name,
+                // Back-convert per-acre quantities into the user's display unit so the
+                // form shows what they originally typed (handleSave re-normalizes).
+                quantity: formQuantityFromStored(
+                  f.quantity ?? 0,
+                  quantityBasis,
+                  perAreaToPerAcreFactor,
+                ),
+                unit: f.unit as FertigationFormData['fertilizers'][number]['unit'],
+                quantityBasis,
+                warehouseItemId: f.warehouse_item_id ?? null,
+                catalogProductId: f.catalog_product_id ?? null,
+                compositionSnapshot: f.composition_snapshot ?? null,
+                densityKgPerL: f.density_kg_per_l ?? null,
+              };
+            });
           }
           setFertigationData(data);
           break;
@@ -366,7 +401,7 @@ export function ActivityEditForm({
       setInitializedRecordId(record.id);
       setIsInitialized(true);
     }
-  }, [isVisible, isInitialized, initializedRecordId, logType, record]);
+  }, [isVisible, isInitialized, initializedRecordId, logType, record, perAreaToPerAcreFactor]);
 
   const handleSave = async () => {
     if (!isFormValid) return;
@@ -397,12 +432,12 @@ export function ActivityEditForm({
           }
           const chemicalStr = buildChemicalSummary(sprayData.chemicals);
           const doseStr = buildWaterDoseString(sprayData.waterVolume);
-          // Edit path stores quantities verbatim (factor 1): the form is hydrated
-          // from already-normalized stored values, so re-applying the create path's
-          // per-acre area-unit conversion here would double-count. The create path
-          // (entry-log-submission) passes the real farm-derived factor instead.
+          // Re-normalize per-acre quantities the same way the create path
+          // (entry-log-submission) does, so an edited hectare-farm log stores the
+          // canonical per-acre value. The hydration step above back-converted these
+          // into the user's display unit, so this re-apply is the exact inverse.
           const chemicalItems = mapAppliedItems(sprayData.chemicals, {
-            perAreaToPerAcreFactor: 1,
+            perAreaToPerAcreFactor,
           });
           const nutrientTotals = calculateNutrientTotalsForLog({
             items: chemicalItems,
@@ -461,16 +496,12 @@ export function ActivityEditForm({
           if (r.id == null) {
             throw new Error('Record ID is missing');
           }
-          const fertilizerItems = fertigationData.fertilizers.map((f) => ({
-            name: f.name.trim(),
-            unit: f.unit,
-            quantity: f.quantity ?? 0,
-            quantity_basis: f.quantityBasis ?? 'total',
-            warehouse_item_id: f.warehouseItemId ?? null,
-            catalog_product_id: f.catalogProductId ?? null,
-            composition_snapshot: f.compositionSnapshot ?? null,
-            density_kg_per_l: f.densityKgPerL ?? null,
-          }));
+          // Use the shared mapper so fertigation-edit matches spray-edit and the
+          // create path: drops blank/zero rows and re-normalizes per-acre quantities
+          // (the inverse of the hydration back-conversion above).
+          const fertilizerItems = mapAppliedItems(fertigationData.fertilizers, {
+            perAreaToPerAcreFactor,
+          });
           const nutrientTotals = calculateNutrientTotalsForLog({
             items: fertilizerItems,
             areaAcre: farm.area ?? 0,

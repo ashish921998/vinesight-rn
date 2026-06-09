@@ -1,9 +1,11 @@
 import {
   mapAppliedItems,
+  formQuantityFromStored,
   buildChemicalSummary,
   buildWaterDoseString,
   type AppliedFormItem,
 } from '@/utils/applied-input-mapper';
+import { perAcreNormalizationFactor } from '@/utils/preferences';
 
 describe('applied-input-mapper', () => {
   describe('mapAppliedItems', () => {
@@ -89,6 +91,108 @@ describe('applied-input-mapper', () => {
         composition_snapshot: composition,
         density_kg_per_l: 1.2,
       });
+    });
+  });
+
+  describe('formQuantityFromStored', () => {
+    it('back-converts per_acre quantities by dividing out the factor (hectares)', () => {
+      // A hectare farm stored a per-acre value of 4.04686; the user typed 10.
+      expect(formQuantityFromStored(4.04686, 'per_acre', 0.404686)).toBe(10);
+    });
+
+    it('leaves total-basis quantities unchanged regardless of factor', () => {
+      expect(formQuantityFromStored(4.04686, 'total', 0.404686)).toBe(4.04686);
+    });
+
+    it('defaults a missing basis to total (no conversion)', () => {
+      expect(formQuantityFromStored(7, undefined, 0.404686)).toBe(7);
+    });
+
+    it('is a no-op for the acres factor (1), even for per_acre basis', () => {
+      expect(formQuantityFromStored(10, 'per_acre', 1)).toBe(10);
+    });
+
+    it('returns acres-factor values verbatim — no rounding, preserves precision', () => {
+      // factor 1 means no conversion, so a high-precision stored value is kept
+      // exactly as-is (matches the edit form's pre-existing verbatim behavior).
+      expect(formQuantityFromStored(4.0468612345, 'per_acre', 1)).toBe(4.0468612345);
+    });
+
+    it('treats a non-positive or non-finite factor as verbatim (no divide-by-zero)', () => {
+      expect(formQuantityFromStored(10, 'per_acre', 0)).toBe(10);
+      expect(formQuantityFromStored(10, 'per_acre', Number.NaN)).toBe(10);
+    });
+
+    it('rounds to 6 d.p. so the hydrated value has no float tail', () => {
+      const recovered = formQuantityFromStored(4.04686, 'per_acre', 0.404686);
+      expect(Number.isInteger(recovered)).toBe(true);
+    });
+  });
+
+  describe('hectare-farm per_acre create -> edit -> re-save round trip', () => {
+    const hectareFactor = perAcreNormalizationFactor('hectares');
+
+    it('keeps the stored per-acre quantity stable and re-shows the user their typed value', () => {
+      // CREATE: a user on a hectare farm types 10 (per their display unit) for a
+      // per_acre row. The create path normalizes it to the canonical per-acre value.
+      const typed = 10;
+      const [created] = mapAppliedItems(
+        [{ name: 'Urea', quantity: typed, unit: 'kg', quantityBasis: 'per_acre' }],
+        { perAreaToPerAcreFactor: hectareFactor },
+      );
+      expect(created.quantity).toBeCloseTo(4.04686, 5);
+
+      // EDIT (hydrate): the edit form shows what the user typed (10), not the
+      // stored 4.05 — the asymmetry this fix removes.
+      const displayed = formQuantityFromStored(
+        created.quantity,
+        created.quantity_basis,
+        hectareFactor,
+      );
+      expect(displayed).toBe(typed);
+
+      // EDIT (re-save, unchanged): re-normalizes back to the identical stored value.
+      const [resaved] = mapAppliedItems(
+        [{ name: 'Urea', quantity: displayed, unit: 'kg', quantityBasis: 'per_acre' }],
+        { perAreaToPerAcreFactor: hectareFactor },
+      );
+      expect(resaved.quantity).toBe(created.quantity);
+    });
+
+    it('is stable across a second edit cycle (no drift)', () => {
+      const [created] = mapAppliedItems(
+        [{ name: 'Urea', quantity: 2.5, unit: 'kg', quantityBasis: 'per_acre' }],
+        { perAreaToPerAcreFactor: hectareFactor },
+      );
+      let stored = created.quantity;
+      for (let i = 0; i < 3; i += 1) {
+        const displayed = formQuantityFromStored(stored, 'per_acre', hectareFactor);
+        expect(displayed).toBe(2.5);
+        stored = mapAppliedItems(
+          [{ name: 'Urea', quantity: displayed, unit: 'kg', quantityBasis: 'per_acre' }],
+          { perAreaToPerAcreFactor: hectareFactor },
+        )[0].quantity;
+        expect(stored).toBe(created.quantity);
+      }
+    });
+
+    it('total-basis quantities are untouched by the round trip', () => {
+      const [created] = mapAppliedItems(
+        [{ name: 'Sulphur', quantity: 12, unit: 'kg', quantityBasis: 'total' }],
+        { perAreaToPerAcreFactor: hectareFactor },
+      );
+      expect(created.quantity).toBe(12);
+      expect(formQuantityFromStored(created.quantity, 'total', hectareFactor)).toBe(12);
+    });
+
+    it('acres farm (factor 1): create and edit already agree — round trip is identity', () => {
+      const acresFactor = perAcreNormalizationFactor('acres');
+      const [created] = mapAppliedItems(
+        [{ name: 'Urea', quantity: 10, unit: 'kg', quantityBasis: 'per_acre' }],
+        { perAreaToPerAcreFactor: acresFactor },
+      );
+      expect(created.quantity).toBe(10);
+      expect(formQuantityFromStored(created.quantity, 'per_acre', acresFactor)).toBe(10);
     });
   });
 

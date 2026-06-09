@@ -22,7 +22,7 @@ import {
 } from '@/utils/applied-input-mapper';
 import { PHI_CALC_VERSION } from '@/services/phi-service';
 import { mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
-import { resolveAreaUnitPreference } from '@/utils/preferences';
+import { resolveAreaUnitPreference, perAcreNormalizationFactor } from '@/utils/preferences';
 import type { AreaUnitPreference } from '@/utils/preferences';
 
 export interface EntryPendingLogSubmission {
@@ -86,7 +86,7 @@ export async function submitEntryPendingLog(params: {
   const areaUnit = resolveAreaUnitPreference(farm.areaUnit ?? 'acres');
   const farmArea =
     typeof farm.area === 'number' && Number.isFinite(farm.area) && farm.area > 0 ? farm.area : 0;
-  const perAreaToPerAcreFactor = areaUnit === 'hectares' ? 0.404686 : 1;
+  const perAreaToPerAcreFactor = perAcreNormalizationFactor(areaUnit);
 
   switch (log.type) {
     case 'irrigation': {

@@ -72,6 +72,37 @@ export function mapAppliedItems<U extends string>(
 }
 
 /**
+ * Inverse of {@link mapAppliedItems}' per-acre normalization, for hydrating the
+ * edit form. Recovers the quantity the user originally entered (expressed *per
+ * their display area unit*) from a stored, already-normalized value by dividing
+ * a `per_acre`-basis quantity by the same `perAreaToPerAcreFactor` the create
+ * path applied; `total`-basis quantities are returned unchanged.
+ *
+ * When a division actually happens (hectares, factor ≈0.404686) the result is
+ * rounded to 6 d.p. so a clean create -> edit -> re-save round trip is a stable
+ * fixed point: no float-tail (`10` not `10.000000000000002`) on display and no
+ * drift across repeated edits. The no-conversion cases — `total` basis, the
+ * acres factor of 1, or a non-positive/invalid factor — return the stored value
+ * verbatim (identity), so acres farms keep their exact pre-existing precision.
+ */
+export function formQuantityFromStored(
+  storedQuantity: number,
+  quantityBasis: QuantityBasis | undefined,
+  perAreaToPerAcreFactor: number,
+): number {
+  if (
+    (quantityBasis ?? 'total') !== 'per_acre' ||
+    !Number.isFinite(perAreaToPerAcreFactor) ||
+    perAreaToPerAcreFactor <= 0 ||
+    perAreaToPerAcreFactor === 1
+  ) {
+    return storedQuantity;
+  }
+  const recovered = storedQuantity / perAreaToPerAcreFactor;
+  return Math.round(recovered * 1e6) / 1e6;
+}
+
+/**
  * Human-readable "Name (qty unit), ..." summary over **all** chemical rows
  * (no filtering — matches the legacy `chemical` column contents).
  */
