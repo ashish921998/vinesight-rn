@@ -1,0 +1,42 @@
+src/utils/preferences.ts
+  s_548797a83cc035::t_8501b081a12697 26-39
+src/utils/entry-log-submission.ts
+  s_548797a83cc035::t_c517baf222f3a3 25
+  s_548797a83cc035::t_bb29c25aca307c 89
+src/utils/applied-input-mapper.ts
+  s_548797a83cc035::t_49feab8e065763 75-80,83,87-95,98-104
+  s_548797a83cc035::t_27f71ed7784dad 81-82,84-86,96-97
+__tests__/applied-input-mapper.test.ts
+  s_548797a83cc035::t_d437d47a19e719 3,8
+  s_548797a83cc035::t_f260a4e3a10bf1 97-114,121-198
+  s_548797a83cc035::t_cc429cd479d67d 115-120
+src/components/screens/activity-edit-form.tsx
+  s_548797a83cc035::t_885c8d6c4b4cd2 404
+  s_548797a83cc035::t_5830c70ae66136 377-395
+  s_548797a83cc035::t_31d75c0c4416cb 435-438,440
+  s_548797a83cc035::t_dc8b8677296e52 108-120
+  s_548797a83cc035::t_410954a581c746 66
+  s_548797a83cc035::t_3cb214654d658e 499-504
+  s_548797a83cc035::t_d7493188aafc83 264-287
+  s_548797a83cc035::t_0dee2c5a0f294c 32,36-37
+__tests__/preferences.test.ts
+  s_548797a83cc035::t_acf35a7360e522 3
+  s_548797a83cc035::t_c14695a1f3d6b5 16-19
+  s_548797a83cc035::t_512d9d89d0ca7c 1-2,4-15,20-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "2ac063df923be6899fd5937e7f94eb131c74f964",
+  "prompts": {},
+  "sessions": {
+    "s_548797a83cc035": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a807ab3-b13b-401f-ae62-45b5abd4c486",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
