@@ -18,7 +18,11 @@ import { useCurrency } from '@/hooks';
 import { Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { Worker } from '@/types';
-import { calculateWorkerSettlement, createWorkerSettlement } from '@/services/worker-service';
+import {
+  calculateWorkerSettlement,
+  settleWorker,
+  summarizeSettlementLedger,
+} from '@/services/worker-service';
 import { Picker } from '@react-native-picker/picker';
 import { supabase } from '@/lib/supabase';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
@@ -195,28 +199,13 @@ export function WorkerSettlementModal({
   }, [settlementCalculation, advanceDeductionAmount]);
 
   // Aggregate lines for ledger display
-  const ledgerLines = useMemo(() => {
-    if (!settlementCalculation) return null;
-    const details = settlementCalculation.attendance_details;
-    const fullDays = details.filter((d) => d.work_status === 'full_day');
-    const halfDays = details.filter((d) => d.work_status === 'half_day');
-    const getUniformRate = (days: typeof details) => {
-      const rates = Array.from(new Set(days.map((d) => d.rate)));
-      return rates.length === 1 ? rates[0] : null;
-    };
-    const fullRate = getUniformRate(fullDays);
-    const halfRate = getUniformRate(halfDays);
-    const fullEarnings = fullDays.reduce((a, d) => a + d.earnings, 0);
-    const halfEarnings = halfDays.reduce((a, d) => a + d.earnings, 0);
-    return {
-      fullDays: fullDays.length,
-      halfDays: halfDays.length,
-      fullRate,
-      halfRate,
-      fullEarnings,
-      halfEarnings,
-    };
-  }, [settlementCalculation]);
+  const ledgerLines = useMemo(
+    () =>
+      settlementCalculation
+        ? summarizeSettlementLedger(settlementCalculation.attendance_details)
+        : null,
+    [settlementCalculation],
+  );
 
   useEffect(() => {
     if (!visible) {
@@ -339,7 +328,7 @@ export function WorkerSettlementModal({
         return;
       }
 
-      await createWorkerSettlement({
+      await settleWorker({
         worker_id: selectedWorker.id,
         farm_id: null,
         period_start: periodDates.start,

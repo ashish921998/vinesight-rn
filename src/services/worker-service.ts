@@ -6,7 +6,7 @@
 import { supabase } from '@/lib/supabase';
 import type { WorkerSettlement, WorkerSettlementInsert } from '@/types';
 
-interface SettlementCalculation {
+export interface SettlementCalculation {
   days_worked: number;
   gross_amount: number;
   attendance_details: Array<{
@@ -16,6 +16,41 @@ interface SettlementCalculation {
     rate: number;
     earnings: number;
   }>;
+}
+
+/** Per-status rollup of a settlement's attendance, for the ledger display. */
+export interface SettlementLedgerSummary {
+  fullDays: number;
+  halfDays: number;
+  /** Uniform rate across all full/half days, or null when rates differ. */
+  fullRate: number | null;
+  halfRate: number | null;
+  fullEarnings: number;
+  halfEarnings: number;
+}
+
+/**
+ * Pure rollup of attendance detail rows into full/half-day counts, the uniform rate
+ * for each band (null when rates differ), and summed earnings. Extracted from the
+ * settlement modal so the ledger math is testable without rendering the (1k-line) modal.
+ */
+export function summarizeSettlementLedger(
+  attendanceDetails: Array<{ work_status: 'full_day' | 'half_day'; rate: number; earnings: number }>,
+): SettlementLedgerSummary {
+  const fullDays = attendanceDetails.filter((d) => d.work_status === 'full_day');
+  const halfDays = attendanceDetails.filter((d) => d.work_status === 'half_day');
+  const uniformRate = (days: typeof fullDays): number | null => {
+    const rates = Array.from(new Set(days.map((d) => d.rate)));
+    return rates.length === 1 ? rates[0] : null;
+  };
+  return {
+    fullDays: fullDays.length,
+    halfDays: halfDays.length,
+    fullRate: uniformRate(fullDays),
+    halfRate: uniformRate(halfDays),
+    fullEarnings: fullDays.reduce((a, d) => a + d.earnings, 0),
+    halfEarnings: halfDays.reduce((a, d) => a + d.earnings, 0),
+  };
 }
 
 /**
@@ -82,93 +117,36 @@ export async function calculateWorkerSettlement(
   };
 }
 
+/** Injectable dependencies for the worker-settlement seam (defaults to the real client). */
+export interface WorkerLedgerDeps {
+  client?: Pick<typeof supabase, 'rpc'>;
+}
+
 /**
- * Create a worker settlement with the given status.
+ * Atomically record a worker settlement and apply its advance-balance delta via the
+ * settle_worker RPC: the settlement row, the advance/payment transactions, and the
+ * advance_balance decrement all land in one server-side transaction (computed from the
+ * worker row's own value under a row lock), or none do. Replaces the old client-side
+ * read-modify-write of advance_balance plus best-effort compensating delete
+ * (see docs/multi-device-write-safety.html).
  */
-export async function createWorkerSettlement(
+export async function settleWorker(
   settlement: WorkerSettlementInsert,
+  deps: WorkerLedgerDeps = {},
 ): Promise<WorkerSettlement> {
-  const status = settlement.status ?? 'confirmed';
-  const { data: createdSettlement, error: insertError } = await supabase
-    .from('worker_settlements')
-    .insert({
-      worker_id: settlement.worker_id,
-      farm_id: settlement.farm_id ?? null,
-      period_start: settlement.period_start,
-      period_end: settlement.period_end,
-      days_worked: settlement.days_worked,
-      gross_amount: settlement.gross_amount,
-      advance_deducted: settlement.advance_deducted,
-      net_payment: settlement.net_payment,
-      status,
-      notes: settlement.notes ?? null,
-      confirmed_at: status === 'confirmed' ? new Date().toISOString() : null,
-    })
-    .select()
-    .single();
-
-  if (insertError) throw insertError;
-
-  if (status === 'confirmed') {
-    try {
-      // Create advance deduction transaction if applicable
-      if (settlement.advance_deducted > 0) {
-        const { error: txError } = await supabase.from('worker_transactions').insert({
-          worker_id: settlement.worker_id,
-          farm_id: settlement.farm_id ?? null,
-          date: new Date().toISOString().split('T')[0],
-          type: 'advance_deducted',
-          amount: settlement.advance_deducted,
-          settlement_id: createdSettlement.id,
-          notes: null,
-        });
-
-        if (txError) throw txError;
-
-        // Update worker's advance balance
-        const { data: workerData, error: fetchError } = await supabase
-          .from('workers')
-          .select('advance_balance')
-          .eq('id', settlement.worker_id)
-          .single();
-
-        if (fetchError) throw fetchError;
-
-        if (workerData) {
-          const { error: updateError } = await supabase
-            .from('workers')
-            .update({
-              advance_balance: Math.max(
-                0,
-                workerData.advance_balance - settlement.advance_deducted,
-              ),
-            })
-            .eq('id', settlement.worker_id);
-
-          if (updateError) throw updateError;
-        }
-      }
-
-      // Create payment transaction if applicable
-      if (settlement.net_payment > 0) {
-        const { error: paymentError } = await supabase.from('worker_transactions').insert({
-          worker_id: settlement.worker_id,
-          farm_id: settlement.farm_id ?? null,
-          date: new Date().toISOString().split('T')[0],
-          type: 'payment',
-          amount: settlement.net_payment,
-          settlement_id: createdSettlement.id,
-          notes: null,
-        });
-
-        if (paymentError) throw paymentError;
-      }
-    } catch (error) {
-      // Rollback: delete the settlement if any subsequent step fails
-      await supabase.from('worker_settlements').delete().eq('id', createdSettlement.id);
-      throw error;
-    }
-  }
-
-  return createdSettlement;
+  const client = deps.client ?? supabase;
+  const { data, error } = await client.rpc('settle_worker', {
+    p_worker_id: settlement.worker_id,
+    p_farm_id: settlement.farm_id ?? null,
+    p_period_start: settlement.period_start,
+    p_period_end: settlement.period_end,
+    p_days_worked: settlement.days_worked,
+    p_gross_amount: settlement.gross_amount,
+    p_advance_deducted: settlement.advance_deducted,
+    p_net_payment: settlement.net_payment,
+    p_status: settlement.status ?? 'confirmed',
+    p_notes: settlement.notes ?? null,
+  });
+  if (error) throw error;
+  return data as WorkerSettlement;
 }

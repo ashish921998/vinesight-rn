@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { calculateWorkerSettlement, createWorkerSettlement } from '@/services/worker-service';
+import { calculateWorkerSettlement } from '@/services/worker-service';
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
@@ -178,84 +178,6 @@ describe('calculateWorkerSettlement', () => {
 
     await expect(calculateWorkerSettlement(1, null, '2024-06-01', '2024-06-30')).rejects.toEqual({
       message: 'Attendance fetch failed',
-    });
-  });
-});
-
-describe('createWorkerSettlement', () => {
-  it('calls supabase insert with correct data and creates payment transaction', async () => {
-    const settlement = {
-      worker_id: 1,
-      farm_id: 10,
-      period_start: '2024-06-01',
-      period_end: '2024-06-30',
-      days_worked: 20,
-      gross_amount: 10000,
-      advance_deducted: 0,
-      net_payment: 10000,
-      status: 'confirmed' as const,
-      notes: 'June settlement',
-    };
-
-    const createdRecord = { id: 42, ...settlement };
-    const settlementChain = mockChain({ data: createdRecord, error: null });
-    const transactionChain = mockChain({ data: null, error: null });
-
-    mockedFrom.mockImplementation((table: string) => {
-      if (table === 'worker_settlements') return settlementChain;
-      if (table === 'worker_transactions') return transactionChain;
-      return mockChain({ data: null, error: null });
-    });
-
-    const result = await createWorkerSettlement(settlement);
-
-    expect(mockedFrom).toHaveBeenCalledWith('worker_settlements');
-    expect(settlementChain.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        worker_id: 1,
-        farm_id: 10,
-        period_start: '2024-06-01',
-        period_end: '2024-06-30',
-        days_worked: 20,
-        gross_amount: 10000,
-        advance_deducted: 0,
-        net_payment: 10000,
-        status: 'confirmed',
-        notes: 'June settlement',
-      }),
-    );
-
-    // net_payment > 0 triggers a payment transaction insert
-    expect(mockedFrom).toHaveBeenCalledWith('worker_transactions');
-    expect(transactionChain.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        worker_id: 1,
-        type: 'payment',
-        amount: 10000,
-        settlement_id: 42,
-      }),
-    );
-    expect(result).toEqual(createdRecord);
-  });
-
-  it('throws when insert fails', async () => {
-    const settlement = {
-      worker_id: 1,
-      farm_id: null,
-      period_start: '2024-06-01',
-      period_end: '2024-06-30',
-      days_worked: 0,
-      gross_amount: 0,
-      advance_deducted: 0,
-      net_payment: 0,
-      status: 'draft' as const,
-    };
-
-    const chain = mockChain({ data: null, error: { message: 'Insert failed' } });
-    mockedFrom.mockImplementation(() => chain);
-
-    await expect(createWorkerSettlement(settlement)).rejects.toEqual({
-      message: 'Insert failed',
     });
   });
 });
