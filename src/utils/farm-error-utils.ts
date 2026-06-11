@@ -29,3 +29,27 @@ export const shouldCaptureFarmErrorInSentry = (errorMeta: FarmDbErrorMeta): bool
   if (!errorMeta.code) return true;
   return !EXPECTED_FARM_DB_ERROR_CODES.has(errorMeta.code);
 };
+
+export const isUniqueDisplayOrderViolation = (
+  error: Pick<FarmDbErrorMeta, 'code' | 'message'> | null,
+): boolean => {
+  if (!error) return false;
+  const message = error.message ?? '';
+  return (
+    error.code === '23505' &&
+    (/farms_user_display_order_unique/i.test(message) || /display_order/i.test(message))
+  );
+};
+
+export const isFarmPrimaryKeySequenceViolation = (
+  error: Pick<FarmDbErrorMeta, 'code' | 'message'> | null,
+): boolean => {
+  if (!error) return false;
+  const message = error.message ?? '';
+  return error.code === '23505' && /farms_pkey/i.test(message);
+};
+
+export const isRetryableFarmInsertConstraintViolation = (
+  error: Pick<FarmDbErrorMeta, 'code' | 'message'> | null,
+): boolean =>
+  isUniqueDisplayOrderViolation(error) || isFarmPrimaryKeySequenceViolation(error);
