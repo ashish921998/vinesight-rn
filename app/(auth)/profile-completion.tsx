@@ -13,6 +13,7 @@ import { useAuthStore } from '@/stores';
 import { useProfile } from '@/hooks';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { joinOrganizationBySlug, joinOrgMessage } from '@/services/organization';
 import { useTranslation } from 'react-i18next';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useIsDark, useM3 } from '@/styles/use-theme';
@@ -27,6 +28,12 @@ export default function ProfileCompletionScreen() {
   const [lastNameDraft, setLastNameDraft] = useState<string | null>(null);
   const [emailDraft, setEmailDraft] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  // Optional consultant code. A farmer who has a consultant enters their org's
+  // slug here to self-link via the join_organization_by_slug RPC after their
+  // profile is saved. Blank = no consultant (freelance farmer), which is fine.
+  const [orgCode, setOrgCode] = useState('');
+  const [orgJoinError, setOrgJoinError] = useState<string | null>(null);
+  const [orgJoinInfo, setOrgJoinInfo] = useState<string | null>(null);
   const hasRedirectedRef = useRef(false);
 
   const {
@@ -111,6 +118,26 @@ export default function ProfileCompletionScreen() {
       lastName: trimmedLastName,
       email: trimmedEmail || undefined,
     });
+
+    // Profile saved. If the farmer entered a consultant code, link them to that
+    // org now. Failures here must NOT block onboarding — the farmer's profile is
+    // already saved and they can retry joining from Settings. Surface the message
+    // and let the normal redirect proceed on success.
+    const trimmedCode = orgCode.trim();
+    if (trimmedCode) {
+      const result = await joinOrganizationBySlug(trimmedCode);
+      if (result.ok) {
+        setOrgJoinInfo(
+          result.organizationName
+            ? `Linked to ${result.organizationName}.`
+            : joinOrgMessage(result.status),
+        );
+        setOrgJoinError(null);
+      } else {
+        setOrgJoinError(joinOrgMessage(result.status));
+        setOrgJoinInfo(null);
+      }
+    }
   };
 
   const containerStyle: ViewStyle = {
@@ -183,6 +210,24 @@ export default function ProfileCompletionScreen() {
     color: m3.colorScheme.error,
   };
 
+  const helperTextStyle: TextStyle = {
+    fontSize: fontSize.xs,
+    color: m3.colorScheme.onSurfaceVariant,
+    marginTop: spacing[1],
+    marginBottom: spacing[2],
+  };
+
+  const infoContainerStyle: ViewStyle = {
+    ...errorContainerStyle,
+    backgroundColor: colorWithOpacity(m3.colorScheme.primary, isDark ? 0.18 : 0.1),
+    borderColor: colorWithOpacity(m3.colorScheme.primary, isDark ? 0.4 : 0.25),
+  };
+
+  const infoTextStyle: TextStyle = {
+    ...errorTextStyle,
+    color: m3.colorScheme.onSurface,
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -240,14 +285,47 @@ export default function ProfileCompletionScreen() {
                 containerStyle={{ marginBottom: spacing[2] }}
               />
 
-              {(errorMessage || emailError) && (
+              <Input
+                label={t('profileCompletion.consultantCodeLabel', {
+                  defaultValue: 'Consultant code (optional)',
+                })}
+                placeholder={t('profileCompletion.consultantCodePlaceholder', {
+                  defaultValue: 'e.g. acme-agro',
+                })}
+                value={orgCode}
+                onChangeText={(value) => {
+                  setOrgCode(value.replace(/\s/g, '').toLowerCase());
+                  if (orgJoinError || orgJoinInfo) {
+                    setOrgJoinError(null);
+                    setOrgJoinInfo(null);
+                  }
+                }}
+                leftIcon="building.2.fill"
+                autoCapitalize="none"
+                autoCorrect={false}
+                containerStyle={{ marginBottom: spacing[1] }}
+              />
+              <Text style={helperTextStyle}>
+                {t('profileCompletion.consultantCodeHelper', {
+                  defaultValue:
+                    'Got a consultant? Enter the code they gave you to link your farm to them. Skip if not.',
+                })}
+              </Text>
+              {orgJoinInfo && (
+                <View style={infoContainerStyle}>
+                  <UiSymbol name="checkmark.circle.fill" size={18} color={m3.colorScheme.primary} />
+                  <Text style={infoTextStyle}>{orgJoinInfo}</Text>
+                </View>
+              )}
+
+              {(errorMessage || emailError || orgJoinError) && (
                 <View style={errorContainerStyle}>
                   <UiSymbol
                     name="exclamationmark.circle.fill"
                     size={18}
                     color={m3.colorScheme.error}
                   />
-                  <Text style={errorTextStyle}>{emailError || errorMessage}</Text>
+                  <Text style={errorTextStyle}>{emailError || orgJoinError || errorMessage}</Text>
                 </View>
               )}
 
