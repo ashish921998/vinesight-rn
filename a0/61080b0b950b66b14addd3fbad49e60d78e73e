@@ -1,0 +1,19 @@
+app/(auth)/profile-completion.tsx
+  s_2edd14441faaf3::t_fdcb19613663bf 56-58,60-62,149-150,154-156,166-176,190-196,369-374
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "a061080b0b950b66b14addd3fbad49e60d78e73e",
+  "prompts": {},
+  "sessions": {
+    "s_2edd14441faaf3": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ed044-48ce-7d96-bfcd-70233c8911d0",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
