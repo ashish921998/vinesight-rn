@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import Toast from 'react-native-toast-message';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { Button, Input } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
 import { isIOS } from '@/hooks';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
@@ -63,10 +63,11 @@ export function JoinOrgModal({ visible, onClose, onJoined }: JoinOrgModalProps) 
 
     if (result.ok) {
       setSuccessOrgName(result.organizationName);
-      Toast.show({
-        type: 'success',
-        text1: joinOrgMessage(result.status),
-      });
+      toast.success(
+        result.organizationName
+          ? `Linked to ${result.organizationName}.`
+          : joinOrgMessage(result.status),
+      );
       onJoined?.(result.organizationName);
     }
   };

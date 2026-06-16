@@ -34,6 +34,14 @@ export default function ProfileCompletionScreen() {
   const [orgCode, setOrgCode] = useState('');
   const [orgJoinError, setOrgJoinError] = useState<string | null>(null);
   const [orgJoinInfo, setOrgJoinInfo] = useState<string | null>(null);
+  // The org join runs AFTER completeProfile, which itself flips
+  // needsProfileCompletion=false and would trigger the auto-redirect before the
+  // join's result (success banner or error) could render. These two flags gate
+  // that redirect: joinPending while the RPC is in flight, joinFailed when it
+  // failed so the farmer stays on this page, reads the error, and can fix/retry
+  // (clearing the code, or correcting it and tapping Continue again, retries).
+  const [joinPending, setJoinPending] = useState(false);
+  const [joinFailed, setJoinFailed] = useState(false);
   const hasRedirectedRef = useRef(false);
 
   const {
@@ -89,15 +97,30 @@ export default function ProfileCompletionScreen() {
       !profileLoading &&
       !needsProfileCompletion &&
       hasProfileName &&
+      !joinPending &&
+      !joinFailed &&
       !hasRedirectedRef.current
     ) {
       hasRedirectedRef.current = true;
       router.replace('/');
     }
-    if (!isAuthenticated || needsProfileCompletion || !hasProfileName) {
+    if (
+      !isAuthenticated ||
+      needsProfileCompletion ||
+      !hasProfileName ||
+      joinPending ||
+      joinFailed
+    ) {
       hasRedirectedRef.current = false;
     }
-  }, [isAuthenticated, needsProfileCompletion, hasProfileName, profileLoading]);
+  }, [
+    isAuthenticated,
+    needsProfileCompletion,
+    hasProfileName,
+    profileLoading,
+    joinPending,
+    joinFailed,
+  ]);
 
   const handleContinue = async () => {
     const trimmedFirstName = firstNameValue.trim();
@@ -113,29 +136,49 @@ export default function ProfileCompletionScreen() {
     }
     setEmailError(null);
     clearError();
-    await completeProfile({
-      firstName: trimmedFirstName,
-      lastName: trimmedLastName,
-      email: trimmedEmail || undefined,
-    });
 
-    // Profile saved. If the farmer entered a consultant code, link them to that
-    // org now. Failures here must NOT block onboarding — the farmer's profile is
-    // already saved and they can retry joining from Settings. Surface the message
-    // and let the normal redirect proceed on success.
     const trimmedCode = orgCode.trim();
+    // If a consultant code was entered, hold the redirect open (joinPending)
+    // until the join resolves so its result isn't wiped by an immediate
+    // navigation away from this screen.
     if (trimmedCode) {
-      const result = await joinOrganizationBySlug(trimmedCode);
-      if (result.ok) {
-        setOrgJoinInfo(
-          result.organizationName
-            ? `Linked to ${result.organizationName}.`
-            : joinOrgMessage(result.status),
-        );
-        setOrgJoinError(null);
-      } else {
-        setOrgJoinError(joinOrgMessage(result.status));
-        setOrgJoinInfo(null);
+      setJoinPending(true);
+      setJoinFailed(false);
+    }
+
+    try {
+      await completeProfile({
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        email: trimmedEmail || undefined,
+      });
+
+      // Profile saved. Now link to the org. Failures must NOT block onboarding —
+      // the profile is already saved — but the farmer should SEE the failure and
+      // be able to fix it, so we set joinFailed to stay on this page.
+      if (trimmedCode) {
+        const result = await joinOrganizationBySlug(trimmedCode);
+        if (result.ok) {
+          setOrgJoinInfo(
+            result.organizationName
+              ? `Linked to ${result.organizationName}.`
+              : joinOrgMessage(result.status),
+          );
+          setOrgJoinError(null);
+          setJoinFailed(false);
+        } else {
+          setOrgJoinError(joinOrgMessage(result.status));
+          setOrgJoinInfo(null);
+          setJoinFailed(true);
+        }
+      }
+    } finally {
+      // Release the redirect gate once the join attempt is done. On success
+      // joinFailed is false, so the redirect fires and the farmer lands on the
+      // dashboard (already linked). On failure joinFailed stays true and they
+      // remain on this page to fix or clear the code.
+      if (trimmedCode) {
+        setJoinPending(false);
       }
     }
   };
@@ -295,9 +338,10 @@ export default function ProfileCompletionScreen() {
                 value={orgCode}
                 onChangeText={(value) => {
                   setOrgCode(value.replace(/\s/g, '').toLowerCase());
-                  if (orgJoinError || orgJoinInfo) {
+                  if (orgJoinError || orgJoinInfo || joinFailed) {
                     setOrgJoinError(null);
                     setOrgJoinInfo(null);
+                    setJoinFailed(false);
                   }
                 }}
                 leftIcon="building.2.fill"

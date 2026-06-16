@@ -26,6 +26,7 @@ import {
   LinkPhoneModal,
   DeleteAccountModal,
 } from '@/components/screens/settings';
+import { JoinOrgModal } from '@/components/screens/settings/JoinOrgModal';
 
 interface LinkPhoneParams {
   linkPhone?: string | string[];
@@ -111,6 +112,7 @@ export default function SettingsScreen() {
   const [isResettingGuidedTour, setIsResettingGuidedTour] = useState(false);
   const [showLinkPhoneModal, setShowLinkPhoneModal] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [showJoinOrg, setShowJoinOrg] = useState(false);
 
   const [selectedCurrency, setSelectedCurrency] = useState(() => getDefaultCurrency());
   const [selectedAreaUnit, setSelectedAreaUnit] = useState<'acres' | 'hectares'>('acres');
@@ -385,6 +387,7 @@ export default function SettingsScreen() {
         styles={styles}
         m3={m3}
         onOpenLinkPhone={handleOpenLinkPhone}
+        onOpenJoinOrg={() => setShowJoinOrg(true)}
         onSignOut={handleSignOut}
         onDeleteAccount={handleDeleteAccount}
       />
@@ -447,6 +450,18 @@ export default function SettingsScreen() {
         styles={styles}
         m3={m3}
       />
+
+      {/* Mount/unmount via key so each open starts with a clean form (avoids
+          setState-in-effect reset pattern). onJoined refetches the profile so any
+          org-scoped UI updates after a successful self-join. */}
+      {showJoinOrg ? (
+        <JoinOrgModal
+          key="join-org"
+          visible={showJoinOrg}
+          onClose={() => setShowJoinOrg(false)}
+          onJoined={() => refetchProfile()}
+        />
+      ) : null}
     </ScrollView>
   );
 }
