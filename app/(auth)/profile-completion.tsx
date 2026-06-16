@@ -53,7 +53,13 @@ export default function ProfileCompletionScreen() {
     completeProfile,
     clearError,
   } = useAuthStore();
-  const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
+  const {
+    data: profile,
+    isLoading: profileLoading,
+    refetch: refetchProfile,
+  } = useProfile({
+    enabled: isAuthenticated,
+  });
   const hasProfileName = Boolean(profile?.full_name && profile.full_name.trim().length > 0);
 
   const { defaultFirstName, defaultLastName, defaultEmail } = useMemo(() => {
@@ -140,9 +146,13 @@ export default function ProfileCompletionScreen() {
     const trimmedCode = orgCode.trim();
     // If a consultant code was entered, hold the redirect open (joinPending)
     // until the join resolves so its result isn't wiped by an immediate
-    // navigation away from this screen.
+    // navigation away from this screen. If there's no code (skip), release any
+    // prior failed-join gate so the redirect can proceed once the profile saves.
     if (trimmedCode) {
       setJoinPending(true);
+      setJoinFailed(false);
+    } else {
+      setJoinPending(false);
       setJoinFailed(false);
     }
 
@@ -152,6 +162,17 @@ export default function ProfileCompletionScreen() {
         lastName: trimmedLastName,
         email: trimmedEmail || undefined,
       });
+
+      // completeProfile signals failures (validation, duplicate email, network)
+      // by writing errorMessage to the auth store and returning void — there is
+      // no success return. If the save failed, do NOT join the org: linking a
+      // farmer when their profile didn't persist leaves a half-finished signup.
+      // needsProfileCompletion stays true on failure, so the farmer remains on
+      // this page, sees the error, and can fix/retry. (finally still releases
+      // joinPending.)
+      if (useAuthStore.getState().errorMessage) {
+        return;
+      }
 
       // Profile saved. Now link to the org. Failures must NOT block onboarding —
       // the profile is already saved — but the farmer should SEE the failure and
@@ -166,6 +187,13 @@ export default function ProfileCompletionScreen() {
           );
           setOrgJoinError(null);
           setJoinFailed(false);
+          // The RPC updated profiles.consultant_organization_id, but
+          // completeProfile already wrote/invalidated the profile cache BEFORE
+          // the join ran. Await a refetch so the dashboard lands with a fresh
+          // consultant_organization_id and org-gated UI (e.g. Fertilizer Plans)
+          // is visible immediately, instead of staying hidden until a later
+          // refetch. (finally still releases joinPending afterward.)
+          await refetchProfile();
         } else {
           setOrgJoinError(joinOrgMessage(result.status));
           setOrgJoinInfo(null);
@@ -338,10 +366,14 @@ export default function ProfileCompletionScreen() {
                 value={orgCode}
                 onChangeText={(value) => {
                   setOrgCode(value.replace(/\s/g, '').toLowerCase());
-                  if (orgJoinError || orgJoinInfo || joinFailed) {
+                  // Dismiss the visible error/info as the user edits, but DO NOT
+                  // clear joinFailed here: clearing it would re-arm the
+                  // auto-redirect effect and yank the farmer off the page before
+                  // they tap Continue to retry. joinFailed is released only by
+                  // handleContinue (on a retry submit, or a skip with no code).
+                  if (orgJoinError || orgJoinInfo) {
                     setOrgJoinError(null);
                     setOrgJoinInfo(null);
-                    setJoinFailed(false);
                   }
                 }}
                 leftIcon="building.2.fill"
