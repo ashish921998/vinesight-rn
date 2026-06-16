@@ -147,7 +147,12 @@ export function OnboardingScreen() {
       useOnboardingStore.getState().setPreferences({ notificationsEnabled });
 
       if (notificationsEnabled && (language === 'en' || language === 'hi' || language === 'mr')) {
-        await syncPushDeviceRegistration(language, {
+        // Fire-and-forget: registering the push device makes a network call
+        // (APNs on iOS) that can hang or fail. It must never block the user from
+        // finishing onboarding — awaiting it here was leaving iOS users stuck on
+        // "Checking permissions..." so `onboarding_completed` never fired.
+        // syncPushDeviceRegistration already swallows its own errors internally.
+        void syncPushDeviceRegistration(language, {
           notificationsEnabled: true,
           featureOverviewEnabled: useNotificationStore.getState().featureOverviewEnabled,
         });
