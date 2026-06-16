@@ -1,0 +1,21 @@
+src/services/organization.ts
+  s_9c39756d9b6e79::t_ca10a1b6720711 1-70,72-102
+src/components/screens/settings/JoinOrgModal.tsx
+  s_9c39756d9b6e79::t_e093d64b06c7bd 1-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "66f0bb6bb291b23dc0de13ea50e9a724d33c49da",
+  "prompts": {},
+  "sessions": {
+    "s_9c39756d9b6e79": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ecfae-f435-705c-89e3-aeb01dee972e",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
