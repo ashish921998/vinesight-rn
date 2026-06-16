@@ -125,6 +125,14 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
     return [state.cropVariety, ...baseVarieties];
   }, [baseVarieties, state.cropVariety]);
 
+  // Variety is no longer a required step during onboarding — it's the heaviest
+  // interaction on this slide (a searchable modal) and was a major drop-off point.
+  // If the user doesn't pick one, fall back to the crop's first known variety so
+  // the farm is still valid; they can refine it later from the farm screen.
+  const defaultCropVariety = baseVarieties[0] ?? '';
+  const hasManualVariety = state.cropVariety.trim().length > 0;
+  const effectiveCropVariety = hasManualVariety ? state.cropVariety : defaultCropVariety;
+
   const filteredVarieties = useMemo(() => {
     if (!varietySearchQueryLower) return varieties;
     return varieties.filter((variety) => variety.toLowerCase().includes(varietySearchQueryLower));
@@ -143,7 +151,8 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
     return selected?.label ?? state.selectedCrop;
   }, [knownCropOptions, state.customCropName, state.selectedCrop, t]);
 
-  const selectedVarietyLabel = state.cropVariety || t('farmForm.variety.selectPlaceholder');
+  const selectedVarietyLabel =
+    state.cropVariety || effectiveCropVariety || t('farmForm.variety.selectPlaceholder');
 
   const isValid = isFarmCoreFieldsValid({
     name: state.name,
@@ -151,7 +160,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
     area: state.area,
     selectedCrop: state.selectedCrop,
     customCropName: state.customCropName,
-    cropVariety: state.cropVariety,
+    cropVariety: effectiveCropVariety,
     customVariety: state.customVariety,
   });
 
@@ -209,7 +218,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
       area: state.area,
       selectedCrop: state.selectedCrop,
       customCropName: state.customCropName,
-      cropVariety: state.cropVariety,
+      cropVariety: effectiveCropVariety,
       customVariety: state.customVariety,
     });
 
@@ -235,9 +244,9 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
     }
   }, [
     createFarm,
+    effectiveCropVariety,
     onResolved,
     state.area,
-    state.cropVariety,
     state.customCropName,
     state.customVariety,
     state.name,
