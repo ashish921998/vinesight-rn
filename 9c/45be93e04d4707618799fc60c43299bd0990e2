@@ -1,0 +1,19 @@
+jest-setup/deno-mock.js
+  s_2edd14441faaf3::t_df081ffb971668 10-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "9c45be93e04d4707618799fc60c43299bd0990e2",
+  "prompts": {},
+  "sessions": {
+    "s_2edd14441faaf3": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ed044-48ce-7d96-bfcd-70233c8911d0",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
