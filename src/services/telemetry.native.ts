@@ -18,6 +18,17 @@ const allowSimulator =
 const options: PostHogOptions = {
   host,
   captureAppLifecycleEvents: true,
+  // Mobile session replay. Lets us watch how users move through onboarding and
+  // where they drop off. Privacy-conscious defaults: text inputs are masked so
+  // we never record what people type, while images stay visible so replays are
+  // actually useful for understanding the flow.
+  enableSessionReplay: true,
+  sessionReplayConfig: {
+    maskAllTextInputs: true,
+    maskAllImages: false,
+    captureLog: true,
+    captureNetworkTelemetry: true,
+  },
 };
 
 const isPhysicalDevice = Device.isDevice ?? false;
