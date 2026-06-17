@@ -1,0 +1,35 @@
+src/types/database.ts
+  s_2edd14441faaf3::t_59f0da3688c10a 317-350
+src/hooks/use-recommendations.ts
+  s_2edd14441faaf3::t_59f0da3688c10a 1-30
+src/i18n/locales/hi.ts
+  s_2edd14441faaf3::t_59f0da3688c10a 917-940,945
+app/consultant-recommendations.tsx
+  s_2edd14441faaf3::t_59f0da3688c10a 1-322
+app/(tabs)/tools.tsx
+  s_2edd14441faaf3::t_59f0da3688c10a 197-209,266-283
+app/_layout.tsx
+  s_2edd14441faaf3::t_59f0da3688c10a 767-770
+src/i18n/locales/mr.ts
+  s_2edd14441faaf3::t_59f0da3688c10a 920-943,948
+src/hooks/query-keys.ts
+  s_2edd14441faaf3::t_59f0da3688c10a 223-230
+src/i18n/locales/en.ts
+  s_2edd14441faaf3::t_59f0da3688c10a 917-940,945
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "d884f9a8eea38311eb9e1d0d2bad612cac795d17",
+  "prompts": {},
+  "sessions": {
+    "s_2edd14441faaf3": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ed044-48ce-7d96-bfcd-70233c8911d0",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
