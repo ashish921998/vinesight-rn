@@ -1375,7 +1375,10 @@ export function EntryForm({
         }
       }
 
-      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      // Refresh the dashboard in the background so the success toast and close
+      // fire immediately — the records are already written; we don't make the
+      // user wait on the full dashboard refetch.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success(t('entryForm.logSaved'));
       onLogSaveSuccess?.();
 

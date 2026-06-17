@@ -137,7 +137,10 @@ export function useSaveSingleLog() {
         submitters,
       });
 
-      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      // Refresh the dashboard in the background — don't block the caller (and the
+      // user) on the full dashboard refetch. The record is already written; the
+      // receipt screen can close/advance immediately while the dashboard catches up.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
 
       return { type, recordId: result.recordId, farmId, waterDelta, previousDailyNote };
     },
