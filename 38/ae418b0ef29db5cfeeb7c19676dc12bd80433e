@@ -1,0 +1,27 @@
+app/(auth)/profile-completion.tsx
+  s_2edd14441faaf3::t_f99273e609c214 132-136,420
+  s_2edd14441faaf3::t_b3dff69c128db0 421-423
+src/services/organization.ts
+  s_2edd14441faaf3::t_e25ff790fdc11c 26-40,112-116,120-121
+  s_2edd14441faaf3::t_b3dff69c128db0 117
+src/components/screens/settings/JoinOrgModal.tsx
+  s_2edd14441faaf3::t_fe60785fc96ae3 76-82
+supabase/migrations/202606160001_join_org_by_slug_rpc.sql
+  s_2edd14441faaf3::t_1667dd63cc4e01 33,52-57,60,115-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "38ae418b0ef29db5cfeeb7c19676dc12bd80433e",
+  "prompts": {},
+  "sessions": {
+    "s_2edd14441faaf3": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ed044-48ce-7d96-bfcd-70233c8911d0",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
