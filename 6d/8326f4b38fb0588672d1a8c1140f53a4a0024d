@@ -1,0 +1,23 @@
+package.json
+  s_2edd14441faaf3::t_c77a84d11eba0b 4
+CHANGELOG.md
+  s_2edd14441faaf3::t_fb5a755ea2b7f4 5-14
+VERSION
+  s_2edd14441faaf3::t_d0b75d4cc8b9a4 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "6d8326f4b38fb0588672d1a8c1140f53a4a0024d",
+  "prompts": {},
+  "sessions": {
+    "s_2edd14441faaf3": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ed044-48ce-7d96-bfcd-70233c8911d0",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
