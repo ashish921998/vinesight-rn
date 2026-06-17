@@ -1377,8 +1377,10 @@ export function EntryForm({
 
       // Refresh the dashboard in the background so the success toast and close
       // fire immediately — the records are already written; we don't make the
-      // user wait on the full dashboard refetch.
-      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      // user wait on the full dashboard refetch. A background refetch failure is
+      // non-critical (each query tracks its own error state) and must not land in
+      // the catch below as a misleading "failed to save" alert, so swallow it.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all }).catch(() => {});
       toast.success(t('entryForm.logSaved'));
       onLogSaveSuccess?.();
 

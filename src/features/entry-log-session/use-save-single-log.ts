@@ -140,7 +140,9 @@ export function useSaveSingleLog() {
       // Refresh the dashboard in the background — don't block the caller (and the
       // user) on the full dashboard refetch. The record is already written; the
       // receipt screen can close/advance immediately while the dashboard catches up.
-      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      // A background refetch failure is non-critical (each query tracks its own
+      // error state), so swallow it rather than surfacing an unhandled rejection.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all }).catch(() => {});
 
       return { type, recordId: result.recordId, farmId, waterDelta, previousDailyNote };
     },
