@@ -30,6 +30,7 @@ declare
   v_org_name text;
   v_owner uuid;
   v_existing_status text;
+  v_row_count int;
 begin
   -- Must be called by a logged-in user. auth.uid() reads the caller's JWT; null under anon.
   if auth.uid() is null then
@@ -48,10 +49,15 @@ begin
     return jsonb_build_object('ok', false, 'status', 'not_found');
   end if;
 
-  -- A team member of THIS org must not also be its client (one account, two roles).
+  -- Staff/client roles are mutually exclusive GLOBALLY, not per-org. A consultant who is a
+  -- team member of ANY organization must not be inserted as another org's client: doing so
+  -- would (a) mix their staff and client roles and (b) have the profile-mirror update below
+  -- rewrite profiles.consultant_organization_id and sever their existing staff affiliation.
+  -- The earlier check only looked at the target org's members, which a staff member of org A
+  -- passes for org B — letting them self-link and silently hijack their own profile pointer.
   if exists (
     select 1 from public.organization_members
-    where organization_id = v_org_id and user_id = auth.uid()
+    where user_id = auth.uid()
   ) then
     return jsonb_build_object('ok', false, 'status', 'is_staff');
   end if;
@@ -106,18 +112,41 @@ begin
   end if;
 
   -- Insert a fresh active client, or reactivate a pre-existing 'pending' row for this org.
-  -- ON CONFLICT covers the race where a concurrent call (or an admin add) created the row
-  -- between our read and write; coalesce keeps any existing assignment instead of clobbering it.
-  insert into public.organization_clients
-    (organization_id, client_user_id, assigned_to, assigned_by, status)
-  values
-    (v_org_id, auth.uid(), v_owner, v_owner, 'active')
-  on conflict (organization_id, client_user_id) do update
-    set status = 'active',
-        assigned_to = coalesce(public.organization_clients.assigned_to, excluded.assigned_to),
-        assigned_by = coalesce(public.organization_clients.assigned_by, excluded.assigned_by),
-        assigned_at = coalesce(public.organization_clients.assigned_at, now()),
-        updated_at = now();
+  --
+  -- Race hardening (review M2/M3):
+  --  * The ON CONFLICT arm is guarded by `WHERE status <> 'inactive'` so an admin removal
+  --    that lands between our pre-check and this write cannot be clobbered back to 'active'
+  --    (TOCTOU on the removed-farmer path). If the guard rejects the update, no row is
+  --    modified and we return 'removed'.
+  --  * The whole write is wrapped in a unique_violation sub-block: a concurrent join / admin
+  --    add that creates an active client row in ANOTHER org between our pre-check and this
+  --    insert would otherwise throw raw SQLSTATE 23505 to the client; we translate it to a
+  --    clean 'already_in_other_org' status instead of a 500.
+  begin
+    insert into public.organization_clients
+      (organization_id, client_user_id, assigned_to, assigned_by, status)
+    values
+      (v_org_id, auth.uid(), v_owner, v_owner, 'active')
+    on conflict (organization_id, client_user_id) do update
+      set status = 'active',
+          assigned_to = coalesce(public.organization_clients.assigned_to, excluded.assigned_to),
+          assigned_by = coalesce(public.organization_clients.assigned_by, excluded.assigned_by),
+          assigned_at = coalesce(public.organization_clients.assigned_at, now()),
+          updated_at = now()
+      where public.organization_clients.status <> 'inactive';
+
+    -- 0 rows affected means the ON CONFLICT guard rejected a reactivation of an 'inactive'
+    -- row that a concurrent admin removal created between our read and write.
+    get diagnostics v_row_count = row_count;
+    if v_row_count = 0 then
+      return jsonb_build_object('ok', false, 'status', 'removed');
+    end if;
+  exception
+    when unique_violation then
+      -- idx_organization_clients_one_active_per_client fired: a concurrent transaction
+      -- made this farmer an active client of another org between our pre-check and here.
+      return jsonb_build_object('ok', false, 'status', 'already_in_other_org');
+  end;
 
   -- Sync the legacy profiles.consultant_organization_id mirror that older screens read.
   update public.profiles

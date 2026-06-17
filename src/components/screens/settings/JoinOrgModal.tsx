@@ -73,6 +73,13 @@ export function JoinOrgModal({ visible, onClose, onJoined }: JoinOrgModalProps) 
   };
 
   const handleClose = () => {
+    // Guard against closing while the join RPC is in flight: dismissing the modal mid-submit
+    // would unmount the component, and the setSubmitting/setResultStatus calls still pending
+    // in handleSubmit would run after unmount (setState on an unmounted component) and the
+    // onJoined callback would never fire. The Cancel button is already disabled while
+    // submitting; this covers the X button, the Android back gesture (onRequestClose), and
+    // the post-success Done button.
+    if (submitting) return;
     onClose();
   };
 

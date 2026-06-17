@@ -129,6 +129,11 @@ export default function ProfileCompletionScreen() {
   ]);
 
   const handleContinue = async () => {
+    // Re-entry guard: completeProfile flips isLoading, but the subsequent org-join RPC sets
+    // joinPending instead. While either is in flight the button could otherwise be tapped
+    // again, firing concurrent RPCs that race the joinPending/joinFailed state machine.
+    if (isLoading || joinPending) return;
+
     const trimmedFirstName = firstNameValue.trim();
     const trimmedLastName = lastNameValue.trim();
     if (!trimmedFirstName || !trimmedLastName) return;
@@ -412,8 +417,10 @@ export default function ProfileCompletionScreen() {
                     : t('profileCompletion.continue')
                 }
                 onPress={handleContinue}
-                isLoading={isLoading}
-                disabled={!firstNameValue.trim() || !lastNameValue.trim()}
+                isLoading={isLoading || joinPending}
+                disabled={
+                  !firstNameValue.trim() || !lastNameValue.trim() || isLoading || joinPending
+                }
                 style={{ marginTop: spacing[4] }}
               />
             </View>

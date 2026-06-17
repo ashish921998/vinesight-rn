@@ -23,6 +23,22 @@ export type JoinOrgStatus =
   | 'network_error';
 
 /**
+ * The status strings the RPC is defined to return. The wrapper treats anything else as
+ * a contract break and degrades to `network_error` rather than trusting an untyped RPC
+ * payload — a malformed/unknown status with ok:true would otherwise be cast straight to
+ * the `JoinOrgStatus` union and treated as a success by callers.
+ */
+const KNOWN_JOIN_STATUSES: ReadonlySet<JoinOrgStatus> = new Set([
+  'joined',
+  'already_joined',
+  'not_found',
+  'is_staff',
+  'already_in_other_org',
+  'removed',
+  'unauthenticated',
+]);
+
+/**
  * Human-friendly copy for each join outcome. The RPC returns stable status codes;
  * this keeps the mapping in one place so both the profile-completion screen and
  * the settings modal render identical messages.
@@ -93,9 +109,16 @@ export async function joinOrganizationBySlug(rawSlug: string): Promise<JoinOrgRe
     return { ok: false, status: 'network_error' };
   }
 
+  // Runtime-validate the RPC payload shape before trusting it. An unknown status string
+  // (or a known-failure status paired with ok:true) is treated as a contract failure and
+  // degraded to network_error instead of being cast into the typed union.
+  const rawStatus = typeof data.status === 'string' ? (data.status as JoinOrgStatus) : null;
+  const ok = Boolean(data.ok);
+  const status = rawStatus && KNOWN_JOIN_STATUSES.has(rawStatus) ? rawStatus : 'network_error';
+
   return {
-    ok: Boolean(data.ok),
-    status: data.status,
+    ok,
+    status,
     organizationName: data.organization_name,
     organizationId: data.organization_id,
   };
