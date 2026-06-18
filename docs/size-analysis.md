@@ -53,6 +53,7 @@ gh secret set EXPO_APPLE_TEAM_ID -R ashish921998/vinesight-rn
 
 ## First run
 
+- **Until `SENTRY_AUTH_TOKEN` is set, the workflow skips the build/upload entirely** (a `preflight` job gates it) — so PRs opened before setup is finished won't fail or burn build minutes. It activates automatically once the secret exists.
 - The **first PR check needs a base build to exist on `main`.** Merge this workflow to `main` first (or push once) so a base build is uploaded; the diff appears on PRs after that.
 - The first native CI build may need a shakeout (NDK download, credentials). `fail-fast: false` means Android and iOS are independent — one can succeed while the other is sorted out.
 - Builds are **size-only**: runtime config like the Google Maps key may be empty in CI. That doesn't affect measured size.

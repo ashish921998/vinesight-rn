@@ -41,7 +41,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Gate: skip everything (including the slow native builds) unless
+  # SENTRY_AUTH_TOKEN is configured. Keeps this workflow from failing on PRs
+  # opened before setup is finished, and on forks that lack the secret.
+  preflight:
+    name: Check setup
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - name: Check for Sentry auth token
+        id: check
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::SENTRY_AUTH_TOKEN not set — skipping Size Analysis. See docs/size-analysis.md."
+          fi
+
   build-and-upload:
+    needs: preflight
+    if: needs.preflight.outputs.configured == 'true'
     name: ${{ matrix.platform }} size
     runs-on: ${{ matrix.os }}
     # Keep Android results even if the iOS build hits a credential snag (or vice-versa).
