@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-06-17
+
+### Added
+- Farmers can now self-link to a consultant's organization by entering that org's slug (the "consultant code") during profile completion or later from Settings, via a new `join_organization_by_slug` SECURITY DEFINER RPC that enforces one-active-org-per-farmer, staff≠client, and removed-stays-removed atomically
+- Optional consultant-code field on the profile-completion (signup) screen, with a Settings entry point and modal for joining after signup, mirroring the existing phone-link modal
+
+### Fixed
+- Signup org-join ordering: the org join is no longer attempted if the profile save failed (duplicate email / validation), the retry gate stays closed until the farmer taps Continue (no premature redirect when editing a failed code), and the profile is refetched after a successful join so org-gated UI like Fertilizer Plans is visible on dashboard landing instead of waiting for a later refetch
+- AI-gateway test fixtures are now hermetic and no longer leak real secrets from the developer shell into the test run
+
 ## [1.3.0] - 2026-06-08
 
 ### Added

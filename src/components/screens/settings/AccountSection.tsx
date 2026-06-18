@@ -12,6 +12,7 @@ interface AccountSectionProps {
   styles: SettingsStyles;
   m3: ReturnType<typeof getM3Theme>;
   onOpenLinkPhone: () => void;
+  onOpenJoinOrg: () => void;
   onSignOut: () => void;
   onDeleteAccount: () => void;
 }
@@ -23,6 +24,7 @@ export function AccountSection({
   styles,
   m3,
   onOpenLinkPhone,
+  onOpenJoinOrg,
   onSignOut,
   onDeleteAccount,
 }: AccountSectionProps) {
@@ -61,6 +63,33 @@ export function AccountSection({
             lineBreakStrategyIOS="standard"
           >
             {phoneActionValue ?? t('settings.linkPhone.sendCode')}
+          </Text>
+          <UISymbol name="chevron.right" size={16} color={m3.surface.s400} />
+        </Pressable>
+        <Pressable
+          onPress={onOpenJoinOrg}
+          accessibilityRole="button"
+          accessibilityLabel={t('settings.joinOrg.rowA11y', {
+            defaultValue: 'Join your consultant',
+          })}
+          style={[styles.settingsItem, styles.borderBottom]}
+        >
+          <View style={styles.settingsIcon}>
+            <UISymbol name="building.2.fill" size={20} color={m3.colorScheme.primary} />
+          </View>
+          <Text
+            style={styles.settingsTitle}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {t('settings.joinOrg.title', { defaultValue: 'Join your consultant' })}
+          </Text>
+          <Text
+            style={styles.settingsValue}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {t('settings.joinOrg.rowSubtitle', { defaultValue: 'Enter code' })}
           </Text>
           <UISymbol name="chevron.right" size={16} color={m3.surface.s400} />
         </Pressable>
