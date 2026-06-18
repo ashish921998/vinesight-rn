@@ -1,0 +1,132 @@
+# Sentry Size Analysis — monitors app download/install size and posts a
+# size-diff status check on every PR.
+#
+# How it works:
+#   - push to main      -> "base" build (no base-sha), gives PRs something to diff against
+#   - pull_request       -> "head" build (carries head/base SHA + PR number) -> status check
+#
+# Builds run with `eas build --local` on FREE GitHub runners (public repo), so
+# they consume ZERO EAS cloud build quota and reuse the existing EXPO_TOKEN for
+# EAS-managed signing credentials. The built artifact is handed to `sentry-cli
+# build upload`, which generates the comparison and (with the Sentry GitHub App
+# installed) posts the PR status check.
+#
+# Required secrets:
+#   - EXPO_TOKEN          (already configured) — EAS auth + credentials
+#   - SENTRY_AUTH_TOKEN   (you must add)        — Sentry build upload auth
+#   - EXPO_APPLE_TEAM_ID  (optional)            — only if the iOS build can't
+#                                                 resolve the Apple team non-interactively
+#
+# One-time manual setup is documented in docs/size-analysis.md.
+
+name: Size Analysis
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+
+# Don't stack builds for the same branch/PR — newest push wins.
+concurrency:
+  group: size-analysis-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-upload:
+    name: ${{ matrix.platform }} size
+    runs-on: ${{ matrix.os }}
+    # Keep Android results even if the iOS build hits a credential snag (or vice-versa).
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: android
+            os: ubuntu-latest
+            artifact: build/app.aab
+          - platform: ios
+            os: macos-latest
+            artifact: build/app.ipa
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        if: matrix.platform == 'android'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      # @sentry/cli >= 2.58.2 is required for `build upload`; installing latest.
+      - name: Install Sentry CLI
+        run: npm install -g @sentry/cli
+
+      - name: Build ${{ matrix.platform }} (eas local)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_APPLE_TEAM_ID: ${{ secrets.EXPO_APPLE_TEAM_ID }}
+        run: |
+          mkdir -p build
+          eas build \
+            --platform ${{ matrix.platform }} \
+            --profile production \
+            --local \
+            --non-interactive \
+            --output ${{ matrix.artifact }}
+
+      # PR build: carries head + base SHA and PR number so Sentry can diff and
+      # post a status check on the pull request.
+      - name: Upload to Sentry (PR head build)
+        if: github.event_name == 'pull_request'
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          sentry-cli build upload "${{ matrix.artifact }}" \
+            --org vinesight-6s \
+            --project vinesight-rn \
+            --build-configuration Release \
+            --vcs-provider github \
+            --head-repo-name "${{ github.repository }}" \
+            --head-sha "${{ github.event.pull_request.head.sha }}" \
+            --base-sha "${{ github.event.pull_request.base.sha }}" \
+            --head-ref "${{ github.head_ref }}" \
+            --base-ref "${{ github.base_ref }}" \
+            --pr-number "${{ github.event.pull_request.number }}"
+
+      # Base build: pushes to main establish the baseline future PRs diff against.
+      # No base-sha on base builds (per Sentry's comparison model).
+      - name: Upload to Sentry (main base build)
+        if: github.event_name == 'push'
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          sentry-cli build upload "${{ matrix.artifact }}" \
+            --org vinesight-6s \
+            --project vinesight-rn \
+            --build-configuration Release \
+            --vcs-provider github \
+            --head-repo-name "${{ github.repository }}" \
+            --head-sha "${{ github.sha }}" \
+            --head-ref "${{ github.ref_name }}"
