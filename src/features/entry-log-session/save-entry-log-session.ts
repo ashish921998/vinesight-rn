@@ -22,6 +22,8 @@ export type EntryLogCreatedRecord = {
   farmId: number;
   farmContext?: EntryLogFarmContext;
   previousDailyNote?: DailyNoteRecord | null;
+  /** Exact water delta applied by an irrigation log, for precise rollback. */
+  waterDelta?: number;
 };
 
 export type EntryLogRollbackFailure = {
@@ -70,9 +72,10 @@ export type SaveEntryLogSessionResult =
       rollbackFailures: EntryLogRollbackFailure[];
     };
 
-export interface EntryLogSessionAdapters extends Omit<EntryLogSubmitters, 'deleteIrrigation'> {
+export interface EntryLogSessionAdapters extends EntryLogSubmitters {
   getDailyNote: (payload: { farmId: number; date: string }) => Promise<DailyNoteRecord | null>;
-  deleteIrrigation: (payload: { id: number; farmId: number }) => Promise<unknown>;
+  /** Atomic delete + exact-delta water reversal for a logged irrigation. */
+  revertIrrigation: (payload: { recordId: number; waterDelta: number }) => Promise<unknown>;
   deleteSpray: (payload: { id: number; farmId: number }) => Promise<unknown>;
   deleteHarvest: (payload: { id: number; farmId: number }) => Promise<unknown>;
   deleteExpense: (payload: { id: number; farmId: number }) => Promise<unknown>;
@@ -115,21 +118,9 @@ async function rollbackCreatedRecords(
       const id = entry.recordId as number;
       switch (entry.type) {
         case 'irrigation':
-          await adapters.deleteIrrigation({ id, farmId: entry.farmId });
-          if (entry.farmContext) {
-            const farm = entry.farmContext;
-            if (
-              farm.total_tank_capacity &&
-              farm.system_discharge &&
-              farm.total_tank_capacity > 0 &&
-              farm.system_discharge > 0
-            ) {
-              await adapters.updateWaterLevel({
-                farmId: entry.farmId,
-                remainingWater: farm.remaining_water ?? 0,
-              });
-            }
-          }
+          // Atomic delete + exact-delta water reversal (revert_irrigation). No stale
+          // snapshot restore — the DB subtracts precisely what log_irrigation added.
+          await adapters.revertIrrigation({ recordId: id, waterDelta: entry.waterDelta ?? 0 });
           break;
         case 'spray':
           await adapters.deleteSpray({ id, farmId: entry.farmId });
@@ -180,7 +171,12 @@ function collectCreatedRecordFromResult(params: {
   log: EntryLogSessionDraft;
   farmId: number;
   farmContext: EntryLogFarmContext;
-  result: PromiseSettledResult<{ pendingLogId: string; type: LogTypeId; recordId: number | null }>;
+  result: PromiseSettledResult<{
+    pendingLogId: string;
+    type: LogTypeId;
+    recordId: number | null;
+    waterDelta?: number;
+  }>;
   previousDailyNote?: DailyNoteRecord | null;
 }): EntryLogCreatedRecord | null {
   const { log, farmId, farmContext, result, previousDailyNote } = params;
@@ -192,20 +188,13 @@ function collectCreatedRecordFromResult(params: {
       farmId,
       farmContext,
       previousDailyNote,
+      waterDelta: result.value.waterDelta,
     };
   }
 
-  if (log.type !== 'irrigation') return null;
-  const orphanedRecordId = (result.reason as { recordId?: number | null } | null)?.recordId ?? null;
-  if (orphanedRecordId === null) return null;
-  return {
-    pendingLogId: log.id,
-    type: log.type,
-    recordId: orphanedRecordId,
-    farmId,
-    farmContext,
-    previousDailyNote,
-  };
+  // With atomic log_irrigation there is no "record created but water update failed"
+  // orphan: a rejected submit means nothing landed, so there is nothing to roll back.
+  return null;
 }
 
 async function submitLogWithSnapshot(params: {

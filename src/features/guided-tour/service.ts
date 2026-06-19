@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { supabase } from '@/lib/supabase';
+import { getUserId } from '@/lib/auth-utils';
 import { telemetry } from '@/services/telemetry';
 import type { GuidedTourPatchPayload, GuidedTourServerState } from './types';
 
@@ -107,13 +108,6 @@ async function updatePushDeviceRow(
   });
 
   if (error) throw error;
-}
-
-async function getUserId(): Promise<string | null> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.user.id ?? null;
 }
 
 export async function fetchGuidedTourServerState(): Promise<GuidedTourServerState | null> {

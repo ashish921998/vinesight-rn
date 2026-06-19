@@ -11,6 +11,11 @@ import {
   OXIDE_TO_ELEMENTAL_FACTORS,
   sanitizeComposition,
 } from '@/constants/nutrient-definitions';
+import {
+  normalizeUnitString,
+  shouldApplyAreaMultiplier,
+  stripPerAcreSuffix,
+} from '@/utils/unit-conversion';
 
 export type NutrientTotals = Record<string, number>;
 
@@ -59,11 +64,7 @@ function roundTo(value: number, precision = 4): number {
 }
 
 function normalizeUnit(unit: string): string {
-  return unit
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '')
-    .replace(/litres?/g, 'liter');
+  return normalizeUnitString(unit).replace(/litres?/g, 'liter');
 }
 
 function resolveDensity(densityKgPerL?: number | null): number {
@@ -71,14 +72,6 @@ function resolveDensity(densityKgPerL?: number | null): number {
     return densityKgPerL;
   }
   return DEFAULT_DENSITY_KG_PER_L;
-}
-
-function isPerAcreUnit(unit: string): boolean {
-  return unit.includes('/acre');
-}
-
-function baseUnit(unit: string): string {
-  return unit.replace('/acre', '');
 }
 
 function resolveTotalQuantity({
@@ -93,7 +86,7 @@ function resolveTotalQuantity({
   areaAcre: number;
 }): number {
   const normalizedUnit = normalizeUnit(unit);
-  const useAreaMultiplier = quantityBasis === 'per_acre' || isPerAcreUnit(normalizedUnit);
+  const useAreaMultiplier = shouldApplyAreaMultiplier(normalizedUnit, quantityBasis);
   if (!useAreaMultiplier) return quantity;
   if (!Number.isFinite(areaAcre) || areaAcre <= 0) return quantity;
   return quantity * areaAcre;
@@ -122,7 +115,7 @@ function toProductMassKg({
     areaAcre,
   });
   const density = resolveDensity(densityKgPerL);
-  const unitToken = baseUnit(normalizedUnit);
+  const unitToken = stripPerAcreSuffix(normalizedUnit);
 
   if (!Number.isFinite(totalQuantity) || totalQuantity <= 0) return null;
 

@@ -15,9 +15,14 @@ import type {
   SprayFormData,
 } from '@/components/forms';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
+import {
+  mapAppliedItems,
+  buildChemicalSummary,
+  buildWaterDoseString,
+} from '@/utils/applied-input-mapper';
 import { PHI_CALC_VERSION } from '@/services/phi-service';
 import { mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
-import { resolveAreaUnitPreference } from '@/utils/preferences';
+import { resolveAreaUnitPreference, perAcreNormalizationFactor } from '@/utils/preferences';
 import type { AreaUnitPreference } from '@/utils/preferences';
 
 export interface EntryPendingLogSubmission {
@@ -43,7 +48,14 @@ export interface EntryLogFarmContext {
 }
 
 export interface EntryLogSubmitters {
-  createIrrigation: (payload: IrrigationRecordInsert) => Promise<{ id?: number | null }>;
+  /**
+   * Atomically inserts an irrigation record and applies its water-balance delta
+   * (server-side). Returns the new record id plus the exact amount added to
+   * remaining_water so a rollback can subtract it precisely.
+   */
+  logIrrigation: (
+    payload: IrrigationRecordInsert,
+  ) => Promise<{ id?: number | null; waterDelta?: number }>;
   createSpray: (payload: SprayRecordInsert) => Promise<{ id?: number | null }>;
   createHarvest: (payload: HarvestRecordInsert) => Promise<{ id?: number | null }>;
   createExpense: (payload: ExpenseRecordInsert) => Promise<{ id?: number | null }>;
@@ -53,14 +65,14 @@ export interface EntryLogSubmitters {
     date: string;
     notes: string | null;
   }) => Promise<{ id?: number | null }>;
-  updateWaterLevel: (payload: { farmId: number; remainingWater: number }) => Promise<unknown>;
-  deleteIrrigation?: (payload: { id: number; farmId: number }) => Promise<unknown>;
 }
 
 export interface EntryLogSubmissionResult {
   pendingLogId: string;
   type: LogTypeId;
   recordId: number | null;
+  /** Exact water delta applied by an irrigation log; used for precise rollback. */
+  waterDelta?: number;
 }
 
 export async function submitEntryPendingLog(params: {
@@ -74,7 +86,7 @@ export async function submitEntryPendingLog(params: {
   const areaUnit = resolveAreaUnitPreference(farm.areaUnit ?? 'acres');
   const farmArea =
     typeof farm.area === 'number' && Number.isFinite(farm.area) && farm.area > 0 ? farm.area : 0;
-  const perAreaToPerAcreFactor = areaUnit === 'hectares' ? 0.404686 : 1;
+  const perAreaToPerAcreFactor = perAcreNormalizationFactor(areaUnit);
 
   switch (log.type) {
     case 'irrigation': {
@@ -83,7 +95,10 @@ export async function submitEntryPendingLog(params: {
       if (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0) {
         throw new Error('Invalid irrigation duration');
       }
-      const created = await submitters.createIrrigation({
+      // Atomic server-side insert + water-balance delta (water-ledger / log_irrigation):
+      // either both the record and the water update land, or neither does. No client
+      // read-modify-write of remaining_water, so no orphaned record to compensate for.
+      const created = await submitters.logIrrigation({
         farm_id: farmId,
         date: dateStr,
         duration,
@@ -94,50 +109,12 @@ export async function submitEntryPendingLog(params: {
         date_of_pruning: farm.date_of_pruning,
       });
 
-      const recordId = created.id ?? null;
-
-      if (
-        farm.total_tank_capacity &&
-        farm.system_discharge &&
-        farm.total_tank_capacity > 0 &&
-        farm.system_discharge > 0
-      ) {
-        const waterAdded = duration * farm.system_discharge;
-        const currentWater = farm.remaining_water ?? 0;
-        const newWaterLevel = Math.min(farm.total_tank_capacity, currentWater + waterAdded);
-        try {
-          await submitters.updateWaterLevel({
-            farmId,
-            remainingWater: newWaterLevel,
-          });
-        } catch (waterLevelError) {
-          // Water-level update failed but irrigation record already exists.
-          // Attempt compensating delete to keep atomic semantics.
-          let orphaned = false;
-          if (recordId !== null && submitters.deleteIrrigation) {
-            try {
-              await submitters.deleteIrrigation({ id: recordId, farmId });
-            } catch {
-              orphaned = true;
-              // Compensating delete failed; record is orphaned. Attach the
-              // recordId to the error so the caller can roll it back too.
-            }
-          } else if (recordId !== null) {
-            orphaned = true;
-          }
-          if (
-            orphaned &&
-            waterLevelError &&
-            typeof waterLevelError === 'object' &&
-            recordId !== null
-          ) {
-            (waterLevelError as { recordId?: number | null }).recordId = recordId;
-          }
-          throw waterLevelError;
-        }
-      }
-
-      return { pendingLogId: log.id, type: log.type, recordId };
+      return {
+        pendingLogId: log.id,
+        type: log.type,
+        recordId: created.id ?? null,
+        waterDelta: created.waterDelta ?? 0,
+      };
     }
 
     case 'spray': {
@@ -145,26 +122,8 @@ export async function submitEntryPendingLog(params: {
       const hasCatalogMix = typeof data.catalogMixId === 'number';
       const hasResolvedPhi =
         hasCatalogMix && data.safeHarvestDate != null && data.governingPhiDays != null;
-      const chemicalStr = data.chemicals
-        .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
-        .join(', ');
-      const chemicalItems = data.chemicals
-        .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
-        .map((c) => {
-          const quantityBasis = c.quantityBasis ?? 'total';
-          const quantity =
-            quantityBasis === 'per_acre' ? c.quantity! * perAreaToPerAcreFactor : c.quantity!;
-          return {
-            name: c.name.trim(),
-            unit: c.unit,
-            quantity,
-            quantity_basis: quantityBasis,
-            warehouse_item_id: c.warehouseItemId ?? null,
-            catalog_product_id: c.catalogProductId ?? null,
-            composition_snapshot: c.compositionSnapshot ?? null,
-            density_kg_per_l: c.densityKgPerL ?? null,
-          };
-        });
+      const chemicalStr = buildChemicalSummary(data.chemicals);
+      const chemicalItems = mapAppliedItems(data.chemicals, { perAreaToPerAcreFactor });
       const nutrientTotals = calculateNutrientTotalsForLog({
         items: chemicalItems,
         areaAcre: farmArea,
@@ -194,7 +153,7 @@ export async function submitEntryPendingLog(params: {
         catalog_mix_id: data.catalogMixId ?? null,
         chemical: chemicalStr,
         chemical_items: chemicalItems,
-        dose: `Water: ${data.waterVolume}L`,
+        dose: buildWaterDoseString(data.waterVolume),
         governing_phi_days: hasResolvedPhi ? (data.governingPhiDays ?? null) : null,
         safe_harvest_date: hasResolvedPhi ? (data.safeHarvestDate ?? null) : null,
         phi_calc_version: hasResolvedPhi ? PHI_CALC_VERSION : null,
@@ -242,23 +201,7 @@ export async function submitEntryPendingLog(params: {
 
     case 'fertigation': {
       const data = log.data as FertigationFormData;
-      const fertilizers = data.fertilizers
-        .filter((f) => f.name.trim() && f.quantity !== undefined && f.quantity > 0)
-        .map((f) => {
-          const quantityBasis = f.quantityBasis ?? 'total';
-          const quantity =
-            quantityBasis === 'per_acre' ? f.quantity! * perAreaToPerAcreFactor : f.quantity!;
-          return {
-            name: f.name.trim(),
-            unit: f.unit,
-            quantity,
-            quantity_basis: quantityBasis,
-            warehouse_item_id: f.warehouseItemId ?? null,
-            catalog_product_id: f.catalogProductId ?? null,
-            composition_snapshot: f.compositionSnapshot ?? null,
-            density_kg_per_l: f.densityKgPerL ?? null,
-          };
-        });
+      const fertilizers = mapAppliedItems(data.fertilizers, { perAreaToPerAcreFactor });
       const nutrientTotals = calculateNutrientTotalsForLog({
         items: fertilizers,
         areaAcre: farmArea,

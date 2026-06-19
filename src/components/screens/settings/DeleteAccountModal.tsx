@@ -16,6 +16,7 @@ import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { spacing, getM3Theme } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { supabase } from '@/lib/supabase';
+import { getAccessToken } from '@/lib/auth-utils';
 import { telemetry } from '@/services/telemetry';
 import { isIOS } from '@/hooks';
 import type { SettingsStyles } from './settings-styles';
@@ -257,10 +258,7 @@ export function DeleteAccountModal({
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const {
-        data: { session: currentSession },
-      } = await supabase.auth.getSession();
-      const accessToken = currentSession?.access_token;
+      const accessToken = await getAccessToken();
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
       if (!accessToken) {
         clearTimeout(timeoutId);
@@ -381,10 +379,7 @@ export function DeleteAccountModal({
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const {
-        data: { session: currentSession },
-      } = await supabase.auth.getSession();
-      const accessToken = currentSession?.access_token;
+      const accessToken = await getAccessToken();
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
       if (!accessToken) {
         clearTimeout(timeoutId);

@@ -7,25 +7,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
+import { requireUserId } from '@/lib/auth-utils';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmSeason, FarmUpdate } from '../types';
-import { TABLES, toSupabaseTimestampString } from '../types';
+import { TABLES } from '../types';
 import { formatLocalDate } from '../utils/date';
-
-// ============================================================
-// MARK: - Helper to get current user ID
-// ============================================================
-
-async function getUserId(): Promise<string> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error || !session) {
-    throw new Error('Please sign in to continue');
-  }
-  return session.user.id;
-}
 
 function isRpcFunctionMissing(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
@@ -135,7 +121,7 @@ export async function ensureInitialFarmSeasonForFarmId(
   farmId: number,
   seasonNameOverride?: string,
 ): Promise<void> {
-  const userId = await getUserId();
+  const userId = await requireUserId();
   const { data: farm, error } = await supabase
     .from(TABLES.FARMS)
     .select('*')
@@ -158,7 +144,7 @@ export function useFarms() {
   return useQuery({
     queryKey: queryKeys.farms.lists(),
     queryFn: async (): Promise<Farm[]> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.FARMS)
@@ -191,7 +177,7 @@ export function useFarm(id: number | undefined) {
   return useQuery({
     queryKey: queryKeys.farms.detail(id!),
     queryFn: async (): Promise<Farm> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
       const { data, error } = await supabase
         .from(TABLES.FARMS)
         .select('*')
@@ -216,7 +202,7 @@ export function useCreateFarm() {
 
   return useMutation({
     mutationFn: async (farm: FarmInsert): Promise<Farm> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
       let data: Farm | null = null;
       let lastError: { code?: string; message?: string } | null = null;
       const { display_order: _ignoredDisplayOrder, ...farmPayload } = farm;
@@ -339,7 +325,7 @@ export function useUpdateFarm() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: FarmUpdate }): Promise<Farm> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.FARMS)
@@ -367,47 +353,6 @@ export function useUpdateFarm() {
 }
 
 // ============================================================
-// MARK: - Update Farm Water Level Mutation
-// ============================================================
-
-export function useUpdateFarmWaterLevel() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      farmId,
-      remainingWater,
-    }: {
-      farmId: number;
-      remainingWater: number;
-    }): Promise<Farm> => {
-      const { data, error } = await supabase
-        .from(TABLES.FARMS)
-        .update({
-          remaining_water: remainingWater,
-          water_calculation_updated_at: toSupabaseTimestampString(new Date()),
-        })
-        .eq('id', farmId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (updatedFarm) => {
-      // Update in cache
-      queryClient.setQueryData<Farm[]>(queryKeys.farms.lists(), (old) => {
-        if (!old) return [updatedFarm];
-        return old.map((f) => (f.id === updatedFarm.id ? updatedFarm : f));
-      });
-      if (updatedFarm.id) {
-        queryClient.setQueryData(queryKeys.farms.detail(updatedFarm.id), updatedFarm);
-      }
-    },
-  });
-}
-
-// ============================================================
 // MARK: - Delete Farm Mutation
 // ============================================================
 
@@ -416,7 +361,7 @@ export function useDeleteFarm() {
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { error } = await supabase
         .from(TABLES.FARMS)

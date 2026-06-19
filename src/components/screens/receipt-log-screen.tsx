@@ -33,7 +33,6 @@ import { Symbol } from '@/components/ui/symbol';
 import { LOG_TYPES, type LogType, type LogTypeId } from '@/constants/calculator-models';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { toSupabaseDateString, type DailyNoteRecord } from '@/types/database';
-import type { Farm } from '@/types';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import { formatDate } from '@/i18n/format';
@@ -66,14 +65,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   useFarm,
   useProfile,
-  useDeleteIrrigationRecord,
   useDeleteSprayRecord,
   useDeleteHarvestRecord,
   useDeleteExpenseRecord,
   useDeleteFertigationRecord,
   useDeleteDailyNote,
   useUpsertDailyNote,
-  useUpdateFarmWaterLevel,
+  useRevertIrrigation,
   queryKeys,
 } from '@/hooks';
 import { useSaveSingleLog } from '@/features/entry-log-session';
@@ -193,14 +191,13 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
 
   const queryClient = useQueryClient();
   const saveLog = useSaveSingleLog();
-  const deleteIrrigation = useDeleteIrrigationRecord();
   const deleteSpray = useDeleteSprayRecord();
   const deleteHarvest = useDeleteHarvestRecord();
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
   const deleteDailyNote = useDeleteDailyNote();
   const upsertDailyNote = useUpsertDailyNote();
-  const updateWaterLevel = useUpdateFarmWaterLevel();
+  const revertIrrigation = useRevertIrrigation();
 
   const [entries, setEntries] = useState<SavedEntry[]>([]);
   const [activeType, setActiveType] = useState<LogTypeId | null>(null);
@@ -366,22 +363,14 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
         const id = entry.recordId;
         switch (entry.type) {
           case 'irrigation':
-            await deleteIrrigation.mutateAsync({ id, farmId: entry.farmId });
-            if (entry.waterDelta != null && entry.waterDelta !== 0) {
-              // Subtract this irrigation's contribution from the *current* tank
-              // level (read fresh from cache — each save writes it via setQueryData)
-              // so removing an earlier irrigation doesn't wipe out later ones.
-              const liveFarm = queryClient.getQueryData<Farm>(queryKeys.farms.detail(entry.farmId));
-              const current = liveFarm?.remaining_water ?? 0;
-              const capacity = liveFarm?.total_tank_capacity ?? undefined;
-              let target = current - entry.waterDelta;
-              if (target < 0) target = 0;
-              if (capacity != null && target > capacity) target = capacity;
-              await updateWaterLevel.mutateAsync({
-                farmId: entry.farmId,
-                remainingWater: target,
-              });
-            }
+            // Atomic delete + exact-delta subtraction, computed server-side from the
+            // farm's own value (revert_irrigation), so removing an irrigation can't race
+            // a concurrent writer. Replaces the old delete-then-absolute-write. A 0/absent
+            // waterDelta (farm without tank capacity) just deletes the record.
+            await revertIrrigation.mutateAsync({
+              recordId: id,
+              waterDelta: entry.waterDelta ?? 0,
+            });
             break;
           case 'spray':
             await deleteSpray.mutateAsync({ id, farmId: entry.farmId });
@@ -428,14 +417,13 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
     },
     [
       queryClient,
-      deleteIrrigation,
+      revertIrrigation,
       deleteSpray,
       deleteHarvest,
       deleteExpense,
       deleteFertigation,
       deleteDailyNote,
       upsertDailyNote,
-      updateWaterLevel,
       t,
     ],
   );

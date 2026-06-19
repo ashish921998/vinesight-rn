@@ -13,7 +13,6 @@ export {
   useFarm,
   useCreateFarm,
   useUpdateFarm,
-  useUpdateFarmWaterLevel,
   useReorderFarms,
   useDeleteFarm,
   usePrefetchFarm,
@@ -72,6 +71,19 @@ export {
   useRecentSprayChemicals,
   useRecentFertigationItems,
 } from './use-records';
+
+// Water Ledger (atomic irrigation + water-balance RPCs)
+export {
+  logIrrigation,
+  revertIrrigation,
+  setWaterLevel,
+  useLogIrrigation,
+  useRevertIrrigation,
+  useSetWaterLevel,
+  WaterLevelConflictError,
+  type LogIrrigationResult,
+  type SetWaterLevelPayload,
+} from './water-ledger';
 
 // Worker Hooks
 export {

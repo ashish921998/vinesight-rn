@@ -21,14 +21,12 @@ import {
 } from '@/utils/entry-log-submission';
 import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
 import {
-  useCreateIrrigationRecord,
+  useLogIrrigation,
   useCreateSprayRecord,
   useCreateHarvestRecord,
   useCreateExpenseRecord,
   useCreateFertigationRecord,
   useUpsertDailyNote,
-  useUpdateFarmWaterLevel,
-  useDeleteIrrigationRecord,
   fetchDailyNoteByDate,
   queryKeys,
 } from '@/hooks';
@@ -81,14 +79,12 @@ function buildFarmContext(farm: Farm, preferredAreaUnit: AreaUnitPreference): En
  */
 export function useSaveSingleLog() {
   const queryClient = useQueryClient();
-  const createIrrigation = useCreateIrrigationRecord();
+  const logIrrigation = useLogIrrigation();
   const createSpray = useCreateSprayRecord();
   const createHarvest = useCreateHarvestRecord();
   const createExpense = useCreateExpenseRecord();
   const createFertigation = useCreateFertigationRecord();
   const upsertDailyNote = useUpsertDailyNote();
-  const updateWaterLevel = useUpdateFarmWaterLevel();
-  const deleteIrrigation = useDeleteIrrigationRecord();
 
   return useCallback(
     async (input: SaveSingleLogInput): Promise<SaveSingleLogResult> => {
@@ -99,33 +95,13 @@ export function useSaveSingleLog() {
       }
 
       const submitters: EntryLogSubmitters = {
-        createIrrigation: (payload) => createIrrigation.mutateAsync(payload),
+        logIrrigation: (payload) => logIrrigation.mutateAsync(payload),
         createSpray: (payload) => createSpray.mutateAsync(payload),
         createHarvest: (payload) => createHarvest.mutateAsync(payload),
         createExpense: (payload) => createExpense.mutateAsync(payload),
         createFertigation: (payload) => createFertigation.mutateAsync(payload),
         upsertDailyNote: (payload) => upsertDailyNote.mutateAsync(payload),
-        updateWaterLevel: (payload) => updateWaterLevel.mutateAsync(payload),
-        deleteIrrigation: (payload) => deleteIrrigation.mutateAsync(payload),
       };
-
-      const willUpdateWaterLevel =
-        type === 'irrigation' &&
-        farm.total_tank_capacity != null &&
-        farm.total_tank_capacity > 0 &&
-        farm.system_discharge != null &&
-        farm.system_discharge > 0;
-      // The amount this irrigation adds to `remaining_water`, mirroring the clamp
-      // in submitEntryPendingLog. Stored (not the absolute pre-save level) so undo
-      // can subtract it from the live level — correct across multiple irrigations.
-      let waterDelta: number | undefined;
-      if (willUpdateWaterLevel) {
-        const duration = (data as { duration?: number | null }).duration ?? 0;
-        const before = farm.remaining_water ?? 0;
-        const capacity = farm.total_tank_capacity as number;
-        const after = Math.min(capacity, before + duration * (farm.system_discharge as number));
-        waterDelta = after - before;
-      }
 
       const previousDailyNote =
         type === 'note' ? await fetchDailyNoteByDate(farmId, dateStr) : undefined;
@@ -139,18 +115,24 @@ export function useSaveSingleLog() {
 
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
 
-      return { type, recordId: result.recordId, farmId, waterDelta, previousDailyNote };
+      // waterDelta is the exact amount log_irrigation applied (server-clamped); the
+      // receipt screen subtracts it from the live level when a row is removed.
+      return {
+        type,
+        recordId: result.recordId,
+        farmId,
+        waterDelta: result.waterDelta,
+        previousDailyNote,
+      };
     },
     [
       queryClient,
-      createIrrigation,
+      logIrrigation,
       createSpray,
       createHarvest,
       createExpense,
       createFertigation,
       upsertDailyNote,
-      updateWaterLevel,
-      deleteIrrigation,
     ],
   );
 }

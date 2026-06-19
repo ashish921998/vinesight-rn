@@ -49,6 +49,11 @@ import {
   type PendingLog,
   type PendingLogFailure,
 } from '@/components/screens/entry-form/PendingLogs';
+import {
+  getLogDescription,
+  buildSprayPendingData,
+} from '@/components/screens/entry-form/draft-mappers';
+import { usePendingLogs } from '@/components/screens/entry-form/use-pending-logs';
 import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
 import { LogForm } from '@/components/screens/entry-form/LogForm';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
@@ -90,17 +95,16 @@ import {
   type FertilizerUnit,
 } from '@/constants/calculator-models';
 import {
-  useCreateIrrigationRecord,
+  useLogIrrigation,
   useCreateSprayRecord,
   useCreateHarvestRecord,
   useCreateExpenseRecord,
   useCreateFertigationRecord,
-  useDeleteIrrigationRecord,
+  useRevertIrrigation,
   useDeleteSprayRecord,
   useDeleteHarvestRecord,
   useDeleteExpenseRecord,
   useDeleteFertigationRecord,
-  useUpdateFarmWaterLevel,
   useFarms,
   useProfile,
   useWarehouseItems,
@@ -431,10 +435,14 @@ export function EntryForm({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedLogType, setSelectedLogType] = useState<LogTypeId | null>(null);
   const [showLogFormModal, setShowLogFormModal] = useState(false);
-  const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
-  const [pendingLogFailures, setPendingLogFailures] = useState<Record<string, PendingLogFailure>>(
-    {},
-  );
+  const {
+    pendingLogs,
+    pendingLogFailures,
+    appendPendingLog,
+    removePendingLog,
+    setPendingLogFailures,
+    clearPendingLogs,
+  } = usePendingLogs();
   const [isSubmittingLogs, setIsSubmittingLogs] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [footerHeight, setFooterHeight] = useState(112);
@@ -574,19 +582,18 @@ export function EntryForm({
     return Array.from(deduped.values()).slice(0, 15);
   }, [fertilizerPlan, fertilizerWarehouseItems, recentFertigationItems]);
 
-  const createIrrigation = useCreateIrrigationRecord();
+  const logIrrigation = useLogIrrigation();
   const createSpray = useCreateSprayRecord();
   const createHarvest = useCreateHarvestRecord();
   const createExpense = useCreateExpenseRecord();
   const createFertigation = useCreateFertigationRecord();
   const upsertDailyNote = useUpsertDailyNote();
-  const deleteIrrigation = useDeleteIrrigationRecord();
+  const revertIrrigation = useRevertIrrigation();
   const deleteSpray = useDeleteSprayRecord();
   const deleteHarvest = useDeleteHarvestRecord();
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
   const deleteDailyNote = useDeleteDailyNote();
-  const updateWaterLevel = useUpdateFarmWaterLevel();
 
   const scrollToNode = useCallback(
     (nodeHandle: number) => {
@@ -858,42 +865,6 @@ export function EntryForm({
     activeTab === 'log' &&
     presentation === 'screen';
 
-  const getLogDescription = useCallback((type: LogTypeId, data: unknown): string => {
-    switch (type) {
-      case 'irrigation':
-        return `${(data as IrrigationFormData).duration} hours`;
-      case 'spray': {
-        const spray = data as SprayFormData;
-        const mixName = spray.catalogMixName?.trim();
-        if (mixName) {
-          return `${mixName} • ${spray.waterVolume}L`;
-        }
-        const chemCount = spray.chemicals.length;
-        return `${spray.waterVolume}L water, ${chemCount} chemical${chemCount !== 1 ? 's' : ''}`;
-      }
-      case 'harvest': {
-        const harvest = data as HarvestFormData;
-        return `${harvest.quantity} kg, Grade ${harvest.grade}`;
-      }
-      case 'expense': {
-        const expense = data as ExpenseFormData;
-        return `₹${expense.cost} - ${expense.type}`;
-      }
-      case 'fertigation': {
-        const fert = data as FertigationFormData;
-        const fertCount = fert.fertilizers.length;
-        const waterText = fert.waterVolume ? `${fert.waterVolume}L water, ` : '';
-        return `${waterText}${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
-      }
-      case 'note': {
-        const note = data as NoteFormData;
-        return note.notes?.trim() ?? '';
-      }
-      default:
-        return '';
-    }
-  }, []);
-
   const enqueuePendingLog = useCallback(
     (type: LogTypeId, data: PendingLog['data']) => {
       const draftScope: PendingLog['scope'] =
@@ -908,38 +879,14 @@ export function EntryForm({
         isSourceTaskLog: false,
       };
 
-      setPendingLogs((prev) => {
-        const shouldMarkSourceTaskLog = Boolean(
-          sourceTaskId &&
-          sourceTaskType &&
-          type === sourceTaskType &&
-          !prev.some((log) => log.isSourceTaskLog),
-        );
-        return [...prev, { ...newLog, isSourceTaskLog: shouldMarkSourceTaskLog }];
-      });
+      appendPendingLog(newLog, sourceTaskId && sourceTaskType ? sourceTaskType : null);
       setSelectedLogType(null);
       setShowLogFormModal(false);
       setTimeout(() => {
         contentScrollViewRef.current?.scrollToEnd({ animated: true });
       }, 250);
     },
-    [activeFarm?.id, getLogDescription, isAllFarmsSelected, sourceTaskId, sourceTaskType],
-  );
-
-  const buildSprayPendingData = useCallback(
-    (input: SprayFormData): SprayFormData =>
-      isGrapeFarm && input.catalogMixId && input.safeHarvestDate && input.governingPhiDays != null
-        ? {
-            ...input,
-          }
-        : {
-            ...input,
-            governingPhiDays: null,
-            safeHarvestDate: null,
-            phiBlockingComponent: null,
-            phiStatus: input.phiStatus ?? (input.catalogMixId ? 'legacy_unverified' : 'unknown'),
-          },
-    [isGrapeFarm],
+    [activeFarm?.id, isAllFarmsSelected, sourceTaskId, sourceTaskType, appendPendingLog],
   );
 
   const addLogToSession = useCallback(() => {
@@ -999,10 +946,10 @@ export function EntryForm({
                         text: t('common.confirm', { defaultValue: 'Confirm' }),
                         style: 'destructive',
                         onPress: () => {
-                          const payload = buildSprayPendingData({
-                            ...sprayData,
-                            phiOverride: true,
-                          });
+                          const payload = buildSprayPendingData(
+                            { ...sprayData, phiOverride: true },
+                            { isGrapeFarm },
+                          );
                           enqueuePendingLog('spray', payload);
                           setSprayData(createEmptySprayFormData());
                         },
@@ -1032,7 +979,7 @@ export function EntryForm({
           );
         }
 
-        data = buildSprayPendingData(sprayData);
+        data = buildSprayPendingData(sprayData, { isGrapeFarm });
         setSprayData(createEmptySprayFormData());
         break;
       case 'harvest':
@@ -1069,20 +1016,14 @@ export function EntryForm({
     noteData,
     isGrapeFarm,
     activeSeason?.target_harvest_date,
-    buildSprayPendingData,
     enqueuePendingLog,
     t,
   ]);
 
-  const removeLogFromSession = useCallback((id: string) => {
-    setPendingLogFailures((prev) => {
-      if (!prev[id]) return prev;
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
-    setPendingLogs((prev) => prev.filter((log) => log.id !== id));
-  }, []);
+  const removeLogFromSession = useCallback(
+    (id: string) => removePendingLog(id),
+    [removePendingLog],
+  );
 
   const saveAllLogs = async () => {
     if (pendingLogs.length === 0) return;
@@ -1093,7 +1034,7 @@ export function EntryForm({
     const createdFrom = entrySource === 'voice_ai' ? 'voice_ai' : 'manual';
 
     const adapters: EntryLogSessionAdapters = {
-      createIrrigation: async (payload) => createIrrigation.mutateAsync(payload),
+      logIrrigation: async (payload) => logIrrigation.mutateAsync(payload),
       createSpray: async (payload) => createSpray.mutateAsync(payload),
       createHarvest: async (payload) => createHarvest.mutateAsync(payload),
       createExpense: async (payload) => createExpense.mutateAsync(payload),
@@ -1109,8 +1050,7 @@ export function EntryForm({
         if (error) throw error;
         return (data ?? null) as DailyNoteRecord | null;
       },
-      updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
-      deleteIrrigation: async (payload) => deleteIrrigation.mutateAsync(payload),
+      revertIrrigation: async (payload) => revertIrrigation.mutateAsync(payload),
       deleteSpray: async (payload) => deleteSpray.mutateAsync(payload),
       deleteHarvest: async (payload) => deleteHarvest.mutateAsync(payload),
       deleteExpense: async (payload) => deleteExpense.mutateAsync(payload),
@@ -1331,8 +1271,7 @@ export function EntryForm({
           recordType: record.type,
         });
       });
-      setPendingLogs([]);
-      setPendingLogFailures({});
+      clearPendingLogs();
 
       if (sourceTaskId && result.sourceTaskRecord) {
         try {
@@ -1671,8 +1610,7 @@ export function EntryForm({
             text: t('entryForm.discardChanges.discard'),
             style: 'destructive',
             onPress: () => {
-              setPendingLogs([]);
-              setPendingLogFailures({});
+              clearPendingLogs();
               resetTaskForm();
               setSelectedLogType(null);
               onClose();
@@ -1692,6 +1630,7 @@ export function EntryForm({
     dueDate,
     taskPlannedInputs.length,
     resetTaskForm,
+    clearPendingLogs,
     onClose,
     t,
   ]);

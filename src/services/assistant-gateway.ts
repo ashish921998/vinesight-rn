@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getUserId } from '@/lib/auth-utils';
 import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import { normalizeAssistantCitations } from '@/services/rag-citations';
 import { telemetry } from '@/services/telemetry';
@@ -69,10 +70,7 @@ export function cancelAllPendingAssistantTurnRequests(): number {
 
 async function resolveUserId(): Promise<string | null> {
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return session?.user?.id ?? null;
+    return await getUserId();
   } catch {
     return null;
   }

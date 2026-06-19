@@ -28,6 +28,12 @@ import {
 import { formatDate, formatCurrency } from '@/i18n/format';
 import { getDefaultCurrency } from '@/i18n/currency';
 import { AreaUnitPreference, convertAreaFromAcres } from '@/utils/preferences';
+import {
+  hasPerAcreSuffix,
+  normalizeUnitString,
+  parseWaterVolumeLitersFromDose,
+  stripPerAcreSuffix,
+} from '@/utils/unit-conversion';
 import { getDaysAfterPruning } from '@/utils/date';
 import {
   UNIT_ALIASES_TO_KG,
@@ -261,9 +267,9 @@ export class ReportService {
     multiplier: number;
     perAcre: boolean;
   } {
-    const compact = value.trim().toLowerCase().replace(/\s+/g, '');
-    const perAcre = compact.includes('/acre');
-    const base = compact.replace('/acre', '');
+    const compact = normalizeUnitString(value);
+    const perAcre = hasPerAcreSuffix(compact);
+    const base = stripPerAcreSuffix(compact);
 
     if (UNIT_ALIASES_TO_KG.has(base)) {
       const multiplier =
@@ -312,13 +318,6 @@ export class ReportService {
       quantity: totalQuantity,
       normalizedUnit: normalized.normalizedUnit,
     };
-  }
-
-  private static parseWaterVolumeFromDose(dose: string | null | undefined): number | null {
-    const match = dose?.match(/Water:\s*([0-9]+(?:\.[0-9]+)?)\s*L/i);
-    if (!match?.[1]) return null;
-    const parsed = Number.parseFloat(match[1]);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 
   private static resolveConcentrationBaseUnit(unit: string): string | null {
@@ -651,7 +650,7 @@ export class ReportService {
     };
 
     filteredSprays.forEach((record) => {
-      const waterVolumeL = this.parseWaterVolumeFromDose(record.dose);
+      const waterVolumeL = parseWaterVolumeLitersFromDose(record.dose);
       this.resolveSprayUsageItems(record).forEach((item) => {
         upsertUsage(
           'spray',
