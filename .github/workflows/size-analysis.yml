@@ -1,9 +1,10 @@
 # Sentry Size Analysis — monitors app download/install size and posts a
-# size-diff status check on every PR.
+# size-diff status check on every code PR (docs-only PRs are skipped).
 #
 # How it works:
 #   - push to main      -> "base" build (no base-sha), gives PRs something to diff against
-#   - pull_request       -> "head" build (carries head/base SHA + PR number) -> status check
+#   - pull_request       -> "head" build (head-sha = PR head, base-sha = merge-base,
+#                           + PR number) -> status check
 #
 # Builds run with `eas build --local` on FREE GitHub runners (public repo), so
 # they consume ZERO EAS cloud build quota and reuse the existing EXPO_TOKEN for
@@ -13,10 +14,12 @@
 #
 # Required secrets:
 #   - EXPO_TOKEN          (already configured) — EAS auth + credentials
-#   - SENTRY_AUTH_TOKEN   (you must add)        — Sentry build upload auth
+#   - SENTRY_AUTH_TOKEN   (configured)         — Sentry build upload auth
 #   - EXPO_APPLE_TEAM_ID  (optional)            — only if the iOS build can't
 #                                                 resolve the Apple team non-interactively
 #
+# Note: fork PRs are intentionally skipped — repo secrets aren't exposed to
+# `pull_request` runs from forks, so the preflight gate (below) short-circuits.
 # One-time manual setup is documented in docs/size-analysis.md.
 
 name: Size Analysis
@@ -39,6 +42,11 @@ on:
 concurrency:
   group: size-analysis-${{ github.ref }}
   cancel-in-progress: true
+
+# Least privilege: this workflow only reads the repo. Sentry posts the status
+# check via its own GitHub App, not GITHUB_TOKEN.
+permissions:
+  contents: read
 
 jobs:
   # Gate: skip everything (including the slow native builds) unless
@@ -75,13 +83,21 @@ jobs:
           - platform: android
             os: ubuntu-latest
             artifact: build/app.aab
+            ext: aab
           - platform: ios
             os: macos-latest
             artifact: build/app.ipa
+            ext: ipa
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # Build the exact PR head commit, NOT the synthetic merge ref, so the
+          # artifact matches the head-sha we report to Sentry. fetch-depth: 0 so
+          # we can compute the merge-base for base-sha.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -119,24 +135,68 @@ jobs:
             --non-interactive \
             --output ${{ matrix.artifact }}
 
+      # Resolve the artifact defensively: prefer the --output path, but fall back
+      # to locating the built binary if EAS placed it elsewhere. Fails loudly if
+      # nothing is found so the upload never runs against a missing file.
+      - name: Resolve artifact path
+        id: artifact
+        env:
+          EXPECTED: ${{ matrix.artifact }}
+          EXT: ${{ matrix.ext }}
+        run: |
+          path="$EXPECTED"
+          if [ ! -f "$path" ]; then
+            echo "Expected artifact not at $path; searching for *.$EXT …"
+            path="$(find . -type f -name "*.$EXT" -not -path '*/node_modules/*' -print 2>/dev/null | head -n 1)"
+          fi
+          if [ -z "$path" ] || [ ! -f "$path" ]; then
+            echo "::error::No .$EXT artifact found after build." >&2
+            exit 1
+          fi
+          echo "Using artifact: $path ($(du -h "$path" | cut -f1))"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
+      # On PRs, base-sha should be the merge-base (where the branch diverged),
+      # not the base-branch tip — otherwise size deltas from unrelated commits
+      # that landed on main after branching get attributed to this PR.
+      - name: Compute merge-base
+        if: github.event_name == 'pull_request'
+        id: base
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          base_sha="$(git merge-base FETCH_HEAD "$HEAD_SHA")"
+          echo "Merge-base with $BASE_REF: $base_sha"
+          echo "sha=$base_sha" >> "$GITHUB_OUTPUT"
+
       # PR build: carries head + base SHA and PR number so Sentry can diff and
-      # post a status check on the pull request.
+      # post a status check on the pull request. Refs go through env vars (not
+      # inline ${{ }}) to avoid shell injection via attacker-controlled branch names.
       - name: Upload to Sentry (PR head build)
         if: github.event_name == 'pull_request'
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          ARTIFACT: ${{ steps.artifact.outputs.path }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ steps.base.outputs.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          sentry-cli build upload "${{ matrix.artifact }}" \
+          sentry-cli build upload "$ARTIFACT" \
             --org vinesight-6s \
             --project vinesight-rn \
             --build-configuration Release \
             --vcs-provider github \
-            --head-repo-name "${{ github.repository }}" \
-            --head-sha "${{ github.event.pull_request.head.sha }}" \
-            --base-sha "${{ github.event.pull_request.base.sha }}" \
-            --head-ref "${{ github.head_ref }}" \
-            --base-ref "${{ github.base_ref }}" \
-            --pr-number "${{ github.event.pull_request.number }}"
+            --head-repo-name "$REPO" \
+            --head-sha "$HEAD_SHA" \
+            --base-sha "$BASE_SHA" \
+            --head-ref "$HEAD_REF" \
+            --base-ref "$BASE_REF" \
+            --pr-number "$PR_NUMBER"
 
       # Base build: pushes to main establish the baseline future PRs diff against.
       # No base-sha on base builds (per Sentry's comparison model).
@@ -144,12 +204,16 @@ jobs:
         if: github.event_name == 'push'
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          ARTIFACT: ${{ steps.artifact.outputs.path }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.sha }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          sentry-cli build upload "${{ matrix.artifact }}" \
+          sentry-cli build upload "$ARTIFACT" \
             --org vinesight-6s \
             --project vinesight-rn \
             --build-configuration Release \
             --vcs-provider github \
-            --head-repo-name "${{ github.repository }}" \
-            --head-sha "${{ github.sha }}" \
-            --head-ref "${{ github.ref_name }}"
+            --head-repo-name "$REPO" \
+            --head-sha "$HEAD_SHA" \
+            --head-ref "$REF_NAME"

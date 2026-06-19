@@ -1,6 +1,6 @@
 # Size Analysis (Sentry)
 
-Monitors the app's **download / install size** and posts a **size-diff status check on every PR**, so size regressions get caught before they ship. Especially relevant for our users on constrained storage and slow connections.
+Monitors the app's **download / install size** and posts a **size-diff status check on every code PR** (docs-only PRs are skipped), so size regressions get caught before they ship. Especially relevant for our users on constrained storage and slow connections.
 
 Powered by [Sentry Size Analysis](https://docs.sentry.io/product/size-analysis/). Sentry is already wired into this app (`@sentry/react-native`, org `vinesight-6s`, project `vinesight-rn`).
 
@@ -11,7 +11,9 @@ Powered by [Sentry Size Analysis](https://docs.sentry.io/product/size-analysis/)
 | Trigger | Build type | Purpose |
 | --- | --- | --- |
 | Push to `main` | **base** (no `base-sha`) | Establishes the baseline that PRs diff against |
-| Pull request to `main` | **head** (`head-sha` + `base-sha` + `pr-number`) | Produces the per-PR size diff + status check |
+| Pull request to `main` | **head** (`head-sha` = PR head, `base-sha` = merge-base, `pr-number`) | Produces the per-PR size diff + status check |
+
+> The workflow checks out the **exact PR head commit** (not the merge ref) and uses the **merge-base** as `base-sha`, so the diff reflects only what the PR changed — not commits that landed on `main` after the branch was created.
 
 Each run, per platform:
 
@@ -53,7 +55,8 @@ gh secret set EXPO_APPLE_TEAM_ID -R ashish921998/vinesight-rn
 
 ## First run
 
-- **Until `SENTRY_AUTH_TOKEN` is set, the workflow skips the build/upload entirely** (a `preflight` job gates it) — so PRs opened before setup is finished won't fail or burn build minutes. It activates automatically once the secret exists.
+- **Until `SENTRY_AUTH_TOKEN` is set, the workflow skips the build/upload entirely** (a `preflight` job gates it) — so PRs opened before setup is finished won't fail or burn build minutes. Note: adding the secret does **not** retroactively re-run already-skipped runs — push a new commit or re-run the workflow to pick it up.
+- **Fork PRs are skipped by design.** GitHub doesn't expose repo secrets to `pull_request` runs from forks, so the preflight gate short-circuits them. (Don't switch to `pull_request_target` to "fix" this — it would leak secrets to untrusted code.)
 - The **first PR check needs a base build to exist on `main`.** Merge this workflow to `main` first (or push once) so a base build is uploaded; the diff appears on PRs after that.
 - The first native CI build may need a shakeout (NDK download, credentials). `fail-fast: false` means Android and iOS are independent — one can succeed while the other is sorted out.
 - Builds are **size-only**: runtime config like the Google Maps key may be empty in CI. That doesn't affect measured size.
