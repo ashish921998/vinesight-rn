@@ -2,7 +2,7 @@
 
 Monitors the app's **download / install size** and posts a **size-diff status check on every code PR** (docs-only PRs are skipped), so size regressions get caught before they ship. Especially relevant for our users on constrained storage and slow connections.
 
-Powered by [Sentry Size Analysis](https://docs.sentry.io/product/size-analysis/). Sentry is already wired into this app (`@sentry/react-native`, org `vinesight-6s`, project `vinesight-rn`).
+Powered by [Sentry Size Analysis](https://docs.sentry.io/product/size-analysis/). Sentry is already wired into this app (`@sentry/react-native`, org `vinesight-6s`, project `react-native`).
 
 ## How it works
 

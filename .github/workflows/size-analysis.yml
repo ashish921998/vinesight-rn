@@ -188,7 +188,7 @@ jobs:
         run: |
           sentry-cli build upload "$ARTIFACT" \
             --org vinesight-6s \
-            --project vinesight-rn \
+            --project react-native \
             --build-configuration Release \
             --vcs-provider github \
             --head-repo-name "$REPO" \
@@ -211,7 +211,7 @@ jobs:
         run: |
           sentry-cli build upload "$ARTIFACT" \
             --org vinesight-6s \
-            --project vinesight-rn \
+            --project react-native \
             --build-configuration Release \
             --vcs-provider github \
             --head-repo-name "$REPO" \
