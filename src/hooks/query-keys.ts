@@ -4,6 +4,10 @@
  */
 
 export const queryKeys = {
+  professionalWorkspace: {
+    all: ['professionalWorkspace'] as const,
+    current: () => ['professionalWorkspace', 'current'] as const,
+  },
   // Farms
   farms: {
     all: ['farms'] as const,

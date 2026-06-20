@@ -10,6 +10,7 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 
 /**
  * Entry point of the app
@@ -27,6 +28,8 @@ export default function Index() {
     })),
   );
   const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
+  const { data: professionalWorkspace, isLoading: workspaceLoading } =
+    useProfessionalWorkspace(isAuthenticated);
   const configStatus = getConfigurationStatus();
   const m3 = useM3();
 
@@ -105,7 +108,7 @@ export default function Index() {
     );
   }
 
-  if (isAuthenticated && profileLoading) {
+  if (isAuthenticated && (profileLoading || workspaceLoading)) {
     return <AnimatedSplash duration={2500} />;
   }
 
@@ -117,6 +120,9 @@ export default function Index() {
 
   // Redirect based on auth state
   if (isAuthenticated) {
+    if (professionalWorkspace) {
+      return <Redirect href="/professional" />;
+    }
     if (needsProfileCompletion || !hasProfileName) {
       return <Redirect href="/(auth)/profile-completion" />;
     }

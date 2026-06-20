@@ -193,6 +193,10 @@ export function TimelineLogCard({
     ? formatDate(parsedDate, { month: 'short', day: 'numeric' })
     : date;
   const secondaryDetail = getSecondaryDetail(type, t, data);
+  const delegatedData = data && 'professional_creator_id' in data ? data : null;
+  const delegatedAttribution = delegatedData?.professional_creator_id
+    ? `Added by ${delegatedData.professional_creator_name ?? 'organization member'} · ${delegatedData.acting_organization_name ?? 'Organization'}`
+    : null;
 
   const panResponder = React.useMemo(
     () =>
@@ -402,6 +406,11 @@ export function TimelineLogCard({
             {secondaryDetail && (
               <Text style={secondaryTextStyle} numberOfLines={1}>
                 {secondaryDetail}
+              </Text>
+            )}
+            {delegatedAttribution && (
+              <Text style={secondaryTextStyle} numberOfLines={1}>
+                {delegatedAttribution}
               </Text>
             )}
 

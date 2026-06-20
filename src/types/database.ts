@@ -110,6 +110,10 @@ export interface IrrigationRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  professional_creator_id?: string | null;
+  acting_organization_id?: string | null;
+  professional_creator_name?: string | null;
+  acting_organization_name?: string | null;
 }
 
 export type IrrigationRecordInsert = Omit<IrrigationRecord, 'id' | 'created_at'>;
@@ -165,6 +169,10 @@ export interface SprayRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  professional_creator_id?: string | null;
+  acting_organization_id?: string | null;
+  professional_creator_name?: string | null;
+  acting_organization_name?: string | null;
 }
 
 export type SprayRecordInsert = Omit<SprayRecord, 'id' | 'created_at'>;
@@ -199,6 +207,10 @@ export interface FertigationRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  professional_creator_id?: string | null;
+  acting_organization_id?: string | null;
+  professional_creator_name?: string | null;
+  acting_organization_name?: string | null;
 }
 
 export type FertigationRecordInsert = Omit<FertigationRecord, 'id' | 'created_at'>;
@@ -222,6 +234,10 @@ export interface HarvestRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  professional_creator_id?: string | null;
+  acting_organization_id?: string | null;
+  professional_creator_name?: string | null;
+  acting_organization_name?: string | null;
 }
 
 export type HarvestRecordInsert = Omit<HarvestRecord, 'id' | 'created_at'>;
@@ -266,6 +282,10 @@ export interface DailyNoteRecord {
   notes?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  professional_creator_id?: string | null;
+  acting_organization_id?: string | null;
+  professional_creator_name?: string | null;
+  acting_organization_name?: string | null;
 }
 
 export type DailyNoteRecordInsert = Omit<DailyNoteRecord, 'id' | 'created_at' | 'updated_at'>;
