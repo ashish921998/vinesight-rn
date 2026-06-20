@@ -606,6 +606,7 @@ export function SegmentedControl({
   selectedTextColor,
 }: SegmentedControlProps) {
   const m3 = useM3();
+  const isDark = useIsDark();
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     backgroundColor: m3.surface.s200,
@@ -625,7 +626,13 @@ export function SegmentedControl({
     borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: selected ? '#FFFFFF' : pressed ? m3.surface.s300 : 'transparent',
+    backgroundColor: selected
+      ? isDark
+        ? m3.surface.s300
+        : '#FFFFFF'
+      : pressed
+        ? m3.surface.s300
+        : 'transparent',
     borderWidth: 0,
     borderCurve: 'continuous',
   });
