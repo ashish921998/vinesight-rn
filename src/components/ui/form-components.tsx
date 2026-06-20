@@ -628,7 +628,7 @@ export function SegmentedControl({
     justifyContent: 'center',
     backgroundColor: selected
       ? isDark
-        ? m3.surface.s300
+        ? m3.primary.p500
         : '#FFFFFF'
       : pressed
         ? m3.surface.s300
@@ -648,7 +648,9 @@ export function SegmentedControl({
         : selected
           ? fontWeight.semibold
           : fontWeight.medium,
-    color: selected ? (selectedTextColor ?? m3.neutral.n900) : m3.neutral.n500,
+    color: selected
+      ? (selectedTextColor ?? (isDark ? '#FFFFFF' : m3.neutral.n900))
+      : m3.neutral.n500,
     textAlign: 'center',
     ...(Platform.OS === 'android'
       ? {
