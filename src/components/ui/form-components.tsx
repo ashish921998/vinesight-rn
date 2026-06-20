@@ -628,7 +628,7 @@ export function SegmentedControl({
     justifyContent: 'center',
     backgroundColor: selected
       ? isDark
-        ? m3.primary.p500
+        ? m3.primary.p600
         : '#FFFFFF'
       : pressed
         ? m3.surface.s300
