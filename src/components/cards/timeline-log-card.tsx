@@ -195,7 +195,10 @@ export function TimelineLogCard({
   const secondaryDetail = getSecondaryDetail(type, t, data);
   const delegatedData = data && 'professional_creator_id' in data ? data : null;
   const delegatedAttribution = delegatedData?.professional_creator_id
-    ? `Added by ${delegatedData.professional_creator_name ?? 'organization member'} · ${delegatedData.acting_organization_name ?? 'Organization'}`
+    ? t('professional.attribution', {
+        member: delegatedData.professional_creator_name ?? t('professional.organizationMember'),
+        organization: delegatedData.acting_organization_name ?? t('professional.organization'),
+      })
     : null;
 
   const panResponder = React.useMemo(

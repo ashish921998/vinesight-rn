@@ -7,6 +7,7 @@ export const queryKeys = {
   professionalWorkspace: {
     all: ['professionalWorkspace'] as const,
     current: () => ['professionalWorkspace', 'current'] as const,
+    farmActivity: (farmId: number) => ['professionalWorkspace', 'farmActivity', farmId] as const,
   },
   // Farms
   farms: {

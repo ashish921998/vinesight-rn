@@ -6,11 +6,14 @@ import { useOnboardingStore } from '@/stores/onboarding-store';
 import { useProfile } from '@/hooks';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
+import { Button } from '@/components/ui/button';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import i18n from '@/i18n';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
+import { resolveAuthenticatedRoute } from '@/utils/professional-routing';
 
 /**
  * Entry point of the app
@@ -28,8 +31,12 @@ export default function Index() {
     })),
   );
   const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
-  const { data: professionalWorkspace, isLoading: workspaceLoading } =
-    useProfessionalWorkspace(isAuthenticated);
+  const {
+    data: professionalWorkspace,
+    isLoading: workspaceLoading,
+    isError: workspaceError,
+    refetch: refetchWorkspace,
+  } = useProfessionalWorkspace({ enabled: isAuthenticated });
   const configStatus = getConfigurationStatus();
   const m3 = useM3();
 
@@ -118,18 +125,42 @@ export default function Index() {
 
   const hasProfileName = Boolean(profile?.full_name && profile.full_name.trim().length > 0);
 
+  if (isAuthenticated && workspaceError) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: m3.colorScheme.background,
+          padding: spacing[6],
+        }}
+      >
+        <Text style={{ color: m3.colorScheme.error, textAlign: 'center' }}>
+          {i18n.t('professional.errors.workspace')}
+        </Text>
+        <Button
+          title={i18n.t('common.tryAgain')}
+          onPress={() => void refetchWorkspace()}
+          style={{ marginTop: spacing[4] }}
+        />
+      </View>
+    );
+  }
+
   // Redirect based on auth state
   if (isAuthenticated) {
-    if (professionalWorkspace) {
-      return <Redirect href="/professional" />;
-    }
-    if (needsProfileCompletion || !hasProfileName) {
-      return <Redirect href="/(auth)/profile-completion" />;
-    }
-    if (!onboardingComplete && !hasSeenOnboarding) {
-      return <Redirect href="/onboarding" />;
-    }
-    return <Redirect href="/(tabs)" />;
+    return (
+      <Redirect
+        href={resolveAuthenticatedRoute({
+          needsProfileCompletion,
+          hasProfileName,
+          professionalWorkspace,
+          onboardingComplete,
+          hasSeenOnboarding,
+        })}
+      />
+    );
   }
 
   return <Redirect href="/(auth)/phone-login" />;
