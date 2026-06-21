@@ -124,11 +124,13 @@ export const mr = {
 
   professional: {
     title: 'शेतकरी',
-    workspace: '{{role}} कार्यक्षेत्र',
+    scopeAll: 'सर्व शेतकरी · {{organization}}',
+    scopeAssigned: 'माझे नियुक्त शेतकरी',
     searchPlaceholder: 'शेतकरी शोधा',
     farmCount_one: '{{count}} शेत',
     farmCount_other: '{{count}} शेते',
     emptyFarmers: 'परवानगी असलेले सक्रिय शेतकरी नाहीत.',
+    emptyAssignedFarmers: 'अद्याप तुम्हाला कोणतेही शेतकरी वाटप केले नाहीत.',
     farmerAccount: 'शेतकरी खाते',
     unavailableFarmer: 'हा शेतकरी आता उपलब्ध नाही. यादी रीफ्रेश करा.',
     unavailableFarm: 'शेताचा प्रवेश आता उपलब्ध नाही.',

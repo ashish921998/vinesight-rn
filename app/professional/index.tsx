@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from 'r
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
+import { deriveProfessionalRole } from '@/utils/professional-role';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 
@@ -12,6 +13,7 @@ export default function ProfessionalDirectory() {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const { data, isLoading, isError, refetch, isRefetching } = useProfessionalWorkspace();
+  const role = deriveProfessionalRole(data);
   const clients = useMemo(
     () =>
       (data?.clients ?? []).filter((c) =>
@@ -35,7 +37,9 @@ export default function ProfessionalDirectory() {
           textTransform: 'uppercase',
         }}
       >
-        {t('professional.workspace', { role: data?.role ?? '' })}
+        {role.isAgronomist
+          ? t('professional.scopeAssigned')
+          : t('professional.scopeAll', { organization: data?.organization_name ?? '' })}
       </Text>
       <TextInput
         accessibilityLabel={t('professional.searchPlaceholder')}
@@ -65,7 +69,9 @@ export default function ProfessionalDirectory() {
           keyExtractor={(item) => item.user_id}
           ListEmptyComponent={
             <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
-              {t('professional.emptyFarmers')}
+              {role.isAgronomist
+                ? t('professional.emptyAssignedFarmers')
+                : t('professional.emptyFarmers')}
             </Text>
           }
           renderItem={({ item }) => (

@@ -123,11 +123,13 @@ export const en = {
 
   professional: {
     title: 'Farmers',
-    workspace: '{{role}} workspace',
+    scopeAll: 'All farmers · {{organization}}',
+    scopeAssigned: 'My assigned farmers',
     searchPlaceholder: 'Search farmers',
     farmCount_one: '{{count}} farm',
     farmCount_other: '{{count}} farms',
     emptyFarmers: 'No permitted active farmers.',
+    emptyAssignedFarmers: 'No farmers have been assigned to you yet.',
     farmerAccount: 'Farmer account',
     unavailableFarmer: 'This farmer is no longer available. Refresh the directory.',
     unavailableFarm: 'Farm access is no longer available.',

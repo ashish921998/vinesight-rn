@@ -123,11 +123,13 @@ export const hi = {
 
   professional: {
     title: 'किसान',
-    workspace: '{{role}} कार्यक्षेत्र',
+    scopeAll: 'सभी किसान · {{organization}}',
+    scopeAssigned: 'मेरे असाइन किसान',
     searchPlaceholder: 'किसान खोजें',
     farmCount_one: '{{count}} खेत',
     farmCount_other: '{{count}} खेत',
     emptyFarmers: 'कोई अनुमत सक्रिय किसान नहीं है।',
+    emptyAssignedFarmers: 'अभी तक आपको कोई किसान सौंपा गया नहीं है।',
     farmerAccount: 'किसान खाता',
     unavailableFarmer: 'यह किसान अब उपलब्ध नहीं है। सूची रीफ़्रेश करें।',
     unavailableFarm: 'खेत की पहुँच अब उपलब्ध नहीं है।',

@@ -98,7 +98,7 @@ as $$
     from public.organization_members om
     join public.organizations o on o.id = om.organization_id
     where om.user_id = auth.uid()
-    order by om.created_at
+    order by om.joined_at
     limit 1
   ), 'null'::jsonb);
 $$;
