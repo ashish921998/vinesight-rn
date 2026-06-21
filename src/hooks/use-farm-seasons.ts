@@ -4,7 +4,7 @@ import { queryKeys } from './query-keys';
 import type { FarmSeason, FarmSeasonInsert, FarmSeasonUpdate } from '../types';
 import { TABLES } from '../types';
 import { parseDbDateToLocalDate } from '../utils/date';
-import { recomputeSeasonAssignmentsClient } from '../lib/season-context';
+import { recomputeSeasonAssignmentsClient, invalidateSeasonIdCache } from '../lib/season-context';
 
 function isRpcFunctionMissing(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
@@ -62,6 +62,7 @@ export function useCreateFarmSeason() {
       return data;
     },
     onSuccess: (newSeason) => {
+      invalidateSeasonIdCache(newSeason.farm_id);
       queryClient.setQueryData<FarmSeason[]>(
         queryKeys.farmSeasons.listByFarm(newSeason.farm_id),
         (old) => {
@@ -98,6 +99,7 @@ export function useUpdateFarmSeason() {
       return data;
     },
     onSuccess: (updatedSeason) => {
+      invalidateSeasonIdCache(updatedSeason.farm_id);
       queryClient.setQueryData<FarmSeason[]>(
         queryKeys.farmSeasons.listByFarm(updatedSeason.farm_id),
         (old) => {
@@ -199,6 +201,7 @@ export function useStartFarmSeason() {
       return data;
     },
     onSuccess: (newSeason) => {
+      invalidateSeasonIdCache(newSeason.farm_id);
       queryClient.invalidateQueries({
         queryKey: queryKeys.farmSeasons.listByFarm(newSeason.farm_id),
       });
@@ -265,6 +268,7 @@ export function useEndFarmSeason() {
       return data;
     },
     onSuccess: (endedSeason) => {
+      invalidateSeasonIdCache(endedSeason.farm_id);
       queryClient.invalidateQueries({
         queryKey: queryKeys.farmSeasons.listByFarm(endedSeason.farm_id),
       });
@@ -289,6 +293,7 @@ export function useRecomputeFarmSeasonAssignments() {
       }
     },
     onSuccess: (_, { farmId }) => {
+      invalidateSeasonIdCache(farmId);
       queryClient.invalidateQueries({ queryKey: queryKeys.farmSeasons.listByFarm(farmId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.irrigationRecords.listByFarm(farmId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.sprayRecords.listByFarm(farmId) });

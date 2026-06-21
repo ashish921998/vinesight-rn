@@ -91,10 +91,12 @@ export default function AddDelegatedLog() {
         date,
         payload,
       });
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: queryKeys.professionalWorkspace.all }),
-        qc.invalidateQueries({ queryKey: queryKeys.professionalWorkspace.farmActivity(farm.id) }),
-      ]);
+      // Fire the refetches in the background — don't block navigation on them.
+      // The activity list updates on its own once these resolve.
+      void qc.invalidateQueries({ queryKey: queryKeys.professionalWorkspace.all });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.professionalWorkspace.farmActivity(farm.id),
+      });
       router.back();
     } catch (e) {
       setError(e instanceof Error ? e.message : t('professional.errors.save'));

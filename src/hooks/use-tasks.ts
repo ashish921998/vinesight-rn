@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { TaskReminder, TaskReminderInsert, TaskReminderUpdate } from '../types/task';
 import { formatLocalDate } from '../utils/date';
-import { resolveOptionalSeasonIdForDate } from '../lib/season-context';
+import { resolveOrCreateSeasonIdForDate } from '../lib/season-context';
 import { encodeTaskPlanInDescription } from '../utils/task-plan';
 import { telemetry } from '../services/telemetry';
 
@@ -113,7 +113,7 @@ export function useCreateTask() {
         : formatLocalDate(new Date());
       const seasonId =
         task.season_id ??
-        (await resolveOptionalSeasonIdForDate({
+        (await resolveOrCreateSeasonIdForDate({
           farmId: task.farm_id,
           date: assignmentDate,
         }));
