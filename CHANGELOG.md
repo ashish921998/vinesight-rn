@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-06-21
+
+### Added
+- Delegated logging for consultants: a professional can record irrigation, spray, fertigation, harvest, and notes on behalf of a client farm, with the entry attributed to the acting professional
+- Role-aware professional directory: owners and admins see every active client in the org, agronomists see only the clients assigned to them, and the directory header and empty states adapt to the role (`deriveProfessionalRole` presentation flags; authorization stays server-side)
+
+### Changed
+- Record creation now lazily creates a farm's initial season when none exists yet (`resolveOrCreateSeasonIdForDate`), so logs are no longer saved with a null season during onboarding or on older farms
+
+### Fixed
+- Logging is faster: the save screen now closes immediately instead of waiting on a background refetch, and season-id resolution is cached per session so repeat saves to the same farm skip the extra RPC round-trip. The cache is invalidated whenever a farm's seasons change (start/end/update/recompute)
+
 ## [1.4.0] - 2026-06-17
 
 ### Added
