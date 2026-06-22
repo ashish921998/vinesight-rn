@@ -19,8 +19,14 @@ import { resolveSeasonIdForDate } from '../lib/season-context';
 
 // Query keys
 export const labTestQueryKeys = {
-  soilTests: (farmId: number) => ['soil-tests', farmId] as const,
-  petioleTests: (farmId: number) => ['petiole-tests', farmId] as const,
+  soilTests: {
+    all: ['soil-tests'] as const,
+    forFarm: (farmId: number) => [...labTestQueryKeys.soilTests.all, farmId] as const,
+  },
+  petioleTests: {
+    all: ['petiole-tests'] as const,
+    forFarm: (farmId: number) => [...labTestQueryKeys.petioleTests.all, farmId] as const,
+  },
   soilTrends: (farmId: number) => ['soil-trends', farmId] as const,
   petioleTrends: (farmId: number) => ['petiole-trends', farmId] as const,
 };
@@ -72,7 +78,7 @@ async function backfillMissingPetiolePruningDates(
  */
 export function useSoilTests(farmId: number, seasonId?: number) {
   return useQuery({
-    queryKey: [...labTestQueryKeys.soilTests(farmId), { seasonId: seasonId ?? null }],
+    queryKey: [...labTestQueryKeys.soilTests.forFarm(farmId), { seasonId: seasonId ?? null }],
     queryFn: async () => {
       let query = supabase
         .from('soil_test_records')
@@ -97,7 +103,7 @@ export function useSoilTests(farmId: number, seasonId?: number) {
  */
 export function usePetioleTests(farmId: number, seasonId?: number) {
   return useQuery({
-    queryKey: [...labTestQueryKeys.petioleTests(farmId), { seasonId: seasonId ?? null }],
+    queryKey: [...labTestQueryKeys.petioleTests.forFarm(farmId), { seasonId: seasonId ?? null }],
     queryFn: async () => {
       let query = supabase
         .from('petiole_test_records')
@@ -143,7 +149,7 @@ export function useCreateSoilTest() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: labTestQueryKeys.soilTests(data.farm_id),
+        queryKey: labTestQueryKeys.soilTests.forFarm(data.farm_id),
       });
     },
   });
@@ -174,7 +180,7 @@ export function useCreatePetioleTest() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: labTestQueryKeys.petioleTests(data.farm_id),
+        queryKey: labTestQueryKeys.petioleTests.forFarm(data.farm_id),
       });
     },
   });
@@ -195,7 +201,7 @@ export function useDeleteSoilTest() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: labTestQueryKeys.soilTests(data.farmId),
+        queryKey: labTestQueryKeys.soilTests.forFarm(data.farmId),
       });
     },
   });
@@ -216,7 +222,7 @@ export function useDeletePetioleTest() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: labTestQueryKeys.petioleTests(data.farmId),
+        queryKey: labTestQueryKeys.petioleTests.forFarm(data.farmId),
       });
     },
   });

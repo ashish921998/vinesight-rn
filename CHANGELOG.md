@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-06-21
+
+### Added
+- Delegated logging for consultants: a professional can record irrigation, spray, fertigation, harvest, and notes on behalf of a client farm, with the entry attributed to the acting professional
+- Role-aware professional directory: owners and admins see every active client in the org, agronomists see only the clients assigned to them, and the directory header and empty states adapt to the role (`deriveProfessionalRole` presentation flags; authorization stays server-side)
+- Consultant lab review screens: per-farm lab reports with petiole test comparison and a soil baseline panel, plus a fertilizer-plan composer that records a petiole triage and sends the plan to the farmer (`consultant-reviews` service, `use-consultant-reviews`)
+- Full-fidelity delegated logs: the `create_delegated_log` RPC persists the complete record payload (PHI metadata, safe-harvest date, nutrient coverage, catalog mix) rather than a reduced subset
+
+### Changed
+- Record creation now lazily creates a farm's initial season when none exists yet (`resolveOrCreateSeasonIdForDate`), so logs are no longer saved with a null season during onboarding or on older farms
+
+### Fixed
+- Logging is faster: the save screen now closes immediately instead of waiting on a background refetch, and season-id resolution is cached per session so repeat saves to the same farm skip the extra RPC round-trip. The cache is invalidated whenever a farm's seasons change (start/end/update/recompute)
+- The app entry screen no longer traps every user on a dead-end error if the professional-workspace lookup hits a transient network error; it falls through to the normal route (farmers are the common case and must never be blocked)
+- Delegated log saves that return no record id now fail loudly instead of persisting an entry that can never be deleted
+- Consultant soil baseline values render reliably regardless of whether the stored keys are camelCase or snake_case, and the lab-reports screen shows a clear unavailable state for a missing farm id instead of a blank screen
+- The delegated farm-activity feed is now scoped to the acting organization, so a consultant cannot see delegated records created by a different organization that previously serviced the same farm (`get_delegated_farm_activity` org filter)
+
 ## [1.4.0] - 2026-06-17
 
 ### Added

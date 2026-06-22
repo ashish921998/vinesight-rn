@@ -45,6 +45,30 @@ export async function getActiveFarmSeason(farmId: number): Promise<FarmSeason | 
   return data ?? null;
 }
 
+// In-session cache of resolved season ids, keyed by `farmId:activityDate`.
+// A farm's season for a given date does not change mid-session, so caching this
+// lets repeated saves skip the resolution round-trip(s) before the insert.
+const seasonIdCache = new Map<string, number>();
+
+function seasonCacheKey(farmId: number, activityDate: string): string {
+  return `${farmId}:${activityDate}`;
+}
+
+/**
+ * Drop cached season resolutions for a farm (or all farms). Call after the
+ * farm's seasons change — e.g. creating, editing, or recomputing seasons.
+ */
+export function invalidateSeasonIdCache(farmId?: number): void {
+  if (farmId === undefined) {
+    seasonIdCache.clear();
+    return;
+  }
+  const prefix = `${farmId}:`;
+  for (const key of seasonIdCache.keys()) {
+    if (key.startsWith(prefix)) seasonIdCache.delete(key);
+  }
+}
+
 export async function resolveSeasonIdForDate({
   farmId,
   date,
@@ -54,6 +78,9 @@ export async function resolveSeasonIdForDate({
 }): Promise<number | null> {
   const activityDate = typeof date === 'string' ? date.slice(0, 10) : formatLocalDate(date);
 
+  const cached = seasonIdCache.get(seasonCacheKey(farmId, activityDate));
+  if (cached !== undefined) return cached;
+
   const { data: rpcData, error: rpcError } = await supabase.rpc('resolve_farm_season_for_date', {
     p_farm_id: farmId,
     p_activity_date: activityDate,
@@ -61,7 +88,10 @@ export async function resolveSeasonIdForDate({
 
   if (!rpcError) {
     const rpcSeasonId = extractSeasonIdFromRpc(rpcData);
-    if (rpcSeasonId !== null) return rpcSeasonId;
+    if (rpcSeasonId !== null) {
+      seasonIdCache.set(seasonCacheKey(farmId, activityDate), rpcSeasonId);
+      return rpcSeasonId;
+    }
   }
 
   const { data, error } = await supabase
@@ -82,7 +112,10 @@ export async function resolveSeasonIdForDate({
     return startsBeforeOrOnDate && endsAfterOrOnDate;
   });
 
-  if (matched?.id) return matched.id;
+  if (matched?.id) {
+    seasonIdCache.set(seasonCacheKey(farmId, activityDate), matched.id);
+    return matched.id;
+  }
   return null;
 }
 
@@ -98,6 +131,35 @@ export async function resolveOptionalSeasonIdForDate(args: {
     }
     throw error;
   }
+}
+
+/**
+ * Resolve the season id for a date, lazily creating the farm's initial season
+ * when none exists yet. This prevents records/tasks from being created with a
+ * null season_id when a farm has no season — e.g. during onboarding where the
+ * initial season may still be in flight, or for older farms created before the
+ * season feature existed.
+ */
+export async function resolveOrCreateSeasonIdForDate(args: {
+  farmId: number;
+  date: string | Date;
+}): Promise<number | null> {
+  const existing = await resolveOptionalSeasonIdForDate(args);
+  if (existing !== null) return existing;
+
+  try {
+    // Imported lazily to avoid a module cycle with the farms hooks file.
+    const { ensureInitialFarmSeasonForFarmId } = await import('../hooks/use-farms');
+    await ensureInitialFarmSeasonForFarmId(args.farmId);
+  } catch (error) {
+    // If season creation fails (e.g. missing table on an older schema), fall
+    // back to a null season rather than blocking the write entirely.
+    if (isPostgrestErrorWithCode(error, '42P01')) return null;
+    console.warn('[season-context] failed to create initial season on demand:', error);
+    throw error;
+  }
+
+  return resolveOptionalSeasonIdForDate(args);
 }
 
 interface SeasonAssignmentTableConfig {
@@ -134,6 +196,9 @@ export async function recomputeSeasonAssignmentsClient(farmId: number): Promise<
     .order('start_date', { ascending: false });
 
   if (seasonsError) throw seasonsError;
+
+  // Season windows are changing — drop any cached resolutions for this farm.
+  invalidateSeasonIdCache(farmId);
 
   const windows = (seasons ?? []) as Array<Pick<FarmSeason, 'id' | 'start_date' | 'end_date'>>;
   const tableConfigs: SeasonAssignmentTableConfig[] = [

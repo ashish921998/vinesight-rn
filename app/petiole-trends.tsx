@@ -15,7 +15,7 @@ import { useFarm } from '@/hooks/use-farms';
 import { usePetioleTestTrends, PETIOLE_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
 import { useFertigationRecords } from '@/hooks';
 import ParameterSelector from '@/components/screens/parameter-selector';
-import TrendsTable from '@/components/screens/trends-table';
+import { PetioleComparison, type ComparisonTest } from '@/components/lab/petiole-comparison';
 import TrendsChart from '@/components/screens/trends-chart';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
@@ -94,6 +94,17 @@ export default function PetioleTrendsScreen() {
           fertigationRecords,
         })
       : [];
+
+  const trendTests = trends?.tests;
+  const comparisonTests: ComparisonTest[] = useMemo(() => {
+    if (!trendTests) return [];
+    return trendTests.map((test, index) => ({
+      id: index,
+      date: test.date,
+      date_of_pruning: test.dateOfPruning ?? null,
+      parameters: test.parameters,
+    }));
+  }, [trendTests]);
 
   const selectedElements = useMemo(() => {
     const mapped = Array.from(selectedParams)
@@ -320,12 +331,17 @@ export default function PetioleTrendsScreen() {
         {/* Content */}
         <View style={{ flex: 1, minHeight: 500 }}>
           {viewMode === 'table' ? (
-            <TrendsTable
-              trendData={trends.tests}
-              parameterTrends={trends.parameterTrends}
-              selectedParams={selectedParams}
-              testType="petiole"
-            />
+            <ScrollView style={{ flex: 1 }} nestedScrollEnabled>
+              <View style={{ padding: spacing[4] }}>
+                <PetioleComparison
+                  tests={comparisonTests}
+                  selectedParams={selectedParams}
+                  showTrendIndicators
+                  showPruningInfo
+                  showLegend
+                />
+              </View>
+            </ScrollView>
           ) : (
             <TrendsChart
               trendData={trends.tests}
