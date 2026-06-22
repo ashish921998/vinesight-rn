@@ -78,7 +78,7 @@ as $$
       'clients', coalesce((
         select jsonb_agg(jsonb_build_object(
           'user_id', p.id,
-          'full_name', p.full_name,
+          'full_name', coalesce(p.full_name, ''),
           'phone', p.phone,
           'farms', coalesce((
             select jsonb_agg(jsonb_build_object(
