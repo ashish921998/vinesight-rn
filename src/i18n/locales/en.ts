@@ -134,7 +134,15 @@ export const en = {
     unavailableFarmer: 'This farmer is no longer available. Refresh the directory.',
     unavailableFarm: 'Farm access is no longer available.',
     activity: 'Activity',
+    recentActivity: 'Recent activity',
     emptyActivity: 'No activity yet.',
+    seeAllLogs_one: 'See all {{count}} log',
+    seeAllLogs_other: 'See all {{count}} logs',
+    allLogs: 'All logs',
+    searchLogsPlaceholder: 'Search logs',
+    noMatchingLogs: 'No logs match your filters.',
+    clearFilters: 'Clear filters',
+    clearSearch: 'Clear search',
     addLog: 'Add log',
     addDelegatedLog: 'Add delegated log',
     logType: 'Log type',
@@ -145,6 +153,10 @@ export const en = {
     attribution: 'Added by {{member}} · {{organization}}',
     organizationMember: 'organization member',
     organization: 'Organization',
+    metrics: {
+      safeToHarvest: 'Safe to harvest {{date}}',
+      harvested: '{{value}} kg harvested',
+    },
     fields: {
       duration: 'Duration (hours)',
       chemical: 'Catalog spray',
@@ -158,6 +170,29 @@ export const en = {
       fertigation: 'Fertigation',
       harvest: 'Harvest',
       note: 'Daily note',
+    },
+    reports: {
+      labReports: 'Lab reports',
+      labReportsTitle: 'Lab Reports',
+      labReportsSubtitle: 'Petiole comparison and soil baseline',
+    },
+    reviews: {
+      soilBaselineTitle: 'Soil baseline',
+      noSoilBaseline: 'No soil test available for this farm.',
+      petioleComparison: 'Petiole comparison',
+      soilBaseline: 'Soil baseline',
+      addItem: 'Add item',
+      itemNumber: 'Item {{number}}',
+      productName: 'Product name',
+      quantity: 'Quantity',
+      createPlan: 'Create fertilizer plan',
+      sendPlan: 'Send plan',
+      planSent: 'Plan sent to the farmer.',
+      errors: {
+        loadFailed: 'Could not load lab data. Tap to retry.',
+        itemQuantityRequired: 'Please enter a positive quantity for every item.',
+        sendFailed: 'Could not send the plan. Please try again.',
+      },
     },
     errors: {
       workspace: "We couldn't load your workspace.",
@@ -2648,6 +2683,11 @@ export const en = {
       tabs: {
         soil: 'Soil ({{count}})',
         petiole: 'Petiole ({{count}})',
+      },
+      comparison: {
+        parameter: 'Parameter',
+        current: 'Current',
+        noPetioleTests: 'No petiole tests available for this farm.',
       },
       card: {
         soilAnalysis: 'Soil Analysis',

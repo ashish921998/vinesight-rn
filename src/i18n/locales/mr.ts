@@ -160,6 +160,29 @@ export const mr = {
       harvest: 'कापणी',
       note: 'दैनिक टिप्पणी',
     },
+    reports: {
+      labReports: 'Lab reports',
+      labReportsTitle: 'Lab Reports',
+      labReportsSubtitle: 'Petiole comparison and soil baseline',
+    },
+    reviews: {
+      soilBaselineTitle: 'Soil baseline',
+      noSoilBaseline: 'No soil test available for this farm.',
+      petioleComparison: 'Petiole comparison',
+      soilBaseline: 'Soil baseline',
+      addItem: 'Add item',
+      itemNumber: 'Item {{number}}',
+      productName: 'Product name',
+      quantity: 'Quantity',
+      createPlan: 'Create fertilizer plan',
+      sendPlan: 'Send plan',
+      planSent: 'Plan sent to the farmer.',
+      errors: {
+        loadFailed: 'Could not load lab data. Tap to retry.',
+        itemQuantityRequired: 'Please enter a positive quantity for every item.',
+        sendFailed: 'Could not send the plan. Please try again.',
+      },
+    },
     errors: {
       workspace: 'आपले कार्यक्षेत्र लोड करता आले नाही.',
       farmers: 'शेतकरी लोड करता आले नाहीत. पुन्हा प्रयत्न करा.',
@@ -2668,6 +2691,11 @@ export const mr = {
       tabs: {
         soil: '$t(glossary.soil) ({{count}})',
         petiole: '$t(glossary.petiole) ({{count}})',
+      },
+      comparison: {
+        parameter: 'घटक',
+        current: 'सद्य',
+        noPetioleTests: 'या शेतासाठी कोणतेही पेटिओल टेस्ट उपलब्ध नाहीत.',
       },
       card: {
         soilAnalysis: '$t(glossary.soil) विश्लेषण',

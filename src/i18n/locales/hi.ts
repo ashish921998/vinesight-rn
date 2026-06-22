@@ -159,6 +159,29 @@ export const hi = {
       harvest: 'कटाई',
       note: 'दैनिक टिप्पणी',
     },
+    reports: {
+      labReports: 'Lab reports',
+      labReportsTitle: 'Lab Reports',
+      labReportsSubtitle: 'Petiole comparison and soil baseline',
+    },
+    reviews: {
+      soilBaselineTitle: 'Soil baseline',
+      noSoilBaseline: 'No soil test available for this farm.',
+      petioleComparison: 'Petiole comparison',
+      soilBaseline: 'Soil baseline',
+      addItem: 'Add item',
+      itemNumber: 'Item {{number}}',
+      productName: 'Product name',
+      quantity: 'Quantity',
+      createPlan: 'Create fertilizer plan',
+      sendPlan: 'Send plan',
+      planSent: 'Plan sent to the farmer.',
+      errors: {
+        loadFailed: 'Could not load lab data. Tap to retry.',
+        itemQuantityRequired: 'Please enter a positive quantity for every item.',
+        sendFailed: 'Could not send the plan. Please try again.',
+      },
+    },
     errors: {
       workspace: 'आपका कार्यक्षेत्र लोड नहीं हो सका।',
       farmers: 'किसान लोड नहीं हो सके। पुनः प्रयास करें।',
@@ -2645,6 +2668,11 @@ export const hi = {
       tabs: {
         soil: 'मिट्टी ({{count}})',
         petiole: 'पेटीओल ({{count}})',
+      },
+      comparison: {
+        parameter: 'पैरामीटर',
+        current: 'वर्तमान',
+        noPetioleTests: 'इस खेत के लिए कोई पेटीओल परीक्षण उपलब्ध नहीं है।',
       },
       card: {
         soilAnalysis: 'मिट्टी विश्लेषण',
