@@ -1,0 +1,52 @@
+src/services/delegated-logs.ts
+  s_ed9b3eeeea03ad::t_4107f33d53cc13 9-19,23-36,90,94,98,107,114,246
+src/hooks/use-consultant-reviews.ts
+  s_a494b067da8033::t_af09c02f5fd0fe 31-34
+  s_fd1f9dddf64f72::t_d765105ffdf44c 10-11
+  s_a494b067da8033::t_91f1bac6a411c5 1-9,12-30,35-38
+  s_fd1f9dddf64f72::t_73663d0f2de19e 39-48
+src/types/database.ts
+  s_a494b067da8033::t_c2cc351f939c9c 336-398
+src/services/consultant-reviews.ts
+  s_a494b067da8033::t_d04957ca213ce7 30-31
+  s_fd1f9dddf64f72::t_66753f809409bd 12
+  s_a494b067da8033::t_d5ba2462cce493 1-11,13-29,68-76
+  s_fd1f9dddf64f72::t_13e2cabb00e4e3 66-67
+  s_fd1f9dddf64f72::t_cb3346fb4e1874 32-65
+src/constants/consultant-lab-config.ts
+  s_a494b067da8033::t_7fb5099ff51394 1-227
+src/hooks/query-keys.ts
+  s_a494b067da8033::t_8e7feae6a725f5 129-135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "6190bdc152971b854f14a386b0b6dc477f3511c6",
+  "prompts": {},
+  "sessions": {
+    "s_a494b067da8033": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "6edf01ce-879b-4ecc-af3a-4ceafe7cb22c",
+        "model": "kimi-k2.7-code"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_ed9b3eeeea03ad": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d2c985b5-94e2-4fb1-b1d1-4a2d81b3b025",
+        "model": "minimax-m3"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_fd1f9dddf64f72": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d22c0c0f-9521-4830-bc55-9291dcf9984e",
+        "model": "custom:GLM-5.2-0"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
