@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - The app entry screen no longer traps every user on a dead-end error if the professional-workspace lookup hits a transient network error; it falls through to the normal route (farmers are the common case and must never be blocked)
 - Delegated log saves that return no record id now fail loudly instead of persisting an entry that can never be deleted
 - Consultant soil baseline values render reliably regardless of whether the stored keys are camelCase or snake_case, and the lab-reports screen shows a clear unavailable state for a missing farm id instead of a blank screen
+- The delegated farm-activity feed is now scoped to the acting organization, so a consultant cannot see delegated records created by a different organization that previously serviced the same farm (`get_delegated_farm_activity` org filter)
 
 ## [1.4.0] - 2026-06-17
 
