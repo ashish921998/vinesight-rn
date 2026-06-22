@@ -77,13 +77,33 @@ import {
   queryKeys,
 } from '@/hooks';
 import { useSaveSingleLog } from '@/features/entry-log-session';
+import type { SaveSingleLogResult } from '@/features/entry-log-session/use-save-single-log';
 import { useAuthStore } from '@/stores';
 import { telemetry } from '@/services/telemetry';
 import { guidedTourEmit } from '@/features/guided-tour';
+import {
+  buildDelegatedLogPayload,
+  createDelegatedLog,
+  deleteDelegatedLog,
+  updateDelegatedLog,
+  type DelegatedContext,
+  type DelegatedLogFormInput,
+  type DelegatedLogType,
+} from '@/services/delegated-logs';
 
 interface ReceiptLogScreenProps {
   farmId?: number | null;
   onClose: () => void;
+  /**
+   * When set, the screen runs in "delegated" mode: the farm is locked to
+   * `delegatedContext.farm`, the `expense` chip is hidden, the header shows
+   * `clientName · farm.name`, and saves route through the
+   * `create_delegated_log` / `delete_delegated_log` RPCs instead of the
+   * farmer mutation hooks. Used by the professional `/professional/log/add`
+   * route so consultants get the same UI farmers see when they tap "Add log"
+   * from a farm's details page (`/log-entry/quick`).
+   */
+  delegatedContext?: DelegatedContext;
 }
 
 type AnyLogData =
@@ -174,13 +194,21 @@ function describeEntry(type: LogTypeId, data: AnyLogData): string {
   }
 }
 
-export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
+export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptLogScreenProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
 
-  const { data: farm } = useFarm(farmId ?? undefined);
+  // Delegated mode: consultant logs on behalf of a farmer client. The farm is
+  // taken from the context (no fetch); `expense` is hidden from the picker;
+  // saves route through the `create_delegated_log` RPC. Identical UX to the
+  // farmer's farm-details-page add log (`/log-entry/quick`).
+  const isDelegatedMode = delegatedContext !== undefined;
+
+  const liveFarmQuery = useFarm(isDelegatedMode ? undefined : (farmId ?? undefined));
+  const farm = isDelegatedMode ? delegatedContext.farm : liveFarmQuery.data;
+
   const { data: profile } = useProfile({ enabled: false });
   const user = useAuthStore((s) => s.user);
   const preferredAreaUnit = resolveAreaUnitPreference(
@@ -264,13 +292,65 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
     setSaving(true);
     const savedType = activeType;
     try {
-      const result = await saveLog({
-        type: savedType,
-        data: draft,
-        farm,
-        dateStr,
-        preferredAreaUnit,
-      });
+      let result: SaveSingleLogResult;
+      if (isDelegatedMode && delegatedContext && savedType !== 'expense') {
+        // Delegated (consultant-on-behalf-of farmer) save. The expense chip
+        // is hidden in delegated mode; this guard is defensive in case a save
+        // somehow captures an expense type.
+        const delegatedType = savedType as DelegatedLogType;
+        // A single farm+date carries exactly one daily note. If the consultant
+        // already logged one today, re-saving the note updates the same row
+        // instead of failing the unique-constraint on `daily_notes`.
+        const existingNote =
+          savedType === 'note' ? entries.find((e) => e.type === 'note') : undefined;
+        const payload = buildDelegatedLogPayload(
+          {
+            type: delegatedType,
+            data: draft as DelegatedLogFormInput['data'],
+          } as DelegatedLogFormInput,
+          { area: farm.area ?? 0 },
+        );
+        let recordId: number | null;
+        if (existingNote?.recordId != null) {
+          const noteText = (draft as NoteFormData).notes ?? '';
+          await updateDelegatedLog('note', existingNote.recordId, noteText);
+          recordId = existingNote.recordId;
+        } else {
+          const rpcResult = await createDelegatedLog({
+            organizationId: delegatedContext.organizationId,
+            clientUserId: delegatedContext.clientUserId,
+            farmId: farm.id ?? 0,
+            recordType: delegatedType,
+            date: dateStr,
+            payload,
+          });
+          // The RPC returns `to_jsonb(<table>.*)` — `id` is the new row's pk.
+          const rawId = (rpcResult as { id?: unknown } | null | undefined)?.id;
+          if (typeof rawId !== 'number') {
+            // Without a numeric pk the entry can't be deleted later (the delete
+            // path requires recordId != null), so treat a missing id as a hard
+            // save failure rather than silently persisting an orphan row.
+            throw new Error('Delegated log save returned no record id');
+          }
+          recordId = rawId;
+        }
+        await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.professionalWorkspace.all });
+        result = {
+          type: savedType,
+          recordId,
+          farmId: farm.id ?? 0,
+          previousDailyNote: undefined,
+        };
+      } else {
+        result = await saveLog({
+          type: savedType,
+          data: draft,
+          farm,
+          dateStr,
+          preferredAreaUnit,
+        });
+      }
       setEntries((prev) => {
         const newEntry: SavedEntry = {
           key: nextKey(),
@@ -330,7 +410,20 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
       setSaving(false);
       savingRef.current = false;
     }
-  }, [activeType, farm, draftValid, saveLog, draft, dateStr, preferredAreaUnit, t]);
+  }, [
+    activeType,
+    farm,
+    draftValid,
+    saveLog,
+    draft,
+    dateStr,
+    preferredAreaUnit,
+    t,
+    isDelegatedMode,
+    delegatedContext,
+    entries,
+    queryClient,
+  ]);
 
   const handleRemove = useCallback(
     async (entry: SavedEntry) => {
@@ -342,6 +435,14 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
         return prev.filter((e) => e.key !== entry.key);
       });
       try {
+        // Delegated path: single-call RPC delete, no water-level undo, no
+        // per-table split. Mirrors the create path's RPC simplicity.
+        if (isDelegatedMode && entry.recordId != null && entry.type !== 'expense') {
+          await deleteDelegatedLog(entry.type as DelegatedLogType, entry.recordId);
+          await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+          await queryClient.invalidateQueries({ queryKey: queryKeys.professionalWorkspace.all });
+          return;
+        }
         if (entry.recordId == null) {
           if (entry.type === 'note') {
             if (entry.previousDailyNote) {
@@ -437,6 +538,7 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
       upsertDailyNote,
       updateWaterLevel,
       t,
+      isDelegatedMode,
     ],
   );
 
@@ -460,8 +562,11 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
         <View style={{ flex: 1 }}>
           <Text
             style={{ fontSize: fontSize.xl, fontWeight: '700', color: m3.colorScheme.onSurface }}
+            numberOfLines={1}
           >
-            {farm?.name ?? t('receiptLog.title', { defaultValue: 'Add activity' })}
+            {isDelegatedMode && delegatedContext
+              ? `${delegatedContext.clientName} · ${farm?.name ?? t('receiptLog.title', { defaultValue: 'Add activity' })}`
+              : (farm?.name ?? t('receiptLog.title', { defaultValue: 'Add activity' }))}
           </Text>
           <Pressable
             onPress={() => setShowDatePicker(true)}
@@ -693,49 +798,51 @@ export function ReceiptLogScreen({ farmId, onClose }: ReceiptLogScreenProps) {
             : t('receiptLog.whatDidYouDo', { defaultValue: 'What did you do?' })}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-          {LOG_TYPES.map((lt: LogType) => (
-            <Pressable
-              key={lt.id}
-              onPress={() => handlePickType(lt.id as LogTypeId)}
-              accessibilityRole="button"
-              accessibilityLabel={t(lt.labelKey)}
-              style={{
-                width: '31.5%',
-                minHeight: 84,
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                backgroundColor: m3.surface.s100,
-                borderWidth: 1,
-                borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-                borderRadius: borderRadius.lg,
-                paddingVertical: spacing[3],
-              }}
-            >
-              <View
+          {LOG_TYPES.filter((lt) => !(isDelegatedMode && lt.id === 'expense')).map(
+            (lt: LogType) => (
+              <Pressable
+                key={lt.id}
+                onPress={() => handlePickType(lt.id as LogTypeId)}
+                accessibilityRole="button"
+                accessibilityLabel={t(lt.labelKey)}
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: radius.full,
+                  width: '31.5%',
+                  minHeight: 84,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: `${lt.color}1f`,
+                  gap: 6,
+                  backgroundColor: m3.surface.s100,
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+                  borderRadius: borderRadius.lg,
+                  paddingVertical: spacing[3],
                 }}
               >
-                <Symbol name={resolveSymbolIconName(lt.icon)} size={20} color={lt.color} />
-              </View>
-              <Text
-                numberOfLines={1}
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: '600',
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {t(lt.labelKey)}
-              </Text>
-            </Pressable>
-          ))}
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: radius.full,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: `${lt.color}1f`,
+                  }}
+                >
+                  <Symbol name={resolveSymbolIconName(lt.icon)} size={20} color={lt.color} />
+                </View>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: '600',
+                    color: m3.colorScheme.onSurface,
+                  }}
+                >
+                  {t(lt.labelKey)}
+                </Text>
+              </Pressable>
+            ),
+          )}
         </View>
       </ScrollView>
 

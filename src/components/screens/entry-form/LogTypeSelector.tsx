@@ -16,6 +16,8 @@ interface LogTypeSelectorProps {
   hasPendingDrafts?: boolean;
   pendingLogTypes?: LogTypeId[];
   hintText?: string;
+  /** Restrict the chip grid to a subset of log types (e.g. delegated logging has no expense). */
+  allowedTypes?: LogTypeId[];
 }
 
 export function LogTypeSelector({
@@ -24,6 +26,7 @@ export function LogTypeSelector({
   hasPendingDrafts = false,
   pendingLogTypes = [],
   hintText,
+  allowedTypes,
 }: LogTypeSelectorProps) {
   const m3 = useM3();
   const { t } = useTranslation();
@@ -93,7 +96,10 @@ export function LogTypeSelector({
           gap: 8,
         }}
       >
-        {LOG_TYPES.map((logType: LogType) => {
+        {(allowedTypes
+          ? LOG_TYPES.filter((logType) => allowedTypes.includes(logType.id as LogTypeId))
+          : LOG_TYPES
+        ).map((logType: LogType) => {
           const isSelected = selectedLogType === logType.id;
           const isAdded = pendingLogTypes.includes(logType.id as LogTypeId);
           const emphasizeSelectedGuidedCard = isGuidedAddLogStep && isSelected;

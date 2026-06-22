@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { deriveProfessionalRole } from '@/utils/professional-role';
+import { useAuthStore } from '@/stores';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 
@@ -11,13 +13,34 @@ export default function ProfessionalDirectory() {
   const router = useRouter();
   const m3 = useM3();
   const { t } = useTranslation();
+  const signOut = useAuthStore((state) => state.signOut);
   const [search, setSearch] = useState('');
+
+  const handleSignOut = () => {
+    Alert.alert(t('settings.signOutConfirmTitle'), t('settings.signOutConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.signOut'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await signOut();
+          } catch (error) {
+            if (__DEV__) {
+              console.error('Sign out error:', error);
+            }
+            Alert.alert(t('common.error'), t('settings.errors.signOutFailed'));
+          }
+        },
+      },
+    ]);
+  };
   const { data, isLoading, isError, refetch, isRefetching } = useProfessionalWorkspace();
   const role = deriveProfessionalRole(data);
   const clients = useMemo(
     () =>
       (data?.clients ?? []).filter((c) =>
-        c.full_name.toLowerCase().includes(search.trim().toLowerCase()),
+        (c.full_name ?? '').toLowerCase().includes(search.trim().toLowerCase()),
       ),
     [data, search],
   );
@@ -27,6 +50,21 @@ export default function ProfessionalDirectory() {
         options={{
           title: data?.organization_name ?? t('professional.title'),
           headerBackVisible: false,
+          headerRight: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('settings.signOut')}
+              onPress={handleSignOut}
+              hitSlop={8}
+              style={{ paddingHorizontal: spacing[2], paddingVertical: spacing[1] }}
+            >
+              <SymbolIcon
+                name="rectangle.portrait.and.arrow.right"
+                size={22}
+                color={m3.colorScheme.onSurface}
+              />
+            </Pressable>
+          ),
         }}
       />
       <Text
