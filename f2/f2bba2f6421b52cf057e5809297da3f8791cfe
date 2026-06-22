@@ -1,0 +1,62 @@
+app/professional/farm/[farmId]/index.tsx
+  s_c1b124cb1fff54::t_ac3313ea4aa4f3 42
+src/i18n/locales/en.ts
+  s_c1b124cb1fff54::t_9d69c36e2893b3 184-189
+src/i18n/locales/mr.ts
+  s_c1b124cb1fff54::t_01644d9b9e58af 164-166,169-172,179-185,187-189
+  s_c1b124cb1fff54::t_fc6c7a69fbec33 173-178
+app/professional/log/add.tsx
+  s_c1b124cb1fff54::t_a082356a3db2d9 15,31-41
+  s_c1b124cb1fff54::t_03df4a4bda4268 1,7
+app/professional/farm/[farmId]/lab-reports.tsx
+  s_c1b124cb1fff54::t_15f766c8cca2f9 71
+  s_c1b124cb1fff54::t_8e25f48f3d19c8 102-104
+  s_c1b124cb1fff54::t_6d0212c031bb34 118-124
+src/services/delegated-logs.ts
+  s_c1b124cb1fff54::t_a2d3cb84263069 127-128
+  s_c1b124cb1fff54::t_4cb02b5fd76ec2 222,230,236,242
+src/i18n/locales/hi.ts
+  s_c1b124cb1fff54::t_8f1feb8adfcdd0 163-165,168-171,178-184,186-188
+  s_c1b124cb1fff54::t_374fa80966577c 172-177
+src/lib/season-context.ts
+  s_c1b124cb1fff54::t_698fda47ce9dfa 159
+supabase/migrations/20260621074218_delegated_logs.sql
+  s_c1b124cb1fff54::t_ab9c62c34c22f7 224,226,228,230,232
+src/services/consultant-reviews.ts
+  s_c1b124cb1fff54::t_d2c5f66c888e60 71
+src/hooks/use-lab-tests.ts
+  s_c1b124cb1fff54::t_19f26137e53122 183
+  s_c1b124cb1fff54::t_fecca064744f02 204
+  s_c1b124cb1fff54::t_273e4b949bfff1 225
+  s_c1b124cb1fff54::t_7fd011573ce44c 81
+  s_c1b124cb1fff54::t_92269bec89502b 106
+  s_c1b124cb1fff54::t_a5d1a7032df98a 152
+  s_c1b124cb1fff54::t_7e91aefd55170a 22-29
+src/components/professional/soil-baseline-panel.tsx
+  s_c1b124cb1fff54::t_9f0d146e31396e 15-20
+  s_c1b124cb1fff54::t_cfd1fb1e9043b5 77,89,99
+src/hooks/use-consultant-reviews.ts
+  s_c1b124cb1fff54::t_d412ad1dc0a12f 34
+src/components/lab/petiole-comparison.tsx
+  s_c1b124cb1fff54::t_5bc90eafa91c4b 60-63
+__tests__/delegated-logs.test.ts
+  s_c1b124cb1fff54::t_2db4aaeb4e18fc 60,66-122,129-135
+app/professional/index.tsx
+  s_c1b124cb1fff54::t_a4e835ba9a5734 17,39-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "f2f2bba2f6421b52cf057e5809297da3f8791cfe",
+  "prompts": {},
+  "sessions": {
+    "s_c1b124cb1fff54": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "72940c77-2ea0-4289-b50e-ae45897b6373",
+        "model": "custom:GLM-5.2-0"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
