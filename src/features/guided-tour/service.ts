@@ -17,6 +17,42 @@ interface PushDeviceSyncOptions {
   featureOverviewEnabled?: boolean;
 }
 
+// Hard ceiling for the push-token fetch. getExpoPushTokenAsync makes a network
+// call (APNs on iOS, FCM on Android) that can otherwise hang indefinitely.
+const PUSH_TOKEN_TIMEOUT_MS = 10_000;
+
+function resolveEasProjectId(): string | undefined {
+  return (
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    (Constants as typeof Constants & { easConfig?: { projectId?: string } }).easConfig?.projectId
+  );
+}
+
+function describeError(error: unknown): Record<string, string | null> {
+  if (error instanceof Error) {
+    return {
+      error_message: error.message,
+      error_name: error.name,
+      error_code: (error as { code?: string | number }).code?.toString() ?? null,
+    };
+  }
+  return { error_message: String(error), error_name: null, error_code: null };
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 function getDeviceTimezone(): string | null {
   try {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone?.trim();
@@ -31,12 +67,12 @@ async function getExpoPushToken(): Promise<string | null> {
   const permission = await Notifications.getPermissionsAsync();
   if (permission.status !== 'granted') return null;
 
-  const projectId =
-    Constants.expoConfig?.extra?.eas?.projectId ??
-    (Constants as typeof Constants & { easConfig?: { projectId?: string } }).easConfig?.projectId;
+  const projectId = resolveEasProjectId();
 
-  const tokenResult = await Notifications.getExpoPushTokenAsync(
-    projectId ? { projectId } : undefined,
+  const tokenResult = await withTimeout(
+    Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined),
+    PUSH_TOKEN_TIMEOUT_MS,
+    'getExpoPushTokenAsync',
   );
   return tokenResult.data || null;
 }
@@ -170,15 +206,23 @@ export async function syncPushDeviceRegistration(
   const userId = await getUserId();
   if (!userId) return false;
 
+  // Track which step failed so the failure event is actually diagnosable:
+  // `fetch_token` = Expo/APNs/FCM token fetch, `update_row` = Supabase upsert.
+  let stage: 'fetch_token' | 'update_row' = 'fetch_token';
   try {
     const expoPushToken = await getExpoPushToken();
     if (!expoPushToken) return false;
 
+    stage = 'update_row';
     await updatePushDeviceRow(userId, expoPushToken, normalizePushLocale(locale), options);
     return true;
   } catch (error) {
     telemetry.capture('guided_tour_push_registration_failed', {
       context: 'syncPushDeviceRegistration',
+      stage,
+      platform: Platform.OS,
+      has_project_id: Boolean(resolveEasProjectId()),
+      ...describeError(error),
     });
     if (__DEV__) {
       console.warn('[guided-tour] push device registration failed', error);
