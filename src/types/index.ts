@@ -31,7 +31,6 @@ export * from './voice-assistant';
 
 // Voice logging types
 export * from './voice-log';
-export * from './fertilizer-plan';
 export * from './phi';
 export * from './catalog';
 

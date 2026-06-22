@@ -126,6 +126,13 @@ export const queryKeys = {
     detail: (farmId: number) => [...queryKeys.fertilizerPlan.all, { farmId }] as const,
   },
 
+  // Consultant Reviews
+  consultantReviews: {
+    all: ['consultantReviews'] as const,
+    triage: (organizationId: string, farmId: number) =>
+      [...queryKeys.consultantReviews.all, 'triage', { organizationId, farmId }] as const,
+  },
+
   // Warehouse Items
   warehouseItems: {
     all: ['warehouseItems'] as const,
