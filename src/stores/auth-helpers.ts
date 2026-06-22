@@ -17,6 +17,8 @@ export type AuthErrorContext =
   | 'verify_phone_link_otp'
   | 'profile_update'
   | 'delete_account'
+  | 'reset_password'
+  | 'update_password'
   | 'generic';
 
 export const getErrorMessage = (error: unknown, fallback: string) => {
@@ -115,6 +117,17 @@ export const getAuthErrorMessage = (
 
   if (context === 'delete_account') {
     return 'We could not process your delete request right now. Please try again.';
+  }
+
+  if (context === 'reset_password') {
+    return 'Could not send the password reset email. Please check the address and try again.';
+  }
+
+  if (context === 'update_password') {
+    if (message.includes('expired') || message.includes('invalid') || message.includes('session')) {
+      return 'This reset link has expired. Please request a new password reset email.';
+    }
+    return 'We could not update your password right now. Please try again.';
   }
 
   return rawMessage;

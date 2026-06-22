@@ -17,6 +17,7 @@ export interface AuthState {
   pendingOTPPhoneMode: PhoneAuthMode | null;
   otpSentSuccessfully: boolean;
   pendingOTPType: EmailOTPType;
+  passwordResetEmailSent: boolean;
   needsProfileCompletion: boolean;
   phoneLinkingPending: boolean;
   phoneLinkingNumber: string | null;
@@ -41,6 +42,10 @@ export interface AuthActions {
   verifyOTP: (email: string, code: string) => Promise<void>;
   resendOTP: () => Promise<void>;
   cancelOTPFlow: () => void;
+
+  resetPasswordForEmail: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
+  clearPasswordResetState: () => void;
 
   signInWithPhone: (phone: string, mode?: PhoneAuthMode, name?: string) => Promise<void>;
   signInWithPhoneAuto: (phone: string, name?: string) => Promise<void>;

@@ -1743,6 +1743,7 @@ export const en = {
     signIn: 'Sign In',
     signUp: 'Sign Up',
     or: 'or',
+    forgotPassword: 'Forgot password?',
     continueWithApple: 'Continue with Apple',
     continueWithGoogle: 'Continue with Google',
     continueWithPhone: 'Continue with Phone',
@@ -1753,7 +1754,39 @@ export const en = {
       switchToSignIn: 'Switch to sign in',
       switchToSignUp: 'Switch to sign up',
       continueWithPhone: 'Sign in with phone number',
+      forgotPassword: 'Reset your password',
     },
+  },
+
+  authForgotPassword: {
+    title: 'Forgot password?',
+    subtitle: "Enter your email and we'll send you a link to reset your password.",
+    email: 'Email',
+    sendButton: 'Send reset link',
+    sending: 'Sending...',
+    sentTitle: 'Check your email',
+    sentSubtitle: 'We sent a password reset link to',
+    sentHint: 'Tap the link in the email to set a new password. The link expires soon.',
+    resend: 'Resend email',
+    backToSignIn: 'Back to sign in',
+    a11y: {
+      back: 'Back to sign in',
+      send: 'Send password reset link',
+    },
+  },
+
+  authResetPassword: {
+    title: 'Set a new password',
+    subtitle: 'Choose a new password for your account.',
+    newPassword: 'New password',
+    confirmPassword: 'Confirm password',
+    updateButton: 'Update password',
+    updating: 'Updating...',
+    mismatch: 'Passwords do not match',
+    tooShort: 'Password must be at least 6 characters',
+    successTitle: 'Password updated',
+    successSubtitle: 'Your password has been changed. You are now signed in.',
+    continueButton: 'Continue',
   },
 
   authOtp: {
