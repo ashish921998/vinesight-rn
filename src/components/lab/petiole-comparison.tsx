@@ -57,7 +57,10 @@ export function PetioleComparison({
       date: test.date,
       dateOfPruning: test.date_of_pruning ?? null,
       params: normalizeParams(test.parameters),
-      isHighlighted: highlightedTestId ? (test.id ?? index) === highlightedTestId : false,
+      isHighlighted:
+        highlightedTestId !== undefined && highlightedTestId !== null
+          ? (test.id ?? index) === highlightedTestId
+          : false,
     }));
   }, [tests, highlightedTestId]);
 

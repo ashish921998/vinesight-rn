@@ -14,6 +14,7 @@ export default function ProfessionalDirectory() {
   const m3 = useM3();
   const { t } = useTranslation();
   const signOut = useAuthStore((state) => state.signOut);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [search, setSearch] = useState('');
 
   const handleSignOut = () => {
@@ -35,7 +36,9 @@ export default function ProfessionalDirectory() {
       },
     ]);
   };
-  const { data, isLoading, isError, refetch, isRefetching } = useProfessionalWorkspace();
+  const { data, isLoading, isError, refetch, isRefetching } = useProfessionalWorkspace({
+    enabled: isAuthenticated,
+  });
   const role = deriveProfessionalRole(data);
   const clients = useMemo(
     () =>

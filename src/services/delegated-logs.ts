@@ -124,7 +124,8 @@ export function buildDelegatedLogPayload(
   switch (input.type) {
     case 'irrigation': {
       const { data } = input;
-      return { duration: data.duration };
+      const trimmedNotes = data.notes?.trim();
+      return { duration: data.duration, notes: trimmedNotes || undefined };
     }
 
     case 'spray': {
@@ -218,6 +219,7 @@ export function buildDelegatedLogPayload(
         areaAcre: farmArea,
         waterVolumeL: data.waterVolume ?? null,
       });
+      const trimmedNotes = data.notes?.trim();
       return {
         fertilizers,
         water_volume: data.waterVolume ?? null,
@@ -225,16 +227,19 @@ export function buildDelegatedLogPayload(
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
         nutrient_calc_coverage: nutrientTotals.coveragePercent,
         area: farmArea,
+        notes: trimmedNotes || undefined,
       };
     }
 
     case 'harvest': {
       const { data } = input;
+      const trimmedNotes = data.notes?.trim();
       return {
         quantity: data.quantity,
         grade: data.grade,
         price: data.price || undefined,
         buyer: data.buyer || undefined,
+        notes: trimmedNotes || undefined,
       };
     }
 

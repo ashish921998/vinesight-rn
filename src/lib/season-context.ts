@@ -156,7 +156,7 @@ export async function resolveOrCreateSeasonIdForDate(args: {
     // back to a null season rather than blocking the write entirely.
     if (isPostgrestErrorWithCode(error, '42P01')) return null;
     console.warn('[season-context] failed to create initial season on demand:', error);
-    return null;
+    throw error;
   }
 
   return resolveOptionalSeasonIdForDate(args);

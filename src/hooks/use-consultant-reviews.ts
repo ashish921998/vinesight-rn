@@ -31,7 +31,7 @@ export function useSendFertilizerPlan() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.consultantReviews.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.professionalWorkspace.all });
-      queryClient.invalidateQueries({ queryKey: labTestQueryKeys.petioleTests(0).slice(0, -1) });
+      queryClient.invalidateQueries({ queryKey: labTestQueryKeys.petioleTests.all });
     },
   });
 }

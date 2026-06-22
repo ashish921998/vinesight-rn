@@ -68,7 +68,7 @@ export default function LabReportsScreen() {
   // A missing/garbage route param yields NaN. The lab hooks are gated on `farmId > 0`
   // so they never fire, but without this guard the screen would sit on a blank state
   // forever; surface the same error UI the sibling farm screen uses instead.
-  const isInvalidFarm = !Number.isFinite(numericFarmId);
+  const isInvalidFarm = !Number.isFinite(numericFarmId) || numericFarmId <= 0;
   const isLoading = !isInvalidFarm && (workspace.isLoading || petiole.isLoading || soil.isLoading);
   const isError = isInvalidFarm || workspace.isError || petiole.isError || soil.isError;
 
@@ -99,8 +99,9 @@ export default function LabReportsScreen() {
   const handleSubmit = async () => {
     const planItems: FertilizerPlanItem[] = [];
     for (const draft of items) {
-      const qty = parseFloat(draft.quantity);
-      if (!draft.name.trim() || Number.isNaN(qty) || qty <= 0) {
+      const qtyRaw = draft.quantity.trim();
+      const qty = Number(qtyRaw);
+      if (!draft.name.trim() || qtyRaw === '' || !Number.isFinite(qty) || qty <= 0) {
         toast.error(t('professional.reviews.errors.itemQuantityRequired'));
         return;
       }
@@ -113,6 +114,13 @@ export default function LabReportsScreen() {
 
     try {
       let reviewId = triage.data?.[0]?.id;
+
+      // If the triage query is still loading, refetch to avoid creating a
+      // duplicate triage for a review that already exists server-side.
+      if (!reviewId && triage.isLoading && workspace.data?.organization_id) {
+        const freshTriage = await triage.refetch();
+        reviewId = freshTriage.data?.[0]?.id;
+      }
 
       if (!reviewId && latestPetioleTest?.id && workspace.data?.organization_id && clientUserId) {
         const review = await createTriage.mutateAsync({

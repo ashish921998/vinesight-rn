@@ -39,7 +39,7 @@ export default function ProfessionalFarm() {
   const activity = useProfessionalFarmActivity({
     organizationId: workspace.data?.organization_id,
     clientUserId: farmer?.user_id,
-    farmId: Number.isFinite(numericFarmId) ? numericFarmId : undefined,
+    farmId: Number.isFinite(numericFarmId) && numericFarmId > 0 ? numericFarmId : undefined,
   });
 
   const activityItems = useMemo(() => activity.data ?? [], [activity.data]);

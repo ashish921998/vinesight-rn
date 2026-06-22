@@ -12,24 +12,12 @@ interface SoilBaselinePanelProps {
   test: SoilTestRecord | null | undefined;
 }
 
-const SECTIONS: { title: string; keys: string[] }[] = [
-  {
-    title: 'Chemical',
-    keys: ['ph', 'ec', 'organicCarbon', 'organicMatter', 'calciumCarbonate'],
-  },
-  {
-    title: 'Major',
-    keys: ['nitrogen', 'phosphorus', 'potassium'],
-  },
-  {
-    title: 'Secondary',
-    keys: ['calcium', 'magnesium', 'sulfur'],
-  },
-  {
-    title: 'Micro',
-    keys: ['iron', 'manganese', 'zinc', 'copper', 'boron', 'molybdenum'],
-  },
-];
+const SECTION_KEYS = [
+  { key: 'chemical', keys: ['ph', 'ec', 'organicCarbon', 'organicMatter', 'calciumCarbonate'] },
+  { key: 'major', keys: ['nitrogen', 'phosphorus', 'potassium'] },
+  { key: 'secondary', keys: ['calcium', 'magnesium', 'sulfur'] },
+  { key: 'micro', keys: ['iron', 'manganese', 'zinc', 'copper', 'boron', 'molybdenum'] },
+] as const;
 
 export function SoilBaselinePanel({ test }: SoilBaselinePanelProps) {
   const { t } = useTranslation();
@@ -86,7 +74,7 @@ export function SoilBaselinePanel({ test }: SoilBaselinePanelProps) {
       </View>
 
       <View style={{ padding: spacing[3], gap: spacing[4] }}>
-        {SECTIONS.map((section) => {
+        {SECTION_KEYS.map((section) => {
           const entries = section.keys
             .map((key) => {
               const option = soilParamOptions.find((p) => p.key === key);
@@ -98,7 +86,7 @@ export function SoilBaselinePanel({ test }: SoilBaselinePanelProps) {
           if (entries.length === 0) return null;
 
           return (
-            <View key={section.title}>
+            <View key={section.key}>
               <Text
                 style={{
                   fontSize: fontSize.xs,
@@ -108,7 +96,7 @@ export function SoilBaselinePanel({ test }: SoilBaselinePanelProps) {
                   textTransform: 'uppercase',
                 }}
               >
-                {section.title}
+                {t(`professional.reviews.soilSections.${section.key}`)}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
                 {entries.map(({ key, option, value }) => {

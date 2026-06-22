@@ -68,7 +68,7 @@ export async function sendFertilizerPlan(
     p_review_id: input.reviewId,
     p_title: input.title,
     p_notes: input.notes ?? '',
-    p_items: JSON.stringify(input.items),
+    p_items: input.items,
   });
 
   if (error) throw error;

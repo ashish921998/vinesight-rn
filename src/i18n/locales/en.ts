@@ -181,6 +181,12 @@ export const en = {
       noSoilBaseline: 'No soil test available for this farm.',
       petioleComparison: 'Petiole comparison',
       soilBaseline: 'Soil baseline',
+      soilSections: {
+        chemical: 'Chemical',
+        major: 'Major',
+        secondary: 'Secondary',
+        micro: 'Micro',
+      },
       addItem: 'Add item',
       itemNumber: 'Item {{number}}',
       productName: 'Product name',

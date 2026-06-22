@@ -221,15 +221,15 @@ begin
   ) order by activity.record_date desc, activity.created_at desc), '[]'::jsonb)
   into result
   from (
-    select 'irrigation'::text record_type, r.date record_date, r.created_at, to_jsonb(r.*) record_data from public.irrigation_records r where r.farm_id = p_farm_id
+    select 'irrigation'::text record_type, r.date record_date, r.created_at, to_jsonb(r.*) record_data from public.irrigation_records r where r.farm_id = p_farm_id and (r.acting_organization_id is null or r.acting_organization_id = p_organization_id)
     union all
-    select 'spray', r.date, r.created_at, to_jsonb(r.*) from public.spray_records r where r.farm_id = p_farm_id
+    select 'spray', r.date, r.created_at, to_jsonb(r.*) from public.spray_records r where r.farm_id = p_farm_id and (r.acting_organization_id is null or r.acting_organization_id = p_organization_id)
     union all
-    select 'fertigation', r.date, r.created_at, to_jsonb(r.*) from public.fertigation_records r where r.farm_id = p_farm_id
+    select 'fertigation', r.date, r.created_at, to_jsonb(r.*) from public.fertigation_records r where r.farm_id = p_farm_id and (r.acting_organization_id is null or r.acting_organization_id = p_organization_id)
     union all
-    select 'harvest', r.date, r.created_at, to_jsonb(r.*) from public.harvest_records r where r.farm_id = p_farm_id
+    select 'harvest', r.date, r.created_at, to_jsonb(r.*) from public.harvest_records r where r.farm_id = p_farm_id and (r.acting_organization_id is null or r.acting_organization_id = p_organization_id)
     union all
-    select 'note', r.date, r.created_at, to_jsonb(r.*) from public.daily_notes r where r.farm_id = p_farm_id
+    select 'note', r.date, r.created_at, to_jsonb(r.*) from public.daily_notes r where r.farm_id = p_farm_id and (r.acting_organization_id is null or r.acting_organization_id = p_organization_id)
   ) activity;
 
   return result;
