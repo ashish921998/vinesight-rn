@@ -1,0 +1,45 @@
+src/i18n/locales/en.ts
+  s_fd1f9dddf64f72::t_e027bf63b9a129 188
+  s_e14a202d611864::t_1adf50c7d34e97 2687-2690
+  s_a494b067da8033::t_9da952fd80ee5c 159,174-187,189-196,2691
+src/i18n/locales/mr.ts
+  s_a494b067da8033::t_5098cde156b205 163-176,178-185,2699
+  s_e14a202d611864::t_ed43e817f17e7d 2695-2698
+  s_fd1f9dddf64f72::t_72043ee2310716 177
+src/i18n/locales/hi.ts
+  s_fd1f9dddf64f72::t_e8084835b93382 176
+  s_a494b067da8033::t_bef0cce070f265 162-175,177-184,2676
+  s_e14a202d611864::t_6cb7f0c02ebcd6 2672-2675
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "555119e66af5c5ac4d51b1e78f2876b33f2f63e4",
+  "prompts": {},
+  "sessions": {
+    "s_a494b067da8033": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "6edf01ce-879b-4ecc-af3a-4ceafe7cb22c",
+        "model": "kimi-k2.7-code"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_e14a202d611864": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "bd83bd35-aff5-46cc-8e50-74a4144aa90c",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_fd1f9dddf64f72": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d22c0c0f-9521-4830-bc55-9291dcf9984e",
+        "model": "custom:GLM-5.2-0"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
