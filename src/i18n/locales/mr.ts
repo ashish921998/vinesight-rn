@@ -901,6 +901,10 @@ export const mr = {
     },
     areaLabel: 'क्षेत्र',
     estimatedWaterLabel: 'अंदाजे पाणी',
+    addFertilizers: {
+      title: 'खते जोडा',
+      subtitle: 'या $t(glossary.irrigation) सोबत दिलेली खते नोंदवा',
+    },
   },
 
   expenseForm: {

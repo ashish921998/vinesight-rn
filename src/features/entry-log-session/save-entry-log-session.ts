@@ -213,11 +213,12 @@ async function submitLogWithSnapshot(params: {
   dateStr: string;
   farm: EntryLogFarmContext;
   adapters: EntryLogSessionAdapters;
+  linkedIrrigationRecordId?: number | null;
 }): Promise<{
   result: { pendingLogId: string; type: LogTypeId; recordId: number | null };
   previousDailyNote: DailyNoteRecord | null;
 }> {
-  const { log, dateStr, farm, adapters } = params;
+  const { log, dateStr, farm, adapters, linkedIrrigationRecordId } = params;
   const previousDailyNote =
     log.type === 'note' ? await adapters.getDailyNote({ farmId: farm.id, date: dateStr }) : null;
   const result = await submitEntryPendingLog({
@@ -225,6 +226,7 @@ async function submitLogWithSnapshot(params: {
     dateStr,
     farm,
     submitters: adapters,
+    linkedIrrigationRecordId,
   });
   return { result, previousDailyNote };
 }
@@ -363,16 +365,26 @@ export async function saveEntryLogSession(
   }
 
   const farmContext = buildFarmContext(singleFarmContext, preferredAreaUnit);
+  // Logs are submitted strictly in array order, so a fertigation log that was added
+  // alongside an irrigation log can read the created irrigation record id (the irrigation
+  // log is always enqueued first) and stamp it onto its own record to link the two.
+  const createdRecordIdByPendingLogId = new Map<string, number | null>();
   const results = await settleSequentially(
-    pendingLogs.map(
-      (log) => () =>
-        submitLogWithSnapshot({
-          log,
-          dateStr,
-          farm: farmContext,
-          adapters,
-        }),
-    ),
+    pendingLogs.map((log) => async () => {
+      const linkedIrrigationRecordId =
+        log.type === 'fertigation' && log.linkIrrigationFromPendingLogId
+          ? (createdRecordIdByPendingLogId.get(log.linkIrrigationFromPendingLogId) ?? null)
+          : null;
+      const outcome = await submitLogWithSnapshot({
+        log,
+        dateStr,
+        farm: farmContext,
+        adapters,
+        linkedIrrigationRecordId,
+      });
+      createdRecordIdByPendingLogId.set(log.id, outcome.result.recordId);
+      return outcome;
+    }),
   );
   const failures: EntryLogSubmissionFailure[] = [];
   const createdRecords: EntryLogCreatedRecord[] = [];

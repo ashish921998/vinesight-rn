@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { radius } from '@/styles/theme';
+import { fontSize, radius } from '@/styles/theme';
 import type {
   IrrigationFormData,
   SprayFormData,
@@ -17,11 +17,13 @@ import type { TextInputProps } from 'react-native';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { guidedTourOn } from '@/features/guided-tour/events';
-import { View, Pressable, Text } from 'react-native';
+import { View, Pressable, Text, Switch } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ChemicalMix } from '@/types/phi';
 
@@ -48,6 +50,9 @@ interface LogFormProps {
   sprayCatalogOnly?: boolean;
   sprayCatalogMixes?: ChemicalMix[];
   showSaveButton?: boolean;
+  /** Whether the irrigation entry includes an attached fertilizer (fertigation) log. */
+  includeFertilizersWithIrrigation?: boolean;
+  onIncludeFertilizersWithIrrigationChange?: (value: boolean) => void;
 }
 
 export function LogForm({
@@ -73,6 +78,8 @@ export function LogForm({
   sprayCatalogOnly = false,
   sprayCatalogMixes = [],
   showSaveButton = true,
+  includeFertilizersWithIrrigation = false,
+  onIncludeFertilizersWithIrrigationChange,
 }: LogFormProps) {
   const m3 = useM3();
   const { t } = useTranslation();
@@ -177,6 +184,87 @@ export function LogForm({
             />
           </GuidedTourTarget>
         </View>
+
+        <View
+          style={{
+            backgroundColor: m3.surface.s100,
+            borderRadius: radius.xl,
+            borderWidth: 1,
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+            overflow: 'hidden',
+          }}
+        >
+          <Pressable
+            onPress={() =>
+              onIncludeFertilizersWithIrrigationChange?.(!includeFertilizersWithIrrigation)
+            }
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              padding: 16,
+              gap: 12,
+            }}
+          >
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: radius.md,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+              }}
+            >
+              <UiSymbol
+                name={resolveSymbolIconName(ICON_REGISTRY.fertigation)}
+                size={20}
+                color={m3.colorScheme.primary}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '600', color: m3.colorScheme.onSurface }}>
+                {t('irrigationForm.addFertilizers.title')}
+              </Text>
+              <Text
+                style={{
+                  marginTop: 2,
+                  fontSize: fontSize.xs,
+                  color: m3.colorScheme.onSurfaceVariant,
+                }}
+              >
+                {t('irrigationForm.addFertilizers.subtitle')}
+              </Text>
+            </View>
+            <Switch
+              value={includeFertilizersWithIrrigation}
+              onValueChange={onIncludeFertilizersWithIrrigationChange}
+              trackColor={{
+                false: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.24),
+                true: m3.colorScheme.primary,
+              }}
+            />
+          </Pressable>
+          {includeFertilizersWithIrrigation && (
+            <View
+              style={{
+                paddingHorizontal: 16,
+                paddingBottom: 16,
+                borderTopWidth: 1,
+                borderTopColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+                paddingTop: 16,
+              }}
+            >
+              <FertigationForm
+                data={fertigationData}
+                onChange={onFertigationChange}
+                onInputFocus={onInputFocus}
+                quickAddItems={fertigationQuickAddItems}
+                compact
+              />
+            </View>
+          )}
+        </View>
+
         {showSaveButton && addEntryButton}
       </View>
     );

@@ -445,6 +445,10 @@ export function EntryForm({
   const keyboardHeightRef = useRef(0);
 
   const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
+  // Fertilizers are mostly applied through irrigation, so the irrigation entry can optionally
+  // carry a fertigation log. When on, the fertigation section (reusing `fertigationData`) is
+  // shown inside the irrigation flow and saved as a linked record.
+  const [irrigationIncludesFertilizers, setIrrigationIncludesFertilizers] = useState(false);
   const [sprayData, setSprayData] = useState<SprayFormData>(() => createEmptySprayFormData());
   const [harvestData, setHarvestData] = useState<HarvestFormData>(() =>
     createEmptyHarvestFormData(),
@@ -894,11 +898,15 @@ export function EntryForm({
     }
   }, []);
 
-  const enqueuePendingLog = useCallback(
-    (type: LogTypeId, data: PendingLog['data']) => {
+  const buildPendingLog = useCallback(
+    (
+      type: LogTypeId,
+      data: PendingLog['data'],
+      extra?: Partial<Pick<PendingLog, 'linkIrrigationFromPendingLogId'>>,
+    ): PendingLog => {
       const draftScope: PendingLog['scope'] =
         isAllFarmsSelected && type === 'expense' ? 'all_farms' : 'single_farm';
-      const newLog: PendingLog = {
+      return {
         id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         type,
         scope: draftScope,
@@ -906,16 +914,25 @@ export function EntryForm({
         data,
         displayDescription: getLogDescription(type, data),
         isSourceTaskLog: false,
+        ...extra,
       };
+    },
+    [activeFarm?.id, getLogDescription, isAllFarmsSelected],
+  );
 
+  const enqueuePendingLogs = useCallback(
+    (newLogs: PendingLog[]) => {
+      if (newLogs.length === 0) return;
       setPendingLogs((prev) => {
-        const shouldMarkSourceTaskLog = Boolean(
-          sourceTaskId &&
-          sourceTaskType &&
-          type === sourceTaskType &&
-          !prev.some((log) => log.isSourceTaskLog),
-        );
-        return [...prev, { ...newLog, isSourceTaskLog: shouldMarkSourceTaskLog }];
+        let hasSourceTaskLog = prev.some((log) => log.isSourceTaskLog);
+        const marked = newLogs.map((log) => {
+          const shouldMark = Boolean(
+            sourceTaskId && sourceTaskType && log.type === sourceTaskType && !hasSourceTaskLog,
+          );
+          if (shouldMark) hasSourceTaskLog = true;
+          return shouldMark ? { ...log, isSourceTaskLog: true } : log;
+        });
+        return [...prev, ...marked];
       });
       setSelectedLogType(null);
       setShowLogFormModal(false);
@@ -923,7 +940,14 @@ export function EntryForm({
         contentScrollViewRef.current?.scrollToEnd({ animated: true });
       }, 250);
     },
-    [activeFarm?.id, getLogDescription, isAllFarmsSelected, sourceTaskId, sourceTaskType],
+    [sourceTaskId, sourceTaskType],
+  );
+
+  const enqueuePendingLog = useCallback(
+    (type: LogTypeId, data: PendingLog['data']) => {
+      enqueuePendingLogs([buildPendingLog(type, data)]);
+    },
+    [buildPendingLog, enqueuePendingLogs],
   );
 
   const buildSprayPendingData = useCallback(
@@ -947,11 +971,33 @@ export function EntryForm({
     if (!activeFarm && !isAllFarmsSelected) return;
     if (isAllFarmsSelected && selectedLogType !== 'expense') return;
 
+    // Irrigation with attached fertilizers: enqueue both, linking the fertigation log to the
+    // irrigation log so the orchestrator can stamp the irrigation record id onto it.
+    if (
+      selectedLogType === 'irrigation' &&
+      irrigationIncludesFertilizers &&
+      validateFertigationForm(fertigationData)
+    ) {
+      const irrigationLog = buildPendingLog('irrigation', { ...irrigationData });
+      const fertigationLog = buildPendingLog(
+        'fertigation',
+        { ...fertigationData },
+        { linkIrrigationFromPendingLogId: irrigationLog.id },
+      );
+      enqueuePendingLogs([irrigationLog, fertigationLog]);
+      setIrrigationData({ duration: undefined });
+      setFertigationData(createEmptyFertigationFormData());
+      setIrrigationIncludesFertilizers(false);
+      return;
+    }
+
     let data: PendingLog['data'];
     switch (selectedLogType) {
       case 'irrigation':
         data = { ...irrigationData };
         setIrrigationData({ duration: undefined });
+        setFertigationData(createEmptyFertigationFormData());
+        setIrrigationIncludesFertilizers(false);
         break;
       case 'spray':
         if (
@@ -1070,7 +1116,10 @@ export function EntryForm({
     isGrapeFarm,
     activeSeason?.target_harvest_date,
     buildSprayPendingData,
+    buildPendingLog,
     enqueuePendingLog,
+    enqueuePendingLogs,
+    irrigationIncludesFertilizers,
     t,
   ]);
 
@@ -1819,6 +1868,8 @@ export function EntryForm({
                 hasFarm={hasFarmForCurrentLog}
                 sprayQuickAddItems={sprayQuickAddItems}
                 fertigationQuickAddItems={fertigationQuickAddItems}
+                includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
+                onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
                 sprayCatalogMixes={catalogMixes}
                 showSaveButton={false}
               />
@@ -1933,6 +1984,8 @@ export function EntryForm({
           hasFarm={hasFarmForCurrentLog}
           sprayQuickAddItems={sprayQuickAddItems}
           fertigationQuickAddItems={fertigationQuickAddItems}
+          includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
+          onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
           sprayCatalogMixes={catalogMixes}
         />
       </View>

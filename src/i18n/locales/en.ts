@@ -956,6 +956,10 @@ export const en = {
     },
     areaLabel: 'Area',
     estimatedWaterLabel: 'Est. Water',
+    addFertilizers: {
+      title: 'Add fertilizers',
+      subtitle: 'Log fertilizers applied with this irrigation',
+    },
   },
 
   analytics: {
