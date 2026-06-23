@@ -1,0 +1,21 @@
+app/(auth)/reset-password.tsx
+  s_19bcb9659ed3c6::t_cf2a7a7b9fbf61 81
+  s_19bcb9659ed3c6::t_4e092da3c35779 107
+  s_19bcb9659ed3c6::t_7d8ae5b342c011 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "090088c53d53ea45af77c35f6f49f65d47a3bb2c",
+  "prompts": {},
+  "sessions": {
+    "s_19bcb9659ed3c6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_10d1a9824ffeVfTKlEmLD48cLN",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
