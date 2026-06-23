@@ -1,0 +1,46 @@
+src/stores/auth-email.ts
+  s_6e1a8f510d733b::t_f33dd06329935f 348
+  s_6e1a8f510d733b::t_bddf8a919efd5d 3
+  s_6e1a8f510d733b::t_470824ff943840 116,121
+  s_6e1a8f510d733b::t_3f756fa8007090 218
+  s_6e1a8f510d733b::t_fdf4cac027bf87 182
+  s_6e1a8f510d733b::t_384aceae5ac2f7 317
+src/i18n/locales/mr.ts
+  s_6e1a8f510d733b::t_3a85e90c6afc3f 1798-1801
+  s_6e1a8f510d733b::t_9270706148fe9e 1760-1764
+  s_6e1a8f510d733b::t_d2f6b60292cfca 1777-1778
+src/i18n/locales/hi.ts
+  s_6e1a8f510d733b::t_f1818c3a224658 1792-1795
+  s_6e1a8f510d733b::t_ead8980762450e 1771-1772
+  s_6e1a8f510d733b::t_b90c5c089e9a1c 1753-1757
+app/(auth)/forgot-password.tsx
+  s_6e1a8f510d733b::t_3616776325a0eb 1,20
+  s_6e1a8f510d733b::t_15c108e67e0130 58,66
+  s_6e1a8f510d733b::t_d0378769273c6d 227-235,239
+  s_6e1a8f510d733b::t_ae1d69412eb8a5 22,31,48-57,59-65,69
+app/(auth)/reset-password.tsx
+  s_6e1a8f510d733b::t_2759ce6c89fd6e 216-233
+  s_6e1a8f510d733b::t_1163e7d309b9dc 131-143
+  s_6e1a8f510d733b::t_b718f3ae6ce7ea 7
+  s_6e1a8f510d733b::t_fb392f2b58463d 59-67
+src/i18n/locales/en.ts
+  s_6e1a8f510d733b::t_857bb2a8d8c4ba 1759-1763
+  s_6e1a8f510d733b::t_150b4285de7c38 1797-1800
+  s_6e1a8f510d733b::t_6e838452a5f190 1776-1777
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "a9f6c89d324a76ff3fc29476385ed31720aaa9e3",
+  "prompts": {},
+  "sessions": {
+    "s_6e1a8f510d733b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_10d16099bffeoHGWeXC78kfWdO",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
