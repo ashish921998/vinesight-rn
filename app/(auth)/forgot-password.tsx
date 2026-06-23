@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,9 @@ import { useTranslation } from 'react-i18next';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useIsDark, useM3 } from '@/styles/use-theme';
+import { formatNumber } from '@/i18n/format';
+
+const RESEND_COOLDOWN = 30;
 
 export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
@@ -25,6 +28,7 @@ export default function ForgotPasswordScreen() {
 
   const { email: emailParam } = useLocalSearchParams<{ email?: string }>();
   const [email, setEmail] = useState(typeof emailParam === 'string' ? emailParam : '');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const {
     isLoading,
@@ -41,7 +45,28 @@ export default function ForgotPasswordScreen() {
     return () => clearPasswordResetState();
   }, [clearPasswordResetState]);
 
+  // Cooldown timer for the resend button.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  // Start the cooldown whenever a reset email is successfully sent.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  const prevResetSentRef = useRef(passwordResetEmailSent);
+  useEffect(() => {
+    if (passwordResetEmailSent && !prevResetSentRef.current) {
+      setResendCooldown(RESEND_COOLDOWN);
+    }
+    prevResetSentRef.current = passwordResetEmailSent;
+  }, [passwordResetEmailSent]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
   const handleSend = async () => {
+    if (passwordResetEmailSent && resendCooldown > 0) return;
     if (!email.trim()) return;
     clearError();
     await resetPasswordForEmail(email);
@@ -199,11 +224,19 @@ export default function ForgotPasswordScreen() {
             </View>
 
             <Button
-              title={isLoading ? t('authForgotPassword.sending') : t('authForgotPassword.resend')}
+              title={
+                isLoading
+                  ? t('authForgotPassword.sending')
+                  : resendCooldown > 0
+                    ? t('authForgotPassword.resendInSecondsShort', {
+                        seconds: formatNumber(resendCooldown),
+                      })
+                    : t('authForgotPassword.resend')
+              }
               variant="outline"
               onPress={handleSend}
               isLoading={isLoading}
-              disabled={isLoading}
+              disabled={isLoading || resendCooldown > 0}
             />
 
             {renderBackButton()}

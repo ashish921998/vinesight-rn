@@ -1750,6 +1750,11 @@ export const hi = {
       continueWithPhone: 'फ़ोन नंबर से साइन इन करें',
       forgotPassword: 'अपना पासवर्ड रीसेट करें',
     },
+    validation: {
+      invalidEmail: 'कृपया एक मान्य ईमेल पता दर्ज करें',
+      passwordTooShort: 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए',
+      invalidOtpCode: 'कृपया एक मान्य 6-अंकीय कोड दर्ज करें',
+    },
   },
 
   authForgotPassword: {
@@ -1763,6 +1768,8 @@ export const hi = {
     sentHint:
       'नया पासवर्ड सेट करने के लिए ईमेल में दिए लिंक पर टैप करें। लिंक जल्द ही समाप्त हो जाएगा।',
     resend: 'ईमेल फिर से भेजें',
+    resendA11yWithSeconds: '{{seconds}} सेकंड में ईमेल फिर से भेजें',
+    resendInSecondsShort: '{{seconds}}से में फिर से भेजें',
     backToSignIn: 'साइन इन पर वापस जाएं',
     a11y: {
       back: 'साइन इन पर वापस जाएं',
@@ -1782,6 +1789,10 @@ export const hi = {
     successTitle: 'पासवर्ड अपडेट हो गया',
     successSubtitle: 'आपका पासवर्ड बदल दिया गया है। अब आप साइन इन हैं।',
     continueButton: 'जारी रखें',
+    backToSignIn: 'साइन इन पर वापस जाएं',
+    a11y: {
+      back: 'साइन इन पर वापस जाएं',
+    },
   },
 
   authOtp: {

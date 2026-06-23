@@ -1756,6 +1756,11 @@ export const en = {
       continueWithPhone: 'Sign in with phone number',
       forgotPassword: 'Reset your password',
     },
+    validation: {
+      invalidEmail: 'Please enter a valid email address',
+      passwordTooShort: 'Password must be at least 6 characters',
+      invalidOtpCode: 'Please enter a valid 6-digit code',
+    },
   },
 
   authForgotPassword: {
@@ -1768,6 +1773,8 @@ export const en = {
     sentSubtitle: 'We sent a password reset link to',
     sentHint: 'Tap the link in the email to set a new password. The link expires soon.',
     resend: 'Resend email',
+    resendA11yWithSeconds: 'Resend email in {{seconds}} seconds',
+    resendInSecondsShort: 'Resend in {{seconds}}s',
     backToSignIn: 'Back to sign in',
     a11y: {
       back: 'Back to sign in',
@@ -1787,6 +1794,10 @@ export const en = {
     successTitle: 'Password updated',
     successSubtitle: 'Your password has been changed. You are now signed in.',
     continueButton: 'Continue',
+    backToSignIn: 'Back to sign in',
+    a11y: {
+      back: 'Back to sign in',
+    },
   },
 
   authOtp: {

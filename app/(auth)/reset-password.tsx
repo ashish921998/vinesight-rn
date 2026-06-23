@@ -4,6 +4,7 @@ import {
   Text,
   KeyboardAvoidingView,
   ScrollView,
+  Pressable,
   Platform,
   type ViewStyle,
   type TextStyle,
@@ -53,6 +54,15 @@ export default function ResetPasswordScreen() {
 
   const handleContinue = () => {
     router.replace('/');
+  };
+
+  const handleBack = () => {
+    clearError();
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(auth)/login');
   };
 
   const displayedError = localError || errorMessage;
@@ -116,6 +126,19 @@ export default function ResetPasswordScreen() {
     marginLeft: spacing[2],
     flex: 1,
     color: m3.colorScheme.error,
+  };
+
+  const backButtonWrapperStyle: ViewStyle = {
+    alignSelf: 'center',
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    marginTop: spacing[6],
+  };
+
+  const backButtonTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: m3.colorScheme.primary,
   };
 
   if (succeeded) {
@@ -190,6 +213,24 @@ export default function ResetPasswordScreen() {
           disabled={!newPassword || !confirmPassword || isLoading}
           style={{ marginTop: spacing[6] }}
         />
+
+        <Pressable
+          onPress={handleBack}
+          disabled={isLoading}
+          style={({ pressed }) => [
+            backButtonWrapperStyle,
+            {
+              backgroundColor: pressed
+                ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                : 'transparent',
+              borderRadius: m3.shape.cornerMedium,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('authResetPassword.a11y.back')}
+        >
+          <Text style={backButtonTextStyle}>{t('authResetPassword.backToSignIn')}</Text>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );

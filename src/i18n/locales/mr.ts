@@ -1757,6 +1757,11 @@ export const mr = {
       continueWithPhone: 'फोन नंबरने साइन इन करा',
       forgotPassword: 'तुमचा पासवर्ड रीसेट करा',
     },
+    validation: {
+      invalidEmail: 'कृपया एक वैध ईमेल पत्ता एंटर करा',
+      passwordTooShort: 'पासवर्ड किमान 6 अक्षरांचा असावा',
+      invalidOtpCode: 'कृपया एक वैध 6-अंकी कोड एंटर करा',
+    },
   },
 
   authForgotPassword: {
@@ -1769,6 +1774,8 @@ export const mr = {
     sentSubtitle: 'आम्ही पासवर्ड रीसेट लिंक पाठवली आहे',
     sentHint: 'नवीन पासवर्ड सेट करण्यासाठी ईमेलमधील लिंकवर टॅप करा. लिंक लवकरच कालबाह्य होईल.',
     resend: 'ईमेल पुन्हा पाठवा',
+    resendA11yWithSeconds: '{{seconds}} सेकंदांनी ईमेल पुन्हा पाठवा',
+    resendInSecondsShort: '{{seconds}}s नंतर पुन्हा पाठवा',
     backToSignIn: 'साइन इन वर परत जा',
     a11y: {
       back: 'साइन इन वर परत जा',
@@ -1788,6 +1795,10 @@ export const mr = {
     successTitle: 'पासवर्ड अपडेट झाला',
     successSubtitle: 'तुमचा पासवर्ड बदलला आहे. तुम्ही आता साइन इन आहात.',
     continueButton: 'पुढे जा',
+    backToSignIn: 'साइन इन वर परत जा',
+    a11y: {
+      back: 'साइन इन वर परत जा',
+    },
   },
 
   authOtp: {

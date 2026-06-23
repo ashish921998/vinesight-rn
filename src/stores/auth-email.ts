@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { telemetry } from '@/services/telemetry';
+import i18n from '@/i18n';
 import {
   isNetworkTimeoutError,
   getAuthErrorMessage,
@@ -112,12 +113,12 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     const trimmedEmail = email.trim();
 
     if (!isValidEmail(trimmedEmail)) {
-      set({ errorMessage: 'Please enter a valid email address' });
+      set({ errorMessage: i18n.t('auth.validation.invalidEmail') });
       return;
     }
 
     if (password.length < 6) {
-      set({ errorMessage: 'Password must be at least 6 characters' });
+      set({ errorMessage: i18n.t('auth.validation.passwordTooShort') });
       return;
     }
 
@@ -178,7 +179,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     const trimmedEmail = email.trim();
 
     if (!isValidEmail(trimmedEmail)) {
-      set({ errorMessage: 'Please enter a valid email address' });
+      set({ errorMessage: i18n.t('auth.validation.invalidEmail') });
       return;
     }
 
@@ -214,7 +215,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     const trimmedCode = code.trim();
 
     if (trimmedCode.length !== 6 || !/^\d+$/.test(trimmedCode)) {
-      set({ errorMessage: 'Please enter a valid 6-digit code' });
+      set({ errorMessage: i18n.t('auth.validation.invalidOtpCode') });
       return;
     }
 
@@ -313,7 +314,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     const trimmedEmail = email.trim();
 
     if (!isValidEmail(trimmedEmail)) {
-      set({ errorMessage: 'Please enter a valid email address' });
+      set({ errorMessage: i18n.t('auth.validation.invalidEmail') });
       return;
     }
 
@@ -344,7 +345,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
 
   updatePassword: async (newPassword: string) => {
     if (newPassword.length < 6) {
-      set({ errorMessage: 'Password must be at least 6 characters' });
+      set({ errorMessage: i18n.t('auth.validation.passwordTooShort') });
       return;
     }
 
