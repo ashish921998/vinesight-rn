@@ -13,7 +13,7 @@ import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, componentRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useIsDark, useM3 } from '@/styles/use-theme';
 
@@ -78,7 +78,7 @@ export default function ResetPasswordScreen() {
   const iconContainerStyle: ViewStyle = {
     width: 80,
     height: 80,
-    borderRadius: borderRadius.full,
+    borderRadius: componentRadius.avatar,
     backgroundColor: m3.colorScheme.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
@@ -104,7 +104,7 @@ export default function ResetPasswordScreen() {
     alignItems: 'center',
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
-    borderRadius: borderRadius.xl,
+    borderRadius: componentRadius.sheet,
     marginTop: spacing[4],
     backgroundColor: colorWithOpacity(m3.colorScheme.error, isDark ? 0.2 : 0.12),
     borderWidth: 1,
