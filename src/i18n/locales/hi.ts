@@ -1737,6 +1737,7 @@ export const hi = {
     signIn: 'साइन इन करें',
     signUp: 'साइन अप करें',
     or: 'या',
+    forgotPassword: 'पासवर्ड भूल गए?',
     continueWithApple: 'Apple के साथ जारी रखें',
     continueWithGoogle: 'Google के साथ जारी रखें',
     continueWithPhone: 'फ़ोन से जारी रखें',
@@ -1747,6 +1748,50 @@ export const hi = {
       switchToSignIn: 'साइन इन पर स्विच करें',
       switchToSignUp: 'साइन अप पर स्विच करें',
       continueWithPhone: 'फ़ोन नंबर से साइन इन करें',
+      forgotPassword: 'अपना पासवर्ड रीसेट करें',
+    },
+    validation: {
+      invalidEmail: 'कृपया एक मान्य ईमेल पता दर्ज करें',
+      passwordTooShort: 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए',
+      invalidOtpCode: 'कृपया एक मान्य 6-अंकीय कोड दर्ज करें',
+    },
+  },
+
+  authForgotPassword: {
+    title: 'पासवर्ड भूल गए?',
+    subtitle: 'अपना ईमेल दर्ज करें और हम आपको पासवर्ड रीसेट करने के लिए एक लिंक भेजेंगे।',
+    email: 'ईमेल',
+    sendButton: 'रीसेट लिंक भेजें',
+    sending: 'भेजा जा रहा है...',
+    sentTitle: 'अपना ईमेल देखें',
+    sentSubtitle: 'हमने पासवर्ड रीसेट लिंक भेजा है',
+    sentHint:
+      'नया पासवर्ड सेट करने के लिए ईमेल में दिए लिंक पर टैप करें। लिंक जल्द ही समाप्त हो जाएगा।',
+    resend: 'ईमेल फिर से भेजें',
+    resendA11yWithSeconds: '{{seconds}} सेकंड में ईमेल फिर से भेजें',
+    resendInSecondsShort: '{{seconds}}से में फिर से भेजें',
+    backToSignIn: 'साइन इन पर वापस जाएं',
+    a11y: {
+      back: 'साइन इन पर वापस जाएं',
+      send: 'पासवर्ड रीसेट लिंक भेजें',
+    },
+  },
+
+  authResetPassword: {
+    title: 'नया पासवर्ड सेट करें',
+    subtitle: 'अपने खाते के लिए नया पासवर्ड चुनें।',
+    newPassword: 'नया पासवर्ड',
+    confirmPassword: 'पासवर्ड की पुष्टि करें',
+    updateButton: 'पासवर्ड अपडेट करें',
+    updating: 'अपडेट हो रहा है...',
+    mismatch: 'पासवर्ड मेल नहीं खाते',
+    tooShort: 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए',
+    successTitle: 'पासवर्ड अपडेट हो गया',
+    successSubtitle: 'आपका पासवर्ड बदल दिया गया है। अब आप साइन इन हैं।',
+    continueButton: 'जारी रखें',
+    backToSignIn: 'साइन इन पर वापस जाएं',
+    a11y: {
+      back: 'साइन इन पर वापस जाएं',
     },
   },
 
