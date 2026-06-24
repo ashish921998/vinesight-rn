@@ -288,6 +288,11 @@ export const en = {
       a11y_one: 'Harvest safety not yet verified. {{count}} spray not yet mapped to label data.',
       a11y_other: 'Harvest safety not yet verified. {{count}} sprays not yet mapped to label data.',
     },
+    harvestCheckUnavailable: {
+      title: "Can't check harvest safety right now",
+      subtitle: 'Tap to retry',
+      a11y: "Can't check harvest safety right now. Double tap to retry.",
+    },
     riskBlock: {
       urgentTasks_one: '{{count}} urgent task',
       urgentTasks_other: '{{count}} urgent tasks',
