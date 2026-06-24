@@ -271,6 +271,13 @@ export const mr = {
       ctaOpenChecker: 'Safe-to-spray तपासा',
       saveTarget: 'लक्ष्य दिनांक जतन करा',
     },
+    harvestUnverified: {
+      title: 'कापणी सुरक्षा अद्याप सत्यापित नाही',
+      subtitle_one: '{{count}} फवारणी अद्याप लेबल डेटाशी जोडलेली नाही',
+      subtitle_other: '{{count}} फवारण्या अद्याप लेबल डेटाशी जोडलेल्या नाहीत',
+      a11y_one: 'कापणी सुरक्षा अद्याप सत्यापित नाही. {{count}} फवारणी जोडलेली नाही.',
+      a11y_other: 'कापणी सुरक्षा अद्याप सत्यापित नाही. {{count}} फवारण्या जोडलेल्या नाहीत.',
+    },
     riskBlock: {
       urgentTasks: '{{count}} तातडीचे कार्य',
       urgentTasks_one: '{{count}} तातडीचे कार्य',

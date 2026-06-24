@@ -1937,6 +1937,60 @@ export default function FarmDetailScreen() {
             </View>
           )}
 
+          {/* Harvest-status unverified advisory — calm "needs attention", distinct
+              from the red PHI-conflict banner above. Fail-closed: shown when season
+              sprays are unmapped so "no conflict banner" never implies "safe". */}
+          {isGrapeFarm && earliestSafeHarvest?.status === 'unverified' && !hasPhiConflict && (
+            <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[3] }}>
+              <View
+                accessible
+                accessibilityLiveRegion="polite"
+                accessibilityLabel={t('farmDetails.harvestUnverified.a11y', {
+                  count: earliestSafeHarvest.unverifiedCount,
+                  defaultValue:
+                    'Harvest safety not yet verified. {{count}} sprays not yet mapped to label data.',
+                })}
+                style={{
+                  padding: spacing[3],
+                  backgroundColor: m3.colorScheme.warningContainer,
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.warning, 0.4),
+                  borderRadius: borderRadius.md,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                }}
+              >
+                <UiSymbol name="info.circle" size={16} color={m3.colorScheme.warning} />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.colorScheme.onWarningContainer,
+                    }}
+                  >
+                    {t('farmDetails.harvestUnverified.title', {
+                      defaultValue: 'Harvest safety not yet verified',
+                    })}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: m3.colorScheme.onWarningContainer,
+                      marginTop: 2,
+                    }}
+                  >
+                    {t('farmDetails.harvestUnverified.subtitle', {
+                      count: earliestSafeHarvest.unverifiedCount,
+                      defaultValue: '{{count}} sprays not yet mapped to label data',
+                    })}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
           {urgentTasks.length > 0 && (
             <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[3] }}>
               <Pressable

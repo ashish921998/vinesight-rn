@@ -269,6 +269,13 @@ export const hi = {
       ctaOpenChecker: 'Safe-to-spray चेकर खोलें',
       saveTarget: 'लक्ष्य तिथि सहेजें',
     },
+    harvestUnverified: {
+      title: 'कटाई सुरक्षा अभी सत्यापित नहीं',
+      subtitle_one: '{{count}} स्प्रे अभी तक लेबल डेटा से मैप नहीं हुआ',
+      subtitle_other: '{{count}} स्प्रे अभी तक लेबल डेटा से मैप नहीं हुए',
+      a11y_one: 'कटाई सुरक्षा अभी सत्यापित नहीं। {{count}} स्प्रे मैप नहीं हुआ।',
+      a11y_other: 'कटाई सुरक्षा अभी सत्यापित नहीं। {{count}} स्प्रे मैप नहीं हुए।',
+    },
     riskBlock: {
       urgentTasks: '{{count}} अत्यावश्यक कार्य',
     },

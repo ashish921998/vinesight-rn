@@ -281,6 +281,13 @@ export const en = {
       ctaOpenChecker: 'Open safe-to-spray checker',
       saveTarget: 'Save target date',
     },
+    harvestUnverified: {
+      title: 'Harvest safety not yet verified',
+      subtitle_one: '{{count}} spray not yet mapped to label data',
+      subtitle_other: '{{count}} sprays not yet mapped to label data',
+      a11y_one: 'Harvest safety not yet verified. {{count}} spray not yet mapped to label data.',
+      a11y_other: 'Harvest safety not yet verified. {{count}} sprays not yet mapped to label data.',
+    },
     riskBlock: {
       urgentTasks_one: '{{count}} urgent task',
       urgentTasks_other: '{{count}} urgent tasks',

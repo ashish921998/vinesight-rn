@@ -462,6 +462,12 @@ const createM3Theme = (isDark: boolean) => {
       // Not an official role; used for "Needs attention" affordances.
       warning: isDark ? darkColors.warning : colors.warning,
       onWarning: onAccent,
+      // Calm "needs attention / not yet verified" surface pair (e.g. the
+      // unverified harvest-status banner). A solid container instead of
+      // opacity-stacking on `warning`, which the a11y backlog flags for
+      // contrast. Distinct from `error` (red = hard conflict / blocked).
+      warningContainer: isDark ? '#3A2C12' : '#FBEFD6',
+      onWarningContainer: isDark ? '#F5D9A6' : '#6B4A12',
 
       // Not an official M3 role; Cellar Ledger gold accent (value-preserving
       // target for legacy `colors.accent[500]`).
