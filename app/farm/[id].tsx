@@ -1950,7 +1950,9 @@ export default function FarmDetailScreen() {
                 accessibilityLiveRegion="polite"
                 accessibilityLabel={t('farmDetails.harvestUnverified.a11y', {
                   count: earliestSafeHarvest.unverifiedCount,
-                  defaultValue:
+                  defaultValue_one:
+                    'Harvest safety not yet verified. {{count}} spray not yet mapped to label data.',
+                  defaultValue_other:
                     'Harvest safety not yet verified. {{count}} sprays not yet mapped to label data.',
                 })}
                 style={{
@@ -1986,7 +1988,8 @@ export default function FarmDetailScreen() {
                   >
                     {t('farmDetails.harvestUnverified.subtitle', {
                       count: earliestSafeHarvest.unverifiedCount,
-                      defaultValue: '{{count}} sprays not yet mapped to label data',
+                      defaultValue_one: '{{count}} spray not yet mapped to label data',
+                      defaultValue_other: '{{count}} sprays not yet mapped to label data',
                     })}
                   </Text>
                 </View>

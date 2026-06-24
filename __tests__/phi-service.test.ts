@@ -182,6 +182,8 @@ describe('computeEarliestSafeHarvest (fail-closed aggregate)', () => {
       { safe_harvest_date: null, chemical: 'Legacy free-text spray' },
     ]);
     expect(result.status).toBe('unverified');
+    expect(result.earliestDate).toBeNull();
+    expect(result.reason).toBeNull();
     expect(result.unverifiedCount).toBe(1);
     expect(result.totalCount).toBe(2);
   });

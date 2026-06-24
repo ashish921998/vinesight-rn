@@ -200,8 +200,8 @@ export interface EarliestSafeHarvestResult {
  *
  *   ┌─────────────────────────────┬───────────────────────────────────────┐
  *   │ records empty               │ no_sprays                              │
- *   │ ≥1 missing valid safe date  │ unverified (earliestDate = max of the  │
- *   │                             │ valid ones, for reference only)        │
+ *   │ ≥1 missing valid safe date  │ unverified (earliestDate = null; a      │
+ *   │                             │ partial date must not look complete)    │
  *   │ all have a valid safe date  │ verified, earliestDate = most          │
  *   │                             │ constraining (latest) date             │
  *   └─────────────────────────────┴───────────────────────────────────────┘
@@ -237,7 +237,13 @@ export function computeEarliestSafeHarvest(records: PhiRecord[]): EarliestSafeHa
   }
 
   if (unverifiedCount > 0) {
-    return { status: 'unverified', earliestDate, reason, unverifiedCount, totalCount };
+    return {
+      status: 'unverified',
+      earliestDate: null,
+      reason: null,
+      unverifiedCount,
+      totalCount,
+    };
   }
   return { status: 'verified', earliestDate, reason, unverifiedCount: 0, totalCount };
 }
