@@ -59,6 +59,12 @@ module.exports = {
     android: {
       package: 'com.vinesight.app',
       versionCode: 35,
+      // Required for FCM so `FirebaseApp.initializeApp` runs at build time;
+      // without it `getExpoPushTokenAsync` fails on Android with
+      // E_REGISTRATION_FAILED ("Default FirebaseApp is not initialized").
+      // Supplied as an EAS file env var (GOOGLE_SERVICES_JSON); falls back to
+      // a local ./google-services.json for local/prebuild use.
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON || './google-services.json',
       permissions: ['android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS'],
       config: {
         googleMaps: {
