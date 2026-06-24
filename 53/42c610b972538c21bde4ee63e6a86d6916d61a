@@ -1,0 +1,28 @@
+app/farm/[id].tsx
+  s_d3631e1d5613ea::t_6b1bd97048b1c5 1953-1955,1991-1992
+src/services/phi-service.ts
+  s_d3631e1d5613ea::t_6b1bd97048b1c5 203-204,240-246
+__tests__/phi-service.test.ts
+  s_d3631e1d5613ea::t_6b1bd97048b1c5 185-186
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "5342c610b972538c21bde4ee63e6a86d6916d61a",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_d3631e1d5613ea": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ef854-8d23-79f1-a1a2-c1f21fac3ad8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
