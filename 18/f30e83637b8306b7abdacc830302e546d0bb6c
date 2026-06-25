@@ -1,0 +1,31 @@
+VERSION
+  s_b8b8a5aba309c3::t_fc8c5d4290e418 1
+package.json
+  s_b8b8a5aba309c3::t_6cd4e5df179aaf 4
+app.config.js
+  s_b8b8a5aba309c3::t_2724413a6213eb 19
+  s_b8b8a5aba309c3::t_ec6734f2d3ecc8 60
+eas.json
+  h_fcdce7b1b8bf31 32-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "18f30e83637b8306b7abdacc830302e546d0bb6c",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_b8b8a5aba309c3": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d7172660-2369-47c2-948a-e9a384ec07a4",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
