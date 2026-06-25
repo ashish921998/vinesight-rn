@@ -270,7 +270,7 @@ export function WorkersTourCoachmark({ onNavigateToAttendance }: WorkersTourCoac
       : 0;
 
   return (
-    <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
+    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <GuidedTourCoachmark
         step={meta.step}
         rect={rect}

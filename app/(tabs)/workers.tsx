@@ -482,7 +482,7 @@ export default function WorkersScreen() {
                   <View
                     pointerEvents="none"
                     style={[
-                      StyleSheet.absoluteFillObject,
+                      StyleSheet.absoluteFill,
                       {
                         backgroundColor: pressed
                           ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)

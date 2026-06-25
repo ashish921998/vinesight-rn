@@ -504,7 +504,7 @@ export default Sentry.wrap(function RootLayout() {
     let disposed = false;
 
     const handleNotificationResponse = (response: {
-      notification: { request: { content: { data: unknown } } };
+      notification: { request: { content: { data?: unknown } } };
     }) => {
       const data = response.notification.request.content.data as {
         type?: string;

@@ -539,7 +539,7 @@ export default function LabTestsScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       borderRadius: radius.xl,
                       backgroundColor: pressed
@@ -555,7 +555,7 @@ export default function LabTestsScreen() {
           <View
             pointerEvents="none"
             style={{
-              ...StyleSheet.absoluteFillObject,
+              ...StyleSheet.absoluteFill,
               alignItems: 'center',
               justifyContent: 'center',
               paddingHorizontal: 112,
@@ -620,7 +620,7 @@ export default function LabTestsScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       borderRadius: borderRadius.full,
                       backgroundColor: pressed
@@ -773,7 +773,7 @@ export default function LabTestsScreen() {
             <View
               pointerEvents="none"
               style={[
-                StyleSheet.absoluteFillObject,
+                StyleSheet.absoluteFill,
                 {
                   backgroundColor: pressed
                     ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)

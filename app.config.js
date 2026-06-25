@@ -2,12 +2,11 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.2.7',
+    version: '3.2.8',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
     scheme: 'vinesight',
-    newArchEnabled: true,
     statusBar: {
       backgroundColor: 'transparent',
       barStyle: 'auto',
@@ -17,7 +16,7 @@ module.exports = {
       supportsTablet: true,
       bundleIdentifier: 'com.vinesight.ios',
       usesAppleSignIn: true,
-      buildNumber: '1.3.3',
+      buildNumber: '1.3.4',
       entitlements: {
         'com.apple.security.application-groups': ['group.com.vinesight.app'],
       },
@@ -58,7 +57,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 35,
+      versionCode: 36,
       permissions: ['android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS'],
       config: {
         googleMaps: {
@@ -71,7 +70,6 @@ module.exports = {
         foregroundImage: './assets/icons/adaptive-icon.png',
         backgroundColor: '#ffffff',
       },
-      edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: true,
       intentFilters: [
         {
