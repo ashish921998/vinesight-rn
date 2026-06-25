@@ -8,6 +8,7 @@ import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import { ObserveRoot, useObserve } from 'expo-observe';
 import * as Sentry from '@sentry/react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { PostHogProvider } from 'posthog-react-native';
@@ -128,7 +129,8 @@ function PetioleReminderSync() {
   return null;
 }
 
-export default Sentry.wrap(function RootLayout() {
+const RootLayoutComponent = Sentry.wrap(function RootLayout() {
+  const { markInteractive } = useObserve();
   const initialize = useAuthStore((state) => state.initialize);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -646,8 +648,11 @@ export default Sentry.wrap(function RootLayout() {
           console.warn('Failed to hide splash screen (safe to ignore during hot reload):', error);
         }
       });
+      // App is ready for interaction — record Time to Interactive (EAS Observe).
+      // Safe to call multiple times; only the first call per session is recorded.
+      markInteractive();
     }
-  }, [isLoading, languageHydrated, themeHydrated]);
+  }, [isLoading, languageHydrated, themeHydrated, markInteractive]);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -814,3 +819,5 @@ export default Sentry.wrap(function RootLayout() {
     </PostHogProvider>
   );
 });
+
+export default ObserveRoot.wrap(RootLayoutComponent);
