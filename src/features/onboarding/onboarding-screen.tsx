@@ -151,11 +151,13 @@ export function OnboardingScreen() {
         // (APNs on iOS) that can hang or fail. It must never block the user from
         // finishing onboarding — awaiting it here was leaving iOS users stuck on
         // "Checking permissions..." so `onboarding_completed` never fired.
-        // syncPushDeviceRegistration already swallows its own errors internally.
+        // syncPushDeviceRegistration already swallows its own errors internally;
+        // the .catch here is a belt-and-suspenders guard so a rejection can never
+        // surface as an unhandled promise rejection during onboarding.
         void syncPushDeviceRegistration(language, {
           notificationsEnabled: true,
           featureOverviewEnabled: useNotificationStore.getState().featureOverviewEnabled,
-        });
+        }).catch(() => {});
       }
 
       setHasManuallyNavigatedBack(false);

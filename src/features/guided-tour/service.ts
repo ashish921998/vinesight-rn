@@ -167,10 +167,12 @@ export async function syncPushDeviceRegistration(
   if (Platform.OS === 'web') return false;
   if (!Device.isDevice) return false;
 
-  const userId = await getUserId();
-  if (!userId) return false;
-
   try {
+    // getUserId() calls supabase.auth.getSession(), which can reject. Keep it
+    // inside the try so this function never throws — callers fire-and-forget it.
+    const userId = await getUserId();
+    if (!userId) return false;
+
     const expoPushToken = await getExpoPushToken();
     if (!expoPushToken) return false;
 
