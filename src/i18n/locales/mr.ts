@@ -854,6 +854,7 @@ export const mr = {
       namePlaceholder: 'रसायनाचे नाव',
       qtyPlaceholder: 'प्रमाण',
       selectUnit: 'युनिट निवडा',
+      quickUnitLabel: 'रसायन प्रमाण युनिट म्हणून {{unit}} वापरा',
       totalQty: 'एकूण प्रमाण',
       perAcre: 'प्रति एकर',
     },

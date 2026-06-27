@@ -39,6 +39,7 @@ export interface ChemicalEntry {
 
 const DEFAULT_CHEMICAL_UNIT: ChemicalUnit = 'gm/L';
 const MAX_CHEMICAL_ROWS = 10;
+const QUICK_CHEMICAL_UNITS: readonly ChemicalUnit[] = ['gm/L', 'ml/L', 'kg', 'liter'];
 
 function isChemicalUnit(value: string): value is ChemicalUnit {
   return CHEMICAL_UNITS.includes(value as ChemicalUnit);
@@ -965,6 +966,14 @@ function ChemicalRow({
     quantityRef.current?.focus();
   };
 
+  const handleUnitSelect = (unit: ChemicalUnit) => {
+    // Preserve an explicitly chosen basis (e.g. a per-acre dose) rather than
+    // silently forcing 'total' — that would undercount saved totals by the
+    // acreage factor. When no basis is set yet, infer it from the unit string
+    // ('…/acre' → per_acre, otherwise total), matching how prefills resolve it.
+    onUpdate({ unit, quantityBasis: chemical.quantityBasis ?? resolveQuantityBasis(unit) });
+  };
+
   return (
     <View
       style={{
@@ -1136,6 +1145,52 @@ function ChemicalRow({
       </View>
 
       {!readOnly ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            marginTop: spacing[2],
+            gap: 8,
+          }}
+        >
+          {QUICK_CHEMICAL_UNITS.map((unit) => {
+            const selected = chemical.unit === unit;
+            return (
+              <Pressable
+                key={unit}
+                onPress={() => handleUnitSelect(unit)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={t('sprayForm.chemicals.quickUnitLabel', {
+                  defaultValue: 'Use {{unit}} as chemical quantity unit',
+                  unit,
+                })}
+                style={{
+                  borderRadius: borderRadius.full,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  backgroundColor: selected
+                    ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
+                    : colors.surface[100],
+                  borderWidth: 1,
+                  borderColor: selected
+                    ? colorWithOpacity(m3.colorScheme.tertiary, 0.5)
+                    : colorWithOpacity(m3.colorScheme.outline, 0.2),
+                }}
+              >
+                <Text
+                  style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}
+                >
+                  {unit}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {!readOnly ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2], gap: 8 }}>
           <Pressable
             onPress={() => onUpdate({ quantityBasis: 'total' })}
@@ -1180,7 +1235,7 @@ function ChemicalRow({
       <UnitPickerModal
         visible={!readOnly && showUnitPicker}
         onClose={() => setShowUnitPicker(false)}
-        onSelect={(unit) => onUpdate({ unit })}
+        onSelect={handleUnitSelect}
         selectedValue={chemical.unit}
         options={CHEMICAL_UNITS}
         title={t('sprayForm.chemicals.selectUnit')}
