@@ -507,7 +507,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
 
       <VarietyPickerSheet
         visible={state.showVarietyPicker}
-        cropVariety={state.cropVariety}
+        cropVariety={effectiveCropVariety}
         varietySearchQuery={state.varietySearchQuery}
         varietySearchQueryTrimmed={varietySearchQueryTrimmed}
         filteredVarieties={filteredVarieties}
