@@ -371,10 +371,21 @@ export async function saveEntryLogSession(
   const createdRecordIdByPendingLogId = new Map<string, number | null>();
   const results = await settleSequentially(
     pendingLogs.map((log) => async () => {
-      const linkedIrrigationRecordId =
-        log.type === 'fertigation' && log.linkIrrigationFromPendingLogId
-          ? (createdRecordIdByPendingLogId.get(log.linkIrrigationFromPendingLogId) ?? null)
-          : null;
+      // A fertigation log linked to an irrigation can only resolve its partner's
+      // record id if the irrigation task already succeeded (it runs first and sets
+      // the map on success). A missing key means the irrigation failed, so fail
+      // fast here rather than silently persisting the fertigation as standalone —
+      // throwing before submit means no unlinked record is ever created/rolled back.
+      let linkedIrrigationRecordId: number | null = null;
+      if (log.type === 'fertigation' && log.linkIrrigationFromPendingLogId) {
+        const sourcePendingLogId = log.linkIrrigationFromPendingLogId;
+        if (!createdRecordIdByPendingLogId.has(sourcePendingLogId)) {
+          throw new Error(
+            `Missing linked irrigation pending log result for fertigation log ${log.id}`,
+          );
+        }
+        linkedIrrigationRecordId = createdRecordIdByPendingLogId.get(sourcePendingLogId) ?? null;
+      }
       const outcome = await submitLogWithSnapshot({
         log,
         dateStr,

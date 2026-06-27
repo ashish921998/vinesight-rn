@@ -996,8 +996,13 @@ export function EntryForm({
       case 'irrigation':
         data = { ...irrigationData };
         setIrrigationData({ duration: undefined });
-        setFertigationData(createEmptyFertigationFormData());
-        setIrrigationIncludesFertilizers(false);
+        // Only reset the shared fertigation form if it was actually used as this
+        // irrigation's inline fertilizer section — otherwise a plain irrigation
+        // entry would silently wipe a partial standalone fertigation draft.
+        if (irrigationIncludesFertilizers) {
+          setFertigationData(createEmptyFertigationFormData());
+          setIrrigationIncludesFertilizers(false);
+        }
         break;
       case 'spray':
         if (
