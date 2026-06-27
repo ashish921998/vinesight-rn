@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backgroundLayer: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
   },
   backgroundOrb: {
     position: 'absolute',
