@@ -11,6 +11,7 @@ import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmSeason, FarmUpdate } from '../types';
 import { TABLES, toSupabaseTimestampString } from '../types';
 import { formatLocalDate } from '../utils/date';
+import { isRetryableFarmInsertConstraintViolation } from '../utils/farm-error-utils';
 
 // ============================================================
 // MARK: - Helper to get current user ID
@@ -40,15 +41,6 @@ function isMissingDisplayOrderColumn(error: { code?: string; message?: string } 
     error.code === '42703' ||
     /column ["']?display_order["']? does not exist/i.test(message) ||
     /could not find .*display_order.* schema cache/i.test(message)
-  );
-}
-
-function isUniqueDisplayOrderViolation(error: { code?: string; message?: string } | null): boolean {
-  if (!error) return false;
-  const message = error.message ?? '';
-  return (
-    error.code === '23505' &&
-    (/farms_user_display_order_unique/i.test(message) || /display_order/i.test(message))
   );
 }
 
@@ -239,7 +231,7 @@ export function useCreateFarm() {
         }
 
         lastError = error;
-        if (!isUniqueDisplayOrderViolation(error)) {
+        if (!isRetryableFarmInsertConstraintViolation(error)) {
           throw error;
         }
       }
