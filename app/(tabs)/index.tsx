@@ -910,7 +910,7 @@ export default function DashboardScreen() {
                         <View
                           pointerEvents="none"
                           style={[
-                            StyleSheet.absoluteFillObject,
+                            StyleSheet.absoluteFill,
                             {
                               backgroundColor: pressed
                                 ? colorWithOpacity(
@@ -1302,7 +1302,7 @@ export default function DashboardScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={t('dashboard.farmPicker.dismissA11y')}
                 onPress={() => setShowFarmPicker(false)}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
               />
               <View
                 style={{

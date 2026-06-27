@@ -862,6 +862,7 @@ export const en = {
       namePlaceholder: 'Chemical name',
       qtyPlaceholder: 'Qty',
       selectUnit: 'Select unit',
+      quickUnitLabel: 'Use {{unit}} as chemical quantity unit',
       totalQty: 'Total Qty',
       perAcre: 'Per acre',
     },

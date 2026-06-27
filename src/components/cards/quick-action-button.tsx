@@ -67,7 +67,7 @@ export function QuickActionButton({ title, icon, color, onPress }: QuickActionBu
           <View
             pointerEvents="none"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 backgroundColor: pressed ? colorWithOpacity(m3.surface.s900, 0.12) : 'transparent',
               },

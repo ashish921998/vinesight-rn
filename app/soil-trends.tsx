@@ -122,7 +122,7 @@ export default function SoilTrendsScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       borderRadius: radius.xl,
                       backgroundColor: pressed
@@ -138,7 +138,7 @@ export default function SoilTrendsScreen() {
           <View
             pointerEvents="none"
             style={{
-              ...StyleSheet.absoluteFillObject,
+              ...StyleSheet.absoluteFill,
               alignItems: 'center',
               justifyContent: 'center',
               paddingHorizontal: 64,

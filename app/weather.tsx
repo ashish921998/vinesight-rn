@@ -9,8 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useNavigation } from '@react-navigation/native';
+import { Stack, useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
 import type { TFunction } from 'i18next';
@@ -203,7 +202,7 @@ export default function WeatherScreen() {
               <View
                 pointerEvents="none"
                 style={[
-                  StyleSheet.absoluteFillObject,
+                  StyleSheet.absoluteFill,
                   {
                     borderRadius: radius.xl,
                     backgroundColor: pressed

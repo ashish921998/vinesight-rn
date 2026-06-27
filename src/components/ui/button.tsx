@@ -166,7 +166,7 @@ export function Button({
           <View
             pointerEvents="none"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 backgroundColor:
                   state.pressed && !isInteractionDisabled

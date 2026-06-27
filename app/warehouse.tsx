@@ -221,7 +221,7 @@ export default function WarehouseScreen() {
               <View
                 pointerEvents="none"
                 style={[
-                  StyleSheet.absoluteFillObject,
+                  StyleSheet.absoluteFill,
                   {
                     borderRadius: radius.xl,
                     backgroundColor: pressed
