@@ -23,6 +23,7 @@ import {
   type FertilizerItem,
 } from '../types';
 import { resolveOrCreateSeasonIdForDate } from '../lib/season-context';
+import { makeRecordWriteHooks } from '../features/offline/record-hooks-factory';
 
 // ============================================================
 // MARK: - IRRIGATION RECORDS
@@ -69,82 +70,14 @@ export function useIrrigationRecordsByFarms(farmIds: number[]) {
   });
 }
 
-export function useCreateIrrigationRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (record: IrrigationRecordInsert): Promise<IrrigationRecord> => {
-      const seasonId =
-        record.season_id ??
-        (await resolveOrCreateSeasonIdForDate({
-          farmId: record.farm_id,
-          date: record.date,
-        }));
-      const { data, error } = await supabase
-        .from(TABLES.IRRIGATION_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (newRecord) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.irrigationRecords.listByFarm(newRecord.farm_id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.irrigationRecords.lists(),
-      });
-    },
-  });
-}
-
-export function useUpdateIrrigationRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<IrrigationRecord>;
-    }): Promise<IrrigationRecord> => {
-      const { data, error } = await supabase
-        .from(TABLES.IRRIGATION_RECORDS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (updatedRecord) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.irrigationRecords.listByFarm(updatedRecord.farm_id),
-      });
-    },
-  });
-}
-
-export function useDeleteIrrigationRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.IRRIGATION_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: (_, { farmId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.irrigationRecords.listByFarm(farmId),
-      });
-    },
-  });
-}
+const irrigationWriteHooks = makeRecordWriteHooks<IrrigationRecord, IrrigationRecordInsert>({
+  table: TABLES.IRRIGATION_RECORDS,
+  keys: queryKeys.irrigationRecords,
+  invalidateListsOnCreate: true,
+});
+export const useCreateIrrigationRecord = irrigationWriteHooks.useCreate;
+export const useUpdateIrrigationRecord = irrigationWriteHooks.useUpdate;
+export const useDeleteIrrigationRecord = irrigationWriteHooks.useDelete;
 
 // ============================================================
 // MARK: - SPRAY RECORDS
@@ -191,79 +124,13 @@ export function useSprayRecordsByFarms(farmIds: number[]) {
   });
 }
 
-export function useCreateSprayRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (record: SprayRecordInsert): Promise<SprayRecord> => {
-      const seasonId =
-        record.season_id ??
-        (await resolveOrCreateSeasonIdForDate({
-          farmId: record.farm_id,
-          date: record.date,
-        }));
-      const { data, error } = await supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (newRecord) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.sprayRecords.listByFarm(newRecord.farm_id),
-      });
-    },
-  });
-}
-
-export function useUpdateSprayRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<SprayRecord>;
-    }): Promise<SprayRecord> => {
-      const { data, error } = await supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (updatedRecord) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.sprayRecords.listByFarm(updatedRecord.farm_id),
-      });
-    },
-  });
-}
-
-export function useDeleteSprayRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.SPRAY_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: (_, { farmId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.sprayRecords.listByFarm(farmId),
-      });
-    },
-  });
-}
+const sprayWriteHooks = makeRecordWriteHooks<SprayRecord, SprayRecordInsert>({
+  table: TABLES.SPRAY_RECORDS,
+  keys: queryKeys.sprayRecords,
+});
+export const useCreateSprayRecord = sprayWriteHooks.useCreate;
+export const useUpdateSprayRecord = sprayWriteHooks.useUpdate;
+export const useDeleteSprayRecord = sprayWriteHooks.useDelete;
 
 // ============================================================
 // MARK: - FERTIGATION RECORDS
@@ -310,79 +177,13 @@ export function useFertigationRecordsByFarms(farmIds: number[]) {
   });
 }
 
-export function useCreateFertigationRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (record: FertigationRecordInsert): Promise<FertigationRecord> => {
-      const seasonId =
-        record.season_id ??
-        (await resolveOrCreateSeasonIdForDate({
-          farmId: record.farm_id,
-          date: record.date,
-        }));
-      const { data, error } = await supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (newRecord) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.fertigationRecords.listByFarm(newRecord.farm_id),
-      });
-    },
-  });
-}
-
-export function useUpdateFertigationRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<FertigationRecord>;
-    }): Promise<FertigationRecord> => {
-      const { data, error } = await supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (updatedRecord) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.fertigationRecords.listByFarm(updatedRecord.farm_id),
-      });
-    },
-  });
-}
-
-export function useDeleteFertigationRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.FERTIGATION_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: (_, { farmId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.fertigationRecords.listByFarm(farmId),
-      });
-    },
-  });
-}
+const fertigationWriteHooks = makeRecordWriteHooks<FertigationRecord, FertigationRecordInsert>({
+  table: TABLES.FERTIGATION_RECORDS,
+  keys: queryKeys.fertigationRecords,
+});
+export const useCreateFertigationRecord = fertigationWriteHooks.useCreate;
+export const useUpdateFertigationRecord = fertigationWriteHooks.useUpdate;
+export const useDeleteFertigationRecord = fertigationWriteHooks.useDelete;
 
 // ============================================================
 // MARK: - HARVEST RECORDS
@@ -429,79 +230,13 @@ export function useHarvestRecordsByFarms(farmIds: number[]) {
   });
 }
 
-export function useCreateHarvestRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (record: HarvestRecordInsert): Promise<HarvestRecord> => {
-      const seasonId =
-        record.season_id ??
-        (await resolveOrCreateSeasonIdForDate({
-          farmId: record.farm_id,
-          date: record.date,
-        }));
-      const { data, error } = await supabase
-        .from(TABLES.HARVEST_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (newRecord) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.harvestRecords.listByFarm(newRecord.farm_id),
-      });
-    },
-  });
-}
-
-export function useUpdateHarvestRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<HarvestRecord>;
-    }): Promise<HarvestRecord> => {
-      const { data, error } = await supabase
-        .from(TABLES.HARVEST_RECORDS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (updatedRecord) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.harvestRecords.listByFarm(updatedRecord.farm_id),
-      });
-    },
-  });
-}
-
-export function useDeleteHarvestRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.HARVEST_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: (_, { farmId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.harvestRecords.listByFarm(farmId),
-      });
-    },
-  });
-}
+const harvestWriteHooks = makeRecordWriteHooks<HarvestRecord, HarvestRecordInsert>({
+  table: TABLES.HARVEST_RECORDS,
+  keys: queryKeys.harvestRecords,
+});
+export const useCreateHarvestRecord = harvestWriteHooks.useCreate;
+export const useUpdateHarvestRecord = harvestWriteHooks.useUpdate;
+export const useDeleteHarvestRecord = harvestWriteHooks.useDelete;
 
 // ============================================================
 // MARK: - EXPENSE RECORDS
@@ -548,79 +283,13 @@ export function useExpenseRecordsByFarms(farmIds: number[]) {
   });
 }
 
-export function useCreateExpenseRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (record: ExpenseRecordInsert): Promise<ExpenseRecord> => {
-      const seasonId =
-        record.season_id ??
-        (await resolveOrCreateSeasonIdForDate({
-          farmId: record.farm_id,
-          date: record.date,
-        }));
-      const { data, error } = await supabase
-        .from(TABLES.EXPENSE_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (newRecord) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.expenseRecords.listByFarm(newRecord.farm_id),
-      });
-    },
-  });
-}
-
-export function useUpdateExpenseRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<ExpenseRecord>;
-    }): Promise<ExpenseRecord> => {
-      const { data, error } = await supabase
-        .from(TABLES.EXPENSE_RECORDS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (updatedRecord) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.expenseRecords.listByFarm(updatedRecord.farm_id),
-      });
-    },
-  });
-}
-
-export function useDeleteExpenseRecord() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.EXPENSE_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: (_, { farmId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.expenseRecords.listByFarm(farmId),
-      });
-    },
-  });
-}
+const expenseWriteHooks = makeRecordWriteHooks<ExpenseRecord, ExpenseRecordInsert>({
+  table: TABLES.EXPENSE_RECORDS,
+  keys: queryKeys.expenseRecords,
+});
+export const useCreateExpenseRecord = expenseWriteHooks.useCreate;
+export const useUpdateExpenseRecord = expenseWriteHooks.useUpdate;
+export const useDeleteExpenseRecord = expenseWriteHooks.useDelete;
 
 // ============================================================
 // MARK: - DAILY NOTES

@@ -110,6 +110,8 @@ export interface IrrigationRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  /** Client-generated dedup handle for offline-first writes. See features/offline/client-id. */
+  client_uuid?: string | null;
   professional_creator_id?: string | null;
   acting_organization_id?: string | null;
   professional_creator_name?: string | null;
@@ -169,6 +171,8 @@ export interface SprayRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  /** Client-generated dedup handle for offline-first writes. See features/offline/client-id. */
+  client_uuid?: string | null;
   professional_creator_id?: string | null;
   acting_organization_id?: string | null;
   professional_creator_name?: string | null;
@@ -207,6 +211,8 @@ export interface FertigationRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  /** Client-generated dedup handle for offline-first writes. See features/offline/client-id. */
+  client_uuid?: string | null;
   professional_creator_id?: string | null;
   acting_organization_id?: string | null;
   professional_creator_name?: string | null;
@@ -234,6 +240,8 @@ export interface HarvestRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  /** Client-generated dedup handle for offline-first writes. See features/offline/client-id. */
+  client_uuid?: string | null;
   professional_creator_id?: string | null;
   acting_organization_id?: string | null;
   professional_creator_name?: string | null;
@@ -265,6 +273,8 @@ export interface ExpenseRecord {
   rate_per_unit?: number | null;
   worker_names?: string | null;
   created_at?: string | null;
+  /** Client-generated dedup handle for offline-first writes. See features/offline/client-id. */
+  client_uuid?: string | null;
 }
 
 export type ExpenseRecordInsert = Omit<ExpenseRecord, 'id' | 'created_at'>;
