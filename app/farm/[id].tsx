@@ -12,8 +12,7 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { useIsFocused } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter, Stack, useIsFocused } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -1471,7 +1470,7 @@ export default function FarmDetailScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       borderRadius: radius.xl,
                       backgroundColor: pressed
@@ -1547,7 +1546,7 @@ export default function FarmDetailScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       borderRadius: radius.xl,
                       backgroundColor: pressed
@@ -2192,7 +2191,7 @@ export default function FarmDetailScreen() {
                         <View
                           pointerEvents="none"
                           style={[
-                            StyleSheet.absoluteFillObject,
+                            StyleSheet.absoluteFill,
                             {
                               backgroundColor: pressed
                                 ? colorWithOpacity(
@@ -3606,7 +3605,7 @@ export default function FarmDetailScreen() {
         <Pressable
           onPress={dismissSeasonSuccessOverlay}
           style={[
-            StyleSheet.absoluteFillObject,
+            StyleSheet.absoluteFill,
             {
               backgroundColor: colorWithOpacity(m3.colorScheme.scrim, 0.28),
               alignItems: 'center',
@@ -3703,7 +3702,7 @@ export default function FarmDetailScreen() {
               <View
                 pointerEvents="none"
                 style={[
-                  StyleSheet.absoluteFillObject,
+                  StyleSheet.absoluteFill,
                   {
                     backgroundColor: pressed
                       ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)

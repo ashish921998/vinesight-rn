@@ -1172,16 +1172,14 @@ function ChemicalRow({
                   paddingVertical: spacing[1],
                   backgroundColor: selected
                     ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
-                    : colors.surface[100],
+                    : m3.surface.s100,
                   borderWidth: 1,
                   borderColor: selected
                     ? colorWithOpacity(m3.colorScheme.tertiary, 0.5)
                     : colorWithOpacity(m3.colorScheme.outline, 0.2),
                 }}
               >
-                <Text
-                  style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}
-                >
+                <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
                   {unit}
                 </Text>
               </Pressable>

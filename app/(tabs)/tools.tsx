@@ -95,7 +95,7 @@ const ToolCard: React.FC<{ item: ToolItem; onPress: () => void }> = ({ item, onP
           <View
             pointerEvents="none"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 backgroundColor: pressed
                   ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)

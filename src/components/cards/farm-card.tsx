@@ -504,7 +504,7 @@ export const FarmCard = React.memo(function FarmCard({
       <View
         pointerEvents="none"
         style={[
-          StyleSheet.absoluteFillObject,
+          StyleSheet.absoluteFill,
           {
             backgroundColor: pressed
               ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
