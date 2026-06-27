@@ -53,7 +53,7 @@ interface TimelineLogCardProps {
 }
 
 // Generate description from record data
-function getDescriptionFromData(
+export function getDescriptionFromData(
   type: LogTypeId,
   t: (key: string, options?: Record<string, unknown>) => string,
   data?: RecordData,
@@ -110,7 +110,7 @@ function getDescriptionFromData(
 }
 
 // Generate secondary detail line
-function getSecondaryDetail(
+export function getSecondaryDetail(
   type: LogTypeId,
   t: (key: string, options?: Record<string, unknown>) => string,
   data?: RecordData,
@@ -193,6 +193,13 @@ export function TimelineLogCard({
     ? formatDate(parsedDate, { month: 'short', day: 'numeric' })
     : date;
   const secondaryDetail = getSecondaryDetail(type, t, data);
+  const delegatedData = data && 'professional_creator_id' in data ? data : null;
+  const delegatedAttribution = delegatedData?.professional_creator_id
+    ? t('professional.attribution', {
+        member: delegatedData.professional_creator_name ?? t('professional.organizationMember'),
+        organization: delegatedData.acting_organization_name ?? t('professional.organization'),
+      })
+    : null;
 
   const panResponder = React.useMemo(
     () =>
@@ -252,10 +259,13 @@ export function TimelineLogCard({
 
   const cardStyle: ViewStyle = {
     backgroundColor: m3.surface.surfaceContainer,
-    borderRadius: m3.shape.cornerLarge,
+    // cornerMedium (16) keeps the left accent reading as a clean vertical spine.
+    // At cornerLarge (24) the thick left border curls around the corners and
+    // renders as a detached floating arc.
+    borderRadius: m3.shape.cornerMedium,
     borderWidth: 1,
     borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.85),
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     borderLeftColor: logType.color,
     overflow: 'hidden',
   };
@@ -402,6 +412,11 @@ export function TimelineLogCard({
             {secondaryDetail && (
               <Text style={secondaryTextStyle} numberOfLines={1}>
                 {secondaryDetail}
+              </Text>
+            )}
+            {delegatedAttribution && (
+              <Text style={secondaryTextStyle} numberOfLines={1}>
+                {delegatedAttribution}
               </Text>
             )}
 

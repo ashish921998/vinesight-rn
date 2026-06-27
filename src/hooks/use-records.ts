@@ -22,7 +22,7 @@ import {
   type DailyNoteRecord,
   type FertilizerItem,
 } from '../types';
-import { resolveOptionalSeasonIdForDate } from '../lib/season-context';
+import { resolveOrCreateSeasonIdForDate } from '../lib/season-context';
 
 // ============================================================
 // MARK: - IRRIGATION RECORDS
@@ -76,7 +76,7 @@ export function useCreateIrrigationRecord() {
     mutationFn: async (record: IrrigationRecordInsert): Promise<IrrigationRecord> => {
       const seasonId =
         record.season_id ??
-        (await resolveOptionalSeasonIdForDate({
+        (await resolveOrCreateSeasonIdForDate({
           farmId: record.farm_id,
           date: record.date,
         }));
@@ -198,7 +198,7 @@ export function useCreateSprayRecord() {
     mutationFn: async (record: SprayRecordInsert): Promise<SprayRecord> => {
       const seasonId =
         record.season_id ??
-        (await resolveOptionalSeasonIdForDate({
+        (await resolveOrCreateSeasonIdForDate({
           farmId: record.farm_id,
           date: record.date,
         }));
@@ -317,7 +317,7 @@ export function useCreateFertigationRecord() {
     mutationFn: async (record: FertigationRecordInsert): Promise<FertigationRecord> => {
       const seasonId =
         record.season_id ??
-        (await resolveOptionalSeasonIdForDate({
+        (await resolveOrCreateSeasonIdForDate({
           farmId: record.farm_id,
           date: record.date,
         }));
@@ -436,7 +436,7 @@ export function useCreateHarvestRecord() {
     mutationFn: async (record: HarvestRecordInsert): Promise<HarvestRecord> => {
       const seasonId =
         record.season_id ??
-        (await resolveOptionalSeasonIdForDate({
+        (await resolveOrCreateSeasonIdForDate({
           farmId: record.farm_id,
           date: record.date,
         }));
@@ -555,7 +555,7 @@ export function useCreateExpenseRecord() {
     mutationFn: async (record: ExpenseRecordInsert): Promise<ExpenseRecord> => {
       const seasonId =
         record.season_id ??
-        (await resolveOptionalSeasonIdForDate({
+        (await resolveOrCreateSeasonIdForDate({
           farmId: record.farm_id,
           date: record.date,
         }));
@@ -714,7 +714,7 @@ export function useUpsertDailyNote() {
       date: string;
       notes: string | null;
     }): Promise<DailyNoteRecord> => {
-      const seasonId = await resolveOptionalSeasonIdForDate({ farmId: farm_id, date });
+      const seasonId = await resolveOrCreateSeasonIdForDate({ farmId: farm_id, date });
       const { data, error } = await supabase
         .from(TABLES.DAILY_NOTES)
         .upsert(

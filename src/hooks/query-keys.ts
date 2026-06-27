@@ -4,6 +4,11 @@
  */
 
 export const queryKeys = {
+  professionalWorkspace: {
+    all: ['professionalWorkspace'] as const,
+    current: () => ['professionalWorkspace', 'current'] as const,
+    farmActivity: (farmId: number) => ['professionalWorkspace', 'farmActivity', farmId] as const,
+  },
   // Farms
   farms: {
     all: ['farms'] as const,
@@ -119,6 +124,13 @@ export const queryKeys = {
   fertilizerPlan: {
     all: ['fertilizerPlan'] as const,
     detail: (farmId: number) => [...queryKeys.fertilizerPlan.all, { farmId }] as const,
+  },
+
+  // Consultant Reviews
+  consultantReviews: {
+    all: ['consultantReviews'] as const,
+    triage: (organizationId: string, farmId: number) =>
+      [...queryKeys.consultantReviews.all, 'triage', { organizationId, farmId }] as const,
   },
 
   // Warehouse Items

@@ -6,15 +6,22 @@ import { supabase } from '@/lib/supabase';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const { code, error, error_description } = useLocalSearchParams<{
+  const { code, error, error_description, type } = useLocalSearchParams<{
     code?: string;
     error?: string;
     error_description?: string;
+    type?: string;
   }>();
 
   useEffect(() => {
     const handleCallback = async () => {
+      const isRecovery = type === 'recovery';
+
       if (error) {
+        if (isRecovery) {
+          router.replace('/(auth)/login');
+          return;
+        }
         router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
         return;
       }
@@ -24,11 +31,17 @@ export default function AuthCallback() {
           const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
           if (sessionError) throw sessionError;
           if (data.session) {
-            router.replace('/');
+            // Password recovery links sign the user in with a temporary session;
+            // route them to set a new password instead of the main app.
+            router.replace(isRecovery ? '/(auth)/reset-password' : '/');
             return;
           }
         } catch (err) {
           console.error('Auth callback exchange error:', err);
+          if (isRecovery) {
+            router.replace('/(auth)/login');
+            return;
+          }
           router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
         }
         return;
@@ -57,7 +70,7 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [code, error, error_description, router]);
+  }, [code, error, error_description, type, router]);
 
   return null;
 }

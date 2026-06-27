@@ -10,6 +10,8 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
+import { resolveAuthenticatedRoute } from '@/utils/professional-routing';
 
 /**
  * Entry point of the app
@@ -27,6 +29,9 @@ export default function Index() {
     })),
   );
   const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
+  const { data: professionalWorkspace, isLoading: workspaceLoading } = useProfessionalWorkspace({
+    enabled: isAuthenticated,
+  });
   const configStatus = getConfigurationStatus();
   const m3 = useM3();
 
@@ -105,7 +110,7 @@ export default function Index() {
     );
   }
 
-  if (isAuthenticated && profileLoading) {
+  if (isAuthenticated && (profileLoading || workspaceLoading)) {
     return <AnimatedSplash duration={2500} />;
   }
 
@@ -115,15 +120,22 @@ export default function Index() {
 
   const hasProfileName = Boolean(profile?.full_name && profile.full_name.trim().length > 0);
 
-  // Redirect based on auth state
+  // Redirect based on auth state. If the workspace lookup errored, professionalWorkspace
+  // is undefined and resolveAuthenticatedRoute falls through to the farmer route — a
+  // transient RPC blip must never trap users (esp. farmers, the common case) on a
+  // dead-end screen at the splash.
   if (isAuthenticated) {
-    if (needsProfileCompletion || !hasProfileName) {
-      return <Redirect href="/(auth)/profile-completion" />;
-    }
-    if (!onboardingComplete && !hasSeenOnboarding) {
-      return <Redirect href="/onboarding" />;
-    }
-    return <Redirect href="/(tabs)" />;
+    return (
+      <Redirect
+        href={resolveAuthenticatedRoute({
+          needsProfileCompletion,
+          hasProfileName,
+          professionalWorkspace,
+          onboardingComplete,
+          hasSeenOnboarding,
+        })}
+      />
+    );
   }
 
   return <Redirect href="/(auth)/phone-login" />;

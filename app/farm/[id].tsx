@@ -328,8 +328,11 @@ export default function FarmDetailScreen() {
     if (!farmSeasons || farmSeasons.length === 0) return null;
     return farmSeasons.find((season) => season.end_date === null) ?? null;
   }, [farmSeasons]);
-  const { data: earliestSafeHarvest, refetch: refetchEarliestSafeHarvest } =
-    useEarliestSafeHarvestForSeason(farmId, activeSeasonRecord?.id ?? null);
+  const {
+    data: earliestSafeHarvest,
+    isError: earliestSafeHarvestIsError,
+    refetch: refetchEarliestSafeHarvest,
+  } = useEarliestSafeHarvestForSeason(farmId, activeSeasonRecord?.id ?? null);
   const earliestSafeHarvestDateLabel = useMemo(() => {
     const raw = earliestSafeHarvest?.earliestDate;
     if (!raw) return null;
@@ -1935,6 +1938,121 @@ export default function FarmDetailScreen() {
                 </View>
               </View>
             </View>
+          )}
+
+          {/* Harvest-status unverified advisory — calm "needs attention", distinct
+              from the red PHI-conflict banner above. Fail-closed: shown when season
+              sprays are unmapped so "no conflict banner" never implies "safe". */}
+          {isGrapeFarm && earliestSafeHarvest?.status === 'unverified' && !hasPhiConflict && (
+            <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[3] }}>
+              <View
+                accessible
+                accessibilityLiveRegion="polite"
+                accessibilityLabel={t('farmDetails.harvestUnverified.a11y', {
+                  count: earliestSafeHarvest.unverifiedCount,
+                  defaultValue_one:
+                    'Harvest safety not yet verified. {{count}} spray not yet mapped to label data.',
+                  defaultValue_other:
+                    'Harvest safety not yet verified. {{count}} sprays not yet mapped to label data.',
+                })}
+                style={{
+                  padding: spacing[3],
+                  backgroundColor: m3.colorScheme.warningContainer,
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.warning, 0.4),
+                  borderRadius: borderRadius.md,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                }}
+              >
+                <UiSymbol name="info.circle" size={16} color={m3.colorScheme.warning} />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.colorScheme.onWarningContainer,
+                    }}
+                  >
+                    {t('farmDetails.harvestUnverified.title', {
+                      defaultValue: 'Harvest safety not yet verified',
+                    })}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: m3.colorScheme.onWarningContainer,
+                      marginTop: 2,
+                    }}
+                  >
+                    {t('farmDetails.harvestUnverified.subtitle', {
+                      count: earliestSafeHarvest.unverifiedCount,
+                      defaultValue_one: '{{count}} spray not yet mapped to label data',
+                      defaultValue_other: '{{count}} sprays not yet mapped to label data',
+                    })}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Harvest check failed (most often offline) and we have no verdict to
+              show. Say so honestly and let them retry, rather than leaving the area
+              blank — which could read as "all clear". Dependency-free: driven off
+              the query error state (no NetInfo wired in this app). */}
+          {isGrapeFarm && earliestSafeHarvestIsError && !earliestSafeHarvest && (
+            <Pressable
+              onPress={() => refetchEarliestSafeHarvest()}
+              accessibilityRole="button"
+              accessibilityLabel={t('farmDetails.harvestCheckUnavailable.a11y', {
+                defaultValue: "Can't check harvest safety right now. Double tap to retry.",
+              })}
+              style={{ paddingHorizontal: spacing[4], marginTop: spacing[3] }}
+            >
+              <View
+                style={{
+                  padding: spacing[3],
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  borderRadius: borderRadius.md,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                }}
+              >
+                <UiSymbol
+                  name="arrow.clockwise"
+                  size={16}
+                  color={m3.colorScheme.onSurfaceVariant}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.colorScheme.onSurface,
+                    }}
+                  >
+                    {t('farmDetails.harvestCheckUnavailable.title', {
+                      defaultValue: "Can't check harvest safety right now",
+                    })}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: m3.colorScheme.onSurfaceVariant,
+                      marginTop: 2,
+                    }}
+                  >
+                    {t('farmDetails.harvestCheckUnavailable.subtitle', {
+                      defaultValue: 'Tap to retry',
+                    })}
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
           )}
 
           {urgentTasks.length > 0 && (

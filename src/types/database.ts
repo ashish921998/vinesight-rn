@@ -110,6 +110,10 @@ export interface IrrigationRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  professional_creator_id?: string | null;
+  acting_organization_id?: string | null;
+  professional_creator_name?: string | null;
+  acting_organization_name?: string | null;
 }
 
 export type IrrigationRecordInsert = Omit<IrrigationRecord, 'id' | 'created_at'>;
@@ -165,6 +169,10 @@ export interface SprayRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  professional_creator_id?: string | null;
+  acting_organization_id?: string | null;
+  professional_creator_name?: string | null;
+  acting_organization_name?: string | null;
 }
 
 export type SprayRecordInsert = Omit<SprayRecord, 'id' | 'created_at'>;
@@ -199,6 +207,10 @@ export interface FertigationRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  professional_creator_id?: string | null;
+  acting_organization_id?: string | null;
+  professional_creator_name?: string | null;
+  acting_organization_name?: string | null;
 }
 
 export type FertigationRecordInsert = Omit<FertigationRecord, 'id' | 'created_at'>;
@@ -222,6 +234,10 @@ export interface HarvestRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  professional_creator_id?: string | null;
+  acting_organization_id?: string | null;
+  professional_creator_name?: string | null;
+  acting_organization_name?: string | null;
 }
 
 export type HarvestRecordInsert = Omit<HarvestRecord, 'id' | 'created_at'>;
@@ -266,6 +282,10 @@ export interface DailyNoteRecord {
   notes?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  professional_creator_id?: string | null;
+  acting_organization_id?: string | null;
+  professional_creator_name?: string | null;
+  acting_organization_name?: string | null;
 }
 
 export type DailyNoteRecordInsert = Omit<DailyNoteRecord, 'id' | 'created_at' | 'updated_at'>;
@@ -311,6 +331,69 @@ export interface PetioleTestRecord {
 export type PetioleTestRecordInsert = Omit<PetioleTestRecord, 'id' | 'created_at'>;
 export type PetioleTestRecordUpdate = Partial<
   Omit<PetioleTestRecord, 'id' | 'farm_id' | 'created_at'>
+>;
+
+// ============================================================
+// MARK: - Petiole Triage (consultant review queue)
+// ============================================================
+
+export type PetioleTriageStatus = 'pending' | 'in_review' | 'reviewed' | 'escalated' | 'resolved';
+
+export interface PetioleTriage {
+  id: string;
+  organization_id: string;
+  farm_id: number;
+  petiole_test_id: number;
+  client_user_id: string;
+  status: PetioleTriageStatus;
+  severity: 'low' | 'medium' | 'high' | null;
+  classification: string | null;
+  summary: string | null;
+  recommendation: string | null;
+  review_notes: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export type PetioleTriageInsert = Omit<PetioleTriage, 'id' | 'created_at' | 'updated_at'>;
+export type PetioleTriageUpdate = Partial<
+  Omit<PetioleTriage, 'id' | 'organization_id' | 'farm_id' | 'created_at'>
+>;
+
+// ============================================================
+// MARK: - Fertilizer Plan (consultant response to a petiole review)
+// ============================================================
+
+export interface FertilizerPlanItem {
+  fertilizer_name: string;
+  quantity: number;
+  unit: string;
+  application_method?: string | null;
+  application_frequency?: number | null;
+  notes?: string | null;
+  application_date?: string | null;
+  sort_order?: number | null;
+}
+
+export interface FertilizerPlan {
+  id: string;
+  review_id: string;
+  farm_id: number;
+  organization_id: string;
+  title: string;
+  notes: string | null;
+  items: FertilizerPlanItem[];
+  consultant_name?: string | null;
+  reviewed_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export type FertilizerPlanInsert = Omit<FertilizerPlan, 'id' | 'created_at' | 'updated_at'>;
+export type FertilizerPlanUpdate = Partial<
+  Omit<FertilizerPlan, 'id' | 'review_id' | 'farm_id' | 'organization_id' | 'created_at'>
 >;
 
 // ============================================================
@@ -672,6 +755,8 @@ export const TABLES = {
   DAILY_NOTES: 'daily_notes',
   SOIL_TEST_RECORDS: 'soil_test_records',
   PETIOLE_TEST_RECORDS: 'petiole_test_records',
+  PETIOLE_TRIAGE: 'petiole_triage',
+  FERTILIZER_PLANS: 'fertilizer_plans',
   SOIL_PROFILES: 'soil_profiles',
   CALCULATION_HISTORY: 'calculation_history',
   PROFILES: 'profiles',

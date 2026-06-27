@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { telemetry } from '@/services/telemetry';
+import i18n from '@/i18n';
 import {
   isNetworkTimeoutError,
   getAuthErrorMessage,
@@ -112,12 +113,12 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     const trimmedEmail = email.trim();
 
     if (!isValidEmail(trimmedEmail)) {
-      set({ errorMessage: 'Please enter a valid email address' });
+      set({ errorMessage: i18n.t('auth.validation.invalidEmail') });
       return;
     }
 
     if (password.length < 6) {
-      set({ errorMessage: 'Password must be at least 6 characters' });
+      set({ errorMessage: i18n.t('auth.validation.passwordTooShort') });
       return;
     }
 
@@ -178,7 +179,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     const trimmedEmail = email.trim();
 
     if (!isValidEmail(trimmedEmail)) {
-      set({ errorMessage: 'Please enter a valid email address' });
+      set({ errorMessage: i18n.t('auth.validation.invalidEmail') });
       return;
     }
 
@@ -214,7 +215,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     const trimmedCode = code.trim();
 
     if (trimmedCode.length !== 6 || !/^\d+$/.test(trimmedCode)) {
-      set({ errorMessage: 'Please enter a valid 6-digit code' });
+      set({ errorMessage: i18n.t('auth.validation.invalidOtpCode') });
       return;
     }
 
@@ -307,5 +308,71 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
       pendingOTPType: 'email',
       errorMessage: null,
     });
+  },
+
+  resetPasswordForEmail: async (email: string) => {
+    const trimmedEmail = email.trim();
+
+    if (!isValidEmail(trimmedEmail)) {
+      set({ errorMessage: i18n.t('auth.validation.invalidEmail') });
+      return;
+    }
+
+    set({ errorMessage: null, isLoading: true, passwordResetEmailSent: false });
+    telemetry.capture('auth_password_reset_requested');
+
+    try {
+      // PKCE flow: the recovery email links back to the app's auth callback
+      // with a `code` to exchange. The `type=recovery` marker tells the
+      // callback to route into the set-new-password screen instead of home.
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+        redirectTo: 'vinesight://auth/callback?type=recovery',
+      });
+
+      if (error) throw error;
+
+      telemetry.capture('auth_password_reset_email_sent');
+      set({ passwordResetEmailSent: true, isLoading: false });
+    } catch (error: unknown) {
+      telemetry.capture('auth_password_reset_failed');
+      set({
+        errorMessage: getAuthErrorMessage(error, 'Failed to send reset email', 'reset_password'),
+        passwordResetEmailSent: false,
+        isLoading: false,
+      });
+    }
+  },
+
+  updatePassword: async (newPassword: string) => {
+    if (newPassword.length < 6) {
+      set({ errorMessage: i18n.t('auth.validation.passwordTooShort') });
+      return;
+    }
+
+    set({ errorMessage: null, isLoading: true });
+    telemetry.capture('auth_password_update_started');
+
+    try {
+      const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+
+      if (error) throw error;
+
+      telemetry.capture('auth_password_update_succeeded');
+      set({
+        user: data.user ?? get().user,
+        passwordResetEmailSent: false,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      telemetry.capture('auth_password_update_failed');
+      set({
+        errorMessage: getAuthErrorMessage(error, 'Failed to update password', 'update_password'),
+        isLoading: false,
+      });
+    }
+  },
+
+  clearPasswordResetState: () => {
+    set({ passwordResetEmailSent: false, errorMessage: null });
   },
 });

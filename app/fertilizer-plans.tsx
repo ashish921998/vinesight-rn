@@ -1,13 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  Text,
-  ActivityIndicator,
-  Pressable,
-  Alert,
-} from 'react-native';
+import { ScrollView, StyleSheet, View, Text, ActivityIndicator, Pressable } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -389,36 +381,6 @@ export default function FertilizerPlansScreen() {
           </View>
         )}
       </ScrollView>
-      {/* FAB - Cellar Ledger design: primary bg, 16px radius, white '+', border-only */}
-      <Pressable
-        style={{
-          position: 'absolute',
-          bottom: insets.bottom + spacing[4], // Account for safe area bottom inset
-          right: spacing[6], // 24px from right
-          width: 52,
-          height: 52,
-          borderRadius: borderRadius.md, // 16px radius
-          backgroundColor: m3.primary.p500,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderWidth: 1,
-          borderColor: colorWithOpacity(m3.primary.p500, 0.3),
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={t('farmDetails.fertilizerPlan.addPlan', 'Add Plan')}
-        onPress={() => Alert.alert(t('farmDetails.fertilizerPlan.addPlan', 'Add Plan'))}
-      >
-        <Text
-          style={{
-            color: m3.surface.s100,
-            fontSize: fontSize['3xl'],
-            fontWeight: '300',
-            lineHeight: 32,
-          }}
-        >
-          +
-        </Text>
-      </Pressable>
     </>
   );
 }
