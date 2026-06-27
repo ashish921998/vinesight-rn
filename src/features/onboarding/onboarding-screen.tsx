@@ -6,8 +6,7 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
-import { router } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ensureInitialFarmSeasonForFarmId, useFarms } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
@@ -147,10 +146,17 @@ export function OnboardingScreen() {
       useOnboardingStore.getState().setPreferences({ notificationsEnabled });
 
       if (notificationsEnabled && (language === 'en' || language === 'hi' || language === 'mr')) {
-        await syncPushDeviceRegistration(language, {
+        // Fire-and-forget: registering the push device makes a network call
+        // (APNs on iOS) that can hang or fail. It must never block the user from
+        // finishing onboarding — awaiting it here was leaving iOS users stuck on
+        // "Checking permissions..." so `onboarding_completed` never fired.
+        // syncPushDeviceRegistration already swallows its own errors internally;
+        // the .catch here is a belt-and-suspenders guard so a rejection can never
+        // surface as an unhandled promise rejection during onboarding.
+        void syncPushDeviceRegistration(language, {
           notificationsEnabled: true,
           featureOverviewEnabled: useNotificationStore.getState().featureOverviewEnabled,
-        });
+        }).catch(() => {});
       }
 
       setHasManuallyNavigatedBack(false);
@@ -433,7 +439,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backgroundLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   backgroundOrb: {
     position: 'absolute',

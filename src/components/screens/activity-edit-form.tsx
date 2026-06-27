@@ -9,6 +9,7 @@ import {
   View,
   Text,
   Pressable,
+  Modal,
   ScrollView,
   Alert,
   ActivityIndicator,
@@ -642,71 +643,69 @@ export function ActivityEditForm({
       {renderForm()}
 
       {showDatePicker && isIOS && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 50,
-          }}
+        <Modal
+          visible
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowDatePicker(false)}
         >
-          <Pressable
-            onPress={() => setShowDatePicker(false)}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.close')}
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            }}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: m3.surface.s100,
-              borderTopLeftRadius: borderRadius['2xl'],
-              borderTopRightRadius: borderRadius['2xl'],
-              padding: spacing[4],
-            }}
-            onStartShouldSetResponder={() => true}
-          >
+          <View style={{ flex: 1 }}>
+            <Pressable
+              onPress={() => setShowDatePicker(false)}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close')}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+              }}
+            />
             <View
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginBottom: spacing[4],
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                backgroundColor: m3.surface.s100,
+                borderTopLeftRadius: borderRadius['2xl'],
+                borderTopRightRadius: borderRadius['2xl'],
+                padding: spacing[4],
               }}
+              onStartShouldSetResponder={() => true}
             >
-              <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
-                {t('common.selectDate')}
-              </Text>
-              <Pressable onPress={() => setShowDatePicker(false)}>
-                <UISymbol name="xmark.circle.fill" size={24} color={m3.surface.s500} />
-              </Pressable>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[4],
+                }}
+              >
+                <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
+                  {t('common.selectDate')}
+                </Text>
+                <Pressable onPress={() => setShowDatePicker(false)}>
+                  <UISymbol name="xmark.circle.fill" size={24} color={m3.surface.s500} />
+                </Pressable>
+              </View>
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="spinner"
+                onChange={(_, date) => {
+                  if (date) setSelectedDate(date);
+                }}
+              />
+              <Button
+                title={t('common.done')}
+                onPress={() => setShowDatePicker(false)}
+                style={{ marginTop: spacing[4] }}
+              />
             </View>
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              display="spinner"
-              onChange={(_, date) => {
-                if (date) setSelectedDate(date);
-              }}
-            />
-            <Button
-              title={t('common.done')}
-              onPress={() => setShowDatePicker(false)}
-              style={{ marginTop: spacing[4] }}
-            />
           </View>
-        </View>
+        </Modal>
       )}
 
       {showDatePicker && !isIOS && (

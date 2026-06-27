@@ -630,7 +630,7 @@ export default function SoilProfilingScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       borderRadius: radius.xl,
                       backgroundColor: pressed
@@ -782,7 +782,7 @@ export default function SoilProfilingScreen() {
             <View
               pointerEvents="none"
               style={[
-                StyleSheet.absoluteFillObject,
+                StyleSheet.absoluteFill,
                 {
                   backgroundColor: pressed
                     ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)

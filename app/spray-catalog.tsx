@@ -411,7 +411,7 @@ export default function SprayCatalogScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       borderRadius: radius.xl,
                       backgroundColor: pressed

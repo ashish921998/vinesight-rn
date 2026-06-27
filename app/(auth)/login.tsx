@@ -201,6 +201,18 @@ export default function LoginScreen() {
     color: m3.colorScheme.primary,
   };
 
+  const forgotPasswordContainerStyle: ViewStyle = {
+    alignSelf: 'flex-end',
+    paddingVertical: spacing[1],
+    paddingHorizontal: spacing[1],
+  };
+
+  const forgotPasswordTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: m3.colorScheme.primary,
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -262,6 +274,24 @@ export default function LoginScreen() {
                 autoComplete={isSignUp ? 'password-new' : 'password'}
                 containerStyle={{ marginBottom: spacing[2] }}
               />
+
+              {/* Forgot Password (sign-in only) */}
+              {!isSignUp && (
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(auth)/forgot-password',
+                      params: { email },
+                    })
+                  }
+                  disabled={isLoading}
+                  style={forgotPasswordContainerStyle}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('auth.a11y.forgotPassword')}
+                >
+                  <Text style={forgotPasswordTextStyle}>{t('auth.forgotPassword')}</Text>
+                </Pressable>
+              )}
 
               {/* Error Message */}
               {errorMessage && (
@@ -358,7 +388,7 @@ export default function LoginScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)

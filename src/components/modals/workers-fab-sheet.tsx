@@ -154,7 +154,7 @@ export function WorkersFabSheet({
       {/* Backdrop */}
       <Animated.View
         style={[
-          StyleSheet.absoluteFillObject,
+          StyleSheet.absoluteFill,
           {
             backgroundColor: 'rgba(0,0,0,0.5)',
             // eslint-disable-next-line react-hooks/refs
@@ -162,7 +162,7 @@ export function WorkersFabSheet({
           },
         ]}
       >
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </Animated.View>
 
       {/* Sheet */}
