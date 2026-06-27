@@ -32,7 +32,15 @@ export function useEarliestSafeHarvestForSeason(
   return useQuery({
     queryKey: queryKeys.phi.earliestSafeHarvest(farmId ?? -1, seasonId ?? null),
     queryFn: async () => {
-      if (!farmId) return { earliestDate: null, reason: null };
+      if (!farmId) {
+        return {
+          status: 'no_sprays' as const,
+          earliestDate: null,
+          reason: null,
+          unverifiedCount: 0,
+          totalCount: 0,
+        };
+      }
       const data = await fetchSprayPhiRows(farmId, seasonId);
       return computeEarliestSafeHarvest(data as SprayPhiRow[]);
     },

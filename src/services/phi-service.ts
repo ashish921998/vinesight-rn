@@ -177,28 +177,75 @@ export interface PhiRecord {
   date?: string | null;
 }
 
-export function computeEarliestSafeHarvest(records: PhiRecord[]): {
+export type AggregateHarvestStatus = 'verified' | 'no_sprays' | 'unverified';
+
+export interface EarliestSafeHarvestResult {
+  status: AggregateHarvestStatus;
   earliestDate: string | null;
   reason: string | null;
-} {
+  /** Count of season sprays that have no valid safe-harvest date. */
+  unverifiedCount: number;
+  totalCount: number;
+}
+
+/**
+ * Aggregate safe-harvest across a season's spray records.
+ *
+ * FAIL CLOSED: a spray with no valid `safe_harvest_date` is NOT silently
+ * dropped from the calculation. If any in-season spray is unmapped or
+ * unverifiable, the aggregate is `unverified` (with the count) so the UI can
+ * never present a confident "safe to harvest" date while compliance is
+ * actually incomplete. (Pre-2026-06 this filtered the nulls out, letting one
+ * verified + one unmapped spray read as safe.)
+ *
+ *   ┌─────────────────────────────┬───────────────────────────────────────┐
+ *   │ records empty               │ no_sprays                              │
+ *   │ ≥1 missing valid safe date  │ unverified (earliestDate = null; a      │
+ *   │                             │ partial date must not look complete)    │
+ *   │ all have a valid safe date  │ verified, earliestDate = most          │
+ *   │                             │ constraining (latest) date             │
+ *   └─────────────────────────────┴───────────────────────────────────────┘
+ */
+export function computeEarliestSafeHarvest(records: PhiRecord[]): EarliestSafeHarvestResult {
+  const totalCount = records.length;
+  if (totalCount === 0) {
+    return {
+      status: 'no_sprays',
+      earliestDate: null,
+      reason: null,
+      unverifiedCount: 0,
+      totalCount: 0,
+    };
+  }
+
   const valid = records
     .map((record) => record.safe_harvest_date)
     .filter((value): value is string => typeof value === 'string' && isValidDateString(value));
-  if (valid.length === 0) {
-    return { earliestDate: null, reason: null };
+  const unverifiedCount = totalCount - valid.length;
+
+  let earliestDate: string | null = null;
+  let reason: string | null = null;
+  if (valid.length > 0) {
+    earliestDate = valid.sort((a, b) => dayDiff(b, a))[0];
+    const blocker = records.find((record) => record.safe_harvest_date === earliestDate);
+    if (blocker) {
+      const component = blocker.phi_blocking_component ?? 'Unknown component';
+      const chemical = blocker.chemical ?? 'Unknown spray';
+      const sprayDate = blocker.date ?? 'unknown date';
+      reason = `${component} (${chemical}, ${sprayDate})`;
+    }
   }
-  const earliestDate = valid.sort((a, b) => dayDiff(b, a))[0];
-  const blocker = records.find((record) => record.safe_harvest_date === earliestDate);
-  if (!blocker) {
-    return { earliestDate, reason: null };
+
+  if (unverifiedCount > 0) {
+    return {
+      status: 'unverified',
+      earliestDate: null,
+      reason: null,
+      unverifiedCount,
+      totalCount,
+    };
   }
-  const component = blocker.phi_blocking_component ?? 'Unknown component';
-  const chemical = blocker.chemical ?? 'Unknown spray';
-  const sprayDate = blocker.date ?? 'unknown date';
-  return {
-    earliestDate,
-    reason: `${component} (${chemical}, ${sprayDate})`,
-  };
+  return { status: 'verified', earliestDate, reason, unverifiedCount: 0, totalCount };
 }
 
 export interface BuildSafeToSprayArgs {
