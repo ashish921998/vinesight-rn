@@ -138,7 +138,7 @@ export default function SoilTrendsScreen() {
           <View
             pointerEvents="none"
             style={{
-              ...StyleSheet.absoluteFill,
+              ...StyleSheet.absoluteFillObject,
               alignItems: 'center',
               justifyContent: 'center',
               paddingHorizontal: 64,

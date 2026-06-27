@@ -555,7 +555,7 @@ export default function LabTestsScreen() {
           <View
             pointerEvents="none"
             style={{
-              ...StyleSheet.absoluteFill,
+              ...StyleSheet.absoluteFillObject,
               alignItems: 'center',
               justifyContent: 'center',
               paddingHorizontal: 112,

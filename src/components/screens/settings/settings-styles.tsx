@@ -310,7 +310,7 @@ export const createStyles = (m3: ReturnType<typeof getM3Theme>) => ({
     justifyContent: 'flex-end',
   } as ViewStyle,
   countryPickerBackdrop: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: colorWithOpacity(m3.surface.s900, 0.35),
   } as ViewStyle,
   countryPickerSheet: {

@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   backdrop: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
   },
   backdropPressable: {
     flex: 1,
