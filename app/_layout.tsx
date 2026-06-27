@@ -546,6 +546,11 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
         currentRouter.push('/(tabs)');
       } else if (data?.type === 'custom') {
         // Custom notifications have no navigation target
+      } else {
+        // Missing or unrecognized payload: don't silently consume the tap (on
+        // cold start the response is cleared right after), open the app home so
+        // the user lands somewhere sensible instead of staying stranded.
+        currentRouter.push('/(tabs)');
       }
     };
 
