@@ -26,7 +26,10 @@ const options: PostHogOptions = {
   sessionReplayConfig: {
     maskAllTextInputs: true,
     maskAllImages: false,
-    captureLog: true,
+    // Don't forward console/Logcat output into recordings — log calls can carry
+    // tokens, JWTs, or user data we don't want captured in replays (Android-only).
+    captureLog: false,
+    // iOS-only; captures request metrics (timing, size, status) — not bodies.
     captureNetworkTelemetry: true,
   },
 };
