@@ -274,6 +274,18 @@ export default function FertilizerPlansScreen() {
                   </Text>
                 ) : null}
               </View>
+              {fertilizerPlan.title ? (
+                <Text
+                  style={{
+                    color: m3.colorScheme.onSurface,
+                    ...m3.typography.titleMedium,
+                    fontWeight: fontWeight.semibold,
+                    marginTop: spacing[2],
+                  }}
+                >
+                  {fertilizerPlan.title}
+                </Text>
+              ) : null}
               {fertilizerPlan.notes ? (
                 <Text
                   style={{
