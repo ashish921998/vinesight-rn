@@ -1,7 +1,10 @@
 package com.vinesight
 
 import android.content.Context
+import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceModifier
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -16,12 +19,12 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import androidx.glance.unit.dp
 import kotlin.math.roundToInt
 
 /**
  * Compose-powered widget content using Glance.
  */
+@Keep
 class WeatherGlanceWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: androidx.glance.GlanceId) {
         val manager = GlanceAppWidgetManager(context)
@@ -36,13 +39,13 @@ class WeatherGlanceWidget : GlanceAppWidget() {
 
 @Composable
 private fun WeatherWidgetContent(widgetData: WeatherWidgetManager.WeatherWidgetData?) {
-    val titleColor = ColorProvider(day = 0xFFFFFFFF.toInt(), night = 0xFFFFFFFF.toInt())
-    val bodyColor = ColorProvider(day = 0xFFE5E7EB.toInt(), night = 0xFFD1D5DB.toInt())
+    val titleColor = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFFFFFFFF))
+    val bodyColor = ColorProvider(day = Color(0xFFE5E7EB), night = Color(0xFFD1D5DB))
 
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(ColorProvider(day = 0xFF1F2937.toInt(), night = 0xFF111827.toInt()))
+            .background(ColorProvider(day = Color(0xFF1F2937), night = Color(0xFF111827)))
             .padding(16.dp),
         horizontalAlignment = Alignment.Start,
         verticalAlignment = Alignment.CenterVertically

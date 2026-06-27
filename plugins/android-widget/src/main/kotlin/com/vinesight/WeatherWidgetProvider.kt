@@ -24,8 +24,9 @@ class WeatherWidgetProvider : GlanceAppWidgetReceiver() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        // GlanceAppWidgetReceiver.onUpdate already schedules a Glance update;
+        // calling requestUpdate here too would render every widget twice.
         super.onUpdate(context, appWidgetManager, appWidgetIds)
-        requestUpdate(context)
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
@@ -60,22 +61,30 @@ class WeatherWidgetProvider : GlanceAppWidgetReceiver() {
         const val ACTION_UPDATE_WIDGET = "com.vinesight.UPDATE_WIDGET"
 
         fun requestUpdate(context: Context, appWidgetId: Int? = null) {
+            // Fire-and-forget; guard the body so a failure in any suspend call
+            // (updateAll/update/getGlanceIds) can't surface as an unhandled
+            // coroutine exception and crash the host process.
             CoroutineScope(Dispatchers.Default).launch {
-                val glanceWidget = WeatherGlanceWidget()
-                if (appWidgetId == null) {
-                    glanceWidget.updateAll(context)
-                    return@launch
-                }
+                try {
+                    val glanceWidget = WeatherGlanceWidget()
+                    if (appWidgetId == null) {
+                        glanceWidget.updateAll(context)
+                        return@launch
+                    }
 
-                val glanceManager = GlanceAppWidgetManager(context)
-                val matchingGlanceId = glanceManager
-                    .getGlanceIds(WeatherWidgetProvider::class.java)
-                    .firstOrNull { glanceManager.getAppWidgetId(it) == appWidgetId }
+                    val glanceManager = GlanceAppWidgetManager(context)
+                    // getGlanceIds expects the GlanceAppWidget subclass, not the receiver.
+                    val matchingGlanceId = glanceManager
+                        .getGlanceIds(WeatherGlanceWidget::class.java)
+                        .firstOrNull { glanceManager.getAppWidgetId(it) == appWidgetId }
 
-                if (matchingGlanceId != null) {
-                    glanceWidget.update(context, matchingGlanceId)
-                } else {
-                    glanceWidget.updateAll(context)
+                    if (matchingGlanceId != null) {
+                        glanceWidget.update(context, matchingGlanceId)
+                    } else {
+                        glanceWidget.updateAll(context)
+                    }
+                } catch (t: Throwable) {
+                    android.util.Log.e("WeatherWidgetProvider", "Widget update failed", t)
                 }
             }
         }
