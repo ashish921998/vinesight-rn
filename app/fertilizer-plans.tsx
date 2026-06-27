@@ -1,12 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  Text,
-  ActivityIndicator,
-  Pressable,
-} from 'react-native';
+import { ScrollView, StyleSheet, View, Text, ActivityIndicator, Pressable } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';

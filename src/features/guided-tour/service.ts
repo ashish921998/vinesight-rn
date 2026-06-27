@@ -203,13 +203,15 @@ export async function syncPushDeviceRegistration(
   if (Platform.OS === 'web') return false;
   if (!Device.isDevice) return false;
 
-  const userId = await getUserId();
-  if (!userId) return false;
-
   // Track which step failed so the failure event is actually diagnosable:
   // `fetch_token` = Expo/APNs/FCM token fetch, `update_row` = Supabase upsert.
   let stage: 'fetch_token' | 'update_row' = 'fetch_token';
   try {
+    // getUserId() calls supabase.auth.getSession(), which can reject. Keep it
+    // inside the try so this function never throws — callers fire-and-forget it.
+    const userId = await getUserId();
+    if (!userId) return false;
+
     const expoPushToken = await getExpoPushToken();
     if (!expoPushToken) return false;
 
