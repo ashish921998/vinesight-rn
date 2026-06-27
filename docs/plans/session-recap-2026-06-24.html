@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Session recap · Grape spray compliance · 24 Jun 2026</title>
+  <style>
+    :root{
+      --ink:#17231d; --muted:#5f6c64; --paper:#f6f4ed; --surface:#fffdf8; --line:#dce0d8;
+      --green:#285b43; --green-soft:#e1ede5; --amber:#9a6a1c; --amber-soft:#f6ead2;
+      --red:#a74535; --red-soft:#f7dfda; --blue:#315e72; --slate:#5b6873; --slate-soft:#e7ebee;
+      --shadow:0 10px 30px rgba(27,42,33,.08); --radius:16px;
+      --sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+      --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6}
+    a{color:var(--green)}
+    code{font-family:var(--mono);font-size:.86em;background:#eef1ec;padding:1px 5px;border-radius:5px}
+    .wrap{max-width:900px;margin:0 auto;padding:0 20px 80px}
+    header.hero{background:linear-gradient(135deg,#173d2d,#285b43 65%,#3f7057);color:#fff;padding:48px 0 42px;margin-bottom:30px}
+    .hero .wrap{padding-bottom:0}
+    .eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:700;opacity:.82}
+    h1{margin:10px 0 12px;font-size:34px;line-height:1.1;letter-spacing:-.02em}
+    .hero p{max-width:680px;margin:0;font-size:17px;color:rgba(255,255,255,.88)}
+    .chips{margin-top:20px;font-size:0}
+    .chip{display:inline-block;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);border-radius:999px;padding:6px 11px;font-size:12px;margin:0 8px 8px 0}
+    h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin:40px 0 14px;padding-left:12px;border-left:4px solid var(--green-soft)}
+    .lead{color:var(--muted);margin:-6px 0 16px}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:14px}
+    .tldr{border-left:5px solid var(--green);font-size:17px}
+    .tldr b{color:var(--green)}
+
+    /* flexbox rows — robust everywhere, no CSS grid */
+    .row{display:flex;flex-wrap:wrap;gap:12px}
+    .row > *{flex:1 1 240px}
+    .kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 16px;text-align:center}
+    .kpi b{display:block;font-size:28px;letter-spacing:-.02em;color:var(--red);margin-bottom:4px}
+    .kpi.ok b{color:var(--green)}
+    .kpi span{font-size:12px;color:var(--muted)}
+    .col{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+    .col.before{border-top:4px solid var(--red)}
+    .col.after{border-top:4px solid var(--green)}
+    .col h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+    .col.before h4{color:var(--red)} .col.after h4{color:var(--green)}
+    .col p{margin:0;font-size:14px;color:var(--muted)}
+
+    /* timeline — flex rows, no absolute positioning */
+    .step{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+    .dot{flex:0 0 auto;width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;font-weight:800;font-size:13px;text-align:center;line-height:32px}
+    .dot.review{background:var(--blue)} .dot.build{background:var(--amber)} .dot.ship{background:var(--green)}
+    .step-body{flex:1 1 auto;min-width:0}
+    .step-body h3{margin:3px 0 4px;font-size:16px;letter-spacing:-.01em}
+    .step-body p{margin:0;color:var(--muted);font-size:14px}
+    .step-body .files{font:12px/1.6 var(--mono);color:var(--muted);margin-top:6px;word-break:break-word}
+
+    table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);font-size:14px}
+    th,td{text-align:left;vertical-align:top;padding:11px 13px;border-bottom:1px solid var(--line)}
+    th{background:#eef1ec;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+    tr:last-child td{border-bottom:0}
+    .tag{display:inline-block;font:700 10px/1.4 var(--mono);padding:3px 6px;border-radius:5px;background:var(--green-soft);color:var(--green)}
+    .state-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+    .pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
+    .pill.green{background:var(--green-soft);color:var(--green)} .pill.amber{background:var(--amber-soft);color:var(--amber)}
+    .pill.slate{background:var(--slate-soft);color:var(--slate)} .pill.red{background:var(--red-soft);color:var(--red)}
+    .state-card p{margin:8px 0 0;font-size:14px;color:var(--muted)}
+    ul.dot-list{margin:0;padding-left:20px;color:var(--muted);font-size:14px}
+    ul.dot-list li{margin-bottom:6px}
+    ul.links{list-style:none;margin:0;padding:0}
+    ul.links li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+    ul.links li:last-child{border-bottom:0}
+    .cta{display:inline-block;margin-top:6px;background:var(--green);color:#fff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px}
+    footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="eyebrow">Session recap · 24 June 2026</div>
+      <h1>We fixed a harvest-safety bug and shipped it</h1>
+      <p>You asked me to review a plan. We reviewed it, found a real safety bug, measured how bad it was, fixed it, and opened a pull request. Here's the whole story in plain terms.</p>
+      <div class="chips">
+        <span class="chip">2 reviews run</span>
+        <span class="chip">15 decisions</span>
+        <span class="chip">2 commits</span>
+        <span class="chip">863 tests green</span>
+        <span class="chip">PR #177 open</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <div class="card tldr">
+      <b>In one sentence:</b> the app could tell a farmer "safe to harvest on this date" even when it had no idea about some of their sprays. We made it say "not sure yet" instead, and shipped that fix. The bigger compliance feature was scoped down and the heavy parts deferred until they're actually needed.
+    </div>
+
+    <h2>The bug, in plain words</h2>
+    <div class="row">
+      <div class="col before">
+        <h4>Before</h4>
+        <p>A farm's "safe to harvest" date was calculated by looking only at sprays the app understood. Any spray it couldn't read (no safety date) was silently ignored. So one understood spray + one unknown spray = a confident green "safe" date, hiding the unknown one.</p>
+      </div>
+      <div class="col after">
+        <h4>After</h4>
+        <p>If even one spray can't be verified, the app now says "Harvest safety not yet verified — N sprays not yet mapped" instead of a fake safe date. It only shows green when everything checks out. Failing toward caution, not false confidence.</p>
+      </div>
+    </div>
+
+    <h2>Why it mattered — we measured it</h2>
+    <p class="lead">Before fixing, we ran one read-only query against the real database to size the blast radius. The numbers reshaped the whole plan.</p>
+    <div class="row">
+      <div class="kpi"><b>99%</b><span>of sprays (1,899 of 1,916) had no safety date</span></div>
+      <div class="kpi"><b>97%</b><span>of farms (64 of 66) were at risk of a false "safe"</span></div>
+      <div class="kpi ok"><b>1</b><span>spray was actually verified today</span></div>
+    </div>
+    <p class="lead" style="margin-top:12px">Because nearly every farm is affected, the fix had to explain itself calmly (not look like the app broke), and the real value of the bigger feature depends on backfilling that old data — not on fancy logic.</p>
+
+    <h2>What we actually did — the arc</h2>
+
+    <div class="step">
+      <div class="dot review">1</div>
+      <div class="step-body">
+        <h3>Engineering review of the plan</h3>
+        <p>Read the real code to check the plan's claims. Cut it from a 7-unit "compliance engine" down to a small, safe "validate-first" slice. Found 7 issues + 3 more from an independent second-opinion pass (no feature-flag system exists, an offline gap, and that the audit export — the actual product goal — was being ignored).</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="dot review">2</div>
+      <div class="step-body">
+        <h3>Design review of the screens</h3>
+        <p>Rated the UI 4/10, raised it to 9/10. Decided how the new "not yet verified" state should look (calm amber, never red), how it differs from "offline" and from a real "don't harvest" conflict, and how the export should read to an auditor. Built a wireframe to show it.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="dot build">3</div>
+      <div class="step-body">
+        <h3>Built the fix</h3>
+        <p>Rewrote the harvest calculation to fail safe, added tests for it, created a calm amber "not yet verified" banner on the farm screen, and a new color token for it.</p>
+        <div class="files">src/services/phi-service.ts · src/styles/theme.ts · app/farm/[id].tsx · en/hi/mr</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="dot build">4</div>
+      <div class="step-body">
+        <h3>Handled the offline case</h3>
+        <p>If the app can't check (usually offline), it now shows a tappable "Can't check — tap to retry" banner instead of a blank space that could look like "all clear." Done without adding any new dependency.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="dot ship">5</div>
+      <div class="step-body">
+        <h3>Shipped it</h3>
+        <p>Two clean commits, all 863 tests passing, pushed to a branch, and opened pull request #177 for review. It can go out as an over-the-air update on its own.</p>
+      </div>
+    </div>
+
+    <h2>What's in the pull request</h2>
+    <table>
+      <thead><tr><th>Commit</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag">66919b2</span></td><td><b>Fail-closed fix.</b> Harvest status now returns verified / no-sprays / unverified (with a count) instead of silently dropping unreadable sprays. Plus 4 tests (incl. the exact bug as a regression test), a new <code>warningContainer</code> color token, and the amber "not yet verified" banner.</td></tr>
+        <tr><td><span class="tag">e5696d3</span></td><td><b>Offline retry banner.</b> A neutral "Can't check harvest safety — tap to retry" state when the data can't load, in English, Hindi, and Marathi.</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:14px"><a class="cta" href="https://github.com/ashish921998/vinesight-rn/pull/177">Open PR #177 on GitHub →</a></p>
+
+    <h2>The four farm-screen states now</h2>
+    <div class="row">
+      <div class="state-card"><span class="pill green">Verified</span><p>"Safe to harvest from 15 Mar" — only when every spray checks out.</p></div>
+      <div class="state-card"><span class="pill amber">Not yet verified</span><p>Calm amber, the common case. "N sprays not yet mapped." No false safe date.</p></div>
+      <div class="state-card"><span class="pill red">PHI conflict</span><p>The existing red "don't harvest yet" warning — kept, not broken.</p></div>
+      <div class="state-card"><span class="pill slate">Can't check</span><p>Offline / load failed. "Tap to retry." Never reads as "all clear."</p></div>
+    </div>
+
+    <h2>What we deliberately did NOT build yet</h2>
+    <p class="lead">The plan's heavier half was scoped out — it needs real data prep and is a separate workstream.</p>
+    <ul class="dot-list">
+      <li>The versioned label-claim database schema (Unit 1)</li>
+      <li>Importing the ICAR-NRCG Annexure data + mapping the 1,899 old sprays (the real, high-effort work)</li>
+      <li>The shared compliance evaluator and a single fast catalog query</li>
+      <li>Compliance fields in the audit export (the actual pilot deliverable)</li>
+      <li>A real feature-flag kill switch and the catalog "strictest PHI" fix</li>
+    </ul>
+
+    <h2>Honest caveats</h2>
+    <ul class="dot-list">
+      <li>The Hindi/Marathi wording on the new banners is my best effort — it wants a native-speaker review.</li>
+      <li>A true offline signal needs a native library (and an app-store build); we used the dependency-free version for now and deferred the real one.</li>
+      <li>An old <code>SafeHarvestCard</code> component is tested but unused; the farm screen uses inline banners. Cleaning that up is deferred.</li>
+    </ul>
+
+    <h2>Where everything lives</h2>
+    <ul class="links">
+      <li>Pull request: <a href="https://github.com/ashish921998/vinesight-rn/pull/177">github.com/ashish921998/vinesight-rn/pull/177</a></li>
+      <li>The full plan (with all 15 decisions + review report): <a href="2026-06-24-001-feat-grape-spray-compliance-plan.md">2026-06-24-001-feat-grape-spray-compliance-plan.md</a></li>
+      <li>The plan as a web page: <a href="grape-spray-compliance-plan.html">grape-spray-compliance-plan.html</a></li>
+      <li>Branch: <code>posthog-code/grape-spray-failclosed</code></li>
+    </ul>
+
+    <footer>
+      Session of 24 June 2026 · reviewed with /plan-eng-review + /plan-design-review · implemented T1 (fail-closed) + OV-4 (offline) · shipped to PR #177. This recap is a plain-language summary, not the source of truth — the plan doc and the PR are.
+    </footer>
+  </div>
+</body>
+</html>
