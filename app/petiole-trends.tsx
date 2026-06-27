@@ -215,7 +215,7 @@ export default function PetioleTrendsScreen() {
           <View
             pointerEvents="none"
             style={{
-              ...StyleSheet.absoluteFillObject,
+              ...StyleSheet.absoluteFill,
               alignItems: 'center',
               justifyContent: 'center',
               paddingHorizontal: 64,
