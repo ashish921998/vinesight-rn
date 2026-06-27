@@ -529,6 +529,9 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
             campaign: data.campaign ?? null,
             day: data.day ?? null,
           });
+          // Stale/invalid route: fall back to home instead of consuming the tap
+          // (on cold start the response is cleared right after this runs).
+          currentRouter.push('/(tabs)');
           return;
         }
         currentRouter.push(route);
