@@ -154,6 +154,71 @@ describe('saveEntryLogSession', () => {
     }
   });
 
+  it('stamps the created irrigation record id onto a co-logged fertigation record', async () => {
+    const adapters = createAdapters();
+    adapters.createIrrigation.mockResolvedValue({ id: 909 });
+    adapters.createFertigation.mockResolvedValue({ id: 777 });
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'irrigation-draft',
+          type: 'irrigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { duration: 2 },
+          displayDescription: '2 hours',
+        },
+        {
+          id: 'fertigation-draft',
+          type: 'fertigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { fertilizers: [{ name: 'Urea', quantity: 5, unit: 'kg' }] },
+          displayDescription: '1 fertilizer',
+          linkIrrigationFromPendingLogId: 'irrigation-draft',
+        },
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('saved');
+    expect(adapters.createFertigation).toHaveBeenCalledWith(
+      expect.objectContaining({ irrigation_record_id: 909 }),
+    );
+  });
+
+  it('saves a fertigation record with a null link when no irrigation is attached', async () => {
+    const adapters = createAdapters();
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'fertigation-draft',
+          type: 'fertigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { fertilizers: [{ name: 'Urea', quantity: 5, unit: 'kg' }] },
+          displayDescription: '1 fertilizer',
+        },
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('saved');
+    expect(adapters.createFertigation).toHaveBeenCalledWith(
+      expect.objectContaining({ irrigation_record_id: null }),
+    );
+  });
+
   it('restores an existing daily note when a later draft fails', async () => {
     const adapters = createAdapters();
     adapters.getDailyNote.mockResolvedValue({

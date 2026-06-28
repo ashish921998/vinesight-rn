@@ -445,6 +445,10 @@ export function EntryForm({
   const keyboardHeightRef = useRef(0);
 
   const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
+  // Fertilizers are mostly applied through irrigation, so the irrigation entry can optionally
+  // carry a fertigation log. When on, the fertigation section (reusing `fertigationData`) is
+  // shown inside the irrigation flow and saved as a linked record.
+  const [irrigationIncludesFertilizers, setIrrigationIncludesFertilizers] = useState(false);
   const [sprayData, setSprayData] = useState<SprayFormData>(() => createEmptySprayFormData());
   const [harvestData, setHarvestData] = useState<HarvestFormData>(() =>
     createEmptyHarvestFormData(),
@@ -454,6 +458,12 @@ export function EntryForm({
   );
   const [fertigationData, setFertigationData] = useState<FertigationFormData>(() =>
     createEmptyFertigationFormData(),
+  );
+  // The irrigation flow's inline fertilizer section keeps its own draft, separate from the
+  // standalone Fertigation tab's `fertigationData`, so toggling fertilizers on an irrigation
+  // entry never reads or clears an in-progress standalone fertigation draft (and vice versa).
+  const [irrigationFertigationData, setIrrigationFertigationData] = useState<FertigationFormData>(
+    () => createEmptyFertigationFormData(),
   );
   const [noteData, setNoteData] = useState<NoteFormData>(() => createEmptyNoteFormData());
   const selectedDateIso = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
@@ -841,6 +851,13 @@ export function EntryForm({
     noteData,
   ]);
 
+  // Bind the inline fertilizer form to the irrigation-only draft when logging irrigation;
+  // the standalone Fertigation tab keeps using `fertigationData`.
+  const activeFertigationData =
+    selectedLogType === 'irrigation' ? irrigationFertigationData : fertigationData;
+  const handleActiveFertigationChange =
+    selectedLogType === 'irrigation' ? setIrrigationFertigationData : setFertigationData;
+
   const hasFarmForCurrentLog = Boolean(
     activeFarm || (isAllFarmsSelected && selectedLogType === 'expense'),
   );
@@ -894,11 +911,15 @@ export function EntryForm({
     }
   }, []);
 
-  const enqueuePendingLog = useCallback(
-    (type: LogTypeId, data: PendingLog['data']) => {
+  const buildPendingLog = useCallback(
+    (
+      type: LogTypeId,
+      data: PendingLog['data'],
+      extra?: Partial<Pick<PendingLog, 'linkIrrigationFromPendingLogId'>>,
+    ): PendingLog => {
       const draftScope: PendingLog['scope'] =
         isAllFarmsSelected && type === 'expense' ? 'all_farms' : 'single_farm';
-      const newLog: PendingLog = {
+      return {
         id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         type,
         scope: draftScope,
@@ -906,16 +927,25 @@ export function EntryForm({
         data,
         displayDescription: getLogDescription(type, data),
         isSourceTaskLog: false,
+        ...extra,
       };
+    },
+    [activeFarm?.id, getLogDescription, isAllFarmsSelected],
+  );
 
+  const enqueuePendingLogs = useCallback(
+    (newLogs: PendingLog[]) => {
+      if (newLogs.length === 0) return;
       setPendingLogs((prev) => {
-        const shouldMarkSourceTaskLog = Boolean(
-          sourceTaskId &&
-          sourceTaskType &&
-          type === sourceTaskType &&
-          !prev.some((log) => log.isSourceTaskLog),
-        );
-        return [...prev, { ...newLog, isSourceTaskLog: shouldMarkSourceTaskLog }];
+        let hasSourceTaskLog = prev.some((log) => log.isSourceTaskLog);
+        const marked = newLogs.map((log) => {
+          const shouldMark = Boolean(
+            sourceTaskId && sourceTaskType && log.type === sourceTaskType && !hasSourceTaskLog,
+          );
+          if (shouldMark) hasSourceTaskLog = true;
+          return shouldMark ? { ...log, isSourceTaskLog: true } : log;
+        });
+        return [...prev, ...marked];
       });
       setSelectedLogType(null);
       setShowLogFormModal(false);
@@ -923,7 +953,14 @@ export function EntryForm({
         contentScrollViewRef.current?.scrollToEnd({ animated: true });
       }, 250);
     },
-    [activeFarm?.id, getLogDescription, isAllFarmsSelected, sourceTaskId, sourceTaskType],
+    [sourceTaskId, sourceTaskType],
+  );
+
+  const enqueuePendingLog = useCallback(
+    (type: LogTypeId, data: PendingLog['data']) => {
+      enqueuePendingLogs([buildPendingLog(type, data)]);
+    },
+    [buildPendingLog, enqueuePendingLogs],
   );
 
   const buildSprayPendingData = useCallback(
@@ -947,11 +984,38 @@ export function EntryForm({
     if (!activeFarm && !isAllFarmsSelected) return;
     if (isAllFarmsSelected && selectedLogType !== 'expense') return;
 
+    // Irrigation with attached fertilizers: enqueue both, linking the fertigation log to the
+    // irrigation log so the orchestrator can stamp the irrigation record id onto it.
+    if (
+      selectedLogType === 'irrigation' &&
+      irrigationIncludesFertilizers &&
+      validateFertigationForm(irrigationFertigationData)
+    ) {
+      const irrigationLog = buildPendingLog('irrigation', { ...irrigationData });
+      const fertigationLog = buildPendingLog(
+        'fertigation',
+        { ...irrigationFertigationData },
+        { linkIrrigationFromPendingLogId: irrigationLog.id },
+      );
+      enqueuePendingLogs([irrigationLog, fertigationLog]);
+      setIrrigationData({ duration: undefined });
+      setIrrigationFertigationData(createEmptyFertigationFormData());
+      setIrrigationIncludesFertilizers(false);
+      return;
+    }
+
     let data: PendingLog['data'];
     switch (selectedLogType) {
       case 'irrigation':
         data = { ...irrigationData };
         setIrrigationData({ duration: undefined });
+        // Reset the irrigation-only fertilizer draft + toggle. This is separate state from
+        // the standalone Fertigation tab's `fertigationData`, so a standalone draft is
+        // never affected by adding a plain irrigation entry.
+        if (irrigationIncludesFertilizers) {
+          setIrrigationFertigationData(createEmptyFertigationFormData());
+          setIrrigationIncludesFertilizers(false);
+        }
         break;
       case 'spray':
         if (
@@ -1066,11 +1130,15 @@ export function EntryForm({
     harvestData,
     expenseData,
     fertigationData,
+    irrigationFertigationData,
     noteData,
     isGrapeFarm,
     activeSeason?.target_harvest_date,
     buildSprayPendingData,
+    buildPendingLog,
     enqueuePendingLog,
+    enqueuePendingLogs,
+    irrigationIncludesFertilizers,
     t,
   ]);
 
@@ -1810,13 +1878,13 @@ export function EntryForm({
                 sprayData={sprayData}
                 harvestData={harvestData}
                 expenseData={expenseData}
-                fertigationData={fertigationData}
+                fertigationData={activeFertigationData}
                 noteData={noteData}
                 onIrrigationChange={setIrrigationData}
                 onSprayChange={setSprayData}
                 onHarvestChange={setHarvestData}
                 onExpenseChange={setExpenseData}
-                onFertigationChange={setFertigationData}
+                onFertigationChange={handleActiveFertigationChange}
                 onNoteChange={setNoteData}
                 onInputFocus={scrollToFocusedInput}
                 onAdd={addLogToSession}
@@ -1824,6 +1892,8 @@ export function EntryForm({
                 hasFarm={hasFarmForCurrentLog}
                 sprayQuickAddItems={sprayQuickAddItems}
                 fertigationQuickAddItems={fertigationQuickAddItems}
+                includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
+                onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
                 sprayCatalogMixes={catalogMixes}
                 showSaveButton={false}
               />
@@ -1924,13 +1994,13 @@ export function EntryForm({
           sprayData={sprayData}
           harvestData={harvestData}
           expenseData={expenseData}
-          fertigationData={fertigationData}
+          fertigationData={activeFertigationData}
           noteData={noteData}
           onIrrigationChange={setIrrigationData}
           onSprayChange={setSprayData}
           onHarvestChange={setHarvestData}
           onExpenseChange={setExpenseData}
-          onFertigationChange={setFertigationData}
+          onFertigationChange={handleActiveFertigationChange}
           onNoteChange={setNoteData}
           onInputFocus={scrollToFocusedInput}
           onAdd={addLogToSession}
@@ -1938,6 +2008,8 @@ export function EntryForm({
           hasFarm={hasFarmForCurrentLog}
           sprayQuickAddItems={sprayQuickAddItems}
           fertigationQuickAddItems={fertigationQuickAddItems}
+          includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
+          onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
           sprayCatalogMixes={catalogMixes}
         />
       </View>

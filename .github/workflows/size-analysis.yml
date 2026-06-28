@@ -126,6 +126,9 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_APPLE_TEAM_ID: ${{ secrets.EXPO_APPLE_TEAM_ID }}
+          # DIAGNOSTIC (temporary): keep the EAS local build temp dir so the next
+          # step can read the raw xcodebuild log fastlane pipes to /dev/null.
+          EAS_LOCAL_BUILD_SKIP_CLEANUP: '1'
         run: |
           mkdir -p build
           eas build \
@@ -134,6 +137,24 @@ jobs:
             --local \
             --non-interactive \
             --output ${{ matrix.artifact }}
+
+      # DIAGNOSTIC (temporary): on iOS failure, surface the real xcodebuild errors
+      # that EAS pipes to a per-build Vinesight-*.log. Revert after root-causing.
+      - name: Surface iOS xcodebuild errors
+        if: ${{ failure() && matrix.platform == 'ios' }}
+        run: |
+          echo "=== searching for EAS local xcodebuild logs ==="
+          logs="$(find /var/folders /private/var/folders "${TMPDIR:-/tmp}" "$HOME/Library/Logs" "$RUNNER_TEMP" -name 'Vinesight*.log' 2>/dev/null | sort -u)"
+          if [ -z "$logs" ]; then echo "!! no Vinesight*.log found (cleanup may have run)"; fi
+          for f in $logs; do
+            echo "############################ $f ############################"
+            echo "--- 'Could not resolve package dependencies' + 40 lines after (the reason) ---"
+            grep -n -A 40 "Could not resolve package dependencies" "$f" | head -60
+            echo "--- all 'error:' lines with context ---"
+            grep -n -B1 -A10 -E "error:|The following build commands failed|because|cannot be|unable to" "$f" | head -160
+          done
+          echo "=== xcresult bundles (for reference) ==="
+          find /var/folders /private/var/folders "${TMPDIR:-/tmp}" -name '*.xcresult' 2>/dev/null | head -3
 
       # Resolve the artifact defensively: prefer the --output path, but fall back
       # to locating the built binary if EAS placed it elsewhere. Fails loudly if

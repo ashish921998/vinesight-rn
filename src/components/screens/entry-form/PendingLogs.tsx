@@ -31,6 +31,8 @@ export interface PendingLog {
     | NoteFormData;
   displayDescription: string;
   isSourceTaskLog?: boolean;
+  /** For a fertigation log added with an irrigation log, the `id` of that irrigation log. */
+  linkIrrigationFromPendingLogId?: string;
 }
 
 export interface PendingLogFailure {

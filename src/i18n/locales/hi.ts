@@ -910,6 +910,10 @@ export const hi = {
     },
     areaLabel: 'क्षेत्र',
     estimatedWaterLabel: 'अनुमानित पानी',
+    addFertilizers: {
+      title: 'खाद जोड़ें',
+      subtitle: 'इस सिंचाई के साथ दी गई खाद लॉग करें',
+    },
   },
 
   expenseForm: {
