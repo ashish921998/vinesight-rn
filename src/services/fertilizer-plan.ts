@@ -45,7 +45,12 @@ export async function fetchFertilizerPlanForFarm(farmId: number): Promise<Fertil
 
   const items: FertilizerPlan['items'] = (row.items ?? [])
     .slice()
-    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    // Items without an explicit sort_order sort last (not first), so derived
+    // "Week N" numbering follows the consultant's ordering for populated rows.
+    .sort(
+      (a, b) =>
+        (a.sort_order ?? Number.MAX_SAFE_INTEGER) - (b.sort_order ?? Number.MAX_SAFE_INTEGER),
+    )
     .map((item) => ({
       name: item.fertilizer_name ?? '',
       quantity: item.quantity,

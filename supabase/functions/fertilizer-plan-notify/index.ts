@@ -78,13 +78,16 @@ type ExpoPushTicket = { status: string; details?: string };
 
 const EXPO_BATCH_LIMIT = 100;
 
-async function sendExpoPushBatch(messages: ExpoPushMessage[]): Promise<ExpoPushTicket[]> {
+async function sendExpoPushBatch(
+  messages: ExpoPushMessage[],
+): Promise<{ tickets: ExpoPushTicket[]; transportFailed: boolean }> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (EXPO_ACCESS_TOKEN) {
     headers.Authorization = `Bearer ${EXPO_ACCESS_TOKEN}`;
   }
 
   const allTickets: ExpoPushTicket[] = [];
+  let transportFailed = false;
   for (let i = 0; i < messages.length; i += EXPO_BATCH_LIMIT) {
     const chunk = messages.slice(i, i + EXPO_BATCH_LIMIT);
     try {
@@ -96,16 +99,18 @@ async function sendExpoPushBatch(messages: ExpoPushMessage[]): Promise<ExpoPushT
       if (!response.ok) {
         const text = await response.text();
         console.error('Expo push batch failed', { status: response.status, text, batchIndex: i });
+        transportFailed = true;
         break;
       }
       const data = (await response.json()) as { data?: ExpoPushTicket[] };
       allTickets.push(...(data.data ?? []));
     } catch (batchError) {
       console.error('Expo push batch error', { error: String(batchError), batchIndex: i });
+      transportFailed = true;
       break;
     }
   }
-  return allTickets;
+  return { tickets: allTickets, transportFailed };
 }
 
 Deno.serve(async (req) => {
@@ -160,9 +165,12 @@ Deno.serve(async (req) => {
 
     const ownerUserId = planRow.farm?.user_id ?? null;
     if (!ownerUserId) {
-      return new Response(JSON.stringify({ ok: true, sent: 0, reason: 'no farm owner' }), {
+      // A plan on an ownerless farm has no recipient — surface it (not ok) so the
+      // call is observable in logs/net._http_response instead of looking delivered.
+      console.warn('fertilizer_plan_no_owner', { planId, farmId: planRow.farm_id });
+      return new Response(JSON.stringify({ ok: false, sent: 0, reason: 'no farm owner' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        status: 422,
       });
     }
 
@@ -198,7 +206,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const tickets = await sendExpoPushBatch(messages);
+    const { tickets, transportFailed } = await sendExpoPushBatch(messages);
     const sent = tickets.filter((ticket) => ticket.status === 'ok').length;
     const failed = tickets.filter((ticket) => ticket.status === 'error');
     if (failed.length > 0) {
@@ -208,9 +216,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Only report success when every batch was delivered and no ticket errored,
+    // so pg_net/logs never treat dropped notifications as delivered.
+    const ok = !transportFailed && failed.length === 0;
     return new Response(
-      JSON.stringify({ ok: true, devices: rows.length, attempted: messages.length, sent }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
+      JSON.stringify({
+        ok,
+        devices: rows.length,
+        attempted: messages.length,
+        sent,
+        failed: failed.length,
+        transportFailed,
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: ok ? 200 : 502,
+      },
     );
   } catch (error) {
     console.error('fertilizer_plan_notify_failed', error);

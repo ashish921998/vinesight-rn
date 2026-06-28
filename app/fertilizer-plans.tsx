@@ -26,7 +26,13 @@ export default function FertilizerPlansScreen() {
   const { data: fertilizerPlan, isLoading } = useFertilizerPlan(farmId);
   const { data: farms } = useFarms();
 
-  const canAccessPlans = Boolean(profile?.consultant_organization_id);
+  // Farmers (the primary audience) view plans for farms they own; consultants
+  // view via their organization. Gating on consultant status alone wrongly
+  // blocked farmers from seeing plans pushed to them. Data access is still
+  // enforced server-side by RLS — this is only the screen's empty-vs-plan gate.
+  const canAccessPlans =
+    Boolean(profile?.consultant_organization_id) ||
+    Boolean(farmId && farms?.some((f) => f.id === farmId));
 
   // Get current farm name for the selector pill
   const currentFarmName = useMemo(() => {
