@@ -14,10 +14,10 @@ export default function ProfessionalDirectory() {
   const router = useRouter();
   const m3 = useM3();
   const { t } = useTranslation();
-  // This directory is the root of the consultant experience. Block the hardware
-  // back button here (and the iOS swipe gesture via gestureEnabled:false below)
-  // so a stray back press can never escape into the farmer app — it behaves
-  // like a home screen: "press back again to exit".
+  // This directory is the root of the consultant experience. Block the Android
+  // hardware back button here (useHomeBackExit) and the iOS root edge-swipe
+  // (gesture guard on the root Stack in app/_layout.tsx) so a stray back can
+  // never escape into the farmer app.
   useHomeBackExit();
   const signOut = useAuthStore((state) => state.signOut);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -59,8 +59,6 @@ export default function ProfessionalDirectory() {
         options={{
           title: data?.organization_name ?? t('professional.title'),
           headerBackVisible: false,
-          // Root of the professional Stack: no swipe-back escape on iOS.
-          gestureEnabled: false,
           headerRight: () => (
             <Pressable
               accessibilityRole="button"

@@ -716,6 +716,15 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                 />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
+                {/*
+                  iOS: disable the root edge-swipe for the professional module so
+                  /professional can't be popped back into the farmer app. The
+                  escape happens at THIS (root) Stack — the directory's nested
+                  gestureEnabled is a no-op here because /professional is a single
+                  screen in the root Stack (the professional/ directory's own
+                  _layout.tsx renders the nested navigator).
+                */}
+                <Stack.Screen name="professional" options={{ gestureEnabled: false }} />
                 <Stack.Screen
                   name="add-activity"
                   options={{ presentation: 'fullScreenModal', headerShown: false }}
