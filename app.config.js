@@ -1,3 +1,18 @@
+const fs = require('fs');
+const path = require('path');
+
+// Android FCM config (google-services.json). EAS cloud builds inject it via the
+// GOOGLE_SERVICES_JSON file env var (value = absolute path); local dev can drop a
+// ./google-services.json. When neither exists — e.g. the Size Analysis workflow,
+// which runs `eas build --local` on a runner without the secret — leave it
+// undefined so prebuild doesn't crash copying a missing file (that size-only
+// build needs no FCM).
+const googleServicesFile =
+  process.env.GOOGLE_SERVICES_JSON ||
+  (fs.existsSync(path.join(__dirname, 'google-services.json'))
+    ? path.join(__dirname, 'google-services.json')
+    : undefined);
+
 module.exports = {
   expo: {
     name: 'Vinesight',
@@ -61,9 +76,9 @@ module.exports = {
       // Required for FCM so `FirebaseApp.initializeApp` runs at build time;
       // without it `getExpoPushTokenAsync` fails on Android with
       // E_REGISTRATION_FAILED ("Default FirebaseApp is not initialized").
-      // Supplied as an EAS file env var (GOOGLE_SERVICES_JSON); falls back to
-      // a local ./google-services.json for local/prebuild use.
-      googleServicesFile: process.env.GOOGLE_SERVICES_JSON || './google-services.json',
+      // Resolved above from GOOGLE_SERVICES_JSON (EAS) or a local file; left
+      // undefined when absent so CI size builds don't fail prebuild.
+      googleServicesFile,
       permissions: ['android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS'],
       config: {
         googleMaps: {
