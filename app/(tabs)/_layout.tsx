@@ -13,6 +13,7 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useM3, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
+const ANDROID_NAV_BAR_FALLBACK_INSET = 32;
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -91,6 +92,7 @@ export default function TabLayout() {
   }
 
   if (isAndroid) {
+    const bottomSystemInset = Math.max(insets.bottom, ANDROID_NAV_BAR_FALLBACK_INSET);
     const renderAndroidTabIcon = (name: string, focused: boolean) => {
       const scaleMap: Record<string, number> = {
         house: 1.1,
@@ -123,8 +125,8 @@ export default function TabLayout() {
               borderTopColor: m3.colorScheme.outline,
               borderTopWidth: 1,
               paddingTop: 8,
-              paddingBottom: Math.max(insets.bottom + 8, 16),
-              height: Math.max(insets.bottom + 56, 72),
+              paddingBottom: bottomSystemInset + 8,
+              height: 64 + bottomSystemInset,
             },
             tabBarLabelStyle: {
               fontSize: fontSize.xs,

@@ -1091,8 +1091,13 @@ export default function FarmDetailScreen() {
         refreshedSeasons.data?.find((season) => season.end_date === null) ?? null;
       if (refreshedActiveSeason) {
         router.push({
-          pathname: '/log-entry/quick',
-          params: { farmId: farm.id.toString() },
+          pathname: '/add-entry',
+          params: {
+            farmId: farm.id.toString(),
+            initialTab: 'log',
+            tabs: 'log',
+            lockFarmSelection: 'true',
+          },
         });
         return;
       }
@@ -1113,8 +1118,13 @@ export default function FarmDetailScreen() {
       return;
     }
     router.push({
-      pathname: '/log-entry/quick',
-      params: { farmId: farm.id.toString() },
+      pathname: '/add-entry',
+      params: {
+        farmId: farm.id.toString(),
+        initialTab: 'log',
+        tabs: 'log',
+        lockFarmSelection: 'true',
+      },
     });
   };
 

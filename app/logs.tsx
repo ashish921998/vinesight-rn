@@ -481,9 +481,12 @@ export default function LogsScreen() {
   const handleAddActivity = useCallback(() => {
     if (selectedFarmId === undefined) return;
     router.push({
-      pathname: '/log-entry/add',
+      pathname: '/add-entry',
       params: {
         farmId: selectedFarmId.toString(),
+        initialTab: 'log',
+        tabs: 'log',
+        lockFarmSelection: 'true',
       },
     });
   }, [router, selectedFarmId]);
