@@ -28,6 +28,14 @@
   Saving a daily note, re-editing, saving again, then removing the row should restore the original pre-session text (or delete via the farm_id+date fallback when none existed). The underlying delete fallback is covered by `use-delete-daily-note.test.tsx`, but the screen-level replace/restore flow is untested.
   **Priority:** P2
 
+## Spray Compliance
+
+- **Design: One-time explanation for the harvest-status flip**
+  When the fail-closed harvest fix ships, ~97% of farms flip from "Safe to harvest <date>" to "not yet verified." The calm amber state + self-explaining copy cover the core, but a one-time inline note / dismissible tip the first time the new unverified state appears ("We now flag sprays we can't verify — here's why") would prevent the "did the app break?" reaction.
+  **Why:** smooths a mass visible behavior change across nearly the whole user base.
+  **Depends on:** the fail-closed fix shipping (eng-review T1) + the new card states (design DT1). Needs a persisted "seen" flag.
+  **Priority:** P3
+
 ## Completed
 
 - Farm display order implemented and migration landed — v1.2.0 (2026-05-28)

@@ -14,8 +14,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { useRouter, useFocusEffect, useIsFocused } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useFarms, useDeleteFarm, useFabBottomPosition, useReorderFarms } from '@/hooks';
@@ -796,7 +795,7 @@ export default function FarmsScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
@@ -940,7 +939,7 @@ export default function FarmsScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)

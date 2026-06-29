@@ -99,7 +99,7 @@ export default function TankMixCalculatorScreen() {
                   <View
                     pointerEvents="none"
                     style={[
-                      StyleSheet.absoluteFillObject,
+                      StyleSheet.absoluteFill,
                       {
                         borderRadius: radius.xl,
                         backgroundColor: pressed

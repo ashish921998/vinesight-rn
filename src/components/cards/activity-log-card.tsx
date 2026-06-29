@@ -211,7 +211,7 @@ export function ActivityLogCard({
             <View
               pointerEvents="none"
               style={[
-                StyleSheet.absoluteFillObject,
+                StyleSheet.absoluteFill,
                 {
                   backgroundColor: pressed
                     ? colorWithOpacity(m3.surface.s900, 0.12)

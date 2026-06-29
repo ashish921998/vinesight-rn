@@ -271,6 +271,18 @@ export const mr = {
       ctaOpenChecker: 'Safe-to-spray तपासा',
       saveTarget: 'लक्ष्य दिनांक जतन करा',
     },
+    harvestUnverified: {
+      title: 'कापणी सुरक्षा अद्याप सत्यापित नाही',
+      subtitle_one: '{{count}} फवारणी अद्याप लेबल डेटाशी जोडलेली नाही',
+      subtitle_other: '{{count}} फवारण्या अद्याप लेबल डेटाशी जोडलेल्या नाहीत',
+      a11y_one: 'कापणी सुरक्षा अद्याप सत्यापित नाही. {{count}} फवारणी जोडलेली नाही.',
+      a11y_other: 'कापणी सुरक्षा अद्याप सत्यापित नाही. {{count}} फवारण्या जोडलेल्या नाहीत.',
+    },
+    harvestCheckUnavailable: {
+      title: 'सध्या कापणी सुरक्षा तपासता आली नाही',
+      subtitle: 'पुन्हा प्रयत्नासाठी टॅप करा',
+      a11y: 'सध्या कापणी सुरक्षा तपासता आली नाही. पुन्हा प्रयत्नासाठी डबल टॅप करा.',
+    },
     riskBlock: {
       urgentTasks: '{{count}} तातडीचे कार्य',
       urgentTasks_one: '{{count}} तातडीचे कार्य',
@@ -842,6 +854,7 @@ export const mr = {
       namePlaceholder: 'रसायनाचे नाव',
       qtyPlaceholder: 'प्रमाण',
       selectUnit: 'युनिट निवडा',
+      quickUnitLabel: 'रसायन प्रमाण युनिट म्हणून {{unit}} वापरा',
       totalQty: 'एकूण प्रमाण',
       perAcre: 'प्रति एकर',
     },
@@ -901,6 +914,10 @@ export const mr = {
     },
     areaLabel: 'क्षेत्र',
     estimatedWaterLabel: 'अंदाजे पाणी',
+    addFertilizers: {
+      title: 'खते जोडा',
+      subtitle: 'या $t(glossary.irrigation) सोबत दिलेली खते नोंदवा',
+    },
   },
 
   expenseForm: {

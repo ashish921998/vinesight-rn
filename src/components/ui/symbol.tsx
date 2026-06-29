@@ -7,7 +7,7 @@ import { useM3 } from '@/styles/use-theme';
 import { AppIcon } from './app-icon';
 
 interface SymbolProps {
-  name: SymbolViewProps['name'] | string;
+  name: string;
   size?: number;
   color?: string;
   weight?: SymbolWeight;

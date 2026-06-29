@@ -269,6 +269,18 @@ export const hi = {
       ctaOpenChecker: 'Safe-to-spray चेकर खोलें',
       saveTarget: 'लक्ष्य तिथि सहेजें',
     },
+    harvestUnverified: {
+      title: 'कटाई सुरक्षा अभी सत्यापित नहीं',
+      subtitle_one: '{{count}} स्प्रे अभी तक लेबल डेटा से मैप नहीं हुआ',
+      subtitle_other: '{{count}} स्प्रे अभी तक लेबल डेटा से मैप नहीं हुए',
+      a11y_one: 'कटाई सुरक्षा अभी सत्यापित नहीं। {{count}} स्प्रे मैप नहीं हुआ।',
+      a11y_other: 'कटाई सुरक्षा अभी सत्यापित नहीं। {{count}} स्प्रे मैप नहीं हुए।',
+    },
+    harvestCheckUnavailable: {
+      title: 'अभी कटाई सुरक्षा जांच नहीं हो सकी',
+      subtitle: 'पुनः प्रयास के लिए टैप करें',
+      a11y: 'अभी कटाई सुरक्षा जांच नहीं हो सकी। पुनः प्रयास के लिए डबल टैप करें।',
+    },
     riskBlock: {
       urgentTasks: '{{count}} अत्यावश्यक कार्य',
     },
@@ -838,6 +850,7 @@ export const hi = {
       namePlaceholder: 'रसायन का नाम',
       qtyPlaceholder: 'मात्रा',
       selectUnit: 'इकाई चुनें',
+      quickUnitLabel: 'रसायन मात्रा इकाई के रूप में {{unit}} उपयोग करें',
       totalQty: 'कुल मात्रा',
       perAcre: 'प्रति एकड़',
     },
@@ -897,6 +910,10 @@ export const hi = {
     },
     areaLabel: 'क्षेत्र',
     estimatedWaterLabel: 'अनुमानित पानी',
+    addFertilizers: {
+      title: 'खाद जोड़ें',
+      subtitle: 'इस सिंचाई के साथ दी गई खाद लॉग करें',
+    },
   },
 
   expenseForm: {

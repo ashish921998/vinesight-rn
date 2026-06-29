@@ -559,7 +559,7 @@ export default function LogsScreen() {
                   <View
                     pointerEvents="none"
                     style={[
-                      StyleSheet.absoluteFillObject,
+                      StyleSheet.absoluteFill,
                       {
                         borderRadius: radius.xl,
                         backgroundColor: pressed

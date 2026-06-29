@@ -30,6 +30,12 @@ export interface EntryPendingLogSubmission {
     | ExpenseFormData
     | FertigationFormData
     | NoteFormData;
+  /**
+   * For a fertigation log that was added together with an irrigation log, the `id` of that
+   * irrigation pending log. The session orchestrator resolves it to the created irrigation
+   * record id and stamps it onto this fertigation record so the two stay linked.
+   */
+  linkIrrigationFromPendingLogId?: string;
 }
 
 export interface EntryLogFarmContext {
@@ -68,8 +74,10 @@ export async function submitEntryPendingLog(params: {
   dateStr: string;
   farm: EntryLogFarmContext;
   submitters: EntryLogSubmitters;
+  /** Resolved irrigation record id to link a co-logged fertigation record to. */
+  linkedIrrigationRecordId?: number | null;
 }): Promise<EntryLogSubmissionResult> {
-  const { log, dateStr, farm, submitters } = params;
+  const { log, dateStr, farm, submitters, linkedIrrigationRecordId } = params;
   const farmId = farm.id;
   const areaUnit = resolveAreaUnitPreference(farm.areaUnit ?? 'acres');
   const farmArea =
@@ -269,6 +277,7 @@ export async function submitEntryPendingLog(params: {
         date: dateStr,
         fertilizers,
         water_volume: data.waterVolume,
+        irrigation_record_id: linkedIrrigationRecordId ?? null,
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
         nutrient_calc_coverage: nutrientTotals.coveragePercent,

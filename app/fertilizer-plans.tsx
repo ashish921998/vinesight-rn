@@ -1,12 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  Text,
-  ActivityIndicator,
-  Pressable,
-} from 'react-native';
+import { ScrollView, StyleSheet, View, Text, ActivityIndicator, Pressable } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -28,12 +21,21 @@ export default function FertilizerPlansScreen() {
     const parsed = Number.parseInt(params.farmId, 10);
     return Number.isFinite(parsed) ? parsed : undefined;
   }, [params.farmId]);
-  const { data: profile } = useProfile({ enabled: true });
+  const { data: profile, isLoading: profileLoading } = useProfile({ enabled: true });
   const { data: farm } = useFarm(farmId);
   const { data: fertilizerPlan, isLoading } = useFertilizerPlan(farmId);
-  const { data: farms } = useFarms();
+  const { data: farms, isLoading: farmsLoading } = useFarms();
 
-  const canAccessPlans = Boolean(profile?.consultant_organization_id);
+  // Farmers (the primary audience) view plans for farms they own; consultants
+  // view via their organization. Gating on consultant status alone wrongly
+  // blocked farmers from seeing plans pushed to them. Data access is still
+  // enforced server-side by RLS — this is only the screen's empty-vs-plan gate.
+  const canAccessPlans =
+    Boolean(profile?.consultant_organization_id) ||
+    Boolean(farmId && farms?.some((f) => f.id === farmId));
+  // Access depends on profile + farms loading; until both resolve, show the
+  // loading state instead of briefly flashing the "no access" screen to a farmer.
+  const accessResolved = !profileLoading && !farmsLoading;
 
   // Get current farm name for the selector pill
   const currentFarmName = useMemo(() => {
@@ -87,7 +89,7 @@ export default function FertilizerPlansScreen() {
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     {
                       borderRadius: radius.xl,
                       backgroundColor: pressed
@@ -156,7 +158,7 @@ export default function FertilizerPlansScreen() {
           </View>
         </View>
 
-        {!canAccessPlans ? (
+        {accessResolved && !canAccessPlans ? (
           <View
             style={{
               borderRadius: m3.shape.cornerLarge,
@@ -185,7 +187,7 @@ export default function FertilizerPlansScreen() {
               {t('farmDetails.fertilizerPlan.emptySubtitle')}
             </Text>
           </View>
-        ) : isLoading ? (
+        ) : !accessResolved || isLoading ? (
           <View
             style={{
               padding: spacing[4],
@@ -281,6 +283,18 @@ export default function FertilizerPlansScreen() {
                   </Text>
                 ) : null}
               </View>
+              {fertilizerPlan.title ? (
+                <Text
+                  style={{
+                    color: m3.colorScheme.onSurface,
+                    ...m3.typography.titleMedium,
+                    fontWeight: fontWeight.semibold,
+                    marginTop: spacing[2],
+                  }}
+                >
+                  {fertilizerPlan.title}
+                </Text>
+              ) : null}
               {fertilizerPlan.notes ? (
                 <Text
                   style={{

@@ -1,5 +1,6 @@
 import {
   buildSafeToSprayStatus,
+  computeEarliestSafeHarvest,
   computePhiForMix,
   computeGoverningPhiComponent,
 } from '@/services/phi-service';
@@ -145,5 +146,56 @@ describe('phi-service', () => {
     expect(statuses[0]?.status).toBe('yellow');
     expect(statuses[0]?.governingPhiDays).toBe(0);
     expect(statuses[0]?.latestSafeSprayDate).toBe('2026-03-01');
+  });
+});
+
+describe('computeEarliestSafeHarvest (fail-closed aggregate)', () => {
+  it('returns no_sprays for an empty season', () => {
+    const result = computeEarliestSafeHarvest([]);
+    expect(result.status).toBe('no_sprays');
+    expect(result.earliestDate).toBeNull();
+    expect(result.unverifiedCount).toBe(0);
+    expect(result.totalCount).toBe(0);
+  });
+
+  it('is verified when every spray has a safe-harvest date, picking the most constraining', () => {
+    const result = computeEarliestSafeHarvest([
+      { safe_harvest_date: '2026-03-10', chemical: 'Spray A' },
+      {
+        safe_harvest_date: '2026-03-15',
+        chemical: 'Spray B',
+        phi_blocking_component: 'Mancozeb',
+        date: '2026-03-03',
+      },
+    ]);
+    expect(result.status).toBe('verified');
+    expect(result.earliestDate).toBe('2026-03-15');
+    expect(result.reason).toBe('Mancozeb (Spray B, 2026-03-03)');
+    expect(result.unverifiedCount).toBe(0);
+  });
+
+  // REGRESSION (the fail-open bug): pre-2026-06 this dropped the null-dated
+  // spray and returned a confident "safe" date. It must now fail closed.
+  it('REGRESSION: one verified + one unmapped spray is unverified, not a false safe date', () => {
+    const result = computeEarliestSafeHarvest([
+      { safe_harvest_date: '2026-03-15', chemical: 'Verified spray' },
+      { safe_harvest_date: null, chemical: 'Legacy free-text spray' },
+    ]);
+    expect(result.status).toBe('unverified');
+    expect(result.earliestDate).toBeNull();
+    expect(result.reason).toBeNull();
+    expect(result.unverifiedCount).toBe(1);
+    expect(result.totalCount).toBe(2);
+  });
+
+  it('is unverified when no spray has a valid safe-harvest date', () => {
+    const result = computeEarliestSafeHarvest([
+      { safe_harvest_date: null },
+      { safe_harvest_date: undefined },
+      { safe_harvest_date: 'not-a-date' },
+    ]);
+    expect(result.status).toBe('unverified');
+    expect(result.unverifiedCount).toBe(3);
+    expect(result.earliestDate).toBeNull();
   });
 });

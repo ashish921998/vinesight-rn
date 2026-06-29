@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Text, Pressable, RefreshControl, TextInput, Alert, Animated } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { useRouter, useFocusEffect, useIsFocused } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';

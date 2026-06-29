@@ -200,6 +200,8 @@ export interface FertigationRecord {
   date: string;
   fertilizers?: FertilizerItem[] | null;
   water_volume?: number | null;
+  /** Set when these fertilizers were logged together with an irrigation record. */
+  irrigation_record_id?: number | null;
   nutrient_totals_elemental?: Record<string, number> | null;
   nutrient_totals_elemental_per_acre?: Record<string, number> | null;
   nutrient_calc_coverage?: number | null;
