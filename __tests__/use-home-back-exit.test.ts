@@ -5,14 +5,21 @@ import { renderHook } from '@testing-library/react-native';
 import { BackHandler, ToastAndroid } from 'react-native';
 
 // Capture the focus-effect cleanups so we can assert the BackHandler
-// subscription is detached on blur (deeper screens must keep normal back).
+// subscription is detached on blur (deeper screens must keep normal back),
+// and let per-test code control what the local navigator's canGoBack() reports
+// (false = directory is the root; true = a modal such as log/add is on top).
 jest.mock('expo-router', () => {
   const cleanups: Array<(() => void) | undefined> = [];
+  let canGoBackImpl = () => false;
   return {
     useFocusEffect: (cb: () => (() => void) | undefined) => {
       cleanups.push(cb());
     },
+    useNavigation: () => ({ canGoBack: () => canGoBackImpl() }),
     __testFocusCleanups: () => cleanups,
+    __setCanGoBack: (fn: () => boolean) => {
+      canGoBackImpl = fn;
+    },
   };
 });
 
@@ -23,11 +30,12 @@ jest.mock('react-i18next', () => ({
 // Imported after the mocks so the hook resolves the stubbed dependencies.
 import { useHomeBackExit } from '@/hooks/use-home-back-exit.android';
 
-const focusCleanups = (
-  jest.requireMock('expo-router') as {
-    __testFocusCleanups: () => Array<(() => void) | undefined>;
-  }
-).__testFocusCleanups();
+const expoRouterMock = jest.requireMock('expo-router') as {
+  __testFocusCleanups: () => Array<(() => void) | undefined>;
+  __setCanGoBack: (fn: () => boolean) => void;
+};
+const focusCleanups = expoRouterMock.__testFocusCleanups();
+const setCanGoBack = expoRouterMock.__setCanGoBack;
 
 /**
  * Regression tests for the professional-module back-button fix.
@@ -48,6 +56,7 @@ describe('useHomeBackExit', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     focusCleanups.splice(0);
+    setCanGoBack(() => false); // directory is the professional-root by default
 
     // jest-expo ships an empty ToastAndroid — populate just the surface the hook uses.
     (ToastAndroid as unknown as { show: typeof toastShow }).show = toastShow;
@@ -118,5 +127,21 @@ describe('useHomeBackExit', () => {
     // Simulate the directory losing focus (a deeper professional screen pushed on top).
     focusCleanups[0]?.();
     expect(removeSubscription).toHaveBeenCalledTimes(1);
+  });
+
+  it('defers to the navigator when a full-screen modal is open on top', () => {
+    // A presented modal (e.g. the full-screen add-log composer) can leave the
+    // directory focused underneath, so this listener still fires. The navigator
+    // has something to dismiss, so we must NOT hijack the press into the toast.
+    setCanGoBack(() => true);
+    renderHook(() => useHomeBackExit());
+
+    const result = backHandler!();
+
+    // Returning false lets React Navigation dismiss the modal as usual — no
+    // exit toast, no app exit.
+    expect(result).toBe(false);
+    expect(toastShow).not.toHaveBeenCalled();
+    expect(backExitApp).not.toHaveBeenCalled();
   });
 });

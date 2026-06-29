@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { BackHandler, ToastAndroid } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useNavigation } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -20,16 +20,32 @@ import { useTranslation } from 'react-i18next';
  * normal back/pop still works there. That scoping is why this is bound with
  * `useFocusEffect` rather than a plain `useEffect`.
  *
+ * A presented modal (e.g. `log/add`) can leave this screen focused underneath,
+ * so the listener may still fire while a modal is open. Guard against that by
+ * delegating to the local navigator whenever it has something on top to dismiss:
+ * `useNavigation()` resolves to this screen's own Stack (the professional Stack),
+ * so `canGoBack()` is true only when a modal/deeper screen covers the directory
+ * — never because of leftover root-stack history, so the farmer-app escape stays
+ * closed. Returning false lets React Navigation dismiss the modal as usual.
+ *
  * @param intervalMs Window in which a second back press exits the app.
  */
 export function useHomeBackExit(intervalMs = 2000) {
   const { t } = useTranslation();
+  const navigation = useNavigation();
 
   useFocusEffect(
     useCallback(() => {
       let lastPressAt = 0;
 
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        // A modal/deeper screen is on top of this home (still focused underneath,
+        // e.g. the full-screen add-log composer): let the navigator dismiss it
+        // instead of hijacking the press into the exit toast.
+        if (navigation.canGoBack()) {
+          return false;
+        }
+
         const now = Date.now();
         if (now - lastPressAt < intervalMs) {
           BackHandler.exitApp();
@@ -40,10 +56,10 @@ export function useHomeBackExit(intervalMs = 2000) {
           t('common.pressBackAgainToExit', 'Press back again to exit'),
           ToastAndroid.SHORT,
         );
-        return true; // always swallow — never pop out of the professional home
+        return true; // at the professional root — never pop out into the farmer app
       });
 
       return () => subscription.remove();
-    }, [t, intervalMs]),
+    }, [t, navigation, intervalMs]),
   );
 }
