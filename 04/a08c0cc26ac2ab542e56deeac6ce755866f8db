@@ -1,0 +1,21 @@
+app/_layout.tsx
+  s_b6979107430cab::t_969e8483fde3be 719-727
+app/professional/index.tsx
+  s_b6979107430cab::t_8997688df29506 17-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "04a08c0cc26ac2ab542e56deeac6ce755866f8db",
+  "prompts": {},
+  "sessions": {
+    "s_b6979107430cab": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f12c3-47c7-7873-84f4-4da36b86dfc1",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
