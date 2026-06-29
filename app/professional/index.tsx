@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useHomeBackExit } from '@/hooks/use-home-back-exit';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { deriveProfessionalRole } from '@/utils/professional-role';
 import { useAuthStore } from '@/stores';
@@ -13,6 +14,11 @@ export default function ProfessionalDirectory() {
   const router = useRouter();
   const m3 = useM3();
   const { t } = useTranslation();
+  // This directory is the root of the consultant experience. Block the hardware
+  // back button here (and the iOS swipe gesture via gestureEnabled:false below)
+  // so a stray back press can never escape into the farmer app — it behaves
+  // like a home screen: "press back again to exit".
+  useHomeBackExit();
   const signOut = useAuthStore((state) => state.signOut);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [search, setSearch] = useState('');
@@ -53,6 +59,8 @@ export default function ProfessionalDirectory() {
         options={{
           title: data?.organization_name ?? t('professional.title'),
           headerBackVisible: false,
+          // Root of the professional Stack: no swipe-back escape on iOS.
+          gestureEnabled: false,
           headerRight: () => (
             <Pressable
               accessibilityRole="button"

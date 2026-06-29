@@ -13,6 +13,7 @@ export const en = {
     edit: 'Edit',
     back: 'Back',
     goBack: 'Go Back',
+    pressBackAgainToExit: 'Press back again to exit',
     next: 'Next',
     complete: 'Complete',
     skip: 'Skip',
