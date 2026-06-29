@@ -53,6 +53,7 @@ import { getExpenseIconName } from '@/utils/expense-icons';
 import { useM3 } from '@/styles/use-theme';
 import { useDomainColors } from '@/styles/use-domain-colors';
 import { getDaysAfterPruning } from '@/utils/date';
+import { createAddLogHref } from '@/utils/add-log-navigation';
 
 interface CombinedLog {
   id: string;
@@ -480,15 +481,7 @@ export default function LogsScreen() {
 
   const handleAddActivity = useCallback(() => {
     if (selectedFarmId === undefined) return;
-    router.push({
-      pathname: '/add-entry',
-      params: {
-        farmId: selectedFarmId.toString(),
-        initialTab: 'log',
-        tabs: 'log',
-        lockFarmSelection: 'true',
-      },
-    });
+    router.push(createAddLogHref({ farmId: selectedFarmId, lockFarmSelection: true }));
   }, [router, selectedFarmId]);
 
   const hasActiveFilters = selectedLogTypes.size > 0 || dateFrom || dateTo;
