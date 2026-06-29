@@ -13,7 +13,7 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useM3, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
-const ANDROID_NAV_BAR_FALLBACK_INSET = 32;
+import { getAndroidBottomSystemInset } from '@/utils/android-system-bars';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -92,7 +92,7 @@ export default function TabLayout() {
   }
 
   if (isAndroid) {
-    const bottomSystemInset = Math.max(insets.bottom, ANDROID_NAV_BAR_FALLBACK_INSET);
+    const bottomSystemInset = getAndroidBottomSystemInset(insets.bottom);
     const renderAndroidTabIcon = (name: string, focused: boolean) => {
       const scaleMap: Record<string, number> = {
         house: 1.1,
