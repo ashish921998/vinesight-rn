@@ -1,0 +1,21 @@
+__tests__/use-home-back-exit.test.ts
+  s_b6979107430cab::t_d96ccc3ccfbd66 8-10,13,18,20-22,33-38,59,131-146
+src/hooks/use-home-back-exit.android.ts
+  s_b6979107430cab::t_b42f13e5f0fc32 3,23-30,35,42-48,59,63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "d55f62ec030c7f5330f6b40b7647bab598713bd2",
+  "prompts": {},
+  "sessions": {
+    "s_b6979107430cab": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f12c3-47c7-7873-84f4-4da36b86dfc1",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
