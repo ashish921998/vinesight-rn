@@ -514,6 +514,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
         route?: string;
         campaign?: string;
         day?: number;
+        farmId?: number | string;
       };
       const currentRouter = routerRef.current;
       if (!currentRouter) return;
@@ -547,6 +548,13 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
         currentRouter.push('/warehouse');
       } else if (data?.type === 'petiole_test') {
         currentRouter.push('/(tabs)');
+      } else if (data?.type === 'fertilizer_plan') {
+        const rawFarmId = data.farmId;
+        const farmId =
+          typeof rawFarmId === 'number' ? rawFarmId : rawFarmId ? Number(rawFarmId) : Number.NaN;
+        currentRouter.push(
+          Number.isFinite(farmId) ? `/fertilizer-plans?farmId=${farmId}` : '/fertilizer-plans',
+        );
       } else if (data?.type === 'custom') {
         // Custom notifications have no navigation target
       } else {

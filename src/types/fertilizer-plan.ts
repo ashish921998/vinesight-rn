@@ -6,6 +6,7 @@ export interface FertilizerPlanItem {
 
 export interface FertilizerPlan {
   farm_id: number;
+  title?: string | null;
   consultant_name?: string | null;
   updated_at?: string | null;
   notes?: string | null;
