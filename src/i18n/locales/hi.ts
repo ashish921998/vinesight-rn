@@ -13,6 +13,7 @@ export const hi = {
     edit: 'संपादित करें',
     back: 'वापस',
     goBack: 'वापस जाएं',
+    pressBackAgainToExit: 'बाहर निकलने के लिए फिर से बैक दबाएँ',
     next: 'अगला',
     complete: 'पूर्ण',
     skip: 'छोड़ें',

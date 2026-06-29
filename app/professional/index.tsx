@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useHomeBackExit } from '@/hooks/use-home-back-exit';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { deriveProfessionalRole } from '@/utils/professional-role';
 import { useAuthStore } from '@/stores';
@@ -13,6 +14,11 @@ export default function ProfessionalDirectory() {
   const router = useRouter();
   const m3 = useM3();
   const { t } = useTranslation();
+  // This directory is the root of the consultant experience. Block the Android
+  // hardware back button here (useHomeBackExit) and the iOS root edge-swipe
+  // (gesture guard on the root Stack in app/_layout.tsx) so a stray back can
+  // never escape into the farmer app.
+  useHomeBackExit();
   const signOut = useAuthStore((state) => state.signOut);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [search, setSearch] = useState('');

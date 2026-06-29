@@ -13,6 +13,7 @@ export const mr = {
     edit: 'संपादित करा',
     back: 'मागे',
     goBack: 'मागे जा',
+    pressBackAgainToExit: 'बाहेर पडण्यासाठी पुन्हा बॅक दाबा',
     next: 'पुढे',
     complete: 'पूर्ण करा',
     skip: 'वगळा',
