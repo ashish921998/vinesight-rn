@@ -1,0 +1,31 @@
+__tests__/use-home-back-exit.test.ts
+  s_b6979107430cab::t_bdf159a59d6984 1-122
+app/professional/index.tsx
+  s_b6979107430cab::t_272e13cd4678f0 5,17-21,62-63
+src/hooks/use-home-back-exit.android.ts
+  s_b6979107430cab::t_f4ff4dda91981d 1-49
+src/hooks/use-home-back-exit.ts
+  s_b6979107430cab::t_8656cafa07d967 1-10
+src/i18n/locales/en.ts
+  s_b6979107430cab::t_8d1a9f0ca916c2 16
+src/i18n/locales/hi.ts
+  s_b6979107430cab::t_c9d7a574b80698 16
+src/i18n/locales/mr.ts
+  s_b6979107430cab::t_1aab9ed3dcc4cd 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "d0540acd4c6cf9b62bda95f9f2302c6799e3e803",
+  "prompts": {},
+  "sessions": {
+    "s_b6979107430cab": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f12c3-47c7-7873-84f4-4da36b86dfc1",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
