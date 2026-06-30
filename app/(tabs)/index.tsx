@@ -35,6 +35,7 @@ import { ALL_FARMS_ID } from '@/constants/farm-selection';
 import { guidedTourEmit } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { parseDbDateToLocalDate } from '@/utils/date';
+import { createAddLogHref } from '@/utils/add-log-navigation';
 
 // ============================================================
 // MARK: - Greeting Helper
@@ -118,15 +119,12 @@ export default function DashboardScreen() {
         },
       });
     } else {
-      router.push({
-        pathname: '/add-entry',
-        params: {
-          farmId: farmId === ALL_FARMS_ID ? 'all' : farmId.toString(),
-          initialLogType: selectedQuickAction ?? undefined,
-          initialTab: 'log',
-          tabs: 'log',
-        },
-      });
+      router.push(
+        createAddLogHref({
+          farmId: farmId === ALL_FARMS_ID ? 'all' : farmId,
+          initialLogType: selectedQuickAction,
+        }),
+      );
     }
     setSelectedQuickAction(null);
   };
@@ -237,14 +235,7 @@ export default function DashboardScreen() {
     }
 
     if (item.type === 'noRecentLogs') {
-      router.push({
-        pathname: '/add-entry',
-        params: {
-          farmId: String(item.farmId),
-          initialTab: 'log',
-          tabs: 'log',
-        },
-      });
+      router.push(createAddLogHref({ farmId: item.farmId }));
       return;
     }
 
@@ -967,13 +958,7 @@ export default function DashboardScreen() {
                     }
                     onPress={() => {
                       if (hasFarms) {
-                        router.push({
-                          pathname: '/add-entry',
-                          params: {
-                            initialTab: 'log',
-                            tabs: 'log',
-                          },
-                        });
+                        router.push(createAddLogHref());
                         return;
                       }
                       router.push('/(tabs)/explore');

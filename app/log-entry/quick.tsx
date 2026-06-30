@@ -1,7 +1,6 @@
-import React from 'react';
-import { useLocalSearchParams } from 'expo-router';
-import { ReceiptLogScreen } from '@/components/screens/receipt-log-screen';
-import { useSafeBack } from '@/hooks/use-safe-back';
+import { Redirect, useLocalSearchParams } from 'expo-router';
+
+import { createAddLogHref } from '@/utils/add-log-navigation';
 
 export const screenOptions = {
   presentation: 'modal',
@@ -9,9 +8,7 @@ export const screenOptions = {
 };
 
 export default function QuickLogRoute() {
-  const goBack = useSafeBack();
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const farmIdNum = farmId && !isNaN(Number(farmId)) ? parseInt(farmId, 10) : undefined;
-
-  return <ReceiptLogScreen farmId={farmIdNum} onClose={goBack} />;
+  return <Redirect href={createAddLogHref({ farmId: farmIdNum, lockFarmSelection: true })} />;
 }

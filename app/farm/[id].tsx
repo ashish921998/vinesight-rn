@@ -67,6 +67,7 @@ import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from 
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { telemetry } from '@/services/telemetry';
+import { createAddLogHref } from '@/utils/add-log-navigation';
 import {
   GUIDED_TOUR_TARGET_IDS,
   GuidedTourTarget,
@@ -1089,10 +1090,7 @@ export default function FarmDetailScreen() {
       const refreshedActiveSeason =
         refreshedSeasons.data?.find((season) => season.end_date === null) ?? null;
       if (refreshedActiveSeason) {
-        router.push({
-          pathname: '/log-entry/quick',
-          params: { farmId: farm.id.toString() },
-        });
+        router.push(createAddLogHref({ farmId: farm.id, lockFarmSelection: true }));
         return;
       }
 
@@ -1111,10 +1109,7 @@ export default function FarmDetailScreen() {
       );
       return;
     }
-    router.push({
-      pathname: '/log-entry/quick',
-      params: { farmId: farm.id.toString() },
-    });
+    router.push(createAddLogHref({ farmId: farm.id, lockFarmSelection: true }));
   };
 
   const handleAddTask = () => {
