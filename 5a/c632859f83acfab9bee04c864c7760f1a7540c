@@ -1,0 +1,37 @@
+src/i18n/locales/mr.ts
+  s_0e497c8b15596f::t_eb57d4a5baf9e0 173
+src/components/professional/soil-baseline-panel.tsx
+  s_0e497c8b15596f::t_1f3ac7bd159443 67
+  s_0e497c8b15596f::t_7d8295c14d0c83 135
+  s_0e497c8b15596f::t_2224ffa55fa31f 11-20,22-23,26-32,34-46,50-64,68-77,80-85,128-132,136-147,154-165,168-169
+  s_0e497c8b15596f::t_afdae145e779bf 65-66,78,175-177,179-190
+src/i18n/locales/hi.ts
+  s_0e497c8b15596f::t_5968c190e6f8a4 172
+app/professional/farm/[farmId]/lab-reports.tsx
+  s_0e497c8b15596f::t_849bc7af1d5eb7 4,6,18
+  s_0e497c8b15596f::t_d48de5eb29ff1c 333
+  s_0e497c8b15596f::t_5d083fd1699c84 336
+  s_0e497c8b15596f::t_bd29bade5fcdb7 89-100
+  s_0e497c8b15596f::t_15cf6ecba6e6cf 285,287-289,291,294-332
+  s_0e497c8b15596f::t_4fddb6b33c2b19 19-21
+  s_0e497c8b15596f::t_9c664635d44e5d 101-103
+  s_0e497c8b15596f::t_f9b54089b968d1 334-335
+src/i18n/locales/en.ts
+  s_0e497c8b15596f::t_81f8c98274cf5c 184
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "5ac632859f83acfab9bee04c864c7760f1a7540c",
+  "prompts": {},
+  "sessions": {
+    "s_0e497c8b15596f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0e15f1db0ffeSbyjl5C6LhXhqO",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
