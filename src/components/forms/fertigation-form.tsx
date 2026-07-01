@@ -40,7 +40,9 @@ function resolveFertilizerUnit(
   const normalized = unit?.trim();
   const lowered = normalized?.toLowerCase();
   if (lowered === 'kg/acre') return 'kg';
+  if (lowered === 'gram/acre' || lowered === 'g/acre') return 'gram';
   if (lowered === 'liter/acre' || lowered === 'litre/acre') return 'liter';
+  if (lowered === 'ml/acre') return 'ml';
   if (lowered === 'litre') return 'liter';
   if (normalized && isFertilizerUnit(normalized)) return normalized;
   return fallback;

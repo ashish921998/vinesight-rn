@@ -196,7 +196,10 @@ export default function ProfessionalFarm() {
         accessibilityRole="button"
         accessibilityLabel={t('professional.reports.labReports')}
         onPress={() =>
-          router.push({ pathname: '/professional/farm/[farmId]/lab-reports', params: { farmId } })
+          router.push({
+            pathname: '/professional/farm/[farmId]/lab-reports',
+            params: { farmId, userId },
+          })
         }
         style={({ pressed }) => ({
           flexDirection: 'row',
@@ -290,6 +293,27 @@ export default function ProfessionalFarm() {
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <Stack.Screen
         options={{
+          // Explicit back control: after a deep reload / replace the native
+          // stack has no history, so the default back button won't render.
+          // Fall back to the farmer screen in that case.
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('common.back')}
+              onPress={() =>
+                router.canGoBack()
+                  ? router.back()
+                  : router.replace({
+                      pathname: '/professional/farmer/[userId]',
+                      params: { userId },
+                    })
+              }
+              hitSlop={8}
+              style={{ paddingHorizontal: spacing[2], paddingVertical: spacing[1] }}
+            >
+              <UiSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+            </Pressable>
+          ),
           // Header carries identity (farm name + variety) so the body can lead
           // with the logs; the farmer's name is one tap back in the stack.
           headerTitle: () => (

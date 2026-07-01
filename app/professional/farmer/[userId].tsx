@@ -5,6 +5,7 @@ import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { formatNumber } from '@/i18n/format';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 
 export default function ProfessionalFarmer() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
@@ -35,7 +36,24 @@ export default function ProfessionalFarmer() {
 
   return (
     <View style={{ flex: 1, padding: spacing[4], backgroundColor: m3.colorScheme.background }}>
-      <Stack.Screen options={{ title: farmer.full_name }} />
+      <Stack.Screen
+        options={{
+          title: farmer.full_name,
+          // Explicit back control: after a deep reload / replace the native
+          // stack has no history, so fall back to the professional directory.
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('common.back')}
+              onPress={() => (router.canGoBack() ? router.back() : router.replace('/professional'))}
+              hitSlop={8}
+              style={{ paddingHorizontal: spacing[2], paddingVertical: spacing[1] }}
+            >
+              <UiSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
+            </Pressable>
+          ),
+        }}
+      />
       <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginBottom: spacing[5] }}>
         {farmer.phone ?? t('professional.farmerAccount')}
       </Text>
