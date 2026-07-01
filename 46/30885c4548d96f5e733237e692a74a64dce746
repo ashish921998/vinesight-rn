@@ -1,0 +1,26 @@
+src/i18n/locales/hi.ts
+  s_a97d4159a7ca50::t_ecbcd9cf5ef2c6 183-184
+app/professional/farm/[farmId]/lab-reports.tsx
+  s_a97d4159a7ca50::t_d013ac518e63f2 4-5,7,61-62,101-102,149-150,237-248,255,257,282-318,355,373,427-446,448-454,456
+  s_a97d4159a7ca50::t_ecbcd9cf5ef2c6 386-387
+src/i18n/locales/en.ts
+  s_a97d4159a7ca50::t_ecbcd9cf5ef2c6 195-196
+src/i18n/locales/mr.ts
+  s_a97d4159a7ca50::t_ecbcd9cf5ef2c6 184-185
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "4630885c4548d96f5e733237e692a74a64dce746",
+  "prompts": {},
+  "sessions": {
+    "s_a97d4159a7ca50": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f1bf3-e641-7483-8da5-f02ba64ee9ed",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
