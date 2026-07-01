@@ -1,7 +1,9 @@
 import { useMemo, useState, useCallback } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/lib/supabase';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius, shadows } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -13,7 +15,10 @@ import {
   useSendFertilizerPlan,
 } from '@/hooks/use-consultant-reviews';
 import { PetioleComparison } from '@/components/lab/petiole-comparison';
-import { SoilBaselinePanel } from '@/components/professional/soil-baseline-panel';
+import {
+  SoilBaselinePanel,
+  type FarmSoilBaseline,
+} from '@/components/professional/soil-baseline-panel';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import {
   FormModal,
@@ -32,8 +37,12 @@ const FAB_BOTTOM = 24;
 // mirroring how the fertigation form models units. Measures are stored in the
 // app's canonical spelling so a plan round-trips cleanly with the farmer-side
 // resolver (see resolveFertilizerUnit); the per-acre basis is a `/acre` suffix.
+//
+// Only the canonical PLAN_ITEM_UNIT_OPTIONS units are ever emitted
+// (['kg/acre','g/acre','L/acre','ml/acre','ppm']). There is no "total" basis —
+// neither the RPC contract nor the farmer-side resolver represents a non-per-acre
+// quantity, so offering it would silently break every submitted item.
 type FertilizerMeasure = 'kg' | 'gram' | 'liter' | 'ml' | 'ppm';
-type QuantityBasis = 'per_acre' | 'total';
 
 const MEASURE_OPTIONS: { value: FertilizerMeasure; label: string }[] = [
   { value: 'kg', label: 'kg' },
@@ -43,21 +52,28 @@ const MEASURE_OPTIONS: { value: FertilizerMeasure; label: string }[] = [
   { value: 'ppm', label: 'ppm' },
 ];
 
-function toUnitString(measure: FertilizerMeasure, basis: QuantityBasis): string {
-  // ppm is a concentration, not a per-acre/total quantity — it never takes a basis suffix.
+// Map a measure to the canonical per-acre unit string. ppm is a concentration
+// and never takes a basis suffix.
+const MEASURE_TO_UNIT: Record<Exclude<FertilizerMeasure, 'ppm'>, string> = {
+  kg: 'kg/acre',
+  gram: 'g/acre',
+  liter: 'L/acre',
+  ml: 'ml/acre',
+};
+
+function toUnitString(measure: FertilizerMeasure): string {
   if (measure === 'ppm') return 'ppm';
-  return basis === 'per_acre' ? `${measure}/acre` : measure;
+  return MEASURE_TO_UNIT[measure];
 }
 
 interface DraftItem {
   name: string;
   quantity: string;
   measure: FertilizerMeasure;
-  basis: QuantityBasis;
 }
 
 function emptyDraft(): DraftItem {
-  return { name: '', quantity: '', measure: 'kg', basis: 'per_acre' };
+  return { name: '', quantity: '', measure: 'kg' };
 }
 
 export default function LabReportsScreen() {
@@ -70,16 +86,44 @@ export default function LabReportsScreen() {
 
   const petiole = usePetioleTests(numericFarmId);
   const soil = useSoilTests(numericFarmId);
+  const farmSoil = useQuery({
+    queryKey: ['professional-farm-soil', numericFarmId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('farms')
+        .select(
+          'soil_texture_class, sand_percentage, silt_percentage, clay_percentage, cation_exchange_capacity, soil_water_retention, bulk_density',
+        )
+        .eq('id', numericFarmId)
+        .single();
+      if (error) throw error;
+      return data as FarmSoilBaseline;
+    },
+    enabled: numericFarmId > 0,
+  });
   const triage = usePetioleTriage(workspace.data?.organization_id, numericFarmId);
   const createTriage = useCreatePetioleTriage();
   const sendPlan = useSendFertilizerPlan();
 
   const [fabOpen, setFabOpen] = useState(false);
+  const [planTitleInput, setPlanTitleInput] = useState('');
   const [planNotes, setPlanNotes] = useState('');
   const [items, setItems] = useState<DraftItem[]>([emptyDraft()]);
 
   const latestSoil = useMemo(() => (soil.data ?? [])[0] ?? null, [soil.data]);
   const latestPetioleTest = useMemo(() => (petiole.data ?? [])[0] ?? null, [petiole.data]);
+
+  const daysAfterPruning = useMemo(() => {
+    const pruningDate = latestPetioleTest?.date_of_pruning;
+    if (!pruningDate) return null;
+    const pruning = new Date(pruningDate);
+    if (Number.isNaN(pruning.getTime())) return null;
+    const now = new Date();
+    const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const pruningDay = Date.UTC(pruning.getFullYear(), pruning.getMonth(), pruning.getDate());
+    const diff = Math.floor((todayUtc - pruningDay) / (1000 * 60 * 60 * 24));
+    return diff >= 0 ? diff : null;
+  }, [latestPetioleTest?.date_of_pruning]);
 
   const client = useMemo(
     () => workspace.data?.clients.find((c) => c.farms.some((f) => f.id === numericFarmId)),
@@ -120,6 +164,7 @@ export default function LabReportsScreen() {
   }, []);
 
   const resetForm = () => {
+    setPlanTitleInput('');
     setPlanNotes('');
     setItems([emptyDraft()]);
   };
@@ -129,14 +174,6 @@ export default function LabReportsScreen() {
   const canSend = useMemo(
     () => items.some((d) => d.name.trim() !== '' && Number(d.quantity) > 0),
     [items],
-  );
-
-  const basisOptions = useMemo(
-    () => [
-      { value: 'per_acre', label: t('professional.reviews.perAcre') },
-      { value: 'total', label: t('professional.reviews.total') },
-    ],
-    [t],
   );
 
   const handleSubmit = async () => {
@@ -155,7 +192,7 @@ export default function LabReportsScreen() {
       planItems.push({
         fertilizer_name: draft.name.trim(),
         quantity: qty,
-        unit: toUnitString(draft.measure, draft.basis),
+        unit: toUnitString(draft.measure),
       });
     }
 
@@ -191,9 +228,9 @@ export default function LabReportsScreen() {
 
       await sendPlan.mutateAsync({
         reviewId,
-        // No title field in the form — the first product name stands in as the
-        // plan's title so downstream consumers still have a human label.
-        title: planItems[0].fertilizer_name,
+        // Editable plan title; fall back to the first product name so a blank
+        // title still yields a human label (preserves prior behavior).
+        title: planTitleInput.trim() || planItems[0].fertilizer_name,
         notes: planNotes.trim() || null,
         items: planItems,
       });
@@ -245,32 +282,62 @@ export default function LabReportsScreen() {
         ) : (
           <View style={{ gap: spacing[5] }}>
             <View>
-              <Text
+              <View
                 style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.colorScheme.onSurface,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   marginBottom: spacing[3],
+                  gap: spacing[2],
                 }}
               >
-                {t('professional.reviews.petioleComparison')}
-              </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
+                    color: m3.colorScheme.onSurface,
+                  }}
+                >
+                  {t('professional.reviews.petioleComparison')}
+                </Text>
+                {daysAfterPruning !== null && (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[1],
+                      borderRadius: borderRadius.lg,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: fontSize['2xs'],
+                        fontWeight: fontWeight.semibold,
+                        color: m3.colorScheme.primary,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {t('professional.reviews.dayAfterPruning')}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.bold,
+                        color: m3.colorScheme.primary,
+                      }}
+                    >
+                      {daysAfterPruning}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <PetioleComparison tests={petiole.data ?? []} />
             </View>
 
-            <View>
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.colorScheme.onSurface,
-                  marginBottom: spacing[3],
-                }}
-              >
-                {t('professional.reviews.soilBaseline')}
-              </Text>
-              <SoilBaselinePanel test={latestSoil} />
-            </View>
+            <SoilBaselinePanel farmSoil={farmSoil.data} test={latestSoil} />
           </View>
         )}
       </ScrollView>
@@ -310,6 +377,16 @@ export default function LabReportsScreen() {
           isSaveDisabled={!canSend}
           saveFullWidth
         >
+          {/* Plan title — first so the consultant names the plan up front. Falls
+              back to the first product name on submit when left blank. */}
+          <FormInput
+            label={t('professional.reviews.planTitle')}
+            value={planTitleInput}
+            onChangeText={setPlanTitleInput}
+            placeholder={t('professional.reviews.planTitle')}
+            style={{ marginBottom: spacing[5] }}
+          />
+
           {/* Who this plan is going to */}
           {(farmerName || farmName) && (
             <View
@@ -465,17 +542,6 @@ export default function LabReportsScreen() {
                   selectedValue={draft.measure}
                   onSelect={(value) => updateItem(index, { measure: value as FertilizerMeasure })}
                 />
-                {/* ppm is a concentration — a per-acre/total basis is meaningless, so hide it. */}
-                {draft.measure !== 'ppm' ? (
-                  <>
-                    <View style={{ height: spacing[2] }} />
-                    <SegmentedControl
-                      options={basisOptions}
-                      selectedValue={draft.basis}
-                      onSelect={(value) => updateItem(index, { basis: value as QuantityBasis })}
-                    />
-                  </>
-                ) : null}
               </View>
             ))}
           </View>

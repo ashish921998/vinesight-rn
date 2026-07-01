@@ -28,7 +28,7 @@ export function useFertilizerPlan(farmId?: number) {
 export function useFertilizerPlans(farmId?: number) {
   return useQuery({
     queryKey: farmId
-      ? queryKeys.fertilizerPlan.list(farmId)
+      ? queryKeys.fertilizerPlan.listByFarm(farmId)
       : ['fertilizerPlan', 'list', 'disabled'],
     queryFn: async (): Promise<FertilizerPlan[]> => {
       if (!farmId) return [];

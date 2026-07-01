@@ -8,24 +8,81 @@ import type { SoilTestRecord } from '@/types/database';
 import { soilParamOptions } from '@/constants/lab-test-parameters';
 import { getParamStatus } from '@/utils/lab-test-utils';
 
-interface SoilBaselinePanelProps {
-  test: SoilTestRecord | null | undefined;
+export interface FarmSoilBaseline {
+  soil_texture_class?: string | null;
+  sand_percentage?: number | null;
+  silt_percentage?: number | null;
+  clay_percentage?: number | null;
+  cation_exchange_capacity?: number | null;
+  soil_water_retention?: number | null;
+  bulk_density?: number | null;
 }
 
-const SECTION_KEYS = [
-  { key: 'chemical', keys: ['ph', 'ec', 'organicCarbon', 'organicMatter', 'calciumCarbonate'] },
-  { key: 'major', keys: ['nitrogen', 'phosphorus', 'potassium'] },
-  { key: 'secondary', keys: ['calcium', 'magnesium', 'sulfur'] },
-  { key: 'micro', keys: ['iron', 'manganese', 'zinc', 'copper', 'boron', 'molybdenum'] },
-] as const;
+interface SoilBaselinePanelProps {
+  farmSoil?: FarmSoilBaseline | null;
+  test?: SoilTestRecord | null;
+}
 
-export function SoilBaselinePanel({ test }: SoilBaselinePanelProps) {
+interface SoilChip {
+  key: string;
+  label: string;
+  unit?: string;
+  value: number | string | null | undefined;
+  status: 'ok' | 'warn' | 'bad';
+}
+
+// Farm-level soil fields set during farm creation. Only those with a non-null
+// value are surfaced so the panel reflects exactly what was recorded.
+const FARM_SOIL_FIELDS: { key: keyof FarmSoilBaseline; label: string; unit?: string }[] = [
+  { key: 'soil_texture_class', label: 'Texture' },
+  { key: 'sand_percentage', label: 'Sand', unit: '%' },
+  { key: 'silt_percentage', label: 'Silt', unit: '%' },
+  { key: 'clay_percentage', label: 'Clay', unit: '%' },
+  { key: 'cation_exchange_capacity', label: 'CEC', unit: 'meq/100g' },
+  { key: 'soil_water_retention', label: 'Water retention', unit: '%' },
+  { key: 'bulk_density', label: 'Bulk density', unit: 'g/cm³' },
+];
+
+export function SoilBaselinePanel({ farmSoil, test }: SoilBaselinePanelProps) {
   const { t } = useTranslation();
   const m3 = useM3();
 
-  const params = useMemo(() => test?.parameters ?? {}, [test]);
+  const farmChips = useMemo<SoilChip[]>(() => {
+    if (!farmSoil) return [];
+    return FARM_SOIL_FIELDS.filter((field) => {
+      const value = farmSoil[field.key];
+      return value !== null && value !== undefined && value !== '';
+    }).map((field) => ({
+      key: field.key,
+      label: field.label,
+      unit: field.unit,
+      value: farmSoil[field.key],
+      status: 'ok' as const,
+    }));
+  }, [farmSoil]);
 
-  if (!test) {
+  const testChips = useMemo<SoilChip[]>(() => {
+    const raw = test?.parameters ?? {};
+    return Object.entries(raw)
+      .filter(([, value]) => value !== null && value !== undefined)
+      .map(([key, value]) => {
+        const option = findSoilOption(key);
+        return {
+          key: `test:${key}`,
+          label: option?.shortLabel ?? humanizeKey(key),
+          unit: option?.unit,
+          value,
+          status: option ? getParamStatus(value, option) : ('ok' as const),
+        };
+      });
+  }, [test?.parameters]);
+
+  const chips = [...farmChips, ...testChips];
+
+  const hasFarmData = farmChips.length > 0;
+  const hasTestData = testChips.length > 0;
+
+  if (!hasFarmData && !hasTestData) {
     return (
       <View
         style={{
@@ -68,92 +125,69 @@ export function SoilBaselinePanel({ test }: SoilBaselinePanelProps) {
         >
           {t('professional.reviews.soilBaselineTitle')}
         </Text>
-        <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-          {formatDate(test.date, { year: 'numeric', month: 'short', day: 'numeric' })}
-        </Text>
+        {test?.date && (
+          <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
+            {formatDate(test.date, { year: 'numeric', month: 'short', day: 'numeric' })}
+          </Text>
+        )}
       </View>
 
-      <View style={{ padding: spacing[3], gap: spacing[4] }}>
-        {SECTION_KEYS.map((section) => {
-          const entries = section.keys
-            .map((key) => {
-              const option = soilParamOptions.find((p) => p.key === key);
-              const value = option ? lookupParam(params, key) : undefined;
-              return { key, option, value };
-            })
-            .filter((item) => item.value !== undefined && item.value !== null);
-
-          if (entries.length === 0) return null;
-
-          return (
-            <View key={section.key}>
+      <View style={{ padding: spacing[3] }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+          {chips.map((chip) => (
+            <View
+              key={chip.key}
+              style={{
+                paddingVertical: spacing[2],
+                paddingHorizontal: spacing[3],
+                borderRadius: borderRadius.md,
+                backgroundColor: m3.colorScheme.surfaceVariant,
+                minWidth: 80,
+              }}
+            >
               <Text
                 style={{
                   fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
                   color: m3.colorScheme.onSurfaceVariant,
-                  marginBottom: spacing[2],
-                  textTransform: 'uppercase',
                 }}
               >
-                {t(`professional.reviews.soilSections.${section.key}`)}
+                {chip.label}
+                {chip.unit ? ` (${chip.unit})` : ''}
               </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-                {entries.map(({ key, option, value }) => {
-                  const status = option ? getParamStatus(value, option) : 'ok';
-                  return (
-                    <View
-                      key={key}
-                      style={{
-                        paddingVertical: spacing[2],
-                        paddingHorizontal: spacing[3],
-                        borderRadius: borderRadius.md,
-                        backgroundColor: m3.colorScheme.surfaceVariant,
-                        minWidth: 80,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: fontSize.xs,
-                          color: m3.colorScheme.onSurfaceVariant,
-                        }}
-                      >
-                        {option?.shortLabel ?? key}
-                        {option?.unit ? ` (${option.unit})` : ''}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.semibold,
-                          color: statusColor(status, m3.colorScheme),
-                          marginTop: spacing[1],
-                        }}
-                      >
-                        {formatSoilValue(value)}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: statusColor(chip.status, m3.colorScheme),
+                  marginTop: spacing[1],
+                }}
+              >
+                {formatSoilValue(chip.value)}
+              </Text>
             </View>
-          );
-        })}
+          ))}
+        </View>
       </View>
     </View>
   );
 }
 
-// Soil options use camelCase keys (e.g. `organicCarbon`), but a stored record may
-// key the same parameter as snake_case (`organic_carbon`) or lowercase. Match on a
-// normalized form (alphanumerics only, lowercased) so values aren't silently dropped.
-function lookupParam(params: Record<string, number>, key: string): number | undefined {
-  if (params[key] !== undefined) return params[key];
+// Matches a stored parameter key against soilParamOptions on a normalized form
+// (alphanumerics only, lowercased) so snake_case / camelCase variants resolve.
+function findSoilOption(storedKey: string) {
   const normalize = (k: string) => k.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const target = normalize(key);
-  for (const candidate of Object.keys(params)) {
-    if (normalize(candidate) === target) return params[candidate];
-  }
-  return undefined;
+  const target = normalize(storedKey);
+  return soilParamOptions.find((p) => normalize(p.key) === target);
+}
+
+// Turns an arbitrary stored key (e.g. cation_exchange_capacity, waterRetention)
+// into a readable label when it isn't a known soilParamOption.
+function humanizeKey(key: string): string {
+  return key
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function formatSoilValue(value: unknown): string {

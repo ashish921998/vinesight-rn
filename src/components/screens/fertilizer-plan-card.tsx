@@ -102,14 +102,18 @@ export function PlanSchedule({ plan, m3, t }: { plan: FertilizerPlan; m3: M3; t:
                 }}
               >
                 {input.quantity}
-                {input.unit ? ` ${input.unit}` : ''}{' '}
-                {t('farmDetails.fertilizerPlan.perAcre', '/ acre')}
+                {/* Stored units already carry their basis (e.g. `kg/acre`, `ppm`),
+                    so render as-is instead of re-appending a per-acre suffix. */}
+                {input.unit ? ` ${input.unit}` : ''}
               </Text>
             )}
             <View style={{ flexDirection: 'row', gap: spacing[4] }}>
               <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
+                {/* Pass the raw date string so formatDate can apply its date-only
+                    UTC handling — wrapping in new Date() shifts date-only values
+                    by timezone and can render the wrong day. */}
                 {input.application_date
-                  ? formatDate(new Date(input.application_date), { month: 'short', day: 'numeric' })
+                  ? formatDate(input.application_date, { month: 'short', day: 'numeric' })
                   : `${t('farmDetails.fertilizerPlan.week', 'Week')} ${index + 1}`}
               </Text>
             </View>

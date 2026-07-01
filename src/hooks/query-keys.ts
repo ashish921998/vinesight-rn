@@ -124,7 +124,7 @@ export const queryKeys = {
   fertilizerPlan: {
     all: ['fertilizerPlan'] as const,
     detail: (farmId: number) => [...queryKeys.fertilizerPlan.all, { farmId }] as const,
-    list: (farmId: number) => [...queryKeys.fertilizerPlan.all, 'list', { farmId }] as const,
+    listByFarm: (farmId: number) => [...queryKeys.fertilizerPlan.all, 'list', { farmId }] as const,
   },
 
   // Consultant Reviews
