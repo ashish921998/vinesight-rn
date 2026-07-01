@@ -180,6 +180,15 @@ export const en = {
     reviews: {
       soilBaselineTitle: 'Soil baseline',
       noSoilBaseline: 'No soil test available for this farm.',
+      soilFields: {
+        texture: 'Texture',
+        sand: 'Sand',
+        silt: 'Silt',
+        clay: 'Clay',
+        cec: 'CEC',
+        waterRetention: 'Water retention',
+        bulkDensity: 'Bulk density',
+      },
       petioleComparison: 'Petiole comparison',
       dayAfterPruning: 'Day after pruning',
       soilBaseline: 'Soil baseline',

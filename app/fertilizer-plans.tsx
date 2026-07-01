@@ -36,12 +36,14 @@ export default function FertilizerPlansScreen() {
   // reviewing a client's farm, or the farm owner viewing plans sent to them.
   // The owner check (`farms`) is the normal farmer path — without it, farmers
   // are locked out of plans they received.
-  const canAccessPlans =
-    Boolean(profile?.consultant_organization_id) ||
-    Boolean(farmId && farms?.some((f) => f.id === farmId));
-  // Defer the access decision until profile/farms resolve, otherwise the denial
-  // state flashes before we actually know the user's access.
-  const accessResolved = !isProfileLoading && !isFarmsLoading;
+  const hasConsultantAccess = !isProfileLoading && Boolean(profile?.consultant_organization_id);
+  const hasFarmAccess = !isFarmsLoading && Boolean(farmId && farms?.some((f) => f.id === farmId));
+  const canAccessPlans = Boolean(profile?.consultant_organization_id) || hasFarmAccess;
+  // Grant access as soon as EITHER side proves it (so a consultant isn't blocked
+  // on `farms` loading, and a farmer isn't blocked on `profile`). Only defer the
+  // denial state until both queries have resolved, so it never flashes early.
+  const accessResolved =
+    hasConsultantAccess || hasFarmAccess || (!isProfileLoading && !isFarmsLoading);
 
   const plans = fertilizerPlans ?? [];
   const currentPlan = plans[0];
@@ -309,7 +311,9 @@ export default function FertilizerPlansScreen() {
                     style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}
                   >
                     {t('farmDetails.fertilizerPlan.updatedLabel', {
-                      date: formatDate(new Date(currentPlan.updated_at), {
+                      // Pass the raw string so formatDate applies its date-only
+                      // UTC handling — new Date() shifts date-only values by tz.
+                      date: formatDate(currentPlan.updated_at, {
                         month: 'short',
                         day: 'numeric',
                       }),

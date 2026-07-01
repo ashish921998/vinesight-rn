@@ -32,15 +32,16 @@ interface SoilChip {
 }
 
 // Farm-level soil fields set during farm creation. Only those with a non-null
-// value are surfaced so the panel reflects exactly what was recorded.
-const FARM_SOIL_FIELDS: { key: keyof FarmSoilBaseline; label: string; unit?: string }[] = [
-  { key: 'soil_texture_class', label: 'Texture' },
-  { key: 'sand_percentage', label: 'Sand', unit: '%' },
-  { key: 'silt_percentage', label: 'Silt', unit: '%' },
-  { key: 'clay_percentage', label: 'Clay', unit: '%' },
-  { key: 'cation_exchange_capacity', label: 'CEC', unit: 'meq/100g' },
-  { key: 'soil_water_retention', label: 'Water retention', unit: '%' },
-  { key: 'bulk_density', label: 'Bulk density', unit: 'g/cm³' },
+// value are surfaced so the panel reflects exactly what was recorded. Labels
+// are i18n keys (resolved via t()) so hi/mr users see translated text.
+const FARM_SOIL_FIELDS: { key: keyof FarmSoilBaseline; labelKey: string; unit?: string }[] = [
+  { key: 'soil_texture_class', labelKey: 'soilFields.texture' },
+  { key: 'sand_percentage', labelKey: 'soilFields.sand', unit: '%' },
+  { key: 'silt_percentage', labelKey: 'soilFields.silt', unit: '%' },
+  { key: 'clay_percentage', labelKey: 'soilFields.clay', unit: '%' },
+  { key: 'cation_exchange_capacity', labelKey: 'soilFields.cec', unit: 'meq/100g' },
+  { key: 'soil_water_retention', labelKey: 'soilFields.waterRetention', unit: '%' },
+  { key: 'bulk_density', labelKey: 'soilFields.bulkDensity', unit: 'g/cm³' },
 ];
 
 export function SoilBaselinePanel({ farmSoil, test }: SoilBaselinePanelProps) {
@@ -54,12 +55,12 @@ export function SoilBaselinePanel({ farmSoil, test }: SoilBaselinePanelProps) {
       return value !== null && value !== undefined && value !== '';
     }).map((field) => ({
       key: field.key,
-      label: field.label,
+      label: t(`professional.reviews.${field.labelKey}`),
       unit: field.unit,
       value: farmSoil[field.key],
       status: 'ok' as const,
     }));
-  }, [farmSoil]);
+  }, [farmSoil, t]);
 
   const testChips = useMemo<SoilChip[]>(() => {
     const raw = test?.parameters ?? {};
@@ -125,7 +126,7 @@ export function SoilBaselinePanel({ farmSoil, test }: SoilBaselinePanelProps) {
         >
           {t('professional.reviews.soilBaselineTitle')}
         </Text>
-        {test?.date && (
+        {hasTestData && test?.date && (
           <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
             {formatDate(test.date, { year: 'numeric', month: 'short', day: 'numeric' })}
           </Text>

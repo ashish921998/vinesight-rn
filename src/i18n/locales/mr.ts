@@ -169,6 +169,15 @@ export const mr = {
     reviews: {
       soilBaselineTitle: 'माती आधार रेषा',
       noSoilBaseline: 'या शेतासाठी कोणताही मातीचा चाचणी अहवाल उपलब्ध नाही.',
+      soilFields: {
+        texture: 'रचना',
+        sand: 'वाळू',
+        silt: 'गाळ',
+        clay: 'चिकणमाती',
+        cec: 'CEC',
+        waterRetention: 'पाणी धरण क्षमता',
+        bulkDensity: 'बल्क घनता',
+      },
       petioleComparison: 'पेटिओल तुलना',
       dayAfterPruning: 'छाटणीनंतरचे दिवस',
       soilBaseline: 'माती आधार रेषा',

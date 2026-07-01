@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius, shadows } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { parseDbDateToLocalDate, formatLocalDate } from '@/utils/date';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { usePetioleTests, useSoilTests } from '@/hooks/use-lab-tests';
 import {
@@ -95,9 +96,14 @@ export default function LabReportsScreen() {
           'soil_texture_class, sand_percentage, silt_percentage, clay_percentage, cation_exchange_capacity, soil_water_retention, bulk_density',
         )
         .eq('id', numericFarmId)
-        .single();
+        // maybeSingle: this baseline data is supplementary. `.single()` throws
+        // (PGRST116) when no row is visible (RLS / deleted farm), which would
+        // be noise; maybeSingle returns null instead. A genuine failure leaves
+        // the panel without farm chips — see isError below for why it's
+        // intentionally excluded there.
+        .maybeSingle();
       if (error) throw error;
-      return data as FarmSoilBaseline;
+      return (data ?? null) as FarmSoilBaseline | null;
     },
     enabled: numericFarmId > 0,
   });
@@ -116,10 +122,13 @@ export default function LabReportsScreen() {
   const daysAfterPruning = useMemo(() => {
     const pruningDate = latestPetioleTest?.date_of_pruning;
     if (!pruningDate) return null;
-    const pruning = new Date(pruningDate);
-    if (Number.isNaN(pruning.getTime())) return null;
-    const now = new Date();
-    const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    // Parse via the date-only helper so a `YYYY-MM-DD` value isn't shifted by
+    // timezone the way `new Date('YYYY-MM-DD')` (treated as UTC midnight) would be.
+    const pruning = parseDbDateToLocalDate(pruningDate);
+    if (!pruning) return null;
+    const today = parseDbDateToLocalDate(formatLocalDate(new Date()));
+    if (!today) return null;
+    const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
     const pruningDay = Date.UTC(pruning.getFullYear(), pruning.getMonth(), pruning.getDate());
     const diff = Math.floor((todayUtc - pruningDay) / (1000 * 60 * 60 * 24));
     return diff >= 0 ? diff : null;
@@ -141,6 +150,9 @@ export default function LabReportsScreen() {
   // forever; surface the same error UI the sibling farm screen uses instead.
   const isInvalidFarm = !Number.isFinite(numericFarmId) || numericFarmId <= 0;
   const isLoading = !isInvalidFarm && (workspace.isLoading || petiole.isLoading || soil.isLoading);
+  // farmSoil.isError is intentionally excluded: it's supplementary baseline
+  // data (uses maybeSingle, so a missing row is null, not an error). A genuine
+  // fetch failure just omits the farm chips rather than hiding the lab tests.
   const isError = isInvalidFarm || workspace.isError || petiole.isError || soil.isError;
 
   const updateItem = useCallback((index: number, patch: Partial<DraftItem>) => {

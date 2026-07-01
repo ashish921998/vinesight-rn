@@ -168,6 +168,15 @@ export const hi = {
     reviews: {
       soilBaselineTitle: 'मिट्टी आधार रेखा',
       noSoilBaseline: 'इस खेत के लिए कोई मिट्टी परीक्षण उपलब्ध नहीं है।',
+      soilFields: {
+        texture: 'बनावट',
+        sand: 'रेत',
+        silt: 'गाद',
+        clay: 'मिट्टी',
+        cec: 'CEC',
+        waterRetention: 'जल धारण क्षमता',
+        bulkDensity: 'आयतन घनत्व',
+      },
       petioleComparison: 'पेटीओल तुलना',
       dayAfterPruning: 'छंटाई के बाद दिन',
       soilBaseline: 'मिट्टी आधार रेखा',
