@@ -185,7 +185,7 @@ export { useAnalytics } from './use-analytics';
 export { useReportData, useReportExport, getDefaultDateRange } from './use-reports';
 
 // Fertilizer Plan
-export { useFertilizerPlan } from './use-fertilizer-plan';
+export { useFertilizerPlan, useFertilizerPlans } from './use-fertilizer-plan';
 export {
   useChemicalCatalog,
   useChemicalMixSearch,

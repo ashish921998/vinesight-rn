@@ -1,14 +1,28 @@
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, View, Text, ActivityIndicator, Pressable } from 'react-native';
+import React, { useMemo, useState, useCallback } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  Text,
+  ActivityIndicator,
+  Pressable,
+  Alert,
+} from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol } from '@/components/ui/symbol';
-import { useFarm, useFertilizerPlan, useProfile, useFarms } from '@/hooks';
+import { useFarm, useFertilizerPlans, useProfile, useFarms } from '@/hooks';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
+import {
+  PlanSchedule,
+  PreviousPlanCard,
+  SectionLabel,
+  planTitle,
+} from '@/components/screens/fertilizer-plan-card';
 
 export default function FertilizerPlansScreen() {
   const { t } = useTranslation();
@@ -21,21 +35,27 @@ export default function FertilizerPlansScreen() {
     const parsed = Number.parseInt(params.farmId, 10);
     return Number.isFinite(parsed) ? parsed : undefined;
   }, [params.farmId]);
-  const { data: profile, isLoading: profileLoading } = useProfile({ enabled: true });
+  const { data: profile } = useProfile({ enabled: true });
   const { data: farm } = useFarm(farmId);
-  const { data: fertilizerPlan, isLoading } = useFertilizerPlan(farmId);
-  const { data: farms, isLoading: farmsLoading } = useFarms();
+  const { data: fertilizerPlans, isLoading } = useFertilizerPlans(farmId);
+  const { data: farms } = useFarms();
 
-  // Farmers (the primary audience) view plans for farms they own; consultants
-  // view via their organization. Gating on consultant status alone wrongly
-  // blocked farmers from seeing plans pushed to them. Data access is still
-  // enforced server-side by RLS — this is only the screen's empty-vs-plan gate.
-  const canAccessPlans =
-    Boolean(profile?.consultant_organization_id) ||
-    Boolean(farmId && farms?.some((f) => f.id === farmId));
-  // Access depends on profile + farms loading; until both resolve, show the
-  // loading state instead of briefly flashing the "no access" screen to a farmer.
-  const accessResolved = !profileLoading && !farmsLoading;
+  const canAccessPlans = Boolean(profile?.consultant_organization_id);
+
+  const plans = fertilizerPlans ?? [];
+  const currentPlan = plans[0];
+  const previousPlans = plans.slice(1);
+
+  // Older plans collapse by default; track which ones the user has expanded.
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const togglePlan = useCallback((planId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(planId)) next.delete(planId);
+      else next.add(planId);
+      return next;
+    });
+  }, []);
 
   // Get current farm name for the selector pill
   const currentFarmName = useMemo(() => {
@@ -158,7 +178,7 @@ export default function FertilizerPlansScreen() {
           </View>
         </View>
 
-        {accessResolved && !canAccessPlans ? (
+        {!canAccessPlans ? (
           <View
             style={{
               borderRadius: m3.shape.cornerLarge,
@@ -187,7 +207,7 @@ export default function FertilizerPlansScreen() {
               {t('farmDetails.fertilizerPlan.emptySubtitle')}
             </Text>
           </View>
-        ) : !accessResolved || isLoading ? (
+        ) : isLoading ? (
           <View
             style={{
               padding: spacing[4],
@@ -209,7 +229,7 @@ export default function FertilizerPlansScreen() {
               {t('farmDetails.fertilizerPlan.loading')}
             </Text>
           </View>
-        ) : !fertilizerPlan ? (
+        ) : !currentPlan ? (
           <View
             style={{
               padding: spacing[4],
@@ -240,6 +260,10 @@ export default function FertilizerPlansScreen() {
           </View>
         ) : (
           <View style={{ gap: spacing[3] }}>
+            {/* Current plan - always expanded */}
+            <SectionLabel color={m3.primary.p500}>
+              {t('farmDetails.fertilizerPlan.currentLabel', 'Current')}
+            </SectionLabel>
             <View
               style={{
                 borderRadius: m3.shape.cornerLarge,
@@ -264,18 +288,14 @@ export default function FertilizerPlansScreen() {
                     flex: 1,
                   }}
                 >
-                  {fertilizerPlan.consultant_name
-                    ? t('farmDetails.fertilizerPlan.consultantLabel', {
-                        name: fertilizerPlan.consultant_name,
-                      })
-                    : t('farmDetails.fertilizerPlan.consultantUnknown')}
+                  {planTitle(currentPlan, t)}
                 </Text>
-                {fertilizerPlan.updated_at ? (
+                {currentPlan.updated_at ? (
                   <Text
                     style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}
                   >
                     {t('farmDetails.fertilizerPlan.updatedLabel', {
-                      date: formatDate(new Date(fertilizerPlan.updated_at), {
+                      date: formatDate(new Date(currentPlan.updated_at), {
                         month: 'short',
                         day: 'numeric',
                       }),
@@ -283,19 +303,7 @@ export default function FertilizerPlansScreen() {
                   </Text>
                 ) : null}
               </View>
-              {fertilizerPlan.title ? (
-                <Text
-                  style={{
-                    color: m3.colorScheme.onSurface,
-                    ...m3.typography.titleMedium,
-                    fontWeight: fontWeight.semibold,
-                    marginTop: spacing[2],
-                  }}
-                >
-                  {fertilizerPlan.title}
-                </Text>
-              ) : null}
-              {fertilizerPlan.notes ? (
+              {currentPlan.notes ? (
                 <Text
                   style={{
                     color: m3.colorScheme.onSurfaceVariant,
@@ -303,105 +311,63 @@ export default function FertilizerPlansScreen() {
                     marginTop: spacing[2],
                   }}
                 >
-                  {fertilizerPlan.notes}
+                  {currentPlan.notes}
                 </Text>
               ) : null}
             </View>
+            <PlanSchedule plan={currentPlan} m3={m3} t={t} />
 
-            {fertilizerPlan.items.length > 0 ? (
-              <View style={{ gap: spacing[3] }}>
-                {/* Section label - uppercase, 12px, 600 weight */}
-                <Text
-                  style={{
-                    fontSize: fontSize.xs + 1,
-                    fontWeight: fontWeight.semibold,
-                    color: m3.colorScheme.onSurfaceVariant,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.6,
-                    marginTop: spacing[1],
-                  }}
-                >
-                  {t('farmDetails.fertilizerPlan.recommendedSchedule', 'Recommended Schedule')}
-                </Text>
-                {/* Plan cards with 5px left strip, status badges */}
-                {fertilizerPlan.items.map((input, index) => {
-                  return (
-                    <View
-                      key={`${input.name}-${index}`}
-                      style={{
-                        backgroundColor: m3.surface.s100,
-                        borderWidth: 1,
-                        borderColor: m3.surface.s300,
-                        borderRadius: borderRadius.md, // 14px = md(16) - close enough
-                        marginBottom: spacing[3],
-                        flexDirection: 'row',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {/* 5px left strip */}
-                      <View
-                        style={{
-                          width: 5,
-                          backgroundColor: m3.primary.p500,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <View style={{ flex: 1, padding: spacing[3] + 2 }}>
-                        {/* Top row: item name */}
-                        <View
-                          style={{
-                            marginBottom: spacing[1],
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.semibold,
-                              color: m3.surface.s900,
-                            }}
-                          >
-                            {input.name || t('farmDetails.fertilizerPlan.unknownInput')}
-                          </Text>
-                        </View>
-                        {/* Product info */}
-                        {input.quantity !== null && input.quantity !== undefined && (
-                          <Text
-                            style={{
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.medium,
-                              color: m3.surface.s900,
-                              marginBottom: spacing[1],
-                            }}
-                          >
-                            {input.quantity}
-                            {input.unit ? ` ${input.unit}` : ''}{' '}
-                            {t('farmDetails.fertilizerPlan.perAcre', '/ acre')}
-                          </Text>
-                        )}
-                        {/* Meta info - show week based on index */}
-                        <View style={{ flexDirection: 'row', gap: spacing[4] }}>
-                          <Text
-                            style={{
-                              fontSize: fontSize.xs,
-                              color: m3.surface.s500,
-                            }}
-                          >
-                            {t('farmDetails.fertilizerPlan.week', 'Week')} {index + 1}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  );
-                })}
+            {/* Previous plans - collapsible history */}
+            {previousPlans.length > 0 ? (
+              <View style={{ gap: spacing[3], marginTop: spacing[2] }}>
+                <SectionLabel color={m3.colorScheme.onSurfaceVariant}>
+                  {t('farmDetails.fertilizerPlan.previousPlans', 'Previous plans')}
+                </SectionLabel>
+                {previousPlans.map((plan) => (
+                  <PreviousPlanCard
+                    key={plan.id}
+                    plan={plan}
+                    m3={m3}
+                    t={t}
+                    expanded={expandedIds.has(plan.id)}
+                    onToggle={() => togglePlan(plan.id)}
+                  />
+                ))}
               </View>
-            ) : (
-              <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium }}>
-                {t('farmDetails.fertilizerPlan.noInputs')}
-              </Text>
-            )}
+            ) : null}
           </View>
         )}
       </ScrollView>
+      {/* FAB - Cellar Ledger design: primary bg, 16px radius, white '+', border-only */}
+      <Pressable
+        style={{
+          position: 'absolute',
+          bottom: insets.bottom + spacing[4], // Account for safe area bottom inset
+          right: spacing[6], // 24px from right
+          width: 52,
+          height: 52,
+          borderRadius: borderRadius.md, // 16px radius
+          backgroundColor: m3.primary.p500,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 1,
+          borderColor: colorWithOpacity(m3.primary.p500, 0.3),
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={t('farmDetails.fertilizerPlan.addPlan', 'Add Plan')}
+        onPress={() => Alert.alert(t('farmDetails.fertilizerPlan.addPlan', 'Add Plan'))}
+      >
+        <Text
+          style={{
+            color: m3.surface.s100,
+            fontSize: fontSize['3xl'],
+            fontWeight: '300',
+            lineHeight: 32,
+          }}
+        >
+          +
+        </Text>
+      </Pressable>
     </>
   );
 }
