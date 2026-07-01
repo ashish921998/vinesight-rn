@@ -181,6 +181,8 @@ export const mr = {
       itemNumber: 'वस्तू {{number}}',
       productName: 'उत्पादनाचे नाव',
       quantity: 'प्रमाण',
+      planTitle: 'योजनेचे शीर्षक',
+      planNotes: 'शेतकऱ्यासाठी नोट्स',
       createPlan: 'खत योजना तयार करा',
       sendPlan: 'योजना पाठवा',
       planSent: 'योजना शेतकऱ्याला पाठवली.',

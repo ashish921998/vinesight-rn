@@ -192,6 +192,8 @@ export const en = {
       itemNumber: 'Item {{number}}',
       productName: 'Product name',
       quantity: 'Quantity',
+      planTitle: 'Plan title',
+      planNotes: 'Notes for the farmer',
       createPlan: 'Create fertilizer plan',
       sendPlan: 'Send plan',
       planSent: 'Plan sent to the farmer.',

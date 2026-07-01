@@ -180,6 +180,8 @@ export const hi = {
       itemNumber: 'वस्तु {{number}}',
       productName: 'उत्पाद का नाम',
       quantity: 'मात्रा',
+      planTitle: 'योजना का शीर्षक',
+      planNotes: 'किसान के लिए नोट्स',
       createPlan: 'उर्वरक योजना बनाएं',
       sendPlan: 'योजना भेजें',
       planSent: 'योजना किसान को भेज दी गई।',

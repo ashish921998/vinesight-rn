@@ -1,7 +1,10 @@
 import { useMemo, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -55,6 +58,8 @@ export default function LabReportsScreen() {
   const sendPlan = useSendFertilizerPlan();
 
   const [fabOpen, setFabOpen] = useState(false);
+  const [planTitle, setPlanTitle] = useState('');
+  const [planNotes, setPlanNotes] = useState('');
   const [items, setItems] = useState<DraftItem[]>([emptyDraft()]);
 
   const latestSoil = useMemo(() => (soil.data ?? [])[0] ?? null, [soil.data]);
@@ -93,6 +98,8 @@ export default function LabReportsScreen() {
   }, []);
 
   const resetForm = () => {
+    setPlanTitle('');
+    setPlanNotes('');
     setItems([emptyDraft()]);
   };
 
@@ -139,8 +146,8 @@ export default function LabReportsScreen() {
 
       await sendPlan.mutateAsync({
         reviewId,
-        title: planItems[0].fertilizer_name,
-        notes: null,
+        title: planTitle.trim() || planItems[0].fertilizer_name,
+        notes: planNotes.trim() || null,
         items: planItems,
       });
 
@@ -227,16 +234,27 @@ export default function LabReportsScreen() {
         animationType="slide"
         onRequestClose={() => setFabOpen(false)}
       >
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <Pressable style={{ flex: 1 }} onPress={() => setFabOpen(false)} />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
+            onPress={() => {
+              Keyboard.dismiss();
+              setFabOpen(false);
+            }}
+          />
           <View
             style={{
               backgroundColor: m3.colorScheme.surface,
               borderTopLeftRadius: borderRadius.xl,
               borderTopRightRadius: borderRadius.xl,
               padding: spacing[5],
+              paddingBottom: spacing[6],
               gap: spacing[4],
-              maxHeight: '80%',
+              maxHeight: '88%',
             }}
           >
             {/* Header */}
@@ -261,8 +279,43 @@ export default function LabReportsScreen() {
               </Pressable>
             </View>
 
-            {/* Item list */}
-            <ScrollView>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ gap: spacing[3], paddingBottom: spacing[2] }}
+            >
+              <TextInput
+                value={planTitle}
+                onChangeText={setPlanTitle}
+                placeholder={t('professional.reviews.planTitle', 'Plan title')}
+                placeholderTextColor={m3.colorScheme.onSurfaceVariant}
+                returnKeyType="next"
+                style={{
+                  padding: spacing[3],
+                  borderRadius: borderRadius.md,
+                  backgroundColor: m3.colorScheme.surfaceVariant,
+                  color: m3.colorScheme.onSurface,
+                  fontSize: fontSize.sm,
+                }}
+              />
+              <TextInput
+                value={planNotes}
+                onChangeText={setPlanNotes}
+                placeholder={t('professional.reviews.planNotes', 'Notes for the farmer')}
+                placeholderTextColor={m3.colorScheme.onSurfaceVariant}
+                multiline
+                textAlignVertical="top"
+                style={{
+                  minHeight: 84,
+                  padding: spacing[3],
+                  borderRadius: borderRadius.md,
+                  backgroundColor: m3.colorScheme.surfaceVariant,
+                  color: m3.colorScheme.onSurface,
+                  fontSize: fontSize.sm,
+                }}
+              />
+
               <View style={{ gap: spacing[3] }}>
                 {items.map((draft, index) => (
                   <View
@@ -299,6 +352,7 @@ export default function LabReportsScreen() {
                       onChangeText={(text) => updateItem(index, { name: text })}
                       placeholder={t('professional.reviews.productName')}
                       placeholderTextColor={m3.colorScheme.onSurfaceVariant}
+                      returnKeyType="next"
                       style={{
                         padding: spacing[2],
                         borderRadius: borderRadius.md,
@@ -316,6 +370,7 @@ export default function LabReportsScreen() {
                         keyboardType="decimal-pad"
                         placeholder={t('professional.reviews.quantity')}
                         placeholderTextColor={m3.colorScheme.onSurfaceVariant}
+                        returnKeyType="done"
                         style={{
                           flex: 1,
                           padding: spacing[2],
@@ -328,6 +383,8 @@ export default function LabReportsScreen() {
                       <View
                         style={{
                           flexDirection: 'row',
+                          flexShrink: 1,
+                          flexWrap: 'wrap',
                           borderRadius: borderRadius.md,
                           backgroundColor: m3.colorScheme.surface,
                           overflow: 'hidden',
@@ -367,34 +424,36 @@ export default function LabReportsScreen() {
             </ScrollView>
 
             {/* Add item + submit */}
-            <Pressable
-              onPress={addItem}
-              style={({ pressed }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: spacing[1],
-                paddingVertical: spacing[2],
-                borderRadius: borderRadius.full,
-                borderWidth: 1,
-                borderColor: m3.colorScheme.primary,
-                opacity: pressed ? 0.8 : 1,
-              })}
-            >
-              <UiSymbol name="plus" size={16} color={m3.colorScheme.primary} />
-              <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.medium }}>
-                {t('professional.reviews.addItem')}
-              </Text>
-            </Pressable>
+            <View style={{ gap: spacing[3] }}>
+              <Pressable
+                onPress={addItem}
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: spacing[1],
+                  paddingVertical: spacing[2],
+                  borderRadius: borderRadius.full,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.primary,
+                  opacity: pressed ? 0.8 : 1,
+                })}
+              >
+                <UiSymbol name="plus" size={16} color={m3.colorScheme.primary} />
+                <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.medium }}>
+                  {t('professional.reviews.addItem')}
+                </Text>
+              </Pressable>
 
-            <Button
-              title={t('professional.reviews.sendPlan')}
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-              isLoading={isSubmitting}
-            />
+              <Button
+                title={t('professional.reviews.sendPlan')}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+                isLoading={isSubmitting}
+              />
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
