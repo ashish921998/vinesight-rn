@@ -10,6 +10,10 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+        "SENTRY_ALLOW_FAILURE": "true"
+      },
       "android": {
         "buildType": "apk"
       }
