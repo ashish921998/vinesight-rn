@@ -50,6 +50,7 @@ import {
   type FertigationFormData,
 } from '@/components/forms';
 import { type ExpenseTypeId, type LogTypeId } from '@/constants/calculator-models';
+import { isFertigationUnitRecognized } from '@/constants/fertilizer-units';
 import {
   useUpdateIrrigationRecord,
   useUpdateSprayRecord,
@@ -347,7 +348,9 @@ export function ActivityEditForm({
             data.fertilizers = r.fertilizers.map((f) => ({
               name: f.name,
               quantity: f.quantity ?? 0,
-              unit: f.unit as FertigationFormData['fertilizers'][number]['unit'],
+              // Stored units load verbatim — historical spellings ('kg/acre',
+              // web-written strings) render as-is, never coerced (issue #192).
+              unit: f.unit,
               quantityBasis: f.quantity_basis ?? 'total',
               warehouseItemId: f.warehouse_item_id ?? null,
               catalogProductId: f.catalog_product_id ?? null,
@@ -466,9 +469,12 @@ export function ActivityEditForm({
           }
           const fertilizerItems = fertigationData.fertilizers.map((f) => ({
             name: f.name.trim(),
+            // Testimony rule (issue #192): stored verbatim; kernel-unknown
+            // strings are flagged for review, never coerced to kg.
             unit: f.unit,
             quantity: f.quantity ?? 0,
             quantity_basis: f.quantityBasis ?? 'total',
+            ...(isFertigationUnitRecognized(f.unit) ? {} : { unit_unrecognized: true }),
             warehouse_item_id: f.warehouseItemId ?? null,
             catalog_product_id: f.catalogProductId ?? null,
             composition_snapshot: f.compositionSnapshot ?? null,
