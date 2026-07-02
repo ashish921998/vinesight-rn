@@ -49,14 +49,16 @@ export const MEASURE_OPTIONS: { value: FertilizerMeasure; label: string }[] = [
 
 /**
  * For each measure, every spelling a stored unit string may take that should
- * resolve back to it. Includes the canonical form plus common aliases
- * (spelled-out numerator, case variants). Resolvers compare case-insensitively.
+ * resolve back to it. Includes the canonical per-acre form, spelled-out /
+ * case variants, AND the bare measure names (kg, liter, gram, ml, litre) so
+ * non-plan callers that store bare units (fertilizer catalog, suggestions)
+ * still resolve correctly. Resolvers compare case-insensitively.
  */
-const PER_ACRE_UNIT_ALIASES: Record<FertilizerMeasure, readonly string[]> = {
-  kg: ['kg/acre'],
-  gram: ['g/acre', 'gram/acre'],
-  liter: ['l/acre', 'liter/acre', 'litre/acre'],
-  ml: ['ml/acre'],
+const UNIT_ALIASES: Record<FertilizerMeasure, readonly string[]> = {
+  kg: ['kg/acre', 'kg'],
+  gram: ['g/acre', 'gram/acre', 'gram'],
+  liter: ['l/acre', 'liter/acre', 'litre/acre', 'liter', 'litre'],
+  ml: ['ml/acre', 'ml'],
   ppm: ['ppm'],
 };
 
@@ -72,8 +74,8 @@ export function resolveFertilizerMeasure(
 ): FertilizerMeasure {
   const lowered = unit?.trim().toLowerCase();
   if (!lowered) return fallback;
-  for (const measure of Object.keys(PER_ACRE_UNIT_ALIASES) as FertilizerMeasure[]) {
-    if (PER_ACRE_UNIT_ALIASES[measure].some((alias) => alias.toLowerCase() === lowered)) {
+  for (const measure of Object.keys(UNIT_ALIASES) as FertilizerMeasure[]) {
+    if (UNIT_ALIASES[measure].some((alias) => alias.toLowerCase() === lowered)) {
       return measure;
     }
   }
