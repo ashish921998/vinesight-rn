@@ -2215,67 +2215,194 @@ export default function FarmDetailScreen() {
             </View>
           </View>
 
-          {/* Open Tasks Section */}
-          <View
-            style={{
-              paddingHorizontal: spacing[4],
-              marginTop: spacing[6],
-            }}
-          >
-            {/* Section header */}
+          {/* Open Tasks Section — hidden in Simplified mode */}
+          {detailedMode && (
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: spacing[3],
+                paddingHorizontal: spacing[4],
+                marginTop: spacing[6],
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.bold,
-                    letterSpacing: 0.8,
-                    textTransform: 'uppercase',
-                    color: m3.surface.s500,
-                  }}
-                >
-                  {t('farmDetails.sections.openTasks', { defaultValue: 'Open tasks' })}
-                </Text>
-                {openTasks.length > 0 && (
+              {/* Section header */}
+              {/* Section header */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[3],
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.bold,
+                      letterSpacing: 0.8,
+                      textTransform: 'uppercase',
                       color: m3.surface.s500,
-                      marginLeft: 4,
                     }}
                   >
-                    · {openTasks.length}
+                    {t('farmDetails.sections.openTasks', { defaultValue: 'Open tasks' })}
                   </Text>
-                )}
+                  {openTasks.length > 0 && (
+                    <Text
+                      style={{
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.bold,
+                        color: m3.surface.s500,
+                        marginLeft: 4,
+                      }}
+                    >
+                      · {openTasks.length}
+                    </Text>
+                  )}
+                </View>
+                {farm?.id ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[1] }}>
+                    <Pressable
+                      onPress={handleAddTask}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('farmDetails.actions.addTask')}
+                      hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
+                      style={({ pressed }) => ({
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 2,
+                        paddingHorizontal: spacing[2],
+                        paddingVertical: spacing[1],
+                        borderRadius: m3.shape.cornerSmall,
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      })}
+                    >
+                      <UiSymbol name="plus" size={13} color={m3.colorScheme.primary} />
+                      <Text
+                        style={{
+                          color: m3.colorScheme.primary,
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
+                        {t('farmDetails.actions.addTask')}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        if (!farm?.id) return;
+                        router.push({
+                          pathname: '/tasks',
+                          params: { farmId: farm.id.toString() },
+                        });
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
+                      hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
+                      style={({ pressed }) => ({
+                        paddingHorizontal: spacing[2],
+                        paddingVertical: spacing[1],
+                        borderRadius: m3.shape.cornerSmall,
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      })}
+                    >
+                      <Text
+                        style={{
+                          color: m3.colorScheme.primary,
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
+                        {t('farmDetails.actions.seeAllTasks')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : null}
               </View>
-              {farm?.id ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[1] }}>
+
+              {/* Task rows */}
+              {openTasks.length > 0 ? (
+                <View
+                  style={{
+                    gap: spacing[3],
+                  }}
+                >
+                  {openTasks.slice(0, OPEN_TASKS_PREVIEW_LIMIT).map((task) => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      showFarmName={false}
+                      onComplete={(item) => {
+                        if (!item.id) return;
+                        handleCompleteTask(item.id);
+                      }}
+                      onEdit={(item) => {
+                        setAddEntry({
+                          tabs: ['task'],
+                          initialTab: 'task',
+                          editingTask: item,
+                        });
+                        router.push({
+                          pathname: '/add-entry',
+                          params: { tabs: 'task', initialTab: 'task' },
+                        });
+                      }}
+                      onDelete={(item) => {
+                        if (!item.id) return;
+                        handleDeleteTask(item.id, item.title);
+                      }}
+                      onLogFromTask={(item) => handleLogFromTask(item)}
+                    />
+                  ))}
+                </View>
+              ) : !isTasksLoading ? (
+                <View
+                  style={{
+                    borderRadius: m3.shape.cornerLarge,
+                    alignItems: 'center',
+                    padding: spacing[8],
+                    backgroundColor: m3.surface.surfaceContainerLow,
+                    borderWidth: 1,
+                    borderColor: m3.colorScheme.outlineVariant,
+                  }}
+                >
+                  <UiSymbol
+                    name="checkbox-outline"
+                    size={28}
+                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
+                  />
+                  <Text
+                    style={{
+                      color: m3.colorScheme.onSurfaceVariant,
+                      fontSize: fontSize.sm,
+                      textAlign: 'center',
+                      marginTop: spacing[2],
+                    }}
+                  >
+                    {t('farmDetails.tasks.empty.title')}
+                  </Text>
                   <Pressable
                     onPress={handleAddTask}
                     accessibilityRole="button"
                     accessibilityLabel={t('farmDetails.actions.addTask')}
-                    hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
                     style={({ pressed }) => ({
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 2,
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: spacing[1],
-                      borderRadius: m3.shape.cornerSmall,
+                      gap: spacing[1],
+                      marginTop: spacing[4],
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: spacing[2],
+                      borderRadius: m3.shape.cornerMedium,
                       backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
+                        ? colorWithOpacity(m3.colorScheme.primary, 0.22)
+                        : colorWithOpacity(m3.colorScheme.primary, 0.14),
+                      borderWidth: 1,
+                      borderColor: m3.colorScheme.primary,
                     })}
                   >
-                    <UiSymbol name="plus" size={13} color={m3.colorScheme.primary} />
+                    <UiSymbol name="plus" size={15} color={m3.colorScheme.primary} />
                     <Text
                       style={{
                         color: m3.colorScheme.primary,
@@ -2286,134 +2413,10 @@ export default function FarmDetailScreen() {
                       {t('farmDetails.actions.addTask')}
                     </Text>
                   </Pressable>
-                  <Pressable
-                    onPress={() => {
-                      if (!farm?.id) return;
-                      router.push({
-                        pathname: '/tasks',
-                        params: { farmId: farm.id.toString() },
-                      });
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
-                    hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
-                    style={({ pressed }) => ({
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: spacing[1],
-                      borderRadius: m3.shape.cornerSmall,
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
-                    })}
-                  >
-                    <Text
-                      style={{
-                        color: m3.colorScheme.primary,
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {t('farmDetails.actions.seeAllTasks')}
-                    </Text>
-                  </Pressable>
                 </View>
               ) : null}
             </View>
-
-            {/* Task rows */}
-            {openTasks.length > 0 ? (
-              <View
-                style={{
-                  gap: spacing[3],
-                }}
-              >
-                {openTasks.slice(0, OPEN_TASKS_PREVIEW_LIMIT).map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    showFarmName={false}
-                    onComplete={(item) => {
-                      if (!item.id) return;
-                      handleCompleteTask(item.id);
-                    }}
-                    onEdit={(item) => {
-                      setAddEntry({
-                        tabs: ['task'],
-                        initialTab: 'task',
-                        editingTask: item,
-                      });
-                      router.push({
-                        pathname: '/add-entry',
-                        params: { tabs: 'task', initialTab: 'task' },
-                      });
-                    }}
-                    onDelete={(item) => {
-                      if (!item.id) return;
-                      handleDeleteTask(item.id, item.title);
-                    }}
-                    onLogFromTask={(item) => handleLogFromTask(item)}
-                  />
-                ))}
-              </View>
-            ) : !isTasksLoading ? (
-              <View
-                style={{
-                  borderRadius: m3.shape.cornerLarge,
-                  alignItems: 'center',
-                  padding: spacing[8],
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                }}
-              >
-                <UiSymbol
-                  name="checkbox-outline"
-                  size={28}
-                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
-                />
-                <Text
-                  style={{
-                    color: m3.colorScheme.onSurfaceVariant,
-                    fontSize: fontSize.sm,
-                    textAlign: 'center',
-                    marginTop: spacing[2],
-                  }}
-                >
-                  {t('farmDetails.tasks.empty.title')}
-                </Text>
-                <Pressable
-                  onPress={handleAddTask}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('farmDetails.actions.addTask')}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: spacing[1],
-                    marginTop: spacing[4],
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: spacing[2],
-                    borderRadius: m3.shape.cornerMedium,
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.22)
-                      : colorWithOpacity(m3.colorScheme.primary, 0.14),
-                    borderWidth: 1,
-                    borderColor: m3.colorScheme.primary,
-                  })}
-                >
-                  <UiSymbol name="plus" size={15} color={m3.colorScheme.primary} />
-                  <Text
-                    style={{
-                      color: m3.colorScheme.primary,
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                    }}
-                  >
-                    {t('farmDetails.actions.addTask')}
-                  </Text>
-                </Pressable>
-              </View>
-            ) : null}
-          </View>
+          )}
 
           {/* Recent Logs Section */}
           <View

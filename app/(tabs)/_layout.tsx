@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { fontSize } from '@/styles/theme';
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, useRouter, useSegments } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -49,6 +49,7 @@ export default function TabLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
   const detailedMode = useAppModeStore((state) => state.detailedMode);
+  const segments = useSegments();
   const [hasRedirected, setHasRedirected] = useState(false);
   const insets = useSafeAreaInsets();
   const m3 = useM3();
@@ -111,6 +112,18 @@ export default function TabLayout() {
       setHasRedirected(false);
     }
   }, [isAuthenticated, isLoading, router, hasRedirected]);
+
+  // If Detailed mode is switched off while the user is sitting on one of the
+  // now-hidden tabs, bounce them back to the dashboard so they don't linger on
+  // a route that has no tab-bar entry (which Expo Router treats as an unmapped
+  // route and can crash on).
+  useEffect(() => {
+    if (detailedMode) return;
+    const activeTab = segments[1]; // ['(tabs)', '<tab>']
+    if (typeof activeTab === 'string' && DETAILED_TABS.some((tab) => tab.name === activeTab)) {
+      router.replace('/(tabs)');
+    }
+  }, [detailedMode, segments, router]);
 
   if (isLoading || !isAuthenticated) {
     return null;

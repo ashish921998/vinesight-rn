@@ -2,7 +2,7 @@ import { StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { borderRadius, fontSize, fontWeight, getM3Theme, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { View, Text, Switch } from 'react-native';
+import { View, Text, Switch, Pressable } from 'react-native';
 import React from 'react';
 
 export const createStyles = (m3: ReturnType<typeof getM3Theme>) => ({
@@ -389,7 +389,7 @@ export function SettingsItem({
   styles: SettingsStyles;
   m3: ReturnType<typeof getM3Theme>;
 }) {
-  return (
+  const content = (
     <View style={[styles.settingsItem, !isLast && styles.borderBottom]}>
       <View style={styles.settingsIcon}>
         <UISymbol name={icon} size={20} color={m3.neutral.n500} />
@@ -425,6 +425,7 @@ export function SettingsItem({
           value={toggle.value}
           onValueChange={toggle.onValueChange}
           trackColor={{ false: m3.surface.s300, true: m3.colorScheme.primary }}
+          accessibilityLabel={title}
         />
       ) : (
         <>
@@ -442,4 +443,22 @@ export function SettingsItem({
       )}
     </View>
   );
+
+  // The toggle variant wraps the row in a Pressable so the whole row is tappable
+  // (matching the other settings rows) and exposes switch a11y semantics.
+  // Non-toggle rows stay a plain View — their tap behavior is supplied by a
+  // wrapping Pressable at the call site.
+  if (toggle) {
+    return (
+      <Pressable
+        onPress={() => toggle.onValueChange(!toggle.value)}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: toggle.value }}
+        accessibilityLabel={title}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+  return content;
 }
