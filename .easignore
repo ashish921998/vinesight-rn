@@ -7,10 +7,11 @@
 .env
 .env.*
 !.env.example
-android/**/build/
-android/.kotlin/
-android/* 2*
-android/**/* 2*
+# Exclude the generated native dirs entirely so EAS prebuilds fresh from
+# app.config (CNG). A stale local android/ otherwise makes EAS skip prebuild
+# and ignore config such as android.googleServicesFile (which breaks FCM push).
+/android
+/ios
 dist/
 web-build/
 google-service-account.json

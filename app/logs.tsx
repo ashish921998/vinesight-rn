@@ -54,6 +54,7 @@ import { useM3 } from '@/styles/use-theme';
 import { useDomainColors } from '@/styles/use-domain-colors';
 import { getDaysAfterPruning } from '@/utils/date';
 import { createAddLogHref } from '@/utils/add-log-navigation';
+import { ALL_FARMS_ID } from '@/constants/farm-selection';
 
 interface CombinedLog {
   id: string;
@@ -480,7 +481,10 @@ export default function LogsScreen() {
   }, []);
 
   const handleAddActivity = useCallback(() => {
-    if (selectedFarmId === undefined) return;
+    if (selectedFarmId === undefined || selectedFarmId === ALL_FARMS_ID) {
+      router.push(createAddLogHref({ farmId: 'all', lockFarmSelection: true }));
+      return;
+    }
     router.push(createAddLogHref({ farmId: selectedFarmId, lockFarmSelection: true }));
   }, [router, selectedFarmId]);
 

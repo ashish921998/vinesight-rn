@@ -5,6 +5,7 @@ import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { formatNumber } from '@/i18n/format';
+import { StackBackButton } from '@/components/ui';
 
 export default function ProfessionalFarmer() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
@@ -35,7 +36,14 @@ export default function ProfessionalFarmer() {
 
   return (
     <View style={{ flex: 1, padding: spacing[4], backgroundColor: m3.colorScheme.background }}>
-      <Stack.Screen options={{ title: farmer.full_name }} />
+      <Stack.Screen
+        options={{
+          title: farmer.full_name,
+          // Explicit back control: after a deep reload / replace the native
+          // stack has no history, so fall back to the professional directory.
+          headerLeft: () => <StackBackButton fallback="/professional" />,
+        }}
+      />
       <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginBottom: spacing[5] }}>
         {farmer.phone ?? t('professional.farmerAccount')}
       </Text>

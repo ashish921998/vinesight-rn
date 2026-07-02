@@ -14,15 +14,11 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { Button, Input } from '@/components/ui';
 import { toast } from '@/components/ui/toast';
-import { isIOS } from '@/hooks';
+import { isIOS, useJoinOrganization } from '@/hooks';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import {
-  joinOrganizationBySlug,
-  joinOrgMessage,
-  type JoinOrgStatus,
-} from '@/services/organization';
+import { joinOrgMessage, type JoinOrgStatus } from '@/services/organization';
 
 interface JoinOrgModalProps {
   visible: boolean;
@@ -39,6 +35,7 @@ interface JoinOrgModalProps {
 export function JoinOrgModal({ visible, onClose, onJoined }: JoinOrgModalProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const { mutateAsync: joinOrganization } = useJoinOrganization();
 
   const [slug, setSlug] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -57,7 +54,9 @@ export function JoinOrgModal({ visible, onClose, onJoined }: JoinOrgModalProps) 
     if (!canSubmit) return;
     setSubmitting(true);
     setResultStatus(null);
-    const result = await joinOrganizationBySlug(trimmedSlug);
+    // useJoinOrganization invalidates + refetches the profile before resolving,
+    // so org-gated UI is already fresh by the time the success banner shows.
+    const result = await joinOrganization(trimmedSlug);
     setResultStatus(result.status);
     setSubmitting(false);
 
@@ -65,8 +64,11 @@ export function JoinOrgModal({ visible, onClose, onJoined }: JoinOrgModalProps) 
       setSuccessOrgName(result.organizationName);
       toast.success(
         result.organizationName
-          ? `Linked to ${result.organizationName}.`
-          : joinOrgMessage(result.status),
+          ? t('settings.joinOrg.successLinked', {
+              name: result.organizationName,
+              defaultValue: 'Linked to {{name}}.',
+            })
+          : joinOrgMessage(result.status, t),
       );
       onJoined?.(result.organizationName);
     }
@@ -220,7 +222,12 @@ export function JoinOrgModal({ visible, onClose, onJoined }: JoinOrgModalProps) 
               <View style={successBannerStyle}>
                 <UISymbol name="checkmark.circle.fill" size={20} color={iconColor} />
                 <Text style={bannerTextStyle}>
-                  {successOrgName ? `Linked to ${successOrgName}.` : joinOrgMessage(resultStatus!)}
+                  {successOrgName
+                    ? t('settings.joinOrg.successLinked', {
+                        name: successOrgName,
+                        defaultValue: 'Linked to {{name}}.',
+                      })
+                    : joinOrgMessage(resultStatus!, t)}
                 </Text>
               </View>
             )}
@@ -228,7 +235,7 @@ export function JoinOrgModal({ visible, onClose, onJoined }: JoinOrgModalProps) 
             {showError && (
               <View style={errorBannerStyle}>
                 <UISymbol name="exclamationmark.circle.fill" size={20} color={iconColor} />
-                <Text style={bannerTextStyle}>{joinOrgMessage(resultStatus!)}</Text>
+                <Text style={bannerTextStyle}>{joinOrgMessage(resultStatus!, t)}</Text>
               </View>
             )}
           </View>

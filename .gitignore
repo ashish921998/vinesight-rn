@@ -45,6 +45,9 @@ yarn-error.*
 /android
 google-service-account.json
 
+# Firebase / FCM Android config (supply via EAS file env var GOOGLE_SERVICES_JSON)
+google-services.json
+
 # signing / credentials (never commit)
 authkey.php
 AuthKey*.p8

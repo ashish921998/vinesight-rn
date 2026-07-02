@@ -7,6 +7,7 @@ import { useProfessionalFarmActivity } from '@/hooks/use-professional-farm-activ
 import { TimelineLogCard } from '@/components/cards/timeline-log-card';
 import { CropIcon } from '@/components/ui/crop-icon';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { StackBackButton } from '@/components/ui';
 import { getCropVisual } from '@/utils/farm-crop-visuals';
 import { getLogType } from '@/constants';
 import { computeEarliestSafeHarvest, type PhiRecord } from '@/services/phi-service';
@@ -196,7 +197,10 @@ export default function ProfessionalFarm() {
         accessibilityRole="button"
         accessibilityLabel={t('professional.reports.labReports')}
         onPress={() =>
-          router.push({ pathname: '/professional/farm/[farmId]/lab-reports', params: { farmId } })
+          router.push({
+            pathname: '/professional/farm/[farmId]/lab-reports',
+            params: { farmId, userId },
+          })
         }
         style={({ pressed }) => ({
           flexDirection: 'row',
@@ -290,6 +294,17 @@ export default function ProfessionalFarm() {
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <Stack.Screen
         options={{
+          // Explicit back control: after a deep reload / replace the native
+          // stack has no history, so the default back button won't render.
+          // Fall back to the farmer screen in that case.
+          headerLeft: () => (
+            <StackBackButton
+              fallback={{
+                pathname: '/professional/farmer/[userId]',
+                params: { userId },
+              }}
+            />
+          ),
           // Header carries identity (farm name + variety) so the body can lead
           // with the logs; the farmer's name is one tap back in the stack.
           headerTitle: () => (
