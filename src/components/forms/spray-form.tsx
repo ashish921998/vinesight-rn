@@ -1,14 +1,13 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  TextInput,
-  ScrollView,
-  Modal,
-  type TextInputProps,
-} from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
+import { SearchSelect } from '@/components/ui/search-select';
+import {
+  chemicalCatalogToOptions,
+  planItemsToOptions,
+  recentItemsToOptions,
+  type SearchSelectSelection,
+} from '@/components/ui/search-select-logic';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
@@ -19,6 +18,8 @@ import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import type { NutrientCompositionItem, QuantityBasis } from '@/types';
 import type { ChemicalMix } from '@/types/phi';
+import type { RecentInputItem } from '@/hooks/use-records';
+import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 import { normalizeMixComponentToPerLiterDose } from '@/services/phi-service';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
@@ -33,6 +34,8 @@ export interface ChemicalEntry {
   quantityBasis?: QuantityBasis;
   warehouseItemId?: number | null;
   catalogProductId?: number | null;
+  /** Set when this row was picked from an active plan item (uuid). */
+  planItemId?: string | null;
   compositionSnapshot?: NutrientCompositionItem[] | null;
   densityKgPerL?: number | null;
 }
@@ -59,6 +62,10 @@ function resolveChemicalUnit(
   }
   if (lowered === 'gm/acre') return 'gram';
   if (lowered === 'ml/acre') return 'ml';
+  // Plan-item spellings: the per-acre basis survives via resolveQuantityBasis
+  // on the original string, so only the scale maps here (like gm/ml above).
+  if (lowered === 'kg/acre') return 'kg';
+  if (lowered === 'liter/acre' || lowered === 'litre/acre' || lowered === 'l/acre') return 'liter';
   if (normalized && isChemicalUnit(normalized)) return normalized;
   return fallback;
 }
@@ -110,6 +117,7 @@ export interface SprayQuickAddItem {
   quantityBasis?: QuantityBasis;
   warehouseItemId?: number | null;
   catalogProductId?: number | null;
+  planItemId?: string | null;
   composition?: NutrientCompositionItem[] | null;
   densityKgPerL?: number | null;
 }
@@ -121,6 +129,10 @@ interface SprayFormProps {
   quickAddItems?: SprayQuickAddItem[];
   catalogOnly?: boolean;
   catalogMixes?: ChemicalMix[];
+  /** This farm's recent spray items (identity-rich) for the picker's history section. */
+  historyItems?: RecentInputItem[];
+  /** This farm's active plan items for the picker's plan section. */
+  planItems?: FertilizerPlanItem[];
   /** Hide the decorative header (inline log composer). */
   compact?: boolean;
 }
@@ -132,6 +144,8 @@ export function SprayForm({
   quickAddItems = [],
   catalogOnly = false,
   catalogMixes = [],
+  historyItems = [],
+  planItems = [],
   compact = false,
 }: SprayFormProps) {
   const m3 = useM3();
@@ -186,25 +200,28 @@ export function SprayForm({
   }, [data.chemicals]);
 
   const waterVolumeRef = useRef<NumericInputHandle>(null);
-  const [showCatalogMixPicker, setShowCatalogMixPicker] = useState(false);
-  const [catalogMixQuery, setCatalogMixQuery] = useState('');
+  const [showProductPicker, setShowProductPicker] = useState(false);
   const selectedCatalogMix = useMemo(
     () => catalogMixes.find((mix) => mix.id === data.catalogMixId) ?? null,
     [catalogMixes, data.catalogMixId],
   );
-  const filteredCatalogMixes = useMemo(() => {
-    const normalized = catalogMixQuery.trim().toLowerCase();
-    if (!normalized) return catalogMixes;
-    return catalogMixes.filter((mix) => {
-      if (mix.name.toLowerCase().includes(normalized)) return true;
-      if ((mix.target_problem ?? '').toLowerCase().includes(normalized)) return true;
-      return mix.components.some(
-        (component) =>
-          component.product_name.toLowerCase().includes(normalized) ||
-          (component.active_ingredient ?? '').toLowerCase().includes(normalized),
-      );
-    });
-  }, [catalogMixes, catalogMixQuery]);
+  // Picker sections. Catalog-only mode (delegated logging) restricts the picker
+  // to catalog mixes — no history/plan prefills, no custom escape hatch.
+  const historyOptions = useMemo(
+    () =>
+      catalogOnly ? [] : recentItemsToOptions(historyItems, { mixLabel: t('searchSelect.mixTag') }),
+    [catalogOnly, historyItems, t],
+  );
+  const planOptions = useMemo(
+    () => (catalogOnly ? [] : planItemsToOptions(planItems)),
+    [catalogOnly, planItems],
+  );
+  const catalogOptions = useMemo(
+    () => chemicalCatalogToOptions(catalogMixes, { includeProducts: !catalogOnly }),
+    [catalogMixes, catalogOnly],
+  );
+  const hasPickerOptions =
+    historyOptions.length > 0 || planOptions.length > 0 || catalogOptions.length > 0;
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -246,6 +263,7 @@ export function SprayForm({
             quantityBasis: 'total',
             warehouseItemId: null,
             catalogProductId: null,
+            planItemId: null,
             compositionSnapshot: null,
             densityKgPerL: null,
           },
@@ -290,11 +308,16 @@ export function SprayForm({
           current.quantity !== undefined && current.quantity > 0
             ? current.quantity
             : (item.quantity ?? undefined),
+        // An explicit item basis (fully-prefilled picker selections) wins over
+        // the pristine row's default 'total'; legacy quick-add producers never
+        // set one, so their behavior is unchanged.
         quantityBasis:
+          item.quantityBasis ??
           current.quantityBasis ??
-          resolveQuantityBasis(item.unit?.trim() ?? validatedUnit, item.quantityBasis),
+          resolveQuantityBasis(item.unit?.trim() ?? validatedUnit),
         warehouseItemId: item.warehouseItemId ?? null,
         catalogProductId: item.catalogProductId ?? null,
+        planItemId: item.planItemId ?? null,
         compositionSnapshot: item.composition ?? null,
         densityKgPerL: item.densityKgPerL ?? null,
       };
@@ -322,6 +345,7 @@ export function SprayForm({
           ),
           warehouseItemId: item.warehouseItemId ?? null,
           catalogProductId: item.catalogProductId ?? null,
+          planItemId: item.planItemId ?? null,
           compositionSnapshot: item.composition ?? null,
           densityKgPerL: item.densityKgPerL ?? null,
         },
@@ -355,6 +379,7 @@ export function SprayForm({
           quantityBasis: 'total' as const,
           warehouseItemId: null,
           catalogProductId: component.product_id,
+          planItemId: null,
           compositionSnapshot: null,
           densityKgPerL: null,
         };
@@ -378,11 +403,37 @@ export function SprayForm({
         phiOverride: false,
         chemicals,
       });
-      setShowCatalogMixPicker(false);
-      setCatalogMixQuery('');
     },
     [onChange],
   );
+
+  const handleSearchSelection = (selection: SearchSelectSelection) => {
+    setShowProductPicker(false);
+    // Whole-mix prefill: catalog mix rows, and history rows whose record was
+    // logged as a catalog mix (record-level mix identity). Falls back to the
+    // single-item prefill when the mix is not in the cached catalog.
+    const mix =
+      selection.catalogMixId != null
+        ? (catalogMixes.find((candidate) => candidate.id === selection.catalogMixId) ?? null)
+        : null;
+    if (mix) {
+      applyCatalogMix(mix);
+      return;
+    }
+    if (selection.kind === 'mix') return;
+    addQuickChemical({
+      name: selection.name,
+      unit: selection.prefill?.unit,
+      quantity: selection.prefill?.quantity,
+      // Resolve the basis from the original unit string ('kg/acre' → per_acre)
+      // before resolveChemicalUnit collapses it to a bare scale.
+      quantityBasis:
+        selection.prefill?.quantityBasis ?? resolveQuantityBasis(selection.prefill?.unit),
+      warehouseItemId: selection.warehouseItemId ?? null,
+      catalogProductId: selection.catalogProductId ?? null,
+      planItemId: selection.planItemId ?? null,
+    });
+  };
 
   const focusFirstChemicalName = () => {
     if (catalogOnly) return;
@@ -492,13 +543,13 @@ export function SprayForm({
                       })}
                 </Text>
                 <Pressable
-                  onPress={() => setShowCatalogMixPicker(true)}
+                  onPress={() => setShowProductPicker(true)}
                   accessibilityRole="button"
                   accessibilityLabel={
                     selectedCatalogMix?.name ??
                     t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })
                   }
-                  accessibilityState={{ expanded: showCatalogMixPicker }}
+                  accessibilityState={{ expanded: showProductPicker }}
                   style={{
                     borderRadius: borderRadius.lg,
                     backgroundColor: m3.surface.s100,
@@ -640,10 +691,13 @@ export function SprayForm({
               />
             ))}
 
-            {/* Add Chemical Button */}
+            {/* Add Chemical Button — opens the sectioned product picker when
+                there is anything to pick from; falls back to a blank row. */}
             {data.chemicals.length < 10 && !catalogOnly && (
               <Pressable
-                onPress={addChemical}
+                onPress={() => (hasPickerOptions ? setShowProductPicker(true) : addChemical())}
+                accessibilityRole="button"
+                accessibilityLabel={t('sprayForm.chemicals.addChemical')}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -715,153 +769,20 @@ export function SprayForm({
         </Text>
       </View>
 
-      <Modal
-        visible={showCatalogMixPicker}
-        transparent
-        animationType="fade"
-        onRequestClose={() => {
-          setShowCatalogMixPicker(false);
-          setCatalogMixQuery('');
-        }}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.25),
-            justifyContent: 'center',
-            padding: spacing[4],
-          }}
-        >
-          <View
-            style={{
-              borderRadius: borderRadius.xl,
-              backgroundColor: m3.colorScheme.surface,
-              borderWidth: 1,
-              borderColor: m3.colorScheme.outlineVariant,
-              maxHeight: '80%',
-            }}
-          >
-            <View
-              style={{
-                padding: spacing[4],
-                borderBottomWidth: 1,
-                borderBottomColor: m3.surface.s100,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s900,
-                }}
-              >
-                {t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })}
-              </Text>
-              <TextInput
-                value={catalogMixQuery}
-                onChangeText={setCatalogMixQuery}
-                accessibilityLabel={t('sprayForm.searchCatalogMix', {
-                  defaultValue: 'Search catalog mix',
-                })}
-                placeholder={t('sprayForm.searchCatalogMix', {
-                  defaultValue: 'Search catalog mix',
-                })}
-                placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                style={{
-                  marginTop: spacing[3],
-                  borderRadius: borderRadius.lg,
-                  borderWidth: 1,
-                  borderColor: m3.surface.s200,
-                  backgroundColor: m3.surface.s100,
-                  color: m3.surface.s900,
-                  paddingHorizontal: spacing[3],
-                  paddingVertical: spacing[3],
-                }}
-              />
-            </View>
-
-            <ScrollView keyboardShouldPersistTaps="handled">
-              {filteredCatalogMixes.map((mix) => {
-                const isSelected = selectedCatalogMix?.id === mix.id;
-                return (
-                  <Pressable
-                    key={mix.id}
-                    onPress={() => applyCatalogMix(mix)}
-                    style={{
-                      paddingHorizontal: spacing[4],
-                      paddingVertical: spacing[3],
-                      borderTopWidth: 1,
-                      borderTopColor: m3.surface.s100,
-                      backgroundColor: isSelected
-                        ? colorWithOpacity(m3.colorScheme.tertiary, 0.08)
-                        : 'transparent',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: fontSize.sm,
-                        color: m3.surface.s900,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {mix.name}
-                    </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 2 }}>
-                      {mix.target_problem ??
-                        t('sprayForm.catalogOnly.fallbackLabel', {
-                          defaultValue: 'Catalog mix',
-                        })}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-              {filteredCatalogMixes.length === 0 ? (
-                <Text
-                  style={{
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: spacing[4],
-                    fontSize: fontSize.sm,
-                    color: m3.surface.s500,
-                  }}
-                >
-                  {t('common.noResultsFound', { defaultValue: 'No results found' })}
-                </Text>
-              ) : null}
-            </ScrollView>
-
-            <View
-              style={{
-                padding: spacing[3],
-                borderTopWidth: 1,
-                borderTopColor: m3.surface.s100,
-                alignItems: 'flex-end',
-              }}
-            >
-              <Pressable
-                onPress={() => {
-                  setShowCatalogMixPicker(false);
-                  setCatalogMixQuery('');
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.close', { defaultValue: 'Close' })}
-                accessibilityHint={t('sprayForm.catalogOnly.closePickerHint', {
-                  defaultValue: 'Closes the catalog mix picker',
-                })}
-                style={{
-                  borderRadius: borderRadius.full,
-                  paddingHorizontal: spacing[3],
-                  paddingVertical: spacing[2],
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                }}
-              >
-                <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
-                  {t('common.close', { defaultValue: 'Close' })}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <SearchSelect
+        visible={showProductPicker}
+        onClose={() => setShowProductPicker(false)}
+        onSelect={handleSearchSelection}
+        historyOptions={historyOptions}
+        planOptions={planOptions}
+        catalogOptions={catalogOptions}
+        allowCustom={!catalogOnly}
+        title={
+          catalogOnly
+            ? t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })
+            : t('sprayForm.chemicals.addChemical')
+        }
+      />
     </View>
   );
 }
@@ -957,6 +878,7 @@ function ChemicalRow({
         resolveQuantityBasis(item.unit?.trim() ?? unit, item.quantityBasis),
       warehouseItemId: item.warehouseItemId ?? null,
       catalogProductId: item.catalogProductId ?? null,
+      planItemId: item.planItemId ?? null,
       compositionSnapshot: item.composition ?? null,
       densityKgPerL: item.densityKgPerL ?? null,
     });
@@ -1271,6 +1193,7 @@ export function createEmptySprayFormData(): SprayFormData {
         quantityBasis: 'total',
         warehouseItemId: null,
         catalogProductId: null,
+        planItemId: null,
         compositionSnapshot: null,
         densityKgPerL: null,
       },

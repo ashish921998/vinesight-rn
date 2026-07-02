@@ -916,6 +916,20 @@ export const hi = {
     },
   },
 
+  searchSelect: {
+    title: 'उत्पाद जोड़ें',
+    searchPlaceholder: 'नाम खोजें या टाइप करें',
+    sections: {
+      history: 'पहले इस्तेमाल किए गए',
+      plan: 'आपकी योजना से',
+      catalog: 'कैटलॉग',
+    },
+    addCustom: '"{{query}}" जोड़ें',
+    customHint: 'कस्टम प्रविष्टि — जैसा टाइप किया वैसा सहेजा जाएगा',
+    mixTag: 'मिश्रण',
+    empty: 'खोजने के लिए नाम टाइप करें',
+  },
+
   irrigationForm: {
     title: 'सिंचाई',
     subtitle: 'सिंचाई अवधि लॉग करें',

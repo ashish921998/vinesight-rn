@@ -252,6 +252,7 @@ export function ActivityEditForm({
                 ('ml/L' as SprayFormData['chemicals'][number]['unit']),
               warehouseItemId: item.warehouse_item_id ?? null,
               catalogProductId: item.catalog_product_id ?? null,
+              planItemId: item.plan_item_id ?? null,
               compositionSnapshot: item.composition_snapshot ?? null,
               densityKgPerL: item.density_kg_per_l ?? null,
             }));
@@ -404,6 +405,7 @@ export function ActivityEditForm({
               quantity_basis: c.quantityBasis ?? 'total',
               warehouse_item_id: c.warehouseItemId ?? null,
               catalog_product_id: c.catalogProductId ?? null,
+              plan_item_id: c.planItemId ?? null,
               composition_snapshot: c.compositionSnapshot ?? null,
               density_kg_per_l: c.densityKgPerL ?? null,
             }));

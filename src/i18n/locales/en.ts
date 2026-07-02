@@ -928,6 +928,20 @@ export const en = {
     },
   },
 
+  searchSelect: {
+    title: 'Add product',
+    searchPlaceholder: 'Search or type a name',
+    sections: {
+      history: 'Used earlier',
+      plan: 'From your plan',
+      catalog: 'Catalog',
+    },
+    addCustom: 'Add "{{query}}"',
+    customHint: 'Custom entry — saved as typed',
+    mixTag: 'Mix',
+    empty: 'Type a name to search',
+  },
+
   expenseForm: {
     title: 'Expense',
     subtitle: 'Log farm expense',

@@ -169,6 +169,7 @@ export async function submitEntryPendingLog(params: {
             quantity_basis: quantityBasis,
             warehouse_item_id: c.warehouseItemId ?? null,
             catalog_product_id: c.catalogProductId ?? null,
+            plan_item_id: c.planItemId ?? null,
             composition_snapshot: c.compositionSnapshot ?? null,
             density_kg_per_l: c.densityKgPerL ?? null,
           };

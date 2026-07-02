@@ -1896,6 +1896,8 @@ export function EntryForm({
                 includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
                 onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
                 sprayCatalogMixes={catalogMixes}
+                sprayHistoryItems={recentSprayChemicals ?? []}
+                sprayPlanItems={fertilizerPlan?.items ?? []}
                 showSaveButton={false}
               />
             </ScrollView>
@@ -2012,6 +2014,8 @@ export function EntryForm({
           includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
           onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
           sprayCatalogMixes={catalogMixes}
+          sprayHistoryItems={recentSprayChemicals ?? []}
+          sprayPlanItems={fertilizerPlan?.items ?? []}
         />
       </View>
     );
