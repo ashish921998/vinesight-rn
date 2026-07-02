@@ -1952,6 +1952,12 @@ export const en = {
       title: 'Detailed mode',
       subtitle: 'Show workers, tools, AI assistant, and tasks',
     },
+    appModeIntro: {
+      title: "We've streamlined VineSight",
+      body: 'The app now starts in Simplified mode. Workers, tools, the AI assistant, and tasks are hidden by default. You can switch back any time.',
+      enableDetailed: 'Enable Detailed mode',
+      staySimplified: 'Stay on Simplified',
+    },
     errors: {
       signOutFailed: 'Failed to sign out. Please try again.',
       notificationsPermissionDenied: 'Notifications permission was not granted.',
