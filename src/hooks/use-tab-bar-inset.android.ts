@@ -5,7 +5,7 @@ import { BottomTabBarHeightContext } from 'expo-router/build/react-navigation/bo
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAndroidBottomSystemInset } from '@/utils/android-system-bars';
 
-const FALLBACK_TAB_BAR_HEIGHT = 56;
+const FALLBACK_TAB_BAR_HEIGHT = 64;
 
 export function useTabBarInset() {
   const height = React.useContext(BottomTabBarHeightContext);
