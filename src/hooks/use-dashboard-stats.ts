@@ -239,8 +239,12 @@ export interface RecentActivity {
 // ============================================================
 
 export function useDashboardStats() {
+  // Reactively track the mode so toggling it produces a fresh cache entry and
+  // the dashboard re-renders with correct worker/task counts immediately.
+  const detailedMode = useAppModeStore((s) => s.detailedMode);
+
   return useQuery({
-    queryKey: queryKeys.dashboard.stats(),
+    queryKey: queryKeys.dashboard.stats(detailedMode),
     queryFn: async (): Promise<DashboardStats> => {
       const userId = await getUserId();
       if (!userId) throw new Error('Not authenticated');
@@ -253,9 +257,6 @@ export function useDashboardStats() {
 
       // In simplified mode the workers/tasks metric cards are hidden, so skip
       // their count queries to avoid wasted network calls.
-      const detailedMode = useAppModeStore.getState().detailedMode;
-
-      // Fetch active workers count (detailed mode only)
       let workersCount = 0;
       if (detailedMode) {
         const { count } = await supabase
@@ -280,7 +281,9 @@ export function useDashboardStats() {
       let pendingTasksCount = 0;
 
       if (farmIds.length > 0) {
-        const [irrigation, spray, harvest, expense, fertigation, tasks] = await Promise.all([
+        // Only run the task-reminders count in detailed mode; simplified mode
+        // hides the tasks card so the query would be wasted.
+        const countQueries = [
           supabase
             .from(TABLES.IRRIGATION_RECORDS)
             .select('*', { count: 'exact', head: true })
@@ -306,14 +309,19 @@ export function useDashboardStats() {
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
-          detailedMode
-            ? supabase
-                .from('task_reminders')
-                .select('*', { count: 'exact', head: true })
-                .in('farm_id', farmIds)
-                .eq('completed', false)
-            : Promise.resolve({ count: 0 } as { count: number | null }),
-        ]);
+        ];
+        if (detailedMode) {
+          countQueries.push(
+            supabase
+              .from('task_reminders')
+              .select('*', { count: 'exact', head: true })
+              .in('farm_id', farmIds)
+              .eq('completed', false),
+          );
+        }
+
+        const counts = await Promise.all(countQueries);
+        const [irrigation, spray, harvest, expense, fertigation] = counts;
 
         activitiesCount =
           (irrigation.count ?? 0) +
@@ -322,7 +330,7 @@ export function useDashboardStats() {
           (expense.count ?? 0) +
           (fertigation.count ?? 0);
 
-        pendingTasksCount = tasks.count ?? 0;
+        pendingTasksCount = detailedMode ? (counts[5]?.count ?? 0) : 0;
       }
 
       return {

@@ -13,33 +13,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  */
 interface AppModeState {
   detailedMode: boolean;
-  hasHydrated: boolean;
-}
-
-interface AppModeActions {
   setDetailedMode: (value: boolean) => void;
-  toggleDetailedMode: () => void;
-  _setHasHydrated: (value: boolean) => void;
 }
 
 const APP_MODE_STORAGE_KEY = 'vinesight-app-mode';
 
-export const useAppModeStore = create<AppModeState & AppModeActions>()(
+export const useAppModeStore = create<AppModeState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       detailedMode: false,
-      hasHydrated: false,
       setDetailedMode: (value) => set({ detailedMode: value }),
-      toggleDetailedMode: () => set({ detailedMode: !get().detailedMode }),
-      _setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: APP_MODE_STORAGE_KEY,
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
-      onRehydrateStorage: () => () => {
-        useAppModeStore.setState({ hasHydrated: true });
-      },
     },
   ),
 );

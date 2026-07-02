@@ -10,7 +10,7 @@ import type { getM3Theme } from '@/styles/theme';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import type { ThemeMode } from '@/stores/theme-store';
 import type { SettingsStyles } from './settings-styles';
-import { SettingsItem, SettingsToggleItem } from './settings-styles';
+import { SettingsItem } from './settings-styles';
 
 interface PreferencesSectionProps {
   language: SupportedLanguageCode | null;
@@ -85,12 +85,11 @@ export function PreferencesSection({
           {t('settings.sectionGeneral')}
         </Text>
         <View style={styles.sectionContent}>
-          <SettingsToggleItem
+          <SettingsItem
             icon="rectangle.stack"
             title={t('settings.appMode.title')}
             subtitle={t('settings.appMode.subtitle')}
-            value={detailedMode}
-            onValueChange={onDetailedModeChange}
+            toggle={{ value: detailedMode, onValueChange: onDetailedModeChange }}
             isLast={false}
             styles={styles}
             m3={m3}

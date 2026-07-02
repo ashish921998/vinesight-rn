@@ -125,6 +125,19 @@ if (globalThisWithSplash[splashKey] !== true) {
 }
 WebBrowser.maybeCompleteAuthSession();
 
+/**
+ * Destinations that are only reachable in Detailed mode. A notification that
+ * would route here in Simplified mode falls back to home instead.
+ */
+const DETAILED_ONLY_ROUTES = new Set(['/(tabs)/workers', '/tasks']);
+
+function resolveNotificationTarget<R extends string>(route: R): R | '/(tabs)' {
+  if (!useAppModeStore.getState().detailedMode && DETAILED_ONLY_ROUTES.has(route)) {
+    return '/(tabs)';
+  }
+  return route;
+}
+
 function PetioleReminderSync() {
   usePetioleTestReminders();
   return null;
@@ -536,24 +549,14 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
           currentRouter.push('/(tabs)');
           return;
         }
-        // In simplified mode, workers/tasks destinations are hidden — fall back to home.
-        const detailedMode = useAppModeStore.getState().detailedMode;
-        if (!detailedMode && (route === '/(tabs)/workers' || route === '/tasks')) {
-          currentRouter.push('/(tabs)');
-          return;
-        }
-        currentRouter.push(route);
+        currentRouter.push(resolveNotificationTarget(route));
       } else if (
         data?.type === 'task_due' ||
         data?.type === 'task_due_tomorrow' ||
         data?.type === 'task_overdue'
       ) {
         // Tasks screen is hidden in simplified mode — fall back to home.
-        if (!useAppModeStore.getState().detailedMode) {
-          currentRouter.push('/(tabs)');
-        } else {
-          currentRouter.push('/tasks');
-        }
+        currentRouter.push(resolveNotificationTarget('/tasks'));
       } else if (data?.type === 'low_water') {
         currentRouter.push('/(tabs)');
       } else if (data?.type === 'warehouse_reorder') {

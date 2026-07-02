@@ -118,6 +118,8 @@ jest.mock('@/stores', () => ({
       upsertTaskSchedule: mockUpsertTaskSchedule,
       removeTaskSchedule: mockRemoveTaskSchedule,
     }),
+  useAppModeStore: (selector: (state: Record<string, unknown>) => unknown) =>
+    selector({ detailedMode: true }),
 }));
 
 jest.mock('@/services/telemetry', () => ({

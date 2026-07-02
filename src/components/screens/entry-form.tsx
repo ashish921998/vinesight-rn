@@ -349,6 +349,7 @@ export function EntryForm({
   const m3 = useM3();
   const { data: profile } = useProfile({ enabled: false });
   const user = useAuthStore((state) => state.user);
+  const detailedMode = useAppModeStore((state) => state.detailedMode);
   const preferredAreaUnit = resolveAreaUnitPreference(
     profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
   );
@@ -357,7 +358,6 @@ export function EntryForm({
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { windowHeight } = useResponsiveHeight();
-  const detailedMode = useAppModeStore((state) => state.detailedMode);
   const resolvedTabs = useMemo<EntryTab[]>(() => {
     if (!detailedMode) return ['log'];
     return tabs && tabs.length > 0 ? tabs : ['log', 'task'];

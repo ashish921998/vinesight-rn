@@ -194,7 +194,8 @@ export const queryKeys = {
   // Dashboard
   dashboard: {
     all: ['dashboard'] as const,
-    stats: () => [...queryKeys.dashboard.all, 'stats'] as const,
+    stats: (detailedMode?: boolean) =>
+      [...queryKeys.dashboard.all, 'stats', { detailedMode }] as const,
     todayNeedsAttention: () => [...queryKeys.dashboard.all, 'todayNeedsAttention'] as const,
     farmsNeedingAttention: () => [...queryKeys.dashboard.all, 'farmsNeedingAttention'] as const,
     recentActivities: (limit?: number) =>

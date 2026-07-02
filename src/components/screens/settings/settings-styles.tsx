@@ -371,6 +371,8 @@ export function SettingsItem({
   icon,
   title,
   value,
+  subtitle,
+  toggle,
   isLast,
   disabled,
   styles,
@@ -379,6 +381,9 @@ export function SettingsItem({
   icon: string;
   title: string;
   value?: string;
+  subtitle?: string;
+  /** When provided, renders a trailing Switch instead of the value + chevron. */
+  toggle?: { value: boolean; onValueChange: (value: boolean) => void };
   isLast?: boolean;
   disabled?: boolean;
   styles: SettingsStyles;
@@ -389,60 +394,15 @@ export function SettingsItem({
       <View style={styles.settingsIcon}>
         <UISymbol name={icon} size={20} color={m3.neutral.n500} />
       </View>
-      <Text
-        style={styles.settingsTitle}
-        textBreakStrategy="highQuality"
-        lineBreakStrategyIOS="standard"
-      >
-        {title}
-      </Text>
-      {value && (
-        <Text
-          style={styles.settingsValue}
-          textBreakStrategy="highQuality"
-          lineBreakStrategyIOS="standard"
-        >
-          {value}
-        </Text>
-      )}
-      {!disabled && <UISymbol name="chevron.right" size={18} color={m3.surface.s500} />}
-    </View>
-  );
-}
-
-export function SettingsToggleItem({
-  icon,
-  title,
-  subtitle,
-  value,
-  onValueChange,
-  isLast,
-  styles,
-  m3,
-}: {
-  icon: string;
-  title: string;
-  subtitle?: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-  isLast?: boolean;
-  styles: SettingsStyles;
-  m3: ReturnType<typeof getM3Theme>;
-}) {
-  return (
-    <View style={[styles.settingsItem, !isLast && styles.borderBottom]}>
-      <View style={styles.settingsIcon}>
-        <UISymbol name={icon} size={20} color={m3.neutral.n500} />
-      </View>
-      <View style={{ flex: 1, marginLeft: spacing[3] }}>
-        <Text
-          style={[styles.settingsTitle, { marginLeft: 0 }]}
-          textBreakStrategy="highQuality"
-          lineBreakStrategyIOS="standard"
-        >
-          {title}
-        </Text>
-        {subtitle ? (
+      {subtitle ? (
+        <View style={{ flex: 1, marginLeft: spacing[3] }}>
+          <Text
+            style={[styles.settingsTitle, { marginLeft: 0 }]}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {title}
+          </Text>
           <Text
             style={styles.settingsSubtitle}
             textBreakStrategy="highQuality"
@@ -450,13 +410,36 @@ export function SettingsToggleItem({
           >
             {subtitle}
           </Text>
-        ) : null}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ false: m3.surface.s300, true: m3.colorScheme.primary }}
-      />
+        </View>
+      ) : (
+        <Text
+          style={styles.settingsTitle}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {title}
+        </Text>
+      )}
+      {toggle ? (
+        <Switch
+          value={toggle.value}
+          onValueChange={toggle.onValueChange}
+          trackColor={{ false: m3.surface.s300, true: m3.colorScheme.primary }}
+        />
+      ) : (
+        <>
+          {value && (
+            <Text
+              style={styles.settingsValue}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {value}
+            </Text>
+          )}
+          {!disabled && <UISymbol name="chevron.right" size={18} color={m3.surface.s500} />}
+        </>
+      )}
     </View>
   );
 }

@@ -15,6 +15,34 @@ import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
 import { getAndroidBottomSystemInset } from '@/utils/android-system-bars';
 
+/**
+ * Tabs gated behind "Detailed mode". Defined once so the Android and iOS tab
+ * bars stay in sync — add/remove a tab here and both render paths update.
+ */
+const DETAILED_TABS = [
+  {
+    name: 'workers',
+    titleKey: 'tabs.workers',
+    android: 'person.2',
+    sf: ['person.2', 'person.2.fill'] as const,
+    ion: ['people-outline', 'people'] as const,
+  },
+  {
+    name: 'tools',
+    titleKey: 'tabs.tools',
+    android: 'wrench.and.screwdriver',
+    sf: ['wrench.and.screwdriver', 'wrench.and.screwdriver.fill'] as const,
+    ion: ['build-outline', 'build'] as const,
+  },
+  {
+    name: 'assistant',
+    titleKey: 'tabs.aiAssistant',
+    android: 'brain',
+    sf: ['brain', 'brain.fill'] as const,
+    ion: ['sparkles-outline', 'sparkles'] as const,
+  },
+] as const;
+
 export default function TabLayout() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -152,35 +180,18 @@ export default function TabLayout() {
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('house', focused),
             }}
           />
-          {detailedMode && (
-            <>
+          {detailedMode &&
+            DETAILED_TABS.map((tab) => (
               <Tabs.Screen
-                name="workers"
+                key={tab.name}
+                name={tab.name}
                 options={{
-                  title: t('tabs.workers'),
+                  title: t(tab.titleKey),
                   headerShown: false,
-                  tabBarIcon: ({ focused }) => renderAndroidTabIcon('person.2', focused),
+                  tabBarIcon: ({ focused }) => renderAndroidTabIcon(tab.android, focused),
                 }}
               />
-              <Tabs.Screen
-                name="tools"
-                options={{
-                  title: t('tabs.tools'),
-                  headerShown: false,
-                  tabBarIcon: ({ focused }) =>
-                    renderAndroidTabIcon('wrench.and.screwdriver', focused),
-                }}
-              />
-              <Tabs.Screen
-                name="assistant"
-                options={{
-                  title: t('tabs.aiAssistant'),
-                  headerShown: false,
-                  tabBarIcon: ({ focused }) => renderAndroidTabIcon('brain', focused),
-                }}
-              />
-            </>
-          )}
+            ))}
         </Tabs>
       </>
     );
@@ -228,27 +239,13 @@ export default function TabLayout() {
           />
           <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        {detailedMode && (
-          <>
-            <NativeTabs.Trigger name="workers">
-              {renderTabIcon(sf('person.2'), sf('person.2.fill'), 'people-outline', 'people')}
-              <NativeTabs.Trigger.Label>{t('tabs.workers')}</NativeTabs.Trigger.Label>
+        {detailedMode &&
+          DETAILED_TABS.map((tab) => (
+            <NativeTabs.Trigger key={tab.name} name={tab.name}>
+              {renderTabIcon(sf(tab.sf[0]), sf(tab.sf[1]), tab.ion[0], tab.ion[1])}
+              <NativeTabs.Trigger.Label>{t(tab.titleKey)}</NativeTabs.Trigger.Label>
             </NativeTabs.Trigger>
-            <NativeTabs.Trigger name="tools">
-              {renderTabIcon(
-                sf('wrench.and.screwdriver'),
-                sf('wrench.and.screwdriver.fill'),
-                'build-outline',
-                'build',
-              )}
-              <NativeTabs.Trigger.Label>{t('tabs.tools')}</NativeTabs.Trigger.Label>
-            </NativeTabs.Trigger>
-            <NativeTabs.Trigger name="assistant">
-              {renderTabIcon(sf('brain'), sf('brain.fill'), 'sparkles-outline', 'sparkles')}
-              <NativeTabs.Trigger.Label>{t('tabs.aiAssistant')}</NativeTabs.Trigger.Label>
-            </NativeTabs.Trigger>
-          </>
-        )}
+          ))}
       </NativeTabs>
     </>
   );
