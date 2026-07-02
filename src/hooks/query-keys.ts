@@ -124,6 +124,13 @@ export const queryKeys = {
   fertilizerPlan: {
     all: ['fertilizerPlan'] as const,
     detail: (farmId: number) => [...queryKeys.fertilizerPlan.all, { farmId }] as const,
+    listByFarm: (farmId: number) => [...queryKeys.fertilizerPlan.all, 'list', { farmId }] as const,
+  },
+
+  // Farm-level soil baseline (texture / CEC / etc. recorded at farm creation).
+  farmSoilBaseline: {
+    all: ['farmSoilBaseline'] as const,
+    detail: (farmId: number) => [...queryKeys.farmSoilBaseline.all, { farmId }] as const,
   },
 
   // Consultant Reviews

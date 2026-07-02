@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores';
-import { useProfile } from '@/hooks';
+import { useProfile, useJoinOrganization } from '@/hooks';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { joinOrganizationBySlug, joinOrgMessage } from '@/services/organization';
+import { joinOrgMessage } from '@/services/organization';
 import { useTranslation } from 'react-i18next';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useIsDark, useM3 } from '@/styles/use-theme';
@@ -53,13 +53,10 @@ export default function ProfileCompletionScreen() {
     completeProfile,
     clearError,
   } = useAuthStore();
-  const {
-    data: profile,
-    isLoading: profileLoading,
-    refetch: refetchProfile,
-  } = useProfile({
+  const { data: profile, isLoading: profileLoading } = useProfile({
     enabled: isAuthenticated,
   });
+  const { mutateAsync: joinOrganization } = useJoinOrganization();
   const hasProfileName = Boolean(profile?.full_name && profile.full_name.trim().length > 0);
 
   const { defaultFirstName, defaultLastName, defaultEmail } = useMemo(() => {
@@ -183,24 +180,24 @@ export default function ProfileCompletionScreen() {
       // the profile is already saved — but the farmer should SEE the failure and
       // be able to fix it, so we set joinFailed to stay on this page.
       if (trimmedCode) {
-        const result = await joinOrganizationBySlug(trimmedCode);
+        // useJoinOrganization invalidates + awaits a profile refetch on success,
+        // so the dashboard lands with a fresh consultant_organization_id and
+        // org-gated UI (e.g. Fertilizer Plans) is visible immediately.
+        // (finally still releases joinPending afterward.)
+        const result = await joinOrganization(trimmedCode);
         if (result.ok) {
           setOrgJoinInfo(
             result.organizationName
-              ? `Linked to ${result.organizationName}.`
-              : joinOrgMessage(result.status),
+              ? t('settings.joinOrg.successLinked', {
+                  name: result.organizationName,
+                  defaultValue: 'Linked to {{name}}.',
+                })
+              : joinOrgMessage(result.status, t),
           );
           setOrgJoinError(null);
           setJoinFailed(false);
-          // The RPC updated profiles.consultant_organization_id, but
-          // completeProfile already wrote/invalidated the profile cache BEFORE
-          // the join ran. Await a refetch so the dashboard lands with a fresh
-          // consultant_organization_id and org-gated UI (e.g. Fertilizer Plans)
-          // is visible immediately, instead of staying hidden until a later
-          // refetch. (finally still releases joinPending afterward.)
-          await refetchProfile();
         } else {
-          setOrgJoinError(joinOrgMessage(result.status));
+          setOrgJoinError(joinOrgMessage(result.status, t));
           setOrgJoinInfo(null);
           setJoinFailed(true);
         }

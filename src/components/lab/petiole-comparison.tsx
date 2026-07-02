@@ -81,7 +81,7 @@ export function PetioleComparison({
         }}
       >
         <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
-          {t('labTests.comparison.noPetioleTests')}
+          {t('labTests.list.comparison.noPetioleTests')}
         </Text>
       </View>
     );
@@ -103,7 +103,7 @@ export function PetioleComparison({
               }}
             >
               <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-                {t('labTests.comparison.parameter')}
+                {t('labTests.list.comparison.parameter')}
               </Text>
             </View>
             {columns.map((column) => (
@@ -154,7 +154,7 @@ export function PetioleComparison({
                 </Text>
                 {column.isHighlighted && (
                   <Text style={{ fontSize: fontSize['2xs'], color: m3.colorScheme.primary }}>
-                    {t('labTests.comparison.current')}
+                    {t('labTests.list.comparison.current')}
                   </Text>
                 )}
               </View>

@@ -50,6 +50,12 @@ interface FormModalProps {
   scrollViewStyle?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
   saveButtonTargetId?: string;
+  /**
+   * When true the primary save button spans the full footer width (a stronger
+   * CTA for submit-style forms). Defaults to the standard right-aligned,
+   * content-width button. Ignored when `showResetButton` is set.
+   */
+  saveFullWidth?: boolean;
 }
 
 function useCloseIconColor() {
@@ -76,6 +82,7 @@ export function FormModal({
   scrollViewStyle,
   contentContainerStyle,
   saveButtonTargetId,
+  saveFullWidth = false,
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -132,12 +139,15 @@ export function FormModal({
     textDecorationLine: 'underline',
   };
 
+  const useFullWidthSave = saveFullWidth && !showResetButton;
+
   const saveButtonStyle: ViewStyle = {
     paddingHorizontal: spacing[8],
     paddingVertical: spacing[3],
     borderRadius: componentRadius.button, // unified control radius — see DESIGN.md › Radius
     backgroundColor: isSaveDisabled || isLoading ? m3.surface.s200 : m3.primary.p500,
     minHeight: 48,
+    ...(useFullWidthSave ? { flex: 1, alignItems: 'center', justifyContent: 'center' } : null),
   };
 
   const saveTextStyle: TextStyle = {

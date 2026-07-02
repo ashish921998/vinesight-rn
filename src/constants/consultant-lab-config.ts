@@ -31,9 +31,10 @@ export interface NutrientRecommendation {
   note?: string;
 }
 
-export const PLAN_ITEM_UNIT_OPTIONS = ['kg/acre', 'g/acre', 'L/acre', 'ml/acre', 'ppm'] as const;
-
-export type PlanItemUnit = (typeof PLAN_ITEM_UNIT_OPTIONS)[number];
+// Plan-item unit options live in `@/constants/fertilizer-units` now (single
+// source of truth for the measure ↔ unit-string mapping). Re-exported here so
+// existing imports from this module keep working.
+export { PLAN_ITEM_UNIT_OPTIONS, type PlanItemUnit } from './fertilizer-units';
 
 export const PETIOLE_RANGES: PetioleRangeDef[] = [
   { key: 'total_nitrogen', label: 'Total N', unit: '%', optimalMin: 1.51, optimalMax: 2.21 },

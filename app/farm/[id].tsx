@@ -22,7 +22,7 @@ import {
   useFarm,
   useFarmRecords,
   useWeather,
-  useProfile,
+  useConsultantLink,
   useDeleteFarm,
   useDeleteIrrigationRecord,
   useDeleteSprayRecord,
@@ -118,7 +118,7 @@ export default function FarmDetailScreen() {
 
   const { data: tasks, isLoading: isTasksLoading, refetch: refetchTasks } = useTasks(farmId);
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
-  const { data: profile } = useProfile({ enabled: true });
+  const { isLinked: hasConsultant } = useConsultantLink();
   const {
     data: farmSeasons,
     isLoading: isSeasonsLoading,
@@ -273,7 +273,7 @@ export default function FarmDetailScreen() {
         color: domain.category.task,
       },
     ];
-    if (profile?.consultant_organization_id) {
+    if (hasConsultant) {
       actions.push({
         id: 'fertilizer-plans',
         titleKey: 'farmDetails.fertilizerPlan.title',
@@ -282,7 +282,7 @@ export default function FarmDetailScreen() {
       });
     }
     return actions;
-  }, [domain.category.fertigation, domain.category.task, m3, profile?.consultant_organization_id]);
+  }, [domain.category.fertigation, domain.category.task, m3, hasConsultant]);
 
   const seasonEndDates = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return [];

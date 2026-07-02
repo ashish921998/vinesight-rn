@@ -67,7 +67,9 @@ export async function sendFertilizerPlan(
   const { data, error } = await supabase.rpc('send_fertilizer_plan', {
     p_review_id: input.reviewId,
     p_title: input.title,
-    p_notes: input.notes ?? '',
+    // Pass null through unchanged so the backend can distinguish omitted notes
+    // from an explicit empty string (a `?? ''` here would erase that signal).
+    p_notes: input.notes,
     p_items: input.items,
   });
 

@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -38,31 +39,27 @@ const KNOWN_JOIN_STATUSES: ReadonlySet<JoinOrgStatus> = new Set([
   'unauthenticated',
 ]);
 
+/** English fallbacks for each join outcome, keyed to settings.joinOrg.status.* */
+const JOIN_STATUS_FALLBACK: Record<JoinOrgStatus, string> = {
+  joined: 'Joined the organization.',
+  already_joined: "You're already linked to this organization.",
+  not_found: 'No organization found with that code. Check it and try again.',
+  is_staff: "You're a team member of this organization and can't join as a farmer.",
+  already_in_other_org: 'You are already linked to another organization.',
+  removed: 'You were removed from this organization. Contact them to be re-added.',
+  unauthenticated: 'Please sign in and try again.',
+  network_error: 'Something went wrong. Please try again.',
+};
+
 /**
  * Human-friendly copy for each join outcome. The RPC returns stable status codes;
- * this keeps the mapping in one place so both the profile-completion screen and
- * the settings modal render identical messages.
+ * this keeps the status→copy mapping in one place so both the profile-completion
+ * screen and the settings modal render identical, translated messages.
  */
-export function joinOrgMessage(status: JoinOrgStatus): string {
-  switch (status) {
-    case 'joined':
-      return 'Joined the organization.';
-    case 'already_joined':
-      return "You're already linked to this organization.";
-    case 'not_found':
-      return 'No organization found with that code. Check it and try again.';
-    case 'is_staff':
-      return "You're a team member of this organization and can't join as a farmer.";
-    case 'already_in_other_org':
-      return 'You are already linked to another organization.';
-    case 'removed':
-      return 'You were removed from this organization. Contact them to be re-added.';
-    case 'unauthenticated':
-      return 'Please sign in and try again.';
-    case 'network_error':
-    default:
-      return 'Something went wrong. Please try again.';
-  }
+export function joinOrgMessage(status: JoinOrgStatus, t: TFunction): string {
+  return t(`settings.joinOrg.status.${status}`, {
+    defaultValue: JOIN_STATUS_FALLBACK[status] ?? JOIN_STATUS_FALLBACK.network_error,
+  });
 }
 
 /**
