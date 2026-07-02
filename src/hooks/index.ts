@@ -184,6 +184,10 @@ export { useAnalytics } from './use-analytics';
 // Report Hooks
 export { useReportData, useReportExport, getDefaultDateRange } from './use-reports';
 
+// Consultant / Organization
+export { useConsultantLink } from './use-consultant-link';
+export { useJoinOrganization } from './use-organization';
+
 // Fertilizer Plan
 export { useFertilizerPlan, useFertilizerPlans } from './use-fertilizer-plan';
 export {

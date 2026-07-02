@@ -5,6 +5,7 @@ export { LoadingState } from './loading-state';
 export { Input } from './input';
 export { ModalBackdrop } from './modal-backdrop';
 export { OTPInput } from './otp-input';
+export { StackBackButton } from './stack-back-button';
 export { UnitPickerModal } from './unit-picker-modal';
 export {
   FormModal,

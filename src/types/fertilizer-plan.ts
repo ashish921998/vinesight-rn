@@ -27,8 +27,6 @@ export interface FertilizerPlan {
   id: string;
   farm_id: number;
   organization_id: string | null;
-  /** Authoring user id. Not selected/loaded today (always null), kept for schema parity. */
-  created_by: string | null;
   /** Plan title (DB column, NOT NULL in schema). */
   title: string | null;
   /** Name of the sending organization (resolved from `organization_id` → organizations). */

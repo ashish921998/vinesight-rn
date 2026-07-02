@@ -5,6 +5,7 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculator-models';
+import { resolveFertilizerMeasure } from '@/constants/fertilizer-units';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
@@ -37,15 +38,11 @@ function resolveFertilizerUnit(
   unit: string | null | undefined,
   fallback: FertilizerUnit = DEFAULT_FERTILIZER_UNIT,
 ): FertilizerUnit {
-  const normalized = unit?.trim();
-  const lowered = normalized?.toLowerCase();
-  if (lowered === 'kg/acre') return 'kg';
-  if (lowered === 'gram/acre' || lowered === 'g/acre') return 'gram';
-  if (lowered === 'liter/acre' || lowered === 'litre/acre') return 'liter';
-  if (lowered === 'ml/acre') return 'ml';
-  if (lowered === 'litre') return 'liter';
-  if (normalized && isFertilizerUnit(normalized)) return normalized;
-  return fallback;
+  // Delegate to the canonical measure resolver, then narrow to a FertilizerUnit.
+  // `ppm` is a valid plan-item measure but not a fertigation-form unit, so it
+  // falls back (preserving prior behavior for ppm / unknown strings).
+  const measure = resolveFertilizerMeasure(unit, fallback);
+  return isFertilizerUnit(measure) ? measure : fallback;
 }
 
 function resolveQuantityBasis(

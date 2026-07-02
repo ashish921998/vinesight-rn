@@ -2,10 +2,11 @@ import React from 'react';
 import { View, Text, Pressable, type TextStyle, type StyleProp } from 'react-native';
 import type { TFunction } from 'i18next';
 import { Symbol } from '@/components/ui/symbol';
-import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
+import { fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { formatDate } from '@/i18n/format';
-import type { FertilizerPlan } from '@/types/fertilizer-plan';
+import { formatLocalDate, addDays } from '@/utils/date';
+import type { FertilizerPlan, FertilizerPlanItem } from '@/types/fertilizer-plan';
 
 type M3 = ReturnType<typeof useM3>;
 
@@ -20,6 +21,36 @@ export function planTitle(plan: FertilizerPlan, t: TFunction): string {
     (plan.consultant_name
       ? t('farmDetails.fertilizerPlan.consultantLabel', { name: plan.consultant_name })
       : t('farmDetails.fertilizerPlan.consultantUnknown'))
+  );
+}
+
+/**
+ * The one-line subtitle under a current-plan title: "Plan by {org} · Updated
+ * {date}". The org segment is shown only when the title is set (otherwise
+ * `planTitle` already fell back to the org name, so repeating it is noise).
+ * Renders nothing when there's no org name and no update date.
+ */
+export function PlanByline({ plan, m3, t }: { plan: FertilizerPlan; m3: M3; t: TFunction }) {
+  const segments = [
+    plan.title?.trim() && plan.consultant_name
+      ? t('farmDetails.fertilizerPlan.consultantLabel', { name: plan.consultant_name })
+      : null,
+    plan.updated_at
+      ? // Pass the raw string so formatDate applies its date-only UTC handling —
+        // wrapping in new Date() shifts date-only values by timezone.
+        t('farmDetails.fertilizerPlan.updatedLabel', {
+          date: formatDate(plan.updated_at, { month: 'short', day: 'numeric' }),
+        })
+      : null,
+  ].filter(Boolean);
+  if (segments.length === 0) return null;
+  return (
+    <Text
+      numberOfLines={1}
+      style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.sm, marginTop: 2 }}
+    >
+      {segments.join(' · ')}
+    </Text>
   );
 }
 
@@ -51,8 +82,152 @@ export function SectionLabel({
   );
 }
 
-/** The recommended-schedule list for a plan's items (or an empty-state line). */
-export function PlanSchedule({ plan, m3, t }: { plan: FertilizerPlan; m3: M3; t: TFunction }) {
+type ScheduleBucketKey = 'thisWeek' | 'upcoming' | 'earlier';
+
+/**
+ * Split a plan's items into time buckets relative to today: this week (today
+ * through +6 days), upcoming, and earlier. Returns null when no item carries a
+ * date — callers fall back to the flat sort_order list. Dateless items in an
+ * otherwise dated plan land in "upcoming" so they are never silently dropped.
+ *
+ * Dates are compared as `YYYY-MM-DD` strings (lexicographic == chronological
+ * for this form), anchored to the local calendar via the canonical date utils
+ * so a date-only `application_date` never drifts by timezone.
+ */
+function bucketItems(
+  items: FertilizerPlanItem[],
+): { key: ScheduleBucketKey; items: FertilizerPlanItem[] }[] | null {
+  if (!items.some((item) => item.application_date)) return null;
+  const today = formatLocalDate(new Date());
+  const weekAhead = addDays(today, 7) ?? today;
+  const buckets: Record<ScheduleBucketKey, FertilizerPlanItem[]> = {
+    thisWeek: [],
+    upcoming: [],
+    earlier: [],
+  };
+  for (const item of items) {
+    const date = item.application_date?.slice(0, 10) ?? null;
+    if (!date) buckets.upcoming.push(item);
+    else if (date < today) buckets.earlier.push(item);
+    else if (date < weekAhead) buckets.thisWeek.push(item);
+    else buckets.upcoming.push(item);
+  }
+  // "What do I do now" first, history last (dimmed) — not strict chronology.
+  return (['thisWeek', 'upcoming', 'earlier'] as const)
+    .map((key) => ({ key, items: buckets[key] }))
+    .filter((bucket) => bucket.items.length > 0);
+}
+
+/** One schedule item: name + date up top, the quantity as the visual anchor. */
+function ScheduleItemCard({
+  input,
+  m3,
+  t,
+  dateLabel,
+  dimmed,
+}: {
+  input: FertilizerPlanItem;
+  m3: M3;
+  t: TFunction;
+  dateLabel: string | null;
+  dimmed: boolean;
+}) {
+  return (
+    <View
+      style={{
+        borderRadius: m3.shape.cornerLarge,
+        backgroundColor: m3.surface.surfaceContainerLow,
+        borderWidth: 1,
+        borderColor: m3.colorScheme.outlineVariant,
+        padding: spacing[3] + 2,
+        opacity: dimmed ? 0.55 : 1,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: spacing[2],
+        }}
+      >
+        <Text
+          style={{
+            flex: 1,
+            color: m3.colorScheme.onSurface,
+            ...m3.typography.bodyMedium,
+            fontWeight: fontWeight.semibold,
+          }}
+        >
+          {input.name || t('farmDetails.fertilizerPlan.unknownInput')}
+        </Text>
+        {dateLabel ? (
+          <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}>
+            {dateLabel}
+          </Text>
+        ) : null}
+      </View>
+      {input.quantity !== null && input.quantity !== undefined && (
+        <Text
+          style={{
+            color: m3.colorScheme.onSurface,
+            fontSize: fontSize.xl,
+            fontWeight: fontWeight.bold,
+            marginTop: spacing[1],
+          }}
+        >
+          {input.quantity}
+          {/* Stored units already carry their basis (e.g. `kg/acre`, `ppm`),
+              so render as-is instead of re-appending a per-acre suffix. */}
+          {input.unit ? ` ${input.unit}` : ''}
+        </Text>
+      )}
+      {input.notes ? (
+        <Text
+          style={{
+            color: m3.colorScheme.onSurfaceVariant,
+            fontSize: fontSize.sm,
+            marginTop: spacing[1],
+          }}
+        >
+          {input.notes}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+/** Date label for an item card: its application date, or a Week-N fallback in
+ * flat (undated) lists where the index still communicates sequence. */
+function itemDateLabel(input: FertilizerPlanItem, index: number, t: TFunction): string {
+  // Pass the raw date string so formatDate can apply its date-only UTC
+  // handling — wrapping in new Date() shifts date-only values by timezone
+  // and can render the wrong day.
+  return input.application_date
+    ? formatDate(input.application_date, { month: 'short', day: 'numeric' })
+    : `${t('farmDetails.fertilizerPlan.week', 'Week')} ${index + 1}`;
+}
+
+/**
+ * The schedule list for a plan's items (or an empty-state line).
+ *
+ * The `current` variant groups items into time buckets relative to today —
+ * "This week" first (accented), then "Upcoming", then "Earlier" (dimmed) — so
+ * the farmer's next action is always at the top. The `history` variant (and any
+ * plan whose items carry no dates) renders the flat sort_order list, since
+ * bucketing an old plan against today would dim everything.
+ */
+export function PlanSchedule({
+  plan,
+  m3,
+  t,
+  variant = 'current',
+}: {
+  plan: FertilizerPlan;
+  m3: M3;
+  t: TFunction;
+  variant?: 'current' | 'history';
+}) {
   if (plan.items.length === 0) {
     return (
       <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium }}>
@@ -60,64 +235,68 @@ export function PlanSchedule({ plan, m3, t }: { plan: FertilizerPlan; m3: M3; t:
       </Text>
     );
   }
+
+  const buckets = variant === 'current' ? bucketItems(plan.items) : null;
+
+  if (!buckets) {
+    return (
+      <View style={{ gap: spacing[3] }}>
+        <SectionLabel color={m3.colorScheme.onSurfaceVariant} style={{ marginTop: spacing[1] }}>
+          {t('farmDetails.fertilizerPlan.recommendedSchedule', 'Recommended Schedule')}
+        </SectionLabel>
+        {plan.items.map((input, index) => (
+          <ScheduleItemCard
+            key={input.id}
+            input={input}
+            m3={m3}
+            t={t}
+            dateLabel={itemDateLabel(input, index, t)}
+            dimmed={false}
+          />
+        ))}
+      </View>
+    );
+  }
+
+  const bucketMeta: Record<ScheduleBucketKey, { label: string; color: string; dimmed: boolean }> = {
+    thisWeek: {
+      label: t('farmDetails.fertilizerPlan.thisWeek', 'This week'),
+      color: m3.primary.p500,
+      dimmed: false,
+    },
+    upcoming: {
+      label: t('farmDetails.fertilizerPlan.upcoming', 'Upcoming'),
+      color: m3.colorScheme.onSurfaceVariant,
+      dimmed: false,
+    },
+    earlier: {
+      label: t('farmDetails.fertilizerPlan.earlier', 'Earlier'),
+      color: m3.colorScheme.onSurfaceVariant,
+      dimmed: true,
+    },
+  };
+
   return (
     <View style={{ gap: spacing[3] }}>
-      <SectionLabel color={m3.colorScheme.onSurfaceVariant} style={{ marginTop: spacing[1] }}>
-        {t('farmDetails.fertilizerPlan.recommendedSchedule', 'Recommended Schedule')}
-      </SectionLabel>
-      {plan.items.map((input, index) => (
-        <View
-          key={input.id}
-          style={{
-            backgroundColor: m3.surface.s100,
-            borderWidth: 1,
-            borderColor: m3.surface.s300,
-            borderRadius: borderRadius.md,
-            marginBottom: spacing[3],
-            flexDirection: 'row',
-            overflow: 'hidden',
-          }}
-        >
-          {/* 5px left strip */}
-          <View style={{ width: 5, backgroundColor: m3.primary.p500, flexShrink: 0 }} />
-          <View style={{ flex: 1, padding: spacing[3] + 2 }}>
-            <View style={{ marginBottom: spacing[1] }}>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s900,
-                }}
-              >
-                {input.name || t('farmDetails.fertilizerPlan.unknownInput')}
-              </Text>
-            </View>
-            {input.quantity !== null && input.quantity !== undefined && (
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: m3.surface.s900,
-                  marginBottom: spacing[1],
-                }}
-              >
-                {input.quantity}
-                {/* Stored units already carry their basis (e.g. `kg/acre`, `ppm`),
-                    so render as-is instead of re-appending a per-acre suffix. */}
-                {input.unit ? ` ${input.unit}` : ''}
-              </Text>
-            )}
-            <View style={{ flexDirection: 'row', gap: spacing[4] }}>
-              <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                {/* Pass the raw date string so formatDate can apply its date-only
-                    UTC handling — wrapping in new Date() shifts date-only values
-                    by timezone and can render the wrong day. */}
-                {input.application_date
+      {buckets.map((bucket) => (
+        <View key={bucket.key} style={{ gap: spacing[3] }}>
+          <SectionLabel color={bucketMeta[bucket.key].color} style={{ marginTop: spacing[1] }}>
+            {bucketMeta[bucket.key].label}
+          </SectionLabel>
+          {bucket.items.map((input) => (
+            <ScheduleItemCard
+              key={input.id}
+              input={input}
+              m3={m3}
+              t={t}
+              dateLabel={
+                input.application_date
                   ? formatDate(input.application_date, { month: 'short', day: 'numeric' })
-                  : `${t('farmDetails.fertilizerPlan.week', 'Week')} ${index + 1}`}
-              </Text>
-            </View>
-          </View>
+                  : null
+              }
+              dimmed={bucketMeta[bucket.key].dimmed}
+            />
+          ))}
         </View>
       ))}
     </View>
@@ -145,7 +324,11 @@ export function PreviousPlanCard({
     plan.created_at
       ? t('farmDetails.fertilizerPlan.createdLabel', {
           defaultValue: 'Created {{date}}',
-          date: formatDate(new Date(plan.created_at), {
+          // Pass the raw string so formatDate can apply its date-only UTC
+          // handling if ever needed; for a full timestamptz this is equivalent
+          // to wrapping in new Date() but stays consistent with the PR's other
+          // date calls.
+          date: formatDate(plan.created_at, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -225,7 +408,7 @@ export function PreviousPlanCard({
               {plan.notes}
             </Text>
           ) : null}
-          <PlanSchedule plan={plan} m3={m3} t={t} />
+          <PlanSchedule plan={plan} m3={m3} t={t} variant="history" />
         </View>
       ) : null}
     </View>

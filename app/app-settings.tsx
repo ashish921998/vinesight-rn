@@ -452,15 +452,10 @@ export default function SettingsScreen() {
       />
 
       {/* Mount/unmount via key so each open starts with a clean form (avoids
-          setState-in-effect reset pattern). onJoined refetches the profile so any
-          org-scoped UI updates after a successful self-join. */}
+          setState-in-effect reset pattern). Profile refresh after a successful
+          self-join is handled inside useJoinOrganization. */}
       {showJoinOrg ? (
-        <JoinOrgModal
-          key="join-org"
-          visible={showJoinOrg}
-          onClose={() => setShowJoinOrg(false)}
-          onJoined={() => refetchProfile()}
-        />
+        <JoinOrgModal key="join-org" visible={showJoinOrg} onClose={() => setShowJoinOrg(false)} />
       ) : null}
     </ScrollView>
   );

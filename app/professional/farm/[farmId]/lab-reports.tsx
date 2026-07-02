@@ -1,13 +1,11 @@
 import { useMemo, useState, useCallback } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '@/lib/supabase';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius, shadows } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { parseDbDateToLocalDate, formatLocalDate } from '@/utils/date';
+import { getDaysAfterPruning, formatLocalDate } from '@/utils/date';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { usePetioleTests, useSoilTests } from '@/hooks/use-lab-tests';
 import {
@@ -16,11 +14,10 @@ import {
   useSendFertilizerPlan,
 } from '@/hooks/use-consultant-reviews';
 import { PetioleComparison } from '@/components/lab/petiole-comparison';
-import {
-  SoilBaselinePanel,
-  type FarmSoilBaseline,
-} from '@/components/professional/soil-baseline-panel';
+import { SoilBaselinePanel } from '@/components/professional/soil-baseline-panel';
+import { useFarmSoilBaseline } from '@/hooks/use-farm-soil-baseline';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { StackBackButton } from '@/components/ui/stack-back-button';
 import {
   FormModal,
   FormInput,
@@ -28,44 +25,16 @@ import {
   SegmentedControl,
 } from '@/components/ui/form-components';
 import { toast } from '@/components/ui/toast';
+import {
+  type FertilizerMeasure,
+  MEASURE_OPTIONS,
+  MEASURE_TO_UNIT,
+} from '@/constants/fertilizer-units';
 import type { FertilizerPlanItem } from '@/types/database';
 
 const FAB_SIZE = 56;
 const FAB_RIGHT = 20;
 const FAB_BOTTOM = 24;
-
-// A measure (what you count) is kept separate from the basis (how it's applied),
-// mirroring how the fertigation form models units. Measures are stored in the
-// app's canonical spelling so a plan round-trips cleanly with the farmer-side
-// resolver (see resolveFertilizerUnit); the per-acre basis is a `/acre` suffix.
-//
-// Only the canonical PLAN_ITEM_UNIT_OPTIONS units are ever emitted
-// (['kg/acre','g/acre','L/acre','ml/acre','ppm']). There is no "total" basis —
-// neither the RPC contract nor the farmer-side resolver represents a non-per-acre
-// quantity, so offering it would silently break every submitted item.
-type FertilizerMeasure = 'kg' | 'gram' | 'liter' | 'ml' | 'ppm';
-
-const MEASURE_OPTIONS: { value: FertilizerMeasure; label: string }[] = [
-  { value: 'kg', label: 'kg' },
-  { value: 'gram', label: 'g' },
-  { value: 'liter', label: 'L' },
-  { value: 'ml', label: 'mL' },
-  { value: 'ppm', label: 'ppm' },
-];
-
-// Map a measure to the canonical per-acre unit string. ppm is a concentration
-// and never takes a basis suffix.
-const MEASURE_TO_UNIT: Record<Exclude<FertilizerMeasure, 'ppm'>, string> = {
-  kg: 'kg/acre',
-  gram: 'g/acre',
-  liter: 'L/acre',
-  ml: 'ml/acre',
-};
-
-function toUnitString(measure: FertilizerMeasure): string {
-  if (measure === 'ppm') return 'ppm';
-  return MEASURE_TO_UNIT[measure];
-}
 
 interface DraftItem {
   name: string;
@@ -81,32 +50,12 @@ export default function LabReportsScreen() {
   const { farmId, userId } = useLocalSearchParams<{ farmId: string; userId: string }>();
   const m3 = useM3();
   const { t } = useTranslation();
-  const router = useRouter();
   const workspace = useProfessionalWorkspace();
   const numericFarmId = Number(farmId);
 
   const petiole = usePetioleTests(numericFarmId);
   const soil = useSoilTests(numericFarmId);
-  const farmSoil = useQuery({
-    queryKey: ['professional-farm-soil', numericFarmId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('farms')
-        .select(
-          'soil_texture_class, sand_percentage, silt_percentage, clay_percentage, cation_exchange_capacity, soil_water_retention, bulk_density',
-        )
-        .eq('id', numericFarmId)
-        // maybeSingle: this baseline data is supplementary. `.single()` throws
-        // (PGRST116) when no row is visible (RLS / deleted farm), which would
-        // be noise; maybeSingle returns null instead. A genuine failure leaves
-        // the panel without farm chips — see isError below for why it's
-        // intentionally excluded there.
-        .maybeSingle();
-      if (error) throw error;
-      return (data ?? null) as FarmSoilBaseline | null;
-    },
-    enabled: numericFarmId > 0,
-  });
+  const farmSoil = useFarmSoilBaseline(numericFarmId);
   const triage = usePetioleTriage(workspace.data?.organization_id, numericFarmId);
   const createTriage = useCreatePetioleTriage();
   const sendPlan = useSendFertilizerPlan();
@@ -119,20 +68,11 @@ export default function LabReportsScreen() {
   const latestSoil = useMemo(() => (soil.data ?? [])[0] ?? null, [soil.data]);
   const latestPetioleTest = useMemo(() => (petiole.data ?? [])[0] ?? null, [petiole.data]);
 
-  const daysAfterPruning = useMemo(() => {
-    const pruningDate = latestPetioleTest?.date_of_pruning;
-    if (!pruningDate) return null;
-    // Parse via the date-only helper so a `YYYY-MM-DD` value isn't shifted by
-    // timezone the way `new Date('YYYY-MM-DD')` (treated as UTC midnight) would be.
-    const pruning = parseDbDateToLocalDate(pruningDate);
-    if (!pruning) return null;
-    const today = parseDbDateToLocalDate(formatLocalDate(new Date()));
-    if (!today) return null;
-    const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-    const pruningDay = Date.UTC(pruning.getFullYear(), pruning.getMonth(), pruning.getDate());
-    const diff = Math.floor((todayUtc - pruningDay) / (1000 * 60 * 60 * 24));
-    return diff >= 0 ? diff : null;
-  }, [latestPetioleTest?.date_of_pruning]);
+  // Days since the latest petiole test's pruning date — today vs the pruning
+  // date. Reuses the canonical date util rather than re-deriving the diff.
+  const daysAfterPruning = latestPetioleTest?.date_of_pruning
+    ? getDaysAfterPruning(formatLocalDate(new Date()), latestPetioleTest.date_of_pruning)
+    : null;
 
   const client = useMemo(
     () => workspace.data?.clients.find((c) => c.farms.some((f) => f.id === numericFarmId)),
@@ -204,7 +144,7 @@ export default function LabReportsScreen() {
       planItems.push({
         fertilizer_name: draft.name.trim(),
         quantity: qty,
-        unit: toUnitString(draft.measure),
+        unit: MEASURE_TO_UNIT[draft.measure],
       });
     }
 
@@ -265,22 +205,12 @@ export default function LabReportsScreen() {
           title: t('professional.reports.labReportsTitle'),
           headerShown: true,
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('common.back')}
-              onPress={() =>
-                router.canGoBack()
-                  ? router.back()
-                  : router.replace({
-                      pathname: '/professional/farm/[farmId]',
-                      params: { farmId, userId },
-                    })
-              }
-              hitSlop={8}
-              style={{ paddingHorizontal: spacing[2], paddingVertical: spacing[1] }}
-            >
-              <UiSymbol name="chevron.left" size={22} color={m3.colorScheme.onSurface} />
-            </Pressable>
+            <StackBackButton
+              fallback={{
+                pathname: '/professional/farm/[farmId]',
+                params: { farmId, userId },
+              }}
+            />
           ),
         }}
       />

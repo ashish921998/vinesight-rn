@@ -92,7 +92,6 @@ export async function fetchFertilizerPlansForFarm(
       id: row.id,
       farm_id: row.farm_id,
       organization_id: row.organization_id,
-      created_by: null,
       title: row.title,
       consultant_name: row.organization?.name ?? null,
       created_at: row.created_at,
