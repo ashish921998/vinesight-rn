@@ -421,11 +421,15 @@ export function SettingsItem({
         </Text>
       )}
       {toggle ? (
+        // The wrapping Pressable is the single accessible control for this row
+        // (role=switch + label). Hide the inner Switch from the accessibility
+        // tree so screen readers don't announce two switches for one toggle.
         <Switch
           value={toggle.value}
           onValueChange={toggle.onValueChange}
           trackColor={{ false: m3.surface.s300, true: m3.colorScheme.primary }}
-          accessibilityLabel={title}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         />
       ) : (
         <>
