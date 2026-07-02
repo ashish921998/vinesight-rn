@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/query-keys';
 import { fetchFarmSoilBaseline } from '@/services/farm-soil-baseline';
-import type { FarmSoilBaseline } from '@/components/professional/soil-baseline-panel';
+import type { FarmSoilBaseline } from '@/types/farm-soil-baseline';
 
 /**
  * Farm-level soil baseline (texture / CEC / bulk density / etc.) recorded at

@@ -7,16 +7,11 @@ import { formatDate } from '@/i18n/format';
 import type { SoilTestRecord } from '@/types/database';
 import { soilParamOptions } from '@/constants/lab-test-parameters';
 import { getParamStatus } from '@/utils/lab-test-utils';
+import type { FarmSoilBaseline } from '@/types/farm-soil-baseline';
 
-export interface FarmSoilBaseline {
-  soil_texture_class?: string | null;
-  sand_percentage?: number | null;
-  silt_percentage?: number | null;
-  clay_percentage?: number | null;
-  cation_exchange_capacity?: number | null;
-  soil_water_retention?: number | null;
-  bulk_density?: number | null;
-}
+// Re-exported for any external consumers that historically imported the type
+// from this component; the canonical definition lives in `@/types`.
+export type { FarmSoilBaseline };
 
 interface SoilBaselinePanelProps {
   farmSoil?: FarmSoilBaseline | null;

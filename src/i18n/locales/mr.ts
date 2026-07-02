@@ -378,6 +378,7 @@ export const mr = {
       currentLabel: 'सध्याची',
       previousPlans: 'मागील योजना',
       recommendedSchedule: 'शिफारस केलेले वेळापत्रक',
+      pastSchedule: 'वेळापत्रक',
       week: 'आठवडा',
       thisWeek: 'या आठवड्यात',
       upcoming: 'पुढील',

@@ -388,6 +388,7 @@ export const en = {
       currentLabel: 'Current',
       previousPlans: 'Previous plans',
       recommendedSchedule: 'Recommended Schedule',
+      pastSchedule: 'Schedule',
       week: 'Week',
       thisWeek: 'This week',
       upcoming: 'Upcoming',

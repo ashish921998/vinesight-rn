@@ -375,6 +375,7 @@ export const hi = {
       currentLabel: 'वर्तमान',
       previousPlans: 'पिछली योजनाएँ',
       recommendedSchedule: 'अनुशंसित समय-सारिणी',
+      pastSchedule: 'समय-सारिणी',
       week: 'सप्ताह',
       thisWeek: 'इस सप्ताह',
       upcoming: 'आगामी',

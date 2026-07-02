@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { FarmSoilBaseline } from '@/components/professional/soil-baseline-panel';
+import type { FarmSoilBaseline } from '@/types/farm-soil-baseline';
 
 /**
  * Fetch the farm-level soil baseline columns (texture, CEC, etc.) for a farm.

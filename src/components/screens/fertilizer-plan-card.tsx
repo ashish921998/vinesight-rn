@@ -106,7 +106,12 @@ function bucketItems(
     earlier: [],
   };
   for (const item of items) {
-    const date = item.application_date?.slice(0, 10) ?? null;
+    const raw = item.application_date?.slice(0, 10) ?? null;
+    // Only bucket dates in canonical `YYYY-MM-DD` form — that's the only shape
+    // for which lexicographic comparison is chronological. A malformed value
+    // (non-zero-padded, unexpected format) would otherwise be misclassified
+    // into the wrong bucket, so fall back to `upcoming` rather than risk it.
+    const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
     if (!date) buckets.upcoming.push(item);
     else if (date < today) buckets.earlier.push(item);
     else if (date < weekAhead) buckets.thisWeek.push(item);
@@ -242,7 +247,9 @@ export function PlanSchedule({
     return (
       <View style={{ gap: spacing[3] }}>
         <SectionLabel color={m3.colorScheme.onSurfaceVariant} style={{ marginTop: spacing[1] }}>
-          {t('farmDetails.fertilizerPlan.recommendedSchedule', 'Recommended Schedule')}
+          {variant === 'history'
+            ? t('farmDetails.fertilizerPlan.pastSchedule', 'Schedule')
+            : t('farmDetails.fertilizerPlan.recommendedSchedule', 'Recommended Schedule')}
         </SectionLabel>
         {plan.items.map((input, index) => (
           <ScheduleItemCard
