@@ -60,7 +60,7 @@ import { formatCurrency, formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { isGrapeCrop } from '@/utils/crop';
 
-import { useModalStore } from '@/stores';
+import { useModalStore, useAppModeStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
 import { useDomainColors } from '@/styles/use-domain-colors';
 import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from '@/utils/haptics';
@@ -97,6 +97,7 @@ export default function FarmDetailScreen() {
   const router = useRouter();
   const isFocused = useIsFocused();
   const { setEditActivity, setAddEntry } = useModalStore();
+  const detailedMode = useAppModeStore((state) => state.detailedMode);
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const insets = useSafeAreaInsets();
 
@@ -246,14 +247,17 @@ export default function FarmDetailScreen() {
   }, [handleBackNavigation, isFocused]);
 
   const workboardActions = useMemo<WorkboardAction[]>(() => {
-    const actions: WorkboardAction[] = [
-      {
+    const actions: WorkboardAction[] = [];
+    if (detailedMode) {
+      actions.push({
         id: 'ai',
         titleKey: 'farmDetails.workboard.actions.ai',
         // Match the bottom navbar AI assistant icon.
         icon: 'brain',
         color: m3.colorScheme.primary,
-      },
+      });
+    }
+    actions.push(
       {
         id: 'lab',
         titleKey: 'farmDetails.workboard.actions.lab',
@@ -272,7 +276,7 @@ export default function FarmDetailScreen() {
         icon: 'square.stack.3d.up.fill',
         color: domain.category.task,
       },
-    ];
+    );
     if (profile?.consultant_organization_id) {
       actions.push({
         id: 'fertilizer-plans',
@@ -282,7 +286,13 @@ export default function FarmDetailScreen() {
       });
     }
     return actions;
-  }, [domain.category.fertigation, domain.category.task, m3, profile?.consultant_organization_id]);
+  }, [
+    detailedMode,
+    domain.category.fertigation,
+    domain.category.task,
+    m3,
+    profile?.consultant_organization_id,
+  ]);
 
   const seasonEndDates = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return [];
@@ -2049,7 +2059,7 @@ export default function FarmDetailScreen() {
             </Pressable>
           )}
 
-          {urgentTasks.length > 0 && (
+          {detailedMode && urgentTasks.length > 0 && (
             <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[3] }}>
               <Pressable
                 onPress={() => {

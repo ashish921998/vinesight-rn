@@ -131,7 +131,7 @@ import { TABLES, toSupabaseDateString } from '@/types/database';
 import type { DailyNoteRecord, Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
-import { useAuthStore, useNotificationStore } from '@/stores';
+import { useAuthStore, useNotificationStore, useAppModeStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
 import { isGrapeCrop } from '@/utils/crop';
 import {
@@ -357,10 +357,11 @@ export function EntryForm({
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { windowHeight } = useResponsiveHeight();
-  const resolvedTabs = useMemo<EntryTab[]>(
-    () => (tabs && tabs.length > 0 ? tabs : ['log', 'task']),
-    [tabs],
-  );
+  const detailedMode = useAppModeStore((state) => state.detailedMode);
+  const resolvedTabs = useMemo<EntryTab[]>(() => {
+    if (!detailedMode) return ['log'];
+    return tabs && tabs.length > 0 ? tabs : ['log', 'task'];
+  }, [tabs, detailedMode]);
   const isScreenPresentation = presentation === 'screen';
   const isInlineComposerMode = isScreenPresentation;
   const defaultTab = resolvedTabs.includes(initialTab || 'log')

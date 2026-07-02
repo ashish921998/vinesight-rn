@@ -1948,6 +1948,10 @@ export const mr = {
     enterPhone: 'फोन नंबर लिहा',
     selectCurrency: 'चलन निवडा',
     selectAreaUnit: 'क्षेत्रफळ एकक निवडा',
+    appMode: {
+      title: 'विस्तृत मोड',
+      subtitle: 'कामगार, साधने, एआय सहाय्यक आणि कार्ये दर्शवा',
+    },
     errors: {
       signOutFailed: 'साइन आउट अयशस्वी. पुन्हा प्रयत्न करा.',
       notificationsPermissionDenied: 'सूचना परवानगी मंजूर झाली नाही.',

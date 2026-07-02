@@ -19,6 +19,7 @@ import {
   useLanguageStore,
   useNotificationStore,
   useThemeStore,
+  useAppModeStore,
 } from '@/stores';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { ToastHost } from '@/components/ui/toast';
@@ -535,13 +536,24 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
           currentRouter.push('/(tabs)');
           return;
         }
+        // In simplified mode, workers/tasks destinations are hidden — fall back to home.
+        const detailedMode = useAppModeStore.getState().detailedMode;
+        if (!detailedMode && (route === '/(tabs)/workers' || route === '/tasks')) {
+          currentRouter.push('/(tabs)');
+          return;
+        }
         currentRouter.push(route);
       } else if (
         data?.type === 'task_due' ||
         data?.type === 'task_due_tomorrow' ||
         data?.type === 'task_overdue'
       ) {
-        currentRouter.push('/tasks');
+        // Tasks screen is hidden in simplified mode — fall back to home.
+        if (!useAppModeStore.getState().detailedMode) {
+          currentRouter.push('/(tabs)');
+        } else {
+          currentRouter.push('/tasks');
+        }
       } else if (data?.type === 'low_water') {
         currentRouter.push('/(tabs)');
       } else if (data?.type === 'warehouse_reorder') {

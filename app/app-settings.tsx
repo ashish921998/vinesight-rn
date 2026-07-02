@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import * as Sentry from '@sentry/react-native';
-import { useAuthStore, useLanguageStore, useThemeStore } from '@/stores';
+import { useAuthStore, useLanguageStore, useThemeStore, useAppModeStore } from '@/stores';
 import { useProfile, useUpdateProfile, useCurrency, isIOS } from '@/hooks';
 import { setAppLanguage } from '@/i18n';
 import type { SupportedLanguageCode } from '@/i18n/languages';
@@ -104,6 +104,8 @@ export default function SettingsScreen() {
   const setLanguage = useLanguageStore((s) => s.setLanguage);
   const themeMode = useThemeStore((s) => s.mode);
   const setThemeMode = useThemeStore((s) => s.setMode);
+  const detailedMode = useAppModeStore((s) => s.detailedMode);
+  const setDetailedMode = useAppModeStore((s) => s.setDetailedMode);
 
   const { data: profile, refetch: refetchProfile } = useProfile();
   const updateProfile = useUpdateProfile();
@@ -371,6 +373,7 @@ export default function SettingsScreen() {
         selectedCurrency={selectedCurrency}
         selectedAreaUnit={selectedAreaUnit}
         isResettingGuidedTour={isResettingGuidedTour}
+        detailedMode={detailedMode}
         styles={styles}
         m3={m3}
         onLanguageChange={handleLanguageChange}
@@ -378,6 +381,7 @@ export default function SettingsScreen() {
         onCurrencyChange={handleCurrencyChange}
         onAreaUnitChange={handleAreaUnitChange}
         onReplayGuidedTour={handleReplayGuidedTour}
+        onDetailedModeChange={setDetailedMode}
       />
 
       <AccountSection

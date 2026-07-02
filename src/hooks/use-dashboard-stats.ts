@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { getUserId } from '../lib/auth-utils';
 import { queryKeys } from './query-keys';
+import { useAppModeStore } from '../stores/app-mode-store';
 import type { Farm } from '../types';
 import { TABLES, isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
@@ -250,12 +251,20 @@ export function useDashboardStats() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
 
-      // Fetch active workers count
-      const { count: workersCount } = await supabase
-        .from(TABLES.WORKERS)
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_active', true);
+      // In simplified mode the workers/tasks metric cards are hidden, so skip
+      // their count queries to avoid wasted network calls.
+      const detailedMode = useAppModeStore.getState().detailedMode;
+
+      // Fetch active workers count (detailed mode only)
+      let workersCount = 0;
+      if (detailedMode) {
+        const { count } = await supabase
+          .from(TABLES.WORKERS)
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('is_active', true);
+        workersCount = count ?? 0;
+      }
 
       // Get recent activities count (last 7 days)
       const sevenDaysAgo = new Date();
@@ -297,11 +306,13 @@ export function useDashboardStats() {
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
-          supabase
-            .from('task_reminders')
-            .select('*', { count: 'exact', head: true })
-            .in('farm_id', farmIds)
-            .eq('completed', false),
+          detailedMode
+            ? supabase
+                .from('task_reminders')
+                .select('*', { count: 'exact', head: true })
+                .in('farm_id', farmIds)
+                .eq('completed', false)
+            : Promise.resolve({ count: 0 } as { count: number | null }),
         ]);
 
         activitiesCount =
@@ -316,7 +327,7 @@ export function useDashboardStats() {
 
       return {
         farmsCount: farmsCount ?? 0,
-        activeWorkersCount: workersCount ?? 0,
+        activeWorkersCount: workersCount,
         recentActivitiesCount: activitiesCount,
         pendingTasksCount,
       };

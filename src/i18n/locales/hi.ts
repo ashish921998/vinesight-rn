@@ -1941,6 +1941,10 @@ export const hi = {
     enterPhone: 'फोन नंबर दर्ज करें',
     selectCurrency: 'मुद्रा चुनें',
     selectAreaUnit: 'क्षेत्रफल इकाई चुनें',
+    appMode: {
+      title: 'विस्तृत मोड',
+      subtitle: 'कर्मचारी, उपकरण, एआई सहायक और कार्य दिखाएं',
+    },
     errors: {
       signOutFailed: 'साइन आउट करने में विफल। कृपया पुनः प्रयास करें।',
       notificationsPermissionDenied: 'सूचनाएं अनुमति प्रदान नहीं की गई।',

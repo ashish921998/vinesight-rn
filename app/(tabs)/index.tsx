@@ -34,6 +34,7 @@ import { useDomainColors } from '@/styles/use-domain-colors';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
 import { guidedTourEmit } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { useAppModeStore } from '@/stores';
 import { parseDbDateToLocalDate } from '@/utils/date';
 import { createAddLogHref } from '@/utils/add-log-navigation';
 
@@ -68,6 +69,7 @@ export default function DashboardScreen() {
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const hasSeenWelcomeThisSession = useGuidedTourStore((s) => s.hasSeenWelcomeThisSession);
   const hasHydrated = useGuidedTourStore((s) => s.hasHydrated);
+  const detailedMode = useAppModeStore((s) => s.detailedMode);
 
   // Data hooks
   const { data: stats, refetch: refetchStats } = useDashboardStats();
@@ -150,7 +152,9 @@ export default function DashboardScreen() {
   };
 
   const hasFarms = Boolean(farms && farms.length > 0);
-  const attentionItems = todayNeedsAttention;
+  const attentionItems = detailedMode
+    ? todayNeedsAttention
+    : todayNeedsAttention?.filter((item) => item.type !== 'overdueTask');
 
   const formatAttentionDate = (value?: string | null): string | null => {
     if (!value) return null;
@@ -509,109 +513,113 @@ export default function DashboardScreen() {
               </Text>
             </Pressable>
 
-            {/* Workers */}
-            <Pressable
-              onPress={() => handleMetricCardPress('workers')}
-              accessibilityRole="button"
-              accessibilityLabel={t('dashboard.stats.activeWorkers')}
-              style={({ pressed }) => ({
-                flex: 1,
-                minWidth: '45%',
-                backgroundColor: m3.surface.s100,
-                borderWidth: 1,
-                borderColor: m3.surface.s300,
-                borderRadius: borderRadius.md,
-                padding: spacing[4],
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(m3.colorScheme.secondary, 0.12),
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: spacing[3],
-                }}
-              >
-                <SymbolIcon name="person.2" size={18} color={m3.colorScheme.secondary} />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  color: m3.surface.s900,
-                  lineHeight: 28,
-                  marginBottom: spacing[1],
-                }}
-              >
-                {formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s500,
-                  letterSpacing: 0,
-                }}
-              >
-                {t('dashboard.stats.activeWorkers')}
-              </Text>
-            </Pressable>
+            {detailedMode && (
+              <>
+                {/* Workers */}
+                <Pressable
+                  onPress={() => handleMetricCardPress('workers')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.stats.activeWorkers')}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minWidth: '45%',
+                    backgroundColor: m3.surface.s100,
+                    borderWidth: 1,
+                    borderColor: m3.surface.s300,
+                    borderRadius: borderRadius.md,
+                    padding: spacing[4],
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: radius.md,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.secondary, 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: spacing[3],
+                    }}
+                  >
+                    <SymbolIcon name="person.2" size={18} color={m3.colorScheme.secondary} />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: fontSize['2xl'],
+                      fontWeight: fontWeight.bold,
+                      color: m3.surface.s900,
+                      lineHeight: 28,
+                      marginBottom: spacing[1],
+                    }}
+                  >
+                    {formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.surface.s500,
+                      letterSpacing: 0,
+                    }}
+                  >
+                    {t('dashboard.stats.activeWorkers')}
+                  </Text>
+                </Pressable>
 
-            {/* Tasks */}
-            <Pressable
-              onPress={() => handleMetricCardPress('tasks')}
-              accessibilityRole="button"
-              accessibilityLabel={t('dashboard.stats.tasks')}
-              style={({ pressed }) => ({
-                flex: 1,
-                minWidth: '45%',
-                backgroundColor: m3.surface.s100,
-                borderWidth: 1,
-                borderColor: m3.surface.s300,
-                borderRadius: borderRadius.md,
-                padding: spacing[4],
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(m3.colorScheme.accent, 0.12),
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: spacing[3],
-                }}
-              >
-                <SymbolIcon name="checklist" size={18} color={m3.colorScheme.accent} />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  color: m3.surface.s900,
-                  lineHeight: 28,
-                  marginBottom: spacing[1],
-                }}
-              >
-                {formatNumber(stats?.pendingTasksCount ?? 0, { maximumFractionDigits: 0 })}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s500,
-                  letterSpacing: 0,
-                }}
-              >
-                {t('dashboard.stats.tasks')}
-              </Text>
-            </Pressable>
+                {/* Tasks */}
+                <Pressable
+                  onPress={() => handleMetricCardPress('tasks')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.stats.tasks')}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minWidth: '45%',
+                    backgroundColor: m3.surface.s100,
+                    borderWidth: 1,
+                    borderColor: m3.surface.s300,
+                    borderRadius: borderRadius.md,
+                    padding: spacing[4],
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: radius.md,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.accent, 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: spacing[3],
+                    }}
+                  >
+                    <SymbolIcon name="checklist" size={18} color={m3.colorScheme.accent} />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: fontSize['2xl'],
+                      fontWeight: fontWeight.bold,
+                      color: m3.surface.s900,
+                      lineHeight: 28,
+                      marginBottom: spacing[1],
+                    }}
+                  >
+                    {formatNumber(stats?.pendingTasksCount ?? 0, { maximumFractionDigits: 0 })}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.surface.s500,
+                      letterSpacing: 0,
+                    }}
+                  >
+                    {t('dashboard.stats.tasks')}
+                  </Text>
+                </Pressable>
+              </>
+            )}
 
             {/* Activities */}
             <Pressable

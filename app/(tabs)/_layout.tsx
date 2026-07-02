@@ -8,7 +8,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useAppModeStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useM3, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -20,6 +20,7 @@ export default function TabLayout() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const detailedMode = useAppModeStore((state) => state.detailedMode);
   const [hasRedirected, setHasRedirected] = useState(false);
   const insets = useSafeAreaInsets();
   const m3 = useM3();
@@ -151,30 +152,35 @@ export default function TabLayout() {
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('house', focused),
             }}
           />
-          <Tabs.Screen
-            name="workers"
-            options={{
-              title: t('tabs.workers'),
-              headerShown: false,
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('person.2', focused),
-            }}
-          />
-          <Tabs.Screen
-            name="tools"
-            options={{
-              title: t('tabs.tools'),
-              headerShown: false,
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('wrench.and.screwdriver', focused),
-            }}
-          />
-          <Tabs.Screen
-            name="assistant"
-            options={{
-              title: t('tabs.aiAssistant'),
-              headerShown: false,
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('brain', focused),
-            }}
-          />
+          {detailedMode && (
+            <>
+              <Tabs.Screen
+                name="workers"
+                options={{
+                  title: t('tabs.workers'),
+                  headerShown: false,
+                  tabBarIcon: ({ focused }) => renderAndroidTabIcon('person.2', focused),
+                }}
+              />
+              <Tabs.Screen
+                name="tools"
+                options={{
+                  title: t('tabs.tools'),
+                  headerShown: false,
+                  tabBarIcon: ({ focused }) =>
+                    renderAndroidTabIcon('wrench.and.screwdriver', focused),
+                }}
+              />
+              <Tabs.Screen
+                name="assistant"
+                options={{
+                  title: t('tabs.aiAssistant'),
+                  headerShown: false,
+                  tabBarIcon: ({ focused }) => renderAndroidTabIcon('brain', focused),
+                }}
+              />
+            </>
+          )}
         </Tabs>
       </>
     );
@@ -222,23 +228,27 @@ export default function TabLayout() {
           />
           <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="workers">
-          {renderTabIcon(sf('person.2'), sf('person.2.fill'), 'people-outline', 'people')}
-          <NativeTabs.Trigger.Label>{t('tabs.workers')}</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="tools">
-          {renderTabIcon(
-            sf('wrench.and.screwdriver'),
-            sf('wrench.and.screwdriver.fill'),
-            'build-outline',
-            'build',
-          )}
-          <NativeTabs.Trigger.Label>{t('tabs.tools')}</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="assistant">
-          {renderTabIcon(sf('brain'), sf('brain.fill'), 'sparkles-outline', 'sparkles')}
-          <NativeTabs.Trigger.Label>{t('tabs.aiAssistant')}</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
+        {detailedMode && (
+          <>
+            <NativeTabs.Trigger name="workers">
+              {renderTabIcon(sf('person.2'), sf('person.2.fill'), 'people-outline', 'people')}
+              <NativeTabs.Trigger.Label>{t('tabs.workers')}</NativeTabs.Trigger.Label>
+            </NativeTabs.Trigger>
+            <NativeTabs.Trigger name="tools">
+              {renderTabIcon(
+                sf('wrench.and.screwdriver'),
+                sf('wrench.and.screwdriver.fill'),
+                'build-outline',
+                'build',
+              )}
+              <NativeTabs.Trigger.Label>{t('tabs.tools')}</NativeTabs.Trigger.Label>
+            </NativeTabs.Trigger>
+            <NativeTabs.Trigger name="assistant">
+              {renderTabIcon(sf('brain'), sf('brain.fill'), 'sparkles-outline', 'sparkles')}
+              <NativeTabs.Trigger.Label>{t('tabs.aiAssistant')}</NativeTabs.Trigger.Label>
+            </NativeTabs.Trigger>
+          </>
+        )}
       </NativeTabs>
     </>
   );

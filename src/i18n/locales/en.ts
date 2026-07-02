@@ -1948,6 +1948,10 @@ export const en = {
     enterPhone: 'Enter phone number',
     selectCurrency: 'Select Currency',
     selectAreaUnit: 'Select Area Unit',
+    appMode: {
+      title: 'Detailed mode',
+      subtitle: 'Show workers, tools, AI assistant, and tasks',
+    },
     errors: {
       signOutFailed: 'Failed to sign out. Please try again.',
       notificationsPermissionDenied: 'Notifications permission was not granted.',

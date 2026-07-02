@@ -2,7 +2,7 @@ import { StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { borderRadius, fontSize, fontWeight, getM3Theme, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { View, Text } from 'react-native';
+import { View, Text, Switch } from 'react-native';
 import React from 'react';
 
 export const createStyles = (m3: ReturnType<typeof getM3Theme>) => ({
@@ -104,6 +104,11 @@ export const createStyles = (m3: ReturnType<typeof getM3Theme>) => ({
     fontSize: fontSize.sm,
     color: m3.surface.s500,
     marginRight: spacing[2],
+  } as TextStyle,
+  settingsSubtitle: {
+    fontSize: fontSize.xs,
+    color: m3.surface.s500,
+    marginTop: 2,
   } as TextStyle,
   borderBottom: { borderBottomWidth: 1, borderBottomColor: m3.surface.s200 } as ViewStyle,
   disabledItem: {
@@ -401,6 +406,57 @@ export function SettingsItem({
         </Text>
       )}
       {!disabled && <UISymbol name="chevron.right" size={18} color={m3.surface.s500} />}
+    </View>
+  );
+}
+
+export function SettingsToggleItem({
+  icon,
+  title,
+  subtitle,
+  value,
+  onValueChange,
+  isLast,
+  styles,
+  m3,
+}: {
+  icon: string;
+  title: string;
+  subtitle?: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  isLast?: boolean;
+  styles: SettingsStyles;
+  m3: ReturnType<typeof getM3Theme>;
+}) {
+  return (
+    <View style={[styles.settingsItem, !isLast && styles.borderBottom]}>
+      <View style={styles.settingsIcon}>
+        <UISymbol name={icon} size={20} color={m3.neutral.n500} />
+      </View>
+      <View style={{ flex: 1, marginLeft: spacing[3] }}>
+        <Text
+          style={[styles.settingsTitle, { marginLeft: 0 }]}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text
+            style={styles.settingsSubtitle}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        trackColor={{ false: m3.surface.s300, true: m3.colorScheme.primary }}
+      />
     </View>
   );
 }
