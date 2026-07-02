@@ -119,7 +119,10 @@ export default function TabLayout() {
   // route and can crash on).
   useEffect(() => {
     if (detailedMode) return;
-    const activeTab = segments[1]; // ['(tabs)', '<tab>']
+    // Inside the (tabs) group the segments are ['(tabs)', '<tab>']. Treat as a
+    // plain array — `useSegments()` returns a union of literal tuples, so a
+    // direct `[1]` access trips TS2493 on the single-segment members.
+    const activeTab = (segments as readonly string[])[1];
     if (typeof activeTab === 'string' && DETAILED_TABS.some((tab) => tab.name === activeTab)) {
       router.replace('/(tabs)');
     }
