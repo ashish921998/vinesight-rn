@@ -21,6 +21,7 @@ import {
   type ExpenseRecordInsert,
   type DailyNoteRecord,
   type FertilizerItem,
+  type QuantityBasis,
 } from '../types';
 import { resolveOrCreateSeasonIdForDate } from '../lib/season-context';
 
@@ -798,15 +799,42 @@ export interface RecentInputItem {
   name: string;
   unit: string;
   quantity?: number | null;
+  quantityBasis?: QuantityBasis;
+  catalogProductId?: number | null;
+  warehouseItemId?: number | null;
+  /** Spray rows only: record-level mix this item was logged as part of. */
+  catalogMixId?: number | null;
 }
 
-function dedupeRecentItems(items: RecentInputItem[], limit = 12): RecentInputItem[] {
-  const seen = new Set<string>();
+/**
+ * Dedupes most-recent-first. Rows carrying an identity id (catalog product,
+ * else warehouse item) collapse by that id — two logs of the same product stay
+ * one row even if the display name drifted. Rows without one keep the legacy
+ * normalized name+unit dedupe, and a shared name still collapses across the
+ * two groups so an identity row and a legacy row never show up twice.
+ */
+export function dedupeRecentItems(items: RecentInputItem[], limit = 12): RecentInputItem[] {
+  const seenIdentityKeys = new Set<string>();
+  const seenNameKeys = new Set<string>();
+  const seenIdentitylessNameKeys = new Set<string>();
   const result: RecentInputItem[] = [];
   for (const item of items) {
-    const key = `${item.name.trim().toLowerCase()}::${item.unit.trim().toLowerCase()}`;
-    if (!item.name.trim() || !item.unit.trim() || seen.has(key)) continue;
-    seen.add(key);
+    if (!item.name.trim() || !item.unit.trim()) continue;
+    const nameKey = `${item.name.trim().toLowerCase()}::${item.unit.trim().toLowerCase()}`;
+    const identityKey =
+      item.catalogProductId != null
+        ? `catalog:${item.catalogProductId}`
+        : item.warehouseItemId != null
+          ? `warehouse:${item.warehouseItemId}`
+          : null;
+    if (identityKey) {
+      if (seenIdentityKeys.has(identityKey) || seenIdentitylessNameKeys.has(nameKey)) continue;
+      seenIdentityKeys.add(identityKey);
+    } else {
+      if (seenNameKeys.has(nameKey)) continue;
+      seenIdentitylessNameKeys.add(nameKey);
+    }
+    seenNameKeys.add(nameKey);
     result.push(item);
     if (result.length >= limit) break;
   }
@@ -836,13 +864,57 @@ function parseSprayChemicalString(value: string | null | undefined): RecentInput
     .map((name) => ({ name, unit: 'gm/L', quantity: null }));
 }
 
+/**
+ * Defensive view of one stored `chemical_items` JSON row: legacy records may
+ * miss any field, so nothing beyond the shape itself is assumed.
+ */
+interface StoredSprayChemicalItem {
+  name?: string;
+  unit?: string;
+  quantity?: number | null;
+  quantity_basis?: QuantityBasis;
+  catalog_product_id?: number | null;
+  warehouse_item_id?: number | null;
+}
+
+/** Subset of a spray record row fetched by the recents query. */
+export interface RecentSprayRecordRow {
+  chemical?: string | null;
+  chemical_items?: StoredSprayChemicalItem[] | null;
+  catalog_mix_id?: number | null;
+}
+
+export function parseRecentSprayRecords(rows: RecentSprayRecordRow[]): RecentInputItem[] {
+  return rows.flatMap((row) => {
+    // Mix identity lives on the record, not on item rows: stamp it onto every
+    // parsed row so a history tap can later prefill the whole mix.
+    const catalogMixId = row.catalog_mix_id;
+    const chemicalItems = row.chemical_items;
+    if (chemicalItems && chemicalItems.length > 0) {
+      return chemicalItems.map((item) => ({
+        name: item.name?.trim() ?? '',
+        unit: item.unit?.trim() ?? '',
+        quantity:
+          typeof item.quantity === 'number' && Number.isFinite(item.quantity)
+            ? item.quantity
+            : null,
+        quantityBasis: item.quantity_basis,
+        catalogProductId: item.catalog_product_id,
+        warehouseItemId: item.warehouse_item_id,
+        catalogMixId,
+      }));
+    }
+    return parseSprayChemicalString(row.chemical).map((item) => ({ ...item, catalogMixId }));
+  });
+}
+
 export function useRecentSprayChemicals(farmId?: number, limit = 12) {
   return useQuery({
     queryKey: [...queryKeys.sprayRecords.lists(), 'recent_chemicals', { farmId: farmId ?? null }],
     queryFn: async (): Promise<RecentInputItem[]> => {
       let query = supabase
         .from(TABLES.SPRAY_RECORDS)
-        .select('chemical,date,chemical_items')
+        .select('chemical,date,chemical_items,catalog_mix_id')
         .order('date', { ascending: false })
         .limit(80);
 
@@ -853,26 +925,36 @@ export function useRecentSprayChemicals(farmId?: number, limit = 12) {
       const { data, error } = await query;
       if (error) throw error;
 
-      const parsed = (data ?? []).flatMap((row) => {
-        const chemicalItems = row.chemical_items as
-          | Array<{ name?: string; unit?: string; quantity?: number | null }>
-          | null
-          | undefined;
-        if (chemicalItems && chemicalItems.length > 0) {
-          return chemicalItems.map((item) => ({
-            name: item.name?.trim() ?? '',
-            unit: item.unit?.trim() ?? '',
-            quantity:
-              typeof item.quantity === 'number' && Number.isFinite(item.quantity)
-                ? item.quantity
-                : null,
-          }));
-        }
-        return parseSprayChemicalString(row.chemical);
-      });
-      return dedupeRecentItems(parsed, limit);
+      return dedupeRecentItems(
+        parseRecentSprayRecords((data ?? []) as RecentSprayRecordRow[]),
+        limit,
+      );
     },
   });
+}
+
+/** Subset of a fertigation record row fetched by the recents query. */
+export interface RecentFertigationRecordRow {
+  fertilizers?: FertilizerItem[] | null;
+}
+
+export function parseRecentFertigationRecords(
+  rows: RecentFertigationRecordRow[],
+): RecentInputItem[] {
+  const parsed: RecentInputItem[] = [];
+  for (const row of rows) {
+    for (const fertilizer of row.fertilizers ?? []) {
+      parsed.push({
+        name: fertilizer.name.trim(),
+        unit: fertilizer.unit.trim(),
+        quantity: fertilizer.quantity ?? null,
+        quantityBasis: fertilizer.quantity_basis,
+        catalogProductId: fertilizer.catalog_product_id,
+        warehouseItemId: fertilizer.warehouse_item_id,
+      });
+    }
+  }
+  return parsed;
 }
 
 export function useRecentFertigationItems(farmId?: number, limit = 12) {
@@ -896,18 +978,10 @@ export function useRecentFertigationItems(farmId?: number, limit = 12) {
       const { data, error } = await query;
       if (error) throw error;
 
-      const parsed: RecentInputItem[] = [];
-      for (const row of data ?? []) {
-        const fertilizers = row.fertilizers as FertilizerItem[] | null;
-        for (const fertilizer of fertilizers ?? []) {
-          parsed.push({
-            name: fertilizer.name.trim(),
-            unit: fertilizer.unit.trim(),
-            quantity: fertilizer.quantity ?? null,
-          });
-        }
-      }
-      return dedupeRecentItems(parsed, limit);
+      return dedupeRecentItems(
+        parseRecentFertigationRecords((data ?? []) as RecentFertigationRecordRow[]),
+        limit,
+      );
     },
   });
 }
