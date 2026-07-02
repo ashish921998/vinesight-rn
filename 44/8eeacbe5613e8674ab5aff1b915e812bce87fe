@@ -1,0 +1,19 @@
+src/constants/fertilizer-units.ts
+  s_88a00634f90de1::t_9a36b127a137fb 52-55,57-61,77-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "448eeacbe5613e8674ab5aff1b915e812bce87fe",
+  "prompts": {},
+  "sessions": {
+    "s_88a00634f90de1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f213b-c011-7a51-8ad1-0c57af2f36bd",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
