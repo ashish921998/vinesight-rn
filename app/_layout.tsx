@@ -167,6 +167,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
   const languageHydrated = useLanguageStore((s) => s.hasHydrated);
 
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
+  const appModeHydrated = useAppModeStore((s) => s.hydrated);
   const notificationPermissionPrompted = useNotificationStore(
     (s) => s.notificationPermissionPrompted,
   );
@@ -515,8 +516,11 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
     };
   }, []);
 
-  // Handle notification taps → deep-link to the appropriate screen
+  // Handle notification taps → deep-link to the appropriate screen.
+  // Gated on app-mode hydration so cold-start notification routing reads the
+  // user's persisted mode rather than the in-memory default (Simplified).
   useEffect(() => {
+    if (!appModeHydrated) return;
     let cleanup: null | (() => void) = null;
     let disposed = false;
 
@@ -610,7 +614,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
       disposed = true;
       cleanup?.();
     };
-  }, []);
+  }, [appModeHydrated]);
 
   // Safety timeout: if initialization hangs (e.g. SecureStore on Android),
   // force-complete all conditions so the app doesn't stay on splash forever.

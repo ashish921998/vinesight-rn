@@ -21,13 +21,15 @@ interface Props {
  *
  * The backdrop is intentionally NOT tap-to-dismiss — the user must pick one of
  * the two actions so they can't accidentally lose the easy path to Detailed.
+ * `onRequestClose` is a no-op so the Android hardware back button can't bypass
+ * that explicit-choice flow either.
  */
 export function AppModeIntroModal({ visible, onEnableDetailed, onStaySimplified }: Props) {
   const { t } = useTranslation();
   const m3 = useM3();
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onStaySimplified}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => {}}>
       <View
         style={{
           flex: 1,
@@ -144,8 +146,10 @@ export function AppModeIntroModal({ visible, onEnableDetailed, onStaySimplified 
  * Mount beside the app's global overlays (e.g. GuidedTourController). Decides
  * whether to show the one-time Simplified-mode intro and wires the actions.
  *
- * Visible only when: authenticated, not mid-profile-completion, intro store has
- * hydrated, the user hasn't seen it yet, they're currently on Simplified mode,
+ * Visible only when: authenticated, not mid-profile-completion, BOTH the intro
+ * store and the app-mode store have hydrated (so a Detailed-mode user can't
+ * briefly flip themselves to Simplified before AsyncStorage restores their
+ * choice), the user hasn't seen it yet, they're currently on Simplified mode,
  * and the guided tour isn't actively presenting (so the two overlays never
  * stack).
  */
@@ -155,6 +159,7 @@ export function AppModeIntroGate() {
   const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
 
   const detailedMode = useAppModeStore((s) => s.detailedMode);
+  const modeHydrated = useAppModeStore((s) => s.hydrated);
   const setDetailedMode = useAppModeStore((s) => s.setDetailedMode);
 
   const hasSeenIntro = useAppModeIntroStore((s) => s.hasSeenSimplifiedModeIntro);
@@ -163,13 +168,17 @@ export function AppModeIntroGate() {
 
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
 
-  const tourIsPresenting = guidedTourStatus === 'in_progress' || guidedTourStatus === 'not_started';
+  // Only block when the tour overlay is *actively* presenting. `not_started`
+  // is the default persisted state for anyone who never launched the tour, so
+  // including it here would suppress this intro for every such user.
+  const tourIsPresenting = guidedTourStatus === 'in_progress';
 
   const visible =
     isAuthenticated &&
     !isLoading &&
     !needsProfileCompletion &&
     introHydrated &&
+    modeHydrated &&
     !hasSeenIntro &&
     !detailedMode &&
     !tourIsPresenting;
