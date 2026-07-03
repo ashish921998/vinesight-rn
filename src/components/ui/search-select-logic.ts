@@ -190,20 +190,33 @@ export interface RecentItemsToOptionsConfig {
  * restore the whole mix (record-level mix identity), with the single-item
  * prefill as offline/missing-mix fallback.
  */
+/**
+ * Stable per-item key that survives list reordering/filtering. Distinct
+ * prefixes (`p`/`w`/`n`) keep the id-space and name-space from colliding.
+ * Uniqueness within one recents list is guaranteed upstream by
+ * `dedupeRecentItems` (use-records.ts): identity rows are deduped by
+ * catalogProductId / warehouseItemId, identityless rows by name::unit.
+ */
+function recentItemKey(item: RecentInputItem): string {
+  if (item.catalogProductId != null) return `history:p${item.catalogProductId}`;
+  if (item.warehouseItemId != null) return `history:w${item.warehouseItemId}`;
+  return `history:n${item.name}::${item.unit}`;
+}
+
 export function recentItemsToOptions(
   items: RecentInputItem[],
   config?: RecentItemsToOptionsConfig,
 ): SearchSelectOption[] {
   return items
     .filter((item) => item.name.trim().length > 0)
-    .map((item, index) => {
+    .map((item) => {
       const dose = formatDoseDetail(item.quantity, item.unit);
       const detail =
         [dose, item.catalogMixId != null ? config?.mixLabel : null]
           .filter((part): part is string => Boolean(part))
           .join(' · ') || null;
       return {
-        key: `history:${index}:${item.name}:${item.unit}`,
+        key: recentItemKey(item),
         name: item.name,
         detail,
         selection: {
@@ -227,22 +240,38 @@ export function recentItemsToOptions(
  * Active plan items: prescribed dose shown, selection stamps `planItemId`.
  * This is how a consultant's custom (non-catalog) prescription reaches the
  * farmer's picker verbatim.
+ *
+ * Quantity is prefilled only when the item carries a unit AND a positive
+ * finite quantity: without a unit the form would fall back to its default
+ * ('gm/L'), silently changing the prescribed meaning of the number, and a
+ * zero/negative quantity would create a row that instantly fails the form's
+ * `quantity > 0` validation. The unit alone still prefills when present.
  */
 export function planItemsToOptions(items: FertilizerPlanItem[]): SearchSelectOption[] {
   return items
     .filter((item) => item.name.trim().length > 0)
-    .map((item) => ({
-      key: `plan:${item.id}`,
-      name: item.name,
-      detail: formatDoseDetail(item.quantity, item.unit),
-      selection: {
-        kind: 'item' as const,
+    .map((item) => {
+      const unit = item.unit?.trim() ? item.unit : null;
+      const quantity =
+        unit != null &&
+        typeof item.quantity === 'number' &&
+        Number.isFinite(item.quantity) &&
+        item.quantity > 0
+          ? item.quantity
+          : null;
+      return {
+        key: `plan:${item.id}`,
         name: item.name,
-        planItemId: item.id,
-        isCustom: false,
-        prefill: { quantity: item.quantity, unit: item.unit },
-      },
-    }));
+        detail: formatDoseDetail(item.quantity, item.unit),
+        selection: {
+          kind: 'item' as const,
+          name: item.name,
+          planItemId: item.id,
+          isCustom: false,
+          prefill: { quantity, unit },
+        },
+      };
+    });
 }
 
 export interface ChemicalCatalogToOptionsConfig {

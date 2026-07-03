@@ -75,9 +75,28 @@ describe('normalizeSearchText', () => {
     expect(normalizeSearchText('  KaRaTe   2 ')).toBe('karate 2');
   });
 
-  it('unifies decomposed and composed Devanagari forms', () => {
-    // 'यूरिया' typed with a combining vowel sign vs precomposed.
-    expect(normalizeSearchText('यूरिया')).toBe(normalizeSearchText('यूरिया'));
+  it('unifies composed and decomposed Unicode forms (NFC)', () => {
+    // Latin: precomposed é (U+00E9) vs e + combining acute (U+0065 U+0301).
+    const latinComposed = 'café';
+    const latinDecomposed = 'café';
+    expect(latinComposed).not.toBe(latinDecomposed); // genuinely distinct forms
+    expect(normalizeSearchText(latinComposed)).toBe(normalizeSearchText(latinDecomposed));
+
+    // Devanagari: क़ QA (U+0958) is a composition exclusion — NFC *decomposes*
+    // it — so both it and क + nukta (U+0915 U+093C) normalize to क + nukta.
+    const devanagariPrecomposed = 'क़';
+    const devanagariDecomposed = 'क़';
+    expect(devanagariPrecomposed).not.toBe(devanagariDecomposed);
+    expect(normalizeSearchText(devanagariPrecomposed)).toBe(
+      normalizeSearchText(devanagariDecomposed),
+    );
+  });
+
+  it('matches queries across Unicode normalization forms', () => {
+    // Option named in one form is found by a query typed in the other.
+    const options = [option('café mix'), option('क़ीटनाशक')];
+    expect(filterAndRankOptions(options, 'café').map((entry) => entry.name)).toEqual(['café mix']);
+    expect(filterAndRankOptions(options, 'क़').map((entry) => entry.name)).toEqual(['क़ीटनाशक']);
   });
 });
 
@@ -219,6 +238,25 @@ describe('recentItemsToOptions', () => {
     expect(options[1].detail).toBe('2 ml/L');
   });
 
+  it('keys rows by identity (not list index), falling back to name::unit', () => {
+    const options = recentItemsToOptions([
+      recent({ catalogProductId: 5 }),
+      recent({ name: 'Warehouse thing', warehouseItemId: 9 }),
+      recent({ name: 'Legacy', unit: 'ml' }),
+    ]);
+    expect(options.map((entry) => entry.key)).toEqual([
+      'history:p5',
+      'history:w9',
+      'history:nLegacy::ml',
+    ]);
+    // Keys do not shift when earlier rows are filtered out.
+    const filtered = recentItemsToOptions([
+      recent({ name: '  ' }),
+      recent({ name: 'Legacy', unit: 'ml' }),
+    ]);
+    expect(filtered.map((entry) => entry.key)).toEqual(['history:nLegacy::ml']);
+  });
+
   it('defaults identity fields to null for legacy rows and skips blank names', () => {
     const options = recentItemsToOptions([recent({}), recent({ name: '   ' })]);
     expect(options).toHaveLength(1);
@@ -254,6 +292,29 @@ describe('planItemsToOptions', () => {
     ]);
     expect(options).toHaveLength(1);
     expect(options[0].detail).toBeNull();
+  });
+
+  it('does not prefill quantity when the unit is missing (default-unit meaning change)', () => {
+    const options = planItemsToOptions([
+      planItem({ unit: null }),
+      planItem({ id: 'plan-item-2', unit: '   ' }),
+    ]);
+    expect(options[0].selection.prefill).toEqual({ quantity: null, unit: null });
+    expect(options[1].selection.prefill).toEqual({ quantity: null, unit: null });
+  });
+
+  it('does not prefill a zero or negative quantity (instantly-invalid row)', () => {
+    const options = planItemsToOptions([
+      planItem({ quantity: 0 }),
+      planItem({ id: 'plan-item-2', quantity: -3 }),
+    ]);
+    expect(options[0].selection.prefill).toEqual({ quantity: null, unit: 'kg/acre' });
+    expect(options[1].selection.prefill).toEqual({ quantity: null, unit: 'kg/acre' });
+  });
+
+  it('prefills both quantity and unit for a valid prescribed dose', () => {
+    const options = planItemsToOptions([planItem({})]);
+    expect(options[0].selection.prefill).toEqual({ quantity: 5, unit: 'kg/acre' });
   });
 });
 

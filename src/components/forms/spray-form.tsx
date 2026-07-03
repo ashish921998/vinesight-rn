@@ -282,76 +282,79 @@ export function SprayForm({
     onChange({ ...data, chemicals: clampChemicalRows(newChemicals) });
   };
 
-  const addQuickChemical = (item: SprayQuickAddItem) => {
-    const validatedUnit = resolveChemicalUnit(item.unit);
-    const normalizedName = item.name.trim().toLowerCase();
-    const alreadyExists = data.chemicals.some(
-      (chemical) =>
-        chemical.name.trim().toLowerCase() === normalizedName && chemical.unit === validatedUnit,
-    );
-    if (alreadyExists) return;
+  const addQuickChemical = useCallback(
+    (item: SprayQuickAddItem) => {
+      const validatedUnit = resolveChemicalUnit(item.unit);
+      const normalizedName = item.name.trim().toLowerCase();
+      const alreadyExists = data.chemicals.some(
+        (chemical) =>
+          chemical.name.trim().toLowerCase() === normalizedName && chemical.unit === validatedUnit,
+      );
+      if (alreadyExists) return;
 
-    const firstIncompleteIndex = data.chemicals.findIndex(
-      (chemical) =>
-        !chemical.name.trim() || chemical.quantity === undefined || chemical.quantity <= 0,
-    );
+      const firstIncompleteIndex = data.chemicals.findIndex(
+        (chemical) =>
+          !chemical.name.trim() || chemical.quantity === undefined || chemical.quantity <= 0,
+      );
 
-    if (firstIncompleteIndex >= 0) {
-      const nextChemicals = [...data.chemicals];
-      const current = nextChemicals[firstIncompleteIndex];
-      if (!current) return;
-      nextChemicals[firstIncompleteIndex] = {
-        ...current,
-        name: item.name.trim(),
-        unit: validatedUnit,
-        quantity:
-          current.quantity !== undefined && current.quantity > 0
-            ? current.quantity
-            : (item.quantity ?? undefined),
-        // An explicit item basis (fully-prefilled picker selections) wins over
-        // the pristine row's default 'total'; legacy quick-add producers never
-        // set one, so their behavior is unchanged.
-        quantityBasis:
-          item.quantityBasis ??
-          current.quantityBasis ??
-          resolveQuantityBasis(item.unit?.trim() ?? validatedUnit),
-        warehouseItemId: item.warehouseItemId ?? null,
-        catalogProductId: item.catalogProductId ?? null,
-        planItemId: item.planItemId ?? null,
-        compositionSnapshot: item.composition ?? null,
-        densityKgPerL: item.densityKgPerL ?? null,
-      };
-      onChange({
-        ...data,
-        chemicals: clampChemicalRows(nextChemicals),
-      });
-      return;
-    }
-
-    if (data.chemicals.length >= MAX_CHEMICAL_ROWS) return;
-
-    onChange({
-      ...data,
-      chemicals: clampChemicalRows([
-        ...data.chemicals,
-        {
-          id: generateId(),
+      if (firstIncompleteIndex >= 0) {
+        const nextChemicals = [...data.chemicals];
+        const current = nextChemicals[firstIncompleteIndex];
+        if (!current) return;
+        nextChemicals[firstIncompleteIndex] = {
+          ...current,
           name: item.name.trim(),
-          quantity: item.quantity ?? undefined,
           unit: validatedUnit,
-          quantityBasis: resolveQuantityBasis(
-            item.unit?.trim() ?? validatedUnit,
-            item.quantityBasis,
-          ),
+          quantity:
+            current.quantity !== undefined && current.quantity > 0
+              ? current.quantity
+              : (item.quantity ?? undefined),
+          // An explicit item basis (fully-prefilled picker selections) wins over
+          // the pristine row's default 'total'; legacy quick-add producers never
+          // set one, so their behavior is unchanged.
+          quantityBasis:
+            item.quantityBasis ??
+            current.quantityBasis ??
+            resolveQuantityBasis(item.unit?.trim() ?? validatedUnit),
           warehouseItemId: item.warehouseItemId ?? null,
           catalogProductId: item.catalogProductId ?? null,
           planItemId: item.planItemId ?? null,
           compositionSnapshot: item.composition ?? null,
           densityKgPerL: item.densityKgPerL ?? null,
-        },
-      ]),
-    });
-  };
+        };
+        onChange({
+          ...data,
+          chemicals: clampChemicalRows(nextChemicals),
+        });
+        return;
+      }
+
+      if (data.chemicals.length >= MAX_CHEMICAL_ROWS) return;
+
+      onChange({
+        ...data,
+        chemicals: clampChemicalRows([
+          ...data.chemicals,
+          {
+            id: generateId(),
+            name: item.name.trim(),
+            quantity: item.quantity ?? undefined,
+            unit: validatedUnit,
+            quantityBasis: resolveQuantityBasis(
+              item.unit?.trim() ?? validatedUnit,
+              item.quantityBasis,
+            ),
+            warehouseItemId: item.warehouseItemId ?? null,
+            catalogProductId: item.catalogProductId ?? null,
+            planItemId: item.planItemId ?? null,
+            compositionSnapshot: item.composition ?? null,
+            densityKgPerL: item.densityKgPerL ?? null,
+          },
+        ]),
+      });
+    },
+    [data, onChange],
+  );
 
   const applyCatalogMix = useCallback(
     (mix: ChemicalMix) => {
@@ -407,33 +410,36 @@ export function SprayForm({
     [onChange],
   );
 
-  const handleSearchSelection = (selection: SearchSelectSelection) => {
-    setShowProductPicker(false);
-    // Whole-mix prefill: catalog mix rows, and history rows whose record was
-    // logged as a catalog mix (record-level mix identity). Falls back to the
-    // single-item prefill when the mix is not in the cached catalog.
-    const mix =
-      selection.catalogMixId != null
-        ? (catalogMixes.find((candidate) => candidate.id === selection.catalogMixId) ?? null)
-        : null;
-    if (mix) {
-      applyCatalogMix(mix);
-      return;
-    }
-    if (selection.kind === 'mix') return;
-    addQuickChemical({
-      name: selection.name,
-      unit: selection.prefill?.unit,
-      quantity: selection.prefill?.quantity,
-      // Resolve the basis from the original unit string ('kg/acre' → per_acre)
-      // before resolveChemicalUnit collapses it to a bare scale.
-      quantityBasis:
-        selection.prefill?.quantityBasis ?? resolveQuantityBasis(selection.prefill?.unit),
-      warehouseItemId: selection.warehouseItemId ?? null,
-      catalogProductId: selection.catalogProductId ?? null,
-      planItemId: selection.planItemId ?? null,
-    });
-  };
+  const handleSearchSelection = useCallback(
+    (selection: SearchSelectSelection) => {
+      setShowProductPicker(false);
+      // Whole-mix prefill: catalog mix rows, and history rows whose record was
+      // logged as a catalog mix (record-level mix identity). Falls back to the
+      // single-item prefill when the mix is not in the cached catalog.
+      const mix =
+        selection.catalogMixId != null
+          ? (catalogMixes.find((candidate) => candidate.id === selection.catalogMixId) ?? null)
+          : null;
+      if (mix) {
+        applyCatalogMix(mix);
+        return;
+      }
+      if (selection.kind === 'mix') return;
+      addQuickChemical({
+        name: selection.name,
+        unit: selection.prefill?.unit,
+        quantity: selection.prefill?.quantity,
+        // Resolve the basis from the original unit string ('kg/acre' → per_acre)
+        // before resolveChemicalUnit collapses it to a bare scale.
+        quantityBasis:
+          selection.prefill?.quantityBasis ?? resolveQuantityBasis(selection.prefill?.unit),
+        warehouseItemId: selection.warehouseItemId ?? null,
+        catalogProductId: selection.catalogProductId ?? null,
+        planItemId: selection.planItemId ?? null,
+      });
+    },
+    [catalogMixes, applyCatalogMix, addQuickChemical],
+  );
 
   const focusFirstChemicalName = () => {
     if (catalogOnly) return;
