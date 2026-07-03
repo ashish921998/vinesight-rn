@@ -35,11 +35,11 @@ const OCR_LANGUAGE = 'en-IN';
 const OCR_OUTPUT_FORMAT = 'md';
 
 // Polling budget for the async Document Intelligence job. Lab reports are 1-2
-// pages and finish in seconds; this caps us well under the function timeout.
+// pages and finish in seconds. We bound the poll by a wall-clock deadline (not a
+// fixed attempt count) so per-request status/JSON latency is counted too, and we
+// return a controlled timeout before the platform kills the request.
 const POLL_INTERVAL_MS = 2500;
-// ~60s worst case, kept safely under the edge-function wall-clock limit so a
-// slow job hits this controlled timeout rather than being killed by the platform.
-const POLL_MAX_ATTEMPTS = 24;
+const POLL_BUDGET_MS = 45_000; // stays safely under the edge-function wall clock
 
 const MAX_FILE_SIZE = 32 * 1024 * 1024; // 32MB
 
@@ -115,6 +115,10 @@ Deno.serve(async (req) => {
       return jsonResponse(400, { error: 'Invalid action. Use action: "parse"' });
     }
 
+    if (body.test_type !== 'soil' && body.test_type !== 'petiole') {
+      return jsonResponse(400, { error: 'Invalid test_type. Use "soil" or "petiole".' });
+    }
+
     // Resolve the report bytes from Storage (preferred) or an inline base64
     // data URL (legacy/small-file fallback).
     let bytes: Uint8Array;
@@ -148,7 +152,12 @@ Deno.serve(async (req) => {
         return jsonResponse(400, { error: 'File too large. Maximum 32MB.' });
       }
       bytes = new Uint8Array(await blob.arrayBuffer());
-      mimeType = blob.type || mimeFromPath(body.storage_path);
+      // Fall back to the path extension when Storage reports no type or a
+      // generic octet-stream (which the format gate below would reject).
+      mimeType =
+        blob.type && blob.type !== 'application/octet-stream'
+          ? blob.type
+          : mimeFromPath(body.storage_path);
       // We have the bytes in memory; remove the stored file (best-effort).
       admin.storage
         .from(STORAGE_BUCKET)
@@ -301,9 +310,11 @@ async function digitizeDocument(
     'Start job',
   );
 
-  // 5. Poll until terminal
+  // 5. Poll until terminal, bounded by an absolute wall-clock deadline so that
+  // per-request latency counts against the budget (not just the sleeps).
   let finalState = '';
-  for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
+  const deadline = Date.now() + POLL_BUDGET_MS;
+  while (Date.now() < deadline) {
     await sleep(POLL_INTERVAL_MS);
     const status = await diFetchJson(
       `${DI_BASE}/${jobId}/status`,

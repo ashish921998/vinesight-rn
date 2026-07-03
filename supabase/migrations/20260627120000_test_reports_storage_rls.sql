@@ -8,6 +8,19 @@
 -- currently cannot write. These owner-scoped policies let a user manage only
 -- files under their own `${auth.uid()}/...` prefix in `test-reports`.
 
+-- Create the private bucket the policies below reference. The size + MIME limits
+-- are enforced by Storage at upload time, so oversized or unsupported files are
+-- rejected before they ever reach the edge function (idempotent; safe to re-run).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'test-reports',
+  'test-reports',
+  false,
+  33554432, -- 32MB, matches MAX_FILE_SIZE in the dynamic-api edge function
+  array['application/pdf', 'image/jpeg', 'image/png']
+)
+on conflict (id) do nothing;
+
 create policy "test_reports_insert_own"
 on storage.objects for insert
 to authenticated

@@ -78,12 +78,11 @@ export async function parseLabTestFromImage(
   try {
     const { base64, mimeType, ext } = await readFile(fileUri);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
       throw new Error('You must be signed in to upload a lab report.');
     }
+    const user = userData.user;
 
     // Upload to Storage first, then hand the edge function just the path. The
     // path is timestamped so it is unique per upload; `upsert: false` keeps us
@@ -98,37 +97,48 @@ export async function parseLabTestFromImage(
       throw new Error(`Failed to upload report: ${uploadError.message}`);
     }
 
-    const { data, error } = await supabase.functions.invoke('dynamic-api', {
-      body: {
-        action: 'parse',
-        storage_path: storagePath,
-        filename: `lab-report.${ext}`,
-        test_type: testType,
-      },
-    });
+    // The edge function deletes the object on success, but not on every failure
+    // path (and not if the invoke never reaches it). Clean up the orphan here on
+    // any failure after a successful upload so the bucket doesn't accumulate files.
+    try {
+      const { data, error } = await supabase.functions.invoke('dynamic-api', {
+        body: {
+          action: 'parse',
+          storage_path: storagePath,
+          filename: `lab-report.${ext}`,
+          test_type: testType,
+        },
+      });
 
-    if (error) {
-      const ctx = (error as { context?: unknown }).context;
-      console.error(
-        `dynamic-api invoke failed | name=${error.name} | message=${error.message} | context=` +
-          (ctx ? JSON.stringify(ctx, Object.getOwnPropertyNames(ctx)) : 'none'),
-      );
-      throw new Error(`AI proxy request failed: ${error.message}`);
+      if (error) {
+        const ctx = (error as { context?: unknown }).context;
+        console.error(
+          `dynamic-api invoke failed | name=${error.name} | message=${error.message} | context=` +
+            (ctx ? JSON.stringify(ctx, Object.getOwnPropertyNames(ctx)) : 'none'),
+        );
+        throw new Error(`AI proxy request failed: ${error.message}`);
+      }
+
+      if (data?.error) {
+        console.error('AI proxy returned error:', JSON.stringify(data.error, null, 2));
+        throw new Error(`AI proxy error: ${data.error.message ?? JSON.stringify(data.error)}`);
+      }
+
+      const response = data as ParseResponse;
+
+      return {
+        testDate: response.testDate || undefined,
+        parameters: validateAndCleanParameters(response.parameters || [], testType),
+        recommendations: response.summary || undefined,
+        notes: response.rawNotes || undefined,
+      };
+    } catch (invokeError) {
+      await supabase.storage
+        .from(STORAGE_BUCKET)
+        .remove([storagePath])
+        .catch(() => {});
+      throw invokeError;
     }
-
-    if (data?.error) {
-      console.error('AI proxy returned error:', JSON.stringify(data.error, null, 2));
-      throw new Error(`AI proxy error: ${data.error.message ?? JSON.stringify(data.error)}`);
-    }
-
-    const response = data as ParseResponse;
-
-    return {
-      testDate: response.testDate || undefined,
-      parameters: validateAndCleanParameters(response.parameters || [], testType),
-      recommendations: response.summary || undefined,
-      notes: response.rawNotes || undefined,
-    };
   } catch (error) {
     console.error('Error parsing lab test:', error);
     throw new Error('Failed to parse lab test data');
