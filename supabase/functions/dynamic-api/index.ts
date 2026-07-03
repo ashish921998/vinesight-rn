@@ -302,8 +302,29 @@ interface DiResponse {
   download_urls?: Record<string, { file_url: string }>;
 }
 
-async function diFetchJson(url: string, init: RequestInit, step: string): Promise<DiResponse> {
-  const res = await fetch(url, init);
+// Per-request cap on every Sarvam call. Without an abort signal a stalled
+// upstream response hangs past the poll deadline (which is only re-checked
+// between requests) until the platform kills the function; with it, a stall
+// surfaces as a controlled 502 instead.
+const DI_REQUEST_TIMEOUT_MS = 15_000;
+// The presigned PUT ships the whole report (up to 10MB), so it gets more room.
+const DI_UPLOAD_TIMEOUT_MS = 60_000;
+
+async function diFetchJson(
+  url: string,
+  init: RequestInit,
+  step: string,
+  timeoutMs = DI_REQUEST_TIMEOUT_MS,
+): Promise<DiResponse> {
+  let res: Response;
+  try {
+    res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`${step} timed out after ${timeoutMs}ms`);
+    }
+    throw error;
+  }
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
     throw new Error(`${step} failed (${res.status}): ${detail}`);
@@ -350,6 +371,7 @@ async function digitizeDocument(
     method: 'PUT',
     headers: { 'x-ms-blob-type': 'BlockBlob', 'Content-Type': contentType },
     body: fileBytes,
+    signal: AbortSignal.timeout(DI_UPLOAD_TIMEOUT_MS),
   });
   if (!putRes.ok) {
     const detail = await putRes.text().catch(() => '');
@@ -405,7 +427,9 @@ async function digitizeDocument(
   const downloadUrl = urls[target]?.file_url;
   if (!downloadUrl) throw new Error('Digitization output is missing a download URL');
 
-  const contentRes = await fetch(downloadUrl);
+  const contentRes = await fetch(downloadUrl, {
+    signal: AbortSignal.timeout(DI_UPLOAD_TIMEOUT_MS),
+  });
   if (!contentRes.ok) {
     throw new Error(`Failed to download output (${contentRes.status})`);
   }
