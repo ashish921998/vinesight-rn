@@ -204,7 +204,9 @@ describe('dose guardrail', () => {
       <SprayForm data={data} onChange={jest.fn()} historyItems={historyItems} />,
     );
 
-    expect(screen.getByText('sprayForm.chemicals.doseGuard.highLastLog:1000:2 ml/l')).toBeTruthy();
+    // Reference units keep their stored casing ('ml/L') — the old lowercase
+    // rendering was an artifact of the deleted foldUnitText (#207).
+    expect(screen.getByText('sprayForm.chemicals.doseGuard.highLastLog:1000:2 ml/L')).toBeTruthy();
   });
 
   it('warns against the linked plan item dose (10× per-acre)', () => {

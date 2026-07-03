@@ -11,11 +11,11 @@
 
 import {
   isFertigationUnitRecognized,
-  parseFertigationUnit,
   resolveFertigationPrefill,
   resolveFertigationUnit,
   resolveFertilizerMeasure,
 } from '@/constants/fertilizer-units';
+import { parseUnitText } from '@/constants/unit-text';
 import { parseUnit } from '@/lib/quantity';
 import type { FertilizerItem } from '@/types/database';
 
@@ -54,7 +54,7 @@ describe('AC1 — L/acre round-trip: form → stored item → display', () => {
   });
 
   it("a historical row storing 'L/acre' verbatim still resolves to volume + per_acre from the string alone", () => {
-    const parsed = parseFertigationUnit('L/acre');
+    const parsed = parseUnitText('L/acre');
     expect(parsed).toMatchObject({ measure: 'volume', basis: 'per_acre' });
   });
 });
@@ -87,6 +87,24 @@ describe('AC2 — unknown unit strings stay verbatim and are flagged, never kg',
       quantityBasis: 'per_acre', // '/acre' testimony in the string
     });
     expect(resolveFertigationPrefill('kgg')).toEqual({ unit: 'kgg', quantityBasis: 'total' });
+  });
+
+  it("spaced-slash testimony ('sacks / acre') counts as per-acre (#207 fold upgrade)", () => {
+    // The sniff folds ' / ' like ' per ' now; the unit text stays verbatim,
+    // so the per_acre basis remains coherent with the stored string.
+    expect(resolveFertigationPrefill('sacks / acre')).toEqual({
+      unit: 'sacks / acre',
+      quantityBasis: 'per_acre',
+    });
+  });
+
+  it("empty-base ' per acre' is not per-acre testimony (accepted edge: trim-first fold)", () => {
+    // A unit string with no base token carries no usable rate; the fold
+    // trims before matching, so it never becomes '/acre'. See unit-text.ts.
+    expect(resolveFertigationPrefill(' per acre')).toEqual({
+      unit: 'per acre',
+      quantityBasis: 'total',
+    });
   });
 
   it('prefill of a ppm plan item keeps ppm instead of the legacy kg/acre coercion', () => {
@@ -229,8 +247,8 @@ describe('AC4 — regression over representative stored rows (no change for vali
   it.each(REPRESENTATIVE_ROWS.map((row) => [row.unit] as const))(
     'resolving stored unit %j preserves its kernel measure (no mass/volume flip)',
     (unit) => {
-      const before = parseFertigationUnit(unit);
-      const after = parseFertigationUnit(resolveFertigationUnit(unit).unit);
+      const before = parseUnitText(unit);
+      const after = parseUnitText(resolveFertigationUnit(unit).unit);
       expect(before).not.toBeNull();
       expect(after).not.toBeNull();
       expect(after?.measure).toBe(before?.measure);

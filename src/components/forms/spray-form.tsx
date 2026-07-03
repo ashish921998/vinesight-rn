@@ -11,7 +11,13 @@ import {
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
-import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculator-models';
+import type { ChemicalUnit } from '../../constants/calculator-models';
+import {
+  DEFAULT_CHEMICAL_UNIT,
+  resolveChemicalQuantityBasis,
+  resolveChemicalUnit,
+} from '@/constants/chemical-units';
+import { toKernelSpelling } from '@/constants/unit-text';
 import {
   SPRAY_UNIT_CHIPS,
   SPRAY_UNIT_OVERFLOW_CHIPS,
@@ -51,58 +57,7 @@ export interface ChemicalEntry {
   densityKgPerL?: number | null;
 }
 
-const DEFAULT_CHEMICAL_UNIT: ChemicalUnit = 'gm/L';
 const MAX_CHEMICAL_ROWS = 10;
-
-function isChemicalUnit(value: string): value is ChemicalUnit {
-  return CHEMICAL_UNITS.includes(value as ChemicalUnit);
-}
-
-/**
- * Fold freeform unit spellings into the canonical `<base>/<denominator>` shape
- * before matching: `'Kg per Acre'` / `'kg / acre'` → `'kg/acre'`. `per` needs
- * whitespace on both sides so product names ("copper") can never match.
- */
-function foldUnitText(raw: string): string {
-  return raw
-    .trim()
-    .toLowerCase()
-    .replace(/\s+per\s+/g, '/')
-    .replace(/\s*\/\s*/g, '/');
-}
-
-function resolveChemicalUnit(
-  unit: string | null | undefined,
-  fallback: ChemicalUnit = DEFAULT_CHEMICAL_UNIT,
-): ChemicalUnit {
-  const normalized = unit?.trim();
-  const lowered = normalized ? foldUnitText(normalized) : undefined;
-  if (lowered === 'gm/liter' || lowered === 'gm/litre' || lowered === 'gm/l' || lowered === 'g/l') {
-    return 'gm/L';
-  }
-  if (lowered === 'ml/liter' || lowered === 'ml/litre' || lowered === 'ml/l') {
-    return 'ml/L';
-  }
-  if (lowered === 'gm/acre' || lowered === 'g/acre' || lowered === 'gram/acre') return 'gram';
-  if (lowered === 'ml/acre') return 'ml';
-  // Plan-item spellings: the per-acre basis survives via resolveQuantityBasis
-  // on the original string, so only the scale maps here (like gm/ml above).
-  if (lowered === 'kg/acre') return 'kg';
-  if (lowered === 'liter/acre' || lowered === 'litre/acre' || lowered === 'l/acre') return 'liter';
-  if (normalized && isChemicalUnit(normalized)) return normalized;
-  return fallback;
-}
-
-function resolveQuantityBasis(
-  unit: string | null | undefined,
-  basis?: QuantityBasis,
-): QuantityBasis {
-  if (basis) return basis;
-  if (!unit?.trim()) return 'total';
-  // Word-boundary matched (like #192's unitTextSaysPerAcre) so '/acreage'
-  // can never false-positive; plural '/acres' still counts.
-  return /\/acres?\b/.test(foldUnitText(unit)) ? 'per_acre' : 'total';
-}
 
 function normalizeDedupeText(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase();
@@ -296,7 +251,7 @@ export function SprayForm({
             id: generateId(),
             name: '',
             quantity: undefined,
-            unit: 'gm/L',
+            unit: DEFAULT_CHEMICAL_UNIT,
             quantityBasis: 'total',
             warehouseItemId: null,
             catalogProductId: null,
@@ -333,7 +288,7 @@ export function SprayForm({
       const incomingBasis =
         item.quantityBasis ??
         lastUsed?.basis ??
-        resolveQuantityBasis(item.unit?.trim() ?? validatedUnit);
+        resolveChemicalQuantityBasis(item.unit?.trim() ?? validatedUnit);
       const incomingChipKey = chipForEntry(validatedUnit, incomingBasis)?.key ?? validatedUnit;
       const alreadyExists = data.chemicals.some(
         (chemical) =>
@@ -368,7 +323,7 @@ export function SprayForm({
             item.quantityBasis ??
             lastUsed?.basis ??
             current.quantityBasis ??
-            resolveQuantityBasis(item.unit?.trim() ?? validatedUnit),
+            resolveChemicalQuantityBasis(item.unit?.trim() ?? validatedUnit),
           warehouseItemId: item.warehouseItemId ?? null,
           catalogProductId: item.catalogProductId ?? null,
           planItemId: item.planItemId ?? null,
@@ -393,7 +348,7 @@ export function SprayForm({
             name: item.name.trim(),
             quantity: item.quantity ?? undefined,
             unit: validatedUnit,
-            quantityBasis: resolveQuantityBasis(
+            quantityBasis: resolveChemicalQuantityBasis(
               item.unit?.trim() ?? validatedUnit,
               item.quantityBasis ?? lastUsed?.basis,
             ),
@@ -485,7 +440,7 @@ export function SprayForm({
         // Resolve the basis from the original unit string ('kg/acre' → per_acre)
         // before resolveChemicalUnit collapses it to a bare scale.
         quantityBasis:
-          selection.prefill?.quantityBasis ?? resolveQuantityBasis(selection.prefill?.unit),
+          selection.prefill?.quantityBasis ?? resolveChemicalQuantityBasis(selection.prefill?.unit),
         warehouseItemId: selection.warehouseItemId ?? null,
         catalogProductId: selection.catalogProductId ?? null,
         planItemId: selection.planItemId ?? null,
@@ -710,7 +665,7 @@ export function SprayForm({
                       </Text>
                       <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                         {item.quantity ? `${item.quantity} ` : ''}
-                        {item.unit ?? 'gm/L'}
+                        {item.unit ?? DEFAULT_CHEMICAL_UNIT}
                       </Text>
                     </Pressable>
                   ))}
@@ -927,7 +882,7 @@ function ChemicalRow({
     // their own basis and win inside the kernel regardless.
     return {
       quantity: planItem.quantity,
-      unit: foldUnitText(planItem.unit),
+      unit: toKernelSpelling(planItem.unit),
       quantityBasis: 'per_acre',
     };
   }, [chemical.planItemId, planItems]);
@@ -943,7 +898,7 @@ function ChemicalRow({
     if (!match || match.quantity == null || match.quantity <= 0) return null;
     return {
       quantity: match.quantity,
-      unit: foldUnitText(match.unit),
+      unit: toKernelSpelling(match.unit),
       quantityBasis: match.quantityBasis ?? null,
     };
   }, [chemical.name, chemical.catalogProductId, historyItems]);
@@ -1012,7 +967,7 @@ function ChemicalRow({
         item.quantityBasis ??
         lastUsed?.basis ??
         chemical.quantityBasis ??
-        resolveQuantityBasis(item.unit?.trim() ?? unit),
+        resolveChemicalQuantityBasis(item.unit?.trim() ?? unit),
       warehouseItemId: item.warehouseItemId ?? null,
       catalogProductId: item.catalogProductId ?? null,
       planItemId: item.planItemId ?? null,
@@ -1123,7 +1078,7 @@ function ChemicalRow({
                     </Text>
                     <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                       {item.quantity ? `${item.quantity} ` : ''}
-                      {item.unit ?? 'gm/L'}
+                      {item.unit ?? DEFAULT_CHEMICAL_UNIT}
                     </Text>
                   </Pressable>
                 ))}
@@ -1373,7 +1328,7 @@ export function createEmptySprayFormData(): SprayFormData {
         id: generateId(),
         name: '',
         quantity: undefined,
-        unit: 'gm/L',
+        unit: DEFAULT_CHEMICAL_UNIT,
         quantityBasis: 'total',
         warehouseItemId: null,
         catalogProductId: null,
