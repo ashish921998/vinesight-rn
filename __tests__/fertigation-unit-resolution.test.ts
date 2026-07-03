@@ -237,13 +237,20 @@ describe('AC4 — regression over representative stored rows (no change for vali
     },
   );
 
-  it('the edit path stores the loaded unit verbatim, so valid rows round-trip byte-identical', () => {
-    // activity-edit-form load maps f.unit → form unit → save maps back f.unit
-    // with no resolver in between; this pins the identity for every fixture.
-    for (const row of REPRESENTATIVE_ROWS) {
-      const loadedIntoForm = { unit: row.unit };
-      const savedBack = { unit: loadedIntoForm.unit };
-      expect(savedBack.unit).toBe(row.unit);
-    }
+  // The verbatim load → save round-trip for these rows is asserted through the
+  // real submission builder in entry-log-submission-fertigation.test.ts
+  // ('stores every representative stored-row unit spelling verbatim').
+});
+
+describe('plan quick-add prefill contract (byPlan uses resolveFertigationPrefill)', () => {
+  it("bare plan unit 'kg' keeps the per-acre basis — plan doses are per-acre rates", () => {
+    expect(resolveFertigationPrefill('kg')).toEqual({ unit: 'kg', quantityBasis: 'per_acre' });
+  });
+
+  it("consultant spelling 'L/acre' prefills as a volume form unit with per-acre basis", () => {
+    expect(resolveFertigationPrefill('L/acre')).toEqual({
+      unit: 'liter',
+      quantityBasis: 'per_acre',
+    });
   });
 });

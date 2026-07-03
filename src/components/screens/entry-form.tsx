@@ -479,14 +479,20 @@ export function EntryForm({
   }, [sprayPhiComputation]);
 
   const fertigationQuickAddItems = useMemo<FertigationQuickAddItem[]>(() => {
-    const byPlan = (fertilizerPlan?.items ?? []).map((item) => ({
-      name: item.name,
-      unit: resolveFertigationUnit(item.unit).unit,
-      quantity: item.quantity ?? null,
-      quantityBasis: inferWarehouseFertilizerQuantityBasis(item.unit),
-      warehouseItemId: null,
-      catalogProductId: null,
-    }));
+    const byPlan = (fertilizerPlan?.items ?? []).map((item) => {
+      // Plan doses are per-acre rates by contract: bare form units ('kg') keep
+      // per_acre; unrepresentable/unknown units stay verbatim with the sniffed
+      // basis (resolveFertigationPrefill — same path as plan one-tap prefill).
+      const prefill = resolveFertigationPrefill(item.unit);
+      return {
+        name: item.name,
+        unit: prefill.unit,
+        quantity: item.quantity ?? null,
+        quantityBasis: prefill.quantityBasis,
+        warehouseItemId: null,
+        catalogProductId: null,
+      };
+    });
     const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
       name: item.name,
       unit: resolveFertigationUnit(item.unit).unit,

@@ -157,6 +157,25 @@ describe('FertigationForm regression', () => {
     expect(state.fertilizers[0].unit).not.toBe('kg');
   });
 
+  it('duplicate check matches verbatim units case-insensitively (no double-add)', () => {
+    const onChange = jest.fn();
+    const data: FertigationFormData = {
+      waterVolume: undefined,
+      fertilizers: [
+        { id: 'fert-1', name: 'GA3', quantity: 100, unit: 'PPM', quantityBasis: 'total' },
+      ],
+    };
+    const screen = render(
+      <FertigationForm
+        data={data}
+        onChange={onChange}
+        quickAddItems={[{ name: 'ga3', unit: 'ppm', quantity: 100 }]}
+      />,
+    );
+    fireEvent.press(screen.getByText('ga3'));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('quick-adding a ppm item keeps ppm instead of the legacy kg coercion', () => {
     const state = quickAdd([{ name: 'GA3', unit: 'ppm', quantity: 100 }], 'GA3');
     expect(state.fertilizers[0]).toEqual(

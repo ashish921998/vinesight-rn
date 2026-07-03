@@ -97,6 +97,38 @@ describe('fertigation submission — unit testimony and flagging', () => {
     expect(payload.fertilizers?.[0]).not.toHaveProperty('unit_unrecognized');
   });
 
+  it('stores every representative stored-row unit spelling verbatim (AC4 round-trip)', async () => {
+    // Spellings drawn from the AC4 representative rows in
+    // fertigation-unit-resolution.test.ts: app-written bare units, historical
+    // '/acre' spellings, consultant-web spellings, and case variants. The real
+    // submission builder must carry each unit string through byte-identical.
+    const representativeUnits = [
+      'kg',
+      'kg/acre',
+      'liter/acre',
+      'L/acre',
+      'litre',
+      'gram',
+      'ml',
+      'Kg/Acre',
+    ];
+    const payload = await submitFertigation({
+      waterVolume: undefined,
+      fertilizers: representativeUnits.map((unit, i) => ({
+        name: `Fertilizer ${i}`,
+        quantity: 5,
+        unit,
+        quantityBasis: 'total' as const,
+      })),
+    });
+    const items = payload.fertilizers ?? [];
+    expect(items.map((item) => item.unit)).toEqual(representativeUnits);
+    for (const item of items) {
+      expect(item).not.toHaveProperty('unit_unrecognized');
+      expect(item.quantity).toBe(5); // total basis: never rescaled
+    }
+  });
+
   it('leaves every recognized form unit unflagged (regression over the picker vocabulary)', async () => {
     const payload = await submitFertigation({
       waterVolume: undefined,

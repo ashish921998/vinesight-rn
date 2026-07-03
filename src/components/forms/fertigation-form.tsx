@@ -145,10 +145,12 @@ export function FertigationForm({
     const resolved = resolveFertigationUnit(item.unit);
     const validatedUnit = resolved.unit;
     const normalizedName = item.name.trim().toLowerCase();
+    // Comparison only — stored unit values stay verbatim (case preserved).
+    const normalizedUnit = validatedUnit.trim().toLowerCase();
     const alreadyExists = data.fertilizers.some(
       (fertilizer) =>
         fertilizer.name.trim().toLowerCase() === normalizedName &&
-        fertilizer.unit === validatedUnit,
+        fertilizer.unit.trim().toLowerCase() === normalizedUnit,
     );
     if (alreadyExists) return;
 
