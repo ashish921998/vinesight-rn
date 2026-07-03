@@ -12,7 +12,11 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import type { ChemicalUnit } from '../../constants/calculator-models';
-import { resolveChemicalQuantityBasis, resolveChemicalUnit } from '@/constants/chemical-units';
+import {
+  DEFAULT_CHEMICAL_UNIT,
+  resolveChemicalQuantityBasis,
+  resolveChemicalUnit,
+} from '@/constants/chemical-units';
 import { toKernelSpelling } from '@/constants/unit-text';
 import {
   SPRAY_UNIT_CHIPS,
@@ -247,7 +251,7 @@ export function SprayForm({
             id: generateId(),
             name: '',
             quantity: undefined,
-            unit: 'gm/L',
+            unit: DEFAULT_CHEMICAL_UNIT,
             quantityBasis: 'total',
             warehouseItemId: null,
             catalogProductId: null,
@@ -661,7 +665,7 @@ export function SprayForm({
                       </Text>
                       <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                         {item.quantity ? `${item.quantity} ` : ''}
-                        {item.unit ?? 'gm/L'}
+                        {item.unit ?? DEFAULT_CHEMICAL_UNIT}
                       </Text>
                     </Pressable>
                   ))}
@@ -1074,7 +1078,7 @@ function ChemicalRow({
                     </Text>
                     <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
                       {item.quantity ? `${item.quantity} ` : ''}
-                      {item.unit ?? 'gm/L'}
+                      {item.unit ?? DEFAULT_CHEMICAL_UNIT}
                     </Text>
                   </Pressable>
                 ))}
@@ -1324,7 +1328,7 @@ export function createEmptySprayFormData(): SprayFormData {
         id: generateId(),
         name: '',
         quantity: undefined,
-        unit: 'gm/L',
+        unit: DEFAULT_CHEMICAL_UNIT,
         quantityBasis: 'total',
         warehouseItemId: null,
         catalogProductId: null,

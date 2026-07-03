@@ -40,16 +40,25 @@ describe('parity with the deleted spray-form enumeration table', () => {
     ['l/acre', 'liter'],
   ];
 
+  // A fallback no LEGACY_TABLE row expects — if resolution ever silently
+  // falls back instead of recognizing, the assertion cannot accidentally pass.
+  const CANARY_FALLBACK = 'ppm' as const;
+
   it.each(LEGACY_TABLE)('resolves %j to %j exactly as the old table did', (raw, expected) => {
-    expect(resolveChemicalUnit(raw)).toBe(expected);
+    expect(resolveChemicalUnit(raw, CANARY_FALLBACK)).toBe(expected);
   });
 
   it.each(LEGACY_TABLE)('parity holds for %j through the legacy folds (#193)', (raw, expected) => {
     // 'Kg per Acre' / 'kg / acre' style spellings the old foldUnitText handled.
     const wordy = raw.toUpperCase().replace('/', ' per ');
     const spaced = raw.replace('/', ' / ');
-    expect(resolveChemicalUnit(wordy)).toBe(expected);
-    expect(resolveChemicalUnit(spaced)).toBe(expected);
+    expect(resolveChemicalUnit(wordy, CANARY_FALLBACK)).toBe(expected);
+    expect(resolveChemicalUnit(spaced, CANARY_FALLBACK)).toBe(expected);
+  });
+
+  it('mixed-case legacy folds resolve the unit AND the basis coherently', () => {
+    expect(resolveChemicalUnit('Kg per Acre', CANARY_FALLBACK)).toBe('kg');
+    expect(resolveChemicalQuantityBasis('Kg per Acre')).toBe('per_acre');
   });
 
   it('missing or unknown units keep the fallback contract', () => {
@@ -81,12 +90,14 @@ describe('spellings the deleted table silently fell back on now resolve', () => 
     ['kgs', 'kg'],
     ['gm', 'gram'],
     ['grams', 'gram'],
+    ['liters/acre', 'liter'],
     ['litres', 'liter'],
     ['milliliter', 'ml'],
     ['mg/L', 'ppm'], // 1 ppm ≡ 1 mg per liter of spray water
     ['grams/litre', 'gm/L'],
+    ['PPM', 'ppm'], // old isChemicalUnit membership check was case-sensitive
   ])('%j → %j', (raw, expected) => {
-    expect(resolveChemicalUnit(raw)).toBe(expected);
+    expect(resolveChemicalUnit(raw, 'kg')).toBe(expected);
   });
 });
 
@@ -123,7 +134,19 @@ describe('resolveChemicalQuantityBasis', () => {
     expect(resolveChemicalQuantityBasis(undefined)).toBe('total');
   });
 
-  it("'/ha' is a per-acre-class rate, matching fertigation (#203) — upgraded from the old text sniff", () => {
-    expect(resolveChemicalQuantityBasis('kg/ha')).toBe('per_acre');
+  it('kernel basis is honored only for picker-representable units — a /ha rate must not pair per_acre with the fallback unit', () => {
+    // 'kg/ha' is kernel-known (a per-acre-class rate) but unrepresentable in
+    // the picker (÷2.47105 factor), so the unit falls back to gm/L. Pairing
+    // that fallback with per_acre would make report-service area-multiply a
+    // concentration. The basis must match the deleted table's text sniff:
+    // no '/acre' in the text → total. (Fertigation differs deliberately —
+    // its rows keep unrepresentable unit text verbatim, so the kernel basis
+    // stays coherent there.)
+    expect(resolveChemicalUnit('kg/ha')).toBe(DEFAULT_CHEMICAL_UNIT);
+    expect(resolveChemicalQuantityBasis('kg/ha')).toBe('total');
+    expect(resolveChemicalQuantityBasis('g/ha')).toBe('total');
+    // '/acre' text on an unrepresentable scale still sniffs per_acre — the
+    // deleted table behaved the same way (pre-existing pairing).
+    expect(resolveChemicalQuantityBasis('mg/acre')).toBe('per_acre');
   });
 });

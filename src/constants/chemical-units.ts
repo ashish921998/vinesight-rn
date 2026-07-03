@@ -18,7 +18,7 @@ import type { ParsedUnit } from '@/lib/quantity';
 import type { QuantityBasis } from '@/types/database';
 
 import type { ChemicalUnit } from './calculator-models';
-import { resolveVerbatimQuantityBasis, parseUnitText } from './unit-text';
+import { parseUnitText, unitTextSaysPerAcre } from './unit-text';
 
 export const DEFAULT_CHEMICAL_UNIT: ChemicalUnit = 'gm/L';
 
@@ -64,13 +64,26 @@ export function resolveChemicalUnit(
 
 /**
  * Basis for a spray row: an explicit basis wins, otherwise the unit text
- * decides via the kernel (`'kg/acre'` → per_acre, `'gm/L'`/bare `'kg'` →
- * total, kernel-unknown strings → per-acre text sniff).
+ * decides (`'kg/acre'` → per_acre, `'gm/L'`/bare `'kg'` → total).
+ *
+ * The kernel's basis is honored ONLY when the unit is representable in the
+ * picker vocabulary. Unlike fertigation rows, which keep unrepresentable
+ * unit text verbatim (so a kernel basis stays coherent with the stored
+ * string), a spray row collapses to the fallback ChemicalUnit — pairing
+ * that fallback with a kernel basis would store rows like
+ * `{unit: 'gm/L', basis: 'per_acre'}` for a `'kg/ha'` input, which
+ * report-service then area-multiplies as if the concentration were a rate.
+ * Unrepresentable and kernel-unknown strings use the per-acre text sniff,
+ * exactly like the enumeration table this module replaced.
  */
 export function resolveChemicalQuantityBasis(
   unit: string | null | undefined,
   basis?: QuantityBasis,
 ): QuantityBasis {
   if (basis) return basis;
-  return resolveVerbatimQuantityBasis(unit);
+  const parsed = parseUnitText(unit);
+  if (parsed && toChemicalUnit(parsed)) {
+    return parsed.basis === 'per_acre' ? 'per_acre' : 'total';
+  }
+  return unitTextSaysPerAcre(unit) ? 'per_acre' : 'total';
 }

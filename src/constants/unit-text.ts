@@ -15,13 +15,18 @@ import type { QuantityBasis } from '@/types/database';
 /**
  * Fold legacy spellings into the kernel's `<base>/<denominator>` shape:
  * `'X per Y'` → `'X/Y'` (whitespace required around `per` so product names
- * like "copper" can never match) and spaced slashes `'X / Y'` → `'X/Y'`.
- * The kernel strips whitespace itself, so the slash fold only matters for
- * consumers that inspect the text of kernel-UNKNOWN strings — the per-acre
- * sniff below must see `'sacks / acre'` the same as `'sacks/acre'`.
+ * like "copper" can never match) and spaced slashes `'X / Y'` → `'X/Y'`,
+ * trimmed. The kernel strips whitespace itself, so the folds only matter
+ * for consumers that inspect the TEXT: the per-acre sniff below must see
+ * `'sacks / acre'` the same as `'sacks/acre'`, and dose-guard references
+ * display the folded string verbatim (a DB unit of `' ml/L '` must not
+ * render with stray spaces).
  */
 export function toKernelSpelling(raw: string): string {
-  return raw.replace(/\s+per\s+/gi, '/').replace(/\s*\/\s*/g, '/');
+  return raw
+    .trim()
+    .replace(/\s+per\s+/gi, '/')
+    .replace(/\s*\/\s*/g, '/');
 }
 
 /**

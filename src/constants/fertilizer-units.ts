@@ -13,7 +13,7 @@
  *   needs ppm, so it consumes `FertilizerUnit` (calculator-models) directly.
  * - `MEASURE_TO_UNIT` is the canonical spelling stored in the DB. Aliases a
  *   reader must also accept (`g/acre` vs `gram/acre`, case variants) are listed
- *   in `PER_ACRE_UNIT_ALIASES` so resolvers normalize consistently.
+ *   in `UNIT_ALIASES` so resolvers normalize consistently.
  *
  * The fertigation LOGGING path resolves unit strings through the quantity
  * kernel (`resolveFertigationUnit` / `resolveFertigationPrefill` below,

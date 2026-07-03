@@ -89,6 +89,15 @@ describe('AC2 — unknown unit strings stay verbatim and are flagged, never kg',
     expect(resolveFertigationPrefill('kgg')).toEqual({ unit: 'kgg', quantityBasis: 'total' });
   });
 
+  it("spaced-slash testimony ('sacks / acre') counts as per-acre (#207 fold upgrade)", () => {
+    // The sniff folds ' / ' like ' per ' now; the unit text stays verbatim,
+    // so the per_acre basis remains coherent with the stored string.
+    expect(resolveFertigationPrefill('sacks / acre')).toEqual({
+      unit: 'sacks / acre',
+      quantityBasis: 'per_acre',
+    });
+  });
+
   it('prefill of a ppm plan item keeps ppm instead of the legacy kg/acre coercion', () => {
     expect(resolveFertigationPrefill('ppm')).toEqual({ unit: 'ppm', quantityBasis: 'total' });
   });
