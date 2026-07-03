@@ -13,12 +13,15 @@ import { parseUnit, type ParsedUnit } from '@/lib/quantity';
 import type { QuantityBasis } from '@/types/database';
 
 /**
- * Fold legacy `'X per Y'` spellings into the kernel's `<base>/<denominator>`
- * shape. Requires whitespace around `per` so product names ("copper") can
- * never match.
+ * Fold legacy spellings into the kernel's `<base>/<denominator>` shape:
+ * `'X per Y'` → `'X/Y'` (whitespace required around `per` so product names
+ * like "copper" can never match) and spaced slashes `'X / Y'` → `'X/Y'`.
+ * The kernel strips whitespace itself, so the slash fold only matters for
+ * consumers that inspect the text of kernel-UNKNOWN strings — the per-acre
+ * sniff below must see `'sacks / acre'` the same as `'sacks/acre'`.
  */
 export function toKernelSpelling(raw: string): string {
-  return raw.replace(/\s+per\s+/gi, '/');
+  return raw.replace(/\s+per\s+/gi, '/').replace(/\s*\/\s*/g, '/');
 }
 
 /**

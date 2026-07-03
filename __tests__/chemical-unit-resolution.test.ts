@@ -103,6 +103,13 @@ describe('resolveChemicalQuantityBasis', () => {
     },
   );
 
+  it.each(['kg / acre', 'sacks / acre', 'banana / acre'])(
+    'spaced-slash spelling %j still yields per_acre (the old foldUnitText collapsed " / ")',
+    (raw) => {
+      expect(resolveChemicalQuantityBasis(raw)).toBe('per_acre');
+    },
+  );
+
   it.each(['gm/L', 'ml/L', 'ppm', 'kg', 'gram', 'liter', 'ml', '', '  ', 'kgg'])(
     '%j yields total',
     (raw) => {
