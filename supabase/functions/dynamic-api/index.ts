@@ -36,12 +36,11 @@ const CHAT_URL = `${SARVAM_BASE}/v1/chat/completions`;
 const OCR_LANGUAGE = 'en-IN';
 const OCR_OUTPUT_FORMAT = 'md';
 
-// Polling budget for the async Document Intelligence job. Lab reports are 1-2
-// pages and finish in seconds. We bound the poll by a wall-clock deadline (not a
-// fixed attempt count) so per-request status/JSON latency is counted too, and we
-// return a controlled timeout before the platform kills the request.
+// Document Intelligence polls an async job. Lab reports are 1-2 pages and finish
+// in seconds. The global REQUEST_BUDGET_MS deadline (captured per request) is
+// the bound on the poll loop and every external fetch, so the whole request
+// stays under the edge-function wall clock and returns a controlled timeout.
 const POLL_INTERVAL_MS = 2500;
-const POLL_BUDGET_MS = 45_000; // stays safely under the edge-function wall clock
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB, matches the test-reports bucket file_size_limit
 
@@ -72,6 +71,10 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Single global deadline for the whole request. Threaded through every
+    // external fetch so their per-call timeouts derive from the remaining
+    // budget and can't sum past the platform wall clock.
+    const deadline = Date.now() + REQUEST_BUDGET_MS;
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return jsonResponse({ error: 'Missing authorization header' }, 401);
@@ -149,7 +152,7 @@ Deno.serve(async (req) => {
     // 1. Digitize the report to Markdown via Document Intelligence.
     let markdown: string;
     try {
-      markdown = await digitizeDocument(uploadName, uploadBytes, uploadContentType);
+      markdown = await digitizeDocument(uploadName, uploadBytes, uploadContentType, deadline);
     } catch (error) {
       return jsonResponse(
         {
@@ -166,7 +169,7 @@ Deno.serve(async (req) => {
 
     // 2. Extract structured parameters from the Markdown via the chat model.
     try {
-      const result = await extractParameters(markdown, body.test_type);
+      const result = await extractParameters(markdown, body.test_type, deadline);
       return jsonResponse({ ...result });
     } catch (error) {
       return jsonResponse(
@@ -197,6 +200,11 @@ async function resolveReportBytes(
   userId: string,
   supabaseUrl: string,
 ): Promise<{ bytes: Uint8Array; mimeType: string } | Response> {
+  // req.json() gives no type guarantees: a truthy non-string (number, array)
+  // would crash .split() below into the top-level 500. Reject it as a 400.
+  if (body.storage_path !== undefined && typeof body.storage_path !== 'string') {
+    return jsonResponse({ error: 'storage_path must be a string' }, 400);
+  }
   if (body.storage_path) {
     // Prevent IDOR: a user may only reference files under their own folder.
     // The service-role client below bypasses RLS, so this string check is the
@@ -321,26 +329,44 @@ interface DiResponse {
   download_urls?: Record<string, { file_url: string }>;
 }
 
-// Per-request cap on every Sarvam call. Without an abort signal a stalled
-// upstream response hangs past the poll deadline (which is only re-checked
-// between requests) until the platform kills the function; with it, a stall
-// surfaces as a controlled 502 instead.
+// Per-call caps. Each Sarvam request is bounded so a stall surfaces as a
+// controlled 502 instead of hanging until the platform kills the function.
 const DI_REQUEST_TIMEOUT_MS = 15_000;
 // The presigned PUT ships the whole report (up to 10MB), so it gets more room.
 const DI_UPLOAD_TIMEOUT_MS = 60_000;
+// Global wall-clock budget for the whole request, captured at entry. Every
+// external fetch derives its per-call timeout from the REMAINING budget (clamped
+// to a floor) so the per-call timeouts can't sum past the platform wall clock
+// and the client always gets the controlled timeout response this code builds.
+// Stays safely under Supabase's edge-function wall clock.
+const REQUEST_BUDGET_MS = 120_000;
+// Minimum a fetch is given even when the budget is nearly spent — avoids
+// instantly-aborting a call and returning a misleading timeout for a request
+// that would have finished in another second.
+const MIN_CALL_TIMEOUT_MS = 5_000;
+
+// Returns the timeout to pass a fetch that should respect the global deadline:
+// the remaining budget, clamped to [MIN_CALL_TIMEOUT_MS, cap]. `cap` is the
+// per-call ceiling (e.g. DI_UPLOAD_TIMEOUT_MS for big PUTs).
+function timeoutForDeadline(deadline: number, cap: number): number {
+  const remaining = deadline - Date.now();
+  return Math.max(MIN_CALL_TIMEOUT_MS, Math.min(cap, remaining));
+}
 
 async function diFetchJson(
   url: string,
   init: RequestInit,
   step: string,
+  deadline: number,
   timeoutMs = DI_REQUEST_TIMEOUT_MS,
 ): Promise<DiResponse> {
   let res: Response;
+  const callTimeout = timeoutForDeadline(deadline, timeoutMs);
   try {
-    res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+    res = await fetch(url, { ...init, signal: AbortSignal.timeout(callTimeout) });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`${step} timed out after ${timeoutMs}ms`);
+      throw new Error(`${step} timed out after ${callTimeout}ms`);
     }
     throw error;
   }
@@ -356,6 +382,7 @@ async function digitizeDocument(
   filename: string,
   fileBytes: Uint8Array,
   contentType: string,
+  deadline: number,
 ): Promise<string> {
   // 1. Create job
   const created = await diFetchJson(
@@ -368,6 +395,7 @@ async function digitizeDocument(
       }),
     },
     'Create job',
+    deadline,
   );
   const jobId = created.job_id;
   if (!jobId) throw new Error('Create job returned no job_id');
@@ -381,6 +409,7 @@ async function digitizeDocument(
       body: JSON.stringify({ job_id: jobId, files: [filename] }),
     },
     'Get upload URL',
+    deadline,
   );
   const fileUrl: string | undefined = uploadLinks?.upload_urls?.[filename]?.file_url;
   if (!fileUrl) throw new Error('No presigned upload URL returned');
@@ -390,7 +419,7 @@ async function digitizeDocument(
     method: 'PUT',
     headers: { 'x-ms-blob-type': 'BlockBlob', 'Content-Type': contentType },
     body: fileBytes,
-    signal: AbortSignal.timeout(DI_UPLOAD_TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutForDeadline(deadline, DI_UPLOAD_TIMEOUT_MS)),
   });
   if (!putRes.ok) {
     const detail = await putRes.text().catch(() => '');
@@ -402,18 +431,20 @@ async function digitizeDocument(
     `${DI_BASE}/${jobId}/start`,
     { method: 'POST', headers: diHeaders(), body: '{}' },
     'Start job',
+    deadline,
   );
 
-  // 5. Poll until terminal, bounded by an absolute wall-clock deadline so that
-  // per-request latency counts against the budget (not just the sleeps).
+  // 5. Poll until terminal. The global deadline is the bound — per-request
+  // status latency and sleeps both count against it, so the loop can't run
+  // past the platform wall clock.
   let finalState = '';
-  const deadline = Date.now() + POLL_BUDGET_MS;
   while (Date.now() < deadline) {
     await sleep(POLL_INTERVAL_MS);
     const status = await diFetchJson(
       `${DI_BASE}/${jobId}/status`,
       { method: 'GET', headers: diHeaders() },
       'Get status',
+      deadline,
     );
     const state = status.job_state;
     if (state === 'Completed' || state === 'PartiallyCompleted') {
@@ -433,6 +464,7 @@ async function digitizeDocument(
     `${DI_BASE}/${jobId}/download-files`,
     { method: 'POST', headers: diHeaders(), body: '{}' },
     'Get download URLs',
+    deadline,
   );
   const urls: Record<string, { file_url: string }> = downloads?.download_urls ?? {};
   const names = Object.keys(urls);
@@ -447,7 +479,7 @@ async function digitizeDocument(
   if (!downloadUrl) throw new Error('Digitization output is missing a download URL');
 
   const contentRes = await fetch(downloadUrl, {
-    signal: AbortSignal.timeout(DI_UPLOAD_TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutForDeadline(deadline, DI_UPLOAD_TIMEOUT_MS)),
   });
   if (!contentRes.ok) {
     throw new Error(`Failed to download output (${contentRes.status})`);
@@ -492,6 +524,7 @@ interface StructuredPayload {
 async function extractParameters(
   markdown: string,
   testType: 'soil' | 'petiole',
+  deadline: number,
 ): Promise<StructuredPayload> {
   const res = await fetch(CHAT_URL, {
     method: 'POST',
@@ -499,10 +532,10 @@ async function extractParameters(
       Authorization: `Bearer ${SARVAM_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    // Same deadline discipline as the OCR requests: the structured-extraction
-    // call must not run unbounded if Sarvam stalls, or the edge function hits
-    // the platform wall clock and returns an opaque failure.
-    signal: AbortSignal.timeout(DI_UPLOAD_TIMEOUT_MS),
+    // Bounded by the global request deadline (not a fresh 60s) so this call
+    // can't overrun the platform wall clock after a slow OCR. Caps at
+    // DI_UPLOAD_TIMEOUT_MS in case the budget still has plenty left.
+    signal: AbortSignal.timeout(timeoutForDeadline(deadline, DI_UPLOAD_TIMEOUT_MS)),
     body: JSON.stringify({
       model: SARVAM_CHAT_MODEL,
       temperature: 0,
