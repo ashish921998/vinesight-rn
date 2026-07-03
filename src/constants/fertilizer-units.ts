@@ -186,12 +186,25 @@ export function resolveFertigationUnit(
 }
 
 /**
+ * True when the unit TEXT itself testifies a per-acre rate, covering both the
+ * kernel spelling (`'kg/acre'`) and the documented legacy word form
+ * (`'kg per acre'`) — the same folding `parseFertigationUnit` applies. This is
+ * the basis fallback for verbatim (kernel-unknown) units, so an unknown
+ * `'banana per acre'` is never silently stored as a plot total.
+ */
+export function unitTextSaysPerAcre(unit: string | null | undefined): boolean {
+  if (typeof unit !== 'string') return false;
+  return toKernelSpelling(unit).toLowerCase().includes('/acre');
+}
+
+/**
  * Resolve a plan/voice fertigation item's unit for prefilling the form.
  * Plan doses are per-acre rates by contract, so form-representable units keep
  * the legacy per_acre basis even when spelled bare (`'kg'` ≡ `'kg/acre'` on a
  * plan item — parity with the previous prefill resolver). Unrepresentable or
- * unknown units stay verbatim; their basis falls back to the `/acre` sniff so
- * the quantity is never silently rescaled.
+ * unknown units stay verbatim; their basis falls back to the per-acre text
+ * sniff (`/acre` AND legacy `per acre` spellings) so the quantity is never
+ * silently rescaled.
  */
 export function resolveFertigationPrefill(unit: string | null | undefined): {
   unit: FertilizerUnit | string;
@@ -205,6 +218,6 @@ export function resolveFertigationPrefill(unit: string | null | undefined): {
   }
   return {
     unit: resolved.unit,
-    quantityBasis: text.toLowerCase().includes('/acre') ? 'per_acre' : 'total',
+    quantityBasis: unitTextSaysPerAcre(text) ? 'per_acre' : 'total',
   };
 }

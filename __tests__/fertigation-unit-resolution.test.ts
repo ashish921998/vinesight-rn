@@ -253,4 +253,28 @@ describe('plan quick-add prefill contract (byPlan uses resolveFertigationPrefill
       quantityBasis: 'per_acre',
     });
   });
+
+  it("unknown unit spelled with the legacy 'per acre' word form keeps the per-acre basis", () => {
+    // Review finding on #203: the fallback sniff must apply the same
+    // 'per acre' → '/acre' folding the parser uses — an unknown
+    // 'banana per acre' plan dose must never be stored as a plot total.
+    expect(resolveFertigationPrefill('banana per acre')).toEqual({
+      unit: 'banana per acre',
+      quantityBasis: 'per_acre',
+    });
+    expect(resolveFertigationPrefill('banana/acre')).toEqual({
+      unit: 'banana/acre',
+      quantityBasis: 'per_acre',
+    });
+    // No per-acre testimony in the text -> total (never rescaled).
+    expect(resolveFertigationPrefill('banana')).toEqual({
+      unit: 'banana',
+      quantityBasis: 'total',
+    });
+    // 'copper' must not match the ' per ' folding (needs whitespace around 'per').
+    expect(resolveFertigationPrefill('copper')).toEqual({
+      unit: 'copper',
+      quantityBasis: 'total',
+    });
+  });
 });
