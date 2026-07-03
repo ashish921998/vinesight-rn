@@ -197,6 +197,20 @@ async function resolveReportBytes(
       return jsonResponse({ error: 'Service role key not configured on server' }, 500);
     }
     const admin = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Reject oversized objects from metadata BEFORE downloading, so the blob is
+    // never buffered into function memory. The bucket's file_size_limit blocks
+    // client uploads over the cap, but a service-role writer (or a bucket whose
+    // limit predates this migration) could still leave a larger object behind.
+    const { data: objectInfo } = await admin.storage.from(STORAGE_BUCKET).info(body.storage_path);
+    if (objectInfo?.size && objectInfo.size > MAX_FILE_SIZE) {
+      await admin.storage
+        .from(STORAGE_BUCKET)
+        .remove([body.storage_path])
+        .catch(() => {});
+      return jsonResponse({ error: 'File too large. Maximum 10MB.' }, 400);
+    }
+
     const { data: blob, error: dlError } = await admin.storage
       .from(STORAGE_BUCKET)
       .download(body.storage_path);
@@ -206,8 +220,7 @@ async function resolveReportBytes(
         404,
       );
     }
-    // Guard memory before buffering the whole object (defense-in-depth behind
-    // the bucket's file_size_limit).
+    // Backstop for when info() metadata was unavailable or reported no size.
     if (blob.size > MAX_FILE_SIZE) {
       // Await the cleanup: the runtime cancels pending promises once the
       // response is sent, so a fire-and-forget removal here would be dropped.

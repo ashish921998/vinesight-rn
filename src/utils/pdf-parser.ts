@@ -34,6 +34,13 @@ interface UploadFile {
   ext: string;
 }
 
+// Expo's file/image APIs return unwrapped base64, but normalize defensively:
+// the size math below and base64-arraybuffer's decode both assume no embedded
+// whitespace (unlike atob, base64-arraybuffer corrupts rather than skips it).
+function normalizeBase64(value: string): string {
+  return value.replace(/[\t\n\f\r ]/g, '');
+}
+
 // The Sarvam OCR pipeline in the dynamic-api edge function only accepts a PDF or
 // a JPEG/PNG image. We detect the real type from magic bytes (not the URI
 // extension, which lies on iOS where a HEIC image can arrive as `.jpg`). PDFs
@@ -53,9 +60,11 @@ function detectPassthrough(bytes: Uint8Array): { mimeType: string; ext: string }
 async function prepareUpload(uri: string): Promise<UploadFile> {
   let base64: string;
   try {
-    base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    base64 = normalizeBase64(
+      await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      }),
+    );
   } catch (error) {
     console.error('[PDF Parser] Error reading file:', error);
     throw new Error(
@@ -83,7 +92,7 @@ async function prepareUpload(uri: string): Promise<UploadFile> {
       base64: true,
     });
     if (!result.base64) throw new Error('Image conversion returned no data');
-    return { base64: result.base64, mimeType: 'image/jpeg', ext: 'jpg' };
+    return { base64: normalizeBase64(result.base64), mimeType: 'image/jpeg', ext: 'jpg' };
   } catch (error) {
     console.error('[PDF Parser] Image conversion failed:', error);
     throw new Error('Unsupported file. Please upload a PDF or an image (JPG, PNG, HEIC, WebP).');
