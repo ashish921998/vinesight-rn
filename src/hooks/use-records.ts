@@ -889,27 +889,49 @@ export interface RecentSprayRecordRow {
   catalog_mix_id?: number | null;
 }
 
+/**
+ * Legacy rows must keep their exact `{ name, unit, quantity }` shape — no
+ * enumerable `undefined` identity keys. An explicit `undefined` would clobber
+ * defaults in any `{ ...defaults, ...recentItem }` consumer, so identity/mix
+ * fields are only attached when the source actually carries them (stored
+ * `null` still passes through as `null`).
+ */
+function attachIdentity(base: RecentInputItem, source: StoredSprayChemicalItem): RecentInputItem {
+  if (source.quantity_basis !== undefined) base.quantityBasis = source.quantity_basis;
+  if (source.catalog_product_id !== undefined) base.catalogProductId = source.catalog_product_id;
+  if (source.warehouse_item_id !== undefined) base.warehouseItemId = source.warehouse_item_id;
+  return base;
+}
+
 export function parseRecentSprayRecords(rows: RecentSprayRecordRow[]): RecentInputItem[] {
   return rows.flatMap((row) => {
     // Mix identity lives on the record, not on item rows: stamp it onto every
-    // parsed row so a history tap can later prefill the whole mix.
+    // parsed row so a history tap can later prefill the whole mix. The select
+    // always returns the column, so only a real (non-null) mix id is attached.
     const catalogMixId = row.catalog_mix_id;
+    const stampMix = (item: RecentInputItem): RecentInputItem => {
+      if (catalogMixId != null) item.catalogMixId = catalogMixId;
+      return item;
+    };
     const chemicalItems = row.chemical_items;
     if (chemicalItems && chemicalItems.length > 0) {
-      return chemicalItems.map((item) => ({
-        name: item.name?.trim() ?? '',
-        unit: item.unit?.trim() ?? '',
-        quantity:
-          typeof item.quantity === 'number' && Number.isFinite(item.quantity)
-            ? item.quantity
-            : null,
-        quantityBasis: item.quantity_basis,
-        catalogProductId: item.catalog_product_id,
-        warehouseItemId: item.warehouse_item_id,
-        catalogMixId,
-      }));
+      return chemicalItems.map((item) =>
+        stampMix(
+          attachIdentity(
+            {
+              name: item.name?.trim() ?? '',
+              unit: item.unit?.trim() ?? '',
+              quantity:
+                typeof item.quantity === 'number' && Number.isFinite(item.quantity)
+                  ? item.quantity
+                  : null,
+            },
+            item,
+          ),
+        ),
+      );
     }
-    return parseSprayChemicalString(row.chemical).map((item) => ({ ...item, catalogMixId }));
+    return parseSprayChemicalString(row.chemical).map((item) => stampMix(item));
   });
 }
 
@@ -949,14 +971,18 @@ export function parseRecentFertigationRecords(
   const parsed: RecentInputItem[] = [];
   for (const row of rows) {
     for (const fertilizer of row.fertilizers ?? []) {
-      parsed.push({
+      const base: RecentInputItem = {
         name: fertilizer.name.trim(),
         unit: fertilizer.unit.trim(),
         quantity: fertilizer.quantity ?? null,
-        quantityBasis: fertilizer.quantity_basis,
-        catalogProductId: fertilizer.catalog_product_id,
-        warehouseItemId: fertilizer.warehouse_item_id,
-      });
+      };
+      // Same legacy-shape rule as spray rows: identity keys only when present.
+      if (fertilizer.quantity_basis !== undefined) base.quantityBasis = fertilizer.quantity_basis;
+      if (fertilizer.catalog_product_id !== undefined)
+        base.catalogProductId = fertilizer.catalog_product_id;
+      if (fertilizer.warehouse_item_id !== undefined)
+        base.warehouseItemId = fertilizer.warehouse_item_id;
+      parsed.push(base);
     }
   }
   return parsed;

@@ -70,10 +70,10 @@ describe('parseRecentSprayRecords', () => {
       { name: 'Karate', unit: 'ml/L', quantity: 2 },
       { name: 'NoQuantity', unit: 'gm/L', quantity: null },
     ]);
-    expect(rows[0].quantityBasis).toBeUndefined();
-    expect(rows[0].catalogProductId).toBeUndefined();
-    expect(rows[0].warehouseItemId).toBeUndefined();
-    expect(rows[0].catalogMixId).toBeUndefined();
+    // The exact legacy shape — no enumerable undefined identity keys, so a
+    // `{ ...defaults, ...row }` consumer can never have defaults clobbered.
+    expect(Object.keys(rows[0])).toEqual(['name', 'unit', 'quantity']);
+    expect(Object.keys(rows[1])).toEqual(['name', 'unit', 'quantity']);
   });
 
   it('falls back to the legacy chemical display string and still stamps the mix id', () => {
@@ -130,9 +130,8 @@ describe('parseRecentFertigationRecords', () => {
     ]);
 
     expect(rows).toEqual([{ name: '19:19:19', unit: 'kg/acre', quantity: 10 }]);
-    expect(rows[0].quantityBasis).toBeUndefined();
-    expect(rows[0].catalogProductId).toBeUndefined();
-    expect(rows[0].warehouseItemId).toBeUndefined();
+    // Exact legacy shape — see the spray-side twin of this assertion.
+    expect(Object.keys(rows[0])).toEqual(['name', 'unit', 'quantity']);
   });
 });
 
