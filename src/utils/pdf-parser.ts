@@ -181,10 +181,14 @@ export async function parseLabTestFromImage(
       notes: response.rawNotes || undefined,
     };
   } catch (invokeError) {
-    await supabase.storage
+    // Best-effort: inspect the returned error too, not just thrown exceptions,
+    // so a silent storage leak is observable in logs (not swallowed).
+    const { error: cleanupError } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .remove([storagePath])
-      .catch(() => {});
+      .remove([storagePath]);
+    if (cleanupError) {
+      console.error('Lab report cleanup failed:', cleanupError);
+    }
     throw invokeError;
   }
 }
