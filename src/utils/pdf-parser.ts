@@ -97,9 +97,10 @@ export async function parseLabTestFromImage(
   try {
     const { base64, mimeType, ext } = await prepareUpload(fileUri);
 
-    // base64 decodes to ~3/4 of its length in bytes.
-    const approxBytes = Math.floor((base64.length * 3) / 4);
-    if (approxBytes > MAX_FILE_SIZE) {
+    // base64 decodes to 3/4 of its length minus any trailing '=' padding.
+    const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+    const byteLength = Math.floor((base64.length * 3) / 4) - padding;
+    if (byteLength > MAX_FILE_SIZE) {
       throw new Error('This report is too large. Please upload a file under 10MB.');
     }
 
@@ -136,12 +137,23 @@ export async function parseLabTestFromImage(
       });
 
       if (error) {
-        const ctx = (error as { context?: unknown }).context;
-        console.error(
-          `dynamic-api invoke failed | name=${error.name} | message=${error.message} | context=` +
-            (ctx ? JSON.stringify(ctx, Object.getOwnPropertyNames(ctx)) : 'none'),
-        );
-        throw new Error(`AI proxy request failed: ${error.message}`);
+        // FunctionsHttpError carries the edge Response in `context`; its JSON
+        // body holds the real { error, details } the function returned, which is
+        // far more useful than the generic "non-2xx status code" message.
+        let detail = error.message;
+        const ctx = (error as { context?: Response }).context;
+        if (ctx && typeof ctx.json === 'function') {
+          try {
+            const errBody = await ctx.json();
+            if (errBody?.error) {
+              detail = errBody.details ? `${errBody.error}: ${errBody.details}` : errBody.error;
+            }
+          } catch {
+            // Non-JSON body — keep the generic message.
+          }
+        }
+        console.error(`dynamic-api invoke failed | name=${error.name} | detail=${detail}`);
+        throw new Error(`AI proxy request failed: ${detail}`);
       }
 
       if (data?.error) {
@@ -166,6 +178,8 @@ export async function parseLabTestFromImage(
     }
   } catch (error) {
     console.error('Error parsing lab test:', error);
-    throw new Error('Failed to parse lab test data');
+    // Preserve the specific, user-actionable message (size, format, auth, or the
+    // upstream failure detail) rather than masking every failure generically.
+    throw error instanceof Error ? error : new Error('Failed to parse lab test data');
   }
 }

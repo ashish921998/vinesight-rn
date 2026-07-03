@@ -10,7 +10,10 @@
 
 -- Create the private bucket the policies below reference. The size + MIME limits
 -- are enforced by Storage at upload time, so oversized or unsupported files are
--- rejected before they ever reach the edge function (idempotent; safe to re-run).
+-- rejected before they ever reach the edge function. On conflict we converge an
+-- existing bucket to these limits (e.g. one created earlier with a 32MB cap), so
+-- the config is the same regardless of prior state. The client converts camera
+-- formats to JPEG before upload, so the narrow MIME allowlist is sufficient.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'test-reports',
@@ -19,7 +22,10 @@ values (
   10485760, -- 10MB, matches MAX_FILE_SIZE in the dynamic-api edge function
   array['application/pdf', 'image/jpeg', 'image/png']
 )
-on conflict (id) do nothing;
+on conflict (id) do update
+set
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 create policy "test_reports_insert_own"
 on storage.objects for insert
