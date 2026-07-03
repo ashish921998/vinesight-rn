@@ -78,3 +78,12 @@ describe('format — ≈ prefix for derived values', () => {
     expect(format(0.7082009672001781, 'volume', { approx: true })).toBe('≈ 708 ml');
   });
 });
+
+describe('formatParts — non-finite values keep a measure-consistent scale', () => {
+  it('never labels a non-finite count as mass', () => {
+    expect(formatParts(Number.NaN, 'count')).toEqual({ value: Number.NaN, scale: 'count' });
+    expect(formatParts(Infinity, 'count')).toEqual({ value: Infinity, scale: 'count' });
+    expect(formatParts(Number.NaN, 'volume')).toEqual({ value: Number.NaN, scale: 'L' });
+    expect(formatParts(Number.NaN, 'mass')).toEqual({ value: Number.NaN, scale: 'kg' });
+  });
+});

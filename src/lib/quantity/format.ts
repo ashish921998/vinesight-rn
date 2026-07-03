@@ -37,7 +37,12 @@ function displayRound(value: number, scale: DisplayScale): number {
  * scale label (किलो / ग्रॅम / लिटर / मिली) and render the same figure everywhere.
  */
 export function formatParts(value: number, measure: Measure): FormatParts {
-  if (!Number.isFinite(value)) return { value, scale: measure === 'volume' ? 'L' : 'kg' };
+  if (!Number.isFinite(value)) {
+    // Keep the scale measure-consistent even for garbage input: a non-finite
+    // count must not come back labeled "kg" (review finding on #201).
+    const scale: DisplayScale = measure === 'count' ? 'count' : measure === 'volume' ? 'L' : 'kg';
+    return { value, scale };
+  }
 
   const abs = Math.abs(value);
 

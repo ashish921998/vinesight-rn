@@ -10,6 +10,13 @@
 import { parseUnit } from './parse-unit';
 import type { Basis, CanonicalTotal, ParsedUnit, QuantityContext, QuantityItem } from './types';
 
+/**
+ * Deliberate: zero is treated as MISSING context, not as a provided value.
+ * A 0-acre farm or a 0-liter spray is invalid data; resolving a rate against
+ * it would silently report "0 applied" and hide the problem, whereas null
+ * lands the row in fold()'s skipped bucket with an explicit reason the UI can
+ * surface. (Adjudicated review decision on #201 — keep, do not "fix".)
+ */
 function isPositiveFinite(value: number | null | undefined): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0;
 }
