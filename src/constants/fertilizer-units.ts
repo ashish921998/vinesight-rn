@@ -187,14 +187,28 @@ export function resolveFertigationUnit(
 
 /**
  * True when the unit TEXT itself testifies a per-acre rate, covering both the
- * kernel spelling (`'kg/acre'`) and the documented legacy word form
- * (`'kg per acre'`) — the same folding `parseFertigationUnit` applies. This is
- * the basis fallback for verbatim (kernel-unknown) units, so an unknown
- * `'banana per acre'` is never silently stored as a plot total.
+ * kernel spelling (`'kg/acre'`, plural `'acres'`) and the documented legacy
+ * word form (`'kg per acre'`) — the same folding `parseFertigationUnit`
+ * applies. Word-boundary matched so `'foo/acreage'` can never false-positive.
  */
 export function unitTextSaysPerAcre(unit: string | null | undefined): boolean {
   if (typeof unit !== 'string') return false;
-  return toKernelSpelling(unit).toLowerCase().includes('/acre');
+  return /\/acres?\b/.test(toKernelSpelling(unit).toLowerCase());
+}
+
+/**
+ * Basis fallback for units the form carries VERBATIM. Kernel-recognized
+ * strings (ppm, g/L, kg/ha …) use the kernel's parsed basis — so `'kg/ha'` is
+ * a per-acre-class rate, never a plot total (its ÷2.47105 conversion is the
+ * kernel's job at fold time; the column only records that it IS a rate).
+ * per_liter_water collapses to 'total' because the stored QuantityBasis enum
+ * cannot express it and area-rescaling a concentration would corrupt it.
+ * Kernel-unknown strings fall back to the per-acre text sniff.
+ */
+export function resolveVerbatimQuantityBasis(unit: string | null | undefined): QuantityBasis {
+  const parsed = parseFertigationUnit(unit);
+  if (parsed) return parsed.basis === 'per_acre' ? 'per_acre' : 'total';
+  return unitTextSaysPerAcre(unit) ? 'per_acre' : 'total';
 }
 
 /**
@@ -218,6 +232,6 @@ export function resolveFertigationPrefill(unit: string | null | undefined): {
   }
   return {
     unit: resolved.unit,
-    quantityBasis: unitTextSaysPerAcre(text) ? 'per_acre' : 'total',
+    quantityBasis: resolveVerbatimQuantityBasis(text),
   };
 }

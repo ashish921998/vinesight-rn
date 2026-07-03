@@ -5,7 +5,7 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculator-models';
-import { resolveFertigationUnit, unitTextSaysPerAcre } from '@/constants/fertilizer-units';
+import { resolveFertigationUnit, resolveVerbatimQuantityBasis } from '@/constants/fertilizer-units';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
@@ -40,8 +40,9 @@ function resolveQuantityBasis(
   basis?: QuantityBasis,
 ): QuantityBasis {
   if (basis) return basis;
-  // Covers '/acre' and the legacy 'per acre' word form — same folding the parser uses.
-  return unitTextSaysPerAcre(unit) ? 'per_acre' : 'total';
+  // Kernel-recognized verbatim units (kg/ha, ppm, g/L) use the kernel's parsed
+  // basis; unknowns fall back to the '/acre' + legacy 'per acre' text sniff.
+  return resolveVerbatimQuantityBasis(unit);
 }
 
 function resolveQuickAddQuantityBasis(

@@ -277,4 +277,29 @@ describe('plan quick-add prefill contract (byPlan uses resolveFertigationPrefill
       quantityBasis: 'total',
     });
   });
+
+  it('kernel-recognized verbatim rates keep their rate basis (Sentry HIGH on #203)', () => {
+    // kg/ha is kernel-known (per-acre-class rate) but form-unrepresentable:
+    // it stays verbatim, and the basis column must still say it is a rate.
+    expect(resolveFertigationPrefill('kg/ha')).toEqual({
+      unit: 'kg/ha',
+      quantityBasis: 'per_acre',
+    });
+    // Concentrations cannot be expressed by the stored basis enum: total,
+    // so the quantity is never area-rescaled.
+    expect(resolveFertigationPrefill('ppm')).toEqual({ unit: 'ppm', quantityBasis: 'total' });
+    expect(resolveFertigationPrefill('gm/L')).toEqual({ unit: 'gm/L', quantityBasis: 'total' });
+  });
+
+  it('per-acre text sniff is word-boundary matched and plural-aware', () => {
+    expect(resolveFertigationPrefill('banana/acres')).toEqual({
+      unit: 'banana/acres',
+      quantityBasis: 'per_acre',
+    });
+    // '/acre' inside a longer token must not false-positive (cubic P2).
+    expect(resolveFertigationPrefill('banana/acreage')).toEqual({
+      unit: 'banana/acreage',
+      quantityBasis: 'total',
+    });
+  });
 });
