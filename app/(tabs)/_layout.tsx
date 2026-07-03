@@ -49,6 +49,7 @@ export default function TabLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
   const detailedMode = useAppModeStore((state) => state.detailedMode);
+  const appModeHydrated = useAppModeStore((state) => state.hydrated);
   const segments = useSegments();
   const [hasRedirected, setHasRedirected] = useState(false);
   const insets = useSafeAreaInsets();
@@ -117,7 +118,13 @@ export default function TabLayout() {
   // now-hidden tabs, bounce them back to the dashboard so they don't linger on
   // a route that has no tab-bar entry (which Expo Router treats as an unmapped
   // route and can crash on).
+  //
+  // Must wait for the app-mode store to hydrate: on cold start the in-memory
+  // default is `detailedMode: false`, so without this gate a Detailed-mode user
+  // resuming on a hidden tab (e.g. /workers) would be redirected to home before
+  // AsyncStorage restores their persisted choice.
   useEffect(() => {
+    if (!appModeHydrated) return;
     if (detailedMode) return;
     // Inside the (tabs) group the segments are ['(tabs)', '<tab>']. Treat as a
     // plain array — `useSegments()` returns a union of literal tuples, so a
@@ -126,7 +133,7 @@ export default function TabLayout() {
     if (typeof activeTab === 'string' && DETAILED_TABS.some((tab) => tab.name === activeTab)) {
       router.replace('/(tabs)');
     }
-  }, [detailedMode, segments, router]);
+  }, [appModeHydrated, detailedMode, segments, router]);
 
   if (isLoading || !isAuthenticated) {
     return null;
