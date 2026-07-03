@@ -920,6 +920,20 @@ export const mr = {
     },
   },
 
+  searchSelect: {
+    title: 'उत्पादन जोडा',
+    searchPlaceholder: 'नाव शोधा किंवा टाइप करा',
+    sections: {
+      history: 'तुम्ही आधी वापरलेले',
+      plan: 'तुमच्या योजनेतून',
+      catalog: 'कॅटलॉग',
+    },
+    addCustom: '"{{query}}" जोडा',
+    customHint: 'सानुकूल नोंद — जशी टाइप केली तशी जतन होईल',
+    mixTag: 'मिश्रण',
+    empty: 'शोधण्यासाठी नाव टाइप करा',
+  },
+
   irrigationForm: {
     title: '$t(glossary.irrigation)',
     subtitle: '$t(glossary.irrigation) कालावधी नोंदवा',

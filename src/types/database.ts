@@ -142,6 +142,12 @@ export interface SprayChemicalItem {
   quantity_basis?: QuantityBasis;
   warehouse_item_id?: number | null;
   catalog_product_id?: number | null;
+  /**
+   * Active plan item (uuid) this chemical was picked from, when selected via
+   * the plan section of the product picker. Items are JSONB-backed, so this is
+   * an optional item-level field like `catalog_product_id` — no migration.
+   */
+  plan_item_id?: string | null;
   composition_snapshot?: NutrientCompositionItem[] | null;
   density_kg_per_l?: number | null;
 }

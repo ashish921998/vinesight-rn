@@ -26,6 +26,8 @@ import { guidedTourOn } from '@/features/guided-tour/events';
 import { View, Pressable, Text, Switch } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ChemicalMix } from '@/types/phi';
+import type { RecentInputItem } from '@/hooks/use-records';
+import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 
 interface LogFormProps {
   selectedLogType: LogTypeId | null;
@@ -49,6 +51,8 @@ interface LogFormProps {
   fertigationQuickAddItems: FertigationQuickAddItem[];
   sprayCatalogOnly?: boolean;
   sprayCatalogMixes?: ChemicalMix[];
+  sprayHistoryItems?: RecentInputItem[];
+  sprayPlanItems?: FertilizerPlanItem[];
   showSaveButton?: boolean;
   /** Whether the irrigation entry includes an attached fertilizer (fertigation) log. */
   includeFertilizersWithIrrigation?: boolean;
@@ -77,6 +81,8 @@ export function LogForm({
   fertigationQuickAddItems,
   sprayCatalogOnly = false,
   sprayCatalogMixes = [],
+  sprayHistoryItems = [],
+  sprayPlanItems = [],
   showSaveButton = true,
   includeFertilizersWithIrrigation = false,
   onIncludeFertilizersWithIrrigationChange,
@@ -288,6 +294,8 @@ export function LogForm({
           quickAddItems={sprayQuickAddItems}
           catalogOnly={sprayCatalogOnly}
           catalogMixes={sprayCatalogMixes}
+          historyItems={sprayHistoryItems}
+          planItems={sprayPlanItems}
           compact
         />
       )}
