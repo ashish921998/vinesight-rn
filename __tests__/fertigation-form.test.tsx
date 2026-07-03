@@ -90,43 +90,100 @@ jest.mock('@/components/ui/unit-picker-modal', () => ({
   UnitPickerModal: () => null,
 }));
 
+function makeEmptyRowData(): FertigationFormData {
+  return {
+    waterVolume: undefined,
+    fertilizers: [
+      {
+        id: 'fert-1',
+        name: '',
+        quantity: 0,
+        unit: 'kg',
+        quantityBasis: undefined,
+      },
+    ],
+  };
+}
+
+function quickAdd(quickAddItems: FertigationQuickAddItem[], pressLabel: string) {
+  const onChange = jest.fn();
+  const screen = render(
+    <FertigationForm data={makeEmptyRowData()} onChange={onChange} quickAddItems={quickAddItems} />,
+  );
+  fireEvent.press(screen.getByText(pressLabel));
+  const latestState = onChange.mock.calls.at(-1)?.[0] as FertigationFormData | undefined;
+  expect(latestState).toBeDefined();
+  return latestState!;
+}
+
 describe('FertigationForm regression', () => {
   it('keeps per_acre basis when quick-add unit is normalized from /acre', () => {
-    const onChange = jest.fn();
-    const data: FertigationFormData = {
-      waterVolume: undefined,
-      fertilizers: [
-        {
-          id: 'fert-1',
-          name: '',
-          quantity: 0,
-          unit: 'kg',
-          quantityBasis: undefined,
-        },
-      ],
-    };
-    const quickAddItems: FertigationQuickAddItem[] = [
-      {
-        name: 'Urea',
-        unit: 'kg/acre',
-        quantity: 10,
-      },
-    ];
-
-    const screen = render(
-      <FertigationForm data={data} onChange={onChange} quickAddItems={quickAddItems} />,
-    );
-
-    fireEvent.press(screen.getByText('Urea'));
-
-    const latestState = onChange.mock.calls.at(-1)?.[0] as FertigationFormData | undefined;
-    expect(latestState).toBeDefined();
-    expect(latestState?.fertilizers[0]).toEqual(
+    const state = quickAdd([{ name: 'Urea', unit: 'kg/acre', quantity: 10 }], 'Urea');
+    expect(state.fertilizers[0]).toEqual(
       expect.objectContaining({
         name: 'Urea',
         unit: 'kg',
         quantity: 10,
         quantityBasis: 'per_acre',
+      }),
+    );
+  });
+
+  it("quick-adding an 'L/acre' plan item stays volume + per_acre (issue #192 AC1)", () => {
+    const state = quickAdd([{ name: 'Humic acid', unit: 'L/acre', quantity: 2 }], 'Humic acid');
+    expect(state.fertilizers[0]).toEqual(
+      expect.objectContaining({
+        name: 'Humic acid',
+        unit: 'liter',
+        quantity: 2,
+        quantityBasis: 'per_acre',
+      }),
+    );
+  });
+
+  it('quick-adding an unknown unit keeps it verbatim — never kg (issue #192 AC2)', () => {
+    const state = quickAdd(
+      [{ name: 'Mystery mix', unit: 'banana/acre', quantity: 5 }],
+      'Mystery mix',
+    );
+    expect(state.fertilizers[0]).toEqual(
+      expect.objectContaining({
+        name: 'Mystery mix',
+        unit: 'banana/acre',
+        quantity: 5,
+        quantityBasis: 'per_acre',
+      }),
+    );
+    expect(state.fertilizers[0].unit).not.toBe('kg');
+  });
+
+  it('duplicate check matches verbatim units case-insensitively (no double-add)', () => {
+    const onChange = jest.fn();
+    const data: FertigationFormData = {
+      waterVolume: undefined,
+      fertilizers: [
+        { id: 'fert-1', name: 'GA3', quantity: 100, unit: 'PPM', quantityBasis: 'total' },
+      ],
+    };
+    const screen = render(
+      <FertigationForm
+        data={data}
+        onChange={onChange}
+        quickAddItems={[{ name: 'ga3', unit: 'ppm', quantity: 100 }]}
+      />,
+    );
+    fireEvent.press(screen.getByText('ga3'));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('quick-adding a ppm item keeps ppm instead of the legacy kg coercion', () => {
+    const state = quickAdd([{ name: 'GA3', unit: 'ppm', quantity: 100 }], 'GA3');
+    expect(state.fertilizers[0]).toEqual(
+      expect.objectContaining({
+        name: 'GA3',
+        unit: 'ppm',
+        quantity: 100,
+        quantityBasis: 'total',
       }),
     );
   });

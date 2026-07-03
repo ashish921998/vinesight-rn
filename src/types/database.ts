@@ -186,6 +186,12 @@ export interface FertilizerItem {
   name: string;
   unit: 'kg/acre' | 'liter/acre' | string;
   quantity: number;
+  /**
+   * True when `unit` was not recognized by the quantity kernel at save time.
+   * The unit string is stored verbatim (farmer testimony) and flagged for
+   * review — never coerced to kg (issue #192). Absent on recognized units.
+   */
+  unit_unrecognized?: boolean;
   quantity_basis?: QuantityBasis;
   warehouse_item_id?: number | null;
   catalog_product_id?: number | null;

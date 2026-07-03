@@ -14,6 +14,7 @@ import type {
   HarvestFormData,
   NoteFormData,
 } from '@/components/forms';
+import { isFertigationUnitRecognized } from '@/constants/fertilizer-units';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
 import { PHI_CALC_VERSION } from '@/services/phi-service';
 import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
@@ -205,9 +206,12 @@ export function buildDelegatedLogPayload(
             quantityBasis === 'per_acre' ? f.quantity! * perAreaToPerAcreFactor : f.quantity!;
           return {
             name: f.name.trim(),
+            // Testimony rule (issue #192): the unit string is stored verbatim.
+            // Kernel-unknown strings are flagged for review, never coerced to kg.
             unit: f.unit,
             quantity,
             quantity_basis: quantityBasis,
+            ...(isFertigationUnitRecognized(f.unit) ? {} : { unit_unrecognized: true }),
             warehouse_item_id: f.warehouseItemId ?? null,
             catalog_product_id: f.catalogProductId ?? null,
             composition_snapshot: f.compositionSnapshot ?? null,

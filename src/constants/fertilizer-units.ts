@@ -14,7 +14,15 @@
  * - `MEASURE_TO_UNIT` is the canonical spelling stored in the DB. Aliases a
  *   reader must also accept (`g/acre` vs `gram/acre`, case variants) are listed
  *   in `PER_ACRE_UNIT_ALIASES` so resolvers normalize consistently.
+ *
+ * The fertigation LOGGING path resolves unit strings through the quantity
+ * kernel (`resolveFertigationUnit` / `resolveFertigationPrefill` below,
+ * issue #192): known spellings resolve to their true measure + basis, unknown
+ * strings stay verbatim and are flagged — never silently coerced to kg.
  */
+
+import { parseUnit, type ParsedUnit } from '@/lib/quantity';
+import type { QuantityBasis } from '@/types/database';
 
 import type { FertilizerUnit } from './calculator-models';
 
@@ -67,6 +75,10 @@ const UNIT_ALIASES: Record<FertilizerMeasure, readonly string[]> = {
  * the string isn't a recognized plan-item unit. Comparisons are case-insensitive
  * and accept the aliases above, so the canonical `'L/acre'` round-trips to
  * `'liter'` (not silently to the default) regardless of casing.
+ *
+ * LEGACY: the fertigation logging path resolves through the quantity kernel
+ * now (`resolveFertigationUnit` below — issue #192); this stays as the
+ * reference the parity suite asserts the kernel path against.
  */
 export function resolveFertilizerMeasure(
   unit: string | null | undefined,
@@ -80,4 +92,146 @@ export function resolveFertilizerMeasure(
     }
   }
   return fallback;
+}
+
+// ============================================================
+// MARK: - Kernel-backed resolution (fertigation logging path, issue #192)
+// ============================================================
+
+/**
+ * Legacy spellings predating the kernel grammar write the denominator as a
+ * word: `'kg per acre'`, `'litre per acre'`. Fold them into the kernel's
+ * `<base>/<denominator>` shape before parsing. Requires whitespace around
+ * `per` so product names ("copper") can never match.
+ */
+function toKernelSpelling(raw: string): string {
+  return raw.replace(/\s+per\s+/gi, '/');
+}
+
+/**
+ * Parse a fertigation unit string through the quantity kernel, tolerating the
+ * legacy `'X per acre'` spellings. Returns null for anything the kernel does
+ * not positively recognize — NEVER a silent kg fallback.
+ */
+export function parseFertigationUnit(raw: string | null | undefined): ParsedUnit | null {
+  if (typeof raw !== 'string') return null;
+  return parseUnit(toKernelSpelling(raw));
+}
+
+/**
+ * True when the kernel positively recognizes the unit string. Items saved with
+ * an unrecognized unit keep the string verbatim and are stamped
+ * `unit_unrecognized: true` (see `FertilizerItem`).
+ */
+export function isFertigationUnitRecognized(raw: string | null | undefined): boolean {
+  return parseFertigationUnit(raw) !== null;
+}
+
+export interface ResolvedFertigationUnit {
+  /**
+   * What the fertigation form row should carry: one of the picker's
+   * `FERTILIZER_UNITS` when the string maps onto that vocabulary losslessly,
+   * otherwise the original text verbatim (trimmed). Verbatim text is never
+   * coerced — an unknown unit must not become kg.
+   */
+  unit: FertilizerUnit | string;
+  /**
+   * The basis the unit string itself pins down (`'kg/acre'` → per_acre, bare
+   * `'kg'` → total). Only set when `unit` is a form unit; undefined for
+   * verbatim strings, whose basis callers resolve by their existing rules.
+   */
+  basisFromUnit?: QuantityBasis;
+}
+
+/**
+ * Map a kernel parse onto the fertigation form's picker vocabulary. Returns
+ * null when no form unit can represent the parse without changing the
+ * number's meaning: concentrations (ppm, g/L), counts, mg scale, and
+ * per-hectare rates (factor ≠ 1 or 0.001 once ÷2.47105 is folded in) all
+ * stay verbatim rather than being mislabeled.
+ */
+function toFormUnit(parsed: ParsedUnit): FertilizerUnit | null {
+  if (parsed.basis === 'per_liter_water') return null;
+  if (parsed.measure === 'mass' && parsed.factorToCanonical === 1) return 'kg';
+  if (parsed.measure === 'mass' && parsed.factorToCanonical === 0.001) return 'gram';
+  if (parsed.measure === 'volume' && parsed.factorToCanonical === 1) return 'liter';
+  if (parsed.measure === 'volume' && parsed.factorToCanonical === 0.001) return 'ml';
+  return null;
+}
+
+/**
+ * Resolve a unit string arriving at the fertigation form (quick-add chips,
+ * name suggestions, recents, warehouse/plan sources) via the quantity kernel.
+ *
+ * - Known spellings resolve to their true measure at form scale plus the basis
+ *   the string carries (`'L/acre'` → liter + per_acre).
+ * - Missing/blank input returns the fallback (nothing to preserve).
+ * - Everything else — unknown strings AND kernel-known units the form cannot
+ *   express (ppm, g/L, kg/ha) — is returned verbatim, never as kg.
+ */
+export function resolveFertigationUnit(
+  raw: string | null | undefined,
+  fallback: FertilizerUnit | string = 'kg',
+): ResolvedFertigationUnit {
+  const text = raw?.trim();
+  if (!text) return { unit: fallback };
+  const parsed = parseFertigationUnit(text);
+  if (parsed) {
+    const formUnit = toFormUnit(parsed);
+    if (formUnit) {
+      return { unit: formUnit, basisFromUnit: parsed.basis === 'per_acre' ? 'per_acre' : 'total' };
+    }
+  }
+  return { unit: text };
+}
+
+/**
+ * True when the unit TEXT itself testifies a per-acre rate, covering both the
+ * kernel spelling (`'kg/acre'`, plural `'acres'`) and the documented legacy
+ * word form (`'kg per acre'`) — the same folding `parseFertigationUnit`
+ * applies. Word-boundary matched so `'foo/acreage'` can never false-positive.
+ */
+export function unitTextSaysPerAcre(unit: string | null | undefined): boolean {
+  if (typeof unit !== 'string') return false;
+  return /\/acres?\b/.test(toKernelSpelling(unit).toLowerCase());
+}
+
+/**
+ * Basis fallback for units the form carries VERBATIM. Kernel-recognized
+ * strings (ppm, g/L, kg/ha …) use the kernel's parsed basis — so `'kg/ha'` is
+ * a per-acre-class rate, never a plot total (its ÷2.47105 conversion is the
+ * kernel's job at fold time; the column only records that it IS a rate).
+ * per_liter_water collapses to 'total' because the stored QuantityBasis enum
+ * cannot express it and area-rescaling a concentration would corrupt it.
+ * Kernel-unknown strings fall back to the per-acre text sniff.
+ */
+export function resolveVerbatimQuantityBasis(unit: string | null | undefined): QuantityBasis {
+  const parsed = parseFertigationUnit(unit);
+  if (parsed) return parsed.basis === 'per_acre' ? 'per_acre' : 'total';
+  return unitTextSaysPerAcre(unit) ? 'per_acre' : 'total';
+}
+
+/**
+ * Resolve a plan/voice fertigation item's unit for prefilling the form.
+ * Plan doses are per-acre rates by contract, so form-representable units keep
+ * the legacy per_acre basis even when spelled bare (`'kg'` ≡ `'kg/acre'` on a
+ * plan item — parity with the previous prefill resolver). Unrepresentable or
+ * unknown units stay verbatim; their basis falls back to the per-acre text
+ * sniff (`/acre` AND legacy `per acre` spellings) so the quantity is never
+ * silently rescaled.
+ */
+export function resolveFertigationPrefill(unit: string | null | undefined): {
+  unit: FertilizerUnit | string;
+  quantityBasis: QuantityBasis;
+} {
+  const text = unit?.trim();
+  if (!text) return { unit: 'kg', quantityBasis: 'per_acre' };
+  const resolved = resolveFertigationUnit(text);
+  if (resolved.basisFromUnit !== undefined) {
+    return { unit: resolved.unit, quantityBasis: 'per_acre' };
+  }
+  return {
+    unit: resolved.unit,
+    quantityBasis: resolveVerbatimQuantityBasis(text),
+  };
 }

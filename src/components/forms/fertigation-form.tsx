@@ -5,7 +5,7 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculator-models';
-import { resolveFertilizerMeasure } from '@/constants/fertilizer-units';
+import { resolveFertigationUnit, resolveVerbatimQuantityBasis } from '@/constants/fertilizer-units';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
@@ -20,7 +20,14 @@ export interface FertilizerEntry {
   id?: string;
   name: string;
   quantity?: number;
-  unit: FertilizerUnit;
+  /**
+   * Normally one of the picker's `FERTILIZER_UNITS`. A raw string means the
+   * source unit could not be represented by the picker vocabulary (ppm,
+   * web-written or unknown spellings) and is carried verbatim — never coerced
+   * to kg (issue #192). Rendered as-is; submission flags kernel-unknown
+   * strings via `unit_unrecognized`.
+   */
+  unit: FertilizerUnit | string;
   quantityBasis?: QuantityBasis;
   warehouseItemId?: number | null;
   catalogProductId?: number | null;
@@ -28,36 +35,24 @@ export interface FertilizerEntry {
   densityKgPerL?: number | null;
 }
 
-const DEFAULT_FERTILIZER_UNIT: FertilizerUnit = 'kg';
-
-function isFertilizerUnit(value: string): value is FertilizerUnit {
-  return FERTILIZER_UNITS.includes(value as FertilizerUnit);
-}
-
-function resolveFertilizerUnit(
-  unit: string | null | undefined,
-  fallback: FertilizerUnit = DEFAULT_FERTILIZER_UNIT,
-): FertilizerUnit {
-  // Delegate to the canonical measure resolver, then narrow to a FertilizerUnit.
-  // `ppm` is a valid plan-item measure but not a fertigation-form unit, so it
-  // falls back (preserving prior behavior for ppm / unknown strings).
-  const measure = resolveFertilizerMeasure(unit, fallback);
-  return isFertilizerUnit(measure) ? measure : fallback;
-}
-
 function resolveQuantityBasis(
   unit: string | null | undefined,
   basis?: QuantityBasis,
 ): QuantityBasis {
   if (basis) return basis;
-  return unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total';
+  // Kernel-recognized verbatim units (kg/ha, ppm, g/L) use the kernel's parsed
+  // basis; unknowns fall back to the '/acre' + legacy 'per acre' text sniff.
+  return resolveVerbatimQuantityBasis(unit);
 }
 
-function resolveQuickAddQuantityBasis(item: FertigationQuickAddItem): QuantityBasis {
+function resolveQuickAddQuantityBasis(
+  item: FertigationQuickAddItem,
+  basisFromUnit?: QuantityBasis,
+): QuantityBasis {
   if (item.quantityBasis) return item.quantityBasis;
   const unit = item.unit?.trim();
   if (!unit) return 'per_acre';
-  return resolveQuantityBasis(unit);
+  return basisFromUnit ?? resolveQuantityBasis(unit);
 }
 
 export interface FertigationFormData {
@@ -149,12 +144,15 @@ export function FertigationForm({
   };
 
   const addQuickFertilizer = (item: FertigationQuickAddItem) => {
-    const validatedUnit = resolveFertilizerUnit(item.unit);
+    const resolved = resolveFertigationUnit(item.unit);
+    const validatedUnit = resolved.unit;
     const normalizedName = item.name.trim().toLowerCase();
+    // Comparison only — stored unit values stay verbatim (case preserved).
+    const normalizedUnit = validatedUnit.trim().toLowerCase();
     const alreadyExists = data.fertilizers.some(
       (fertilizer) =>
         fertilizer.name.trim().toLowerCase() === normalizedName &&
-        fertilizer.unit === validatedUnit,
+        fertilizer.unit.trim().toLowerCase() === normalizedUnit,
     );
     if (alreadyExists) return;
 
@@ -175,7 +173,8 @@ export function FertigationForm({
           current.quantity !== undefined && current.quantity > 0
             ? current.quantity
             : (item.quantity ?? 0),
-        quantityBasis: current.quantityBasis ?? resolveQuickAddQuantityBasis(item),
+        quantityBasis:
+          current.quantityBasis ?? resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
         warehouseItemId: item.warehouseItemId ?? null,
         catalogProductId: item.catalogProductId ?? null,
         compositionSnapshot: item.composition ?? null,
@@ -199,7 +198,7 @@ export function FertigationForm({
           name: item.name.trim(),
           quantity: item.quantity ?? 0,
           unit: validatedUnit,
-          quantityBasis: resolveQuickAddQuantityBasis(item),
+          quantityBasis: resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
           warehouseItemId: item.warehouseItemId ?? null,
           catalogProductId: item.catalogProductId ?? null,
           compositionSnapshot: item.composition ?? null,
@@ -565,15 +564,17 @@ function FertilizerRow({
 
   const isRowComplete = fertilizer.name.trim() && (fertilizer.quantity ?? 0) > 0;
   const applySuggestion = (item: FertigationQuickAddItem) => {
-    const unit = resolveFertilizerUnit(item.unit, fertilizer.unit);
+    const resolved = resolveFertigationUnit(item.unit, fertilizer.unit);
     const currentQuantity = fertilizer.quantity ?? 0;
     onUpdate({
       name: item.name,
-      unit,
+      unit: resolved.unit,
       quantity: currentQuantity > 0 ? currentQuantity : (item.quantity ?? 0),
       quantityBasis:
         fertilizer.quantityBasis ??
-        resolveQuantityBasis(item.unit?.trim() ?? unit, item.quantityBasis),
+        item.quantityBasis ??
+        resolved.basisFromUnit ??
+        resolveQuantityBasis(item.unit?.trim() ?? resolved.unit),
       warehouseItemId: item.warehouseItemId ?? null,
       catalogProductId: item.catalogProductId ?? null,
       compositionSnapshot: item.composition ?? null,

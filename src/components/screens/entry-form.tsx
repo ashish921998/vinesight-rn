@@ -87,8 +87,8 @@ import {
   type LogTypeId,
   HARVEST_GRADES,
   CHEMICAL_UNITS,
-  type FertilizerUnit,
 } from '@/constants/calculator-models';
+import { resolveFertigationPrefill, resolveFertigationUnit } from '@/constants/fertilizer-units';
 import {
   useCreateIrrigationRecord,
   useCreateSprayRecord,
@@ -196,58 +196,10 @@ function isValidChemicalUnit(unit: string): unit is SprayFormData['chemicals'][n
   return CHEMICAL_UNITS.includes(unit as SprayFormData['chemicals'][number]['unit']);
 }
 
-function normalizeFertigationDoseUnit(unit: string | null | undefined): 'kg/acre' | 'liter/acre' {
-  if (typeof unit !== 'string') return 'kg/acre';
-  const trimmed = unit.trim();
-  if (!trimmed) return 'kg/acre';
-  const normalized = trimmed.toLowerCase();
-  if (normalized === 'kg' || normalized === 'kg/acre' || normalized === 'kg per acre') {
-    return 'kg/acre';
-  }
-  if (
-    normalized === 'liter' ||
-    normalized === 'litre' ||
-    normalized === 'l' ||
-    normalized === 'liter/acre' ||
-    normalized === 'litre/acre' ||
-    normalized === 'l/acre' ||
-    normalized === 'liter per acre' ||
-    normalized === 'litre per acre'
-  ) {
-    return 'liter/acre';
-  }
-  if (normalized === 'ppm') return 'kg/acre';
-  return 'kg/acre';
-}
-
-function normalizeWarehouseFertilizerUnit(unit: string | null | undefined): FertilizerUnit {
-  if (typeof unit !== 'string') return 'kg';
-  const trimmed = unit.trim();
-  if (!trimmed) return 'kg';
-  const normalized = trimmed.toLowerCase();
-  if (normalized === 'kg' || normalized === 'kg/acre' || normalized === 'kg per acre') {
-    return 'kg';
-  }
-  if (
-    normalized === 'liter' ||
-    normalized === 'litre' ||
-    normalized === 'l' ||
-    normalized === 'liter/acre' ||
-    normalized === 'litre/acre' ||
-    normalized === 'l/acre' ||
-    normalized === 'liter per acre' ||
-    normalized === 'litre per acre'
-  ) {
-    return 'liter';
-  }
-  if (normalized === 'gram' || normalized === 'gm' || normalized === 'gram/acre') {
-    return 'gram';
-  }
-  if (normalized === 'ml' || normalized === 'ml/acre') {
-    return 'ml';
-  }
-  return 'kg';
-}
+// Fertigation unit resolution goes through the quantity kernel
+// (`resolveFertigationUnit` / `resolveFertigationPrefill` in
+// `@/constants/fertilizer-units`) — unknown unit strings stay verbatim and are
+// never coerced to kg (issue #192).
 
 function inferWarehouseFertilizerQuantityBasis(
   unit: string | null | undefined,
@@ -256,18 +208,6 @@ function inferWarehouseFertilizerQuantityBasis(
   const normalized = unit.trim().toLowerCase();
   if (!normalized) return undefined;
   return normalized.includes('/acre') || normalized.includes('per acre') ? 'per_acre' : undefined;
-}
-
-function resolveFertigationPrefill(
-  unit: string | null | undefined,
-): Pick<FertigationFormData['fertilizers'][number], 'unit' | 'quantityBasis'> {
-  const normalized = normalizeFertigationDoseUnit(unit);
-  if (normalized === 'liter/acre') return { unit: 'liter', quantityBasis: 'per_acre' };
-  if (normalized === 'kg/acre') return { unit: 'kg', quantityBasis: 'per_acre' };
-  return {
-    unit: 'kg',
-    quantityBasis: 'per_acre',
-  };
 }
 
 function normalizeSprayDoseUnit(unit: string): string {
@@ -539,17 +479,23 @@ export function EntryForm({
   }, [sprayPhiComputation]);
 
   const fertigationQuickAddItems = useMemo<FertigationQuickAddItem[]>(() => {
-    const byPlan = (fertilizerPlan?.items ?? []).map((item) => ({
-      name: item.name,
-      unit: normalizeWarehouseFertilizerUnit(item.unit),
-      quantity: item.quantity ?? null,
-      quantityBasis: inferWarehouseFertilizerQuantityBasis(item.unit),
-      warehouseItemId: null,
-      catalogProductId: null,
-    }));
+    const byPlan = (fertilizerPlan?.items ?? []).map((item) => {
+      // Plan doses are per-acre rates by contract: bare form units ('kg') keep
+      // per_acre; unrepresentable/unknown units stay verbatim with the sniffed
+      // basis (resolveFertigationPrefill — same path as plan one-tap prefill).
+      const prefill = resolveFertigationPrefill(item.unit);
+      return {
+        name: item.name,
+        unit: prefill.unit,
+        quantity: item.quantity ?? null,
+        quantityBasis: prefill.quantityBasis,
+        warehouseItemId: null,
+        catalogProductId: null,
+      };
+    });
     const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
       name: item.name,
-      unit: normalizeWarehouseFertilizerUnit(item.unit),
+      unit: resolveFertigationUnit(item.unit).unit,
       quantity: null,
       quantityBasis: inferWarehouseFertilizerQuantityBasis(item.unit),
       warehouseItemId: item.id ?? null,
