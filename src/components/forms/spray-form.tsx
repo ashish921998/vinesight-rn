@@ -12,6 +12,17 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculator-models';
+import {
+  SPRAY_UNIT_CHIPS,
+  SPRAY_UNIT_OVERFLOW_CHIPS,
+  buildTankEcho,
+  chipForEntry,
+  evaluateDoseGuard,
+  sprayUnitChipByKey,
+  type DoseReference,
+  type SprayUnitChip,
+} from './spray-unit-chips';
+import { sprayProductKey, useSprayUnitStore } from '@/stores/spray-unit-store';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
@@ -42,7 +53,6 @@ export interface ChemicalEntry {
 
 const DEFAULT_CHEMICAL_UNIT: ChemicalUnit = 'gm/L';
 const MAX_CHEMICAL_ROWS = 10;
-const QUICK_CHEMICAL_UNITS: readonly ChemicalUnit[] = ['gm/L', 'ml/L', 'kg', 'liter'];
 
 function isChemicalUnit(value: string): value is ChemicalUnit {
   return CHEMICAL_UNITS.includes(value as ChemicalUnit);
@@ -73,7 +83,7 @@ function resolveChemicalUnit(
   if (lowered === 'ml/liter' || lowered === 'ml/litre' || lowered === 'ml/l') {
     return 'ml/L';
   }
-  if (lowered === 'gm/acre') return 'gram';
+  if (lowered === 'gm/acre' || lowered === 'g/acre' || lowered === 'gram/acre') return 'gram';
   if (lowered === 'ml/acre') return 'ml';
   // Plan-item spellings: the per-acre basis survives via resolveQuantityBasis
   // on the original string, so only the scale maps here (like gm/ml above).
@@ -149,6 +159,8 @@ interface SprayFormProps {
   historyItems?: RecentInputItem[];
   /** This farm's active plan items for the picker's plan section. */
   planItems?: FertilizerPlanItem[];
+  /** Farm area in acres — resolves per-acre doses into the tank echo. */
+  areaAcres?: number | null;
   /** Hide the decorative header (inline log composer). */
   compact?: boolean;
 }
@@ -162,10 +174,19 @@ export function SprayForm({
   catalogMixes = [],
   historyItems = [],
   planItems = [],
+  areaAcres = null,
   compact = false,
 }: SprayFormProps) {
   const m3 = useM3();
   const { t } = useTranslation();
+  const lastUsedChips = useSprayUnitStore((s) => s.lastUsedChips);
+  const lastUsedChipFor = useCallback(
+    (name: string, catalogProductId?: number | null): SprayUnitChip | null => {
+      const productKey = sprayProductKey(name, catalogProductId);
+      return sprayUnitChipByKey(productKey ? lastUsedChips[productKey] : null);
+    },
+    [lastUsedChips],
+  );
   const onChangeRef = useRef(onChange);
   const dataRef = useRef(data);
   const isValid =
@@ -300,11 +321,25 @@ export function SprayForm({
 
   const addQuickChemical = useCallback(
     (item: SprayQuickAddItem) => {
-      const validatedUnit = resolveChemicalUnit(item.unit);
+      // Items with no unit of their own default to the product's last-used
+      // chip (per-product persistence, issue #194) before the g/L fallback.
+      const lastUsed = item.unit?.trim() ? null : lastUsedChipFor(item.name, item.catalogProductId);
+      const validatedUnit = lastUsed?.unit ?? resolveChemicalUnit(item.unit);
       const normalizedName = item.name.trim().toLowerCase();
+      // Duplicate identity is the fused chip (unit + basis), not the unit
+      // string alone — 'kg total' and 'kg/acre' share unit 'kg' but are
+      // distinct entries. Rows outside the chip vocabulary fall back to the
+      // unit string.
+      const incomingBasis =
+        item.quantityBasis ??
+        lastUsed?.basis ??
+        resolveQuantityBasis(item.unit?.trim() ?? validatedUnit);
+      const incomingChipKey = chipForEntry(validatedUnit, incomingBasis)?.key ?? validatedUnit;
       const alreadyExists = data.chemicals.some(
         (chemical) =>
-          chemical.name.trim().toLowerCase() === normalizedName && chemical.unit === validatedUnit,
+          chemical.name.trim().toLowerCase() === normalizedName &&
+          (chipForEntry(chemical.unit, chemical.quantityBasis)?.key ?? chemical.unit) ===
+            incomingChipKey,
       );
       if (alreadyExists) return;
 
@@ -327,9 +362,11 @@ export function SprayForm({
               : (item.quantity ?? undefined),
           // An explicit item basis (fully-prefilled picker selections) wins over
           // the pristine row's default 'total'; legacy quick-add producers never
-          // set one, so their behavior is unchanged.
+          // set one, so their behavior is unchanged. The last-used chip's basis
+          // only applies when the item brought no unit at all.
           quantityBasis:
             item.quantityBasis ??
+            lastUsed?.basis ??
             current.quantityBasis ??
             resolveQuantityBasis(item.unit?.trim() ?? validatedUnit),
           warehouseItemId: item.warehouseItemId ?? null,
@@ -358,7 +395,7 @@ export function SprayForm({
             unit: validatedUnit,
             quantityBasis: resolveQuantityBasis(
               item.unit?.trim() ?? validatedUnit,
-              item.quantityBasis,
+              item.quantityBasis ?? lastUsed?.basis,
             ),
             warehouseItemId: item.warehouseItemId ?? null,
             catalogProductId: item.catalogProductId ?? null,
@@ -369,7 +406,7 @@ export function SprayForm({
         ]),
       });
     },
-    [data, onChange],
+    [data, onChange, lastUsedChipFor],
   );
 
   const applyCatalogMix = useCallback(
@@ -710,6 +747,11 @@ export function SprayForm({
                 onNextChemical={focusNextChemicalName}
                 onInputFocus={onInputFocus}
                 readOnly={catalogOnly}
+                waterLiters={data.waterVolume ?? null}
+                areaAcres={areaAcres}
+                historyItems={historyItems}
+                planItems={planItems}
+                lastUsedChipFor={lastUsedChipFor}
               />
             ))}
 
@@ -823,6 +865,12 @@ interface ChemicalRowProps {
   onNextChemical: (index: number) => void;
   onInputFocus?: TextInputProps['onFocus'];
   readOnly?: boolean;
+  waterLiters?: number | null;
+  areaAcres?: number | null;
+  historyItems?: RecentInputItem[];
+  planItems?: FertilizerPlanItem[];
+  /** Resolves a product's last-used chip — owned by SprayForm (one subscription). */
+  lastUsedChipFor: (name: string, catalogProductId?: number | null) => SprayUnitChip | null;
 }
 
 function ChemicalRow({
@@ -838,6 +886,11 @@ function ChemicalRow({
   onNextChemical,
   onInputFocus,
   readOnly = false,
+  waterLiters = null,
+  areaAcres = null,
+  historyItems = [],
+  planItems = [],
+  lastUsedChipFor,
 }: ChemicalRowProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -847,6 +900,60 @@ function ChemicalRow({
   );
   const [isNameFocused, setIsNameFocused] = useState(false);
   const [isQuantityFocused, setIsQuantityFocused] = useState(false);
+  // Reads route through the parent's lastUsedChipFor; only the write (recording
+  // a chip selection) is local — that keeps one store subscription, in SprayForm.
+  const setLastUsedChip = useSprayUnitStore((s) => s.setLastUsedChip);
+
+  const activeChip = chipForEntry(chemical.unit, chemical.quantityBasis);
+  const activeOverflowChip = SPRAY_UNIT_OVERFLOW_CHIPS.find((chip) => chip.key === activeChip?.key);
+  const unitLabel = activeChip?.key ?? chemical.unit;
+
+  const tankEcho = useMemo(
+    () => buildTankEcho(chemical, { waterLiters, areaAcres }),
+    [chemical, waterLiters, areaAcres],
+  );
+
+  // Guardrail references are strictly independent of the entry: the linked
+  // plan item's dose, else the most recent prior log of the same product.
+  // The tank echo derives from the same entry and is never a trigger.
+  const planReference = useMemo<DoseReference | null>(() => {
+    if (!chemical.planItemId) return null;
+    const planItem = planItems.find((item) => item.id === chemical.planItemId);
+    if (!planItem?.unit || planItem.quantity == null || planItem.quantity <= 0) return null;
+    // Plan doses are per-acre rates by contract; slashed unit spellings carry
+    // their own basis and win inside the kernel regardless.
+    return {
+      quantity: planItem.quantity,
+      unit: foldUnitText(planItem.unit),
+      quantityBasis: 'per_acre',
+    };
+  }, [chemical.planItemId, planItems]);
+
+  const historyReference = useMemo<DoseReference | null>(() => {
+    const nameKey = chemical.name.trim().toLowerCase();
+    if (!nameKey && chemical.catalogProductId == null) return null;
+    const match = historyItems.find((item) =>
+      chemical.catalogProductId != null && item.catalogProductId != null
+        ? item.catalogProductId === chemical.catalogProductId
+        : item.name.trim().toLowerCase() === nameKey,
+    );
+    if (!match || match.quantity == null || match.quantity <= 0) return null;
+    return {
+      quantity: match.quantity,
+      unit: foldUnitText(match.unit),
+      quantityBasis: match.quantityBasis ?? null,
+    };
+  }, [chemical.name, chemical.catalogProductId, historyItems]);
+
+  const doseWarning = useMemo(
+    () =>
+      evaluateDoseGuard(
+        chemical,
+        { plan: planReference, history: historyReference },
+        { waterLiters, areaAcres },
+      ),
+    [chemical, planReference, historyReference, waterLiters, areaAcres],
+  );
 
   const nameSuggestions = useMemo(() => {
     const query = chemical.name.trim().toLowerCase();
@@ -890,14 +997,19 @@ function ChemicalRow({
   };
 
   const applySuggestion = (item: SprayQuickAddItem) => {
-    const unit = resolveChemicalUnit(item.unit, chemical.unit);
+    // Suggestions without a unit of their own fall back to the product's
+    // last-used chip before inheriting the row's current unit.
+    const lastUsed = item.unit?.trim() ? null : lastUsedChipFor(item.name, item.catalogProductId);
+    const unit = lastUsed?.unit ?? resolveChemicalUnit(item.unit, chemical.unit);
     onUpdate({
       name: item.name,
       unit,
       quantity: chemical.quantity ?? item.quantity ?? undefined,
       quantityBasis:
+        item.quantityBasis ??
+        lastUsed?.basis ??
         chemical.quantityBasis ??
-        resolveQuantityBasis(item.unit?.trim() ?? unit, item.quantityBasis),
+        resolveQuantityBasis(item.unit?.trim() ?? unit),
       warehouseItemId: item.warehouseItemId ?? null,
       catalogProductId: item.catalogProductId ?? null,
       planItemId: item.planItemId ?? null,
@@ -910,12 +1022,25 @@ function ChemicalRow({
     quantityRef.current?.focus();
   };
 
-  const handleUnitSelect = (unit: ChemicalUnit) => {
-    // Preserve an explicitly chosen basis (e.g. a per-acre dose) rather than
-    // silently forcing 'total' — that would undercount saved totals by the
-    // acreage factor. When no basis is set yet, infer it from the unit string
-    // ('…/acre' → per_acre, otherwise total), matching how prefills resolve it.
-    onUpdate({ unit, quantityBasis: chemical.quantityBasis ?? resolveQuantityBasis(unit) });
+  const handleNameChange = (name: string) => {
+    const updates: Partial<ChemicalEntry> = { name };
+    // Typed products preselect their last-used chip while the row is still
+    // pristine (no dose entered yet) — never fights an entered quantity.
+    if (chemical.quantity === undefined) {
+      const lastUsed = lastUsedChipFor(name, null);
+      if (lastUsed) {
+        updates.unit = lastUsed.unit;
+        updates.quantityBasis = lastUsed.basis;
+      }
+    }
+    onUpdate(updates);
+  };
+
+  const handleChipSelect = (chip: SprayUnitChip) => {
+    // The chip is the single source of unit + basis — no separate toggle.
+    onUpdate({ unit: chip.unit, quantityBasis: chip.basis });
+    const productKey = sprayProductKey(chemical.name, chemical.catalogProductId);
+    if (productKey) setLastUsedChip(productKey, chip.key);
   };
 
   return (
@@ -949,7 +1074,7 @@ function ChemicalRow({
             placeholder={t('sprayForm.chemicals.namePlaceholder')}
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             value={chemical.name}
-            onChangeText={(name) => onUpdate({ name })}
+            onChangeText={handleNameChange}
             editable={!readOnly}
             onFocus={(event) => {
               if (readOnly) return;
@@ -1064,16 +1189,9 @@ function ChemicalRow({
           blurOnSubmit={index >= chemicalCount - 1}
         />
 
-        {/* Unit Picker */}
-        <Pressable
-          disabled={readOnly}
-          accessibilityState={{ disabled: readOnly }}
-          onPress={() => (!readOnly ? setShowUnitPicker(true) : null)}
+        {/* Current unit label — the chips below are the only way to change it. */}
+        <View
           style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
             backgroundColor: m3.surface.s100,
             borderRadius: borderRadius.lg,
             paddingHorizontal: spacing[3],
@@ -1083,11 +1201,64 @@ function ChemicalRow({
             borderColor: m3.surface.s200,
           }}
         >
-          <Text style={{ fontSize: fontSize.base, color: m3.surface.s900 }}>{chemical.unit}</Text>
-          <Symbol name="chevron.right" size={18} color={m3.surface.s600} />
-        </Pressable>
+          <Text style={{ fontSize: fontSize.base, color: m3.surface.s900 }}>{unitLabel}</Text>
+        </View>
       </View>
 
+      {/* Live tank echo — the entered rate resolved into tank reality. */}
+      {tankEcho ? (
+        <Text
+          style={{
+            marginTop: spacing[1],
+            marginLeft: spacing[1],
+            fontSize: fontSize.xs,
+            color: m3.surface.s600,
+          }}
+        >
+          {tankEcho.kind === 'water'
+            ? t('sprayForm.chemicals.tankEcho.water', {
+                defaultValue: '{{quantity}} {{unit}} × {{water}} L = {{total}} in tank',
+                quantity: chemical.quantity,
+                unit: unitLabel,
+                water: tankEcho.contextValue,
+                total: tankEcho.totalText,
+              })
+            : t('sprayForm.chemicals.tankEcho.area', {
+                defaultValue: '{{quantity}} {{unit}} × {{area}} acre = {{total}} in tank',
+                quantity: chemical.quantity,
+                unit: unitLabel,
+                area: tankEcho.contextValue,
+                total: tankEcho.totalText,
+              })}
+        </Text>
+      ) : null}
+
+      {/* Non-blocking dose guardrail — plan/prior-log deviation only. */}
+      {doseWarning ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            marginTop: spacing[2],
+            gap: 6,
+          }}
+        >
+          <Symbol name="exclamationmark.triangle.fill" size={14} color={m3.colorScheme.warning} />
+          <Text style={{ flex: 1, fontSize: fontSize.xs, color: m3.colorScheme.warning }}>
+            {t(
+              `sprayForm.chemicals.doseGuard.${doseWarning.direction}${
+                doseWarning.source === 'plan' ? 'Plan' : 'LastLog'
+              }`,
+              {
+                ratio: doseWarning.ratio,
+                reference: `${doseWarning.reference.quantity} ${doseWarning.reference.unit}`,
+              },
+            )}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Basis-fused unit chips: g/L · mL/L · g/acre · mL/acre · ppm + overflow. */}
       {!readOnly ? (
         <View
           style={{
@@ -1098,17 +1269,17 @@ function ChemicalRow({
             gap: 8,
           }}
         >
-          {QUICK_CHEMICAL_UNITS.map((unit) => {
-            const selected = chemical.unit === unit;
+          {SPRAY_UNIT_CHIPS.map((chip) => {
+            const selected = activeChip?.key === chip.key;
             return (
               <Pressable
-                key={unit}
-                onPress={() => handleUnitSelect(unit)}
+                key={chip.key}
+                onPress={() => handleChipSelect(chip)}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 accessibilityLabel={t('sprayForm.chemicals.quickUnitLabel', {
                   defaultValue: 'Use {{unit}} as chemical quantity unit',
-                  unit,
+                  unit: chip.key,
                 })}
                 style={{
                   borderRadius: borderRadius.full,
@@ -1124,62 +1295,50 @@ function ChemicalRow({
                 }}
               >
                 <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
-                  {unit}
+                  {chip.key}
                 </Text>
               </Pressable>
             );
           })}
-        </View>
-      ) : null}
-
-      {!readOnly ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2], gap: 8 }}>
           <Pressable
-            onPress={() => onUpdate({ quantityBasis: 'total' })}
+            onPress={() => setShowUnitPicker(true)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: activeOverflowChip !== undefined }}
+            accessibilityLabel={t('sprayForm.chemicals.moreUnits', { defaultValue: 'More units' })}
             style={{
+              flexDirection: 'row',
+              alignItems: 'center',
               borderRadius: borderRadius.full,
               paddingHorizontal: spacing[3],
               paddingVertical: spacing[1],
-              backgroundColor:
-                (chemical.quantityBasis ?? 'total') === 'total'
-                  ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
-                  : m3.surface.s100,
+              backgroundColor: activeOverflowChip
+                ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
+                : m3.surface.s100,
               borderWidth: 1,
-              borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
+              borderColor: activeOverflowChip
+                ? colorWithOpacity(m3.colorScheme.tertiary, 0.5)
+                : colorWithOpacity(m3.colorScheme.outline, 0.2),
             }}
           >
             <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
-              {t('sprayForm.chemicals.totalQty', { defaultValue: 'Total Qty' })}
+              {activeOverflowChip?.key ??
+                t('sprayForm.chemicals.moreUnits', { defaultValue: 'More units' })}
             </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => onUpdate({ quantityBasis: 'per_acre' })}
-            style={{
-              borderRadius: borderRadius.full,
-              paddingHorizontal: spacing[3],
-              paddingVertical: spacing[1],
-              backgroundColor:
-                chemical.quantityBasis === 'per_acre'
-                  ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
-                  : m3.surface.s100,
-              borderWidth: 1,
-              borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
-            }}
-          >
-            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
-              {t('sprayForm.chemicals.perAcre', { defaultValue: 'Per acre' })}
-            </Text>
+            <Symbol name="chevron.down" size={12} color={m3.surface.s600} />
           </Pressable>
         </View>
       ) : null}
 
-      {/* Unit Picker Modal */}
+      {/* Overflow menu: rare total/per-acre shapes. */}
       <UnitPickerModal
         visible={!readOnly && showUnitPicker}
         onClose={() => setShowUnitPicker(false)}
-        onSelect={handleUnitSelect}
-        selectedValue={chemical.unit}
-        options={CHEMICAL_UNITS}
+        onSelect={(key) => {
+          const chip = SPRAY_UNIT_OVERFLOW_CHIPS.find((candidate) => candidate.key === key);
+          if (chip) handleChipSelect(chip);
+        }}
+        selectedValue={activeOverflowChip?.key ?? ''}
+        options={SPRAY_UNIT_OVERFLOW_CHIPS.map((chip) => chip.key)}
         title={t('sprayForm.chemicals.selectUnit')}
       />
     </View>

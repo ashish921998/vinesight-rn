@@ -967,7 +967,12 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
                   />
                 )}
                 {activeType === 'spray' && (
-                  <SprayForm data={draft as SprayFormData} onChange={setDraft} compact />
+                  <SprayForm
+                    data={draft as SprayFormData}
+                    onChange={setDraft}
+                    areaAcres={farm?.area ?? null}
+                    compact
+                  />
                 )}
                 {activeType === 'harvest' && (
                   <HarvestForm data={draft as HarvestFormData} onChange={setDraft} compact />
