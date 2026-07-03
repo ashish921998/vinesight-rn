@@ -810,17 +810,21 @@ export interface RecentInputItem {
  * Dedupes most-recent-first. Rows carrying an identity id (catalog product,
  * else warehouse item) collapse by that id — two logs of the same product stay
  * one row even if the display name drifted. Rows without one keep the legacy
- * normalized name+unit dedupe, and a shared name still collapses across the
- * two groups so an identity row and a legacy row never show up twice.
+ * normalized name+unit dedupe. Cross-group suppression is NAME-ONLY (unit
+ * ignored): identity dedupe itself ignores unit, so a legacy "Urea liter/acre"
+ * must also collapse against an identity "Urea kg/acre" — an identity row and
+ * a legacy row sharing a name never render twice, whatever their units.
  */
 export function dedupeRecentItems(items: RecentInputItem[], limit = 12): RecentInputItem[] {
   const seenIdentityKeys = new Set<string>();
-  const seenNameKeys = new Set<string>();
-  const seenIdentitylessNameKeys = new Set<string>();
+  const seenLegacyPairKeys = new Set<string>();
+  const seenIdentityNames = new Set<string>();
+  const seenLegacyNames = new Set<string>();
   const result: RecentInputItem[] = [];
   for (const item of items) {
     if (!item.name.trim() || !item.unit.trim()) continue;
-    const nameKey = `${item.name.trim().toLowerCase()}::${item.unit.trim().toLowerCase()}`;
+    const nameOnlyKey = item.name.trim().toLowerCase();
+    const pairKey = `${nameOnlyKey}::${item.unit.trim().toLowerCase()}`;
     const identityKey =
       item.catalogProductId != null
         ? `catalog:${item.catalogProductId}`
@@ -828,13 +832,14 @@ export function dedupeRecentItems(items: RecentInputItem[], limit = 12): RecentI
           ? `warehouse:${item.warehouseItemId}`
           : null;
     if (identityKey) {
-      if (seenIdentityKeys.has(identityKey) || seenIdentitylessNameKeys.has(nameKey)) continue;
+      if (seenIdentityKeys.has(identityKey) || seenLegacyNames.has(nameOnlyKey)) continue;
       seenIdentityKeys.add(identityKey);
+      seenIdentityNames.add(nameOnlyKey);
     } else {
-      if (seenNameKeys.has(nameKey)) continue;
-      seenIdentitylessNameKeys.add(nameKey);
+      if (seenLegacyPairKeys.has(pairKey) || seenIdentityNames.has(nameOnlyKey)) continue;
+      seenLegacyPairKeys.add(pairKey);
+      seenLegacyNames.add(nameOnlyKey);
     }
-    seenNameKeys.add(nameKey);
     result.push(item);
     if (result.length >= limit) break;
   }

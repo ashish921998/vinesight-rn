@@ -199,6 +199,25 @@ describe('dedupeRecentItems', () => {
     expect(result).toEqual([item({ quantity: 5 })]);
   });
 
+  it('collapses identity vs legacy rows sharing a name even when their units differ', () => {
+    // greptile P1 repro on #202: cross-group suppression must be name-only.
+    const result = dedupeRecentItems([
+      item({ unit: 'kg/acre', catalogProductId: 1 }),
+      item({ unit: 'liter/acre', quantity: 5 }),
+    ]);
+
+    expect(result).toEqual([item({ unit: 'kg/acre', catalogProductId: 1 })]);
+  });
+
+  it('collapses cross-unit name matches in the reverse order too (most recent wins)', () => {
+    const result = dedupeRecentItems([
+      item({ unit: 'liter/acre', quantity: 5 }),
+      item({ unit: 'kg/acre', catalogProductId: 1 }),
+    ]);
+
+    expect(result).toEqual([item({ unit: 'liter/acre', quantity: 5 })]);
+  });
+
   it('skips blank names/units and respects the limit', () => {
     const result = dedupeRecentItems(
       [
