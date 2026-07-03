@@ -11,11 +11,11 @@
 
 import {
   isFertigationUnitRecognized,
-  parseFertigationUnit,
   resolveFertigationPrefill,
   resolveFertigationUnit,
   resolveFertilizerMeasure,
 } from '@/constants/fertilizer-units';
+import { parseUnitText } from '@/constants/unit-text';
 import { parseUnit } from '@/lib/quantity';
 import type { FertilizerItem } from '@/types/database';
 
@@ -54,7 +54,7 @@ describe('AC1 — L/acre round-trip: form → stored item → display', () => {
   });
 
   it("a historical row storing 'L/acre' verbatim still resolves to volume + per_acre from the string alone", () => {
-    const parsed = parseFertigationUnit('L/acre');
+    const parsed = parseUnitText('L/acre');
     expect(parsed).toMatchObject({ measure: 'volume', basis: 'per_acre' });
   });
 });
@@ -229,8 +229,8 @@ describe('AC4 — regression over representative stored rows (no change for vali
   it.each(REPRESENTATIVE_ROWS.map((row) => [row.unit] as const))(
     'resolving stored unit %j preserves its kernel measure (no mass/volume flip)',
     (unit) => {
-      const before = parseFertigationUnit(unit);
-      const after = parseFertigationUnit(resolveFertigationUnit(unit).unit);
+      const before = parseUnitText(unit);
+      const after = parseUnitText(resolveFertigationUnit(unit).unit);
       expect(before).not.toBeNull();
       expect(after).not.toBeNull();
       expect(after?.measure).toBe(before?.measure);
