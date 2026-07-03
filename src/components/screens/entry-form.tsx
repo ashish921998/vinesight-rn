@@ -1844,6 +1844,7 @@ export function EntryForm({
                 sprayCatalogMixes={catalogMixes}
                 sprayHistoryItems={recentSprayChemicals ?? []}
                 sprayPlanItems={fertilizerPlan?.items ?? []}
+                sprayAreaAcres={activeFarm?.area ?? null}
                 showSaveButton={false}
               />
             </ScrollView>
@@ -1962,6 +1963,7 @@ export function EntryForm({
           sprayCatalogMixes={catalogMixes}
           sprayHistoryItems={recentSprayChemicals ?? []}
           sprayPlanItems={fertilizerPlan?.items ?? []}
+          sprayAreaAcres={activeFarm?.area ?? null}
         />
       </View>
     );

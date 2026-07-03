@@ -883,8 +883,17 @@ export const en = {
       qtyPlaceholder: 'Qty',
       selectUnit: 'Select unit',
       quickUnitLabel: 'Use {{unit}} as chemical quantity unit',
-      totalQty: 'Total Qty',
-      perAcre: 'Per acre',
+      moreUnits: 'More units',
+      tankEcho: {
+        water: '{{quantity}} {{unit}} × {{water}} L = {{total}} in tank',
+        area: '{{quantity}} {{unit}} × {{area}} acre = {{total}} in tank',
+      },
+      doseGuard: {
+        highPlan: 'Check dose — about {{ratio}}× your plan dose ({{reference}})',
+        lowPlan: 'Check dose — about 1/{{ratio}} of your plan dose ({{reference}})',
+        highLastLog: 'Check dose — about {{ratio}}× your last logged dose ({{reference}})',
+        lowLastLog: 'Check dose — about 1/{{ratio}} of your last logged dose ({{reference}})',
+      },
     },
     quickAdd: 'Quick Add',
     catalogOnly: {

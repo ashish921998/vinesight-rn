@@ -548,7 +548,12 @@ export function ActivityEditForm({
           />
         )}
         {logType === 'spray' && (
-          <SprayForm data={sprayData} onChange={setSprayData} onInputFocus={scrollToFocusedInput} />
+          <SprayForm
+            data={sprayData}
+            onChange={setSprayData}
+            onInputFocus={scrollToFocusedInput}
+            areaAcres={farm.area ?? null}
+          />
         )}
         {logType === 'harvest' && (
           <HarvestForm
