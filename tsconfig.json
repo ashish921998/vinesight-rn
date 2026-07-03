@@ -2,6 +2,10 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    // Edge-function files use Deno-style `.ts`-suffixed imports, and one of them
+    // (ai-gateway/utils/helpers.ts) is pulled into this program via a Jest test.
+    // Legal because expo/tsconfig.base sets noEmit.
+    "allowImportingTsExtensions": true,
     "moduleSuffixes": [".ios", ".android", ".native", ".web", ""],
     "baseUrl": ".",
     "paths": {

@@ -148,14 +148,8 @@ export function normalizeBase64Input(value: string | null | undefined): string {
   return trimmed;
 }
 
-/**
- * Estimate the decoded byte size of base64 data
- */
-export function estimateBase64Bytes(base64Value: string): number {
-  const normalized = base64Value.trim();
-  const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
-  return Math.max(0, Math.floor((normalized.length * 3) / 4) - padding);
-}
+// Estimate the decoded byte size of base64 data — shared across edge functions.
+export { estimateBase64Bytes } from '../../_shared/encoding.ts';
 
 /**
  * Decode base64 string to Uint8Array

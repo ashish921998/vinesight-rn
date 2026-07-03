@@ -1,29 +1,7 @@
 /**
  * CORS Headers Configuration
- * Standard CORS headers for Supabase Edge Functions.
+ * Re-exported from the cross-function shared module so ai-gateway and
+ * dynamic-api use one implementation.
  */
 
-export const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-/**
- * Create a JSON response with CORS headers
- */
-export function jsonResponse(body: Record<string, unknown>, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-    },
-  });
-}
-
-/**
- * Create an OPTIONS response for CORS preflight
- */
-export function corsOptionsResponse(): Response {
-  return new Response('ok', { headers: corsHeaders });
-}
+export { corsHeaders, corsOptionsResponse, jsonResponse } from '../../_shared/http.ts';

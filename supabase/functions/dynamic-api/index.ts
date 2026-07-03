@@ -1,13 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { zipSync } from 'https://esm.sh/fflate@0.8.2';
+import { corsOptionsResponse, jsonResponse } from '../_shared/http.ts';
+import { decodeBase64ToBytes, estimateBase64Bytes } from '../_shared/encoding.ts';
 
 // All-Sarvam lab-report parser.
 //
 // Input: the client (src/utils/pdf-parser.ts) uploads the report to the
 // private `test-reports` bucket and sends { storage_path }. We read the file
 // by path with the service role (a base64 file in the body would exceed the
-// edge-function body limit and hang). `file_data` is kept as a small-file
-// fallback.
+// edge-function body limit and hang). `file_data` is a back-compat shim for
+// app builds that predate the Storage-upload flow (see resolveReportBytes).
 //
 // Pipeline:
 //   1. Sarvam Document Intelligence (Sarvam Vision) OCRs the report -> Markdown.
@@ -43,18 +45,6 @@ const POLL_BUDGET_MS = 45_000; // stays safely under the edge-function wall cloc
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB, matches the test-reports bucket file_size_limit
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-function jsonResponse(status: number, body: Record<string, unknown>) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
-
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -78,13 +68,13 @@ function mimeFromPath(path: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return corsOptionsResponse();
   }
 
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return jsonResponse(401, { error: 'Missing authorization header' });
+      return jsonResponse({ error: 'Missing authorization header' }, 401);
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
@@ -97,93 +87,33 @@ Deno.serve(async (req) => {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return jsonResponse(401, { error: 'Unauthorized' });
+      return jsonResponse({ error: 'Unauthorized' }, 401);
     }
 
     if (!SARVAM_API_KEY) {
-      return jsonResponse(500, { error: 'Sarvam API key not configured on server' });
+      return jsonResponse({ error: 'Sarvam API key not configured on server' }, 500);
     }
 
     let body: ParseRequest;
     try {
       body = await req.json();
     } catch {
-      return jsonResponse(400, { error: 'Invalid JSON body' });
+      return jsonResponse({ error: 'Invalid JSON body' }, 400);
     }
 
     if (body.action !== 'parse') {
-      return jsonResponse(400, { error: 'Invalid action. Use action: "parse"' });
+      return jsonResponse({ error: 'Invalid action. Use action: "parse"' }, 400);
     }
 
     if (body.test_type !== 'soil' && body.test_type !== 'petiole') {
-      return jsonResponse(400, { error: 'Invalid test_type. Use "soil" or "petiole".' });
+      return jsonResponse({ error: 'Invalid test_type. Use "soil" or "petiole".' }, 400);
     }
 
-    // Resolve the report bytes from Storage (preferred) or an inline base64
-    // data URL (legacy/small-file fallback).
-    let bytes: Uint8Array;
-    let mimeType: string;
-
-    if (body.storage_path) {
-      // Prevent IDOR: a user may only reference files under their own folder.
-      if (!body.storage_path.startsWith(`${user.id}/`)) {
-        return jsonResponse(403, { error: 'storage_path is outside your folder' });
-      }
-      if (!SUPABASE_SERVICE_ROLE_KEY) {
-        return jsonResponse(500, { error: 'Service role key not configured on server' });
-      }
-      const admin = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY);
-      const { data: blob, error: dlError } = await admin.storage
-        .from(STORAGE_BUCKET)
-        .download(body.storage_path);
-      if (dlError || !blob) {
-        return jsonResponse(404, {
-          error: 'Could not read the uploaded file',
-          details: dlError?.message,
-        });
-      }
-      // Guard memory before buffering the whole object (the RLS bucket does not
-      // cap object size, so an oversized upload could exhaust the function).
-      if (blob.size > MAX_FILE_SIZE) {
-        // Await the cleanup: the runtime cancels pending promises once the
-        // response is sent, so a fire-and-forget removal here would be dropped.
-        await admin.storage
-          .from(STORAGE_BUCKET)
-          .remove([body.storage_path])
-          .catch(() => {});
-        return jsonResponse(400, { error: 'File too large. Maximum 10MB.' });
-      }
-      bytes = new Uint8Array(await blob.arrayBuffer());
-      // Fall back to the path extension when Storage reports no type or a
-      // generic octet-stream (which the format gate below would reject).
-      mimeType =
-        blob.type && blob.type !== 'application/octet-stream'
-          ? blob.type
-          : mimeFromPath(body.storage_path);
-      // We have the bytes in memory; remove the stored file. Awaited (best-effort
-      // via catch) so the deletion is guaranteed to finish — an unawaited promise
-      // can be cancelled by the runtime if an early error path sends the response.
-      await admin.storage
-        .from(STORAGE_BUCKET)
-        .remove([body.storage_path])
-        .catch(() => {});
-    } else if (body.file_data && body.file_data.startsWith('data:')) {
-      if (body.file_data.length > MAX_FILE_SIZE * 1.37) {
-        return jsonResponse(400, { error: 'File too large. Maximum 10MB.' });
-      }
-      const match = body.file_data.match(/^data:([^;]+);base64,(.+)$/);
-      if (!match) {
-        return jsonResponse(400, { error: 'Invalid data URL format' });
-      }
-      mimeType = match[1];
-      const binaryString = atob(match[2]);
-      bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-    } else {
-      return jsonResponse(400, { error: 'Provide storage_path or file_data' });
+    const resolved = await resolveReportBytes(body, user.id, supabaseUrl);
+    if (resolved instanceof Response) {
+      return resolved;
     }
+    const { bytes, mimeType } = resolved;
 
     // Sarvam Document Intelligence accepts a single PDF or a ZIP of JPEG/PNG
     // images. PDFs upload directly; a captured image is wrapped in a ZIP.
@@ -201,9 +131,10 @@ Deno.serve(async (req) => {
       uploadName = 'report.zip';
       uploadContentType = 'application/zip';
     } else {
-      return jsonResponse(400, {
-        error: `Unsupported file type "${mimeType}". Upload a PDF, JPEG, or PNG.`,
-      });
+      return jsonResponse(
+        { error: `Unsupported file type "${mimeType}". Upload a PDF, JPEG, or PNG.` },
+        400,
+      );
     }
 
     // 1. Digitize the report to Markdown via Document Intelligence.
@@ -211,32 +142,113 @@ Deno.serve(async (req) => {
     try {
       markdown = await digitizeDocument(uploadName, uploadBytes, uploadContentType);
     } catch (error) {
-      return jsonResponse(502, {
-        error: 'Sarvam document digitization failed',
-        details: error instanceof Error ? error.message : String(error),
-      });
+      return jsonResponse(
+        {
+          error: 'Sarvam document digitization failed',
+          details: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
     }
 
     if (!markdown.trim()) {
-      return jsonResponse(422, { error: 'No readable text found in the report' });
+      return jsonResponse({ error: 'No readable text found in the report' }, 422);
     }
 
     // 2. Extract structured parameters from the Markdown via the chat model.
     try {
       const result = await extractParameters(markdown, body.test_type);
-      return jsonResponse(200, result);
+      return jsonResponse({ ...result });
     } catch (error) {
-      return jsonResponse(502, {
-        error: 'Sarvam extraction failed',
-        details: error instanceof Error ? error.message : String(error),
-      });
+      return jsonResponse(
+        {
+          error: 'Sarvam extraction failed',
+          details: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
     }
   } catch (error) {
-    return jsonResponse(500, {
-      error: error instanceof Error ? error.message : 'Internal server error',
-    });
+    return jsonResponse(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      500,
+    );
   }
 });
+
+// Resolves a parse request into the report bytes + MIME type, or a ready error
+// Response when the request can't be served.
+//
+// Cleanup contract: once this function downloads the object from Storage it
+// also deletes it — the bytes live in memory from here on. The client
+// (src/utils/pdf-parser.ts) only removes the object when the invoke fails
+// before reaching this point (network error, auth failure, validation 400).
+async function resolveReportBytes(
+  body: ParseRequest,
+  userId: string,
+  supabaseUrl: string,
+): Promise<{ bytes: Uint8Array; mimeType: string } | Response> {
+  if (body.storage_path) {
+    // Prevent IDOR: a user may only reference files under their own folder.
+    if (!body.storage_path.startsWith(`${userId}/`)) {
+      return jsonResponse({ error: 'storage_path is outside your folder' }, 403);
+    }
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      return jsonResponse({ error: 'Service role key not configured on server' }, 500);
+    }
+    const admin = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY);
+    const { data: blob, error: dlError } = await admin.storage
+      .from(STORAGE_BUCKET)
+      .download(body.storage_path);
+    if (dlError || !blob) {
+      return jsonResponse(
+        { error: 'Could not read the uploaded file', details: dlError?.message },
+        404,
+      );
+    }
+    // Guard memory before buffering the whole object (defense-in-depth behind
+    // the bucket's file_size_limit).
+    if (blob.size > MAX_FILE_SIZE) {
+      // Await the cleanup: the runtime cancels pending promises once the
+      // response is sent, so a fire-and-forget removal here would be dropped.
+      await admin.storage
+        .from(STORAGE_BUCKET)
+        .remove([body.storage_path])
+        .catch(() => {});
+      return jsonResponse({ error: 'File too large. Maximum 10MB.' }, 400);
+    }
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    // Fall back to the path extension when Storage reports no type or a
+    // generic octet-stream (which the handler's format gate would reject).
+    const mimeType =
+      blob.type && blob.type !== 'application/octet-stream'
+        ? blob.type
+        : mimeFromPath(body.storage_path);
+    // Bytes are in memory; remove the stored file. Awaited (best-effort via
+    // catch) so the deletion is guaranteed to finish before we return.
+    await admin.storage
+      .from(STORAGE_BUCKET)
+      .remove([body.storage_path])
+      .catch(() => {});
+    return { bytes, mimeType };
+  }
+
+  // Back-compat shim: app builds released before the Storage-upload flow
+  // (<= v1.4.x) send the file inline as a base64 data URL. Remove this branch
+  // once those builds no longer call the function.
+  if (body.file_data && body.file_data.startsWith('data:')) {
+    const match = body.file_data.match(/^data:([^;]+);base64,(.+)$/);
+    if (!match) {
+      return jsonResponse({ error: 'Invalid data URL format' }, 400);
+    }
+    if (estimateBase64Bytes(match[2]) > MAX_FILE_SIZE) {
+      return jsonResponse({ error: 'File too large. Maximum 10MB.' }, 400);
+    }
+    return { bytes: decodeBase64ToBytes(match[2]), mimeType: match[1] };
+  }
+
+  return jsonResponse({ error: 'Provide storage_path or file_data' }, 400);
+}
 
 function diHeaders(): HeadersInit {
   return {

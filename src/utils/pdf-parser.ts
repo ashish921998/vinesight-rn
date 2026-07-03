@@ -94,92 +94,85 @@ export async function parseLabTestFromImage(
   fileUri: string,
   testType: 'soil' | 'petiole',
 ): Promise<ParsedLabTest> {
+  const { base64, mimeType, ext } = await prepareUpload(fileUri);
+
+  // base64 decodes to 3/4 of its length minus any trailing '=' padding.
+  const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+  const byteLength = Math.floor((base64.length * 3) / 4) - padding;
+  if (byteLength > MAX_FILE_SIZE) {
+    throw new Error('This report is too large. Please upload a file under 10MB.');
+  }
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user) {
+    throw new Error('You must be signed in to upload a lab report.');
+  }
+  const user = userData.user;
+
+  // Upload to Storage first, then hand the edge function just the path. The
+  // path is timestamped so it is unique per upload; `upsert: false` keeps us
+  // to the insert-only RLS policy (no UPDATE policy exists on this bucket).
+  const storagePath = `${user.id}/${Date.now()}-lab-report.${ext}`;
+  const { error: uploadError } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(storagePath, decodeBase64(base64), { contentType: mimeType, upsert: false });
+
+  if (uploadError) {
+    console.error('Lab report upload failed:', uploadError);
+    throw new Error(`Failed to upload report: ${uploadError.message}`);
+  }
+
+  // Cleanup contract: the edge function deletes the object once it downloads
+  // it. This catch covers failures before that point (network error, auth
+  // failure, validation 400) so orphans don't accumulate in the bucket.
   try {
-    const { base64, mimeType, ext } = await prepareUpload(fileUri);
+    const { data, error } = await supabase.functions.invoke('dynamic-api', {
+      body: {
+        action: 'parse',
+        storage_path: storagePath,
+        filename: `lab-report.${ext}`,
+        test_type: testType,
+      },
+    });
 
-    // base64 decodes to 3/4 of its length minus any trailing '=' padding.
-    const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
-    const byteLength = Math.floor((base64.length * 3) / 4) - padding;
-    if (byteLength > MAX_FILE_SIZE) {
-      throw new Error('This report is too large. Please upload a file under 10MB.');
-    }
-
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData?.user) {
-      throw new Error('You must be signed in to upload a lab report.');
-    }
-    const user = userData.user;
-
-    // Upload to Storage first, then hand the edge function just the path. The
-    // path is timestamped so it is unique per upload; `upsert: false` keeps us
-    // to the insert-only RLS policy (no UPDATE policy exists on this bucket).
-    const storagePath = `${user.id}/${Date.now()}-lab-report.${ext}`;
-    const { error: uploadError } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .upload(storagePath, decodeBase64(base64), { contentType: mimeType, upsert: false });
-
-    if (uploadError) {
-      console.error('Lab report upload failed:', uploadError);
-      throw new Error(`Failed to upload report: ${uploadError.message}`);
-    }
-
-    // The edge function deletes the object on success, but not on every failure
-    // path (and not if the invoke never reaches it). Clean up the orphan here on
-    // any failure after a successful upload so the bucket doesn't accumulate files.
-    try {
-      const { data, error } = await supabase.functions.invoke('dynamic-api', {
-        body: {
-          action: 'parse',
-          storage_path: storagePath,
-          filename: `lab-report.${ext}`,
-          test_type: testType,
-        },
-      });
-
-      if (error) {
-        // FunctionsHttpError carries the edge Response in `context`; its JSON
-        // body holds the real { error, details } the function returned, which is
-        // far more useful than the generic "non-2xx status code" message.
-        let detail = error.message;
-        const ctx = (error as { context?: Response }).context;
-        if (ctx && typeof ctx.json === 'function') {
-          try {
-            const errBody = await ctx.json();
-            if (errBody?.error) {
-              detail = errBody.details ? `${errBody.error}: ${errBody.details}` : errBody.error;
-            }
-          } catch {
-            // Non-JSON body — keep the generic message.
+    if (error) {
+      // FunctionsHttpError carries the edge Response in `context`; its JSON
+      // body holds the real { error, details } the function returned, which is
+      // far more useful than the generic "non-2xx status code" message.
+      let detail = error.message;
+      const ctx = (error as { context?: Response }).context;
+      if (ctx && typeof ctx.json === 'function') {
+        try {
+          const errBody = await ctx.json();
+          if (errBody?.error) {
+            detail = errBody.details ? `${errBody.error}: ${errBody.details}` : errBody.error;
           }
+        } catch {
+          // Non-JSON body — keep the generic message.
         }
-        console.error(`dynamic-api invoke failed | name=${error.name} | detail=${detail}`);
-        throw new Error(`AI proxy request failed: ${detail}`);
       }
-
-      if (data?.error) {
-        console.error('AI proxy returned error:', JSON.stringify(data.error, null, 2));
-        throw new Error(`AI proxy error: ${data.error.message ?? JSON.stringify(data.error)}`);
-      }
-
-      const response = data as ParseResponse;
-
-      return {
-        testDate: response.testDate || undefined,
-        parameters: validateAndCleanParameters(response.parameters || [], testType),
-        recommendations: response.summary || undefined,
-        notes: response.rawNotes || undefined,
-      };
-    } catch (invokeError) {
-      await supabase.storage
-        .from(STORAGE_BUCKET)
-        .remove([storagePath])
-        .catch(() => {});
-      throw invokeError;
+      console.error(`dynamic-api invoke failed | name=${error.name} | detail=${detail}`);
+      throw new Error(`AI proxy request failed: ${detail}`);
     }
-  } catch (error) {
-    console.error('Error parsing lab test:', error);
-    // Preserve the specific, user-actionable message (size, format, auth, or the
-    // upstream failure detail) rather than masking every failure generically.
-    throw error instanceof Error ? error : new Error('Failed to parse lab test data');
+
+    if (data?.error) {
+      console.error('AI proxy returned error:', JSON.stringify(data.error, null, 2));
+      throw new Error(`AI proxy error: ${data.error.message ?? JSON.stringify(data.error)}`);
+    }
+
+    const response = data as ParseResponse;
+
+    return {
+      testDate: response.testDate || undefined,
+      parameters: validateAndCleanParameters(response.parameters || [], testType),
+      recommendations: response.summary || undefined,
+      notes: response.rawNotes || undefined,
+    };
+  } catch (invokeError) {
+    await supabase.storage
+      .from(STORAGE_BUCKET)
+      .remove([storagePath])
+      .catch(() => {});
+    throw invokeError;
   }
 }
