@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { decode as decodeBase64 } from 'base64-arraybuffer';
 import { supabase } from '@/lib/supabase';
 import { validateAndCleanParameters } from './lab-test-utils';
@@ -23,19 +24,21 @@ interface ParseResponse {
 // body (edge-function bodies over ~1-2MB hang).
 const STORAGE_BUCKET = 'test-reports';
 
-interface ReadFileResult {
+// Matches the test-reports bucket's file_size_limit. Storage rejects larger
+// uploads outright, so we pre-check to fail with a friendlier message.
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+interface UploadFile {
   base64: string;
   mimeType: string;
   ext: string;
 }
 
-// The Sarvam OCR pipeline in the dynamic-api edge function only accepts a PDF
-// or a JPEG/PNG image. Detecting the type from the file's magic bytes (rather
-// than the URI extension) keeps the client and edge function in agreement and
-// catches iOS quirks like a HEIC image handed to us with a `.jpg` extension.
-type SupportedType = { mimeType: string; ext: string };
-
-function detectSupportedType(bytes: Uint8Array): SupportedType | null {
+// The Sarvam OCR pipeline in the dynamic-api edge function only accepts a PDF or
+// a JPEG/PNG image. We detect the real type from magic bytes (not the URI
+// extension, which lies on iOS where a HEIC image can arrive as `.jpg`). PDFs
+// and real JPEG/PNG pass through untouched.
+function detectPassthrough(bytes: Uint8Array): { mimeType: string; ext: string } | null {
   const startsWith = (sig: number[], offset = 0) => sig.every((b, i) => bytes[offset + i] === b);
 
   // %PDF
@@ -44,10 +47,10 @@ function detectSupportedType(bytes: Uint8Array): SupportedType | null {
   if (startsWith([0x89, 0x50, 0x4e, 0x47])) return { mimeType: 'image/png', ext: 'png' };
   // JPEG SOI marker
   if (startsWith([0xff, 0xd8, 0xff])) return { mimeType: 'image/jpeg', ext: 'jpg' };
-  return null; // GIF, WebP, HEIC, and anything else are unsupported upstream.
+  return null; // HEIC/HEIF/WebP/TIFF/GIF/etc — convert to JPEG below.
 }
 
-async function readFile(uri: string): Promise<ReadFileResult> {
+async function prepareUpload(uri: string): Promise<UploadFile> {
   let base64: string;
   try {
     base64 = await FileSystem.readAsStringAsync(uri, {
@@ -60,15 +63,31 @@ async function readFile(uri: string): Promise<ReadFileResult> {
     );
   }
 
-  // Sniff the first bytes (24 chars of base64 -> 18 bytes) to determine the
-  // real content type instead of trusting the file extension.
+  // Sniff the first bytes (24 chars of base64 -> 18 bytes) for a format the OCR
+  // pipeline accepts directly.
   const headBytes = new Uint8Array(decodeBase64(base64.slice(0, 24)));
-  const detected = detectSupportedType(headBytes);
-  if (!detected) {
-    throw new Error('Unsupported file. Please upload a PDF, JPEG, or PNG lab report.');
+  const passthrough = detectPassthrough(headBytes);
+  if (passthrough) {
+    return { base64, mimeType: passthrough.mimeType, ext: passthrough.ext };
   }
 
-  return { base64, mimeType: detected.mimeType, ext: detected.ext };
+  // Anything else the picker can hand us (iOS HEIC/HEIF camera photos, WebP,
+  // TIFF, GIF) is converted to JPEG on-device so the upload is always in a
+  // format Sarvam can OCR.
+  try {
+    // No transform actions — a no-op re-encode to JPEG. compress 0.9 keeps text
+    // legible for OCR while trimming size toward the 10MB cap.
+    const result = await manipulateAsync(uri, [], {
+      format: SaveFormat.JPEG,
+      compress: 0.9,
+      base64: true,
+    });
+    if (!result.base64) throw new Error('Image conversion returned no data');
+    return { base64: result.base64, mimeType: 'image/jpeg', ext: 'jpg' };
+  } catch (error) {
+    console.error('[PDF Parser] Image conversion failed:', error);
+    throw new Error('Unsupported file. Please upload a PDF or an image (JPG, PNG, HEIC, WebP).');
+  }
 }
 
 export async function parseLabTestFromImage(
@@ -76,7 +95,13 @@ export async function parseLabTestFromImage(
   testType: 'soil' | 'petiole',
 ): Promise<ParsedLabTest> {
   try {
-    const { base64, mimeType, ext } = await readFile(fileUri);
+    const { base64, mimeType, ext } = await prepareUpload(fileUri);
+
+    // base64 decodes to ~3/4 of its length in bytes.
+    const approxBytes = Math.floor((base64.length * 3) / 4);
+    if (approxBytes > MAX_FILE_SIZE) {
+      throw new Error('This report is too large. Please upload a file under 10MB.');
+    }
 
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData?.user) {

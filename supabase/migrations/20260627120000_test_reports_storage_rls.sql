@@ -16,7 +16,7 @@ values (
   'test-reports',
   'test-reports',
   false,
-  33554432, -- 32MB, matches MAX_FILE_SIZE in the dynamic-api edge function
+  10485760, -- 10MB, matches MAX_FILE_SIZE in the dynamic-api edge function
   array['application/pdf', 'image/jpeg', 'image/png']
 )
 on conflict (id) do nothing;

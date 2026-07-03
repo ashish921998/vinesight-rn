@@ -41,7 +41,7 @@ const OCR_OUTPUT_FORMAT = 'md';
 const POLL_INTERVAL_MS = 2500;
 const POLL_BUDGET_MS = 45_000; // stays safely under the edge-function wall clock
 
-const MAX_FILE_SIZE = 32 * 1024 * 1024; // 32MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB, matches the test-reports bucket file_size_limit
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
           .from(STORAGE_BUCKET)
           .remove([body.storage_path])
           .catch(() => {});
-        return jsonResponse(400, { error: 'File too large. Maximum 32MB.' });
+        return jsonResponse(400, { error: 'File too large. Maximum 10MB.' });
       }
       bytes = new Uint8Array(await blob.arrayBuffer());
       // Fall back to the path extension when Storage reports no type or a
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
         .catch(() => {});
     } else if (body.file_data && body.file_data.startsWith('data:')) {
       if (body.file_data.length > MAX_FILE_SIZE * 1.37) {
-        return jsonResponse(400, { error: 'File too large. Maximum 32MB.' });
+        return jsonResponse(400, { error: 'File too large. Maximum 10MB.' });
       }
       const match = body.file_data.match(/^data:([^;]+);base64,(.+)$/);
       if (!match) {
