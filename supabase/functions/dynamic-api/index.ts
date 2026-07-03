@@ -198,12 +198,29 @@ async function resolveReportBytes(
     }
     const admin = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Reject oversized objects from metadata BEFORE downloading, so the blob is
-    // never buffered into function memory. The bucket's file_size_limit blocks
-    // client uploads over the cap, but a service-role writer (or a bucket whose
-    // limit predates this migration) could still leave a larger object behind.
-    const { data: objectInfo } = await admin.storage.from(STORAGE_BUCKET).info(body.storage_path);
-    if (objectInfo?.size && objectInfo.size > MAX_FILE_SIZE) {
+    // Verify the object size from metadata BEFORE downloading, so an oversized
+    // blob is never buffered into function memory. The bucket's file_size_limit
+    // blocks client uploads over the cap, but a service-role writer (or a bucket
+    // whose limit predates this migration) could still leave a larger object
+    // behind. Fail closed: if the size can't be verified, don't download — the
+    // object was just uploaded through this same Storage API, so unverifiable
+    // metadata means the download is broken too, and the client re-uploads on
+    // retry anyway.
+    const { data: objectInfo, error: infoError } = await admin.storage
+      .from(STORAGE_BUCKET)
+      .info(body.storage_path);
+    const objectSize = typeof objectInfo?.size === 'number' ? objectInfo.size : null;
+    if (infoError || objectSize === null) {
+      await admin.storage
+        .from(STORAGE_BUCKET)
+        .remove([body.storage_path])
+        .catch(() => {});
+      return jsonResponse(
+        { error: 'Could not verify the uploaded file', details: infoError?.message },
+        404,
+      );
+    }
+    if (objectSize > MAX_FILE_SIZE) {
       await admin.storage
         .from(STORAGE_BUCKET)
         .remove([body.storage_path])
@@ -220,7 +237,8 @@ async function resolveReportBytes(
         404,
       );
     }
-    // Backstop for when info() metadata was unavailable or reported no size.
+    // Backstop: guards drift between the metadata just verified and what
+    // download() actually returned (e.g. the object changed in between).
     if (blob.size > MAX_FILE_SIZE) {
       // Await the cleanup: the runtime cancels pending promises once the
       // response is sent, so a fire-and-forget removal here would be dropped.
