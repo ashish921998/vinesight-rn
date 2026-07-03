@@ -48,12 +48,25 @@ function isChemicalUnit(value: string): value is ChemicalUnit {
   return CHEMICAL_UNITS.includes(value as ChemicalUnit);
 }
 
+/**
+ * Fold freeform unit spellings into the canonical `<base>/<denominator>` shape
+ * before matching: `'Kg per Acre'` / `'kg / acre'` → `'kg/acre'`. `per` needs
+ * whitespace on both sides so product names ("copper") can never match.
+ */
+function foldUnitText(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/\s+per\s+/g, '/')
+    .replace(/\s*\/\s*/g, '/');
+}
+
 function resolveChemicalUnit(
   unit: string | null | undefined,
   fallback: ChemicalUnit = DEFAULT_CHEMICAL_UNIT,
 ): ChemicalUnit {
   const normalized = unit?.trim();
-  const lowered = normalized?.toLowerCase();
+  const lowered = normalized ? foldUnitText(normalized) : undefined;
   if (lowered === 'gm/liter' || lowered === 'gm/litre' || lowered === 'gm/l' || lowered === 'g/l') {
     return 'gm/L';
   }
@@ -75,7 +88,10 @@ function resolveQuantityBasis(
   basis?: QuantityBasis,
 ): QuantityBasis {
   if (basis) return basis;
-  return unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total';
+  if (!unit?.trim()) return 'total';
+  // Word-boundary matched (like #192's unitTextSaysPerAcre) so '/acreage'
+  // can never false-positive; plural '/acres' still counts.
+  return /\/acres?\b/.test(foldUnitText(unit)) ? 'per_acre' : 'total';
 }
 
 function normalizeDedupeText(value: string | null | undefined): string {

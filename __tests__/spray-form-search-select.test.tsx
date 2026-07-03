@@ -85,6 +85,17 @@ const planItems: FertilizerPlanItem[] = [
     notes: null,
     sort_order: null,
   },
+  {
+    id: 'p2',
+    name: 'PlanMagnesium',
+    quantity: 3,
+    unit: 'Kg per Acre',
+    application_date: null,
+    application_method: null,
+    application_frequency: null,
+    notes: null,
+    sort_order: null,
+  },
 ];
 
 const catalogMixes: ChemicalMix[] = [
@@ -198,6 +209,22 @@ describe('SprayForm × SearchSelect adoption', () => {
       quantityBasis: 'per_acre',
       planItemId: 'p1',
       catalogProductId: null,
+    });
+  });
+
+  it('folds freeform unit spellings — "Kg per Acre" resolves to kg + per_acre', () => {
+    const onChange = jest.fn();
+    const screen = renderSprayForm(onChange);
+
+    fireEvent.press(screen.getByText('PlanMagnesium'));
+
+    const next = onChange.mock.calls[0][0] as SprayFormData;
+    expect(next.chemicals[0]).toMatchObject({
+      name: 'PlanMagnesium',
+      quantity: 3,
+      unit: 'kg',
+      quantityBasis: 'per_acre',
+      planItemId: 'p2',
     });
   });
 
