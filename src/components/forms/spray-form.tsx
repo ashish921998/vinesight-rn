@@ -19,6 +19,15 @@ import {
 } from '@/constants/chemical-units';
 import { toKernelSpelling } from '@/constants/unit-text';
 import {
+  MAX_PRODUCT_ROWS,
+  allProductRowsComplete,
+  applyQuickAdd,
+  filterNameSuggestions,
+  isProductRowComplete,
+  sanitizeQuantityInput,
+} from './product-rows';
+import { NameSuggestionOverlay } from './name-suggestion-overlay';
+import {
   SPRAY_UNIT_CHIPS,
   SPRAY_UNIT_OVERFLOW_CHIPS,
   buildTankEcho,
@@ -57,8 +66,6 @@ export interface ChemicalEntry {
   densityKgPerL?: number | null;
 }
 
-const MAX_CHEMICAL_ROWS = 10;
-
 function normalizeDedupeText(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase();
 }
@@ -75,7 +82,7 @@ function generateId(): string {
 }
 
 function clampChemicalRows(chemicals: ChemicalEntry[]): ChemicalEntry[] {
-  return chemicals.slice(0, MAX_CHEMICAL_ROWS);
+  return chemicals.slice(0, MAX_PRODUCT_ROWS);
 }
 
 export interface SprayFormData {
@@ -147,8 +154,7 @@ export function SprayForm({
   const isValid =
     data.waterVolume !== undefined &&
     data.waterVolume > 0 &&
-    data.chemicals.length > 0 &&
-    data.chemicals.every((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0);
+    allProductRowsComplete(data.chemicals);
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
   const showDetailsGuidance =
@@ -232,7 +238,7 @@ export function SprayForm({
   }, [data]);
 
   useEffect(() => {
-    if (data.chemicals.length <= MAX_CHEMICAL_ROWS) return;
+    if (data.chemicals.length <= MAX_PRODUCT_ROWS) return;
     const clamped = clampChemicalRows(data.chemicals);
     if (clamped.length === data.chemicals.length) return;
     onChangeRef.current({
@@ -242,7 +248,7 @@ export function SprayForm({
   }, [data]);
 
   const addChemical = () => {
-    if (data.chemicals.length < MAX_CHEMICAL_ROWS) {
+    if (data.chemicals.length < MAX_PRODUCT_ROWS) {
       onChange({
         ...data,
         chemicals: clampChemicalRows([
@@ -290,24 +296,12 @@ export function SprayForm({
         lastUsed?.basis ??
         resolveChemicalQuantityBasis(item.unit?.trim() ?? validatedUnit);
       const incomingChipKey = chipForEntry(validatedUnit, incomingBasis)?.key ?? validatedUnit;
-      const alreadyExists = data.chemicals.some(
-        (chemical) =>
+      const nextChemicals = applyQuickAdd(data.chemicals, {
+        isDuplicate: (chemical) =>
           chemical.name.trim().toLowerCase() === normalizedName &&
           (chipForEntry(chemical.unit, chemical.quantityBasis)?.key ?? chemical.unit) ===
             incomingChipKey,
-      );
-      if (alreadyExists) return;
-
-      const firstIncompleteIndex = data.chemicals.findIndex(
-        (chemical) =>
-          !chemical.name.trim() || chemical.quantity === undefined || chemical.quantity <= 0,
-      );
-
-      if (firstIncompleteIndex >= 0) {
-        const nextChemicals = [...data.chemicals];
-        const current = nextChemicals[firstIncompleteIndex];
-        if (!current) return;
-        nextChemicals[firstIncompleteIndex] = {
+        fillRow: (current) => ({
           ...current,
           name: item.name.trim(),
           unit: validatedUnit,
@@ -329,37 +323,24 @@ export function SprayForm({
           planItemId: item.planItemId ?? null,
           compositionSnapshot: item.composition ?? null,
           densityKgPerL: item.densityKgPerL ?? null,
-        };
-        onChange({
-          ...data,
-          chemicals: clampChemicalRows(nextChemicals),
-        });
-        return;
-      }
-
-      if (data.chemicals.length >= MAX_CHEMICAL_ROWS) return;
-
-      onChange({
-        ...data,
-        chemicals: clampChemicalRows([
-          ...data.chemicals,
-          {
-            id: generateId(),
-            name: item.name.trim(),
-            quantity: item.quantity ?? undefined,
-            unit: validatedUnit,
-            quantityBasis: resolveChemicalQuantityBasis(
-              item.unit?.trim() ?? validatedUnit,
-              item.quantityBasis ?? lastUsed?.basis,
-            ),
-            warehouseItemId: item.warehouseItemId ?? null,
-            catalogProductId: item.catalogProductId ?? null,
-            planItemId: item.planItemId ?? null,
-            compositionSnapshot: item.composition ?? null,
-            densityKgPerL: item.densityKgPerL ?? null,
-          },
-        ]),
+        }),
+        appendRow: () => ({
+          id: generateId(),
+          name: item.name.trim(),
+          quantity: item.quantity ?? undefined,
+          unit: validatedUnit,
+          quantityBasis: resolveChemicalQuantityBasis(
+            item.unit?.trim() ?? validatedUnit,
+            item.quantityBasis ?? lastUsed?.basis,
+          ),
+          warehouseItemId: item.warehouseItemId ?? null,
+          catalogProductId: item.catalogProductId ?? null,
+          planItemId: item.planItemId ?? null,
+          compositionSnapshot: item.composition ?? null,
+          densityKgPerL: item.densityKgPerL ?? null,
+        }),
       });
+      if (nextChemicals) onChange({ ...data, chemicals: clampChemicalRows(nextChemicals) });
     },
     [data, onChange, lastUsedChipFor],
   );
@@ -399,7 +380,7 @@ export function SprayForm({
       if (chemicals.length === 0) {
         return;
       }
-      if (chemicals.length > MAX_CHEMICAL_ROWS) {
+      if (chemicals.length > MAX_PRODUCT_ROWS) {
         return;
       }
 
@@ -913,34 +894,22 @@ function ChemicalRow({
     [chemical, planReference, historyReference, waterLiters, areaAcres],
   );
 
-  const nameSuggestions = useMemo(() => {
-    const query = chemical.name.trim().toLowerCase();
-    if (!query) return [];
-
-    return quickAddItems
-      .filter((item) => item.name.trim().toLowerCase().includes(query))
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .slice(0, 6);
-  }, [chemical.name, quickAddItems]);
+  const nameSuggestions = useMemo(
+    () => filterNameSuggestions(quickAddItems, chemical.name),
+    [chemical.name, quickAddItems],
+  );
   const showNoMatchHint =
     !readOnly && isNameFocused && chemical.name.trim().length >= 2 && nameSuggestions.length === 0;
   const shouldShowSuggestions =
     !readOnly && isNameFocused && chemical.name.trim().length >= 2 && nameSuggestions.length > 0;
 
   const handleQuantityChange = (text: string) => {
-    const cleanText = text.replace(/[^0-9.]/g, '');
-    const parts = cleanText.split('.');
-    let sanitizedText = parts[0];
-    if (parts.length > 1) {
-      sanitizedText += '.' + parts[1].slice(0, 2);
-    }
+    const { text: sanitizedText, quantity } = sanitizeQuantityInput(text);
     setQuantityText(sanitizedText);
-    const qty = sanitizedText === '' ? undefined : parseFloat(sanitizedText);
-    onUpdate({ quantity: qty });
+    onUpdate({ quantity });
   };
 
-  const isRowComplete =
-    chemical.name.trim() && chemical.quantity !== undefined && chemical.quantity > 0;
+  const isRowComplete = isProductRowComplete(chemical);
 
   const handleNameSubmit = () => {
     if (quantityRef.current) {
@@ -1046,44 +1015,11 @@ function ChemicalRow({
           />
 
           {shouldShowSuggestions ? (
-            <View
-              style={{
-                position: 'absolute',
-                top: 52,
-                left: 0,
-                right: 0,
-                backgroundColor: '#ffffff',
-                borderRadius: borderRadius.lg,
-                borderWidth: 1,
-                borderColor: m3.surface.s300,
-                maxHeight: 208,
-                overflow: 'hidden',
-                zIndex: 20,
-              }}
-            >
-              <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
-                {nameSuggestions.map((item, suggestionIndex) => (
-                  <Pressable
-                    key={`${item.name}-${item.unit ?? 'unit'}-${suggestionIndex}`}
-                    onPress={() => applySuggestion(item)}
-                    style={{
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[2],
-                      borderTopWidth: suggestionIndex === 0 ? 0 : 1,
-                      borderTopColor: m3.surface.s100,
-                    }}
-                  >
-                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
-                      {item.name}
-                    </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                      {item.quantity ? `${item.quantity} ` : ''}
-                      {item.unit ?? DEFAULT_CHEMICAL_UNIT}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
+            <NameSuggestionOverlay
+              items={nameSuggestions}
+              onSelect={applySuggestion}
+              fallbackUnitLabel={DEFAULT_CHEMICAL_UNIT}
+            />
           ) : null}
 
           {showNoMatchHint ? (
@@ -1305,10 +1241,7 @@ function ChemicalRow({
 
 export function validateSprayForm(data: SprayFormData): boolean {
   return (
-    data.waterVolume !== undefined &&
-    data.waterVolume > 0 &&
-    data.chemicals.length > 0 &&
-    data.chemicals.every((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
+    data.waterVolume !== undefined && data.waterVolume > 0 && allProductRowsComplete(data.chemicals)
   );
 }
 
