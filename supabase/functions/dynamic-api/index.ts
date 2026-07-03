@@ -487,6 +487,10 @@ async function extractParameters(
       Authorization: `Bearer ${SARVAM_API_KEY}`,
       'Content-Type': 'application/json',
     },
+    // Same deadline discipline as the OCR requests: the structured-extraction
+    // call must not run unbounded if Sarvam stalls, or the edge function hits
+    // the platform wall clock and returns an opaque failure.
+    signal: AbortSignal.timeout(DI_UPLOAD_TIMEOUT_MS),
     body: JSON.stringify({
       model: SARVAM_CHAT_MODEL,
       temperature: 0,
