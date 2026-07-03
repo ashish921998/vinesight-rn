@@ -5,11 +5,13 @@
  *
  * Kept free of React so ordering/filtering/prefill behavior is unit-testable.
  */
-import type { QuantityBasis } from '@/types/database';
+import type { NutrientCompositionItem, QuantityBasis } from '@/types/database';
 import type { RecentInputItem } from '@/hooks/use-records';
 import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 import type { ChemicalMix } from '@/types/phi';
+import type { MasterCatalogProduct } from '@/types/catalog';
 import { normalizeMixComponentToPerLiterDose } from '@/services/phi-service';
+import { resolveFertigationPrefill } from '@/constants/fertilizer-units';
 
 // ============================================================
 // MARK: - Emit contract
@@ -41,6 +43,13 @@ export interface SearchSelectSelection {
   catalogMixId?: number | null;
   isCustom: boolean;
   prefill?: SearchSelectPrefill;
+  /**
+   * Declared nutrient composition of the picked product (catalog fertilizer
+   * picks). Consumers stamp it as `composition_snapshot` on the logged item —
+   * the same path warehouse picks use — so the nutrient ledger sees
+   * catalog-picked items too (issue #200).
+   */
+  composition?: NutrientCompositionItem[] | null;
 }
 
 // ============================================================
@@ -74,9 +83,11 @@ export interface SearchSelectSection {
  * Case/whitespace-tolerant normalization that works for Latin and Devanagari:
  * NFC unifies composed/decomposed Devanagari forms, lowercase handles Latin
  * (a no-op for Devanagari), and inner whitespace collapses to single spaces.
+ * `:` and `-` fold to spaces so NPK-grade spellings converge — a query of
+ * "19:19:19" must match a "19-19-19" option (and vice versa, issue #196).
  */
 export function normalizeSearchText(value: string): string {
-  return value.normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+  return value.normalize('NFC').toLowerCase().replace(/[:-]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 /** Prefix > token-prefix > substring, per field. 0 = no match. */
@@ -236,29 +247,42 @@ export function recentItemsToOptions(
     });
 }
 
+/** How a surface turns a plan item's stored unit into a picker prefill. */
+export type PlanItemPrefillResolver = (unit: string | null | undefined) => {
+  unit: string | null;
+  quantityBasis?: QuantityBasis;
+};
+
 /**
  * Active plan items: prescribed dose shown, selection stamps `planItemId`.
  * This is how a consultant's custom (non-catalog) prescription reaches the
  * farmer's picker verbatim.
  *
- * Quantity is prefilled only when the item carries a unit AND a positive
- * finite quantity: without a unit the form would fall back to its default
- * ('gm/L'), silently changing the prescribed meaning of the number, and a
- * zero/negative quantity would create a row that instantly fails the form's
- * `quantity > 0` validation. The unit alone still prefills when present.
+ * Quantity is prefilled only when the RESOLVED prefill carries a unit AND the
+ * item has a positive finite quantity: without a unit the form would fall
+ * back to its default, silently changing the prescribed meaning of the
+ * number, and a zero/negative quantity would create a row that instantly
+ * fails the form's `quantity > 0` validation. The default resolver passes the
+ * stored unit through untouched (spray), so blank units suppress the quantity
+ * exactly as before.
  */
-export function planItemsToOptions(items: FertilizerPlanItem[]): SearchSelectOption[] {
+export function planItemsToOptions(
+  items: FertilizerPlanItem[],
+  resolvePrefill: PlanItemPrefillResolver = (unit) => ({ unit: unit?.trim() ? unit : null }),
+): SearchSelectOption[] {
   return items
     .filter((item) => item.name.trim().length > 0)
     .map((item) => {
-      const unit = item.unit?.trim() ? item.unit : null;
+      const resolved = resolvePrefill(item.unit);
       const quantity =
-        unit != null &&
+        resolved.unit != null &&
         typeof item.quantity === 'number' &&
         Number.isFinite(item.quantity) &&
         item.quantity > 0
           ? item.quantity
           : null;
+      const prefill: SearchSelectPrefill = { quantity, unit: resolved.unit };
+      if (resolved.quantityBasis !== undefined) prefill.quantityBasis = resolved.quantityBasis;
       return {
         key: `plan:${item.id}`,
         name: item.name,
@@ -268,10 +292,120 @@ export function planItemsToOptions(items: FertilizerPlanItem[]): SearchSelectOpt
           name: item.name,
           planItemId: item.id,
           isCustom: false,
-          prefill: { quantity, unit },
+          prefill,
         },
       };
     });
+}
+
+/**
+ * Active plan items for the FERTIGATION picker: same builder, but the prefill
+ * goes through `resolveFertigationPrefill` — plan doses are per-acre rates by
+ * contract, so form-representable units keep per_acre even when spelled bare
+ * (`'kg'` ≡ `'kg/acre'` on a plan item), and verbatim/unknown units are never
+ * coerced to kg (issue #192). The resolver always returns a unit, so the
+ * quantity prefills whenever it is positive.
+ */
+export const fertigationPlanItemsToOptions = (items: FertilizerPlanItem[]): SearchSelectOption[] =>
+  planItemsToOptions(items, resolveFertigationPrefill);
+
+/**
+ * Map a catalog product's declared compositions onto the stored
+ * `composition_snapshot` shape. Only `nutrient` rows qualify — active
+ * ingredients / other component types are not nutrient declarations and must
+ * not enter the nutrient ledger. Returns null when nothing qualifies so
+ * consumers stamp the same "no composition" value legacy items carry.
+ */
+export function catalogCompositionToSnapshot(
+  product: MasterCatalogProduct,
+): NutrientCompositionItem[] | null {
+  const rows = (product.compositions ?? [])
+    .filter((composition) => composition.component_type === 'nutrient')
+    .map((composition) => ({
+      nutrient_code: composition.component_code,
+      percent: composition.percent,
+      basis: 'declared' as const,
+    }));
+  return rows.length > 0 ? rows : null;
+}
+
+/**
+ * Fertilizer catalog section (master `chemical_products` rows): selecting a
+ * row stores the CANONICAL catalog name verbatim — that string-level
+ * convergence is the contract until plan items grow a product id (Phase W) —
+ * plus `catalogProductId` and the declared nutrient composition where present.
+ * Aliases/active ingredient/manufacturer are matchable but never stored.
+ * No dose prefill: the catalog carries no dose.
+ */
+export function fertilizerCatalogToOptions(products: MasterCatalogProduct[]): SearchSelectOption[] {
+  return products
+    .filter((product) => product.name.trim().length > 0)
+    .map((product) => {
+      const keywords = [
+        ...(product.aliases ?? []).map((alias) => alias.alias),
+        product.active_ingredient ?? '',
+        product.manufacturer ?? '',
+      ].filter((keyword) => keyword.length > 0);
+      return {
+        key: `product:${product.id}`,
+        name: product.name,
+        detail:
+          [product.manufacturer, product.active_ingredient]
+            .filter((part): part is string => Boolean(part))
+            .join(' · ') || null,
+        keywords: keywords.length > 0 ? keywords : undefined,
+        selection: {
+          kind: 'item' as const,
+          name: product.name,
+          catalogProductId: product.id,
+          isCustom: false,
+          composition: catalogCompositionToSnapshot(product),
+        },
+      };
+    });
+}
+
+/** A past plan item as fetched for the org's prescription history. */
+export interface OrgPlanHistoryItem {
+  name: string;
+  quantity: number | null;
+  unit: string | null;
+}
+
+/**
+ * Consultant plan authoring's history section ("what you prescribe often"):
+ * distinct product names across the org's past plan items, newest first.
+ * Dedupe uses `normalizeSearchText`, so separator spellings collapse too —
+ * one row for "19:19:19"/"19-19-19", keeping the most recent spelling and
+ * dose. Selections carry no identity (plan items are strings by contract);
+ * the last prescribed dose rides along as prefill.
+ */
+export function orgPlanHistoryToOptions(items: OrgPlanHistoryItem[]): SearchSelectOption[] {
+  const seen = new Set<string>();
+  const options: SearchSelectOption[] = [];
+  for (const item of items) {
+    const name = item.name.trim();
+    if (!name) continue;
+    const dedupeKey = normalizeSearchText(name);
+    if (!dedupeKey || seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+    const quantity =
+      typeof item.quantity === 'number' && Number.isFinite(item.quantity) && item.quantity > 0
+        ? item.quantity
+        : null;
+    options.push({
+      key: `org:${dedupeKey}`,
+      name,
+      detail: formatDoseDetail(item.quantity, item.unit),
+      selection: {
+        kind: 'item',
+        name,
+        isCustom: false,
+        prefill: { quantity, unit: item.unit ?? null },
+      },
+    });
+  }
+  return options;
 }
 
 export interface ChemicalCatalogToOptionsConfig {

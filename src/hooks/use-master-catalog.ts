@@ -107,6 +107,8 @@ async function fetchMasterProducts(args: {
 export function useMasterProducts(options?: {
   inputTypes?: CatalogInputType[];
   stateCode?: string | null;
+  /** Gate the fetch on the surface actually needing the catalog. */
+  enabled?: boolean;
 }) {
   const inputTypes = options?.inputTypes ?? [];
   const stateCode = options?.stateCode?.trim().toUpperCase() || null;
@@ -119,6 +121,7 @@ export function useMasterProducts(options?: {
         stateCode,
       }),
     staleTime: 60_000,
+    enabled: options?.enabled ?? true,
   });
 }
 

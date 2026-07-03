@@ -41,6 +41,12 @@ export interface SearchSelectProps {
   allowCustom?: boolean;
   title?: string;
   searchPlaceholder?: string;
+  /**
+   * Per-section header overrides (already-localized strings) for contexts
+   * where the defaults misread — e.g. consultant plan authoring renames
+   * history to "You often prescribe".
+   */
+  sectionTitles?: Partial<Record<SearchSelectSectionId, string>>;
 }
 
 export function SearchSelect({ visible, onClose, ...bodyProps }: SearchSelectProps) {
@@ -61,6 +67,7 @@ function SearchSelectBody({
   allowCustom = true,
   title,
   searchPlaceholder,
+  sectionTitles,
 }: Omit<SearchSelectProps, 'visible'>) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -155,8 +162,10 @@ function SearchSelectBody({
           keyboardShouldPersistTaps="handled"
           stickySectionHeadersEnabled={false}
           renderSectionHeader={({ section }) => {
-            const titleKey = SECTION_TITLE_KEYS[section.id as SearchSelectSectionId];
-            if (!titleKey) return null;
+            const sectionId = section.id as SearchSelectSectionId;
+            const titleKey = SECTION_TITLE_KEYS[sectionId];
+            const headerText = sectionTitles?.[sectionId] ?? (titleKey ? t(titleKey) : null);
+            if (!headerText) return null;
             return (
               <Text
                 accessibilityRole="header"
@@ -171,7 +180,7 @@ function SearchSelectBody({
                   letterSpacing: 0.4,
                 }}
               >
-                {t(titleKey)}
+                {headerText}
               </Text>
             );
           }}

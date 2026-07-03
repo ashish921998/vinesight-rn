@@ -112,6 +112,7 @@ import {
   useChemicalMixSearch,
   usePhiComputation,
   useFertilizerPlan,
+  useMasterProducts,
   queryKeys,
   isIOS,
   useResponsiveHeight,
@@ -390,6 +391,18 @@ export function EntryForm({
   // carry a fertigation log. When on, the fertigation section (reusing `fertigationData`) is
   // shown inside the irrigation flow and saved as a linked record.
   const [irrigationIncludesFertilizers, setIrrigationIncludesFertilizers] = useState(false);
+  // Fertilizer catalog for the fertigation picker's catalog section. Includes
+  // biostimulants (fertigation-applied), matching the warehouse fertilizer
+  // grouping; the section simply hides when the catalog has no rows. Fetched
+  // only when a flow that mounts the fertigation form is active (irrigation
+  // embeds it behind the include-fertilizers toggle).
+  const { data: fertilizerCatalogProducts = [] } = useMasterProducts({
+    inputTypes: ['fertilizer', 'biostimulant'],
+    stateCode: null,
+    enabled:
+      selectedLogType === 'fertigation' ||
+      (selectedLogType === 'irrigation' && irrigationIncludesFertilizers),
+  });
   const [sprayData, setSprayData] = useState<SprayFormData>(() => createEmptySprayFormData());
   const [harvestData, setHarvestData] = useState<HarvestFormData>(() =>
     createEmptyHarvestFormData(),
@@ -491,6 +504,7 @@ export function EntryForm({
         quantityBasis: prefill.quantityBasis,
         warehouseItemId: null,
         catalogProductId: null,
+        planItemId: item.id,
       };
     });
     const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
@@ -1844,6 +1858,9 @@ export function EntryForm({
                 sprayCatalogMixes={catalogMixes}
                 sprayHistoryItems={recentSprayChemicals ?? []}
                 sprayPlanItems={fertilizerPlan?.items ?? []}
+                fertigationHistoryItems={recentFertigationItems ?? []}
+                fertigationPlanItems={fertilizerPlan?.items ?? []}
+                fertigationCatalogProducts={fertilizerCatalogProducts}
                 sprayAreaAcres={activeFarm?.area ?? null}
                 showSaveButton={false}
               />
@@ -1963,6 +1980,9 @@ export function EntryForm({
           sprayCatalogMixes={catalogMixes}
           sprayHistoryItems={recentSprayChemicals ?? []}
           sprayPlanItems={fertilizerPlan?.items ?? []}
+          fertigationHistoryItems={recentFertigationItems ?? []}
+          fertigationPlanItems={fertilizerPlan?.items ?? []}
+          fertigationCatalogProducts={fertilizerCatalogProducts}
           sprayAreaAcres={activeFarm?.area ?? null}
         />
       </View>

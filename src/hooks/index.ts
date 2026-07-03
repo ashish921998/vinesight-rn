@@ -189,7 +189,11 @@ export { useConsultantLink } from './use-consultant-link';
 export { useJoinOrganization } from './use-organization';
 
 // Fertilizer Plan
-export { useFertilizerPlan, useFertilizerPlans } from './use-fertilizer-plan';
+export {
+  useFertilizerPlan,
+  useFertilizerPlans,
+  useOrgFertilizerPlanItemHistory,
+} from './use-fertilizer-plan';
 export {
   useChemicalCatalog,
   useChemicalMixSearch,

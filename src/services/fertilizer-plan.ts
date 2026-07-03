@@ -110,3 +110,48 @@ export async function fetchFertilizerPlanForFarm(farmId: number): Promise<Fertil
   const plans = await fetchFertilizerPlansForFarm(farmId, { limit: 1 });
   return plans[0] ?? null;
 }
+
+/** One prescribed product from an org's past plans (name + last dose). */
+export interface OrgFertilizerPlanHistoryItem {
+  name: string;
+  quantity: number | null;
+  unit: string | null;
+}
+
+/**
+ * Flat list of items across the org's most recent fertilizer plans, newest
+ * plan first — the raw feed for the consultant picker's "what you prescribe
+ * often" section. Names are returned as stored (no dedupe here); the option
+ * builder collapses duplicates so the most recent dose wins. RLS already
+ * scopes plans to the consultant's organization.
+ */
+export async function fetchOrgFertilizerPlanItemHistory(
+  organizationId: string,
+  { planLimit = 30 }: { planLimit?: number } = {},
+): Promise<OrgFertilizerPlanHistoryItem[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const { data, error } = await supabase
+    .from('fertilizer_plans')
+    .select('id, created_at, fertilizer_plan_items(fertilizer_name, quantity, unit)')
+    .eq('organization_id', organizationId)
+    .order('created_at', { ascending: false })
+    .limit(planLimit);
+
+  if (error) {
+    if (__DEV__) console.warn('[fertilizer-plan] fetch org item history failed:', error.message);
+    throw error;
+  }
+
+  const rows = (data ?? []) as unknown as {
+    fertilizer_plan_items: Pick<PlanItemRow, 'fertilizer_name' | 'quantity' | 'unit'>[] | null;
+  }[];
+
+  return rows.flatMap((row) =>
+    (row.fertilizer_plan_items ?? []).map((item) => ({
+      name: item.fertilizer_name,
+      quantity: item.quantity,
+      unit: item.unit,
+    })),
+  );
+}

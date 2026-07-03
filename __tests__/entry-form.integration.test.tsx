@@ -81,6 +81,7 @@ jest.mock('@/hooks', () => ({
   useChemicalMixSearch: (...args: unknown[]) => mockUseChemicalMixSearch(...args),
   usePhiComputation: (...args: unknown[]) => mockUsePhiComputation(...args),
   useFertilizerPlan: () => ({ data: null, isLoading: false, error: null }),
+  useMasterProducts: () => ({ data: [], isLoading: false, error: null }),
   queryKeys: {
     dashboard: {
       all: ['dashboard'],

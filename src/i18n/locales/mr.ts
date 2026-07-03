@@ -184,6 +184,8 @@ export const mr = {
       addItem: 'आणखी एक उत्पादन जोडा',
       itemNumber: 'उत्पादन {{number}}',
       productName: 'उत्पादनाचे नाव',
+      selectProduct: 'उत्पादन निवडा किंवा शोधा',
+      prescribedOften: 'तुम्ही अनेकदा सुचवता',
       quantity: 'प्रमाण',
       unit: 'एकक',
       planNotes: 'शेतकऱ्यासाठी नोट्स',

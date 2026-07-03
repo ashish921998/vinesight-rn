@@ -268,6 +268,7 @@ export async function submitEntryPendingLog(params: {
             ...(isFertigationUnitRecognized(f.unit) ? {} : { unit_unrecognized: true }),
             warehouse_item_id: f.warehouseItemId ?? null,
             catalog_product_id: f.catalogProductId ?? null,
+            plan_item_id: f.planItemId ?? null,
             composition_snapshot: f.compositionSnapshot ?? null,
             density_kg_per_l: f.densityKgPerL ?? null,
           };

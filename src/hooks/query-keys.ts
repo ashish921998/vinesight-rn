@@ -125,6 +125,8 @@ export const queryKeys = {
     all: ['fertilizerPlan'] as const,
     detail: (farmId: number) => [...queryKeys.fertilizerPlan.all, { farmId }] as const,
     listByFarm: (farmId: number) => [...queryKeys.fertilizerPlan.all, 'list', { farmId }] as const,
+    orgItemHistory: (organizationId: string) =>
+      [...queryKeys.fertilizerPlan.all, 'orgItemHistory', { organizationId }] as const,
   },
 
   // Farm-level soil baseline (texture / CEC / etc. recorded at farm creation).

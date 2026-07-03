@@ -195,6 +195,8 @@ export const en = {
       addItem: 'Add another product',
       itemNumber: 'Product {{number}}',
       productName: 'Product name',
+      selectProduct: 'Select or search product',
+      prescribedOften: 'You often prescribe',
       quantity: 'Quantity',
       unit: 'Unit',
       planNotes: 'Notes for the farmer',
