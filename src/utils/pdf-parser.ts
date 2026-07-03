@@ -29,37 +29,46 @@ interface ReadFileResult {
   ext: string;
 }
 
+// The Sarvam OCR pipeline in the dynamic-api edge function only accepts a PDF
+// or a JPEG/PNG image. Detecting the type from the file's magic bytes (rather
+// than the URI extension) keeps the client and edge function in agreement and
+// catches iOS quirks like a HEIC image handed to us with a `.jpg` extension.
+type SupportedType = { mimeType: string; ext: string };
+
+function detectSupportedType(bytes: Uint8Array): SupportedType | null {
+  const startsWith = (sig: number[], offset = 0) => sig.every((b, i) => bytes[offset + i] === b);
+
+  // %PDF
+  if (startsWith([0x25, 0x50, 0x44, 0x46])) return { mimeType: 'application/pdf', ext: 'pdf' };
+  // \x89 P N G
+  if (startsWith([0x89, 0x50, 0x4e, 0x47])) return { mimeType: 'image/png', ext: 'png' };
+  // JPEG SOI marker
+  if (startsWith([0xff, 0xd8, 0xff])) return { mimeType: 'image/jpeg', ext: 'jpg' };
+  return null; // GIF, WebP, HEIC, and anything else are unsupported upstream.
+}
+
 async function readFile(uri: string): Promise<ReadFileResult> {
+  let base64: string;
   try {
-    const base64 = await FileSystem.readAsStringAsync(uri, {
+    base64 = await FileSystem.readAsStringAsync(uri, {
       encoding: FileSystem.EncodingType.Base64,
     });
-
-    const lowerUri = uri.toLowerCase();
-    let mimeType = 'image/jpeg';
-    let ext = 'jpg';
-
-    if (lowerUri.endsWith('.pdf')) {
-      mimeType = 'application/pdf';
-      ext = 'pdf';
-    } else if (lowerUri.endsWith('.png')) {
-      mimeType = 'image/png';
-      ext = 'png';
-    } else if (lowerUri.endsWith('.webp')) {
-      mimeType = 'image/webp';
-      ext = 'webp';
-    } else if (lowerUri.endsWith('.gif')) {
-      mimeType = 'image/gif';
-      ext = 'gif';
-    }
-
-    return { base64, mimeType, ext };
   } catch (error) {
     console.error('[PDF Parser] Error reading file:', error);
     throw new Error(
       `Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`,
     );
   }
+
+  // Sniff the first bytes (24 chars of base64 -> 18 bytes) to determine the
+  // real content type instead of trusting the file extension.
+  const headBytes = new Uint8Array(decodeBase64(base64.slice(0, 24)));
+  const detected = detectSupportedType(headBytes);
+  if (!detected) {
+    throw new Error('Unsupported file. Please upload a PDF, JPEG, or PNG lab report.');
+  }
+
+  return { base64, mimeType: detected.mimeType, ext: detected.ext };
 }
 
 export async function parseLabTestFromImage(
@@ -76,11 +85,13 @@ export async function parseLabTestFromImage(
       throw new Error('You must be signed in to upload a lab report.');
     }
 
-    // Upload to Storage first, then hand the edge function just the path.
+    // Upload to Storage first, then hand the edge function just the path. The
+    // path is timestamped so it is unique per upload; `upsert: false` keeps us
+    // to the insert-only RLS policy (no UPDATE policy exists on this bucket).
     const storagePath = `${user.id}/${Date.now()}-lab-report.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(storagePath, decodeBase64(base64), { contentType: mimeType, upsert: true });
+      .upload(storagePath, decodeBase64(base64), { contentType: mimeType, upsert: false });
 
     if (uploadError) {
       console.error('Lab report upload failed:', uploadError);

@@ -37,7 +37,9 @@ const OCR_OUTPUT_FORMAT = 'md';
 // Polling budget for the async Document Intelligence job. Lab reports are 1-2
 // pages and finish in seconds; this caps us well under the function timeout.
 const POLL_INTERVAL_MS = 2500;
-const POLL_MAX_ATTEMPTS = 40; // ~100s worst case
+// ~60s worst case, kept safely under the edge-function wall-clock limit so a
+// slow job hits this controlled timeout rather than being killed by the platform.
+const POLL_MAX_ATTEMPTS = 24;
 
 const MAX_FILE_SIZE = 32 * 1024 * 1024; // 32MB
 
@@ -135,6 +137,15 @@ Deno.serve(async (req) => {
           error: 'Could not read the uploaded file',
           details: dlError?.message,
         });
+      }
+      // Guard memory before buffering the whole object (the RLS bucket does not
+      // cap object size, so an oversized upload could exhaust the function).
+      if (blob.size > MAX_FILE_SIZE) {
+        admin.storage
+          .from(STORAGE_BUCKET)
+          .remove([body.storage_path])
+          .catch(() => {});
+        return jsonResponse(400, { error: 'File too large. Maximum 32MB.' });
       }
       bytes = new Uint8Array(await blob.arrayBuffer());
       mimeType = blob.type || mimeFromPath(body.storage_path);
@@ -327,7 +338,10 @@ async function digitizeDocument(
   const target = mdName ?? jsonName;
   if (!target) throw new Error('No output file produced by digitization');
 
-  const contentRes = await fetch(urls[target].file_url);
+  const downloadUrl = urls[target]?.file_url;
+  if (!downloadUrl) throw new Error('Digitization output is missing a download URL');
+
+  const contentRes = await fetch(downloadUrl);
   if (!contentRes.ok) {
     throw new Error(`Failed to download output (${contentRes.status})`);
   }
@@ -403,9 +417,18 @@ async function extractParameters(
     }),
   });
 
-  const data = await res.json();
+  // Read the body as text first: a non-JSON upstream error page would make
+  // res.json() throw and swallow the real status/body.
+  const rawBody = await res.text();
   if (!res.ok) {
-    throw new Error(`Chat completion error (${res.status}): ${JSON.stringify(data)}`);
+    throw new Error(`Chat completion error (${res.status}): ${rawBody.slice(0, 500)}`);
+  }
+
+  let data: { choices?: Array<{ message?: { content?: string } }> };
+  try {
+    data = JSON.parse(rawBody);
+  } catch {
+    throw new Error(`Chat completion returned non-JSON response: ${rawBody.slice(0, 500)}`);
   }
 
   const content: string | undefined = data?.choices?.[0]?.message?.content;
