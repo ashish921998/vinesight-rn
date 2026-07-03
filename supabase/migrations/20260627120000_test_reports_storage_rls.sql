@@ -27,6 +27,10 @@ set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
+-- Drop-then-create keeps the migration idempotent: these policies already exist
+-- in environments where they were created out-of-band (e.g. via the dashboard),
+-- and a bare `create policy` would fail there with a duplicate-policy error.
+drop policy if exists "test_reports_insert_own" on storage.objects;
 create policy "test_reports_insert_own"
 on storage.objects for insert
 to authenticated
@@ -35,6 +39,7 @@ with check (
   and (storage.foldername(name))[1] = (select auth.uid()::text)
 );
 
+drop policy if exists "test_reports_select_own" on storage.objects;
 create policy "test_reports_select_own"
 on storage.objects for select
 to authenticated
@@ -43,6 +48,7 @@ using (
   and (storage.foldername(name))[1] = (select auth.uid()::text)
 );
 
+drop policy if exists "test_reports_delete_own" on storage.objects;
 create policy "test_reports_delete_own"
 on storage.objects for delete
 to authenticated

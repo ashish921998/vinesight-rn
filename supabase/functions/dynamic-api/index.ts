@@ -145,7 +145,9 @@ Deno.serve(async (req) => {
       // Guard memory before buffering the whole object (the RLS bucket does not
       // cap object size, so an oversized upload could exhaust the function).
       if (blob.size > MAX_FILE_SIZE) {
-        admin.storage
+        // Await the cleanup: the runtime cancels pending promises once the
+        // response is sent, so a fire-and-forget removal here would be dropped.
+        await admin.storage
           .from(STORAGE_BUCKET)
           .remove([body.storage_path])
           .catch(() => {});
@@ -158,8 +160,10 @@ Deno.serve(async (req) => {
         blob.type && blob.type !== 'application/octet-stream'
           ? blob.type
           : mimeFromPath(body.storage_path);
-      // We have the bytes in memory; remove the stored file (best-effort).
-      admin.storage
+      // We have the bytes in memory; remove the stored file. Awaited (best-effort
+      // via catch) so the deletion is guaranteed to finish — an unawaited promise
+      // can be cancelled by the runtime if an early error path sends the response.
+      await admin.storage
         .from(STORAGE_BUCKET)
         .remove([body.storage_path])
         .catch(() => {});
