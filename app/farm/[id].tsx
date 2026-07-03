@@ -40,11 +40,8 @@ import {
   isIOS,
   useCurrency,
 } from '@/hooks';
-import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
-import { TaskRow, TimelineLogCard } from '@/components/cards';
+import { TimelineLogCard } from '@/components/cards';
 import { useTranslation } from 'react-i18next';
-import { useNotificationStore } from '@/stores';
-import { cancelNotification } from '@/services/notifications';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -53,18 +50,16 @@ import type {
   FertigationRecord,
   DailyNoteRecord,
 } from '@/types';
-import type { TaskReminder } from '@/types/task';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { isGrapeCrop } from '@/utils/crop';
 
-import { useModalStore } from '@/stores';
+import { useModalStore, useAppModeStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
 import { useDomainColors } from '@/styles/use-domain-colors';
 import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from '@/utils/haptics';
-import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { telemetry } from '@/services/telemetry';
 import { createAddLogHref } from '@/utils/add-log-navigation';
@@ -86,7 +81,6 @@ interface WorkboardAction {
 }
 
 const NOW_TICK_MS = 60_000;
-const OPEN_TASKS_PREVIEW_LIMIT = 5;
 
 export default function FarmDetailScreen() {
   const m3 = useM3();
@@ -96,7 +90,8 @@ export default function FarmDetailScreen() {
 
   const router = useRouter();
   const isFocused = useIsFocused();
-  const { setEditActivity, setAddEntry } = useModalStore();
+  const { setEditActivity } = useModalStore();
+  const detailedMode = useAppModeStore((state) => state.detailedMode);
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const insets = useSafeAreaInsets();
 
@@ -116,7 +111,6 @@ export default function FarmDetailScreen() {
     refetch: refetchRecords,
   } = useFarmRecords(farmId);
 
-  const { data: tasks, isLoading: isTasksLoading, refetch: refetchTasks } = useTasks(farmId);
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
   const { isLinked: hasConsultant } = useConsultantLink();
   const {
@@ -125,20 +119,6 @@ export default function FarmDetailScreen() {
     refetch: refetchSeasons,
   } = useFarmSeasons(farmId);
   const { needsReview: needsSeasonReview } = useFarmSeasonStatus(farmId);
-  const completeMutation = useCompleteTask();
-  const deleteMutation = useDeleteTask();
-  const taskSchedules = useNotificationStore((s) => s.taskSchedules);
-  const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
-
-  const cleanupTaskNotifications = async (taskId: number): Promise<void> => {
-    const schedule = taskSchedules[String(taskId)];
-    if (!schedule) return;
-
-    if (schedule.notificationIds?.length) {
-      await Promise.allSettled(schedule.notificationIds.map(cancelNotification));
-    }
-    removeTaskSchedule(String(taskId));
-  };
 
   const deleteFarmMutation = useDeleteFarm();
   const deleteIrrigation = useDeleteIrrigationRecord();
@@ -246,14 +226,17 @@ export default function FarmDetailScreen() {
   }, [handleBackNavigation, isFocused]);
 
   const workboardActions = useMemo<WorkboardAction[]>(() => {
-    const actions: WorkboardAction[] = [
-      {
+    const actions: WorkboardAction[] = [];
+    if (detailedMode) {
+      actions.push({
         id: 'ai',
         titleKey: 'farmDetails.workboard.actions.ai',
         // Match the bottom navbar AI assistant icon.
         icon: 'brain',
         color: m3.colorScheme.primary,
-      },
+      });
+    }
+    actions.push(
       {
         id: 'lab',
         titleKey: 'farmDetails.workboard.actions.lab',
@@ -272,7 +255,7 @@ export default function FarmDetailScreen() {
         icon: 'square.stack.3d.up.fill',
         color: domain.category.task,
       },
-    ];
+    );
     if (hasConsultant) {
       actions.push({
         id: 'fertilizer-plans',
@@ -282,7 +265,7 @@ export default function FarmDetailScreen() {
       });
     }
     return actions;
-  }, [domain.category.fertigation, domain.category.task, m3, hasConsultant]);
+  }, [detailedMode, domain.category.fertigation, domain.category.task, m3, hasConsultant]);
 
   const seasonEndDates = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return [];
@@ -381,25 +364,6 @@ export default function FarmDetailScreen() {
     if (!minimumSeasonStartDate) return false;
     return formatLocalDate(new Date()) < formatLocalDate(minimumSeasonStartDate);
   }, [activeSeasonRecord, minimumSeasonStartDate]);
-
-  // Compute urgent tasks (overdue or due today)
-  const urgentTasks = useMemo(() => {
-    if (!tasks) return [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = formatLocalDate(today);
-    return tasks.filter((task) => {
-      if (task.completed) return false;
-      if (!task.due_date) return false;
-      const taskDate = parseDbDateToLocalDate(task.due_date);
-      if (!taskDate) return false;
-      taskDate.setHours(0, 0, 0, 0);
-      const taskDateStr = formatLocalDate(taskDate);
-      // Overdue (before today) or due today
-      return taskDateStr <= todayStr;
-    });
-  }, [tasks]);
-  const openTasks = useMemo(() => tasks?.filter((t) => !t.completed) ?? [], [tasks]);
 
   const seasonProgressPct = useMemo(() => {
     const start =
@@ -1074,7 +1038,6 @@ export default function FarmDetailScreen() {
       await Promise.all([
         refetchFarm(),
         refetchRecords(),
-        refetchTasks(),
         refetchSeasons(),
         refetchEarliestSafeHarvest(),
       ]);
@@ -1110,24 +1073,6 @@ export default function FarmDetailScreen() {
       return;
     }
     router.push(createAddLogHref({ farmId: farm.id, lockFarmSelection: true }));
-  };
-
-  const handleAddTask = () => {
-    if (!farm?.id) return;
-    setAddEntry({
-      tabs: ['task'],
-      initialTab: 'task',
-      initialFarmId: farm.id,
-    });
-    router.push({
-      pathname: '/add-entry',
-      params: {
-        tabs: 'task',
-        initialTab: 'task',
-        farmId: farm.id.toString(),
-        lockFarmSelection: 'true',
-      },
-    });
   };
 
   const handleEditActivity = (log: (typeof recentLogs)[number]) => {
@@ -1213,84 +1158,6 @@ export default function FarmDetailScreen() {
         },
       ],
     );
-  };
-
-  const handleCompleteTask = (taskId: number) => {
-    Alert.alert(t('tasks.alerts.completeTitle'), t('tasks.alerts.completeBodyGeneric'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.complete'),
-        onPress: () => {
-          completeMutation.mutate(taskId, {
-            onSuccess: () => {
-              void cleanupTaskNotifications(taskId);
-              refetchTasks();
-            },
-            onError: (error: Error) => {
-              Alert.alert(
-                t('common.error'),
-                error.message || t('farmDetails.errors.completeTaskFailed'),
-              );
-            },
-          });
-        },
-      },
-    ]);
-  };
-
-  const handleDeleteTask = (taskId: number, taskTitle: string) => {
-    triggerHapticWarning();
-    Alert.alert(t('tasks.alerts.deleteTitle'), t('tasks.alerts.deleteBody', { title: taskTitle }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: () => {
-          deleteMutation.mutate(taskId, {
-            onSuccess: () => {
-              void cleanupTaskNotifications(taskId);
-              refetchTasks();
-            },
-            onError: (error: Error) => {
-              Alert.alert(
-                t('common.error'),
-                error.message || t('farmDetails.errors.deleteTaskFailed'),
-              );
-            },
-          });
-        },
-      },
-    ]);
-  };
-
-  const handleLogFromTask = (task: TaskReminder) => {
-    if (!task.id || (task.type !== 'spray' && task.type !== 'fertigation')) return;
-    const planned =
-      task.planned_inputs && task.planned_inputs.length > 0
-        ? task.planned_inputs
-        : decodeTaskPlanFromDescription(task.description);
-    setAddEntry({
-      tabs: ['log'],
-      initialTab: 'log',
-      initialFarmId: task.farm_id,
-      initialLogType: task.type,
-      sourceTaskId: task.id,
-      logPrefill:
-        task.type === 'spray'
-          ? { sprayChemicals: planned }
-          : {
-              fertigationItems: planned,
-            },
-    });
-    router.push({
-      pathname: '/add-entry',
-      params: {
-        tabs: 'log',
-        initialTab: 'log',
-        farmId: String(task.farm_id),
-        initialLogType: task.type,
-      },
-    });
   };
 
   const handleDeleteFarm = () => {
@@ -2049,64 +1916,6 @@ export default function FarmDetailScreen() {
             </Pressable>
           )}
 
-          {urgentTasks.length > 0 && (
-            <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[3] }}>
-              <Pressable
-                onPress={() => {
-                  if (!farm?.id) return;
-                  router.push({ pathname: '/tasks', params: { farmId: farm.id.toString() } });
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={t('farmDetails.a11y.viewUrgentTasks', {
-                  defaultValue: 'View urgent tasks',
-                })}
-                style={({ pressed }) => ({
-                  padding: spacing[3],
-                  backgroundColor: pressed
-                    ? colorWithOpacity(m3.colorScheme.warning, 0.16)
-                    : colorWithOpacity(m3.colorScheme.warning, 0.1),
-                  borderWidth: 1,
-                  borderColor: colorWithOpacity(m3.colorScheme.warning, 0.3),
-                  borderRadius: borderRadius.md,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing[2],
-                })}
-              >
-                <UiSymbol
-                  name="exclamationmark.triangle.fill"
-                  size={16}
-                  color={m3.colorScheme.warning}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.semibold,
-                      color: m3.colorScheme.warning,
-                    }}
-                  >
-                    {t('farmDetails.riskBlock.urgentTasks', { count: urgentTasks.length })}
-                  </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500, marginTop: 2 }}>
-                    {t('farmDetails.tasks.urgentHint', {
-                      defaultValue: 'Review due and overdue work before logging more activity.',
-                    })}
-                  </Text>
-                </View>
-                <Text
-                  style={{
-                    color: m3.colorScheme.primary,
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.semibold,
-                  }}
-                >
-                  {t('common.view')}
-                </Text>
-              </Pressable>
-            </View>
-          )}
-
           {/* Workboard Section */}
           <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
             <Text
@@ -2203,206 +2012,6 @@ export default function FarmDetailScreen() {
                 ))}
               </View>
             </View>
-          </View>
-
-          {/* Open Tasks Section */}
-          <View
-            style={{
-              paddingHorizontal: spacing[4],
-              marginTop: spacing[6],
-            }}
-          >
-            {/* Section header */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: spacing[3],
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.bold,
-                    letterSpacing: 0.8,
-                    textTransform: 'uppercase',
-                    color: m3.surface.s500,
-                  }}
-                >
-                  {t('farmDetails.sections.openTasks', { defaultValue: 'Open tasks' })}
-                </Text>
-                {openTasks.length > 0 && (
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.bold,
-                      color: m3.surface.s500,
-                      marginLeft: 4,
-                    }}
-                  >
-                    · {openTasks.length}
-                  </Text>
-                )}
-              </View>
-              {farm?.id ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[1] }}>
-                  <Pressable
-                    onPress={handleAddTask}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('farmDetails.actions.addTask')}
-                    hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 2,
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: spacing[1],
-                      borderRadius: m3.shape.cornerSmall,
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
-                    })}
-                  >
-                    <UiSymbol name="plus" size={13} color={m3.colorScheme.primary} />
-                    <Text
-                      style={{
-                        color: m3.colorScheme.primary,
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {t('farmDetails.actions.addTask')}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => {
-                      if (!farm?.id) return;
-                      router.push({
-                        pathname: '/tasks',
-                        params: { farmId: farm.id.toString() },
-                      });
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
-                    hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
-                    style={({ pressed }) => ({
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: spacing[1],
-                      borderRadius: m3.shape.cornerSmall,
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
-                    })}
-                  >
-                    <Text
-                      style={{
-                        color: m3.colorScheme.primary,
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {t('farmDetails.actions.seeAllTasks')}
-                    </Text>
-                  </Pressable>
-                </View>
-              ) : null}
-            </View>
-
-            {/* Task rows */}
-            {openTasks.length > 0 ? (
-              <View
-                style={{
-                  gap: spacing[3],
-                }}
-              >
-                {openTasks.slice(0, OPEN_TASKS_PREVIEW_LIMIT).map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    showFarmName={false}
-                    onComplete={(item) => {
-                      if (!item.id) return;
-                      handleCompleteTask(item.id);
-                    }}
-                    onEdit={(item) => {
-                      setAddEntry({
-                        tabs: ['task'],
-                        initialTab: 'task',
-                        editingTask: item,
-                      });
-                      router.push({
-                        pathname: '/add-entry',
-                        params: { tabs: 'task', initialTab: 'task' },
-                      });
-                    }}
-                    onDelete={(item) => {
-                      if (!item.id) return;
-                      handleDeleteTask(item.id, item.title);
-                    }}
-                    onLogFromTask={(item) => handleLogFromTask(item)}
-                  />
-                ))}
-              </View>
-            ) : !isTasksLoading ? (
-              <View
-                style={{
-                  borderRadius: m3.shape.cornerLarge,
-                  alignItems: 'center',
-                  padding: spacing[8],
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                }}
-              >
-                <UiSymbol
-                  name="checkbox-outline"
-                  size={28}
-                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
-                />
-                <Text
-                  style={{
-                    color: m3.colorScheme.onSurfaceVariant,
-                    fontSize: fontSize.sm,
-                    textAlign: 'center',
-                    marginTop: spacing[2],
-                  }}
-                >
-                  {t('farmDetails.tasks.empty.title')}
-                </Text>
-                <Pressable
-                  onPress={handleAddTask}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('farmDetails.actions.addTask')}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: spacing[1],
-                    marginTop: spacing[4],
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: spacing[2],
-                    borderRadius: m3.shape.cornerMedium,
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.22)
-                      : colorWithOpacity(m3.colorScheme.primary, 0.14),
-                    borderWidth: 1,
-                    borderColor: m3.colorScheme.primary,
-                  })}
-                >
-                  <UiSymbol name="plus" size={15} color={m3.colorScheme.primary} />
-                  <Text
-                    style={{
-                      color: m3.colorScheme.primary,
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                    }}
-                  >
-                    {t('farmDetails.actions.addTask')}
-                  </Text>
-                </Pressable>
-              </View>
-            ) : null}
           </View>
 
           {/* Recent Logs Section */}

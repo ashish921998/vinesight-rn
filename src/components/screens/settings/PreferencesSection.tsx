@@ -18,6 +18,7 @@ interface PreferencesSectionProps {
   selectedCurrency: string;
   selectedAreaUnit: 'acres' | 'hectares';
   isResettingGuidedTour: boolean;
+  detailedMode: boolean;
   styles: SettingsStyles;
   m3: ReturnType<typeof getM3Theme>;
   onLanguageChange: (code: SupportedLanguageCode) => void;
@@ -25,6 +26,7 @@ interface PreferencesSectionProps {
   onCurrencyChange: (code: string) => void;
   onAreaUnitChange: (unit: 'hectares' | 'acres') => void;
   onReplayGuidedTour: () => void;
+  onDetailedModeChange: (value: boolean) => void;
 }
 
 export function PreferencesSection({
@@ -33,6 +35,7 @@ export function PreferencesSection({
   selectedCurrency,
   selectedAreaUnit,
   isResettingGuidedTour,
+  detailedMode,
   styles,
   m3,
   onLanguageChange,
@@ -40,6 +43,7 @@ export function PreferencesSection({
   onCurrencyChange,
   onAreaUnitChange,
   onReplayGuidedTour,
+  onDetailedModeChange,
 }: PreferencesSectionProps) {
   const { t } = useTranslation();
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
@@ -81,6 +85,15 @@ export function PreferencesSection({
           {t('settings.sectionGeneral')}
         </Text>
         <View style={styles.sectionContent}>
+          <SettingsItem
+            icon="rectangle.stack"
+            title={t('settings.appMode.title')}
+            subtitle={t('settings.appMode.subtitle')}
+            toggle={{ value: detailedMode, onValueChange: onDetailedModeChange }}
+            isLast={false}
+            styles={styles}
+            m3={m3}
+          />
           <Pressable
             onPress={() => setShowLanguagePicker(true)}
             accessibilityRole="button"

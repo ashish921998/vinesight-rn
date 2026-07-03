@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { getUserId } from '../lib/auth-utils';
 import { queryKeys } from './query-keys';
+import { useAppModeStore } from '../stores/app-mode-store';
 import type { Farm } from '../types';
 import { TABLES, isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
@@ -238,8 +239,12 @@ export interface RecentActivity {
 // ============================================================
 
 export function useDashboardStats() {
+  // Reactively track the mode so toggling it produces a fresh cache entry and
+  // the dashboard re-renders with correct worker/task counts immediately.
+  const detailedMode = useAppModeStore((s) => s.detailedMode);
+
   return useQuery({
-    queryKey: queryKeys.dashboard.stats(),
+    queryKey: queryKeys.dashboard.stats(detailedMode),
     queryFn: async (): Promise<DashboardStats> => {
       const userId = await getUserId();
       if (!userId) throw new Error('Not authenticated');
@@ -250,12 +255,17 @@ export function useDashboardStats() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
 
-      // Fetch active workers count
-      const { count: workersCount } = await supabase
-        .from(TABLES.WORKERS)
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_active', true);
+      // In simplified mode the workers/tasks metric cards are hidden, so skip
+      // their count queries to avoid wasted network calls.
+      let workersCount = 0;
+      if (detailedMode) {
+        const { count } = await supabase
+          .from(TABLES.WORKERS)
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('is_active', true);
+        workersCount = count ?? 0;
+      }
 
       // Get recent activities count (last 7 days)
       const sevenDaysAgo = new Date();
@@ -271,7 +281,9 @@ export function useDashboardStats() {
       let pendingTasksCount = 0;
 
       if (farmIds.length > 0) {
-        const [irrigation, spray, harvest, expense, fertigation, tasks] = await Promise.all([
+        // Only run the task-reminders count in detailed mode; simplified mode
+        // hides the tasks card so the query would be wasted.
+        const countQueries = [
           supabase
             .from(TABLES.IRRIGATION_RECORDS)
             .select('*', { count: 'exact', head: true })
@@ -297,12 +309,19 @@ export function useDashboardStats() {
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
-          supabase
-            .from('task_reminders')
-            .select('*', { count: 'exact', head: true })
-            .in('farm_id', farmIds)
-            .eq('completed', false),
-        ]);
+        ];
+        if (detailedMode) {
+          countQueries.push(
+            supabase
+              .from('task_reminders')
+              .select('*', { count: 'exact', head: true })
+              .in('farm_id', farmIds)
+              .eq('completed', false),
+          );
+        }
+
+        const counts = await Promise.all(countQueries);
+        const [irrigation, spray, harvest, expense, fertigation] = counts;
 
         activitiesCount =
           (irrigation.count ?? 0) +
@@ -311,12 +330,12 @@ export function useDashboardStats() {
           (expense.count ?? 0) +
           (fertigation.count ?? 0);
 
-        pendingTasksCount = tasks.count ?? 0;
+        pendingTasksCount = detailedMode ? (counts[5]?.count ?? 0) : 0;
       }
 
       return {
         farmsCount: farmsCount ?? 0,
-        activeWorkersCount: workersCount ?? 0,
+        activeWorkersCount: workersCount,
         recentActivitiesCount: activitiesCount,
         pendingTasksCount,
       };

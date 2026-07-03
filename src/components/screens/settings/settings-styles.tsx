@@ -2,7 +2,7 @@ import { StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { borderRadius, fontSize, fontWeight, getM3Theme, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { View, Text } from 'react-native';
+import { View, Text, Switch, Pressable } from 'react-native';
 import React from 'react';
 
 export const createStyles = (m3: ReturnType<typeof getM3Theme>) => ({
@@ -104,6 +104,11 @@ export const createStyles = (m3: ReturnType<typeof getM3Theme>) => ({
     fontSize: fontSize.sm,
     color: m3.surface.s500,
     marginRight: spacing[2],
+  } as TextStyle,
+  settingsSubtitle: {
+    fontSize: fontSize.xs,
+    color: m3.surface.s500,
+    marginTop: 2,
   } as TextStyle,
   borderBottom: { borderBottomWidth: 1, borderBottomColor: m3.surface.s200 } as ViewStyle,
   disabledItem: {
@@ -366,6 +371,8 @@ export function SettingsItem({
   icon,
   title,
   value,
+  subtitle,
+  toggle,
   isLast,
   disabled,
   styles,
@@ -374,33 +381,88 @@ export function SettingsItem({
   icon: string;
   title: string;
   value?: string;
+  subtitle?: string;
+  /** When provided, renders a trailing Switch instead of the value + chevron. */
+  toggle?: { value: boolean; onValueChange: (value: boolean) => void };
   isLast?: boolean;
   disabled?: boolean;
   styles: SettingsStyles;
   m3: ReturnType<typeof getM3Theme>;
 }) {
-  return (
+  const content = (
     <View style={[styles.settingsItem, !isLast && styles.borderBottom]}>
       <View style={styles.settingsIcon}>
         <UISymbol name={icon} size={20} color={m3.neutral.n500} />
       </View>
-      <Text
-        style={styles.settingsTitle}
-        textBreakStrategy="highQuality"
-        lineBreakStrategyIOS="standard"
-      >
-        {title}
-      </Text>
-      {value && (
+      {subtitle ? (
+        <View style={{ flex: 1, marginLeft: spacing[3] }}>
+          <Text
+            style={[styles.settingsTitle, { marginLeft: 0 }]}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {title}
+          </Text>
+          <Text
+            style={styles.settingsSubtitle}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {subtitle}
+          </Text>
+        </View>
+      ) : (
         <Text
-          style={styles.settingsValue}
+          style={styles.settingsTitle}
           textBreakStrategy="highQuality"
           lineBreakStrategyIOS="standard"
         >
-          {value}
+          {title}
         </Text>
       )}
-      {!disabled && <UISymbol name="chevron.right" size={18} color={m3.surface.s500} />}
+      {toggle ? (
+        // The wrapping Pressable is the single accessible control for this row
+        // (role=switch + label). Hide the inner Switch from the accessibility
+        // tree so screen readers don't announce two switches for one toggle.
+        <Switch
+          value={toggle.value}
+          onValueChange={toggle.onValueChange}
+          trackColor={{ false: m3.surface.s300, true: m3.colorScheme.primary }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
+      ) : (
+        <>
+          {value && (
+            <Text
+              style={styles.settingsValue}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {value}
+            </Text>
+          )}
+          {!disabled && <UISymbol name="chevron.right" size={18} color={m3.surface.s500} />}
+        </>
+      )}
     </View>
   );
+
+  // The toggle variant wraps the row in a Pressable so the whole row is tappable
+  // (matching the other settings rows) and exposes switch a11y semantics.
+  // Non-toggle rows stay a plain View — their tap behavior is supplied by a
+  // wrapping Pressable at the call site.
+  if (toggle) {
+    return (
+      <Pressable
+        onPress={() => toggle.onValueChange(!toggle.value)}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: toggle.value }}
+        accessibilityLabel={title}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+  return content;
 }

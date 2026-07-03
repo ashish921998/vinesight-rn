@@ -1972,6 +1972,16 @@ export const mr = {
     enterPhone: 'फोन नंबर लिहा',
     selectCurrency: 'चलन निवडा',
     selectAreaUnit: 'क्षेत्रफळ एकक निवडा',
+    appMode: {
+      title: 'विस्तृत मोड',
+      subtitle: 'कामगार, साधने, एआय सहाय्यक आणि कार्ये दर्शवा',
+    },
+    appModeIntro: {
+      title: 'आम्ही VineSight सोपे केले आहे',
+      body: 'अॅप आता सोप्या मोडमध्ये सुरू होतो. कामगार, साधने, एआय सहाय्यक आणि कार्ये डिफॉल्टनुसार लपवलेली आहेत. तुम्ही कधीही परत स्विच करू शकता.',
+      enableDetailed: 'विस्तृत मोड चालू करा',
+      staySimplified: 'सोप्या मोडमध्ये राहा',
+    },
     errors: {
       signOutFailed: 'साइन आउट अयशस्वी. पुन्हा प्रयत्न करा.',
       notificationsPermissionDenied: 'सूचना परवानगी मंजूर झाली नाही.',

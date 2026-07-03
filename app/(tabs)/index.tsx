@@ -34,6 +34,7 @@ import { useDomainColors } from '@/styles/use-domain-colors';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
 import { guidedTourEmit } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { useAppModeStore } from '@/stores';
 import { parseDbDateToLocalDate } from '@/utils/date';
 import { createAddLogHref } from '@/utils/add-log-navigation';
 
@@ -68,6 +69,7 @@ export default function DashboardScreen() {
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const hasSeenWelcomeThisSession = useGuidedTourStore((s) => s.hasSeenWelcomeThisSession);
   const hasHydrated = useGuidedTourStore((s) => s.hasHydrated);
+  const detailedMode = useAppModeStore((s) => s.detailedMode);
 
   // Data hooks
   const { data: stats, refetch: refetchStats } = useDashboardStats();
@@ -270,7 +272,9 @@ export default function DashboardScreen() {
     (guidedTourStatus === 'in_progress' ||
       (guidedTourStatus === 'not_started' && !hasSeenWelcomeThisSession));
 
-  const hasAlerts = attentionItems && attentionItems.length > 0;
+  // The attention section is hidden in Simplified mode, so the hero should not
+  // advertise alerts there either.
+  const hasAlerts = detailedMode && !!attentionItems && attentionItems.length > 0;
   const alertCount = attentionItems?.length ?? 0;
 
   useEffect(() => {
@@ -509,109 +513,113 @@ export default function DashboardScreen() {
               </Text>
             </Pressable>
 
-            {/* Workers */}
-            <Pressable
-              onPress={() => handleMetricCardPress('workers')}
-              accessibilityRole="button"
-              accessibilityLabel={t('dashboard.stats.activeWorkers')}
-              style={({ pressed }) => ({
-                flex: 1,
-                minWidth: '45%',
-                backgroundColor: m3.surface.s100,
-                borderWidth: 1,
-                borderColor: m3.surface.s300,
-                borderRadius: borderRadius.md,
-                padding: spacing[4],
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(m3.colorScheme.secondary, 0.12),
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: spacing[3],
-                }}
-              >
-                <SymbolIcon name="person.2" size={18} color={m3.colorScheme.secondary} />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  color: m3.surface.s900,
-                  lineHeight: 28,
-                  marginBottom: spacing[1],
-                }}
-              >
-                {formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s500,
-                  letterSpacing: 0,
-                }}
-              >
-                {t('dashboard.stats.activeWorkers')}
-              </Text>
-            </Pressable>
+            {detailedMode && (
+              <>
+                {/* Workers */}
+                <Pressable
+                  onPress={() => handleMetricCardPress('workers')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.stats.activeWorkers')}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minWidth: '45%',
+                    backgroundColor: m3.surface.s100,
+                    borderWidth: 1,
+                    borderColor: m3.surface.s300,
+                    borderRadius: borderRadius.md,
+                    padding: spacing[4],
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: radius.md,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.secondary, 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: spacing[3],
+                    }}
+                  >
+                    <SymbolIcon name="person.2" size={18} color={m3.colorScheme.secondary} />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: fontSize['2xl'],
+                      fontWeight: fontWeight.bold,
+                      color: m3.surface.s900,
+                      lineHeight: 28,
+                      marginBottom: spacing[1],
+                    }}
+                  >
+                    {formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.surface.s500,
+                      letterSpacing: 0,
+                    }}
+                  >
+                    {t('dashboard.stats.activeWorkers')}
+                  </Text>
+                </Pressable>
 
-            {/* Tasks */}
-            <Pressable
-              onPress={() => handleMetricCardPress('tasks')}
-              accessibilityRole="button"
-              accessibilityLabel={t('dashboard.stats.tasks')}
-              style={({ pressed }) => ({
-                flex: 1,
-                minWidth: '45%',
-                backgroundColor: m3.surface.s100,
-                borderWidth: 1,
-                borderColor: m3.surface.s300,
-                borderRadius: borderRadius.md,
-                padding: spacing[4],
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(m3.colorScheme.accent, 0.12),
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: spacing[3],
-                }}
-              >
-                <SymbolIcon name="checklist" size={18} color={m3.colorScheme.accent} />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  color: m3.surface.s900,
-                  lineHeight: 28,
-                  marginBottom: spacing[1],
-                }}
-              >
-                {formatNumber(stats?.pendingTasksCount ?? 0, { maximumFractionDigits: 0 })}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s500,
-                  letterSpacing: 0,
-                }}
-              >
-                {t('dashboard.stats.tasks')}
-              </Text>
-            </Pressable>
+                {/* Tasks */}
+                <Pressable
+                  onPress={() => handleMetricCardPress('tasks')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.stats.tasks')}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minWidth: '45%',
+                    backgroundColor: m3.surface.s100,
+                    borderWidth: 1,
+                    borderColor: m3.surface.s300,
+                    borderRadius: borderRadius.md,
+                    padding: spacing[4],
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: radius.md,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.accent, 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: spacing[3],
+                    }}
+                  >
+                    <SymbolIcon name="checklist" size={18} color={m3.colorScheme.accent} />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: fontSize['2xl'],
+                      fontWeight: fontWeight.bold,
+                      color: m3.surface.s900,
+                      lineHeight: 28,
+                      marginBottom: spacing[1],
+                    }}
+                  >
+                    {formatNumber(stats?.pendingTasksCount ?? 0, { maximumFractionDigits: 0 })}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.surface.s500,
+                      letterSpacing: 0,
+                    }}
+                  >
+                    {t('dashboard.stats.tasks')}
+                  </Text>
+                </Pressable>
+              </>
+            )}
 
             {/* Activities */}
             <Pressable
@@ -666,308 +674,310 @@ export default function DashboardScreen() {
             </Pressable>
           </View>
 
-          {/* Today Needs Attention */}
-          <View style={{ marginBottom: spacing[6] }}>
-            <Text style={sectionTitleStyle} accessibilityRole="header">
-              {t('dashboard.needsAttention.title')}
-            </Text>
-            {isLoadingTodayNeedsAttention ? (
-              <View
-                style={{
-                  height: 72,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderRadius: m3.shape.cornerMedium,
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                }}
-              >
-                <ActivityIndicator color={m3.colorScheme.primary} />
-              </View>
-            ) : todayNeedsAttentionError ? (
-              <View
-                style={{
-                  borderRadius: m3.shape.cornerLarge,
-                  padding: spacing[5],
-                  alignItems: 'center',
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                }}
-              >
-                <SymbolIcon
-                  name="exclamationmark.triangle.fill"
-                  size={38}
-                  color={m3.colorScheme.error}
-                />
-                <Text
+          {/* Today Needs Attention — Simplified mode hides this section */}
+          {detailedMode && (
+            <View style={{ marginBottom: spacing[6] }}>
+              <Text style={sectionTitleStyle} accessibilityRole="header">
+                {t('dashboard.needsAttention.title')}
+              </Text>
+              {isLoadingTodayNeedsAttention ? (
+                <View
                   style={{
-                    ...m3.typography.titleMedium,
-                    color: m3.colorScheme.onSurface,
-                    marginTop: spacing[3],
-                    textAlign: 'center',
+                    height: 72,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: m3.surface.surfaceContainerLow,
+                    borderRadius: m3.shape.cornerMedium,
+                    borderWidth: 1,
+                    borderColor: m3.colorScheme.outlineVariant,
                   }}
                 >
-                  {t('dashboard.needsAttention.error.title')}
-                </Text>
-                <Text
-                  style={{
-                    ...m3.typography.bodyMedium,
-                    color: m3.colorScheme.onSurfaceVariant,
-                    marginTop: spacing[2],
-                    textAlign: 'center',
-                  }}
-                >
-                  {t('dashboard.needsAttention.error.subtitle')}
-                </Text>
-                <View style={{ marginTop: spacing[4], width: '100%' }}>
-                  <Button
-                    title={t('dashboard.needsAttention.error.cta')}
-                    onPress={() => {
-                      void refetchTodayNeedsAttention();
-                    }}
-                  />
+                  <ActivityIndicator color={m3.colorScheme.primary} />
                 </View>
-              </View>
-            ) : attentionItems && attentionItems.length > 0 ? (
-              attentionItems.map((item) => {
-                const title = getAttentionTitle(item);
-                const reasonLabel = t(`dashboard.needsAttention.reasons.${item.type}`);
-                const actionLabel = getAttentionActionLabel(item);
-                const metaLabel = getAttentionMetaLabel(item);
-                const icon = getAttentionIcon(item);
-                const isHigh = item.severity === 'high';
-                const isMedium = item.severity === 'medium';
-                const severityHighLabel = t('dashboard.needsAttention.severity.high');
-                const severityMediumLabel = t('dashboard.needsAttention.severity.medium');
-                const emphasisColor = isHigh
-                  ? m3.colorScheme.error
-                  : isMedium
-                    ? m3.colorScheme.warning
-                    : m3.colorScheme.primary;
-                const iconBackground = isHigh
-                  ? colorWithOpacity(m3.colorScheme.error, 0.18)
-                  : isMedium
-                    ? colorWithOpacity(m3.colorScheme.warning, 0.18)
-                    : colorWithOpacity(m3.colorScheme.primary, 0.1);
-                const iconGlyphColor = isHigh
-                  ? m3.colorScheme.error
-                  : isMedium
-                    ? m3.colorScheme.warning
-                    : icon.color;
-                const secondaryLine =
-                  item.farmName && metaLabel
-                    ? `${item.farmName} · ${metaLabel}`
-                    : item.farmName && !metaLabel
-                      ? `${item.farmName} · ${reasonLabel}`
-                      : metaLabel
-                        ? metaLabel
-                        : reasonLabel;
-                const accessibilityLabel = `${title}.${
-                  isHigh ? ` ${severityHighLabel}.` : isMedium ? ` ${severityMediumLabel}.` : ''
-                } ${secondaryLine}. ${actionLabel}.`;
-
-                return (
-                  <Pressable
-                    key={item.id}
-                    onPress={() => handleNeedsAttentionPress(item)}
-                    accessibilityRole="button"
-                    accessibilityLabel={accessibilityLabel}
+              ) : todayNeedsAttentionError ? (
+                <View
+                  style={{
+                    borderRadius: m3.shape.cornerLarge,
+                    padding: spacing[5],
+                    alignItems: 'center',
+                    backgroundColor: m3.surface.surfaceContainerLow,
+                    borderWidth: 1,
+                    borderColor: m3.colorScheme.outlineVariant,
+                  }}
+                >
+                  <SymbolIcon
+                    name="exclamationmark.triangle.fill"
+                    size={38}
+                    color={m3.colorScheme.error}
+                  />
+                  <Text
                     style={{
-                      borderRadius: m3.shape.cornerMedium,
-                      paddingVertical: spacing[3] + 2,
-                      paddingHorizontal: spacing[3],
-                      marginBottom: spacing[2],
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: colorWithOpacity(emphasisColor, 0.07),
-                      borderWidth: 1,
-                      borderColor: colorWithOpacity(emphasisColor, 0.25),
-                      overflow: 'hidden',
+                      ...m3.typography.titleMedium,
+                      color: m3.colorScheme.onSurface,
+                      marginTop: spacing[3],
+                      textAlign: 'center',
                     }}
                   >
-                    {({ pressed }) => (
-                      <>
-                        <View
-                          style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: borderRadius.full,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: iconBackground,
-                          }}
-                        >
-                          <SymbolIcon name={icon.name} size={20} color={iconGlyphColor} />
-                        </View>
-                        <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                    {t('dashboard.needsAttention.error.title')}
+                  </Text>
+                  <Text
+                    style={{
+                      ...m3.typography.bodyMedium,
+                      color: m3.colorScheme.onSurfaceVariant,
+                      marginTop: spacing[2],
+                      textAlign: 'center',
+                    }}
+                  >
+                    {t('dashboard.needsAttention.error.subtitle')}
+                  </Text>
+                  <View style={{ marginTop: spacing[4], width: '100%' }}>
+                    <Button
+                      title={t('dashboard.needsAttention.error.cta')}
+                      onPress={() => {
+                        void refetchTodayNeedsAttention();
+                      }}
+                    />
+                  </View>
+                </View>
+              ) : attentionItems && attentionItems.length > 0 ? (
+                attentionItems.map((item) => {
+                  const title = getAttentionTitle(item);
+                  const reasonLabel = t(`dashboard.needsAttention.reasons.${item.type}`);
+                  const actionLabel = getAttentionActionLabel(item);
+                  const metaLabel = getAttentionMetaLabel(item);
+                  const icon = getAttentionIcon(item);
+                  const isHigh = item.severity === 'high';
+                  const isMedium = item.severity === 'medium';
+                  const severityHighLabel = t('dashboard.needsAttention.severity.high');
+                  const severityMediumLabel = t('dashboard.needsAttention.severity.medium');
+                  const emphasisColor = isHigh
+                    ? m3.colorScheme.error
+                    : isMedium
+                      ? m3.colorScheme.warning
+                      : m3.colorScheme.primary;
+                  const iconBackground = isHigh
+                    ? colorWithOpacity(m3.colorScheme.error, 0.18)
+                    : isMedium
+                      ? colorWithOpacity(m3.colorScheme.warning, 0.18)
+                      : colorWithOpacity(m3.colorScheme.primary, 0.1);
+                  const iconGlyphColor = isHigh
+                    ? m3.colorScheme.error
+                    : isMedium
+                      ? m3.colorScheme.warning
+                      : icon.color;
+                  const secondaryLine =
+                    item.farmName && metaLabel
+                      ? `${item.farmName} · ${metaLabel}`
+                      : item.farmName && !metaLabel
+                        ? `${item.farmName} · ${reasonLabel}`
+                        : metaLabel
+                          ? metaLabel
+                          : reasonLabel;
+                  const accessibilityLabel = `${title}.${
+                    isHigh ? ` ${severityHighLabel}.` : isMedium ? ` ${severityMediumLabel}.` : ''
+                  } ${secondaryLine}. ${actionLabel}.`;
+
+                  return (
+                    <Pressable
+                      key={item.id}
+                      onPress={() => handleNeedsAttentionPress(item)}
+                      accessibilityRole="button"
+                      accessibilityLabel={accessibilityLabel}
+                      style={{
+                        borderRadius: m3.shape.cornerMedium,
+                        paddingVertical: spacing[3] + 2,
+                        paddingHorizontal: spacing[3],
+                        marginBottom: spacing[2],
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: colorWithOpacity(emphasisColor, 0.07),
+                        borderWidth: 1,
+                        borderColor: colorWithOpacity(emphasisColor, 0.25),
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {({ pressed }) => (
+                        <>
+                          <View
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: borderRadius.full,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: iconBackground,
+                            }}
+                          >
+                            <SymbolIcon name={icon.name} size={20} color={iconGlyphColor} />
+                          </View>
+                          <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: spacing[2],
+                              }}
+                            >
+                              <Text
+                                numberOfLines={1}
+                                style={{
+                                  ...m3.typography.titleMedium,
+                                  color: m3.colorScheme.onSurface,
+                                  flexShrink: 1,
+                                }}
+                              >
+                                {title}
+                              </Text>
+                              {isHigh ? (
+                                <View
+                                  style={{
+                                    paddingHorizontal: 8,
+                                    paddingVertical: 2,
+                                    borderRadius: borderRadius.pill,
+                                    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.14),
+                                  }}
+                                >
+                                  <Text
+                                    style={{
+                                      ...m3.typography.labelSmall,
+                                      color: m3.colorScheme.error,
+                                      fontWeight: fontWeight.semibold,
+                                      letterSpacing: 0.3,
+                                      textTransform: 'uppercase',
+                                    }}
+                                  >
+                                    {severityHighLabel}
+                                  </Text>
+                                </View>
+                              ) : isMedium ? (
+                                <View
+                                  style={{
+                                    paddingHorizontal: 8,
+                                    paddingVertical: 2,
+                                    borderRadius: borderRadius.pill,
+                                    backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.14),
+                                  }}
+                                >
+                                  <Text
+                                    style={{
+                                      ...m3.typography.labelSmall,
+                                      color: m3.colorScheme.warning,
+                                      fontWeight: fontWeight.semibold,
+                                      letterSpacing: 0.3,
+                                      textTransform: 'uppercase',
+                                    }}
+                                  >
+                                    {severityMediumLabel}
+                                  </Text>
+                                </View>
+                              ) : null}
+                            </View>
+                            <Text
+                              numberOfLines={1}
+                              style={{
+                                ...m3.typography.labelSmall,
+                                color: m3.colorScheme.onSurfaceVariant,
+                                marginTop: 2,
+                              }}
+                            >
+                              {secondaryLine}
+                            </Text>
+                          </View>
                           <View
                             style={{
                               flexDirection: 'row',
                               alignItems: 'center',
-                              gap: spacing[2],
+                              gap: 4,
+                              marginLeft: spacing[2],
                             }}
                           >
                             <Text
                               numberOfLines={1}
                               style={{
-                                ...m3.typography.titleMedium,
-                                color: m3.colorScheme.onSurface,
-                                flexShrink: 1,
+                                ...m3.typography.labelSmall,
+                                color: m3.colorScheme.primary,
+                                fontWeight: fontWeight.semibold,
                               }}
                             >
-                              {title}
+                              {actionLabel}
                             </Text>
-                            {isHigh ? (
-                              <View
-                                style={{
-                                  paddingHorizontal: 8,
-                                  paddingVertical: 2,
-                                  borderRadius: borderRadius.pill,
-                                  backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.14),
-                                }}
-                              >
-                                <Text
-                                  style={{
-                                    ...m3.typography.labelSmall,
-                                    color: m3.colorScheme.error,
-                                    fontWeight: fontWeight.semibold,
-                                    letterSpacing: 0.3,
-                                    textTransform: 'uppercase',
-                                  }}
-                                >
-                                  {severityHighLabel}
-                                </Text>
-                              </View>
-                            ) : isMedium ? (
-                              <View
-                                style={{
-                                  paddingHorizontal: 8,
-                                  paddingVertical: 2,
-                                  borderRadius: borderRadius.pill,
-                                  backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.14),
-                                }}
-                              >
-                                <Text
-                                  style={{
-                                    ...m3.typography.labelSmall,
-                                    color: m3.colorScheme.warning,
-                                    fontWeight: fontWeight.semibold,
-                                    letterSpacing: 0.3,
-                                    textTransform: 'uppercase',
-                                  }}
-                                >
-                                  {severityMediumLabel}
-                                </Text>
-                              </View>
-                            ) : null}
+                            <SymbolIcon
+                              name="chevron.right"
+                              size={14}
+                              color={m3.colorScheme.primary}
+                            />
                           </View>
-                          <Text
-                            numberOfLines={1}
-                            style={{
-                              ...m3.typography.labelSmall,
-                              color: m3.colorScheme.onSurfaceVariant,
-                              marginTop: 2,
-                            }}
-                          >
-                            {secondaryLine}
-                          </Text>
-                        </View>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 4,
-                            marginLeft: spacing[2],
-                          }}
-                        >
-                          <Text
-                            numberOfLines={1}
-                            style={{
-                              ...m3.typography.labelSmall,
-                              color: m3.colorScheme.primary,
-                              fontWeight: fontWeight.semibold,
-                            }}
-                          >
-                            {actionLabel}
-                          </Text>
-                          <SymbolIcon
-                            name="chevron.right"
-                            size={14}
-                            color={m3.colorScheme.primary}
+                          <View
+                            pointerEvents="none"
+                            style={[
+                              StyleSheet.absoluteFill,
+                              {
+                                backgroundColor: pressed
+                                  ? colorWithOpacity(
+                                      m3.colorScheme.onSurface,
+                                      m3.stateLayerOpacity.pressed,
+                                    )
+                                  : 'transparent',
+                              },
+                            ]}
                           />
-                        </View>
-                        <View
-                          pointerEvents="none"
-                          style={[
-                            StyleSheet.absoluteFill,
-                            {
-                              backgroundColor: pressed
-                                ? colorWithOpacity(
-                                    m3.colorScheme.onSurface,
-                                    m3.stateLayerOpacity.pressed,
-                                  )
-                                : 'transparent',
-                            },
-                          ]}
-                        />
-                      </>
-                    )}
-                  </Pressable>
-                );
-              })
-            ) : (
-              <View
-                style={{
-                  borderRadius: m3.shape.cornerLarge,
-                  padding: spacing[5],
-                  alignItems: 'center',
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                }}
-              >
-                <SymbolIcon name="checkmark.seal.fill" size={38} color={m3.colorScheme.primary} />
-                <Text
+                        </>
+                      )}
+                    </Pressable>
+                  );
+                })
+              ) : (
+                <View
                   style={{
-                    ...m3.typography.titleMedium,
-                    color: m3.colorScheme.onSurface,
-                    marginTop: spacing[3],
-                    textAlign: 'center',
+                    borderRadius: m3.shape.cornerLarge,
+                    padding: spacing[5],
+                    alignItems: 'center',
+                    backgroundColor: m3.surface.surfaceContainerLow,
+                    borderWidth: 1,
+                    borderColor: m3.colorScheme.outlineVariant,
                   }}
                 >
-                  {t('dashboard.needsAttention.empty.title')}
-                </Text>
-                <Text
-                  style={{
-                    ...m3.typography.bodyMedium,
-                    color: m3.colorScheme.onSurfaceVariant,
-                    marginTop: spacing[2],
-                    textAlign: 'center',
-                  }}
-                >
-                  {t('dashboard.needsAttention.empty.subtitle')}
-                </Text>
-                <View style={{ marginTop: spacing[4], width: '100%' }}>
-                  <Button
-                    title={
-                      hasFarms
-                        ? t('dashboard.needsAttention.empty.ctaWithFarms')
-                        : t('dashboard.cta.addFirstFarm')
-                    }
-                    onPress={() => {
-                      if (hasFarms) {
-                        router.push(createAddLogHref());
-                        return;
-                      }
-                      router.push('/(tabs)/explore');
+                  <SymbolIcon name="checkmark.seal.fill" size={38} color={m3.colorScheme.primary} />
+                  <Text
+                    style={{
+                      ...m3.typography.titleMedium,
+                      color: m3.colorScheme.onSurface,
+                      marginTop: spacing[3],
+                      textAlign: 'center',
                     }}
-                  />
+                  >
+                    {t('dashboard.needsAttention.empty.title')}
+                  </Text>
+                  <Text
+                    style={{
+                      ...m3.typography.bodyMedium,
+                      color: m3.colorScheme.onSurfaceVariant,
+                      marginTop: spacing[2],
+                      textAlign: 'center',
+                    }}
+                  >
+                    {t('dashboard.needsAttention.empty.subtitle')}
+                  </Text>
+                  <View style={{ marginTop: spacing[4], width: '100%' }}>
+                    <Button
+                      title={
+                        hasFarms
+                          ? t('dashboard.needsAttention.empty.ctaWithFarms')
+                          : t('dashboard.cta.addFirstFarm')
+                      }
+                      onPress={() => {
+                        if (hasFarms) {
+                          router.push(createAddLogHref());
+                          return;
+                        }
+                        router.push('/(tabs)/explore');
+                      }}
+                    />
+                  </View>
                 </View>
-              </View>
-            )}
-          </View>
+              )}
+            </View>
+          )}
 
           {/* Quick Actions Section */}
           <View style={{ marginBottom: spacing[6] }}>

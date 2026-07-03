@@ -19,6 +19,7 @@ import {
   useLanguageStore,
   useNotificationStore,
   useThemeStore,
+  useAppModeStore,
 } from '@/stores';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { ToastHost } from '@/components/ui/toast';
@@ -36,6 +37,7 @@ import { androidTextPadding, fontSize } from '@/styles/theme';
 import { useM3, useIsDark } from '@/styles/use-theme';
 import { queryClient, queryPersister, QUERY_CACHE_MAX_AGE_MS } from '@/lib/query-cache';
 import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
+import { AppModeIntroGate } from '@/components/app-mode-intro-modal';
 import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
 import { resolveFeatureOverviewRoute } from '@/services/feature-overview-notifications';
 
@@ -124,6 +126,19 @@ if (globalThisWithSplash[splashKey] !== true) {
 }
 WebBrowser.maybeCompleteAuthSession();
 
+/**
+ * Destinations that are only reachable in Detailed mode. A notification that
+ * would route here in Simplified mode falls back to home instead.
+ */
+const DETAILED_ONLY_ROUTES = new Set(['/(tabs)/workers', '/tasks']);
+
+function resolveNotificationTarget<R extends string>(route: R): R | '/(tabs)' {
+  if (!useAppModeStore.getState().detailedMode && DETAILED_ONLY_ROUTES.has(route)) {
+    return '/(tabs)';
+  }
+  return route;
+}
+
 function PetioleReminderSync() {
   usePetioleTestReminders();
   return null;
@@ -152,6 +167,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
   const languageHydrated = useLanguageStore((s) => s.hasHydrated);
 
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
+  const appModeHydrated = useAppModeStore((s) => s.hydrated);
   const notificationPermissionPrompted = useNotificationStore(
     (s) => s.notificationPermissionPrompted,
   );
@@ -500,8 +516,11 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
     };
   }, []);
 
-  // Handle notification taps → deep-link to the appropriate screen
+  // Handle notification taps → deep-link to the appropriate screen.
+  // Gated on app-mode hydration so cold-start notification routing reads the
+  // user's persisted mode rather than the in-memory default (Simplified).
   useEffect(() => {
+    if (!appModeHydrated) return;
     let cleanup: null | (() => void) = null;
     let disposed = false;
 
@@ -535,13 +554,14 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
           currentRouter.push('/(tabs)');
           return;
         }
-        currentRouter.push(route);
+        currentRouter.push(resolveNotificationTarget(route));
       } else if (
         data?.type === 'task_due' ||
         data?.type === 'task_due_tomorrow' ||
         data?.type === 'task_overdue'
       ) {
-        currentRouter.push('/tasks');
+        // Tasks screen is hidden in simplified mode — fall back to home.
+        currentRouter.push(resolveNotificationTarget('/tasks'));
       } else if (data?.type === 'low_water') {
         currentRouter.push('/(tabs)');
       } else if (data?.type === 'warehouse_reorder') {
@@ -594,7 +614,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
       disposed = true;
       cleanup?.();
     };
-  }, []);
+  }, [appModeHydrated]);
 
   // Safety timeout: if initialization hangs (e.g. SecureStore on Android),
   // force-complete all conditions so the app doesn't stay on splash forever.
@@ -821,6 +841,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="worker-analytics/[id]" options={{ headerShown: true }} />
               </Stack>
               <GuidedTourController />
+              <AppModeIntroGate />
             </I18nextProvider>
           </PersistQueryClientProvider>
           <ToastHost />
