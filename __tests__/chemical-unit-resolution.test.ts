@@ -121,6 +121,15 @@ describe('resolveChemicalQuantityBasis', () => {
     },
   );
 
+  it.each([' per acre', '  per acre', ' per acre '])(
+    'empty-base string %j yields total — no base token means no usable rate (trim-first, matching the deleted foldUnitText)',
+    (raw) => {
+      expect(resolveChemicalQuantityBasis(raw)).toBe('total');
+      // Leading whitespace before a REAL base never regresses the fold:
+      expect(resolveChemicalQuantityBasis(`  kg${raw}`)).toBe('per_acre');
+    },
+  );
+
   it.each(['gm/L', 'ml/L', 'ppm', 'kg', 'gram', 'liter', 'ml', '', '  ', 'kgg'])(
     '%j yields total',
     (raw) => {

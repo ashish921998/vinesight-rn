@@ -98,6 +98,15 @@ describe('AC2 — unknown unit strings stay verbatim and are flagged, never kg',
     });
   });
 
+  it("empty-base ' per acre' is not per-acre testimony (accepted edge: trim-first fold)", () => {
+    // A unit string with no base token carries no usable rate; the fold
+    // trims before matching, so it never becomes '/acre'. See unit-text.ts.
+    expect(resolveFertigationPrefill(' per acre')).toEqual({
+      unit: 'per acre',
+      quantityBasis: 'total',
+    });
+  });
+
   it('prefill of a ppm plan item keeps ppm instead of the legacy kg/acre coercion', () => {
     expect(resolveFertigationPrefill('ppm')).toEqual({ unit: 'ppm', quantityBasis: 'total' });
   });

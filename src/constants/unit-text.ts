@@ -21,6 +21,15 @@ import type { QuantityBasis } from '@/types/database';
  * `'sacks / acre'` the same as `'sacks/acre'`, and dose-guard references
  * display the folded string verbatim (a DB unit of `' ml/L '` must not
  * render with stray spaces).
+ *
+ * Trim runs FIRST, deliberately: an empty-base string like `' per acre'`
+ * must NOT fold to `'/acre'` and sniff as per-acre — a unit with no base
+ * token carries no usable rate, and pairing that sniff with the spray
+ * picker's fallback unit would recreate the incoherent
+ * `{unit: 'gm/L', basis: 'per_acre'}` rows the representability gate in
+ * chemical-units.ts exists to prevent. (The deleted spray foldUnitText
+ * also trimmed first; realistic inputs like `'  kg per acre'` keep their
+ * internal whitespace and fold identically under either order.)
  */
 export function toKernelSpelling(raw: string): string {
   return raw
