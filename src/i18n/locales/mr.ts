@@ -877,8 +877,18 @@ export const mr = {
       qtyPlaceholder: 'प्रमाण',
       selectUnit: 'युनिट निवडा',
       quickUnitLabel: 'रसायन प्रमाण युनिट म्हणून {{unit}} वापरा',
-      totalQty: 'एकूण प्रमाण',
-      perAcre: 'प्रति एकर',
+      moreUnits: 'इतर युनिट्स',
+      tankEcho: {
+        water: '{{quantity}} {{unit}} × {{water}} लिटर = टाकीत {{total}}',
+        area: '{{quantity}} {{unit}} × {{area}} एकर = टाकीत {{total}}',
+      },
+      doseGuard: {
+        highPlan:
+          'मात्रा तपासा — तुमच्या नियोजनातील मात्रेच्या ({{reference}}) सुमारे {{ratio}} पट',
+        lowPlan: 'मात्रा तपासा — तुमच्या नियोजनातील मात्रेच्या ({{reference}}) सुमारे 1/{{ratio}}',
+        highLastLog: 'मात्रा तपासा — तुमच्या मागील नोंदीच्या ({{reference}}) सुमारे {{ratio}} पट',
+        lowLastLog: 'मात्रा तपासा — तुमच्या मागील नोंदीच्या ({{reference}}) सुमारे 1/{{ratio}}',
+      },
     },
     quickAdd: 'जलद जोडा',
     catalogOnly: {

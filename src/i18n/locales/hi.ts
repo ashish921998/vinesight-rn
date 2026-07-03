@@ -873,8 +873,17 @@ export const hi = {
       qtyPlaceholder: 'मात्रा',
       selectUnit: 'इकाई चुनें',
       quickUnitLabel: 'रसायन मात्रा इकाई के रूप में {{unit}} उपयोग करें',
-      totalQty: 'कुल मात्रा',
-      perAcre: 'प्रति एकड़',
+      moreUnits: 'अन्य इकाइयाँ',
+      tankEcho: {
+        water: '{{quantity}} {{unit}} × {{water}} लीटर = टंकी में {{total}}',
+        area: '{{quantity}} {{unit}} × {{area}} एकड़ = टंकी में {{total}}',
+      },
+      doseGuard: {
+        highPlan: 'खुराक जांचें — आपकी योजना की खुराक ({{reference}}) से लगभग {{ratio}} गुना',
+        lowPlan: 'खुराक जांचें — आपकी योजना की खुराक ({{reference}}) का लगभग 1/{{ratio}}',
+        highLastLog: 'खुराक जांचें — आपकी पिछली एंट्री ({{reference}}) से लगभग {{ratio}} गुना',
+        lowLastLog: 'खुराक जांचें — आपकी पिछली एंट्री ({{reference}}) का लगभग 1/{{ratio}}',
+      },
     },
     quickAdd: 'त्वरित जोड़',
     catalogOnly: {

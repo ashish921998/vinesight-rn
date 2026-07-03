@@ -96,6 +96,17 @@ const planItems: FertilizerPlanItem[] = [
     notes: null,
     sort_order: null,
   },
+  {
+    id: 'p3',
+    name: 'PlanZinc',
+    quantity: 200,
+    unit: 'g/acre',
+    application_date: null,
+    application_method: null,
+    application_frequency: null,
+    notes: null,
+    sort_order: null,
+  },
 ];
 
 const catalogMixes: ChemicalMix[] = [
@@ -139,8 +150,10 @@ const catalogMixes: ChemicalMix[] = [
   },
 ];
 
-function renderSprayForm(onChange: (data: SprayFormData) => void) {
-  const data = createEmptySprayFormData();
+function renderSprayForm(
+  onChange: (data: SprayFormData) => void,
+  data: SprayFormData = createEmptySprayFormData(),
+) {
   const screen = render(
     <SprayForm
       data={data}
@@ -226,6 +239,78 @@ describe('SprayForm × SearchSelect adoption', () => {
       quantityBasis: 'per_acre',
       planItemId: 'p2',
     });
+  });
+
+  it("resolves the canonical plan spelling 'g/acre' to gram + per_acre, never gm/L", () => {
+    const onChange = jest.fn();
+    const screen = renderSprayForm(onChange);
+
+    fireEvent.press(screen.getByText('PlanZinc'));
+
+    const next = onChange.mock.calls[0][0] as SprayFormData;
+    expect(next.chemicals[0]).toMatchObject({
+      name: 'PlanZinc',
+      quantity: 200,
+      unit: 'gram',
+      quantityBasis: 'per_acre',
+      planItemId: 'p3',
+    });
+  });
+
+  it('quick-add dedupes on the fused chip: same name + unit with a different basis is a new row', () => {
+    const onChange = jest.fn();
+    const data = createEmptySprayFormData();
+    data.chemicals = [
+      {
+        id: 'row1',
+        name: 'PlanUrea',
+        quantity: 4,
+        unit: 'kg',
+        quantityBasis: 'total',
+        warehouseItemId: null,
+        catalogProductId: null,
+        planItemId: null,
+        compositionSnapshot: null,
+        densityKgPerL: null,
+      },
+    ];
+    const screen = renderSprayForm(onChange, data);
+
+    // Plan pick resolves to kg + per_acre — a different chip than kg total.
+    fireEvent.press(screen.getByText('PlanUrea'));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const next = onChange.mock.calls[0][0] as SprayFormData;
+    expect(next.chemicals).toHaveLength(2);
+    expect(next.chemicals[1]).toMatchObject({
+      name: 'PlanUrea',
+      unit: 'kg',
+      quantityBasis: 'per_acre',
+    });
+  });
+
+  it('quick-add still blocks a true duplicate (same name, same fused chip)', () => {
+    const onChange = jest.fn();
+    const data = createEmptySprayFormData();
+    data.chemicals = [
+      {
+        id: 'row1',
+        name: 'PlanUrea',
+        quantity: 4,
+        unit: 'kg',
+        quantityBasis: 'per_acre',
+        warehouseItemId: null,
+        catalogProductId: null,
+        planItemId: null,
+        compositionSnapshot: null,
+        densityKgPerL: null,
+      },
+    ];
+    const screen = renderSprayForm(onChange, data);
+
+    fireEvent.press(screen.getByText('PlanUrea'));
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('adds a plain custom row from the escape hatch', () => {

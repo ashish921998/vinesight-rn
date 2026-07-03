@@ -1861,6 +1861,7 @@ export function EntryForm({
                 fertigationHistoryItems={recentFertigationItems ?? []}
                 fertigationPlanItems={fertilizerPlan?.items ?? []}
                 fertigationCatalogProducts={fertilizerCatalogProducts}
+                sprayAreaAcres={activeFarm?.area ?? null}
                 showSaveButton={false}
               />
             </ScrollView>
@@ -1982,6 +1983,7 @@ export function EntryForm({
           fertigationHistoryItems={recentFertigationItems ?? []}
           fertigationPlanItems={fertilizerPlan?.items ?? []}
           fertigationCatalogProducts={fertilizerCatalogProducts}
+          sprayAreaAcres={activeFarm?.area ?? null}
         />
       </View>
     );

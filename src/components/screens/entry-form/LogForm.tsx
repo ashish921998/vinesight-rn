@@ -57,6 +57,8 @@ interface LogFormProps {
   fertigationHistoryItems?: RecentInputItem[];
   fertigationPlanItems?: FertilizerPlanItem[];
   fertigationCatalogProducts?: MasterCatalogProduct[];
+  /** Farm area in acres — resolves per-acre spray doses into the tank echo. */
+  sprayAreaAcres?: number | null;
   showSaveButton?: boolean;
   /** Whether the irrigation entry includes an attached fertilizer (fertigation) log. */
   includeFertilizersWithIrrigation?: boolean;
@@ -90,6 +92,7 @@ export function LogForm({
   fertigationHistoryItems = [],
   fertigationPlanItems = [],
   fertigationCatalogProducts = [],
+  sprayAreaAcres = null,
   showSaveButton = true,
   includeFertilizersWithIrrigation = false,
   onIncludeFertilizersWithIrrigationChange,
@@ -306,6 +309,7 @@ export function LogForm({
           catalogMixes={sprayCatalogMixes}
           historyItems={sprayHistoryItems}
           planItems={sprayPlanItems}
+          areaAcres={sprayAreaAcres}
           compact
         />
       )}
