@@ -353,6 +353,28 @@ function timeoutForDeadline(deadline: number, cap: number): number {
   return Math.max(MIN_CALL_TIMEOUT_MS, Math.min(cap, remaining));
 }
 
+// The single fetch primitive every external call routes through: global
+// deadline (via timeoutForDeadline) + a named TimeoutError so a stall surfaces
+// as "X timed out after Nms" instead of the vague "The operation was aborted."
+async function fetchBounded(
+  url: string,
+  init: RequestInit,
+  step: string,
+  deadline: number,
+  cap = DI_REQUEST_TIMEOUT_MS,
+): Promise<Response> {
+  const callTimeout = timeoutForDeadline(deadline, cap);
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(callTimeout) });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`${step} timed out after ${callTimeout}ms`);
+    }
+    throw error;
+  }
+}
+
+// fetchBounded + non-2xx check + JSON parse, for the Sarvam control calls.
 async function diFetchJson(
   url: string,
   init: RequestInit,
@@ -360,16 +382,7 @@ async function diFetchJson(
   deadline: number,
   timeoutMs = DI_REQUEST_TIMEOUT_MS,
 ): Promise<DiResponse> {
-  let res: Response;
-  const callTimeout = timeoutForDeadline(deadline, timeoutMs);
-  try {
-    res = await fetch(url, { ...init, signal: AbortSignal.timeout(callTimeout) });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`${step} timed out after ${callTimeout}ms`);
-    }
-    throw error;
-  }
+  const res = await fetchBounded(url, init, step, deadline, timeoutMs);
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
     throw new Error(`${step} failed (${res.status}): ${detail}`);
@@ -414,24 +427,18 @@ async function digitizeDocument(
   const fileUrl: string | undefined = uploadLinks?.upload_urls?.[filename]?.file_url;
   if (!fileUrl) throw new Error('No presigned upload URL returned');
 
-  // 3. Upload the file to Azure blob storage (presigned PUT). Same
-  // TimeoutError handling as diFetchJson: without it, a slow upload surfaces as
-  // the vague "The operation was aborted." instead of "File upload timed out".
-  const putTimeout = timeoutForDeadline(deadline, DI_UPLOAD_TIMEOUT_MS);
-  let putRes: Response;
-  try {
-    putRes = await fetch(fileUrl, {
+  // 3. Upload the file to Azure blob storage (presigned PUT).
+  const putRes = await fetchBounded(
+    fileUrl,
+    {
       method: 'PUT',
       headers: { 'x-ms-blob-type': 'BlockBlob', 'Content-Type': contentType },
       body: fileBytes,
-      signal: AbortSignal.timeout(putTimeout),
-    });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`File upload timed out after ${putTimeout}ms`);
-    }
-    throw error;
-  }
+    },
+    'File upload',
+    deadline,
+    DI_UPLOAD_TIMEOUT_MS,
+  );
   if (!putRes.ok) {
     const detail = await putRes.text().catch(() => '');
     throw new Error(`File upload failed (${putRes.status}): ${detail}`);
@@ -489,20 +496,13 @@ async function digitizeDocument(
   const downloadUrl = urls[target]?.file_url;
   if (!downloadUrl) throw new Error('Digitization output is missing a download URL');
 
-  // Same TimeoutError handling as the PUT above and diFetchJson — a slow
-  // download should surface as a clear timeout, not "The operation was aborted."
-  const downloadTimeout = timeoutForDeadline(deadline, DI_UPLOAD_TIMEOUT_MS);
-  let contentRes: Response;
-  try {
-    contentRes = await fetch(downloadUrl, {
-      signal: AbortSignal.timeout(downloadTimeout),
-    });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Output download timed out after ${downloadTimeout}ms`);
-    }
-    throw error;
-  }
+  const contentRes = await fetchBounded(
+    downloadUrl,
+    {},
+    'Output download',
+    deadline,
+    DI_UPLOAD_TIMEOUT_MS,
+  );
   if (!contentRes.ok) {
     throw new Error(`Failed to download output (${contentRes.status})`);
   }
@@ -548,19 +548,14 @@ async function extractParameters(
   testType: 'soil' | 'petiole',
   deadline: number,
 ): Promise<StructuredPayload> {
-  // Same TimeoutError handling as diFetchJson and the PUT/download calls —
-  // a stalled extraction surfaces as a clear timeout, not "The operation was
-  // aborted." Bounded by the global deadline (caps at DI_UPLOAD_TIMEOUT_MS).
-  const chatTimeout = timeoutForDeadline(deadline, DI_UPLOAD_TIMEOUT_MS);
-  let res: Response;
-  try {
-    res = await fetch(CHAT_URL, {
+  const res = await fetchBounded(
+    CHAT_URL,
+    {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${SARVAM_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      signal: AbortSignal.timeout(chatTimeout),
       body: JSON.stringify({
         model: SARVAM_CHAT_MODEL,
         temperature: 0,
@@ -584,13 +579,11 @@ async function extractParameters(
           },
         },
       }),
-    });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Chat completion timed out after ${chatTimeout}ms`);
-    }
-    throw error;
-  }
+    },
+    'Chat completion',
+    deadline,
+    DI_UPLOAD_TIMEOUT_MS,
+  );
 
   // Read the body as text first: a non-JSON upstream error page would make
   // res.json() throw and swallow the real status/body.
