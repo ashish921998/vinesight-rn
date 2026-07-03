@@ -112,6 +112,7 @@ import {
   useChemicalMixSearch,
   usePhiComputation,
   useFertilizerPlan,
+  useMasterProducts,
   queryKeys,
   isIOS,
   useResponsiveHeight,
@@ -338,6 +339,13 @@ export function EntryForm({
   const { data: fertilizerPlan } = useFertilizerPlan(logFarmId ?? undefined);
   const { activeSeason } = useFarmSeasonStatus(logFarmId ?? undefined);
   const { data: catalogMixes = [] } = useChemicalMixSearch('', isGrapeFarm);
+  // Fertilizer catalog for the fertigation picker's catalog section. Includes
+  // biostimulants (fertigation-applied), matching the warehouse fertilizer
+  // grouping; the section simply hides when the catalog has no rows.
+  const { data: fertilizerCatalogProducts = [] } = useMasterProducts({
+    inputTypes: ['fertilizer', 'biostimulant'],
+    stateCode: null,
+  });
 
   useEffect(() => {
     if (!isVisible) return;
@@ -491,6 +499,7 @@ export function EntryForm({
         quantityBasis: prefill.quantityBasis,
         warehouseItemId: null,
         catalogProductId: null,
+        planItemId: item.id,
       };
     });
     const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
@@ -1844,6 +1853,9 @@ export function EntryForm({
                 sprayCatalogMixes={catalogMixes}
                 sprayHistoryItems={recentSprayChemicals ?? []}
                 sprayPlanItems={fertilizerPlan?.items ?? []}
+                fertigationHistoryItems={recentFertigationItems ?? []}
+                fertigationPlanItems={fertilizerPlan?.items ?? []}
+                fertigationCatalogProducts={fertilizerCatalogProducts}
                 showSaveButton={false}
               />
             </ScrollView>
@@ -1962,6 +1974,9 @@ export function EntryForm({
           sprayCatalogMixes={catalogMixes}
           sprayHistoryItems={recentSprayChemicals ?? []}
           sprayPlanItems={fertilizerPlan?.items ?? []}
+          fertigationHistoryItems={recentFertigationItems ?? []}
+          fertigationPlanItems={fertilizerPlan?.items ?? []}
+          fertigationCatalogProducts={fertilizerCatalogProducts}
         />
       </View>
     );

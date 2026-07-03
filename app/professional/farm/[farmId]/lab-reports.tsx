@@ -13,6 +13,14 @@ import {
   useCreatePetioleTriage,
   useSendFertilizerPlan,
 } from '@/hooks/use-consultant-reviews';
+import { useOrgFertilizerPlanItemHistory } from '@/hooks/use-fertilizer-plan';
+import { useMasterProducts } from '@/hooks/use-master-catalog';
+import { SearchSelect } from '@/components/ui/search-select';
+import {
+  fertilizerCatalogToOptions,
+  orgPlanHistoryToOptions,
+  type SearchSelectSelection,
+} from '@/components/ui/search-select-logic';
 import { PetioleComparison } from '@/components/lab/petiole-comparison';
 import { SoilBaselinePanel } from '@/components/professional/soil-baseline-panel';
 import { useFarmSoilBaseline } from '@/hooks/use-farm-soil-baseline';
@@ -29,6 +37,7 @@ import {
   type FertilizerMeasure,
   MEASURE_OPTIONS,
   MEASURE_TO_UNIT,
+  resolveFertilizerMeasure,
 } from '@/constants/fertilizer-units';
 import type { FertilizerPlanItem } from '@/types/database';
 
@@ -64,6 +73,26 @@ export default function LabReportsScreen() {
   const [planTitleInput, setPlanTitleInput] = useState('');
   const [planNotes, setPlanNotes] = useState('');
   const [items, setItems] = useState<DraftItem[]>([emptyDraft()]);
+  /** Which draft row the product picker is filling (null = closed). */
+  const [productPickerIndex, setProductPickerIndex] = useState<number | null>(null);
+
+  // Product picker sections: what this org prescribed before ("you often
+  // prescribe") → fertilizer catalog → custom escape hatch. Plan items store
+  // the picked name verbatim as a string — the canonical catalog name is the
+  // convergence point (no product_id column until Phase W).
+  const orgPlanHistory = useOrgFertilizerPlanItemHistory(workspace.data?.organization_id);
+  const { data: fertilizerCatalogProducts = [] } = useMasterProducts({
+    inputTypes: ['fertilizer', 'biostimulant'],
+    stateCode: null,
+  });
+  const orgHistoryOptions = useMemo(
+    () => orgPlanHistoryToOptions(orgPlanHistory.data ?? []),
+    [orgPlanHistory.data],
+  );
+  const catalogOptions = useMemo(
+    () => fertilizerCatalogToOptions(fertilizerCatalogProducts),
+    [fertilizerCatalogProducts],
+  );
 
   const latestSoil = useMemo(() => (soil.data ?? [])[0] ?? null, [soil.data]);
   const latestPetioleTest = useMemo(() => (petiole.data ?? [])[0] ?? null, [petiole.data]);
@@ -114,6 +143,38 @@ export default function LabReportsScreen() {
   const addItem = useCallback(() => {
     setItems((prev) => [...prev, emptyDraft()]);
   }, []);
+
+  const handleProductSelection = useCallback(
+    (selection: SearchSelectSelection) => {
+      const index = productPickerIndex;
+      setProductPickerIndex(null);
+      if (index === null || selection.kind === 'mix') return;
+      setItems((prev) => {
+        const current = prev[index];
+        if (!current) return prev;
+        const next = [...prev];
+        const prefillQuantity = selection.prefill?.quantity;
+        // Org-history rows carry the last prescribed dose: prefill it only
+        // into an untouched quantity, and map the stored unit back to a
+        // measure (keeping the current one when the unit is unrecognized).
+        next[index] = {
+          ...current,
+          name: selection.name,
+          quantity:
+            current.quantity.trim() === '' &&
+            typeof prefillQuantity === 'number' &&
+            prefillQuantity > 0
+              ? String(prefillQuantity)
+              : current.quantity,
+          measure: selection.prefill?.unit
+            ? resolveFertilizerMeasure(selection.prefill.unit, current.measure)
+            : current.measure,
+        };
+        return next;
+      });
+    },
+    [productPickerIndex],
+  );
 
   const resetForm = () => {
     setPlanTitleInput('');
@@ -450,14 +511,52 @@ export default function LabReportsScreen() {
                   )}
                 </View>
 
-                <FormInput
-                  label={t('professional.reviews.productName')}
-                  required
-                  value={draft.name}
-                  onChangeText={(text) => updateItem(index, { name: text })}
-                  placeholder={t('professional.reviews.productName')}
-                  style={{ marginBottom: spacing[3] }}
-                />
+                {/* Product name — picker only (org history → catalog → custom
+                    escape hatch); the free-text input is deliberately gone so
+                    names converge on the canonical catalog spelling. */}
+                <View style={{ marginBottom: spacing[3] }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                      color: m3.surface.s500,
+                      marginBottom: spacing[2],
+                    }}
+                  >
+                    {t('professional.reviews.productName')}
+                    <Text style={{ color: m3.colorScheme.error }}> *</Text>
+                  </Text>
+                  <Pressable
+                    onPress={() => setProductPickerIndex(index)}
+                    accessibilityRole="button"
+                    accessibilityLabel={draft.name || t('professional.reviews.selectProduct')}
+                    accessibilityState={{ expanded: productPickerIndex === index }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      backgroundColor: m3.surface.s100,
+                      borderWidth: 1,
+                      borderColor: m3.surface.s300,
+                      borderRadius: borderRadius.sm,
+                      minHeight: 48,
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: spacing[3],
+                    }}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        flex: 1,
+                        fontSize: fontSize.base,
+                        color: draft.name ? m3.surface.s900 : m3.neutral.n400,
+                      }}
+                    >
+                      {draft.name || t('professional.reviews.selectProduct')}
+                    </Text>
+                    <UiSymbol name="chevron.right" size={18} color={m3.surface.s600} />
+                  </Pressable>
+                </View>
 
                 <FormInput
                   label={t('professional.reviews.quantity')}
@@ -542,6 +641,16 @@ export default function LabReportsScreen() {
             multiline
             numberOfLines={3}
             style={{ marginTop: spacing[6], marginBottom: 0 }}
+          />
+
+          <SearchSelect
+            visible={productPickerIndex !== null}
+            onClose={() => setProductPickerIndex(null)}
+            onSelect={handleProductSelection}
+            historyOptions={orgHistoryOptions}
+            catalogOptions={catalogOptions}
+            title={t('professional.reviews.productName')}
+            sectionTitles={{ history: t('professional.reviews.prescribedOften') }}
           />
         </FormModal>
       )}

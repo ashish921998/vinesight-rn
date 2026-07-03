@@ -3,6 +3,8 @@ import { queryKeys } from '@/hooks/query-keys';
 import {
   fetchFertilizerPlanForFarm,
   fetchFertilizerPlansForFarm,
+  fetchOrgFertilizerPlanItemHistory,
+  type OrgFertilizerPlanHistoryItem,
 } from '@/services/fertilizer-plan';
 import type { FertilizerPlan } from '@/types/fertilizer-plan';
 
@@ -35,5 +37,23 @@ export function useFertilizerPlans(farmId?: number) {
       return fetchFertilizerPlansForFarm(farmId);
     },
     enabled: Boolean(farmId),
+  });
+}
+
+/**
+ * Items across the org's recent plans (newest first) — the consultant plan
+ * picker's "what you prescribe often" section. Raw rows; dedupe happens in
+ * `orgPlanHistoryToOptions`.
+ */
+export function useOrgFertilizerPlanItemHistory(organizationId?: string) {
+  return useQuery({
+    queryKey: organizationId
+      ? queryKeys.fertilizerPlan.orgItemHistory(organizationId)
+      : ['fertilizerPlan', 'orgItemHistory', 'disabled'],
+    queryFn: async (): Promise<OrgFertilizerPlanHistoryItem[]> => {
+      if (!organizationId) return [];
+      return fetchOrgFertilizerPlanItemHistory(organizationId);
+    },
+    enabled: Boolean(organizationId),
   });
 }

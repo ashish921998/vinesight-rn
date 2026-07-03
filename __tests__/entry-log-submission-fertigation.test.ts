@@ -129,6 +129,42 @@ describe('fertigation submission — unit testimony and flagging', () => {
     }
   });
 
+  it('stamps plan_item_id and composition_snapshot from picker-selected rows (issue #196)', async () => {
+    const composition = [{ nutrient_code: 'N', percent: 19, basis: 'declared' as const }];
+    const payload = await submitFertigation({
+      waterVolume: 300,
+      fertilizers: [
+        {
+          name: '19:19:19',
+          quantity: 5,
+          unit: 'kg',
+          quantityBasis: 'total',
+          planItemId: 'plan-item-1',
+          catalogProductId: 500,
+          compositionSnapshot: composition,
+        },
+        // Legacy rows without picker identity stamp explicit nulls.
+        { name: 'Urea', quantity: 10, unit: 'kg', quantityBasis: 'total' },
+      ],
+    });
+    const items = payload.fertilizers ?? [];
+    expect(items[0]).toEqual(
+      expect.objectContaining({
+        name: '19:19:19',
+        plan_item_id: 'plan-item-1',
+        catalog_product_id: 500,
+        composition_snapshot: composition,
+      }),
+    );
+    expect(items[1]).toEqual(
+      expect.objectContaining({
+        plan_item_id: null,
+        catalog_product_id: null,
+        composition_snapshot: null,
+      }),
+    );
+  });
+
   it('leaves every recognized form unit unflagged (regression over the picker vocabulary)', async () => {
     const payload = await submitFertigation({
       waterVolume: undefined,

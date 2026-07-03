@@ -1,9 +1,13 @@
 import {
   buildSearchSelectSections,
+  catalogCompositionToSnapshot,
   chemicalCatalogToOptions,
   customOptionForQuery,
+  fertigationPlanItemsToOptions,
+  fertilizerCatalogToOptions,
   filterAndRankOptions,
   normalizeSearchText,
+  orgPlanHistoryToOptions,
   planItemsToOptions,
   recentItemsToOptions,
   type SearchSelectOption,
@@ -11,6 +15,7 @@ import {
 import type { RecentInputItem } from '@/hooks/use-records';
 import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 import type { ChemicalMix, ChemicalMixComponent } from '@/types/phi';
+import type { MasterCatalogProduct } from '@/types/catalog';
 
 // search-select-logic reuses the per-liter dose normalizer from phi-service,
 // whose module graph reaches the supabase client.
@@ -56,6 +61,41 @@ const component = (overrides: Partial<ChemicalMixComponent>): ChemicalMixCompone
   phi_days: 30,
   phi_verified: true,
   phi_source: 'label',
+  ...overrides,
+});
+
+const catalogProduct = (overrides: Partial<MasterCatalogProduct>): MasterCatalogProduct => ({
+  id: 500,
+  name: '19:19:19',
+  manufacturer: 'IFFCO',
+  active_ingredient: null,
+  input_type: 'fertilizer',
+  verification_tier: 'verified',
+  formulation: null,
+  state_code: 'MH',
+  source_reference: null,
+  is_active: true,
+  aliases: [],
+  compositions: [
+    {
+      id: 1,
+      product_id: 500,
+      component_code: 'N',
+      component_type: 'nutrient',
+      percent: 19,
+      basis: 'declared',
+      verified: true,
+    },
+    {
+      id: 2,
+      product_id: 500,
+      component_code: 'P2O5',
+      component_type: 'nutrient',
+      percent: 19,
+      basis: 'declared',
+      verified: true,
+    },
+  ],
   ...overrides,
 });
 
@@ -384,5 +424,189 @@ describe('chemicalCatalogToOptions', () => {
 
   it('returns nothing for an empty catalog', () => {
     expect(chemicalCatalogToOptions([])).toEqual([]);
+  });
+});
+
+describe('separator folding (issue #196)', () => {
+  it("folds ':' and '-' so NPK-grade spellings normalize identically", () => {
+    expect(normalizeSearchText('19:19:19')).toBe(normalizeSearchText('19-19-19'));
+    expect(normalizeSearchText('19:19:19')).toBe('19 19 19');
+  });
+
+  it('a "19:19:19" query matches a "19-19-19" option and vice versa', () => {
+    const options = [option('19-19-19'), option('Urea')];
+    expect(filterAndRankOptions(options, '19:19:19').map((entry) => entry.name)).toEqual([
+      '19-19-19',
+    ]);
+    const reversed = [option('19:19:19'), option('Urea')];
+    expect(filterAndRankOptions(reversed, '19-19-19').map((entry) => entry.name)).toEqual([
+      '19:19:19',
+    ]);
+  });
+});
+
+describe('fertigationPlanItemsToOptions', () => {
+  it('stamps planItemId and resolves the prefill through the plan contract', () => {
+    const options = fertigationPlanItemsToOptions([planItem({})]);
+    expect(options).toEqual([
+      {
+        key: 'plan:plan-item-1',
+        name: '19:19:19',
+        detail: '5 kg/acre',
+        selection: {
+          kind: 'item',
+          name: '19:19:19',
+          planItemId: 'plan-item-1',
+          isCustom: false,
+          prefill: { quantity: 5, unit: 'kg', quantityBasis: 'per_acre' },
+        },
+      },
+    ]);
+  });
+
+  it("keeps per_acre for bare form units ('kg' ≡ 'kg/acre' on a plan item)", () => {
+    const [entry] = fertigationPlanItemsToOptions([planItem({ unit: 'kg' })]);
+    expect(entry.selection.prefill).toEqual({ quantity: 5, unit: 'kg', quantityBasis: 'per_acre' });
+  });
+
+  it('carries verbatim/unknown units through unchanged — never coerced to kg', () => {
+    const [ppm] = fertigationPlanItemsToOptions([planItem({ unit: 'ppm', quantity: 100 })]);
+    expect(ppm.selection.prefill).toEqual({ quantity: 100, unit: 'ppm', quantityBasis: 'total' });
+    const [unknown] = fertigationPlanItemsToOptions([planItem({ unit: 'banana/acre' })]);
+    expect(unknown.selection.prefill).toEqual({
+      quantity: 5,
+      unit: 'banana/acre',
+      quantityBasis: 'per_acre',
+    });
+  });
+
+  it('skips nameless items and never prefills a non-positive quantity', () => {
+    const options = fertigationPlanItemsToOptions([
+      planItem({ id: 'a', name: '  ' }),
+      planItem({ id: 'b', quantity: 0 }),
+    ]);
+    expect(options).toHaveLength(1);
+    expect(options[0].selection.prefill).toEqual({
+      quantity: null,
+      unit: 'kg',
+      quantityBasis: 'per_acre',
+    });
+  });
+});
+
+describe('fertilizerCatalogToOptions', () => {
+  it('maps products with the canonical name, identity, and nutrient composition', () => {
+    const options = fertilizerCatalogToOptions([catalogProduct({})]);
+    expect(options).toEqual([
+      {
+        key: 'product:500',
+        name: '19:19:19',
+        detail: 'IFFCO',
+        keywords: ['IFFCO'],
+        selection: {
+          kind: 'item',
+          name: '19:19:19',
+          catalogProductId: 500,
+          isCustom: false,
+          composition: [
+            { nutrient_code: 'N', percent: 19, basis: 'declared' },
+            { nutrient_code: 'P2O5', percent: 19, basis: 'declared' },
+          ],
+        },
+      },
+    ]);
+    // No dose prefill: the catalog carries no dose.
+    expect(options[0].selection.prefill).toBeUndefined();
+  });
+
+  it('is findable via aliases and active ingredient (matchable, never stored)', () => {
+    const options = fertilizerCatalogToOptions([
+      catalogProduct({
+        aliases: [
+          {
+            id: 9,
+            product_id: 500,
+            alias: 'NPK GR-2',
+            locale: 'en',
+            alias_kind: 'trade',
+          },
+        ],
+        active_ingredient: 'Chelated Zinc',
+      }),
+    ]);
+    expect(filterAndRankOptions(options, 'gr-2')).toHaveLength(1);
+    expect(filterAndRankOptions(options, 'chelated')).toHaveLength(1);
+    expect(options[0].selection.name).toBe('19:19:19');
+  });
+
+  it('only nutrient component rows enter the composition snapshot', () => {
+    const product = catalogProduct({
+      compositions: [
+        {
+          id: 1,
+          product_id: 500,
+          component_code: 'Zn',
+          component_type: 'nutrient',
+          percent: 12,
+          basis: 'declared',
+          verified: true,
+        },
+        {
+          id: 2,
+          product_id: 500,
+          component_code: 'EDTA',
+          component_type: 'active_ingredient',
+          percent: 40,
+          basis: 'declared',
+          verified: true,
+        },
+      ],
+    });
+    expect(catalogCompositionToSnapshot(product)).toEqual([
+      { nutrient_code: 'Zn', percent: 12, basis: 'declared' },
+    ]);
+    expect(catalogCompositionToSnapshot(catalogProduct({ compositions: [] }))).toBeNull();
+  });
+
+  it('degrades gracefully: empty catalog yields no options (section hidden)', () => {
+    expect(fertilizerCatalogToOptions([])).toEqual([]);
+  });
+});
+
+describe('orgPlanHistoryToOptions', () => {
+  it('dedupes by normalized name (case, whitespace, and separator variants)', () => {
+    const options = orgPlanHistoryToOptions([
+      { name: '19:19:19', quantity: 5, unit: 'kg/acre' },
+      { name: '19-19-19', quantity: 3, unit: 'kg/acre' },
+      { name: ' urea ', quantity: 25, unit: 'kg/acre' },
+      { name: 'Urea', quantity: 10, unit: 'kg/acre' },
+    ]);
+    expect(options.map((entry) => entry.name)).toEqual(['19:19:19', 'urea']);
+    // Newest-first input: the most recent spelling and dose win.
+    expect(options[0].detail).toBe('5 kg/acre');
+    expect(options[1].detail).toBe('25 kg/acre');
+  });
+
+  it('carries the last prescribed dose as prefill without identity', () => {
+    const [entry] = orgPlanHistoryToOptions([{ name: 'MAP', quantity: 4, unit: 'kg/acre' }]);
+    expect(entry.selection).toEqual({
+      kind: 'item',
+      name: 'MAP',
+      isCustom: false,
+      prefill: { quantity: 4, unit: 'kg/acre' },
+    });
+  });
+
+  it('skips blank names; missing doses stay unprefilled', () => {
+    const options = orgPlanHistoryToOptions([
+      { name: '   ', quantity: 5, unit: 'kg/acre' },
+      { name: 'DAP', quantity: null, unit: null },
+      { name: 'SOP', quantity: 0, unit: 'kg/acre' },
+    ]);
+    expect(options).toHaveLength(2);
+    expect(options[0].selection.prefill).toEqual({ quantity: null, unit: null });
+    expect(options[0].detail).toBeNull();
+    // Zero/negative doses never prefill (instantly-invalid row).
+    expect(options[1].selection.prefill).toEqual({ quantity: null, unit: 'kg/acre' });
   });
 });

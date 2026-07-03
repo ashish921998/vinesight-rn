@@ -183,6 +183,8 @@ export const hi = {
       addItem: 'एक और उत्पाद जोड़ें',
       itemNumber: 'उत्पाद {{number}}',
       productName: 'उत्पाद का नाम',
+      selectProduct: 'उत्पाद चुनें या खोजें',
+      prescribedOften: 'आप अक्सर सुझाते हैं',
       quantity: 'मात्रा',
       unit: 'इकाई',
       planNotes: 'किसान के लिए नोट्स',

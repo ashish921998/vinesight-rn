@@ -26,6 +26,7 @@ import { guidedTourOn } from '@/features/guided-tour/events';
 import { View, Pressable, Text, Switch } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ChemicalMix } from '@/types/phi';
+import type { MasterCatalogProduct } from '@/types/catalog';
 import type { RecentInputItem } from '@/hooks/use-records';
 import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 
@@ -53,6 +54,9 @@ interface LogFormProps {
   sprayCatalogMixes?: ChemicalMix[];
   sprayHistoryItems?: RecentInputItem[];
   sprayPlanItems?: FertilizerPlanItem[];
+  fertigationHistoryItems?: RecentInputItem[];
+  fertigationPlanItems?: FertilizerPlanItem[];
+  fertigationCatalogProducts?: MasterCatalogProduct[];
   showSaveButton?: boolean;
   /** Whether the irrigation entry includes an attached fertilizer (fertigation) log. */
   includeFertilizersWithIrrigation?: boolean;
@@ -83,6 +87,9 @@ export function LogForm({
   sprayCatalogMixes = [],
   sprayHistoryItems = [],
   sprayPlanItems = [],
+  fertigationHistoryItems = [],
+  fertigationPlanItems = [],
+  fertigationCatalogProducts = [],
   showSaveButton = true,
   includeFertilizersWithIrrigation = false,
   onIncludeFertilizersWithIrrigationChange,
@@ -265,6 +272,9 @@ export function LogForm({
                 onChange={onFertigationChange}
                 onInputFocus={onInputFocus}
                 quickAddItems={fertigationQuickAddItems}
+                historyItems={fertigationHistoryItems}
+                planItems={fertigationPlanItems}
+                catalogProducts={fertigationCatalogProducts}
                 compact
               />
             </View>
@@ -321,6 +331,9 @@ export function LogForm({
           onChange={onFertigationChange}
           onInputFocus={onInputFocus}
           quickAddItems={fertigationQuickAddItems}
+          historyItems={fertigationHistoryItems}
+          planItems={fertigationPlanItems}
+          catalogProducts={fertigationCatalogProducts}
           compact
         />
       )}

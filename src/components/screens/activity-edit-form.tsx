@@ -355,6 +355,7 @@ export function ActivityEditForm({
               quantityBasis: f.quantity_basis ?? 'total',
               warehouseItemId: f.warehouse_item_id ?? null,
               catalogProductId: f.catalog_product_id ?? null,
+              planItemId: f.plan_item_id ?? null,
               compositionSnapshot: f.composition_snapshot ?? null,
               densityKgPerL: f.density_kg_per_l ?? null,
             }));
@@ -479,6 +480,7 @@ export function ActivityEditForm({
             ...(isFertigationUnitRecognized(f.unit) ? {} : { unit_unrecognized: true }),
             warehouse_item_id: f.warehouseItemId ?? null,
             catalog_product_id: f.catalogProductId ?? null,
+            plan_item_id: f.planItemId ?? null,
             composition_snapshot: f.compositionSnapshot ?? null,
             density_kg_per_l: f.densityKgPerL ?? null,
           }));
