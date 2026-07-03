@@ -117,6 +117,12 @@ Deno.serve(async (req) => {
 
     // Sarvam Document Intelligence accepts a single PDF or a ZIP of JPEG/PNG
     // images. PDFs upload directly; a captured image is wrapped in a ZIP.
+    //
+    // Anything else is rejected by design. Current clients convert camera
+    // formats (WebP/GIF/HEIC) to JPEG on-device before upload; legacy file_data
+    // clients sending image/webp or image/gif have always failed here — Sarvam
+    // cannot ingest those formats, and transcoding server-side would require a
+    // WASM image codec just to serve pre-Storage-flow app builds.
     let uploadName: string;
     let uploadBytes: Uint8Array;
     let uploadContentType: string;
