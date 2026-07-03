@@ -83,7 +83,7 @@ function resolveChemicalUnit(
   if (lowered === 'ml/liter' || lowered === 'ml/litre' || lowered === 'ml/l') {
     return 'ml/L';
   }
-  if (lowered === 'gm/acre') return 'gram';
+  if (lowered === 'gm/acre' || lowered === 'g/acre' || lowered === 'gram/acre') return 'gram';
   if (lowered === 'ml/acre') return 'ml';
   // Plan-item spellings: the per-acre basis survives via resolveQuantityBasis
   // on the original string, so only the scale maps here (like gm/ml above).
@@ -326,9 +326,20 @@ export function SprayForm({
       const lastUsed = item.unit?.trim() ? null : lastUsedChipFor(item.name, item.catalogProductId);
       const validatedUnit = lastUsed?.unit ?? resolveChemicalUnit(item.unit);
       const normalizedName = item.name.trim().toLowerCase();
+      // Duplicate identity is the fused chip (unit + basis), not the unit
+      // string alone — 'kg total' and 'kg/acre' share unit 'kg' but are
+      // distinct entries. Rows outside the chip vocabulary fall back to the
+      // unit string.
+      const incomingBasis =
+        item.quantityBasis ??
+        lastUsed?.basis ??
+        resolveQuantityBasis(item.unit?.trim() ?? validatedUnit);
+      const incomingChipKey = chipForEntry(validatedUnit, incomingBasis)?.key ?? validatedUnit;
       const alreadyExists = data.chemicals.some(
         (chemical) =>
-          chemical.name.trim().toLowerCase() === normalizedName && chemical.unit === validatedUnit,
+          chemical.name.trim().toLowerCase() === normalizedName &&
+          (chipForEntry(chemical.unit, chemical.quantityBasis)?.key ?? chemical.unit) ===
+            incomingChipKey,
       );
       if (alreadyExists) return;
 
