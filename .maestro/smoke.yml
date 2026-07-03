@@ -1,0 +1,12 @@
+# Smoke test: from a clean install, sign in and verify the dashboard renders.
+# Self-contained — clears app state and logs in with the e2e test account.
+appId: com.vinesight.ios
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: subflows/login.yml
+- assertVisible: 'Farms'
+- assertVisible: 'Active workers'
+- assertVisible: 'Tasks'
+- assertVisible: 'Activities'

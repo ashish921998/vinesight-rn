@@ -15,6 +15,7 @@
     "generate-widget": "node scripts/generate-widget.js",
     "storybook:start": "cross-env EXPO_PUBLIC_STORYBOOK_ENABLED=true expo start",
     "web:smoke": "CI=1 expo export --platform web --output-dir /tmp/vinesight-web-smoke",
+    "e2e": "set -a && . ./.env.maestro && set +a && JAVA_HOME=/opt/homebrew/opt/openjdk $HOME/.maestro/bin/maestro test .maestro",
     "test:widgets": "jest --testPathPattern=components/widgets",
     "test:widgets:watch": "jest --watch --testPathPattern=components/widgets",
     "test:widgets:coverage": "jest --coverage --testPathPattern=components/widgets",
