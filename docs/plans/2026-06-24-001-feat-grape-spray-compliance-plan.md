@@ -64,7 +64,7 @@ The current aggregate harvest calculation also ignores records without a valid `
 
 ### External References
 
-- `/Users/ashishhuddar/Downloads/Annexure 5 Grapes-2025-26 17.09.2025.pdf` — ICAR-NRCG Annexure 5, revised 2025-09-17.
+- `Annexure 5 Grapes-2025-26 17.09.2025.pdf` (ICAR-NRCG, not checked in) — ICAR-NRCG Annexure 5, revised 2025-09-17.
 
 ## Key Technical Decisions
 
@@ -463,7 +463,7 @@ The evaluation contract should distinguish:
 
 ## Sources & References
 
-- Source document: `/Users/ashishhuddar/Downloads/Annexure 5 Grapes-2025-26 17.09.2025.pdf`
+- Source document: `Annexure 5 Grapes-2025-26 17.09.2025.pdf` (ICAR-NRCG, not checked in)
 - Existing schema: `supabase/migrations/20260221010000_phi_catalog.sql`
 - Existing PHI domain logic: `src/services/phi-service.ts`
 - Existing catalog query: `src/hooks/use-chemical-catalog.ts`

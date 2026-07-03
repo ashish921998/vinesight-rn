@@ -529,6 +529,9 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
             campaign: data.campaign ?? null,
             day: data.day ?? null,
           });
+          // Stale/invalid route: fall back to home instead of consuming the tap
+          // (on cold start the response is cleared right after this runs).
+          currentRouter.push('/(tabs)');
           return;
         }
         currentRouter.push(route);
@@ -546,6 +549,11 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
         currentRouter.push('/(tabs)');
       } else if (data?.type === 'custom') {
         // Custom notifications have no navigation target
+      } else {
+        // Missing or unrecognized payload: don't silently consume the tap (on
+        // cold start the response is cleared right after), open the app home so
+        // the user lands somewhere sensible instead of staying stranded.
+        currentRouter.push('/(tabs)');
       }
     };
 
