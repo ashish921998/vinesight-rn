@@ -216,11 +216,23 @@ async function resolveReportBytes(
     }
     const admin = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY);
     // Best-effort removal of the stored object (RLS-bypassing service role).
-    const removeUploaded = () =>
-      admin.storage
-        .from(STORAGE_BUCKET)
-        .remove([body.storage_path as string])
-        .catch(() => {});
+    // The Storage client resolves with { error } on API failures (rate limits,
+    // transient 5xx) rather than rejecting, so a bare .catch(() => {}) would
+    // swallow them and leak orphans silently. Inspect the resolved error and
+    // log it so the leak stays observable in the function logs. Never throws —
+    // cleanup failure must not mask the real error returned to the client.
+    const removeUploaded = async () => {
+      try {
+        const { error } = await admin.storage
+          .from(STORAGE_BUCKET)
+          .remove([body.storage_path as string]);
+        if (error) {
+          console.error('Storage cleanup failed:', error.message);
+        }
+      } catch (error) {
+        console.error('Storage cleanup threw:', error);
+      }
+    };
 
     // Verify the object size from metadata BEFORE downloading, so an oversized
     // blob is never buffered into function memory. The bucket's file_size_limit
