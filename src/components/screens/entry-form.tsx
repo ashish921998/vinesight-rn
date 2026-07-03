@@ -339,13 +339,6 @@ export function EntryForm({
   const { data: fertilizerPlan } = useFertilizerPlan(logFarmId ?? undefined);
   const { activeSeason } = useFarmSeasonStatus(logFarmId ?? undefined);
   const { data: catalogMixes = [] } = useChemicalMixSearch('', isGrapeFarm);
-  // Fertilizer catalog for the fertigation picker's catalog section. Includes
-  // biostimulants (fertigation-applied), matching the warehouse fertilizer
-  // grouping; the section simply hides when the catalog has no rows.
-  const { data: fertilizerCatalogProducts = [] } = useMasterProducts({
-    inputTypes: ['fertilizer', 'biostimulant'],
-    stateCode: null,
-  });
 
   useEffect(() => {
     if (!isVisible) return;
@@ -398,6 +391,18 @@ export function EntryForm({
   // carry a fertigation log. When on, the fertigation section (reusing `fertigationData`) is
   // shown inside the irrigation flow and saved as a linked record.
   const [irrigationIncludesFertilizers, setIrrigationIncludesFertilizers] = useState(false);
+  // Fertilizer catalog for the fertigation picker's catalog section. Includes
+  // biostimulants (fertigation-applied), matching the warehouse fertilizer
+  // grouping; the section simply hides when the catalog has no rows. Fetched
+  // only when a flow that mounts the fertigation form is active (irrigation
+  // embeds it behind the include-fertilizers toggle).
+  const { data: fertilizerCatalogProducts = [] } = useMasterProducts({
+    inputTypes: ['fertilizer', 'biostimulant'],
+    stateCode: null,
+    enabled:
+      selectedLogType === 'fertigation' ||
+      (selectedLogType === 'irrigation' && irrigationIncludesFertilizers),
+  });
   const [sprayData, setSprayData] = useState<SprayFormData>(() => createEmptySprayFormData());
   const [harvestData, setHarvestData] = useState<HarvestFormData>(() =>
     createEmptyHarvestFormData(),

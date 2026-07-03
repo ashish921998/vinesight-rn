@@ -247,29 +247,42 @@ export function recentItemsToOptions(
     });
 }
 
+/** How a surface turns a plan item's stored unit into a picker prefill. */
+export type PlanItemPrefillResolver = (unit: string | null | undefined) => {
+  unit: string | null;
+  quantityBasis?: QuantityBasis;
+};
+
 /**
  * Active plan items: prescribed dose shown, selection stamps `planItemId`.
  * This is how a consultant's custom (non-catalog) prescription reaches the
  * farmer's picker verbatim.
  *
- * Quantity is prefilled only when the item carries a unit AND a positive
- * finite quantity: without a unit the form would fall back to its default
- * ('gm/L'), silently changing the prescribed meaning of the number, and a
- * zero/negative quantity would create a row that instantly fails the form's
- * `quantity > 0` validation. The unit alone still prefills when present.
+ * Quantity is prefilled only when the RESOLVED prefill carries a unit AND the
+ * item has a positive finite quantity: without a unit the form would fall
+ * back to its default, silently changing the prescribed meaning of the
+ * number, and a zero/negative quantity would create a row that instantly
+ * fails the form's `quantity > 0` validation. The default resolver passes the
+ * stored unit through untouched (spray), so blank units suppress the quantity
+ * exactly as before.
  */
-export function planItemsToOptions(items: FertilizerPlanItem[]): SearchSelectOption[] {
+export function planItemsToOptions(
+  items: FertilizerPlanItem[],
+  resolvePrefill: PlanItemPrefillResolver = (unit) => ({ unit: unit?.trim() ? unit : null }),
+): SearchSelectOption[] {
   return items
     .filter((item) => item.name.trim().length > 0)
     .map((item) => {
-      const unit = item.unit?.trim() ? item.unit : null;
+      const resolved = resolvePrefill(item.unit);
       const quantity =
-        unit != null &&
+        resolved.unit != null &&
         typeof item.quantity === 'number' &&
         Number.isFinite(item.quantity) &&
         item.quantity > 0
           ? item.quantity
           : null;
+      const prefill: SearchSelectPrefill = { quantity, unit: resolved.unit };
+      if (resolved.quantityBasis !== undefined) prefill.quantityBasis = resolved.quantityBasis;
       return {
         key: `plan:${item.id}`,
         name: item.name,
@@ -279,47 +292,22 @@ export function planItemsToOptions(items: FertilizerPlanItem[]): SearchSelectOpt
           name: item.name,
           planItemId: item.id,
           isCustom: false,
-          prefill: { quantity, unit },
+          prefill,
         },
       };
     });
 }
 
 /**
- * Active plan items for the FERTIGATION picker. Unlike the generic
- * `planItemsToOptions`, the prefill goes through `resolveFertigationPrefill`:
- * plan doses are per-acre rates by contract, so form-representable units keep
- * per_acre even when spelled bare (`'kg'` ≡ `'kg/acre'` on a plan item), and
- * verbatim/unknown units are never coerced to kg (issue #192). Selecting a row
- * stamps `planItemId` on the logged fertigation item.
+ * Active plan items for the FERTIGATION picker: same builder, but the prefill
+ * goes through `resolveFertigationPrefill` — plan doses are per-acre rates by
+ * contract, so form-representable units keep per_acre even when spelled bare
+ * (`'kg'` ≡ `'kg/acre'` on a plan item), and verbatim/unknown units are never
+ * coerced to kg (issue #192). The resolver always returns a unit, so the
+ * quantity prefills whenever it is positive.
  */
-export function fertigationPlanItemsToOptions(items: FertilizerPlanItem[]): SearchSelectOption[] {
-  return items
-    .filter((item) => item.name.trim().length > 0)
-    .map((item) => {
-      const prefill = resolveFertigationPrefill(item.unit);
-      const quantity =
-        typeof item.quantity === 'number' && Number.isFinite(item.quantity) && item.quantity > 0
-          ? item.quantity
-          : null;
-      return {
-        key: `plan:${item.id}`,
-        name: item.name,
-        detail: formatDoseDetail(item.quantity, item.unit),
-        selection: {
-          kind: 'item' as const,
-          name: item.name,
-          planItemId: item.id,
-          isCustom: false,
-          prefill: {
-            quantity,
-            unit: prefill.unit,
-            quantityBasis: prefill.quantityBasis,
-          },
-        },
-      };
-    });
-}
+export const fertigationPlanItemsToOptions = (items: FertilizerPlanItem[]): SearchSelectOption[] =>
+  planItemsToOptions(items, resolveFertigationPrefill);
 
 /**
  * Map a catalog product's declared compositions onto the stored

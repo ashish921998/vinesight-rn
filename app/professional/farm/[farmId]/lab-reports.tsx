@@ -79,11 +79,16 @@ export default function LabReportsScreen() {
   // Product picker sections: what this org prescribed before ("you often
   // prescribe") → fertilizer catalog → custom escape hatch. Plan items store
   // the picked name verbatim as a string — the canonical catalog name is the
-  // convergence point (no product_id column until Phase W).
-  const orgPlanHistory = useOrgFertilizerPlanItemHistory(workspace.data?.organization_id);
+  // convergence point (no product_id column until Phase W). Both feeds are
+  // gated on the plan sheet being open so merely visiting lab reports never
+  // pays for them.
+  const orgPlanHistory = useOrgFertilizerPlanItemHistory(
+    fabOpen ? workspace.data?.organization_id : undefined,
+  );
   const { data: fertilizerCatalogProducts = [] } = useMasterProducts({
     inputTypes: ['fertilizer', 'biostimulant'],
     stateCode: null,
+    enabled: fabOpen,
   });
   const orgHistoryOptions = useMemo(
     () => orgPlanHistoryToOptions(orgPlanHistory.data ?? []),

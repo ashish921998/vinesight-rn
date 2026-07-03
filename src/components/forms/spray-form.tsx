@@ -452,6 +452,9 @@ export function SprayForm({
         warehouseItemId: selection.warehouseItemId ?? null,
         catalogProductId: selection.catalogProductId ?? null,
         planItemId: selection.planItemId ?? null,
+        // No spray option builder sets composition today; forwarded anyway so
+        // spray and fertigation stamp identically when one ever does.
+        composition: selection.composition ?? null,
       });
     },
     [catalogMixes, applyCatalogMix, addQuickChemical],

@@ -214,6 +214,10 @@ export function buildDelegatedLogPayload(
             ...(isFertigationUnitRecognized(f.unit) ? {} : { unit_unrecognized: true }),
             warehouse_item_id: f.warehouseItemId ?? null,
             catalog_product_id: f.catalogProductId ?? null,
+            // Delegated composers offer no plan section today, so this is
+            // always null — written anyway so the serializer stays total over
+            // FertilizerEntry and can't silently drop a future plan pick.
+            plan_item_id: f.planItemId ?? null,
             composition_snapshot: f.compositionSnapshot ?? null,
             density_kg_per_l: f.densityKgPerL ?? null,
           };

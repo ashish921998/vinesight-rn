@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { SearchSelect } from '@/components/ui/search-select';
@@ -179,95 +179,101 @@ export function FertigationForm({
     onChange({ ...data, fertilizers: newFertilizers });
   };
 
-  const addQuickFertilizer = (item: FertigationQuickAddItem) => {
-    const resolved = resolveFertigationUnit(item.unit);
-    const validatedUnit = resolved.unit;
-    const normalizedName = item.name.trim().toLowerCase();
-    // Comparison only — stored unit values stay verbatim (case preserved).
-    const normalizedUnit = validatedUnit.trim().toLowerCase();
-    const alreadyExists = data.fertilizers.some(
-      (fertilizer) =>
-        fertilizer.name.trim().toLowerCase() === normalizedName &&
-        fertilizer.unit.trim().toLowerCase() === normalizedUnit,
-    );
-    if (alreadyExists) return;
+  const addQuickFertilizer = useCallback(
+    (item: FertigationQuickAddItem) => {
+      const resolved = resolveFertigationUnit(item.unit);
+      const validatedUnit = resolved.unit;
+      const normalizedName = item.name.trim().toLowerCase();
+      // Comparison only — stored unit values stay verbatim (case preserved).
+      const normalizedUnit = validatedUnit.trim().toLowerCase();
+      const alreadyExists = data.fertilizers.some(
+        (fertilizer) =>
+          fertilizer.name.trim().toLowerCase() === normalizedName &&
+          fertilizer.unit.trim().toLowerCase() === normalizedUnit,
+      );
+      if (alreadyExists) return;
 
-    const firstIncompleteIndex = data.fertilizers.findIndex(
-      (fertilizer) =>
-        !fertilizer.name.trim() || fertilizer.quantity === undefined || fertilizer.quantity <= 0,
-    );
+      const firstIncompleteIndex = data.fertilizers.findIndex(
+        (fertilizer) =>
+          !fertilizer.name.trim() || fertilizer.quantity === undefined || fertilizer.quantity <= 0,
+      );
 
-    if (firstIncompleteIndex >= 0) {
-      const nextFertilizers = [...data.fertilizers];
-      const current = nextFertilizers[firstIncompleteIndex];
-      if (!current) return;
-      nextFertilizers[firstIncompleteIndex] = {
-        ...current,
-        name: item.name.trim(),
-        unit: validatedUnit,
-        quantity:
-          current.quantity !== undefined && current.quantity > 0
-            ? current.quantity
-            : (item.quantity ?? 0),
-        // An explicit item basis (fully-prefilled picker selections) wins over
-        // the pristine row's default 'per_acre'; legacy quick-add producers
-        // without one keep the current-row-first resolution.
-        quantityBasis:
-          item.quantityBasis ??
-          current.quantityBasis ??
-          resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
-        warehouseItemId: item.warehouseItemId ?? null,
-        catalogProductId: item.catalogProductId ?? null,
-        planItemId: item.planItemId ?? null,
-        compositionSnapshot: item.composition ?? null,
-        densityKgPerL: item.densityKgPerL ?? null,
-      };
-      onChange({
-        ...data,
-        fertilizers: nextFertilizers,
-      });
-      return;
-    }
-
-    if (data.fertilizers.length >= 10) return;
-
-    onChange({
-      ...data,
-      fertilizers: [
-        ...data.fertilizers,
-        {
-          id: `${normalizedName}-${validatedUnit.trim().toLowerCase()}`,
+      if (firstIncompleteIndex >= 0) {
+        const nextFertilizers = [...data.fertilizers];
+        const current = nextFertilizers[firstIncompleteIndex];
+        if (!current) return;
+        nextFertilizers[firstIncompleteIndex] = {
+          ...current,
           name: item.name.trim(),
-          quantity: item.quantity ?? 0,
           unit: validatedUnit,
-          quantityBasis: resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
+          quantity:
+            current.quantity !== undefined && current.quantity > 0
+              ? current.quantity
+              : (item.quantity ?? 0),
+          // An explicit item basis (fully-prefilled picker selections) wins over
+          // the pristine row's default 'per_acre'; legacy quick-add producers
+          // without one keep the current-row-first resolution.
+          quantityBasis:
+            item.quantityBasis ??
+            current.quantityBasis ??
+            resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
           warehouseItemId: item.warehouseItemId ?? null,
           catalogProductId: item.catalogProductId ?? null,
           planItemId: item.planItemId ?? null,
           compositionSnapshot: item.composition ?? null,
           densityKgPerL: item.densityKgPerL ?? null,
-        },
-      ],
-    });
-  };
+        };
+        onChange({
+          ...data,
+          fertilizers: nextFertilizers,
+        });
+        return;
+      }
 
-  const handleSearchSelection = (selection: SearchSelectSelection) => {
-    setShowProductPicker(false);
-    // The fertigation picker never offers catalog mixes.
-    if (selection.kind === 'mix') return;
-    addQuickFertilizer({
-      name: selection.name,
-      unit: selection.prefill?.unit,
-      quantity: selection.prefill?.quantity,
-      quantityBasis: selection.prefill?.quantityBasis,
-      warehouseItemId: selection.warehouseItemId ?? null,
-      catalogProductId: selection.catalogProductId ?? null,
-      planItemId: selection.planItemId ?? null,
-      // Catalog picks carry declared nutrient composition; stamped exactly
-      // like warehouse picks so the nutrient ledger sees them (issue #200).
-      composition: selection.composition ?? null,
-    });
-  };
+      if (data.fertilizers.length >= 10) return;
+
+      onChange({
+        ...data,
+        fertilizers: [
+          ...data.fertilizers,
+          {
+            id: `${normalizedName}-${validatedUnit.trim().toLowerCase()}`,
+            name: item.name.trim(),
+            quantity: item.quantity ?? 0,
+            unit: validatedUnit,
+            quantityBasis: resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
+            warehouseItemId: item.warehouseItemId ?? null,
+            catalogProductId: item.catalogProductId ?? null,
+            planItemId: item.planItemId ?? null,
+            compositionSnapshot: item.composition ?? null,
+            densityKgPerL: item.densityKgPerL ?? null,
+          },
+        ],
+      });
+    },
+    [data, onChange],
+  );
+
+  const handleSearchSelection = useCallback(
+    (selection: SearchSelectSelection) => {
+      setShowProductPicker(false);
+      // The fertigation picker never offers catalog mixes.
+      if (selection.kind === 'mix') return;
+      addQuickFertilizer({
+        name: selection.name,
+        unit: selection.prefill?.unit,
+        quantity: selection.prefill?.quantity,
+        quantityBasis: selection.prefill?.quantityBasis,
+        warehouseItemId: selection.warehouseItemId ?? null,
+        catalogProductId: selection.catalogProductId ?? null,
+        planItemId: selection.planItemId ?? null,
+        // Catalog picks carry declared nutrient composition; stamped exactly
+        // like warehouse picks so the nutrient ledger sees them (issue #200).
+        composition: selection.composition ?? null,
+      });
+    },
+    [addQuickFertilizer],
+  );
 
   // Calculate total inputs count
   const totalInputs = data.fertilizers.filter((f) => f.name.trim() && (f.quantity ?? 0) > 0).length;
