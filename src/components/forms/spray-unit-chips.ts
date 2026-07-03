@@ -209,8 +209,11 @@ export function evaluateDoseGuard(
     if (ratio <= 1 / DOSE_GUARD_FACTOR) {
       return { source, direction: 'low', ratio: Math.round(1 / ratio), reference };
     }
-    // A comparable reference existed and the dose looks sane — done. The
-    // plan is the authority when linked; history never second-guesses it.
+    // Authority decision, not a fall-through: a comparable reference was found
+    // and the dose sits inside the sane band. This early exit ends the loop — a
+    // sane plan dose renders the history reference moot, and a sane history dose
+    // warrants no warning. (Test-locked: "a sane linked plan dose is
+    // authoritative — history never second-guesses it".)
     return null;
   }
 

@@ -751,6 +751,7 @@ export function SprayForm({
                 areaAcres={areaAcres}
                 historyItems={historyItems}
                 planItems={planItems}
+                lastUsedChipFor={lastUsedChipFor}
               />
             ))}
 
@@ -868,6 +869,8 @@ interface ChemicalRowProps {
   areaAcres?: number | null;
   historyItems?: RecentInputItem[];
   planItems?: FertilizerPlanItem[];
+  /** Resolves a product's last-used chip — owned by SprayForm (one subscription). */
+  lastUsedChipFor: (name: string, catalogProductId?: number | null) => SprayUnitChip | null;
 }
 
 function ChemicalRow({
@@ -887,6 +890,7 @@ function ChemicalRow({
   areaAcres = null,
   historyItems = [],
   planItems = [],
+  lastUsedChipFor,
 }: ChemicalRowProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -896,7 +900,8 @@ function ChemicalRow({
   );
   const [isNameFocused, setIsNameFocused] = useState(false);
   const [isQuantityFocused, setIsQuantityFocused] = useState(false);
-  const lastUsedChips = useSprayUnitStore((s) => s.lastUsedChips);
+  // Reads route through the parent's lastUsedChipFor; only the write (recording
+  // a chip selection) is local — that keeps one store subscription, in SprayForm.
   const setLastUsedChip = useSprayUnitStore((s) => s.setLastUsedChip);
 
   const activeChip = chipForEntry(chemical.unit, chemical.quantityBasis);
@@ -991,17 +996,10 @@ function ChemicalRow({
     }
   };
 
-  const lastUsedChipForRow = (name: string, catalogProductId?: number | null) => {
-    const productKey = sprayProductKey(name, catalogProductId);
-    return sprayUnitChipByKey(productKey ? lastUsedChips[productKey] : null);
-  };
-
   const applySuggestion = (item: SprayQuickAddItem) => {
     // Suggestions without a unit of their own fall back to the product's
     // last-used chip before inheriting the row's current unit.
-    const lastUsed = item.unit?.trim()
-      ? null
-      : lastUsedChipForRow(item.name, item.catalogProductId);
+    const lastUsed = item.unit?.trim() ? null : lastUsedChipFor(item.name, item.catalogProductId);
     const unit = lastUsed?.unit ?? resolveChemicalUnit(item.unit, chemical.unit);
     onUpdate({
       name: item.name,
@@ -1029,7 +1027,7 @@ function ChemicalRow({
     // Typed products preselect their last-used chip while the row is still
     // pristine (no dose entered yet) — never fights an entered quantity.
     if (chemical.quantity === undefined) {
-      const lastUsed = lastUsedChipForRow(name, null);
+      const lastUsed = lastUsedChipFor(name, null);
       if (lastUsed) {
         updates.unit = lastUsed.unit;
         updates.quantityBasis = lastUsed.basis;
