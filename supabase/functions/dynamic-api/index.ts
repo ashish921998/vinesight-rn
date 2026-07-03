@@ -133,7 +133,10 @@ Deno.serve(async (req) => {
       uploadContentType = 'application/pdf';
     } else if (mimeType === 'image/jpeg' || mimeType === 'image/png') {
       const ext = mimeType === 'image/png' ? 'png' : 'jpg';
-      uploadBytes = zipSync({ [`page-1.${ext}`]: bytes });
+      // level: 0 (store) — the payload is already-compressed JPEG/PNG, so
+      // deflating it burns edge-isolate CPU for ~0% gain. The ZIP is only the
+      // container Sarvam requires.
+      uploadBytes = zipSync({ [`page-1.${ext}`]: [bytes, { level: 0 }] });
       uploadName = 'report.zip';
       uploadContentType = 'application/zip';
     } else {
@@ -196,13 +199,28 @@ async function resolveReportBytes(
 ): Promise<{ bytes: Uint8Array; mimeType: string } | Response> {
   if (body.storage_path) {
     // Prevent IDOR: a user may only reference files under their own folder.
-    if (!body.storage_path.startsWith(`${userId}/`)) {
+    // The service-role client below bypasses RLS, so this string check is the
+    // only authorization gate — validate by exact path segments (not a prefix
+    // startsWith, which `${userId}/../<other>/f` would satisfy) and reject any
+    // traversal or empty segment.
+    const segments = body.storage_path.split('/');
+    const pathIsOwned =
+      segments.length >= 2 &&
+      segments[0] === userId &&
+      segments.every((s) => s.length > 0 && s !== '.' && s !== '..');
+    if (!pathIsOwned) {
       return jsonResponse({ error: 'storage_path is outside your folder' }, 403);
     }
     if (!SUPABASE_SERVICE_ROLE_KEY) {
       return jsonResponse({ error: 'Service role key not configured on server' }, 500);
     }
     const admin = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY);
+    // Best-effort removal of the stored object (RLS-bypassing service role).
+    const removeUploaded = () =>
+      admin.storage
+        .from(STORAGE_BUCKET)
+        .remove([body.storage_path as string])
+        .catch(() => {});
 
     // Verify the object size from metadata BEFORE downloading, so an oversized
     // blob is never buffered into function memory. The bucket's file_size_limit
@@ -217,20 +235,14 @@ async function resolveReportBytes(
       .info(body.storage_path);
     const objectSize = typeof objectInfo?.size === 'number' ? objectInfo.size : null;
     if (infoError || objectSize === null) {
-      await admin.storage
-        .from(STORAGE_BUCKET)
-        .remove([body.storage_path])
-        .catch(() => {});
+      await removeUploaded();
       return jsonResponse(
         { error: 'Could not verify the uploaded file', details: infoError?.message },
         404,
       );
     }
     if (objectSize > MAX_FILE_SIZE) {
-      await admin.storage
-        .from(STORAGE_BUCKET)
-        .remove([body.storage_path])
-        .catch(() => {});
+      await removeUploaded();
       return jsonResponse({ error: 'File too large. Maximum 10MB.' }, 400);
     }
 
@@ -238,20 +250,19 @@ async function resolveReportBytes(
       .from(STORAGE_BUCKET)
       .download(body.storage_path);
     if (dlError || !blob) {
+      // Same cleanup contract as the sibling error branches: don't leave the
+      // object orphaned just because the download leg failed.
+      await removeUploaded();
       return jsonResponse(
         { error: 'Could not read the uploaded file', details: dlError?.message },
         404,
       );
     }
     // Backstop: guards drift between the metadata just verified and what
-    // download() actually returned (e.g. the object changed in between).
+    // download() actually returned (e.g. the object changed in between). Awaited
+    // cleanup — the runtime cancels pending promises once the response is sent.
     if (blob.size > MAX_FILE_SIZE) {
-      // Await the cleanup: the runtime cancels pending promises once the
-      // response is sent, so a fire-and-forget removal here would be dropped.
-      await admin.storage
-        .from(STORAGE_BUCKET)
-        .remove([body.storage_path])
-        .catch(() => {});
+      await removeUploaded();
       return jsonResponse({ error: 'File too large. Maximum 10MB.' }, 400);
     }
     const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -261,12 +272,8 @@ async function resolveReportBytes(
       blob.type && blob.type !== 'application/octet-stream'
         ? blob.type
         : mimeFromPath(body.storage_path);
-    // Bytes are in memory; remove the stored file. Awaited (best-effort via
-    // catch) so the deletion is guaranteed to finish before we return.
-    await admin.storage
-      .from(STORAGE_BUCKET)
-      .remove([body.storage_path])
-      .catch(() => {});
+    // Bytes are in memory; remove the stored file (awaited, best-effort).
+    await removeUploaded();
     return { bytes, mimeType };
   }
 

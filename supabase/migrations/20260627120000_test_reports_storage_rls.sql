@@ -28,6 +28,12 @@ set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
+-- Defense-in-depth: ensure RLS is on for storage.objects. Supabase ships it
+-- enabled by default, but if it were ever disabled in an environment these
+-- owner-scoped policies would silently become no-ops and the bucket would be
+-- wide open. Idempotent.
+alter table storage.objects enable row level security;
+
 -- Drop-then-create keeps the migration idempotent: these policies already exist
 -- in environments where they were created out-of-band (e.g. via the dashboard),
 -- and a bare `create policy` would fail there with a duplicate-policy error.

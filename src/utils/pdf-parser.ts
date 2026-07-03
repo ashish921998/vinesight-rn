@@ -121,7 +121,10 @@ export async function parseLabTestFromImage(
   // Upload to Storage first, then hand the edge function just the path. The
   // path is timestamped so it is unique per upload; `upsert: false` keeps us
   // to the insert-only RLS policy (no UPDATE policy exists on this bucket).
-  const storagePath = `${user.id}/${Date.now()}-lab-report.${ext}`;
+  // Random suffix (not just Date.now()) so a double-tap or fast retry in the
+  // same millisecond can't collide — with upsert:false a collision would 409.
+  const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  const storagePath = `${user.id}/${uniqueId}-lab-report.${ext}`;
   const { error: uploadError } = await supabase.storage
     .from(STORAGE_BUCKET)
     .upload(storagePath, decodeBase64(base64), { contentType: mimeType, upsert: false });
