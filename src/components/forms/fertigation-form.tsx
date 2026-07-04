@@ -10,6 +10,15 @@ import {
 } from '@/components/ui/search-select-logic';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput, type NumericInputHandle } from './form-field';
+import {
+  MAX_PRODUCT_ROWS,
+  allProductRowsComplete,
+  applyQuickAdd,
+  filterNameSuggestions,
+  isProductRowComplete,
+  sanitizeQuantityInput,
+} from './product-rows';
+import { NameSuggestionOverlay } from './name-suggestion-overlay';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculator-models';
 import { resolveFertigationUnit } from '@/constants/fertilizer-units';
@@ -56,6 +65,10 @@ function resolveQuantityBasis(
   // Kernel-recognized verbatim units (kg/ha, ppm, g/L) use the kernel's parsed
   // basis; unknowns fall back to the '/acre' + legacy 'per acre' text sniff.
   return resolveVerbatimQuantityBasis(unit);
+}
+
+function generateRowId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 function resolveQuickAddQuantityBasis(
@@ -115,9 +128,7 @@ export function FertigationForm({
 }: FertigationFormProps) {
   const m3 = useM3();
   const { t } = useTranslation();
-  const isValid =
-    data.fertilizers.length > 0 &&
-    data.fertilizers.every((f) => f.name.trim() && (f.quantity ?? 0) > 0);
+  const isValid = allProductRowsComplete(data.fertilizers);
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
   const showDetailsGuidance =
@@ -147,13 +158,13 @@ export function FertigationForm({
   }, []);
 
   const addFertilizer = () => {
-    if (data.fertilizers.length < 10) {
+    if (data.fertilizers.length < MAX_PRODUCT_ROWS) {
       onChange({
         ...data,
         fertilizers: [
           ...data.fertilizers,
           {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            id: generateRowId(),
             name: '',
             quantity: 0,
             unit: 'kg',
@@ -187,23 +198,11 @@ export function FertigationForm({
       const normalizedName = item.name.trim().toLowerCase();
       // Comparison only — stored unit values stay verbatim (case preserved).
       const normalizedUnit = validatedUnit.trim().toLowerCase();
-      const alreadyExists = data.fertilizers.some(
-        (fertilizer) =>
+      const nextFertilizers = applyQuickAdd(data.fertilizers, {
+        isDuplicate: (fertilizer) =>
           fertilizer.name.trim().toLowerCase() === normalizedName &&
           fertilizer.unit.trim().toLowerCase() === normalizedUnit,
-      );
-      if (alreadyExists) return;
-
-      const firstIncompleteIndex = data.fertilizers.findIndex(
-        (fertilizer) =>
-          !fertilizer.name.trim() || fertilizer.quantity === undefined || fertilizer.quantity <= 0,
-      );
-
-      if (firstIncompleteIndex >= 0) {
-        const nextFertilizers = [...data.fertilizers];
-        const current = nextFertilizers[firstIncompleteIndex];
-        if (!current) return;
-        nextFertilizers[firstIncompleteIndex] = {
+        fillRow: (current) => ({
           ...current,
           name: item.name.trim(),
           unit: validatedUnit,
@@ -223,34 +222,21 @@ export function FertigationForm({
           planItemId: item.planItemId ?? null,
           compositionSnapshot: item.composition ?? null,
           densityKgPerL: item.densityKgPerL ?? null,
-        };
-        onChange({
-          ...data,
-          fertilizers: nextFertilizers,
-        });
-        return;
-      }
-
-      if (data.fertilizers.length >= 10) return;
-
-      onChange({
-        ...data,
-        fertilizers: [
-          ...data.fertilizers,
-          {
-            id: `${normalizedName}-${validatedUnit.trim().toLowerCase()}`,
-            name: item.name.trim(),
-            quantity: item.quantity ?? 0,
-            unit: validatedUnit,
-            quantityBasis: resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
-            warehouseItemId: item.warehouseItemId ?? null,
-            catalogProductId: item.catalogProductId ?? null,
-            planItemId: item.planItemId ?? null,
-            compositionSnapshot: item.composition ?? null,
-            densityKgPerL: item.densityKgPerL ?? null,
-          },
-        ],
+        }),
+        appendRow: () => ({
+          id: generateRowId(),
+          name: item.name.trim(),
+          quantity: item.quantity ?? 0,
+          unit: validatedUnit,
+          quantityBasis: resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
+          warehouseItemId: item.warehouseItemId ?? null,
+          catalogProductId: item.catalogProductId ?? null,
+          planItemId: item.planItemId ?? null,
+          compositionSnapshot: item.composition ?? null,
+          densityKgPerL: item.densityKgPerL ?? null,
+        }),
       });
+      if (nextFertilizers) onChange({ ...data, fertilizers: nextFertilizers });
     },
     [data, onChange],
   );
@@ -277,7 +263,7 @@ export function FertigationForm({
   );
 
   // Calculate total inputs count
-  const totalInputs = data.fertilizers.filter((f) => f.name.trim() && (f.quantity ?? 0) > 0).length;
+  const totalInputs = data.fertilizers.filter(isProductRowComplete).length;
 
   return (
     <View>
@@ -449,7 +435,7 @@ export function FertigationForm({
 
           {/* Add Fertilizer Button — opens the sectioned product picker when
               there is anything to pick from; falls back to a blank row. */}
-          {data.fertilizers.length < 10 && (
+          {data.fertilizers.length < MAX_PRODUCT_ROWS && (
             <Pressable
               onPress={() => (hasPickerOptions ? setShowProductPicker(true) : addFertilizer())}
               accessibilityRole="button"
@@ -507,33 +493,31 @@ export function FertigationForm({
           >
             Fertilizers Summary
           </Text>
-          {data.fertilizers
-            .filter((f) => f.name.trim() && (f.quantity ?? 0) > 0)
-            .map((f, idx) => (
-              <View
-                key={idx}
+          {data.fertilizers.filter(isProductRowComplete).map((f, idx) => (
+            <View
+              key={idx}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingVertical: spacing[1],
+              }}
+            >
+              <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
+                {f.name}
+              </Text>
+              <Text
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingVertical: spacing[1],
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: m3.colorScheme.success,
                 }}
               >
-                <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
-                  {f.name}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.medium,
-                    color: m3.colorScheme.success,
-                  }}
-                >
-                  {f.quantity ?? 0} {f.unit}
-                  {f.quantityBasis === 'per_acre' ? ` (${perAreaLabel})` : ''}
-                </Text>
-              </View>
-            ))}
+                {f.quantity ?? 0} {f.unit}
+                {f.quantityBasis === 'per_acre' ? ` (${perAreaLabel})` : ''}
+              </Text>
+            </View>
+          ))}
         </View>
       )}
 
@@ -609,14 +593,10 @@ function FertilizerRow({
     fertilizer.quantity !== undefined && fertilizer.quantity > 0
       ? fertilizer.quantity.toString()
       : '';
-  const nameSuggestions = useMemo(() => {
-    const query = fertilizer.name.trim().toLowerCase();
-    if (!query) return [];
-    return quickAddItems
-      .filter((item) => item.name.trim().toLowerCase().includes(query))
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .slice(0, 6);
-  }, [fertilizer.name, quickAddItems]);
+  const nameSuggestions = useMemo(
+    () => filterNameSuggestions(quickAddItems, fertilizer.name),
+    [fertilizer.name, quickAddItems],
+  );
   const showNoMatchHint =
     isNameFocused && fertilizer.name.trim().length >= 2 && nameSuggestions.length === 0;
   const shouldShowSuggestions =
@@ -632,18 +612,12 @@ function FertilizerRow({
   }, [isQuantityEditing, quantityText, syncedQuantityText]);
 
   const handleQuantityChange = (text: string) => {
-    const cleanText = text.replace(/[^0-9.]/g, '');
-    const parts = cleanText.split('.');
-    let sanitizedText = parts[0];
-    if (parts.length > 1) {
-      sanitizedText += '.' + parts[1].slice(0, 2);
-    }
+    const { text: sanitizedText, quantity } = sanitizeQuantityInput(text);
     setQuantityText(sanitizedText);
-    const qty = sanitizedText === '' ? undefined : parseFloat(sanitizedText);
-    onUpdate({ quantity: qty });
+    onUpdate({ quantity });
   };
 
-  const isRowComplete = fertilizer.name.trim() && (fertilizer.quantity ?? 0) > 0;
+  const isRowComplete = isProductRowComplete(fertilizer);
   const applySuggestion = (item: FertigationQuickAddItem) => {
     const resolved = resolveFertigationUnit(item.unit, fertilizer.unit);
     const currentQuantity = fertilizer.quantity ?? 0;
@@ -707,44 +681,11 @@ function FertilizerRow({
           />
 
           {shouldShowSuggestions ? (
-            <View
-              style={{
-                position: 'absolute',
-                top: 52,
-                left: 0,
-                right: 0,
-                backgroundColor: '#ffffff',
-                borderRadius: borderRadius.lg,
-                borderWidth: 1,
-                borderColor: m3.surface.s300,
-                maxHeight: 208,
-                overflow: 'hidden',
-                zIndex: 20,
-              }}
-            >
-              <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
-                {nameSuggestions.map((item, suggestionIndex) => (
-                  <Pressable
-                    key={`${item.name}-${item.unit ?? 'unit'}-${suggestionIndex}`}
-                    onPress={() => applySuggestion(item)}
-                    style={{
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[2],
-                      borderTopWidth: suggestionIndex === 0 ? 0 : 1,
-                      borderTopColor: m3.surface.s100,
-                    }}
-                  >
-                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
-                      {item.name}
-                    </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                      {item.quantity ? `${item.quantity} ` : ''}
-                      {item.unit ?? 'kg'}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
+            <NameSuggestionOverlay
+              items={nameSuggestions}
+              onSelect={applySuggestion}
+              fallbackUnitLabel="kg"
+            />
           ) : null}
 
           {showNoMatchHint ? (
@@ -882,10 +823,7 @@ function FertilizerRow({
 }
 
 export function validateFertigationForm(data: FertigationFormData): boolean {
-  return (
-    data.fertilizers.length > 0 &&
-    data.fertilizers.every((f) => f.name.trim() && (f.quantity ?? 0) > 0)
-  );
+  return allProductRowsComplete(data.fertilizers);
 }
 
 // Create empty fertigation form data
