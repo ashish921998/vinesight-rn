@@ -696,7 +696,7 @@ export function SprayForm({
 
             {/* Add Chemical Button — opens the sectioned product picker when
                 there is anything to pick from; falls back to a blank row. */}
-            {data.chemicals.length < 10 && !catalogOnly && (
+            {data.chemicals.length < MAX_PRODUCT_ROWS && !catalogOnly && (
               <Pressable
                 onPress={() => (hasPickerOptions ? setShowProductPicker(true) : addChemical())}
                 accessibilityRole="button"
