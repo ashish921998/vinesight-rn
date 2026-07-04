@@ -14,9 +14,11 @@ import {
   useExpenseRecords,
 } from './use-records';
 import { useWarehouseItems } from './use-profile';
+import { useFertilizerPlan } from './use-fertilizer-plan';
 import { ReportService } from '../services/report-service';
 import {
   DateRange,
+  ReportPlanItemInput,
   ReportPreview,
   ReportType,
   ReportFormat,
@@ -132,6 +134,21 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
     seasonId,
   );
   const { data: warehouseItems, isLoading: warehouseItemsLoading } = useWarehouseItems();
+  // Current fertilizer plan — the compliance delta's join target. Not part of
+  // the loading gate: a farm without a plan (or a failed plan fetch) still
+  // gets its report; the compliance section simply stays empty.
+  const { data: fertilizerPlan } = useFertilizerPlan(effectiveFarmId);
+
+  const planItems = useMemo<ReportPlanItemInput[]>(
+    () =>
+      (fertilizerPlan?.items ?? []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        unit: item.unit,
+      })),
+    [fertilizerPlan],
+  );
 
   const farm = useMemo(() => {
     if (!farms || !effectiveFarmId) return null;
@@ -242,6 +259,7 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
         seasonContext,
         seasonNameById,
         seasonWindowById,
+        planItems,
       },
     );
   }, [
@@ -251,6 +269,7 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
     fertigations,
     harvests,
     irrigations,
+    planItems,
     seasonContext,
     seasonNameById,
     seasonWindowById,

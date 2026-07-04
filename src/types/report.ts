@@ -103,6 +103,114 @@ export interface ReportData {
   harvest: ReportHarvestRecord[];
   expense: ReportExpenseRecord[];
   stock: ReportStockUsageRecord[];
+  /** Kernel-computed quantity lenses (issue #198). Optional so hand-built fixtures stay valid. */
+  usage?: ReportUsageLenses;
+}
+
+// ============================================================
+// MARK: - Usage lenses (issue #198)
+// ============================================================
+
+export type UsageLensMeasure = 'mass' | 'volume' | 'count';
+
+/**
+ * One canonical figure of a lens row. `value` is full precision (kg / L /
+ * count); `display` is render-rounded by the kernel's format() and carries
+ * the "≈ " prefix because every lens figure is derived (folded/divided),
+ * never a value the farmer typed.
+ */
+export interface UsageLensFigure {
+  measure: UsageLensMeasure;
+  value: number;
+  display: string;
+}
+
+export interface UsagePerPlotRow {
+  key: string;
+  name: string;
+  type: 'spray' | 'fertilizer';
+  usageCount: number;
+  /** One figure per measure — mass, volume and count never merge into one number. */
+  totals: UsageLensFigure[];
+}
+
+/**
+ * A row shown as logged, without any conversion: unrecognized-unit items
+ * ("Other"), concentration items missing their water volume
+ * ("concentration-only"), and per-acre rates missing the farm area.
+ */
+export interface UsageVerbatimRow {
+  key: string;
+  name: string;
+  type: 'spray' | 'fertilizer';
+  unit: string;
+  quantity: number;
+  usageCount: number;
+}
+
+export interface UsagePerAcreRow {
+  key: string;
+  name: string;
+  type: 'spray' | 'fertilizer';
+  perAcre: UsageLensFigure[];
+}
+
+/**
+ * 'verified' — every applied contribution came from a record item stamped
+ * with this plan item's id. 'approximate' — at least one contribution was
+ * matched only by normalized product name; never presented as verified.
+ */
+export type UsageComplianceMatchLevel = 'verified' | 'approximate';
+
+export interface UsageComplianceRow {
+  planItemId: string;
+  name: string;
+  measure: UsageLensMeasure;
+  prescribedPerAcre: number;
+  prescribedDisplay: string;
+  appliedPerAcre: number | null;
+  appliedDisplay: string | null;
+  matchLevel: UsageComplianceMatchLevel | null;
+}
+
+export interface UsagePerLiterRow {
+  key: string;
+  name: string;
+  measure: 'mass' | 'volume';
+  /** Σ chemical canonical ÷ Σ water volume — weighted by water, never a plain average. */
+  concentration: number;
+  display: string;
+  /** Spray events with logged water that back this figure. */
+  eventCount: number;
+}
+
+export interface ReportUsageLenses {
+  perPlot: {
+    rows: UsagePerPlotRow[];
+    other: UsageVerbatimRow[];
+    concentrationOnly: UsageVerbatimRow[];
+    rateOnly: UsageVerbatimRow[];
+  };
+  perAcre: {
+    /** False when the farm area is missing/zero/non-finite — the lens is hidden, never divided by a guess. */
+    available: boolean;
+    areaAcres: number | null;
+    rows: UsagePerAcreRow[];
+    compliance: UsageComplianceRow[];
+  };
+  perLiter: {
+    rows: UsagePerLiterRow[];
+    sprayEventsWithWater: number;
+    sprayEventsTotal: number;
+  };
+}
+
+/** Minimal plan-item shape the compliance delta joins against. */
+export interface ReportPlanItemInput {
+  id: string;
+  name: string;
+  quantity: number | null;
+  unit: string | null;
 }
 
 export interface ReportStockUsageRecord {

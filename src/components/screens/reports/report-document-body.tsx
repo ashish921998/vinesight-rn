@@ -1,10 +1,15 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatNumber } from '@/i18n/format';
-import { spacing } from '@/styles/theme';
+import { fontSize, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
-import { getSectionsForReportType, type ReportPreview, type ReportType } from '@/types/report';
+import {
+  getSectionsForReportType,
+  type ReportPreview,
+  type ReportType,
+  type UsageVerbatimRow,
+} from '@/types/report';
 import { ReportSectionBlock, type ReportSectionRow } from './report-section-block';
 
 const ROW_LIMIT = 12;
@@ -163,6 +168,95 @@ export function ReportDocumentBody({
     ],
   }));
 
+  // ── Usage lens rows (kernel-derived, issue #198) ───────────────────────
+
+  const usage = preview.data.usage;
+
+  const verbatimRows = (rows: UsageVerbatimRow[], prefix: string): ReportSectionRow[] =>
+    rows.slice(0, ROW_LIMIT).map((row) => ({
+      id: `${prefix}-${row.key}`,
+      lines: [
+        { label: '', value: row.name },
+        {
+          label: t('reports.lenses.asLogged'),
+          value: `${formatNumber(row.quantity)} ${row.unit}`,
+          monospace: true,
+        },
+        { label: t('reports.lenses.uses'), value: String(row.usageCount), monospace: true },
+      ],
+    }));
+
+  const perPlotRows: ReportSectionRow[] = (usage?.perPlot.rows ?? [])
+    .slice(0, ROW_LIMIT)
+    .map((row) => ({
+      id: `lens-plot-${row.key}`,
+      lines: [
+        { label: '', value: row.name },
+        {
+          label: t('reports.lenses.total'),
+          value: row.totals.map((figure) => figure.display).join(' · '),
+          monospace: true,
+        },
+        { label: t('reports.lenses.uses'), value: String(row.usageCount), monospace: true },
+      ],
+    }));
+
+  const perAcreLensRows: ReportSectionRow[] = (usage?.perAcre.rows ?? [])
+    .slice(0, ROW_LIMIT)
+    .map((row) => ({
+      id: `lens-acre-${row.key}`,
+      lines: [
+        { label: '', value: row.name },
+        {
+          label: t('reports.lenses.perAcre'),
+          value: row.perAcre.map((figure) => figure.display).join(' · '),
+          monospace: true,
+        },
+      ],
+    }));
+
+  const complianceRows: ReportSectionRow[] = (usage?.perAcre.compliance ?? [])
+    .slice(0, ROW_LIMIT)
+    .map((row) => ({
+      id: `lens-compliance-${row.planItemId}`,
+      lines: [
+        { label: '', value: row.name },
+        {
+          label: t('reports.lenses.prescribed'),
+          value: row.prescribedDisplay,
+          monospace: true,
+        },
+        {
+          label: t('reports.lenses.applied'),
+          value: row.appliedDisplay ?? t('reports.lenses.notLogged'),
+          monospace: true,
+        },
+        {
+          label: t('reports.lenses.match'),
+          value:
+            row.matchLevel === 'verified'
+              ? t('reports.lenses.verified')
+              : row.matchLevel === 'approximate'
+                ? t('reports.lenses.approximate')
+                : '-',
+        },
+      ],
+    }));
+
+  const perLiterRows: ReportSectionRow[] = (usage?.perLiter.rows ?? [])
+    .slice(0, ROW_LIMIT)
+    .map((row) => ({
+      id: `lens-liter-${row.key}`,
+      lines: [
+        { label: '', value: row.name },
+        { label: t('reports.lenses.concentration'), value: row.display, monospace: true },
+        { label: t('reports.lenses.uses'), value: String(row.eventCount), monospace: true },
+      ],
+    }));
+
+  const hasPerPlotContent =
+    (usage?.perPlot.rows.length ?? 0) > 0 || (usage?.perPlot.rateOnly.length ?? 0) > 0;
+
   // ── Section card wrapper with left accent bar ──────────────────────────
 
   const renderSectionCard = (accentColor: string, children: React.ReactNode) => (
@@ -287,6 +381,145 @@ export function ReportDocumentBody({
               icon={SECTION_ICONS.stock}
               accentColor={stockAccentColor}
             />,
+          )
+        : null}
+
+      {/* Usage lenses (issue #198): per plot / per acre / per liter */}
+      {visibleSections.has('stock') && usage && usage.perPlot.rows.length > 0
+        ? renderSectionCard(
+            stockAccentColor,
+            <ReportSectionBlock
+              title={t('reports.lenses.perPlotTitle')}
+              rows={perPlotRows}
+              hiddenCount={Math.max(0, usage.perPlot.rows.length - ROW_LIMIT)}
+              variant="compact-inline"
+              icon="chart.bar.fill"
+              accentColor={stockAccentColor}
+            />,
+          )
+        : null}
+
+      {visibleSections.has('stock') && usage && usage.perPlot.other.length > 0
+        ? renderSectionCard(
+            stockAccentColor,
+            <ReportSectionBlock
+              title={t('reports.lenses.otherTitle')}
+              rows={verbatimRows(usage.perPlot.other, 'lens-other')}
+              hiddenCount={Math.max(0, usage.perPlot.other.length - ROW_LIMIT)}
+              variant="compact-inline"
+              icon="questionmark.circle"
+              accentColor={stockAccentColor}
+            />,
+          )
+        : null}
+
+      {visibleSections.has('stock') && usage && usage.perPlot.concentrationOnly.length > 0
+        ? renderSectionCard(
+            stockAccentColor,
+            <ReportSectionBlock
+              title={t('reports.lenses.concentrationOnlyTitle')}
+              rows={verbatimRows(usage.perPlot.concentrationOnly, 'lens-conc')}
+              hiddenCount={Math.max(0, usage.perPlot.concentrationOnly.length - ROW_LIMIT)}
+              variant="compact-inline"
+              icon="drop.circle.fill"
+              accentColor={stockAccentColor}
+            />,
+          )
+        : null}
+
+      {visibleSections.has('stock') && usage && usage.perPlot.rateOnly.length > 0
+        ? renderSectionCard(
+            stockAccentColor,
+            <ReportSectionBlock
+              title={t('reports.lenses.rateOnlyTitle')}
+              rows={verbatimRows(usage.perPlot.rateOnly, 'lens-rate')}
+              hiddenCount={Math.max(0, usage.perPlot.rateOnly.length - ROW_LIMIT)}
+              variant="compact-inline"
+              icon="questionmark.circle"
+              accentColor={stockAccentColor}
+            />,
+          )
+        : null}
+
+      {visibleSections.has('stock') && usage && hasPerPlotContent
+        ? renderSectionCard(
+            stockAccentColor,
+            usage.perAcre.available ? (
+              <ReportSectionBlock
+                title={t('reports.lenses.perAcreTitle')}
+                rows={perAcreLensRows}
+                hiddenCount={Math.max(0, usage.perAcre.rows.length - ROW_LIMIT)}
+                variant="compact-inline"
+                icon="square.grid.2x2.fill"
+                accentColor={stockAccentColor}
+              />
+            ) : (
+              <View style={{ paddingVertical: spacing[3], paddingRight: spacing[3] }}>
+                <Text
+                  selectable
+                  style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.sm }}
+                >
+                  {t('reports.lenses.perAcreUnavailable')}
+                </Text>
+              </View>
+            ),
+          )
+        : null}
+
+      {visibleSections.has('stock') && usage && usage.perAcre.compliance.length > 0
+        ? renderSectionCard(
+            stockAccentColor,
+            <View>
+              <ReportSectionBlock
+                title={t('reports.lenses.complianceTitle')}
+                rows={complianceRows}
+                hiddenCount={Math.max(0, usage.perAcre.compliance.length - ROW_LIMIT)}
+                variant="compact-inline"
+                icon="checkmark.seal.fill"
+                accentColor={stockAccentColor}
+              />
+              <Text
+                selectable
+                style={{
+                  color: m3.colorScheme.onSurfaceVariant,
+                  fontSize: fontSize.xs,
+                  paddingVertical: spacing[2],
+                  paddingRight: spacing[3],
+                }}
+              >
+                {t('reports.lenses.complianceNote')}
+              </Text>
+            </View>,
+          )
+        : null}
+
+      {visibleSections.has('stock') && usage && usage.perLiter.rows.length > 0
+        ? renderSectionCard(
+            stockAccentColor,
+            <View>
+              <ReportSectionBlock
+                title={t('reports.lenses.perLiterTitle')}
+                rows={perLiterRows}
+                hiddenCount={Math.max(0, usage.perLiter.rows.length - ROW_LIMIT)}
+                variant="compact-inline"
+                icon="drop.fill"
+                accentColor={stockAccentColor}
+              />
+              <Text
+                selectable
+                style={{
+                  color: m3.colorScheme.onSurfaceVariant,
+                  fontSize: fontSize.xs,
+                  paddingVertical: spacing[2],
+                  paddingRight: spacing[3],
+                }}
+              >
+                {t('reports.lenses.waterCoverage', {
+                  withWater: usage.perLiter.sprayEventsWithWater,
+                  total: usage.perLiter.sprayEventsTotal,
+                })}
+              </Text>
+            </View>,
           )
         : null}
     </View>
