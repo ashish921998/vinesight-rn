@@ -61,6 +61,11 @@ describe('sanitizeQuantityInput', () => {
     expect(sanitizeQuantityInput('')).toEqual({ text: '', quantity: undefined });
     expect(sanitizeQuantityInput('abc')).toEqual({ text: '', quantity: undefined });
   });
+
+  it('never leaks NaN mid-edit — a lone decimal point stores undefined', () => {
+    expect(sanitizeQuantityInput('.')).toEqual({ text: '.', quantity: undefined });
+    expect(sanitizeQuantityInput('1.')).toEqual({ text: '1.', quantity: 1 });
+  });
 });
 
 describe('applyQuickAdd', () => {

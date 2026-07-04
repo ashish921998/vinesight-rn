@@ -47,7 +47,8 @@ export function filterNameSuggestions<T extends { name: string }>(
 /**
  * Sanitize a quantity keystroke: digits and one decimal point, at most two
  * decimal places. Returns the text to render and the numeric value to store
- * (undefined for an empty field).
+ * (undefined for an empty or not-yet-numeric field — a lone '.' mid-edit
+ * must not leak NaN into form state).
  */
 export function sanitizeQuantityInput(text: string): {
   text: string;
@@ -59,9 +60,10 @@ export function sanitizeQuantityInput(text: string): {
   if (parts.length > 1) {
     sanitizedText += '.' + parts[1].slice(0, 2);
   }
+  const parsed = parseFloat(sanitizedText);
   return {
     text: sanitizedText,
-    quantity: sanitizedText === '' ? undefined : parseFloat(sanitizedText),
+    quantity: Number.isFinite(parsed) ? parsed : undefined,
   };
 }
 

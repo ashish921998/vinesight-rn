@@ -67,6 +67,10 @@ function resolveQuantityBasis(
   return resolveVerbatimQuantityBasis(unit);
 }
 
+function generateRowId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 function resolveQuickAddQuantityBasis(
   item: FertigationQuickAddItem,
   basisFromUnit?: QuantityBasis,
@@ -160,7 +164,7 @@ export function FertigationForm({
         fertilizers: [
           ...data.fertilizers,
           {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            id: generateRowId(),
             name: '',
             quantity: 0,
             unit: 'kg',
@@ -220,7 +224,7 @@ export function FertigationForm({
           densityKgPerL: item.densityKgPerL ?? null,
         }),
         appendRow: () => ({
-          id: `${normalizedName}-${normalizedUnit}`,
+          id: generateRowId(),
           name: item.name.trim(),
           quantity: item.quantity ?? 0,
           unit: validatedUnit,
