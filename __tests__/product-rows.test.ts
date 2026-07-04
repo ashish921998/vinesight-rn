@@ -79,7 +79,13 @@ describe('applyQuickAdd', () => {
     expect(applyQuickAdd([row('Urea', 5)], opts('Urea'))).toBeNull();
   });
 
-  it('fills the first incomplete row in place', () => {
+  it('never overwrites a named row awaiting its dose — appends instead', () => {
+    // Two consecutive no-dose catalog picks must both survive.
+    const next = applyQuickAdd([row('Urea', undefined)], opts('Zinc'));
+    expect(next?.map((r) => r.name)).toEqual(['Urea', 'Zinc']);
+  });
+
+  it('fills the first nameless row in place', () => {
     const rows = [row('Urea', 5), row('', undefined), row('', undefined)];
     const next = applyQuickAdd(rows, opts('Zinc'));
     expect(next?.map((r) => r.name)).toEqual(['Urea', 'Zinc', '']);

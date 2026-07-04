@@ -79,7 +79,11 @@ export interface QuickAddOptions<TRow extends ProductRowLike> {
 
 /**
  * The quick-add engine both forms share: skip duplicates, fill the first
- * incomplete row in place, otherwise append while there is capacity.
+ * NAMELESS row in place, otherwise append while there is capacity.
+ * Only a nameless row is a fill target — a named row still awaiting its
+ * dose is a real in-progress entry (e.g. the previous no-dose catalog
+ * pick) and must never be overwritten by the next quick-add. A dose typed
+ * before the name survives the fill (fillRow keeps positive quantities).
  * Returns the next row list, or null when nothing should change (duplicate
  * or at capacity) — callers no-op on null instead of emitting an onChange.
  */
@@ -89,12 +93,12 @@ export function applyQuickAdd<TRow extends ProductRowLike>(
 ): TRow[] | null {
   if (rows.some(isDuplicate)) return null;
 
-  const firstIncompleteIndex = rows.findIndex((row) => !isProductRowComplete(row));
-  if (firstIncompleteIndex >= 0) {
-    const current = rows[firstIncompleteIndex];
+  const fillIndex = rows.findIndex((row) => !row.name.trim());
+  if (fillIndex >= 0) {
+    const current = rows[fillIndex];
     if (!current) return null;
     const next = [...rows];
-    next[firstIncompleteIndex] = fillRow(current);
+    next[fillIndex] = fillRow(current);
     return next;
   }
 
