@@ -3197,6 +3197,7 @@ export const en = {
     },
     lenses: {
       perPlotTitle: 'Applied Quantities — Per Plot',
+      product: 'Product',
       perAcreTitle: 'Applied Quantities — Per Acre',
       perLiterTitle: 'Per Liter of Water',
       perAcreUnavailable: 'Per-acre view unavailable — farm area is missing or invalid.',
@@ -3207,12 +3208,14 @@ export const en = {
       perAcre: 'Per acre',
       concentration: 'Concentration',
       uses: 'Uses',
+      eventsWithWater: 'Events with water',
       asLogged: 'As logged',
       complianceTitle: 'Plan Compliance (per acre)',
       prescribed: 'Prescribed',
       applied: 'Applied',
       match: 'Match',
       notLogged: 'Not logged',
+      unresolved: 'Logged — unit not comparable',
       verified: 'Verified',
       approximate: 'Approximate (name match)',
       complianceNote:

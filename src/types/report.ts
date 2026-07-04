@@ -160,7 +160,7 @@ export interface UsagePerAcreRow {
  * with this plan item's id. 'approximate' — at least one contribution was
  * matched only by normalized product name; never presented as verified.
  */
-export type UsageComplianceMatchLevel = 'verified' | 'approximate';
+export type UsageComplianceMatchLevel = 'verified' | 'approximate' | 'unresolved';
 
 export interface UsageComplianceRow {
   planItemId: string;

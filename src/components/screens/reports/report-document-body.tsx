@@ -176,7 +176,7 @@ export function ReportDocumentBody({
     rows.slice(0, ROW_LIMIT).map((row) => ({
       id: `${prefix}-${row.key}`,
       lines: [
-        { label: '', value: row.name },
+        { label: t('reports.lenses.product'), value: row.name },
         {
           label: t('reports.lenses.asLogged'),
           value: `${formatNumber(row.quantity)} ${row.unit}`,
@@ -191,7 +191,7 @@ export function ReportDocumentBody({
     .map((row) => ({
       id: `lens-plot-${row.key}`,
       lines: [
-        { label: '', value: row.name },
+        { label: t('reports.lenses.product'), value: row.name },
         {
           label: t('reports.lenses.total'),
           value: row.totals.map((figure) => figure.display).join(' · '),
@@ -206,7 +206,7 @@ export function ReportDocumentBody({
     .map((row) => ({
       id: `lens-acre-${row.key}`,
       lines: [
-        { label: '', value: row.name },
+        { label: t('reports.lenses.product'), value: row.name },
         {
           label: t('reports.lenses.perAcre'),
           value: row.perAcre.map((figure) => figure.display).join(' · '),
@@ -220,7 +220,7 @@ export function ReportDocumentBody({
     .map((row) => ({
       id: `lens-compliance-${row.planItemId}`,
       lines: [
-        { label: '', value: row.name },
+        { label: t('reports.lenses.product'), value: row.name },
         {
           label: t('reports.lenses.prescribed'),
           value: row.prescribedDisplay,
@@ -228,7 +228,13 @@ export function ReportDocumentBody({
         },
         {
           label: t('reports.lenses.applied'),
-          value: row.appliedDisplay ?? t('reports.lenses.notLogged'),
+          value:
+            row.appliedDisplay ??
+            t(
+              row.matchLevel === 'unresolved'
+                ? 'reports.lenses.unresolved'
+                : 'reports.lenses.notLogged',
+            ),
           monospace: true,
         },
         {
@@ -238,7 +244,9 @@ export function ReportDocumentBody({
               ? t('reports.lenses.verified')
               : row.matchLevel === 'approximate'
                 ? t('reports.lenses.approximate')
-                : '-',
+                : row.matchLevel === 'unresolved'
+                  ? t('reports.lenses.unresolved')
+                  : '-',
         },
       ],
     }));
@@ -248,9 +256,9 @@ export function ReportDocumentBody({
     .map((row) => ({
       id: `lens-liter-${row.key}`,
       lines: [
-        { label: '', value: row.name },
+        { label: t('reports.lenses.product'), value: row.name },
         { label: t('reports.lenses.concentration'), value: row.display, monospace: true },
-        { label: t('reports.lenses.uses'), value: String(row.eventCount), monospace: true },
+        { label: t('reports.lenses.eventsWithWater'), value: String(row.eventCount), monospace: true },
       ],
     }));
 
@@ -444,25 +452,19 @@ export function ReportDocumentBody({
       {visibleSections.has('stock') && usage && hasPerPlotContent
         ? renderSectionCard(
             stockAccentColor,
-            usage.perAcre.available ? (
-              <ReportSectionBlock
-                title={t('reports.lenses.perAcreTitle')}
-                rows={perAcreLensRows}
-                hiddenCount={Math.max(0, usage.perAcre.rows.length - ROW_LIMIT)}
-                variant="compact-inline"
-                icon="square.grid.2x2.fill"
-                accentColor={stockAccentColor}
-              />
-            ) : (
-              <View style={{ paddingVertical: spacing[3], paddingRight: spacing[3] }}>
-                <Text
-                  selectable
-                  style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.sm }}
-                >
-                  {t('reports.lenses.perAcreUnavailable')}
-                </Text>
-              </View>
-            ),
+            <ReportSectionBlock
+              title={t('reports.lenses.perAcreTitle')}
+              rows={usage.perAcre.available ? perAcreLensRows : []}
+              hiddenCount={
+                usage.perAcre.available
+                  ? Math.max(0, usage.perAcre.rows.length - ROW_LIMIT)
+                  : 0
+              }
+              variant="compact-inline"
+              icon="square.grid.2x2.fill"
+              accentColor={stockAccentColor}
+              emptyMessage={t('reports.lenses.perAcreUnavailable')}
+            />,
           )
         : null}
 

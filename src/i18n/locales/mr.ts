@@ -3206,6 +3206,7 @@ export const mr = {
     },
     lenses: {
       perPlotTitle: 'वापरलेले प्रमाण — एकूण प्लॉट',
+      product: 'उत्पादन',
       perAcreTitle: 'वापरलेले प्रमाण — एकरी',
       perLiterTitle: 'प्रति लिटर पाणी',
       perAcreUnavailable: 'एकरी दृश्य उपलब्ध नाही — शेताचे क्षेत्रफळ नोंदलेले नाही.',
@@ -3216,12 +3217,14 @@ export const mr = {
       perAcre: 'एकरी',
       concentration: 'संहती',
       uses: 'वापर',
+      eventsWithWater: 'पाणी नोंदवलेले प्रसंग',
       asLogged: 'जसे नोंदवले',
       complianceTitle: 'योजना पालन (एकरी)',
       prescribed: 'सुचवलेले',
       applied: 'वापरलेले',
       match: 'जुळणी',
       notLogged: 'नोंद नाही',
+      unresolved: 'नोंद आहे — एककाची तुलना शक्य नाही',
       verified: 'पडताळलेले',
       approximate: 'अंदाजे (नावावरून जुळणी)',
       complianceNote:

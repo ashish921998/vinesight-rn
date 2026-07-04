@@ -3180,6 +3180,7 @@ export const hi = {
     },
     lenses: {
       perPlotTitle: 'लगाई गई मात्रा — प्रति प्लॉट',
+      product: 'उत्पाद',
       perAcreTitle: 'लगाई गई मात्रा — प्रति एकड़',
       perLiterTitle: 'प्रति लीटर पानी',
       perAcreUnavailable: 'प्रति-एकड़ दृश्य उपलब्ध नहीं — खेत का क्षेत्रफल दर्ज नहीं है।',
@@ -3190,12 +3191,14 @@ export const hi = {
       perAcre: 'प्रति एकड़',
       concentration: 'सांद्रता',
       uses: 'उपयोग',
+      eventsWithWater: 'पानी दर्ज इवेंट',
       asLogged: 'जैसा दर्ज किया गया',
       complianceTitle: 'योजना अनुपालन (प्रति एकड़)',
       prescribed: 'निर्धारित',
       applied: 'लगाया गया',
       match: 'मिलान',
       notLogged: 'दर्ज नहीं',
+      unresolved: 'दर्ज है — इकाई की तुलना संभव नहीं',
       verified: 'सत्यापित',
       approximate: 'अनुमानित (नाम से मिलान)',
       complianceNote:

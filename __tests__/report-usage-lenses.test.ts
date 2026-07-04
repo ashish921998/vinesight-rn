@@ -91,6 +91,7 @@ function usageFor(params: {
   sprays?: SprayRecord[];
   fertigations?: FertigationRecord[];
   planItems?: ReportPlanItemInput[];
+  areaUnit?: 'acres' | 'hectares';
 }) {
   const usage = ReportService.generateReportData(
     params.farm,
@@ -101,7 +102,7 @@ function usageFor(params: {
     [],
     DATE_RANGE,
     [],
-    { planItems: params.planItems },
+    { planItems: params.planItems, areaUnit: params.areaUnit },
   ).usage;
   expect(usage).toBeDefined();
   return usage!;
@@ -186,7 +187,7 @@ describe('§5 vector: 100 ppm GA3 in 400 L water on a 3.5 acre farm', () => {
     expect(lens.perPlot.rows).toEqual([]);
     expect(lens.perPlot.concentrationOnly).toEqual([
       {
-        key: 'spray::ga3::ppm',
+        key: 'spray::ga3::ppm::100',
         name: 'GA3',
         type: 'spray',
         unit: 'ppm',
@@ -302,7 +303,7 @@ describe('lens hard rules', () => {
     expect(lens.perPlot.rows).toEqual([]);
     expect(lens.perPlot.other).toEqual([
       {
-        key: 'fertilizer::jeevamrut::tola',
+        key: 'fertilizer::jeevamrut::tola::5',
         name: 'Jeevamrut',
         type: 'fertilizer',
         unit: 'tola',
@@ -331,7 +332,7 @@ describe('lens hard rules', () => {
     expect(lens.perPlot.rows.map((row) => row.name)).toEqual(['DAP']);
     expect(lens.perPlot.rateOnly).toEqual([
       {
-        key: 'fertilizer::urea::kg/acre',
+        key: 'fertilizer::urea::kg/acre::5',
         name: 'Urea',
         type: 'fertilizer',
         unit: 'kg/acre',
@@ -466,9 +467,11 @@ describe('compliance delta (prescribed vs applied, per acre)', () => {
       planItems: PLAN_ITEMS,
       fertigations: [fertigation([{ name: 'Urea', quantity: 8.4, unit: 'liter' }])],
     });
+    // The join still refuses (applied stays null) — but the liters ARE
+    // logged evidence, so the row reads 'unresolved', never 'not logged'.
     expect(lens.perAcre.compliance[0]).toMatchObject({
       appliedPerAcre: null,
-      matchLevel: null,
+      matchLevel: 'unresolved',
     });
   });
 
@@ -489,5 +492,117 @@ describe('compliance delta (prescribed vs applied, per acre)', () => {
       appliedPerAcre: 4.5,
       matchLevel: 'approximate',
     });
+  });
+});
+
+describe('area provenance: hectares-preference farms convert before per-acre math', () => {
+  // farm.area holds the raw number the user typed under their preference
+  // (entry-log-submission.ts treats it the same way). 2 "areas" on a
+  // hectares farm = 2 ha = 4.94211... acres, NOT 2 acres — without the
+  // conversion every per-acre rate reads 2.47× too high.
+  const HECTARES_TO_ACRES = 1 / 0.404686;
+
+  it('divides by area × 2.47105 when areaUnit is hectares', () => {
+    const usage = usageFor({
+      farm: farmWithArea(2),
+      areaUnit: 'hectares',
+      fertigations: [fertigation([{ name: 'Urea', quantity: 10, unit: 'kg' }])],
+    });
+    expect(usage.perAcre.available).toBe(true);
+    expect(usage.perAcre.areaAcres).toBeCloseTo(2 * HECTARES_TO_ACRES, 10);
+    expect(usage.perAcre.rows[0].perAcre[0].value).toBeCloseTo(10 / (2 * HECTARES_TO_ACRES), 10);
+  });
+
+  it('acres preference (and unset) keeps the raw area — no behavior change', () => {
+    const asAcres = usageFor({
+      farm: farmWithArea(2),
+      areaUnit: 'acres',
+      fertigations: [fertigation([{ name: 'Urea', quantity: 10, unit: 'kg' }])],
+    });
+    const unset = usageFor({
+      farm: farmWithArea(2),
+      fertigations: [fertigation([{ name: 'Urea', quantity: 10, unit: 'kg' }])],
+    });
+    expect(asAcres.perAcre.areaAcres).toBe(2);
+    expect(unset.perAcre.areaAcres).toBe(2);
+    expect(asAcres.perAcre.rows[0].perAcre[0].value).toBe(5);
+  });
+
+  it('compliance delta prescribed-vs-applied also uses converted acres', () => {
+    const usage = usageFor({
+      farm: farmWithArea(2),
+      areaUnit: 'hectares',
+      planItems: [{ id: 'plan-7', name: 'Urea', quantity: 2, unit: 'kg/acre' }],
+      fertigations: [
+        fertigation([{ name: 'Urea', quantity: 10, unit: 'kg', plan_item_id: 'plan-7' }]),
+      ],
+    });
+    const row = usage.perAcre.compliance[0];
+    expect(row.prescribedPerAcre).toBe(2);
+    expect(row.appliedPerAcre).toBeCloseTo(10 / (2 * HECTARES_TO_ACRES), 10);
+  });
+});
+
+describe('compliance: records stamped from a superseded plan degrade to approximate', () => {
+  // Consultants replace plans mid-season. A record carrying an old plan's
+  // item id must NOT vanish into a verified map nothing joins against —
+  // that would render the same-named current item as "not logged" and
+  // accuse the farmer of skipping applications they made.
+  it('routes a stale plan_item_id through name matching', () => {
+    const usage = usageFor({
+      farm: farmWithArea(2),
+      planItems: [{ id: 'new-plan-item', name: 'Urea', quantity: 2, unit: 'kg/acre' }],
+      fertigations: [
+        fertigation([{ name: 'Urea', quantity: 10, unit: 'kg', plan_item_id: 'old-plan-item' }]),
+      ],
+    });
+    const row = usage.perAcre.compliance[0];
+    expect(row.appliedPerAcre).toBeCloseTo(5, 12);
+    expect(row.matchLevel).toBe('approximate');
+  });
+});
+
+describe('compliance: adversarial-review regressions', () => {
+  it('a name match counts ONCE against same-named plan items, prescriptions summed', () => {
+    // Plans repeat a product across application dates by design. One
+    // unstamped 10 kg log must not appear as 10 kg applied on EACH row.
+    const usage = usageFor({
+      farm: farmWithArea(2),
+      planItems: [
+        { id: 'p1', name: 'Urea', quantity: 2, unit: 'kg/acre' },
+        { id: 'p2', name: 'Urea', quantity: 3, unit: 'kg/acre' },
+      ],
+      fertigations: [fertigation([{ name: 'Urea', quantity: 10, unit: 'kg' }])],
+    });
+    expect(usage.perAcre.compliance).toHaveLength(1);
+    const row = usage.perAcre.compliance[0];
+    expect(row.prescribedPerAcre).toBe(5);
+    expect(row.appliedPerAcre).toBeCloseTo(5, 12);
+    expect(row.matchLevel).toBe('approximate');
+  });
+
+  it('spray chemicals never name-match into fertilizer-plan compliance', () => {
+    const usage = usageFor({
+      farm: farmWithArea(2),
+      planItems: [{ id: 'p1', name: 'Sulphur', quantity: 2, unit: 'kg/acre' }],
+      sprays: [spray([{ name: 'Sulphur', quantity: 4, unit: 'kg' }], 200)],
+    });
+    const row = usage.perAcre.compliance[0];
+    expect(row.appliedPerAcre).toBeNull();
+    expect(row.matchLevel).toBeNull();
+  });
+
+  it('per-acre rates resolve against the RECORD area snapshot, not the current farm area', () => {
+    // Logged over 2 acres, farm later edited to 3.5 — the plot total must
+    // still describe what was applied (250 ml/acre × 2 acres = 0.5 L).
+    const usage = usageFor({
+      farm: farmWithArea(3.5),
+      fertigations: [
+        fertigation([{ name: 'Liquid', quantity: 250, unit: 'ml/acre' }], { area: 2 }),
+      ],
+    });
+    expect(usage.perPlot.rows[0].totals).toEqual([
+      { measure: 'volume', value: 0.5, display: '≈ 500 ml' },
+    ]);
   });
 });

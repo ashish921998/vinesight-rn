@@ -45,6 +45,13 @@ export interface UsageEvent {
   type: 'spray' | 'fertilizer';
   waterLiters: number | null;
   items: UsageEventItem[];
+  /**
+   * Area the record was actually applied over (acres), snapshotted at logging
+   * time. Per-acre rates resolve against THIS, not the farm's current area —
+   * editing the farm later must not rewrite what was applied. Falls back to
+   * the farm-level area when absent.
+   */
+  areaAcres?: number | null;
 }
 
 export function normalizeProductName(value: string): string {
@@ -89,10 +96,12 @@ function upsertVerbatim(
   type: 'spray' | 'fertilizer',
 ): void {
   const unit = item.unit.trim();
-  const key = `${type}::${normalizeProductName(item.name)}::${unit.toLowerCase()}`;
+  // These buckets promise "shown as logged" — and their quantities may be
+  // intensive (30 gm/L + 40 gm/L is NOT 70 gm/L), so values are never summed:
+  // each distinct logged value is its own row and repeats bump usageCount.
+  const key = `${type}::${normalizeProductName(item.name)}::${unit.toLowerCase()}::${item.quantity}`;
   const existing = map.get(key);
   if (existing) {
-    existing.quantity += item.quantity;
     existing.usageCount += 1;
     return;
   }
@@ -117,6 +126,11 @@ export function computeUsageLenses(params: {
 }): ReportUsageLenses {
   const { events, planItems = [] } = params;
   const areaAcres = isPositiveFinite(params.areaAcres) ? params.areaAcres : null;
+  // Compliance joins against the CURRENT plan only. A record stamped from a
+  // superseded plan carries a plan_item_id no current item will ever match —
+  // routing it into the verified map would make it vanish from the delta
+  // ("not logged"), so stale-stamped contributions degrade to name matching.
+  const currentPlanItemIds = new Set(planItems.map((item) => item.id));
 
   const products = new Map<string, ProductAccumulator>();
   const other = new Map<string, UsageVerbatimRow>();
@@ -134,13 +148,22 @@ export function computeUsageLenses(params: {
   // Compliance accumulation keyed by plan item id / normalized plan name.
   const verifiedByPlanItem = new Map<string, Partial<Record<Measure, number>>>();
   const approxByName = new Map<string, Partial<Record<Measure, number>>>();
+  // Every current-plan stamp we saw at all — even when the item's quantity
+  // could not be resolved into the plan's measure. Distinguishes "logged but
+  // not comparable" from "not logged" (a false non-application claim is the
+  // worst output a compliance table can produce).
+  const stampedSeen = new Set<string>();
 
   for (const event of events) {
-    const ctx = { areaAcres, waterLiters: event.waterLiters };
+    const eventAreaAcres = isPositiveFinite(event.areaAcres) ? event.areaAcres : areaAcres;
+    const ctx = { areaAcres: eventAreaAcres, waterLiters: event.waterLiters };
     const perLiterSeen = new Set<string>();
 
     for (const item of event.items) {
       if (!item.name.trim() || !Number.isFinite(item.quantity) || item.quantity <= 0) continue;
+      if (item.planItemId && currentPlanItemIds.has(item.planItemId)) {
+        stampedSeen.add(item.planItemId);
+      }
 
       const { totals, skipped } = fold(
         [{ quantity: item.quantity, unit: item.unit, quantityBasis: item.quantityBasis }],
@@ -199,11 +222,15 @@ export function computeUsageLenses(params: {
         perLiterAcc.set(plKey, pl);
       }
 
-      if (item.planItemId) {
+      if (item.planItemId && currentPlanItemIds.has(item.planItemId)) {
         const byMeasure = verifiedByPlanItem.get(item.planItemId) ?? {};
         byMeasure[measure] = (byMeasure[measure] ?? 0) + value;
         verifiedByPlanItem.set(item.planItemId, byMeasure);
-      } else {
+      } else if (event.type === 'fertilizer') {
+        // Name matching joins FERTILIZER-plan items, so only fertigation
+        // contributions qualify — a spray chemical that happens to share a
+        // name must not inflate plan compliance. (Stamped items above are
+        // trusted regardless of surface: the linkage is explicit.)
         const nameKey = normalizeProductName(item.name);
         const byMeasure = approxByName.get(nameKey) ?? {};
         byMeasure[measure] = (byMeasure[measure] ?? 0) + value;
@@ -235,7 +262,9 @@ export function computeUsageLenses(params: {
       : [];
 
   const compliance: UsageComplianceRow[] =
-    areaAcres != null ? computeCompliance(planItems, verifiedByPlanItem, approxByName, areaAcres) : [];
+    areaAcres != null
+      ? computeCompliance(planItems, verifiedByPlanItem, approxByName, areaAcres, stampedSeen)
+      : [];
 
   const sprayEvents = events.filter((event) => event.type === 'spray');
   const perLiterRows: UsagePerLiterRow[] = sortByName(
@@ -281,8 +310,21 @@ function computeCompliance(
   verifiedByPlanItem: Map<string, Partial<Record<Measure, number>>>,
   approxByName: Map<string, Partial<Record<Measure, number>>>,
   areaAcres: number,
+  stampedSeen: Set<string>,
 ): UsageComplianceRow[] {
-  const rows: UsageComplianceRow[] = [];
+  // Plans repeat the same product across application dates by design, but a
+  // name-matched (unstamped) contribution cannot be attributed to one of
+  // those rows — adding it to EACH would multiply the applied figure by the
+  // row count. So the delta is per (product name, measure): prescriptions
+  // for the same product sum into one row and the name match counts once.
+  interface ComplianceGroup {
+    name: string;
+    nameKey: string;
+    measure: Measure;
+    planItemIds: string[];
+    prescribedPerAcre: number;
+  }
+  const groups = new Map<string, ComplianceGroup>();
 
   for (const planItem of planItems) {
     if (!planItem.unit || !isPositiveFinite(planItem.quantity)) continue;
@@ -295,25 +337,59 @@ function computeCompliance(
     const canonical = planItem.quantity * parsed.factorToCanonical;
     const prescribedPerAcre = parsed.basis === 'per_acre' ? canonical : canonical / areaAcres;
 
-    const verified = verifiedByPlanItem.get(planItem.id)?.[parsed.measure] ?? 0;
-    const approx = approxByName.get(normalizeProductName(planItem.name))?.[parsed.measure] ?? 0;
+    const nameKey = normalizeProductName(planItem.name);
+    const groupKey = `${nameKey}::${parsed.measure}`;
+    const group = groups.get(groupKey) ?? {
+      name: displayName(planItem.name),
+      nameKey,
+      measure: parsed.measure,
+      planItemIds: [],
+      prescribedPerAcre: 0,
+    };
+    group.planItemIds.push(planItem.id);
+    group.prescribedPerAcre += prescribedPerAcre;
+    groups.set(groupKey, group);
+  }
+
+  const rows: UsageComplianceRow[] = [];
+  for (const group of groups.values()) {
+    const verified = group.planItemIds.reduce(
+      (sum, id) => sum + (verifiedByPlanItem.get(id)?.[group.measure] ?? 0),
+      0,
+    );
+    const approxMeasures = approxByName.get(group.nameKey);
+    const approx = approxMeasures?.[group.measure] ?? 0;
     const hasVerified = verified > 0;
     const hasApprox = approx > 0;
 
     const appliedPerAcre = hasVerified || hasApprox ? (verified + approx) / areaAcres : null;
 
+    // Contributions exist but could not be expressed in the plan's measure
+    // (stamped record with an unresolvable unit, or a name match folded into
+    // a different measure): that is "unresolved", never "not logged".
+    const hasUnresolvedEvidence =
+      appliedPerAcre == null &&
+      (group.planItemIds.some((id) => stampedSeen.has(id)) ||
+        Object.values(approxMeasures ?? {}).some((value) => (value ?? 0) > 0));
+
     rows.push({
-      planItemId: planItem.id,
-      name: displayName(planItem.name),
-      measure: parsed.measure,
-      prescribedPerAcre,
-      prescribedDisplay: `${format(prescribedPerAcre, parsed.measure, { approx: true })}/acre`,
+      planItemId: group.planItemIds.join('+'),
+      name: group.name,
+      measure: group.measure,
+      prescribedPerAcre: group.prescribedPerAcre,
+      prescribedDisplay: `${format(group.prescribedPerAcre, group.measure, { approx: true })}/acre`,
       appliedPerAcre,
       appliedDisplay:
         appliedPerAcre != null
-          ? `${format(appliedPerAcre, parsed.measure, { approx: true })}/acre`
+          ? `${format(appliedPerAcre, group.measure, { approx: true })}/acre`
           : null,
-      matchLevel: hasApprox ? 'approximate' : hasVerified ? 'verified' : null,
+      matchLevel: hasApprox
+        ? 'approximate'
+        : hasVerified
+          ? 'verified'
+          : hasUnresolvedEvidence
+            ? 'unresolved'
+            : null,
     });
   }
 

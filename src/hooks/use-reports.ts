@@ -13,8 +13,9 @@ import {
   useHarvestRecords,
   useExpenseRecords,
 } from './use-records';
-import { useWarehouseItems } from './use-profile';
+import { useProfile, useWarehouseItems } from './use-profile';
 import { useFertilizerPlan } from './use-fertilizer-plan';
+import { useAuthStore } from '@/stores';
 import { ReportService } from '../services/report-service';
 import {
   DateRange,
@@ -28,7 +29,7 @@ import {
 } from '../types/report';
 import { resolveBaselineFilters, computeReportDeltas } from '../services/report-comparison';
 import { useCurrency } from './use-currency';
-import type { AreaUnitPreference } from '@/utils/preferences';
+import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
 import { formatLocalDate } from '@/utils/date';
 import { formatDate } from '@/i18n/format';
 import type {
@@ -138,6 +139,14 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
   // the loading gate: a farm without a plan (or a failed plan fetch) still
   // gets its report; the compliance section simply stays empty.
   const { data: fertilizerPlan } = useFertilizerPlan(effectiveFarmId);
+  // farm.area is stored as the raw number the user typed under their area-unit
+  // preference — the per-acre lens must know that unit or hectare farms get
+  // rates that are silently 2.47× too high (same resolution as app/reports.tsx).
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { user } = useAuthStore();
+  const areaUnit = resolveAreaUnitPreference(
+    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
+  );
 
   const planItems = useMemo<ReportPlanItemInput[]>(
     () =>
@@ -260,9 +269,11 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
         seasonNameById,
         seasonWindowById,
         planItems,
+        areaUnit,
       },
     );
   }, [
+    areaUnit,
     dateRange,
     expenses,
     farm,
@@ -284,7 +295,11 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
     harvestsLoading ||
     expensesLoading ||
     warehouseItemsLoading ||
-    farmSeasonsLoading;
+    farmSeasonsLoading ||
+    // Without this gate a hectares-preference user's first preview computes
+    // per-acre figures with the 'acres' fallback (2.47× too high) until the
+    // profile query settles — and an immediate export captures that preview.
+    profileLoading;
 
   return {
     farm,
