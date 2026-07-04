@@ -1,7 +1,7 @@
 {
   "name": "vinesight-rn",
   "_dependencyNotes": "For Expo SDK 54.0.31 compatibility, run: npx expo install expo-blur expo-constants expo-document-picker expo-file-system expo-font expo-image-picker expo-linear-gradient. Pin openai to >=5.20.0. react-native-markdown-display should be tested against React Native 0.81. Run npx expo install react-native-webview to ensure compatibility.",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
