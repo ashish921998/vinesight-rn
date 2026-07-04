@@ -521,7 +521,9 @@ export function EntryForm({
       name: item.name,
       unit: item.unit,
       quantity: item.quantity ?? null,
-      quantityBasis: undefined,
+      // History carries its own basis — a total logged as bare 'kg' must not
+      // re-enter as a rate (or vice versa) now that chips fuse unit + basis.
+      quantityBasis: item.quantityBasis,
     }));
     const deduped = new Map<string, FertigationQuickAddItem>();
     [...byPlan, ...byWarehouse, ...byRecent].forEach((item) => {
@@ -1861,7 +1863,7 @@ export function EntryForm({
                 fertigationHistoryItems={recentFertigationItems ?? []}
                 fertigationPlanItems={fertilizerPlan?.items ?? []}
                 fertigationCatalogProducts={fertilizerCatalogProducts}
-                sprayAreaAcres={activeFarm?.area ?? null}
+                areaAcres={activeFarm?.area ?? null}
                 showSaveButton={false}
               />
             </ScrollView>
@@ -1983,7 +1985,7 @@ export function EntryForm({
           fertigationHistoryItems={recentFertigationItems ?? []}
           fertigationPlanItems={fertilizerPlan?.items ?? []}
           fertigationCatalogProducts={fertilizerCatalogProducts}
-          sprayAreaAcres={activeFarm?.area ?? null}
+          areaAcres={activeFarm?.area ?? null}
         />
       </View>
     );

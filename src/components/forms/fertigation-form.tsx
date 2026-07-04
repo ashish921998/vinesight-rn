@@ -20,9 +20,17 @@ import {
 } from './product-rows';
 import { NameSuggestionOverlay } from './name-suggestion-overlay';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
-import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculator-models';
+import type { FertilizerUnit } from '../../constants/calculator-models';
 import { resolveFertigationUnit } from '@/constants/fertilizer-units';
-import { resolveVerbatimQuantityBasis } from '@/constants/unit-text';
+import { resolveVerbatimQuantityBasis, toKernelSpelling } from '@/constants/unit-text';
+import {
+  FERTIGATION_UNIT_CHIPS,
+  FERTIGATION_UNIT_OVERFLOW_CHIPS,
+  buildFertigationAreaEcho,
+  fertigationChipForEntry,
+  type FertigationUnitChip,
+} from './fertigation-unit-chips';
+import { evaluateDoseGuard, type DoseReference } from './product-dose';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
@@ -77,8 +85,21 @@ function resolveQuickAddQuantityBasis(
 ): QuantityBasis {
   if (item.quantityBasis) return item.quantityBasis;
   const unit = item.unit?.trim();
-  if (!unit) return 'per_acre';
+  // No unit at all → total, matching the manual-add default (issue #195):
+  // nothing about the item testifies a rate, and plan items always arrive
+  // with an explicit per_acre basis (resolveFertigationPrefill).
+  if (!unit) return 'total';
   return basisFromUnit ?? resolveQuantityBasis(unit);
+}
+
+/**
+ * resolveFertigationUnit collapses 'kg/acre' → bare 'kg' + basisFromUnit;
+ * the string's per-acre testimony must survive that collapse and beat the
+ * row's current basis. basisFromUnit === 'total' is NOT testimony — bare
+ * units are basis-neutral in the kernel — so only per_acre short-circuits.
+ */
+function perAcreUnitTestimony(basisFromUnit?: QuantityBasis): QuantityBasis | undefined {
+  return basisFromUnit === 'per_acre' ? 'per_acre' : undefined;
 }
 
 export interface FertigationFormData {
@@ -110,7 +131,8 @@ interface FertigationFormProps {
   planItems?: FertilizerPlanItem[];
   /** Master fertilizer catalog products for the picker's catalog section. */
   catalogProducts?: MasterCatalogProduct[];
-  perAreaLabel?: string;
+  /** Farm area in acres — powers the bidirectional per-acre ↔ total echo. */
+  areaAcres?: number | null;
   /** Hide the decorative header + summary/validation chrome (inline log composer). */
   compact?: boolean;
 }
@@ -123,7 +145,7 @@ export function FertigationForm({
   historyItems = [],
   planItems = [],
   catalogProducts = [],
-  perAreaLabel = 'Per acre',
+  areaAcres = null,
   compact = false,
 }: FertigationFormProps) {
   const m3 = useM3();
@@ -167,8 +189,10 @@ export function FertigationForm({
             id: generateRowId(),
             name: '',
             quantity: 0,
+            // Manual add lands on the bare 'kg' chip — total for the plot
+            // (issue #195); plan picks arrive with their own per_acre basis.
             unit: 'kg',
-            quantityBasis: 'per_acre',
+            quantityBasis: 'total',
             warehouseItemId: null,
             catalogProductId: null,
             planItemId: null,
@@ -210,11 +234,13 @@ export function FertigationForm({
             current.quantity !== undefined && current.quantity > 0
               ? current.quantity
               : (item.quantity ?? 0),
-          // An explicit item basis (fully-prefilled picker selections) wins over
-          // the pristine row's default 'per_acre'; legacy quick-add producers
-          // without one keep the current-row-first resolution.
+          // An explicit item basis (fully-prefilled picker selections) wins,
+          // then the unit string's own per-acre testimony ('kg/acre' collapsed
+          // to bare 'kg' must not inherit the pristine row's 'total'), then
+          // the current row, then the quick-add default.
           quantityBasis:
             item.quantityBasis ??
+            perAcreUnitTestimony(resolved.basisFromUnit) ??
             current.quantityBasis ??
             resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
           warehouseItemId: item.warehouseItemId ?? null,
@@ -429,7 +455,10 @@ export function FertigationForm({
               onRemove={() => removeFertilizer(index)}
               showRemove={data.fertilizers.length > 1}
               onInputFocus={onInputFocus}
-              perAreaLabel={perAreaLabel}
+              areaAcres={areaAcres}
+              waterLiters={data.waterVolume ?? null}
+              historyItems={historyItems}
+              planItems={planItems}
             />
           ))}
 
@@ -493,31 +522,38 @@ export function FertigationForm({
           >
             Fertilizers Summary
           </Text>
-          {data.fertilizers.filter(isProductRowComplete).map((f, idx) => (
-            <View
-              key={idx}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingVertical: spacing[1],
-              }}
-            >
-              <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
-                {f.name}
-              </Text>
-              <Text
+          {data.fertilizers.filter(isProductRowComplete).map((f, idx) => {
+            const chip = fertigationChipForEntry(f.unit, f.quantityBasis);
+            return (
+              <View
+                key={idx}
                 style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.success,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingVertical: spacing[1],
                 }}
               >
-                {f.quantity ?? 0} {f.unit}
-                {f.quantityBasis === 'per_acre' ? ` (${perAreaLabel})` : ''}
-              </Text>
-            </View>
-          ))}
+                <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
+                  {f.name}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    color: m3.colorScheme.success,
+                  }}
+                >
+                  {/* Chip rows read as one fused token ("10 kg/acre"); verbatim
+                      units keep the raw string + the legacy per-acre marker. */}
+                  {f.quantity ?? 0} {chip?.key ?? f.unit}
+                  {!chip && f.quantityBasis === 'per_acre'
+                    ? ` (${t('fertigationForm.fertilizers.perAcre')})`
+                    : ''}
+                </Text>
+              </View>
+            );
+          })}
         </View>
       )}
 
@@ -565,7 +601,10 @@ interface FertilizerRowProps {
   onRemove: () => void;
   showRemove: boolean;
   onInputFocus?: TextInputProps['onFocus'];
-  perAreaLabel: string;
+  areaAcres?: number | null;
+  waterLiters?: number | null;
+  historyItems?: RecentInputItem[];
+  planItems?: FertilizerPlanItem[];
 }
 
 function FertilizerRow({
@@ -575,7 +614,10 @@ function FertilizerRow({
   onRemove,
   showRemove,
   onInputFocus,
-  perAreaLabel,
+  areaAcres = null,
+  waterLiters = null,
+  historyItems = [],
+  planItems = [],
 }: FertilizerRowProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -618,6 +660,60 @@ function FertilizerRow({
   };
 
   const isRowComplete = isProductRowComplete(fertilizer);
+
+  const activeChip = fertigationChipForEntry(fertilizer.unit, fertilizer.quantityBasis);
+  const activeOverflowChip = FERTIGATION_UNIT_OVERFLOW_CHIPS.find(
+    (chip) => chip.key === activeChip?.key,
+  );
+  const unitLabel = activeChip?.key ?? fertilizer.unit;
+
+  const areaEcho = useMemo(
+    () => buildFertigationAreaEcho(fertilizer, areaAcres),
+    [fertilizer, areaAcres],
+  );
+
+  // Guardrail references are strictly independent of the entry: the linked
+  // plan item's dose, else the most recent prior log of the same product.
+  // The area echo derives from the same entry and is never a trigger.
+  const planReference = useMemo<DoseReference | null>(() => {
+    if (!fertilizer.planItemId) return null;
+    const planItem = planItems.find((item) => item.id === fertilizer.planItemId);
+    if (!planItem?.unit || planItem.quantity == null || planItem.quantity <= 0) return null;
+    // Plan doses are per-acre rates by contract; slashed unit spellings carry
+    // their own basis and win inside the kernel regardless.
+    return {
+      quantity: planItem.quantity,
+      unit: toKernelSpelling(planItem.unit),
+      quantityBasis: 'per_acre',
+    };
+  }, [fertilizer.planItemId, planItems]);
+
+  const historyReference = useMemo<DoseReference | null>(() => {
+    const nameKey = fertilizer.name.trim().toLowerCase();
+    if (!nameKey && fertilizer.catalogProductId == null) return null;
+    const match = historyItems.find((item) =>
+      fertilizer.catalogProductId != null && item.catalogProductId != null
+        ? item.catalogProductId === fertilizer.catalogProductId
+        : item.name.trim().toLowerCase() === nameKey,
+    );
+    if (!match || match.quantity == null || match.quantity <= 0) return null;
+    return {
+      quantity: match.quantity,
+      unit: toKernelSpelling(match.unit),
+      quantityBasis: match.quantityBasis ?? null,
+    };
+  }, [fertilizer.name, fertilizer.catalogProductId, historyItems]);
+
+  const doseWarning = useMemo(
+    () =>
+      evaluateDoseGuard(
+        fertilizer,
+        { plan: planReference, history: historyReference },
+        { areaAcres, waterLiters },
+      ),
+    [fertilizer, planReference, historyReference, areaAcres, waterLiters],
+  );
+
   const applySuggestion = (item: FertigationQuickAddItem) => {
     const resolved = resolveFertigationUnit(item.unit, fertilizer.unit);
     const currentQuantity = fertilizer.quantity ?? 0;
@@ -625,10 +721,12 @@ function FertilizerRow({
       name: item.name,
       unit: resolved.unit,
       quantity: currentQuantity > 0 ? currentQuantity : (item.quantity ?? 0),
+      // Same precedence as quick-add: the item's explicit basis, then the
+      // unit string's per-acre testimony, then the row, then the sniff.
       quantityBasis:
-        fertilizer.quantityBasis ??
         item.quantityBasis ??
-        resolved.basisFromUnit ??
+        perAcreUnitTestimony(resolved.basisFromUnit) ??
+        fertilizer.quantityBasis ??
         resolveQuantityBasis(item.unit?.trim() ?? resolved.unit),
       warehouseItemId: item.warehouseItemId ?? null,
       catalogProductId: item.catalogProductId ?? null,
@@ -640,6 +738,11 @@ function FertilizerRow({
       setQuantityText(item.quantity.toString());
     }
     quantityRef.current?.focus();
+  };
+
+  const handleChipSelect = (chip: FertigationUnitChip) => {
+    // The chip is the single source of unit + basis — no separate toggle.
+    onUpdate({ unit: chip.unit, quantityBasis: chip.basis });
   };
 
   return (
@@ -748,14 +851,9 @@ function FertilizerRow({
           }}
         />
 
-        {/* Unit Picker */}
-        <Pressable
-          onPress={() => setShowUnitPicker(true)}
+        {/* Current unit label — the chips below are the only way to change it. */}
+        <View
           style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
             backgroundColor: m3.surface.s100,
             borderRadius: borderRadius.lg,
             paddingHorizontal: spacing[3],
@@ -765,58 +863,156 @@ function FertilizerRow({
             borderColor: m3.surface.s200,
           }}
         >
-          <Text style={{ fontSize: fontSize.base, color: m3.surface.s900 }}>{fertilizer.unit}</Text>
-          <IconSymbol name="chevron.right" size={18} color={m3.surface.s600} />
-        </Pressable>
+          <Text style={{ fontSize: fontSize.base, color: m3.surface.s900 }}>{unitLabel}</Text>
+        </View>
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2], gap: 8 }}>
-        <Pressable
-          onPress={() => onUpdate({ quantityBasis: 'total' })}
+      {/* Live area echo — total ↔ per-acre, both directions, kernel-resolved. */}
+      {areaEcho ? (
+        <Text
           style={{
-            borderRadius: borderRadius.full,
-            paddingHorizontal: spacing[3],
-            paddingVertical: spacing[1],
-            backgroundColor:
-              (fertilizer.quantityBasis ?? 'total') === 'total'
-                ? colorWithOpacity(m3.colorScheme.success, 0.2)
-                : m3.surface.s100,
-            borderWidth: 1,
-            borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
+            marginTop: spacing[1],
+            marginLeft: spacing[1],
+            fontSize: fontSize.xs,
+            color: m3.surface.s600,
           }}
         >
-          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
-            Total Qty
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => onUpdate({ quantityBasis: 'per_acre' })}
-          style={{
-            borderRadius: borderRadius.full,
-            paddingHorizontal: spacing[3],
-            paddingVertical: spacing[1],
-            backgroundColor:
-              fertilizer.quantityBasis === 'per_acre'
-                ? colorWithOpacity(m3.colorScheme.success, 0.2)
-                : m3.surface.s100,
-            borderWidth: 1,
-            borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
-          }}
-        >
-          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
-            {perAreaLabel}
-          </Text>
-        </Pressable>
-      </View>
+          {areaEcho.direction === 'to_total'
+            ? t('fertigationForm.fertilizers.areaEcho.toTotal', {
+                quantity: fertilizer.quantity,
+                unit: unitLabel,
+                total: areaEcho.approxText,
+              })
+            : t('fertigationForm.fertilizers.areaEcho.toPerAcre', {
+                quantity: fertilizer.quantity,
+                unit: unitLabel,
+                rate: areaEcho.approxText,
+              })}
+        </Text>
+      ) : null}
 
-      {/* Unit Picker Modal */}
+      {/* Non-blocking dose guardrail — plan/prior-log deviation only. */}
+      {doseWarning ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            marginTop: spacing[2],
+            gap: 6,
+          }}
+        >
+          <IconSymbol
+            name="exclamationmark.triangle.fill"
+            size={14}
+            color={m3.colorScheme.warning}
+          />
+          <Text style={{ flex: 1, fontSize: fontSize.xs, color: m3.colorScheme.warning }}>
+            {t(
+              `fertigationForm.fertilizers.doseGuard.${doseWarning.direction}${
+                doseWarning.source === 'plan' ? 'Plan' : 'LastLog'
+              }`,
+              {
+                ratio: doseWarning.ratio,
+                reference: `${doseWarning.reference.quantity} ${doseWarning.reference.unit}`,
+              },
+            )}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Basis-fused unit chips: kg/acre · L/acre · kg · L + the g/mL overflow.
+          Verbatim units (ppm, kg/ha, unknown strings) are outside the chip
+          vocabulary — their raw text renders here instead, never coerced. */}
+      {activeChip ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            marginTop: spacing[2],
+            gap: 8,
+          }}
+        >
+          {FERTIGATION_UNIT_CHIPS.map((chip) => {
+            const selected = activeChip.key === chip.key;
+            return (
+              <Pressable
+                key={chip.key}
+                onPress={() => handleChipSelect(chip)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={t('fertigationForm.fertilizers.quickUnitLabel', {
+                  unit: chip.key,
+                })}
+                style={{
+                  borderRadius: borderRadius.full,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  backgroundColor: selected
+                    ? colorWithOpacity(m3.colorScheme.success, 0.2)
+                    : m3.surface.s100,
+                  borderWidth: 1,
+                  borderColor: selected
+                    ? colorWithOpacity(m3.colorScheme.success, 0.5)
+                    : colorWithOpacity(m3.colorScheme.outline, 0.2),
+                }}
+              >
+                <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
+                  {chip.key}
+                </Text>
+              </Pressable>
+            );
+          })}
+          <Pressable
+            onPress={() => setShowUnitPicker(true)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: activeOverflowChip !== undefined }}
+            accessibilityLabel={t('fertigationForm.fertilizers.moreUnits')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderRadius: borderRadius.full,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[1],
+              backgroundColor: activeOverflowChip
+                ? colorWithOpacity(m3.colorScheme.success, 0.2)
+                : m3.surface.s100,
+              borderWidth: 1,
+              borderColor: activeOverflowChip
+                ? colorWithOpacity(m3.colorScheme.success, 0.5)
+                : colorWithOpacity(m3.colorScheme.outline, 0.2),
+            }}
+          >
+            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
+              {activeOverflowChip?.key ?? t('fertigationForm.fertilizers.moreUnits')}
+            </Text>
+            <IconSymbol name="chevron.down" size={12} color={m3.surface.s600} />
+          </Pressable>
+        </View>
+      ) : (
+        <Text
+          style={{
+            marginTop: spacing[2],
+            marginLeft: spacing[1],
+            fontSize: fontSize.xs,
+            color: m3.surface.s600,
+          }}
+        >
+          {t('fertigationForm.fertilizers.verbatimUnitHint', { unit: fertilizer.unit })}
+        </Text>
+      )}
+
+      {/* Overflow menu: the gram/mL family. */}
       <UnitPickerModal
         visible={showUnitPicker}
         onClose={() => setShowUnitPicker(false)}
-        onSelect={(unit) => onUpdate({ unit })}
-        selectedValue={fertilizer.unit}
-        options={FERTILIZER_UNITS}
-        title="Select Unit"
+        onSelect={(key) => {
+          const chip = FERTIGATION_UNIT_OVERFLOW_CHIPS.find((candidate) => candidate.key === key);
+          if (chip) handleChipSelect(chip);
+        }}
+        selectedValue={activeOverflowChip?.key ?? ''}
+        options={FERTIGATION_UNIT_OVERFLOW_CHIPS.map((chip) => chip.key)}
+        title={t('fertigationForm.fertilizers.selectUnit')}
       />
     </View>
   );
@@ -834,8 +1030,9 @@ export function createEmptyFertigationFormData(): FertigationFormData {
       {
         name: '',
         quantity: 0,
+        // Manual entry defaults to the bare 'kg' chip — total for the plot.
         unit: 'kg',
-        quantityBasis: 'per_acre',
+        quantityBasis: 'total',
         warehouseItemId: null,
         catalogProductId: null,
         planItemId: null,

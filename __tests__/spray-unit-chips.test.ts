@@ -10,9 +10,11 @@ import {
   SPRAY_UNIT_OVERFLOW_CHIPS,
   buildTankEcho,
   chipForEntry,
-  evaluateDoseGuard,
   sprayUnitChipByKey,
 } from '@/components/forms/spray-unit-chips';
+// The guardrail is the shared product-dose core (#195) — spray asserts it
+// through the same entry point the form uses.
+import { evaluateDoseGuard } from '@/components/forms/product-dose';
 import { CHEMICAL_UNITS } from '@/constants/calculator-models';
 import { parseUnit, totalFor } from '@/lib/quantity';
 

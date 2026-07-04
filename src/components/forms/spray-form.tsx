@@ -32,11 +32,10 @@ import {
   SPRAY_UNIT_OVERFLOW_CHIPS,
   buildTankEcho,
   chipForEntry,
-  evaluateDoseGuard,
   sprayUnitChipByKey,
-  type DoseReference,
   type SprayUnitChip,
 } from './spray-unit-chips';
+import { evaluateDoseGuard, type DoseReference } from './product-dose';
 import { sprayProductKey, useSprayUnitStore } from '@/stores/spray-unit-store';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
