@@ -1,0 +1,191 @@
+/**
+ * Snapshot lock for the report pipeline (issue #198, step 0).
+ *
+ * Captures the report service's outputs for a representative seeded dataset
+ * BEFORE the quantity math is rebuilt on the quantity kernel. Any output
+ * change during the refactor must be an explicit, reviewed snapshot update
+ * with a rationale in the commit message — never an accidental drift.
+ *
+ * The seed covers every unit family the refactor touches: kg, kg/acre (unit
+ * string and quantity_basis column), gm/L, ml/L, ppm, L/acre, gram, an
+ * unrecognized verbatim unit ('tola'), count-like units ('bags'), a legacy
+ * string-encoded spray, concentration items with and without water volume,
+ * and a fertigation record with a water_volume column.
+ */
+
+import { ReportService } from '@/services/report-service';
+import type { DateRange } from '@/types/report';
+import type { Farm, FertigationRecord, SprayRecord, WarehouseItem } from '@/types/database';
+
+jest.mock('expo-print', () => ({
+  printToFileAsync: jest.fn(),
+}));
+
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: jest.fn().mockResolvedValue(true),
+  shareAsync: jest.fn(),
+}));
+
+jest.mock(
+  'expo-file-system/legacy',
+  () => ({
+    cacheDirectory: '/tmp/',
+    documentDirectory: '/tmp/',
+    writeAsStringAsync: jest.fn(),
+    copyAsync: jest.fn(),
+    getInfoAsync: jest.fn().mockResolvedValue({ exists: true, isDirectory: true }),
+    makeDirectoryAsync: jest.fn(),
+  }),
+  { virtual: true },
+);
+
+const DATE_RANGE: DateRange = { from: '2026-01-01', to: '2026-12-31' };
+
+const FARM: Farm = {
+  id: 1,
+  name: 'Golden Vineyard',
+  area: 2.5,
+  region: 'Nashik',
+  crop: 'Grape',
+  crop_variety: 'Thompson',
+  planting_date: '2020-01-01',
+  date_of_pruning: '2026-01-10',
+};
+
+const SPRAYS: SprayRecord[] = [
+  {
+    id: 101,
+    farm_id: 1,
+    date: '2026-02-01',
+    chemical: '',
+    chemical_items: [
+      { name: 'Mancozeb', quantity: 2, unit: 'kg', warehouse_item_id: 2 },
+      { name: 'Imidacloprid', quantity: 30, unit: 'gm/L' },
+      { name: 'Silico Sticker', quantity: 2, unit: 'ml/L' },
+      { name: 'GA3', quantity: 100, unit: 'ppm' },
+    ],
+    dose: 'Water: 400L',
+    area: 2.5,
+    weather: 'Sunny',
+    operator: 'Ravi',
+  },
+  {
+    id: 102,
+    farm_id: 1,
+    date: '2026-02-10',
+    chemical: '',
+    chemical_items: [
+      { name: 'GA3', quantity: 50, unit: 'ppm' },
+      { name: 'Copper Oxychloride', quantity: 3, unit: 'gm/L' },
+    ],
+    // No water volume logged — concentration items cannot resolve to totals.
+    dose: '',
+    area: 2.5,
+    weather: 'Cloudy',
+    operator: 'Ravi',
+  },
+  {
+    id: 103,
+    farm_id: 1,
+    date: '2026-02-20',
+    // Legacy string-encoded chemicals (no chemical_items).
+    chemical: 'M45 (10 kg)',
+    dose: 'Water: 200L',
+    area: 2.5,
+    weather: 'Sunny',
+    operator: 'Sunil',
+  },
+];
+
+const FERTIGATIONS: FertigationRecord[] = [
+  {
+    id: 201,
+    farm_id: 1,
+    date: '2026-03-01',
+    area: 2.5,
+    fertilizers: [
+      { name: 'Urea', quantity: 50, unit: 'kg/acre', warehouse_item_id: 1 },
+      // Bare unit + per_acre basis column (how quick-add stores rates).
+      { name: 'SOP', quantity: 20, unit: 'kg', quantity_basis: 'per_acre' },
+      { name: 'Humic Acid', quantity: 2, unit: 'L/acre' },
+    ],
+  },
+  {
+    id: 202,
+    farm_id: 1,
+    date: '2026-03-10',
+    area: 2.5,
+    fertilizers: [
+      // Unrecognized verbatim unit — farmer testimony, flagged at save time.
+      { name: 'Jeevamrut', quantity: 5, unit: 'tola', unit_unrecognized: true },
+      { name: 'Neem Cake', quantity: 3, unit: 'bags' },
+      { name: 'Micro Mix', quantity: 500, unit: 'gram' },
+    ],
+  },
+  {
+    id: 203,
+    farm_id: 1,
+    date: '2026-03-20',
+    area: 2.5,
+    water_volume: 200,
+    fertilizers: [
+      { name: 'Compost Tea', quantity: 10, unit: 'gm/L' },
+      // Concentration unit string + per_acre basis column: exercises basis
+      // precedence between the unit string and the stored column.
+      { name: 'Special Mix', quantity: 4, unit: 'gm/L', quantity_basis: 'per_acre' },
+    ],
+  },
+];
+
+const WAREHOUSE_ITEMS: WarehouseItem[] = [
+  { id: 1, name: 'Urea', type: 'fertilizer', quantity: 500, unit: 'kg', unit_price: 6 },
+  { id: 2, name: 'Mancozeb', type: 'spray', quantity: 10, unit: 'kg', unit_price: 400 },
+];
+
+function generateData() {
+  return ReportService.generateReportData(
+    FARM,
+    [],
+    SPRAYS,
+    FERTIGATIONS,
+    [],
+    [],
+    DATE_RANGE,
+    WAREHOUSE_ITEMS,
+  );
+}
+
+describe('report pipeline snapshot lock (#198)', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ now: new Date('2026-06-15T10:00:00Z') });
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  it('stock usage rows', () => {
+    expect(generateData().stock).toMatchSnapshot();
+  });
+
+  it('summary', () => {
+    const data = generateData();
+    expect(ReportService.calculateSummary(data, 'comprehensive')).toMatchSnapshot();
+  });
+
+  it('comprehensive CSV', () => {
+    const data = generateData();
+    expect(ReportService.generateCSV(data, 'comprehensive', 'acres')).toMatchSnapshot();
+  });
+
+  it('stock-usage CSV', () => {
+    const data = generateData();
+    expect(ReportService.generateCSV(data, 'stock-usage', 'acres')).toMatchSnapshot();
+  });
+
+  it('comprehensive PDF HTML', () => {
+    const data = generateData();
+    const summary = ReportService.calculateSummary(data, 'comprehensive');
+    expect(ReportService.generatePDFHtml(data, summary, 'comprehensive', 'INR', 'acres')).toMatchSnapshot();
+  });
+});
