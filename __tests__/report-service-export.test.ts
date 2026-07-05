@@ -264,6 +264,13 @@ describe('report export parity', () => {
     // Truly no applications — the generic empty text is correct here.
     expect(csv).toContain('No records in selected range');
     expect(csv).not.toContain('No composition data');
+
+    // PDF mirrors the same split — a no-application report must not be
+    // misreported as a composition failure.
+    const html = ReportService.generatePDFHtml(dataNoLogs, SAMPLE_SUMMARY, 'operations', 'INR');
+    expect(html).toContain('Nutrient Ledger');
+    expect(html).toContain('No records in selected range');
+    expect(html).not.toContain('No composition data');
   });
 
   it('uses a single season column in CSV rows', () => {

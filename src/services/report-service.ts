@@ -1622,7 +1622,13 @@ export class ReportService {
         );
         html += `<p class="more-records">Elemental values match petiole/soil lab reports. Bag-grade (N-P₂O₅-K₂O) matches what is printed on fertilizer bags.</p>`;
       } else {
-        html += `<h2>🌱 Nutrient Ledger — N·P·K Applied</h2><p class="empty-section">No composition data — nutrients cannot be calculated (coverage 0%).</p>`;
+        // Same split as the CSV: no applications at all is a different truth
+        // than applications whose composition is missing.
+        html += `<h2>🌱 Nutrient Ledger — N·P·K Applied</h2><p class="empty-section">${
+          ledger.itemCount === 0
+            ? this.EMPTY_SECTION_TEXT
+            : 'No composition data — nutrients cannot be calculated (coverage 0%).'
+        }</p>`;
       }
     }
 
