@@ -26,11 +26,15 @@ export const NUTRIENT_CODES = [
 
 export type KnownNutrientCode = (typeof NUTRIENT_CODES)[number];
 
+// Keys are in normalizeNutrientCode() form (trimmed, UPPERCASED): the only
+// lookup happens after sanitizeComposition, which normalizes every code —
+// mixed-case keys ('MgO', 'CaO') would silently miss and fall back to
+// factor 1, overstating Mg ~1.66× / Ca ~1.4× under an unconverted bucket.
 export const OXIDE_TO_ELEMENTAL_FACTORS: Record<string, { elemental: string; factor: number }> = {
   P2O5: { elemental: 'P', factor: 0.4364 },
   K2O: { elemental: 'K', factor: 0.8301 },
-  CaO: { elemental: 'Ca', factor: 0.7147 },
-  MgO: { elemental: 'Mg', factor: 0.6031 },
+  CAO: { elemental: 'Ca', factor: 0.7147 },
+  MGO: { elemental: 'Mg', factor: 0.6031 },
   SO3: { elemental: 'S', factor: 0.4005 },
 };
 

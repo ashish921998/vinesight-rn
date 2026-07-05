@@ -4,7 +4,12 @@
  * composition, every code is a known nutrient, percentages are valid and sum
  * sensibly, and no two products share an identity (state + lower(name)).
  */
-import { NUTRIENT_CODES, sanitizeComposition } from '@/constants/nutrient-definitions';
+import {
+  NUTRIENT_CODES,
+  OXIDE_TO_ELEMENTAL_FACTORS,
+  normalizeNutrientCode,
+  sanitizeComposition,
+} from '@/constants/nutrient-definitions';
 import {
   FERTILIZER_CATALOG_SEED,
   SEED_STATE_CODE,
@@ -53,6 +58,32 @@ describe('fertilizer catalog seed data', () => {
       }));
       // sanitizeComposition drops any invalid row; a valid seed loses nothing.
       expect(sanitizeComposition(asItems)).toHaveLength(product.compositions.length);
+    }
+  });
+
+  it('resolves every sanitized code in the ledger — oxide factor hit or known elemental', () => {
+    // The ledger looks codes up POST-sanitize (uppercased). A code that is
+    // neither an OXIDE_TO_ELEMENTAL_FACTORS key nor a known elemental in that
+    // form silently falls back to factor 1 under an unconverted bucket —
+    // exactly how 'MgO' once overstated Mg ~1.66× when the map was mixed-case.
+    const elementalCodes = new Set(
+      NUTRIENT_CODES.filter((code) => !(code in { P2O5: 1, K2O: 1, CaO: 1, MgO: 1, SO3: 1 })).map(
+        (code) => normalizeNutrientCode(code),
+      ),
+    );
+    for (const product of FERTILIZER_CATALOG_SEED) {
+      for (const composition of product.compositions) {
+        const sanitized = normalizeNutrientCode(composition.component_code);
+        const resolves =
+          sanitized in OXIDE_TO_ELEMENTAL_FACTORS || elementalCodes.has(sanitized);
+        if (!resolves) {
+          throw new Error(
+            `${product.name}: code '${composition.component_code}' (sanitized '${sanitized}') ` +
+              'resolves to neither an oxide conversion nor a known elemental — the ledger would ' +
+              'silently apply factor 1',
+          );
+        }
+      }
     }
   });
 
