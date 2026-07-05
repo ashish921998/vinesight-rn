@@ -34,5 +34,12 @@ export interface FertilizerPlan {
   created_at: string | null;
   updated_at: string | null;
   notes: string | null;
+  /**
+   * Farm area in canonical acres, snapshotted at plan creation (DB trigger).
+   * Null for plans predating the snapshot — readers fall back to the current
+   * farm area. Lets compliance read total-basis prescriptions ("10 kg") per
+   * acre against the area the plan was written for, not a since-edited farm.
+   */
+  farm_area_acres: number | null;
   items: FertilizerPlanItem[];
 }

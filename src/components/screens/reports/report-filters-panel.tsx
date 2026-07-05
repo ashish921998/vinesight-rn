@@ -15,7 +15,6 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { convertAreaFromAcres } from '@/utils/preferences';
 import type { ReportFormat, ReportType } from '@/types/report';
 import type { Farm } from '@/types';
 
@@ -867,7 +866,7 @@ export function ReportFiltersPanel({
                           fontSize: fontSize.xs,
                         }}
                       >
-                        {formatNumber(convertAreaFromAcres(farmItem.area, areaUnit))}{' '}
+                        {formatNumber(farmItem.area)}{' '}
                         {t(`units.${areaUnit}`)}
                       </Text>
                     </View>

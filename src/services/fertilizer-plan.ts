@@ -23,6 +23,7 @@ interface PlanRow {
   notes: string | null;
   created_at: string | null;
   updated_at: string | null;
+  farm_area_acres: number | null;
   // PostgREST embeds the sending organization as an object (or null when RLS
   // hides it). The consultant label is the sending organization's name.
   organization: { name: string | null } | null;
@@ -62,7 +63,7 @@ export async function fetchFertilizerPlansForFarm(
   let query = supabase
     .from('fertilizer_plans')
     .select(
-      'id, farm_id, organization_id, title, notes, created_at, updated_at, organization:organizations(name), fertilizer_plan_items(id, fertilizer_name, quantity, unit, application_date, application_method, application_frequency, notes, sort_order)',
+      'id, farm_id, organization_id, title, notes, created_at, updated_at, farm_area_acres, organization:organizations(name), fertilizer_plan_items(id, fertilizer_name, quantity, unit, application_date, application_method, application_frequency, notes, sort_order)',
     )
     .eq('farm_id', farmId)
     .order('created_at', { ascending: false });
@@ -97,6 +98,7 @@ export async function fetchFertilizerPlansForFarm(
       created_at: row.created_at,
       updated_at: row.updated_at ?? row.created_at ?? null,
       notes: row.notes,
+      farm_area_acres: row.farm_area_acres,
       items,
     };
   });

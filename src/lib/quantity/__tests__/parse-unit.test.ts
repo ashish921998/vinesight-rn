@@ -179,3 +179,16 @@ describe('parseUnit — unknown input returns null, never a silent kg fallback',
     expect(parsed?.measure).toBeUndefined();
   });
 });
+
+describe('prototype-chain keys are never resolved as units', () => {
+  // Unit strings are user input; a bare BASE_UNITS[token] index would resolve
+  // 'constructor'/'toString' to truthy prototype members and emit
+  // { measure: undefined } — which downstream multiplies into NaN quantities
+  // on the printed document.
+  it.each(['constructor', 'toString', '__proto__', 'hasOwnProperty', 'kg/constructor'])(
+    'returns null for %j',
+    (raw) => {
+      expect(parseUnit(raw)).toBeNull();
+    },
+  );
+});

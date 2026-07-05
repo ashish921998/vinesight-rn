@@ -1,0 +1,521 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`report pipeline snapshot lock (#198) comprehensive CSV 1`] = `
+"Farm Report - Golden Vineyard
+Report Type: Comprehensive
+Region: Nashik
+Area: 2.5 acres
+Date Range: 01-01-2026 to 31-12-2026
+Season: All seasons
+Generated: <generated-at>
+
+IRRIGATION RECORDS
+No records in selected range
+
+SPRAY RECORDS (3)
+Date,Days After Pruning,Season,Chemical,Dose,Operator,Notes
+20-02-2026,41,"'-",M45 (10 kg),Water: 200L,Sunil,
+10-02-2026,31,"'-","GA3, Copper Oxychloride","50 ppm, 3 gm/L",Ravi,
+01-02-2026,22,"'-","Mancozeb, Imidacloprid, Silico Sticker, GA3","2 kg, 30 gm/L, 2 ml/L, 100 ppm; Water: 400L",Ravi,
+
+FERTIGATION RECORDS (3)
+Date,Days After Pruning,Season,Fertilizers,Notes
+20-03-2026,69,"'-","Compost Tea (10 gm/L), Special Mix (4 gm/L)",
+10-03-2026,59,"'-","Jeevamrut (5 tola), Neem Cake (3 bags), Micro Mix (500 gram)",
+01-03-2026,50,"'-","Urea (50 kg/acre), SOP (20 kg), Humic Acid (2 L/acre)",
+
+HARVEST RECORDS
+No records in selected range
+
+EXPENSE RECORDS
+No records in selected range
+
+STOCK USAGE SUMMARY (Matched 2 of 15)
+Item,Type,Total Quantity Used,Unit,Total Area Treated,Usage Count,Current Stock,Estimated Opening Stock,Estimated Consumed %,Match
+Mancozeb,spray,2,kg,2.5,1,10,12,16.67,warehouse_item_id
+Urea,fertilizer,125,kg,2.5,1,500,625,20,warehouse_item_id
+
+UNMATCHED LOG ITEMS (13)
+Item,Type,Total Quantity Used,Unit,Total Area Treated,Usage Count,Reason
+Compost Tea,fertilizer,2,kg,2.5,1,No warehouse match or missing water volume
+GA3,spray,0.04,kg,2.5,1,No warehouse match or missing water volume
+Humic Acid,fertilizer,5,liter,2.5,1,No warehouse match or missing water volume
+Imidacloprid,spray,12,kg,2.5,1,No warehouse match or missing water volume
+Jeevamrut,fertilizer,5,tola,2.5,1,No warehouse match or missing water volume
+M45,spray,10,kg,2.5,1,No warehouse match or missing water volume
+Micro Mix,fertilizer,0.5,kg,2.5,1,No warehouse match or missing water volume
+Neem Cake,fertilizer,3,unit,2.5,1,No warehouse match or missing water volume
+Silico Sticker,spray,0.8,liter,2.5,1,No warehouse match or missing water volume
+SOP,fertilizer,50,kg,2.5,1,No warehouse match or missing water volume
+Special Mix,fertilizer,0.8,kg,2.5,1,No warehouse match or missing water volume
+GA3,spray,50,ppm,2.5,1,No warehouse match or missing water volume
+Copper Oxychloride,spray,3,gm/l,2.5,1,No warehouse match or missing water volume
+
+"APPLIED QUANTITIES - PER PLOT (per product, per measure)"
+Product,Type,Total Applied,Uses
+Compost Tea,fertilizer,≈ 2 kg,1
+GA3,spray,≈ 40 g,1
+Humic Acid,fertilizer,≈ 5 L,1
+Imidacloprid,spray,≈ 12 kg,1
+M45,spray,≈ 10 kg,1
+Mancozeb,spray,≈ 2 kg,1
+Micro Mix,fertilizer,≈ 500 g,1
+Neem Cake,fertilizer,≈ 3,1
+Silico Sticker,spray,≈ 800 ml,1
+SOP,fertilizer,≈ 50 kg,1
+Special Mix,fertilizer,≈ 800 g,1
+Urea,fertilizer,≈ 125 kg,1
+
+"OTHER PRODUCTS (unit not recognized - shown as logged, no conversion)"
+Product,Type,Quantity As Logged,Uses
+Jeevamrut,fertilizer,5 tola,1
+
+CONCENTRATION-ONLY (water volume not logged - cannot resolve to a total)
+Product,Type,Concentration As Logged,Uses
+Copper Oxychloride,spray,3 gm/L,1
+GA3,spray,50 ppm,1
+
+APPLIED QUANTITIES - PER ACRE (farm area: 2.5 acres)
+Product,Type,Per Acre
+Compost Tea,fertilizer,≈ 800 g/acre
+GA3,spray,≈ 16 g/acre
+Humic Acid,fertilizer,≈ 2 L/acre
+Imidacloprid,spray,≈ 4.8 kg/acre
+M45,spray,≈ 4 kg/acre
+Mancozeb,spray,≈ 800 g/acre
+Micro Mix,fertilizer,≈ 200 g/acre
+Neem Cake,fertilizer,≈ 1.2/acre
+Silico Sticker,spray,≈ 320 ml/acre
+SOP,fertilizer,≈ 20 kg/acre
+Special Mix,fertilizer,≈ 320 g/acre
+Urea,fertilizer,≈ 50 kg/acre
+
+PER LITER OF WATER (spray concentration, weighted by water volume; based on 2 of 3 spray events with logged water)
+Product,Concentration,Events
+GA3,≈ 100 mg/L,1
+Imidacloprid,≈ 30 g/L,1
+M45,≈ 50 g/L,1
+Mancozeb,≈ 5 g/L,1
+Silico Sticker,≈ 2 ml/L,1
+"
+`;
+
+exports[`report pipeline snapshot lock (#198) comprehensive PDF HTML 1`] = `
+"
+      <!DOCTYPE html>
+      <html>
+      <head>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; }
+        h1 { color: #1a5d1a; margin-bottom: 10px; }
+        h2 { color: #333; margin-top: 25px; border-bottom: 2px solid #1a5d1a; padding-bottom: 5px; }
+        .header { margin-bottom: 20px; }
+        .meta { color: #666; font-size: 14px; }
+        .summary { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .summary-item { padding: 10px; background: white; border-radius: 4px; }
+        .summary-value { font-size: 20px; font-weight: bold; color: #1a5d1a; }
+        .summary-label { font-size: 12px; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        th, td { padding: 8px; text-align: left; border: 1px solid #ddd; }
+        th { background: #1a5d1a; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .profit { color: #16a34a; }
+        .loss { color: #dc2626; }
+        .empty-section { color: #666; font-style: italic; margin: 10px 0 0; }
+        .more-records { color: #666; font-size: 12px; margin-top: 6px; }
+        .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 11px; color: #666; }
+      </style>
+    </head>
+      <body>
+        <div class="header">
+          <h1>🍇 Golden Vineyard</h1>
+          <p class="meta">
+            Report Type: Comprehensive<br>
+            Region: Nashik | Area: 2.5 acres<br>
+            Report Period: 01-01-2026 to 31-12-2026<br>
+            Season: All seasons
+            
+          </p>
+        </div>
+        
+        <div class="summary">
+          <h3 style="margin-top: 0;">Summary</h3>
+          <div class="summary-grid">
+            <div class="summary-item"><div class="summary-value ">21</div><div class="summary-label">Total Records</div></div><div class="summary-item"><div class="summary-value ">15</div><div class="summary-label">Unique Stock Items Used</div></div><div class="summary-item"><div class="summary-value ">0 kg</div><div class="summary-label">Total Harvest</div></div><div class="summary-item"><div class="summary-value ">₹0</div><div class="summary-label">Revenue</div></div><div class="summary-item"><div class="summary-value ">₹0</div><div class="summary-label">Expenses</div></div><div class="summary-item"><div class="summary-value profit">₹0</div><div class="summary-label">Net Profit</div></div>
+          </div>
+        </div>
+    <h2>💧 Irrigation Records (0)</h2><p class="empty-section">No records in selected range</p><h2>🧪 Spray Records (3)</h2>
+        <table>
+          <tr><th>Date</th><th>DAP</th><th>Season</th><th>Chemical</th><th>Dose</th></tr>
+          <tr><td>20-02-2026</td><td>41d</td><td>-</td><td>M45 (10 kg)</td><td>Water: 200L</td></tr><tr><td>10-02-2026</td><td>31d</td><td>-</td><td>GA3, Copper Oxychloride</td><td>50 ppm, 3 gm/L</td></tr><tr><td>01-02-2026</td><td>22d</td><td>-</td><td>Mancozeb, Imidacloprid, Silico Sticker, GA3</td><td>2 kg, 30 gm/L, 2 ml/L, 100 ppm; Water: 400L</td></tr>
+        </table>
+        
+      <h2>🧴 Fertigation Records (3)</h2>
+        <table>
+          <tr><th>Date</th><th>DAP</th><th>Season</th><th>Fertilizers</th></tr>
+          <tr><td>20-03-2026</td><td>69d</td><td>-</td><td>Compost Tea (10 gm/L), Special Mix (4 gm/L)</td></tr><tr><td>10-03-2026</td><td>59d</td><td>-</td><td>Jeevamrut (5 tola), Neem Cake (3 bags), Micro Mix (500 gram)</td></tr><tr><td>01-03-2026</td><td>50d</td><td>-</td><td>Urea (50 kg/acre), SOP (20 kg), Humic Acid (2 L/acre)</td></tr>
+        </table>
+        
+      <h2>🍇 Harvest Records (0)</h2><p class="empty-section">No records in selected range</p><h2>💰 Expense Records (0)</h2><p class="empty-section">No records in selected range</p><h2>📦 Stock Usage Summary (Matched 2 of 15)</h2>
+        <table>
+          <tr><th>Item</th><th>Type</th><th>Total Qty</th><th>Unit</th><th>Area Treated</th><th>Count</th><th>Current Stock</th><th>Estimated Opening</th><th>Estimated Consumed %</th><th>Match</th></tr>
+          <tr><td>Mancozeb</td><td>spray</td><td>2</td><td>kg</td><td>2.5</td><td>1</td><td>10</td><td>12</td><td>16.67%</td><td>warehouse_item_id</td></tr><tr><td>Urea</td><td>fertilizer</td><td>125</td><td>kg</td><td>2.5</td><td>1</td><td>500</td><td>625</td><td>20%</td><td>warehouse_item_id</td></tr>
+        </table>
+        
+      <h2>⚠️ Unmatched Log Items (13)</h2>
+        <table>
+          <tr><th>Item</th><th>Type</th><th>Total Qty</th><th>Unit</th><th>Area Treated</th><th>Count</th><th>Reason</th></tr>
+          <tr><td>Compost Tea</td><td>fertilizer</td><td>2</td><td>kg</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>GA3</td><td>spray</td><td>0.04</td><td>kg</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>Humic Acid</td><td>fertilizer</td><td>5</td><td>liter</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>Imidacloprid</td><td>spray</td><td>12</td><td>kg</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>Jeevamrut</td><td>fertilizer</td><td>5</td><td>tola</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>M45</td><td>spray</td><td>10</td><td>kg</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>Micro Mix</td><td>fertilizer</td><td>0.5</td><td>kg</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>Neem Cake</td><td>fertilizer</td><td>3</td><td>unit</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>Silico Sticker</td><td>spray</td><td>0.8</td><td>liter</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>SOP</td><td>fertilizer</td><td>50</td><td>kg</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>Special Mix</td><td>fertilizer</td><td>0.8</td><td>kg</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>GA3</td><td>spray</td><td>50</td><td>ppm</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr><tr><td>Copper Oxychloride</td><td>spray</td><td>3</td><td>gm/l</td><td>2.5</td><td>1</td><td>No warehouse match or missing water volume</td></tr>
+        </table>
+        
+      <h2>⚖️ Applied Quantities — Per Plot</h2>
+        <table>
+          <tr><th>Product</th><th>Type</th><th>Total Applied</th><th>Uses</th></tr>
+          <tr><td>Compost Tea</td><td>fertilizer</td><td>≈ 2 kg</td><td>1</td></tr><tr><td>GA3</td><td>spray</td><td>≈ 40 g</td><td>1</td></tr><tr><td>Humic Acid</td><td>fertilizer</td><td>≈ 5 L</td><td>1</td></tr><tr><td>Imidacloprid</td><td>spray</td><td>≈ 12 kg</td><td>1</td></tr><tr><td>M45</td><td>spray</td><td>≈ 10 kg</td><td>1</td></tr><tr><td>Mancozeb</td><td>spray</td><td>≈ 2 kg</td><td>1</td></tr><tr><td>Micro Mix</td><td>fertilizer</td><td>≈ 500 g</td><td>1</td></tr><tr><td>Neem Cake</td><td>fertilizer</td><td>≈ 3</td><td>1</td></tr><tr><td>Silico Sticker</td><td>spray</td><td>≈ 800 ml</td><td>1</td></tr><tr><td>SOP</td><td>fertilizer</td><td>≈ 50 kg</td><td>1</td></tr><tr><td>Special Mix</td><td>fertilizer</td><td>≈ 800 g</td><td>1</td></tr><tr><td>Urea</td><td>fertilizer</td><td>≈ 125 kg</td><td>1</td></tr>
+        </table>
+        
+      <h2>Other Products (unit not recognized — shown as logged)</h2>
+        <table>
+          <tr><th>Product</th><th>Type</th><th>Quantity As Logged</th><th>Uses</th></tr>
+          <tr><td>Jeevamrut</td><td>fertilizer</td><td>5 tola</td><td>1</td></tr>
+        </table>
+        
+      <h2>Concentration-Only (water volume not logged)</h2>
+        <table>
+          <tr><th>Product</th><th>Type</th><th>Concentration As Logged</th><th>Uses</th></tr>
+          <tr><td>Copper Oxychloride</td><td>spray</td><td>3 gm/L</td><td>1</td></tr><tr><td>GA3</td><td>spray</td><td>50 ppm</td><td>1</td></tr>
+        </table>
+        
+      <h2>⚖️ Applied Quantities — Per Acre (farm area: 2.5 acres)</h2>
+        <table>
+          <tr><th>Product</th><th>Type</th><th>Per Acre</th></tr>
+          <tr><td>Compost Tea</td><td>fertilizer</td><td>≈ 800 g/acre</td></tr><tr><td>GA3</td><td>spray</td><td>≈ 16 g/acre</td></tr><tr><td>Humic Acid</td><td>fertilizer</td><td>≈ 2 L/acre</td></tr><tr><td>Imidacloprid</td><td>spray</td><td>≈ 4.8 kg/acre</td></tr><tr><td>M45</td><td>spray</td><td>≈ 4 kg/acre</td></tr><tr><td>Mancozeb</td><td>spray</td><td>≈ 800 g/acre</td></tr><tr><td>Micro Mix</td><td>fertilizer</td><td>≈ 200 g/acre</td></tr><tr><td>Neem Cake</td><td>fertilizer</td><td>≈ 1.2/acre</td></tr><tr><td>Silico Sticker</td><td>spray</td><td>≈ 320 ml/acre</td></tr><tr><td>SOP</td><td>fertilizer</td><td>≈ 20 kg/acre</td></tr><tr><td>Special Mix</td><td>fertilizer</td><td>≈ 320 g/acre</td></tr><tr><td>Urea</td><td>fertilizer</td><td>≈ 50 kg/acre</td></tr>
+        </table>
+        
+      <h2>💦 Per Liter of Water (spray concentration, weighted by water volume; based on 2 of 3 spray events with logged water)</h2>
+        <table>
+          <tr><th>Product</th><th>Concentration</th><th>Events</th></tr>
+          <tr><td>GA3</td><td>≈ 100 mg/L</td><td>1</td></tr><tr><td>Imidacloprid</td><td>≈ 30 g/L</td><td>1</td></tr><tr><td>M45</td><td>≈ 50 g/L</td><td>1</td></tr><tr><td>Mancozeb</td><td>≈ 5 g/L</td><td>1</td></tr><tr><td>Silico Sticker</td><td>≈ 2 ml/L</td><td>1</td></tr>
+        </table>
+        
+      
+        <div class="footer">
+          Generated by Vinesight on <generated-at></div>
+      </body>
+      </html>
+    "
+`;
+
+exports[`report pipeline snapshot lock (#198) stock usage rows 1`] = `
+[
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "Compost Tea",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 2,
+    "type": "fertilizer",
+    "unit": "kg",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "GA3",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 0.04,
+    "type": "spray",
+    "unit": "kg",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "Humic Acid",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 5,
+    "type": "fertilizer",
+    "unit": "liter",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "Imidacloprid",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 12,
+    "type": "spray",
+    "unit": "kg",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "Jeevamrut",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 5,
+    "type": "fertilizer",
+    "unit": "tola",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "M45",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 10,
+    "type": "spray",
+    "unit": "kg",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": 10,
+    "estimatedConsumedPercent": 16.67,
+    "estimatedOpeningStockQuantity": 12,
+    "itemName": "Mancozeb",
+    "matchStrategy": "warehouse_item_id",
+    "quantityUsed": 2,
+    "type": "spray",
+    "unit": "kg",
+    "usageCount": 1,
+    "warehouseItemId": 2,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "Micro Mix",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 0.5,
+    "type": "fertilizer",
+    "unit": "kg",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "Neem Cake",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 3,
+    "type": "fertilizer",
+    "unit": "unit",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "Silico Sticker",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 0.8,
+    "type": "spray",
+    "unit": "liter",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "SOP",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 50,
+    "type": "fertilizer",
+    "unit": "kg",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "Special Mix",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 0.8,
+    "type": "fertilizer",
+    "unit": "kg",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": 500,
+    "estimatedConsumedPercent": 20,
+    "estimatedOpeningStockQuantity": 625,
+    "itemName": "Urea",
+    "matchStrategy": "warehouse_item_id",
+    "quantityUsed": 125,
+    "type": "fertilizer",
+    "unit": "kg",
+    "usageCount": 1,
+    "warehouseItemId": 1,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "GA3",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 50,
+    "type": "spray",
+    "unit": "ppm",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+  {
+    "areaTreated": 2.5,
+    "catalogProductId": null,
+    "currentStockQuantity": null,
+    "estimatedConsumedPercent": null,
+    "estimatedOpeningStockQuantity": null,
+    "itemName": "Copper Oxychloride",
+    "matchStrategy": "unmatched",
+    "quantityUsed": 3,
+    "type": "spray",
+    "unit": "gm/l",
+    "usageCount": 1,
+    "warehouseItemId": null,
+  },
+]
+`;
+
+exports[`report pipeline snapshot lock (#198) stock-usage CSV 1`] = `
+"Farm Report - Golden Vineyard
+Report Type: Stock Usage
+Region: Nashik
+Area: 2.5 acres
+Date Range: 01-01-2026 to 31-12-2026
+Season: All seasons
+Generated: <generated-at>
+
+STOCK USAGE SUMMARY (Matched 2 of 15)
+Item,Type,Total Quantity Used,Unit,Total Area Treated,Usage Count,Current Stock,Estimated Opening Stock,Estimated Consumed %,Match
+Mancozeb,spray,2,kg,2.5,1,10,12,16.67,warehouse_item_id
+Urea,fertilizer,125,kg,2.5,1,500,625,20,warehouse_item_id
+
+UNMATCHED LOG ITEMS (13)
+Item,Type,Total Quantity Used,Unit,Total Area Treated,Usage Count,Reason
+Compost Tea,fertilizer,2,kg,2.5,1,No warehouse match or missing water volume
+GA3,spray,0.04,kg,2.5,1,No warehouse match or missing water volume
+Humic Acid,fertilizer,5,liter,2.5,1,No warehouse match or missing water volume
+Imidacloprid,spray,12,kg,2.5,1,No warehouse match or missing water volume
+Jeevamrut,fertilizer,5,tola,2.5,1,No warehouse match or missing water volume
+M45,spray,10,kg,2.5,1,No warehouse match or missing water volume
+Micro Mix,fertilizer,0.5,kg,2.5,1,No warehouse match or missing water volume
+Neem Cake,fertilizer,3,unit,2.5,1,No warehouse match or missing water volume
+Silico Sticker,spray,0.8,liter,2.5,1,No warehouse match or missing water volume
+SOP,fertilizer,50,kg,2.5,1,No warehouse match or missing water volume
+Special Mix,fertilizer,0.8,kg,2.5,1,No warehouse match or missing water volume
+GA3,spray,50,ppm,2.5,1,No warehouse match or missing water volume
+Copper Oxychloride,spray,3,gm/l,2.5,1,No warehouse match or missing water volume
+
+"APPLIED QUANTITIES - PER PLOT (per product, per measure)"
+Product,Type,Total Applied,Uses
+Compost Tea,fertilizer,≈ 2 kg,1
+GA3,spray,≈ 40 g,1
+Humic Acid,fertilizer,≈ 5 L,1
+Imidacloprid,spray,≈ 12 kg,1
+M45,spray,≈ 10 kg,1
+Mancozeb,spray,≈ 2 kg,1
+Micro Mix,fertilizer,≈ 500 g,1
+Neem Cake,fertilizer,≈ 3,1
+Silico Sticker,spray,≈ 800 ml,1
+SOP,fertilizer,≈ 50 kg,1
+Special Mix,fertilizer,≈ 800 g,1
+Urea,fertilizer,≈ 125 kg,1
+
+"OTHER PRODUCTS (unit not recognized - shown as logged, no conversion)"
+Product,Type,Quantity As Logged,Uses
+Jeevamrut,fertilizer,5 tola,1
+
+CONCENTRATION-ONLY (water volume not logged - cannot resolve to a total)
+Product,Type,Concentration As Logged,Uses
+Copper Oxychloride,spray,3 gm/L,1
+GA3,spray,50 ppm,1
+
+APPLIED QUANTITIES - PER ACRE (farm area: 2.5 acres)
+Product,Type,Per Acre
+Compost Tea,fertilizer,≈ 800 g/acre
+GA3,spray,≈ 16 g/acre
+Humic Acid,fertilizer,≈ 2 L/acre
+Imidacloprid,spray,≈ 4.8 kg/acre
+M45,spray,≈ 4 kg/acre
+Mancozeb,spray,≈ 800 g/acre
+Micro Mix,fertilizer,≈ 200 g/acre
+Neem Cake,fertilizer,≈ 1.2/acre
+Silico Sticker,spray,≈ 320 ml/acre
+SOP,fertilizer,≈ 20 kg/acre
+Special Mix,fertilizer,≈ 320 g/acre
+Urea,fertilizer,≈ 50 kg/acre
+
+PER LITER OF WATER (spray concentration, weighted by water volume; based on 2 of 3 spray events with logged water)
+Product,Concentration,Events
+GA3,≈ 100 mg/L,1
+Imidacloprid,≈ 30 g/L,1
+M45,≈ 50 g/L,1
+Mancozeb,≈ 5 g/L,1
+Silico Sticker,≈ 2 ml/L,1
+"
+`;
+
+exports[`report pipeline snapshot lock (#198) summary 1`] = `
+{
+  "dateRange": "2026-01-01 to 2026-12-31",
+  "expenseCount": 0,
+  "fertigationCount": 3,
+  "harvestCount": 0,
+  "irrigationCount": 0,
+  "netProfit": 0,
+  "sprayCount": 3,
+  "stockUsageCount": 15,
+  "totalExpenses": 0,
+  "totalHarvest": 0,
+  "totalIrrigationHours": 0,
+  "totalRecords": 21,
+  "totalRevenue": 0,
+  "totalWaterUsage": 0,
+}
+`;

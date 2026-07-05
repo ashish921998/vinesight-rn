@@ -23,17 +23,21 @@ import {
   ReportStockUsageRecord,
   ReportSectionKey,
   ReportSeasonContext,
+  ReportPlanItemInput,
+  ReportUsageLenses,
   getSectionsForReportType,
 } from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
 import { getDefaultCurrency } from '@/i18n/currency';
-import { AreaUnitPreference, convertAreaFromAcres } from '@/utils/preferences';
-import { getDaysAfterPruning } from '@/utils/date';
 import {
-  UNIT_ALIASES_TO_KG,
-  UNIT_ALIASES_TO_LITER,
-  UNIT_ALIASES_TO_COUNT,
-} from '@/constants/units';
+  AreaUnitPreference,
+  convertAreaToAcres,
+  resolveAreaUnitPreference,
+} from '@/utils/preferences';
+import { getDaysAfterPruning } from '@/utils/date';
+import { parseUnit, totalFor } from '@/lib/quantity';
+import type { Measure } from '@/lib/quantity';
+import { computeUsageLenses, normalizeProductName, type UsageEvent } from './report-usage-lenses';
 import {
   Farm,
   IrrigationRecord,
@@ -51,6 +55,14 @@ interface ReportGenerationOptions {
   seasonContext?: ReportSeasonContext;
   seasonNameById?: Record<number, string>;
   seasonWindowById?: Record<number, string>;
+  /** Current fertilizer-plan items — the join target for the compliance delta. */
+  planItems?: ReportPlanItemInput[];
+  /**
+   * Unit `farm.area` was entered in (the user's area-unit preference).
+   * `farm.area` is stored as the raw typed number, NOT canonical acres —
+   * hectares-preference farms must be converted before any per-acre math.
+   */
+  areaUnit?: AreaUnitPreference;
 }
 
 export class ReportService {
@@ -253,7 +265,22 @@ export class ReportService {
   }
 
   private static normalizeName(value: string): string {
-    return value.trim().replace(/\s+/g, ' ').toLowerCase();
+    // One normalization rule, shared with the lens compliance matcher —
+    // divergence here would split stock rows from compliance rows.
+    return normalizeProductName(value);
+  }
+
+  /**
+   * Area for section headings. Hectare-preference farms convert to a long
+   * float (2 ha → 4.942108…) — round at render like every other lens figure.
+   */
+  private static formatAreaAcres(area: number | null): string {
+    return area == null ? '-' : String(Number(area.toFixed(2)));
+  }
+
+  /** Stock-usage row label for a kernel measure (kept from the pre-kernel vocabulary). */
+  private static measureUnitLabel(measure: Measure): string {
+    return measure === 'mass' ? 'kg' : measure === 'volume' ? 'liter' : 'unit';
   }
 
   private static normalizeUnit(value: string): {
@@ -261,34 +288,25 @@ export class ReportService {
     multiplier: number;
     perAcre: boolean;
   } {
+    const parsed = parseUnit(value);
+    // Concentration units (gm/L, ppm) are not stock quantities on their own —
+    // they resolve through the record's water volume upstream, so they take
+    // the verbatim path here just like unknown units.
+    if (parsed && parsed.basis !== 'per_liter_water') {
+      return {
+        normalizedUnit: this.measureUnitLabel(parsed.measure),
+        multiplier: parsed.factorToCanonical,
+        perAcre: parsed.basis === 'per_acre',
+      };
+    }
+
+    // Verbatim fallback (farmer testimony): unknown units are never converted
+    // or coerced — the compact string becomes its own bucket. A '/acre'
+    // suffix still marks the quantity as a rate so the area multiply below
+    // stays arithmetically sound at the verbatim scale.
     const compact = value.trim().toLowerCase().replace(/\s+/g, '');
     const perAcre = compact.includes('/acre');
     const base = compact.replace('/acre', '');
-
-    if (UNIT_ALIASES_TO_KG.has(base)) {
-      const multiplier =
-        base === 'gram' || base === 'grams' || base === 'gm' || base === 'gms' || base === 'g'
-          ? 0.001
-          : 1;
-      return { normalizedUnit: 'kg', multiplier, perAcre };
-    }
-
-    if (UNIT_ALIASES_TO_LITER.has(base)) {
-      const multiplier =
-        base === 'ml' ||
-        base === 'milliliter' ||
-        base === 'milliliters' ||
-        base === 'millilitre' ||
-        base === 'millilitres'
-          ? 0.001
-          : 1;
-      return { normalizedUnit: 'liter', multiplier, perAcre };
-    }
-
-    if (UNIT_ALIASES_TO_COUNT.has(base)) {
-      return { normalizedUnit: 'unit', multiplier: 1, perAcre };
-    }
-
     return { normalizedUnit: base || 'unit', multiplier: 1, perAcre };
   }
 
@@ -321,11 +339,8 @@ export class ReportService {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 
-  private static resolveConcentrationBaseUnit(unit: string): string | null {
-    const compact = unit.trim().toLowerCase().replace(/\s+/g, '');
-    const concentrationMatch = /^(.*)\/(l|liter|litre)$/.exec(compact);
-    if (!concentrationMatch?.[1]) return null;
-    return concentrationMatch[1];
+  private static positiveOrNull(value: number | null | undefined): number | null {
+    return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
   }
 
   /**
@@ -355,6 +370,7 @@ export class ReportService {
     quantityBasis?: QuantityBasis;
     warehouseItemId?: number | null;
     catalogProductId?: number | null;
+    planItemId?: string | null;
   }> {
     const chemicalItems = (record.chemical_items ?? []) as SprayChemicalItem[];
     if (chemicalItems.length > 0) {
@@ -366,6 +382,7 @@ export class ReportService {
           quantityBasis: item.quantity_basis,
           warehouseItemId: item.warehouse_item_id ?? null,
           catalogProductId: item.catalog_product_id ?? null,
+          planItemId: item.plan_item_id ?? null,
         }))
         .filter(
           (item) => item.name && item.unit && Number.isFinite(item.quantity) && item.quantity > 0,
@@ -377,6 +394,7 @@ export class ReportService {
       quantityBasis: 'total' as const,
       warehouseItemId: null,
       catalogProductId: null,
+      planItemId: null,
     }));
   }
 
@@ -387,6 +405,7 @@ export class ReportService {
     quantityBasis?: QuantityBasis;
     warehouseItemId?: number | null;
     catalogProductId?: number | null;
+    planItemId?: string | null;
   }> {
     const fertilizerItems = (record.fertilizers ?? []) as FertilizerItem[];
     return fertilizerItems
@@ -397,6 +416,7 @@ export class ReportService {
         quantityBasis: item.quantity_basis,
         warehouseItemId: item.warehouse_item_id ?? null,
         catalogProductId: item.catalog_product_id ?? null,
+        planItemId: item.plan_item_id ?? null,
       }))
       .filter(
         (item) => item.name && item.unit && Number.isFinite(item.quantity) && item.quantity > 0,
@@ -544,6 +564,7 @@ export class ReportService {
     fertigations: FertigationRecord[],
     dateRange: DateRange,
     warehouseItems: WarehouseItem[],
+    areaUnit?: AreaUnitPreference,
   ): ReportStockUsageRecord[] {
     const usageMap = new Map<
       string,
@@ -571,12 +592,13 @@ export class ReportService {
       const normalizedName = this.normalizeName(name);
       if (!normalizedName) return;
 
-      const concentrationBaseUnit = this.resolveConcentrationBaseUnit(unit);
-      let resolvedQuantity = quantity;
-      let resolvedUnit = unit;
-      let resolvedQuantityBasis = quantityBasis;
-      if (concentrationBaseUnit) {
-        if (!waterVolumeL || !Number.isFinite(waterVolumeL) || waterVolumeL <= 0) {
+      let resolved: { quantity: number; normalizedUnit: string } | null;
+      const parsedUnit = parseUnit(unit);
+      if (parsedUnit?.basis === 'per_liter_water') {
+        // Kernel contract: the unit string's basis wins over the stored
+        // quantity_basis column — a 'gm/L' or 'ppm' item is a concentration
+        // and resolves through the record's water volume, never through area.
+        if (!this.positiveOrNull(waterVolumeL)) {
           console.warn(
             `Item "${name}" added to unmatched usage: missing water volume required for concentration-based unit "${unit}"`,
           );
@@ -604,21 +626,13 @@ export class ReportService {
           }
           return;
         }
-        resolvedQuantity = quantity * waterVolumeL;
-        resolvedUnit = concentrationBaseUnit;
-        // Preserve the original per-acre basis: if the water volume is specified per-acre,
-        // the resolved quantity remains per-acre and will be multiplied by area downstream.
-        if (resolvedQuantityBasis !== 'per_acre') {
-          resolvedQuantityBasis = 'total';
-        }
+        const total = totalFor({ quantity, unit }, { waterLiters: waterVolumeL });
+        resolved = total
+          ? { quantity: total.value, normalizedUnit: this.measureUnitLabel(total.measure) }
+          : null;
+      } else {
+        resolved = this.resolveAppliedQuantity(quantity, unit, quantityBasis, area);
       }
-
-      const resolved = this.resolveAppliedQuantity(
-        resolvedQuantity,
-        resolvedUnit,
-        resolvedQuantityBasis,
-        area,
-      );
       if (!resolved) return;
 
       const key = `${type}::${normalizedName}::${resolved.normalizedUnit}`;
@@ -650,6 +664,15 @@ export class ReportService {
       });
     };
 
+    // record.area is stored raw in the user's preferred unit (see
+    // entry-log-submission.ts) — convert to acres before per-acre math so
+    // Stock Usage and the per-acre lens can never contradict each other on
+    // a hectare-preference farm. (Caveat: this applies the CURRENT
+    // preference; a preference change after logging shifts both sections
+    // together rather than silently splitting them.)
+    const recordAreaAcres = (area: number) =>
+      convertAreaToAcres(area, resolveAreaUnitPreference(areaUnit));
+
     filteredSprays.forEach((record) => {
       const waterVolumeL = this.parseWaterVolumeFromDose(record.dose);
       this.resolveSprayUsageItems(record).forEach((item) => {
@@ -659,7 +682,7 @@ export class ReportService {
           item.quantity,
           item.unit,
           item.quantityBasis,
-          record.area,
+          recordAreaAcres(record.area),
           item.warehouseItemId,
           item.catalogProductId,
           waterVolumeL,
@@ -675,9 +698,10 @@ export class ReportService {
           item.quantity,
           item.unit,
           item.quantityBasis,
-          record.area,
+          recordAreaAcres(record.area),
           item.warehouseItemId,
           item.catalogProductId,
+          this.positiveOrNull(record.water_volume),
         );
       });
     });
@@ -709,8 +733,22 @@ export class ReportService {
     warehouseItems: WarehouseItem[],
     options: ReportGenerationOptions = {},
   ): ReportData {
-    const { seasonContext, seasonNameById, seasonWindowById } = options;
-    const stockUsage = this.calculateStockUsage(sprays, fertigations, dateRange, warehouseItems);
+    const { seasonContext, seasonNameById, seasonWindowById, planItems } = options;
+    const stockUsage = this.calculateStockUsage(
+      sprays,
+      fertigations,
+      dateRange,
+      warehouseItems,
+      options.areaUnit,
+    );
+    const usage = this.calculateUsageLenses(
+      farm,
+      sprays,
+      fertigations,
+      dateRange,
+      planItems,
+      options.areaUnit,
+    );
     const irrigationRecords = this.sortRecordsByDateDesc(
       this.filterByDateRange(irrigations, dateRange),
     );
@@ -788,7 +826,60 @@ export class ReportService {
         remarks: r.remarks || undefined,
       })),
       stock: stockUsage,
+      usage,
     };
+  }
+
+  /**
+   * Kernel-backed quantity lenses (issue #198): per plot / per acre /
+   * per liter of water, plus the plan-compliance delta. `farm.area` is
+   * stored in the user's preferred unit (see entry-log-submission.ts), so
+   * hectares-preference farms convert ×2.47105 here before any per-acre
+   * division; computeUsageLenses hides the lens when area is missing/invalid.
+   */
+  private static calculateUsageLenses(
+    farm: Farm,
+    sprays: SprayRecord[],
+    fertigations: FertigationRecord[],
+    dateRange: DateRange,
+    planItems?: ReportPlanItemInput[],
+    areaUnit?: AreaUnitPreference,
+  ): ReportUsageLenses {
+    // Per-acre rates resolve against the area snapshotted on the record at
+    // logging time (converted from the preferred unit) — editing the farm's
+    // area later must not rewrite what was applied. The farm-level area is
+    // only the fallback for records without one.
+    const recordAreaAcres = (area: number | null | undefined) => {
+      const positive = this.positiveOrNull(area ?? null);
+      return positive == null
+        ? null
+        : convertAreaToAcres(positive, resolveAreaUnitPreference(areaUnit));
+    };
+
+    const events: UsageEvent[] = [
+      ...this.filterByDateRange(sprays, dateRange).map((record) => ({
+        type: 'spray' as const,
+        waterLiters: this.parseWaterVolumeFromDose(record.dose),
+        items: this.resolveSprayUsageItems(record),
+        areaAcres: recordAreaAcres(record.area),
+      })),
+      ...this.filterByDateRange(fertigations, dateRange).map((record) => ({
+        type: 'fertilizer' as const,
+        waterLiters: this.positiveOrNull(record.water_volume),
+        items: this.resolveFertigationUsageItems(record),
+        areaAcres: recordAreaAcres(record.area),
+      })),
+    ];
+
+    const areaInPreferredUnit = this.positiveOrNull(farm.area);
+    return computeUsageLenses({
+      events,
+      areaAcres:
+        areaInPreferredUnit == null
+          ? null
+          : convertAreaToAcres(areaInPreferredUnit, resolveAreaUnitPreference(areaUnit)),
+      planItems,
+    });
   }
 
   /**
@@ -887,7 +978,10 @@ export class ReportService {
     rows.push(`Farm Report - ${data.farmName}`);
     rows.push(`Report Type: ${this.formatReportType(reportType)}`);
     rows.push(`Region: ${data.farmRegion}`);
-    rows.push(`Area: ${convertAreaFromAcres(data.farmArea, areaUnit)} ${areaUnitLabel}`);
+    // farm.area is stored as the raw number typed under the user's area-unit
+    // preference — print it verbatim with its label. Converting "from acres"
+    // here contradicted the per-acre lens heading on hectare farms.
+    rows.push(`Area: ${data.farmArea} ${areaUnitLabel}`);
     rows.push(`Date Range: ${formatDate(data.dateRange.from)} to ${formatDate(data.dateRange.to)}`);
     rows.push(`Season: ${this.formatSeasonContextLabel(data.seasonContext)}`);
     if (data.seasonContext?.mode === 'season') {
@@ -1004,9 +1098,118 @@ export class ReportService {
         });
         rows.push('');
       }
+
+      if (data.usage) {
+        this.appendUsageLensesCSV(rows, data.usage);
+      }
     }
 
     return rows.join('\n');
+  }
+
+  /**
+   * Applied-quantity lenses (issue #198). Every figure is derived (folded /
+   * divided) and carries the "≈" prefix; verbatim buckets show quantities
+   * exactly as logged, never converted.
+   */
+  private static appendUsageLensesCSV(rows: string[], usage: ReportUsageLenses): void {
+    const { perPlot, perAcre, perLiter } = usage;
+
+    if (perPlot.rows.length > 0) {
+      rows.push(this.escapeCSV('APPLIED QUANTITIES - PER PLOT (per product, per measure)'));
+      rows.push('Product,Type,Total Applied,Uses');
+      perPlot.rows.forEach((row) => {
+        rows.push(
+          `${this.escapeCSV(row.name)},${row.type},${this.escapeCSV(
+            row.totals.map((figure) => figure.display).join(' | '),
+          )},${row.usageCount}`,
+        );
+      });
+      rows.push('');
+    }
+
+    if (perPlot.other.length > 0) {
+      rows.push(this.escapeCSV('OTHER PRODUCTS (unit not recognized - shown as logged, no conversion)'));
+      rows.push('Product,Type,Quantity As Logged,Uses');
+      perPlot.other.forEach((row) => {
+        rows.push(
+          `${this.escapeCSV(row.name)},${row.type},${this.escapeCSV(`${row.quantity} ${row.unit}`)},${row.usageCount}`,
+        );
+      });
+      rows.push('');
+    }
+
+    if (perPlot.concentrationOnly.length > 0) {
+      rows.push('CONCENTRATION-ONLY (water volume not logged - cannot resolve to a total)');
+      rows.push('Product,Type,Concentration As Logged,Uses');
+      perPlot.concentrationOnly.forEach((row) => {
+        rows.push(
+          `${this.escapeCSV(row.name)},${row.type},${this.escapeCSV(`${row.quantity} ${row.unit}`)},${row.usageCount}`,
+        );
+      });
+      rows.push('');
+    }
+
+    if (perPlot.rateOnly.length > 0) {
+      rows.push('RATE-ONLY (farm area unavailable - cannot resolve to a total)');
+      rows.push('Product,Type,Rate As Logged,Uses');
+      perPlot.rateOnly.forEach((row) => {
+        rows.push(
+          `${this.escapeCSV(row.name)},${row.type},${this.escapeCSV(`${row.quantity} ${row.unit}`)},${row.usageCount}`,
+        );
+      });
+      rows.push('');
+    }
+
+    if (perAcre.available) {
+      if (perAcre.rows.length > 0) {
+        rows.push(
+          `APPLIED QUANTITIES - PER ACRE (farm area: ${this.formatAreaAcres(perAcre.areaAcres)} acres)`,
+        );
+        rows.push('Product,Type,Per Acre');
+        perAcre.rows.forEach((row) => {
+          rows.push(
+            `${this.escapeCSV(row.name)},${row.type},${this.escapeCSV(
+              row.perAcre.map((figure) => figure.display).join(' | '),
+            )}`,
+          );
+        });
+        rows.push('');
+      }
+      if (perAcre.compliance.length > 0) {
+        rows.push(this.escapeCSV('PLAN COMPLIANCE (prescribed vs applied, per acre)'));
+        rows.push('Product,Prescribed,Applied,Match');
+        perAcre.compliance.forEach((row) => {
+          rows.push(
+            `${this.escapeCSV(row.name)},${this.escapeCSV(row.prescribedDisplay)},${this.escapeCSV(
+              row.appliedDisplay ??
+                (row.matchLevel === 'unresolved' ? 'logged - unit not comparable' : 'not logged'),
+            )},${row.matchLevel ?? '-'}`,
+          );
+        });
+        rows.push(
+          'Note: verified = applied records logged from this plan item; approximate = matched by product name only - never presented as verified.',
+        );
+        rows.push('');
+      }
+    } else if (perPlot.rows.length > 0 || perPlot.rateOnly.length > 0) {
+      rows.push('APPLIED QUANTITIES - PER ACRE');
+      rows.push('Unavailable: farm area is missing or invalid - never divided by a guess.');
+      rows.push('');
+    }
+
+    if (perLiter.rows.length > 0) {
+      rows.push(
+        `PER LITER OF WATER (spray concentration, weighted by water volume; based on ${perLiter.sprayEventsWithWater} of ${perLiter.sprayEventsTotal} spray events with logged water)`,
+      );
+      rows.push('Product,Concentration,Events');
+      perLiter.rows.forEach((row) => {
+        rows.push(
+          `${this.escapeCSV(row.name)},${this.escapeCSV(row.display)},${row.eventCount}`,
+        );
+      });
+      rows.push('');
+    }
   }
 
   /**
@@ -1120,7 +1323,7 @@ export class ReportService {
           <h1>🍇 ${this.escapeHtml(data.farmName)}</h1>
           <p class="meta">
             Report Type: ${this.escapeHtml(this.formatReportType(reportType))}<br>
-            Region: ${this.escapeHtml(data.farmRegion)} | Area: ${convertAreaFromAcres(data.farmArea, areaUnit)} ${areaUnitLabel}<br>
+            Region: ${this.escapeHtml(data.farmRegion)} | Area: ${data.farmArea} ${areaUnitLabel}<br>
             Report Period: ${formatDate(data.dateRange.from)} to ${formatDate(data.dateRange.to)}<br>
             Season: ${this.escapeHtml(this.formatSeasonContextLabel(data.seasonContext))}
             ${
@@ -1262,6 +1465,90 @@ export class ReportService {
           ),
           Math.max(0, unmatchedStockRows.length - maxRowsPerSection),
         );
+      }
+
+      if (data.usage) {
+        const { perPlot, perAcre, perLiter } = data.usage;
+
+        if (perPlot.rows.length > 0) {
+          appendSectionTable(
+            '⚖️ Applied Quantities — Per Plot',
+            ['Product', 'Type', 'Total Applied', 'Uses'],
+            perPlot.rows.map(
+              (r) =>
+                `<tr><td>${this.escapeHtml(r.name)}</td><td>${this.escapeHtml(r.type)}</td><td>${this.escapeHtml(r.totals.map((figure) => figure.display).join(' · '))}</td><td>${r.usageCount}</td></tr>`,
+            ),
+          );
+        }
+
+        if (perPlot.other.length > 0) {
+          appendSectionTable(
+            'Other Products (unit not recognized — shown as logged)',
+            ['Product', 'Type', 'Quantity As Logged', 'Uses'],
+            perPlot.other.map(
+              (r) =>
+                `<tr><td>${this.escapeHtml(r.name)}</td><td>${this.escapeHtml(r.type)}</td><td>${this.escapeHtml(`${r.quantity} ${r.unit}`)}</td><td>${r.usageCount}</td></tr>`,
+            ),
+          );
+        }
+
+        if (perPlot.concentrationOnly.length > 0) {
+          appendSectionTable(
+            'Concentration-Only (water volume not logged)',
+            ['Product', 'Type', 'Concentration As Logged', 'Uses'],
+            perPlot.concentrationOnly.map(
+              (r) =>
+                `<tr><td>${this.escapeHtml(r.name)}</td><td>${this.escapeHtml(r.type)}</td><td>${this.escapeHtml(`${r.quantity} ${r.unit}`)}</td><td>${r.usageCount}</td></tr>`,
+            ),
+          );
+        }
+
+        if (perPlot.rateOnly.length > 0) {
+          appendSectionTable(
+            'Rate-Only (farm area unavailable)',
+            ['Product', 'Type', 'Rate As Logged', 'Uses'],
+            perPlot.rateOnly.map(
+              (r) =>
+                `<tr><td>${this.escapeHtml(r.name)}</td><td>${this.escapeHtml(r.type)}</td><td>${this.escapeHtml(`${r.quantity} ${r.unit}`)}</td><td>${r.usageCount}</td></tr>`,
+            ),
+          );
+        }
+
+        if (perAcre.available && perAcre.rows.length > 0) {
+          appendSectionTable(
+            `⚖️ Applied Quantities — Per Acre (farm area: ${this.formatAreaAcres(perAcre.areaAcres)} acres)`,
+            ['Product', 'Type', 'Per Acre'],
+            perAcre.rows.map(
+              (r) =>
+                `<tr><td>${this.escapeHtml(r.name)}</td><td>${this.escapeHtml(r.type)}</td><td>${this.escapeHtml(r.perAcre.map((figure) => figure.display).join(' · '))}</td></tr>`,
+            ),
+          );
+        } else if (!perAcre.available && (perPlot.rows.length > 0 || perPlot.rateOnly.length > 0)) {
+          html += `<h2>⚖️ Applied Quantities — Per Acre</h2><p class="empty-section">Unavailable: farm area is missing or invalid — never divided by a guess.</p>`;
+        }
+
+        if (perAcre.available && perAcre.compliance.length > 0) {
+          appendSectionTable(
+            '📋 Plan Compliance (prescribed vs applied, per acre)',
+            ['Product', 'Prescribed', 'Applied', 'Match'],
+            perAcre.compliance.map(
+              (r) =>
+                `<tr><td>${this.escapeHtml(r.name)}</td><td>${this.escapeHtml(r.prescribedDisplay)}</td><td>${this.escapeHtml(r.appliedDisplay ?? (r.matchLevel === 'unresolved' ? 'logged — unit not comparable' : 'not logged'))}</td><td>${this.escapeHtml(r.matchLevel ?? '-')}</td></tr>`,
+            ),
+          );
+          html += `<p class="more-records">verified = applied records logged from this plan item; approximate = matched by product name only — never presented as verified.</p>`;
+        }
+
+        if (perLiter.rows.length > 0) {
+          appendSectionTable(
+            `💦 Per Liter of Water (spray concentration, weighted by water volume; based on ${perLiter.sprayEventsWithWater} of ${perLiter.sprayEventsTotal} spray events with logged water)`,
+            ['Product', 'Concentration', 'Events'],
+            perLiter.rows.map(
+              (r) =>
+                `<tr><td>${this.escapeHtml(r.name)}</td><td>${this.escapeHtml(r.display)}</td><td>${r.eventCount}</td></tr>`,
+            ),
+          );
+        }
       }
     }
 
