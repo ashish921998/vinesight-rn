@@ -220,12 +220,22 @@ export function FertigationForm({
       const resolved = resolveFertigationUnit(item.unit);
       const validatedUnit = resolved.unit;
       const normalizedName = item.name.trim().toLowerCase();
-      // Comparison only — stored unit values stay verbatim (case preserved).
-      const normalizedUnit = validatedUnit.trim().toLowerCase();
+      // Duplicate identity is the fused chip (unit + basis), not the unit
+      // string alone — 'kg total' and 'kg/acre' share unit 'kg' but are
+      // distinct entries (same rule as spray). Rows outside the chip
+      // vocabulary fall back to the case-folded unit string ('PPM' ≡ 'ppm').
+      const incomingBasis =
+        item.quantityBasis ??
+        perAcreUnitTestimony(resolved.basisFromUnit) ??
+        resolveQuickAddQuantityBasis(item, resolved.basisFromUnit);
+      const incomingChipKey =
+        fertigationChipForEntry(validatedUnit, incomingBasis)?.key ??
+        validatedUnit.trim().toLowerCase();
       const nextFertilizers = applyQuickAdd(data.fertilizers, {
         isDuplicate: (fertilizer) =>
           fertilizer.name.trim().toLowerCase() === normalizedName &&
-          fertilizer.unit.trim().toLowerCase() === normalizedUnit,
+          (fertigationChipForEntry(fertilizer.unit, fertilizer.quantityBasis)?.key ??
+            fertilizer.unit.trim().toLowerCase()) === incomingChipKey,
         fillRow: (current) => ({
           ...current,
           name: item.name.trim(),

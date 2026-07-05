@@ -211,6 +211,63 @@ describe('smart defaults', () => {
     });
   });
 
+  it('quick-add with a different basis appends a row — never overwrites the other-basis row', () => {
+    // Existing row: Urea 5 kg/acre. Quick-add: Urea 10 kg TOTAL. Same unit
+    // string ('kg'), different fused chip — filling would silently rewrite
+    // the rate row's basis, so it must append a second row instead.
+    const onChange = jest.fn();
+    const screen = render(
+      <FertigationForm
+        data={fertigationData({
+          fertilizers: [
+            fertilizerRow({ name: 'Urea', unit: 'kg', quantity: 5, quantityBasis: 'per_acre' }),
+          ],
+        })}
+        onChange={onChange}
+        quickAddItems={[{ name: 'urea', unit: 'kg', quantity: 10, quantityBasis: 'total' }]}
+      />,
+    );
+
+    fireEvent.press(screen.getByText('urea'));
+
+    const next = onChange.mock.calls[0][0] as FertigationFormData;
+    expect(next.fertilizers).toHaveLength(2);
+    expect(next.fertilizers[0]).toMatchObject({
+      name: 'Urea',
+      quantity: 5,
+      quantityBasis: 'per_acre',
+    });
+    expect(next.fertilizers[1]).toMatchObject({
+      name: 'urea',
+      quantity: 10,
+      quantityBasis: 'total',
+    });
+  });
+
+  it('quick-add with the SAME fused chip stays a duplicate — no second row, no change', () => {
+    const onChange = jest.fn();
+    const screen = render(
+      <FertigationForm
+        data={fertigationData({
+          fertilizers: [
+            fertilizerRow({
+              name: 'Urea',
+              unit: 'kg',
+              quantity: 5,
+              quantityBasis: 'total',
+            }),
+          ],
+        })}
+        onChange={onChange}
+        quickAddItems={[{ name: 'urea', unit: 'kg', quantity: 10, quantityBasis: 'total' }]}
+      />,
+    );
+
+    fireEvent.press(screen.getByText('urea'));
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('a history quick-add keeps the basis it carries', () => {
     const onChange = jest.fn();
     const screen = render(
