@@ -233,20 +233,22 @@ async function main(): Promise<void> {
   const counts = { inserted: 0, updated: 0, skipped: 0 };
   for (const product of FERTILIZER_CATALOG_SEED) {
     const resolution = await upsertProduct(supabase, product, existingByLowerName);
-    if (resolution.action === 'skipped') {
-      // Not seed-owned: leave its compositions alone too — a curated product's
-      // nutrient rows are exactly what the skip is protecting.
-      counts.skipped += 1;
-      log(`  skipped (curated, not seed-owned): ${product.name} (#${resolution.id})`);
-      continue;
-    }
+    // Compositions sync runs for skipped (curated/foreign) products too — its
+    // per-row ownership guards make it purely additive there: existing rows
+    // are never updated or deleted, only MISSING codes are inserted. That is
+    // the Q7 point — a pre-existing provisional 'Urea' with no compositions
+    // must still end up feeding the nutrient ledger.
     await syncCompositions(supabase, resolution.id, product);
     counts[resolution.action] += 1;
-    log(`  ${resolution.action}: ${product.name} (#${resolution.id})`);
+    log(
+      resolution.action === 'skipped'
+        ? `  skipped product (curated, not seed-owned; missing compositions backfilled): ${product.name} (#${resolution.id})`
+        : `  ${resolution.action}: ${product.name} (#${resolution.id})`,
+    );
   }
 
   log(
-    `Done. Inserted ${counts.inserted}, updated ${counts.updated}, skipped ${counts.skipped} (curated).`,
+    `Done. Inserted ${counts.inserted}, updated ${counts.updated}, skipped ${counts.skipped} product rows (curated; missing compositions still backfilled).`,
   );
 }
 
