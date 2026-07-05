@@ -96,17 +96,44 @@ async function syncCompositions(
 ): Promise<void> {
   const { data: existingRows, error: fetchError } = await supabase
     .from('chemical_product_compositions')
-    .select('id, component_code')
+    .select('id, component_code, verified, source_note')
     .eq('product_id', productId)
     .eq('basis', 'declared');
   if (fetchError) throw fetchError;
 
+  type ExistingCompositionRow = {
+    id: number;
+    component_code: string;
+    verified: boolean | null;
+    source_note: string | null;
+  };
+  const existing = (existingRows ?? []) as ExistingCompositionRow[];
   const existingIdByCode = new Map(
-    (existingRows ?? []).map((row: { id: number; component_code: string }) => [
-      row.component_code.toLowerCase(),
-      row.id,
-    ]),
+    existing.map((row) => [row.component_code.toLowerCase(), row.id]),
   );
+
+  // A grade correction can DROP a component between seed revisions; without a
+  // delete the stale row keeps feeding the nutrient ledger. Only rows this
+  // seeder wrote are eligible (seed source-note marker + unverified) — a
+  // human-verified row or one another writer added is never touched.
+  const seedCodes = new Set(
+    product.compositions.map((composition) => composition.component_code.toLowerCase()),
+  );
+  const staleSeedRowIds = existing
+    .filter(
+      (row) =>
+        !seedCodes.has(row.component_code.toLowerCase()) &&
+        row.verified !== true &&
+        (row.source_note ?? '').startsWith(SEED_COMPOSITION_SOURCE_NOTE),
+    )
+    .map((row) => row.id);
+  if (staleSeedRowIds.length > 0) {
+    const { error } = await supabase
+      .from('chemical_product_compositions')
+      .delete()
+      .in('id', staleSeedRowIds);
+    if (error) throw error;
+  }
 
   for (const composition of product.compositions) {
     const row = {
@@ -197,6 +224,8 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  console.error('Seed failed:', error);
+  // Writes are per-row (no client-side transaction in supabase-js); a mid-run
+  // failure leaves a partial but valid state that the next --write converges.
+  console.error('Seed failed (safe to re-run --write to converge):', error);
   process.exit(1);
 });
