@@ -76,6 +76,33 @@ describe('fertilizer catalog seed data', () => {
     }
   });
 
+  it('gives every product of the same grade an identical composition set (brand-agnostic)', () => {
+    // The header comment promises multiple brands per grade carry the same
+    // composition so the nutrient ledger is brand-agnostic — enforce it.
+    const byGrade = new Map<string, { name: string; key: string }[]>();
+    for (const product of FERTILIZER_CATALOG_SEED) {
+      // Null grades are straights/micronutrients — distinct products, exempt.
+      if (product.grade == null) continue;
+      const key = product.compositions
+        .map((composition) => `${composition.component_code.toLowerCase()}=${composition.percent}`)
+        .sort()
+        .join('|');
+      const entries = byGrade.get(product.grade) ?? [];
+      entries.push({ name: product.name, key });
+      byGrade.set(product.grade, entries);
+    }
+    for (const [grade, entries] of byGrade) {
+      const keys = new Set(entries.map((entry) => entry.key));
+      if (keys.size > 1) {
+        throw new Error(
+          `grade ${grade} has diverging compositions: ${entries
+            .map((entry) => `${entry.name} → ${entry.key}`)
+            .join(' ; ')}`,
+        );
+      }
+    }
+  });
+
   it('has no duplicate product identity (state + lower(name))', () => {
     const identities = FERTILIZER_CATALOG_SEED.map(
       (product) => `${SEED_STATE_CODE}:${product.name.toLowerCase()}`,

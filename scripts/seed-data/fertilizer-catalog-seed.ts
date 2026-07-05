@@ -377,7 +377,10 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     name: 'Vanita Aditya 00:00:50 (SOP)',
     manufacturer: 'Vanita Agro',
     grade: '0-0-50',
-    compositions: npk(0, 0, 50),
+    // Same SOP grade as the generic entry — carries the same ~17.5% S.
+    compositions: npk(0, 0, 50, [
+      { component_code: 'S', percent: 17.5, note: 'Soluble SOP typically declares ~17-18% S' },
+    ]),
   },
 ];
 

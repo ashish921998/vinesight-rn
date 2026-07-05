@@ -81,31 +81,57 @@ async function upsertProduct(
 }
 
 /**
- * Upsert the product's nutrient compositions. The unique index is
- * (product_id, lower(component_code), basis) — all rows use basis 'declared' —
- * so onConflict upsert makes re-runs idempotent and lets grade corrections land.
+ * Sync the product's nutrient compositions. The unique index is the EXPRESSION
+ * index (product_id, lower(component_code), basis), which PostgREST's
+ * onConflict column list cannot target (Postgres won't infer an expression
+ * index from raw column names) — an upsert would fail on the very first write.
+ * So: read the product's existing 'declared' rows, then update matches (keyed
+ * on lower(component_code)) and insert the rest. Re-runs stay idempotent and
+ * grade corrections land.
  */
-async function upsertCompositions(
+async function syncCompositions(
   supabase: SupabaseClient,
   productId: number,
   product: FertilizerSeedProduct,
 ): Promise<void> {
-  const rows = product.compositions.map((composition) => ({
-    product_id: productId,
-    component_code: composition.component_code,
-    component_type: 'nutrient',
-    percent: composition.percent,
-    basis: 'declared',
-    verified: false,
-    source_note: composition.note
-      ? `${SEED_COMPOSITION_SOURCE_NOTE} ${composition.note}`
-      : SEED_COMPOSITION_SOURCE_NOTE,
-  }));
-
-  const { error } = await supabase
+  const { data: existingRows, error: fetchError } = await supabase
     .from('chemical_product_compositions')
-    .upsert(rows, { onConflict: 'product_id,component_code,basis' });
-  if (error) throw error;
+    .select('id, component_code')
+    .eq('product_id', productId)
+    .eq('basis', 'declared');
+  if (fetchError) throw fetchError;
+
+  const existingIdByCode = new Map(
+    (existingRows ?? []).map((row: { id: number; component_code: string }) => [
+      row.component_code.toLowerCase(),
+      row.id,
+    ]),
+  );
+
+  for (const composition of product.compositions) {
+    const row = {
+      product_id: productId,
+      component_code: composition.component_code,
+      component_type: 'nutrient',
+      percent: composition.percent,
+      basis: 'declared',
+      verified: false,
+      source_note: composition.note
+        ? `${SEED_COMPOSITION_SOURCE_NOTE} ${composition.note}`
+        : SEED_COMPOSITION_SOURCE_NOTE,
+    };
+    const existingId = existingIdByCode.get(composition.component_code.toLowerCase());
+    if (existingId != null) {
+      const { error } = await supabase
+        .from('chemical_product_compositions')
+        .update(row)
+        .eq('id', existingId);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from('chemical_product_compositions').insert(row);
+      if (error) throw error;
+    }
+  }
 }
 
 async function main(): Promise<void> {
@@ -161,7 +187,7 @@ async function main(): Promise<void> {
   for (const product of FERTILIZER_CATALOG_SEED) {
     const isUpdate = existingByLowerName.has(product.name.toLowerCase());
     const productId = await upsertProduct(supabase, product, existingByLowerName);
-    await upsertCompositions(supabase, productId, product);
+    await syncCompositions(supabase, productId, product);
     if (isUpdate) updated += 1;
     else inserted += 1;
     log(`  ${isUpdate ? 'updated' : 'inserted'}: ${product.name} (#${productId})`);
