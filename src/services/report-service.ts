@@ -840,6 +840,8 @@ export class ReportService {
               resolveAreaUnitPreference(options.areaUnit),
             )
           : null,
+        // record.area is raw in this unit too — the ledger converts per record.
+        areaUnit: options.areaUnit,
       }),
     };
   }

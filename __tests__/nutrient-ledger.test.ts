@@ -216,6 +216,39 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
     expect(ledger.areaAcres).toBeNull();
   });
 
+  it('converts record areas from the preferred unit before per-acre kernel math (hectares)', () => {
+    // record.area is stored RAW in the user's preferred unit. A 2-ha record is
+    // 4.9421 acres; feeding the bare 2 into the kernel's per_acre context
+    // would under-report every per-acre item 2.47105×.
+    const ledger = calculateNutrientLedger({
+      sprayRecords: [],
+      fertigationRecords: [
+        fertigation({
+          area: 2, // hectares under this preference
+          fertilizers: [
+            {
+              name: 'Urea',
+              unit: 'kg',
+              quantity: 5,
+              quantity_basis: 'per_acre',
+              composition_snapshot: [{ nutrient_code: 'N', percent: 46, basis: 'declared' }],
+            },
+          ],
+        }),
+      ],
+      fromDate: '2026-03-01',
+      toDate: '2026-03-31',
+      areaAcres: 2 / 0.404686, // farm area, already converted by the caller
+      areaUnit: 'hectares',
+    });
+
+    const nitrogen = ledger.rows.find((row) => row.element === 'N');
+    const acres = 2 / 0.404686;
+    // 5 kg/acre × 4.9421 acres × 46% N — and per-acre recovers the rate's N.
+    expect(nitrogen?.elementalKg).toBeCloseTo(5 * acres * 0.46, 3);
+    expect(nitrogen?.elementalKgPerAcre).toBeCloseTo(5 * 0.46, 4);
+  });
+
   it('parses spray water volume from the dose string for concentration items', () => {
     const spray: SprayRecord = {
       id: 1,

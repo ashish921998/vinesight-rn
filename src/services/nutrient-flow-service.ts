@@ -12,6 +12,11 @@ import {
   sanitizeComposition,
 } from '@/constants/nutrient-definitions';
 import { totalFor } from '@/lib/quantity';
+import {
+  type AreaUnitPreference,
+  convertAreaToAcres,
+  resolveAreaUnitPreference,
+} from '@/utils/preferences';
 import type { NutrientLedger, NutrientLedgerRow } from '@/types/report';
 
 export type NutrientTotals = Record<string, number>;
@@ -436,12 +441,15 @@ export function calculateNutrientLedger({
   fromDate,
   toDate,
   areaAcres,
+  areaUnit,
 }: {
   sprayRecords: SprayRecord[];
   fertigationRecords: FertigationRecord[];
   fromDate: string;
   toDate: string;
   areaAcres: number | null | undefined;
+  /** The user's stored-area unit — record.area is RAW in this unit, not acres. */
+  areaUnit?: AreaUnitPreference | string | null;
 }): NutrientLedger {
   const validArea =
     typeof areaAcres === 'number' && Number.isFinite(areaAcres) && areaAcres > 0
@@ -493,18 +501,27 @@ export function calculateNutrientLedger({
     });
   };
 
+  // record.area is stored RAW in the user's preferred unit (acres or
+  // hectares) — same contract as report generation, which converts before any
+  // per-acre math. Feeding hectares into the kernel's per_acre context would
+  // under-report every per-acre item 2.47105× on hectare-preference farms.
+  const recordAreaAcres = (area: number | null | undefined): number =>
+    typeof area === 'number' && Number.isFinite(area) && area > 0
+      ? convertAreaToAcres(area, resolveAreaUnitPreference(areaUnit ?? undefined))
+      : 0;
+
   // Spray records
   inRange(sprayRecords).forEach((record) => {
     const items = (record.chemical_items ?? []) as SprayChemicalItem[];
     if (items.length === 0) return;
-    processItems(items, record.area ?? 0, parseSprayWaterVolumeL(record.dose));
+    processItems(items, recordAreaAcres(record.area), parseSprayWaterVolumeL(record.dose));
   });
 
   // Fertigation records
   inRange(fertigationRecords).forEach((record) => {
     const items = (record.fertilizers ?? []) as FertilizerItem[];
     if (items.length === 0) return;
-    processItems(items, record.area ?? 0, record.water_volume ?? null);
+    processItems(items, recordAreaAcres(record.area), record.water_volume ?? null);
   });
 
   // Build per-acre totals
