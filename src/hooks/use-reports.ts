@@ -155,6 +155,9 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
         name: item.name,
         quantity: item.quantity,
         unit: item.unit,
+        // Plan-level snapshot of the farm area (canonical acres) at plan
+        // creation — null on plans predating the snapshot column.
+        areaAcres: fertilizerPlan?.farm_area_acres ?? null,
       })),
     [fertilizerPlan],
   );

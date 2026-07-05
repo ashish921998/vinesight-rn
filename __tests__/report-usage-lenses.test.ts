@@ -475,6 +475,28 @@ describe('compliance delta (prescribed vs applied, per acre)', () => {
     });
   });
 
+  it('total-basis prescriptions divide by the plan area snapshot, not the current farm area', () => {
+    // Plan says "10 kg" written for a 2-acre farm (snapshot stamped by the
+    // DB trigger); the farmer applied exactly 10 kg over those 2 acres, then
+    // the farm was edited to 3.5 acres. Prescribed must stay 5 kg/acre —
+    // reading it against 3.5 (≈ 2.86) would call an exactly-followed plan an
+    // over-application, since applied rates stay pinned to record areas.
+    const usage = usageFor({
+      farm: farmWithArea(3.5),
+      planItems: [{ id: 'pi-dap', name: 'DAP', quantity: 10, unit: 'kg', areaAcres: 2 }],
+      fertigations: [
+        fertigation([{ name: 'DAP', quantity: 10, unit: 'kg', plan_item_id: 'pi-dap' }], {
+          area: 2,
+        }),
+      ],
+    });
+    expect(usage.perAcre.compliance[0]).toMatchObject({
+      prescribedPerAcre: 5,
+      appliedPerAcre: 5,
+      matchLevel: 'verified',
+    });
+  });
+
   it('total-basis plan items divide by area; concentration prescriptions are excluded', () => {
     const lens = usageFor({
       farm: farmWithArea(2),

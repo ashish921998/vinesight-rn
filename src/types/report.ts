@@ -211,6 +211,13 @@ export interface ReportPlanItemInput {
   name: string;
   quantity: number | null;
   unit: string | null;
+  /**
+   * Farm area (canonical acres) snapshotted when the plan was written —
+   * the denominator for reading total-basis prescriptions ("10 kg") per
+   * acre. Absent/null on plans predating the snapshot: compliance falls
+   * back to the current farm area.
+   */
+  areaAcres?: number | null;
 }
 
 export interface ReportStockUsageRecord {
