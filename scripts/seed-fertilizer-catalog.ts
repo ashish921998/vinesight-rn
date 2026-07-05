@@ -38,6 +38,7 @@ function log(message: string): void {
 interface ExistingProductRow {
   id: number;
   name: string;
+  input_type: string | null;
   verification_tier: string | null;
   source_reference: string | null;
 }
@@ -56,7 +57,10 @@ function seederOwnsProduct(row: ExistingProductRow): boolean {
   );
 }
 
-type ProductResolution = { id: number; action: 'inserted' | 'updated' | 'skipped' };
+type ProductResolution = {
+  id: number;
+  action: 'inserted' | 'updated' | 'skipped' | 'foreign';
+};
 
 /**
  * Ensure a product row exists (by state + lower(name)) and return its id.
@@ -81,6 +85,12 @@ async function upsertProduct(
 
   const existing = existingByLowerName.get(product.name.toLowerCase());
   if (existing) {
+    // The unique index spans ALL input types, so a non-fertilizer row can hold
+    // this (state, name) identity. It is not our product: don't insert (unique
+    // violation), don't update, and don't attach nutrient compositions to it.
+    if (existing.input_type !== 'fertilizer') {
+      return { id: existing.id, action: 'foreign' };
+    }
     if (!seederOwnsProduct(existing)) {
       return { id: existing.id, action: 'skipped' };
     }
@@ -217,12 +227,14 @@ async function main(): Promise<void> {
   });
 
   // One read resolves every identity up front, so the write loop never dupes.
-  // Ownership fields ride along so curated/foreign rows can be skipped whole.
+  // No input_type filter: the unique index is (state_code, lower(name)) across
+  // ALL input types, so a non-fertilizer row holding a seed name must be seen
+  // here or the insert would hit the constraint. Ownership fields ride along
+  // so curated/foreign rows can be skipped whole.
   const { data: existingRows, error: fetchError } = await supabase
     .from('chemical_products')
-    .select('id,name,verification_tier,source_reference')
-    .eq('state_code', SEED_STATE_CODE)
-    .eq('input_type', 'fertilizer');
+    .select('id,name,input_type,verification_tier,source_reference')
+    .eq('state_code', SEED_STATE_CODE);
   if (fetchError) throw fetchError;
 
   const existingByLowerName = new Map<string, ExistingProductRow>();
@@ -230,14 +242,23 @@ async function main(): Promise<void> {
     existingByLowerName.set(existing.name.toLowerCase(), existing);
   }
 
-  const counts = { inserted: 0, updated: 0, skipped: 0 };
+  const counts = { inserted: 0, updated: 0, skipped: 0, foreign: 0 };
   for (const product of FERTILIZER_CATALOG_SEED) {
     const resolution = await upsertProduct(supabase, product, existingByLowerName);
-    // Compositions sync runs for skipped (curated/foreign) products too — its
-    // per-row ownership guards make it purely additive there: existing rows
-    // are never updated or deleted, only MISSING codes are inserted. That is
-    // the Q7 point — a pre-existing provisional 'Urea' with no compositions
-    // must still end up feeding the nutrient ledger.
+    if (resolution.action === 'foreign') {
+      // A non-fertilizer product owns this (state, name) identity. Nutrient
+      // compositions don't belong on it, so it gets no backfill either.
+      counts.foreign += 1;
+      log(
+        `  FOREIGN identity (non-fertilizer product holds this name; left untouched): ${product.name} (#${resolution.id})`,
+      );
+      continue;
+    }
+    // Compositions sync runs for skipped (curated) products too — its per-row
+    // ownership guards make it purely additive there: existing rows are never
+    // updated or deleted, only MISSING codes are inserted. That is the Q7
+    // point — a pre-existing provisional 'Urea' with no compositions must
+    // still end up feeding the nutrient ledger.
     await syncCompositions(supabase, resolution.id, product);
     counts[resolution.action] += 1;
     log(
@@ -248,7 +269,8 @@ async function main(): Promise<void> {
   }
 
   log(
-    `Done. Inserted ${counts.inserted}, updated ${counts.updated}, skipped ${counts.skipped} product rows (curated; missing compositions still backfilled).`,
+    `Done. Inserted ${counts.inserted}, updated ${counts.updated}, skipped ${counts.skipped} product rows (curated; missing compositions still backfilled)` +
+      (counts.foreign > 0 ? `, ${counts.foreign} left alone (non-fertilizer identity).` : '.'),
   );
 }
 
