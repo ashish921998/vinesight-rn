@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2026-07-04
+
+### Added
+- Reports now show applied quantities through three lenses: per plot (season totals), per acre (rates), and per liter of water (spray concentration). Mass, volume, and count are kept separate — they never collapse into one misleading number.
+- A plan-compliance section in reports compares what a fertilizer plan prescribed against what was actually applied, per acre. Rows are marked "verified" when the applied record was logged from that plan item, and "approximate" when matched by product name only — never presented as verified.
+- Products logged in a unit the app can't convert now appear in clearly labelled "shown as logged" buckets (unrecognized unit, water volume not logged, farm area unavailable) instead of vanishing from the report.
+
+### Fixed
+- Per-acre report figures now use the area the record was applied over, so editing a farm's area later no longer rewrites what past applications look like, and the Stock Usage and per-plot sections can no longer contradict each other.
+- Hectare-preference farms now convert to acres before any per-acre math, so their rates are no longer reported ~2.47× too high.
+- A spray concentration or per-acre rate is never summed as if it were a plot total (30 g/L twice is no longer shown as "60 g/L").
+- The per-acre lens keeps its titled header when farm area is unavailable, so the reader can tell which section is unavailable and why.
+
 ## [1.5.0] - 2026-06-21
 
 ### Added

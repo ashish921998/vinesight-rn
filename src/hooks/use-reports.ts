@@ -13,10 +13,13 @@ import {
   useHarvestRecords,
   useExpenseRecords,
 } from './use-records';
-import { useWarehouseItems } from './use-profile';
+import { useProfile, useWarehouseItems } from './use-profile';
+import { useFertilizerPlan } from './use-fertilizer-plan';
+import { useAuthStore } from '@/stores';
 import { ReportService } from '../services/report-service';
 import {
   DateRange,
+  ReportPlanItemInput,
   ReportPreview,
   ReportType,
   ReportFormat,
@@ -26,7 +29,7 @@ import {
 } from '../types/report';
 import { resolveBaselineFilters, computeReportDeltas } from '../services/report-comparison';
 import { useCurrency } from './use-currency';
-import type { AreaUnitPreference } from '@/utils/preferences';
+import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
 import { formatLocalDate } from '@/utils/date';
 import { formatDate } from '@/i18n/format';
 import type {
@@ -132,6 +135,32 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
     seasonId,
   );
   const { data: warehouseItems, isLoading: warehouseItemsLoading } = useWarehouseItems();
+  // Current fertilizer plan — the compliance delta's join target. Not part of
+  // the loading gate: a farm without a plan (or a failed plan fetch) still
+  // gets its report; the compliance section simply stays empty.
+  const { data: fertilizerPlan } = useFertilizerPlan(effectiveFarmId);
+  // farm.area is stored as the raw number the user typed under their area-unit
+  // preference — the per-acre lens must know that unit or hectare farms get
+  // rates that are silently 2.47× too high (same resolution as app/reports.tsx).
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { user } = useAuthStore();
+  const areaUnit = resolveAreaUnitPreference(
+    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
+  );
+
+  const planItems = useMemo<ReportPlanItemInput[]>(
+    () =>
+      (fertilizerPlan?.items ?? []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        unit: item.unit,
+        // Plan-level snapshot of the farm area (canonical acres) at plan
+        // creation — null on plans predating the snapshot column.
+        areaAcres: fertilizerPlan?.farm_area_acres ?? null,
+      })),
+    [fertilizerPlan],
+  );
 
   const farm = useMemo(() => {
     if (!farms || !effectiveFarmId) return null;
@@ -242,15 +271,19 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
         seasonContext,
         seasonNameById,
         seasonWindowById,
+        planItems,
+        areaUnit,
       },
     );
   }, [
+    areaUnit,
     dateRange,
     expenses,
     farm,
     fertigations,
     harvests,
     irrigations,
+    planItems,
     seasonContext,
     seasonNameById,
     seasonWindowById,
@@ -265,7 +298,11 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
     harvestsLoading ||
     expensesLoading ||
     warehouseItemsLoading ||
-    farmSeasonsLoading;
+    farmSeasonsLoading ||
+    // Without this gate a hectares-preference user's first preview computes
+    // per-acre figures with the 'acres' fallback (2.47× too high) until the
+    // profile query settles — and an immediate export captures that preview.
+    profileLoading;
 
   return {
     farm,

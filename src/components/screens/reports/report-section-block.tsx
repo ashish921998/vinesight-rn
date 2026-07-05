@@ -26,6 +26,8 @@ interface ReportSectionBlockProps {
   icon?: string;
   /** Accent color for the icon and decorative elements. */
   accentColor?: string;
+  /** Overrides the generic empty-state text when rows is empty. */
+  emptyMessage?: string;
 }
 
 const INITIAL_ROWS_TO_RENDER = 6;
@@ -53,6 +55,7 @@ export function ReportSectionBlock({
   variant = 'default',
   icon,
   accentColor,
+  emptyMessage,
 }: ReportSectionBlockProps) {
   const m3 = useM3();
   const { t } = useTranslation();
@@ -431,7 +434,7 @@ export function ReportSectionBlock({
               fontSize: fontSize.sm,
             }}
           >
-            {t('reports.formal.emptySection')}
+            {emptyMessage ?? t('reports.formal.emptySection')}
           </Text>
         </View>
       ) : variant === 'compact-two-col' ? (

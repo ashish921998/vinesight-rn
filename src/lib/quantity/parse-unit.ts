@@ -123,14 +123,18 @@ export function parseUnit(raw: string): ParsedUnit | null {
     return null;
   }
 
-  const base = BASE_UNITS[baseToken];
+  // Own-property guard: unit strings are user input, and a bare index would
+  // resolve prototype-chain keys ('constructor', 'toString') to truthy junk.
+  const base = Object.hasOwn(BASE_UNITS, baseToken) ? BASE_UNITS[baseToken] : undefined;
   if (!base) return null;
 
   if (denomToken === null) {
     return { measure: base.measure, basis: 'total', factorToCanonical: base.factor };
   }
 
-  const denominator = DENOMINATORS[denomToken];
+  const denominator = Object.hasOwn(DENOMINATORS, denomToken)
+    ? DENOMINATORS[denomToken]
+    : undefined;
   if (!denominator) return null;
   // 'pcs/L' etc. is meaningless — a count cannot be a water concentration.
   // (count per acre stays allowed: report-service accepts e.g. 'packet/acre'.)
