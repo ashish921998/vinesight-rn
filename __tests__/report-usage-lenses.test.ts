@@ -592,6 +592,50 @@ describe('compliance: adversarial-review regressions', () => {
     expect(row.matchLevel).toBeNull();
   });
 
+  it('compliance applied rate divides by the record snapshot area, not the current farm area', () => {
+    // 250 ml/acre logged over 2 acres, farm since resized to 3.5 acres. The
+    // applied rate must still read 250 ml/acre (0.25 L/acre) — dividing the
+    // 0.5 L plot total by 3.5 would fabricate ≈143 ml/acre and contradict
+    // the logged rate.
+    const usage = usageFor({
+      farm: farmWithArea(3.5),
+      planItems: [{ id: 'pi-liquid', name: 'Liquid', quantity: 250, unit: 'ml/acre' }],
+      fertigations: [
+        fertigation([{ name: 'Liquid', quantity: 250, unit: 'ml/acre', plan_item_id: 'pi-liquid' }], {
+          area: 2,
+        }),
+      ],
+    });
+    const row = usage.perAcre.compliance[0];
+    expect(row.prescribedPerAcre).toBeCloseTo(0.25, 12);
+    expect(row.appliedPerAcre).toBeCloseTo(0.25, 12);
+    expect(row.matchLevel).toBe('verified');
+  });
+
+  it('each application contributes its own per-acre rate, summed like prescriptions', () => {
+    // Application 1: 12 kg over 2 acres = 6 kg/acre. Application 2: 21 kg over
+    // 3 acres = 7 kg/acre. The cumulative applied rate is 6 + 7 = 13 kg/acre —
+    // computed from each record's own area, never the farm's current 4 acres.
+    const usage = usageFor({
+      farm: farmWithArea(4),
+      planItems: [{ id: 'pi-urea', name: 'Urea', quantity: 5, unit: 'kg/acre' }],
+      fertigations: [
+        fertigation([{ name: 'Urea', quantity: 12, unit: 'kg', plan_item_id: 'pi-urea' }], {
+          id: 1,
+          area: 2,
+        }),
+        fertigation([{ name: 'Urea', quantity: 21, unit: 'kg' }], {
+          id: 2,
+          date: '2026-03-05',
+          area: 3,
+        }),
+      ],
+    });
+    const row = usage.perAcre.compliance[0];
+    expect(row.appliedPerAcre).toBeCloseTo(13, 12);
+    expect(row.matchLevel).toBe('approximate');
+  });
+
   it('per-acre rates resolve against the RECORD area snapshot, not the current farm area', () => {
     // Logged over 2 acres, farm later edited to 3.5 — the plot total must
     // still describe what was applied (250 ml/acre × 2 acres = 0.5 L).

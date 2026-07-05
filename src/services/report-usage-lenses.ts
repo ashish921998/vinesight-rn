@@ -8,7 +8,9 @@
  *              missing/zero/non-finite — never divided by a guess. Includes
  *              the compliance delta against plan items: contributions stamped
  *              with plan_item_id are 'verified'; name-only matches are
- *              'approximate', never presented as verified.
+ *              'approximate', never presented as verified. Applied rates
+ *              divide by the area the contributing records covered, not the
+ *              (possibly since-edited) current farm area.
  *   per liter  spray concentration = Σ chemical canonical ÷ Σ water volume,
  *              weighted by water volume — never a plain average of per-event
  *              concentrations. ppm folds natively as mg/L.
@@ -146,6 +148,12 @@ export function computeUsageLenses(params: {
   >();
 
   // Compliance accumulation keyed by plan item id / normalized plan name.
+  // Values are Σ per-acre RATES, not plot totals: each contribution divides
+  // by the area of ITS OWN event (the record's snapshot when present). fold()
+  // multiplied per-acre rates by that same area, so this round-trips exactly —
+  // dividing plot totals by the current farm area instead would rewrite the
+  // logged rate whenever the farm was resized after logging (250 ml/acre over
+  // 2 acres on a farm resized to 3.5 must not read as ≈143 ml/acre).
   const verifiedByPlanItem = new Map<string, Partial<Record<Measure, number>>>();
   const approxByName = new Map<string, Partial<Record<Measure, number>>>();
   // Every current-plan stamp we saw at all — even when the item's quantity
@@ -222,19 +230,25 @@ export function computeUsageLenses(params: {
         perLiterAcc.set(plKey, pl);
       }
 
-      if (item.planItemId && currentPlanItemIds.has(item.planItemId)) {
-        const byMeasure = verifiedByPlanItem.get(item.planItemId) ?? {};
-        byMeasure[measure] = (byMeasure[measure] ?? 0) + value;
-        verifiedByPlanItem.set(item.planItemId, byMeasure);
-      } else if (event.type === 'fertilizer') {
-        // Name matching joins FERTILIZER-plan items, so only fertigation
-        // contributions qualify — a spray chemical that happens to share a
-        // name must not inflate plan compliance. (Stamped items above are
-        // trusted regardless of surface: the linkage is explicit.)
-        const nameKey = normalizeProductName(item.name);
-        const byMeasure = approxByName.get(nameKey) ?? {};
-        byMeasure[measure] = (byMeasure[measure] ?? 0) + value;
-        approxByName.set(nameKey, byMeasure);
+      // Compliance contributions are per-acre rates over the event's own
+      // area. eventAreaAcres can only be null when the farm area is also
+      // null — and then compliance is never computed — so skipping is safe.
+      if (eventAreaAcres != null) {
+        const ratePerAcre = value / eventAreaAcres;
+        if (item.planItemId && currentPlanItemIds.has(item.planItemId)) {
+          const byMeasure = verifiedByPlanItem.get(item.planItemId) ?? {};
+          byMeasure[measure] = (byMeasure[measure] ?? 0) + ratePerAcre;
+          verifiedByPlanItem.set(item.planItemId, byMeasure);
+        } else if (event.type === 'fertilizer') {
+          // Name matching joins FERTILIZER-plan items, so only fertigation
+          // contributions qualify — a spray chemical that happens to share a
+          // name must not inflate plan compliance. (Stamped items above are
+          // trusted regardless of surface: the linkage is explicit.)
+          const nameKey = normalizeProductName(item.name);
+          const byMeasure = approxByName.get(nameKey) ?? {};
+          byMeasure[measure] = (byMeasure[measure] ?? 0) + ratePerAcre;
+          approxByName.set(nameKey, byMeasure);
+        }
       }
     }
   }
@@ -362,7 +376,12 @@ function computeCompliance(
     const hasVerified = verified > 0;
     const hasApprox = approx > 0;
 
-    const appliedPerAcre = hasVerified || hasApprox ? (verified + approx) / areaAcres : null;
+    // The maps already hold per-acre rates (each contribution divided by its
+    // own event's area) — summing gives the cumulative applied rate, mirroring
+    // how prescriptions sum across plan rows. No further division: dividing by
+    // the current farm area here would misstate records logged over a
+    // different (snapshotted) area.
+    const appliedPerAcre = hasVerified || hasApprox ? verified + approx : null;
 
     // Contributions exist but could not be expressed in the plan's measure
     // (stamped record with an unresolvable unit, or a name match folded into

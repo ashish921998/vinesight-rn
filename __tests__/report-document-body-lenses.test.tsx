@@ -126,7 +126,6 @@ function renderBody(preview: ReportPreview, reportType: 'stock-usage' | 'financi
       preview={preview}
       reportType={reportType}
       preferredCurrency="INR"
-      areaUnit="acres"
       panelStyle={{}}
     />,
   );
