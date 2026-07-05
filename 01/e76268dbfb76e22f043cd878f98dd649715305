@@ -1,0 +1,19 @@
+__tests__/fertilizer-catalog-seed.test.ts
+  s_7ccb2d496f2e28::t_b27c38fcd11ad5 1-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "01e76268dbfb76e22f043cd878f98dd649715305",
+  "prompts": {},
+  "sessions": {
+    "s_7ccb2d496f2e28": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f329e-5b7c-7093-a562-d9a74cfd1ed8",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
