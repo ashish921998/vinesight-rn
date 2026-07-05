@@ -39,7 +39,7 @@ import { getDaysAfterPruning } from '@/utils/date';
 import { parseUnit, totalFor } from '@/lib/quantity';
 import type { Measure } from '@/lib/quantity';
 import { computeUsageLenses, normalizeProductName, type UsageEvent } from './report-usage-lenses';
-import { calculateNutrientLedger } from './nutrient-flow-service';
+import { calculateNutrientLedger, parseSprayWaterVolumeL } from './nutrient-flow-service';
 import {
   Farm,
   IrrigationRecord,
@@ -334,11 +334,10 @@ export class ReportService {
     };
   }
 
+  // Single canonical dose-string parser (nutrient-flow-service) — a second
+  // regex here once drifted (no L suffix) and read "Water: 200mL" as liters.
   private static parseWaterVolumeFromDose(dose: string | null | undefined): number | null {
-    const match = dose?.match(/Water:\s*([0-9]+(?:\.[0-9]+)?)\s*L/i);
-    if (!match?.[1]) return null;
-    const parsed = Number.parseFloat(match[1]);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    return parseSprayWaterVolumeL(dose);
   }
 
   private static positiveOrNull(value: number | null | undefined): number | null {

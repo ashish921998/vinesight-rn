@@ -76,7 +76,7 @@ function CoverageChip({
         {isZero
           ? t('reports.nutrientLedger.coverageZero')
           : t('reports.nutrientLedger.coverageLabel', {
-              value: coveragePercent.toFixed(0),
+              value: String(coveragePercent),
             })}
       </Text>
     </View>

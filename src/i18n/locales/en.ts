@@ -3253,7 +3253,7 @@ export const en = {
       elementalHeader: 'Elemental (kg)',
       oxideHeader: 'Bag-grade',
       perAcreHeader: 'Per acre',
-      perAcreUnavailable: 'Per-acre view unavailable — farm area missing.',
+      perAcreUnavailable: 'Per-acre view unavailable — farm area is missing or invalid.',
       emptyTitle: 'No fertilizer or spray logs in this period',
       dualBasisNote:
         'Elemental values match petiole/soil lab reports. Bag-grade (N-P₂O₅-K₂O) matches what is printed on fertilizer bags.',

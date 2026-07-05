@@ -215,14 +215,17 @@ function parseNutrientTotals(value: unknown): NutrientTotals | null {
 }
 
 /**
- * Spray records carry water volume only inside the free-text dose string
- * ("Water: 200L"). One parser for every consumer in this module.
+ * Spray records carry water volume only inside the free-text dose string —
+ * always written as "Water: <n>L" by the submission paths. One parser for
+ * every consumer in this module, and the same L-suffix requirement as
+ * report-service's parseWaterVolumeFromDose: a number in another unit
+ * ("Water: 200mL") must not be read as liters and inflate nutrient mass.
  */
-function parseSprayWaterVolumeL(dose: string | null | undefined): number | null {
-  const match = dose?.match(/Water:\s*(\d+(?:\.\d+)?)/i);
+export function parseSprayWaterVolumeL(dose: string | null | undefined): number | null {
+  const match = dose?.match(/Water:\s*(\d+(?:\.\d+)?)\s*L/i);
   if (!match) return null;
   const value = Number.parseFloat(match[1] ?? '');
-  return Number.isFinite(value) ? value : null;
+  return Number.isFinite(value) && value > 0 ? value : null;
 }
 
 function resolveSprayTotalsPerAcre(record: SprayRecord): ResolvedLogIntervalTotals {
@@ -361,18 +364,27 @@ export function aggregateNutrientsBetweenPetioleTests({
 /**
  * Elemental → oxide conversion for dual-basis display.
  *
- * Keys are elemental symbols (N, P, K, Ca, Mg, S). Values carry the oxide
- * symbol and the inverse factor (elemental ÷ factor = oxide kg).
- * Only macros that have a bag-grade oxide convention are listed here;
- * micros (Fe, Mn, Zn, Cu, B, Mo, Na, Cl) stay elemental-only.
+ * Keys are elemental symbols; each entry names its display symbol and the
+ * OXIDE_TO_ELEMENTAL_FACTORS key it inverts (elemental ÷ factor = oxide kg) —
+ * ONE canonical factor source, so a factor update can never leave the ledger
+ * display disagreeing with nutrient normalization. Only macros with a
+ * bag-grade convention are listed; micros stay elemental-only.
  */
-const ELEMENTAL_TO_OXIDE: Record<string, { symbol: string; inverseFactor: number }> = {
-  P: { symbol: 'P₂O₅', inverseFactor: 0.4364 },
-  K: { symbol: 'K₂O', inverseFactor: 0.8301 },
-  Ca: { symbol: 'CaO', inverseFactor: 0.7147 },
-  Mg: { symbol: 'MgO', inverseFactor: 0.6031 },
-  S: { symbol: 'SO₃', inverseFactor: 0.4005 },
-};
+const ELEMENTAL_TO_OXIDE: Record<string, { symbol: string; inverseFactor: number }> =
+  Object.fromEntries(
+    (
+      [
+        ['P', 'P₂O₅', 'P2O5'],
+        ['K', 'K₂O', 'K2O'],
+        ['Ca', 'CaO', 'CAO'],
+        ['Mg', 'MgO', 'MGO'],
+        ['S', 'SO₃', 'SO3'],
+      ] as const
+    ).map(([element, symbol, factorKey]) => [
+      element,
+      { symbol, inverseFactor: OXIDE_TO_ELEMENTAL_FACTORS[factorKey].factor },
+    ]),
+  );
 
 /** Macro display order — N first, then primary oxides, then secondary. */
 const MACRO_ORDER = ['N', 'P', 'K', 'Ca', 'Mg', 'S'];
