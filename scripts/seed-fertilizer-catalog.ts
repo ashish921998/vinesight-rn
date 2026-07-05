@@ -108,24 +108,21 @@ async function syncCompositions(
     source_note: string | null;
   };
   const existing = (existingRows ?? []) as ExistingCompositionRow[];
-  const existingIdByCode = new Map(
-    existing.map((row) => [row.component_code.toLowerCase(), row.id]),
-  );
+  const existingByCode = new Map(existing.map((row) => [row.component_code.toLowerCase(), row]));
+  // Ownership rule, applied to UPDATE and DELETE alike: the seeder may only
+  // touch rows it wrote (seed source-note marker) that no human has verified.
+  // Without the verified guard a re-run would silently downgrade a reviewed
+  // composition back to provisional seed data.
+  const seederOwns = (row: ExistingCompositionRow): boolean =>
+    row.verified !== true && (row.source_note ?? '').startsWith(SEED_COMPOSITION_SOURCE_NOTE);
 
   // A grade correction can DROP a component between seed revisions; without a
-  // delete the stale row keeps feeding the nutrient ledger. Only rows this
-  // seeder wrote are eligible (seed source-note marker + unverified) — a
-  // human-verified row or one another writer added is never touched.
+  // delete the stale row keeps feeding the nutrient ledger.
   const seedCodes = new Set(
     product.compositions.map((composition) => composition.component_code.toLowerCase()),
   );
   const staleSeedRowIds = existing
-    .filter(
-      (row) =>
-        !seedCodes.has(row.component_code.toLowerCase()) &&
-        row.verified !== true &&
-        (row.source_note ?? '').startsWith(SEED_COMPOSITION_SOURCE_NOTE),
-    )
+    .filter((row) => !seedCodes.has(row.component_code.toLowerCase()) && seederOwns(row))
     .map((row) => row.id);
   if (staleSeedRowIds.length > 0) {
     const { error } = await supabase
@@ -147,12 +144,14 @@ async function syncCompositions(
         ? `${SEED_COMPOSITION_SOURCE_NOTE} ${composition.note}`
         : SEED_COMPOSITION_SOURCE_NOTE,
     };
-    const existingId = existingIdByCode.get(composition.component_code.toLowerCase());
-    if (existingId != null) {
+    const existingRow = existingByCode.get(composition.component_code.toLowerCase());
+    if (existingRow != null) {
+      // Verified or foreign rows win over the seed — skip, never downgrade.
+      if (!seederOwns(existingRow)) continue;
       const { error } = await supabase
         .from('chemical_product_compositions')
         .update(row)
-        .eq('id', existingId);
+        .eq('id', existingRow.id);
       if (error) throw error;
     } else {
       const { error } = await supabase.from('chemical_product_compositions').insert(row);
