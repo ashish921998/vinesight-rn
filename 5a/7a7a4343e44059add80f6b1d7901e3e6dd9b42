@@ -1,0 +1,23 @@
+scripts/seed-data/fertilizer-catalog-seed.ts
+  s_7ccb2d496f2e28::t_d0028eb2bcfa02 1-392
+scripts/seed-fertilizer-catalog.ts
+  s_7ccb2d496f2e28::t_f87e471df8858c 1-176
+tsconfig.json
+  s_7ccb2d496f2e28::t_ed3be4931fe4f2 5-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5a7a7a4343e44059add80f6b1d7901e3e6dd9b42",
+  "prompts": {},
+  "sessions": {
+    "s_7ccb2d496f2e28": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f329e-5b7c-7093-a562-d9a74cfd1ed8",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
