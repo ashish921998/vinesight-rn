@@ -923,6 +923,21 @@ export const mr = {
       namePlaceholder: 'खताचे नाव',
       qtyPlaceholder: 'प्रमाण',
       selectUnit: 'युनिट निवडा',
+      quickUnitLabel: 'खत प्रमाण युनिट म्हणून {{unit}} वापरा',
+      moreUnits: 'इतर युनिट्स',
+      perAcre: 'प्रति एकर',
+      verbatimUnitHint: 'युनिट जसे नोंदवले तसे ठेवले: {{unit}}',
+      areaEcho: {
+        toTotal: '{{quantity}} {{unit}} → एकूण {{total}}',
+        toPerAcre: '{{quantity}} {{unit}} → {{rate}}/एकर',
+      },
+      doseGuard: {
+        highPlan:
+          'प्रमाण तपासा — तुमच्या नियोजनातील मात्रेच्या ({{reference}}) सुमारे {{ratio}} पट',
+        lowPlan: 'प्रमाण तपासा — तुमच्या नियोजनातील मात्रेच्या ({{reference}}) सुमारे 1/{{ratio}}',
+        highLastLog: 'प्रमाण तपासा — तुमच्या मागील नोंदीच्या ({{reference}}) सुमारे {{ratio}} पट',
+        lowLastLog: 'प्रमाण तपासा — तुमच्या मागील नोंदीच्या ({{reference}}) सुमारे 1/{{ratio}}',
+      },
     },
     quickAdd: 'जलद जोडा',
     noMatchesHint: 'जुळणारे सापडले नाही. सानुकूल $t(glossary.fertigation) नावासह पुढे जा.',

@@ -89,6 +89,7 @@ import {
   CHEMICAL_UNITS,
 } from '@/constants/calculator-models';
 import { resolveFertigationPrefill, resolveFertigationUnit } from '@/constants/fertilizer-units';
+import { fertigationChipForEntry } from '@/components/forms/fertigation-unit-chips';
 import {
   useCreateIrrigationRecord,
   useCreateSprayRecord,
@@ -521,11 +522,20 @@ export function EntryForm({
       name: item.name,
       unit: item.unit,
       quantity: item.quantity ?? null,
-      quantityBasis: undefined,
+      // History carries its own basis — a total logged as bare 'kg' must not
+      // re-enter as a rate (or vice versa) now that chips fuse unit + basis.
+      quantityBasis: item.quantityBasis,
     }));
     const deduped = new Map<string, FertigationQuickAddItem>();
     [...byPlan, ...byWarehouse, ...byRecent].forEach((item) => {
-      const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
+      // Dedupe on fused chip identity (unit + basis), not the unit string —
+      // 'kg total' and 'kg/acre' both store unit 'kg' but are distinct chips.
+      // Outside the chip vocabulary, fall back to unit + raw basis.
+      const unitKey = (item.unit ?? '').trim().toLowerCase();
+      const chipKey =
+        fertigationChipForEntry(item.unit ?? '', item.quantityBasis)?.key ??
+        `${unitKey}::${item.quantityBasis ?? ''}`;
+      const key = `${item.name.trim().toLowerCase()}::${chipKey}`;
       const existing = deduped.get(key);
       if (!existing) {
         deduped.set(key, item);
@@ -1861,7 +1871,7 @@ export function EntryForm({
                 fertigationHistoryItems={recentFertigationItems ?? []}
                 fertigationPlanItems={fertilizerPlan?.items ?? []}
                 fertigationCatalogProducts={fertilizerCatalogProducts}
-                sprayAreaAcres={activeFarm?.area ?? null}
+                areaAcres={activeFarm?.area ?? null}
                 showSaveButton={false}
               />
             </ScrollView>
@@ -1983,7 +1993,7 @@ export function EntryForm({
           fertigationHistoryItems={recentFertigationItems ?? []}
           fertigationPlanItems={fertilizerPlan?.items ?? []}
           fertigationCatalogProducts={fertilizerCatalogProducts}
-          sprayAreaAcres={activeFarm?.area ?? null}
+          areaAcres={activeFarm?.area ?? null}
         />
       </View>
     );

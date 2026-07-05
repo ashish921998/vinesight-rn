@@ -576,6 +576,7 @@ export function ActivityEditForm({
             data={fertigationData}
             onChange={setFertigationData}
             onInputFocus={scrollToFocusedInput}
+            areaAcres={farm.area ?? null}
           />
         )}
       </View>
