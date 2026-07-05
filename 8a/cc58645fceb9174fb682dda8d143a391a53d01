@@ -1,0 +1,47 @@
+src/types/phi.ts
+  s_7ccb2d496f2e28::t_2789a111bf6ada 6-9,20,44,48,73
+  s_7ccb2d496f2e28::t_6958073ae2c2fc 10-19,21-43,45-47,49,63
+docs/data/chemical-label-claims/icar-nrcg-grapes-2025-09-17.csv
+  s_7ccb2d496f2e28::t_ba4c77c519895b 2-11
+  s_7ccb2d496f2e28::t_78607039d45d24 1
+scripts/import-chemical-label-claims.ts
+  s_7ccb2d496f2e28::t_1a37f9672c5efe 790
+  s_7ccb2d496f2e28::t_cd365280d11cea 1-34,39-234,238-314,318-351,353-536,538-547,549-611,615-667,669-673,675-785,787-789,791-795
+  s_7ccb2d496f2e28::t_2789a111bf6ada 786
+  s_7ccb2d496f2e28::t_c44fd220daa0cd 35-38,352
+  s_7ccb2d496f2e28::t_b6f4dd2f3376d5 235-237,315-317,612-614
+  s_7ccb2d496f2e28::t_e91a849420ae5f 537,548,668,674
+__tests__/chemical-label-claim-import.test.ts
+  s_7ccb2d496f2e28::t_ce0d2eab4d9ce4 1-226
+supabase/migrations/20260624120000_grape_label_claims.sql
+  s_7ccb2d496f2e28::t_960ef32ff2d7f6 1-305
+package.json
+  s_7ccb2d496f2e28::t_ce0d2eab4d9ce4 15
+src/types/index.ts
+  s_7ccb2d496f2e28::t_2789a111bf6ada 78-81
+src/types/database.ts
+  s_7ccb2d496f2e28::t_6958073ae2c2fc 169-170,189-283,867-869
+supabase/tests/grape_label_claims.sql
+  s_7ccb2d496f2e28::t_960ef32ff2d7f6 1-146,183-219,239-252,254-279,282-288,309-316,318-342,345-375,377-395,397-413
+  s_7ccb2d496f2e28::t_7eb5a2a0e5d531 147-182,220-238,253,280-281,289-308,317,343-344,376,396
+supabase/rollbacks/20260624120000_grape_label_claims_rollback.sql
+  s_7ccb2d496f2e28::t_960ef32ff2d7f6 1-61
+docs/data/chemical-label-claims/icar-nrcg-grapes-2025-09-17-review.md
+  s_7ccb2d496f2e28::t_78607039d45d24 1-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8acc58645fceb9174fb682dda8d143a391a53d01",
+  "prompts": {},
+  "sessions": {
+    "s_7ccb2d496f2e28": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f329e-5b7c-7093-a562-d9a74cfd1ed8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
