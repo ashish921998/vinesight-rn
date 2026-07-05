@@ -360,6 +360,12 @@ function computeCompliance(
     if (parsed.basis === 'per_liter_water') continue;
 
     const canonical = planItem.quantity * parsed.factorToCanonical;
+    // Total-basis prescriptions ("10 kg") divide by the CURRENT farm area:
+    // plan items carry no area snapshot, so this is the only reading
+    // available. If the farm is resized between planning and reporting, the
+    // prescribed rate shifts while applied rates stay pinned to their record
+    // areas — a known limit until plans snapshot the area they were written
+    // for. Per-acre prescriptions are area-independent and unaffected.
     const prescribedPerAcre = parsed.basis === 'per_acre' ? canonical : canonical / areaAcres;
 
     const nameKey = normalizeProductName(planItem.name);
