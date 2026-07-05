@@ -38,18 +38,36 @@ function log(message: string): void {
 interface ExistingProductRow {
   id: number;
   name: string;
+  verification_tier: string | null;
+  source_reference: string | null;
 }
 
 /**
+ * Same ownership rule as compositions, one level up: the seeder may only
+ * rewrite product rows it created (seed source_reference) that are still
+ * provisional. A curated production row — human-upgraded tier, or one another
+ * writer created under the same (state, name) identity — wins over the seed:
+ * touching it would reset manufacturer/tier/is_active to provisional values.
+ */
+function seederOwnsProduct(row: ExistingProductRow): boolean {
+  return (
+    row.verification_tier === 'provisional' &&
+    (row.source_reference ?? '').startsWith(SEED_SOURCE_REFERENCE)
+  );
+}
+
+type ProductResolution = { id: number; action: 'inserted' | 'updated' | 'skipped' };
+
+/**
  * Ensure a product row exists (by state + lower(name)) and return its id.
- * Updates the mutable descriptive fields on re-run so corrections propagate
- * without ever creating a duplicate identity.
+ * Seed-owned rows get their descriptive fields refreshed so corrections
+ * propagate; curated/foreign rows are left untouched (action 'skipped').
  */
 async function upsertProduct(
   supabase: SupabaseClient,
   product: FertilizerSeedProduct,
   existingByLowerName: Map<string, ExistingProductRow>,
-): Promise<number> {
+): Promise<ProductResolution> {
   const row = {
     name: product.name,
     manufacturer: product.manufacturer,
@@ -63,12 +81,15 @@ async function upsertProduct(
 
   const existing = existingByLowerName.get(product.name.toLowerCase());
   if (existing) {
+    if (!seederOwnsProduct(existing)) {
+      return { id: existing.id, action: 'skipped' };
+    }
     const { error } = await supabase
       .from('chemical_products')
       .update(row)
       .eq('id', existing.id);
     if (error) throw error;
-    return existing.id;
+    return { id: existing.id, action: 'updated' };
   }
 
   const { data, error } = await supabase
@@ -77,7 +98,7 @@ async function upsertProduct(
     .select('id')
     .single();
   if (error) throw error;
-  return (data as { id: number }).id;
+  return { id: (data as { id: number }).id, action: 'inserted' };
 }
 
 /**
@@ -196,9 +217,10 @@ async function main(): Promise<void> {
   });
 
   // One read resolves every identity up front, so the write loop never dupes.
+  // Ownership fields ride along so curated/foreign rows can be skipped whole.
   const { data: existingRows, error: fetchError } = await supabase
     .from('chemical_products')
-    .select('id,name')
+    .select('id,name,verification_tier,source_reference')
     .eq('state_code', SEED_STATE_CODE)
     .eq('input_type', 'fertilizer');
   if (fetchError) throw fetchError;
@@ -208,18 +230,24 @@ async function main(): Promise<void> {
     existingByLowerName.set(existing.name.toLowerCase(), existing);
   }
 
-  let inserted = 0;
-  let updated = 0;
+  const counts = { inserted: 0, updated: 0, skipped: 0 };
   for (const product of FERTILIZER_CATALOG_SEED) {
-    const isUpdate = existingByLowerName.has(product.name.toLowerCase());
-    const productId = await upsertProduct(supabase, product, existingByLowerName);
-    await syncCompositions(supabase, productId, product);
-    if (isUpdate) updated += 1;
-    else inserted += 1;
-    log(`  ${isUpdate ? 'updated' : 'inserted'}: ${product.name} (#${productId})`);
+    const resolution = await upsertProduct(supabase, product, existingByLowerName);
+    if (resolution.action === 'skipped') {
+      // Not seed-owned: leave its compositions alone too — a curated product's
+      // nutrient rows are exactly what the skip is protecting.
+      counts.skipped += 1;
+      log(`  skipped (curated, not seed-owned): ${product.name} (#${resolution.id})`);
+      continue;
+    }
+    await syncCompositions(supabase, resolution.id, product);
+    counts[resolution.action] += 1;
+    log(`  ${resolution.action}: ${product.name} (#${resolution.id})`);
   }
 
-  log(`Done. Inserted ${inserted}, updated ${updated}, ${compositionCount} composition rows synced.`);
+  log(
+    `Done. Inserted ${counts.inserted}, updated ${counts.updated}, skipped ${counts.skipped} (curated).`,
+  );
 }
 
 main().catch((error: unknown) => {
