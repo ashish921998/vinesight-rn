@@ -15,6 +15,9 @@ import {
   PlanByline,
   planTitle,
 } from '@/components/screens/fertilizer-plan-card';
+import { resolveFertigationPrefill } from '@/constants/fertilizer-units';
+import { useModalStore } from '@/stores';
+import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 
 export default function FertilizerPlansScreen() {
   const { t } = useTranslation();
@@ -31,6 +34,7 @@ export default function FertilizerPlansScreen() {
   const { data: farm } = useFarm(farmId);
   const { data: fertilizerPlans, isLoading } = useFertilizerPlans(farmId);
   const { data: farms, isLoading: isFarmsLoading } = useFarms();
+  const { setAddEntry } = useModalStore();
 
   // Two paths to this screen: a consultant (has consultant_organization_id)
   // reviewing a client's farm, or the farm owner viewing plans sent to them.
@@ -59,6 +63,48 @@ export default function FertilizerPlansScreen() {
       return next;
     });
   }, []);
+
+  /**
+   * One-tap "Log this" handler: converts the plan item's canonical prescription
+   * into the fertigation form's natural chip via the kernel (issue #197).
+   * ppm items are excluded at the ScheduleItemCard level — this callback is
+   * only wired to non-ppm items. The planItemId rides along so the submitted
+   * record links back to the prescription.
+   */
+  const handleLogPlanItem = useCallback(
+    (item: FertilizerPlanItem) => {
+      // Plan doses are per-acre by contract; resolveFertigationPrefill converts
+      // the stored unit string into the form's vocabulary while preserving per_acre.
+      // Unknown/verbatim units (e.g. 'banana/acre') pass through unchanged.
+      const prefill = resolveFertigationPrefill(item.unit);
+      setAddEntry({
+        initialLogType: 'fertigation',
+        initialFarmId: farmId ?? null,
+        logPrefill: {
+          fertigationItems: [
+            {
+              name: item.name,
+              quantity: item.quantity ?? null,
+              unit: prefill.unit,
+              quantityBasis: prefill.quantityBasis,
+              planItemId: item.id,
+            },
+          ],
+        },
+      });
+      router.push({
+        pathname: '/add-entry',
+        params: {
+          tabs: 'log',
+          initialTab: 'log',
+          farmId: farmId !== undefined ? String(farmId) : undefined,
+          initialLogType: 'fertigation',
+          lockFarmSelection: 'true',
+        },
+      });
+    },
+    [farmId, router, setAddEntry],
+  );
 
   // Farm name shown as the header subtitle (null hides the subtitle line).
   const currentFarmName = useMemo(() => {
@@ -346,7 +392,7 @@ export default function FertilizerPlansScreen() {
               </View>
             ) : null}
 
-            <PlanSchedule plan={currentPlan} m3={m3} t={t} />
+            <PlanSchedule plan={currentPlan} m3={m3} t={t} onLogItem={handleLogPlanItem} />
 
             {/* Previous plans - collapsible history */}
             {previousPlans.length > 0 ? (

@@ -26,6 +26,13 @@ export interface PlannedInputItem {
   unit?: string | null;
   quantityBasis?: QuantityBasis | null;
   source?: 'warehouse' | 'recent' | 'custom' | null;
+  /**
+   * Active plan item (uuid) this item was pre-filled from, when the log was
+   * started via a plan-item one-tap or picker plan-section selection. Stamps
+   * the same linkage as `FertilizerEntry.planItemId` so it survives through the
+   * `initialLogPrefill` path — no schema migration (JSONB-backed at storage).
+   */
+  planItemId?: string | null;
 }
 
 // Main task interface

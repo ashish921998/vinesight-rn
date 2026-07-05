@@ -649,6 +649,9 @@ export function EntryForm({
               quantity: item.quantity ?? 0,
               unit,
               quantityBasis,
+              // plan_item_id linkage: plan one-tap prefill carries planItemId so
+              // the submitted record can reference the prescription (issue #197).
+              planItemId: item.planItemId ?? null,
             };
           }),
         });
