@@ -1140,7 +1140,16 @@ export class ReportService {
       ),
     );
     if (ledger.rows.length === 0 || ledger.coveragePercent === 0) {
-      rows.push(this.EMPTY_SECTION_TEXT);
+      // itemCount === 0 means no applications logged; itemCount > 0 with 0%
+      // coverage means applications exist but none carried a composition —
+      // the coverage line above already states "0 of N", so calling it "no
+      // records" would contradict it and misreport missing composition as
+      // missing applications.
+      rows.push(
+        ledger.itemCount === 0
+          ? this.EMPTY_SECTION_TEXT
+          : 'No composition data — nutrients cannot be calculated',
+      );
       rows.push('');
       return;
     }

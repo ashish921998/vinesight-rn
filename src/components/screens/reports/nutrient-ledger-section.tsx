@@ -363,9 +363,13 @@ export function NutrientLedgerSection({ ledger, panelStyle }: NutrientLedgerSect
                 fontStyle: 'italic',
               }}
             >
-              {hasRows
-                ? t('reports.nutrientLedger.coverageZero')
-                : t('reports.nutrientLedger.emptyTitle')}
+              {/* Distinguish "no applications at all" from "applications
+                  exist but none had composition" — rows is empty in BOTH, so
+                  key off itemCount, not hasRows, or the excluded-item case is
+                  mislabeled as "no logs" and contradicts the coverage chip. */}
+              {ledger.itemCount === 0
+                ? t('reports.nutrientLedger.emptyTitle')
+                : t('reports.nutrientLedger.coverageZero')}
             </Text>
           </View>
         ) : (

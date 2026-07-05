@@ -237,9 +237,33 @@ describe('report export parity', () => {
     const csv = ReportService.generateCSV(dataZeroCoverage, 'operations');
     expect(csv).toContain('NUTRIENT LEDGER - N-P-K APPLIED');
     expect(csv).toContain('Nutrients from 0% of applied quantity (0 of 3 items with composition)');
+    // Applications exist but lack composition — must not be reported as "no
+    // records", which would contradict the "0 of 3" coverage line.
+    expect(csv).toContain('No composition data — nutrients cannot be calculated');
+    expect(csv).not.toContain('No records in selected range');
 
     const html = ReportService.generatePDFHtml(dataZeroCoverage, SAMPLE_SUMMARY, 'operations', 'INR');
     expect(html).toContain('No composition data — nutrients cannot be calculated (coverage 0%)');
+  });
+
+  it('distinguishes no-applications from zero-composition in the CSV ledger (issue #200)', () => {
+    const dataNoLogs: ReportData = {
+      ...SAMPLE_DATA,
+      nutrientLedger: {
+        rows: [],
+        coveragePercent: 0,
+        itemCount: 0,
+        composedItemCount: 0,
+        areaAcres: 2,
+        fromDate: '2026-01-01',
+        toDate: '2026-12-31',
+      },
+    };
+
+    const csv = ReportService.generateCSV(dataNoLogs, 'operations');
+    // Truly no applications — the generic empty text is correct here.
+    expect(csv).toContain('No records in selected range');
+    expect(csv).not.toContain('No composition data');
   });
 
   it('uses a single season column in CSV rows', () => {
