@@ -157,34 +157,42 @@ describe('FertigationForm regression', () => {
     expect(state.fertilizers[0].unit).not.toBe('kg');
   });
 
-  it('duplicate check matches verbatim units case-insensitively (no double-add)', () => {
+  it('ppm quick-add items render as an explanatory notice, not a tappable chip (issue #197 AC2)', () => {
+    // ppm items cannot be one-tap added — tapping a chip would silently
+    // enter a water-concentration dose without a water volume. Instead the
+    // form shows an informational row via the ppmPlanItemNotice translation key.
+    // The t-mock returns the translation key itself so we can look for it in the tree.
     const onChange = jest.fn();
-    const data: FertigationFormData = {
-      waterVolume: undefined,
-      fertilizers: [
-        { id: 'fert-1', name: 'GA3', quantity: 100, unit: 'PPM', quantityBasis: 'total' },
-      ],
-    };
     const screen = render(
       <FertigationForm
-        data={data}
+        data={makeEmptyRowData()}
         onChange={onChange}
-        quickAddItems={[{ name: 'ga3', unit: 'ppm', quantity: 100 }]}
+        quickAddItems={[{ name: 'GA3', unit: 'ppm', quantity: 100 }]}
       />,
     );
-    fireEvent.press(screen.getByText('ga3'));
+    // The notice row is present (via the translated key, t-mock returns key as-is).
+    expect(screen.queryByText('fertigationForm.ppmPlanItemNotice')).toBeTruthy();
+    // No pressable chip — the item is NOT in the horizontal chip scroll.
+    // After rendering, onChange must NOT have been called (no side effect on mount).
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('quick-adding a ppm item keeps ppm instead of the legacy kg coercion', () => {
-    const state = quickAdd([{ name: 'GA3', unit: 'ppm', quantity: 100 }], 'GA3');
-    expect(state.fertilizers[0]).toEqual(
-      expect.objectContaining({
-        name: 'GA3',
-        unit: 'ppm',
-        quantity: 100,
-        quantityBasis: 'total',
-      }),
+  it('verbatim non-ppm units (unknown strings) still appear as tappable chips', () => {
+    // Only water-concentration units (ppm, g/L …) are excluded from chips.
+    // Truly unknown strings like 'banana/acre' remain in the chip row.
+    const onChange = jest.fn();
+    const screen = render(
+      <FertigationForm
+        data={makeEmptyRowData()}
+        onChange={onChange}
+        quickAddItems={[{ name: 'Mystery mix', unit: 'banana/acre', quantity: 5 }]}
+      />,
     );
+    // 'Mystery mix' chip is present (non-ppm verbatim unit renders as a chip).
+    const allMysteryTexts = screen.queryAllByText('Mystery mix');
+    // There should be at least one occurrence (the chip).
+    expect(allMysteryTexts.length).toBeGreaterThan(0);
+    // Notice key should NOT appear for a non-ppm unit.
+    expect(screen.queryByText('fertigationForm.ppmPlanItemNotice')).toBeNull();
   });
 });

@@ -31,6 +31,7 @@ import {
   type FertigationUnitChip,
 } from './fertigation-unit-chips';
 import { evaluateDoseGuard, type DoseReference } from './product-dose';
+import { isWaterConcentrationUnit } from '@/lib/quantity';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
@@ -163,13 +164,33 @@ export function FertigationForm({
   // catalog → custom escape hatch. No warehouse section — warehouse identity
   // only passes through history rows that already carry it (issue #196).
   const historyOptions = useMemo(() => recentItemsToOptions(historyItems), [historyItems]);
-  const planOptions = useMemo(() => fertigationPlanItemsToOptions(planItems), [planItems]);
+  // ppm/water-concentration plan items are excluded from the picker for the
+  // same reason as the quick-add chips: the fertigation form has no chip for
+  // them, so selecting one would drop a verbatim ppm unit into a form that
+  // can't represent it. The plan card surfaces them as an explanatory notice
+  // instead (issue #197, acceptance criterion 2) — one consistent exclusion.
+  const planOptions = useMemo(
+    () =>
+      fertigationPlanItemsToOptions(planItems.filter((item) => !isWaterConcentrationUnit(item.unit))),
+    [planItems],
+  );
   const catalogOptions = useMemo(
     () => fertilizerCatalogToOptions(catalogProducts),
     [catalogProducts],
   );
   const hasPickerOptions =
     historyOptions.length > 0 || planOptions.length > 0 || catalogOptions.length > 0;
+
+  // Split quick-add items into water-concentration (ppm, g/L …) and regular
+  // items so each group renders consistently without inline filter calls in JSX.
+  const ppmQuickAddItems = useMemo(
+    () => quickAddItems.filter((item) => isWaterConcentrationUnit(item.unit)),
+    [quickAddItems],
+  );
+  const regularQuickAddItems = useMemo(
+    () => quickAddItems.filter((item) => !isWaterConcentrationUnit(item.unit)),
+    [quickAddItems],
+  );
 
   useEffect(() => {
     const unsubscribe = guidedTourOn('guidedTour.focusLogActivityInput', ({ recordType }) => {
@@ -383,31 +404,57 @@ export function FertigationForm({
               >
                 {t('fertigationForm.quickAdd')}
               </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {quickAddItems.map((item, index) => (
-                  <Pressable
-                    key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
-                    onPress={() => addQuickFertilizer(item)}
-                    style={{
-                      marginRight: spacing[2],
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[2],
-                      borderRadius: borderRadius.full,
-                      backgroundColor: m3.surface.s100,
-                      borderWidth: 1,
-                      borderColor: m3.surface.s200,
-                    }}
-                  >
-                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
-                      {item.name}
-                    </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                      {item.quantity ? `${item.quantity} ` : ''}
-                      {item.unit ?? 'kg'}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
+              {/* ppm and other water-concentration plan items cannot be one-tap
+                  added (no valid fertigation chip), so we show an explanatory
+                  notice for each one rather than a tappable chip. Tapping a
+                  ppm chip would silently enter a wrong unit — never allowed
+                  (issue #197, acceptance criterion 2). */}
+              {ppmQuickAddItems.map((item, index) => (
+                <View
+                  key={`ppm-notice-${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: spacing[1],
+                    gap: 6,
+                  }}
+                >
+                  <IconSymbol name="info.circle" size={13} color={m3.surface.s500} />
+                  <Text style={{ flex: 1, fontSize: fontSize.xs, color: m3.surface.s500 }}>
+                    {t('fertigationForm.ppmPlanItemNotice', {
+                      name: item.name,
+                      defaultValue: '{{name}}: ppm doses can\'t be quick-added — enter manually',
+                    })}
+                  </Text>
+                </View>
+              ))}
+              {regularQuickAddItems.length > 0 ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {regularQuickAddItems.map((item, index) => (
+                    <Pressable
+                      key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                      onPress={() => addQuickFertilizer(item)}
+                      style={{
+                        marginRight: spacing[2],
+                        paddingHorizontal: spacing[3],
+                        paddingVertical: spacing[2],
+                        borderRadius: borderRadius.full,
+                        backgroundColor: m3.surface.s100,
+                        borderWidth: 1,
+                        borderColor: m3.surface.s200,
+                      }}
+                    >
+                      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
+                        {item.name}
+                      </Text>
+                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
+                        {item.quantity ? `${item.quantity} ` : ''}
+                        {item.unit ?? 'kg'}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              ) : null}
             </View>
           ) : null}
 

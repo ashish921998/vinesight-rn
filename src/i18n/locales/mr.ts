@@ -391,6 +391,12 @@ export const mr = {
       inputsCount_other: '{{count}} इनपुट',
       noInputs: 'इनपुट नाहीत',
       unknownInput: 'अज्ञात इनपुट',
+      /** One-tap log button label on a plan schedule item (issue #197). */
+      logThis: 'हे नोंदवा',
+      /** Accessibility label for the one-tap log button, includes item name. */
+      logThisItem: '{{name}} नोंदवा',
+      /** Explanatory notice for ppm plan items that cannot be one-tap prefilled. */
+      ppmNotice: 'ppm मात्रा जलद जोडता येत नाही — स्वतः भरा',
     },
     tabs: {
       activities: 'नोंदी',
@@ -940,6 +946,8 @@ export const mr = {
       },
     },
     quickAdd: 'जलद जोडा',
+    /** ppm/g-per-L plan items shown as informational rows, never tappable chips (issue #197). */
+    ppmPlanItemNotice: '{{name}}: ppm मात्रा जलद जोडता येत नाही — स्वतः भरा',
     noMatchesHint: 'जुळणारे सापडले नाही. सानुकूल $t(glossary.fertigation) नावासह पुढे जा.',
     validation: {
       ready: 'जोडण्यासाठी तयार',

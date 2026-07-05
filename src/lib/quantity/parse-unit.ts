@@ -146,3 +146,16 @@ export function parseUnit(raw: string): ParsedUnit | null {
     factorToCanonical: base.factor * denominator.factor,
   };
 }
+
+/**
+ * True when the unit string is a water-concentration dose (ppm, g/L, mg/L …).
+ * These parse fine but map to no fertigation chip, so quick-add surfaces must
+ * exclude them with an explanation instead of silently coercing the dose.
+ * Single shared predicate: the exclusion is compliance-critical and its
+ * definition must not drift between call sites.
+ */
+export function isWaterConcentrationUnit(unit: string | null | undefined): boolean {
+  if (!unit) return false;
+  const parsed = parseUnit(unit.trim());
+  return parsed !== null && parsed.basis === 'per_liter_water';
+}

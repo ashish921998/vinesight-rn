@@ -388,6 +388,12 @@ export const hi = {
       inputsCount_other: '{{count}} इनपुट',
       noInputs: 'कोई इनपुट नहीं',
       unknownInput: 'अज्ञात इनपुट',
+      /** One-tap log button label on a plan schedule item (issue #197). */
+      logThis: 'यह लॉग करें',
+      /** Accessibility label for the one-tap log button, includes item name. */
+      logThisItem: '{{name}} लॉग करें',
+      /** Explanatory notice for ppm plan items that cannot be one-tap prefilled. */
+      ppmNotice: 'ppm मात्रा त्वरित नहीं जोड़ी जा सकती — स्वयं दर्ज करें',
     },
     tabs: {
       activities: 'लॉग्स',
@@ -934,6 +940,8 @@ export const hi = {
       },
     },
     quickAdd: 'त्वरित जोड़',
+    /** ppm/g-per-L plan items shown as informational rows, never tappable chips (issue #197). */
+    ppmPlanItemNotice: '{{name}}: ppm मात्रा त्वरित नहीं जोड़ी जा सकती — स्वयं दर्ज करें',
     noMatchesHint: 'कोई मिलान नहीं मिला। कस्टम उर्वरक नाम के साथ जारी रखें।',
     validation: {
       ready: 'जोड़ने के लिए तैयार',

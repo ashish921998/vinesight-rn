@@ -17,7 +17,7 @@
  * behavior anywhere by itself.
  */
 
-export { ACRES_PER_HECTARE, parseUnit } from './parse-unit';
+export { ACRES_PER_HECTARE, isWaterConcentrationUnit, parseUnit } from './parse-unit';
 export { effectiveBasis, totalFor } from './total-for';
 export { fold } from './fold';
 export { format, formatParts } from './format';

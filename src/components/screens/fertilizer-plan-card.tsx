@@ -2,11 +2,13 @@ import React from 'react';
 import { View, Text, Pressable, type TextStyle, type StyleProp } from 'react-native';
 import type { TFunction } from 'i18next';
 import { Symbol } from '@/components/ui/symbol';
-import { fontSize, fontWeight, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, addDays } from '@/utils/date';
 import type { FertilizerPlan, FertilizerPlanItem } from '@/types/fertilizer-plan';
+import { isWaterConcentrationUnit } from '@/lib/quantity';
 
 type M3 = ReturnType<typeof useM3>;
 
@@ -130,13 +132,18 @@ function ScheduleItemCard({
   t,
   dateLabel,
   dimmed,
+  onLogTap,
 }: {
   input: FertilizerPlanItem;
   m3: M3;
   t: TFunction;
   dateLabel: string | null;
   dimmed: boolean;
+  /** One-tap log button handler. Absent for history items and ppm plan items. */
+  onLogTap?: (() => void) | null;
 }) {
+  const isPpm = isWaterConcentrationUnit(input.unit);
+
   return (
     <View
       style={{
@@ -198,6 +205,53 @@ function ScheduleItemCard({
           {input.notes}
         </Text>
       ) : null}
+
+      {/* ppm items: explanatory notice instead of a log button — the dose
+          cannot be prefilled without silently misrepresenting its meaning. */}
+      {isPpm ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: spacing[2],
+            gap: 5,
+          }}
+        >
+          <Symbol name="info.circle" size={12} color={m3.colorScheme.onSurfaceVariant} />
+          <Text style={{ flex: 1, fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
+            {t('farmDetails.fertilizerPlan.ppmNotice', 'ppm doses can\'t be quick-added — enter manually')}
+          </Text>
+        </View>
+      ) : onLogTap != null ? (
+        /* One-tap "Log this" button: one press navigates to the fertigation
+           form with this item prefilled via the kernel (issue #197). */
+        <Pressable
+          onPress={onLogTap}
+          accessibilityRole="button"
+          accessibilityLabel={t('farmDetails.fertilizerPlan.logThisItem', {
+            name: input.name || t('farmDetails.fertilizerPlan.unknownInput'),
+            defaultValue: 'Log {{name}}',
+          })}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            alignSelf: 'flex-start',
+            marginTop: spacing[2],
+            paddingHorizontal: spacing[3],
+            paddingVertical: spacing[1] + 1,
+            borderRadius: borderRadius.full,
+            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+            gap: 4,
+          }}
+        >
+          <Symbol name="plus.circle" size={13} color={m3.colorScheme.primary} />
+          <Text
+            style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: m3.colorScheme.primary }}
+          >
+            {t('farmDetails.fertilizerPlan.logThis', 'Log this')}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -221,17 +275,23 @@ function itemDateLabel(input: FertilizerPlanItem, index: number, t: TFunction): 
  * the farmer's next action is always at the top. The `history` variant (and any
  * plan whose items carry no dates) renders the flat sort_order list, since
  * bucketing an old plan against today would dim everything.
+ *
+ * `onLogItem` fires when the farmer taps the one-tap log button on an item.
+ * History items never render the button; ppm items show a notice instead.
  */
 export function PlanSchedule({
   plan,
   m3,
   t,
   variant = 'current',
+  onLogItem,
 }: {
   plan: FertilizerPlan;
   m3: M3;
   t: TFunction;
   variant?: 'current' | 'history';
+  /** One-tap log callback; absent for history variant (past plans). */
+  onLogItem?: (item: FertilizerPlanItem) => void;
 }) {
   if (plan.items.length === 0) {
     return (
@@ -259,6 +319,11 @@ export function PlanSchedule({
             t={t}
             dateLabel={itemDateLabel(input, index, t)}
             dimmed={false}
+            onLogTap={
+              variant === 'current' && onLogItem != null
+                ? () => onLogItem(input)
+                : null
+            }
           />
         ))}
       </View>
@@ -302,6 +367,9 @@ export function PlanSchedule({
                   : null
               }
               dimmed={bucketMeta[bucket.key].dimmed}
+              onLogTap={
+                onLogItem != null ? () => onLogItem(input) : null
+              }
             />
           ))}
         </View>
