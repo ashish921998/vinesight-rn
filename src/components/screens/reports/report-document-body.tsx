@@ -11,6 +11,7 @@ import {
   type UsageVerbatimRow,
 } from '@/types/report';
 import { ReportSectionBlock, type ReportSectionRow } from './report-section-block';
+import { NutrientLedgerSection } from './nutrient-ledger-section';
 
 const ROW_LIMIT = 12;
 
@@ -524,6 +525,13 @@ export function ReportDocumentBody({
             </View>,
           )
         : null}
+
+      {/* Nutrient ledger (issue #200): renders its own card via panelStyle.
+          Shown even at 0% coverage — the component's empty/zero states carry
+          the honesty message; hiding it would read as "nothing was applied". */}
+      {visibleSections.has('nutrient-ledger') && preview.data.nutrientLedger ? (
+        <NutrientLedgerSection ledger={preview.data.nutrientLedger} panelStyle={panelStyle} />
+      ) : null}
     </View>
   );
 }

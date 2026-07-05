@@ -25,6 +25,7 @@ import {
   ReportSeasonContext,
   ReportPlanItemInput,
   ReportUsageLenses,
+  NutrientLedger,
   getSectionsForReportType,
 } from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
@@ -38,6 +39,7 @@ import { getDaysAfterPruning } from '@/utils/date';
 import { parseUnit, totalFor } from '@/lib/quantity';
 import type { Measure } from '@/lib/quantity';
 import { computeUsageLenses, normalizeProductName, type UsageEvent } from './report-usage-lenses';
+import { calculateNutrientLedger } from './nutrient-flow-service';
 import {
   Farm,
   IrrigationRecord,
@@ -827,6 +829,18 @@ export class ReportService {
       })),
       stock: stockUsage,
       usage,
+      nutrientLedger: calculateNutrientLedger({
+        sprayRecords: sprays,
+        fertigationRecords: fertigations,
+        fromDate: dateRange.from,
+        toDate: dateRange.to,
+        areaAcres: this.positiveOrNull(farm.area)
+          ? convertAreaToAcres(
+              this.positiveOrNull(farm.area)!,
+              resolveAreaUnitPreference(options.areaUnit),
+            )
+          : null,
+      }),
     };
   }
 
@@ -1104,7 +1118,40 @@ export class ReportService {
       }
     }
 
+    if (visibleSections.has('nutrient-ledger') && data.nutrientLedger) {
+      this.appendNutrientLedgerCSV(rows, data.nutrientLedger);
+    }
+
     return rows.join('\n');
+  }
+
+  /**
+   * Nutrient ledger (issue #200). Elemental figures match petiole/soil lab
+   * reports; bag-grade oxide (P₂O₅/K₂O …) matches fertilizer bags. Coverage
+   * is stated on every export — 0% renders the empty text, never zeros
+   * presented as truth.
+   */
+  private static appendNutrientLedgerCSV(rows: string[], ledger: NutrientLedger): void {
+    rows.push('NUTRIENT LEDGER - N-P-K APPLIED');
+    rows.push(
+      this.escapeCSV(
+        `Nutrients from ${ledger.coveragePercent}% of applied quantity (${ledger.composedItemCount} of ${ledger.itemCount} items with composition)`,
+      ),
+    );
+    if (ledger.rows.length === 0 || ledger.coveragePercent === 0) {
+      rows.push(this.EMPTY_SECTION_TEXT);
+      rows.push('');
+      return;
+    }
+    rows.push('Element,Elemental (kg),Elemental (kg/acre),Bag-grade,Bag-grade (kg),Bag-grade (kg/acre)');
+    ledger.rows.forEach((row) => {
+      rows.push(
+        `${row.element},${row.elementalKg},${row.elementalKgPerAcre ?? ''},${this.escapeCSV(
+          row.oxideSymbol ?? '',
+        )},${row.oxideKg ?? ''},${row.oxideKgPerAcre ?? ''}`,
+      );
+    });
+    rows.push('');
   }
 
   /**
@@ -1549,6 +1596,23 @@ export class ReportService {
             ),
           );
         }
+      }
+    }
+
+    if (visibleSections.has('nutrient-ledger') && data.nutrientLedger) {
+      const ledger = data.nutrientLedger;
+      if (ledger.rows.length > 0 && ledger.coveragePercent > 0) {
+        appendSectionTable(
+          `🌱 Nutrient Ledger — N·P·K Applied (nutrients from ${ledger.coveragePercent}% of applied quantity)`,
+          ['Element', 'Elemental (kg)', 'Elemental (kg/acre)', 'Bag-grade', 'Bag-grade (kg)', 'Bag-grade (kg/acre)'],
+          ledger.rows.map(
+            (r) =>
+              `<tr><td>${this.escapeHtml(r.element)}</td><td>${r.elementalKg}</td><td>${r.elementalKgPerAcre ?? '-'}</td><td>${this.escapeHtml(r.oxideSymbol ?? '-')}</td><td>${r.oxideKg ?? '-'}</td><td>${r.oxideKgPerAcre ?? '-'}</td></tr>`,
+          ),
+        );
+        html += `<p class="more-records">Elemental values match petiole/soil lab reports. Bag-grade (N-P₂O₅-K₂O) matches what is printed on fertilizer bags.</p>`;
+      } else {
+        html += `<h2>🌱 Nutrient Ledger — N·P·K Applied</h2><p class="empty-section">No composition data — nutrients cannot be calculated (coverage 0%).</p>`;
       }
     }
 

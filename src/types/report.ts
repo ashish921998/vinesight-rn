@@ -14,7 +14,8 @@ export type ReportSectionKey =
   | 'fertigation'
   | 'harvest'
   | 'expense'
-  | 'stock';
+  | 'stock'
+  | 'nutrient-ledger';
 
 export const REPORT_SECTION_ORDER: ReportSectionKey[] = [
   'meta',
@@ -25,6 +26,7 @@ export const REPORT_SECTION_ORDER: ReportSectionKey[] = [
   'harvest',
   'expense',
   'stock',
+  'nutrient-ledger',
 ];
 
 const REPORT_TYPE_SECTION_MAP: Record<ReportType, ReportSectionKey[]> = {
@@ -37,9 +39,21 @@ const REPORT_TYPE_SECTION_MAP: Record<ReportType, ReportSectionKey[]> = {
     'harvest',
     'expense',
     'stock',
+    'nutrient-ledger',
   ],
-  operations: ['meta', 'executive', 'irrigation', 'spray', 'fertigation', 'harvest'],
+  operations: [
+    'meta',
+    'executive',
+    'irrigation',
+    'spray',
+    'fertigation',
+    'harvest',
+    'nutrient-ledger',
+  ],
   financial: ['meta', 'executive', 'expense'],
+  // No ledger here: nutrients derive from application LOGS (fertigation/spray),
+  // not from warehouse stock movement — a stock report showing "N given" would
+  // conflate what left the shelf with what reached the vines.
   'stock-usage': ['meta', 'executive', 'stock'],
 };
 
@@ -105,6 +119,8 @@ export interface ReportData {
   stock: ReportStockUsageRecord[];
   /** Kernel-computed quantity lenses (issue #198). Optional so hand-built fixtures stay valid. */
   usage?: ReportUsageLenses;
+  /** Nutrient ledger for the selected period (issue #200). Optional — absent on old fixtures. */
+  nutrientLedger?: NutrientLedger;
 }
 
 // ============================================================
@@ -339,4 +355,58 @@ export interface ReportComparison {
 export interface ReportPreview {
   data: ReportData;
   summary: ReportSummary;
+}
+
+// ============================================================
+// MARK: - Nutrient ledger (issue #200)
+// ============================================================
+
+/**
+ * A single nutrient row in the ledger — elemental (matches petiole/soil labs)
+ * and optionally bag-grade oxide (what bags / consultants speak).
+ *
+ * Only N/P/K/Ca/Mg/S get oxide equivalents (P₂O₅, K₂O, CaO, MgO, SO₃).
+ * Micros (Fe, Mn, Zn, Cu, B, Mo, Na, Cl) stay elemental only.
+ */
+export interface NutrientLedgerRow {
+  /** Elemental symbol: N, P, K, Ca, Mg, S, Fe, Mn, … */
+  element: string;
+  /** kg of this element for the period / plot. */
+  elementalKg: number;
+  /** kg of element per acre for the period. Null when area is unknown. */
+  elementalKgPerAcre: number | null;
+  /**
+   * Bag-grade oxide symbol (P₂O₅, K₂O, CaO, MgO, SO₃) — present only for
+   * the six macros above. Elemental → oxide via the inverse pinned factors.
+   */
+  oxideSymbol?: string;
+  /** kg of bag-grade oxide for the period / plot. Null when no oxide equivalent. */
+  oxideKg?: number;
+  /** kg of bag-grade oxide per acre. Null when no oxide equivalent or area unknown. */
+  oxideKgPerAcre?: number;
+}
+
+/**
+ * Nutrient ledger for a single date-range period (or petiole interval).
+ * Coverage is identity-bound and honest — items without a composition
+ * snapshot are excluded from totals but counted in the denominator.
+ */
+export interface NutrientLedger {
+  /** Sorted rows, macros first (N → P → K → Ca → Mg → S), then micros by element. */
+  rows: NutrientLedgerRow[];
+  /**
+   * Percent of applied quantity (by item count) that had a composition snapshot
+   * and a resolvable unit. Padded to 100 is never acceptable; 0 means totals
+   * cannot be trusted and the UI must say so clearly.
+   */
+  coveragePercent: number;
+  /** Total items counted in the denominator (all valid quantity items). */
+  itemCount: number;
+  /** Items that contributed to the nutrient totals (had snapshot + resolvable mass). */
+  composedItemCount: number;
+  /** Farm area (acres) used for per-acre math. Null → per-acre columns hidden. */
+  areaAcres: number | null;
+  /** Date range this ledger covers. */
+  fromDate: string;
+  toDate: string;
 }

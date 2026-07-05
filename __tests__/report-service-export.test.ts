@@ -149,6 +149,7 @@ describe('report section visibility contract', () => {
       'spray',
       'fertigation',
       'harvest',
+      'nutrient-ledger',
     ]);
   });
 
@@ -169,6 +170,76 @@ describe('report export parity', () => {
     expect(csv).toContain('FERTIGATION RECORDS');
     expect(csv).not.toContain('EXPENSE RECORDS');
     expect(csv).not.toContain('STOCK USAGE SUMMARY');
+  });
+
+  it('exports the nutrient ledger to CSV and PDF with coverage, dual basis, and type gating (issue #200)', () => {
+    const dataWithLedger: ReportData = {
+      ...SAMPLE_DATA,
+      nutrientLedger: {
+        rows: [
+          {
+            element: 'N',
+            elementalKg: 13.8,
+            elementalKgPerAcre: 6.9,
+          },
+          {
+            element: 'P',
+            elementalKg: 2.2693,
+            elementalKgPerAcre: 1.1346,
+            oxideSymbol: 'P₂O₅',
+            oxideKg: 5.2,
+            oxideKgPerAcre: 2.6,
+          },
+        ],
+        coveragePercent: 50,
+        itemCount: 2,
+        composedItemCount: 1,
+        areaAcres: 2,
+        fromDate: '2026-01-01',
+        toDate: '2026-12-31',
+      },
+    };
+
+    const csv = ReportService.generateCSV(dataWithLedger, 'operations');
+    expect(csv).toContain('NUTRIENT LEDGER - N-P-K APPLIED');
+    expect(csv).toContain('Nutrients from 50% of applied quantity (1 of 2 items with composition)');
+    expect(csv).toContain('P,2.2693,1.1346,P₂O₅,5.2,2.6');
+
+    const html = ReportService.generatePDFHtml(dataWithLedger, SAMPLE_SUMMARY, 'operations', 'INR');
+    expect(html).toContain('Nutrient Ledger');
+    expect(html).toContain('nutrients from 50% of applied quantity');
+    expect(html).toContain('P₂O₅');
+
+    // The ledger derives from application logs, not stock movement — it must
+    // stay out of stock-usage and financial exports.
+    expect(ReportService.generateCSV(dataWithLedger, 'stock-usage')).not.toContain(
+      'NUTRIENT LEDGER',
+    );
+    expect(
+      ReportService.generatePDFHtml(dataWithLedger, SAMPLE_SUMMARY, 'financial', 'INR'),
+    ).not.toContain('Nutrient Ledger');
+  });
+
+  it('renders the 0%-coverage empty text instead of zeros-as-truth (issue #200)', () => {
+    const dataZeroCoverage: ReportData = {
+      ...SAMPLE_DATA,
+      nutrientLedger: {
+        rows: [],
+        coveragePercent: 0,
+        itemCount: 3,
+        composedItemCount: 0,
+        areaAcres: 2,
+        fromDate: '2026-01-01',
+        toDate: '2026-12-31',
+      },
+    };
+
+    const csv = ReportService.generateCSV(dataZeroCoverage, 'operations');
+    expect(csv).toContain('NUTRIENT LEDGER - N-P-K APPLIED');
+    expect(csv).toContain('Nutrients from 0% of applied quantity (0 of 3 items with composition)');
+
+    const html = ReportService.generatePDFHtml(dataZeroCoverage, SAMPLE_SUMMARY, 'operations', 'INR');
+    expect(html).toContain('No composition data — nutrients cannot be calculated (coverage 0%)');
   });
 
   it('uses a single season column in CSV rows', () => {
