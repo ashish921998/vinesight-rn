@@ -2,6 +2,12 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    // Node's native TS runner (used by scripts/seed-*.ts) requires explicit
+    // `.ts` extensions on relative imports; the app is bundled by Metro/Babel,
+    // which strips types and ignores the extension, so this is emit-only and
+    // safe alongside the project's `tsc --noEmit` typecheck.
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "moduleSuffixes": [".ios", ".android", ".native", ".web", ""],
     "baseUrl": ".",
     "paths": {
