@@ -23,6 +23,26 @@ describe('nutrient-flow-service', () => {
     expect(result.coveragePercent).toBe(100);
   });
 
+  it('converts mixed-case oxide codes (MgO) — never a factor-1 fallback bucket', () => {
+    // Sanitize uppercases codes before the factors lookup; a mixed-case map
+    // key would miss and silently credit 16 kg MgO as 1.6 kg of literal 'MGO'.
+    const result = calculateNutrientTotalsForLog({
+      items: [
+        {
+          quantity: 10,
+          unit: 'kg',
+          quantity_basis: 'total',
+          composition_snapshot: [{ nutrient_code: 'MgO', percent: 16, basis: 'declared' }],
+        },
+      ],
+      areaAcre: 2,
+    });
+
+    expect(result.nutrientTotalsElemental.Mg).toBeCloseTo(10 * 0.16 * 0.6031, 6);
+    expect(result.nutrientTotalsElemental.MGO).toBeUndefined();
+    expect(result.nutrientTotalsElemental.MgO).toBeUndefined();
+  });
+
   it('handles concentration unit gm/L with water volume', () => {
     const result = calculateNutrientTotalsForLog({
       items: [
