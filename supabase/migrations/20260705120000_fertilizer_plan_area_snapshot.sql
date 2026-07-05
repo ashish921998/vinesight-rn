@@ -35,10 +35,19 @@ begin
     return new;
   end if;
 
+  -- Positive guard: accept ONLY a finite, positive area; null everything else.
+  -- numeric supports 'NaN' and ±'Infinity', and `NaN <= 0` / a bare `<= 0`
+  -- check would let both leak through (NaN <= 0 is NULL, Infinity <= 0 is
+  -- false). Requiring `> 0 and < Infinity` rejects NaN (NaN > 0 is NULL),
+  -- ±Infinity, zero, and negatives at once — matching the app's
+  -- normalizeAreaToAcres, which drops any "missing/zero/non-finite" area.
   select case
-      when f.area is null or f.area <= 0 then null
-      when coalesce(p.area_unit_preference, 'acres') = 'hectares' then f.area / 0.404686
-      else f.area
+      when f.area > 0 and f.area < 'Infinity'::numeric then
+        case
+          when coalesce(p.area_unit_preference, 'acres') = 'hectares' then f.area / 0.404686
+          else f.area
+        end
+      else null
     end
     into new.farm_area_acres
     from public.farms f
