@@ -42,7 +42,7 @@ const HEADER = [
 ];
 
 const baseRow = {
-  edition_key: 'icar-nrcg-grapes-2025-09-17',
+  edition_key: 'icar-nrcg-grapes-2025-09-17', // gitleaks:allow (edition slug, not a secret)
   source_title: 'ICAR-NRCG Annexure 5 Grapes 2025-26',
   issuing_body: 'ICAR-NRCG',
   source_document: 'Annexure 5 Grapes-2025-26 17.09.2025.pdf',
@@ -199,7 +199,7 @@ describe('chemical label claim import', () => {
     const newerPlan = buildImportPlan(
       csv([
         {
-          edition_key: 'icar-nrcg-grapes-2025-11-03',
+          edition_key: 'icar-nrcg-grapes-2025-11-03', // gitleaks:allow (edition slug, not a secret)
           source_document: 'Annexure 5 Grapes-2025-26 rev 03.11.2025.pdf',
           document_revision_date: '2025-11-03',
           source_serial: '1',
@@ -212,13 +212,13 @@ describe('chemical label claim import', () => {
 
     expect(afterNew).toContainEqual(
       expect.objectContaining({
-        edition_key: 'icar-nrcg-grapes-2025-09-17',
+        edition_key: 'icar-nrcg-grapes-2025-09-17', // gitleaks:allow (edition slug, not a secret)
         effective_to: '2025-11-02',
       }),
     );
     expect(afterNew).toContainEqual(
       expect.objectContaining({
-        edition_key: 'icar-nrcg-grapes-2025-11-03',
+        edition_key: 'icar-nrcg-grapes-2025-11-03', // gitleaks:allow (edition slug, not a secret)
         effective_to: null,
       }),
     );
