@@ -4,7 +4,7 @@
  *
  *   per plot   Σ totalFor(item, ctx) per product per MEASURE — mass, volume
  *              and count never merge into one number.
- *   per acre   plot totals ÷ farm area (acres). Hidden when the area is
+ *   per acre   Σ per-acre rates (each event's total ÷ its own area). Hidden when the area is
  *              missing/zero/non-finite — never divided by a guess. Includes
  *              the compliance delta against plan items: contributions stamped
  *              with plan_item_id are 'verified'; name-only matches are
@@ -90,6 +90,11 @@ interface ProductAccumulator {
   type: 'spray' | 'fertilizer';
   usageCount: number;
   totals: Partial<Record<Measure, number>>;
+  // Σ per-acre RATES: each contribution divided by its own event's area
+  // before summing. fold() multiplied per-acre rates by that same area, so
+  // this round-trips to the logged rate — unlike totals ÷ current farm area,
+  // which misstates records logged over a since-edited area.
+  perAcreTotals: Partial<Record<Measure, number>>;
 }
 
 function upsertVerbatim(
@@ -203,9 +208,13 @@ export function computeUsageLenses(params: {
         type: event.type,
         usageCount: 0,
         totals: {},
+        perAcreTotals: {},
       };
       acc.usageCount += 1;
       acc.totals[measure] = (acc.totals[measure] ?? 0) + value;
+      if (eventAreaAcres != null) {
+        acc.perAcreTotals[measure] = (acc.perAcreTotals[measure] ?? 0) + value / eventAreaAcres;
+      }
       products.set(productKey, acc);
 
       if (
@@ -270,7 +279,9 @@ export function computeUsageLenses(params: {
             key,
             name: acc.name,
             type: acc.type,
-            perAcre: toFigures(acc.totals, (v) => v / areaAcres, '/acre'),
+            // perAcreTotals already holds summed per-acre rates (each divided
+            // by its own event's area) — no further division by farm area.
+            perAcre: toFigures(acc.perAcreTotals, (v) => v, '/acre'),
           })),
         )
       : [];

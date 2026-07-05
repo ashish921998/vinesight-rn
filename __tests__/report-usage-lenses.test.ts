@@ -638,7 +638,8 @@ describe('compliance: adversarial-review regressions', () => {
 
   it('per-acre rates resolve against the RECORD area snapshot, not the current farm area', () => {
     // Logged over 2 acres, farm later edited to 3.5 — the plot total must
-    // still describe what was applied (250 ml/acre × 2 acres = 0.5 L).
+    // still describe what was applied (250 ml/acre × 2 acres = 0.5 L), and the
+    // per-acre row must read the logged 250 ml/acre, not 0.5 L ÷ 3.5 ≈ 143.
     const usage = usageFor({
       farm: farmWithArea(3.5),
       fertigations: [
@@ -648,5 +649,25 @@ describe('compliance: adversarial-review regressions', () => {
     expect(usage.perPlot.rows[0].totals).toEqual([
       { measure: 'volume', value: 0.5, display: '≈ 500 ml' },
     ]);
+    expect(usage.perAcre.rows[0].perAcre).toEqual([
+      { measure: 'volume', value: 0.25, display: '≈ 250 ml/acre' },
+    ]);
+  });
+
+  it('per-acre rows sum each application rate over its own area', () => {
+    // 12 kg over 2 acres (6 kg/acre) + 21 kg over 3 acres (7 kg/acre) reads a
+    // cumulative 13 kg/acre — independent of the farm's current 4-acre size.
+    const usage = usageFor({
+      farm: farmWithArea(4),
+      fertigations: [
+        fertigation([{ name: 'Urea', quantity: 12, unit: 'kg' }], { id: 1, area: 2 }),
+        fertigation([{ name: 'Urea', quantity: 21, unit: 'kg' }], {
+          id: 2,
+          date: '2026-03-05',
+          area: 3,
+        }),
+      ],
+    });
+    expect(usage.perAcre.rows[0].perAcre[0].value).toBeCloseTo(13, 12);
   });
 });
