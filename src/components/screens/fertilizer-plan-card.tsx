@@ -8,7 +8,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, addDays } from '@/utils/date';
 import type { FertilizerPlan, FertilizerPlanItem } from '@/types/fertilizer-plan';
-import { parseUnit } from '@/lib/quantity';
+import { isWaterConcentrationUnit } from '@/lib/quantity';
 
 type M3 = ReturnType<typeof useM3>;
 
@@ -125,18 +125,6 @@ function bucketItems(
     .filter((bucket) => bucket.items.length > 0);
 }
 
-/**
- * True when the plan item's unit is a water-concentration (ppm, g/L, mg/L …):
- * the kernel recognizes it but it cannot map to any fertigation chip. These
- * items cannot be one-tap quick-added to the fertigation form without silently
- * coercing the dose (issue #197, acceptance criterion 2).
- */
-export function isPpmPlanItem(unit: string | null | undefined): boolean {
-  if (!unit) return false;
-  const parsed = parseUnit(unit.trim());
-  return parsed !== null && parsed.basis === 'per_liter_water';
-}
-
 /** One schedule item: name + date up top, the quantity as the visual anchor. */
 function ScheduleItemCard({
   input,
@@ -154,7 +142,7 @@ function ScheduleItemCard({
   /** One-tap log button handler. Absent for history items and ppm plan items. */
   onLogTap?: (() => void) | null;
 }) {
-  const isPpm = isPpmPlanItem(input.unit);
+  const isPpm = isWaterConcentrationUnit(input.unit);
 
   return (
     <View
@@ -240,7 +228,10 @@ function ScheduleItemCard({
         <Pressable
           onPress={onLogTap}
           accessibilityRole="button"
-          accessibilityLabel={t('farmDetails.fertilizerPlan.logThisItem', { name: input.name })}
+          accessibilityLabel={t('farmDetails.fertilizerPlan.logThisItem', {
+            name: input.name || t('farmDetails.fertilizerPlan.unknownInput'),
+            defaultValue: 'Log {{name}}',
+          })}
           style={{
             flexDirection: 'row',
             alignItems: 'center',

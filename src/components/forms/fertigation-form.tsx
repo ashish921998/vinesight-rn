@@ -31,7 +31,7 @@ import {
   type FertigationUnitChip,
 } from './fertigation-unit-chips';
 import { evaluateDoseGuard, type DoseReference } from './product-dose';
-import { parseUnit } from '@/lib/quantity';
+import { isWaterConcentrationUnit } from '@/lib/quantity';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
@@ -78,18 +78,6 @@ function resolveQuantityBasis(
 
 function generateRowId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-/**
- * True when the unit string is a water-concentration (ppm, g/L, mg/L …):
- * the kernel recognizes it but it cannot map to any fertigation chip. These
- * items are excluded from the one-tap quick-add row and shown as an
- * explanatory notice instead (issue #197 acceptance criterion 2).
- */
-export function isWaterConcentrationUnit(unit: string | null | undefined): boolean {
-  if (!unit) return false;
-  const parsed = parseUnit(unit.trim());
-  return parsed !== null && parsed.basis === 'per_liter_water';
 }
 
 function resolveQuickAddQuantityBasis(
@@ -412,9 +400,9 @@ export function FertigationForm({
                   notice for each one rather than a tappable chip. Tapping a
                   ppm chip would silently enter a wrong unit — never allowed
                   (issue #197, acceptance criterion 2). */}
-              {ppmQuickAddItems.map((item) => (
+              {ppmQuickAddItems.map((item, index) => (
                 <View
-                  key={`ppm-notice-${item.name}`}
+                  key={`ppm-notice-${item.name}-${item.unit ?? 'unit'}-${index}`}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',

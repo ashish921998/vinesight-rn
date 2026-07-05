@@ -5,14 +5,13 @@
  *   (a) Kernel conversion: prescription → chip round-trip via
  *       resolveFertigationPrefill (the function the one-tap handler calls).
  *   (b) ppm exclusion: isWaterConcentrationUnit gates the quick-add chip row
- *       and the one-tap button; isPpmPlanItem gates the plan-card button.
+ *       row, the one-tap button, and the plan-card button (one shared predicate).
  *   (c) plan_item_id survives submission: FertilizerEntry.planItemId →
  *       FertilizerItem.plan_item_id through entry-log-submission.
  */
 
 import { resolveFertigationPrefill } from '@/constants/fertilizer-units';
-import { isWaterConcentrationUnit } from '@/components/forms/fertigation-form';
-import { isPpmPlanItem } from '@/components/screens/fertilizer-plan-card';
+import { isWaterConcentrationUnit } from '@/lib/quantity';
 import { submitEntryPendingLog } from '@/utils/entry-log-submission';
 import type { FertigationFormData } from '@/components/forms';
 import type { FertigationRecordInsert } from '@/types';
@@ -129,33 +128,9 @@ describe('isWaterConcentrationUnit — gates quick-add chip exclusion (issue #19
   );
 });
 
-describe('isPpmPlanItem — gates one-tap button on plan card (issue #197 §b)', () => {
-  /**
-   * The plan-card ScheduleItemCard renders an explanatory notice (not a
-   * log button) for water-concentration plan items. isPpmPlanItem is the
-   * predicate used there.
-   */
-
-  it.each(['ppm', 'PPM', 'mg/L', 'gm/L'])(
-    'returns true for water-concentration plan unit %j',
-    (unit) => {
-      expect(isPpmPlanItem(unit)).toBe(true);
-    },
-  );
-
-  it.each(['kg/acre', 'g/acre', 'L/acre', 'ml/acre', 'kg', 'gram'])(
-    'returns false for form-representable plan unit %j',
-    (unit) => {
-      expect(isPpmPlanItem(unit)).toBe(false);
-    },
-  );
-
-  it('returns false for null/undefined (no unit stored)', () => {
-    expect(isPpmPlanItem(null)).toBe(false);
-    expect(isPpmPlanItem(undefined)).toBe(false);
-    expect(isPpmPlanItem('')).toBe(false);
-  });
-});
+// The plan-card ScheduleItemCard gates its one-tap button on the SAME shared
+// kernel predicate — a single definition so the two surfaces can never drift
+// on what counts as a water-concentration dose.
 
 // ============================================================
 // MARK: - (c) plan_item_id survives form → submission → DB write

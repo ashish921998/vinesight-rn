@@ -392,7 +392,15 @@ export default function FertilizerPlansScreen() {
               </View>
             ) : null}
 
-            <PlanSchedule plan={currentPlan} m3={m3} t={t} onLogItem={handleLogPlanItem} />
+            {/* One-tap logging is the farm owner's action: consultant-only
+                reviewers (plan link, no farm ownership) must not enter the
+                add-entry flow for a farm that isn't theirs. */}
+            <PlanSchedule
+              plan={currentPlan}
+              m3={m3}
+              t={t}
+              onLogItem={hasFarmAccess ? handleLogPlanItem : undefined}
+            />
 
             {/* Previous plans - collapsible history */}
             {previousPlans.length > 0 ? (
