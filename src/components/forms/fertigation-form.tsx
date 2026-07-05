@@ -164,7 +164,16 @@ export function FertigationForm({
   // catalog → custom escape hatch. No warehouse section — warehouse identity
   // only passes through history rows that already carry it (issue #196).
   const historyOptions = useMemo(() => recentItemsToOptions(historyItems), [historyItems]);
-  const planOptions = useMemo(() => fertigationPlanItemsToOptions(planItems), [planItems]);
+  // ppm/water-concentration plan items are excluded from the picker for the
+  // same reason as the quick-add chips: the fertigation form has no chip for
+  // them, so selecting one would drop a verbatim ppm unit into a form that
+  // can't represent it. The plan card surfaces them as an explanatory notice
+  // instead (issue #197, acceptance criterion 2) — one consistent exclusion.
+  const planOptions = useMemo(
+    () =>
+      fertigationPlanItemsToOptions(planItems.filter((item) => !isWaterConcentrationUnit(item.unit))),
+    [planItems],
+  );
   const catalogOptions = useMemo(
     () => fertilizerCatalogToOptions(catalogProducts),
     [catalogProducts],

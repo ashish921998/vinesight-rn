@@ -12,9 +12,24 @@
 
 import { resolveFertigationPrefill } from '@/constants/fertilizer-units';
 import { isWaterConcentrationUnit } from '@/lib/quantity';
+import { fertigationPlanItemsToOptions } from '@/components/ui/search-select-logic';
 import { submitEntryPendingLog } from '@/utils/entry-log-submission';
 import type { FertigationFormData } from '@/components/forms';
+import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 import type { FertigationRecordInsert } from '@/types';
+
+// Minimal plan-item fixture; each test overrides the fields it exercises.
+const BLANK_PLAN_ITEM: FertilizerPlanItem = {
+  id: '',
+  name: '',
+  quantity: null,
+  unit: null,
+  application_date: null,
+  application_method: null,
+  application_frequency: null,
+  notes: null,
+  sort_order: null,
+};
 
 // entry-log-submission only reads PHI_CALC_VERSION; the real module reaches
 // the supabase client, which has no place in this test.
@@ -131,6 +146,30 @@ describe('isWaterConcentrationUnit — gates quick-add chip exclusion (issue #19
 // The plan-card ScheduleItemCard gates its one-tap button on the SAME shared
 // kernel predicate — a single definition so the two surfaces can never drift
 // on what counts as a water-concentration dose.
+
+describe('picker plan-items section excludes ppm (issue #197 §b)', () => {
+  /**
+   * The manual picker's plan section is a third entry into a fertigation log,
+   * alongside the one-tap button and the quick-add chips. It must apply the
+   * same ppm exclusion: the form has no chip for a water-concentration dose,
+   * so a ppm plan item is filtered out before fertigationPlanItemsToOptions
+   * ever maps it — never offered, never coerced.
+   */
+  const planItems: FertilizerPlanItem[] = [
+    { ...BLANK_PLAN_ITEM, id: 'a', name: 'MAP', quantity: 5, unit: 'kg/acre' },
+    { ...BLANK_PLAN_ITEM, id: 'b', name: 'GA3', quantity: 100, unit: 'ppm' },
+    { ...BLANK_PLAN_ITEM, id: 'c', name: 'Boron', quantity: 2, unit: 'g/L' },
+  ];
+
+  it('drops water-concentration items and keeps form-representable ones', () => {
+    const selectable = planItems.filter((item) => !isWaterConcentrationUnit(item.unit));
+    const options = fertigationPlanItemsToOptions(selectable);
+    const names = options.map((option) => option.name);
+    expect(names).toEqual(['MAP']);
+    expect(names).not.toContain('GA3');
+    expect(names).not.toContain('Boron');
+  });
+});
 
 // ============================================================
 // MARK: - (c) plan_item_id survives form → submission → DB write
