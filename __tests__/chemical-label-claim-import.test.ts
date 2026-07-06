@@ -9,6 +9,7 @@ import {
 
 const HEADER = [
   'edition_key',
+  'document_family',
   'source_title',
   'issuing_body',
   'source_document',
@@ -45,6 +46,7 @@ const HEADER = [
 
 const baseRow = {
   edition_key: 'icar-nrcg-grapes-2025-09-17', // gitleaks:allow (edition slug, not a secret)
+  document_family: 'annexure-5-grapes',
   source_title: 'ICAR-NRCG Annexure 5 Grapes 2025-26',
   issuing_body: 'ICAR-NRCG',
   source_document: 'Annexure 5 Grapes-2025-26 17.09.2025.pdf',
@@ -346,6 +348,40 @@ describe('applyImportPlan write path', () => {
     // is exactly the PGRST116 crash the review reproduced.
     expect(sourceUpdate!.terminal).toBe('await');
     expect(claimsUpdate!.terminal).toBe('await');
+  });
+
+  it('scopes the supersede lookup to the document family, never (body, crop) alone', async () => {
+    const log: FakeOp[] = [];
+    const client = fakeClient(happyPathResponder(() => null), log);
+
+    await applyImportPlan(plan(), client);
+
+    // Annexure-9 shares source_type, issuing body, and crop with Annexure-5 —
+    // only the family slug keeps one import from superseding the other.
+    const priorLookup = log.find(
+      (op) => op.table === 'chemical_label_sources' && called(op, 'lt'),
+    );
+    expect(priorLookup!.methods).toContainEqual({
+      method: 'ilike',
+      args: ['document_family', 'annexure-5-grapes'],
+    });
+  });
+
+  it('resolves product names case-insensitively (identity is lower(name), casing is presentation)', async () => {
+    const log: FakeOp[] = [];
+    const client = fakeClient(
+      happyPathResponder((op) =>
+        op.table === 'chemical_products'
+          ? { data: [{ id: 77, name: 'AZOXYSTROBIN 23 sc' }], error: null }
+          : null,
+      ),
+      log,
+    );
+
+    await expect(applyImportPlan(plan(), client)).resolves.toBeUndefined();
+    const productLookup = log.find((op) => op.table === 'chemical_products');
+    expect(called(productLookup!, 'ilike')).toBe(true);
+    expect(called(productLookup!, 'eq')).toBe(false);
   });
 
   it('supersedes prior revisions only after the new edition landed', async () => {

@@ -10,6 +10,7 @@ export const DEFAULT_CSV_PATH =
 
 const REQUIRED_COLUMNS = [
   'edition_key',
+  'document_family',
   'source_title',
   'issuing_body',
   'source_document',
@@ -55,6 +56,7 @@ export interface LabelClaimMrlInput {
 
 export interface ValidatedLabelClaimRow {
   edition_key: string;
+  document_family: string;
   source_title: string;
   issuing_body: string;
   source_document: string;
@@ -93,6 +95,7 @@ export interface ValidatedLabelClaimRow {
 export interface ImportPlan {
   sourceIdentity: {
     source_type: 'annexure';
+    document_family: string;
     issuing_body: string;
     source_document: string;
     source_title: string;
@@ -213,7 +216,7 @@ export function buildImportPlan(csv: string): ImportPlan {
   const sourceKeys = new Set(
     rows.map(
       (row) =>
-        `${row.edition_key}::${row.issuing_body}::${row.source_document}::${row.crop}::${row.document_revision_date}`,
+        `${row.edition_key}::${row.document_family}::${row.issuing_body}::${row.source_document}::${row.crop}::${row.document_revision_date}`,
     ),
   );
 
@@ -224,6 +227,7 @@ export function buildImportPlan(csv: string): ImportPlan {
   return {
     sourceIdentity: {
       source_type: 'annexure',
+      document_family: first.document_family,
       issuing_body: first.issuing_body,
       source_document: first.source_document,
       source_title: first.source_title,
@@ -268,7 +272,11 @@ export function validateProductMappingCandidates(
     return row.product_id;
   }
 
-  const exactMatches = candidates.filter((candidate) => candidate.name === row.product_exact_name);
+  // Case-insensitive: products are unique on lower(name) per state, so casing
+  // is presentation, not identity.
+  const exactMatches = candidates.filter(
+    (candidate) => candidate.name.toLowerCase() === row.product_exact_name.toLowerCase(),
+  );
   if (exactMatches.length !== 1) {
     throw new Error(
       `Product mapping for "${row.product_exact_name}" is ${
@@ -419,6 +427,7 @@ function validateRow(row: CsvRow, line: number): ValidatedLabelClaimRow {
 
   return {
     edition_key: requiredText(row.edition_key, line, 'edition_key'),
+    document_family: requiredText(row.document_family, line, 'document_family').toLowerCase(),
     source_title: requiredText(row.source_title, line, 'source_title'),
     issuing_body: requiredText(row.issuing_body, line, 'issuing_body'),
     source_document: requiredText(row.source_document, line, 'source_document'),
@@ -526,6 +535,7 @@ async function upsertSource(plan: ImportPlan, client: SupabaseLikeClient): Promi
         await client
           .from('chemical_label_sources')
           .update({
+            document_family: plan.sourceIdentity.document_family,
             source_title: plan.sourceIdentity.source_title,
             source_url: plan.sourceIdentity.source_url,
             effective_from: plan.sourceIdentity.effective_from,
@@ -555,14 +565,17 @@ async function effectiveDatePriorSources(
   plan: ImportPlan,
   client: SupabaseLikeClient,
 ): Promise<void> {
-  // Document family key: type + issuing body + crop. Deliberately NOT the
+  // Supersession is scoped to the explicit document_family slug. Not the
   // filename — every Annexure revision ships as a differently-named PDF
-  // ("… 17.09.2025.pdf" vs "… rev 03.11.2025.pdf"), so a filename-scoped
-  // lookup would never find the edition it is superseding.
+  // ("… 17.09.2025.pdf" vs "… rev 03.11.2025.pdf") so a filename scope never
+  // matches anything. And not (type, body, crop) alone — Annexure-5 and
+  // Annexure-9 share all three, and importing one must never effective-date
+  // the other. Rows without a family are never auto-superseded (fail-closed).
   let query = client
     .from('chemical_label_sources')
     .select('id')
     .eq('source_type', plan.sourceIdentity.source_type);
+  query = ciEq(query, 'document_family', plan.sourceIdentity.document_family);
   query = ciEq(query, 'issuing_body', plan.sourceIdentity.issuing_body);
   const prior = await query
     .ilike('crop', plan.sourceIdentity.crop.replace(/([%_\\])/g, '\\$1'))
@@ -617,10 +630,15 @@ async function resolveProductId(
   // List query, not .single(): zero or multiple matches are expected data
   // conditions that must surface as the descriptive missing/ambiguous errors
   // below — .single() would turn both into an opaque PGRST116 first.
-  const result = await client
-    .from('chemical_products')
-    .select('id,name')
-    .eq('name', row.product_exact_name);
+  // Case-insensitive like every identity lookup here: products are unique on
+  // (state_code, lower(name)), so casing carries no identity — an exact-case
+  // .eq could only fail to find the one product the name already denotes.
+  // Same-name rows across states still surface as 'ambiguous' and block.
+  const result = await ciEq(
+    client.from('chemical_products').select('id,name'),
+    'name',
+    row.product_exact_name,
+  );
 
   throwIfSupabaseError(result.error);
   const candidates = (result.data ?? [])
