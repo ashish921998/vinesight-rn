@@ -8,6 +8,7 @@
 import {
   calculateNutrientLedger,
   calculateNutrientTotalsForLog,
+  parseSprayWaterVolumeL,
 } from '@/services/nutrient-flow-service';
 import type { FertigationRecord, SprayRecord } from '@/types';
 
@@ -375,5 +376,27 @@ describe('kernel-swap behavior delta — documented, intentional (issue #200)', 
 
     expect(result.nutrientTotalsElemental.N).toBeUndefined();
     expect(result.coveragePercent).toBe(0);
+  });
+});
+
+describe('parseSprayWaterVolumeL — dose-string parser contract', () => {
+  it('requires a bare L suffix — non-liter units never parse as liters', () => {
+    // The 'm' between the digits and 'L' blocks the match (\s* spans only
+    // whitespace), so mL can never be misread as 200 liters — the /i flag
+    // only permits case variants of the same tokens, not different units.
+    expect(parseSprayWaterVolumeL('Water: 200mL')).toBeNull();
+    expect(parseSprayWaterVolumeL('Water: 200 mL')).toBeNull();
+    expect(parseSprayWaterVolumeL('Water: 200 milliliters')).toBeNull();
+    expect(parseSprayWaterVolumeL('no water here')).toBeNull();
+    expect(parseSprayWaterVolumeL(null)).toBeNull();
+  });
+
+  it('accepts the canonical writer format and its case/spelling variants', () => {
+    // Both submission paths write exactly `Water: ${x}L`; lowercase 'l' and
+    // a spelled-out 'Liters' are legitimate liter spellings.
+    expect(parseSprayWaterVolumeL('Water: 200L')).toBe(200);
+    expect(parseSprayWaterVolumeL('water: 200l')).toBe(200);
+    expect(parseSprayWaterVolumeL('Water: 2.5 L')).toBe(2.5);
+    expect(parseSprayWaterVolumeL('Water: 200Liters')).toBe(200);
   });
 });

@@ -47,9 +47,11 @@ export function normalizeNutrientCode(code: string): string {
 // targets, ledger macro/oxide maps, petiole-trends element rows) are all
 // mixed-case — without this map a direct 'Ca' declaration lands under 'CA'
 // while 'CaO' lands under 'Ca', splitting one element into two buckets.
-export const CANONICAL_CODE_BY_NORMALIZED: Record<string, string> = Object.fromEntries(
-  NUTRIENT_CODES.map((code) => [normalizeNutrientCode(code), code]),
-);
+// Typed `string | undefined`: sanitizeComposition accepts ANY non-empty code,
+// so lookups with unlisted codes miss — the type forces callers to handle it
+// (noUncheckedIndexedAccess is off, so a total Record would hide the miss).
+export const CANONICAL_CODE_BY_NORMALIZED: Record<string, string | undefined> =
+  Object.fromEntries(NUTRIENT_CODES.map((code) => [normalizeNutrientCode(code), code]));
 
 export function sanitizeComposition(
   composition: NutrientCompositionItem[] | null | undefined,
