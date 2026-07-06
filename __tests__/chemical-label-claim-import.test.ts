@@ -151,6 +151,17 @@ describe('chemical label claim import', () => {
     expect(row.stage_restrictions).toBe('Pre-bloom only');
   });
 
+  it('rejects rows that disagree on the superseded-by date — it is edition-level', () => {
+    expect(() =>
+      buildImportPlan(
+        csv([
+          { document_superseded_by_revision_date: '2025-11-03' },
+          { source_serial: '2', document_superseded_by_revision_date: '' },
+        ]),
+      ),
+    ).toThrow(/exactly one source edition/);
+  });
+
   it('rejects duplicate source serial/target pairs', () => {
     expect(() =>
       parseChemicalLabelClaimCsv(

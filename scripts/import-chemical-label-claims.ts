@@ -216,7 +216,7 @@ export function buildImportPlan(csv: string): ImportPlan {
   const sourceKeys = new Set(
     rows.map(
       (row) =>
-        `${row.edition_key}::${row.document_family}::${row.issuing_body}::${row.source_document}::${row.crop}::${row.document_revision_date}`,
+        `${row.edition_key}::${row.document_family}::${row.issuing_body}::${row.source_document}::${row.crop}::${row.document_revision_date}::${row.document_superseded_by_revision_date ?? ''}`,
     ),
   );
 
