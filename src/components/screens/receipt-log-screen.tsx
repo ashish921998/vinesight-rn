@@ -35,7 +35,6 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { toSupabaseDateString, type DailyNoteRecord } from '@/types/database';
 import type { Farm } from '@/types';
 import { triggerHapticSuccess } from '@/utils/haptics';
-import { convertAreaToAcres, resolveAreaUnitPreference } from '@/utils/preferences';
 import { formatDate } from '@/i18n/format';
 import {
   IrrigationForm,
@@ -65,7 +64,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useFarm,
-  useProfile,
+  useFarmAreaAcres,
   useDeleteIrrigationRecord,
   useDeleteSprayRecord,
   useDeleteHarvestRecord,
@@ -78,7 +77,6 @@ import {
 } from '@/hooks';
 import { useSaveSingleLog } from '@/features/entry-log-session';
 import type { SaveSingleLogResult } from '@/features/entry-log-session/use-save-single-log';
-import { useAuthStore } from '@/stores';
 import { telemetry } from '@/services/telemetry';
 import { guidedTourEmit } from '@/features/guided-tour';
 import {
@@ -209,15 +207,14 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
   const liveFarmQuery = useFarm(isDelegatedMode ? undefined : (farmId ?? undefined));
   const farm = isDelegatedMode ? delegatedContext.farm : liveFarmQuery.data;
 
-  const { data: profile } = useProfile({ enabled: false });
-  const user = useAuthStore((s) => s.user);
-  const preferredAreaUnit = resolveAreaUnitPreference(
-    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
+  // In delegated mode use the CLIENT's area-unit preference (the farm owner's),
+  // so the payload uses the same acres/hectares basis the record was written
+  // against — not the signed-in consultant's. Mirrors the server-side
+  // stamp_fertilizer_plan_farm_area trigger resolution.
+  const { preferredAreaUnit, farmAreaAcres } = useFarmAreaAcres(
+    farm?.area,
+    delegatedContext?.clientAreaUnitPreference,
   );
-  const farmAreaAcres =
-    typeof farm?.area === 'number' && Number.isFinite(farm.area) && farm.area > 0
-      ? convertAreaToAcres(farm.area, preferredAreaUnit)
-      : null;
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -312,7 +309,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
             type: delegatedType,
             data: draft as DelegatedLogFormInput['data'],
           } as DelegatedLogFormInput,
-          { area: farm.area ?? 0 },
+          { area: farm.area ?? 0, areaUnit: preferredAreaUnit },
         );
         let recordId: number | null;
         if (existingNote?.recordId != null) {

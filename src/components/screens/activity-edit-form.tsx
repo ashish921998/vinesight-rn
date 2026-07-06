@@ -57,11 +57,10 @@ import {
   useUpdateHarvestRecord,
   useUpdateExpenseRecord,
   useUpdateFertigationRecord,
-  useProfile,
+  useFarmAreaAcres,
   isIOS,
   useResponsiveHeight,
 } from '@/hooks';
-import { useAuthStore } from '@/stores';
 import { toSupabaseDateString, fromSupabaseDateString } from '@/types';
 import type {
   Farm,
@@ -72,7 +71,6 @@ import type {
   FertigationRecord,
 } from '@/types';
 import { mapExpenseRecordTypeToTypeId, mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
-import { convertAreaToAcres, resolveAreaUnitPreference } from '@/utils/preferences';
 
 function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -99,15 +97,7 @@ export function ActivityEditForm({
 }: ActivityEditFormProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const { data: profile } = useProfile({ enabled: false });
-  const user = useAuthStore((state) => state.user);
-  const preferredAreaUnit = resolveAreaUnitPreference(
-    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
-  );
-  const farmAreaAcres =
-    typeof farm.area === 'number' && Number.isFinite(farm.area) && farm.area > 0
-      ? convertAreaToAcres(farm.area, preferredAreaUnit)
-      : null;
+  const { farmAreaAcres } = useFarmAreaAcres(farm.area);
   const isVisible = visible ?? true;
   const { windowHeight } = useResponsiveHeight();
   const [selectedDate, setSelectedDate] = useState(new Date());

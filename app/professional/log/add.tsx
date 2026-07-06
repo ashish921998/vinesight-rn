@@ -5,6 +5,7 @@ import { ReceiptLogScreen } from '@/components/screens/receipt-log-screen';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
+import type { AreaUnitPreference } from '@/utils/preferences';
 import type { DelegatedContext } from '@/services/delegated-logs';
 import type { Farm } from '@/types';
 
@@ -72,6 +73,13 @@ export default function AddDelegatedLog() {
     clientUserId: farmer.user_id,
     clientName: farmer.full_name,
     farm: farmLike,
+    // The farm owner's area-unit preference, so the shared save path converts
+    // acres on the same basis the plan/record was written against — not the
+    // signed-in consultant's. Sourced from the workspace RPC (profiles).
+    clientAreaUnitPreference:
+      farmer.area_unit_preference === 'hectares' || farmer.area_unit_preference === 'acres'
+        ? (farmer.area_unit_preference as AreaUnitPreference)
+        : null,
   };
 
   return (

@@ -4,10 +4,11 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol } from '@/components/ui/symbol';
-import { useFarm, useFertilizerPlans, useConsultantLink, useFarms } from '@/hooks';
+import { useFarm, useFertilizerPlans, useConsultantLink, useFarms, useProfile } from '@/hooks';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { convertAreaToAcres, resolveAreaUnitPreference } from '@/utils/preferences';
 import {
   PlanSchedule,
   PreviousPlanCard,
@@ -32,6 +33,14 @@ export default function FertilizerPlansScreen() {
   }, [params.farmId]);
   const { isLinked: hasConsultantLink, isLoading: isProfileLoading } = useConsultantLink();
   const { data: farm } = useFarm(farmId);
+  const { data: profile } = useProfile({ enabled: false });
+  // Fallback area in canonical acres for plans whose `farm_area_acres`
+  // snapshot is null (created before the snapshot column existed). Per
+  // the FertilizerPlan type, null snapshots fall back to current farm area.
+  const currentFarmAreaAcres =
+    typeof farm?.area === 'number' && Number.isFinite(farm.area) && farm.area > 0
+      ? convertAreaToAcres(farm.area, resolveAreaUnitPreference(profile?.area_unit_preference))
+      : null;
   const { data: fertilizerPlans, isLoading } = useFertilizerPlans(farmId);
   const { data: farms, isLoading: isFarmsLoading } = useFarms();
   const { setAddEntry } = useModalStore();
@@ -399,7 +408,7 @@ export default function FertilizerPlansScreen() {
               plan={currentPlan}
               m3={m3}
               t={t}
-              areaAcres={currentPlan.farm_area_acres}
+              areaAcres={currentPlan.farm_area_acres ?? currentFarmAreaAcres}
               onLogItem={hasFarmAccess ? handleLogPlanItem : undefined}
             />
 
@@ -416,7 +425,7 @@ export default function FertilizerPlansScreen() {
                     m3={m3}
                     t={t}
                     expanded={expandedIds.has(plan.id)}
-                    areaAcres={plan.farm_area_acres}
+                    areaAcres={plan.farm_area_acres ?? currentFarmAreaAcres}
                     onToggle={() => togglePlan(plan.id)}
                   />
                 ))}

@@ -103,7 +103,7 @@ import {
   useDeleteFertigationRecord,
   useUpdateFarmWaterLevel,
   useFarms,
-  useProfile,
+  useFarmAreaAcres,
   useWarehouseItems,
   useRecentSprayChemicals,
   useRecentFertigationItems,
@@ -133,7 +133,7 @@ import { TABLES, toSupabaseDateString } from '@/types/database';
 import type { DailyNoteRecord, Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
-import { useAuthStore, useNotificationStore, useAppModeStore } from '@/stores';
+import { useNotificationStore, useAppModeStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
 import { isGrapeCrop } from '@/utils/crop';
 import {
@@ -142,7 +142,6 @@ import {
   type EntryLogSessionAdapters,
   type EntryLogSubmissionFailure,
 } from '@/features/entry-log-session';
-import { convertAreaToAcres, resolveAreaUnitPreference } from '@/utils/preferences';
 import {
   ensureNotificationPermissions,
   scheduleTaskDueReminder,
@@ -289,12 +288,7 @@ export function EntryForm({
 }: EntryFormProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const { data: profile } = useProfile({ enabled: false });
-  const user = useAuthStore((state) => state.user);
   const detailedMode = useAppModeStore((state) => state.detailedMode);
-  const preferredAreaUnit = resolveAreaUnitPreference(
-    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
-  );
 
   const isVisible = visible ?? true;
   const queryClient = useQueryClient();
@@ -331,10 +325,13 @@ export function EntryForm({
       ? farms?.find((f) => f.id === selectedFarmId)
       : null) ??
     null;
-  const activeFarmAreaAcres =
-    typeof activeFarm?.area === 'number' && Number.isFinite(activeFarm.area) && activeFarm.area > 0
-      ? convertAreaToAcres(activeFarm.area, preferredAreaUnit)
-      : null;
+  // Resolve the active farm's area in canonical acres AND the user's preferred
+  // area unit (used both for per-acre math here and threaded into the save
+  // session below). Centralized so the resolution stays consistent across
+  // screens — see `useFarmAreaAcres`.
+  const { preferredAreaUnit, farmAreaAcres: activeFarmAreaAcres } = useFarmAreaAcres(
+    activeFarm?.area,
+  );
   const isGrapeFarm = isGrapeCrop(activeFarm?.crop, activeFarm?.crop_variety);
   const logFarmId = activeFarm?.id;
   const { data: sprayWarehouseItems } = useWarehouseItems('spray');
