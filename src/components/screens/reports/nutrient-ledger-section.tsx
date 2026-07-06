@@ -342,10 +342,15 @@ export function NutrientLedgerSection({ ledger, panelStyle }: NutrientLedgerSect
           </Text>
         </View>
 
-        {/* Coverage chip */}
-        <View style={{ paddingBottom: spacing[2] }}>
-          <CoverageChip coveragePercent={ledger.coveragePercent} m3={m3} />
-        </View>
+        {/* Coverage chip — only when something was applied. With no logs at
+            all, coveragePercent is 0 and the chip would claim "no composition
+            data", contradicting the body's "no logs" message; coverage of
+            applied quantity is meaningless when nothing was applied. */}
+        {ledger.itemCount > 0 ? (
+          <View style={{ paddingBottom: spacing[2] }}>
+            <CoverageChip coveragePercent={ledger.coveragePercent} m3={m3} />
+          </View>
+        ) : null}
 
         {/* Gate on rows, not coverage — a rounded coverage must never hide real rows */}
         {!hasRows ? (
