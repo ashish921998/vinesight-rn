@@ -1,8 +1,11 @@
 /**
- * Seed-data validation for the fertilizer catalog (units plan §10 Q7). Guards
- * the invariants the nutrient ledger (§5) depends on: every product carries a
- * composition, every code is a known nutrient, percentages are valid and sum
- * sensibly, and no two products share an identity (state + lower(name)).
+ * Seed-data validation for the fertilizer catalog (units plan §10 Q7; dedup
+ * refined in issue #234). Guards the invariants the nutrient ledger (§5)
+ * depends on: every product carries a composition, every code is a known
+ * nutrient, percentages are valid and sum sensibly, no two products share an
+ * identity (state + lower(name)), and — the #234 invariant — no two products
+ * declare the SAME composition set (brand is not identity; a quantified
+ * difference is the only thing that distinguishes two fertilizer products).
  */
 import {
   NUTRIENT_CODES,
@@ -13,16 +16,19 @@ import {
 import {
   FERTILIZER_CATALOG_SEED,
   SEED_STATE_CODE,
+  compositionKey,
   type SeedComposition,
 } from '../scripts/seed-data/fertilizer-catalog-seed';
 
 const KNOWN_CODES = new Set<string>(NUTRIENT_CODES);
 
 describe('fertilizer catalog seed data', () => {
-  it('seeds a meaningful catalog (~40 products) with the expected shared state', () => {
-    // The plan asks for ~40 common fertigation products; guard the floor so a
-    // regression that drops entries is caught.
-    expect(FERTILIZER_CATALOG_SEED.length).toBeGreaterThanOrEqual(40);
+  it('seeds a meaningful catalog (~30 products) with the expected shared state', () => {
+    // Issue #234 collapsed the 10 branded rows (Mahadhan / YaraTera / Vanita)
+    // into their generic grades — one row per declared composition set. The
+    // floor dropped from ~40 to ~30; guard it so a regression that drops
+    // entries is caught.
+    expect(FERTILIZER_CATALOG_SEED.length).toBeGreaterThanOrEqual(30);
     expect(SEED_STATE_CODE).toBe('MH');
   });
 
@@ -74,8 +80,7 @@ describe('fertilizer catalog seed data', () => {
     for (const product of FERTILIZER_CATALOG_SEED) {
       for (const composition of product.compositions) {
         const sanitized = normalizeNutrientCode(composition.component_code);
-        const resolves =
-          sanitized in OXIDE_TO_ELEMENTAL_FACTORS || elementalCodes.has(sanitized);
+        const resolves = sanitized in OXIDE_TO_ELEMENTAL_FACTORS || elementalCodes.has(sanitized);
         if (!resolves) {
           throw new Error(
             `${product.name}: code '${composition.component_code}' (sanitized '${sanitized}') ` +
@@ -107,29 +112,47 @@ describe('fertilizer catalog seed data', () => {
     }
   });
 
-  it('gives every product of the same grade an identical composition set (brand-agnostic)', () => {
-    // The header comment promises multiple brands per grade carry the same
-    // composition so the nutrient ledger is brand-agnostic — enforce it.
-    const byGrade = new Map<string, { name: string; key: string }[]>();
+  it('declares no two products with the same composition set (brand is not identity — #234)', () => {
+    // The #234 invariant: identity for fertilizers is the declared composition
+    // SET, not the brand. Two active products that declare the same nutrients at
+    // the same percentages are the same product — one must collapse into the
+    // other (the brand surviving as an alias). This replaces the old
+    // "same grade ⇒ identical composition" test, which deliberately ALLOWED the
+    // branded duplicates the dedup removed.
+    const seen = new Map<string, string>();
     for (const product of FERTILIZER_CATALOG_SEED) {
-      // Null grades are straights/micronutrients — distinct products, exempt.
-      if (product.grade == null) continue;
-      const key = product.compositions
-        .map((composition) => `${composition.component_code.toLowerCase()}=${composition.percent}`)
-        .sort()
-        .join('|');
-      const entries = byGrade.get(product.grade) ?? [];
-      entries.push({ name: product.name, key });
-      byGrade.set(product.grade, entries);
-    }
-    for (const [grade, entries] of byGrade) {
-      const keys = new Set(entries.map((entry) => entry.key));
-      if (keys.size > 1) {
+      const key = compositionKey(product.compositions);
+      const first = seen.get(key);
+      if (first !== undefined) {
         throw new Error(
-          `grade ${grade} has diverging compositions: ${entries
-            .map((entry) => `${entry.name} → ${entry.key}`)
-            .join(' ; ')}`,
+          `${product.name} duplicates the composition set of ${first} (${key}) — ` +
+            'these should be one product with the brand as an alias (issue #234).',
         );
+      }
+      seen.set(key, product.name);
+    }
+  });
+
+  it('folds branded bags into their generic as aliases, not separate products (#234)', () => {
+    // The branded names (Mahadhan / YaraTera / Vanita) must NOT be product names
+    // in the seed — they survive as aliases on the generic survivor so typing
+    // the brand still finds the product, but the catalog is brand-agnostic.
+    const branded = ['mahadhan', 'yaratera', 'vanita'];
+    for (const product of FERTILIZER_CATALOG_SEED) {
+      for (const marker of branded) {
+        if (product.name.toLowerCase().includes(marker)) {
+          throw new Error(
+            `${product.name} is a branded row — brands must be aliases on a ` +
+              'generic, not their own product (issue #234).',
+          );
+        }
+      }
+    }
+    // And every alias string must itself be a branded/legacy name (sanity: the
+    // aliases field exists to carry collapsed brands, not arbitrary keywords).
+    for (const product of FERTILIZER_CATALOG_SEED) {
+      for (const alias of product.aliases ?? []) {
+        expect(alias.trim().length).toBeGreaterThan(0);
       }
     }
   });

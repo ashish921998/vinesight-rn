@@ -1,16 +1,23 @@
 /**
  * Fertilizer catalog seed source (units plan §10 Q7 — "Fertilizer catalog is a
- * seeding gap, not a schema gap").
+ * seeding gap, not a schema gap"; dedup refined in issue #234).
  *
- * ~40 common Indian fertigation products as `chemical_products` rows
- * (input_type='fertilizer') plus their declared nutrient compositions as
- * `chemical_product_compositions` rows (component_type='nutrient'). Every entry
- * SHIPS a composition — that is the whole point: the nutrient ledger (§5) is
- * identity-bound, so a catalog fertilizer with no composition would be picked
- * yet contribute nothing. Grades are grounded in `WAREHOUSE_PRESETS`
- * (nutrient-presets.ts, the ready-made branded seed source) plus standard FCO
- * fertilizer grades (urea 46-0-0, MAP 12-61-0, SOP 0-0-50, …). Where a real
- * label deviates from the round grade, the exact number rides in `note`.
+ * One row per DECLARED COMPOSITION SET — for fertilizers, product identity is
+ * the quantified nutrient content, nothing else (issue #234 design stance).
+ * Brand is NOT identity: a branded bag whose guaranteed analysis matches a
+ * generic grade is the same product. Where a real label deviates from the round
+ * grade, the exact number rides in `note`. A quantified difference (e.g. TANBOR
+ * = calcium nitrate + declared B 0.2–0.3%) is a distinct product even when it
+ * shares a base grade — the composition-set key (not the grade string) decides.
+ *
+ * Branded names that previously had their own rows survive as `aliases` on the
+ * generic — search keywords only (typing "yara" finds MAP), never identity.
+ *
+ * Every entry SHIPS a composition — the nutrient ledger (§5) is identity-bound,
+ * so a catalog fertilizer with no composition would be picked yet contribute
+ * nothing. Grades are grounded in `WAREHOUSE_PRESETS` (nutrient-presets.ts, the
+ * ready-made branded seed source) plus standard FCO fertilizer grades (urea
+ * 46-0-0, MAP 12-61-0, SOP 0-0-50, …).
  *
  * Pure data — no Supabase/Deno imports — so it is importable by both the Node
  * seed runner (`scripts/seed-fertilizer-catalog.ts`) and Jest validation tests.
@@ -42,10 +49,36 @@ export interface FertilizerSeedProduct {
   /** Grade shorthand (e.g. "46-0-0"), stored as `active_ingredient` for search. */
   grade: string | null;
   compositions: SeedComposition[];
+  /**
+   * Brand/trade strings that previously had their own product rows but whose
+   * declared composition matches this generic (issue #234). Survive as search
+   * aliases on this row — typing the brand finds the generic — never identity.
+   * Written to `chemical_product_aliases` (alias_kind='trade') by the seeder.
+   */
+  aliases?: string[];
+}
+
+/**
+ * Stable identity key for a fertilizer product: its declared composition set,
+ * case-insensitive on nutrient code and sorted so row order doesn't matter.
+ * Two products with the same key are the SAME fertilizer (issue #234) — brand
+ * is not identity. A quantified difference (different code or percent) yields a
+ * different key, which is why TANBOR (Ca + B 0.3%) ≠ plain calcium nitrate.
+ */
+export function compositionKey(compositions: SeedComposition[]): string {
+  return compositions
+    .map((composition) => `${composition.component_code.toLowerCase()}=${composition.percent}`)
+    .sort()
+    .join('|');
 }
 
 /** Convenience: an N-P₂O₅-K₂O grade in one call (skips zero components). */
-function npk(n: number, p2o5: number, k2o: number, extra: SeedComposition[] = []): SeedComposition[] {
+function npk(
+  n: number,
+  p2o5: number,
+  k2o: number,
+  extra: SeedComposition[] = [],
+): SeedComposition[] {
   const rows: SeedComposition[] = [];
   if (n > 0) rows.push({ component_code: 'N', percent: n });
   if (p2o5 > 0) rows.push({ component_code: 'P2O5', percent: p2o5 });
@@ -56,9 +89,10 @@ function npk(n: number, p2o5: number, k2o: number, extra: SeedComposition[] = []
 /**
  * The seed set. Grades follow Indian FCO guaranteed-analysis (the numbers on the
  * bag) — water-soluble fertigation grades first, then straights/soil grades,
- * then micronutrient staples. Multiple brands per grade are intentional: farmers
- * type the brand they buy, and each carries the same composition so the ledger
- * is brand-agnostic.
+ * then micronutrient staples. One row per declared composition set (issue #234):
+ * a brand whose guaranteed analysis matches a generic is folded into it and
+ * kept as an `aliases` keyword — the farmer can still type the brand they buy,
+ * but the catalog (and thus the ledger) is brand-agnostic.
  */
 export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
   // ── Water-soluble NPK fertigation grades ──────────────────────────────────
@@ -67,12 +101,14 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     manufacturer: 'Generic FCO Grade',
     grade: '19-19-19',
     compositions: npk(19, 19, 19),
+    aliases: ['Mahadhan 19:19:19'],
   },
   {
     name: 'NPK 20:20:20',
     manufacturer: 'Generic FCO Grade',
     grade: '20-20-20',
     compositions: npk(20, 20, 20),
+    aliases: ['Vanita Aditya 20:20:20'],
   },
   {
     name: 'NPK 12:61:00 (MAP)',
@@ -80,6 +116,7 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     grade: '12-61-0',
     // Mono-ammonium phosphate — the standard fertigation MAP grade.
     compositions: npk(12, 61, 0),
+    aliases: ['Mahadhan 12:61:00', 'YaraTera Krista MAP 12:61:00'],
   },
   {
     name: 'NPK 13:40:13',
@@ -93,6 +130,7 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     grade: '0-52-34',
     // Mono-potassium phosphate.
     compositions: npk(0, 52, 34),
+    aliases: ['Mahadhan 00:52:34', 'YaraTera Krista MKP 00:52:34'],
   },
   {
     name: 'NPK 13:00:45 (KNO3)',
@@ -100,6 +138,7 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     grade: '13-0-45',
     // Potassium nitrate.
     compositions: npk(13, 0, 45),
+    aliases: ['YaraTera Krista K Plus 13:00:45'],
   },
   {
     name: 'NPK 00:00:50 (SOP)',
@@ -110,6 +149,7 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
       { component_code: 'K2O', percent: 50 },
       { component_code: 'S', percent: 17.5, note: 'Soluble SOP typically declares ~17-18% S' },
     ],
+    aliases: ['Vanita Aditya 00:00:50 (SOP)'],
   },
   {
     name: 'NPK 00:60:20',
@@ -170,6 +210,7 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
       { component_code: 'N', percent: 15.5 },
       { component_code: 'Ca', percent: 19 },
     ],
+    aliases: ['YaraTera Calcinit'],
   },
   {
     name: 'CAN (Calcium Ammonium Nitrate)',
@@ -188,6 +229,7 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     manufacturer: 'Generic FCO Grade',
     grade: '18-46-0',
     compositions: npk(18, 46, 0),
+    aliases: ['Mahadhan DAP'],
   },
   {
     name: 'SSP (Single Super Phosphate)',
@@ -314,74 +356,14 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     compositions: [{ component_code: 'Cu', percent: 24 }],
   },
 
-  // ── Branded grades (from WAREHOUSE_PRESETS — the offline fallback source) ──
-  {
-    name: 'Mahadhan 19:19:19',
-    manufacturer: 'Deepak Fertilisers (Mahadhan)',
-    grade: '19-19-19',
-    compositions: npk(19, 19, 19),
-  },
-  {
-    name: 'Mahadhan 12:61:00',
-    manufacturer: 'Deepak Fertilisers (Mahadhan)',
-    grade: '12-61-0',
-    compositions: npk(12, 61, 0),
-  },
-  {
-    name: 'Mahadhan 00:52:34',
-    manufacturer: 'Deepak Fertilisers (Mahadhan)',
-    grade: '0-52-34',
-    compositions: npk(0, 52, 34),
-  },
-  {
-    name: 'Mahadhan DAP',
-    manufacturer: 'Deepak Fertilisers (Mahadhan)',
-    grade: '18-46-0',
-    compositions: npk(18, 46, 0),
-  },
-  {
-    name: 'YaraTera Krista MAP 12:61:00',
-    manufacturer: 'Yara India',
-    grade: '12-61-0',
-    compositions: npk(12, 61, 0),
-  },
-  {
-    name: 'YaraTera Krista K Plus 13:00:45',
-    manufacturer: 'Yara India',
-    grade: '13-0-45',
-    compositions: npk(13, 0, 45),
-  },
-  {
-    name: 'YaraTera Krista MKP 00:52:34',
-    manufacturer: 'Yara India',
-    grade: '0-52-34',
-    compositions: npk(0, 52, 34),
-  },
-  {
-    name: 'YaraTera Calcinit',
-    manufacturer: 'Yara India',
-    grade: null,
-    // Calcium ammonium nitrate — 15.5% N + 19% Ca.
-    compositions: [
-      { component_code: 'N', percent: 15.5 },
-      { component_code: 'Ca', percent: 19 },
-    ],
-  },
-  {
-    name: 'Vanita Aditya 20:20:20',
-    manufacturer: 'Vanita Agro',
-    grade: '20-20-20',
-    compositions: npk(20, 20, 20),
-  },
-  {
-    name: 'Vanita Aditya 00:00:50 (SOP)',
-    manufacturer: 'Vanita Agro',
-    grade: '0-0-50',
-    // Same SOP grade as the generic entry — carries the same ~17.5% S.
-    compositions: npk(0, 0, 50, [
-      { component_code: 'S', percent: 17.5, note: 'Soluble SOP typically declares ~17-18% S' },
-    ]),
-  },
+  // ── Branded grades removed (issue #234) ────────────────────────────────────
+  // Branded bags (Mahadhan / YaraTera / Vanita) whose declared composition
+  // matched a generic grade were collapsed INTO that generic and now survive
+  // only as `aliases` above — typing the brand still finds the product, but the
+  // catalog models one row per composition set. Live rows previously seeded
+  // under these brand names are deactivated by the catalog dedup migration
+  // (supabase/migrations/20260707120000_fertilizer_catalog_dedup.sql) and by
+  // the seeder's convergence step on re-run.
 ];
 
 /** Shared state for all seeded rows — Maharashtra grape belt. */
