@@ -387,14 +387,28 @@ export interface OrgPlanHistoryItem {
  * form (lab-reports.tsx stores it as `productId` on the draft).
  */
 export function orgPlanHistoryToOptions(items: OrgPlanHistoryItem[]): SearchSelectOption[] {
-  const seen = new Set<string>();
+  const indexByKey = new Map<string, number>();
   const options: SearchSelectOption[] = [];
   for (const item of items) {
     const name = item.name.trim();
     if (!name) continue;
     const dedupeKey = normalizeSearchText(name);
-    if (!dedupeKey || seen.has(dedupeKey)) continue;
-    seen.add(dedupeKey);
+    if (!dedupeKey) continue;
+
+    const existingIndex = indexByKey.get(dedupeKey);
+    if (existingIndex !== undefined) {
+      // The newest row's name/dose already won (first seen). Only recover
+      // identity: a newer CUSTOM prescription can shadow an older CATALOG one
+      // of the same name, and keeping the null catalogProductId would lose
+      // product_id restoration on re-pick (compliance would fall back to name
+      // matching). Back-fill from the first older row that carries identity.
+      const kept = options[existingIndex].selection;
+      if (kept.kind === 'item' && kept.catalogProductId == null && item.catalogProductId != null) {
+        kept.catalogProductId = item.catalogProductId;
+      }
+      continue;
+    }
+
     const quantity =
       typeof item.quantity === 'number' && Number.isFinite(item.quantity) && item.quantity > 0
         ? item.quantity
@@ -411,6 +425,7 @@ export function orgPlanHistoryToOptions(items: OrgPlanHistoryItem[]): SearchSele
         prefill: { quantity, unit: item.unit ?? null },
       },
     });
+    indexByKey.set(dedupeKey, options.length - 1);
   }
   return options;
 }

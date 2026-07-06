@@ -29,6 +29,8 @@ const BLANK_PLAN_ITEM: FertilizerPlanItem = {
   application_frequency: null,
   notes: null,
   sort_order: null,
+  product_id: null,
+  quantity_basis: null,
 };
 
 // entry-log-submission only reads PHI_CALC_VERSION; the real module reaches

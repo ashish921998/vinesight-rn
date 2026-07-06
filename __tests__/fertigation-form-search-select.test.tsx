@@ -81,6 +81,8 @@ const planItems: FertilizerPlanItem[] = [
     application_frequency: null,
     notes: null,
     sort_order: null,
+    product_id: null,
+    quantity_basis: null,
   },
 ];
 

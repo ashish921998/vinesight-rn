@@ -159,6 +159,12 @@ export async function fetchOrgFertilizerPlanItemHistory(
     >[] | null;
   }[];
 
+  // catalogProductId rides through because catalog identity cannot be
+  // reconstructed from anything else. quantity_basis deliberately does NOT:
+  // the authoring picker re-canonicalizes every unit to one of five
+  // per-acre/ppm forms (resolveFertilizerMeasure → MEASURE_TO_UNIT), so basis
+  // is derived unambiguously from the re-picked unit. Passing a stored basis
+  // through would risk a basis that disagrees with the form's forced unit.
   return rows.flatMap((row) =>
     (row.fertilizer_plan_items ?? []).map((item) => ({
       name: item.fertilizer_name,
