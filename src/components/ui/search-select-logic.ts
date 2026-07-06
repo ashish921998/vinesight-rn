@@ -291,6 +291,9 @@ export function planItemsToOptions(
           kind: 'item' as const,
           name: item.name,
           planItemId: item.id,
+          // Phase W: carry product_id so logged items stamp catalog_product_id
+          // when the plan item has identity. Null for legacy/custom items.
+          catalogProductId: item.product_id ?? null,
           isCustom: false,
           prefill,
         },
@@ -370,6 +373,8 @@ export interface OrgPlanHistoryItem {
   name: string;
   quantity: number | null;
   unit: string | null;
+  /** Catalog product id from Phase W plan authoring. Null for legacy rows. */
+  catalogProductId?: number | null;
 }
 
 /**
@@ -377,18 +382,33 @@ export interface OrgPlanHistoryItem {
  * distinct product names across the org's past plan items, newest first.
  * Dedupe uses `normalizeSearchText`, so separator spellings collapse too —
  * one row for "19:19:19"/"19-19-19", keeping the most recent spelling and
- * dose. Selections carry no identity (plan items are strings by contract);
- * the last prescribed dose rides along as prefill.
+ * dose. Phase W: selections now carry `catalogProductId` where available so
+ * re-picking a previously prescribed product restores identity in the authoring
+ * form (lab-reports.tsx stores it as `productId` on the draft).
  */
 export function orgPlanHistoryToOptions(items: OrgPlanHistoryItem[]): SearchSelectOption[] {
-  const seen = new Set<string>();
+  const indexByKey = new Map<string, number>();
   const options: SearchSelectOption[] = [];
   for (const item of items) {
     const name = item.name.trim();
     if (!name) continue;
     const dedupeKey = normalizeSearchText(name);
-    if (!dedupeKey || seen.has(dedupeKey)) continue;
-    seen.add(dedupeKey);
+    if (!dedupeKey) continue;
+
+    const existingIndex = indexByKey.get(dedupeKey);
+    if (existingIndex !== undefined) {
+      // The newest row's name/dose already won (first seen). Only recover
+      // identity: a newer CUSTOM prescription can shadow an older CATALOG one
+      // of the same name, and keeping the null catalogProductId would lose
+      // product_id restoration on re-pick (compliance would fall back to name
+      // matching). Back-fill from the first older row that carries identity.
+      const kept = options[existingIndex].selection;
+      if (kept.kind === 'item' && kept.catalogProductId == null && item.catalogProductId != null) {
+        kept.catalogProductId = item.catalogProductId;
+      }
+      continue;
+    }
+
     const quantity =
       typeof item.quantity === 'number' && Number.isFinite(item.quantity) && item.quantity > 0
         ? item.quantity
@@ -400,10 +420,12 @@ export function orgPlanHistoryToOptions(items: OrgPlanHistoryItem[]): SearchSele
       selection: {
         kind: 'item',
         name,
+        catalogProductId: item.catalogProductId ?? null,
         isCustom: false,
         prefill: { quantity, unit: item.unit ?? null },
       },
     });
+    indexByKey.set(dedupeKey, options.length - 1);
   }
   return options;
 }

@@ -45,6 +45,8 @@ const planItem = (overrides: Partial<FertilizerPlanItem>): FertilizerPlanItem =>
   application_frequency: null,
   notes: null,
   sort_order: null,
+  product_id: null,
+  quantity_basis: null,
   ...overrides,
 });
 
@@ -318,6 +320,9 @@ describe('planItemsToOptions', () => {
           kind: 'item',
           name: '19:19:19',
           planItemId: 'plan-item-1',
+          // Phase W: catalogProductId forwarded from plan item's product_id.
+          // The default planItem fixture has no product_id → null.
+          catalogProductId: null,
           isCustom: false,
           prefill: { quantity: 5, unit: 'kg/acre' },
         },
@@ -457,6 +462,9 @@ describe('fertigationPlanItemsToOptions', () => {
           kind: 'item',
           name: '19:19:19',
           planItemId: 'plan-item-1',
+          // Phase W: catalogProductId is forwarded from plan item's product_id.
+          // Null for the default fixture (no product_id set).
+          catalogProductId: null,
           isCustom: false,
           prefill: { quantity: 5, unit: 'kg', quantityBasis: 'per_acre' },
         },
@@ -471,7 +479,8 @@ describe('fertigationPlanItemsToOptions', () => {
 
   it('carries verbatim/unknown units through unchanged — never coerced to kg', () => {
     const [ppm] = fertigationPlanItemsToOptions([planItem({ unit: 'ppm', quantity: 100 })]);
-    expect(ppm.selection.prefill).toEqual({ quantity: 100, unit: 'ppm', quantityBasis: 'total' });
+    // Phase W: ppm is per_liter_water in the kernel; stored directly now.
+    expect(ppm.selection.prefill).toEqual({ quantity: 100, unit: 'ppm', quantityBasis: 'per_liter_water' });
     const [unknown] = fertigationPlanItemsToOptions([planItem({ unit: 'banana/acre' })]);
     expect(unknown.selection.prefill).toEqual({
       quantity: 5,
@@ -587,11 +596,14 @@ describe('orgPlanHistoryToOptions', () => {
     expect(options[1].detail).toBe('25 kg/acre');
   });
 
-  it('carries the last prescribed dose as prefill without identity', () => {
+  it('carries the last prescribed dose as prefill, null catalogProductId when absent', () => {
     const [entry] = orgPlanHistoryToOptions([{ name: 'MAP', quantity: 4, unit: 'kg/acre' }]);
+    // Phase W: catalogProductId is always present in the selection shape.
+    // Legacy items (no catalogProductId on the source) receive null.
     expect(entry.selection).toEqual({
       kind: 'item',
       name: 'MAP',
+      catalogProductId: null,
       isCustom: false,
       prefill: { quantity: 4, unit: 'kg/acre' },
     });
@@ -608,5 +620,31 @@ describe('orgPlanHistoryToOptions', () => {
     expect(options[0].detail).toBeNull();
     // Zero/negative doses never prefill (instantly-invalid row).
     expect(options[1].selection.prefill).toEqual({ quantity: null, unit: 'kg/acre' });
+  });
+
+  it('recovers catalog identity when a newer custom row shadows an older catalog one', () => {
+    // Newest-first feed: a consultant typed "MAP" custom in a recent plan
+    // (no product_id), but an older plan prescribed the catalog MAP (id 42).
+    // The newest row's dose still wins, but identity must be recovered from
+    // the older row so re-picking restores product_id (else compliance would
+    // silently fall back to name matching).
+    const options = orgPlanHistoryToOptions([
+      { name: 'MAP', quantity: 6, unit: 'kg/acre', catalogProductId: null },
+      { name: 'MAP', quantity: 5, unit: 'kg/acre', catalogProductId: 42 },
+    ]);
+    expect(options).toHaveLength(1);
+    expect(options[0].detail).toBe('6 kg/acre'); // newest dose kept
+    expect(options[0].selection.catalogProductId).toBe(42); // identity recovered
+  });
+
+  it('keeps the newest row identity when it already carries one', () => {
+    // The newest catalog pick wins outright — an older different id never
+    // overwrites a present one.
+    const options = orgPlanHistoryToOptions([
+      { name: 'MAP', quantity: 6, unit: 'kg/acre', catalogProductId: 42 },
+      { name: 'MAP', quantity: 5, unit: 'kg/acre', catalogProductId: 99 },
+    ]);
+    expect(options).toHaveLength(1);
+    expect(options[0].selection.catalogProductId).toBe(42);
   });
 });

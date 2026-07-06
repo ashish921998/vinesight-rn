@@ -29,6 +29,8 @@ const BLANK_PLAN_ITEM: FertilizerPlanItem = {
   application_frequency: null,
   notes: null,
   sort_order: null,
+  product_id: null,
+  quantity_basis: null,
 };
 
 // entry-log-submission only reads PHI_CALC_VERSION; the real module reaches
@@ -89,13 +91,14 @@ describe('resolveFertigationPrefill — prescription unit → form chip (issue #
     expect(result.quantityBasis).toBe('per_acre');
   });
 
-  it('ppm → verbatim "ppm" + total basis (water-concentration, not per-acre)', () => {
+  it('ppm → verbatim "ppm" + per_liter_water basis (water-concentration, not per-acre)', () => {
     // ppm is recognized by the kernel but has no form chip — it passes through
-    // verbatim. The basis sniff returns 'total' (not per_acre) for ppm.
+    // verbatim. Now that QuantityBasis includes per_liter_water (Phase W), the
+    // kernel's basis is stored directly rather than collapsed to 'total'.
     const result = resolveFertigationPrefill('ppm');
     expect(result.unit).toBe('ppm');
-    // ppm has basis per_liter_water, not per_acre; the text sniff returns total.
-    expect(result.quantityBasis).toBe('total');
+    // ppm has basis per_liter_water in the kernel; Phase W stores it directly.
+    expect(result.quantityBasis).toBe('per_liter_water');
   });
 
   it('unknown unit → verbatim pass-through, per_acre sniff when spelt with /acre', () => {

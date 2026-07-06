@@ -125,7 +125,7 @@ export type IrrigationRecordUpdate = Partial<
 // MARK: - Spray Record
 // ============================================================
 
-export type QuantityBasis = 'total' | 'per_acre';
+export type QuantityBasis = 'total' | 'per_acre' | 'per_liter_water';
 export type NutrientCompositionBasis = 'declared';
 
 export interface NutrientCompositionItem {
@@ -390,6 +390,10 @@ export interface FertilizerPlanItem {
   fertilizer_name: string;
   quantity: number;
   unit: string;
+  /** Identity link to chemical_products(id). Null = custom/legacy item. */
+  product_id?: number | null;
+  /** Quantity basis, stored verbatim from the authoring picker. Null = legacy row. */
+  quantity_basis?: QuantityBasis | null;
   application_method?: string | null;
   application_frequency?: number | null;
   notes?: string | null;

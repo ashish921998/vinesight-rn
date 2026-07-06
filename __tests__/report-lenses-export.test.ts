@@ -103,6 +103,22 @@ describe('plan compliance section in exports', () => {
     expect(csv).toContain('Urea,≈ 5 kg/acre,not logged,-');
   });
 
+  it('identity (catalog_product_id) matches through the full report pipeline (Phase W)', () => {
+    // The logged item carries a DIFFERENT name than the plan row, so only the
+    // product-id path can join them — proves report-service passes
+    // catalog_product_id into the usage events end to end.
+    const csv = ReportService.generateCSV(
+      generate(
+        farmWithArea(2),
+        [fertigation([{ name: 'MAP 12:61:00', quantity: 8, unit: 'kg', catalog_product_id: 42 }])],
+        [{ id: 'pi-map', name: 'MAP', quantity: 5, unit: 'kg/acre', productId: 42 }],
+      ),
+      'comprehensive',
+      'acres',
+    );
+    expect(csv).toContain('MAP,≈ 5 kg/acre,≈ 4 kg/acre,approximate');
+  });
+
   it('PDF renders the compliance table and the verified/approximate footnote', () => {
     const reportData = data();
     const summary = ReportService.calculateSummary(reportData, 'comprehensive');

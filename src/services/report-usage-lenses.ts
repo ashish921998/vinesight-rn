@@ -41,6 +41,8 @@ export interface UsageEventItem {
   unit: string;
   quantityBasis?: QuantityBasis | null;
   planItemId?: string | null;
+  /** Catalog product id stamped on the logged item (Phase W). */
+  catalogProductId?: number | null;
 }
 
 export interface UsageEvent {
@@ -136,8 +138,13 @@ export function computeUsageLenses(params: {
   // Compliance joins against the CURRENT plan only. A record stamped from a
   // superseded plan carries a plan_item_id no current item will ever match —
   // routing it into the verified map would make it vanish from the delta
-  // ("not logged"), so stale-stamped contributions degrade to name matching.
+  // ("not logged"), so stale-stamped contributions degrade to name/identity matching.
   const currentPlanItemIds = new Set(planItems.map((item) => item.id));
+  // Phase W: product ids the current plan prescribes, for identity matching.
+  const planProductIds = new Set<number>();
+  for (const planItem of planItems) {
+    if (planItem.productId != null) planProductIds.add(planItem.productId);
+  }
 
   const products = new Map<string, ProductAccumulator>();
   const other = new Map<string, UsageVerbatimRow>();
@@ -160,6 +167,13 @@ export function computeUsageLenses(params: {
   // logged rate whenever the farm was resized after logging (250 ml/acre over
   // 2 acres on a farm resized to 3.5 must not read as ≈143 ml/acre).
   const verifiedByPlanItem = new Map<string, Partial<Record<Measure, number>>>();
+  // Phase W: identity-based approximate accumulator, keyed by CATALOG PRODUCT
+  // id — one contribution accumulates exactly once no matter how many plan
+  // rows prescribe that product (plans repeat products across application
+  // dates by design; keying by plan-item id and fanning out would multiply
+  // the applied figure by the row count, the exact failure mode the
+  // name-match design note below warns about).
+  const approxByProductId = new Map<number, Partial<Record<Measure, number>>>();
   const approxByName = new Map<string, Partial<Record<Measure, number>>>();
   // Every current-plan stamp we saw at all — even when the item's quantity
   // could not be resolved into the plan's measure. Distinguishes "logged but
@@ -245,18 +259,29 @@ export function computeUsageLenses(params: {
       if (eventAreaAcres != null) {
         const ratePerAcre = value / eventAreaAcres;
         if (item.planItemId && currentPlanItemIds.has(item.planItemId)) {
+          // Verified: plan_item_id stamp links directly to a current plan item.
           const byMeasure = verifiedByPlanItem.get(item.planItemId) ?? {};
           byMeasure[measure] = (byMeasure[measure] ?? 0) + ratePerAcre;
           verifiedByPlanItem.set(item.planItemId, byMeasure);
         } else if (event.type === 'fertilizer') {
-          // Name matching joins FERTILIZER-plan items, so only fertigation
-          // contributions qualify — a spray chemical that happens to share a
-          // name must not inflate plan compliance. (Stamped items above are
-          // trusted regardless of surface: the linkage is explicit.)
-          const nameKey = normalizeProductName(item.name);
-          const byMeasure = approxByName.get(nameKey) ?? {};
-          byMeasure[measure] = (byMeasure[measure] ?? 0) + ratePerAcre;
-          approxByName.set(nameKey, byMeasure);
+          // Approximate matching joins FERTILIZER-plan items only — a spray
+          // chemical that shares a name must not inflate plan compliance.
+          // Phase W: precedence is PER CONTRIBUTION — a contribution that can
+          // identity-match (its catalog product is prescribed by the current
+          // plan) accumulates via identity and never via name; contributions
+          // without identity fall back to name matching. Stale-stamped
+          // contributions (plan_item_id from a superseded plan) take the same
+          // path: identity first, then name. Null product ids never match.
+          if (item.catalogProductId != null && planProductIds.has(item.catalogProductId)) {
+            const byMeasure = approxByProductId.get(item.catalogProductId) ?? {};
+            byMeasure[measure] = (byMeasure[measure] ?? 0) + ratePerAcre;
+            approxByProductId.set(item.catalogProductId, byMeasure);
+          } else {
+            const nameKey = normalizeProductName(item.name);
+            const byMeasure = approxByName.get(nameKey) ?? {};
+            byMeasure[measure] = (byMeasure[measure] ?? 0) + ratePerAcre;
+            approxByName.set(nameKey, byMeasure);
+          }
         }
       }
     }
@@ -288,7 +313,14 @@ export function computeUsageLenses(params: {
 
   const compliance: UsageComplianceRow[] =
     areaAcres != null
-      ? computeCompliance(planItems, verifiedByPlanItem, approxByName, areaAcres, stampedSeen)
+      ? computeCompliance(
+          planItems,
+          verifiedByPlanItem,
+          approxByProductId,
+          approxByName,
+          areaAcres,
+          stampedSeen,
+        )
       : [];
 
   const sprayEvents = events.filter((event) => event.type === 'spray');
@@ -333,6 +365,7 @@ export function computeUsageLenses(params: {
 function computeCompliance(
   planItems: ReportPlanItemInput[],
   verifiedByPlanItem: Map<string, Partial<Record<Measure, number>>>,
+  approxByProductId: Map<number, Partial<Record<Measure, number>>>,
   approxByName: Map<string, Partial<Record<Measure, number>>>,
   areaAcres: number,
   stampedSeen: Set<string>,
@@ -347,9 +380,16 @@ function computeCompliance(
     nameKey: string;
     measure: Measure;
     planItemIds: string[];
+    /** Distinct catalog product ids this group's rows prescribe (Phase W). */
+    productIds: number[];
     prescribedPerAcre: number;
   }
   const groups = new Map<string, ComplianceGroup>();
+  // Each product id is claimed by ONE group only (first in plan order). Two
+  // groups can otherwise share a product — same pick relabeled across rows —
+  // and an identity contribution counted in both would double the applied
+  // figure across the table.
+  const claimedProductIds = new Set<number>();
 
   for (const planItem of planItems) {
     if (!planItem.unit || !isPositiveFinite(planItem.quantity)) continue;
@@ -376,9 +416,14 @@ function computeCompliance(
       nameKey,
       measure: parsed.measure,
       planItemIds: [],
+      productIds: [],
       prescribedPerAcre: 0,
     };
     group.planItemIds.push(planItem.id);
+    if (planItem.productId != null && !claimedProductIds.has(planItem.productId)) {
+      claimedProductIds.add(planItem.productId);
+      group.productIds.push(planItem.productId);
+    }
     group.prescribedPerAcre += prescribedPerAcre;
     groups.set(groupKey, group);
   }
@@ -389,8 +434,22 @@ function computeCompliance(
       (sum, id) => sum + (verifiedByPlanItem.get(id)?.[group.measure] ?? 0),
       0,
     );
+
+    // Phase W: identity-matched contributions accumulate under their product
+    // id, once each — summing the group's DISTINCT products mirrors how the
+    // name match counts once per group and cannot multiply by row count.
+    // Identity and name are DIFFERENT contributions (precedence was applied
+    // per contribution at accumulation), so the group sums both: a catalog-
+    // picked Urea log and a hand-typed Urea log are two real applications.
+    // Both stay matchLevel 'approximate' — only plan_item_id stamps can ever
+    // read 'verified'.
+    const identityApprox = group.productIds.reduce(
+      (sum, productId) => sum + (approxByProductId.get(productId)?.[group.measure] ?? 0),
+      0,
+    );
+
     const approxMeasures = approxByName.get(group.nameKey);
-    const approx = approxMeasures?.[group.measure] ?? 0;
+    const approx = identityApprox + (approxMeasures?.[group.measure] ?? 0);
     const hasVerified = verified > 0;
     const hasApprox = approx > 0;
 
@@ -402,11 +461,14 @@ function computeCompliance(
     const appliedPerAcre = hasVerified || hasApprox ? verified + approx : null;
 
     // Contributions exist but could not be expressed in the plan's measure
-    // (stamped record with an unresolvable unit, or a name match folded into
-    // a different measure): that is "unresolved", never "not logged".
+    // (stamped record with an unresolvable unit, or a name/identity match
+    // folded into a different measure): that is "unresolved", never "not logged".
     const hasUnresolvedEvidence =
       appliedPerAcre == null &&
       (group.planItemIds.some((id) => stampedSeen.has(id)) ||
+        group.productIds.some((productId) =>
+          Object.values(approxByProductId.get(productId) ?? {}).some((v) => (v ?? 0) > 0),
+        ) ||
         Object.values(approxMeasures ?? {}).some((value) => (value ?? 0) > 0));
 
     rows.push({
