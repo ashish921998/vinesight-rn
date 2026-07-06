@@ -1,7 +1,7 @@
 import type { PostHogEventProperties } from '@posthog/core';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import { useEffect, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import { PostHog, type PostHogOptions } from 'posthog-react-native';
 import { type FeatureFlagKey, FLAG_DEFAULTS } from '@/services/feature-flags';
 
@@ -125,34 +125,25 @@ export function isFeatureEnabled(key: FeatureFlagKey): boolean {
  * @returns boolean — always, never undefined.
  */
 export function useAppFeatureFlag(key: FeatureFlagKey): boolean {
-  const defaultValue = FLAG_DEFAULTS[key];
-
-  const [enabled, setEnabled] = useState<boolean>(() => {
-    if (!posthogClient) return defaultValue;
+  // The hook is exactly the external-store shape: subscribe to flag refreshes,
+  // read a boolean snapshot. useSyncExternalStore re-reads the snapshot on
+  // every render, so a `key` change picks up the new flag immediately (a
+  // useState-initializer version showed the old key's value until the next
+  // refresh event). All SDK touchpoints are guarded — if the subscription
+  // throws, the hook settles on the declared default and simply stops
+  // receiving refreshes, never crashes the component.
+  const subscribe = useCallback((onStoreChange: () => void) => {
+    if (!posthogClient) return () => {};
     try {
-      return posthogClient.isFeatureEnabled(key) ?? defaultValue;
+      return posthogClient.onFeatureFlags(onStoreChange);
     } catch {
-      return defaultValue;
+      return () => {};
     }
-  });
+  }, []);
 
-  useEffect(() => {
-    if (!posthogClient) return;
-
-    // Subscribe to flag refreshes so the component re-renders automatically.
-    // The initial value is already read synchronously in the useState initializer;
-    // we only need to update when PostHog reloads flags (e.g. after network comes
-    // back up or reloadFeatureFlagsAsync() is called).
-    const unsubscribe = posthogClient.onFeatureFlags(() => {
-      try {
-        setEnabled(posthogClient.isFeatureEnabled(key) ?? defaultValue);
-      } catch {
-        setEnabled(defaultValue);
-      }
-    });
-
-    return unsubscribe;
-  }, [key, defaultValue]);
-
-  return enabled;
+  return useSyncExternalStore(
+    subscribe,
+    () => isFeatureEnabled(key),
+    () => FLAG_DEFAULTS[key],
+  );
 }
