@@ -18,6 +18,7 @@ export {
   useDeleteFarm,
   usePrefetchFarm,
 } from './use-farms';
+export { useFarmAreaAcres, type UseFarmAreaAcresResult } from './use-farm-area-acres';
 export {
   useFarmSeasons,
   useCreateFarmSeason,

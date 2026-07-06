@@ -8,9 +8,62 @@ import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, addDays } from '@/utils/date';
 import type { FertilizerPlan, FertilizerPlanItem } from '@/types/fertilizer-plan';
-import { isWaterConcentrationUnit } from '@/lib/quantity';
+import { format, isWaterConcentrationUnit, parseUnit, totalFor } from '@/lib/quantity';
 
 type M3 = ReturnType<typeof useM3>;
+
+export type PlanItemQuantityDisplay = {
+  headline: string;
+  subtitle: string | null;
+  isDerivedTotal: boolean;
+};
+
+function formatStoredRate(input: FertilizerPlanItem): string | null {
+  if (input.quantity === null || input.quantity === undefined) return null;
+  return input.unit ? `${input.quantity} ${input.unit}` : `${input.quantity}`;
+}
+
+function countUnitLabel(unit: string): string {
+  return unit.split('/')[0]?.trim() ?? '';
+}
+
+export function planItemQuantityDisplay(
+  input: FertilizerPlanItem,
+  areaAcres?: number | null,
+): PlanItemQuantityDisplay | null {
+  const rate = formatStoredRate(input);
+  if (!rate) return null;
+  if (input.quantity === null || input.quantity === undefined) return null;
+  if (!input.unit) return { headline: rate, subtitle: null, isDerivedTotal: false };
+
+  if (isWaterConcentrationUnit(input.unit)) {
+    return { headline: rate, subtitle: null, isDerivedTotal: false };
+  }
+
+  const parsed = parseUnit(input.unit);
+  const quantityBasis = parsed?.basis === 'total' ? 'per_acre' : undefined;
+  if (!parsed || (parsed.basis !== 'per_acre' && quantityBasis !== 'per_acre')) {
+    return { headline: rate, subtitle: null, isDerivedTotal: false };
+  }
+
+  const total = totalFor(
+    { quantity: input.quantity, unit: input.unit, quantityBasis },
+    { areaAcres },
+  );
+
+  if (!total) {
+    return { headline: rate, subtitle: null, isDerivedTotal: false };
+  }
+
+  return {
+    headline:
+      total.measure === 'count'
+        ? `${format(total.value, total.measure, { approx: true })} ${countUnitLabel(input.unit)}`.trim()
+        : format(total.value, total.measure, { approx: true }),
+    subtitle: rate,
+    isDerivedTotal: true,
+  };
+}
 
 /**
  * Consultant/title label shown at the head of every plan card: the plan's own
@@ -132,6 +185,7 @@ function ScheduleItemCard({
   t,
   dateLabel,
   dimmed,
+  areaAcres,
   onLogTap,
 }: {
   input: FertilizerPlanItem;
@@ -139,10 +193,12 @@ function ScheduleItemCard({
   t: TFunction;
   dateLabel: string | null;
   dimmed: boolean;
+  areaAcres?: number | null;
   /** One-tap log button handler. Absent for history items and ppm plan items. */
   onLogTap?: (() => void) | null;
 }) {
   const isPpm = isWaterConcentrationUnit(input.unit);
+  const quantityDisplay = planItemQuantityDisplay(input, areaAcres);
 
   return (
     <View
@@ -179,7 +235,7 @@ function ScheduleItemCard({
           </Text>
         ) : null}
       </View>
-      {input.quantity !== null && input.quantity !== undefined && (
+      {quantityDisplay ? (
         <Text
           style={{
             color: m3.colorScheme.onSurface,
@@ -188,12 +244,22 @@ function ScheduleItemCard({
             marginTop: spacing[1],
           }}
         >
-          {input.quantity}
-          {/* Stored units already carry their basis (e.g. `kg/acre`, `ppm`),
-              so render as-is instead of re-appending a per-acre suffix. */}
-          {input.unit ? ` ${input.unit}` : ''}
+          {quantityDisplay.headline}
         </Text>
-      )}
+      ) : null}
+      {quantityDisplay?.subtitle ? (
+        <Text
+          style={{
+            color: m3.colorScheme.onSurfaceVariant,
+            fontSize: fontSize.sm,
+            marginTop: 2,
+          }}
+        >
+          {t('farmDetails.fertilizerPlan.rateSubtitle', {
+            rate: quantityDisplay.subtitle,
+          })}
+        </Text>
+      ) : null}
       {input.notes ? (
         <Text
           style={{
@@ -219,7 +285,10 @@ function ScheduleItemCard({
         >
           <Symbol name="info.circle" size={12} color={m3.colorScheme.onSurfaceVariant} />
           <Text style={{ flex: 1, fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-            {t('farmDetails.fertilizerPlan.ppmNotice', 'ppm doses can\'t be quick-added — enter manually')}
+            {t(
+              'farmDetails.fertilizerPlan.ppmNotice',
+              "ppm doses can't be quick-added — enter manually",
+            )}
           </Text>
         </View>
       ) : onLogTap != null ? (
@@ -246,7 +315,11 @@ function ScheduleItemCard({
         >
           <Symbol name="plus.circle" size={13} color={m3.colorScheme.primary} />
           <Text
-            style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: m3.colorScheme.primary }}
+            style={{
+              fontSize: fontSize.xs,
+              fontWeight: fontWeight.semibold,
+              color: m3.colorScheme.primary,
+            }}
           >
             {t('farmDetails.fertilizerPlan.logThis', 'Log this')}
           </Text>
@@ -284,12 +357,14 @@ export function PlanSchedule({
   m3,
   t,
   variant = 'current',
+  areaAcres,
   onLogItem,
 }: {
   plan: FertilizerPlan;
   m3: M3;
   t: TFunction;
   variant?: 'current' | 'history';
+  areaAcres?: number | null;
   /** One-tap log callback; absent for history variant (past plans). */
   onLogItem?: (item: FertilizerPlanItem) => void;
 }) {
@@ -319,11 +394,8 @@ export function PlanSchedule({
             t={t}
             dateLabel={itemDateLabel(input, index, t)}
             dimmed={false}
-            onLogTap={
-              variant === 'current' && onLogItem != null
-                ? () => onLogItem(input)
-                : null
-            }
+            areaAcres={areaAcres}
+            onLogTap={variant === 'current' && onLogItem != null ? () => onLogItem(input) : null}
           />
         ))}
       </View>
@@ -367,9 +439,8 @@ export function PlanSchedule({
                   : null
               }
               dimmed={bucketMeta[bucket.key].dimmed}
-              onLogTap={
-                onLogItem != null ? () => onLogItem(input) : null
-              }
+              areaAcres={areaAcres}
+              onLogTap={onLogItem != null ? () => onLogItem(input) : null}
             />
           ))}
         </View>
@@ -387,12 +458,14 @@ export function PreviousPlanCard({
   m3,
   t,
   expanded,
+  areaAcres,
   onToggle,
 }: {
   plan: FertilizerPlan;
   m3: M3;
   t: TFunction;
   expanded: boolean;
+  areaAcres?: number | null;
   onToggle: () => void;
 }) {
   const subtitle = [
@@ -483,7 +556,7 @@ export function PreviousPlanCard({
               {plan.notes}
             </Text>
           ) : null}
-          <PlanSchedule plan={plan} m3={m3} t={t} variant="history" />
+          <PlanSchedule plan={plan} m3={m3} t={t} variant="history" areaAcres={areaAcres} />
         </View>
       ) : null}
     </View>

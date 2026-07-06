@@ -57,6 +57,7 @@ import {
   useUpdateHarvestRecord,
   useUpdateExpenseRecord,
   useUpdateFertigationRecord,
+  useFarmAreaAcres,
   isIOS,
   useResponsiveHeight,
 } from '@/hooks';
@@ -96,6 +97,7 @@ export function ActivityEditForm({
 }: ActivityEditFormProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const { farmAreaAcres } = useFarmAreaAcres(farm.area);
   const isVisible = visible ?? true;
   const { windowHeight } = useResponsiveHeight();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -415,7 +417,7 @@ export function ActivityEditForm({
             }));
           const nutrientTotals = calculateNutrientTotalsForLog({
             items: chemicalItems,
-            areaAcre: farm.area ?? 0,
+            areaAcre: farmAreaAcres ?? 0,
             waterVolumeL: sprayData.waterVolume ?? null,
           });
           await updateSpray.mutateAsync({
@@ -486,7 +488,7 @@ export function ActivityEditForm({
           }));
           const nutrientTotals = calculateNutrientTotalsForLog({
             items: fertilizerItems,
-            areaAcre: farm.area ?? 0,
+            areaAcre: farmAreaAcres ?? 0,
             waterVolumeL: fertigationData.waterVolume ?? null,
           });
           await updateFertigation.mutateAsync({
@@ -554,7 +556,7 @@ export function ActivityEditForm({
             data={sprayData}
             onChange={setSprayData}
             onInputFocus={scrollToFocusedInput}
-            areaAcres={farm.area ?? null}
+            areaAcres={farmAreaAcres}
           />
         )}
         {logType === 'harvest' && (
@@ -576,7 +578,7 @@ export function ActivityEditForm({
             data={fertigationData}
             onChange={setFertigationData}
             onInputFocus={scrollToFocusedInput}
-            areaAcres={farm.area ?? null}
+            areaAcres={farmAreaAcres}
           />
         )}
       </View>

@@ -34,6 +34,13 @@ export interface DelegatedContext {
   clientUserId: string;
   clientName: string;
   farm: Farm;
+  /**
+   * The CLIENT's area-unit preference (`profiles.area_unit_preference` for the
+   * farm owner), so the delegated save path computes acres on the same basis
+   * the plan/record was written against — not the signed-in consultant's.
+   * Matches the server-side resolution in `stamp_fertilizer_plan_farm_area`.
+   */
+  clientAreaUnitPreference?: AreaUnitPreference | null;
 }
 export interface ProfessionalFarm {
   id: number;
@@ -47,6 +54,7 @@ export interface ProfessionalClient {
   user_id: string;
   full_name: string;
   phone: string | null;
+  area_unit_preference?: AreaUnitPreference | null;
   farms: ProfessionalFarm[];
 }
 export interface ProfessionalWorkspace {

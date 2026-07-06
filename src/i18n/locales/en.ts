@@ -405,6 +405,8 @@ export const en = {
       logThis: 'Log this',
       /** Accessibility label for the one-tap log button, includes item name. */
       logThisItem: 'Log {{name}}',
+      /** Subtitle under a derived plot-total plan item headline. */
+      rateSubtitle: 'Rate: {{rate}}',
       /** Explanatory notice for ppm plan items that cannot be one-tap prefilled. */
       ppmNotice: "ppm doses can't be quick-added — enter manually",
     },
@@ -953,7 +955,7 @@ export const en = {
     },
     quickAdd: 'Quick Add',
     /** ppm/g-per-L plan items shown as informational rows, never tappable chips (issue #197). */
-    ppmPlanItemNotice: '{{name}}: ppm doses can\'t be quick-added — enter manually',
+    ppmPlanItemNotice: "{{name}}: ppm doses can't be quick-added — enter manually",
     noMatchesHint: 'No matches. Continue with custom fertilizer name.',
     validation: {
       ready: 'Ready to add',

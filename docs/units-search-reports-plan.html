@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vinesight RN — Units, Search-Select &amp; Reports Plan</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafaf8;
+    --surface: #ffffff;
+    --surface-2: #f1f0ec;
+    --text: #1c1b17;
+    --text-2: #5f5c54;
+    --border: #e2e0d8;
+    --accent: #3f6c3a;
+    --accent-soft: #e8f0e6;
+    --amber: #9a6b1f;
+    --amber-soft: #f7ecd8;
+    --red: #a33a2e;
+    --red-soft: #f8e5e2;
+    --blue: #2f5a7a;
+    --blue-soft: #e4edf4;
+    --code-bg: #102014;
+    --code-text: #d7e4d3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14140f;
+      --surface: #1d1d17;
+      --surface-2: #26261f;
+      --text: #ebe9e0;
+      --text-2: #a5a294;
+      --border: #37362c;
+      --accent: #8fbb85;
+      --accent-soft: #24301f;
+      --amber: #d9a959;
+      --amber-soft: #322817;
+      --red: #d98276;
+      --red-soft: #33201c;
+      --blue: #8ab4d4;
+      --blue-soft: #1d2a34;
+      --code-bg: #0c150e;
+      --code-text: #c9d8c4;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    font-size: 15px; line-height: 1.55;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 40px 24px 96px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 1.4px; font-size: 11px; font-weight: 700; color: var(--accent); }
+  h1 { font-size: 30px; line-height: 1.2; margin: 6px 0 10px; letter-spacing: -0.4px; }
+  .meta { color: var(--text-2); font-size: 13px; margin-bottom: 18px; }
+  .summary { font-size: 16px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 10px; padding: 16px 18px; }
+  h2 { font-size: 21px; margin: 44px 0 6px; letter-spacing: -0.2px; }
+  h2 .num { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 6px; }
+  h3 { font-size: 16px; margin: 24px 0 6px; }
+  p { margin: 8px 0; }
+  .sub { color: var(--text-2); margin-top: 0; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 18px 0; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .card .big { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .card .lbl { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13.5px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-2); background: var(--surface-2); padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+  pre { background: var(--code-bg); color: var(--code-text); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px; letter-spacing: 0.3px; }
+  .pill.p1 { background: var(--accent-soft); color: var(--accent); }
+  .pill.p2 { background: var(--blue-soft); color: var(--blue); }
+  .pill.p3 { background: var(--amber-soft); color: var(--amber); }
+  .pill.p4 { background: var(--red-soft); color: var(--red); }
+  .chip { display: inline-block; font-family: ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600; border: 1.5px solid var(--accent); color: var(--accent); border-radius: 999px; padding: 2px 11px; margin: 2px 3px 2px 0; }
+  .chip.dim { border-color: var(--border); color: var(--text-2); }
+  .callout { border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; margin: 14px 0; background: var(--surface); }
+  .callout.warn { border-left: 4px solid var(--amber); }
+  .callout.danger { border-left: 4px solid var(--red); }
+  .callout.ok { border-left: 4px solid var(--accent); }
+  .callout .t { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+  details { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin: 10px 0; }
+  summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+  figure { margin: 18px 0; }
+  figcaption { font-size: 12.5px; color: var(--text-2); text-align: center; margin-top: 6px; }
+  .svgwrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  svg text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: currentColor; }
+  .sev { display: inline-block; width: 9px; height: 9px; border-radius: 999px; margin-right: 6px; }
+  .sev.hi { background: var(--red); } .sev.md { background: var(--amber); } .sev.lo { background: var(--accent); }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 4px; }
+  .toc a { font-size: 12.5px; color: var(--blue); text-decoration: none; border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 3px 12px; }
+  .kbd-num { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Vinesight RN · Implementation Plan · vinesight-rn-clean</div>
+    <h1>One unit contract: kernel, search-select with history, and meticulous reports</h1>
+    <div class="meta">2 July 2026 · Status: implementation reviewed 6 July 2026 · Scope: farmer app (spray + fertigation logging, plan reading) and professional module (plan authoring) · Schema changes deferred to Phase W (web-owned DB)</div>
+    <p class="summary">
+      Today, quantities live as free-typed unit strings interpreted by three drifting alias tables, product names are free text with no identity, and every computation (farmer's "how much do I pour", reports' per-acre totals) re-derives meaning heuristically. This plan replaces that with <strong>one unit kernel</strong> (measure × basis, display scales on top), <strong>one SearchSelect component</strong> (history first, catalog second, identity always) used by all three add-item flows, and a <strong>reports contract</strong> with golden test vectors for per-plot, per-acre, and per-liter computations. Grounded in the ICAR-NRC Grapes 2025-26 annexure dose formats.
+    </p>
+    <nav class="toc">
+      <a href="#today">1 · Today's failures</a>
+      <a href="#kernel">2 · Unit kernel</a>
+      <a href="#chips">3 · Chips per surface</a>
+      <a href="#select">4 · SearchSelect</a>
+      <a href="#reports">5 · Reports</a>
+      <a href="#matrix">6 · Coverage matrix</a>
+      <a href="#phases">7 · Phases</a>
+      <a href="#risks">8 · Risks</a>
+      <a href="#verify">9 · Verification</a>
+      <a href="#open">10 · Open questions</a>
+      <a href="#compliance">11 · Compliance layer</a>
+    </nav>
+  </header>
+
+  <div class="cards">
+    <div class="card"><div class="big">3 × 3</div><div class="lbl">measures × bases — count is fold-only, never a chip</div></div>
+    <div class="card"><div class="big">12</div><div class="lbl">surfaces touched (matrix in §6)</div></div>
+    <div class="card"><div class="big">1</div><div class="lbl">shared SearchSelect replaces 3 add-item UIs</div></div>
+    <div class="card"><div class="big">0</div><div class="lbl">historical rows migrated — legacy parsed, never rewritten</div></div>
+  </div>
+
+  <section id="today">
+    <h2><span class="num">1</span>What is broken today</h2>
+    <table>
+      <tr><th style="width:34%">Failure</th><th>Evidence</th></tr>
+      <tr><td><span class="sev hi"></span><strong>Silent unit corruption</strong></td><td>Consultant's <code>'L/acre'</code> fell through the farmer-side resolver to fallback <code>'kg'</code> — liters became kilograms in quick-add. Patched with an alias table (<code>PER_ACRE_UNIT_ALIASES</code> at HEAD; renamed in the working-tree diff), but the fallback-to-kg failure mode and hand-synced table survive.</td></tr>
+      <tr><td><span class="sev hi"></span><strong>Three alias vocabularies</strong></td><td><code>constants/fertilizer-units.ts</code> (UNIT_ALIASES), <code>constants/units.ts</code> (UNIT_ALIASES_TO_KG/LITER/COUNT for reports), spray-form's own <code>resolve…</code> + <code>'/acre'</code> substring sniffing. Different tolerance in each — a unit can parse in reports and corrupt in quick-add.</td></tr>
+      <tr><td><span class="sev hi"></span><strong>No product identity in plans</strong></td><td>Professional lab-reports form: product name is a free-text <code>FormInput</code>. "19:19:19", "19-19-19", "NPK 19all" are three different products to every downstream consumer (quick-add matching, warehouse, reports).</td></tr>
+      <tr><td><span class="sev md"></span><strong>Farmer does the math</strong></td><td>Plan shows <em>rate</em> (250 ml/acre); farmer multiplies by his 3.5 acres in his head. Spray form collects water volume but never shows the computed tank total back.</td></tr>
+      <tr><td><span class="sev md"></span><strong>Basis is smuggled in strings</strong></td><td><code>'gm/L'</code> vs <code>'kg'</code> vs <code>'kg/acre'</code> — basis lives inside the unit string, resolved by <code>.includes('/acre')</code>. Fertigation rows do have a <code>quantity_basis</code> column; spray's per-liter basis exists only as string convention.</td></tr>
+      <tr><td><span class="sev lo"></span><strong>History unused at entry time</strong></td><td><code>useRecentSprayChemicals</code> / <code>useRecentFertigationItems</code> exist but only feed entry-form suggestions — the actual pickers don't lead with "what you used last time".</td></tr>
+    </table>
+  </section>
+
+  <section id="kernel">
+    <h2><span class="num">2</span>The unit kernel — one module owns meaning</h2>
+    <p class="sub">Implemented as <code>src/lib/quantity/*</code> (replaces live <code>UNIT_ALIASES</code> use; <code>src/constants/units.ts</code> remains only as legacy alias fixtures for drift-guard tests).</p>
+    <p>Every quantity in the system is a point on a 2×3 grid, plus a display scale that is <em>presentation only</em>:</p>
+    <pre><code>type Measure = 'mass' | 'volume' | 'count'; // count = fold-only (pcs/packet/bag) — never a chip
+type Basis   = 'total' | 'per_acre' | 'per_liter_water';
+type Scale   = 'mg' | 'g' | 'kg' | 'ml' | 'L';   // display/entry only — never identity
+
+// A stored quantity, canonicalized:
+interface Quantity { value: number; measure: Measure; basis: Basis }
+// ppm is sugar: { measure:'mass', basis:'per_liter_water', scale:'mg' }
+// — 1 ppm = 1 mg/L holds for w/v spray/fertigation solutions ONLY. Soil/petiole
+//   lab ppm is mg/kg (w/w) and must never route through this kernel.</code></pre>
+    <table>
+      <tr><th>Function</th><th>Contract</th></tr>
+      <tr><td><code>parse(unitString, value)</code></td><td>→ <code>{ quantity, factor } | null</code>. Understands every legacy spelling (<code>'g/acre'</code>, <code>'gram/acre'</code>, <code>'litre'</code>, case variants, plurals) via a factor (500 <code>'g/acre'</code> → 0.5 kg-mass per_acre). Also accepts <strong>source-only bases</strong>: any <code>/ha</code> spelling (annexure label claims, web-written data) normalizes to <code>per_acre</code> with factor ÷2.47105 — the whole app runs on acres; <code>/ha</code> is never a farmer-facing chip and never stored on app-authored records. <strong>Returns <code>null</code> for unknowns — never silently kg.</strong> Dev builds warn.</td></tr>
+      <tr><td><code>format(quantity, locale)</code></td><td>Picks the human scale: &lt; 1 kg → g, &lt; 1 g → mg, &lt; 1 L → ml; integers preferred; ≥ 1 → kg/L with ≤ 2 trimmed decimals. Localized unit labels (किलो / ग्रॅम / लिटर / मिली). "≈" prefix when the value was derived (multiplied), never on entered values.</td></tr>
+      <tr><td><code>totalFor(quantity, ctx)</code></td><td><code>per_acre × ctx.areaAcres</code>, <code>per_liter_water × ctx.waterLiters</code>, <code>total</code> pass-through → a <code>total</code> Quantity. Returns <code>null</code> when ctx is missing (no area / no water volume) — callers fall back to showing the rate, never guess.</td></tr>
+      <tr><td><code>fold(quantity)</code></td><td>Analytics currency: everything to canonical kg / L (+ basis carried alongside). Replaces the ad-hoc normalizer inside <code>report-service.ts</code>.</td></tr>
+      <tr><td>Closed writer vocabulary</td><td>Plan writers use the closed <code>MEASURE_TO_UNIT</code> / chip vocabularies instead of free-form strings. Canonical vocabulary is closed: plans → <code>kg/acre · g/acre · L/acre · ml/acre · ppm</code>; logs keep the farmer's chip string + basis (testimony, §3).</td></tr>
+    </table>
+    <div class="callout ok"><div class="t">Provable, not hoped-for</div>Canonical spellings are <em>derived</em> from one table at module init (reverse map, lowercased once). The property test in §9 round-trips every chip through store → parse → format and asserts identity. Editing the table cannot desync a second table, because there is no second table.</div>
+
+    <figure>
+      <div class="svgwrap">
+      <svg viewBox="0 0 880 300" role="img" aria-label="Data flow: authoring to reports">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" opacity="0.55"/>
+          </marker>
+        </defs>
+        <g font-size="12.5">
+          <!-- authoring -->
+          <rect x="16" y="26" width="200" height="66" rx="10" fill="none" stroke="currentColor" opacity="0.85"/>
+          <text x="116" y="50" text-anchor="middle" font-weight="700">Authoring</text>
+          <text x="116" y="68" text-anchor="middle" opacity="0.65">consultant plan form (RN + web)</text>
+          <text x="116" y="84" text-anchor="middle" opacity="0.65">g/ml entry scales → canonical</text>
+          <!-- farmer logging -->
+          <rect x="16" y="196" width="200" height="66" rx="10" fill="none" stroke="currentColor" opacity="0.85"/>
+          <text x="116" y="220" text-anchor="middle" font-weight="700">Farmer logging</text>
+          <text x="116" y="238" text-anchor="middle" opacity="0.65">spray + fertigation forms</text>
+          <text x="116" y="254" text-anchor="middle" opacity="0.65">chip = fused unit·basis</text>
+          <!-- kernel -->
+          <rect x="330" y="106" width="220" height="86" rx="12" fill="currentColor" opacity="0.08"/>
+          <rect x="330" y="106" width="220" height="86" rx="12" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <text x="440" y="134" text-anchor="middle" font-weight="700">quantity-kernel</text>
+          <text x="440" y="152" text-anchor="middle" opacity="0.7">parse · format · totalFor · fold</text>
+          <text x="440" y="170" text-anchor="middle" opacity="0.7">measure × basis · scales on top</text>
+          <!-- DB -->
+          <rect x="330" y="16" width="220" height="56" rx="10" fill="none" stroke="currentColor" opacity="0.85"/>
+          <text x="440" y="39" text-anchor="middle" font-weight="700">Shared DB (web-owned)</text>
+          <text x="440" y="57" text-anchor="middle" opacity="0.65">plans: canonical · logs: testimony + basis</text>
+          <!-- plan screen -->
+          <rect x="664" y="26" width="200" height="66" rx="10" fill="none" stroke="currentColor" opacity="0.85"/>
+          <text x="764" y="50" text-anchor="middle" font-weight="700">Farmer plan screen</text>
+          <text x="764" y="68" text-anchor="middle" opacity="0.65">headline: total for YOUR plot</text>
+          <text x="764" y="84" text-anchor="middle" opacity="0.65">one-tap log → prefilled</text>
+          <!-- reports -->
+          <rect x="664" y="196" width="200" height="66" rx="10" fill="none" stroke="currentColor" opacity="0.85"/>
+          <text x="764" y="220" text-anchor="middle" font-weight="700">Reports</text>
+          <text x="764" y="238" text-anchor="middle" opacity="0.65">fold() → per plot · per acre</text>
+          <text x="764" y="254" text-anchor="middle" opacity="0.65">· per liter water</text>
+          <!-- arrows -->
+          <line x1="216" y1="59" x2="328" y2="44" stroke="currentColor" opacity="0.55" marker-end="url(#arr)"/>
+          <line x1="216" y1="229" x2="328" y2="170" stroke="currentColor" opacity="0.55" marker-end="url(#arr)"/>
+          <line x1="440" y1="104" x2="440" y2="74" stroke="currentColor" opacity="0.55" marker-end="url(#arr)"/>
+          <line x1="552" y1="44" x2="662" y2="56" stroke="currentColor" opacity="0.55" marker-end="url(#arr)"/>
+          <line x1="552" y1="170" x2="662" y2="222" stroke="currentColor" opacity="0.55" marker-end="url(#arr)"/>
+        </g>
+      </svg>
+      </div>
+      <figcaption>Everything crosses the kernel. No form, screen, or report interprets a unit string on its own again.</figcaption>
+    </figure>
+
+    <h3>Storage rule: prescriptions vs testimony</h3>
+    <table>
+      <tr><th style="width:26%">Data</th><th>Rule</th><th>Why</th></tr>
+      <tr><td>Plan items (cross-app contract)</td><td>Canonical only: <code>kg/acre · kg · L/acre · L · ppm</code>. g/ml accepted at <em>entry</em>, converted on save.</td><td>Contract with web app + farmer consumers must have one spelling. Tiny closed vocabulary = nothing to misparse.</td></tr>
+      <tr><td>Spray / fertigation records</td><td>Keep the farmer's chip string + explicit <code>quantity_basis</code>. No conversion at rest. <strong>Basis persistence reality:</strong> the DB enum is <code>total | per_acre</code> only (<code>database.ts:128</code>) — <code>per_liter_water</code> is an <em>in-memory</em> basis, derived from the chip string (<code>g/L</code>, <code>mL/L</code>, <code>ppm</code>) at parse time. Extending the persisted enum is a Phase-W item; until then the chip string is the durable carrier of concentration basis, which the testimony rule preserves anyway.</td><td>Logs are testimony — "875 ml" stays 875 ml for audit and display. <code>fold()</code> converts only inside analytics.</td></tr>
+      <tr><td>Historical rows</td><td>Never rewritten. <code>parse()</code> with factor handles every legacy spelling forever.</td><td>Zero-migration, zero-risk. Old <code>'g/acre'</code> rows display and compute correctly.</td></tr>
+    </table>
+  </section>
+
+  <section id="chips">
+    <h2><span class="num">3</span>Chip vocabulary per surface — basis fused into the chip, no toggles</h2>
+    <p class="sub">Validated against ICAR-NRC Grapes Annexure-5 (17 Sep 2025): real doses are ~50/50 concentration (<code>g/L</code> ×24, <code>mL/L</code> ×18) vs per-area (<code>mL/ha</code> ×23, <code>g/ha</code> ×16); ppm appears only for PGRs (GA3, NAA, CCC); the annexure itself writes 5000 <em>g</em>/ha, never 5 kg/ha — spray stays gram-scale by convention. Note the annexure's per-area basis is <em>hectare</em>; the app is acre-only — conversion (÷2.47105) happens once, at the catalog-claim boundary (§11.1), so no <code>/ha</code> chip exists anywhere below.</p>
+    <table>
+      <tr><th style="width:22%">Surface</th><th>Chips (one tap = unit + basis)</th><th>Default</th><th>Notes</th></tr>
+      <tr>
+        <td>Spray form</td>
+        <td><span class="chip">g/L</span><span class="chip">mL/L</span><span class="chip">g/acre</span><span class="chip">mL/acre</span><span class="chip">ppm</span></td>
+        <td>per-product last-used, else <code>g/L</code></td>
+        <td>Existing separate per-acre toggle <strong>dies</strong> — chip carries basis. <code>g/acre</code>, <code>mL/acre</code> are new chips (current <code>CHEMICAL_UNITS</code> lacks them). Bare <code>kg</code>/<code>liter</code> retire from quick chips; overflow picker keeps <span class="chip dim">g (total)</span><span class="chip dim">mL (total)</span> for "I know what I poured".</td>
+      </tr>
+      <tr>
+        <td>Fertigation form</td>
+        <td><span class="chip">kg/acre</span><span class="chip">L/acre</span><span class="chip">kg</span><span class="chip">L</span></td>
+        <td>per-product last-used, else <code>kg</code> (total)</td>
+        <td>Bare chip = total in tank — same convention as today's records (bare units already mean total via <code>resolveQuantityBasis</code>; stored as bare <code>kg</code>/<code>L</code> + <code>quantity_basis: 'total'</code>, no migration). The bare-vs-<code>/acre</code> ambiguity is resolved by the layer above, not by chip wording: defaults pick the right chip (plan quick-add → per-acre; manual → total; last-used-per-product overrides) and the live echo line makes the meaning visible the moment a number is typed (<code>10 kg → ≈ 2.9 kg/acre</code>). Total chips exist because manual logging is naturally total ("मी 10 किलो टाकले" — what went in the tank). Overflow keeps <span class="chip dim">g</span><span class="chip dim">mL</span> scales for micros. Matches plan vocabulary 1:1 minus ppm → plan quick-add maps directly.</td>
+      </tr>
+      <tr>
+        <td>Professional plan authoring</td>
+        <td><span class="chip">kg/acre</span><span class="chip">L/acre</span><span class="chip">kg</span><span class="chip">L</span><span class="chip">ppm</span> + g/ml entry scales</td>
+        <td><code>kg/acre</code></td>
+        <td>Entry in g/ml converts on save (500 g → 0.5 kg stored). Preview shows what the farmer will see, including the plot-total headline for the target farm.</td>
+      </tr>
+    </table>
+    <div class="callout"><div class="t">Live computed line — the error check that doubles as spoon-feeding</div>Under every dose input where context exists: spray <code>30 g/L × 400 L = <strong>12 kg in the tank</strong></code>; plan/fertigation per-acre <code>250 ml/acre × 3.5 acres ≈ <strong>875 ml for your plot</strong></code>; ppm <code>100 ppm × 400 L = <strong>40 g in the tank</strong></code>. Farmer verifies against the scoop in his hand <em>before</em> saving.</div>
+    <div class="callout ok"><div class="t">The basis standard: per-acre is the canonical lens, never the forced entry</div>Entry accepts whichever basis the farmer actually measured (forcing per-acre entry would make a farmer who dissolved "10 kg in the tank" type 10 against a per-acre chip — a silent 3.5× error; and partial-plot fertigation makes "per acre of what" ambiguous). Standardization happens one layer up: <strong>(a) defaults</strong> — plan quick-add preselects the per-acre chip, manual add defaults to total (bare <code>kg</code>/<code>L</code>), last-used-per-product overrides both; <strong>(b) live echo</strong> — every entry shows its conversion in the other basis (<code>10 kg → ≈ 2.9 kg/acre</code>, <code>3 kg/acre → ≈ 10.5 kg total</code>), which also lets the farmer eyeball his plan target with zero arithmetic; <strong>(c) downstream</strong> — reports, compliance deltas, and every consultant-facing view render per-acre (with totals alongside), derived by the kernel. Standard where comparison happens; freedom where the ground truth lives.</div>
+    <div class="callout warn"><div class="t">Guardrail: the ml↔L / g↔kg flip</div>On save, if the entered amount is ~10× or ~1000× off an <strong>independent</strong> reference — the linked plan item, or the last log for this product — one localized prompt: "योजनेत 875 ml आहे — युनिट तपासा?" Non-blocking (farmer can confirm), telemetry-counted. The live "= in tank" line above is a <em>visual</em> check only, not a guardrail reference: it is computed from the very input being validated, so it can never contradict it. With no plan link and no prior log, the guardrail is honestly inert — first-ever logs rely on the visual line.</div>
+  </section>
+
+  <section id="select">
+    <h2><span class="num">4</span>SearchSelect — one component, history first, identity always</h2>
+    <p class="sub">New <code>src/components/ui/search-select.tsx</code>. Replaces the three divergent add-item experiences: spray's catalog-mix search, fertigation's warehouse-linked rows, and the professional form's free-text <code>FormInput</code>.</p>
+    <h3>Anatomy (top to bottom)</h3>
+    <table>
+      <tr><th style="width:24%">Section</th><th>Content</th><th>Why first-class</th></tr>
+      <tr><td>Search field</td><td>Debounced local filter over cached catalog + server search fallback. Latin + Devanagari matching (catalog names indexed both ways where available).</td><td>Low-literacy users type 2–3 characters; ranking must be forgiving (prefix &gt; substring &gt; fuzzy).</td></tr>
+      <tr><td><strong>History</strong> ("तुम्ही आधी वापरलेले")</td><td>Per-farm recents from <code>useRecentSprayChemicals</code> / <code>useRecentFertigationItems</code>, each row showing name + <em>last dose chip + quantity</em>, tap = fully prefilled item. <strong>Prerequisite hook change:</strong> the stored item JSON already carries <code>quantity_basis</code>, <code>catalog_product_id</code>, <code>warehouse_item_id</code>, but the recents parsers keep only <code>{name, unit, quantity}</code> (<code>use-records.ts:856-915</code>) — extend <code>RecentInputItem</code> + both parsers to pass these through, and dedupe by identity id (fallback: normalized name). Mix identity is <em>record-level</em> (<code>SprayRecord.catalog_mix_id</code>), not on item rows: the spray recents query must also select <code>catalog_mix_id</code> alongside <code>chemical_items</code> and stamp it onto each parsed row, so tapping a history mix can prefill the whole mix, not just one component.</td><td>The paranoia point: a farmer re-logging his usual spray should touch the screen twice. History is the spoon-feeding surface, and it also pins unit/dose consistency log-over-log.</td></tr>
+      <tr><td>Warehouse</td><td><strong>De-scoped (2 Jul 2026): no warehouse section in SearchSelect for now.</strong> The existing <code>warehouseItemId</code> field keeps passing through untouched wherever it already exists (item JSON, recents parser), and entry-form's current warehouse-suggestion merge (<code>entry-form.tsx:480-553</code>) stays as-is — zero work, no data loss, no behavior removed.</td><td>Warehouse integration (stock badge, deduction) is a separate future feature; nothing in this plan depends on it.</td></tr>
+      <tr><td>Catalog</td><td><strong>Spray:</strong> existing DB catalog — <code>chemical_products</code> + <code>chemical_product_aliases</code> + <code>chemical_mixes</code>/<code>_components</code> + <code>chemical_phi_rules</code> (label doses, PHI where present); selecting prefills the label-claim dose chip. <strong>Fertilizer:</strong> same table supports <code>input_type='fertilizer'</code> + nutrient compositions, but seeding/wiring is the gap (Q7). Selecting stamps <code>composition_snapshot</code> → feeds the nutrient ledger (§5).</td><td>Annexure doses arrive through the catalog, not through typing. Annexure-5 is the claims layer on catalog products (sibling compliance plan), not the name source — and it covers plant-protection chemicals only, never fertilizers.</td></tr>
+      <tr><td>Free-text escape hatch</td><td>Last row: "Add ‘&lt;query&gt;’ as custom" — stores name with <code>product_id = null</code>, flagged <code>is_custom</code>.</td><td>Never block logging. But custom items are visibly second-class (no dose prefill, excluded from strict report groupings — bucketed under "Other").</td></tr>
+    </table>
+    <h3>Per-surface wiring</h3>
+    <table>
+      <tr><th style="width:24%">Surface</th><th>Sources (in order)</th><th>On select, prefill</th></tr>
+      <tr><td>Spray form</td><td>History (this farm) → active plan items (this farm) → catalog mixes → products → custom</td><td>Name, identity id, dose chip + value (last-used, else prescribed, else label claim), PHI metadata; picking a plan item also stamps <code>plan_item_id</code></td></tr>
+      <tr><td>Fertigation form</td><td>History (this farm) → active plan items (this farm) → fertilizer catalog (Q7) → custom</td><td>Name, identity id, unit chip + quantity (last-used, else prescribed), basis; picking a plan item also stamps <code>plan_item_id</code>. (<code>warehouseItemId</code> passes through from history rows if present — no warehouse UI.)</td></tr>
+      <tr><td>Professional plan authoring</td><td>Org history ("what you prescribe often", from this org's past plan items) → fertilizer catalog (Q7) / spray catalog → custom</td><td>Canonical product name + id + default dose. <strong>Kills the free-text identity gap</strong> — plan items gain <code>product_id</code> (nullable column; needs web coordination, see Phase W; until then store name from catalog verbatim so string-matching at least converges).</td></tr>
+    </table>
+    <div class="callout"><div class="t">The consultant → farmer name loop is closed by the plan, not the catalog</div>Both roles search the <em>same master catalog</em>, so a catalog-sourced prescription is findable by the farmer verbatim. When the consultant uses the custom escape hatch (name not in catalog), that name still reaches the farmer through the <strong>active-plan-items source</strong> above — the farmer's picker lists it with the prescribed dose, and selecting it stamps <code>plan_item_id</code> (the same write as one-tap log from the plans screen; two entry points, one mechanism). After the first log it also lives in the farmer's history. Custom names are <em>never</em> auto-promoted into the master catalog — the catalog stays curated (versioned annexure imports, <code>catalog_mapping_status</code> review), so one consultant's typo can't pollute every user's search results. On the consultant side the custom name persists via org history (§10 Q3), so it autocompletes for them from the second plan onward.</div>
+    <div class="callout danger"><div class="t">Identity is the report's foundation — and where it can persist today</div>Reports group by product. Free text ⇒ "19:19:19" vs "19-19-19" are two rows and the totals lie. Every path through SearchSelect emits <code>{ name, product_id?, warehouse_item_id?, is_custom }</code> — but persistence differs by record type and level: <strong>spray/fertigation log items already carry item-level identity</strong> (<code>catalog_product_id</code>, <code>warehouse_item_id</code> — <code>database.ts:138-146, 190-191</code>; warehouse rows even carry <code>catalog_mapping_status</code>), and <strong>mix identity is record-level</strong> (<code>SprayRecord.catalog_mix_id</code>, <code>:154</code> — one mix per spray record, its <code>chemical_items</code> being that mix's components). Log identity therefore persists from P2 with no schema work, as long as consumers respect the level split. <strong>Plan items have no <code>product_id</code> column</strong> until Phase W — for plans, P2 identity means the canonical catalog name stored verbatim (string-level convergence), upgraded to a real FK when the web migration lands. Reports (P4) are identity-keyed for logs, name-keyed for plan-compliance deltas until W.</div>
+  </section>
+
+  <section id="reports">
+    <h2><span class="num">5</span>Reports — the computation contract</h2>
+    <p class="sub">All report math goes through <code>fold()</code> + <code>totalFor()</code>. The ad-hoc normalizer in <code>report-service.ts:262-305</code> and its <code>UNIT_ALIASES_TO_*</code> sets are replaced by kernel calls; the old alias sets remain only as test inputs proving the kernel covers the legacy parse table.</p>
+    <table>
+      <tr><th style="width:20%">Lens</th><th>Definition</th><th>Rules</th></tr>
+      <tr><td><strong>Per plot</strong> (एकूण)</td><td>Σ <code>totalFor(item, {areaAcres, waterLiters})</code> over the period, per product and per measure</td><td>Mass, volume, and <strong>count</strong> (pcs/packet/bag — today's <code>UNIT_ALIASES_TO_COUNT</code> rows) never merge into one number; count keeps its own bucket when <code>units.ts</code> is absorbed into the kernel. <code>per_liter_water</code> items need the record's water volume — if absent, the row is reported in a separate "concentration-only" bucket, never guessed. Custom (<code>is_custom</code>) products group under "Other".</td></tr>
+      <tr><td><strong>Per acre</strong> (एकरी)</td><td>per-plot ÷ <code>farm.area</code> (acres)</td><td>Only computed when area is present and plausibly acres (see §8 hectare risk). Compliance delta ("prescribed 5 kg/acre · applied 4.2 kg/acre") requires a link: no <code>plan_item_id</code> exists on record items today — the one-tap-log flow (P3) writes an optional <code>plan_item_id</code> into the item JSON (same pattern as the existing optional <code>catalog_product_id</code>; no schema migration, items are JSONB). Records without it fall back to identity/name matching, rendered as "approximate" — never presented as a verified delta.</td></tr>
+      <tr><td><strong>Per liter water</strong> (प्रति लिटर)</td><td>Spray concentration view: Σ chemical mass/volume ÷ Σ water volume per spray event; period view = weighted mean</td><td>Only for spray records with water volume. ppm rows fold as mg/L natively. This is the PHI/residue-relevant lens — never averaged across events without weighting by water volume.</td></tr>
+      <tr><td><strong>Nutrient ledger</strong> (kg N · P · K दिले)</td><td>Σ product mass (kg) × declared composition % → per-nutrient kg, oxides converted to elemental via pinned factors (P₂O₅ ×0.4364 → P, K₂O ×0.8301 → K, …); views: per plot, per acre, per period, and between petiole tests</td><td><strong>Already scaffolded end-to-end</strong>: catalog/warehouse composition → <code>composition_snapshot</code> + <code>density_kg_per_l</code> stamped on log items at submission (<code>entry-log-submission.ts:172,266</code>) → <code>nutrient-flow-service.ts</code> folds (consumed by petiole-trends today). Its <code>toProductMassKg</code> is the <em>fourth</em> drifting unit parser — P4 replaces it with kernel calls, preserving density/water-volume/ppm semantics (snapshot-locked first). Coverage is identity-bound and reported honestly: items without a composition snapshot are excluded and the UI says "nutrients from N% of applied quantity" (<code>coveragePercent</code> exists) — never padded. Display dual-basis: elemental computed (matches petiole/soil tests), bag-grade N-P₂O₅-K₂O shown alongside (the language bags and consultants speak). This is why Q7 items must carry composition.</td></tr>
+      <tr><td><strong>Precision</strong></td><td colspan="2">Compute at full precision, round only at render via <code>format()</code> (g under 1 kg, etc.). "≈" on every derived figure. No mid-pipeline rounding — the golden vectors (§9) assert exact intermediate values.</td></tr>
+    </table>
+    <h3>Worked vectors (become unit tests verbatim)</h3>
+    <table>
+      <tr><th>Input</th><th>Context</th><th>Per plot</th><th>Per acre</th><th>Per liter</th></tr>
+      <tr><td class="kbd-num">250 ml/acre liquid</td><td class="kbd-num">3.5 acre plot</td><td class="kbd-num">≈ 875 ml</td><td class="kbd-num">250 ml</td><td>—</td></tr>
+      <tr><td class="kbd-num">30 g/L fungicide</td><td class="kbd-num">400 L water</td><td class="kbd-num">≈ 12 kg</td><td class="kbd-num">≈ 3.43 kg (÷3.5)</td><td class="kbd-num">30 g/L</td></tr>
+      <tr><td class="kbd-num">100 ppm GA3</td><td class="kbd-num">400 L water</td><td class="kbd-num">≈ 40 g</td><td class="kbd-num">≈ 11.4 g</td><td class="kbd-num">100 mg/L</td></tr>
+      <tr><td class="kbd-num">Legacy row: 500 'g/acre'</td><td class="kbd-num">1.5 acre plot</td><td class="kbd-num">≈ 750 g</td><td class="kbd-num">500 g</td><td>—</td></tr>
+      <tr><td class="kbd-num">Label claim: 500 mL/ha (annexure source)</td><td class="kbd-num">prefill → 3.5 acre plot</td><td class="kbd-num">≈ 708 ml</td><td class="kbd-num">≈ 202 ml (÷2.47105)</td><td>—</td></tr>
+      <tr><td class="kbd-num">10 kg (total, tank)</td><td class="kbd-num">any</td><td class="kbd-num">10 kg</td><td class="kbd-num">÷ area</td><td>÷ water if logged</td></tr>
+    </table>
+  </section>
+
+  <section id="matrix">
+    <h2><span class="num">6</span>Surface coverage matrix — nothing escapes</h2>
+    <table>
+      <tr><th style="width:26%">Surface</th><th>Change</th><th style="width:10%">Phase</th></tr>
+      <tr><td><code>lib/quantity/*</code></td><td>Types, parse/format/totalFor/fold + worked-vector/property tests. <code>fertilizer-units.ts</code> delegates logging/prefill resolution into the kernel; <code>units.ts</code> alias sets are no longer production parsers.</td><td><span class="pill p1">P1</span></td></tr>
+      <tr><td><code>components/ui/search-select.tsx</code> (new)</td><td>Sectioned results (history/plan items/catalog/custom), debounce, identity emission, a11y labels, Devanagari-tolerant filter.</td><td><span class="pill p2">P2</span></td></tr>
+      <tr><td>Spray form</td><td>Chips <code>g/L · mL/L · g/acre · mL/acre · ppm</code>; per-acre toggle removed; live "= in tank" line; guardrail; SearchSelect for chemical add; per-product last-used defaults.</td><td><span class="pill p2">P2</span>/<span class="pill p3">P3</span></td></tr>
+      <tr><td>Fertigation form</td><td>Chips <code>kg/acre · L/acre · kg · L</code>; SearchSelect (history + plan items + catalog); guardrail; resolver deleted → kernel.</td><td><span class="pill p2">P2</span>/<span class="pill p3">P3</span></td></tr>
+      <tr><td>Entry-form quick-add (plan → fertigation)</td><td>Prefill via kernel (canonical → farmer's natural scale); ppm items excluded with explanatory row instead of silent-kg.</td><td><span class="pill p3">P3</span></td></tr>
+      <tr><td>Professional lab-reports (plan authoring)</td><td>SearchSelect replaces free-text product input; g/ml entry scales + basis-fused chips; farmer-preview with plot-total headline; org-history section.</td><td><span class="pill p2">P2</span></td></tr>
+      <tr><td>Farmer plan screen + plan cards</td><td>Item headline = <code>totalFor()</code> big number, rate demoted to subtitle; formatter everywhere; one-tap "log this".</td><td><span class="pill p3">P3</span></td></tr>
+      <tr><td><code>report-service.ts</code></td><td>Normalizer swapped for kernel <code>fold()</code>; three lenses (§5); compliance delta vs linked plan; custom-product "Other" bucket.</td><td><span class="pill p4">P4</span></td></tr>
+      <tr><td><code>nutrient-flow-service.ts</code></td><td>Consumes folded canonical quantities; per-acre math delegated to <code>totalFor</code> semantics (no behavior change intended — snapshot tests lock outputs).</td><td><span class="pill p4">P4</span></td></tr>
+      <tr><td>i18n (en/hi/mr)</td><td>Chip labels, scale labels (किलो/ग्रॅम/लिटर/मिली), guardrail copy, SearchSelect section headers, report lens names. No <code>defaultValue</code>-only keys.</td><td>all</td></tr>
+      <tr><td>PHI / catalog metadata</td><td>SearchSelect surfaces PHI from catalog mix on selection (read-only pass-through; PHI computation itself untouched).</td><td><span class="pill p3">P3</span></td></tr>
+      <tr><td>Chemical catalog compliance data</td><td><strong>Owned by the June-24 compliance plan</strong> (<code>chemical_label_sources/_claims/_claim_mrls</code>, reviewable import). This plan adds: Annexure-9 monitored/zero-tolerance dataset (additive, same provenance model) + live-revision pinning (A5 03 Nov 2025, A9 17 Jan 2026). Exact-formulation review only — no brand fuzzy mapping. See §11.1.</td><td><span class="pill p2">P2</span></td></tr>
+      <tr><td>Spray-time compliance guard</td><td>Consumes the June-24 plan's evaluator (<code>allowed|warning|blocked|unverified</code>); adds A9 zero-tolerance as an evaluator input; surfaces outcomes in SearchSelect at selection time. See §11.2.</td><td><span class="pill p3">P3</span></td></tr>
+      <tr><td>Exporter spray diary report</td><td>Full document under the sibling plan's "N of M verified" header: chemical, dose (testimony + folded), water, date, per-spray claim snapshot (PHI + evaluation + MRL + revision). GrapeNet-shaped. See §11.3.</td><td><span class="pill p4">P4</span></td></tr>
+      <tr><td>Web app + schema <span class="pill p4">Phase W</span></td><td>Out of RN scope, tracked: plan-item <code>product_id</code> + <code>quantity_basis</code> columns, unit check-constraint, <code>per_liter_water</code> added to the persisted <code>QuantityBasis</code> enum for log records, web plan form adopts same chips. Until then RN parse() tolerates everything web writes.</td><td><span class="pill p4">W</span></td></tr>
+    </table>
+  </section>
+
+  <section id="phases">
+    <h2><span class="num">7</span>Phases — each independently shippable</h2>
+    <table>
+      <tr><th style="width:14%">Phase</th><th>Delivers</th><th>Acceptance criteria</th></tr>
+      <tr><td><span class="pill p1">P1 Kernel</span></td><td><code>src/lib/quantity/*</code> + tests; fertigation/spray/plan resolvers delegate; the hand-synced alias table (<code>PER_ACRE_UNIT_ALIASES</code> at HEAD) deleted.</td><td>Property test: every chip round-trips store→parse→format identically. Every string in prod data samples parses or dev-warns (no silent kg). tsc + eslint + existing tests green.</td></tr>
+      <tr><td><span class="pill p2">P2 Authoring + Select</span></td><td>SearchSelect component; recents hooks extended (identity + basis pass-through); professional form adopts it + entry scales + farmer preview; spray/fertigation adopt SearchSelect.</td><td>Every selected product carries identity at the strongest level the schema allows: persisted ids on spray/fertigation items (columns exist today); canonical catalog name verbatim on plan items (FK upgrade in Phase W). Custom-only path is an explicit choice. Plan saved in g displays back in g. History rows prefill name + id + chip + quantity + basis completely.</td></tr>
+      <tr><td><span class="pill p3">P3 Farmer math</span></td><td>Plot-total headline on plan screen; live "= in tank" lines; one-tap log from plan; guardrail; chip sets final.</td><td>The §5 worked vectors render exactly as specified on-screen. Guardrail fires on a 875 ml → 875 L test entry. Zero toggles remain in either form. <strong>Blocking gate:</strong> the plot-total headline does not ship until the §8 area-unit trace closes — <code>farm.area</code> provenance verified and converted through the existing <code>resolveAreaUnitPreference</code> path (<code>entry-log-submission.ts:82</code>), hectare-stored areas converted (×2.471), ambiguous farms falling back to rate-only display.</td></tr>
+      <tr><td><span class="pill p4">P4 Reports</span></td><td>Three lenses through fold(); compliance delta; concentration-only + "Other" buckets; nutrient-flow snapshot-locked.</td><td>Golden vectors pass as unit tests. A seeded farm's report totals hand-verified once against a spreadsheet. Legacy rows appear correctly without migration.</td></tr>
+    </table>
+    <p class="sub">Order rationale: kernel first (everything types against it), identity second (reports are garbage-in without it), farmer UX third (visible wins), reports last (consumes all of the above).</p>
+  </section>
+
+  <section id="risks">
+    <h2><span class="num">8</span>Risks &amp; edge cases</h2>
+    <table>
+      <tr><th style="width:28%">Risk</th><th>Mitigation</th></tr>
+      <tr><td><span class="sev hi"></span>Web app keeps writing arbitrary unit strings until Phase W</td><td><code>parse() → null</code> path: item renders with raw string + no computation, dev-warn + telemetry counter. Never silently converted.</td></tr>
+      <tr><td><span class="sev hi"></span><code>farm.area</code> unit ambiguity (acres vs hectares preference)</td><td>Before P3 headline ships: trace farm-creation write path. If any ambiguity → headline only for farms whose area provenance is acres; others show rate-only. A wrong dose is worse than no headline.</td></tr>
+      <tr><td><span class="sev md"></span>ppm without water volume / tank capacity</td><td>Rendered as concentration, excluded from totals and quick-add with explanatory copy. Phase-W+ can use <code>total_tank_capacity</code> for "g in your tank".</td></tr>
+      <tr><td><span class="sev md"></span>Guardrail false positives annoy users</td><td>Non-blocking single prompt, 10×/1000× thresholds only, telemetry on fire-rate; tune or scope down if &gt;5% of saves trigger.</td></tr>
+      <tr><td><span class="sev md"></span>Renamed catalog products vs history identity</td><td>History keyed on <code>product_id</code> (name is display only). Custom items keyed on normalized name, visibly "Other" in reports.</td></tr>
+      <tr><td><span class="sev lo"></span>Offline: catalog search unavailable</td><td>History + plan-items sections are local/cached and always work; catalog section shows cached results with "offline" hint; custom escape hatch always available.</td></tr>
+      <tr><td><span class="sev lo"></span>Report snapshot drift in nutrient-flow</td><td>Snapshot tests recorded <em>before</em> P4 refactor; any diff is a deliberate, reviewed change.</td></tr>
+      <tr><td><span class="sev md"></span>Annexures revise <em>within</em> a season, not just yearly (A5: Sep→Nov 2025; A9: Oct 2025→Jan 2026)</td><td>Catalog seeded from <em>versioned</em> annexure imports, never hardcoded in app code; each row carries <code>source_doc + revision_date</code>. Import pulls from nrcgrapes.in at import time. Stale-season data is a compliance bug — see §11.4, where this plan itself demonstrated the failure mode.</td></tr>
+    </table>
+  </section>
+
+  <section id="verify">
+    <h2><span class="num">9</span>Verification plan</h2>
+    <table>
+      <tr><th style="width:24%">Layer</th><th>Check</th></tr>
+      <tr><td>Kernel property tests</td><td>Round-trip identity for every chip × representative values (0.02, 0.5, 1, 2.5, 875, 5000); legacy-spelling table (every string found in current prod-shaped fixtures) parses to expected quantity; unknown strings → null.</td></tr>
+      <tr><td>Golden vectors</td><td>§5 table encoded as unit tests against <code>totalFor</code>/<code>fold</code> — exact values, no tolerance.</td></tr>
+      <tr><td>Snapshot locks</td><td>report-service + nutrient-flow outputs for a seeded farm captured pre-refactor, asserted post.</td></tr>
+      <tr><td>Manual QA script (per phase)</td><td>Marathi locale: author plan in g → farmer sees g headline → one-tap log → record shows farmer unit → report totals match hand calc. Spray: g/L entry → tank line → save → per-liter lens. Guardrail: enter 875 L against 875 ml plan.</td></tr>
+      <tr><td>Telemetry</td><td>Counters: parse-null rate, guardrail fire rate, custom-product rate (measures whether SearchSelect identity coverage is working — target &lt;10% custom within a month).</td></tr>
+    </table>
+  </section>
+
+  <section id="open">
+    <h2><span class="num">10</span>Open questions (answers change the plan)</h2>
+    <table>
+      <tr><th style="width:6%">#</th><th>Question</th><th>Default if unanswered</th></tr>
+      <tr><td>1</td><td>Confirm acre as the only <em>rate</em> basis app-wide (hectare users still see per-acre rates)?</td><td>Yes — rates stay per-acre. But plot <em>totals</em> must convert the stored area via the existing <code>area_unit_preference</code> / <code>resolveAreaUnitPreference</code> path (hectares ×2.471), never assume acres — P3 acceptance gates on this trace. Only rate-basis conversion (per-ha prescriptions) is out of scope.</td></tr>
+      <tr><td>2</td><td>Should fertigation logging deduct from warehouse stock now that identity is linked?</td><td><strong>✅ Answered (2 Jul 2026): warehouse is fully out of scope.</strong> No deduction, no warehouse section in SearchSelect, no new warehouse UI. Existing <code>warehouseItemId</code> fields just pass through untouched.</td></tr>
+      <tr><td>3</td><td>Professional org-history section: per-organization or per-consultant-user?</td><td><strong>✅ Answered (2 Jul 2026): per-organization.</strong> There is effectively one org today — a plain query over this org's past plan items, no per-consultant scoping, no multi-org abstraction.</td></tr>
+      <tr><td>4</td><td>Phase W timing — when can the web repo take <code>product_id</code>/<code>quantity_basis</code>/unit-constraint migrations?</td><td>RN ships tolerant parse() and works without it indefinitely.</td></tr>
+      <tr><td>5</td><td>Zero-tolerance chemical picked for an export-bound farm: hard block or strong warning with override?</td><td>Warning + explicit confirm + telemetry. Blocking risks farmers logging off-app, which is worse for the exporter.</td></tr>
+      <tr><td>6</td><td>Who owns the seasonal annexure refresh (new A5/A9 each year) — ops task or in-app admin import?</td><td>Manual versioned import per season, owned by whoever maintains the master catalog today.</td></tr>
+      <tr><td>7</td><td><strong>Fertilizer catalog is a seeding gap, not a schema gap.</strong> <code>chemical_products.input_type</code> already allows <code>'fertilizer'</code> (also biostimulant/adjuvant), and <code>chemical_product_compositions</code> holds per-product nutrient rows (<code>component_type='nutrient'</code>) — but the logging forms never search it (only <code>warehouse-item-form</code> uses <code>useMasterProducts</code> for mapping), and whether fertilizer rows are actually seeded in prod is unverified. Annexure-5 can't help — it covers plant-protection chemicals, never fertilizers. "Urea" today is only ever a typed string.</td><td>Seed ~40 common fertigation products (urea 46-0-0, MAP 12-61-0, SOP 0-0-50, 19:19:19, 0:52:34, 13:0:45, CAN, MgSO₄…) as <code>input_type='fertilizer'</code> rows <strong>with compositions</strong> — the shared-DB data task the web side owns; <code>WAREHOUSE_PRESETS</code> (<code>nutrient-presets.ts</code>, branded NPK entries with declared compositions) is the ready-made seed source and stays the offline fallback. SearchSelect's fertigation/plan-authoring catalog section reads <code>useMasterProducts({inputTypes:['fertilizer']})</code>. Every entry ships composition so the nutrient ledger (§5) gets high coverage, and selection stamps <code>composition_snapshot</code> exactly like warehouse picks do today.</td></tr>
+    </table>
+  </section>
+
+  <section id="compliance">
+    <h2><span class="num">11</span>Compliance layer — Annexure 5 + Annexure 9 close the loop</h2>
+    <p class="sub">Two ICAR-NRC Grapes documents define the export-grape residue regime (APEDA / GrapeNet, EU export). Annexure-5 is the <strong>whitelist</strong>: ~80 chemicals with CIB&amp;RC label claim — dose, EU-MRL, PHI days. Annexure-9 is the <strong>audit list</strong>: 278 chemicals the residue lab tests (per the 09 Oct 2025 revision), of which 164 sit at LOQ (<code>0.01*</code>) — zero tolerance, detection above LOQ rejects the export consignment. MRLs are harmonized across both (verified: Amisulbrom 0.50, Azoxystrobin 3.00, Cyazofamid 2.00). <strong>Current revisions per nrcgrapes.in (checked 2 Jul 2026): Annexure-5 rev. 03 Nov 2025, Annexure-9 rev. 17 Jan 2026</strong> — the PDFs analyzed for this plan (17 Sep / 09 Oct 2025) are already two revisions stale; the catalog import must pull the live documents and re-verify all counts.</p>
+    <div class="callout danger"><div class="t">Gating: this section defers to the existing compliance plan</div>An <strong>active sibling plan already owns Annexure-5 compliance</strong>: <code>docs/plans/2026-06-24-001-feat-grape-spray-compliance-plan.md</code> — versioned <code>chemical_label_sources</code> / <code>chemical_label_claims</code> / <code>chemical_label_claim_mrls</code> tables, a reviewable import pipeline, a pure evaluator returning <code>allowed | warning | blocked | unverified</code> (target-, stage-, and application-count-aware), per-spray claim snapshots (historical truth), fail-closed harvest summaries, and version-and-supersede source updates. <strong>This section does not introduce a second compliance system.</strong> Everything below is re-scoped as <em>extensions to that plan</em>: its schema names replace the column sketch this section previously invented; its exact-formulation review stance ("no fuzzy auto-verification; ambiguous rows stay blocked") <em>replaces</em> the brand→active mapping table previously proposed here; its evaluator states replace this section's three-state guard. What this section adds that the sibling plan does not cover: the Annexure-9 monitored/zero-tolerance layer, the exporter spray-diary deliverable (it has only a summary ratio line), and the live-revision pinning below (the sibling plan is itself pinned to the superseded 17 Sep 2025 edition).</div>
+    <div class="callout warn"><div class="t">Why this elevates the whole plan</div>A spray log is not a diary entry — it is a line on an export compliance document. A ml→kg unit corruption or a free-text product name doesn't just skew a chart; it falsifies the audit trail an exporter relies on. The kernel's never-silent-fallback rule and SearchSelect's identity capture are compliance requirements, not code hygiene.</div>
+
+    <h3>11.1 · Catalog data — owned by the June-24 plan, extended for Annexure-9</h3>
+    <table>
+      <tr><th style="width:26%">Source</th><th>Where it lands</th></tr>
+      <tr><td>Annexure-5 (whitelist)</td><td><strong>Already specced</strong>: <code>chemical_label_sources</code> (document + revision provenance) + versioned <code>chemical_label_claims</code> (formulation, dose, PHI, stage/count/interval constraints) + <code>chemical_label_claim_mrls</code> (market MRL references) per the June-24 plan's Unit 1/2. <strong>Dose-unit boundary:</strong> concentration formats (g/L, mL/L, ppm) are area-free and map 1:1 onto §3 chips; the annexure's per-area doses are <em>per hectare</em> (mL/ha, g/ha) while the entire app runs on acres — claims are stored faithful to source (sibling R2), and the kernel's <code>/ha</code> parse (÷2.47105) converts at the prefill/evaluation boundary. A farmer prefilled from a 500 mL/ha claim sees <strong>≈ 202 mL/acre</strong>, never a /ha figure.</td></tr>
+      <tr><td>Annexure-9 (audit list) — <em>new, additive</em></td><td>Extension in the sibling plan's style: an additive monitored-residues dataset (per active ingredient: harmonized EU-MRL, LOQ/zero-tolerance flag) hanging off <code>chemical_label_sources</code> for provenance, naming to be settled inside that plan. Approved chemicals appear in both lists with matching MRLs — the import cross-checks them.</td></tr>
+      <tr><td>Product mapping</td><td>Per the sibling plan's explicit stance: <strong>exact formulation/composition review only — no fuzzy brand→active auto-mapping</strong>. Ambiguous or unreviewed products stay <code>unverified</code>/blocked from claim matching. The existing <code>catalog_mapping_status</code> (<code>mapped_verified | mapped_provisional | unmapped</code>) on warehouse items is the review-state carrier SearchSelect surfaces.</td></tr>
+    </table>
+
+    <h3>11.2 · Spray-time guard — consumes the June-24 evaluator, adds one input</h3>
+    <p class="sub">The sibling plan's pure evaluator already returns <code>allowed | warning | blocked | unverified</code> from claim + date + harvest target + stage + prior applications. This plan adds the Annexure-9 monitored/zero-tolerance dataset as one more evaluator input and wires the result into SearchSelect at <em>selection</em> time (the evaluator's existing seam is pre-save):</p>
+    <table>
+      <tr><th style="width:30%">Evaluator outcome</th><th>SearchSelect / form behavior</th></tr>
+      <tr><td><span class="sev lo"></span><code>allowed</code> (verified claim)</td><td>Prefill label-claim dose chip + value; PHI days inline (feeds existing safe-to-spray matrix).</td></tr>
+      <tr><td><span class="sev hi"></span><code>blocked</code>-class: zero-tolerance (A9 LOQ, no label claim)</td><td>Strong localized warning at selection <em>and</em> save: "export grapes: zero tolerance — consignment will fail residue test." Whether this maps to hard <code>blocked</code> or override-able <code>warning</code> is open question #5. Telemetry counter either way. Catching this at spray time saves the season; the lab catches it after harvest, when the lot is already lost.</td></tr>
+      <tr><td><span class="sev md"></span><code>unverified</code> (unknown / custom / unmapped)</td><td>Neutral "unverified for export" notice. Never blocks logging — an unlogged spray is worse than an unverified one. Fail-closed rule (sibling R6): unverified sprays make the season summary <code>unverified</code>, never silently omitted.</td></tr>
+    </table>
+
+    <h3>11.3 · Exporter spray diary (P4 report) — extends the sibling plan's summary line</h3>
+    <p>The June-24 plan already specs a report header ("N of M sprays verified against ICAR-NRCG Annexure 5 (rev …); remainder pending review"). This deliverable is the full document under that header — the compliance artifact the paying customer (exporter / consultant) needs, per season, per farm, GrapeNet-shaped:</p>
+    <table>
+      <tr><th>Column</th><th>Source (real concepts only)</th></tr>
+      <tr><td>Date · growth stage</td><td>Spray record + season data</td></tr>
+      <tr><td>Chemical (active ingredient + formulation)</td><td>SearchSelect identity → verified claim mapping (§11.1; unverified rows shown as unverified, per fail-closed R6)</td></tr>
+      <tr><td>Dose (as logged) · folded canonical · water volume</td><td>Kernel <code>parse</code>/<code>fold</code> — testimony preserved, canonical alongside</td></tr>
+      <tr><td>PHI days · earliest safe harvest · evaluation outcome</td><td>Per-spray claim snapshot (sibling R5 — the rule as it was at spray time, not today's catalog)</td></tr>
+      <tr><td>EU-MRL reference · annexure revision</td><td><code>chemical_label_claim_mrls</code> + <code>chemical_label_sources</code> revision on the snapshot</td></tr>
+    </table>
+    <p class="sub">Rendered through existing report/export infra (<code>useReportExport</code>). The per-liter lens (§5) is the residue-relevant view; this diary is its exporter-facing sibling. Snapshot-sourcing matters: a diary regenerated after a catalog update must show the rule each spray was judged against, not the current rule.</p>
+
+    <h3>11.4 · Seasonal refresh discipline</h3>
+    <p>Both annexures revise repeatedly <em>within</em> a season, not once a year: the PDFs reviewed for this plan (A5 17 Sep 2025, A9 09 Oct 2025) were already superseded by A5 rev. 03 Nov 2025 and A9 rev. 17 Jan 2026 on nrcgrapes.in at the time of writing — this plan itself hit the staleness failure mode it warns about. <strong>So did the sibling plan</strong>: its "first source edition" is pinned to the 17 Sep 2025 A5 — its Unit-2 import should target the 03 Nov 2025 revision instead. The mechanism is already right there (R10: additive, effective-dated, never overwrite — <code>chemical_label_sources</code> carries provenance); what this section adds is the operational rule: the import fetches the <em>live</em> documents from nrcgrapes.in at import time and records the revision it actually loaded. A farm operating on a superseded whitelist is a compliance bug of the same severity as a unit corruption — surfaced in §8 risks and open question #6.</p>
+  </section>
+
+  <footer style="margin-top:48px; padding-top:16px; border-top:1px solid var(--border); color:var(--text-2); font-size:12px;">
+    Sources: vinesight-rn-clean working tree (src/components/forms/spray-form.tsx, fertigation-form.tsx, src/components/screens/entry-form.tsx, src/hooks/use-records.ts, app/professional/farm/[farmId]/lab-reports.tsx, src/services/report-service.ts, src/constants/units.ts, fertilizer-units.ts, calculator-models.ts, src/types/database.ts, catalog.ts) · docs/plans/2026-06-24-001-feat-grape-spray-compliance-plan.md (active sibling plan — §11 defers to it) · ICAR-NRC Grapes Annexure-5 (analyzed rev. 17 Sep 2025; current rev. 03 Nov 2025 per nrcgrapes.in, 2 Jul 2026) · Annexure-9 (analyzed rev. 09 Oct 2025, 278 monitored / 164 zero-tolerance; current rev. 17 Jan 2026 — re-verify counts on import) · Prior session findings: L/acre→kg round-trip bug, alias-table triplication, free-text product identity gap.
+  </footer>
+</main>
+</body>
+</html>

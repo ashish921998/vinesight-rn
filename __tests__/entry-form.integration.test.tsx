@@ -73,6 +73,10 @@ jest.mock('@/hooks', () => ({
   useUpdateFarmWaterLevel: () => ({ mutateAsync: mockUpdateWaterLevelMutate }),
   useFarms: (...args: unknown[]) => mockUseFarms(...args),
   useProfile: () => ({ data: { area_unit_preference: 'acres' } }),
+  useFarmAreaAcres: (area: number | null | undefined) => ({
+    preferredAreaUnit: 'acres' as const,
+    farmAreaAcres: typeof area === 'number' && Number.isFinite(area) && area > 0 ? area : null,
+  }),
   useResponsiveHeight: () => ({ windowHeight: 800 }),
   useWarehouseItems: () => ({ data: [] }),
   useRecentSprayChemicals: () => ({ data: [] }),
