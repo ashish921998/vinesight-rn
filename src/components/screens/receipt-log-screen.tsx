@@ -35,7 +35,7 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { toSupabaseDateString, type DailyNoteRecord } from '@/types/database';
 import type { Farm } from '@/types';
 import { triggerHapticSuccess } from '@/utils/haptics';
-import { resolveAreaUnitPreference } from '@/utils/preferences';
+import { convertAreaToAcres, resolveAreaUnitPreference } from '@/utils/preferences';
 import { formatDate } from '@/i18n/format';
 import {
   IrrigationForm,
@@ -214,6 +214,10 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
   const preferredAreaUnit = resolveAreaUnitPreference(
     profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
   );
+  const farmAreaAcres =
+    typeof farm?.area === 'number' && Number.isFinite(farm.area) && farm.area > 0
+      ? convertAreaToAcres(farm.area, preferredAreaUnit)
+      : null;
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -970,7 +974,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
                   <SprayForm
                     data={draft as SprayFormData}
                     onChange={setDraft}
-                    areaAcres={farm?.area ?? null}
+                    areaAcres={farmAreaAcres}
                     compact
                   />
                 )}
@@ -984,6 +988,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
                   <FertigationForm
                     data={draft as FertigationFormData}
                     onChange={setDraft}
+                    areaAcres={farmAreaAcres}
                     compact
                   />
                 )}

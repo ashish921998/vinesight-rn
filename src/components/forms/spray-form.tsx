@@ -1049,21 +1049,28 @@ function ChemicalRow({
         )}
       </View>
 
-      {/* Quantity and Unit Row */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}>
+      {/* Quantity + unit-suffix row. The unit lives inline as a muted suffix
+          so "5 ppm" reads naturally; chips below are the only way to change it. */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: spacing[2],
+          borderRadius: borderRadius.lg,
+          backgroundColor: m3.surface.s100,
+          borderWidth: 1,
+          borderColor: isQuantityFocused ? m3.colorScheme.tertiary : m3.surface.s200,
+        }}
+      >
         <TextInput
           ref={quantityRef}
           style={{
             flex: 1,
-            borderRadius: borderRadius.lg,
             paddingHorizontal: spacing[3],
             paddingVertical: 10,
             fontSize: fontSize.base,
             color: m3.surface.s900,
             textAlign: 'center',
-            backgroundColor: m3.surface.s100,
-            borderWidth: 1,
-            borderColor: isQuantityFocused ? m3.colorScheme.tertiary : m3.surface.s200,
           }}
           placeholder={t('sprayForm.chemicals.qtyPlaceholder')}
           placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
@@ -1081,21 +1088,17 @@ function ChemicalRow({
           returnKeyType={index < chemicalCount - 1 ? 'next' : 'done'}
           blurOnSubmit={index >= chemicalCount - 1}
         />
-
-        {/* Current unit label — the chips below are the only way to change it. */}
-        <View
+        <Text
           style={{
-            backgroundColor: m3.surface.s100,
-            borderRadius: borderRadius.lg,
             paddingHorizontal: spacing[3],
             paddingVertical: 10,
-            marginLeft: spacing[2],
-            borderWidth: 1,
-            borderColor: m3.surface.s200,
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.semibold,
+            color: m3.surface.s600,
           }}
         >
-          <Text style={{ fontSize: fontSize.base, color: m3.surface.s900 }}>{unitLabel}</Text>
-        </View>
+          {unitLabel}
+        </Text>
       </View>
 
       {/* Live tank echo — the entered rate resolved into tank reality. */}
@@ -1178,16 +1181,20 @@ function ChemicalRow({
                   borderRadius: borderRadius.full,
                   paddingHorizontal: spacing[3],
                   paddingVertical: spacing[1],
-                  backgroundColor: selected
-                    ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
-                    : m3.surface.s100,
+                  backgroundColor: selected ? m3.colorScheme.tertiary : m3.surface.s100,
                   borderWidth: 1,
                   borderColor: selected
-                    ? colorWithOpacity(m3.colorScheme.tertiary, 0.5)
+                    ? m3.colorScheme.tertiary
                     : colorWithOpacity(m3.colorScheme.outline, 0.2),
                 }}
               >
-                <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: selected ? m3.surface.s100 : m3.surface.s700,
+                    fontWeight: '600',
+                  }}
+                >
                   {chip.key}
                 </Text>
               </Pressable>
@@ -1204,20 +1211,28 @@ function ChemicalRow({
               borderRadius: borderRadius.full,
               paddingHorizontal: spacing[3],
               paddingVertical: spacing[1],
-              backgroundColor: activeOverflowChip
-                ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
-                : m3.surface.s100,
+              backgroundColor: activeOverflowChip ? m3.colorScheme.tertiary : m3.surface.s100,
               borderWidth: 1,
               borderColor: activeOverflowChip
-                ? colorWithOpacity(m3.colorScheme.tertiary, 0.5)
+                ? m3.colorScheme.tertiary
                 : colorWithOpacity(m3.colorScheme.outline, 0.2),
             }}
           >
-            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                color: activeOverflowChip ? m3.surface.s100 : m3.surface.s700,
+                fontWeight: '600',
+              }}
+            >
               {activeOverflowChip?.key ??
                 t('sprayForm.chemicals.moreUnits', { defaultValue: 'More units' })}
             </Text>
-            <Symbol name="chevron.down" size={12} color={m3.surface.s600} />
+            <Symbol
+              name="chevron.down"
+              size={12}
+              color={activeOverflowChip ? m3.surface.s100 : m3.surface.s600}
+            />
           </Pressable>
         </View>
       ) : null}

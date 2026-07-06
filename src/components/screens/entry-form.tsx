@@ -142,7 +142,7 @@ import {
   type EntryLogSessionAdapters,
   type EntryLogSubmissionFailure,
 } from '@/features/entry-log-session';
-import { resolveAreaUnitPreference } from '@/utils/preferences';
+import { convertAreaToAcres, resolveAreaUnitPreference } from '@/utils/preferences';
 import {
   ensureNotificationPermissions,
   scheduleTaskDueReminder,
@@ -331,6 +331,10 @@ export function EntryForm({
       ? farms?.find((f) => f.id === selectedFarmId)
       : null) ??
     null;
+  const activeFarmAreaAcres =
+    typeof activeFarm?.area === 'number' && Number.isFinite(activeFarm.area) && activeFarm.area > 0
+      ? convertAreaToAcres(activeFarm.area, preferredAreaUnit)
+      : null;
   const isGrapeFarm = isGrapeCrop(activeFarm?.crop, activeFarm?.crop_variety);
   const logFarmId = activeFarm?.id;
   const { data: sprayWarehouseItems } = useWarehouseItems('spray');
@@ -1874,7 +1878,7 @@ export function EntryForm({
                 fertigationHistoryItems={recentFertigationItems ?? []}
                 fertigationPlanItems={fertilizerPlan?.items ?? []}
                 fertigationCatalogProducts={fertilizerCatalogProducts}
-                areaAcres={activeFarm?.area ?? null}
+                areaAcres={activeFarmAreaAcres}
                 showSaveButton={false}
               />
             </ScrollView>
@@ -1996,7 +2000,7 @@ export function EntryForm({
           fertigationHistoryItems={recentFertigationItems ?? []}
           fertigationPlanItems={fertilizerPlan?.items ?? []}
           fertigationCatalogProducts={fertilizerCatalogProducts}
-          areaAcres={activeFarm?.area ?? null}
+          areaAcres={activeFarmAreaAcres}
         />
       </View>
     );
