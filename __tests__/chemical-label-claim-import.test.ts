@@ -145,9 +145,7 @@ describe('chemical label claim import', () => {
     expect(row.source_serial).toBe('16a');
     expect(row.phi_min_days).toBeNull();
     expect(row.phi_max_days).toBeNull();
-    expect(row.mrls).toEqual([
-      expect.objectContaining({ no_mrl_required: true, mrl_value: null }),
-    ]);
+    expect(row.mrls).toEqual([expect.objectContaining({ no_mrl_required: true, mrl_value: null })]);
     expect(row.stage_restrictions).toBe('Pre-bloom only');
   });
 
@@ -289,10 +287,22 @@ function fakeClient(respond: Responder, log: FakeOp[]): SupabaseLikeClient {
     const builder: Record<string, unknown> = {
       maybeSingle: () => Promise.resolve(resolve('maybeSingle')),
       single: () => Promise.resolve(resolve('single')),
-      then: (onFulfilled?: (value: unknown) => unknown, onRejected?: (reason: unknown) => unknown) =>
-        Promise.resolve(resolve('await')).then(onFulfilled, onRejected),
+      then: (
+        onFulfilled?: (value: unknown) => unknown,
+        onRejected?: (reason: unknown) => unknown,
+      ) => Promise.resolve(resolve('await')).then(onFulfilled, onRejected),
     };
-    for (const method of ['select', 'insert', 'update', 'delete', 'eq', 'ilike', 'lt', 'is', 'in']) {
+    for (const method of [
+      'select',
+      'insert',
+      'update',
+      'delete',
+      'eq',
+      'ilike',
+      'lt',
+      'is',
+      'in',
+    ]) {
       builder[method] = (...args: unknown[]) => {
         methods.push({ method, args });
         return builder;
@@ -332,6 +342,12 @@ describe('applyImportPlan write path', () => {
       if (op.table === 'chemical_label_claims' && called(op, 'insert')) {
         return { data: { id: 500 }, error: null };
       }
+      // An update followed by .select('id') returns a row array, never a bare
+      // object — modeling this keeps the fake honest against the zero-row guard
+      // in upsertClaim.
+      if (op.table === 'chemical_label_claims' && called(op, 'update')) {
+        return { data: [{ id: 500 }], error: null };
+      }
       if (op.table === 'chemical_label_claim_mrls' && called(op, 'select')) {
         return { data: [], error: null };
       }
@@ -351,8 +367,12 @@ describe('applyImportPlan write path', () => {
 
     await applyImportPlan(plan(), client);
 
-    const sourceUpdate = log.find((op) => op.table === 'chemical_label_sources' && called(op, 'update'));
-    const claimsUpdate = log.find((op) => op.table === 'chemical_label_claims' && called(op, 'update'));
+    const sourceUpdate = log.find(
+      (op) => op.table === 'chemical_label_sources' && called(op, 'update'),
+    );
+    const claimsUpdate = log.find(
+      (op) => op.table === 'chemical_label_claims' && called(op, 'update'),
+    );
     expect(argsOf(sourceUpdate!, 'in')).toEqual(['id', [1, 2]]);
     expect(argsOf(claimsUpdate!, 'in')).toEqual(['source_id', [1, 2]]);
     // Bulk updates resolve as plain awaits — .single() on a multi-row update
@@ -363,15 +383,16 @@ describe('applyImportPlan write path', () => {
 
   it('scopes the supersede lookup to the document family, never (body, crop) alone', async () => {
     const log: FakeOp[] = [];
-    const client = fakeClient(happyPathResponder(() => null), log);
+    const client = fakeClient(
+      happyPathResponder(() => null),
+      log,
+    );
 
     await applyImportPlan(plan(), client);
 
     // Annexure-9 shares source_type, issuing body, and crop with Annexure-5 —
     // only the family slug keeps one import from superseding the other.
-    const priorLookup = log.find(
-      (op) => op.table === 'chemical_label_sources' && called(op, 'lt'),
-    );
+    const priorLookup = log.find((op) => op.table === 'chemical_label_sources' && called(op, 'lt'));
     expect(priorLookup!.methods).toContainEqual({
       method: 'ilike',
       args: ['document_family', 'annexure-5-grapes'],
@@ -444,7 +465,8 @@ describe('applyImportPlan write path', () => {
           return { data: { id: 500 }, error: null };
         }
         if (op.table === 'chemical_label_claims' && called(op, 'update')) {
-          return { data: { id: 500 }, error: null };
+          // .update().select() returns a row array (Supabase semantics).
+          return { data: [{ id: 500 }], error: null };
         }
         if (op.table === 'chemical_label_claim_mrls' && called(op, 'select')) {
           return { data: [{ id: 5, market: 'EU', residue_name: 'azoxystrobin' }], error: null };
@@ -525,17 +547,52 @@ describe('applyImportPlan write path', () => {
     );
 
     await expect(applyImportPlan(plan(), client)).rejects.toThrow('claim write failed');
-    expect(
-      log.some((op) => op.table === 'chemical_label_sources' && called(op, 'update')),
-    ).toBe(false);
+    expect(log.some((op) => op.table === 'chemical_label_sources' && called(op, 'update'))).toBe(
+      false,
+    );
+  });
+
+  it('throws a clear error when a claim row vanishes between lookup and update', async () => {
+    // The row was present at the maybeSingle lookup but the by-pk update then
+    // matches zero rows — a concurrent delete racing the importer. The fix for
+    // the PGRST116 crash (dropping .single()) would silently no-op here, so the
+    // guard turns it back into a loud, row-attributed error.
+    const log: FakeOp[] = [];
+    const client = fakeClient(
+      happyPathResponder((op) => {
+        if (op.table === 'chemical_label_sources' && op.terminal === 'maybeSingle') {
+          return { data: { id: 10 }, error: null };
+        }
+        if (op.table === 'chemical_label_claims' && op.terminal === 'maybeSingle') {
+          return { data: { id: 500 }, error: null };
+        }
+        if (op.table === 'chemical_label_claims' && called(op, 'update')) {
+          return { data: [], error: null };
+        }
+        return null;
+      }),
+      log,
+    );
+
+    await expect(applyImportPlan(plan(), client)).rejects.toThrow(
+      /claim 500 vanished between lookup and update/,
+    );
+    // A failed claim write must not proceed to refresh source provenance.
+    expect(log.some((op) => op.table === 'chemical_label_sources' && called(op, 'update'))).toBe(
+      false,
+    );
   });
 
   it('reports missing and ambiguous product mappings with row context, not PGRST116', async () => {
     const missing = fakeClient(
-      happyPathResponder((op) => (op.table === 'chemical_products' ? { data: [], error: null } : null)),
+      happyPathResponder((op) =>
+        op.table === 'chemical_products' ? { data: [], error: null } : null,
+      ),
       [],
     );
-    await expect(applyImportPlan(plan(), missing)).rejects.toThrow(/missing.*exact one-row mapping/s);
+    await expect(applyImportPlan(plan(), missing)).rejects.toThrow(
+      /missing.*exact one-row mapping/s,
+    );
 
     const ambiguous = fakeClient(
       happyPathResponder((op) =>

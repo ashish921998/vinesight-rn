@@ -5,8 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseUnit } from '../src/lib/quantity/parse-unit.ts';
 
-export const DEFAULT_CSV_PATH =
-  'docs/data/chemical-label-claims/icar-nrcg-grapes-2025-09-17.csv';
+export const DEFAULT_CSV_PATH = 'docs/data/chemical-label-claims/icar-nrcg-grapes-2025-09-17.csv';
 
 const REQUIRED_COLUMNS = [
   'edition_key',
@@ -262,7 +261,10 @@ export function summarizeImportRows(rows: ValidatedLabelClaimRow[]): ImportSumma
 }
 
 export function validateProductMappingCandidates(
-  row: Pick<ValidatedLabelClaimRow, 'product_mapping_strategy' | 'product_exact_name' | 'product_id'>,
+  row: Pick<
+    ValidatedLabelClaimRow,
+    'product_mapping_strategy' | 'product_exact_name' | 'product_id'
+  >,
   candidates: Array<{ id: number; name: string }>,
 ): number {
   if (row.product_mapping_strategy === 'product_id') {
@@ -378,7 +380,9 @@ function ciEq(table: SupabaseTable, column: string, value: string): SupabaseTabl
 }
 
 function validateRow(row: CsvRow, line: number): ValidatedLabelClaimRow {
-  const requiredEmpty = REQUIRED_NON_EMPTY_COLUMNS.filter((column) => clean(row[column]).length === 0);
+  const requiredEmpty = REQUIRED_NON_EMPTY_COLUMNS.filter(
+    (column) => clean(row[column]).length === 0,
+  );
   if (requiredEmpty.length > 0) {
     throw new Error(`Line ${line}: missing required fields: ${requiredEmpty.join(', ')}`);
   }
@@ -390,7 +394,9 @@ function validateRow(row: CsvRow, line: number): ValidatedLabelClaimRow {
 
   const productMappingStrategy = clean(row.product_mapping_strategy);
   if (!PRODUCT_MAPPING_STRATEGIES.has(productMappingStrategy)) {
-    throw new Error(`Line ${line}: unsupported product_mapping_strategy "${productMappingStrategy}"`);
+    throw new Error(
+      `Line ${line}: unsupported product_mapping_strategy "${productMappingStrategy}"`,
+    );
   }
 
   const doseBasis = clean(row.dose_basis);
@@ -436,7 +442,11 @@ function validateRow(row: CsvRow, line: number): ValidatedLabelClaimRow {
     issuing_body: requiredText(row.issuing_body, line, 'issuing_body'),
     source_document: requiredText(row.source_document, line, 'source_document'),
     source_url: nullable(row.source_url),
-    document_revision_date: requiredDate(row.document_revision_date, line, 'document_revision_date'),
+    document_revision_date: requiredDate(
+      row.document_revision_date,
+      line,
+      'document_revision_date',
+    ),
     document_superseded_by_revision_date: optionalDate(row.document_superseded_by_revision_date),
     crop: requiredText(row.crop, line, 'crop').toLowerCase(),
     source_page: requiredInt(row.source_page, line, 'source_page'),
@@ -709,19 +719,29 @@ async function upsertClaim(
 
   throwIfSupabaseError(existing.error);
   if (existing.data?.id) {
-    // Update by primary key — no .select().single(): the id is already known,
-    // and a row deleted between lookup and update must not crash the import
-    // with PGRST116 over a zero-row result.
+    // Update by primary key. No .single(): the id is already known, and a row
+    // deleted between lookup and update must surface as a clear error rather
+    // than crash with PGRST116 over a zero-row result or — worse — silently
+    // no-op and let downstream syncMrls run against a missing claim.
     const claimId = Number(existing.data.id);
-    throwIfSupabaseError(
-      (await client.from('chemical_label_claims').update(payload).eq('id', claimId)).error,
-    );
+    const updated = await client
+      .from('chemical_label_claims')
+      .update(payload)
+      .eq('id', claimId)
+      .select('id');
+    throwIfSupabaseError(updated.error);
+    if (!updated.data?.length) {
+      throw new Error(
+        `Row ${row.source_serial}: claim ${claimId} vanished between lookup and update`,
+      );
+    }
     return claimId;
   }
 
   const inserted = await client.from('chemical_label_claims').insert(payload).select('id').single();
   throwIfSupabaseError(inserted.error);
-  if (!inserted.data?.id) throw new Error(`Row ${row.source_serial}: inserted claim returned no id`);
+  if (!inserted.data?.id)
+    throw new Error(`Row ${row.source_serial}: inserted claim returned no id`);
   return Number(inserted.data.id);
 }
 
