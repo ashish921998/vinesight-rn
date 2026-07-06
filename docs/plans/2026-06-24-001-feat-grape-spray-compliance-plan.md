@@ -1,7 +1,7 @@
 ---
 title: "feat: Add versioned grape spray compliance"
 type: feat
-status: active
+status: parked
 date: 2026-06-24
 ---
 
@@ -667,6 +667,20 @@ offline    | catalog cache evicted / no network       | grey: "Can't check — y
 - [ ] **DT3 (P1)** — a11y/i18n: 44px targets, live-region + labels, contrast, en/hi/mr plural count copy. Files: card + `src/i18n/locales/{en,hi,mr}.ts`.
 - [ ] **DT4 (P2)** — export: status column + honest header summary. Files: `src/services/report-service.ts`, `src/types/report.ts`, `app/reports.tsx`.
 - [ ] **DT5 (P3, TODOS.md)** — one-time explanation for the unverified flip.
+
+## Strategy Review Outcome — Parked at Foundation (2026-07-06)
+
+> `/plan-ceo-review` re-examined whether completing the remaining slice is the right move now. Decision: **park**.
+
+**Shipped and stable (dormant, flag off):** T1 fail-closed domain fix (`phi-service.ts` tri-state + `use-phi.ts`), T2 flag wrapper (#213), T3 schema live in prod (#214), T9 import pipeline (#216). Zero claims imported — the CSV awaits human PDF verification.
+
+**Parked pending a committed consultant/exporter pilot:** #217 (backfill), #218 (catalog RPC), #219 (evaluator), #220 (6-state card + caution token), #221 (audit export), #222–#224 (Annexure-9 track).
+
+**Rationale:** the 2026-06-24 eng review conditioned all remaining value on the Fratelli pilot (central record-keeping + audit export); that buyer has paid ₹0 to date. With no claims imported and 97% of farms flipping to "unverified" until the founder-driven 1,899-spray backfill, every remaining unit renders empty. Parking costs nothing: additive schema, idempotent supersession-aware importer, kill-switch flag already off.
+
+**Exception executed at park time:** #215 (PHI-rule dedup → strictest verified + currently-effective) — a live safety bug in the *shipped* PHI display, independent of this plan.
+
+**Resume trigger:** a pilot conversation with a date. Resume order: human CSV verification → `--write` import → #217 backfill → #221 export (pilot minimum), then #218/#219/#220, then #222–#224.
 
 ## GSTACK REVIEW REPORT
 

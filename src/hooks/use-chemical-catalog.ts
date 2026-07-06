@@ -33,6 +33,43 @@ interface ChemicalPhiRuleRow {
   phi_days: number;
   verified: boolean;
   source_note: string | null;
+  effective_from: string | null;
+  effective_to: string | null;
+}
+
+function isCurrentlyEffective(rule: ChemicalPhiRuleRow, todayIso: string): boolean {
+  if (rule.effective_from && rule.effective_from > todayIso) return false;
+  if (rule.effective_to && rule.effective_to < todayIso) return false;
+  return true;
+}
+
+/**
+ * One governing PHI rule per product: verified beats unverified, and among the
+ * same verification tier the strictest (max phi_days) wins so ties fail to the
+ * safe side. Rules outside their effective_from/effective_to window are not
+ * candidates at all — an expired rule must not govern in either direction.
+ */
+export function dedupePhiRules(
+  phiRules: ChemicalPhiRuleRow[],
+  todayIso: string = new Date().toISOString().slice(0, 10),
+): Map<number, ChemicalPhiRuleRow> {
+  const byProduct = new Map<number, ChemicalPhiRuleRow>();
+  phiRules.forEach((rule) => {
+    if (!isCurrentlyEffective(rule, todayIso)) return;
+    const existing = byProduct.get(rule.product_id);
+    if (!existing) {
+      byProduct.set(rule.product_id, rule);
+      return;
+    }
+    if (existing.verified !== rule.verified) {
+      if (rule.verified) byProduct.set(rule.product_id, rule);
+      return;
+    }
+    if (rule.phi_days > existing.phi_days) {
+      byProduct.set(rule.product_id, rule);
+    }
+  });
+  return byProduct;
 }
 
 function mapCatalogData(
@@ -47,17 +84,7 @@ function mapCatalogData(
     componentByMix.set(component.mix_id, current);
   });
 
-  const phiRuleByProduct = new Map<number, ChemicalPhiRuleRow>();
-  phiRules.forEach((rule) => {
-    const existing = phiRuleByProduct.get(rule.product_id);
-    if (!existing) {
-      phiRuleByProduct.set(rule.product_id, rule);
-      return;
-    }
-    if (!existing.verified && rule.verified) {
-      phiRuleByProduct.set(rule.product_id, rule);
-    }
-  });
+  const phiRuleByProduct = dedupePhiRules(phiRules);
 
   return mixes.map((mix) => {
     const mappedComponents = (componentByMix.get(mix.id) ?? [])
@@ -148,7 +175,7 @@ async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
     productIds.length > 0
       ? supabase
           .from(TABLES.CHEMICAL_PHI_RULES)
-          .select('product_id,crop,phi_days,verified,source_note')
+          .select('product_id,crop,phi_days,verified,source_note,effective_from,effective_to')
           .in('product_id', productIds)
           .eq('crop', 'grape')
       : Promise.resolve({
