@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "import:label-claims": "node --experimental-strip-types scripts/import-chemical-label-claims.ts",
     "generate-widget": "node scripts/generate-widget.js",
     "storybook:start": "cross-env EXPO_PUBLIC_STORYBOOK_ENABLED=true expo start",
     "web:smoke": "CI=1 expo export --platform web --output-dir /tmp/vinesight-web-smoke",

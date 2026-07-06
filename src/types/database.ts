@@ -185,6 +185,109 @@ export type SprayRecordInsert = Omit<SprayRecord, 'id' | 'created_at'>;
 export type SprayRecordUpdate = Partial<Omit<SprayRecord, 'id' | 'farm_id' | 'created_at'>>;
 
 // ============================================================
+// MARK: - Chemical Label Claims
+// ============================================================
+
+export type LabelClaimReviewStatus = 'pending_review' | 'verified' | 'rejected' | 'superseded';
+export type LabelSourceType = 'annexure' | 'label' | 'manual_review' | 'other';
+export type LabelDoseBasis = 'per_liter_water' | 'per_acre' | 'total' | 'other';
+// NOTE: per-spray compliance columns (and their status union) land with the
+// Unit 4 write path (ARCH-3) — the evaluator outcome type lives in phi.ts as
+// PhiComplianceStatus until then.
+
+export interface ChemicalLabelSource {
+  id?: number;
+  source_type: LabelSourceType;
+  /**
+   * Stable document-family slug (e.g. 'annexure-5-grapes') that supersession
+   * is scoped to. Nullable by design: rows without a family are never
+   * auto-superseded (fail-closed) — the claims importer always writes it.
+   */
+  document_family?: string | null;
+  issuing_body: string;
+  source_document: string;
+  source_title: string;
+  source_url?: string | null;
+  crop: string;
+  revision_date: string;
+  effective_from?: string | null;
+  effective_to?: string | null;
+  document_checksum?: string | null;
+  edition_defaults?: Record<string, unknown>;
+  review_status: LabelClaimReviewStatus;
+  notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export type ChemicalLabelSourceInsert = Omit<
+  ChemicalLabelSource,
+  'id' | 'created_at' | 'updated_at'
+>;
+export type ChemicalLabelSourceUpdate = Partial<
+  Omit<ChemicalLabelSource, 'id' | 'created_at' | 'updated_at'>
+>;
+
+export interface ChemicalLabelClaim {
+  id?: number;
+  source_id: number;
+  product_id: number;
+  crop: string;
+  source_page?: number | null;
+  source_serial: string;
+  formulation_name: string;
+  active_ingredient?: string | null;
+  target_problem: string;
+  dose_value: number;
+  dose_unit: string;
+  dose_basis: LabelDoseBasis;
+  phi_min_days?: number | null;
+  phi_max_days?: number | null;
+  phi_note?: string | null;
+  systemic_class?: string | null;
+  restrictions?: string | null;
+  resistance_markers?: string | null;
+  max_applications_per_season?: number | null;
+  min_application_interval_days?: number | null;
+  max_application_interval_days?: number | null;
+  application_interval_note?: string | null;
+  stage_restrictions?: string | null;
+  review_status: LabelClaimReviewStatus;
+  effective_from?: string | null;
+  effective_to?: string | null;
+  supersedes_claim_id?: number | null;
+  is_active: boolean;
+  review_notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export type ChemicalLabelClaimInsert = Omit<
+  ChemicalLabelClaim,
+  'id' | 'created_at' | 'updated_at'
+>;
+export type ChemicalLabelClaimUpdate = Partial<
+  Omit<ChemicalLabelClaim, 'id' | 'created_at' | 'updated_at'>
+>;
+
+export interface ChemicalLabelClaimMrl {
+  id?: number;
+  claim_id: number;
+  market: string;
+  residue_name: string;
+  mrl_value?: number | null;
+  mrl_unit: string;
+  no_mrl_required: boolean;
+  source_note?: string | null;
+  created_at?: string | null;
+}
+
+export type ChemicalLabelClaimMrlInsert = Omit<ChemicalLabelClaimMrl, 'id' | 'created_at'>;
+export type ChemicalLabelClaimMrlUpdate = Partial<
+  Omit<ChemicalLabelClaimMrl, 'id' | 'claim_id' | 'created_at'>
+>;
+
+// ============================================================
 // MARK: - Fertigation Record
 // ============================================================
 
@@ -771,6 +874,9 @@ export const TABLES = {
   CHEMICAL_MIXES: 'chemical_mixes',
   CHEMICAL_MIX_COMPONENTS: 'chemical_mix_components',
   CHEMICAL_PHI_RULES: 'chemical_phi_rules',
+  CHEMICAL_LABEL_SOURCES: 'chemical_label_sources',
+  CHEMICAL_LABEL_CLAIMS: 'chemical_label_claims',
+  CHEMICAL_LABEL_CLAIM_MRLS: 'chemical_label_claim_mrls',
   IRRIGATION_RECORDS: 'irrigation_records',
   SPRAY_RECORDS: 'spray_records',
   FERTIGATION_RECORDS: 'fertigation_records',
