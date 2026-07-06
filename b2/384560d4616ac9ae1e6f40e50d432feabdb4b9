@@ -1,0 +1,39 @@
+src/components/forms/spray-form.tsx
+  s_871edbfc0bc96a::t_b52b1daa473ed8 1060-1064,1091,1095-1097,1100-1101,1184,1187,1191-1197,1214,1217,1221-1227
+  s_871edbfc0bc96a::t_ebed88d80b291f 1057-1059
+src/components/screens/receipt-log-screen.tsx
+  s_e13b9af3706fc4::t_74621a74bf8d91 38,217-220,977,991
+src/components/screens/entry-form.tsx
+  s_e13b9af3706fc4::t_5326c0bf633ada 145,1881,2003
+  s_e13b9af3706fc4::t_437b9c6f2c3fb6 334-337
+src/components/screens/activity-edit-form.tsx
+  s_e13b9af3706fc4::t_41425184715848 430,501
+  s_e13b9af3706fc4::t_acfff44c1eee99 60,64,75,102-110,569,591
+docs/units-search-reports-plan.html
+  s_e13b9af3706fc4::t_643f19c219b118 1-161,163-420
+  s_e13b9af3706fc4::t_c4b784628a49cf 162
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b2384560d4616ac9ae1e6f40e50d432feabdb4b9",
+  "prompts": {},
+  "sessions": {
+    "s_871edbfc0bc96a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3cfb6948-76b1-4f20-aae6-adf743a4fb93",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_e13b9af3706fc4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f355c-7615-7ab2-bcde-ed0330903fb0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
