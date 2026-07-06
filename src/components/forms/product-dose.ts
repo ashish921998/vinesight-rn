@@ -240,20 +240,18 @@ export function evaluateDoseGuidanceGuard(
   const ratioLow = ratioBetween(entered, minRate, enteredItem, minItem, ctx);
 
   // The message reports the entered value in the GUIDANCE unit (e.g. "entered
-  // 12 g/L"), not the kernel's canonical unit (kg). The guidance reference and
-  // the entry are measure-matched above, so dividing the entered canonical rate
-  // by the reference unit's factor converts it back into the guidance's scale.
-  const guidanceFactor = maxRate.rate / guidance.maxValue;
-  const enteredInGuidanceUnit =
-    guidanceFactor > 0
-      ? roundForMessage(entered.rate / guidanceFactor)
-      : roundForMessage(entered.rate);
-
+  // 12 g/L"), not the kernel's canonical unit (kg). Derive it from the ratio,
+  // NOT from a unit-scale division: ratioBetween already resolved any basis
+  // difference (entered 8 kg total on 3.5 ac vs a 2.5 kg/ha bound is ratio
+  // 2.26 → 5.65 kg/ha), whereas dividing entered.rate by the unit factor
+  // ignores the area/water factor and would report 19.77 kg/ha for the same
+  // entry. bound × ratio equals rate ÷ factor in the same-basis case, so one
+  // formula serves both branches.
   if (ratioHigh !== null && ratioHigh >= DOSE_GUIDANCE_FACTOR) {
     return {
       direction: 'high',
       reference: guidance,
-      entered: enteredInGuidanceUnit,
+      entered: roundForMessage(guidance.maxValue * ratioHigh),
       unit: guidance.unit,
     };
   }
@@ -261,7 +259,7 @@ export function evaluateDoseGuidanceGuard(
     return {
       direction: 'low',
       reference: guidance,
-      entered: enteredInGuidanceUnit,
+      entered: roundForMessage(guidance.minValue * ratioLow),
       unit: guidance.unit,
     };
   }

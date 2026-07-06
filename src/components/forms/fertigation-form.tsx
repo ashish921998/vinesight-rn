@@ -260,48 +260,59 @@ export function FertigationForm({
       const incomingChipKey =
         fertigationChipForEntry(validatedUnit, incomingBasis)?.key ??
         validatedUnit.trim().toLowerCase();
+      // Whether the item's quantity actually reached the input — false when
+      // fillRow preserves a quantity the user already typed. Read by the
+      // prefill telemetry so it counts prefills that landed, not picks.
+      let quantityApplied = false;
       const nextFertilizers = applyQuickAdd(data.fertilizers, {
         isDuplicate: (fertilizer) =>
           fertilizer.name.trim().toLowerCase() === normalizedName &&
           (fertigationChipForEntry(fertilizer.unit, fertilizer.quantityBasis)?.key ??
             fertilizer.unit.trim().toLowerCase()) === incomingChipKey,
-        fillRow: (current) => ({
-          ...current,
-          name: item.name.trim(),
-          unit: validatedUnit,
-          quantity:
-            current.quantity !== undefined && current.quantity > 0
-              ? current.quantity
-              : (item.quantity ?? 0),
-          // An explicit item basis (fully-prefilled picker selections) wins,
-          // then the unit string's own per-acre testimony ('kg/acre' collapsed
-          // to bare 'kg' must not inherit the pristine row's 'total'), then
-          // the current row, then the quick-add default.
-          quantityBasis:
-            item.quantityBasis ??
-            perAcreUnitTestimony(resolved.basisFromUnit) ??
-            current.quantityBasis ??
-            resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
-          warehouseItemId: item.warehouseItemId ?? null,
-          catalogProductId: item.catalogProductId ?? null,
-          planItemId: item.planItemId ?? null,
-          compositionSnapshot: item.composition ?? null,
-          densityKgPerL: item.densityKgPerL ?? null,
-        }),
-        appendRow: () => ({
-          id: generateRowId(),
-          name: item.name.trim(),
-          quantity: item.quantity ?? 0,
-          unit: validatedUnit,
-          quantityBasis: resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
-          warehouseItemId: item.warehouseItemId ?? null,
-          catalogProductId: item.catalogProductId ?? null,
-          planItemId: item.planItemId ?? null,
-          compositionSnapshot: item.composition ?? null,
-          densityKgPerL: item.densityKgPerL ?? null,
-        }),
+        fillRow: (current) => {
+          quantityApplied = !(current.quantity !== undefined && current.quantity > 0);
+          return {
+            ...current,
+            name: item.name.trim(),
+            unit: validatedUnit,
+            quantity:
+              current.quantity !== undefined && current.quantity > 0
+                ? current.quantity
+                : (item.quantity ?? 0),
+            // An explicit item basis (fully-prefilled picker selections) wins,
+            // then the unit string's own per-acre testimony ('kg/acre' collapsed
+            // to bare 'kg' must not inherit the pristine row's 'total'), then
+            // the current row, then the quick-add default.
+            quantityBasis:
+              item.quantityBasis ??
+              perAcreUnitTestimony(resolved.basisFromUnit) ??
+              current.quantityBasis ??
+              resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
+            warehouseItemId: item.warehouseItemId ?? null,
+            catalogProductId: item.catalogProductId ?? null,
+            planItemId: item.planItemId ?? null,
+            compositionSnapshot: item.composition ?? null,
+            densityKgPerL: item.densityKgPerL ?? null,
+          };
+        },
+        appendRow: () => {
+          quantityApplied = true;
+          return {
+            id: generateRowId(),
+            name: item.name.trim(),
+            quantity: item.quantity ?? 0,
+            unit: validatedUnit,
+            quantityBasis: resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
+            warehouseItemId: item.warehouseItemId ?? null,
+            catalogProductId: item.catalogProductId ?? null,
+            planItemId: item.planItemId ?? null,
+            compositionSnapshot: item.composition ?? null,
+            densityKgPerL: item.densityKgPerL ?? null,
+          };
+        },
       });
       if (nextFertilizers) onChange({ ...data, fertilizers: nextFertilizers });
+      return nextFertilizers != null && quantityApplied;
     },
     [data, onChange],
   );
@@ -311,15 +322,7 @@ export function FertigationForm({
       setShowProductPicker(false);
       // The fertigation picker never offers catalog mixes.
       if (selection.kind === 'mix') return;
-      // Telemetry: count when a catalog pick carries a recommended-dose prefill
-      // (#236) — the foliar midpoint reaching the input. A plan/history row for
-      // the same product would win precedence and carry no prefill here.
-      if (selection.catalogProductId != null && selection.prefill?.quantity != null) {
-        telemetry.capture('recommended_dose_prefilled', {
-          productId: selection.catalogProductId,
-        });
-      }
-      addQuickFertilizer({
+      const prefillApplied = addQuickFertilizer({
         name: selection.name,
         unit: selection.prefill?.unit,
         quantity: selection.prefill?.quantity,
@@ -331,6 +334,19 @@ export function FertigationForm({
         // like warehouse picks so the nutrient ledger sees them (issue #200).
         composition: selection.composition ?? null,
       });
+      // Telemetry: count when a recommended-dose prefill (#236) actually
+      // REACHED the input — gated on the quick-add result, because fillRow
+      // preserves a quantity the user already typed and counting those picks
+      // would inflate the adoption metric.
+      if (
+        selection.catalogProductId != null &&
+        selection.prefill?.quantity != null &&
+        prefillApplied
+      ) {
+        telemetry.capture('recommended_dose_prefilled', {
+          productId: selection.catalogProductId,
+        });
+      }
     },
     [addQuickFertilizer],
   );
@@ -792,20 +808,24 @@ function FertilizerRow({
   );
 
   // Recommended-dose range guardrail (#236): a SEPARATE, advisory-only warning
-  // against the catalog product's foliar label range. Independent of the
-  // plan/history guardrail above — both can show, neither blocks. Only resolves
-  // when the row carries a catalog product id AND that product has foliar
-  // guidance. Null otherwise (silent, like every optional layer).
+  // against the catalog product's label range. Independent of the plan/history
+  // guardrail above — both can show, neither blocks. The reference row follows
+  // the ENTERED unit's basis: a tank-concentration entry (g/L, ml/L, ppm) is
+  // judged against the foliar range; a per-acre/total entry against the drip
+  // range (kg/ha). Never cross-judged — comparing a 10,000 L fertigation
+  // against a 3–6 g/L spray-tank label fires spurious LOW warnings. No row for
+  // the matching route → null (silent, like every optional layer).
   const guidanceReference = useMemo<DoseGuidanceReference | null>(() => {
     if (fertilizer.catalogProductId == null) return null;
     const product = catalogProducts.find((item) => item.id === fertilizer.catalogProductId);
     if (!product) return null;
-    const foliar = (product.doseGuidance ?? []).find(
-      (guidance) => guidance.applicationRoute === 'foliar',
+    const route = isWaterConcentrationUnit(fertilizer.unit) ? 'foliar' : 'drip';
+    const row = (product.doseGuidance ?? []).find(
+      (guidance) => guidance.applicationRoute === route,
     );
-    if (!foliar) return null;
-    return { minValue: foliar.minValue, maxValue: foliar.maxValue, unit: foliar.unit };
-  }, [fertilizer.catalogProductId, catalogProducts]);
+    if (!row) return null;
+    return { minValue: row.minValue, maxValue: row.maxValue, unit: row.unit };
+  }, [fertilizer.catalogProductId, fertilizer.unit, catalogProducts]);
 
   const guidanceWarning = useMemo(
     () =>
@@ -819,8 +839,20 @@ function FertilizerRow({
   // Telemetry: count when the recommendation range guard fires (advisory-only
   // signal — the plan/history guard has no telemetry today). Fire-and-forget,
   // property-only, no PII. The prefill counter lives at the picker selection.
+  // Deduped per warning EPISODE: guidanceWarning gets a fresh object identity
+  // on every keystroke (its memo dep `fertilizer` is rebuilt by each onUpdate),
+  // so capturing on raw identity would fire once per keystroke while the
+  // warning shows. The ref keys on product+direction and resets when the
+  // warning clears, so the metric counts episodes, not renders.
+  const guidanceWarningEpisode = useRef<string | null>(null);
   useEffect(() => {
-    if (!guidanceWarning || fertilizer.catalogProductId == null) return;
+    if (!guidanceWarning || fertilizer.catalogProductId == null) {
+      guidanceWarningEpisode.current = null;
+      return;
+    }
+    const episode = `${fertilizer.catalogProductId}:${guidanceWarning.direction}`;
+    if (guidanceWarningEpisode.current === episode) return;
+    guidanceWarningEpisode.current = episode;
     telemetry.capture('dose_guidance_guard_triggered', {
       productId: fertilizer.catalogProductId,
       direction: guidanceWarning.direction,

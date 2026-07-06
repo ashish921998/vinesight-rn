@@ -89,18 +89,10 @@ begin
   end if;
 end $$;
 
--- updated_at maintenance trigger (mirrors the catalog's handle_*_updated_at).
-create or replace function public.handle_chemical_product_dose_guidance_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
-
+-- updated_at maintenance trigger — extensions.moddatetime, exactly like the
+-- sibling catalog tables (phi_catalog.sql); no hand-rolled function to keep
+-- search_path-clean per the Supabase security advisor.
 drop trigger if exists handle_chemical_product_dose_guidance_updated_at on public.chemical_product_dose_guidance;
 create trigger handle_chemical_product_dose_guidance_updated_at
   before update on public.chemical_product_dose_guidance
-  for each row execute function public.handle_chemical_product_dose_guidance_updated_at();
+  for each row execute procedure extensions.moddatetime(updated_at);

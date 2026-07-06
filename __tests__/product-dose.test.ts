@@ -84,6 +84,11 @@ describe('evaluateDoseGuidanceGuard — range guardrail (issue #236)', () => {
       ctx,
     );
     expect(warning?.direction).toBe('high');
+    // The message reports the TRUE per-hectare rate, basis-resolved: 8 kg on
+    // 3.5 acres (1.4164 ha) = 5.65 kg/ha — NOT entered.rate ÷ unit factor
+    // (which would ignore the area and claim 19.77 kg/ha).
+    expect(warning?.entered).toBeCloseTo(5.65, 1);
+    expect(warning?.unit).toBe('kg/ha');
   });
 
   it('stays silent across bases when the resolving area is missing', () => {

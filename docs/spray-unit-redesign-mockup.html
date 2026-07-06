@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spray Unit Redesign — Before / After</title>
+<style>
+  :root {
+    /* Material-3-ish tokens mirroring the app */
+    --primary: #4f7c4a;
+    --tertiary: #5b7a8c;
+    --surface-100: #f5f5f3;
+    --surface-200: #e7e7e4;
+    --surface-600: #6e6e69;
+    --surface-700: #4f4f4b;
+    --surface-800: #34342f;
+    --surface-900: #1c1c1a;
+    --outline: rgba(0,0,0,0.18);
+    --warning: #c47a1a;
+  }
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, #e9ede7 0%, #dfe5e9 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+    color: var(--surface-900);
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+    letter-spacing: -0.3px;
+  }
+  .subtitle { color: var(--surface-600); font-size: 14px; margin: 0 0 36px; }
+
+  .phones {
+    display: flex;
+    gap: 56px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* phone frame */
+  .phone {
+    width: 340px;
+    background: #fff;
+    border-radius: 38px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+    border: 10px solid #1c1c1a;
+  }
+  .phone-label {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    color: var(--surface-700);
+  }
+  .phone-label.badge-old { color: #b35a3a; }
+  .phone-label.badge-new { color: var(--primary); }
+
+  .screen {
+    background: #fafaf9;
+    padding: 20px 16px 28px;
+    min-height: 420px;
+  }
+
+  /* section header */
+  .section-header { margin-bottom: 14px; }
+  .section-title { font-size: 15px; font-weight: 600; }
+  .section-sub { font-size: 12px; color: var(--surface-600); margin-top: 2px; }
+
+  /* date row */
+  .date-row {
+    display: flex; align-items: center;
+    background: var(--surface-100);
+    border: 2px solid var(--surface-200);
+    border-radius: 18px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+  }
+  .date-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(79,124,74,0.12);
+    color: var(--primary);
+    display: grid; place-items: center;
+    margin-right: 12px; font-size: 16px;
+  }
+  .date-text { font-size: 14px; font-weight: 500; }
+
+  /* chemical card */
+  .card {
+    background: #fff;
+    border: 1px solid var(--surface-200);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .name-row { display: flex; align-items: center; gap: 6px; }
+  .name-input {
+    flex: 1;
+    font-size: 15px; font-weight: 600;
+    background: transparent; border: none;
+    color: var(--surface-900);
+    padding: 4px 0;
+  }
+  .remove-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: grid; place-items: center;
+    color: var(--surface-600);
+    font-size: 20px;
+  }
+
+  /* ----- OLD: two boxes ----- */
+  .qty-row-old { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .qty-box-old {
+    flex: 1; text-align: center;
+    background: var(--surface-100);
+    border: 1px solid var(--surface-200);
+    border-radius: 12px;
+    padding: 10px;
+    font-size: 15px;
+  }
+  .unit-box-old {
+    background: var(--surface-100);
+    border: 1px solid var(--surface-200);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 15px;
+    color: var(--surface-900);
+  }
+
+  /* ----- NEW: merged field with suffix ----- */
+  .qty-row-new {
+    display: flex; align-items: center;
+    background: var(--surface-100);
+    border: 1px solid var(--surface-200);
+    border-radius: 12px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .qty-input-new {
+    flex: 1; text-align: center;
+    border: none; background: transparent;
+    font-size: 15px; padding: 10px;
+    color: var(--surface-900);
+  }
+  .unit-suffix-new {
+    padding: 10px 14px;
+    font-size: 13px; font-weight: 600;
+    color: var(--surface-600);
+    border-left: 1px dashed rgba(0,0,0,0.08);
+  }
+
+  /* tank echo */
+  .tank-echo {
+    margin-top: 6px; padding-left: 4px;
+    font-size: 11px; color: var(--surface-600);
+  }
+
+  /* chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip {
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid var(--outline);
+    background: var(--surface-100);
+    color: var(--surface-700);
+    display: inline-flex; align-items: center; gap: 4px;
+    line-height: 1.6;
+  }
+  .chip-selected-old {
+    background: rgba(91,122,140,0.2);
+    border-color: rgba(91,122,140,0.5);
+    color: var(--surface-800);
+  }
+  .chip-selected-new {
+    background: var(--tertiary);
+    border-color: var(--tertiary);
+    color: #fff;
+  }
+  .chevron { font-size: 10px; opacity: 0.7; }
+
+  .footer-note {
+    margin-top: 40px;
+    max-width: 760px;
+    font-size: 13px; line-height: 1.6;
+    color: var(--surface-600);
+    text-align: center;
+  }
+  .footer-note strong { color: var(--surface-900); }
+</style>
+</head>
+<body>
+
+  <h1>Spray Chemical Row — Unit Display</h1>
+  <p class="subtitle">Before vs. after redesign</p>
+
+  <div class="phones">
+
+    <!-- ============ OLD ============ -->
+    <div>
+      <div class="phone-label badge-old">Before</div>
+      <div class="phone">
+        <div class="screen">
+          <div class="section-header">
+            <div class="section-title">Edit details</div>
+            <div class="section-sub">North Block</div>
+          </div>
+          <div class="date-row">
+            <div class="date-icon">📅</div>
+            <div class="date-text">Mon, Jul 6, 2026</div>
+          </div>
+
+          <div class="card">
+            <div class="name-row">
+              <input class="name-input" value="Bayleton" readonly />
+              <div class="remove-btn">⊖</div>
+            </div>
+
+            <div class="qty-row-old">
+              <div class="qty-box-old">5</div>
+              <div class="unit-box-old">ppm</div>
+            </div>
+
+            <div class="tank-echo">5 ppm × 400 L = 0.002 L in tank</div>
+
+            <div class="chips">
+              <span class="chip">g/L</span>
+              <span class="chip">mL/L</span>
+              <span class="chip">g/acre</span>
+              <span class="chip">mL/acre</span>
+              <span class="chip chip-selected-old">ppm</span>
+              <span class="chip">More units <span class="chevron">▾</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ NEW ============ -->
+    <div>
+      <div class="phone-label badge-new">After</div>
+      <div class="phone">
+        <div class="screen">
+          <div class="section-header">
+            <div class="section-title">Edit details</div>
+            <div class="section-sub">North Block</div>
+          </div>
+          <div class="date-row">
+            <div class="date-icon">📅</div>
+            <div class="date-text">Mon, Jul 6, 2026</div>
+          </div>
+
+          <div class="card">
+            <div class="name-row">
+              <input class="name-input" value="Bayleton" readonly />
+              <div class="remove-btn">⊖</div>
+            </div>
+
+            <div class="qty-row-new">
+              <input class="qty-input-new" value="5" readonly />
+              <span class="unit-suffix-new">ppm</span>
+            </div>
+
+            <div class="tank-echo">5 ppm × 400 L = 0.002 L in tank</div>
+
+            <div class="chips">
+              <span class="chip">g/L</span>
+              <span class="chip">mL/L</span>
+              <span class="chip">g/acre</span>
+              <span class="chip">mL/acre</span>
+              <span class="chip chip-selected-new">ppm</span>
+              <span class="chip">More units <span class="chevron">▾</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="footer-note">
+    <strong>Key change:</strong> the selected unit is shown once, not twice.
+    It now lives inline as a muted suffix inside the quantity field — so it reads as
+    “5&nbsp;ppm” — while the chip strip is the single place to change it, with a clearer
+    solid-filled selected state for stronger visual hierarchy.
+  </p>
+
+</body>
+</html>

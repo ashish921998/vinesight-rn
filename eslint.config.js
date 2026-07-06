@@ -144,6 +144,7 @@ module.exports = [
     ignores: [
       'node_modules/',
       '.claude/',
+      '.worktrees/',
       '.expo/',
       '.rnstorybook/',
       'dist/',

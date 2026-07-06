@@ -232,71 +232,11 @@ export const FERTILIZER_DOSE_GUIDANCE_SEED: FertilizerDoseGuidanceSeed[] = [
     applicationsPerMonth: 2,
   },
 
-  // ── Branded grades (carry the same composition + label range as their generic) ──
-  {
-    productName: 'Mahadhan 19:19:19',
-    applicationRoute: 'foliar',
-    minValue: 3,
-    maxValue: 6,
-    unit: 'g/L',
-    applicationsPerMonth: 2,
-  },
-  {
-    productName: 'Mahadhan 12:61:00',
-    applicationRoute: 'foliar',
-    minValue: 2,
-    maxValue: 5,
-    unit: 'g/L',
-    applicationsPerMonth: 2,
-  },
-  {
-    productName: 'Mahadhan 00:52:34',
-    applicationRoute: 'foliar',
-    minValue: 1,
-    maxValue: 2.5,
-    unit: 'g/L',
-    applicationsPerMonth: 2,
-  },
-  {
-    productName: 'YaraTera Krista MAP 12:61:00',
-    applicationRoute: 'foliar',
-    minValue: 2,
-    maxValue: 5,
-    unit: 'g/L',
-    applicationsPerMonth: 2,
-  },
-  {
-    productName: 'YaraTera Krista K Plus 13:00:45',
-    applicationRoute: 'foliar',
-    minValue: 1,
-    maxValue: 2.5,
-    unit: 'g/L',
-    applicationsPerMonth: 2,
-  },
-  {
-    productName: 'YaraTera Krista MKP 00:52:34',
-    applicationRoute: 'foliar',
-    minValue: 1,
-    maxValue: 2.5,
-    unit: 'g/L',
-    applicationsPerMonth: 2,
-  },
-  {
-    productName: 'Vanita Aditya 20:20:20',
-    applicationRoute: 'foliar',
-    minValue: 3,
-    maxValue: 6,
-    unit: 'g/L',
-    applicationsPerMonth: 2,
-  },
-  {
-    productName: 'Vanita Aditya 00:00:50 (SOP)',
-    applicationRoute: 'foliar',
-    minValue: 2,
-    maxValue: 5,
-    unit: 'g/L',
-    applicationsPerMonth: 2,
-  },
+  // NO branded rows by design: #234/#239 collapse branded fertilizer products
+  // into their generic grades (brand = alias, not identity), so guidance keyed
+  // to a branded name would dangle after that cleanup. Every branded label
+  // range above is identical to its generic grade's row, which already covers
+  // it (brand picks resolve to the generic product id).
 ];
 
 /** Shared state for all seeded rows — Maharashtra grape belt (matches the catalog seed). */
