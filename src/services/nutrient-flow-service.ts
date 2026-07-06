@@ -395,6 +395,13 @@ const ELEMENTAL_TO_OXIDE: Record<string, { symbol: string; inverseFactor: number
 const MACRO_ORDER = ['N', 'P', 'K', 'Ca', 'Mg', 'S'];
 
 /**
+ * Micronutrient display order (issue #235) — agronomic convention for the
+ * grape belt (Fe chlorosis first, Zn, then the rest), not alphabetical.
+ * Elements outside both orders (Na, Cl, free-form codes) sort after these.
+ */
+const MICRO_ORDER = ['Fe', 'Zn', 'Mn', 'Cu', 'B', 'Mo'];
+
+/**
  * Build a sorted NutrientLedgerRow[] from an elemental totals map, with
  * optional per-acre figures and oxide equivalents for macros.
  */
@@ -405,14 +412,19 @@ function buildLedgerRows(
   const elements = Object.keys(elementalTotals);
   if (elements.length === 0) return [];
 
-  // Sort: MACRO_ORDER first (in sequence), then remaining alphabetically
+  // Sort: MACRO_ORDER first (in sequence), then MICRO_ORDER (in sequence),
+  // then anything else alphabetically.
   const macroSet = new Set(MACRO_ORDER);
+  const microSet = new Set(MICRO_ORDER);
   const macros = MACRO_ORDER.filter((el) => elementalTotals[el] != null);
-  const micros = elements
-    .filter((el) => !macroSet.has(el) && Number.isFinite(elementalTotals[el]))
+  const micros = MICRO_ORDER.filter(
+    (el) => elementalTotals[el] != null && Number.isFinite(elementalTotals[el]),
+  );
+  const others = elements
+    .filter((el) => !macroSet.has(el) && !microSet.has(el) && Number.isFinite(elementalTotals[el]))
     .sort();
 
-  return [...macros, ...micros].map((element) => {
+  return [...macros, ...micros, ...others].map((element) => {
     const elementalKg = roundTo(elementalTotals[element] ?? 0, 6);
     const perAcreRaw = elementalTotalsPerAcre?.[element];
     const elementalKgPerAcre =
@@ -428,9 +440,7 @@ function buildLedgerRows(
 
     const oxideKg = roundTo(elementalKg / oxide.inverseFactor, 6);
     const oxideKgPerAcre =
-      elementalKgPerAcre != null
-        ? roundTo(elementalKgPerAcre / oxide.inverseFactor, 6)
-        : undefined;
+      elementalKgPerAcre != null ? roundTo(elementalKgPerAcre / oxide.inverseFactor, 6) : undefined;
 
     return {
       element,
@@ -469,9 +479,7 @@ export function calculateNutrientLedger({
   areaUnit?: AreaUnitPreference | string | null;
 }): NutrientLedger {
   const validArea =
-    typeof areaAcres === 'number' && Number.isFinite(areaAcres) && areaAcres > 0
-      ? areaAcres
-      : null;
+    typeof areaAcres === 'number' && Number.isFinite(areaAcres) && areaAcres > 0 ? areaAcres : null;
 
   // Filter records by date range (inclusive on both ends)
   const inRange = <T extends { date: string }>(records: T[]): T[] =>
@@ -556,8 +564,7 @@ export function calculateNutrientLedger({
 
   // Floor at 0.01 when anything composed: 1 item among tens of thousands
   // rounds to 0.00, and every surface treats exactly-0 as "nothing computable".
-  const rawCoveragePercent =
-    itemCount > 0 ? roundTo((composedItemCount / itemCount) * 100, 2) : 0;
+  const rawCoveragePercent = itemCount > 0 ? roundTo((composedItemCount / itemCount) * 100, 2) : 0;
   const coveragePercent =
     composedItemCount > 0 ? Math.max(rawCoveragePercent, 0.01) : rawCoveragePercent;
 

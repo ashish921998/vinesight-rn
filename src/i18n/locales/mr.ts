@@ -3258,11 +3258,11 @@ export const mr = {
         'पाण्याच्या प्रमाणानुसार भारित — {{total}} पैकी {{withWater}} फवारणी नोंदींमध्ये पाणी नोंदलेले आहे.',
     },
     nutrientLedger: {
-      title: 'पोषक तत्त्व नोंदवही — N·P·K दिलेले',
+      title: 'पोषक तत्त्व नोंदवही — दिलेली पोषक तत्त्वे',
       coverageLabel: 'वापरलेल्या प्रमाणाच्या {{value}}% मधून पोषक तत्त्वे',
       coverageZero: 'रचना माहिती नाही — पोषक तत्त्वे मोजता येत नाहीत',
       elementHeader: 'घटक',
-      elementalHeader: 'मूलतत्त्व (kg)',
+      elementalHeader: 'मूलतत्त्व',
       oxideHeader: 'बॅग-ग्रेड',
       perAcreHeader: 'एकरी',
       perAcreUnavailable: 'एकरी दृश्य उपलब्ध नाही — शेताचे क्षेत्रफळ नोंदलेले नाही.',

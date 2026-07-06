@@ -201,7 +201,7 @@ describe('report export parity', () => {
     };
 
     const csv = ReportService.generateCSV(dataWithLedger, 'operations');
-    expect(csv).toContain('NUTRIENT LEDGER - N-P-K APPLIED');
+    expect(csv).toContain('NUTRIENT LEDGER - NUTRIENTS APPLIED');
     expect(csv).toContain('Nutrients from 50% of applied quantity (1 of 2 items with composition)');
     expect(csv).toContain('P,2.2693,1.1346,P₂O₅,5.2,2.6');
 
@@ -235,14 +235,19 @@ describe('report export parity', () => {
     };
 
     const csv = ReportService.generateCSV(dataZeroCoverage, 'operations');
-    expect(csv).toContain('NUTRIENT LEDGER - N-P-K APPLIED');
+    expect(csv).toContain('NUTRIENT LEDGER - NUTRIENTS APPLIED');
     expect(csv).toContain('Nutrients from 0% of applied quantity (0 of 3 items with composition)');
     // Applications exist but lack composition — must not be reported as "no
     // records", which would contradict the "0 of 3" coverage line.
     expect(csv).toContain('No composition data — nutrients cannot be calculated');
     expect(csv).not.toContain('No records in selected range');
 
-    const html = ReportService.generatePDFHtml(dataZeroCoverage, SAMPLE_SUMMARY, 'operations', 'INR');
+    const html = ReportService.generatePDFHtml(
+      dataZeroCoverage,
+      SAMPLE_SUMMARY,
+      'operations',
+      'INR',
+    );
     expect(html).toContain('No composition data — nutrients cannot be calculated (coverage 0%)');
   });
 

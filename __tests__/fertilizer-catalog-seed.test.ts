@@ -26,6 +26,28 @@ describe('fertilizer catalog seed data', () => {
     expect(SEED_STATE_CODE).toBe('MH');
   });
 
+  it('covers the full micronutrient tier — Fe, Zn, Mn, Cu, B, Mo each have a source (issue #235)', () => {
+    // "You applied 0 g of Zn this season" is only tellable if a Zn product a
+    // farmer can pick exists with a composition. Guard every tier element.
+    const seededCodes = new Set(
+      FERTILIZER_CATALOG_SEED.flatMap((product) =>
+        product.compositions.map((composition) => composition.component_code),
+      ),
+    );
+    for (const element of ['Fe', 'Zn', 'Mn', 'Cu', 'B', 'Mo']) {
+      expect(seededCodes.has(element as SeedComposition['component_code'])).toBe(true);
+    }
+    // Salt + chelate forms are distinct products (#234 identity rule): at
+    // least two independent B sources and two chelate chemistries for Zn/Fe.
+    const names = FERTILIZER_CATALOG_SEED.map((product) => product.name.toLowerCase());
+    expect(names.some((name) => name.includes('borax'))).toBe(true);
+    expect(names.some((name) => name.includes('boric acid'))).toBe(true);
+    expect(names.some((name) => name.includes('molybdate'))).toBe(true);
+    expect(names.some((name) => name.includes('zn-hedp'))).toBe(true);
+    expect(names.some((name) => name.includes('fe-hedp'))).toBe(true);
+    expect(names.some((name) => name.includes('cu-edta'))).toBe(true);
+  });
+
   it('gives every product at least one composition row — the whole point of Q7', () => {
     for (const product of FERTILIZER_CATALOG_SEED) {
       expect(product.compositions.length).toBeGreaterThan(0);
@@ -74,8 +96,7 @@ describe('fertilizer catalog seed data', () => {
     for (const product of FERTILIZER_CATALOG_SEED) {
       for (const composition of product.compositions) {
         const sanitized = normalizeNutrientCode(composition.component_code);
-        const resolves =
-          sanitized in OXIDE_TO_ELEMENTAL_FACTORS || elementalCodes.has(sanitized);
+        const resolves = sanitized in OXIDE_TO_ELEMENTAL_FACTORS || elementalCodes.has(sanitized);
         if (!resolves) {
           throw new Error(
             `${product.name}: code '${composition.component_code}' (sanitized '${sanitized}') ` +

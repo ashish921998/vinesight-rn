@@ -22,6 +22,7 @@ import { componentRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatNumber } from '@/i18n/format';
+import { formatParts } from '@/lib/quantity';
 import type { NutrientLedger, NutrientLedgerRow } from '@/types/report';
 
 const LEDGER_ACCENT_COLOR = '#2e7d4f'; // same green family as other report sections
@@ -31,9 +32,15 @@ interface NutrientLedgerSectionProps {
   panelStyle: object;
 }
 
-function formatKg(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return '—';
-  return formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+/**
+ * Farmer-natural mass rendering via the kernel's scale picker (issue #235):
+ * micronutrient totals are grams-per-acre scale, and "0.00 kg" of Mo is a
+ * rounding lie — 0.0004 kg must render as "400 mg", 0.083 kg as "83 g".
+ */
+function formatMass(valueKg: number | null | undefined): string {
+  if (valueKg == null || !Number.isFinite(valueKg)) return '—';
+  const parts = formatParts(valueKg, 'mass');
+  return `${formatNumber(parts.value, { maximumFractionDigits: 3 })} ${parts.scale}`;
 }
 
 function CoverageChip({
@@ -184,7 +191,8 @@ function LedgerTable({ rows, showPerAcre, m3 }: LedgerTableProps) {
               paddingHorizontal: spacing[3],
               borderBottomWidth: index < rows.length - 1 ? 1 : 0,
               borderBottomColor: separatorColor,
-              backgroundColor: index % 2 === 0 ? 'transparent' : colorWithOpacity(m3.surface.s200, 0.5),
+              backgroundColor:
+                index % 2 === 0 ? 'transparent' : colorWithOpacity(m3.surface.s200, 0.5),
             }}
           >
             {/* Element symbol */}
@@ -224,7 +232,7 @@ function LedgerTable({ rows, showPerAcre, m3 }: LedgerTableProps) {
                   fontVariant: ['tabular-nums'],
                 }}
               >
-                {formatKg(row.elementalKg)} kg
+                {formatMass(row.elementalKg)}
               </Text>
             </View>
 
@@ -239,7 +247,7 @@ function LedgerTable({ rows, showPerAcre, m3 }: LedgerTableProps) {
                     fontVariant: ['tabular-nums'],
                   }}
                 >
-                  {formatKg(row.oxideKg)} kg
+                  {formatMass(row.oxideKg)}
                 </Text>
               ) : (
                 <Text
@@ -265,7 +273,7 @@ function LedgerTable({ rows, showPerAcre, m3 }: LedgerTableProps) {
                     fontVariant: ['tabular-nums'],
                   }}
                 >
-                  {formatKg(row.elementalKgPerAcre)}/ac
+                  {formatMass(row.elementalKgPerAcre)}/ac
                 </Text>
                 {row.oxideKgPerAcre != null ? (
                   <Text
@@ -276,7 +284,7 @@ function LedgerTable({ rows, showPerAcre, m3 }: LedgerTableProps) {
                       fontVariant: ['tabular-nums'],
                     }}
                   >
-                    {formatKg(row.oxideKgPerAcre)}/ac
+                    {formatMass(row.oxideKgPerAcre)}/ac
                   </Text>
                 ) : null}
               </View>

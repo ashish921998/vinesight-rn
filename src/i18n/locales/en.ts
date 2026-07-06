@@ -3248,11 +3248,11 @@ export const en = {
         'Weighted by water volume — based on {{withWater}} of {{total}} spray events with logged water.',
     },
     nutrientLedger: {
-      title: 'Nutrient Ledger — N·P·K Applied',
+      title: 'Nutrient Ledger — Nutrients Applied',
       coverageLabel: 'Nutrients from {{value}}% of applied quantity',
       coverageZero: 'No composition data — nutrients cannot be calculated',
       elementHeader: 'Element',
-      elementalHeader: 'Elemental (kg)',
+      elementalHeader: 'Elemental',
       oxideHeader: 'Bag-grade',
       perAcreHeader: 'Per acre',
       perAcreUnavailable: 'Per-acre view unavailable — farm area is missing or invalid.',
