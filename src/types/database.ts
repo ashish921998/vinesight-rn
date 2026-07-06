@@ -198,6 +198,12 @@ export type LabelDoseBasis = 'per_liter_water' | 'per_acre' | 'total' | 'other';
 export interface ChemicalLabelSource {
   id?: number;
   source_type: LabelSourceType;
+  /**
+   * Stable document-family slug (e.g. 'annexure-5-grapes') that supersession
+   * is scoped to. Nullable by design: rows without a family are never
+   * auto-superseded (fail-closed) — the claims importer always writes it.
+   */
+  document_family?: string | null;
   issuing_body: string;
   source_document: string;
   source_title: string;
