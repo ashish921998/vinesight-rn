@@ -514,7 +514,31 @@ async function upsertSource(plan: ImportPlan, client: SupabaseLikeClient): Promi
   const existing = await query.eq('revision_date', plan.sourceIdentity.revision_date).maybeSingle();
 
   throwIfSupabaseError(existing.error);
-  if (existing.data?.id) return Number(existing.data.id);
+  if (existing.data?.id) {
+    // A same-edition re-import is a full statement of the edition, including
+    // its provenance: refresh the mutable source fields (review_status,
+    // effective dates, URL, notes) so a reviewed CSV doesn't leave the source
+    // row wrapping its claims with stale pre-review metadata. The identity
+    // columns stay untouched — they are the lookup key.
+    const sourceId = Number(existing.data.id);
+    throwIfSupabaseError(
+      (
+        await client
+          .from('chemical_label_sources')
+          .update({
+            source_title: plan.sourceIdentity.source_title,
+            source_url: plan.sourceIdentity.source_url,
+            effective_from: plan.sourceIdentity.effective_from,
+            effective_to: plan.sourceIdentity.effective_to,
+            edition_defaults: plan.sourceIdentity.edition_defaults,
+            review_status: plan.sourceIdentity.review_status,
+            notes: plan.sourceIdentity.notes,
+          })
+          .eq('id', sourceId)
+      ).error,
+    );
+    return sourceId;
+  }
 
   const inserted = await client
     .from('chemical_label_sources')
@@ -590,20 +614,20 @@ async function resolveProductId(
     return row.product_id;
   }
 
+  // List query, not .single(): zero or multiple matches are expected data
+  // conditions that must surface as the descriptive missing/ambiguous errors
+  // below — .single() would turn both into an opaque PGRST116 first.
   const result = await client
     .from('chemical_products')
     .select('id,name')
-    .eq('name', row.product_exact_name)
-    .single();
+    .eq('name', row.product_exact_name);
 
   throwIfSupabaseError(result.error);
-  if (!result.data?.id || typeof result.data.name !== 'string') {
-    throw new Error(`Row ${row.source_serial}: product_exact_name did not resolve`);
-  }
+  const candidates = (result.data ?? [])
+    .filter((candidate) => candidate.id != null && typeof candidate.name === 'string')
+    .map((candidate) => ({ id: Number(candidate.id), name: String(candidate.name) }));
 
-  return validateProductMappingCandidates(row, [
-    { id: Number(result.data.id), name: result.data.name },
-  ]);
+  return validateProductMappingCandidates(row, candidates);
 }
 
 async function upsertClaim(

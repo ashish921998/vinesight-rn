@@ -311,7 +311,7 @@ describe('applyImportPlan write path', () => {
         return { data: [], error: null };
       }
       if (op.table === 'chemical_products') {
-        return { data: { id: 77, name: 'Azoxystrobin 23 SC' }, error: null };
+        return { data: [{ id: 77, name: 'Azoxystrobin 23 SC' }], error: null };
       }
       if (op.table === 'chemical_label_claims' && op.terminal === 'maybeSingle') {
         return { data: null, error: null };
@@ -383,6 +383,98 @@ describe('applyImportPlan write path', () => {
     );
 
     await expect(applyImportPlan(plan(), client)).rejects.toThrow('connection reset');
+  });
+
+  it('re-imports the same edition by updating in place — no duplicate inserts', async () => {
+    const log: FakeOp[] = [];
+    // Second-run world: source, claim, and the claim's MRL row all exist.
+    const client = fakeClient(
+      happyPathResponder((op) => {
+        if (op.table === 'chemical_label_sources' && op.terminal === 'maybeSingle') {
+          return { data: { id: 10 }, error: null };
+        }
+        if (op.table === 'chemical_label_claims' && op.terminal === 'maybeSingle') {
+          return { data: { id: 500 }, error: null };
+        }
+        if (op.table === 'chemical_label_claims' && called(op, 'update')) {
+          return { data: { id: 500 }, error: null };
+        }
+        if (op.table === 'chemical_label_claim_mrls' && called(op, 'select')) {
+          return { data: [{ id: 5, market: 'EU', residue_name: 'azoxystrobin' }], error: null };
+        }
+        return null;
+      }),
+      log,
+    );
+
+    await applyImportPlan(plan(), client);
+
+    expect(log.filter((op) => called(op, 'insert'))).toHaveLength(0);
+    expect(log.filter((op) => called(op, 'delete'))).toHaveLength(0);
+    // Everything resolves to updates: source provenance refresh, claim, MRL.
+    const updatedTables = log.filter((op) => called(op, 'update')).map((op) => op.table);
+    expect(updatedTables).toEqual(
+      expect.arrayContaining([
+        'chemical_label_sources',
+        'chemical_label_claims',
+        'chemical_label_claim_mrls',
+      ]),
+    );
+  });
+
+  it('refreshes source provenance on a same-edition re-import (review status, dates, notes)', async () => {
+    const log: FakeOp[] = [];
+    const client = fakeClient(
+      happyPathResponder((op) => {
+        if (op.table === 'chemical_label_sources' && op.terminal === 'maybeSingle') {
+          return { data: { id: 10 }, error: null };
+        }
+        if (op.table === 'chemical_label_claims' && op.terminal === 'maybeSingle') {
+          return { data: { id: 500 }, error: null };
+        }
+        return null;
+      }),
+      log,
+    );
+
+    await applyImportPlan(plan(), client);
+
+    const sourceUpdate = log.find(
+      (op) => op.table === 'chemical_label_sources' && called(op, 'update'),
+    );
+    expect(sourceUpdate).toBeDefined();
+    expect(argsOf(sourceUpdate!, 'eq')).toEqual(['id', 10]);
+    expect(argsOf(sourceUpdate!, 'update')![0]).toMatchObject({
+      review_status: 'pending_review',
+      source_title: 'ICAR-NRCG Annexure 5 Grapes 2025-26',
+    });
+    // Identity columns are the lookup key — never part of the update payload.
+    expect(argsOf(sourceUpdate!, 'update')![0]).not.toHaveProperty('source_document');
+    expect(argsOf(sourceUpdate!, 'update')![0]).not.toHaveProperty('revision_date');
+  });
+
+  it('reports missing and ambiguous product mappings with row context, not PGRST116', async () => {
+    const missing = fakeClient(
+      happyPathResponder((op) => (op.table === 'chemical_products' ? { data: [], error: null } : null)),
+      [],
+    );
+    await expect(applyImportPlan(plan(), missing)).rejects.toThrow(/missing.*exact one-row mapping/s);
+
+    const ambiguous = fakeClient(
+      happyPathResponder((op) =>
+        op.table === 'chemical_products'
+          ? {
+              data: [
+                { id: 1, name: 'Azoxystrobin 23 SC' },
+                { id: 2, name: 'Azoxystrobin 23 SC' },
+              ],
+              error: null,
+            }
+          : null,
+      ),
+      [],
+    );
+    await expect(applyImportPlan(plan(), ambiguous)).rejects.toThrow(/ambiguous/);
   });
 
   it('deletes MRL child rows that are absent from the reviewed CSV', async () => {
