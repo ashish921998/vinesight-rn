@@ -709,14 +709,14 @@ async function upsertClaim(
 
   throwIfSupabaseError(existing.error);
   if (existing.data?.id) {
-    const updated = await client
-      .from('chemical_label_claims')
-      .update(payload)
-      .eq('id', existing.data.id)
-      .select('id')
-      .single();
-    throwIfSupabaseError(updated.error);
-    return Number(updated.data?.id ?? existing.data.id);
+    // Update by primary key — no .select().single(): the id is already known,
+    // and a row deleted between lookup and update must not crash the import
+    // with PGRST116 over a zero-row result.
+    const claimId = Number(existing.data.id);
+    throwIfSupabaseError(
+      (await client.from('chemical_label_claims').update(payload).eq('id', claimId)).error,
+    );
+    return claimId;
   }
 
   const inserted = await client.from('chemical_label_claims').insert(payload).select('id').single();
