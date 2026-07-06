@@ -61,15 +61,17 @@ export function unitTextSaysPerAcre(unit: string | null | undefined): boolean {
 
 /**
  * Basis fallback for units a form carries VERBATIM. Kernel-recognized strings
- * (ppm, g/L, kg/ha …) use the kernel's parsed basis — so `'kg/ha'` is a
- * per-acre-class rate, never a plot total (its ÷2.47105 conversion is the
- * kernel's job at fold time; the column only records that it IS a rate).
- * per_liter_water collapses to 'total' because the stored QuantityBasis enum
- * cannot express it and area-rescaling a concentration would corrupt it.
+ * (ppm, g/L, kg/ha …) use the kernel's parsed basis directly — so `'kg/ha'`
+ * is a per-acre-class rate and `'gm/L'`/`'ppm'` are per_liter_water. The
+ * DB-stored QuantityBasis enum now includes per_liter_water (Phase W), so the
+ * former collapse of concentration units to 'total' is obsolete and removed.
+ * Area-rescaling (per_acre) is never applied to per_liter_water quantities
+ * (it's a concentration; multiplying by area would corrupt it). Callers that
+ * treat "not per_acre" as "total" must check for per_liter_water explicitly.
  * Kernel-unknown strings fall back to the per-acre text sniff.
  */
 export function resolveVerbatimQuantityBasis(unit: string | null | undefined): QuantityBasis {
   const parsed = parseUnitText(unit);
-  if (parsed) return parsed.basis === 'per_acre' ? 'per_acre' : 'total';
+  if (parsed) return parsed.basis;
   return unitTextSaysPerAcre(unit) ? 'per_acre' : 'total';
 }

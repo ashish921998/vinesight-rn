@@ -108,7 +108,9 @@ describe('AC2 — unknown unit strings stay verbatim and are flagged, never kg',
   });
 
   it('prefill of a ppm plan item keeps ppm instead of the legacy kg/acre coercion', () => {
-    expect(resolveFertigationPrefill('ppm')).toEqual({ unit: 'ppm', quantityBasis: 'total' });
+    // Phase W: per_liter_water is now stored directly (DB enum widened). The
+    // old collapse to 'total' was a workaround for a missing enum value.
+    expect(resolveFertigationPrefill('ppm')).toEqual({ unit: 'ppm', quantityBasis: 'per_liter_water' });
   });
 });
 
@@ -303,10 +305,11 @@ describe('plan quick-add prefill contract (byPlan uses resolveFertigationPrefill
       unit: 'kg/ha',
       quantityBasis: 'per_acre',
     });
-    // Concentrations cannot be expressed by the stored basis enum: total,
-    // so the quantity is never area-rescaled.
-    expect(resolveFertigationPrefill('ppm')).toEqual({ unit: 'ppm', quantityBasis: 'total' });
-    expect(resolveFertigationPrefill('gm/L')).toEqual({ unit: 'gm/L', quantityBasis: 'total' });
+    // Phase W: QuantityBasis now includes per_liter_water. Concentration units
+    // are stored with their actual basis — never collapsed to 'total'.
+    // Area-rescaling (per_acre) is still never applied to per_liter_water.
+    expect(resolveFertigationPrefill('ppm')).toEqual({ unit: 'ppm', quantityBasis: 'per_liter_water' });
+    expect(resolveFertigationPrefill('gm/L')).toEqual({ unit: 'gm/L', quantityBasis: 'per_liter_water' });
   });
 
   it('per-acre text sniff is word-boundary matched and plural-aware', () => {

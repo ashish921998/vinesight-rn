@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type { FertilizerPlan, FertilizerPlanItem } from '@/types/fertilizer-plan';
+import type { QuantityBasis } from '@/types/database';
 
 // Row shapes as returned by the embedded select below. Kept narrow on purpose —
 // only the columns this screen consumes are selected.
@@ -8,6 +9,8 @@ interface PlanItemRow {
   fertilizer_name: string;
   quantity: number | null;
   unit: string | null;
+  product_id: number | null;
+  quantity_basis: QuantityBasis | null;
   application_date: string | null;
   application_method: string | null;
   application_frequency: number | null;
@@ -36,6 +39,8 @@ function mapItem(row: PlanItemRow): FertilizerPlanItem {
     name: row.fertilizer_name,
     quantity: row.quantity,
     unit: row.unit,
+    product_id: row.product_id,
+    quantity_basis: row.quantity_basis,
     application_date: row.application_date,
     application_method: row.application_method,
     application_frequency: row.application_frequency,
@@ -63,7 +68,7 @@ export async function fetchFertilizerPlansForFarm(
   let query = supabase
     .from('fertilizer_plans')
     .select(
-      'id, farm_id, organization_id, title, notes, created_at, updated_at, farm_area_acres, organization:organizations(name), fertilizer_plan_items(id, fertilizer_name, quantity, unit, application_date, application_method, application_frequency, notes, sort_order)',
+      'id, farm_id, organization_id, title, notes, created_at, updated_at, farm_area_acres, organization:organizations(name), fertilizer_plan_items(id, fertilizer_name, quantity, unit, product_id, quantity_basis, application_date, application_method, application_frequency, notes, sort_order)',
     )
     .eq('farm_id', farmId)
     .order('created_at', { ascending: false });
@@ -113,11 +118,13 @@ export async function fetchFertilizerPlanForFarm(farmId: number): Promise<Fertil
   return plans[0] ?? null;
 }
 
-/** One prescribed product from an org's past plans (name + last dose). */
+/** One prescribed product from an org's past plans (name + last dose + product identity). */
 export interface OrgFertilizerPlanHistoryItem {
   name: string;
   quantity: number | null;
   unit: string | null;
+  /** Catalog product id, if the item was authored via the Phase W picker. Null for legacy rows. */
+  catalogProductId: number | null;
 }
 
 /**
@@ -135,7 +142,7 @@ export async function fetchOrgFertilizerPlanItemHistory(
 
   const { data, error } = await supabase
     .from('fertilizer_plans')
-    .select('id, created_at, fertilizer_plan_items(fertilizer_name, quantity, unit)')
+    .select('id, created_at, fertilizer_plan_items(fertilizer_name, quantity, unit, product_id)')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
     .limit(planLimit);
@@ -146,7 +153,10 @@ export async function fetchOrgFertilizerPlanItemHistory(
   }
 
   const rows = (data ?? []) as unknown as {
-    fertilizer_plan_items: Pick<PlanItemRow, 'fertilizer_name' | 'quantity' | 'unit'>[] | null;
+    fertilizer_plan_items: Pick<
+      PlanItemRow,
+      'fertilizer_name' | 'quantity' | 'unit' | 'product_id'
+    >[] | null;
   }[];
 
   return rows.flatMap((row) =>
@@ -154,6 +164,7 @@ export async function fetchOrgFertilizerPlanItemHistory(
       name: item.fertilizer_name,
       quantity: item.quantity,
       unit: item.unit,
+      catalogProductId: item.product_id,
     })),
   );
 }

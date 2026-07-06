@@ -234,6 +234,12 @@ export interface ReportPlanItemInput {
    * back to the current farm area.
    */
   areaAcres?: number | null;
+  /**
+   * Catalog product identity (Phase W). When non-null, a contribution whose
+   * logged item carries the same catalog_product_id matches this plan row by
+   * identity — more reliable than name matching. Null = legacy/custom item.
+   */
+  productId?: number | null;
 }
 
 export interface ReportStockUsageRecord {

@@ -158,6 +158,8 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
         // Plan-level snapshot of the farm area (canonical acres) at plan
         // creation — null on plans predating the snapshot column.
         areaAcres: fertilizerPlan?.farm_area_acres ?? null,
+        // Phase W: product identity for stronger compliance matching.
+        productId: item.product_id ?? null,
       })),
     [fertilizerPlan],
   );

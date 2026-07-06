@@ -8,6 +8,8 @@
  * persisted row, so `id` is always present. Nullable columns are `T | null`
  * (present but possibly null), never optional.
  */
+import type { QuantityBasis } from '@/types/database';
+
 export interface FertilizerPlanItem {
   /** Row id (uuid). */
   id: string;
@@ -15,6 +17,10 @@ export interface FertilizerPlanItem {
   name: string;
   quantity: number | null;
   unit: string | null;
+  /** Identity link to chemical_products(id). Null for legacy/custom items. Absent on old fixtures. */
+  product_id?: number | null;
+  /** Stored basis from the plan authoring form. Null for legacy/web rows. Absent on old fixtures. */
+  quantity_basis?: QuantityBasis | null;
   application_date: string | null;
   application_method: string | null;
   application_frequency: number | null;

@@ -291,6 +291,9 @@ export function planItemsToOptions(
           kind: 'item' as const,
           name: item.name,
           planItemId: item.id,
+          // Phase W: carry product_id so logged items stamp catalog_product_id
+          // when the plan item has identity. Null for legacy/custom items.
+          catalogProductId: item.product_id ?? null,
           isCustom: false,
           prefill,
         },
@@ -370,6 +373,8 @@ export interface OrgPlanHistoryItem {
   name: string;
   quantity: number | null;
   unit: string | null;
+  /** Catalog product id from Phase W plan authoring. Null for legacy rows. */
+  catalogProductId?: number | null;
 }
 
 /**
@@ -377,8 +382,9 @@ export interface OrgPlanHistoryItem {
  * distinct product names across the org's past plan items, newest first.
  * Dedupe uses `normalizeSearchText`, so separator spellings collapse too —
  * one row for "19:19:19"/"19-19-19", keeping the most recent spelling and
- * dose. Selections carry no identity (plan items are strings by contract);
- * the last prescribed dose rides along as prefill.
+ * dose. Phase W: selections now carry `catalogProductId` where available so
+ * re-picking a previously prescribed product restores identity in the authoring
+ * form (lab-reports.tsx stores it as `productId` on the draft).
  */
 export function orgPlanHistoryToOptions(items: OrgPlanHistoryItem[]): SearchSelectOption[] {
   const seen = new Set<string>();
@@ -400,6 +406,7 @@ export function orgPlanHistoryToOptions(items: OrgPlanHistoryItem[]): SearchSele
       selection: {
         kind: 'item',
         name,
+        catalogProductId: item.catalogProductId ?? null,
         isCustom: false,
         prefill: { quantity, unit: item.unit ?? null },
       },

@@ -39,6 +39,7 @@ import {
   MEASURE_TO_UNIT,
   resolveFertilizerMeasure,
 } from '@/constants/fertilizer-units';
+import { resolveVerbatimQuantityBasis } from '@/constants/unit-text';
 import type { FertilizerPlanItem } from '@/types/database';
 
 const FAB_SIZE = 56;
@@ -49,10 +50,12 @@ interface DraftItem {
   name: string;
   quantity: string;
   measure: FertilizerMeasure;
+  /** Catalog product id from a picker selection. Null = custom or manually edited. */
+  productId: number | null;
 }
 
 function emptyDraft(): DraftItem {
-  return { name: '', quantity: '', measure: 'kg' };
+  return { name: '', quantity: '', measure: 'kg', productId: null };
 }
 
 export default function LabReportsScreen() {
@@ -162,9 +165,12 @@ export default function LabReportsScreen() {
         // Org-history rows carry the last prescribed dose: prefill it only
         // into an untouched quantity, and map the stored unit back to a
         // measure (keeping the current one when the unit is unrecognized).
+        // catalogProductId is stored so the submitted plan item carries
+        // product_id identity (Phase W). Custom picks arrive with null.
         next[index] = {
           ...current,
           name: selection.name,
+          productId: selection.catalogProductId ?? null,
           quantity:
             current.quantity.trim() === '' &&
             typeof prefillQuantity === 'number' &&
@@ -211,6 +217,8 @@ export default function LabReportsScreen() {
         fertilizer_name: draft.name.trim(),
         quantity: qty,
         unit: MEASURE_TO_UNIT[draft.measure],
+        product_id: draft.productId,
+        quantity_basis: resolveVerbatimQuantityBasis(MEASURE_TO_UNIT[draft.measure]),
       });
     }
 
