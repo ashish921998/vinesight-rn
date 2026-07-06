@@ -30,8 +30,14 @@ import {
   fertigationChipForEntry,
   type FertigationUnitChip,
 } from './fertigation-unit-chips';
-import { evaluateDoseGuard, type DoseReference } from './product-dose';
+import {
+  evaluateDoseGuard,
+  evaluateDoseGuidanceGuard,
+  type DoseReference,
+  type DoseGuidanceReference,
+} from './product-dose';
 import { isWaterConcentrationUnit } from '@/lib/quantity';
+import { telemetry } from '@/services/telemetry';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
@@ -171,7 +177,9 @@ export function FertigationForm({
   // instead (issue #197, acceptance criterion 2) — one consistent exclusion.
   const planOptions = useMemo(
     () =>
-      fertigationPlanItemsToOptions(planItems.filter((item) => !isWaterConcentrationUnit(item.unit))),
+      fertigationPlanItemsToOptions(
+        planItems.filter((item) => !isWaterConcentrationUnit(item.unit)),
+      ),
     [planItems],
   );
   const catalogOptions = useMemo(
@@ -303,6 +311,14 @@ export function FertigationForm({
       setShowProductPicker(false);
       // The fertigation picker never offers catalog mixes.
       if (selection.kind === 'mix') return;
+      // Telemetry: count when a catalog pick carries a recommended-dose prefill
+      // (#236) — the foliar midpoint reaching the input. A plan/history row for
+      // the same product would win precedence and carry no prefill here.
+      if (selection.catalogProductId != null && selection.prefill?.quantity != null) {
+        telemetry.capture('recommended_dose_prefilled', {
+          productId: selection.catalogProductId,
+        });
+      }
       addQuickFertilizer({
         name: selection.name,
         unit: selection.prefill?.unit,
@@ -423,7 +439,7 @@ export function FertigationForm({
                   <Text style={{ flex: 1, fontSize: fontSize.xs, color: m3.surface.s500 }}>
                     {t('fertigationForm.ppmPlanItemNotice', {
                       name: item.name,
-                      defaultValue: '{{name}}: ppm doses can\'t be quick-added — enter manually',
+                      defaultValue: "{{name}}: ppm doses can't be quick-added — enter manually",
                     })}
                   </Text>
                 </View>
@@ -516,6 +532,7 @@ export function FertigationForm({
               waterLiters={data.waterVolume ?? null}
               historyItems={historyItems}
               planItems={planItems}
+              catalogProducts={catalogProducts}
             />
           ))}
 
@@ -662,6 +679,8 @@ interface FertilizerRowProps {
   waterLiters?: number | null;
   historyItems?: RecentInputItem[];
   planItems?: FertilizerPlanItem[];
+  /** Catalog products — used to resolve a row's recommended-dose range guardrail (#236). */
+  catalogProducts?: MasterCatalogProduct[];
 }
 
 function FertilizerRow({
@@ -675,6 +694,7 @@ function FertilizerRow({
   waterLiters = null,
   historyItems = [],
   planItems = [],
+  catalogProducts = [],
 }: FertilizerRowProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -770,6 +790,42 @@ function FertilizerRow({
       ),
     [fertilizer, planReference, historyReference, areaAcres, waterLiters],
   );
+
+  // Recommended-dose range guardrail (#236): a SEPARATE, advisory-only warning
+  // against the catalog product's foliar label range. Independent of the
+  // plan/history guardrail above — both can show, neither blocks. Only resolves
+  // when the row carries a catalog product id AND that product has foliar
+  // guidance. Null otherwise (silent, like every optional layer).
+  const guidanceReference = useMemo<DoseGuidanceReference | null>(() => {
+    if (fertilizer.catalogProductId == null) return null;
+    const product = catalogProducts.find((item) => item.id === fertilizer.catalogProductId);
+    if (!product) return null;
+    const foliar = (product.doseGuidance ?? []).find(
+      (guidance) => guidance.applicationRoute === 'foliar',
+    );
+    if (!foliar) return null;
+    return { minValue: foliar.minValue, maxValue: foliar.maxValue, unit: foliar.unit };
+  }, [fertilizer.catalogProductId, catalogProducts]);
+
+  const guidanceWarning = useMemo(
+    () =>
+      evaluateDoseGuidanceGuard(fertilizer, guidanceReference, {
+        areaAcres,
+        waterLiters,
+      }),
+    [fertilizer, guidanceReference, areaAcres, waterLiters],
+  );
+
+  // Telemetry: count when the recommendation range guard fires (advisory-only
+  // signal — the plan/history guard has no telemetry today). Fire-and-forget,
+  // property-only, no PII. The prefill counter lives at the picker selection.
+  useEffect(() => {
+    if (!guidanceWarning || fertilizer.catalogProductId == null) return;
+    telemetry.capture('dose_guidance_guard_triggered', {
+      productId: fertilizer.catalogProductId,
+      direction: guidanceWarning.direction,
+    });
+  }, [guidanceWarning, fertilizer.catalogProductId]);
 
   const applySuggestion = (item: FertigationQuickAddItem) => {
     const resolved = resolveFertigationUnit(item.unit, fertilizer.unit);
@@ -971,6 +1027,38 @@ function FertilizerRow({
               {
                 ratio: doseWarning.ratio,
                 reference: `${doseWarning.reference.quantity} ${doseWarning.reference.unit}`,
+              },
+            )}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Recommended-dose range guardrail (#236) — advisory only, separate from
+          the plan/history guardrail above. Fires at 2× outside the label range. */}
+      {guidanceWarning ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            marginTop: spacing[2],
+            gap: 6,
+          }}
+        >
+          <IconSymbol
+            name="exclamationmark.triangle.fill"
+            size={14}
+            color={m3.colorScheme.warning}
+          />
+          <Text style={{ flex: 1, fontSize: fontSize.xs, color: m3.colorScheme.warning }}>
+            {t(
+              `fertigationForm.fertilizers.doseGuard.recommended${
+                guidanceWarning.direction === 'high' ? 'High' : 'Low'
+              }`,
+              {
+                entered: `${guidanceWarning.entered} ${guidanceWarning.unit}`,
+                min: String(guidanceWarning.reference.minValue),
+                max: String(guidanceWarning.reference.maxValue),
+                unit: guidanceWarning.reference.unit,
               },
             )}
           </Text>

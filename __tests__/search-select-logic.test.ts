@@ -480,7 +480,11 @@ describe('fertigationPlanItemsToOptions', () => {
   it('carries verbatim/unknown units through unchanged — never coerced to kg', () => {
     const [ppm] = fertigationPlanItemsToOptions([planItem({ unit: 'ppm', quantity: 100 })]);
     // Phase W: ppm is per_liter_water in the kernel; stored directly now.
-    expect(ppm.selection.prefill).toEqual({ quantity: 100, unit: 'ppm', quantityBasis: 'per_liter_water' });
+    expect(ppm.selection.prefill).toEqual({
+      quantity: 100,
+      unit: 'ppm',
+      quantityBasis: 'per_liter_water',
+    });
     const [unknown] = fertigationPlanItemsToOptions([planItem({ unit: 'banana/acre' })]);
     expect(unknown.selection.prefill).toEqual({
       quantity: 5,
@@ -579,6 +583,51 @@ describe('fertilizerCatalogToOptions', () => {
 
   it('degrades gracefully: empty catalog yields no options (section hidden)', () => {
     expect(fertilizerCatalogToOptions([])).toEqual([]);
+  });
+
+  describe('recommended-dose prefill (issue #236)', () => {
+    it('prefills the foliar midpoint when a product carries foliar guidance', () => {
+      const options = fertilizerCatalogToOptions([
+        catalogProduct({
+          doseGuidance: [
+            {
+              applicationRoute: 'foliar',
+              minValue: 3,
+              maxValue: 6,
+              unit: 'g/L',
+              sourceNote: 'label',
+            },
+          ],
+        }),
+      ]);
+      // Midpoint of 3–6 = 4.5, rounded to 2dp; unit kept verbatim (g/L).
+      expect(options[0].selection.prefill).toEqual({ quantity: 4.5, unit: 'g/L' });
+      // Detail carries the ≈ midpoint + the raw range.
+      expect(options[0].detail).toContain('≈ 4.5 g');
+      expect(options[0].detail).toContain('3–6 g/L');
+    });
+
+    it('carries no prefill when the product has no guidance (regression)', () => {
+      const options = fertilizerCatalogToOptions([catalogProduct({})]);
+      expect(options[0].selection.prefill).toBeUndefined();
+    });
+
+    it('ignores non-foliar guidance for the prefill (drip/soil are not foliar doses)', () => {
+      const options = fertilizerCatalogToOptions([
+        catalogProduct({
+          doseGuidance: [
+            {
+              applicationRoute: 'drip',
+              minValue: 1.25,
+              maxValue: 2.5,
+              unit: 'kg/ha',
+              sourceNote: 'label',
+            },
+          ],
+        }),
+      ]);
+      expect(options[0].selection.prefill).toBeUndefined();
+    });
   });
 });
 

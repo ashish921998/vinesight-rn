@@ -12,6 +12,7 @@ import type { ChemicalMix } from '@/types/phi';
 import type { MasterCatalogProduct } from '@/types/catalog';
 import { normalizeMixComponentToPerLiterDose } from '@/services/phi-service';
 import { resolveFertigationPrefill } from '@/constants/fertilizer-units';
+import { parseUnit } from '@/lib/quantity';
 
 // ============================================================
 // MARK: - Emit contract
@@ -333,12 +334,63 @@ export function catalogCompositionToSnapshot(
 }
 
 /**
+ * Recommended-dose prefill for a catalog fertilizer pick (issue #236). Returns
+ * the FOLIAR recommendation midpoint + canonical unit so a bare catalog row
+ * (no plan item / last-used dose) lands a sensible dose in the input. The unit
+ * stays in its canonical spelling (e.g. 'g/L') — `toFormUnit` returns null for
+ * per_liter_water units, so the form keeps it verbatim exactly like ppm/g-per-L
+ * plan items; it is never coerced to kg. Returns null when there is no foliar
+ * guidance or the unit is not kernel-parseable (defensive — never blocks a pick).
+ *
+ * Precedence is preserved by the section ordering (plan > history > catalog):
+ * a plan/history row for the same product appears ABOVE the catalog row, so this
+ * prefill only applies when the user picks the bare catalog row.
+ */
+export function catalogFoliarDosePrefill(
+  product: MasterCatalogProduct,
+): SearchSelectPrefill | null {
+  const foliar = (product.doseGuidance ?? []).find(
+    (guidance) => guidance.applicationRoute === 'foliar',
+  );
+  if (!foliar) return null;
+  // Defensive: a malformed seed unit must never break picking.
+  if (!parseUnit(foliar.unit)) return null;
+  const midpoint = (foliar.minValue + foliar.maxValue) / 2;
+  // Round to 2dp — a 3–6 g/L range prefilling 4.5, not 4.500000001.
+  const quantity = Math.round(midpoint * 100) / 100;
+  return { quantity, unit: foliar.unit };
+}
+
+/** Short "≈ 4.5 g/L (3–6 g/L)" label for a foliar recommendation, for the detail row. */
+export function foliarDoseDetail(product: MasterCatalogProduct): string | null {
+  const foliar = (product.doseGuidance ?? []).find(
+    (guidance) => guidance.applicationRoute === 'foliar',
+  );
+  if (!foliar) return null;
+  // The midpoint renders in the GUIDANCE unit (g/L), not the kernel's canonical
+  // unit — the seed publishes clean per-liter values (3–6 g/L), and `format()`
+  // would re-scale them to kg. The '≈ ' prefix marks it derived (prefill source),
+  // consistent with the area-echo convention. Trim trailing zeros: 4.5 stays 4.5.
+  const midpoint = trimMidpoint((foliar.minValue + foliar.maxValue) / 2);
+  return `≈ ${midpoint} ${foliar.unit} (${String(foliar.minValue)}–${String(foliar.maxValue)} ${foliar.unit})`;
+}
+
+/** Trim a midpoint to ≤ 2 dp with no trailing zeros (4.50 → "4.5", 5.00 → "5"). */
+function trimMidpoint(value: number): string {
+  return String(Math.round(value * 100) / 100);
+}
+
+/**
  * Fertilizer catalog section (master `chemical_products` rows): selecting a
  * row stores the CANONICAL catalog name verbatim — that string-level
  * convergence is the contract until plan items grow a product id (Phase W) —
  * plus `catalogProductId` and the declared nutrient composition where present.
  * Aliases/active ingredient/manufacturer are matchable but never stored.
- * No dose prefill: the catalog carries no dose.
+ *
+ * Dose prefill: a foliar recommended-dose row (issue #236) prefills the input
+ * with the range midpoint, marked derived via the '≈ ' convention in the detail
+ * text. This is the LOWEST-precedence prefill source — plan items and history
+ * rows for the same product appear above the catalog row and win.
  */
 export function fertilizerCatalogToOptions(products: MasterCatalogProduct[]): SearchSelectOption[] {
   return products
@@ -349,13 +401,14 @@ export function fertilizerCatalogToOptions(products: MasterCatalogProduct[]): Se
         product.active_ingredient ?? '',
         product.manufacturer ?? '',
       ].filter((keyword) => keyword.length > 0);
+      const prefill = catalogFoliarDosePrefill(product);
+      const detail = [product.manufacturer, product.active_ingredient, foliarDoseDetail(product)]
+        .filter((part): part is string => Boolean(part))
+        .join(' · ');
       return {
         key: `product:${product.id}`,
         name: product.name,
-        detail:
-          [product.manufacturer, product.active_ingredient]
-            .filter((part): part is string => Boolean(part))
-            .join(' · ') || null,
+        detail: detail || null,
         keywords: keywords.length > 0 ? keywords : undefined,
         selection: {
           kind: 'item' as const,
@@ -363,6 +416,7 @@ export function fertilizerCatalogToOptions(products: MasterCatalogProduct[]): Se
           catalogProductId: product.id,
           isCustom: false,
           composition: catalogCompositionToSnapshot(product),
+          prefill: prefill ?? undefined,
         },
       };
     });

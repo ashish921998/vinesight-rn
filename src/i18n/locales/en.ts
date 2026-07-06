@@ -951,6 +951,11 @@ export const en = {
         lowPlan: 'Check quantity — about 1/{{ratio}} of your plan dose ({{reference}})',
         highLastLog: 'Check quantity — about {{ratio}}× your last logged dose ({{reference}})',
         lowLastLog: 'Check quantity — about 1/{{ratio}} of your last logged dose ({{reference}})',
+        // Recommended-dose range guardrail (#236) — advisory, never blocks.
+        recommendedHigh:
+          'Check quantity — entered {{entered}}; label recommends {{min}}–{{max}} {{unit}}',
+        recommendedLow:
+          'Check quantity — entered {{entered}}; label recommends {{min}}–{{max}} {{unit}}',
       },
     },
     quickAdd: 'Quick Add',
