@@ -1,0 +1,35 @@
+src/i18n/locales/en.ts
+  s_db490d26508715::t_442f6d61879ecc 958
+  s_db490d26508715::t_dd5d7f48e2e130 408-409
+src/components/screens/fertilizer-plan-card.tsx
+  s_db490d26508715::t_7a4f932accda21 11,36-40
+  s_db490d26508715::t_30c7289dbd8739 44,277-280,307-311,387,432
+  s_db490d26508715::t_669d1e071a203a 15-31,34-35,41-43,45-56,177,185,190,227,236-249,251,349,356,386,431,450,457,548
+  s_db490d26508715::t_46a3017a938776 32
+  s_db490d26508715::t_0f3ec7749fafac 33
+src/components/screens/__tests__/fertilizer-plan-card.test.ts
+  s_db490d26508715::t_30c7289dbd8739 21
+  s_db490d26508715::t_7529e2763191ee 49-58
+  s_db490d26508715::t_62b0c507999c1e 1-20,22-48,59
+src/i18n/locales/mr.ts
+  s_db490d26508715::t_dd5d7f48e2e130 398-399
+src/i18n/locales/hi.ts
+  s_db490d26508715::t_9a5ad46d886a40 3241-3242
+  s_db490d26508715::t_dd5d7f48e2e130 395-396
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7150226e92bfc97b621c6838c00b22ad73a5d020",
+  "prompts": {},
+  "sessions": {
+    "s_db490d26508715": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f3567-ff5f-7720-aade-793a06da18d6",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
