@@ -166,8 +166,6 @@ export interface SprayRecord {
   phi_calc_version?: string | null;
   phi_blocking_component?: string | null;
   phi_status?: 'verified' | 'legacy_unverified' | 'unknown' | null;
-  compliance_status?: ComplianceStatus | null;
-  compliance_snapshot?: Record<string, unknown> | null;
   nutrient_totals_elemental?: Record<string, number> | null;
   nutrient_totals_elemental_per_acre?: Record<string, number> | null;
   nutrient_calc_coverage?: number | null;
@@ -193,7 +191,9 @@ export type SprayRecordUpdate = Partial<Omit<SprayRecord, 'id' | 'farm_id' | 'cr
 export type LabelClaimReviewStatus = 'pending_review' | 'verified' | 'rejected' | 'superseded';
 export type LabelSourceType = 'annexure' | 'label' | 'manual_review' | 'other';
 export type LabelDoseBasis = 'per_liter_water' | 'per_acre' | 'total' | 'other';
-export type ComplianceStatus = 'allowed' | 'warning' | 'blocked' | 'unverified';
+// NOTE: per-spray compliance columns (and their status union) land with the
+// Unit 4 write path (ARCH-3) — the evaluator outcome type lives in phi.ts as
+// PhiComplianceStatus until then.
 
 export interface ChemicalLabelSource {
   id?: number;

@@ -2,6 +2,8 @@
 
 Dataset: `icar-nrcg-grapes-2025-09-17.csv`
 
+Schema: the label-claim tables live in the shared DB and are owned by the web repo per ADR-0002 — migration `202607060002_grape_label_claims.sql` (+ rollback and SQL assertion suite) in `ashish921998/Vinesight`, applied to prod 2026-07-06. This repo owns only the importer, this dataset, and the app types.
+
 Important: the analyzed edition, revised 17 Sep 2025, is superseded by a 03 Nov 2025 revision on `nrcgrapes.in`. This starter import must not be promoted as verified production data. The live import target is the current revision, and every row here remains `pending_review` until a human verifies it against the live PDF.
 
 ## Review Protocol

@@ -44,6 +44,7 @@ export interface PhiChemicalLabelClaim {
   review_status: PhiLabelClaimReviewStatus;
   effective_from?: string | null;
   effective_to?: string | null;
+  supersedes_claim_id?: number | null;
   is_active: boolean;
   mrls?: PhiChemicalLabelClaimMrl[];
 }

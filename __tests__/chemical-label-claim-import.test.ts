@@ -1,8 +1,10 @@
 import {
+  applyImportPlan,
   buildImportPlan,
   mergeClaimsBySourceIdentity,
   parseChemicalLabelClaimCsv,
   validateProductMappingCandidates,
+  type SupabaseLikeClient,
 } from '../scripts/import-chemical-label-claims';
 
 const HEADER = [
@@ -194,6 +196,30 @@ describe('chemical label claim import', () => {
     expect(twice).toHaveLength(1);
   });
 
+  it('rejects impossible calendar dates instead of letting Date.parse normalize them', () => {
+    expect(() =>
+      parseChemicalLabelClaimCsv(csv([{ document_revision_date: '2025-02-30' }])),
+    ).toThrow(/real YYYY-MM-DD date/);
+  });
+
+  it('marks a valued MRL entry as a real limit even when the row flags other residues exempt', () => {
+    const [row] = parseChemicalLabelClaimCsv(
+      csv([
+        {
+          mrls: 'EU|azoxystrobin|3.00|mg/kg;IN|sulphur',
+          no_mrl_required: 'true',
+        },
+      ]),
+    );
+
+    // DB enforces exemption XOR value per row — a numeric value is never
+    // stored alongside no_mrl_required = true.
+    expect(row.mrls).toEqual([
+      expect.objectContaining({ mrl_value: 3, no_mrl_required: false }),
+      expect.objectContaining({ mrl_value: null, no_mrl_required: true }),
+    ]);
+  });
+
   it('effective-dates older editions when a newer edition is imported', () => {
     const oldPlan = buildImportPlan(csv([{}]));
     const newerPlan = buildImportPlan(
@@ -222,5 +248,169 @@ describe('chemical label claim import', () => {
         effective_to: null,
       }),
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Write path (applyImportPlan) against a recording fake client — regression
+// coverage for the review findings: multi-row supersede, supersede-after-
+// claims ordering, surfaced lookup errors, stale-MRL deletion.
+// ---------------------------------------------------------------------------
+
+interface FakeOp {
+  table: string;
+  methods: Array<{ method: string; args: unknown[] }>;
+  terminal: 'await' | 'single' | 'maybeSingle';
+}
+
+type Responder = (op: FakeOp) => { data: unknown; error: Error | null };
+
+function fakeClient(respond: Responder, log: FakeOp[]): SupabaseLikeClient {
+  const from = (table: string) => {
+    const methods: FakeOp['methods'] = [];
+    const resolve = (terminal: FakeOp['terminal']) => {
+      const op: FakeOp = { table, methods, terminal };
+      log.push(op);
+      return respond(op);
+    };
+    const builder: Record<string, unknown> = {
+      maybeSingle: () => Promise.resolve(resolve('maybeSingle')),
+      single: () => Promise.resolve(resolve('single')),
+      then: (onFulfilled?: (value: unknown) => unknown, onRejected?: (reason: unknown) => unknown) =>
+        Promise.resolve(resolve('await')).then(onFulfilled, onRejected),
+    };
+    for (const method of ['select', 'insert', 'update', 'delete', 'eq', 'ilike', 'lt', 'is', 'in']) {
+      builder[method] = (...args: unknown[]) => {
+        methods.push({ method, args });
+        return builder;
+      };
+    }
+    return builder as unknown as ReturnType<SupabaseLikeClient['from']>;
+  };
+  return { from };
+}
+
+const called = (op: FakeOp, method: string) => op.methods.some((m) => m.method === method);
+const argsOf = (op: FakeOp, method: string) => op.methods.find((m) => m.method === method)?.args;
+
+describe('applyImportPlan write path', () => {
+  const plan = () => buildImportPlan(csv([{}]));
+
+  const happyPathResponder =
+    (overrides: (op: FakeOp) => { data: unknown; error: Error | null } | null): Responder =>
+    (op) => {
+      const override = overrides(op);
+      if (override) return override;
+      if (op.table === 'chemical_label_sources' && op.terminal === 'maybeSingle') {
+        return { data: null, error: null };
+      }
+      if (op.table === 'chemical_label_sources' && called(op, 'insert')) {
+        return { data: { id: 10 }, error: null };
+      }
+      if (op.table === 'chemical_label_sources' && called(op, 'lt')) {
+        return { data: [], error: null };
+      }
+      if (op.table === 'chemical_products') {
+        return { data: { id: 77, name: 'Azoxystrobin 23 SC' }, error: null };
+      }
+      if (op.table === 'chemical_label_claims' && op.terminal === 'maybeSingle') {
+        return { data: null, error: null };
+      }
+      if (op.table === 'chemical_label_claims' && called(op, 'insert')) {
+        return { data: { id: 500 }, error: null };
+      }
+      if (op.table === 'chemical_label_claim_mrls' && called(op, 'select')) {
+        return { data: [], error: null };
+      }
+      return { data: null, error: null };
+    };
+
+  it('supersedes every open prior revision with bulk updates and no .single()', async () => {
+    const log: FakeOp[] = [];
+    const client = fakeClient(
+      happyPathResponder((op) =>
+        op.table === 'chemical_label_sources' && called(op, 'lt')
+          ? { data: [{ id: 1 }, { id: 2 }], error: null }
+          : null,
+      ),
+      log,
+    );
+
+    await applyImportPlan(plan(), client);
+
+    const sourceUpdate = log.find((op) => op.table === 'chemical_label_sources' && called(op, 'update'));
+    const claimsUpdate = log.find((op) => op.table === 'chemical_label_claims' && called(op, 'update'));
+    expect(argsOf(sourceUpdate!, 'in')).toEqual(['id', [1, 2]]);
+    expect(argsOf(claimsUpdate!, 'in')).toEqual(['source_id', [1, 2]]);
+    // Bulk updates resolve as plain awaits — .single() on a multi-row update
+    // is exactly the PGRST116 crash the review reproduced.
+    expect(sourceUpdate!.terminal).toBe('await');
+    expect(claimsUpdate!.terminal).toBe('await');
+  });
+
+  it('supersedes prior revisions only after the new edition landed', async () => {
+    const log: FakeOp[] = [];
+    const client = fakeClient(
+      happyPathResponder((op) =>
+        op.table === 'chemical_label_sources' && called(op, 'lt')
+          ? { data: [{ id: 1 }], error: null }
+          : null,
+      ),
+      log,
+    );
+
+    await applyImportPlan(plan(), client);
+
+    const claimInsertIndex = log.findIndex(
+      (op) => op.table === 'chemical_label_claims' && called(op, 'insert'),
+    );
+    const supersedeIndex = log.findIndex(
+      (op) => op.table === 'chemical_label_sources' && called(op, 'update'),
+    );
+    expect(claimInsertIndex).toBeGreaterThanOrEqual(0);
+    expect(supersedeIndex).toBeGreaterThan(claimInsertIndex);
+  });
+
+  it('surfaces prior-source lookup errors instead of skipping supersession', async () => {
+    const log: FakeOp[] = [];
+    const client = fakeClient(
+      happyPathResponder((op) =>
+        op.table === 'chemical_label_sources' && called(op, 'lt')
+          ? { data: null, error: new Error('connection reset') }
+          : null,
+      ),
+      log,
+    );
+
+    await expect(applyImportPlan(plan(), client)).rejects.toThrow('connection reset');
+  });
+
+  it('deletes MRL child rows that are absent from the reviewed CSV', async () => {
+    const log: FakeOp[] = [];
+    const client = fakeClient(
+      happyPathResponder((op) =>
+        op.table === 'chemical_label_claim_mrls' && called(op, 'select')
+          ? {
+              data: [
+                { id: 5, market: 'EU', residue_name: 'azoxystrobin' },
+                { id: 6, market: 'Japan', residue_name: 'azoxystrobin' },
+              ],
+              error: null,
+            }
+          : null,
+      ),
+      log,
+    );
+
+    await applyImportPlan(plan(), client);
+
+    const deleteOp = log.find(
+      (op) => op.table === 'chemical_label_claim_mrls' && called(op, 'delete'),
+    );
+    expect(argsOf(deleteOp!, 'in')).toEqual(['id', [6]]);
+    const updateOp = log.find(
+      (op) => op.table === 'chemical_label_claim_mrls' && called(op, 'update'),
+    );
+    expect(argsOf(updateOp!, 'eq')).toEqual(['id', 5]);
   });
 });

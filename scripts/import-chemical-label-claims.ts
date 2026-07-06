@@ -3,7 +3,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-// @ts-expect-error Node 24 runs this CLI with --experimental-strip-types.
 import { parseUnit } from '../src/lib/quantity/parse-unit.ts';
 
 export const DEFAULT_CSV_PATH =
@@ -323,29 +322,47 @@ export function mergeClaimsBySourceIdentity(
 
 export async function applyImportPlan(plan: ImportPlan, client: SupabaseLikeClient): Promise<void> {
   const sourceId = await upsertSource(plan, client);
-  await effectiveDatePriorSources(plan, client);
 
   for (const row of plan.rows) {
     const productId = await resolveProductId(row, client);
     const claimId = await upsertClaim(sourceId, productId, row, client);
-    await upsertMrls(claimId, row.mrls, client);
+    await syncMrls(claimId, row.mrls, client);
   }
+
+  // Supersede prior editions only after the new edition has landed completely.
+  // A mid-import failure then leaves the old edition active (stale but
+  // consistent) instead of a catalog with no active edition at all; re-running
+  // the import finishes the job either way.
+  await effectiveDatePriorSources(plan, client);
 }
 
-interface SupabaseLikeClient {
+export interface SupabaseLikeClient {
   from(table: string): SupabaseTable;
 }
 
-interface SupabaseTable {
+type SupabaseRows = Array<Record<string, unknown>>;
+
+interface SupabaseTable extends PromiseLike<{ data: SupabaseRows | null; error: Error | null }> {
   select(columns?: string): SupabaseTable;
   insert(values: unknown): SupabaseTable;
   update(values: unknown): SupabaseTable;
+  delete(): SupabaseTable;
   eq(column: string, value: unknown): SupabaseTable;
+  ilike(column: string, pattern: string): SupabaseTable;
   lt(column: string, value: unknown): SupabaseTable;
   is(column: string, value: unknown): SupabaseTable;
   in(column: string, values: unknown[]): SupabaseTable;
   maybeSingle(): Promise<{ data: Record<string, unknown> | null; error: Error | null }>;
   single(): Promise<{ data: Record<string, unknown> | null; error: Error | null }>;
+}
+
+// The identity indexes are case-insensitive (lower(...) expression indexes), so
+// every lookup that feeds them must be case-insensitive too — otherwise a
+// re-import with different casing misses the existing row and the insert dies
+// on the unique index. PostgREST's case-insensitive operator is ilike; escape
+// its wildcards so values are compared literally.
+function ciEq(table: SupabaseTable, column: string, value: string): SupabaseTable {
+  return table.ilike(column, value.replace(/([%_\\])/g, '\\$1'));
 }
 
 function validateRow(row: CsvRow, line: number): ValidatedLabelClaimRow {
@@ -472,27 +489,29 @@ function parseMrls(raw: string, noMrlRequired: boolean, line: number): LabelClai
     if (parsedValue === null && !noMrlRequired) {
       throw new Error(`Line ${line}: MRL value is required for "${entry}"`);
     }
+    // The DB enforces exactly one state per row: exemption (no value) XOR a
+    // real limit. A numeric value on an entry is a real limit even when the
+    // row-level flag marks other residues exempt.
     return {
       market,
       residue_name: residueName,
       mrl_value: parsedValue,
       mrl_unit: unit || 'mg/kg',
-      no_mrl_required: noMrlRequired,
+      no_mrl_required: parsedValue === null,
       source_note: nullable(sourceNote),
     };
   });
 }
 
 async function upsertSource(plan: ImportPlan, client: SupabaseLikeClient): Promise<number> {
-  const existing = await client
+  let query = client
     .from('chemical_label_sources')
     .select('id')
-    .eq('source_type', plan.sourceIdentity.source_type)
-    .eq('issuing_body', plan.sourceIdentity.issuing_body)
-    .eq('source_document', plan.sourceIdentity.source_document)
-    .eq('crop', plan.sourceIdentity.crop)
-    .eq('revision_date', plan.sourceIdentity.revision_date)
-    .maybeSingle();
+    .eq('source_type', plan.sourceIdentity.source_type);
+  query = ciEq(query, 'issuing_body', plan.sourceIdentity.issuing_body);
+  query = ciEq(query, 'source_document', plan.sourceIdentity.source_document);
+  query = ciEq(query, 'crop', plan.sourceIdentity.crop);
+  const existing = await query.eq('revision_date', plan.sourceIdentity.revision_date).maybeSingle();
 
   throwIfSupabaseError(existing.error);
   if (existing.data?.id) return Number(existing.data.id);
@@ -512,30 +531,41 @@ async function effectiveDatePriorSources(
   plan: ImportPlan,
   client: SupabaseLikeClient,
 ): Promise<void> {
-  const prior = await client
+  // Document family key: type + issuing body + crop. Deliberately NOT the
+  // filename — every Annexure revision ships as a differently-named PDF
+  // ("… 17.09.2025.pdf" vs "… rev 03.11.2025.pdf"), so a filename-scoped
+  // lookup would never find the edition it is superseding.
+  let query = client
     .from('chemical_label_sources')
     .select('id')
-    .eq('source_type', plan.sourceIdentity.source_type)
-    .eq('issuing_body', plan.sourceIdentity.issuing_body)
-    .eq('source_document', plan.sourceIdentity.source_document)
-    .eq('crop', plan.sourceIdentity.crop)
+    .eq('source_type', plan.sourceIdentity.source_type);
+  query = ciEq(query, 'issuing_body', plan.sourceIdentity.issuing_body);
+  const prior = await query
+    .ilike('crop', plan.sourceIdentity.crop.replace(/([%_\\])/g, '\\$1'))
     .lt('revision_date', plan.sourceIdentity.revision_date)
-    .is('effective_to', null)
-    .single();
+    .is('effective_to', null);
 
-  if (prior.error || !prior.data?.id) return;
+  // A lookup failure is an operational error, not "no prior edition" —
+  // swallowing it would silently leave a superseded edition active.
+  throwIfSupabaseError(prior.error);
 
-  const priorSourceIds = [Number(prior.data.id)];
+  // Zero-to-many prior revisions can be open (e.g. an earlier partially
+  // failed import); close all of them.
+  const priorSourceIds = (prior.data ?? [])
+    .map((row) => Number(row.id))
+    .filter((id) => Number.isFinite(id));
+  if (priorSourceIds.length === 0) return;
+
   const effectiveTo = previousDay(plan.sourceIdentity.revision_date);
 
+  // No .select().single() on the updates: they legitimately touch zero-to-many
+  // rows, and their return values are unused.
   throwIfSupabaseError(
     (
       await client
         .from('chemical_label_sources')
         .update({ effective_to: effectiveTo, review_status: 'superseded' })
         .in('id', priorSourceIds)
-        .select('id')
-        .single()
     ).error,
   );
 
@@ -545,8 +575,6 @@ async function effectiveDatePriorSources(
         .from('chemical_label_claims')
         .update({ effective_to: effectiveTo, is_active: false, review_status: 'superseded' })
         .in('source_id', priorSourceIds)
-        .select('id')
-        .single()
     ).error,
   );
 }
@@ -616,13 +644,10 @@ async function upsertClaim(
     review_notes: row.review_notes,
   };
 
-  const existing = await client
-    .from('chemical_label_claims')
-    .select('id')
-    .eq('source_id', sourceId)
-    .eq('source_serial', row.source_serial)
-    .eq('target_problem', row.target_problem)
-    .maybeSingle();
+  let existingQuery = client.from('chemical_label_claims').select('id').eq('source_id', sourceId);
+  existingQuery = ciEq(existingQuery, 'source_serial', row.source_serial);
+  existingQuery = ciEq(existingQuery, 'target_problem', row.target_problem);
+  const existing = await existingQuery.maybeSingle();
 
   throwIfSupabaseError(existing.error);
   if (existing.data?.id) {
@@ -642,37 +667,47 @@ async function upsertClaim(
   return Number(inserted.data.id);
 }
 
-async function upsertMrls(
+async function syncMrls(
   claimId: number,
   mrls: LabelClaimMrlInput[],
   client: SupabaseLikeClient,
 ): Promise<void> {
-  for (const mrl of mrls) {
-    const existing = await client
-      .from('chemical_label_claim_mrls')
-      .select('id')
-      .eq('claim_id', claimId)
-      .eq('market', mrl.market)
-      .eq('residue_name', mrl.residue_name)
-      .maybeSingle();
+  // One fetch of the claim's current MRL children drives everything: identity
+  // matching is done in code against lowercased keys (the unique index is
+  // case-insensitive), and rows absent from the reviewed CSV are DELETED —
+  // a same-edition re-import is a full statement of the claim's MRLs, so a
+  // renamed or removed market/residue must not survive as a stale child row.
+  const existing = await client
+    .from('chemical_label_claim_mrls')
+    .select('id,market,residue_name')
+    .eq('claim_id', claimId);
+  throwIfSupabaseError(existing.error);
 
-    throwIfSupabaseError(existing.error);
+  const mrlKey = (market: unknown, residue: unknown) =>
+    `${String(market).toLowerCase()}::${String(residue).toLowerCase()}`;
+  const existingByKey = new Map(
+    (existing.data ?? []).map((row) => [mrlKey(row.market, row.residue_name), Number(row.id)]),
+  );
+  const keepKeys = new Set(mrls.map((mrl) => mrlKey(mrl.market, mrl.residue_name)));
+
+  const staleIds = [...existingByKey.entries()]
+    .filter(([key]) => !keepKeys.has(key))
+    .map(([, id]) => id);
+  if (staleIds.length > 0) {
+    throwIfSupabaseError(
+      (await client.from('chemical_label_claim_mrls').delete().in('id', staleIds)).error,
+    );
+  }
+
+  for (const mrl of mrls) {
     const payload = { claim_id: claimId, ...mrl };
-    if (existing.data?.id) {
+    const existingId = existingByKey.get(mrlKey(mrl.market, mrl.residue_name));
+    if (existingId !== undefined) {
       throwIfSupabaseError(
-        (
-          await client
-            .from('chemical_label_claim_mrls')
-            .update(payload)
-            .eq('id', existing.data.id)
-            .select('id')
-            .single()
-        ).error,
+        (await client.from('chemical_label_claim_mrls').update(payload).eq('id', existingId)).error,
       );
     } else {
-      throwIfSupabaseError(
-        (await client.from('chemical_label_claim_mrls').insert(payload).select('id').single()).error,
-      );
+      throwIfSupabaseError((await client.from('chemical_label_claim_mrls').insert(payload)).error);
     }
   }
 }
@@ -690,8 +725,8 @@ function nullable(value: string | undefined): string | null {
 
 function requiredDate(value: string | undefined, line: number, column: string): string {
   const date = requiredText(value, line, column);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
-    throw new Error(`Line ${line}: ${column} must be YYYY-MM-DD`);
+  if (!isValidIsoDate(date)) {
+    throw new Error(`Line ${line}: ${column} must be a real YYYY-MM-DD date`);
   }
   return date;
 }
@@ -699,10 +734,18 @@ function requiredDate(value: string | undefined, line: number, column: string): 
 function optionalDate(value: string | undefined): string | null {
   const date = nullable(value);
   if (date === null) return null;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
-    throw new Error(`Optional date must be YYYY-MM-DD: ${date}`);
+  if (!isValidIsoDate(date)) {
+    throw new Error(`Optional date must be a real YYYY-MM-DD date: ${date}`);
   }
   return date;
+}
+
+// Round-trips through Date because Date.parse alone normalizes impossible
+// calendar dates (2025-02-30 parses as 2025-03-02) instead of rejecting them.
+function isValidIsoDate(date: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const parsed = new Date(`${date}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
 }
 
 function requiredInt(value: string | undefined, line: number, column: string): number {
