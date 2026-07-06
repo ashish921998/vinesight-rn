@@ -38,10 +38,17 @@ export function useFarmAreaAcres(
   const { data: profile } = useProfile({ enabled: false });
   const user = useAuthStore((state) => state.user);
   // The delegated path overrides with the CLIENT's preference; the farmer path
-  // reads the signed-in user's profile (then auth_metadata fallback).
-  const preferredAreaUnit = resolveAreaUnitPreference(
-    areaUnitOverride ?? profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
-  );
+  // reads the signed-in user's profile (then auth_metadata fallback). Branch on
+  // `undefined` ONLY: a delegated caller passing an explicit `null` (client has
+  // no preference set) must resolve to the default acres basis via
+  // resolveAreaUnitPreference, NOT fall through to the consultant's own unit —
+  // otherwise a client on acres whose preference is unset would be computed on
+  // the signed-in consultant's hectares basis.
+  const resolvedOverride =
+    areaUnitOverride === undefined
+      ? (profile?.area_unit_preference ?? user?.user_metadata?.area_unit)
+      : areaUnitOverride;
+  const preferredAreaUnit = resolveAreaUnitPreference(resolvedOverride);
   const farmAreaAcres =
     typeof area === 'number' && Number.isFinite(area) && area > 0
       ? convertAreaToAcres(area, preferredAreaUnit)
