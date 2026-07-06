@@ -3255,6 +3255,19 @@ export const mr = {
       waterCoverage:
         'पाण्याच्या प्रमाणानुसार भारित — {{total}} पैकी {{withWater}} फवारणी नोंदींमध्ये पाणी नोंदलेले आहे.',
     },
+    nutrientLedger: {
+      title: 'पोषक तत्त्व नोंदवही — N·P·K दिलेले',
+      coverageLabel: 'वापरलेल्या प्रमाणाच्या {{value}}% मधून पोषक तत्त्वे',
+      coverageZero: 'रचना माहिती नाही — पोषक तत्त्वे मोजता येत नाहीत',
+      elementHeader: 'घटक',
+      elementalHeader: 'मूलतत्त्व (kg)',
+      oxideHeader: 'बॅग-ग्रेड',
+      perAcreHeader: 'एकरी',
+      perAcreUnavailable: 'एकरी दृश्य उपलब्ध नाही — शेताचे क्षेत्रफळ नोंदलेले नाही.',
+      emptyTitle: 'या कालावधीत खत किंवा फवारणीची नोंद नाही',
+      dualBasisNote:
+        'मूलतत्त्व मूल्ये पेटिओल/माती प्रयोगशाळा अहवालाशी जुळतात. बॅग-ग्रेड (N-P₂O₅-K₂O) खत बॅगवर छापलेल्या मूल्याशी जुळते.',
+    },
     formal: {
       metaTitle: '$t(glossary.report) प्रकार',
       currentReportType: 'सध्याचा $t(glossary.report) प्रकार',

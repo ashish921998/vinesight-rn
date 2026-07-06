@@ -3245,6 +3245,19 @@ export const en = {
       waterCoverage:
         'Weighted by water volume — based on {{withWater}} of {{total}} spray events with logged water.',
     },
+    nutrientLedger: {
+      title: 'Nutrient Ledger — N·P·K Applied',
+      coverageLabel: 'Nutrients from {{value}}% of applied quantity',
+      coverageZero: 'No composition data — nutrients cannot be calculated',
+      elementHeader: 'Element',
+      elementalHeader: 'Elemental (kg)',
+      oxideHeader: 'Bag-grade',
+      perAcreHeader: 'Per acre',
+      perAcreUnavailable: 'Per-acre view unavailable — farm area is missing or invalid.',
+      emptyTitle: 'No fertilizer or spray logs in this period',
+      dualBasisNote:
+        'Elemental values match petiole/soil lab reports. Bag-grade (N-P₂O₅-K₂O) matches what is printed on fertilizer bags.',
+    },
     formal: {
       metaTitle: 'Report Type',
       currentReportType: 'Current Report Type',

@@ -3228,6 +3228,19 @@ export const hi = {
       waterCoverage:
         'पानी की मात्रा से भारित — {{total}} में से {{withWater}} स्प्रे इवेंट में पानी दर्ज है।',
     },
+    nutrientLedger: {
+      title: 'पोषक तत्व खाता — N·P·K दिया गया',
+      coverageLabel: 'लागू मात्रा के {{value}}% से पोषक तत्व',
+      coverageZero: 'कोई संरचना डेटा नहीं — पोषक तत्वों की गणना संभव नहीं',
+      elementHeader: 'तत्व',
+      elementalHeader: 'मूल तत्व (kg)',
+      oxideHeader: 'बैग-ग्रेड',
+      perAcreHeader: 'प्रति एकड़',
+      perAcreUnavailable: 'प्रति-एकड़ दृश्य उपलब्ध नहीं — खेत का क्षेत्रफल दर्ज नहीं है या अमान्य है।',
+      emptyTitle: 'इस अवधि में कोई उर्वरक या स्प्रे लॉग नहीं',
+      dualBasisNote:
+        'मूल तत्व मान पेटिओल/मिट्टी लैब रिपोर्ट से मेल खाते हैं। बैग-ग्रेड (N-P₂O₅-K₂O) उर्वरक बैग पर लिखे मान से मेल खाता है।',
+    },
     formal: {
       metaTitle: 'रिपोर्ट प्रकार',
       currentReportType: 'वर्तमान रिपोर्ट प्रकार',
