@@ -260,7 +260,10 @@ async function deactivateRemovedSeedProducts(
     if (seededLowerNames.has(lowerName)) continue;
     if (row.input_type !== 'fertilizer') continue;
     if (!seederOwnsProduct(row)) continue;
-    // Only deactivate rows currently active — re-runs should be no-ops.
+    // Only deactivate rows currently active — re-runs are then true no-ops
+    // (without this, every --write re-issues the update and churns updated_at
+    // via the moddatetime trigger while logging a false "deactivated N rows").
+    if (row.is_active === false) continue;
     toDeactivate.push(row.id);
   }
   if (toDeactivate.length === 0) return 0;

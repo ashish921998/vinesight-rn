@@ -1,6 +1,6 @@
 -- MANUAL ROLLBACK SCRIPT (do not place in supabase/migrations)
 -- Reverts the data changes introduced by:
---   supabase/migrations/20260707120000_fertilizer_catalog_dedup.sql
+--   supabase/migrations/20260707130000_fertilizer_catalog_dedup.sql
 --
 -- WARNING:
 -- - This is destructive and re-activates collapsed/corrupt product rows.
@@ -24,6 +24,13 @@ begin;
 -- restores them as pickable products — note this re-introduces the
 -- composition-set duplication the dedup removed. Matched by name (ids are
 -- environment-specific), within the seed state (MH).
+-- LIMITATION: matched by name within MH, mirroring exactly how the migration
+-- targeted these rows. The mis-typed spray rows ('00:52:34', 'sop', 'sulpher')
+-- are pre-existing (not seed-owned), so a source_reference/tier scope can't be
+-- used without failing to restore them. If a DIFFERENT MH row shares one of
+-- these exact grade-code names and was deactivated for an unrelated reason,
+-- this would resurrect it too — hence the "review on staging first" warning
+-- above. Verify the matched set on staging before running in production.
 update public.chemical_products
 set is_active = true
 where state_code = 'MH'

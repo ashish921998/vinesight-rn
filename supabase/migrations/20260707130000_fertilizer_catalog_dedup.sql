@@ -94,8 +94,14 @@ begin
   if to_regclass('public.warehouse_items') is null then return; end if;
   with updated as (
     update public.warehouse_items wi
+    -- Preserve a human 'mapped_verified' status: the collapse invariant is an
+    -- identical declared composition, so a verified mapping stays true; only
+    -- unverified/provisional rows take the provisional stamp.
     set catalog_product_id = cts.survivor_id,
-        catalog_mapping_status = 'mapped_provisional'
+        catalog_mapping_status = case
+          when wi.catalog_mapping_status = 'mapped_verified' then 'mapped_verified'
+          else 'mapped_provisional'
+        end
     from collapsed_to_survivor cts
     where wi.catalog_product_id = cts.collapsed_id
     returning 1
@@ -121,10 +127,59 @@ begin
 end $$;
 
 -- chemical_phi_rules.product_id (FK ON DELETE CASCADE)
+-- chemical_phi_rules has a unique index on (product_id, lower(crop),
+-- coalesce(effective_from, '1900-01-01')). A blind re-point aborts on a
+-- duplicate — and the collision comes from TWO directions: a collapsed row's
+-- rule may match a rule the survivor already has, OR two sibling collapsed rows
+-- (both folding into the same survivor) may each carry an equivalent rule.
+-- So: (1) drop collapsed rules whose slot is already taken on the survivor,
+-- (2) among sibling collapsed rules headed for the same slot keep the lowest
+-- id, (3) re-point what remains — now provably one rule per target slot.
+-- Dropping is safe: the collapse invariant makes these the same product, and
+-- the rules hang off the about-to-be-deactivated collapsed row.
 do $$
-declare n int := 0;
+declare n_moved int := 0; n_dropped int := 0; d int := 0;
 begin
   if to_regclass('public.chemical_phi_rules') is null then return; end if;
+
+  -- (1) collapsed rule collides with an existing survivor rule
+  with dropped as (
+    delete from public.chemical_phi_rules pr
+    using collapsed_to_survivor cts
+    where pr.product_id = cts.collapsed_id
+      and exists (
+        select 1 from public.chemical_phi_rules ex
+        where ex.product_id = cts.survivor_id
+          and lower(ex.crop) = lower(pr.crop)
+          and coalesce(ex.effective_from, date '1900-01-01')
+              = coalesce(pr.effective_from, date '1900-01-01')
+      )
+    returning 1
+  )
+  select count(*) into d from dropped; n_dropped := n_dropped + d;
+
+  -- (2) two sibling collapsed rules headed for the same survivor slot — keep
+  -- the lowest id, drop the rest
+  with dropped as (
+    delete from public.chemical_phi_rules pr
+    using collapsed_to_survivor cts
+    where pr.product_id = cts.collapsed_id
+      and exists (
+        select 1
+        from public.chemical_phi_rules pr2
+        join collapsed_to_survivor cts2 on pr2.product_id = cts2.collapsed_id
+        where cts2.survivor_id = cts.survivor_id
+          and lower(pr2.crop) = lower(pr.crop)
+          and coalesce(pr2.effective_from, date '1900-01-01')
+              = coalesce(pr.effective_from, date '1900-01-01')
+          and pr2.id < pr.id
+      )
+    returning 1
+  )
+  select count(*) into d from dropped; n_dropped := n_dropped + d;
+
+  -- (3) re-point the survivors — every remaining collapsed rule now owns a
+  -- unique, free target slot
   with updated as (
     update public.chemical_phi_rules pr
     set product_id = cts.survivor_id
@@ -132,8 +187,8 @@ begin
     where pr.product_id = cts.collapsed_id
     returning 1
   )
-  select count(*) into n from updated;
-  raise notice 'catalog dedup: chemical_phi_rules re-pointed % row(s)', n;
+  select count(*) into n_moved from updated;
+  raise notice 'catalog dedup: chemical_phi_rules re-pointed %, dropped % duplicate(s)', n_moved, n_dropped;
 end $$;
 
 -- fertilizer_plan_items.product_id (table owned by the web app; identity link)
@@ -185,6 +240,7 @@ begin
             then jsonb_set(elem, '{catalog_product_id}', to_jsonb(cts.survivor_id))
           else elem
         end
+        order by t.idx  -- preserve original array order (jsonb_agg is otherwise unordered)
       )
       from jsonb_array_elements(chemical_items) with ordinality as t(elem, idx)
       left join collapsed_to_survivor cts
@@ -219,6 +275,7 @@ begin
             then jsonb_set(elem, '{catalog_product_id}', to_jsonb(cts.survivor_id))
           else elem
         end
+        order by t.idx  -- preserve original array order (jsonb_agg is otherwise unordered)
       )
       from jsonb_array_elements(fertilizers) with ordinality as t(elem, idx)
       left join collapsed_to_survivor cts
@@ -268,7 +325,10 @@ begin
   -- brand-name alias for each collapsed row (so typing the brand finds the
   -- generic). Skips duplicates via chemical_product_aliases_unique.
   insert into public.chemical_product_aliases (product_id, alias, locale, alias_kind, source)
-  select survivor_id, lower(alias), 'en', 'trade', 'fertilizer-catalog-dedup:234'
+  -- Store the alias in its natural case ('Mahadhan 19:19:19'); the unique index
+  -- lower()s for dedup, so lowercasing the stored value would only make any
+  -- future UI render it lowercase permanently.
+  select survivor_id, alias, 'en', 'trade', 'fertilizer-catalog-dedup:234'
   from (
     -- existing aliases on the collapsed row
     select cts.survivor_id, a.alias as alias
