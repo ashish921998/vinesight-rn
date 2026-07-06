@@ -475,18 +475,48 @@ describe('applyImportPlan write path', () => {
 
     await applyImportPlan(plan(), client);
 
-    const sourceUpdate = log.find(
+    const sourceUpdateIndex = log.findIndex(
       (op) => op.table === 'chemical_label_sources' && called(op, 'update'),
     );
+    const sourceUpdate = log[sourceUpdateIndex];
     expect(sourceUpdate).toBeDefined();
-    expect(argsOf(sourceUpdate!, 'eq')).toEqual(['id', 10]);
-    expect(argsOf(sourceUpdate!, 'update')![0]).toMatchObject({
+    expect(argsOf(sourceUpdate, 'eq')).toEqual(['id', 10]);
+    expect(argsOf(sourceUpdate, 'update')![0]).toMatchObject({
       review_status: 'pending_review',
       source_title: 'ICAR-NRCG Annexure 5 Grapes 2025-26',
     });
     // Identity columns are the lookup key — never part of the update payload.
-    expect(argsOf(sourceUpdate!, 'update')![0]).not.toHaveProperty('source_document');
-    expect(argsOf(sourceUpdate!, 'update')![0]).not.toHaveProperty('revision_date');
+    expect(argsOf(sourceUpdate, 'update')![0]).not.toHaveProperty('source_document');
+    expect(argsOf(sourceUpdate, 'update')![0]).not.toHaveProperty('revision_date');
+    // Provenance lands only after the claim writes — a reviewed-looking source
+    // must never precede the claims that justify it.
+    const lastClaimWriteIndex = log.reduce(
+      (last, op, index) =>
+        op.table === 'chemical_label_claims' && called(op, 'update') ? index : last,
+      -1,
+    );
+    expect(sourceUpdateIndex).toBeGreaterThan(lastClaimWriteIndex);
+  });
+
+  it('leaves source metadata untouched when a claim write fails mid-import', async () => {
+    const log: FakeOp[] = [];
+    const client = fakeClient(
+      happyPathResponder((op) => {
+        if (op.table === 'chemical_label_sources' && op.terminal === 'maybeSingle') {
+          return { data: { id: 10 }, error: null };
+        }
+        if (op.table === 'chemical_label_claims' && called(op, 'insert')) {
+          return { data: null, error: new Error('claim write failed') };
+        }
+        return null;
+      }),
+      log,
+    );
+
+    await expect(applyImportPlan(plan(), client)).rejects.toThrow('claim write failed');
+    expect(
+      log.some((op) => op.table === 'chemical_label_sources' && called(op, 'update')),
+    ).toBe(false);
   });
 
   it('reports missing and ambiguous product mappings with row context, not PGRST116', async () => {

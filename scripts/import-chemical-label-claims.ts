@@ -329,7 +329,7 @@ export function mergeClaimsBySourceIdentity(
 }
 
 export async function applyImportPlan(plan: ImportPlan, client: SupabaseLikeClient): Promise<void> {
-  const sourceId = await upsertSource(plan, client);
+  const { sourceId, isExisting } = await ensureSource(plan, client);
 
   for (const row of plan.rows) {
     const productId = await resolveProductId(row, client);
@@ -337,10 +337,14 @@ export async function applyImportPlan(plan: ImportPlan, client: SupabaseLikeClie
     await syncMrls(claimId, row.mrls, client);
   }
 
-  // Supersede prior editions only after the new edition has landed completely.
-  // A mid-import failure then leaves the old edition active (stale but
-  // consistent) instead of a catalog with no active edition at all; re-running
-  // the import finishes the job either way.
+  // Every edition-level mutation runs only after the row writes succeeded —
+  // a mid-import failure must leave edition state (source review metadata,
+  // prior-edition supersession) exactly as it was, never a reviewed-looking
+  // source wrapping half-written claims. Re-running the import finishes the
+  // job either way.
+  if (isExisting) {
+    await refreshSourceProvenance(plan, sourceId, client);
+  }
   await effectiveDatePriorSources(plan, client);
 }
 
@@ -512,7 +516,10 @@ function parseMrls(raw: string, noMrlRequired: boolean, line: number): LabelClai
   });
 }
 
-async function upsertSource(plan: ImportPlan, client: SupabaseLikeClient): Promise<number> {
+async function ensureSource(
+  plan: ImportPlan,
+  client: SupabaseLikeClient,
+): Promise<{ sourceId: number; isExisting: boolean }> {
   let query = client
     .from('chemical_label_sources')
     .select('id')
@@ -524,30 +531,10 @@ async function upsertSource(plan: ImportPlan, client: SupabaseLikeClient): Promi
 
   throwIfSupabaseError(existing.error);
   if (existing.data?.id) {
-    // A same-edition re-import is a full statement of the edition, including
-    // its provenance: refresh the mutable source fields (review_status,
-    // effective dates, URL, notes) so a reviewed CSV doesn't leave the source
-    // row wrapping its claims with stale pre-review metadata. The identity
-    // columns stay untouched — they are the lookup key.
-    const sourceId = Number(existing.data.id);
-    throwIfSupabaseError(
-      (
-        await client
-          .from('chemical_label_sources')
-          .update({
-            document_family: plan.sourceIdentity.document_family,
-            source_title: plan.sourceIdentity.source_title,
-            source_url: plan.sourceIdentity.source_url,
-            effective_from: plan.sourceIdentity.effective_from,
-            effective_to: plan.sourceIdentity.effective_to,
-            edition_defaults: plan.sourceIdentity.edition_defaults,
-            review_status: plan.sourceIdentity.review_status,
-            notes: plan.sourceIdentity.notes,
-          })
-          .eq('id', sourceId)
-      ).error,
-    );
-    return sourceId;
+    // Deliberately NO metadata refresh here: the caller runs it after the
+    // claim/MRL writes succeed, so a mid-import failure cannot leave the
+    // source row carrying review metadata its claims never received.
+    return { sourceId: Number(existing.data.id), isExisting: true };
   }
 
   const inserted = await client
@@ -558,7 +545,36 @@ async function upsertSource(plan: ImportPlan, client: SupabaseLikeClient): Promi
 
   throwIfSupabaseError(inserted.error);
   if (!inserted.data?.id) throw new Error('Inserted source did not return an id');
-  return Number(inserted.data.id);
+  return { sourceId: Number(inserted.data.id), isExisting: false };
+}
+
+// A same-edition re-import is a full statement of the edition, including its
+// provenance: refresh the mutable source fields (review_status, effective
+// dates, URL, notes) so a reviewed CSV doesn't leave the source row wrapping
+// its claims with stale pre-review metadata. The identity columns stay
+// untouched — they are the lookup key. Runs only after the row writes land.
+async function refreshSourceProvenance(
+  plan: ImportPlan,
+  sourceId: number,
+  client: SupabaseLikeClient,
+): Promise<void> {
+  throwIfSupabaseError(
+    (
+      await client
+        .from('chemical_label_sources')
+        .update({
+          document_family: plan.sourceIdentity.document_family,
+          source_title: plan.sourceIdentity.source_title,
+          source_url: plan.sourceIdentity.source_url,
+          effective_from: plan.sourceIdentity.effective_from,
+          effective_to: plan.sourceIdentity.effective_to,
+          edition_defaults: plan.sourceIdentity.edition_defaults,
+          review_status: plan.sourceIdentity.review_status,
+          notes: plan.sourceIdentity.notes,
+        })
+        .eq('id', sourceId)
+    ).error,
+  );
 }
 
 async function effectiveDatePriorSources(
