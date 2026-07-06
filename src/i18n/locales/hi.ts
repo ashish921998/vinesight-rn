@@ -392,6 +392,8 @@ export const hi = {
       logThis: 'यह लॉग करें',
       /** Accessibility label for the one-tap log button, includes item name. */
       logThisItem: '{{name}} लॉग करें',
+      /** Subtitle under a derived plot-total plan item headline. */
+      rateSubtitle: 'दर: {{rate}}',
       /** Explanatory notice for ppm plan items that cannot be one-tap prefilled. */
       ppmNotice: 'ppm मात्रा त्वरित नहीं जोड़ी जा सकती — स्वयं दर्ज करें',
     },
@@ -3236,7 +3238,8 @@ export const hi = {
       elementalHeader: 'मूल तत्व (kg)',
       oxideHeader: 'बैग-ग्रेड',
       perAcreHeader: 'प्रति एकड़',
-      perAcreUnavailable: 'प्रति-एकड़ दृश्य उपलब्ध नहीं — खेत का क्षेत्रफल दर्ज नहीं है या अमान्य है।',
+      perAcreUnavailable:
+        'प्रति-एकड़ दृश्य उपलब्ध नहीं — खेत का क्षेत्रफल दर्ज नहीं है या अमान्य है।',
       emptyTitle: 'इस अवधि में कोई उर्वरक या स्प्रे लॉग नहीं',
       dualBasisNote:
         'मूल तत्व मान पेटिओल/मिट्टी लैब रिपोर्ट से मेल खाते हैं। बैग-ग्रेड (N-P₂O₅-K₂O) उर्वरक बैग पर लिखे मान से मेल खाता है।',

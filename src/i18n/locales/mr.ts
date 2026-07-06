@@ -395,6 +395,8 @@ export const mr = {
       logThis: 'हे नोंदवा',
       /** Accessibility label for the one-tap log button, includes item name. */
       logThisItem: '{{name}} नोंदवा',
+      /** Subtitle under a derived plot-total plan item headline. */
+      rateSubtitle: 'दर: {{rate}}',
       /** Explanatory notice for ppm plan items that cannot be one-tap prefilled. */
       ppmNotice: 'ppm मात्रा जलद जोडता येत नाही — स्वतः भरा',
     },

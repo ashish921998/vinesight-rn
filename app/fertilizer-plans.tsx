@@ -399,6 +399,7 @@ export default function FertilizerPlansScreen() {
               plan={currentPlan}
               m3={m3}
               t={t}
+              areaAcres={currentPlan.farm_area_acres}
               onLogItem={hasFarmAccess ? handleLogPlanItem : undefined}
             />
 
@@ -415,6 +416,7 @@ export default function FertilizerPlansScreen() {
                     m3={m3}
                     t={t}
                     expanded={expandedIds.has(plan.id)}
+                    areaAcres={plan.farm_area_acres}
                     onToggle={() => togglePlan(plan.id)}
                   />
                 ))}
