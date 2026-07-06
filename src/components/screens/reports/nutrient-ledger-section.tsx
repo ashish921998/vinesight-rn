@@ -347,7 +347,8 @@ export function NutrientLedgerSection({ ledger, panelStyle }: NutrientLedgerSect
           <CoverageChip coveragePercent={ledger.coveragePercent} m3={m3} />
         </View>
 
-        {!hasRows || ledger.coveragePercent === 0 ? (
+        {/* Gate on rows, not coverage — a rounded coverage must never hide real rows */}
+        {!hasRows ? (
           /* Zero-coverage / empty state — never show zeros as truth */
           <View
             style={{

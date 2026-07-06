@@ -1139,7 +1139,7 @@ export class ReportService {
         `Nutrients from ${ledger.coveragePercent}% of applied quantity (${ledger.composedItemCount} of ${ledger.itemCount} items with composition)`,
       ),
     );
-    if (ledger.rows.length === 0 || ledger.coveragePercent === 0) {
+    if (ledger.rows.length === 0) {
       // itemCount === 0 means no applications logged; itemCount > 0 with 0%
       // coverage means applications exist but none carried a composition —
       // the coverage line above already states "0 of N", so calling it "no
@@ -1611,7 +1611,7 @@ export class ReportService {
 
     if (visibleSections.has('nutrient-ledger') && data.nutrientLedger) {
       const ledger = data.nutrientLedger;
-      if (ledger.rows.length > 0 && ledger.coveragePercent > 0) {
+      if (ledger.rows.length > 0) {
         appendSectionTable(
           `🌱 Nutrient Ledger — N·P·K Applied (nutrients from ${ledger.coveragePercent}% of applied quantity)`,
           ['Element', 'Elemental (kg)', 'Elemental (kg/acre)', 'Bag-grade', 'Bag-grade (kg)', 'Bag-grade (kg/acre)'],

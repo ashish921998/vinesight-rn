@@ -137,10 +137,81 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       areaAcres: 2,
     });
 
-    expect(ledger.rows.map((row) => row.element)).toEqual(['N', 'K', 'FE', 'ZN']);
-    const zinc = ledger.rows.find((row) => row.element === 'ZN');
+    expect(ledger.rows.map((row) => row.element)).toEqual(['N', 'K', 'Fe', 'Zn']);
+    const zinc = ledger.rows.find((row) => row.element === 'Zn');
     expect(zinc?.oxideSymbol).toBeUndefined();
     expect(zinc?.oxideKg).toBeUndefined();
+  });
+
+  it('canonicalizes direct Ca/Mg declarations — one row per element, with bag-grade oxide', () => {
+    // sanitizeComposition uppercases codes; without canonicalization a direct
+    // 'Ca' declaration lands under 'CA' (sorted with micros, no CaO value)
+    // while a 'CaO' declaration lands under 'Ca' — one element, two rows.
+    const ledger = calculateNutrientLedger({
+      sprayRecords: [],
+      fertigationRecords: [
+        fertigation({
+          fertilizers: [
+            {
+              name: 'Calcium mix',
+              unit: 'kg',
+              quantity: 10,
+              composition_snapshot: [
+                { nutrient_code: 'Ca', percent: 10, basis: 'declared' },
+                { nutrient_code: 'CaO', percent: 14, basis: 'declared' },
+                { nutrient_code: 'Mg', percent: 5, basis: 'declared' },
+              ],
+            },
+          ],
+        }),
+      ],
+      fromDate: '2026-03-01',
+      toDate: '2026-03-31',
+      areaAcres: 2,
+    });
+
+    // Exactly one Ca row, macro-sorted, merging direct + oxide contributions.
+    expect(ledger.rows.map((row) => row.element)).toEqual(['Ca', 'Mg']);
+    const calcium = ledger.rows[0];
+    // 10 kg × (10% direct + 14% CaO × 0.7147) elemental Ca
+    expect(calcium?.elementalKg).toBeCloseTo(10 * 0.1 + 10 * 0.14 * 0.7147, 4);
+    expect(calcium?.oxideSymbol).toBe('CaO');
+    expect(calcium?.oxideKg).toBeCloseTo(calcium!.elementalKg / 0.7147, 4);
+    const magnesium = ledger.rows[1];
+    expect(magnesium?.oxideSymbol).toBe('MgO');
+    expect(magnesium?.oxideKg).toBeCloseTo((10 * 0.05) / 0.6031, 4);
+  });
+
+  it('coverage floors at 0.01% — rounding never forges a 0% with composed rows behind it', () => {
+    const noComp = Array.from({ length: 29999 }, (_, i) => ({
+      name: `Mystery ${i}`,
+      unit: 'kg',
+      quantity: 1,
+      composition_snapshot: null,
+    }));
+    const ledger = calculateNutrientLedger({
+      sprayRecords: [],
+      fertigationRecords: [
+        fertigation({
+          fertilizers: [
+            {
+              name: 'Urea',
+              unit: 'kg',
+              quantity: 10,
+              composition_snapshot: [{ nutrient_code: 'N', percent: 46, basis: 'declared' }],
+            },
+            ...noComp,
+          ],
+        }),
+      ],
+      fromDate: '2026-03-01',
+      toDate: '2026-03-31',
+      areaAcres: 2,
+    });
+
+    // 1/30000 rounds to 0.00 at 2 decimals — must not read as "no data".
+    expect(ledger.rows.map((row) => row.element)).toEqual(['N']);
+    expect(ledger.coveragePercent).toBe(0.01);
   });
 
   it('coverage honesty: no-composition items excluded from totals, counted in the denominator', () => {

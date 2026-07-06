@@ -42,6 +42,15 @@ export function normalizeNutrientCode(code: string): string {
   return code.trim().toUpperCase().replace(/\s+/g, '');
 }
 
+// Canonical display casing for each normalized code ('CA' → 'Ca', 'FE' → 'Fe').
+// sanitizeComposition uppercases codes, but element keys downstream (oxide
+// targets, ledger macro/oxide maps, petiole-trends element rows) are all
+// mixed-case — without this map a direct 'Ca' declaration lands under 'CA'
+// while 'CaO' lands under 'Ca', splitting one element into two buckets.
+export const CANONICAL_CODE_BY_NORMALIZED: Record<string, string> = Object.fromEntries(
+  NUTRIENT_CODES.map((code) => [normalizeNutrientCode(code), code]),
+);
+
 export function sanitizeComposition(
   composition: NutrientCompositionItem[] | null | undefined,
 ): NutrientCompositionItem[] {

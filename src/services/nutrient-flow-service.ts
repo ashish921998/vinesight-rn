@@ -7,6 +7,7 @@ import type {
   SprayRecord,
 } from '@/types';
 import {
+  CANONICAL_CODE_BY_NORMALIZED,
   DEFAULT_DENSITY_KG_PER_L,
   OXIDE_TO_ELEMENTAL_FACTORS,
   sanitizeComposition,
@@ -134,8 +135,12 @@ function toElementalTotals(
 
   cleanComposition.forEach((entry) => {
     const declaredKg = productMassKg * (entry.percent / 100);
+    // Canonicalize the fallback key: sanitize uppercased the code, but every
+    // downstream consumer (ledger macro/oxide maps, petiole element rows)
+    // speaks mixed case — 'CA' here with 'Ca' from CaO would split one
+    // element into two rows and drop its bag-grade values.
     const conversion = OXIDE_TO_ELEMENTAL_FACTORS[entry.nutrient_code] ?? {
-      elemental: entry.nutrient_code,
+      elemental: CANONICAL_CODE_BY_NORMALIZED[entry.nutrient_code] ?? entry.nutrient_code,
       factor: 1,
     };
     const elementalKg = declaredKg * conversion.factor;
@@ -549,7 +554,12 @@ export function calculateNutrientLedger({
     roundedTotals[key] = roundTo(value, 6);
   }
 
-  const coveragePercent = itemCount > 0 ? roundTo((composedItemCount / itemCount) * 100, 2) : 0;
+  // Floor at 0.01 when anything composed: 1 item among tens of thousands
+  // rounds to 0.00, and every surface treats exactly-0 as "nothing computable".
+  const rawCoveragePercent =
+    itemCount > 0 ? roundTo((composedItemCount / itemCount) * 100, 2) : 0;
+  const coveragePercent =
+    composedItemCount > 0 ? Math.max(rawCoveragePercent, 0.01) : rawCoveragePercent;
 
   return {
     rows: buildLedgerRows(roundedTotals, elementalPerAcre),
