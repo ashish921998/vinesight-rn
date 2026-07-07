@@ -144,6 +144,58 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
     expect(zinc?.oxideKg).toBeUndefined();
   });
 
+  it('orders the full micro tier agronomically (Fe Zn Mn Cu B Mo), other codes last (issue #235)', () => {
+    const ledger = calculateNutrientLedger({
+      sprayRecords: [],
+      fertigationRecords: [
+        fertigation({
+          fertilizers: [
+            {
+              name: 'Multi-micro',
+              unit: 'kg',
+              quantity: 10,
+              // Deliberately shuffled + a non-tier code (Na) that must sort last.
+              composition_snapshot: [
+                { nutrient_code: 'Mo', percent: 0.1, basis: 'declared' },
+                { nutrient_code: 'Na', percent: 1, basis: 'declared' },
+                { nutrient_code: 'B', percent: 0.5, basis: 'declared' },
+                { nutrient_code: 'Zn', percent: 3, basis: 'declared' },
+                { nutrient_code: 'Cu', percent: 1, basis: 'declared' },
+                { nutrient_code: 'Fe', percent: 2.5, basis: 'declared' },
+                { nutrient_code: 'Mn', percent: 1, basis: 'declared' },
+                { nutrient_code: 'N', percent: 5, basis: 'declared' },
+              ],
+            },
+          ],
+        }),
+      ],
+      fromDate: '2026-03-01',
+      toDate: '2026-03-31',
+      areaAcres: 2,
+    });
+
+    expect(ledger.rows.map((row) => row.element)).toEqual([
+      'N',
+      'Fe',
+      'Zn',
+      'Mn',
+      'Cu',
+      'B',
+      'Mo',
+      'Na',
+    ]);
+    // Gram-scale masses survive the pipeline: 10 kg × 0.1% Mo = 0.01 kg.
+    const molybdenum = ledger.rows.find((row) => row.element === 'Mo');
+    expect(molybdenum?.elementalKg).toBeCloseTo(0.01, 6);
+    expect(molybdenum?.elementalKgPerAcre).toBeCloseTo(0.005, 6);
+    // Dual-basis never fabricates oxide rows for micros.
+    for (const element of ['Fe', 'Zn', 'Mn', 'Cu', 'B', 'Mo', 'Na']) {
+      const row = ledger.rows.find((r) => r.element === element);
+      expect(row?.oxideSymbol).toBeUndefined();
+      expect(row?.oxideKg).toBeUndefined();
+    }
+  });
+
   it('canonicalizes direct Ca/Mg declarations — one row per element, with bag-grade oxide', () => {
     // sanitizeComposition uppercases codes; without canonicalization a direct
     // 'Ca' declaration lands under 'CA' (sorted with micros, no CaO value)
@@ -249,7 +301,9 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       sprayRecords: [],
       fertigationRecords: [
         fertigation({
-          fertilizers: [{ name: 'Local Mix', unit: 'kg', quantity: 25, composition_snapshot: null }],
+          fertilizers: [
+            { name: 'Local Mix', unit: 'kg', quantity: 25, composition_snapshot: null },
+          ],
         }),
       ],
       fromDate: '2026-03-01',

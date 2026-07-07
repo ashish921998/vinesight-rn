@@ -45,7 +45,12 @@ export interface FertilizerSeedProduct {
 }
 
 /** Convenience: an N-P₂O₅-K₂O grade in one call (skips zero components). */
-function npk(n: number, p2o5: number, k2o: number, extra: SeedComposition[] = []): SeedComposition[] {
+function npk(
+  n: number,
+  p2o5: number,
+  k2o: number,
+  extra: SeedComposition[] = [],
+): SeedComposition[] {
   const rows: SeedComposition[] = [];
   if (n > 0) rows.push({ component_code: 'N', percent: n });
   if (p2o5 > 0) rows.push({ component_code: 'P2O5', percent: p2o5 });
@@ -311,7 +316,52 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     manufacturer: 'Generic FCO Grade',
     grade: null,
     // Copper sulphate pentahydrate — FCO 24% Cu grade.
-    compositions: [{ component_code: 'Cu', percent: 24 }],
+    compositions: [
+      { component_code: 'Cu', percent: 24 },
+      { component_code: 'S', percent: 12, note: 'Pentahydrate carries ~12-12.8% S' },
+    ],
+  },
+  {
+    name: 'Borax (10.5%)',
+    manufacturer: 'Generic FCO Grade',
+    grade: null,
+    // Sodium tetraborate decahydrate — FCO 10.5% B grade.
+    compositions: [{ component_code: 'B', percent: 10.5 }],
+  },
+  {
+    name: 'Boric Acid (17%)',
+    manufacturer: 'Generic FCO Grade',
+    grade: null,
+    // FCO 17% B grade.
+    compositions: [{ component_code: 'B', percent: 17 }],
+  },
+  {
+    name: 'Ammonium Molybdate (52%)',
+    manufacturer: 'Generic FCO Grade',
+    grade: null,
+    // FCO 52% Mo grade — the only Mo source commonly sold as a straight.
+    compositions: [{ component_code: 'Mo', percent: 52 }],
+  },
+  // HEDP-chelate forms are distinct products from the EDTA forms (#234
+  // identity rule: different chelate form / percent = different product).
+  // Grades per Vanita Agro Synergy Plus labels (reviewed 2026-07-06).
+  {
+    name: 'Chelated Iron (Fe-HEDP 17%)',
+    manufacturer: 'Generic Grade',
+    grade: null,
+    compositions: [{ component_code: 'Fe', percent: 17 }],
+  },
+  {
+    name: 'Chelated Zinc (Zn-HEDP 17%)',
+    manufacturer: 'Generic Grade',
+    grade: null,
+    compositions: [{ component_code: 'Zn', percent: 17 }],
+  },
+  {
+    name: 'Chelated Copper (Cu-EDTA 12%)',
+    manufacturer: 'Generic FCO Grade',
+    grade: null,
+    compositions: [{ component_code: 'Cu', percent: 12 }],
   },
 
   // ── Branded grades (from WAREHOUSE_PRESETS — the offline fallback source) ──

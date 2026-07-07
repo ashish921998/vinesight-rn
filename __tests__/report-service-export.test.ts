@@ -190,6 +190,14 @@ describe('report export parity', () => {
             oxideKg: 5.2,
             oxideKgPerAcre: 2.6,
           },
+          {
+            // Micronutrient (issue #235): gram-scale mass. CSV keeps raw kg
+            // for machine reading; the PDF renders through the kernel scale
+            // picker so 0.012 kg shows as "12 g", not "0.01 kg".
+            element: 'Zn',
+            elementalKg: 0.012,
+            elementalKgPerAcre: 0.006,
+          },
         ],
         coveragePercent: 50,
         itemCount: 2,
@@ -201,14 +209,19 @@ describe('report export parity', () => {
     };
 
     const csv = ReportService.generateCSV(dataWithLedger, 'operations');
-    expect(csv).toContain('NUTRIENT LEDGER - N-P-K APPLIED');
+    expect(csv).toContain('NUTRIENT LEDGER - NUTRIENTS APPLIED');
     expect(csv).toContain('Nutrients from 50% of applied quantity (1 of 2 items with composition)');
     expect(csv).toContain('P,2.2693,1.1346,P₂O₅,5.2,2.6');
+    // CSV stays numeric kg even for micros (machine-readable).
+    expect(csv).toContain('Zn,0.012,0.006,,,');
 
     const html = ReportService.generatePDFHtml(dataWithLedger, SAMPLE_SUMMARY, 'operations', 'INR');
     expect(html).toContain('Nutrient Ledger');
     expect(html).toContain('nutrients from 50% of applied quantity');
     expect(html).toContain('P₂O₅');
+    // PDF cells go through the kernel scale picker: macro in kg, micro in g.
+    expect(html).toContain('<td>2.27 kg</td>');
+    expect(html).toContain('<td>12 g</td>');
 
     // The ledger derives from application logs, not stock movement — it must
     // stay out of stock-usage and financial exports.
@@ -235,14 +248,19 @@ describe('report export parity', () => {
     };
 
     const csv = ReportService.generateCSV(dataZeroCoverage, 'operations');
-    expect(csv).toContain('NUTRIENT LEDGER - N-P-K APPLIED');
+    expect(csv).toContain('NUTRIENT LEDGER - NUTRIENTS APPLIED');
     expect(csv).toContain('Nutrients from 0% of applied quantity (0 of 3 items with composition)');
     // Applications exist but lack composition — must not be reported as "no
     // records", which would contradict the "0 of 3" coverage line.
     expect(csv).toContain('No composition data — nutrients cannot be calculated');
     expect(csv).not.toContain('No records in selected range');
 
-    const html = ReportService.generatePDFHtml(dataZeroCoverage, SAMPLE_SUMMARY, 'operations', 'INR');
+    const html = ReportService.generatePDFHtml(
+      dataZeroCoverage,
+      SAMPLE_SUMMARY,
+      'operations',
+      'INR',
+    );
     expect(html).toContain('No composition data — nutrients cannot be calculated (coverage 0%)');
   });
 

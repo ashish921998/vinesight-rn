@@ -3231,11 +3231,11 @@ export const hi = {
         'पानी की मात्रा से भारित — {{total}} में से {{withWater}} स्प्रे इवेंट में पानी दर्ज है।',
     },
     nutrientLedger: {
-      title: 'पोषक तत्व खाता — N·P·K दिया गया',
+      title: 'पोषक तत्व खाता — दिए गए पोषक तत्व',
       coverageLabel: 'लागू मात्रा के {{value}}% से पोषक तत्व',
       coverageZero: 'कोई संरचना डेटा नहीं — पोषक तत्वों की गणना संभव नहीं',
       elementHeader: 'तत्व',
-      elementalHeader: 'मूल तत्व (kg)',
+      elementalHeader: 'मूल तत्व',
       oxideHeader: 'बैग-ग्रेड',
       perAcreHeader: 'प्रति एकड़',
       perAcreUnavailable:

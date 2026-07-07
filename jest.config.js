@@ -6,8 +6,8 @@ module.exports = {
     'react-native-gesture-handler/jestSetup.js',
   ],
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
-  testPathIgnorePatterns: ['<rootDir>/.claude/'],
-  modulePathIgnorePatterns: ['<rootDir>/.claude/'],
+  testPathIgnorePatterns: ['<rootDir>/.claude/', '<rootDir>/.worktrees/'],
+  modulePathIgnorePatterns: ['<rootDir>/.claude/', '<rootDir>/.worktrees/'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@widgets/shared$': '<rootDir>/components/widgets/shared',
