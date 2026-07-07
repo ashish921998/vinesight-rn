@@ -315,7 +315,6 @@ export function EntryForm({
     return tabs && tabs.length > 0 ? tabs : ['log', 'task'];
   }, [tabs, detailedMode]);
   const isScreenPresentation = presentation === 'screen';
-  const isInlineComposerMode = isScreenPresentation;
   const defaultTab = resolvedTabs.includes(initialTab || 'log')
     ? initialTab || resolvedTabs[0]
     : resolvedTabs[0];
@@ -623,9 +622,8 @@ export function EntryForm({
       if (!keyboardHeightRef.current) return;
       const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
       if (typeof resolvedHandle !== 'number') return;
-      // In screen/inline mode the focused input lives inside the main content
-      // ScrollView; in modal mode it lives inside the dedicated log-form ScrollView.
-      const activeScrollView = isInlineComposerMode ? contentScrollViewRef : logFormScrollViewRef;
+      // The focused input lives inside the composer sheet's dedicated ScrollView.
+      const activeScrollView = logFormScrollViewRef;
       UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
         const keyboardTop = windowHeight - keyboardHeightRef.current;
         const inputBottom = y + height;
@@ -639,7 +637,7 @@ export function EntryForm({
         }
       });
     },
-    [windowHeight, isInlineComposerMode],
+    [windowHeight],
   );
 
   // Track keyboard visibility
@@ -667,7 +665,7 @@ export function EntryForm({
   useEffect(() => {
     if (isVisible && initialLogType) {
       setSelectedLogType(initialLogType);
-      setShowLogFormModal(!isInlineComposerMode);
+      setShowLogFormModal(true);
       if (initialLogType === 'spray' && initialLogPrefill?.sprayChemicals?.length) {
         setSprayData({
           waterVolume: undefined,
@@ -706,7 +704,7 @@ export function EntryForm({
         });
       }
     }
-  }, [isVisible, initialLogType, initialLogPrefill, isInlineComposerMode]);
+  }, [isVisible, initialLogType, initialLogPrefill]);
 
   useEffect(() => {
     if (selectedFarmId !== ALL_FARMS_ID) return;
@@ -742,7 +740,7 @@ export function EntryForm({
     if (!isVisible || !initialVoiceLogPrefill) return;
 
     setSelectedLogType(initialVoiceLogPrefill.type);
-    setShowLogFormModal(!isInlineComposerMode);
+    setShowLogFormModal(true);
 
     const prefillDate = parseInitialLogDate(initialVoiceLogPrefill.date);
     if (prefillDate) {
@@ -831,7 +829,7 @@ export function EntryForm({
         break;
       }
     }
-  }, [initialVoiceLogPrefill, isVisible, isInlineComposerMode]);
+  }, [initialVoiceLogPrefill, isVisible]);
 
   type OnFocusEvent = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
 
@@ -1863,7 +1861,10 @@ export function EntryForm({
       <Modal
         visible={showLogFormModal}
         animationType="slide"
-        presentationStyle="fullScreen"
+        // iOS page sheet: the Add Log overview stays visible behind the
+        // composer and swipe-down dismisses (fires onRequestClose). Android
+        // ignores presentationStyle and keeps the full-screen slide.
+        presentationStyle="pageSheet"
         onRequestClose={() => {
           setShowLogFormModal(false);
           setSelectedLogType(null);
@@ -1882,7 +1883,9 @@ export function EntryForm({
                 borderColor: m3.surface.s100,
                 paddingHorizontal: 16,
                 paddingBottom: 12,
-                paddingTop: 8 + insets.top,
+                // Page sheets hang below the status bar on iOS, so the safe-area
+                // top inset only applies on Android's full-screen fallback.
+                paddingTop: isIOS ? 14 : 8 + insets.top,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -2048,71 +2051,6 @@ export function EntryForm({
           </KeyboardAvoidingView>
         </View>
       </Modal>
-    );
-  };
-
-  const renderInlineLogComposerForm = () => {
-    if (!isInlineComposerMode || !selectedLogType) return null;
-
-    return (
-      <View style={{ marginBottom: 16 }}>
-        {selectedLogType === 'spray' ? (
-          <View
-            style={{
-              marginBottom: 10,
-              padding: 12,
-              borderRadius: radius.md,
-              backgroundColor: colorWithOpacity(m3.colorScheme.secondaryContainer, 0.5),
-            }}
-          >
-            <Text
-              style={{
-                color: m3.colorScheme.onSurfaceVariant,
-                ...m3.typography.labelSmall,
-              }}
-            >
-              {isGrapeFarm
-                ? t('entryForm.phiScope.grapeOnlyEnabled', {
-                    defaultValue: 'PHI safety checks are currently available for grape sprays.',
-                  })
-                : t('entryForm.phiScope.grapeOnlyDisabled', {
-                    defaultValue:
-                      'PHI safety validation is currently available for grape sprays only.',
-                  })}
-            </Text>
-          </View>
-        ) : null}
-        <LogForm
-          selectedLogType={selectedLogType}
-          irrigationData={irrigationData}
-          sprayData={sprayData}
-          harvestData={harvestData}
-          expenseData={expenseData}
-          fertigationData={activeFertigationData}
-          noteData={noteData}
-          onIrrigationChange={setIrrigationData}
-          onSprayChange={setSprayData}
-          onHarvestChange={setHarvestData}
-          onExpenseChange={setExpenseData}
-          onFertigationChange={handleActiveFertigationChange}
-          onNoteChange={setNoteData}
-          onInputFocus={scrollToFocusedInput}
-          onAdd={addLogToSession}
-          isValid={isLogFormValid}
-          hasFarm={hasFarmForCurrentLog}
-          sprayQuickAddItems={sprayQuickAddItems}
-          fertigationQuickAddItems={fertigationQuickAddItems}
-          includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
-          onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
-          sprayCatalogMixes={catalogMixes}
-          sprayHistoryItems={recentSprayChemicals ?? []}
-          sprayPlanItems={fertilizerPlan?.items ?? []}
-          fertigationHistoryItems={recentFertigationItems ?? []}
-          fertigationPlanItems={fertilizerPlan?.items ?? []}
-          fertigationCatalogProducts={fertilizerCatalogProducts}
-          areaAcres={activeFarmAreaAcres}
-        />
-      </View>
     );
   };
 
@@ -2393,65 +2331,58 @@ export function EntryForm({
           })}
           onSelect={(type) => {
             setSelectedLogType(type);
-            setShowLogFormModal(!isInlineComposerMode);
+            setShowLogFormModal(true);
           }}
         />
       </GuidedTourTarget>
-      {renderInlineLogComposerForm()}
-      {isInlineComposerMode &&
-        pendingLogs.length === 0 &&
-        !selectedLogType &&
-        repeatLastLogSuggestion && (
-          <RepeatLastLog
-            date={repeatLastLogSuggestion.date}
-            items={repeatLastLogSuggestion.items}
-            onAdd={handleRepeatLastLog}
-          />
-        )}
-      {isInlineComposerMode &&
-        pendingLogs.length === 0 &&
-        !selectedLogType &&
-        !repeatLastLogSuggestion && (
-          <View
+      {pendingLogs.length === 0 && !selectedLogType && repeatLastLogSuggestion && (
+        <RepeatLastLog
+          date={repeatLastLogSuggestion.date}
+          items={repeatLastLogSuggestion.items}
+          onAdd={handleRepeatLastLog}
+        />
+      )}
+      {pendingLogs.length === 0 && !selectedLogType && !repeatLastLogSuggestion && (
+        <View
+          style={{
+            borderWidth: 1,
+            borderStyle: 'dashed',
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+            borderRadius: radius.lg,
+            paddingHorizontal: 16,
+            paddingVertical: 18,
+            marginBottom: 16,
+            alignItems: 'center',
+            backgroundColor: colorWithOpacity(m3.surface.s100, 0.72),
+          }}
+        >
+          <Text
+            selectable
             style={{
-              borderWidth: 1,
-              borderStyle: 'dashed',
-              borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-              borderRadius: radius.lg,
-              paddingHorizontal: 16,
-              paddingVertical: 18,
-              marginBottom: 16,
-              alignItems: 'center',
-              backgroundColor: colorWithOpacity(m3.surface.s100, 0.72),
+              fontSize: fontSize.sm,
+              fontWeight: '700',
+              color: m3.colorScheme.onSurface,
+              textAlign: 'center',
             }}
           >
-            <Text
-              selectable
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: '700',
-                color: m3.colorScheme.onSurface,
-                textAlign: 'center',
-              }}
-            >
-              {t('entryForm.emptyStackTitle', { defaultValue: 'Tap a chip above to start' })}
-            </Text>
-            <Text
-              selectable
-              style={{
-                marginTop: 4,
-                fontSize: fontSize.xs,
-                lineHeight: 17,
-                color: m3.colorScheme.onSurfaceVariant,
-                textAlign: 'center',
-              }}
-            >
-              {t('entryForm.emptyStackBody', {
-                defaultValue: 'Add one or more activities, then save them together.',
-              })}
-            </Text>
-          </View>
-        )}
+            {t('entryForm.emptyStackTitle', { defaultValue: 'Tap a chip above to start' })}
+          </Text>
+          <Text
+            selectable
+            style={{
+              marginTop: 4,
+              fontSize: fontSize.xs,
+              lineHeight: 17,
+              color: m3.colorScheme.onSurfaceVariant,
+              textAlign: 'center',
+            }}
+          >
+            {t('entryForm.emptyStackBody', {
+              defaultValue: 'Add one or more activities, then save them together.',
+            })}
+          </Text>
+        </View>
+      )}
       <PendingLogs
         pendingLogs={pendingLogs}
         failures={pendingLogFailures}
@@ -3579,14 +3510,10 @@ export function EntryForm({
           {activeTab === 'log' ? renderLogContent() : renderTaskContent()}
         </ScrollView>
 
-        {activeTab === 'log' && !isInlineComposerMode && renderLogFormModal()}
+        {activeTab === 'log' && renderLogFormModal()}
 
         {/* Sticky Add Entry button above keyboard */}
-        {activeTab === 'log' &&
-          isKeyboardVisible &&
-          !showLogFormModal &&
-          !isInlineComposerMode &&
-          renderStickyAddButton()}
+        {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
 
         <View
           onLayout={(event) => {
