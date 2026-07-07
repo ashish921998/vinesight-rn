@@ -44,6 +44,16 @@ import {
   spacing,
 } from '@/styles/theme';
 import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
+import { RepeatLastLog } from '@/components/screens/entry-form/RepeatLastLog';
+import { WeekStrip } from '@/components/ui/week-strip';
+import {
+  irrigationRecordToFormData,
+  sprayRecordToFormData,
+  harvestRecordToFormData,
+  expenseRecordToFormData,
+  fertigationRecordToFormData,
+  dailyNoteRecordToFormData,
+} from '@/utils/record-to-form';
 import {
   PendingLogs,
   type PendingLog,
@@ -114,6 +124,12 @@ import {
   usePhiComputation,
   useFertilizerPlan,
   useMasterProducts,
+  useIrrigationRecords,
+  useSprayRecords,
+  useHarvestRecords,
+  useExpenseRecords,
+  useFertigationRecords,
+  useDailyNotes,
   queryKeys,
   isIOS,
   useResponsiveHeight,
@@ -340,6 +356,15 @@ export function EntryForm({
   const { data: recentFertigationItems } = useRecentFertigationItems(logFarmId ?? undefined);
   const { data: fertilizerPlan } = useFertilizerPlan(logFarmId ?? undefined);
   const { activeSeason } = useFarmSeasonStatus(logFarmId ?? undefined);
+  // Saved records for the selected farm — power the week-strip "already
+  // logged" dots and the repeat-last-log suggestion. Query keys are shared
+  // with the farm detail screen, so these are usually cache hits.
+  const { data: farmIrrigationRecords } = useIrrigationRecords(logFarmId ?? undefined);
+  const { data: farmSprayRecords } = useSprayRecords(logFarmId ?? undefined);
+  const { data: farmHarvestRecords } = useHarvestRecords(logFarmId ?? undefined);
+  const { data: farmExpenseRecords } = useExpenseRecords(logFarmId ?? undefined);
+  const { data: farmFertigationRecords } = useFertigationRecords(logFarmId ?? undefined);
+  const { data: farmDailyNotes } = useDailyNotes(logFarmId ?? undefined);
   const { data: catalogMixes = [] } = useChemicalMixSearch('', isGrapeFarm);
 
   useEffect(() => {
@@ -423,6 +448,29 @@ export function EntryForm({
   );
   const [noteData, setNoteData] = useState<NoteFormData>(() => createEmptyNoteFormData());
   const selectedDateIso = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
+  // Dates (yyyy-mm-dd) that already have any saved log on the selected farm.
+  const loggedDateIsos = useMemo(() => {
+    const dates = new Set<string>();
+    const collect = (records?: { date: string }[]) => {
+      records?.forEach((record) => {
+        if (record.date) dates.add(record.date.slice(0, 10));
+      });
+    };
+    collect(farmIrrigationRecords);
+    collect(farmSprayRecords);
+    collect(farmHarvestRecords);
+    collect(farmExpenseRecords);
+    collect(farmFertigationRecords);
+    collect(farmDailyNotes);
+    return dates;
+  }, [
+    farmIrrigationRecords,
+    farmSprayRecords,
+    farmHarvestRecords,
+    farmExpenseRecords,
+    farmFertigationRecords,
+    farmDailyNotes,
+  ]);
   const { data: sprayPhiComputation } = usePhiComputation(
     sprayData.catalogMixId ?? null,
     selectedDateIso,
@@ -937,6 +985,71 @@ export function EntryForm({
     },
     [buildPendingLog, enqueuePendingLogs],
   );
+
+  // "Repeat last log": the most recent logged day on this farm before the
+  // selected date, with its records mapped back into draft form data.
+  const repeatLastLogSuggestion = useMemo(() => {
+    if (isAllFarmsSelected || !logFarmId) return null;
+    let lastIso: string | null = null;
+    loggedDateIsos.forEach((iso) => {
+      if (iso < selectedDateIso && (!lastIso || iso > lastIso)) lastIso = iso;
+    });
+    if (!lastIso) return null;
+    const matchesDay = (record: { date: string }) => record.date?.slice(0, 10) === lastIso;
+    const items: { key: string; type: LogTypeId; data: PendingLog['data']; description: string }[] =
+      [];
+    const push = (key: string, type: LogTypeId, data: PendingLog['data']) => {
+      items.push({ key, type, data, description: getLogDescription(type, data) });
+    };
+    (farmIrrigationRecords ?? []).filter(matchesDay).forEach((record) => {
+      push(`irrigation-${record.id}`, 'irrigation', irrigationRecordToFormData(record));
+    });
+    (farmFertigationRecords ?? []).filter(matchesDay).forEach((record) => {
+      push(`fertigation-${record.id}`, 'fertigation', fertigationRecordToFormData(record));
+    });
+    (farmSprayRecords ?? []).filter(matchesDay).forEach((record) => {
+      const data = sprayRecordToFormData(record);
+      // PHI fields derive from the spray date — a copy on a new date must not
+      // inherit them. Mirrors buildSprayPendingData's non-verified branch.
+      push(`spray-${record.id}`, 'spray', {
+        ...data,
+        governingPhiDays: null,
+        safeHarvestDate: null,
+        phiBlockingComponent: null,
+        phiStatus: data.catalogMixId ? 'legacy_unverified' : 'unknown',
+      });
+    });
+    (farmHarvestRecords ?? []).filter(matchesDay).forEach((record) => {
+      push(`harvest-${record.id}`, 'harvest', harvestRecordToFormData(record));
+    });
+    (farmExpenseRecords ?? []).filter(matchesDay).forEach((record) => {
+      push(`expense-${record.id}`, 'expense', expenseRecordToFormData(record));
+    });
+    (farmDailyNotes ?? []).filter(matchesDay).forEach((record) => {
+      push(`note-${record.id}`, 'note', dailyNoteRecordToFormData(record));
+    });
+    if (items.length === 0) return null;
+    return { dateIso: lastIso, date: parseDbDateToLocalDate(lastIso) ?? new Date(), items };
+  }, [
+    isAllFarmsSelected,
+    logFarmId,
+    loggedDateIsos,
+    selectedDateIso,
+    getLogDescription,
+    farmIrrigationRecords,
+    farmFertigationRecords,
+    farmSprayRecords,
+    farmHarvestRecords,
+    farmExpenseRecords,
+    farmDailyNotes,
+  ]);
+
+  const handleRepeatLastLog = useCallback(() => {
+    if (!repeatLastLogSuggestion) return;
+    enqueuePendingLogs(
+      repeatLastLogSuggestion.items.map((item) => buildPendingLog(item.type, item.data)),
+    );
+  }, [repeatLastLogSuggestion, buildPendingLog, enqueuePendingLogs]);
 
   const buildSprayPendingData = useCallback(
     (input: SprayFormData): SprayFormData =>
@@ -2231,16 +2344,6 @@ export function EntryForm({
             >
               {t('entryForm.loggingFor', { defaultValue: 'Logging for' })}
             </Text>
-            <Text
-              selectable
-              style={{
-                fontSize: fontSize.xl,
-                fontWeight: '700',
-                color: m3.colorScheme.onSurface,
-              }}
-            >
-              {formatDate(selectedDate, { weekday: 'short', month: 'short', day: 'numeric' })}
-            </Text>
           </View>
 
           {pendingLogs.length > 0 && (
@@ -2269,45 +2372,12 @@ export function EntryForm({
             </View>
           )}
         </View>
-        <Pressable
-          onPress={() => setShowDatePicker(true)}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: m3.surface.s50,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-            borderRadius: radius.md,
-            borderWidth: 1,
-            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <AppIcon name="calendar" size={18} color={m3.colorScheme.primary} />
-            <Text
-              selectable
-              style={{
-                marginLeft: 8,
-                fontSize: fontSize.base,
-                fontWeight: '600',
-                color: m3.colorScheme.onSurface,
-              }}
-            >
-              {formatDate(selectedDate, {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </Text>
-          </View>
-          <AppIcon
-            name="chevron-forward"
-            size={16}
-            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.65)}
-          />
-        </Pressable>
+        <WeekStrip
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          markedDates={loggedDateIsos}
+          onOpenPicker={() => setShowDatePicker(true)}
+        />
       </View>
 
       <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}>
@@ -2328,47 +2398,60 @@ export function EntryForm({
         />
       </GuidedTourTarget>
       {renderInlineLogComposerForm()}
-      {isInlineComposerMode && pendingLogs.length === 0 && !selectedLogType && (
-        <View
-          style={{
-            borderWidth: 1,
-            borderStyle: 'dashed',
-            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-            borderRadius: radius.lg,
-            paddingHorizontal: 16,
-            paddingVertical: 18,
-            marginBottom: 16,
-            alignItems: 'center',
-            backgroundColor: colorWithOpacity(m3.surface.s100, 0.72),
-          }}
-        >
-          <Text
-            selectable
+      {isInlineComposerMode &&
+        pendingLogs.length === 0 &&
+        !selectedLogType &&
+        repeatLastLogSuggestion && (
+          <RepeatLastLog
+            date={repeatLastLogSuggestion.date}
+            items={repeatLastLogSuggestion.items}
+            onAdd={handleRepeatLastLog}
+          />
+        )}
+      {isInlineComposerMode &&
+        pendingLogs.length === 0 &&
+        !selectedLogType &&
+        !repeatLastLogSuggestion && (
+          <View
             style={{
-              fontSize: fontSize.sm,
-              fontWeight: '700',
-              color: m3.colorScheme.onSurface,
-              textAlign: 'center',
+              borderWidth: 1,
+              borderStyle: 'dashed',
+              borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+              borderRadius: radius.lg,
+              paddingHorizontal: 16,
+              paddingVertical: 18,
+              marginBottom: 16,
+              alignItems: 'center',
+              backgroundColor: colorWithOpacity(m3.surface.s100, 0.72),
             }}
           >
-            {t('entryForm.emptyStackTitle', { defaultValue: 'Tap a chip above to start' })}
-          </Text>
-          <Text
-            selectable
-            style={{
-              marginTop: 4,
-              fontSize: fontSize.xs,
-              lineHeight: 17,
-              color: m3.colorScheme.onSurfaceVariant,
-              textAlign: 'center',
-            }}
-          >
-            {t('entryForm.emptyStackBody', {
-              defaultValue: 'Add one or more activities, then save them together.',
-            })}
-          </Text>
-        </View>
-      )}
+            <Text
+              selectable
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: '700',
+                color: m3.colorScheme.onSurface,
+                textAlign: 'center',
+              }}
+            >
+              {t('entryForm.emptyStackTitle', { defaultValue: 'Tap a chip above to start' })}
+            </Text>
+            <Text
+              selectable
+              style={{
+                marginTop: 4,
+                fontSize: fontSize.xs,
+                lineHeight: 17,
+                color: m3.colorScheme.onSurfaceVariant,
+                textAlign: 'center',
+              }}
+            >
+              {t('entryForm.emptyStackBody', {
+                defaultValue: 'Add one or more activities, then save them together.',
+              })}
+            </Text>
+          </View>
+        )}
       <PendingLogs
         pendingLogs={pendingLogs}
         failures={pendingLogFailures}
