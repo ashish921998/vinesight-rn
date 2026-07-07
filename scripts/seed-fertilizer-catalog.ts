@@ -25,6 +25,9 @@ import {
   type FertilizerSeedProduct,
 } from './seed-data/fertilizer-catalog-seed.ts';
 
+/** Provenance stamped on every alias row written by this seeder. */
+const SEED_ALIASES_SOURCE = 'fertilizer-catalog-seed:collapsed-brand';
+
 const WRITE = process.argv.includes('--write');
 
 const SUPABASE_URL = process.env.SUPABASE_URL?.trim() ?? '';
@@ -41,6 +44,7 @@ interface ExistingProductRow {
   input_type: string | null;
   verification_tier: string | null;
   source_reference: string | null;
+  is_active: boolean | null;
 }
 
 /**
@@ -94,10 +98,7 @@ async function upsertProduct(
     if (!seederOwnsProduct(existing)) {
       return { id: existing.id, action: 'skipped' };
     }
-    const { error } = await supabase
-      .from('chemical_products')
-      .update(row)
-      .eq('id', existing.id);
+    const { error } = await supabase.from('chemical_products').update(row).eq('id', existing.id);
     if (error) throw error;
     return { id: existing.id, action: 'updated' };
   }
@@ -191,6 +192,90 @@ async function syncCompositions(
   }
 }
 
+/**
+ * Sync the product's trade aliases (issue #234). Brands whose declared
+ * composition matched a generic no longer have their own rows; they survive as
+ * search keywords here so a farmer typing "yara" still finds MAP. Idempotent by
+ * the `chemical_product_aliases_unique` expression index — read existing,
+ * insert the missing. Never updates or deletes: a curated alias a human added is
+ * left alone, and an alias the seed drops (a future re-grade) is harmless to keep.
+ */
+async function syncAliases(
+  supabase: SupabaseClient,
+  productId: number,
+  product: FertilizerSeedProduct,
+): Promise<number> {
+  const aliases = product.aliases;
+  if (!aliases || aliases.length === 0) return 0;
+
+  const { data: existingRows, error: fetchError } = await supabase
+    .from('chemical_product_aliases')
+    .select('alias')
+    .eq('product_id', productId);
+  if (fetchError) throw fetchError;
+
+  const existingLower = new Set(
+    ((existingRows ?? []) as { alias: string }[]).map((row) => row.alias.toLowerCase()),
+  );
+  const toInsert = aliases
+    .filter((alias) => !existingLower.has(alias.toLowerCase()))
+    .map((alias) => ({
+      product_id: productId,
+      alias,
+      locale: 'en',
+      alias_kind: 'trade',
+      source: SEED_ALIASES_SOURCE,
+    }));
+  if (toInsert.length === 0) return 0;
+
+  const { error } = await supabase.from('chemical_product_aliases').insert(toInsert);
+  if (error) throw error;
+  return toInsert.length;
+}
+
+/**
+ * Convergence step (issue #234 note 3): deactivate seed-owned fertilizer rows
+ * whose (state, lower(name)) is no longer in the seed set. The branded rows
+ * (Mahadhan / YaraTera / Vanita) were removed from the seed once they collapsed
+ * into their generics; without this step a re-run leaves them active and the
+ * dedup invariant ("no two active fertilizer products share a composition set")
+ * is violated on re-seed.
+ *
+ * Safe under the existing ownership model — only rows this seeder created
+ * (provisional + seed source_reference) and that are still fertilizer-typed are
+ * eligible. A curated/upgraded row or one held by another writer is skipped.
+ * Rows are deactivated (is_active=false), never deleted, so historical FKs
+ * (ON DELETE SET NULL / CASCADE) keep pointing at real, identifiable rows.
+ */
+async function deactivateRemovedSeedProducts(
+  supabase: SupabaseClient,
+  existingByLowerName: Map<string, ExistingProductRow>,
+): Promise<number> {
+  const seededLowerNames = new Set(
+    FERTILIZER_CATALOG_SEED.map((product) => product.name.toLowerCase()),
+  );
+
+  const toDeactivate: number[] = [];
+  for (const [lowerName, row] of existingByLowerName) {
+    if (seededLowerNames.has(lowerName)) continue;
+    if (row.input_type !== 'fertilizer') continue;
+    if (!seederOwnsProduct(row)) continue;
+    // Only deactivate rows currently active — re-runs are then true no-ops
+    // (without this, every --write re-issues the update and churns updated_at
+    // via the moddatetime trigger while logging a false "deactivated N rows").
+    if (row.is_active === false) continue;
+    toDeactivate.push(row.id);
+  }
+  if (toDeactivate.length === 0) return 0;
+
+  const { error } = await supabase
+    .from('chemical_products')
+    .update({ is_active: false })
+    .in('id', toDeactivate);
+  if (error) throw error;
+  return toDeactivate.length;
+}
+
 async function main(): Promise<void> {
   const productCount = FERTILIZER_CATALOG_SEED.length;
   const compositionCount = FERTILIZER_CATALOG_SEED.reduce(
@@ -209,9 +294,13 @@ async function main(): Promise<void> {
       const grade = product.compositions
         .map((composition) => `${composition.component_code} ${composition.percent}%`)
         .join(', ');
-      log(`  • ${product.name} [${product.manufacturer}] → ${grade}`);
+      const aliasNote =
+        product.aliases && product.aliases.length > 0
+          ? ` (aliases: ${product.aliases.join(', ')})`
+          : '';
+      log(`  • ${product.name} [${product.manufacturer}] → ${grade}${aliasNote}`);
     }
-    log('Re-run with --write to apply.');
+    log('Re-run with --write to apply (also deactivates seed-owned rows no longer in the seed).');
     return;
   }
 
@@ -233,7 +322,7 @@ async function main(): Promise<void> {
   // so curated/foreign rows can be skipped whole.
   const { data: existingRows, error: fetchError } = await supabase
     .from('chemical_products')
-    .select('id,name,input_type,verification_tier,source_reference')
+    .select('id,name,input_type,verification_tier,source_reference,is_active')
     .eq('state_code', SEED_STATE_CODE);
   if (fetchError) throw fetchError;
 
@@ -242,7 +331,7 @@ async function main(): Promise<void> {
     existingByLowerName.set(existing.name.toLowerCase(), existing);
   }
 
-  const counts = { inserted: 0, updated: 0, skipped: 0, foreign: 0 };
+  const counts = { inserted: 0, updated: 0, skipped: 0, foreign: 0, aliases: 0 };
   for (const product of FERTILIZER_CATALOG_SEED) {
     const resolution = await upsertProduct(supabase, product, existingByLowerName);
     if (resolution.action === 'foreign') {
@@ -260,6 +349,7 @@ async function main(): Promise<void> {
     // point — a pre-existing provisional 'Urea' with no compositions must
     // still end up feeding the nutrient ledger.
     await syncCompositions(supabase, resolution.id, product);
+    counts.aliases += await syncAliases(supabase, resolution.id, product);
     counts[resolution.action] += 1;
     log(
       resolution.action === 'skipped'
@@ -268,9 +358,18 @@ async function main(): Promise<void> {
     );
   }
 
+  // Convergence (issue #234): deactivate seed-owned fertilizer rows that fell
+  // out of the seed (the collapsed brands). Runs AFTER upserts so the survivor
+  // generics are confirmed present before any collapse target goes inactive.
+  const deactivated = await deactivateRemovedSeedProducts(supabase, existingByLowerName);
+  if (deactivated > 0) {
+    log(`  deactivated ${deactivated} collapsed/duplicate fertilizer product row(s) (issue #234).`);
+  }
+
   log(
     `Done. Inserted ${counts.inserted}, updated ${counts.updated}, skipped ${counts.skipped} product rows (curated; missing compositions still backfilled)` +
-      (counts.foreign > 0 ? `, ${counts.foreign} left alone (non-fertilizer identity).` : '.'),
+      (counts.foreign > 0 ? `, ${counts.foreign} left alone (non-fertilizer identity)` : '') +
+      (counts.aliases > 0 ? `, ${counts.aliases} alias row(s) added.` : '.'),
   );
 }
 
