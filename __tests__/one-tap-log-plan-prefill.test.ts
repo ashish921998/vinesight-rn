@@ -213,7 +213,6 @@ async function submitFertigation(data: FertigationFormData) {
 describe('plan_item_id survival — form state → DB item JSON (issue #197 §c)', () => {
   it('stamps plan_item_id from a plan-prefilled row into the submitted item', async () => {
     const payload = await submitFertigation({
-      waterVolume: 400,
       fertilizers: [
         {
           name: 'MAP 12:61:0',
@@ -235,7 +234,6 @@ describe('plan_item_id survival — form state → DB item JSON (issue #197 §c)
 
   it('plan_item_id and catalog_product_id can coexist on the same row', async () => {
     const payload = await submitFertigation({
-      waterVolume: 300,
       fertilizers: [
         {
           name: '19:19:19',
@@ -255,21 +253,15 @@ describe('plan_item_id survival — form state → DB item JSON (issue #197 §c)
 
   it('rows without plan_item_id carry null (no required-field regression)', async () => {
     const payload = await submitFertigation({
-      waterVolume: undefined,
-      fertilizers: [
-        { name: 'Urea', quantity: 10, unit: 'kg', quantityBasis: 'total' },
-      ],
+      fertilizers: [{ name: 'Urea', quantity: 10, unit: 'kg', quantityBasis: 'total' }],
     });
-    expect(payload.fertilizers?.[0]).toEqual(
-      expect.objectContaining({ plan_item_id: null }),
-    );
+    expect(payload.fertilizers?.[0]).toEqual(expect.objectContaining({ plan_item_id: null }));
     // The row must still be valid — no regression on unlinked fertigation logs.
     expect(payload.fertilizers?.[0]?.name).toBe('Urea');
   });
 
   it('mixed rows: one plan-linked, one unlinked — both survive correctly', async () => {
     const payload = await submitFertigation({
-      waterVolume: 500,
       fertilizers: [
         {
           name: 'Humic acid',
@@ -291,14 +283,11 @@ describe('plan_item_id survival — form state → DB item JSON (issue #197 §c)
     // History rows parsed in use-records.ts never attach planItemId, so a new
     // log from history has no plan linkage. This test verifies the null default.
     const payload = await submitFertigation({
-      waterVolume: 200,
       fertilizers: [
         // Simulates a history-prefilled row: planItemId intentionally absent.
         { name: 'KNO3', quantity: 3, unit: 'kg', quantityBasis: 'total' },
       ],
     });
-    expect(payload.fertilizers?.[0]).toEqual(
-      expect.objectContaining({ plan_item_id: null }),
-    );
+    expect(payload.fertilizers?.[0]).toEqual(expect.objectContaining({ plan_item_id: null }));
   });
 });

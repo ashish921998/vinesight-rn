@@ -160,9 +160,6 @@ export function expenseRecordToFormData(record: ExpenseRecord): ExpenseFormData 
 
 export function fertigationRecordToFormData(record: FertigationRecord): FertigationFormData {
   const data = createEmptyFertigationFormData();
-  if (record.water_volume != null) {
-    data.waterVolume = record.water_volume;
-  }
   if (record.fertilizers && record.fertilizers.length > 0) {
     data.fertilizers = record.fertilizers.map((f) => ({
       name: f.name,

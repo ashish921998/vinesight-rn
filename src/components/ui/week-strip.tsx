@@ -50,10 +50,14 @@ export function WeekStrip({
   const selectedDay = startOfDay(selectedDate);
   const selectedIso = toSupabaseDateString(selectedDay);
 
-  // Window of 7 days ending at the latest selectable day, shifted back when
-  // the selected date (picked via the full calendar) falls outside it.
+  // Today sits at the middle-right of the strip (index 4 of 7), so the default
+  // window runs from latestDay-4 to latestDay+2. When the calendar-selected date
+  // falls outside that window (only the past is reachable — maxDate blocks the
+  // future), re-anchor the window on the selected date so it stays visible.
   const windowEnd =
-    selectedDay.getTime() < addDays(latestDay, -6).getTime() ? selectedDay : latestDay;
+    selectedDay.getTime() < addDays(latestDay, -4).getTime()
+      ? addDays(selectedDay, 2)
+      : addDays(latestDay, 2);
 
   const days = useMemo(() => {
     return Array.from({ length: 7 }, (_, index) => {

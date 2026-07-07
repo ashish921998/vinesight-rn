@@ -248,13 +248,13 @@ describe('ActivityConfirmCard', () => {
 
   // ── Fertigation type ─────────────────────────────────────────
   describe('fertigation type', () => {
-    it('shows fertilizers and water volume fields', () => {
+    it('shows fertilizers field (no water volume — fertigation carries none)', () => {
       const { getByText } = render(
         <ActivityConfirmCard
           voiceLogAction={makeAction({
             type: 'fertigation',
             fertigation: {
-              waterVolume: 300,
+              waterVolume: null,
               fertilizers: [{ name: 'Urea', quantity: 5, unit: 'kg', quantityBasis: null }],
             },
           })}
@@ -264,8 +264,6 @@ describe('ActivityConfirmCard', () => {
       );
       expect(getByText('Fertilizers:')).toBeTruthy();
       expect(getByText('Urea')).toBeTruthy();
-      expect(getByText('Water:')).toBeTruthy();
-      expect(getByText('300 L')).toBeTruthy();
     });
   });
 

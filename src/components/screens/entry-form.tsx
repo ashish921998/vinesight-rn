@@ -687,7 +687,6 @@ export function EntryForm({
       }
       if (initialLogType === 'fertigation' && initialLogPrefill?.fertigationItems?.length) {
         setFertigationData({
-          waterVolume: undefined,
           fertilizers: initialLogPrefill.fertigationItems.map((item) => {
             const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
             return {
@@ -823,7 +822,6 @@ export function EntryForm({
           : createEmptyFertigationFormData().fertilizers;
 
         setFertigationData({
-          waterVolume: fertigationPrefill?.waterVolume ?? undefined,
           fertilizers: prefilledFertilizers,
         });
         break;
@@ -920,8 +918,7 @@ export function EntryForm({
       case 'fertigation': {
         const fert = data as FertigationFormData;
         const fertCount = fert.fertilizers.length;
-        const waterText = fert.waterVolume ? `${fert.waterVolume}L water, ` : '';
-        return `${waterText}${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
+        return `${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
       }
       case 'note': {
         const note = data as NoteFormData;

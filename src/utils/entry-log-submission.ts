@@ -276,13 +276,11 @@ export async function submitEntryPendingLog(params: {
       const nutrientTotals = calculateNutrientTotalsForLog({
         items: fertilizers,
         areaAcre: farmArea,
-        waterVolumeL: data.waterVolume ?? null,
       });
       const created = await submitters.createFertigation({
         farm_id: farmId,
         date: dateStr,
         fertilizers,
-        water_volume: data.waterVolume,
         irrigation_record_id: linkedIrrigationRecordId ?? null,
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,

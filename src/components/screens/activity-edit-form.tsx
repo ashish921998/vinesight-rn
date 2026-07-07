@@ -336,13 +336,11 @@ export function ActivityEditForm({
           const nutrientTotals = calculateNutrientTotalsForLog({
             items: fertilizerItems,
             areaAcre: farmAreaAcres ?? 0,
-            waterVolumeL: fertigationData.waterVolume ?? null,
           });
           await updateFertigation.mutateAsync({
             id: r.id,
             updates: {
               fertilizers: fertilizerItems,
-              water_volume: fertigationData.waterVolume,
               nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
               nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
               nutrient_calc_coverage: nutrientTotals.coveragePercent,

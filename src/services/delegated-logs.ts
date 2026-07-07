@@ -234,12 +234,10 @@ export function buildDelegatedLogPayload(
       const nutrientTotals = calculateNutrientTotalsForLog({
         items: fertilizers,
         areaAcre: farmArea,
-        waterVolumeL: data.waterVolume ?? null,
       });
       const trimmedNotes = data.notes?.trim();
       return {
         fertilizers,
-        water_volume: data.waterVolume ?? null,
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
         nutrient_calc_coverage: nutrientTotals.coveragePercent,
