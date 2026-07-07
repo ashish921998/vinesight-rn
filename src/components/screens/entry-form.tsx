@@ -981,6 +981,25 @@ export function EntryForm({
     [buildPendingLog, enqueuePendingLogs],
   );
 
+  // Clears PHI fields from a spray draft. PHI derives from the spray date, so a
+  // copied/repeated spray must not inherit verified fields. Centralized here so
+  // the add flow and the repeat-last-log flow share one rule.
+  const buildSprayPendingData = useCallback(
+    (input: SprayFormData): SprayFormData =>
+      isGrapeFarm && input.catalogMixId && input.safeHarvestDate && input.governingPhiDays != null
+        ? {
+            ...input,
+          }
+        : {
+            ...input,
+            governingPhiDays: null,
+            safeHarvestDate: null,
+            phiBlockingComponent: null,
+            phiStatus: input.phiStatus ?? (input.catalogMixId ? 'legacy_unverified' : 'unknown'),
+          },
+    [isGrapeFarm],
+  );
+
   // "Repeat last log": the most recent logged day on this farm before the
   // selected date, with its records mapped back into draft form data.
   const repeatLastLogSuggestion = useMemo(() => {
@@ -991,28 +1010,51 @@ export function EntryForm({
     });
     if (!lastIso) return null;
     const matchesDay = (record: { date: string }) => record.date?.slice(0, 10) === lastIso;
-    const items: { key: string; type: LogTypeId; data: PendingLog['data']; description: string }[] =
-      [];
+    // A repeat draft item. `linkedIrrigationItemKey` is set on fertigation
+    // items that were originally linked to an irrigation record on this day, so
+    // the enqueue step can carry `linkIrrigationFromPendingLogId` forward and
+    // the copied pair stays linked (the fertigation record keeps its
+    // irrigation_record_id).
+    interface RepeatItem {
+      key: string;
+      type: LogTypeId;
+      data: PendingLog['data'];
+      description: string;
+      linkedIrrigationItemKey?: string;
+    }
+    const items: RepeatItem[] = [];
     const push = (key: string, type: LogTypeId, data: PendingLog['data']) => {
       items.push({ key, type, data, description: getLogDescription(type, data) });
     };
+    // Index the day's irrigation records by id so linked fertigation can resolve
+    // its partner suggestion item (the copy must point at the new irrigation
+    // draft, not the original record id).
+    const irrigationItemKeyByRecordId = new Map<number, string>();
     (farmIrrigationRecords ?? []).filter(matchesDay).forEach((record) => {
-      push(`irrigation-${record.id}`, 'irrigation', irrigationRecordToFormData(record));
+      const key = `irrigation-${record.id}`;
+      if (record.id != null) irrigationItemKeyByRecordId.set(record.id, key);
+      push(key, 'irrigation', irrigationRecordToFormData(record));
     });
     (farmFertigationRecords ?? []).filter(matchesDay).forEach((record) => {
-      push(`fertigation-${record.id}`, 'fertigation', fertigationRecordToFormData(record));
+      const key = `fertigation-${record.id}`;
+      const data = fertigationRecordToFormData(record);
+      const linkedIrrigationItemKey = record.irrigation_record_id
+        ? irrigationItemKeyByRecordId.get(record.irrigation_record_id)
+        : undefined;
+      const item: RepeatItem = {
+        key,
+        type: 'fertigation',
+        data,
+        description: getLogDescription('fertigation', data),
+      };
+      if (linkedIrrigationItemKey) item.linkedIrrigationItemKey = linkedIrrigationItemKey;
+      items.push(item);
     });
     (farmSprayRecords ?? []).filter(matchesDay).forEach((record) => {
-      const data = sprayRecordToFormData(record);
       // PHI fields derive from the spray date — a copy on a new date must not
-      // inherit them. Mirrors buildSprayPendingData's non-verified branch.
-      push(`spray-${record.id}`, 'spray', {
-        ...data,
-        governingPhiDays: null,
-        safeHarvestDate: null,
-        phiBlockingComponent: null,
-        phiStatus: data.catalogMixId ? 'legacy_unverified' : 'unknown',
-      });
+      // inherit them. Routed through buildSprayPendingData (same path as adding
+      // a spray) so the rule lives in one place.
+      push(`spray-${record.id}`, 'spray', buildSprayPendingData(sprayRecordToFormData(record)));
     });
     (farmHarvestRecords ?? []).filter(matchesDay).forEach((record) => {
       push(`harvest-${record.id}`, 'harvest', harvestRecordToFormData(record));
@@ -1031,6 +1073,7 @@ export function EntryForm({
     loggedDateIsos,
     selectedDateIso,
     getLogDescription,
+    buildSprayPendingData,
     farmIrrigationRecords,
     farmFertigationRecords,
     farmSprayRecords,
@@ -1041,26 +1084,23 @@ export function EntryForm({
 
   const handleRepeatLastLog = useCallback(() => {
     if (!repeatLastLogSuggestion) return;
-    enqueuePendingLogs(
-      repeatLastLogSuggestion.items.map((item) => buildPendingLog(item.type, item.data)),
+    // Build drafts first so fertigation items can reference their partner
+    // irrigation draft by its NEW pending-log id (the link points at the copy,
+    // not the original record). `buildPendingLog` stamps a fresh id on each.
+    const drafts = repeatLastLogSuggestion.items.map((item) =>
+      buildPendingLog(item.type, item.data),
     );
+    const draftIdByItemKey = new Map(
+      drafts.map((draft, index) => [repeatLastLogSuggestion.items[index].key, draft.id]),
+    );
+    const linkedDrafts = drafts.map((draft, index) => {
+      const item = repeatLastLogSuggestion.items[index];
+      if (!item.linkedIrrigationItemKey) return draft;
+      const partnerDraftId = draftIdByItemKey.get(item.linkedIrrigationItemKey);
+      return partnerDraftId ? { ...draft, linkIrrigationFromPendingLogId: partnerDraftId } : draft;
+    });
+    enqueuePendingLogs(linkedDrafts);
   }, [repeatLastLogSuggestion, buildPendingLog, enqueuePendingLogs]);
-
-  const buildSprayPendingData = useCallback(
-    (input: SprayFormData): SprayFormData =>
-      isGrapeFarm && input.catalogMixId && input.safeHarvestDate && input.governingPhiDays != null
-        ? {
-            ...input,
-          }
-        : {
-            ...input,
-            governingPhiDays: null,
-            safeHarvestDate: null,
-            phiBlockingComponent: null,
-            phiStatus: input.phiStatus ?? (input.catalogMixId ? 'legacy_unverified' : 'unknown'),
-          },
-    [isGrapeFarm],
-  );
 
   const addLogToSession = useCallback(() => {
     if (!selectedLogType || !isLogFormValid) return;
@@ -3208,6 +3248,7 @@ export function EntryForm({
           <DateTimePicker
             value={selectedDate}
             mode="date"
+            maximumDate={new Date()}
             onChange={(_, date) => {
               setShowDatePicker(false);
               if (date) setSelectedDate(date);
@@ -3270,6 +3311,7 @@ export function EntryForm({
                 value={selectedDate}
                 mode="date"
                 display="spinner"
+                maximumDate={new Date()}
                 onChange={(_, date) => {
                   if (date) setSelectedDate(date);
                 }}

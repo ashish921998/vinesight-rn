@@ -140,7 +140,7 @@ export function RepeatLastLog({ date, items, onAdd }: RepeatLastLogProps) {
             backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
           }}
         >
-          <AppIcon name="add" size={14} color={m3.colorScheme.primary} />
+          <AppIcon name="add-circle" size={14} color={m3.colorScheme.primary} />
           <Text
             style={{
               marginLeft: 4,

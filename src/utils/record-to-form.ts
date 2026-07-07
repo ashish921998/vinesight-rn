@@ -42,8 +42,14 @@ function normalizeLegacySprayUnit(rawUnit: string): AllowedSprayUnit | null {
   if (lowered === 'ml/liter' || lowered === 'ml/litre' || lowered === 'ml/l') {
     return 'ml/L';
   }
-  if (lowered === 'gm/acre') return 'gram';
+  // Per-acre spellings → the bare unit the chip vocabulary stores; the
+  // /acre testimony is carried separately by quantityBasis (set below). Cover
+  // the common mass/volume variants so a stored 'kg/acre' or 'L/acre' does not
+  // fall through to the default 'ml/L' (which would flip mass↔volume).
+  if (lowered === 'gm/acre' || lowered === 'g/acre' || lowered === 'gram/acre') return 'gram';
+  if (lowered === 'kg/acre') return 'kg';
   if (lowered === 'ml/acre') return 'ml';
+  if (lowered === 'l/acre' || lowered === 'liter/acre' || lowered === 'litre/acre') return 'liter';
   return allowedSprayUnitByLowercase.get(lowered) ?? null;
 }
 
@@ -162,6 +168,10 @@ export function fertigationRecordToFormData(record: FertigationRecord): Fertigat
   const data = createEmptyFertigationFormData();
   if (record.fertilizers && record.fertilizers.length > 0) {
     data.fertilizers = record.fertilizers.map((f) => ({
+      // Stable per-row id so FertilizerRow keys are stable when the user
+      // edits/reorders a repeat-last-log or activity-edit draft — index-keyed
+      // rows leak input state across rows on delete/reorder.
+      id: generateId(),
       name: f.name,
       quantity: f.quantity ?? 0,
       // Stored units load verbatim — historical spellings ('kg/acre',
