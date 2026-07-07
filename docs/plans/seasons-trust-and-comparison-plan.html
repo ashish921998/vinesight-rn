@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seasons: Trust the Numbers + Comparison — Implementation Plan</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafaf9; --fg: #1c1917; --muted: #57534e; --card: #ffffff;
+    --border: #e7e5e4; --accent: #15803d; --accent-soft: #dcfce7;
+    --amber: #b45309; --amber-soft: #fef3c7; --red: #b91c1c; --red-soft: #fee2e2;
+    --blue: #1d4ed8; --blue-soft: #dbeafe; --code-bg: #0f172a; --code-fg: #e2e8f0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c0a09; --fg: #e7e5e4; --muted: #a8a29e; --card: #1c1917;
+      --border: #292524; --accent: #4ade80; --accent-soft: #14532d;
+      --amber: #fbbf24; --amber-soft: #451a03; --red: #f87171; --red-soft: #450a0a;
+      --blue: #60a5fa; --blue-soft: #172554;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    font-size: 15px; line-height: 1.55;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 40px 24px 80px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; color: var(--accent); font-weight: 600; }
+  h1 { font-size: 28px; margin: 6px 0 8px; line-height: 1.2; }
+  h2 { font-size: 20px; margin: 40px 0 12px; padding-top: 20px; border-top: 1px solid var(--border); }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p.lede { color: var(--muted); font-size: 16px; margin-top: 0; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 20px 0; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .card .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .card .v { font-size: 17px; font-weight: 650; margin-top: 2px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em;
+         background: color-mix(in srgb, var(--border) 55%, transparent); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--code-bg); color: var(--code-fg); border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
+  pre code { background: none; padding: 0; color: inherit; font-size: 13px; line-height: 1.5; }
+  .task { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin: 14px 0; }
+  .task h4 { margin: 0 0 6px; font-size: 15px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pill { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+  .pill.s  { background: var(--accent-soft); color: var(--accent); }
+  .pill.m  { background: var(--blue-soft); color: var(--blue); }
+  .pill.risk { background: var(--red-soft); color: var(--red); }
+  .pill.decide { background: var(--amber-soft); color: var(--amber); }
+  .task .meta { font-size: 13px; color: var(--muted); margin: 6px 0; }
+  .callout { border-left: 3px solid var(--amber); background: var(--amber-soft); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 14px; }
+  .callout.good { border-color: var(--accent); background: var(--accent-soft); }
+  .callout.bad { border-color: var(--red); background: var(--red-soft); }
+  figure { margin: 20px 0; }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  svg text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  details { margin: 10px 0; }
+  summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+  ul { padding-left: 22px; } li { margin: 4px 0; }
+  .small { font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Implementation plan · vinesight-rn-clean · 2026-07-07</div>
+  <h1>Seasons: trust the numbers, then compare them</h1>
+  <p class="lede">Two tracks. <strong>Track A</strong> closes the null-<code>season_id</code> gap so season-scoped totals are honest. <strong>Track B</strong> surfaces the season comparison that is already half-built — user-picked baseline, a side-by-side section, and inclusion in the exported PDF (the artifact consultants actually hand to farmers and exporters).</p>
+
+  <div class="cards">
+    <div class="card"><div class="k">Repo</div><div class="v">~/Developer/vinesight-rn-clean</div></div>
+    <div class="card"><div class="k">Tracks</div><div class="v">A: data trust · B: comparison</div></div>
+    <div class="card"><div class="k">Schema changes</div><div class="v">None (RN-only)</div></div>
+    <div class="card"><div class="k">Tasks</div><div class="v">8 (5 small, 3 medium)</div></div>
+  </div>
+
+  <h2>What already exists (don't rebuild it)</h2>
+  <p>Investigation of the current code changed the plan's shape considerably — the comparison engine is already implemented, and the "unassigned records" concept already has types and pure logic. What's missing is wiring and UI.</p>
+  <table>
+    <tr><th>Capability</th><th>Where</th><th>Status</th></tr>
+    <tr><td>Per-farm seasons, date-window <code>season_id</code> resolution with cache + lazy season creation</td><td><code>src/lib/season-context.ts</code></td><td>Done</td></tr>
+    <tr><td>Recompute assignments across all 11 record tables (RPC + client fallback)</td><td><code>recompute_farm_season_assignments</code> RPC; <code>recomputeSeasonAssignmentsClient</code> in <code>season-context.ts:191</code></td><td>Done — but only runs on season <em>end</em></td></tr>
+    <tr><td>Period-over-period comparison: auto baseline = previous season, aligned to the <em>same elapsed window</em> (day-N vs day-N)</td><td><code>src/services/report-comparison.ts</code> (pure), <code>useReportComparison</code> in <code>src/hooks/use-reports.ts:334</code></td><td>Done</td></tr>
+    <tr><td>Delta chips on report summary tiles</td><td><code>report-executive-summary.tsx:23</code> (<code>DeltaChip</code>), wired in <code>app/reports.tsx:552</code></td><td>Done — app-only, not exported</td></tr>
+    <tr><td>Explicit baseline pick, type-level slot</td><td><code>ReportCompareOptions.baselineSeasonId</code> in <code>src/types/report.ts:71</code></td><td>Scaffolded, <strong>nothing consumes it</strong></td></tr>
+    <tr><td>Unassigned-records filtering logic</td><td><code>shouldIncludeUnassigned</code> / <code>filterRecordsForSeason</code> in <code>use-reports.ts:53-73</code></td><td>Logic done, <strong>no UI exposes it</strong></td></tr>
+    <tr><td>Between-seasons hint on farm details</td><td><code>waterUsageCaption</code> in <code>app/farm/[id].tsx:492</code></td><td>Water tile only; expense/harvest tiles silent (TODOS.md P3)</td></tr>
+    <tr><td>Permissive <code>season_id</code> INSERT trigger</td><td>Branch <code>fix/permissive-season-id-insert</code> (commit <code>e05d351b</code>, Desktop checkout)</td><td>See risk R1 below</td></tr>
+  </table>
+
+  <h2>How a record can end up with a null season_id</h2>
+  <figure>
+    <svg viewBox="0 0 880 250" width="100%" role="img" aria-label="Season assignment flow">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 z" fill="currentColor" opacity="0.6"/>
+        </marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-opacity="0.5">
+        <rect x="10"  y="30" width="180" height="58" rx="8"/>
+        <rect x="250" y="30" width="200" height="58" rx="8"/>
+        <rect x="510" y="10" width="170" height="48" rx="8"/>
+        <rect x="510" y="80" width="170" height="48" rx="8"/>
+        <rect x="720" y="80" width="150" height="48" rx="8" stroke-dasharray="4 3"/>
+        <line x1="190" y1="59" x2="243" y2="59" marker-end="url(#arr)"/>
+        <line x1="450" y1="45" x2="503" y2="34" marker-end="url(#arr)"/>
+        <line x1="450" y1="74" x2="503" y2="100" marker-end="url(#arr)"/>
+        <line x1="680" y1="104" x2="713" y2="104" marker-end="url(#arr)"/>
+      </g>
+      <g font-size="13" fill="currentColor">
+        <text x="24" y="55">Record saved</text>
+        <text x="24" y="74" font-size="11" opacity="0.65">use-records.ts insert</text>
+        <text x="264" y="55">resolveOrCreateSeasonId</text>
+        <text x="264" y="74" font-size="11" opacity="0.65">date-window match + trigger</text>
+        <text x="524" y="30">date inside a season</text>
+        <text x="524" y="46" font-size="11" opacity="0.65">→ season_id set ✓</text>
+        <text x="524" y="100">date after last end_date</text>
+        <text x="524" y="116" font-size="11" opacity="0.65">(farm between seasons)</text>
+        <text x="734" y="100" font-size="12">season_id NULL —</text>
+        <text x="734" y="116" font-size="11" opacity="0.65">invisible in season views</text>
+      </g>
+      <g font-size="12" fill="currentColor" opacity="0.75">
+        <text x="10" y="180">Consequences today:</text>
+        <text x="10" y="202">· Reports with a season selected filter by season_id — null rows silently vanish, no count, no toggle shown.</text>
+        <text x="10" y="222">· Farm details expense/harvest tiles date-clamp to the last end_date — post-season entries drop out with no caption.</text>
+        <text x="10" y="242">· Starting the next season backdated does NOT recompute — orphans stay orphaned until a season is ended.</text>
+      </g>
+    </svg>
+    <figcaption>The gap is narrow but silent: only between-seasons entries and pre-backdated-season entries are affected — exactly the expenses/harvests farmers log right after a harvest ends.</figcaption>
+  </figure>
+
+  <h2>Track A — make season numbers trustworthy</h2>
+
+  <div class="task">
+    <h4>A1 · Recompute assignments when a season <em>starts</em> <span class="pill s">Small</span></h4>
+    <div class="meta"><code>src/hooks/use-farm-seasons.ts</code> — <code>useStartFarmSeason</code> (line 136)</div>
+    <p>Today only <code>useEndFarmSeason</code> recomputes. A backdated season start (common: farmer starts logging days after pruning) leaves earlier orphaned records null. Fix: in <code>useStartFarmSeason</code>'s success path, fire <code>recompute_farm_season_assignments</code> (RPC with the existing <code>recomputeSeasonAssignmentsClient</code> fallback, same pattern as <code>useRecomputeFarmSeasonAssignments:283</code>), then reuse its record-query invalidation block — extract that block into a shared helper rather than duplicating the 10 <code>invalidateQueries</code> calls.</p>
+    <p class="small"><strong>Accept:</strong> add an expense dated 2026-06-20 to a farm with no active season → start a season backdated to 2026-06-15 → expense's <code>season_id</code> is set and it appears in that season's report without manual recompute.</p>
+  </div>
+
+  <div class="task">
+    <h4>A2 · Stop lazy-creating seasons for between-seasons farms <span class="pill s">Small</span> <span class="pill decide">Behavior decision</span></h4>
+    <div class="meta"><code>src/hooks/use-farms.ts</code> — <code>ensureInitialFarmSeason</code> (line 80); called from <code>resolveOrCreateSeasonIdForDate</code> (<code>season-context.ts:143</code>)</div>
+    <p><strong>Latent bug found while planning:</strong> <code>ensureInitialFarmSeason</code> checks only for an <em>active</em> season. A farm whose season just ended has none — so saving any record silently starts a brand-new season with <code>start_date = date_of_pruning ?? today</code>. The pruning date is from the <em>previous</em> cycle, so the new "active" season can overlap every ended season and swallow historical records on the next recompute.</p>
+    <p>Fix: only auto-create when the farm has <em>zero</em> seasons (the original intent — old farms predating the feature). If ended seasons exist, return null and let the record stay unassigned — A3 makes that visible, A1 heals it when the real next season starts.</p>
+    <p class="small"><strong>Accept:</strong> end a season, log an irrigation → no new <code>farm_seasons</code> row appears; record has null <code>season_id</code>. A brand-new farm with no seasons still gets its initial season on first save.</p>
+  </div>
+
+  <div class="task">
+    <h4>A3 · Surface unassigned records in reports <span class="pill m">Medium</span></h4>
+    <div class="meta"><code>src/components/screens/reports/report-filters-panel.tsx</code> (season section ~line 460 and ~920), <code>app/reports.tsx</code>, <code>src/hooks/use-reports.ts</code>; strings in <code>src/i18n/locales/{en,hi,mr}.ts</code></div>
+    <p>When a specific season is selected, DB queries filter <code>eq('season_id', …)</code> — null rows vanish with no trace. Add a lightweight count query (one <code>head: true, count: 'exact'</code> per record table where <code>farm_id = X AND season_id IS NULL</code>, summed in a small <code>useUnassignedRecordCount(farmId)</code> hook) and render a notice row under the season picker when a season is selected and count &gt; 0: <em>"N records aren't in any season — visible under All seasons."</em> Tapping it switches the picker to All seasons.</p>
+    <p>Deliberately <strong>notice-only</strong>, no "include them anyway" toggle in season mode: merging unassigned rows into a specific season's totals would misattribute them. The existing <code>includeUnassigned</code> logic already handles All-seasons mode correctly (default true).</p>
+    <p class="small"><strong>Accept:</strong> farm with 3 between-season expenses → select a season in reports → notice shows "3 records…"; switch to All seasons → they're in the totals.</p>
+  </div>
+
+  <div class="task">
+    <h4>A4 · Between-seasons captions for expense/harvest tiles on farm details <span class="pill s">Small</span></h4>
+    <div class="meta"><code>app/farm/[id].tsx</code> — <code>seasonExpenseTotal:422</code>, <code>seasonHarvestQuantity:441</code>, caption pattern at <code>waterUsageCaption:492</code>; strings in en/hi/mr</div>
+    <p>Closes the TODOS.md P3 item directly. The tiles clamp to <code>[seasonMetricsStartDate, seasonMetricsEndDate]</code>; when the farm is between seasons, entries dated after <code>end_date</code> are excluded silently. Compute the excluded count inside the same memos (records with date &gt; <code>seasonMetricsEndDate</code>) and reuse the existing <code>betweenSeasonsHint</code> caption pattern the water tile already has: <em>"+N logged after season end — not counted."</em> While there, sanity-check <code>isBetweenSeasons:362</code> — its <code>today &lt; minimumSeasonStartDate</code> condition looks like it's false for most genuinely-between-seasons farms; the new captions should key off "no active season && ended seasons exist" instead.</p>
+    <p class="small"><strong>Accept:</strong> end season, add an expense → expense tile shows the excluded-count caption instead of a silently smaller total.</p>
+  </div>
+
+  <div class="task">
+    <h4>A5 · Verify prod server state <span class="pill s">Small</span> <span class="pill risk">Blocked on approval</span></h4>
+    <div class="meta">Supabase prod project <code>ibczxoiaonssyzsybebu</code> — MCP <code>execute_sql</code> needs user approval (attempted during planning, not granted)</div>
+    <p>Confirm before shipping Track A: (1) <code>assign_season_id_for_row</code> in prod is the permissive version — the forward migration from commit <code>e05d351b</code> exists only as a <em>rollback</em> file in the Desktop checkout (<code>supabase/rollbacks/20260618120000_…_rollback.sql</code>); neither repo has the forward file, so it was likely applied directly to prod — verify, and commit the forward SQL into the repo for the record. (2) <code>recompute_farm_season_assignments</code> and <code>start_farm_season</code> exist and whether <code>start_farm_season</code> already recomputes server-side (if so, A1's client call is a cheap no-op double-check). Remember: the web repo owns this schema — any server-side change goes there, but Track A needs none.</p>
+  </div>
+
+  <h2>Track B — surface the comparison</h2>
+  <div class="callout good">The hard part — baseline resolution aligned by days-since-season-start, delta math, double-fetch plumbing — is already built and running (<code>useReportComparison</code>). Track B is exposure: let the user pick the baseline, show more than chips, and put it in the export.</div>
+
+  <div class="task">
+    <h4>B1 · User-picked comparison season <span class="pill m">Medium</span></h4>
+    <div class="meta"><code>src/types/report.ts:69-81</code> (types exist), <code>src/services/report-comparison.ts:87</code> (<code>resolveBaselineFilters</code>), <code>report-filters-panel.tsx</code>, <code>app/reports.tsx</code> filter state</div>
+    <p>Wire the dormant <code>ReportFilters.compare?.baselineSeasonId</code>: when a season is selected, show a "Compare with" row in the filters panel — options: <em>Previous season (auto)</em> [default, current behavior], each other season by label (<code>formatReportSeasonLabel</code>), and <em>Off</em>. In <code>resolveBaselineFilters</code>, when an explicit id is set, use that season instead of "the one immediately before", keeping the elapsed-window clamp exactly as-is. <code>compare.enabled: false</code> short-circuits to null (chips disappear — already handled by <code>comparison</code> being null).</p>
+    <p class="small"><strong>Accept:</strong> pick season 2024–25 as baseline for 2026 → chips recompute against it; Off hides chips; default unchanged.</p>
+  </div>
+
+  <div class="task">
+    <h4>B2 · Side-by-side comparison section in the report body <span class="pill m">Medium</span></h4>
+    <div class="meta">New <code>src/components/screens/reports/report-season-comparison-section.tsx</code>; extend <code>ReportComparison</code> in <code>src/types/report.ts</code>; <code>useReportComparison</code> in <code>use-reports.ts:334</code></div>
+    <p>Delta chips answer "up or down"; consultants need the actual numbers. Extend <code>ReportComparison</code> to carry what the hook already has in scope but throws away: the baseline's <code>ReportSummary</code>, baseline season label, and the elapsed-days window. New section (rendered with the other <code>report-section-block</code> sections): a three-column table — metric · current season · baseline season · Δ% — over the seven existing comparison metrics (<code>COMPARISON_METRIC_FIELDS</code> in <code>report-comparison.ts:27</code>), with the footnote <em>"Both seasons measured over their first N days."</em> That footnote is the honesty guarantee — without it a partial season looks like a collapse.</p>
+    <p class="small"><strong>Accept:</strong> season selected with a prior season having records → section renders with real numbers and the day-window footnote; hidden when comparison is null.</p>
+  </div>
+
+  <div class="task">
+    <h4>B3 · Comparison in the exported PDF <span class="pill m">Medium</span></h4>
+    <div class="meta"><code>src/services/report-service.ts</code> — <code>exportPDF</code> (line 1713) and its HTML template; <code>useReportExport</code> in <code>use-reports.ts:358</code>; call sites in <code>app/reports.tsx</code></div>
+    <p>The PDF is the consultant's deliverable, and today it carries zero comparison data. Thread an optional <code>comparison</code> block (same extended <code>ReportComparison</code> shape from B2) through <code>exportPDF</code>/<code>downloadPDF</code> and render the same table + footnote in the PDF HTML. CSV stays as-is. Keep the param optional so all existing call sites compile untouched.</p>
+    <p class="small"><strong>Accept:</strong> export a season report with an available baseline → PDF contains the comparison table; export with comparison off → PDF unchanged from today.</p>
+  </div>
+
+  <h2>Sequencing</h2>
+  <table>
+    <tr><th>Order</th><th>Task</th><th>Why this order</th></tr>
+    <tr><td>1</td><td>A2 (lazy-create guard)</td><td>Stops new bad data (bogus overlapping seasons) before anything else touches assignment.</td></tr>
+    <tr><td>2</td><td>A1 (recompute on start)</td><td>Heals orphans; makes A2's deliberately-null records temporary.</td></tr>
+    <tr><td>3</td><td>A3 + A4 (visibility)</td><td>UI honesty for whatever remains null. Independent of each other; can parallelize.</td></tr>
+    <tr><td>4</td><td>A5 (prod verify)</td><td>Any time — needs a one-time Supabase approval from Ashish.</td></tr>
+    <tr><td>5</td><td>B1 → B2 → B3</td><td>B2 depends on B1's filter plumbing only loosely, but B3 depends on B2's extended <code>ReportComparison</code> shape.</td></tr>
+  </table>
+  <p class="small">Suggested branches: <code>posthog-code/seasons-null-trust</code> (Track A) and <code>posthog-code/season-comparison-ui</code> (Track B) — two PRs, Track A first.</p>
+
+  <h2>Tests</h2>
+  <ul>
+    <li><code>report-comparison.ts</code> claims unit tests in its header comment but <strong>no test file exists</strong> — create <code>report-comparison.test.ts</code>: auto-previous baseline, explicit <code>baselineSeasonId</code>, elapsed-window clamp to a shorter prior season, first-season → null, compare-off → null.</li>
+    <li><code>ensureInitialFarmSeason</code>: creates for zero-season farm; skips for farm with only ended seasons (mocked Supabase, same style as <code>use-delete-daily-note.test.tsx</code>).</li>
+    <li>Excluded-count memo logic from A4 — extract as a pure helper so it's testable without rendering the 3,300-line screen.</li>
+  </ul>
+
+  <h2>Risks &amp; open questions</h2>
+  <table>
+    <tr><th></th><th>Risk</th><th>Mitigation</th></tr>
+    <tr><td><span class="pill risk">R1</span></td><td>Prod trigger state unverified — forward migration file missing from both repos (only the rollback exists). If prod still has the strict trigger, A2's "leave it null" path would 400 on insert.</td><td>A5 first Supabase check; commit the forward SQL to the repo once confirmed.</td></tr>
+    <tr><td><span class="pill risk">R2</span></td><td><code>start_farm_season</code> RPC behavior on overlapping windows is unknown (web repo owns it).</td><td>A5 reads the function body; A2 avoids ever calling it with a stale pruning date anyway.</td></tr>
+    <tr><td><span class="pill decide">D1</span></td><td>A2 changes behavior: between-seasons saves used to (wrongly) resurrect a season; now they stay unassigned. Someone relying on the accidental behavior would notice.</td><td>The A3 notice + A1 heal make the new behavior visible and self-correcting; call it out in the PR description.</td></tr>
+    <tr><td><span class="pill decide">D2</span></td><td>Comparison metrics limited to the 7 summary fields — no per-spray/per-nutrient comparison yet.</td><td>Fine for v1; the section component makes adding rows cheap later.</td></tr>
+  </table>
+
+  <h2>File map</h2>
+  <table>
+    <tr><th>File</th><th>Change</th></tr>
+    <tr><td><code>src/hooks/use-farms.ts</code></td><td>A2: zero-seasons guard in <code>ensureInitialFarmSeason</code></td></tr>
+    <tr><td><code>src/hooks/use-farm-seasons.ts</code></td><td>A1: recompute + shared invalidation helper in <code>useStartFarmSeason</code></td></tr>
+    <tr><td><code>src/hooks/use-reports.ts</code></td><td>A3 count hook consumption; B1 pass-through; B2 extended comparison</td></tr>
+    <tr><td><code>src/services/report-comparison.ts</code></td><td>B1: honor <code>compare.baselineSeasonId</code>/<code>enabled</code>; B2: return baseline summary + window</td></tr>
+    <tr><td><code>src/services/report-service.ts</code></td><td>B3: optional comparison block in PDF template</td></tr>
+    <tr><td><code>src/components/screens/reports/report-filters-panel.tsx</code></td><td>A3 notice row; B1 "Compare with" picker</td></tr>
+    <tr><td><code>src/components/screens/reports/report-season-comparison-section.tsx</code></td><td>B2: new side-by-side section</td></tr>
+    <tr><td><code>app/reports.tsx</code></td><td>A3/B1 filter state; B2 section mount; B3 export wiring</td></tr>
+    <tr><td><code>app/farm/[id].tsx</code></td><td>A4: excluded-count captions on expense/harvest tiles</td></tr>
+    <tr><td><code>src/types/report.ts</code></td><td>B2: extend <code>ReportComparison</code> (baseline summary, label, elapsed days)</td></tr>
+    <tr><td><code>src/i18n/locales/{en,hi,mr}.ts</code></td><td>A3/A4/B1/B2 strings ×3 locales</td></tr>
+    <tr><td><code>supabase/migrations/</code> + <code>rollbacks/</code></td><td>A5: commit the forward permissive-trigger SQL for the record (no deploy — web owns schema)</td></tr>
+  </table>
+
+  <p class="small" style="margin-top:40px">Sources: exploration of <code>vinesight-rn-clean@main</code> (831e570b) on 2026-07-07; TODOS.md P3 item; branch <code>fix/permissive-season-id-insert</code> on the Desktop checkout. Prod DB state marked TBD — needs Supabase approval.</p>
+</main>
+</body>
+</html>

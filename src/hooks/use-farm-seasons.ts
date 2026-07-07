@@ -12,6 +12,42 @@ function isRpcFunctionMissing(error: { code?: string; message?: string } | null)
   return typeof error.message === 'string' && /function .* does not exist/i.test(error.message);
 }
 
+async function recomputeSeasonAssignments(farmId: number): Promise<void> {
+  const { error } = await supabase.rpc('recompute_farm_season_assignments', {
+    p_farm_id: farmId,
+  });
+  if (error) {
+    if (isRpcFunctionMissing(error)) {
+      await recomputeSeasonAssignmentsClient(farmId);
+      return;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Season windows changed — every record query for the farm may now carry a
+ * different season_id. Shared by the start/end/recompute mutations.
+ */
+function invalidateSeasonScopedQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  farmId: number,
+): void {
+  invalidateSeasonIdCache(farmId);
+  queryClient.invalidateQueries({ queryKey: queryKeys.farmSeasons.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.irrigationRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.sprayRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.fertigationRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.harvestRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.expenseRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.soilTestRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.petioleTestRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.soilProfiles.listByFarm(farmId) });
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.temporaryWorkerEntries.listByFarm(farmId),
+  });
+}
+
 function sortFarmSeasonsByEndDate(items: FarmSeason[]) {
   const next = [...items];
   next.sort((a, b) => {
@@ -154,57 +190,69 @@ export function useStartFarmSeason() {
       templateVersion?: number | null;
       configJson?: Record<string, unknown> | null;
     }): Promise<FarmSeason> => {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('start_farm_season', {
-        p_farm_id: farmId,
-        p_start_date: startDate,
-        p_template_key: templateKey ?? null,
-        p_config_json: configJson ?? null,
-        p_season_name: seasonName ?? null,
-      });
+      const startSeason = async (): Promise<FarmSeason> => {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('start_farm_season', {
+          p_farm_id: farmId,
+          p_start_date: startDate,
+          p_template_key: templateKey ?? null,
+          p_config_json: configJson ?? null,
+          p_season_name: seasonName ?? null,
+        });
 
-      if (!rpcError) {
-        if (rpcData && typeof rpcData === 'object' && 'id' in rpcData) {
-          return rpcData as FarmSeason;
+        if (!rpcError) {
+          if (rpcData && typeof rpcData === 'object' && 'id' in rpcData) {
+            return rpcData as FarmSeason;
+          }
+          // Fallback refetch path if rpc returns scalar/void.
+          const { data: latest, error: latestError } = await supabase
+            .from(TABLES.FARM_SEASONS)
+            .select('*')
+            .eq('farm_id', farmId)
+            .is('end_date', null)
+            .order('start_date', { ascending: false })
+            .limit(1)
+            .single();
+          if (latestError) throw latestError;
+          return latest;
         }
-        // Fallback refetch path if rpc returns scalar/void.
-        const { data: latest, error: latestError } = await supabase
+        if (!isRpcFunctionMissing(rpcError)) {
+          throw rpcError;
+        }
+
+        const { data, error } = await supabase
           .from(TABLES.FARM_SEASONS)
-          .select('*')
-          .eq('farm_id', farmId)
-          .is('end_date', null)
-          .order('start_date', { ascending: false })
-          .limit(1)
+          .insert({
+            farm_id: farmId,
+            start_date: startDate,
+            end_date: null,
+            season_name: seasonName ?? null,
+            crop_type_snapshot: cropTypeSnapshot ?? null,
+            template_key: templateKey ?? null,
+            template_version: templateVersion ?? null,
+            config_json: configJson ?? null,
+          })
+          .select()
           .single();
-        if (latestError) throw latestError;
-        return latest;
-      }
-      if (!isRpcFunctionMissing(rpcError)) {
-        throw rpcError;
+
+        if (error) throw error;
+        return data;
+      };
+
+      const season = await startSeason();
+
+      // A backdated start can cover records logged while the farm was between
+      // seasons (season_id null) — re-bucket them now instead of waiting for
+      // the season to end. Best-effort: the season itself already started.
+      try {
+        await recomputeSeasonAssignments(farmId);
+      } catch (error) {
+        console.warn('[farm-seasons] recompute after season start failed:', error);
       }
 
-      const { data, error } = await supabase
-        .from(TABLES.FARM_SEASONS)
-        .insert({
-          farm_id: farmId,
-          start_date: startDate,
-          end_date: null,
-          season_name: seasonName ?? null,
-          crop_type_snapshot: cropTypeSnapshot ?? null,
-          template_key: templateKey ?? null,
-          template_version: templateVersion ?? null,
-          config_json: configJson ?? null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return season;
     },
     onSuccess: (newSeason) => {
-      invalidateSeasonIdCache(newSeason.farm_id);
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.farmSeasons.listByFarm(newSeason.farm_id),
-      });
+      invalidateSeasonScopedQueries(queryClient, newSeason.farm_id);
     },
   });
 }
@@ -268,10 +316,7 @@ export function useEndFarmSeason() {
       return data;
     },
     onSuccess: (endedSeason) => {
-      invalidateSeasonIdCache(endedSeason.farm_id);
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.farmSeasons.listByFarm(endedSeason.farm_id),
-      });
+      invalidateSeasonScopedQueries(queryClient, endedSeason.farm_id);
     },
   });
 }
@@ -281,31 +326,10 @@ export function useRecomputeFarmSeasonAssignments() {
 
   return useMutation({
     mutationFn: async ({ farmId }: { farmId: number }): Promise<void> => {
-      const { error } = await supabase.rpc('recompute_farm_season_assignments', {
-        p_farm_id: farmId,
-      });
-      if (error) {
-        if (error.code === '42883') {
-          await recomputeSeasonAssignmentsClient(farmId);
-          return;
-        }
-        throw error;
-      }
+      await recomputeSeasonAssignments(farmId);
     },
     onSuccess: (_, { farmId }) => {
-      invalidateSeasonIdCache(farmId);
-      queryClient.invalidateQueries({ queryKey: queryKeys.farmSeasons.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.irrigationRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sprayRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.fertigationRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.harvestRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.expenseRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.soilTestRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.petioleTestRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.soilProfiles.listByFarm(farmId) });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.temporaryWorkerEntries.listByFarm(farmId),
-      });
+      invalidateSeasonScopedQueries(queryClient, farmId);
     },
   });
 }

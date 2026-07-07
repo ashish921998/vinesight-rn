@@ -135,10 +135,11 @@ export async function resolveOptionalSeasonIdForDate(args: {
 
 /**
  * Resolve the season id for a date, lazily creating the farm's initial season
- * when none exists yet. This prevents records/tasks from being created with a
- * null season_id when a farm has no season — e.g. during onboarding where the
+ * when the farm has no season history yet — e.g. during onboarding where the
  * initial season may still be in flight, or for older farms created before the
- * season feature existed.
+ * season feature existed. Farms that are merely *between* seasons are left
+ * alone: their records stay unassigned until the next season starts (which
+ * recomputes assignments) rather than resurrecting an overlapping season.
  */
 export async function resolveOrCreateSeasonIdForDate(args: {
   farmId: number;
