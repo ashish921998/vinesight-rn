@@ -46,6 +46,7 @@ import {
 import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
 import { RepeatLastLog } from '@/components/screens/entry-form/RepeatLastLog';
 import { WeekStrip } from '@/components/ui/week-strip';
+import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
 import {
   irrigationRecordToFormData,
   sprayRecordToFormData,
@@ -2211,79 +2212,23 @@ export function EntryForm({
               color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
           </Pressable>
-          {showLogFarmPicker && farms && (
-            <View
-              style={{
-                backgroundColor: m3.surface.s100,
-                borderRadius: radius.md,
-                marginTop: 8,
-                borderWidth: 1,
-                borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                overflow: 'hidden',
-              }}
-            >
-              {selectedLogType === 'expense' && (
-                <Pressable
-                  key="all-farms"
-                  onPress={() => {
-                    setSelectedFarmId(ALL_FARMS_ID);
-                    setShowLogFarmPicker(false);
-                  }}
-                  style={{
-                    padding: 16,
-                    borderBottomWidth: 1,
-                    borderColor: m3.surface.s100,
-                    backgroundColor: isAllFarmsSelected
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                      : m3.surface.s100,
-                  }}
-                >
-                  <Text
-                    selectable
-                    style={{
-                      color: isAllFarmsSelected
-                        ? m3.colorScheme.primary
-                        : m3.colorScheme.onSurfaceVariant,
-                      fontWeight: isAllFarmsSelected ? '500' : '400',
-                    }}
-                  >
-                    {t('entryForm.allFarms')}
-                  </Text>
-                </Pressable>
-              )}
-              {farms.map((f) => (
-                <Pressable
-                  key={f.id}
-                  onPress={() => {
-                    if (f.id) setSelectedFarmId(f.id);
-                    setShowLogFarmPicker(false);
-                  }}
-                  style={{
-                    padding: 16,
-                    borderBottomWidth: 1,
-                    borderColor: m3.surface.s100,
-                    backgroundColor:
-                      activeFarm?.id === f.id
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                        : m3.surface.s100,
-                  }}
-                >
-                  <Text
-                    selectable
-                    style={{
-                      color:
-                        activeFarm?.id === f.id
-                          ? m3.colorScheme.primary
-                          : m3.colorScheme.onSurfaceVariant,
-                      fontWeight: activeFarm?.id === f.id ? '500' : '400',
-                    }}
-                  >
-                    {f.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
+          <OptionPickerSheet
+            visible={showLogFarmPicker}
+            onClose={() => setShowLogFarmPicker(false)}
+            title={t('entryForm.selectFarm')}
+            selectedKey={isAllFarmsSelected ? 'all-farms' : (activeFarm?.id?.toString() ?? null)}
+            options={[
+              ...(selectedLogType === 'expense'
+                ? [{ key: 'all-farms', label: t('entryForm.allFarms') }]
+                : []),
+              ...(farms ?? [])
+                .filter((f) => f.id)
+                .map((f) => ({ key: String(f.id), label: f.name })),
+            ]}
+            onSelect={(key) => {
+              setSelectedFarmId(key === 'all-farms' ? ALL_FARMS_ID : Number(key));
+            }}
+          />
         </View>
       )}
 
@@ -2563,50 +2508,16 @@ export function EntryForm({
               color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
           </Pressable>
-          {showTaskFarmPicker && farms && (
-            <View
-              style={{
-                backgroundColor: m3.surface.s100,
-                borderRadius: radius.md,
-                marginTop: 8,
-                borderWidth: 1,
-                borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                overflow: 'hidden',
-              }}
-            >
-              {farms.map((f) => (
-                <Pressable
-                  key={f.id}
-                  onPress={() => {
-                    if (f.id) setTaskFarmId(f.id);
-                    setShowTaskFarmPicker(false);
-                  }}
-                  style={{
-                    padding: 16,
-                    borderBottomWidth: 1,
-                    borderColor: m3.surface.s100,
-                    backgroundColor:
-                      taskFarmId === f.id
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                        : m3.surface.s100,
-                  }}
-                >
-                  <Text
-                    selectable
-                    style={{
-                      color:
-                        taskFarmId === f.id
-                          ? m3.colorScheme.primary
-                          : m3.colorScheme.onSurfaceVariant,
-                      fontWeight: taskFarmId === f.id ? '500' : '400',
-                    }}
-                  >
-                    {f.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
+          <OptionPickerSheet
+            visible={showTaskFarmPicker}
+            onClose={() => setShowTaskFarmPicker(false)}
+            title={t('entryForm.selectFarm')}
+            selectedKey={taskFarmId?.toString() ?? null}
+            options={(farms ?? [])
+              .filter((f) => f.id)
+              .map((f) => ({ key: String(f.id), label: f.name }))}
+            onSelect={(key) => setTaskFarmId(Number(key))}
+          />
         </View>
       )}
 
