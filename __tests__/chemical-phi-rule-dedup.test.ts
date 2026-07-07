@@ -1,4 +1,5 @@
 import { dedupePhiRules } from '@/hooks/use-chemical-catalog';
+import { formatLocalDate } from '@/utils/date';
 
 const TODAY = '2026-07-06';
 
@@ -95,16 +96,33 @@ describe('dedupePhiRules', () => {
   });
 
   it('defaults "today" to the device-LOCAL calendar date, not UTC', () => {
-    // Local-midnight construction: new Date(y, m, d, 1:00) is 01:00 in the
-    // test runner's OWN zone, so for any zone east of UTC the UTC date is
-    // still "yesterday" — a UTC-derived default (toISOString) would exclude a
-    // rule that became effective on the local date. (Concrete case: 01:00 IST
-    // on 2026-07-07 is 19:30 UTC on 2026-07-06.)
-    jest.useFakeTimers().setSystemTime(new Date(2026, 6, 7, 1, 0, 0));
+    // Pick a mock instant whose LOCAL calendar date differs from its UTC date
+    // on THIS runner, so a regression to a UTC-derived default is caught
+    // wherever such a moment exists — not only on east-of-UTC hosts (the
+    // earlier version constructed 01:00 local, which on a UTC/west-of-UTC CI
+    // runner shares the same date as UTC and so could not discriminate).
+    //   - East of UTC (e.g. IST): early local morning leaves UTC on the
+    //     PREVIOUS day, so a rule effective_from = local-today looks
+    //     not-yet-effective under a UTC default and is dropped.
+    //   - West of UTC: late local evening rolls UTC to the NEXT day, so a rule
+    //     effective_to = local-today looks expired under a UTC default and is
+    //     dropped.
+    //   - Pure UTC: local and UTC dates can never differ, so the distinction is
+    //     unobservable; the test then only confirms the default works.
+    const offsetMin = new Date(2026, 6, 7).getTimezoneOffset(); // >0 west, <0 east, 0 UTC
+    const hour = offsetMin > 0 ? 23 : 1;
+    jest.useFakeTimers().setSystemTime(new Date(2026, 6, 7, hour, 0, 0));
     try {
-      const effectiveToday = rule({ phi_days: 66, effective_from: '2026-07-07' });
+      const localToday = formatLocalDate(new Date());
+      // A rule valid on local-today (inclusive on both window bounds). A UTC
+      // default would push "today" off by a day and drop it; the strictest
+      // (66-day) rule then loses to the 30-day one, flipping the winner.
+      const governing =
+        offsetMin > 0
+          ? rule({ phi_days: 66, effective_to: localToday })
+          : rule({ phi_days: 66, effective_from: localToday });
       const older = rule({ phi_days: 30 });
-      expect(dedupePhiRules([older, effectiveToday]).get(1)).toBe(effectiveToday);
+      expect(dedupePhiRules([older, governing]).get(1)).toBe(governing);
     } finally {
       jest.useRealTimers();
     }
