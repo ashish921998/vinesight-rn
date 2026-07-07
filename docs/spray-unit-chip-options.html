@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spray Unit Chip — Design Options</title>
+<style>
+  :root {
+    --primary: #4f7c4a;
+    --tertiary: #5b7a8c;
+    --tertiary-tint: #eaf0f4;
+    --surface-0: #ffffff;
+    --surface-100: #f4f4f1;
+    --surface-200: #e7e7e3;
+    --surface-600: #6e6e69;
+    --surface-700: #4f4f4b;
+    --surface-900: #1c1c1a;
+    --outline: rgba(0,0,0,0.14);
+    --water: #2f6f8f;   /* per-litre family */
+    --acre: #6b7d3a;    /* per-acre family  */
+    --abs: #8a6d3b;     /* absolute family  */
+  }
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(160deg, #e8ece6 0%, #dde3e8 100%);
+    min-height: 100vh;
+    padding: 36px 16px 60px;
+    color: var(--surface-900);
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.3px; text-align:center; }
+  .subtitle { color: var(--surface-600); font-size: 14px; margin: 0 0 32px; text-align:center; }
+
+  .grid {
+    max-width: 1080px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 28px;
+  }
+
+  .option {
+    background: #fff;
+    border-radius: 22px;
+    padding: 22px 20px 24px;
+    box-shadow: 0 12px 30px -16px rgba(0,0,0,0.25);
+  }
+  .opt-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 6px; }
+  .opt-title { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
+  .opt-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase;
+    color: var(--surface-600);
+    background: var(--surface-100); border-radius: 999px; padding: 3px 9px;
+  }
+  .opt-desc { font-size: 12.5px; color: var(--surface-600); line-height: 1.5; margin-bottom: 18px; }
+
+  /* shared input row used in every option */
+  .field {
+    display:flex; align-items:center;
+    background: var(--surface-100);
+    border: 1px solid var(--surface-200);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .field input {
+    flex:1; text-align:center; border:none; background:transparent;
+    font-size: 16px; padding: 11px; color: var(--surface-900); font-weight: 500;
+  }
+  .suffix {
+    padding: 11px 14px; font-size: 13px; font-weight: 700; color: var(--surface-600);
+    border-left: 1px dashed rgba(0,0,0,0.08);
+  }
+
+  .tank { font-size: 11px; color: var(--surface-600); padding-left: 4px; margin-bottom: 12px; }
+
+  /* ---------- OPTION A: current pills (refined) ---------- */
+  .pills { display:flex; flex-wrap:wrap; gap: 7px; }
+  .pill {
+    border-radius: 999px; padding: 6px 13px;
+    font-size: 12.5px; font-weight: 600;
+    border: 1px solid var(--outline);
+    background: var(--surface-100); color: var(--surface-700);
+    cursor: pointer; user-select: none; line-height: 1.5;
+    transition: all .12s ease;
+  }
+  .pill.on {
+    background: var(--tertiary); border-color: var(--tertiary); color: #fff;
+  }
+  .pill.more { display:inline-flex; align-items:center; gap:4px; }
+  .pill.more .chev { font-size: 9px; opacity:.7; }
+
+  /* ---------- OPTION B: segmented control ---------- */
+  .segmented {
+    display:flex;
+    background: var(--surface-100);
+    border: 1px solid var(--surface-200);
+    border-radius: 11px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .seg {
+    flex: 1; text-align:center;
+    padding: 7px 4px;
+    font-size: 12px; font-weight: 600;
+    color: var(--surface-600);
+    border-radius: 8px;
+    cursor: pointer; user-select:none;
+    transition: all .12s ease;
+    white-space: nowrap;
+  }
+  .seg.on {
+    background: #fff; color: var(--surface-900);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+  .seg.more { flex: 0 0 auto; display:inline-flex; align-items:center; gap:3px; padding: 7px 9px; }
+
+  /* ---------- OPTION C: grouped by basis ---------- */
+  .groups { display:flex; flex-direction:column; gap: 10px; }
+  .group { }
+  .group-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+    color: var(--surface-600);
+    margin: 0 0 5px 3px;
+    display:flex; align-items:center; gap:5px;
+  }
+  .group-label .dot { width:7px; height:7px; border-radius:50%; }
+  .dot.water { background: var(--water); }
+  .dot.acre  { background: var(--acre); }
+  .dot.abs   { background: var(--abs); }
+  .group-chips { display:flex; gap: 7px; flex-wrap:wrap; }
+  .gchip {
+    border-radius: 10px; padding: 7px 13px;
+    font-size: 12.5px; font-weight: 600;
+    border: 1px solid var(--outline);
+    background: #fff; color: var(--surface-700);
+    cursor: pointer; user-select:none;
+    transition: all .12s ease;
+  }
+  .gchip.water.on { background: var(--water); border-color: var(--water); color:#fff; }
+  .gchip.acre.on  { background: var(--acre);  border-color: var(--acre);  color:#fff; }
+  .gchip.abs.on   { background: var(--abs);   border-color: var(--abs);   color:#fff; }
+
+  /* ---------- OPTION D: minimal current + switcher ---------- */
+  .minimal { display:flex; align-items:center; justify-content:space-between; }
+  .cur-unit {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size: 13px; font-weight: 600; color: var(--surface-700);
+  }
+  .cur-unit .live {
+    background: var(--tertiary-tint); color: var(--tertiary);
+    border-radius: 8px; padding: 4px 10px; font-weight: 700;
+  }
+  .switch-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    background: #fff; border: 1px solid var(--outline);
+    border-radius: 999px; padding: 7px 13px;
+    font-size: 12.5px; font-weight: 600; color: var(--surface-700);
+    cursor: pointer; user-select:none;
+  }
+  .switch-btn:hover { background: var(--surface-100); }
+
+  .hint {
+    margin-top: 36px; text-align:center;
+    font-size: 12.5px; color: var(--surface-600);
+  }
+  .hint b { color: var(--surface-900); }
+</style>
+</head>
+<body>
+
+  <h1>Unit chip strip — pick a direction</h1>
+  <p class="subtitle">Same field &amp; suffix in every option. Only the chip strip differs. Tap to feel selection.</p>
+
+  <div class="grid">
+
+    <!-- A -->
+    <div class="option">
+      <div class="opt-head">
+        <div class="opt-title">A · Refined pills</div>
+        <div class="opt-tag">evolution</div>
+      </div>
+      <div class="opt-desc">Same shape you have today, but bigger touch targets, tighter rhythm, and a crisp solid selected state.</div>
+      <div class="field"><input value="5" /><span class="suffix">ppm</span></div>
+      <div class="tank">5 ppm × 400 L = 0.002 L in tank</div>
+      <div class="pills" data-opt="a">
+        <span class="pill">g/L</span>
+        <span class="pill">mL/L</span>
+        <span class="pill">g/acre</span>
+        <span class="pill">mL/acre</span>
+        <span class="pill on">ppm</span>
+        <span class="pill more">More <span class="chev">▾</span></span>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="option">
+      <div class="opt-head">
+        <div class="opt-title">B · Segmented control</div>
+        <div class="opt-tag">compact</div>
+      </div>
+      <div class="opt-desc">One connected bar — no wrapping, no floating chips. Clearest hierarchy, feels like a native iOS control.</div>
+      <div class="field"><input value="5" /><span class="suffix">ppm</span></div>
+      <div class="tank">5 ppm × 400 L = 0.002 L in tank</div>
+      <div class="segmented" data-opt="b">
+        <span class="seg">g/L</span>
+        <span class="seg">mL/L</span>
+        <span class="seg">g/acre</span>
+        <span class="seg">mL/acre</span>
+        <span class="seg on">ppm</span>
+        <span class="seg more">More ▾</span>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="option">
+      <div class="opt-head">
+        <div class="opt-title">C · Grouped by basis</div>
+        <div class="opt-tag">structured</div>
+      </div>
+      <div class="opt-desc">Units clustered by what they mean — per litre, per acre, absolute. Colour encodes the family. Most explicit, slightly taller.</div>
+      <div class="field"><input value="5" /><span class="suffix">ppm</span></div>
+      <div class="tank">5 ppm × 400 L = 0.002 L in tank</div>
+      <div class="groups" data-opt="c">
+        <div class="group">
+          <div class="group-label"><span class="dot water"></span>Per litre</div>
+          <div class="group-chips">
+            <span class="gchip water">g/L</span>
+            <span class="gchip water">mL/L</span>
+          </div>
+        </div>
+        <div class="group">
+          <div class="group-label"><span class="dot acre"></span>Per acre</div>
+          <div class="group-chips">
+            <span class="gchip acre">g/acre</span>
+            <span class="gchip acre">mL/acre</span>
+          </div>
+        </div>
+        <div class="group">
+          <div class="group-label"><span class="dot abs"></span>Absolute</div>
+          <div class="group-chips">
+            <span class="gchip abs on">ppm</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- D -->
+    <div class="option">
+      <div class="opt-head">
+        <div class="opt-title">D · Minimal switcher</div>
+        <div class="opt-tag">calm</div>
+      </div>
+      <div class="opt-desc">No chip strip at all in the resting state. Shows the active unit clearly; a single “Change” button opens the bottom sheet. Least cluttered.</div>
+      <div class="field"><input value="5" /><span class="suffix">ppm</span></div>
+      <div class="tank">5 ppm × 400 L = 0.002 L in tank</div>
+      <div class="minimal">
+        <div class="cur-unit">Using <span class="live">ppm</span></div>
+        <div class="switch-btn">Change unit <span>↕</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="hint">Tell me <b>A</b>, <b>B</b>, <b>C</b>, or <b>D</b> and I’ll implement it in <code>spray-form.tsx</code>.</p>
+
+<script>
+  // simple selection feel for A, B, C
+  function wire(container, sel) {
+    container.querySelectorAll(sel).forEach(el => {
+      el.addEventListener('click', () => {
+        container.querySelectorAll(sel).forEach(x => {
+          x.classList.remove('on');
+          // for grouped, also drop family colour classes from selection
+          if (sel === '.gchip') x.classList.remove('on');
+        });
+        el.classList.add('on');
+      });
+    });
+  }
+  document.querySelectorAll('[data-opt]').forEach(c => {
+    const opt = c.getAttribute('data-opt');
+    if (opt === 'a' || opt === 'b') wire(c, '.' + (opt === 'a' ? 'pill' : 'seg'));
+    if (opt === 'c') wire(c, '.gchip');
+  });
+</script>
+</body>
+</html>

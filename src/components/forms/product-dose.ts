@@ -162,3 +162,135 @@ export function evaluateDoseGuard(
 
   return null;
 }
+
+// ============================================================
+// MARK: - Recommended-dose range guardrail (issue #236)
+// ============================================================
+
+/**
+ * An optional label-recommended range for a catalog product (one route). The
+ * picker prefills the foliar midpoint; this guardrail warns when the entered
+ * dose sits far OUTSIDE the range. Advisory only — never regulatory, never
+ * blocks submission (testimony rule: an unlogged application is worse than an
+ * off-label one). Mirrors CatalogDoseGuidance minus provenance fields.
+ */
+export interface DoseGuidanceReference {
+  minValue: number;
+  maxValue: number;
+  unit: string;
+}
+
+export interface DoseGuidanceWarning {
+  direction: 'high' | 'low';
+  /** The recommendation range that was breached. */
+  reference: DoseGuidanceReference;
+  /** The entered value (kernel-normalized to the reference's measure), for the message. */
+  entered: number;
+  unit: string;
+}
+
+/**
+ * The recommendation range fires at 2× outside the bound — looser than a flat
+ * "any value off-range" (which would nag on a 7 g/L entry against a 3–6 g/L
+ * label) but tighter than the 10× fat-finger rule (which would miss the issue's
+ * own example: 30 g/L vs a 3–6 g/L label). Concretely: HIGH fires when
+ * entered ≥ max × 2; LOW fires when entered ≤ min / 2.
+ */
+const DOSE_GUIDANCE_FACTOR = 2;
+
+/**
+ * Range guardrail against an optional recommended-dose label range. Compares
+ * the entered dose against the range bounds, kernel-normalized (same
+ * `comparableRate`/`totalFor` helpers as the plan/history guardrail): same
+ * effective basis → canonical rates compare directly; different bases → both
+ * resolve to plot totals under the same context. Measures never cross (a kg
+ * entry cannot be judged against an L reference). No guidance or no context →
+ * null (silent). Never blocks submission.
+ */
+export function evaluateDoseGuidanceGuard(
+  entry: ProductDoseEntry,
+  guidance: DoseGuidanceReference | null | undefined,
+  ctx: QuantityContext,
+): DoseGuidanceWarning | null {
+  if (!guidance || guidance.minValue <= 0 || guidance.maxValue < guidance.minValue) return null;
+  const enteredItem = asQuantityItem(entry);
+  if (!enteredItem) return null;
+  const entered = comparableRate(enteredItem);
+  if (!entered) return null;
+
+  const minItem: QuantityItem = {
+    quantity: guidance.minValue,
+    unit: guidance.unit,
+    quantityBasis: null,
+  };
+  const maxItem: QuantityItem = {
+    quantity: guidance.maxValue,
+    unit: guidance.unit,
+    quantityBasis: null,
+  };
+  const minRate = comparableRate(minItem);
+  const maxRate = comparableRate(maxItem);
+  if (!minRate || !maxRate || minRate.measure !== entered.measure) return null;
+
+  // HIGH: entered vs the range's max bound; LOW: entered vs the range's min bound.
+  // Same effective basis → canonical rates compare directly; different bases →
+  // both resolve to plot totals under the same context (null when context is
+  // missing — the check stays silent rather than guessing).
+  const ratioHigh = ratioBetween(entered, maxRate, enteredItem, maxItem, ctx);
+  const ratioLow = ratioBetween(entered, minRate, enteredItem, minItem, ctx);
+
+  // The message reports the entered value in the GUIDANCE unit (e.g. "entered
+  // 12 g/L"), not the kernel's canonical unit (kg). Derive it from the ratio,
+  // NOT from a unit-scale division: ratioBetween already resolved any basis
+  // difference (entered 8 kg total on 3.5 ac vs a 2.5 kg/ha bound is ratio
+  // 2.26 → 5.65 kg/ha), whereas dividing entered.rate by the unit factor
+  // ignores the area/water factor and would report 19.77 kg/ha for the same
+  // entry. bound × ratio equals rate ÷ factor in the same-basis case, so one
+  // formula serves both branches.
+  if (ratioHigh !== null && ratioHigh >= DOSE_GUIDANCE_FACTOR) {
+    return {
+      direction: 'high',
+      reference: guidance,
+      entered: roundForMessage(guidance.maxValue * ratioHigh),
+      unit: guidance.unit,
+    };
+  }
+  if (ratioLow !== null && ratioLow <= 1 / DOSE_GUIDANCE_FACTOR) {
+    return {
+      direction: 'low',
+      reference: guidance,
+      entered: roundForMessage(guidance.minValue * ratioLow),
+      unit: guidance.unit,
+    };
+  }
+  return null;
+}
+
+/**
+ * Entered ÷ reference canonical rate. Same effective basis → direct ratio;
+ * different bases → both resolve to plot totals under the same context. Returns
+ * null when the bases differ and the context can't resolve either side (the
+ * check stays silent rather than guessing). Mirrors evaluateDoseGuard's branch.
+ */
+function ratioBetween(
+  entered: ComparableRate,
+  reference: ComparableRate,
+  enteredItem: QuantityItem,
+  referenceItem: QuantityItem,
+  ctx: QuantityContext,
+): number | null {
+  if (entered.basis === reference.basis) {
+    return reference.rate > 0 ? entered.rate / reference.rate : null;
+  }
+  const enteredTotal = totalFor(enteredItem, ctx);
+  const referenceTotal = totalFor(referenceItem, ctx);
+  if (enteredTotal && referenceTotal && referenceTotal.value > 0) {
+    return enteredTotal.value / referenceTotal.value;
+  }
+  return null;
+}
+
+/** Round a canonical rate for a human-readable message (≤ 2 dp). */
+function roundForMessage(value: number): number {
+  return Math.round(value * 100) / 100;
+}

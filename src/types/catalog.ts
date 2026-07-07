@@ -29,6 +29,40 @@ export interface MasterCatalogProductComposition {
   updated_at?: string | null;
 }
 
+/**
+ * Application route for a recommended-dose row. Foliar guidance carries a
+ * per_liter_water concentration (canonical g/L); drip/soil guidance carries a
+ * per_acre rate (canonical kg/ha — the kernel folds ÷2.47105 → kg/acre at the
+ * read boundary). Issue #236.
+ */
+export type DoseApplicationRoute = 'foliar' | 'drip' | 'soil';
+
+/**
+ * Optional agronomic recommended-dose guidance for one product + route
+ * (issue #236). Advisory only — never regulatory. The picker prefills the
+ * foliar midpoint (plan item > last-used > recommendation) and the magnitude
+ * guardrail fires a 2×-outside-the-range warning against this range.
+ *
+ * Provenance discipline mirrors compositions (source_note marker) and the
+ * label-claim layer (source_url + effective window + review_status), but there
+ * is NO compliance semantics here — review_status is editorial, not legal.
+ */
+export interface CatalogDoseGuidance {
+  applicationRoute: DoseApplicationRoute;
+  /** Lower bound of the recommended range, in `unit` canonical units (>0). */
+  minValue: number;
+  /** Upper bound of the recommended range (>= minValue). */
+  maxValue: number;
+  /** Canonical unit spelling the quantity kernel parses: 'g/L', 'kg/ha'. */
+  unit: string;
+  /** Optional label frequency ("1–2 sprays/month" → 2). */
+  applicationsPerMonth?: number | null;
+  /** Provenance marker (seeder ownership-rule keys on the prefix). */
+  sourceNote: string;
+  /** Label / manufacturer-site URL. */
+  sourceUrl?: string | null;
+}
+
 export interface MasterCatalogProduct {
   id: number;
   name: string;
@@ -44,4 +78,6 @@ export interface MasterCatalogProduct {
   updated_at?: string | null;
   aliases?: MasterCatalogProductAlias[];
   compositions?: MasterCatalogProductComposition[];
+  /** Optional recommended-dose rows (0..N, one per route). Null/missing = no guidance. */
+  doseGuidance?: CatalogDoseGuidance[] | null;
 }

@@ -262,10 +262,7 @@ export interface ChemicalLabelClaim {
   updated_at?: string | null;
 }
 
-export type ChemicalLabelClaimInsert = Omit<
-  ChemicalLabelClaim,
-  'id' | 'created_at' | 'updated_at'
->;
+export type ChemicalLabelClaimInsert = Omit<ChemicalLabelClaim, 'id' | 'created_at' | 'updated_at'>;
 export type ChemicalLabelClaimUpdate = Partial<
   Omit<ChemicalLabelClaim, 'id' | 'created_at' | 'updated_at'>
 >;
@@ -871,6 +868,7 @@ export const TABLES = {
   CHEMICAL_PRODUCTS: 'chemical_products',
   CHEMICAL_PRODUCT_ALIASES: 'chemical_product_aliases',
   CHEMICAL_PRODUCT_COMPOSITIONS: 'chemical_product_compositions',
+  CHEMICAL_PRODUCT_DOSE_GUIDANCE: 'chemical_product_dose_guidance',
   CHEMICAL_MIXES: 'chemical_mixes',
   CHEMICAL_MIX_COMPONENTS: 'chemical_mix_components',
   CHEMICAL_PHI_RULES: 'chemical_phi_rules',

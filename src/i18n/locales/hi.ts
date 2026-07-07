@@ -939,6 +939,9 @@ export const hi = {
         lowPlan: 'मात्रा जांचें — आपकी योजना की खुराक ({{reference}}) का लगभग 1/{{ratio}}',
         highLastLog: 'मात्रा जांचें — आपकी पिछली एंट्री ({{reference}}) से लगभग {{ratio}} गुना',
         lowLastLog: 'मात्रा जांचें — आपकी पिछली एंट्री ({{reference}}) का लगभग 1/{{ratio}}',
+        // अनुशंसित-खुराक रेंज गार्डरेल (#236) — सलाहकार, कभी रोकता नहीं।
+        recommendedHigh: 'मात्रा जांचें — दर्ज {{entered}}; लेबल {{min}}–{{max}} {{unit}} अनुशंसित',
+        recommendedLow: 'मात्रा जांचें — दर्ज {{entered}}; लेबल {{min}}–{{max}} {{unit}} अनुशंसित',
       },
     },
     quickAdd: 'त्वरित जोड़',
