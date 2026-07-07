@@ -1,8 +1,14 @@
-import { LOG_TYPES, type LogTypeId, type LogType } from '@/constants/calculator-models';
+import {
+  LOG_TYPES,
+  PICKER_HIDDEN_LOG_TYPE_IDS,
+  type LogTypeId,
+  type LogType,
+} from '@/constants/calculator-models';
+import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { fontSize, radius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
-import { AppIcon } from '@/components/ui/app-icon';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { guidedTourEmit } from '@/features/guided-tour/events';
@@ -20,6 +26,11 @@ interface LogTypeSelectorProps {
   allowedTypes?: LogTypeId[];
 }
 
+// The two everyday activities get large hero tiles; the rest share a compact
+// row. Fertigation is logged inside the irrigation flow, so it never appears
+// as its own tile — the irrigation tile names it instead.
+const HERO_LOG_TYPE_IDS: readonly LogTypeId[] = ['irrigation', 'spray'];
+
 export function LogTypeSelector({
   selectedLogType,
   onSelect,
@@ -35,6 +46,134 @@ export function LogTypeSelector({
   const isGuidedAddLogStep = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
   const showInlineGuidance = isGuidedAddLogStep && selectedLogType === null && !hasPendingDrafts;
 
+  const visibleTypes = allowedTypes
+    ? LOG_TYPES.filter((logType) => allowedTypes.includes(logType.id as LogTypeId))
+    : LOG_TYPES.filter((logType) => !PICKER_HIDDEN_LOG_TYPE_IDS.has(logType.id));
+  const heroTypes = visibleTypes.filter((logType) =>
+    HERO_LOG_TYPE_IDS.includes(logType.id as LogTypeId),
+  );
+  const secondaryTypes = visibleTypes.filter(
+    (logType) => !HERO_LOG_TYPE_IDS.includes(logType.id as LogTypeId),
+  );
+
+  const pendingCountByType = pendingLogTypes.reduce<Partial<Record<LogTypeId, number>>>(
+    (acc, type) => {
+      acc[type] = (acc[type] ?? 0) + 1;
+      return acc;
+    },
+    {},
+  );
+
+  const renderTile = (logType: LogType, variant: 'hero' | 'compact') => {
+    const isHero = variant === 'hero';
+    const typeId = logType.id as LogTypeId;
+    const isSelected = selectedLogType === logType.id;
+    const addedCount = pendingCountByType[typeId] ?? 0;
+    const isAdded = addedCount > 0;
+    const iconBoxSize = isHero ? 42 : 34;
+    const showFertilizerHint = isHero && typeId === 'irrigation';
+
+    return (
+      <Pressable
+        key={logType.id}
+        onPress={() => {
+          guidedTourEmit('guidedTour.logTypeSelected', { recordType: typeId });
+          onSelect(typeId);
+        }}
+        accessibilityRole="button"
+        accessibilityState={{ selected: isSelected }}
+        style={{
+          flex: 1,
+          flexDirection: isHero ? 'row' : 'column',
+          alignItems: 'center',
+          justifyContent: isHero ? 'flex-start' : 'center',
+          gap: isHero ? 10 : 6,
+          paddingVertical: isHero ? 14 : 11,
+          paddingHorizontal: isHero ? 12 : 6,
+          borderRadius: radius.lg,
+          borderWidth: isSelected || (showInlineGuidance && isHero) ? 1.5 : 1,
+          backgroundColor: isAdded
+            ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+            : m3.surface.s50,
+          borderColor: isSelected
+            ? logType.color
+            : isAdded
+              ? colorWithOpacity(m3.colorScheme.primary, 0.4)
+              : showInlineGuidance
+                ? colorWithOpacity(m3.colorScheme.primary, 0.25)
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+        }}
+      >
+        <View style={{ position: 'relative' }}>
+          <View
+            style={{
+              width: iconBoxSize,
+              height: iconBoxSize,
+              borderRadius: radius.md,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: colorWithOpacity(logType.color, 0.14),
+            }}
+          >
+            <UiSymbol
+              name={resolveSymbolIconName(logType.icon)}
+              size={isHero ? 20 : 16}
+              color={logType.color}
+            />
+          </View>
+          {isAdded && (
+            <View
+              style={{
+                position: 'absolute',
+                top: -6,
+                right: -6,
+                minWidth: 20,
+                height: 20,
+                borderRadius: radius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingHorizontal: 5,
+                backgroundColor: m3.colorScheme.primary,
+                borderWidth: 2,
+                borderColor: m3.surface.s100,
+              }}
+            >
+              <Text style={{ fontSize: fontSize['2xs'], fontWeight: '800', color: '#FFFFFF' }}>
+                {addedCount}
+              </Text>
+            </View>
+          )}
+        </View>
+        <View style={isHero ? { flex: 1 } : { alignItems: 'center' }}>
+          <Text
+            selectable
+            numberOfLines={1}
+            style={{
+              fontSize: isHero ? fontSize.base : fontSize.xs,
+              fontWeight: '700',
+              color: m3.colorScheme.onSurface,
+            }}
+          >
+            {t(logType.labelKey)}
+          </Text>
+          {showFertilizerHint && (
+            <Text
+              selectable
+              numberOfLines={1}
+              style={{
+                marginTop: 1,
+                fontSize: fontSize.xs,
+                color: m3.colorScheme.onSurfaceVariant,
+              }}
+            >
+              {t('entryForm.irrigationFertilizerHint', { defaultValue: '+ fertilizers' })}
+            </Text>
+          )}
+        </View>
+      </Pressable>
+    );
+  };
+
   return (
     <GuidedTourTarget
       targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_TYPE_SELECTOR}
@@ -49,137 +188,44 @@ export function LogTypeSelector({
           : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
       }}
     >
-      <View style={{ marginBottom: 12 }}>
+      <Text
+        selectable
+        style={{
+          fontSize: fontSize.lg,
+          fontWeight: '800',
+          color: m3.colorScheme.onSurface,
+          marginBottom: 12,
+        }}
+      >
+        {t('entryForm.whatDidYouDoToday', { defaultValue: 'What did you do today?' })}
+      </Text>
+
+      {showInlineGuidance && hintText && (
         <Text
           selectable
           style={{
-            fontSize: fontSize.xs,
-            fontWeight: '700',
-            letterSpacing: 0.6,
-            textTransform: 'uppercase',
-            color: m3.colorScheme.onSurfaceVariant,
-          }}
-        >
-          {t('entryForm.whatDidYouDoToday', { defaultValue: 'What did you do today?' })}
-        </Text>
-        <Text
-          selectable
-          style={{
-            marginTop: 6,
-            fontSize: fontSize.xl,
-            lineHeight: 24,
-            fontWeight: '700',
-            color: m3.colorScheme.onSurface,
-          }}
-        >
-          {t('entryForm.activityType')}
-        </Text>
-        <Text
-          selectable
-          style={{
-            marginTop: 6,
+            marginTop: -6,
+            marginBottom: 12,
             fontSize: fontSize.sm,
             lineHeight: 20,
             color: m3.colorScheme.onSurfaceVariant,
           }}
         >
-          {hintText ??
-            t('entryForm.selectActivityTypeHint', {
-              defaultValue: 'Tap a chip to add it to today, then save the stack together.',
-            })}
+          {hintText}
         </Text>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: 8,
-        }}
-      >
-        {(allowedTypes
-          ? LOG_TYPES.filter((logType) => allowedTypes.includes(logType.id as LogTypeId))
-          : LOG_TYPES
-        ).map((logType: LogType) => {
-          const isSelected = selectedLogType === logType.id;
-          const isAdded = pendingLogTypes.includes(logType.id as LogTypeId);
-          const emphasizeSelectedGuidedCard = isGuidedAddLogStep && isSelected;
-          const emphasizeAllGuidedCards = showInlineGuidance;
-          return (
-            <Pressable
-              key={logType.id}
-              onPress={() => {
-                const selectedType = logType.id as LogTypeId;
-                guidedTourEmit('guidedTour.logTypeSelected', { recordType: selectedType });
-                onSelect(selectedType);
-              }}
-              style={{
-                minHeight: 42,
-                paddingLeft: 8,
-                paddingRight: 12,
-                paddingVertical: 8,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                borderRadius: radius.full,
-                borderWidth: emphasizeSelectedGuidedCard ? 2 : 1,
-                backgroundColor: isSelected
-                  ? logType.color
-                  : isAdded
-                    ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                    : emphasizeAllGuidedCards
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.03)
-                      : m3.surface.s50,
-                borderColor: isSelected
-                  ? logType.color
-                  : isAdded
-                    ? colorWithOpacity(m3.colorScheme.primary, 0.35)
-                    : emphasizeAllGuidedCards
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.25)
-                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                opacity: emphasizeAllGuidedCards ? 1 : undefined,
-              }}
-            >
-              <View
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: radius.full,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: 7,
-                  backgroundColor: isSelected
-                    ? '#FFFFFF30'
-                    : isAdded
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.14)
-                      : `${logType.color}12`,
-                }}
-              >
-                <AppIcon
-                  name={isAdded ? 'checkmark-circle' : 'add-circle'}
-                  size={14}
-                  color={isSelected ? '#FFFFFF' : isAdded ? m3.colorScheme.primary : logType.color}
-                />
-              </View>
-              <Text
-                selectable
-                style={[
-                  { fontSize: fontSize.xs, fontWeight: '700', lineHeight: 16 },
-                  {
-                    color: isSelected
-                      ? '#FFFFFF'
-                      : isAdded
-                        ? m3.colorScheme.primary
-                        : m3.colorScheme.onSurface,
-                  },
-                ]}
-                numberOfLines={1}
-              >
-                {t(logType.labelKey)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      )}
+
+      {heroTypes.length > 0 && (
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: secondaryTypes.length ? 8 : 0 }}>
+          {heroTypes.map((logType) => renderTile(logType, 'hero'))}
+        </View>
+      )}
+
+      {secondaryTypes.length > 0 && (
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {secondaryTypes.map((logType) => renderTile(logType, 'compact'))}
+        </View>
+      )}
     </GuidedTourTarget>
   );
 }

@@ -836,6 +836,7 @@ export const mr = {
       selectDueDateTitle: 'देय दिनांक निवडा',
     },
     pickDate: 'तारीख निवडा',
+    irrigationFertilizerHint: '+ खते',
     repeatLastLogTitle: 'मागील नोंद पुन्हा करायची?',
     repeatLastLogLoggedOn: '{{date}} रोजी नोंदवले',
     repeatLastLogAdd_one: '{{count}} मसुदा जोडा',
@@ -924,12 +925,6 @@ export const mr = {
   fertigationForm: {
     title: 'फर्टिगेशन',
     subtitle: '$t(glossary.fertigation) अनुप्रयोग नोंदवा',
-    waterVolume: {
-      label: 'पाणी मात्रा',
-      placeholder: 'प्रमाण टाका',
-      unitLiters: 'लिटर',
-      hint: 'फर्टिगेशनसाठी वापरलेले एकूण पाणी (वैकल्पिक)',
-    },
     fertilizers: {
       label: 'खते',
       addFertilizer: '$t(glossary.fertigation) जोडा',
