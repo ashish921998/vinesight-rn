@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/hooks/query-keys';
 import { TABLES } from '@/types/database';
+import { formatLocalDate } from '@/utils/date';
 import type { ChemicalMix, ChemicalMixComponent } from '@/types/phi';
 
 interface ChemicalMixRow {
@@ -48,10 +49,15 @@ function isCurrentlyEffective(rule: ChemicalPhiRuleRow, todayIso: string): boole
  * same verification tier the strictest (max phi_days) wins so ties fail to the
  * safe side. Rules outside their effective_from/effective_to window are not
  * candidates at all — an expired rule must not govern in either direction.
+ *
+ * "Today" is the device's LOCAL calendar date (formatLocalDate, the same
+ * convention as season-context): a UTC-derived date would run a day behind
+ * for IST users until 05:30 local, briefly excluding a rule that became
+ * effective today.
  */
 export function dedupePhiRules(
   phiRules: ChemicalPhiRuleRow[],
-  todayIso: string = new Date().toISOString().slice(0, 10),
+  todayIso: string = formatLocalDate(new Date()),
 ): Map<number, ChemicalPhiRuleRow> {
   const byProduct = new Map<number, ChemicalPhiRuleRow>();
   phiRules.forEach((rule) => {

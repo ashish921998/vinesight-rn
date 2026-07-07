@@ -93,4 +93,20 @@ describe('dedupePhiRules', () => {
     expect(result.get(1)).toBe(p1Strict);
     expect(result.get(2)).toBe(p2Only);
   });
+
+  it('defaults "today" to the device-LOCAL calendar date, not UTC', () => {
+    // Local-midnight construction: new Date(y, m, d, 1:00) is 01:00 in the
+    // test runner's OWN zone, so for any zone east of UTC the UTC date is
+    // still "yesterday" — a UTC-derived default (toISOString) would exclude a
+    // rule that became effective on the local date. (Concrete case: 01:00 IST
+    // on 2026-07-07 is 19:30 UTC on 2026-07-06.)
+    jest.useFakeTimers().setSystemTime(new Date(2026, 6, 7, 1, 0, 0));
+    try {
+      const effectiveToday = rule({ phi_days: 66, effective_from: '2026-07-07' });
+      const older = rule({ phi_days: 30 });
+      expect(dedupePhiRules([older, effectiveToday]).get(1)).toBe(effectiveToday);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
