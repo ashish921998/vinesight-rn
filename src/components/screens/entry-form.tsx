@@ -1602,6 +1602,14 @@ export function EntryForm({
   const [type, setType] = useState<TaskType>('note');
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [taskFarmId, setTaskFarmId] = useState<number | null>(null);
+  // Single-farm accounts skip the farm selector cards entirely, so default
+  // the task farm to the only farm (logs already auto-select via selectedFarmId).
+  const isSingleFarmAccount = (farms?.length ?? 0) === 1;
+  useEffect(() => {
+    if (isSingleFarmAccount && !taskFarmId && farms?.[0]?.id) {
+      setTaskFarmId(farms[0].id);
+    }
+  }, [isSingleFarmAccount, taskFarmId, farms]);
   const [dueDate, setDueDate] = useState('');
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
   const [showTypePicker, setShowTypePicker] = useState(false);
@@ -2153,7 +2161,7 @@ export function EntryForm({
 
   const renderLogContent = () => (
     <>
-      {!farm && !lockFarmSelection && (
+      {!farm && !lockFarmSelection && !isSingleFarmAccount && (
         <View
           style={{
             backgroundColor: m3.surface.s100,
@@ -2466,7 +2474,7 @@ export function EntryForm({
         </View>
       )}
 
-      {!farm && !lockFarmSelection && (
+      {!farm && !lockFarmSelection && !isSingleFarmAccount && (
         <View style={{ marginBottom: 16 }}>
           <Text
             selectable
