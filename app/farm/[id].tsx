@@ -610,6 +610,12 @@ export default function FarmDetailScreen() {
           mode: 'manual',
         },
       });
+      if (createdSeason.recomputeFailed) {
+        Alert.alert(
+          t('common.warning', { defaultValue: 'Warning' }),
+          t('farmDetails.seasons.warnings.recomputePartial'),
+        );
+      }
       if (seasonTargetHarvestDate) {
         if (typeof createdSeason?.id !== 'number') {
           Alert.alert(

@@ -76,11 +76,15 @@ describe('resolveBaseline', () => {
     expect(result?.baselineSeason).toEqual(s2024);
   });
 
-  it('clamps the baseline window to the prior season’s end', () => {
+  it('clamps the baseline window to the prior season’s end, and reports the clamped elapsedDays', () => {
     const prior = season(9, '2025-04-01', '2025-04-15'); // ends before 30 elapsed days
     const current = season(10, '2026-04-01', null);
     const result = resolveBaseline(baseFilters({ seasonId: 10 }), [current, prior], current, TODAY);
     expect(result?.filters.dateRange.to).toBe('2025-04-15');
+    // Must reflect the clamped window (14 days), not the current season's
+    // unclamped elapsed time (30 days) — otherwise a "both measured over N
+    // days" footnote would overstate how far the baseline actually covers.
+    expect(result?.elapsedDays).toBe(14);
   });
 
   it('falls back to the preceding equal-length window with no season selected', () => {

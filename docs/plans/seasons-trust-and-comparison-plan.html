@@ -81,8 +81,8 @@
   <table>
     <tr><th>Capability</th><th>Where</th><th>Status</th></tr>
     <tr><td>Per-farm seasons, date-window <code>season_id</code> resolution with cache + lazy season creation</td><td><code>src/lib/season-context.ts</code></td><td>Done</td></tr>
-    <tr><td>Recompute assignments across all 11 record tables (RPC + client fallback)</td><td><code>recompute_farm_season_assignments</code> RPC; <code>recomputeSeasonAssignmentsClient</code> in <code>season-context.ts:191</code></td><td>Done — but only runs on season <em>end</em></td></tr>
-    <tr><td>Period-over-period comparison: auto baseline = previous season, aligned to the <em>same elapsed window</em> (day-N vs day-N)</td><td><code>src/services/report-comparison.ts</code> (pure), <code>useReportComparison</code> in <code>src/hooks/use-reports.ts:334</code></td><td>Done</td></tr>
+    <tr><td>Recompute assignments across all 11 record tables (RPC + client fallback)</td><td><code>recompute_farm_season_assignments</code> RPC; <code>recomputeSeasonAssignmentsClient</code> in <code>season-context.ts:191</code></td><td>Done — A1 landed: <code>useStartFarmSeason</code> now recomputes on start too, via a shared <code>invalidateSeasonScopedQueries</code> helper</td></tr>
+    <tr><td>Period-over-period comparison: auto baseline = previous season, aligned to the <em>same elapsed window</em> (day-N vs day-N), full baseline summary + labels for the UI</td><td><code>src/services/report-comparison.ts</code> (pure), <code>useReportComparison</code> in <code>src/hooks/use-reports.ts</code></td><td>Done — <code>ReportComparison</code> now carries <code>baselineSummary</code>/<code>baselineLabel</code>/<code>currentLabel</code>/<code>elapsedDays</code>, fully populated by the hook</td></tr>
     <tr><td>Delta chips on report summary tiles</td><td><code>report-executive-summary.tsx:23</code> (<code>DeltaChip</code>), wired in <code>app/reports.tsx:552</code></td><td>Done — app-only, not exported</td></tr>
     <tr><td>Explicit baseline pick, type-level slot</td><td><code>ReportCompareOptions.baselineSeasonId</code> in <code>src/types/report.ts:71</code></td><td>Scaffolded, <strong>nothing consumes it</strong></td></tr>
     <tr><td>Unassigned-records filtering logic</td><td><code>shouldIncludeUnassigned</code> / <code>filterRecordsForSeason</code> in <code>use-reports.ts:53-73</code></td><td>Logic done, <strong>no UI exposes it</strong></td></tr>
@@ -134,17 +134,17 @@
   <h2>Track A — make season numbers trustworthy</h2>
 
   <div class="task">
-    <h4>A1 · Recompute assignments when a season <em>starts</em> <span class="pill s">Small</span></h4>
+    <h4>A1 · Recompute assignments when a season <em>starts</em> <span class="pill s">Small</span> <span class="pill s">Done</span></h4>
     <div class="meta"><code>src/hooks/use-farm-seasons.ts</code> — <code>useStartFarmSeason</code> (line 136)</div>
     <p>Today only <code>useEndFarmSeason</code> recomputes. A backdated season start (common: farmer starts logging days after pruning) leaves earlier orphaned records null. Fix: in <code>useStartFarmSeason</code>'s success path, fire <code>recompute_farm_season_assignments</code> (RPC with the existing <code>recomputeSeasonAssignmentsClient</code> fallback, same pattern as <code>useRecomputeFarmSeasonAssignments:283</code>), then reuse its record-query invalidation block — extract that block into a shared helper rather than duplicating the 10 <code>invalidateQueries</code> calls.</p>
     <p class="small"><strong>Accept:</strong> add an expense dated 2026-06-20 to a farm with no active season → start a season backdated to 2026-06-15 → expense's <code>season_id</code> is set and it appears in that season's report without manual recompute.</p>
   </div>
 
   <div class="task">
-    <h4>A2 · Stop lazy-creating seasons for between-seasons farms <span class="pill s">Small</span> <span class="pill decide">Behavior decision</span></h4>
+    <h4>A2 · Stop lazy-creating seasons for between-seasons farms <span class="pill s">Small</span> <span class="pill decide">Behavior decision</span> <span class="pill s">Done</span></h4>
     <div class="meta"><code>src/hooks/use-farms.ts</code> — <code>ensureInitialFarmSeason</code> (line 80); called from <code>resolveOrCreateSeasonIdForDate</code> (<code>season-context.ts:143</code>)</div>
-    <p><strong>Latent bug found while planning:</strong> <code>ensureInitialFarmSeason</code> checks only for an <em>active</em> season. A farm whose season just ended has none — so saving any record silently starts a brand-new season with <code>start_date = date_of_pruning ?? today</code>. The pruning date is from the <em>previous</em> cycle, so the new "active" season can overlap every ended season and swallow historical records on the next recompute.</p>
-    <p>Fix: only auto-create when the farm has <em>zero</em> seasons (the original intent — old farms predating the feature). If ended seasons exist, return null and let the record stay unassigned — A3 makes that visible, A1 heals it when the real next season starts.</p>
+    <p><strong>Latent bug found while planning (now fixed):</strong> <code>ensureInitialFarmSeason</code> used to check only for an <em>active</em> season. A farm whose season just ended has none — so saving any record silently started a brand-new season with <code>start_date = date_of_pruning ?? today</code>. The pruning date is from the <em>previous</em> cycle, so the new "active" season could overlap every ended season and swallow historical records on the next recompute.</p>
+    <p>Fix landed: only auto-create when the farm has <em>zero</em> seasons (the original intent — old farms predating the feature). If ended seasons exist, the record stays unassigned — A3 makes that visible, A1 heals it when the real next season starts.</p>
     <p class="small"><strong>Accept:</strong> end a season, log an irrigation → no new <code>farm_seasons</code> row appears; record has null <code>season_id</code>. A brand-new farm with no seasons still gets its initial season on first save.</p>
   </div>
 
@@ -174,15 +174,15 @@
 
   <div class="task">
     <h4>B1 · User-picked comparison season <span class="pill m">Medium</span></h4>
-    <div class="meta"><code>src/types/report.ts:69-81</code> (types exist), <code>src/services/report-comparison.ts:87</code> (<code>resolveBaselineFilters</code>), <code>report-filters-panel.tsx</code>, <code>app/reports.tsx</code> filter state</div>
-    <p>Wire the dormant <code>ReportFilters.compare?.baselineSeasonId</code>: when a season is selected, show a "Compare with" row in the filters panel — options: <em>Previous season (auto)</em> [default, current behavior], each other season by label (<code>formatReportSeasonLabel</code>), and <em>Off</em>. In <code>resolveBaselineFilters</code>, when an explicit id is set, use that season instead of "the one immediately before", keeping the elapsed-window clamp exactly as-is. <code>compare.enabled: false</code> short-circuits to null (chips disappear — already handled by <code>comparison</code> being null).</p>
+    <div class="meta"><code>src/types/report.ts:69-81</code> (types exist), <code>src/services/report-comparison.ts</code> (<code>resolveBaseline</code>), <code>report-filters-panel.tsx</code>, <code>app/reports.tsx</code> filter state</div>
+    <p>Wire the dormant <code>ReportFilters.compare?.baselineSeasonId</code>: when a season is selected, show a "Compare with" row in the filters panel — options: <em>Previous season (auto)</em> [default, current behavior], each other season by label (<code>formatReportSeasonLabel</code>), and <em>Off</em>. In <code>resolveBaseline</code>, when an explicit id is set, use that season instead of "the one immediately before", keeping the elapsed-window clamp exactly as-is. <code>compare.enabled: false</code> short-circuits to null (chips disappear — already handled by <code>comparison</code> being null).</p>
     <p class="small"><strong>Accept:</strong> pick season 2024–25 as baseline for 2026 → chips recompute against it; Off hides chips; default unchanged.</p>
   </div>
 
   <div class="task">
     <h4>B2 · Side-by-side comparison section in the report body <span class="pill m">Medium</span></h4>
-    <div class="meta">New <code>src/components/screens/reports/report-season-comparison-section.tsx</code>; extend <code>ReportComparison</code> in <code>src/types/report.ts</code>; <code>useReportComparison</code> in <code>use-reports.ts:334</code></div>
-    <p>Delta chips answer "up or down"; consultants need the actual numbers. Extend <code>ReportComparison</code> to carry what the hook already has in scope but throws away: the baseline's <code>ReportSummary</code>, baseline season label, and the elapsed-days window. New section (rendered with the other <code>report-section-block</code> sections): a three-column table — metric · current season · baseline season · Δ% — over the seven existing comparison metrics (<code>COMPARISON_METRIC_FIELDS</code> in <code>report-comparison.ts:27</code>), with the footnote <em>"Both seasons measured over their first N days."</em> That footnote is the honesty guarantee — without it a partial season looks like a collapse.</p>
+    <div class="meta">New <code>src/components/screens/reports/report-season-comparison-section.tsx</code>, consuming the (now fully populated) <code>ReportComparison</code> from <code>useReportComparison</code> in <code>use-reports.ts</code></div>
+    <p>Delta chips answer "up or down"; consultants need the actual numbers. <code>ReportComparison</code> already carries the baseline's <code>ReportSummary</code>, baseline/current labels, and the elapsed-days window (populated in <code>useReportComparison</code>) — this task is UI-only. New section (rendered with the other <code>report-section-block</code> sections): a three-column table — metric · current season · baseline season · Δ% — over the seven existing comparison metrics (<code>COMPARISON_METRIC_FIELDS</code> in <code>report-comparison.ts:27</code>), with the footnote <em>"Both seasons measured over their first N days."</em> That footnote is the honesty guarantee — without it a partial season looks like a collapse.</p>
     <p class="small"><strong>Accept:</strong> season selected with a prior season having records → section renders with real numbers and the day-window footnote; hidden when comparison is null.</p>
   </div>
 
@@ -206,7 +206,7 @@
 
   <h2>Tests</h2>
   <ul>
-    <li><code>report-comparison.ts</code> claims unit tests in its header comment but <strong>no test file exists</strong> — create <code>report-comparison.test.ts</code>: auto-previous baseline, explicit <code>baselineSeasonId</code>, elapsed-window clamp to a shorter prior season, first-season → null, compare-off → null.</li>
+    <li><code>report-comparison.ts</code> already has <code>__tests__/report-comparison.test.ts</code> (auto-previous baseline, elapsed-window clamp + clamped <code>elapsedDays</code>, first-season → null); extend it with B1's explicit-<code>baselineSeasonId</code> and compare-off cases once that's wired.</li>
     <li><code>ensureInitialFarmSeason</code>: creates for zero-season farm; skips for farm with only ended seasons (mocked Supabase, same style as <code>use-delete-daily-note.test.tsx</code>).</li>
     <li>Excluded-count memo logic from A4 — extract as a pure helper so it's testable without rendering the 3,300-line screen.</li>
   </ul>

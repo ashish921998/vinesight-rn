@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
+import { taskQueryKeys } from './use-tasks';
 import type { FarmSeason, FarmSeasonInsert, FarmSeasonUpdate } from '../types';
 import { TABLES } from '../types';
 import { parseDbDateToLocalDate } from '../utils/date';
@@ -27,7 +28,9 @@ async function recomputeSeasonAssignments(farmId: number): Promise<void> {
 
 /**
  * Season windows changed — every record query for the farm may now carry a
- * different season_id. Shared by the start/end/recompute mutations.
+ * different season_id. Shared by the start/end/recompute mutations. Must
+ * cover every table recomputeSeasonAssignmentsClient touches (season-context.ts)
+ * — daily notes and task reminders included, not just the five "record" hooks.
  */
 function invalidateSeasonScopedQueries(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -40,12 +43,16 @@ function invalidateSeasonScopedQueries(
   queryClient.invalidateQueries({ queryKey: queryKeys.fertigationRecords.listByFarm(farmId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.harvestRecords.listByFarm(farmId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.expenseRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.dailyNotes.listByFarm(farmId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.soilTestRecords.listByFarm(farmId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.petioleTestRecords.listByFarm(farmId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.soilProfiles.listByFarm(farmId) });
   queryClient.invalidateQueries({
     queryKey: queryKeys.temporaryWorkerEntries.listByFarm(farmId),
   });
+  // Tasks use their own query-key namespace (use-tasks.ts), not the shared
+  // queryKeys object — invalidate broadly since it isn't farm-scoped there.
+  queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
 }
 
 function sortFarmSeasonsByEndDate(items: FarmSeason[]) {
@@ -189,7 +196,7 @@ export function useStartFarmSeason() {
       templateKey?: string | null;
       templateVersion?: number | null;
       configJson?: Record<string, unknown> | null;
-    }): Promise<FarmSeason> => {
+    }): Promise<FarmSeason & { recomputeFailed: boolean }> => {
       const startSeason = async (): Promise<FarmSeason> => {
         const { data: rpcData, error: rpcError } = await supabase.rpc('start_farm_season', {
           p_farm_id: farmId,
@@ -242,14 +249,21 @@ export function useStartFarmSeason() {
 
       // A backdated start can cover records logged while the farm was between
       // seasons (season_id null) — re-bucket them now instead of waiting for
-      // the season to end. Best-effort: the season itself already started.
+      // the season to end. The season itself has already started successfully
+      // by this point, so a recompute failure doesn't fail the mutation — but
+      // it must not be swallowed either, or records can stay silently
+      // unassigned with no indication anything went wrong. Callers surface
+      // `recomputeFailed` to the user (see handleStartSeason in farm/[id].tsx)
+      // instead of treating this like a fully successful start.
+      let recomputeFailed = false;
       try {
         await recomputeSeasonAssignments(farmId);
       } catch (error) {
         console.warn('[farm-seasons] recompute after season start failed:', error);
+        recomputeFailed = true;
       }
 
-      return season;
+      return { ...season, recomputeFailed };
     },
     onSuccess: (newSeason) => {
       invalidateSeasonScopedQueries(queryClient, newSeason.farm_id);

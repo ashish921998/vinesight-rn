@@ -352,6 +352,10 @@ export const en = {
         endSuccess: 'Season ended successfully.',
         reviewQueuedSuccess: 'Season assignment review triggered successfully.',
       },
+      warnings: {
+        recomputePartial:
+          'Season started, but some older records could not be moved into it automatically. Use "Review season history" to fix this.',
+      },
       errors: {
         invalidRange: 'Season end date must be after the start date.',
         startBeforeAllowed: 'Season start date must be after the previous season end date.',

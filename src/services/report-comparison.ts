@@ -122,6 +122,11 @@ export function resolveBaseline(
     if (prior.end_date && baselineTo > prior.end_date) {
       baselineTo = prior.end_date;
     }
+    // elapsedDays must reflect the window actually being compared, not the
+    // current season's elapsed time — when the prior season is shorter and
+    // baselineTo gets clamped above, reporting the unclamped `elapsed` would
+    // overstate how far the baseline period runs (a UI footnote reading "both
+    // seasons measured over their first 30 days" when the baseline only has 14).
     return {
       filters: {
         farmId,
@@ -130,7 +135,7 @@ export function resolveBaseline(
         includeUnassigned: false,
       },
       baselineSeason: prior,
-      elapsedDays: elapsed,
+      elapsedDays: daysBetween(prior.start_date, baselineTo),
     };
   }
 
