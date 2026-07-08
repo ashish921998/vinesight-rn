@@ -6,6 +6,12 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
+// week-strip (pulled in via location-picker → ui/index) imports @/i18n/format,
+// whose module-load side effect runs the real i18n.init() and fails under Jest.
+jest.mock('@/i18n/format', () => ({
+  formatDate: () => 'Jan 1',
+}));
+
 jest.mock('react-native-maps', () => {
   function BrokenMapView() {
     throw new Error('Map native view not available');
