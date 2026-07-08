@@ -453,6 +453,7 @@ export function useReportExport() {
       format: ReportFormat,
       reportType: ReportType,
       areaUnit: AreaUnitPreference = 'acres',
+      comparison?: ReportComparison | null,
     ) => {
       setIsProcessing(true);
       setExportError(null);
@@ -467,6 +468,7 @@ export function useReportExport() {
             reportType,
             preferredCurrency,
             areaUnit,
+            comparison,
           );
         }
       } catch (error) {
@@ -486,6 +488,7 @@ export function useReportExport() {
       format: ReportFormat,
       reportType: ReportType,
       areaUnit: AreaUnitPreference = 'acres',
+      comparison?: ReportComparison | null,
     ): Promise<string> => {
       setIsProcessing(true);
       setExportError(null);
@@ -500,6 +503,7 @@ export function useReportExport() {
           reportType,
           preferredCurrency,
           areaUnit,
+          comparison,
         );
       } catch (error) {
         console.error('Download error:', error);

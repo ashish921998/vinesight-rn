@@ -320,7 +320,7 @@ export default function ReportsScreen() {
     }
 
     try {
-      await exportReport(preview, format, reportType, areaUnit);
+      await exportReport(preview, format, reportType, areaUnit, comparison);
       telemetry.capture('data_exported', {
         export_type: format,
         scope: 'farm',
@@ -339,7 +339,7 @@ export default function ReportsScreen() {
     }
 
     try {
-      const fileUri = await downloadReport(preview, format, reportType, areaUnit);
+      const fileUri = await downloadReport(preview, format, reportType, areaUnit, comparison);
       telemetry.capture('data_exported', {
         export_type: `${format}_download`,
         scope: 'farm',
