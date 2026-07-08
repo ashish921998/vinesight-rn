@@ -360,10 +360,13 @@ export default function FarmDetailScreen() {
     return lastSeasonEndDate ? parseDbDateToLocalDate(lastSeasonEndDate) : null;
   }, [activeSeasonRecord, lastSeasonEndDate]);
   const isBetweenSeasons = useMemo(() => {
+    // Season history exists but nothing is active now. (Previously keyed off
+    // today < minimumSeasonStartDate — i.e. lastEnd + 1 day — which is only
+    // true on the end day itself, so the between-seasons hint never showed
+    // for farms that ended a season any earlier than yesterday.)
     if (activeSeasonRecord) return false;
-    if (!minimumSeasonStartDate) return false;
-    return formatLocalDate(new Date()) < formatLocalDate(minimumSeasonStartDate);
-  }, [activeSeasonRecord, minimumSeasonStartDate]);
+    return lastSeasonEndDate != null;
+  }, [activeSeasonRecord, lastSeasonEndDate]);
 
   const seasonProgressPct = useMemo(() => {
     const start =
@@ -419,43 +422,54 @@ export default function FarmDetailScreen() {
     );
   }, [irrigationRecords, seasonMetricsStartDate]);
 
-  const seasonExpenseTotal = useMemo(() => {
-    if (!expenseRecords) return null;
-    const activeStartIso = seasonMetricsStartDate ? formatLocalDate(seasonMetricsStartDate) : null;
-    const activeEndIso = seasonMetricsEndDate ? formatLocalDate(seasonMetricsEndDate) : null;
-    const scopedExpenseRecords =
-      activeStartIso === null && activeEndIso === null
-        ? expenseRecords
-        : expenseRecords.filter((record) => {
-            const recordDate = parseDbDateToLocalDate(record.date);
-            if (!recordDate) return false;
-            const recordIso = formatLocalDate(recordDate);
-            return (
-              (activeStartIso === null || recordIso >= activeStartIso) &&
-              (activeEndIso === null || recordIso <= activeEndIso)
-            );
-          });
-    return scopedExpenseRecords.reduce((sum, record) => sum + (record.cost || 0), 0);
-  }, [expenseRecords, seasonMetricsEndDate, seasonMetricsStartDate]);
+  // Tiles clamp to [seasonMetricsStartDate, seasonMetricsEndDate]; entries
+  // dated after a between-seasons farm's last end_date fall outside that
+  // window, so alongside each total we count them — the tiles caption the
+  // exclusion instead of showing a silently smaller number.
+  const sumSeasonScopedRecords = React.useCallback(
+    <T extends { date: string }>(
+      records: T[] | undefined,
+      valueOf: (record: T) => number,
+    ): { total: number; excludedAfterEnd: number } | null => {
+      if (!records) return null;
+      const activeStartIso = seasonMetricsStartDate
+        ? formatLocalDate(seasonMetricsStartDate)
+        : null;
+      const activeEndIso = seasonMetricsEndDate ? formatLocalDate(seasonMetricsEndDate) : null;
+      const unbounded = activeStartIso === null && activeEndIso === null;
+      let total = 0;
+      let excludedAfterEnd = 0;
+      for (const record of records) {
+        if (unbounded) {
+          total += valueOf(record);
+          continue;
+        }
+        const recordDate = parseDbDateToLocalDate(record.date);
+        if (!recordDate) continue;
+        const recordIso = formatLocalDate(recordDate);
+        if (activeEndIso !== null && recordIso > activeEndIso) {
+          excludedAfterEnd += 1;
+          continue;
+        }
+        if (activeStartIso !== null && recordIso < activeStartIso) continue;
+        total += valueOf(record);
+      }
+      return { total, excludedAfterEnd };
+    },
+    [seasonMetricsEndDate, seasonMetricsStartDate],
+  );
 
-  const seasonHarvestQuantity = useMemo(() => {
-    if (!harvestRecords) return null;
-    const activeStartIso = seasonMetricsStartDate ? formatLocalDate(seasonMetricsStartDate) : null;
-    const activeEndIso = seasonMetricsEndDate ? formatLocalDate(seasonMetricsEndDate) : null;
-    const scopedHarvestRecords =
-      activeStartIso === null && activeEndIso === null
-        ? harvestRecords
-        : harvestRecords.filter((record) => {
-            const recordDate = parseDbDateToLocalDate(record.date);
-            if (!recordDate) return false;
-            const recordIso = formatLocalDate(recordDate);
-            return (
-              (activeStartIso === null || recordIso >= activeStartIso) &&
-              (activeEndIso === null || recordIso <= activeEndIso)
-            );
-          });
-    return scopedHarvestRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-  }, [harvestRecords, seasonMetricsEndDate, seasonMetricsStartDate]);
+  const seasonExpenseMetrics = useMemo(
+    () => sumSeasonScopedRecords(expenseRecords, (record) => record.cost || 0),
+    [expenseRecords, sumSeasonScopedRecords],
+  );
+  const seasonExpenseTotal = seasonExpenseMetrics?.total ?? null;
+
+  const seasonHarvestMetrics = useMemo(
+    () => sumSeasonScopedRecords(harvestRecords, (record) => record.quantity || 0),
+    [harvestRecords, sumSeasonScopedRecords],
+  );
+  const seasonHarvestQuantity = seasonHarvestMetrics?.total ?? null;
 
   const formatCurrencyCompact = (value: number | null | undefined) => {
     if (value === null || value === undefined) return '—';
@@ -610,15 +624,20 @@ export default function FarmDetailScreen() {
           mode: 'manual',
         },
       });
+      // Collected rather than shown immediately — firing multiple sequential
+      // Alert.alert calls stacks/overlaps on iOS and drops earlier ones on
+      // Android, so any warnings from this flow are merged into one alert.
+      const warnings: string[] = [];
+      if (createdSeason.recomputeFailed) {
+        warnings.push(t('farmDetails.seasons.warnings.recomputePartial'));
+      }
+      const targetDateSaveFailedMessage = t('entryForm.phiErrors.targetDateSavePartial', {
+        defaultValue:
+          'Season started successfully, but target harvest date was not saved. You can edit the season to set it now.',
+      });
       if (seasonTargetHarvestDate) {
         if (typeof createdSeason?.id !== 'number') {
-          Alert.alert(
-            t('common.warning', { defaultValue: 'Warning' }),
-            t('entryForm.phiErrors.targetDateSavePartial', {
-              defaultValue:
-                'Season started successfully, but target harvest date was not saved. You can edit the season to set it now.',
-            }),
-          );
+          warnings.push(targetDateSaveFailedMessage);
         } else {
           try {
             await updateSeasonTargetHarvestDate.mutateAsync({
@@ -627,23 +646,25 @@ export default function FarmDetailScreen() {
               targetHarvestDate: formatLocalDate(seasonTargetHarvestDate),
             });
           } catch {
-            Alert.alert(
-              t('common.warning', { defaultValue: 'Warning' }),
-              t('entryForm.phiErrors.targetDateSavePartial', {
-                defaultValue:
-                  'Season started successfully, but target harvest date was not saved. You can edit the season to set it now.',
-              }),
-            );
+            warnings.push(targetDateSaveFailedMessage);
           }
         }
       }
+      if (warnings.length > 0) {
+        Alert.alert(t('common.warning', { defaultValue: 'Warning' }), warnings.join('\n\n'));
+      }
       await refetchSeasons();
-      triggerHapticSuccess();
       setShowSeasonForm(false);
       setShowSeasonStartPicker(false);
       setShowSeasonEndPicker(false);
       setShowSeasonTargetPicker(false);
-      showSeasonSuccess('start');
+      // Skip the celebratory success overlay when recompute failed — it reads
+      // as "all done" right after a warning that some records still need
+      // manual review, which is a contradictory pair of signals.
+      if (!createdSeason.recomputeFailed) {
+        triggerHapticSuccess();
+        showSeasonSuccess('start');
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : t('farmDetails.seasons.errors.startFailed');
@@ -2324,6 +2345,19 @@ export default function FarmDetailScreen() {
                 >
                   {formatCurrencyCompact(seasonExpenseTotal)}
                 </Text>
+                {seasonExpenseMetrics && seasonExpenseMetrics.excludedAfterEnd > 0 ? (
+                  <Text
+                    style={{
+                      fontSize: fontSize['2xs'],
+                      color: m3.colorScheme.onSurfaceVariant,
+                      marginTop: spacing[1],
+                    }}
+                  >
+                    {t('farmDetails.seasonTotals.excludedAfterEnd', {
+                      count: seasonExpenseMetrics.excludedAfterEnd,
+                    })}
+                  </Text>
+                ) : null}
               </View>
               <View
                 style={{
@@ -2356,6 +2390,19 @@ export default function FarmDetailScreen() {
                 >
                   {formatHarvestQuantity(seasonHarvestQuantity)}
                 </Text>
+                {seasonHarvestMetrics && seasonHarvestMetrics.excludedAfterEnd > 0 ? (
+                  <Text
+                    style={{
+                      fontSize: fontSize['2xs'],
+                      color: m3.colorScheme.onSurfaceVariant,
+                      marginTop: spacing[1],
+                    }}
+                  >
+                    {t('farmDetails.seasonTotals.excludedAfterEnd', {
+                      count: seasonHarvestMetrics.excludedAfterEnd,
+                    })}
+                  </Text>
+                ) : null}
               </View>
             </View>
           </View>

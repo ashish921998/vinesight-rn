@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
+import { taskQueryKeys } from './use-tasks';
 import type { FarmSeason, FarmSeasonInsert, FarmSeasonUpdate } from '../types';
 import { TABLES } from '../types';
 import { parseDbDateToLocalDate } from '../utils/date';
@@ -10,6 +12,95 @@ function isRpcFunctionMissing(error: { code?: string; message?: string } | null)
   if (!error) return false;
   if (error.code === '42883' || error.code === 'PGRST202') return true;
   return typeof error.message === 'string' && /function .* does not exist/i.test(error.message);
+}
+
+/**
+ * A season-start recompute call can fail outright (network/RPC error) without
+ * ever reaching the server-side logic that flags ambiguous assignments in
+ * `season_inference_audit` — so `needsSeasonReview` alone can't surface it.
+ *
+ * The durable copy of this client-only signal lives in its own AsyncStorage
+ * key, NOT the persisted query cache: the cache has a 24h maxAge/gcTime, so a
+ * flag stored only there silently evaporates while the affected records can
+ * still be sitting at season_id null. The query below reads storage directly
+ * (so a cold start doesn't depend on cache rehydration either) and the two
+ * mutation writers keep storage and cache in sync — setRecomputeRetryFlag is
+ * the only writer. Kept off the `farmSeasons.*` key hierarchy so unrelated
+ * season invalidations don't wipe the in-memory copy.
+ */
+function recomputeRetryQueryKey(farmId: number) {
+  return ['farm-season-recompute-retry', farmId] as const;
+}
+
+function recomputeRetryStorageKey(farmId: number): string {
+  return `VINESIGHT_SEASON_RECOMPUTE_RETRY_${farmId}`;
+}
+
+async function readRecomputeRetryFlag(farmId: number): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(recomputeRetryStorageKey(farmId))) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setRecomputeRetryFlag(
+  queryClient: ReturnType<typeof useQueryClient>,
+  farmId: number,
+  value: boolean,
+): void {
+  queryClient.setQueryData(recomputeRetryQueryKey(farmId), value);
+  // Fire-and-forget: the in-memory cache above is already correct for this
+  // session; storage failure only costs cross-restart durability.
+  const write = value
+    ? AsyncStorage.setItem(recomputeRetryStorageKey(farmId), '1')
+    : AsyncStorage.removeItem(recomputeRetryStorageKey(farmId));
+  write.catch((error) => {
+    console.warn('[farm-seasons] failed to persist recompute-retry flag:', error);
+  });
+}
+
+async function recomputeSeasonAssignments(farmId: number): Promise<void> {
+  const { error } = await supabase.rpc('recompute_farm_season_assignments', {
+    p_farm_id: farmId,
+  });
+  if (error) {
+    if (isRpcFunctionMissing(error)) {
+      await recomputeSeasonAssignmentsClient(farmId);
+      return;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Season windows changed — every record query for the farm may now carry a
+ * different season_id. Shared by the start/end/recompute mutations. Must
+ * cover every table recomputeSeasonAssignmentsClient touches (season-context.ts)
+ * — daily notes and task reminders included, not just the five "record" hooks.
+ */
+function invalidateSeasonScopedQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  farmId: number,
+): void {
+  invalidateSeasonIdCache(farmId);
+  queryClient.invalidateQueries({ queryKey: queryKeys.farmSeasons.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.irrigationRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.sprayRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.fertigationRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.harvestRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.expenseRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.dailyNotes.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.soilTestRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.petioleTestRecords.listByFarm(farmId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.soilProfiles.listByFarm(farmId) });
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.temporaryWorkerEntries.listByFarm(farmId),
+  });
+  queryClient.invalidateQueries({ queryKey: queryKeys.reports.unassignedRecordCount(farmId) });
+  // Tasks use their own query-key namespace (use-tasks.ts), not the shared
+  // queryKeys object — invalidate broadly since it isn't farm-scoped there.
+  queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
 }
 
 function sortFarmSeasonsByEndDate(items: FarmSeason[]) {
@@ -153,58 +244,80 @@ export function useStartFarmSeason() {
       templateKey?: string | null;
       templateVersion?: number | null;
       configJson?: Record<string, unknown> | null;
-    }): Promise<FarmSeason> => {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('start_farm_season', {
-        p_farm_id: farmId,
-        p_start_date: startDate,
-        p_template_key: templateKey ?? null,
-        p_config_json: configJson ?? null,
-        p_season_name: seasonName ?? null,
-      });
+    }): Promise<FarmSeason & { recomputeFailed: boolean }> => {
+      const startSeason = async (): Promise<FarmSeason> => {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('start_farm_season', {
+          p_farm_id: farmId,
+          p_start_date: startDate,
+          p_template_key: templateKey ?? null,
+          p_config_json: configJson ?? null,
+          p_season_name: seasonName ?? null,
+        });
 
-      if (!rpcError) {
-        if (rpcData && typeof rpcData === 'object' && 'id' in rpcData) {
-          return rpcData as FarmSeason;
+        if (!rpcError) {
+          if (rpcData && typeof rpcData === 'object' && 'id' in rpcData) {
+            return rpcData as FarmSeason;
+          }
+          // Fallback refetch path if rpc returns scalar/void.
+          const { data: latest, error: latestError } = await supabase
+            .from(TABLES.FARM_SEASONS)
+            .select('*')
+            .eq('farm_id', farmId)
+            .is('end_date', null)
+            .order('start_date', { ascending: false })
+            .limit(1)
+            .single();
+          if (latestError) throw latestError;
+          return latest;
         }
-        // Fallback refetch path if rpc returns scalar/void.
-        const { data: latest, error: latestError } = await supabase
+        if (!isRpcFunctionMissing(rpcError)) {
+          throw rpcError;
+        }
+
+        const { data, error } = await supabase
           .from(TABLES.FARM_SEASONS)
-          .select('*')
-          .eq('farm_id', farmId)
-          .is('end_date', null)
-          .order('start_date', { ascending: false })
-          .limit(1)
+          .insert({
+            farm_id: farmId,
+            start_date: startDate,
+            end_date: null,
+            season_name: seasonName ?? null,
+            crop_type_snapshot: cropTypeSnapshot ?? null,
+            template_key: templateKey ?? null,
+            template_version: templateVersion ?? null,
+            config_json: configJson ?? null,
+          })
+          .select()
           .single();
-        if (latestError) throw latestError;
-        return latest;
-      }
-      if (!isRpcFunctionMissing(rpcError)) {
-        throw rpcError;
+
+        if (error) throw error;
+        return data;
+      };
+
+      const season = await startSeason();
+
+      // A backdated start can cover records logged while the farm was between
+      // seasons (season_id null) — re-bucket them now instead of waiting for
+      // the season to end. The season itself has already started successfully
+      // by this point, so a recompute failure doesn't fail the mutation — but
+      // it must not be swallowed either, or records can stay silently
+      // unassigned with no indication anything went wrong. Callers surface
+      // `recomputeFailed` to the user (see handleStartSeason in farm/[id].tsx)
+      // instead of treating this like a fully successful start.
+      let recomputeFailed = false;
+      try {
+        await recomputeSeasonAssignments(farmId);
+      } catch (error) {
+        console.warn('[farm-seasons] recompute after season start failed:', error);
+        recomputeFailed = true;
       }
 
-      const { data, error } = await supabase
-        .from(TABLES.FARM_SEASONS)
-        .insert({
-          farm_id: farmId,
-          start_date: startDate,
-          end_date: null,
-          season_name: seasonName ?? null,
-          crop_type_snapshot: cropTypeSnapshot ?? null,
-          template_key: templateKey ?? null,
-          template_version: templateVersion ?? null,
-          config_json: configJson ?? null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return { ...season, recomputeFailed };
     },
     onSuccess: (newSeason) => {
-      invalidateSeasonIdCache(newSeason.farm_id);
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.farmSeasons.listByFarm(newSeason.farm_id),
-      });
+      invalidateSeasonScopedQueries(queryClient, newSeason.farm_id);
+      if (newSeason.recomputeFailed) {
+        setRecomputeRetryFlag(queryClient, newSeason.farm_id, true);
+      }
     },
   });
 }
@@ -268,10 +381,7 @@ export function useEndFarmSeason() {
       return data;
     },
     onSuccess: (endedSeason) => {
-      invalidateSeasonIdCache(endedSeason.farm_id);
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.farmSeasons.listByFarm(endedSeason.farm_id),
-      });
+      invalidateSeasonScopedQueries(queryClient, endedSeason.farm_id);
     },
   });
 }
@@ -281,31 +391,11 @@ export function useRecomputeFarmSeasonAssignments() {
 
   return useMutation({
     mutationFn: async ({ farmId }: { farmId: number }): Promise<void> => {
-      const { error } = await supabase.rpc('recompute_farm_season_assignments', {
-        p_farm_id: farmId,
-      });
-      if (error) {
-        if (error.code === '42883') {
-          await recomputeSeasonAssignmentsClient(farmId);
-          return;
-        }
-        throw error;
-      }
+      await recomputeSeasonAssignments(farmId);
     },
     onSuccess: (_, { farmId }) => {
-      invalidateSeasonIdCache(farmId);
-      queryClient.invalidateQueries({ queryKey: queryKeys.farmSeasons.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.irrigationRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sprayRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.fertigationRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.harvestRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.expenseRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.soilTestRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.petioleTestRecords.listByFarm(farmId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.soilProfiles.listByFarm(farmId) });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.temporaryWorkerEntries.listByFarm(farmId),
-      });
+      invalidateSeasonScopedQueries(queryClient, farmId);
+      setRecomputeRetryFlag(queryClient, farmId, false);
     },
   });
 }
@@ -329,6 +419,20 @@ export function useFarmSeasonStatus(farmId: number | undefined) {
     },
     enabled: !!farmId && !Number.isNaN(farmId),
   });
+  // Client-only fallback for a recompute that failed outright (network/RPC
+  // error) rather than completing and flagging ambiguity server-side — see
+  // recomputeRetryQueryKey. The queryFn reads the durable AsyncStorage copy,
+  // so the flag survives query-cache eviction (24h maxAge) and doesn't depend
+  // on cache rehydration timing at cold start. staleTime: 0 so every mount
+  // re-reads storage (a cheap local read) — a rehydrated cache entry from a
+  // previous session must not mask a storage write the persister's throttle
+  // window dropped.
+  const recomputeRetryQuery = useQuery({
+    queryKey: recomputeRetryQueryKey(farmId ?? -1),
+    queryFn: () => readRecomputeRetryFlag(farmId ?? -1),
+    enabled: !!farmId && !Number.isNaN(farmId),
+    staleTime: 0,
+  });
 
   const seasons = seasonsQuery.data ?? [];
   const activeSeason = seasons.find((season) => season.end_date === null) ?? null;
@@ -339,10 +443,14 @@ export function useFarmSeasonStatus(farmId: number | undefined) {
     activeSeason,
     hasActiveSeason: activeSeason !== null,
     lastEndedSeason,
-    needsReview: reviewQuery.data ?? false,
+    needsReview: (reviewQuery.data ?? false) || (recomputeRetryQuery.data ?? false),
     isLoading: seasonsQuery.isLoading || reviewQuery.isLoading,
     refetch: async () => {
-      await Promise.all([seasonsQuery.refetch(), reviewQuery.refetch()]);
+      await Promise.all([
+        seasonsQuery.refetch(),
+        reviewQuery.refetch(),
+        recomputeRetryQuery.refetch(),
+      ]);
     },
   };
 }

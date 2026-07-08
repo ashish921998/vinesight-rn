@@ -4,8 +4,12 @@
  */
 
 import { useMemo, useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useFarms } from './use-farms';
 import { useFarmSeasons } from './use-farm-seasons';
+import { queryKeys } from './query-keys';
+import { supabase } from '../lib/supabase';
+import { TABLES } from '../types';
 import {
   useIrrigationRecords,
   useSprayRecords,
@@ -27,7 +31,7 @@ import {
   ReportSeasonContext,
   ReportComparison,
 } from '../types/report';
-import { resolveBaselineFilters, computeReportDeltas } from '../services/report-comparison';
+import { resolveBaseline, computeReportDeltas } from '../services/report-comparison';
 import { useCurrency } from './use-currency';
 import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
 import { formatLocalDate } from '@/utils/date';
@@ -335,21 +339,103 @@ export function useReportComparison(filters: ReportFilters) {
   const current = useReportData(filters);
   const todayIso = useMemo(() => formatLocalDate(new Date()), []);
 
-  const baselineFilters = useMemo(
-    () => resolveBaselineFilters(filters, current.seasons, current.selectedSeason, todayIso),
+  const baselineResolution = useMemo(
+    () => resolveBaseline(filters, current.seasons, current.selectedSeason, todayIso),
     [filters, current.seasons, current.selectedSeason, todayIso],
   );
 
+  const baselineFilters = baselineResolution?.filters ?? null;
   const baseline = useReportData(baselineFilters ?? filters, { enabled: baselineFilters != null });
 
+  // Only set when the baseline had to be clamped to a shorter prior season —
+  // refetches the current side over that same narrower window so the delta
+  // compares like-for-like instead of a full season against a truncated one.
+  const currentComparisonFilters = baselineResolution?.currentFilters ?? null;
+  const currentComparison = useReportData(currentComparisonFilters ?? filters, {
+    enabled: currentComparisonFilters != null,
+  });
+
   const comparison = useMemo<ReportComparison | null>(() => {
-    if (!baselineFilters || !current.preview || !baseline.preview) return null;
+    if (!baselineResolution || !current.preview || !baseline.preview) return null;
     // Must-have-records: an empty prior window is not an honest baseline.
     if (baseline.preview.summary.totalRecords === 0) return null;
-    return { deltas: computeReportDeltas(current.preview.summary, baseline.preview.summary) };
-  }, [baselineFilters, current.preview, baseline.preview]);
+
+    const currentSummary = currentComparisonFilters
+      ? currentComparison.preview?.summary
+      : current.preview.summary;
+    if (!currentSummary) return null;
+
+    const currentLabel = current.selectedSeason
+      ? formatReportSeasonLabel(current.selectedSeason)
+      : `${filters.dateRange.from} – ${filters.dateRange.to}`;
+    const baselineLabel = baselineResolution.baselineSeason
+      ? formatReportSeasonLabel(baselineResolution.baselineSeason)
+      : `${baselineResolution.filters.dateRange.from} – ${baselineResolution.filters.dateRange.to}`;
+
+    return {
+      deltas: computeReportDeltas(currentSummary, baseline.preview.summary),
+      baselineSummary: baseline.preview.summary,
+      baselineLabel,
+      currentLabel,
+      elapsedDays: baselineResolution.elapsedDays,
+    };
+  }, [
+    baselineResolution,
+    current.preview,
+    current.selectedSeason,
+    baseline.preview,
+    currentComparisonFilters,
+    currentComparison.preview,
+    filters.dateRange.from,
+    filters.dateRange.to,
+  ]);
 
   return { ...current, comparison };
+}
+
+/** The record tables that feed report totals and carry a season_id. */
+const UNASSIGNED_COUNT_TABLES = [
+  TABLES.IRRIGATION_RECORDS,
+  TABLES.SPRAY_RECORDS,
+  TABLES.FERTIGATION_RECORDS,
+  TABLES.HARVEST_RECORDS,
+  TABLES.EXPENSE_RECORDS,
+] as const;
+
+/**
+ * Count of a farm's records that belong to no season (season_id null), summed
+ * across the record tables that feed report totals. When a specific season is
+ * selected, the record queries filter eq('season_id', …) so these rows vanish
+ * from the totals with no trace — the reports screen uses this count to say
+ * so. Pass null to disable (no farm, or no season filter active).
+ */
+export function useUnassignedRecordCount(farmId: number | null) {
+  return useQuery({
+    queryKey: queryKeys.reports.unassignedRecordCount(farmId ?? -1),
+    queryFn: async (): Promise<number> => {
+      if (farmId == null) return 0;
+      const counts = await Promise.all(
+        UNASSIGNED_COUNT_TABLES.map(async (table) => {
+          const { count, error } = await supabase
+            .from(table)
+            .select('id', { count: 'exact', head: true })
+            .eq('farm_id', farmId)
+            .is('season_id', null);
+          if (error) {
+            // Missing table on older schemas — zero, not a broken notice.
+            if (error.code === '42P01') return 0;
+            throw error;
+          }
+          return count ?? 0;
+        }),
+      );
+      return counts.reduce((sum, value) => sum + value, 0);
+    },
+    enabled: farmId != null,
+    // Head-only counts are cheap; stay fresh so the notice tracks recomputes
+    // and newly logged records instead of a 5-minute-stale cache.
+    staleTime: 0,
+  });
 }
 
 /**

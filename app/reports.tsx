@@ -26,6 +26,7 @@ import { useFarms, useProfile } from '@/hooks';
 import {
   useReportComparison,
   useReportExport,
+  useUnassignedRecordCount,
   getDefaultDateRange,
   clampDateRangeToSeasonBounds,
   formatReportSeasonLabel,
@@ -129,6 +130,11 @@ export default function ReportsScreen() {
     comparison,
   } = useReportComparison(reportFilters);
   const { isExporting, exportReport, downloadReport } = useReportExport();
+  // Only counted while a season filter is active — that's the only mode where
+  // unassigned rows silently drop out of the totals (All seasons includes them).
+  const { data: unassignedRecordCount = 0 } = useUnassignedRecordCount(
+    selectedSeasonId != null ? selectedFarmId : null,
+  );
 
   React.useEffect(() => {
     if (farms && farms.length > 0 && selectedFarmId == null) {
@@ -514,6 +520,7 @@ export default function ReportsScreen() {
               seasonPresetOptions={seasonPresetOptions}
               onApplySeasonPreset={handleApplyPreset}
               showNoActiveSeasonInfo={sortedSeasons.length > 0 && activeSeason == null}
+              unassignedRecordCount={unassignedRecordCount}
               dateFrom={dateRange.from}
               dateTo={dateRange.to}
               onOpenFromDate={() => {

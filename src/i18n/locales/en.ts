@@ -352,6 +352,10 @@ export const en = {
         endSuccess: 'Season ended successfully.',
         reviewQueuedSuccess: 'Season assignment review triggered successfully.',
       },
+      warnings: {
+        recomputePartial:
+          'Season started, but some older records could not be moved into it automatically. Use "Review season history" to fix this.',
+      },
       errors: {
         invalidRange: 'Season end date must be after the start date.',
         startBeforeAllowed: 'Season start date must be after the previous season end date.',
@@ -363,6 +367,10 @@ export const en = {
         activeSeasonExists:
           'An active season exists. Please end the current season before creating a new one.',
       },
+    },
+    seasonTotals: {
+      excludedAfterEnd_one: '+{{count}} entry logged after season end — not counted',
+      excludedAfterEnd_other: '+{{count}} entries logged after season end — not counted',
     },
     workboard: {
       title: 'WORKBOARD',
@@ -3183,6 +3191,10 @@ export const en = {
       active: 'Active',
       window: 'Season window: {{from}} to {{to}}',
       noActiveInfo: 'No active season. Use all seasons or select a historical season.',
+      unassignedNotice_one:
+        "{{count}} record isn't in any season — tap to view it under All seasons.",
+      unassignedNotice_other:
+        "{{count}} records aren't in any season — tap to view them under All seasons.",
       presets: {
         active: 'Active season',
         mostRecent: 'Most recent season',

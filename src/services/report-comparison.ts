@@ -75,8 +75,28 @@ export function computeReportDeltas(
   return deltas;
 }
 
+export interface BaselineResolution {
+  /** Filters that fetch the baseline period's records. */
+  filters: ReportFilters;
+  /** The prior season used as the baseline, when comparing season-to-season. */
+  baselineSeason: FarmSeason | null;
+  /**
+   * Days measured from each season's start (elapsed-window alignment). Null
+   * for plain date-window baselines.
+   */
+  elapsedDays: number | null;
+  /**
+   * Set only when the baseline window had to be clamped to a shorter prior
+   * season. Refetching the *current* side with this narrower range keeps the
+   * comparison apples-to-apples — both sides cover the same `elapsedDays`
+   * window instead of comparing a full current season against a truncated
+   * baseline. Null when the current side's own filters already match.
+   */
+  currentFilters: ReportFilters | null;
+}
+
 /**
- * Resolve the baseline filters for a comparison, or null when no honest
+ * Resolve the baseline period for a comparison, or null when no honest
  * baseline exists (no farm, first season, or a date-window with nothing before
  * it that we can align to).
  *
@@ -84,12 +104,12 @@ export function computeReportDeltas(
  * the selected one (relative to the selection, not the active season).
  * No season  → the immediately preceding equal-length date window.
  */
-export function resolveBaselineFilters(
+export function resolveBaseline(
   filters: ReportFilters,
   seasons: FarmSeason[],
   selectedSeason: FarmSeason | null,
   todayIso: string,
-): ReportFilters | null {
+): BaselineResolution | null {
   const farmId = filters.farmId;
   if (farmId == null) return null;
 
@@ -110,11 +130,36 @@ export function resolveBaselineFilters(
     if (prior.end_date && baselineTo > prior.end_date) {
       baselineTo = prior.end_date;
     }
+    // elapsedDays must reflect the window actually being compared, not the
+    // current season's elapsed time — when the prior season is shorter and
+    // baselineTo gets clamped above, reporting the unclamped `elapsed` would
+    // overstate how far the baseline period runs (a UI footnote reading "both
+    // seasons measured over their first 30 days" when the baseline only has 14).
+    const clampedElapsedDays = daysBetween(prior.start_date, baselineTo);
+    // The clamp above narrows the *baseline* window. If we compare that against
+    // the current season's full (unclamped) elapsed window, the delta is
+    // apples-to-oranges — e.g. current's first 30 days vs baseline's first 14.
+    // Surface a matching current-side window so the caller refetches both
+    // sides over the same `clampedElapsedDays`.
+    const currentFilters: ReportFilters | null =
+      clampedElapsedDays < elapsed
+        ? {
+            farmId,
+            seasonId: filters.seasonId,
+            dateRange: { from: currentFrom, to: addDaysIso(currentFrom, clampedElapsedDays) },
+            includeUnassigned: false,
+          }
+        : null;
     return {
-      farmId,
-      seasonId: prior.id,
-      dateRange: { from: prior.start_date, to: baselineTo },
-      includeUnassigned: false,
+      filters: {
+        farmId,
+        seasonId: prior.id,
+        dateRange: { from: prior.start_date, to: baselineTo },
+        includeUnassigned: false,
+      },
+      baselineSeason: prior,
+      elapsedDays: clampedElapsedDays,
+      currentFilters,
     };
   }
 
@@ -123,8 +168,13 @@ export function resolveBaselineFilters(
   const baselineTo = addDaysIso(filters.dateRange.from, -1);
   const baselineFrom = addDaysIso(baselineTo, -length);
   return {
-    farmId,
-    dateRange: { from: baselineFrom, to: baselineTo },
-    includeUnassigned: filters.includeUnassigned ?? true,
+    filters: {
+      farmId,
+      dateRange: { from: baselineFrom, to: baselineTo },
+      includeUnassigned: filters.includeUnassigned ?? true,
+    },
+    baselineSeason: null,
+    elapsedDays: null,
+    currentFilters: null,
   };
 }

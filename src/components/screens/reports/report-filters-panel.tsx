@@ -58,6 +58,7 @@ interface ReportFiltersPanelProps {
   seasonPresetOptions: ReportSeasonPresetOption[];
   onApplySeasonPreset: (preset: ReportSeasonPresetKey) => void;
   showNoActiveSeasonInfo: boolean;
+  unassignedRecordCount: number;
   dateFrom: string;
   dateTo: string;
   onOpenFromDate: () => void;
@@ -247,6 +248,7 @@ export function ReportFiltersPanel({
   seasonPresetOptions,
   onApplySeasonPreset,
   showNoActiveSeasonInfo,
+  unassignedRecordCount,
   dateFrom,
   dateTo,
   onOpenFromDate,
@@ -567,6 +569,41 @@ export function ReportFiltersPanel({
                     {t('reports.season.noActiveInfo')}
                   </Text>
                 </View>
+              ) : null}
+
+              {/* Season-filtered queries drop season_id-null rows with no trace;
+                  when any exist, say so — notice only, never merged into a
+                  specific season's totals. Tap switches to All seasons. */}
+              {selectedSeasonId != null && unassignedRecordCount > 0 ? (
+                <Pressable
+                  onPress={() => onSelectSeason(null)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('reports.season.unassignedNotice', {
+                    count: unassignedRecordCount,
+                  })}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing[1],
+                    // Match the preset chips' touch target — this row is the
+                    // only path to the hidden unassigned records.
+                    minHeight: 34,
+                    paddingVertical: spacing[1],
+                  }}
+                >
+                  <Icon name="info.circle" size={12} color={m3.colorScheme.primary} />
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: m3.colorScheme.primary,
+                      fontWeight: fontWeight.medium,
+                      flex: 1,
+                    }}
+                  >
+                    {t('reports.season.unassignedNotice', { count: unassignedRecordCount })}
+                  </Text>
+                </Pressable>
               ) : null}
             </View>
 

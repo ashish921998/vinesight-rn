@@ -356,6 +356,18 @@ export interface MetricDelta {
 /** Per-tile deltas for the executive-summary grid, keyed by tile key. */
 export interface ReportComparison {
   deltas: Record<string, MetricDelta>;
+  /** The baseline summary the deltas were computed against. */
+  baselineSummary: ReportSummary;
+  /** Label of the baseline period (season name, or date window). */
+  baselineLabel: string;
+  /** Label of the current period (season name, or date window). */
+  currentLabel: string;
+  /**
+   * When both periods are seasons, the number of days measured from each
+   * season's start (elapsed-window alignment — "day N vs day N"). Null for
+   * plain date-window baselines.
+   */
+  elapsedDays: number | null;
 }
 
 export interface ReportPreview {

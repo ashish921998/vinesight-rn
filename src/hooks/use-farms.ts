@@ -84,11 +84,15 @@ export async function ensureInitialFarmSeason(
 ): Promise<void> {
   if (typeof farm.id !== 'number') return;
 
+  // Only bootstrap a season for farms with no season history at all. A farm
+  // that is *between* seasons (only ended seasons) must not get a new season
+  // auto-started here: the start date below would come from the previous
+  // cycle's pruning date and overlap the ended seasons, silently re-capturing
+  // historical records. Between-seasons records stay unassigned instead.
   const { data: existingSeason, error: existingSeasonError } = await supabase
     .from(TABLES.FARM_SEASONS)
     .select('id')
     .eq('farm_id', farm.id)
-    .is('end_date', null)
     .limit(1)
     .maybeSingle();
 
