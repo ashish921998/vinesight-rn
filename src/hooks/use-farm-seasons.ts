@@ -446,7 +446,11 @@ export function useFarmSeasonStatus(farmId: number | undefined) {
     needsReview: (reviewQuery.data ?? false) || (recomputeRetryQuery.data ?? false),
     isLoading: seasonsQuery.isLoading || reviewQuery.isLoading,
     refetch: async () => {
-      await Promise.all([seasonsQuery.refetch(), reviewQuery.refetch()]);
+      await Promise.all([
+        seasonsQuery.refetch(),
+        reviewQuery.refetch(),
+        recomputeRetryQuery.refetch(),
+      ]);
     },
   };
 }
