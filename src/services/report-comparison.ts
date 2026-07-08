@@ -75,8 +75,20 @@ export function computeReportDeltas(
   return deltas;
 }
 
+export interface BaselineResolution {
+  /** Filters that fetch the baseline period's records. */
+  filters: ReportFilters;
+  /** The prior season used as the baseline, when comparing season-to-season. */
+  baselineSeason: FarmSeason | null;
+  /**
+   * Days measured from each season's start (elapsed-window alignment). Null
+   * for plain date-window baselines.
+   */
+  elapsedDays: number | null;
+}
+
 /**
- * Resolve the baseline filters for a comparison, or null when no honest
+ * Resolve the baseline period for a comparison, or null when no honest
  * baseline exists (no farm, first season, or a date-window with nothing before
  * it that we can align to).
  *
@@ -84,12 +96,12 @@ export function computeReportDeltas(
  * the selected one (relative to the selection, not the active season).
  * No season  → the immediately preceding equal-length date window.
  */
-export function resolveBaselineFilters(
+export function resolveBaseline(
   filters: ReportFilters,
   seasons: FarmSeason[],
   selectedSeason: FarmSeason | null,
   todayIso: string,
-): ReportFilters | null {
+): BaselineResolution | null {
   const farmId = filters.farmId;
   if (farmId == null) return null;
 
@@ -111,10 +123,14 @@ export function resolveBaselineFilters(
       baselineTo = prior.end_date;
     }
     return {
-      farmId,
-      seasonId: prior.id,
-      dateRange: { from: prior.start_date, to: baselineTo },
-      includeUnassigned: false,
+      filters: {
+        farmId,
+        seasonId: prior.id,
+        dateRange: { from: prior.start_date, to: baselineTo },
+        includeUnassigned: false,
+      },
+      baselineSeason: prior,
+      elapsedDays: elapsed,
     };
   }
 
@@ -123,8 +139,12 @@ export function resolveBaselineFilters(
   const baselineTo = addDaysIso(filters.dateRange.from, -1);
   const baselineFrom = addDaysIso(baselineTo, -length);
   return {
-    farmId,
-    dateRange: { from: baselineFrom, to: baselineTo },
-    includeUnassigned: filters.includeUnassigned ?? true,
+    filters: {
+      farmId,
+      dateRange: { from: baselineFrom, to: baselineTo },
+      includeUnassigned: filters.includeUnassigned ?? true,
+    },
+    baselineSeason: null,
+    elapsedDays: null,
   };
 }

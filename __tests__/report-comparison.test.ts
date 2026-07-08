@@ -1,4 +1,4 @@
-import { computeReportDeltas, resolveBaselineFilters } from '@/services/report-comparison';
+import { computeReportDeltas, resolveBaseline } from '@/services/report-comparison';
 import type { FarmSeason } from '@/types/database';
 import type { ReportFilters, ReportSummary } from '@/types/report';
 
@@ -33,31 +33,30 @@ const baseFilters = (over: Partial<ReportFilters>): ReportFilters => ({
   ...over,
 });
 
-describe('resolveBaselineFilters', () => {
+describe('resolveBaseline', () => {
   it('returns null when there is no farm', () => {
-    expect(resolveBaselineFilters(baseFilters({ farmId: null }), [], null, TODAY)).toBeNull();
+    expect(resolveBaseline(baseFilters({ farmId: null }), [], null, TODAY)).toBeNull();
   });
 
   it('returns null on a farm’s first season (no prior season)', () => {
     const s2026 = season(10, '2026-04-01', null);
     const filters = baseFilters({ seasonId: 10 });
-    expect(resolveBaselineFilters(filters, [s2026], s2026, TODAY)).toBeNull();
+    expect(resolveBaseline(filters, [s2026], s2026, TODAY)).toBeNull();
   });
 
   it('aligns the prior season to the SAME elapsed window (partial active season)', () => {
     const prior = season(9, '2025-04-01', '2025-09-01');
     const current = season(10, '2026-04-01', null); // active, 30 days elapsed by TODAY
-    const result = resolveBaselineFilters(
-      baseFilters({ seasonId: 10 }),
-      [current, prior],
-      current,
-      TODAY,
-    );
+    const result = resolveBaseline(baseFilters({ seasonId: 10 }), [current, prior], current, TODAY);
     expect(result).toEqual({
-      farmId: 1,
-      seasonId: 9,
-      dateRange: { from: '2025-04-01', to: '2025-05-01' }, // +30 days, honest comparison
-      includeUnassigned: false,
+      filters: {
+        farmId: 1,
+        seasonId: 9,
+        dateRange: { from: '2025-04-01', to: '2025-05-01' }, // +30 days, honest comparison
+        includeUnassigned: false,
+      },
+      baselineSeason: prior,
+      elapsedDays: 30,
     });
   });
 
@@ -66,35 +65,35 @@ describe('resolveBaselineFilters', () => {
     const s2025 = season(9, '2025-04-01', '2025-09-01');
     const s2026 = season(10, '2026-04-01', null);
     // Select the middle season → baseline must be 2024, not 2026.
-    const result = resolveBaselineFilters(
+    const result = resolveBaseline(
       baseFilters({ seasonId: 9 }),
       [s2026, s2025, s2024],
       s2025,
       TODAY,
     );
-    expect(result?.seasonId).toBe(8);
-    expect(result?.dateRange.from).toBe('2024-04-01');
+    expect(result?.filters.seasonId).toBe(8);
+    expect(result?.filters.dateRange.from).toBe('2024-04-01');
+    expect(result?.baselineSeason).toEqual(s2024);
   });
 
   it('clamps the baseline window to the prior season’s end', () => {
     const prior = season(9, '2025-04-01', '2025-04-15'); // ends before 30 elapsed days
     const current = season(10, '2026-04-01', null);
-    const result = resolveBaselineFilters(
-      baseFilters({ seasonId: 10 }),
-      [current, prior],
-      current,
-      TODAY,
-    );
-    expect(result?.dateRange.to).toBe('2025-04-15');
+    const result = resolveBaseline(baseFilters({ seasonId: 10 }), [current, prior], current, TODAY);
+    expect(result?.filters.dateRange.to).toBe('2025-04-15');
   });
 
   it('falls back to the preceding equal-length window with no season selected', () => {
     const filters = baseFilters({ dateRange: { from: '2026-01-01', to: '2026-01-31' } });
-    const result = resolveBaselineFilters(filters, [], null, TODAY);
+    const result = resolveBaseline(filters, [], null, TODAY);
     expect(result).toEqual({
-      farmId: 1,
-      dateRange: { from: '2025-12-01', to: '2025-12-31' },
-      includeUnassigned: true,
+      filters: {
+        farmId: 1,
+        dateRange: { from: '2025-12-01', to: '2025-12-31' },
+        includeUnassigned: true,
+      },
+      baselineSeason: null,
+      elapsedDays: null,
     });
   });
 });

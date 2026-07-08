@@ -27,7 +27,7 @@ import {
   ReportSeasonContext,
   ReportComparison,
 } from '../types/report';
-import { resolveBaselineFilters, computeReportDeltas } from '../services/report-comparison';
+import { resolveBaseline, computeReportDeltas } from '../services/report-comparison';
 import { useCurrency } from './use-currency';
 import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
 import { formatLocalDate } from '@/utils/date';
@@ -335,19 +335,41 @@ export function useReportComparison(filters: ReportFilters) {
   const current = useReportData(filters);
   const todayIso = useMemo(() => formatLocalDate(new Date()), []);
 
-  const baselineFilters = useMemo(
-    () => resolveBaselineFilters(filters, current.seasons, current.selectedSeason, todayIso),
+  const baselineResolution = useMemo(
+    () => resolveBaseline(filters, current.seasons, current.selectedSeason, todayIso),
     [filters, current.seasons, current.selectedSeason, todayIso],
   );
 
+  const baselineFilters = baselineResolution?.filters ?? null;
   const baseline = useReportData(baselineFilters ?? filters, { enabled: baselineFilters != null });
 
   const comparison = useMemo<ReportComparison | null>(() => {
-    if (!baselineFilters || !current.preview || !baseline.preview) return null;
+    if (!baselineResolution || !current.preview || !baseline.preview) return null;
     // Must-have-records: an empty prior window is not an honest baseline.
     if (baseline.preview.summary.totalRecords === 0) return null;
-    return { deltas: computeReportDeltas(current.preview.summary, baseline.preview.summary) };
-  }, [baselineFilters, current.preview, baseline.preview]);
+
+    const currentLabel = current.selectedSeason
+      ? formatReportSeasonLabel(current.selectedSeason)
+      : `${filters.dateRange.from} – ${filters.dateRange.to}`;
+    const baselineLabel = baselineResolution.baselineSeason
+      ? formatReportSeasonLabel(baselineResolution.baselineSeason)
+      : `${baselineResolution.filters.dateRange.from} – ${baselineResolution.filters.dateRange.to}`;
+
+    return {
+      deltas: computeReportDeltas(current.preview.summary, baseline.preview.summary),
+      baselineSummary: baseline.preview.summary,
+      baselineLabel,
+      currentLabel,
+      elapsedDays: baselineResolution.elapsedDays,
+    };
+  }, [
+    baselineResolution,
+    current.preview,
+    current.selectedSeason,
+    baseline.preview,
+    filters.dateRange.from,
+    filters.dateRange.to,
+  ]);
 
   return { ...current, comparison };
 }
