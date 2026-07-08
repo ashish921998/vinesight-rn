@@ -95,6 +95,9 @@ export function useCreateIrrigationRecord() {
         queryKey: queryKeys.irrigationRecords.listByFarm(newRecord.farm_id),
       });
       queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(newRecord.farm_id),
+      });
+      queryClient.invalidateQueries({
         queryKey: queryKeys.irrigationRecords.lists(),
       });
     },
@@ -126,6 +129,9 @@ export function useUpdateIrrigationRecord() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.irrigationRecords.listByFarm(updatedRecord.farm_id),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(updatedRecord.farm_id),
+      });
     },
   });
 }
@@ -142,6 +148,9 @@ export function useDeleteIrrigationRecord() {
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.irrigationRecords.listByFarm(farmId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(farmId),
       });
     },
   });
@@ -216,6 +225,9 @@ export function useCreateSprayRecord() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.sprayRecords.listByFarm(newRecord.farm_id),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(newRecord.farm_id),
+      });
     },
   });
 }
@@ -245,6 +257,9 @@ export function useUpdateSprayRecord() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.sprayRecords.listByFarm(updatedRecord.farm_id),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(updatedRecord.farm_id),
+      });
     },
   });
 }
@@ -261,6 +276,9 @@ export function useDeleteSprayRecord() {
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.sprayRecords.listByFarm(farmId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(farmId),
       });
     },
   });
@@ -335,6 +353,9 @@ export function useCreateFertigationRecord() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.fertigationRecords.listByFarm(newRecord.farm_id),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(newRecord.farm_id),
+      });
     },
   });
 }
@@ -364,6 +385,9 @@ export function useUpdateFertigationRecord() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.fertigationRecords.listByFarm(updatedRecord.farm_id),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(updatedRecord.farm_id),
+      });
     },
   });
 }
@@ -380,6 +404,9 @@ export function useDeleteFertigationRecord() {
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.fertigationRecords.listByFarm(farmId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(farmId),
       });
     },
   });
@@ -454,6 +481,9 @@ export function useCreateHarvestRecord() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.harvestRecords.listByFarm(newRecord.farm_id),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(newRecord.farm_id),
+      });
     },
   });
 }
@@ -483,6 +513,9 @@ export function useUpdateHarvestRecord() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.harvestRecords.listByFarm(updatedRecord.farm_id),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(updatedRecord.farm_id),
+      });
     },
   });
 }
@@ -499,6 +532,9 @@ export function useDeleteHarvestRecord() {
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.harvestRecords.listByFarm(farmId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(farmId),
       });
     },
   });
@@ -573,6 +609,9 @@ export function useCreateExpenseRecord() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.expenseRecords.listByFarm(newRecord.farm_id),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(newRecord.farm_id),
+      });
     },
   });
 }
@@ -602,6 +641,9 @@ export function useUpdateExpenseRecord() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.expenseRecords.listByFarm(updatedRecord.farm_id),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(updatedRecord.farm_id),
+      });
     },
   });
 }
@@ -618,6 +660,9 @@ export function useDeleteExpenseRecord() {
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.expenseRecords.listByFarm(farmId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reports.unassignedRecordCount(farmId),
       });
     },
   });
