@@ -47,6 +47,8 @@ import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector
 import { RepeatLastLog } from '@/components/screens/entry-form/RepeatLastLog';
 import { WeekStrip } from '@/components/ui/week-strip';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { createStartSeasonHref } from '@/utils/add-log-navigation';
+import { useRouter } from 'expo-router';
 import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
 import {
   irrigationRecordToFormData,
@@ -885,13 +887,24 @@ export function EntryForm({
   const handleActiveFertigationChange =
     selectedLogType === 'irrigation' ? setIrrigationFertigationData : setFertigationData;
 
+  const router = useRouter();
   const hasFarmForCurrentLog = Boolean(
     activeFarm || (isAllFarmsSelected && selectedLogType === 'expense'),
   );
   const hasFarmForPendingSession = Boolean(activeFarm || isAllFarmsSelected);
-  const canSubmitLog = Boolean(isLogFormValid && hasFarmForCurrentLog);
+  // Farmer paths require an active season before any log is saved. Blocks a
+  // single resolved farm with no active season; the All-farms expense case is
+  // exempt (spans farms, no single season to check). DB stays permissive — this
+  // is a UX gate, not a data constraint.
+  const isBlockedByNoSeason = logFarmId != null && !isAllFarmsSelected && !activeSeason;
+  const goStartSeason = useCallback(() => {
+    if (logFarmId == null) return;
+    onClose();
+    router.push(createStartSeasonHref(logFarmId));
+  }, [logFarmId, onClose, router]);
+  const canSubmitLog = Boolean(isLogFormValid && hasFarmForCurrentLog && !isBlockedByNoSeason);
   const canSaveLogs = Boolean(
-    pendingLogs.length > 0 && !isSubmittingLogs && hasFarmForPendingSession,
+    pendingLogs.length > 0 && !isSubmittingLogs && hasFarmForPendingSession && !isBlockedByNoSeason,
   );
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
@@ -2180,11 +2193,11 @@ export function EntryForm({
 
   const renderLogContent = () => (
     <>
-      {/* Non-blocking nudge: records still save with a null season_id (the DB
-          trigger is permissive), this just tells the user they'll stay
-          unassigned. Only when a single farm is resolved and has no active
-          season — never for the All-farms expense case. */}
-      {logFarmId != null && !isAllFarmsSelected && !activeSeason ? <NoActiveSeasonBanner /> : null}
+      {/* Season gate: farmer paths must have an active season to save. Banner
+          carries the Start-season CTA; Save stays disabled while blocked (see
+          isBlockedByNoSeason / canSubmitLog). Single resolved farm only —
+          never the All-farms expense case. */}
+      {isBlockedByNoSeason ? <NoActiveSeasonBanner onStartSeason={goStartSeason} /> : null}
       {!hasCallerProvidedFarm && !lockFarmSelection && !isSingleFarmAccount && (
         <View
           style={{

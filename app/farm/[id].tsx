@@ -92,7 +92,10 @@ export default function FarmDetailScreen() {
   const isFocused = useIsFocused();
   const { setEditActivity } = useModalStore();
   const detailedMode = useAppModeStore((state) => state.detailedMode);
-  const { id } = useLocalSearchParams<{ id?: string | string[] }>();
+  const { id, startSeason: startSeasonParam } = useLocalSearchParams<{
+    id?: string | string[];
+    startSeason?: string;
+  }>();
   const insets = useSafeAreaInsets();
 
   // Expo Router route params can be `string[]` in some cases; normalize to one value.
@@ -953,6 +956,25 @@ export default function FarmDetailScreen() {
     showSeasonForm,
     isSeasonsLoading,
   ]);
+
+  // Deep-link from a logging form's "Start season" CTA: ?startSeason=1 auto-
+  // opens the season-start form once the farm is confirmed between seasons.
+  // Guarded by a ref so it fires once per navigation, not on every re-render.
+  const startSeasonParamHandledRef = React.useRef(false);
+  useEffect(() => {
+    if (startSeasonParam !== '1') {
+      startSeasonParamHandledRef.current = false;
+      return;
+    }
+    if (isSeasonsLoading || farmSeasons === undefined) return;
+    if (startSeasonParamHandledRef.current) return;
+    startSeasonParamHandledRef.current = true;
+    if (!activeSeasonRecord && !showSeasonForm) {
+      openStartSeasonForm();
+    }
+    // openStartSeasonForm intentionally omitted — latest impl only needed when this fires.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startSeasonParam, activeSeasonRecord, farmSeasons, isSeasonsLoading, showSeasonForm]);
 
   const confirmDeleteFarmFromSheet = () => {
     setShowFarmActionsSheet(false);

@@ -168,9 +168,11 @@ describe('EntryForm UI integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseFarms.mockReturnValue({ data: [] });
+    // Default to an active season so save-flow assertions aren't blocked by the
+    // no-season gate; tests that exercise the gate override this explicitly.
     mockUseFarmSeasonStatus.mockReturnValue({
-      activeSeason: null,
-      hasActiveSeason: false,
+      activeSeason: { id: 1, start_date: '2026-01-01', end_date: null, target_harvest_date: null },
+      hasActiveSeason: true,
       lastEndedSeason: null,
       needsReview: false,
       isLoading: false,
@@ -194,6 +196,44 @@ describe('EntryForm UI integration', () => {
     mockUpdateWaterLevelMutate.mockResolvedValue({});
     mockTaskCreateMutate.mockResolvedValue({ id: 201 });
     mockTaskUpdateMutate.mockResolvedValue({ id: 202 });
+  });
+
+  it('gates saving on a single farm with no active season and offers Start season', async () => {
+    mockUseFarmSeasonStatus.mockReturnValue({
+      activeSeason: null,
+      hasActiveSeason: false,
+      lastEndedSeason: null,
+      needsReview: false,
+      isLoading: false,
+      refetch: jest.fn(),
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm farm={mockFarm} onClose={jest.fn()} tabs={['log']} presentation="screen" />
+      </QueryClientProvider>,
+    );
+
+    // Start-season CTA is shown instead of letting the log be saved.
+    await waitFor(() => {
+      expect(screen.getByText('farmDetails.seasons.banner.startSeason')).toBeTruthy();
+    });
+
+    // Building an expense draft is gated — no Save button appears and nothing
+    // is persisted.
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    expect(screen.queryByText('entryForm.saveLogs')).toBeNull();
+    expect(mockCreateExpenseMutate).not.toHaveBeenCalled();
   });
 
   it('submits expense log from UI with normalized backend expense type', async () => {

@@ -26,6 +26,8 @@ import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
+import { createStartSeasonHref } from '@/utils/add-log-navigation';
+import { useRouter } from 'expo-router';
 import { SoilSectionData } from '../../types/database';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
@@ -51,6 +53,12 @@ export default function SoilProfileForm({
   const m3 = useM3();
   const createProfile = useCreateSoilProfile();
   const { activeSeason } = useFarmSeasonStatus(farmId);
+  const isBlockedByNoSeason = !activeSeason;
+  const router = useRouter();
+  const goStartSeason = () => {
+    onClose();
+    router.push(createStartSeasonHref(farmId));
+  };
 
   const [sections, setSections] = useState<Record<string, string>>({
     top: '',
@@ -81,6 +89,8 @@ export default function SoilProfileForm({
   };
 
   const handleSubmit = async () => {
+    // Season gate — save disabled in UI, but guard here too.
+    if (isBlockedByNoSeason) return;
     // Validate at least one section has moisture value
     const filledSections = Object.entries(sections).filter(([, value]) => value.trim() !== '');
 
@@ -180,14 +190,15 @@ export default function SoilProfileForm({
         >
           {t('soilProfileForm.titleAdd')}
         </Text>
-        <Pressable onPress={handleSubmit} disabled={isLoading}>
+        <Pressable onPress={handleSubmit} disabled={isLoading || isBlockedByNoSeason}>
           <Text
             style={{
               fontSize: fontSize.base,
               fontWeight: fontWeight.semibold,
-              color: isLoading
-                ? colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)
-                : m3.colorScheme.primary,
+              color:
+                isLoading || isBlockedByNoSeason
+                  ? colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)
+                  : m3.colorScheme.primary,
             }}
           >
             {isLoading ? t('common.saving') : t('common.save')}
@@ -208,9 +219,9 @@ export default function SoilProfileForm({
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        {!activeSeason ? (
+        {isBlockedByNoSeason ? (
           <View style={{ marginTop: spacing[4] }}>
-            <NoActiveSeasonBanner />
+            <NoActiveSeasonBanner onStartSeason={goStartSeason} />
           </View>
         ) : null}
         {/* Date Picker */}

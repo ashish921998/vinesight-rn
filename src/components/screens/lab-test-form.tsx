@@ -16,6 +16,8 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { FormModal, SectionHeader, FormInput } from '@/components/ui/form-components';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
+import { createStartSeasonHref } from '@/utils/add-log-navigation';
+import { useRouter } from 'expo-router';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
@@ -52,6 +54,11 @@ export default function LabTestForm({
   const createPetioleTest = useCreatePetioleTest();
   const { data: farm } = useFarm(farmId);
   const { activeSeason } = useFarmSeasonStatus(farmId);
+  const router = useRouter();
+  const goStartSeason = () => {
+    onClose();
+    router.push(createStartSeasonHref(farmId));
+  };
 
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -300,10 +307,10 @@ export default function LabTestForm({
       onSave={handleSubmit}
       saveLabel={t('labTests.form.saveLabel')}
       isLoading={isLoading}
-      isSaveDisabled={!isValid}
+      isSaveDisabled={!isValid || !activeSeason}
       presentation={presentation}
     >
-      {!activeSeason ? <NoActiveSeasonBanner /> : null}
+      {!activeSeason ? <NoActiveSeasonBanner onStartSeason={goStartSeason} /> : null}
       <SectionHeader title={t('labTests.form.uploadSectionTitle')} style={{ marginBottom: 12 }} />
       <Pressable
         onPress={handleUploadFile}

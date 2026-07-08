@@ -6,6 +6,8 @@ import { useCreateTemporaryWorkerEntry, useFarms, useCurrency } from '@/hooks';
 import { FormModal, SectionHeader, FormInput, PreviewCard, Button } from '@/components/ui';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
+import { createStartSeasonHref } from '@/utils/add-log-navigation';
+import { useRouter } from 'expo-router';
 import { FarmSelectModal } from '@/components/modals/farm-select-modal';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -50,6 +52,14 @@ export function TempWorkerForm({
 
   const resolvedFarmId = externalFarmId ?? selectedFarmId;
   const { activeSeason } = useFarmSeasonStatus(resolvedFarmId ?? undefined);
+  // Block save until the resolved farm has an active season.
+  const isBlockedByNoSeason = resolvedFarmId != null && !activeSeason;
+  const router = useRouter();
+  const goStartSeason = () => {
+    if (resolvedFarmId == null) return;
+    onClose();
+    router.push(createStartSeasonHref(resolvedFarmId));
+  };
   const parsedHours = parseFloat(hoursWorked);
   const parsedAmount = parseFloat(amountPaid);
   const isHoursValid =
@@ -116,12 +126,12 @@ export function TempWorkerForm({
       onSave={handleSave}
       saveLabel={t('workers.tempWorkers.form.save')}
       isLoading={isSubmitting}
-      isSaveDisabled={!isValid}
+      isSaveDisabled={!isValid || isBlockedByNoSeason}
       showResetButton
       onReset={handleReset}
       presentation={presentation}
     >
-      {resolvedFarmId != null && !activeSeason ? <NoActiveSeasonBanner /> : null}
+      {isBlockedByNoSeason ? <NoActiveSeasonBanner onStartSeason={goStartSeason} /> : null}
       <SectionHeader
         title={t('workers.tempWorkers.form.sections.workerDetails')}
         style={{ marginBottom: spacing[4] }}
