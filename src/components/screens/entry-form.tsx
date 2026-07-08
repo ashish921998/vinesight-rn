@@ -1064,7 +1064,15 @@ export function EntryForm({
       // PHI fields derive from the spray date — a copy on a new date must not
       // inherit them. Routed through buildSprayPendingData (same path as adding
       // a spray) so the rule lives in one place.
-      push(`spray-${record.id}`, 'spray', buildSprayPendingData(sprayRecordToFormData(record)));
+      const formData = sprayRecordToFormData(record);
+      // spray records only carry catalog_mix_id; resolve the name from the
+      // catalog cache (already loaded above) so the repeat description and the
+      // copied draft show the mix name, not a chemical-count fallback.
+      if (formData.catalogMixId != null && !formData.catalogMixName) {
+        formData.catalogMixName =
+          catalogMixes.find((mix) => mix.id === formData.catalogMixId)?.name ?? null;
+      }
+      push(`spray-${record.id}`, 'spray', buildSprayPendingData(formData));
     });
     (farmHarvestRecords ?? []).filter(matchesDay).forEach((record) => {
       push(`harvest-${record.id}`, 'harvest', harvestRecordToFormData(record));
@@ -1090,6 +1098,7 @@ export function EntryForm({
     farmHarvestRecords,
     farmExpenseRecords,
     farmDailyNotes,
+    catalogMixes,
   ]);
 
   const handleRepeatLastLog = useCallback(() => {
