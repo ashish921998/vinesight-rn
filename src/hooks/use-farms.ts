@@ -77,6 +77,15 @@ async function resolveNextFarmDisplayOrder(userId: string): Promise<{
   return { supportsDisplayOrder, displayOrder };
 }
 
+/**
+ * A newly created farm should only auto-start its first season when the farmer
+ * supplied a pruning date to anchor it to. Without one, the create flow prompts
+ * the farmer to pick a start date instead of silently defaulting to "today".
+ */
+export function shouldAutoStartInitialSeason(farm: Pick<Farm, 'date_of_pruning'>): boolean {
+  return Boolean(farm.date_of_pruning);
+}
+
 export async function ensureInitialFarmSeason(
   farm: Farm,
   userId: string,
@@ -257,7 +266,7 @@ export function useCreateFarm() {
       // leave the farm season-less so the create flow can prompt the farmer to
       // pick a start date (see the startSeason redirect in use-farm-form). The
       // lazy resolver's legacy safety net is intentionally left untouched.
-      if (data.date_of_pruning) {
+      if (shouldAutoStartInitialSeason(data)) {
         const seasonName = t('farms.defaultSeasonName', { year: new Date().getFullYear() });
         try {
           await ensureInitialFarmSeason(data, userId, seasonName);
