@@ -374,6 +374,7 @@ export function useReportComparison(filters: ReportFilters) {
 
     return {
       deltas: computeReportDeltas(currentSummary, baseline.preview.summary),
+      currentSummary,
       baselineSummary: baseline.preview.summary,
       baselineLabel,
       currentLabel,

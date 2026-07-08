@@ -3207,6 +3207,11 @@ export const en = {
         thisYear: 'This year',
       },
     },
+    comparison: {
+      title: 'Season comparison',
+      footnote_one: 'Both seasons measured over their first {{count}} day.',
+      footnote_other: 'Both seasons measured over their first {{count}} days.',
+    },
     selectFromDate: 'Select From Date',
     selectToDate: 'Select To Date',
     reportType: {

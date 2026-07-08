@@ -3220,6 +3220,11 @@ export const mr = {
         thisYear: 'हे वर्ष',
       },
     },
+    comparison: {
+      title: 'हंगाम तुलना',
+      footnote_one: 'दोन्ही हंगाम त्यांच्या पहिल्या {{count}} दिवसावर मोजले आहेत.',
+      footnote_other: 'दोन्ही हंगाम त्यांच्या पहिल्या {{count}} दिवसांवर मोजले आहेत.',
+    },
     selectFromDate: 'पासूनचा दिनांक निवडा',
     selectToDate: 'पर्यंतचा दिनांक निवडा',
     reportType: {

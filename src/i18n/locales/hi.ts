@@ -3191,6 +3191,11 @@ export const hi = {
         thisYear: 'यह वर्ष',
       },
     },
+    comparison: {
+      title: 'सीज़न तुलना',
+      footnote_one: 'दोनों सीज़न उनके पहले {{count}} दिन के आधार पर मापे गए हैं।',
+      footnote_other: 'दोनों सीज़न उनके पहले {{count}} दिनों के आधार पर मापे गए हैं।',
+    },
     selectFromDate: 'प्रारंभ तिथि चुनें',
     selectToDate: 'समाप्ति तिथि चुनें',
     reportType: {

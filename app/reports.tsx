@@ -45,6 +45,7 @@ import {
   type ReportSeasonPresetOption,
 } from '@/components/screens/reports/report-filters-panel';
 import { ReportExecutiveSummary } from '@/components/screens/reports/report-executive-summary';
+import { ReportSeasonComparisonSection } from '@/components/screens/reports/report-season-comparison-section';
 import { ReportDocumentBody } from '@/components/screens/reports/report-document-body';
 import { ReportExportActions } from '@/components/screens/reports/report-export-actions';
 import type { FarmSeason } from '@/types';
@@ -572,6 +573,14 @@ export default function ReportsScreen() {
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
                   comparison={comparison}
                 />
+
+                {comparison ? (
+                  <ReportSeasonComparisonSection
+                    comparison={comparison}
+                    preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
+                    panelStyle={panelStyle}
+                  />
+                ) : null}
 
                 <ReportDocumentBody
                   preview={preview}
