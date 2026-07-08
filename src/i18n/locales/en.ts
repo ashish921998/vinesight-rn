@@ -368,6 +368,10 @@ export const en = {
           'An active season exists. Please end the current season before creating a new one.',
       },
     },
+    seasonTotals: {
+      excludedAfterEnd_one: '+{{count}} entry logged after season end — not counted',
+      excludedAfterEnd_other: '+{{count}} entries logged after season end — not counted',
+    },
     workboard: {
       title: 'WORKBOARD',
       subtitle: 'Quick access to tools and resources.',

@@ -157,7 +157,7 @@
   </div>
 
   <div class="task">
-    <h4>A4 · Between-seasons captions for expense/harvest tiles on farm details <span class="pill s">Small</span></h4>
+    <h4>A4 · Between-seasons captions for expense/harvest tiles on farm details <span class="pill s">Small</span> <span class="pill s">Done</span></h4>
     <div class="meta"><code>app/farm/[id].tsx</code> — <code>seasonExpenseTotal:422</code>, <code>seasonHarvestQuantity:441</code>, caption pattern at <code>waterUsageCaption:492</code>; strings in en/hi/mr</div>
     <p>Closes the TODOS.md P3 item directly. The tiles clamp to <code>[seasonMetricsStartDate, seasonMetricsEndDate]</code>; when the farm is between seasons, entries dated after <code>end_date</code> are excluded silently. Compute the excluded count inside the same memos (records with date &gt; <code>seasonMetricsEndDate</code>) and reuse the existing <code>betweenSeasonsHint</code> caption pattern the water tile already has: <em>"+N logged after season end — not counted."</em> While there, sanity-check <code>isBetweenSeasons:362</code> — its <code>today &lt; minimumSeasonStartDate</code> condition looks like it's false for most genuinely-between-seasons farms; the new captions should key off "no active season && ended seasons exist" instead.</p>
     <p class="small"><strong>Accept:</strong> end season, add an expense → expense tile shows the excluded-count caption instead of a silently smaller total.</p>
