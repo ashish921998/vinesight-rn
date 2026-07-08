@@ -1069,29 +1069,22 @@ export default function FarmDetailScreen() {
 
   const handleAddActivity = async () => {
     if (!farm?.id) return;
-    if (!activeSeasonRecord) {
+    // Guided-tour teaching moment: during onboarding's add_log step, steer a
+    // between-seasons farm to start a season first. This is an intentional
+    // teaching gate, not a data-integrity block. Outside the tour, logging is
+    // never blocked — a between-seasons farm just gets a non-blocking nudge
+    // inside the add-log form (records save with a null season_id, the DB
+    // trigger is permissive). The refetch guards against gating a season that
+    // was just started but not yet reflected in the cached list.
+    if (!activeSeasonRecord && guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log') {
       const refreshedSeasons = await refetchSeasons();
       const refreshedActiveSeason =
         refreshedSeasons.data?.find((season) => season.end_date === null) ?? null;
-      if (refreshedActiveSeason) {
-        router.push(createAddLogHref({ farmId: farm.id, lockFarmSelection: true }));
-        return;
-      }
-
-      if (guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log') {
+      if (!refreshedActiveSeason) {
         if (isSeasonsLoading) return;
         openStartSeasonForm();
         return;
       }
-      Alert.alert(
-        t('farmDetails.seasons.errors.noActiveSeason'),
-        t('farmDetails.seasons.actions.startSeasonToContinue'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('farmDetails.actions.startSeason'), onPress: openStartSeasonForm },
-        ],
-      );
-      return;
     }
     router.push(createAddLogHref({ farmId: farm.id, lockFarmSelection: true }));
   };

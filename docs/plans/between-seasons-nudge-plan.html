@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Between-Seasons Soft Nudge — Implementation Plan</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --bg-soft: #f6f7f9;
+    --text: #1a1d21;
+    --text-dim: #5b6270;
+    --border: #e2e5ea;
+    --accent: #2f6fed;
+    --accent-soft: #eaf1fe;
+    --amber: #9a6400;
+    --amber-soft: #fdf3d9;
+    --red: #b3261e;
+    --red-soft: #fbe9e7;
+    --green: #1a7f4b;
+    --green-soft: #e6f6ec;
+    --code-bg: #0f172a;
+    --code-text: #e2e8f0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --bg-soft: #1c1f24;
+      --text: #eceef1;
+      --text-dim: #a1a8b5;
+      --border: #2b2f36;
+      --accent: #7aa7ff;
+      --accent-soft: #1c2740;
+      --amber: #e0b64a;
+      --amber-soft: #332a12;
+      --red: #ff8a80;
+      --red-soft: #3a1e1c;
+      --green: #6fdca0;
+      --green-soft: #16301f;
+      --code-bg: #0b0f19;
+      --code-text: #dbe4f3;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    line-height: 1.55;
+  }
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+  header .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-size: 28px;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    font-size: 19px;
+    margin: 48px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 15px;
+    margin: 28px 0 10px;
+  }
+  p { color: var(--text); }
+  .lede {
+    font-size: 15.5px;
+    color: var(--text-dim);
+    max-width: 70ch;
+  }
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .pill.todo { background: var(--accent-soft); color: var(--accent); }
+  .pill.done { background: var(--green-soft); color: var(--green); }
+  .pill.risk { background: var(--red-soft); color: var(--red); }
+  .quote-block {
+    background: var(--amber-soft);
+    border-left: 3px solid var(--amber);
+    padding: 14px 18px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    color: var(--text);
+    margin: 16px 0;
+  }
+  .quote-block .src {
+    display: block;
+    margin-top: 8px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 12px 0 24px;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  td code, p code, li code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  pre code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 18px 0 8px;
+  }
+  .stat-card {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .stat-card .num { font-size: 22px; font-weight: 700; }
+  .stat-card .label { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
+  .task-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .task-card h4 {
+    margin: 0 0 8px;
+    font-size: 14.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .task-card .meta {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    margin-bottom: 8px;
+  }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  figure { margin: 20px 0; }
+  figcaption {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    text-align: center;
+  }
+  svg text { fill: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+  .box { fill: var(--bg-soft); stroke: var(--border); }
+  .box.hot { fill: var(--red-soft); stroke: var(--red); }
+  .box.cool { fill: var(--accent-soft); stroke: var(--accent); }
+  .arrow { stroke: var(--text-dim); stroke-width: 1.5; marker-end: url(#arrowhead); fill: none; }
+  details {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+  }
+  summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+  .nongoals { background: var(--bg-soft); border-radius: 10px; padding: 4px 20px; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <div class="eyebrow">Season data trust · scoped from PR #241 follow-up</div>
+  <h1>Between-Seasons Soft Nudge — Implementation Plan</h1>
+  <p class="lede">
+    Make "no active season" consistently non-blocking across every logging entry point,
+    instead of the current mix of one stale hard gate and ~10 silent bypasses — without
+    repeating the DB-level incident that made this permissive in the first place. Also
+    close the companion discoverability gap: a between-seasons farm is currently almost
+    invisible on its own detail screen, with "Start Season" buried in an overflow menu.
+  </p>
+</header>
+
+<section>
+  <h2>Why this, why now</h2>
+  <p>
+    The instinct to require an active season before logging anything was already tried —
+    at the database level, in <code>assign_season_id_for_row()</code>, the trigger that runs
+    on every insert/update across all 11 activity tables. Its own source comment explains
+    what happened:
+  </p>
+  <div class="quote-block">
+    "Permissive for all writes: when no season window covers this date, leave season_id null
+    rather than raising. <strong>Previously INSERT raised P0001, which surfaced as a 400 and
+    blocked the write.</strong> Recompute / 'start season' backfills the season_id afterwards."
+    <span class="src">assign_season_id_for_row() — production DB, project ibczxoiaonssyzsybebu</span>
+  </div>
+  <p>
+    That's exactly the branch this work sits on top of (<code>fix/permissive-season-id-insert</code>).
+    Meanwhile the client still has a leftover echo of the old strict era: <code>handleAddActivity</code>
+    in <code>app/farm/[id].tsx</code> blocks with a Cancel/Start-Season alert — but only on the
+    farm-detail screen's primary FAB. Every other entry point bypasses it entirely.
+  </p>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="num">11</div><div class="label">tables with a permissive season_id trigger</div></div>
+    <div class="stat-card"><div class="num">1</div><div class="label">entry point with today's stale hard block</div></div>
+    <div class="stat-card"><div class="num">~10</div><div class="label">entry points that bypass it silently</div></div>
+    <div class="stat-card"><div class="num">0</div><div class="label">DB or new hard blocks proposed here</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>Current state — inconsistent by accident</h2>
+  <table>
+    <tr><th>Entry point</th><th>File</th><th>Behavior today</th></tr>
+    <tr><td>Farm detail primary FAB</td><td><code>app/farm/[id].tsx:1056</code> (<code>handleAddActivity</code>)</td><td>Blocks — Alert with Cancel / Start Season</td></tr>
+    <tr><td>Home feed FAB(s)</td><td><code>app/(tabs)/index.tsx</code> (4 call sites)</td><td>No check — logs straight through</td></tr>
+    <tr><td>Tasks screen</td><td><code>app/tasks.tsx</code> (6 call sites)</td><td>No check</td></tr>
+    <tr><td>Logs screen</td><td><code>app/logs.tsx</code></td><td>No check</td></tr>
+    <tr><td>Fertilizer plans</td><td><code>app/fertilizer-plans.tsx</code></td><td>No check</td></tr>
+    <tr><td>Deep-link shortcuts</td><td><code>app/add-activity.tsx</code>, <code>app/log-entry/quick.tsx</code>, <code>app/log-entry/add.tsx</code></td><td>No check</td></tr>
+    <tr><td>Onboarding</td><td><code>onboarding-screen.tsx:244</code></td><td>No check (usually moot — new farm auto-bootstraps first season)</td></tr>
+    <tr><td>Voice assistant confirm</td><td><code>ChatScreen.tsx:517</code></td><td>No check</td></tr>
+    <tr><td>Consultant delegated log</td><td><code>receipt-log-screen.tsx</code> → <code>create_delegated_log</code> RPC</td><td>No check — separate server-side path entirely</td></tr>
+    <tr><td>Reports filtering</td><td><code>report-filters-panel.tsx:60</code></td><td>Already a soft, non-blocking info note — the pattern this plan generalizes</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Approach</h2>
+  <p>
+    Nudge, never block. Instead of intercepting navigation at every one of the ~10 call sites
+    (fragile — the next new entry point silently reintroduces the gap), place a single
+    non-blocking banner <em>inside</em> each destination form, where the farm is already known.
+    Almost every entry point already funnels into one of four forms.
+  </p>
+  <figure>
+    <svg viewBox="0 0 860 260" width="100%" role="img" aria-label="Many entry points funnel into four forms, each showing one shared banner">
+      <defs>
+        <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="currentColor" style="color: var(--text-dim)" />
+        </marker>
+      </defs>
+      <g font-size="11.5">
+        <rect class="box" x="10" y="15" width="150" height="34" rx="6"/><text x="85" y="36" text-anchor="middle">Home / Tasks / Logs</text>
+        <rect class="box" x="10" y="60" width="150" height="34" rx="6"/><text x="85" y="81" text-anchor="middle">Farm detail FAB</text>
+        <rect class="box" x="10" y="105" width="150" height="34" rx="6"/><text x="85" y="126" text-anchor="middle">Voice assistant</text>
+        <rect class="box" x="10" y="150" width="150" height="34" rx="6"/><text x="85" y="171" text-anchor="middle">Deep links</text>
+        <rect class="box" x="10" y="195" width="150" height="34" rx="6"/><text x="85" y="216" text-anchor="middle">Consultant "add log"</text>
+
+        <path class="arrow" d="M160,32 C220,32 220,95 280,95"/>
+        <path class="arrow" d="M160,77 C220,77 220,95 280,95"/>
+        <path class="arrow" d="M160,122 C220,122 220,95 280,95"/>
+        <path class="arrow" d="M160,167 C220,167 220,95 280,95"/>
+        <path class="arrow" d="M160,212 C230,212 230,180 280,180"/>
+
+        <rect class="box cool" x="280" y="60" width="170" height="70" rx="8"/>
+        <text x="365" y="90" text-anchor="middle" font-weight="600">EntryForm</text>
+        <text x="365" y="108" text-anchor="middle" font-size="10.5">(receipt-log-screen too)</text>
+
+        <rect class="box cool" x="280" y="150" width="170" height="60" rx="8"/>
+        <text x="365" y="175" text-anchor="middle" font-weight="600">Receipt log</text>
+        <text x="365" y="192" text-anchor="middle" font-size="10.5">delegated mode</text>
+
+        <path class="arrow" d="M450,95 C520,95 520,95 570,95"/>
+        <path class="arrow" d="M450,180 C520,180 520,120 570,120"/>
+
+        <rect class="box hot" x="570" y="70" width="240" height="90" rx="8"/>
+        <text x="690" y="98" text-anchor="middle" font-weight="600">Shared banner</text>
+        <text x="690" y="116" text-anchor="middle" font-size="10.5">"No active season — this</text>
+        <text x="690" y="130" text-anchor="middle" font-size="10.5">will stay unassigned"</text>
+        <text x="690" y="148" text-anchor="middle" font-size="10.5">never blocks Save</text>
+      </g>
+    </svg>
+    <figcaption>One banner, driven by the existing <code>useFarmSeasonStatus(farmId)</code> hook, reused everywhere instead of per-entry-point gating.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Tasks</h2>
+
+  <div class="task-card">
+    <h4>C1 — Soften <code>handleAddActivity</code><span class="pill todo">todo</span></h4>
+    <div class="meta">app/farm/[id].tsx:1056-1083</div>
+    <p>
+      Remove the blocking <code>Alert.alert(... Cancel / Start Season)</code> branch for the
+      normal (non-guided-tour) case — just navigate to the add-log screen regardless of
+      <code>activeSeasonRecord</code>. Keep the guided-tour branch as-is (lines 1067-1071):
+      that's an intentional teaching moment during onboarding, not a data-integrity gate,
+      and removing it would regress the tour.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h4>C2 — Shared banner component<span class="pill todo">todo</span></h4>
+    <div class="meta">new: src/components/ui/no-active-season-banner.tsx (name indicative)</div>
+    <p>
+      Small, dismissible-per-session banner: "No active season for this farm — records will
+      stay unassigned until you start one," with a "Start season" link. Modeled on the
+      existing <code>showNoActiveSeasonInfo</code> pattern in
+      <code>report-filters-panel.tsx:551</code>, which is already this exact non-blocking
+      style applied to the reports screen.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h4>C3 — Wire into EntryForm<span class="pill todo">todo</span></h4>
+    <div class="meta">src/components/screens/entry-form.tsx:342</div>
+    <p>
+      <code>activeSeason</code> is already fetched here via <code>useFarmSeasonStatus(logFarmId)</code>
+      for the PHI check — no new data dependency needed. Render the banner near the top of
+      the form body when <code>!activeSeason</code> and a farm is selected. Covers
+      <code>app/add-entry.tsx</code>, <code>app/add-task.tsx</code>, and
+      <code>farm-log-form.tsx</code> in one place — i.e. most of the "no check" rows in the
+      table above, since they all route through this component.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h4>C4 — Wire into the remaining standalone forms<span class="pill todo">todo</span></h4>
+    <div class="meta">lab-test-form.tsx · soil-profile-form.tsx · temp-worker-form.tsx</div>
+    <p>
+      These don't go through <code>EntryForm</code>. Add <code>useFarmSeasonStatus(farmId)</code>
+      (not currently imported in any of the three) and the same banner. Lower priority than
+      C3 — lab tests/soil profiles/worker entries are less date-sensitive for season
+      attribution than the daily field logs, but still worth the same treatment for
+      consistency.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h4>C5 — Receipt-log screen, both modes<span class="pill todo">todo</span></h4>
+    <div class="meta">src/components/screens/receipt-log-screen.tsx:207-208</div>
+    <p>
+      <code>farm.id</code> is already resolved identically in both the farmer path
+      (<code>liveFarmQuery.data</code>) and the delegated/consultant path
+      (<code>delegatedContext.farm</code>) — add <code>useFarmSeasonStatus(farm?.id)</code>
+      once and reuse the same banner. This is the one path that write straight to a
+      Postgres RPC (<code>create_delegated_log</code>) rather than the client hooks, so the
+      banner here is the <em>only</em> season-awareness a consultant logging on a farmer's
+      behalf will see — worth being deliberate about the copy (e.g. naming the farm) since
+      [[vinesight-business-model]] treats the consultant as the primary paying user.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h4>C6 — i18n strings<span class="pill todo">todo</span></h4>
+    <div class="meta">src/i18n/locales/{en,hi,mr}.ts</div>
+    <p>
+      One new banner copy string (+ "Start season" action label, can likely reuse
+      <code>farmDetails.actions.startSeason</code>). Translate to hi/mr following the existing
+      <code>farmDetails.seasons.*</code> key conventions.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h4>C7 — Season Strip empty state<span class="pill todo">todo</span></h4>
+    <div class="meta">app/farm/[id].tsx:1452-1621 ("Season Strip Card")</div>
+    <p>
+      The Season Strip — a prominent progress card (pruning date, days elapsed, target
+      harvest) at the very top of the farm screen — only renders when
+      <code>activeSeasonRecord && seasonProgressPct !== null</code>. When a farm is between
+      seasons, the block is skipped entirely and the screen jumps straight to "Vital
+      Signs," with nothing in its place. "Start Season" still exists, but only as one line
+      inside the "⋮" farm-actions overflow menu (<code>handleOpenFarmActions</code> /
+      the Android bottom sheet, both already correctly toggling the label — this isn't a
+      missing-feature bug, it's a missing-prominence one).
+    </p>
+    <p>
+      Fix: render an empty-state card in the same slot when there's no active season —
+      "No active season — Start Season" as its own tappable card (reusing
+      <code>openStartSeasonForm</code>), matching the visual weight the progress card gives
+      to the active state instead of relying on the user to find the overflow menu. This is
+      the season-<em>management</em>-side companion to C1/C2 above (which address the
+      logging-side gap) — same root cause, different symptom: a between-seasons farm is
+      currently almost invisible on its own detail screen.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h4>C8 — A3 (already tracked): unassigned-records notice in reports<span class="pill risk">pending, separate task</span></h4>
+    <div class="meta">cross-reference — not new scope, the recovery-side sibling of this work</div>
+    <p>
+      A soft nudge only prevents <em>new</em> unassigned records going forward; it doesn't
+      surface the ones that already exist. A3 (still pending from the earlier seasons-trust
+      plan) is what actually closes the loop — showing an "N unassigned records" note in
+      reports so a user can find and reassign them after the fact. Sequencing this after
+      C1-C6 makes sense: no point pointing users at a reports notice for a workflow that's
+      simultaneously about to nudge them out of causing more of the same gap.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h4>C9 — Tests<span class="pill todo">todo</span></h4>
+    <div class="meta">__tests__/</div>
+    <p>
+      Unit test the banner's visibility condition (no active season vs. active season vs.
+      farm not yet selected). No new logic in <code>resolveOrCreateSeasonIdForDate</code> or
+      the DB trigger, so no new season-resolution test cases are needed — this is purely a
+      UI-layer change.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>File map</h2>
+  <table>
+    <tr><th>File</th><th>Change</th></tr>
+    <tr><td><code>app/farm/[id].tsx</code></td><td>Remove blocking Alert branch in <code>handleAddActivity</code> (keep guided-tour branch); add Season Strip empty-state card (C7)</td></tr>
+    <tr><td><code>src/components/ui/no-active-season-banner.tsx</code></td><td>New shared banner component</td></tr>
+    <tr><td><code>src/components/screens/entry-form.tsx</code></td><td>Render banner using existing <code>activeSeason</code></td></tr>
+    <tr><td><code>src/components/screens/lab-test-form.tsx</code></td><td>Add <code>useFarmSeasonStatus</code> + banner</td></tr>
+    <tr><td><code>src/components/screens/soil-profile-form.tsx</code></td><td>Add <code>useFarmSeasonStatus</code> + banner</td></tr>
+    <tr><td><code>src/components/screens/temp-worker-form.tsx</code></td><td>Add <code>useFarmSeasonStatus</code> + banner</td></tr>
+    <tr><td><code>src/components/screens/receipt-log-screen.tsx</code></td><td>Add <code>useFarmSeasonStatus(farm?.id)</code> + banner, both modes</td></tr>
+    <tr><td><code>src/i18n/locales/{en,hi,mr}.ts</code></td><td>New banner copy strings</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2 style="border-bottom:none; margin-bottom:8px;">Non-goals</h2>
+  <div class="nongoals">
+    <ul>
+      <li>No changes to <code>assign_season_id_for_row()</code> or any DB trigger/constraint — the permissive behavior stays exactly as-is.</li>
+      <li>No blocking dialogs anywhere, including the delegated/consultant RPC path — a consultant should never be prevented from logging for a farmer because that farmer forgot to start a season.</li>
+      <li>No change to <code>resolveOrCreateSeasonIdForDate</code> / <code>resolveSeasonIdForDate</code> resolution semantics.</li>
+      <li>Not unifying the lazy-bootstrap-vs-plain-null split between record types (flagged in the original scoping pass) — separate cleanup, out of scope here.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Open questions</h2>
+  <details>
+    <summary>Should the delegated/consultant banner differ in copy from the farmer-facing one?</summary>
+    <p>
+      A consultant managing many farms may see this banner often and for farms they don't
+      directly control the season-starting cadence for. Worth a lighter-weight treatment
+      (e.g. a small inline note rather than a full banner) if it turns out to be noisy in
+      practice — flag for design review rather than deciding upfront.
+    </p>
+  </details>
+  <details>
+    <summary>Does the banner need a per-farm dismiss state, or does it just reappear every time?</summary>
+    <p>
+      Leaning toward "just show it whenever true" (no dismiss/snooze state) since it's
+      informational and cheap to ignore — but worth confirming it doesn't feel naggy once
+      it's live on the highest-traffic form (EntryForm).
+    </p>
+  </details>
+</section>
+
+</main>
+</body>
+</html>

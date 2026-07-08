@@ -46,6 +46,7 @@ import {
 import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
 import { RepeatLastLog } from '@/components/screens/entry-form/RepeatLastLog';
 import { WeekStrip } from '@/components/ui/week-strip';
+import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
 import {
   irrigationRecordToFormData,
@@ -2179,6 +2180,11 @@ export function EntryForm({
 
   const renderLogContent = () => (
     <>
+      {/* Non-blocking nudge: records still save with a null season_id (the DB
+          trigger is permissive), this just tells the user they'll stay
+          unassigned. Only when a single farm is resolved and has no active
+          season — never for the All-farms expense case. */}
+      {logFarmId != null && !isAllFarmsSelected && !activeSeason ? <NoActiveSeasonBanner /> : null}
       {!hasCallerProvidedFarm && !lockFarmSelection && !isSingleFarmAccount && (
         <View
           style={{

@@ -332,6 +332,11 @@ export const hi = {
       actions: {
         startSeasonToContinue: 'रिकॉर्ड जोड़ने के लिए पहले सीज़न शुरू करें।',
       },
+      banner: {
+        noActiveSeason:
+          'इस खेत के लिए कोई सक्रिय सीज़न नहीं है — जब तक आप सीज़न शुरू नहीं करते, रिकॉर्ड बिना सीज़न के रहेंगे।',
+        startSeason: 'सीज़न शुरू करें',
+      },
       alerts: {
         startSuccessTitle: 'सीज़न सफलतापूर्वक शुरू हुआ',
         startSuccess: 'नया सीज़न अब सक्रिय है।',

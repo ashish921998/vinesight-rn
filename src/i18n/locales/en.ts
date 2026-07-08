@@ -345,6 +345,11 @@ export const en = {
       actions: {
         startSeasonToContinue: 'Start a season to continue adding records.',
       },
+      banner: {
+        noActiveSeason:
+          'No active season for this farm — records will stay unassigned until you start one.',
+        startSeason: 'Start season',
+      },
       alerts: {
         startSuccessTitle: 'Season started successfully',
         startSuccess: 'New season is now active.',
