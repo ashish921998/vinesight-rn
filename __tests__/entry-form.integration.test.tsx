@@ -86,6 +86,13 @@ jest.mock('@/hooks', () => ({
   usePhiComputation: (...args: unknown[]) => mockUsePhiComputation(...args),
   useFertilizerPlan: () => ({ data: null, isLoading: false, error: null }),
   useMasterProducts: () => ({ data: [], isLoading: false, error: null }),
+  // Saved-record hooks power the week-strip dots + repeat-last-log suggestion.
+  useIrrigationRecords: () => ({ data: [] }),
+  useSprayRecords: () => ({ data: [] }),
+  useHarvestRecords: () => ({ data: [] }),
+  useExpenseRecords: () => ({ data: [] }),
+  useFertigationRecords: () => ({ data: [] }),
+  useDailyNotes: () => ({ data: [] }),
   queryKeys: {
     dashboard: {
       all: ['dashboard'],

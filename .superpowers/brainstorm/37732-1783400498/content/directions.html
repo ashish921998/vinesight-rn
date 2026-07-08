@@ -1,0 +1,217 @@
+<h2>Three directions for the "Add log" screen</h2>
+<p class="subtitle">Same data & save flow underneath — these differ only in how you <em>pick an activity</em> and how the screen <em>feels</em>. Tap a phone to pick the direction you like.</p>
+
+<style>
+  .dir-row { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
+  .dir-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .dir-title { font-weight: 700; font-size: 15px; color: var(--text); }
+  .dir-sub { font-size: 12.5px; color: var(--text-dim); max-width: 250px; text-align: center; line-height: 1.45; }
+
+  /* Phone frame */
+  .phone {
+    width: 248px; height: 500px; border-radius: 34px;
+    background: #f4f5f3; position: relative; overflow: hidden;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.18), 0 0 0 9px #1c1c1e, 0 0 0 10px #2c2c2e;
+    cursor: pointer; transition: transform .12s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .phone:hover { transform: translateY(-4px); }
+  .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 86px; height: 20px; background: #1c1c1e; border-bottom-left-radius: 13px; border-bottom-right-radius: 13px; z-index: 5; }
+  .scr { position: absolute; inset: 0; padding: 26px 14px 14px; display: flex; flex-direction: column; }
+
+  /* shared chrome */
+  .hdr { display: flex; align-items: center; justify-content: space-between; }
+  .hdr-x { font-size: 17px; color: #8a8a8e; line-height: 1; }
+  .hdr-t { font-size: 14px; font-weight: 700; color: #1d1d1f; }
+  .hdr-t small { display:block; font-size: 9.5px; font-weight: 500; color: #8a8a8e; margin-top: 1px;}
+  .hdr-dot { width: 8px; height: 8px; border-radius: 50%; background: #598d6b; }
+
+  .pill { display:inline-flex; align-items:center; gap:5px; padding: 3px 9px; border-radius: 999px;
+    font-size: 9px; font-weight: 700; }
+
+  .label-cap { font-size: 8.5px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: #8a8a8e; margin-bottom: 5px;}
+
+  /* ---- Direction A: Refined chips ---- */
+  .datecard-A { background:#fff; border-radius: 16px; padding: 10px 12px; margin: 10px 0; display:flex; align-items:center; justify-content:space-between;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);}
+  .datecard-A .d-left small { font-size: 8px; font-weight:700; letter-spacing:.6px; color:#8a8a8e; text-transform:uppercase;}
+  .datecard-A .d-left b { display:block; font-size: 12.5px; color:#1d1d1f; margin-top:2px;}
+  .cal-mini { width:30px;height:30px;border-radius:9px;background:#eef3ee;display:flex;align-items:center;justify-content:center;color:#598d6b;font-size:14px;}
+
+  .chips-A { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
+  .chip-A { display:inline-flex; align-items:center; gap:5px; padding:6px 9px 6px 6px; border-radius:999px;
+    background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.05); font-size:9.5px; font-weight:600; color:#1d1d1f;}
+  .chip-A .ico { width:18px;height:18px;border-radius:50%; display:flex;align-items:center;justify-content:center; font-size:10px;}
+  .chip-A.sel { background:#598d6b; color:#fff; }
+  .chip-A.sel .ico { background: rgba(255,255,255,.25); color:#fff;}
+
+  .empty-A { margin-top: 14px; border:1.5px dashed #d9ded9; border-radius:16px; padding: 22px 12px; text-align:center;}
+  .empty-A .e-ico { width:34px;height:34px;border-radius:50%; background:#eef3ee; margin:0 auto 8px; display:flex;align-items:center;justify-content:center; font-size:16px;}
+  .empty-A b { font-size:11px; color:#1d1d1f; display:block;}
+  .empty-A span { font-size:9.5px; color:#8a8a8e; display:block; margin-top:3px;}
+
+  .btn-save { position:absolute; bottom:14px; left:14px; right:14px; height:38px; border-radius:14px;
+    background:#1d1d1f; color:#fff; display:flex;align-items:center;justify-content:center; font-size:12px; font-weight:700;}
+
+  /* ---- Direction B: Category tiles ---- */
+  .tile-grid { display:grid; grid-template-columns: 1fr 1fr; gap:9px; margin-top:8px;}
+  .tile { border-radius:18px; padding:12px 11px; min-height:74px; display:flex; flex-direction:column; justify-content:space-between;
+    color:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.10);}
+  .tile .t-ico { width:26px;height:26px;border-radius:9px; background:rgba(255,255,255,.22); display:flex;align-items:center;justify-content:center; font-size:13px;}
+  .tile b { font-size:10.5px; font-weight:700; line-height:1.2;}
+  .tile small { font-size:8px; opacity:.85; font-weight:500;}
+
+  /* ---- Direction C: Action-first / quick ---- */
+  .hero-C { background: linear-gradient(135deg,#598d6b,#3f6b50); border-radius:20px; padding:14px; color:#fff; margin-top:10px;}
+  .hero-C .h-eyebrow { font-size:8.5px; font-weight:700; letter-spacing:.6px; opacity:.85; text-transform:uppercase;}
+  .hero-C .h-q { font-size:15px; font-weight:800; margin-top:3px; line-height:1.2;}
+  .hero-C .h-cta { display:inline-flex; align-items:center; gap:5px; margin-top:9px; background:#fff; color:#3f6b50;
+    padding:6px 11px; border-radius:999px; font-size:10px; font-weight:800;}
+  .quick-row { display:flex; gap:7px; margin-top:12px; overflow:hidden;}
+  .q-tile { flex:1; border-radius:14px; background:#fff; padding:9px 6px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+  .q-tile .qi { width:26px;height:26px;border-radius:9px; margin:0 auto 4px; display:flex;align-items:center;justify-content:center; font-size:13px;}
+  .q-tile b { font-size:8.5px; font-weight:700; color:#1d1d1f; display:block;}
+  .rec-card { margin-top:11px; background:#fff; border-radius:14px; padding:9px 11px; display:flex; align-items:center; gap:9px; box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+  .rec-card .r-ico { width:28px;height:28px;border-radius:9px; background:#eef3ee; display:flex;align-items:center;justify-content:center; font-size:14px;}
+  .rec-card .r-mid b{ font-size:10px; color:#1d1d1f; display:block;}
+  .rec-card .r-mid small{ font-size:8.5px; color:#8a8a8e;}
+  .rec-card .r-tag { margin-left:auto; font-size:8px; font-weight:700; color:#598d6b;}
+</style>
+
+<div class="dir-row">
+
+  <!-- ===== DIRECTION A ===== -->
+  <div class="dir-col">
+    <div class="phone" data-choice="a" onclick="toggleSelect(this)">
+      <div class="notch"></div>
+      <div class="scr">
+        <div class="hdr">
+          <span class="hdr-x">✕</span>
+          <div class="hdr-t" style="text-align:center">Add log<small>Simulator farm</small></div>
+          <span class="hdr-dot"></span>
+        </div>
+
+        <div class="datecard-A">
+          <div class="d-left"><small>Logging for</small><b>Today · Jul 7</b></div>
+          <div class="cal-mini">🗓</div>
+        </div>
+
+        <div style="margin-top:4px">
+          <div class="label-cap">What did you do today?</div>
+          <div class="chips-A">
+            <span class="chip-A sel"><span class="ico" style="background:rgba(255,255,255,.25)">💧</span>Irrigation</span>
+            <span class="chip-A"><span class="ico" style="background:#eaf3ee">🛢</span>Spray</span>
+            <span class="chip-A"><span class="ico" style="background:#eaf3ee">🌾</span>Harvest</span>
+            <span class="chip-A"><span class="ico" style="background:#eaf3ee">💸</span>Expense</span>
+            <span class="chip-A"><span class="ico" style="background:#eaf3ee">🌱</span>Fertigation</span>
+            <span class="chip-A"><span class="ico" style="background:#eaf3ee">📝</span>Note</span>
+          </div>
+        </div>
+
+        <div class="empty-A">
+          <div class="e-ico">＋</div>
+          <b>Tap a chip above to start</b>
+          <span>Your drafts collect here, saved together</span>
+        </div>
+
+        <div class="btn-save">Save</div>
+      </div>
+    </div>
+    <div class="dir-title">A · Refined current</div>
+    <div class="dir-sub">Same chip flow, but elevated: cleaner cards, icon chips, nicer empty state, sticky save. Lowest risk.</div>
+  </div>
+
+  <!-- ===== DIRECTION B ===== -->
+  <div class="dir-col">
+    <div class="phone" data-choice="b" onclick="toggleSelect(this)">
+      <div class="notch"></div>
+      <div class="scr">
+        <div class="hdr">
+          <span class="hdr-x">✕</span>
+          <div class="hdr-t" style="text-align:center">Add log<small>Simulator farm</small></div>
+          <span class="hdr-dot"></span>
+        </div>
+
+        <div class="datecard-A">
+          <div class="d-left"><small>Logging for</small><b>Today · Jul 7</b></div>
+          <div class="cal-mini">🗓</div>
+        </div>
+
+        <div style="margin-top:4px">
+          <div class="label-cap">Pick an activity</div>
+          <div class="tile-grid">
+            <div class="tile" style="background:linear-gradient(135deg,#4a90c2,#357ab8)"><div class="t-ico">💧</div><div><b>Irrigation</b><small>Duration</small></div></div>
+            <div class="tile" style="background:linear-gradient(135deg,#598d6b,#3f6b50)"><div class="t-ico">🛢</div><div><b>Spray</b><small>Chemicals + water</small></div></div>
+            <div class="tile" style="background:linear-gradient(135deg,#c79a3e,#a87f2c)"><div class="t-ico">🌾</div><div><b>Harvest</b><small>Qty · grade</small></div></div>
+            <div class="tile" style="background:linear-gradient(135deg,#7a6b9e,#5d4f80)"><div class="t-ico">💸</div><div><b>Expense</b><small>Cost · type</small></div></div>
+            <div class="tile" style="background:linear-gradient(135deg,#4f9e6f,#3a7a55)"><div class="t-ico">🌱</div><div><b>Fertigation</b><small>Through irrigation</small></div></div>
+            <div class="tile" style="background:linear-gradient(135deg,#5E7B72,#455a52)"><div class="t-ico">📝</div><div><b>Note</b><small>Free text</small></div></div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;font-size:9px;color:#8a8a8e;text-align:center;line-height:1.4">
+          Drafts appear as a stack at the bottom ↘
+        </div>
+
+        <div class="btn-save" style="background:#598d6b">Save stack</div>
+      </div>
+    </div>
+    <div class="dir-title">B · Category tiles</div>
+    <div class="dir-sub">Big tappable 2-col tiles, each color-coded with icon + sub-label. More visual & scannable. Medium risk.</div>
+  </div>
+
+  <!-- ===== DIRECTION C ===== -->
+  <div class="dir-col">
+    <div class="phone" data-choice="c" onclick="toggleSelect(this)">
+      <div class="notch"></div>
+      <div class="scr">
+        <div class="hdr">
+          <span class="hdr-x">✕</span>
+          <div class="hdr-t" style="text-align:center">Add log<small>Simulator farm</small></div>
+          <span class="hdr-dot"></span>
+        </div>
+
+        <div class="datecard-A" style="margin-top:8px">
+          <div class="d-left"><small>Logging for</small><b>Today · Jul 7</b></div>
+          <div class="cal-mini">🗓</div>
+        </div>
+
+        <div class="hero-C">
+          <div class="h-eyebrow">Quick add</div>
+          <div class="h-q">What happened<br>in the vineyard?</div>
+          <span class="h-cta">＋ Start a log</span>
+        </div>
+
+        <div class="quick-row">
+          <div class="q-tile"><div class="qi" style="background:#e7f0fb;color:#357ab8">💧</div><b>Irrigation</b></div>
+          <div class="q-tile"><div class="qi" style="background:#eaf3ee;color:#3f6b50">🛢</div><b>Spray</b></div>
+          <div class="q-tile"><div class="qi" style="background:#f5efe0;color:#a87f2c">🌾</div><b>Harvest</b></div>
+        </div>
+        <div class="quick-row" style="margin-top:7px">
+          <div class="q-tile"><div class="qi" style="background:#efeaf5;color:#5d4f80">💸</div><b>Expense</b></div>
+          <div class="q-tile"><div class="qi" style="background:#e7f3ec;color:#3a7a55">🌱</div><b>Fertigation</b></div>
+          <div class="q-tile"><div class="qi" style="background:#eef0ef;color:#455a52">📝</div><b>Note</b></div>
+        </div>
+
+        <div class="rec-card">
+          <div class="r-ico">↻</div>
+          <div class="r-mid"><b>Last spray</b><small>3 days ago · Block 2</small></div>
+          <span class="r-tag">Repeat</span>
+        </div>
+
+        <div class="btn-save" style="background:#1d1d1f">Save</div>
+      </div>
+    </div>
+    <div class="dir-title">C · Action-first</div>
+    <div class="dir-sub">Hero prompt + quick tiles + "repeat last" shortcut. More guided, faster for repeat tasks. Highest effort.</div>
+  </div>
+
+</div>
+
+<div style="margin-top:26px;padding:14px 16px;background:rgba(89,141,107,0.06);border:1px solid rgba(89,141,107,0.18);border-radius:14px">
+  <b style="font-size:13px">My recommendation: <span style="color:#3f6b50">B (Category tiles)</span></b>
+  <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 0;line-height:1.5">
+    Your users pick from 6 activities every single time they log — that's the screen's core job. Big color-coded tiles make that one tap obvious and fast, while keeping your existing forms & stack-save logic untouched underneath. A is a safe fallback if you want minimal change.
+  </p>
+</div>

@@ -191,7 +191,7 @@ export function buildDelegatedLogPayload(
         catalog_mix_id: data.catalogMixId ?? null,
         chemical: chemicalStr,
         chemical_items: chemicalItems,
-        dose: `Water: ${data.waterVolume}L`,
+        dose: data.waterVolume != null ? `Water: ${data.waterVolume}L` : '',
         governing_phi_days: hasResolvedPhi ? (data.governingPhiDays ?? null) : null,
         safe_harvest_date: hasResolvedPhi ? (data.safeHarvestDate ?? null) : null,
         phi_calc_version: hasResolvedPhi ? PHI_CALC_VERSION : null,
@@ -234,12 +234,10 @@ export function buildDelegatedLogPayload(
       const nutrientTotals = calculateNutrientTotalsForLog({
         items: fertilizers,
         areaAcre: farmArea,
-        waterVolumeL: data.waterVolume ?? null,
       });
       const trimmedNotes = data.notes?.trim();
       return {
         fertilizers,
-        water_volume: data.waterVolume ?? null,
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
         nutrient_calc_coverage: nutrientTotals.coveragePercent,

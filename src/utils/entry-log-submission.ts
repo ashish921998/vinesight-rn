@@ -204,7 +204,7 @@ export async function submitEntryPendingLog(params: {
         catalog_mix_id: data.catalogMixId ?? null,
         chemical: chemicalStr,
         chemical_items: chemicalItems,
-        dose: `Water: ${data.waterVolume}L`,
+        dose: data.waterVolume != null ? `Water: ${data.waterVolume}L` : '',
         governing_phi_days: hasResolvedPhi ? (data.governingPhiDays ?? null) : null,
         safe_harvest_date: hasResolvedPhi ? (data.safeHarvestDate ?? null) : null,
         phi_calc_version: hasResolvedPhi ? PHI_CALC_VERSION : null,
@@ -276,13 +276,11 @@ export async function submitEntryPendingLog(params: {
       const nutrientTotals = calculateNutrientTotalsForLog({
         items: fertilizers,
         areaAcre: farmArea,
-        waterVolumeL: data.waterVolume ?? null,
       });
       const created = await submitters.createFertigation({
         farm_id: farmId,
         date: dateStr,
         fertilizers,
-        water_volume: data.waterVolume,
         irrigation_record_id: linkedIrrigationRecordId ?? null,
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,

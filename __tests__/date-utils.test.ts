@@ -4,6 +4,7 @@ import {
   parseDbDateToLocalDate,
   getDaysAfterPruning,
 } from '@/utils/date';
+import { toSupabaseDateString } from '@/types/database';
 
 describe('formatLocalDate', () => {
   it('formats a normal date with zero-padded month and day', () => {
@@ -89,6 +90,20 @@ describe('parseDbDateToLocalDate', () => {
   it('returns null for invalid date-only values (e.g. Feb 30)', () => {
     // new Date(2024, 1, 30) rolls over to March, so validation catches it
     expect(parseDbDateToLocalDate('2024-02-30')).toBeNull();
+  });
+});
+
+describe('toSupabaseDateString', () => {
+  it('formats a local-midnight date in the local calendar day', () => {
+    // Regression: a previous .toISOString() implementation serialized local
+    // midnight through UTC, shifting the day backward in positive-offset
+    // timezones (local Jul 8 00:00 in UTC+5:30 -> "2026-07-07").
+    const date = new Date(2026, 6, 8); // Jul 8, local midnight
+    expect(toSupabaseDateString(date)).toBe('2026-07-08');
+  });
+
+  it('zero-pads single-digit month and day', () => {
+    expect(toSupabaseDateString(new Date(2026, 0, 5))).toBe('2026-01-05');
   });
 });
 

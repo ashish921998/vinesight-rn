@@ -186,7 +186,6 @@ describe('buildDelegatedLogPayload', () => {
       {
         type: 'fertigation',
         data: {
-          waterVolume: 50,
           fertilizers: [
             { id: 'f', name: 'Urea', quantity: 10, unit: 'kg', quantityBasis: 'total' },
           ],
@@ -195,7 +194,6 @@ describe('buildDelegatedLogPayload', () => {
       { area: 4 },
     );
     expect(payload.area).toBe(4);
-    expect(payload.water_volume).toBe(50);
     expect(payload.fertilizers).toEqual([
       expect.objectContaining({ name: 'Urea', quantity: 10, quantity_basis: 'total' }),
     ]);

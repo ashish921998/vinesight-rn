@@ -9,7 +9,6 @@ import {
   type SearchSelectSelection,
 } from '@/components/ui/search-select-logic';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
-import { NumericInput, type NumericInputHandle } from './form-field';
 import {
   MAX_PRODUCT_ROWS,
   allProductRowsComplete,
@@ -49,8 +48,6 @@ import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
-import { guidedTourOn } from '@/features/guided-tour/events';
-
 export interface FertilizerEntry {
   id?: string;
   name: string;
@@ -110,7 +107,6 @@ function perAcreUnitTestimony(basisFromUnit?: QuantityBasis): QuantityBasis | un
 }
 
 export interface FertigationFormData {
-  waterVolume?: number;
   fertilizers: FertilizerEntry[];
   notes?: string;
 }
@@ -163,7 +159,6 @@ export function FertigationForm({
   const showDetailsGuidance =
     guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
 
-  const waterVolumeRef = useRef<NumericInputHandle>(null);
   const [showProductPicker, setShowProductPicker] = useState(false);
 
   // Picker sections: this farm's history → active plan items → fertilizer
@@ -199,14 +194,6 @@ export function FertigationForm({
     () => quickAddItems.filter((item) => !isWaterConcentrationUnit(item.unit)),
     [quickAddItems],
   );
-
-  useEffect(() => {
-    const unsubscribe = guidedTourOn('guidedTour.focusLogActivityInput', ({ recordType }) => {
-      if (recordType !== 'fertigation') return;
-      waterVolumeRef.current?.focus();
-    });
-    return unsubscribe;
-  }, []);
 
   const addFertilizer = () => {
     if (data.fertilizers.length < MAX_PRODUCT_ROWS) {
@@ -393,19 +380,6 @@ export function FertigationForm({
         </View>
       )}
 
-      {/* Water Volume Input */}
-      <NumericInput
-        label={t('fertigationForm.waterVolume.label')}
-        placeholder={t('fertigationForm.waterVolume.placeholder')}
-        value={data.waterVolume}
-        onValueChange={(waterVolume) => onChange({ ...data, waterVolume })}
-        unit={t('fertigationForm.waterVolume.unitLiters')}
-        decimals={2}
-        hint={t('fertigationForm.waterVolume.hint')}
-        ref={waterVolumeRef}
-        onFocus={onInputFocus}
-      />
-
       <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_FERTIGATION_DETAILS}>
         <View
           style={{
@@ -545,7 +519,6 @@ export function FertigationForm({
               showRemove={data.fertilizers.length > 1}
               onInputFocus={onInputFocus}
               areaAcres={areaAcres}
-              waterLiters={data.waterVolume ?? null}
               historyItems={historyItems}
               planItems={planItems}
               catalogProducts={catalogProducts}
@@ -692,7 +665,6 @@ interface FertilizerRowProps {
   showRemove: boolean;
   onInputFocus?: TextInputProps['onFocus'];
   areaAcres?: number | null;
-  waterLiters?: number | null;
   historyItems?: RecentInputItem[];
   planItems?: FertilizerPlanItem[];
   /** Catalog products — used to resolve a row's recommended-dose range guardrail (#236). */
@@ -707,7 +679,6 @@ function FertilizerRow({
   showRemove,
   onInputFocus,
   areaAcres = null,
-  waterLiters = null,
   historyItems = [],
   planItems = [],
   catalogProducts = [],
@@ -802,9 +773,9 @@ function FertilizerRow({
       evaluateDoseGuard(
         fertilizer,
         { plan: planReference, history: historyReference },
-        { areaAcres, waterLiters },
+        { areaAcres },
       ),
-    [fertilizer, planReference, historyReference, areaAcres, waterLiters],
+    [fertilizer, planReference, historyReference, areaAcres],
   );
 
   // Recommended-dose range guardrail (#236): a SEPARATE, advisory-only warning
@@ -831,9 +802,8 @@ function FertilizerRow({
     () =>
       evaluateDoseGuidanceGuard(fertilizer, guidanceReference, {
         areaAcres,
-        waterLiters,
       }),
-    [fertilizer, guidanceReference, areaAcres, waterLiters],
+    [fertilizer, guidanceReference, areaAcres],
   );
 
   // Telemetry: count when the recommendation range guard fires (advisory-only
@@ -1202,7 +1172,6 @@ export function validateFertigationForm(data: FertigationFormData): boolean {
 // Create empty fertigation form data
 export function createEmptyFertigationFormData(): FertigationFormData {
   return {
-    waterVolume: undefined,
     fertilizers: [
       {
         name: '',

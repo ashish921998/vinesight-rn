@@ -241,14 +241,6 @@ function ActivityFields({ draft }: ActivityFieldsProps) {
                 value={draft.fertigation.fertilizers.map((f) => f.name).join(', ')}
               />
             )}
-          {draft.fertigation?.waterVolume != null && (
-            <FieldRow
-              label={t('assistant.activityConfirm.waterVolumeLabel')}
-              value={t('assistant.activityConfirm.waterVolumeValue', {
-                value: draft.fertigation.waterVolume,
-              })}
-            />
-          )}
         </>
       );
 

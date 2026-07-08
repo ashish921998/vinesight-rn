@@ -792,6 +792,12 @@ export const hi = {
     saveLogs: 'लॉग सहेजें ({{count}})',
     retrySaveLogs: 'फिर से सहेजें ({{count}})',
     saveTask: 'कार्य सहेजें',
+    pickDate: 'तारीख चुनें',
+    irrigationFertilizerHint: '+ खाद',
+    repeatLastLogTitle: 'पिछला लॉग दोहराएँ?',
+    repeatLastLogLoggedOn: '{{date}} को लॉग किया गया',
+    repeatLastLogAdd_one: '{{count}} ड्राफ्ट जोड़ें',
+    repeatLastLogAdd_other: '{{count}} ड्राफ्ट जोड़ें',
     drafts_one: '{{count}} ड्राफ्ट',
     drafts_other: '{{count}} ड्राफ्ट',
     pendingLogs_one: 'लंबित लॉग ({{count}})',
@@ -914,12 +920,6 @@ export const hi = {
   fertigationForm: {
     title: 'फर्टिगेशन',
     subtitle: '$t(glossary.fertigation) अनुप्रयोग लॉग करें',
-    waterVolume: {
-      label: 'पानी की मात्रा',
-      placeholder: 'मात्रा दर्ज करें',
-      unitLiters: 'लीटर',
-      hint: 'फर्टिगेशन के लिए उपयोग किया गया कुल पानी (वैकल्पिक)',
-    },
     fertilizers: {
       label: 'उर्वरक',
       addFertilizer: '$t(glossary.fertigation) जोड़ें',

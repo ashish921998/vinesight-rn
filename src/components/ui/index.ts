@@ -19,6 +19,8 @@ export {
 } from './search-select-logic';
 export { StackBackButton } from './stack-back-button';
 export { UnitPickerModal } from './unit-picker-modal';
+export { OptionPickerSheet, type OptionPickerSheetOption } from './option-picker-sheet';
+export { WeekStrip } from './week-strip';
 export {
   FormModal,
   FullScreenForm,

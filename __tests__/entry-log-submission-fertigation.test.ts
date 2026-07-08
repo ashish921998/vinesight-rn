@@ -46,7 +46,6 @@ async function submitFertigation(data: FertigationFormData) {
 describe('fertigation submission — unit testimony and flagging', () => {
   it('stores a volume-per-acre entry as liter + per_acre, unflagged', async () => {
     const payload = await submitFertigation({
-      waterVolume: 400,
       fertilizers: [{ name: 'Humic acid', quantity: 2, unit: 'liter', quantityBasis: 'per_acre' }],
     });
     expect(payload.fertilizers).toEqual([
@@ -62,7 +61,6 @@ describe('fertigation submission — unit testimony and flagging', () => {
 
   it('stores unknown unit strings verbatim with unit_unrecognized: true — never kg', async () => {
     const payload = await submitFertigation({
-      waterVolume: undefined,
       fertilizers: [
         { name: 'Mystery mix', quantity: 5, unit: 'banana/acre', quantityBasis: 'total' },
         { name: 'Typo fert', quantity: 3, unit: 'kgg', quantityBasis: 'total' },
@@ -88,7 +86,6 @@ describe('fertigation submission — unit testimony and flagging', () => {
 
   it('keeps kernel-known but non-form units (ppm) verbatim and unflagged', async () => {
     const payload = await submitFertigation({
-      waterVolume: 200,
       fertilizers: [{ name: 'GA3', quantity: 100, unit: 'ppm', quantityBasis: 'total' }],
     });
     expect(payload.fertilizers?.[0]).toEqual(
@@ -113,7 +110,6 @@ describe('fertigation submission — unit testimony and flagging', () => {
       'Kg/Acre',
     ];
     const payload = await submitFertigation({
-      waterVolume: undefined,
       fertilizers: representativeUnits.map((unit, i) => ({
         name: `Fertilizer ${i}`,
         quantity: 5,
@@ -132,7 +128,6 @@ describe('fertigation submission — unit testimony and flagging', () => {
   it('stamps plan_item_id and composition_snapshot from picker-selected rows (issue #196)', async () => {
     const composition = [{ nutrient_code: 'N', percent: 19, basis: 'declared' as const }];
     const payload = await submitFertigation({
-      waterVolume: 300,
       fertilizers: [
         {
           name: '19:19:19',
@@ -167,7 +162,6 @@ describe('fertigation submission — unit testimony and flagging', () => {
 
   it('leaves every recognized form unit unflagged (regression over the picker vocabulary)', async () => {
     const payload = await submitFertigation({
-      waterVolume: undefined,
       fertilizers: [
         { name: 'Urea', quantity: 25, unit: 'kg', quantityBasis: 'total' },
         { name: 'MgSO4', quantity: 500, unit: 'gram', quantityBasis: 'per_acre' },

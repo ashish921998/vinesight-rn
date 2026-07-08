@@ -44,6 +44,17 @@ import {
   spacing,
 } from '@/styles/theme';
 import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
+import { RepeatLastLog } from '@/components/screens/entry-form/RepeatLastLog';
+import { WeekStrip } from '@/components/ui/week-strip';
+import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
+import {
+  irrigationRecordToFormData,
+  sprayRecordToFormData,
+  harvestRecordToFormData,
+  expenseRecordToFormData,
+  fertigationRecordToFormData,
+  dailyNoteRecordToFormData,
+} from '@/utils/record-to-form';
 import {
   PendingLogs,
   type PendingLog,
@@ -114,6 +125,12 @@ import {
   usePhiComputation,
   useFertilizerPlan,
   useMasterProducts,
+  useIrrigationRecords,
+  useSprayRecords,
+  useHarvestRecords,
+  useExpenseRecords,
+  useFertigationRecords,
+  useDailyNotes,
   queryKeys,
   isIOS,
   useResponsiveHeight,
@@ -299,7 +316,6 @@ export function EntryForm({
     return tabs && tabs.length > 0 ? tabs : ['log', 'task'];
   }, [tabs, detailedMode]);
   const isScreenPresentation = presentation === 'screen';
-  const isInlineComposerMode = isScreenPresentation;
   const defaultTab = resolvedTabs.includes(initialTab || 'log')
     ? initialTab || resolvedTabs[0]
     : resolvedTabs[0];
@@ -319,6 +335,12 @@ export function EntryForm({
   const [showTaskFarmPicker, setShowTaskFarmPicker] = useState(false);
 
   const isAllFarmsSelected = selectedFarmId === ALL_FARMS_ID;
+  // A caller can hand off a specific farm two ways: the resolved `farm` object
+  // (farm-detail entry points) or just `initialFarmId` (deep links from a task,
+  // a voice-log draft, etc. that only know the id). Either means the farm is
+  // already a fact, not a choice — the picker card should stay hidden, same as
+  // the `farm` prop case, rather than asking the user to reconfirm it.
+  const hasCallerProvidedFarm = Boolean(farm) || initialFarmId != null;
   const activeFarm =
     farm ??
     (selectedFarmId !== null && selectedFarmId !== ALL_FARMS_ID
@@ -340,6 +362,15 @@ export function EntryForm({
   const { data: recentFertigationItems } = useRecentFertigationItems(logFarmId ?? undefined);
   const { data: fertilizerPlan } = useFertilizerPlan(logFarmId ?? undefined);
   const { activeSeason } = useFarmSeasonStatus(logFarmId ?? undefined);
+  // Saved records for the selected farm — power the week-strip "already
+  // logged" dots and the repeat-last-log suggestion. Query keys are shared
+  // with the farm detail screen, so these are usually cache hits.
+  const { data: farmIrrigationRecords } = useIrrigationRecords(logFarmId ?? undefined);
+  const { data: farmSprayRecords } = useSprayRecords(logFarmId ?? undefined);
+  const { data: farmHarvestRecords } = useHarvestRecords(logFarmId ?? undefined);
+  const { data: farmExpenseRecords } = useExpenseRecords(logFarmId ?? undefined);
+  const { data: farmFertigationRecords } = useFertigationRecords(logFarmId ?? undefined);
+  const { data: farmDailyNotes } = useDailyNotes(logFarmId ?? undefined);
   const { data: catalogMixes = [] } = useChemicalMixSearch('', isGrapeFarm);
 
   useEffect(() => {
@@ -423,6 +454,29 @@ export function EntryForm({
   );
   const [noteData, setNoteData] = useState<NoteFormData>(() => createEmptyNoteFormData());
   const selectedDateIso = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
+  // Dates (yyyy-mm-dd) that already have any saved log on the selected farm.
+  const loggedDateIsos = useMemo(() => {
+    const dates = new Set<string>();
+    const collect = (records?: { date: string }[]) => {
+      records?.forEach((record) => {
+        if (record.date) dates.add(record.date.slice(0, 10));
+      });
+    };
+    collect(farmIrrigationRecords);
+    collect(farmSprayRecords);
+    collect(farmHarvestRecords);
+    collect(farmExpenseRecords);
+    collect(farmFertigationRecords);
+    collect(farmDailyNotes);
+    return dates;
+  }, [
+    farmIrrigationRecords,
+    farmSprayRecords,
+    farmHarvestRecords,
+    farmExpenseRecords,
+    farmFertigationRecords,
+    farmDailyNotes,
+  ]);
   const { data: sprayPhiComputation } = usePhiComputation(
     sprayData.catalogMixId ?? null,
     selectedDateIso,
@@ -575,9 +629,8 @@ export function EntryForm({
       if (!keyboardHeightRef.current) return;
       const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
       if (typeof resolvedHandle !== 'number') return;
-      // In screen/inline mode the focused input lives inside the main content
-      // ScrollView; in modal mode it lives inside the dedicated log-form ScrollView.
-      const activeScrollView = isInlineComposerMode ? contentScrollViewRef : logFormScrollViewRef;
+      // The focused input lives inside the composer sheet's dedicated ScrollView.
+      const activeScrollView = logFormScrollViewRef;
       UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
         const keyboardTop = windowHeight - keyboardHeightRef.current;
         const inputBottom = y + height;
@@ -591,7 +644,7 @@ export function EntryForm({
         }
       });
     },
-    [windowHeight, isInlineComposerMode],
+    [windowHeight],
   );
 
   // Track keyboard visibility
@@ -619,7 +672,7 @@ export function EntryForm({
   useEffect(() => {
     if (isVisible && initialLogType) {
       setSelectedLogType(initialLogType);
-      setShowLogFormModal(!isInlineComposerMode);
+      setShowLogFormModal(true);
       if (initialLogType === 'spray' && initialLogPrefill?.sprayChemicals?.length) {
         setSprayData({
           waterVolume: undefined,
@@ -641,7 +694,6 @@ export function EntryForm({
       }
       if (initialLogType === 'fertigation' && initialLogPrefill?.fertigationItems?.length) {
         setFertigationData({
-          waterVolume: undefined,
           fertilizers: initialLogPrefill.fertigationItems.map((item) => {
             const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
             return {
@@ -658,7 +710,7 @@ export function EntryForm({
         });
       }
     }
-  }, [isVisible, initialLogType, initialLogPrefill, isInlineComposerMode]);
+  }, [isVisible, initialLogType, initialLogPrefill]);
 
   useEffect(() => {
     if (selectedFarmId !== ALL_FARMS_ID) return;
@@ -694,7 +746,7 @@ export function EntryForm({
     if (!isVisible || !initialVoiceLogPrefill) return;
 
     setSelectedLogType(initialVoiceLogPrefill.type);
-    setShowLogFormModal(!isInlineComposerMode);
+    setShowLogFormModal(true);
 
     const prefillDate = parseInitialLogDate(initialVoiceLogPrefill.date);
     if (prefillDate) {
@@ -777,13 +829,12 @@ export function EntryForm({
           : createEmptyFertigationFormData().fertilizers;
 
         setFertigationData({
-          waterVolume: fertigationPrefill?.waterVolume ?? undefined,
           fertilizers: prefilledFertilizers,
         });
         break;
       }
     }
-  }, [initialVoiceLogPrefill, isVisible, isInlineComposerMode]);
+  }, [initialVoiceLogPrefill, isVisible]);
 
   type OnFocusEvent = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
 
@@ -857,11 +908,14 @@ export function EntryForm({
       case 'spray': {
         const spray = data as SprayFormData;
         const mixName = spray.catalogMixName?.trim();
+        const water = spray.waterVolume;
+        const waterLabel = water != null ? `${water}L` : '';
         if (mixName) {
-          return `${mixName} • ${spray.waterVolume}L`;
+          return waterLabel ? `${mixName} • ${waterLabel}` : mixName;
         }
         const chemCount = spray.chemicals.length;
-        return `${spray.waterVolume}L water, ${chemCount} chemical${chemCount !== 1 ? 's' : ''}`;
+        const chemLabel = `${chemCount} chemical${chemCount !== 1 ? 's' : ''}`;
+        return waterLabel ? `${waterLabel} water, ${chemLabel}` : chemLabel;
       }
       case 'harvest': {
         const harvest = data as HarvestFormData;
@@ -874,8 +928,7 @@ export function EntryForm({
       case 'fertigation': {
         const fert = data as FertigationFormData;
         const fertCount = fert.fertilizers.length;
-        const waterText = fert.waterVolume ? `${fert.waterVolume}L water, ` : '';
-        return `${waterText}${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
+        return `${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
       }
       case 'note': {
         const note = data as NoteFormData;
@@ -938,6 +991,9 @@ export function EntryForm({
     [buildPendingLog, enqueuePendingLogs],
   );
 
+  // Clears PHI fields from a spray draft. PHI derives from the spray date, so a
+  // copied/repeated spray must not inherit verified fields. Centralized here so
+  // the add flow and the repeat-last-log flow share one rule.
   const buildSprayPendingData = useCallback(
     (input: SprayFormData): SprayFormData =>
       isGrapeFarm && input.catalogMixId && input.safeHarvestDate && input.governingPhiDays != null
@@ -953,6 +1009,117 @@ export function EntryForm({
           },
     [isGrapeFarm],
   );
+
+  // "Repeat last log": the most recent logged day on this farm before the
+  // selected date, with its records mapped back into draft form data.
+  const repeatLastLogSuggestion = useMemo(() => {
+    if (isAllFarmsSelected || !logFarmId) return null;
+    let lastIso: string | null = null;
+    loggedDateIsos.forEach((iso) => {
+      if (iso < selectedDateIso && (!lastIso || iso > lastIso)) lastIso = iso;
+    });
+    if (!lastIso) return null;
+    const matchesDay = (record: { date: string }) => record.date?.slice(0, 10) === lastIso;
+    // A repeat draft item. `linkedIrrigationItemKey` is set on fertigation
+    // items that were originally linked to an irrigation record on this day, so
+    // the enqueue step can carry `linkIrrigationFromPendingLogId` forward and
+    // the copied pair stays linked (the fertigation record keeps its
+    // irrigation_record_id).
+    interface RepeatItem {
+      key: string;
+      type: LogTypeId;
+      data: PendingLog['data'];
+      description: string;
+      linkedIrrigationItemKey?: string;
+    }
+    const items: RepeatItem[] = [];
+    const push = (key: string, type: LogTypeId, data: PendingLog['data']) => {
+      items.push({ key, type, data, description: getLogDescription(type, data) });
+    };
+    // Index the day's irrigation records by id so linked fertigation can resolve
+    // its partner suggestion item (the copy must point at the new irrigation
+    // draft, not the original record id).
+    const irrigationItemKeyByRecordId = new Map<number, string>();
+    (farmIrrigationRecords ?? []).filter(matchesDay).forEach((record) => {
+      const key = `irrigation-${record.id}`;
+      if (record.id != null) irrigationItemKeyByRecordId.set(record.id, key);
+      push(key, 'irrigation', irrigationRecordToFormData(record));
+    });
+    (farmFertigationRecords ?? []).filter(matchesDay).forEach((record) => {
+      const key = `fertigation-${record.id}`;
+      const data = fertigationRecordToFormData(record);
+      const linkedIrrigationItemKey = record.irrigation_record_id
+        ? irrigationItemKeyByRecordId.get(record.irrigation_record_id)
+        : undefined;
+      const item: RepeatItem = {
+        key,
+        type: 'fertigation',
+        data,
+        description: getLogDescription('fertigation', data),
+      };
+      if (linkedIrrigationItemKey) item.linkedIrrigationItemKey = linkedIrrigationItemKey;
+      items.push(item);
+    });
+    (farmSprayRecords ?? []).filter(matchesDay).forEach((record) => {
+      // PHI fields derive from the spray date — a copy on a new date must not
+      // inherit them. Routed through buildSprayPendingData (same path as adding
+      // a spray) so the rule lives in one place.
+      const formData = sprayRecordToFormData(record);
+      // spray records only carry catalog_mix_id; resolve the name from the
+      // catalog cache (already loaded above) so the repeat description and the
+      // copied draft show the mix name, not a chemical-count fallback.
+      if (formData.catalogMixId != null && !formData.catalogMixName) {
+        formData.catalogMixName =
+          catalogMixes.find((mix) => mix.id === formData.catalogMixId)?.name ?? null;
+      }
+      push(`spray-${record.id}`, 'spray', buildSprayPendingData(formData));
+    });
+    (farmHarvestRecords ?? []).filter(matchesDay).forEach((record) => {
+      push(`harvest-${record.id}`, 'harvest', harvestRecordToFormData(record));
+    });
+    (farmExpenseRecords ?? []).filter(matchesDay).forEach((record) => {
+      push(`expense-${record.id}`, 'expense', expenseRecordToFormData(record));
+    });
+    (farmDailyNotes ?? []).filter(matchesDay).forEach((record) => {
+      push(`note-${record.id}`, 'note', dailyNoteRecordToFormData(record));
+    });
+    if (items.length === 0) return null;
+    return { dateIso: lastIso, date: parseDbDateToLocalDate(lastIso) ?? new Date(), items };
+  }, [
+    isAllFarmsSelected,
+    logFarmId,
+    loggedDateIsos,
+    selectedDateIso,
+    getLogDescription,
+    buildSprayPendingData,
+    farmIrrigationRecords,
+    farmFertigationRecords,
+    farmSprayRecords,
+    farmHarvestRecords,
+    farmExpenseRecords,
+    farmDailyNotes,
+    catalogMixes,
+  ]);
+
+  const handleRepeatLastLog = useCallback(() => {
+    if (!repeatLastLogSuggestion) return;
+    // Build drafts first so fertigation items can reference their partner
+    // irrigation draft by its NEW pending-log id (the link points at the copy,
+    // not the original record). `buildPendingLog` stamps a fresh id on each.
+    const drafts = repeatLastLogSuggestion.items.map((item) =>
+      buildPendingLog(item.type, item.data),
+    );
+    const draftIdByItemKey = new Map(
+      drafts.map((draft, index) => [repeatLastLogSuggestion.items[index].key, draft.id]),
+    );
+    const linkedDrafts = drafts.map((draft, index) => {
+      const item = repeatLastLogSuggestion.items[index];
+      if (!item.linkedIrrigationItemKey) return draft;
+      const partnerDraftId = draftIdByItemKey.get(item.linkedIrrigationItemKey);
+      return partnerDraftId ? { ...draft, linkIrrigationFromPendingLogId: partnerDraftId } : draft;
+    });
+    enqueuePendingLogs(linkedDrafts);
+  }, [repeatLastLogSuggestion, buildPendingLog, enqueuePendingLogs]);
 
   const addLogToSession = useCallback(() => {
     if (!selectedLogType || !isLogFormValid) return;
@@ -1453,6 +1620,14 @@ export function EntryForm({
   const [type, setType] = useState<TaskType>('note');
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [taskFarmId, setTaskFarmId] = useState<number | null>(null);
+  // Single-farm accounts skip the farm selector cards entirely, so default
+  // the task farm to the only farm (logs already auto-select via selectedFarmId).
+  const isSingleFarmAccount = (farms?.length ?? 0) === 1;
+  useEffect(() => {
+    if (isSingleFarmAccount && !taskFarmId && farms?.[0]?.id) {
+      setTaskFarmId(farms[0].id);
+    }
+  }, [isSingleFarmAccount, taskFarmId, farms]);
   const [dueDate, setDueDate] = useState('');
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
   const [showTypePicker, setShowTypePicker] = useState(false);
@@ -1750,7 +1925,10 @@ export function EntryForm({
       <Modal
         visible={showLogFormModal}
         animationType="slide"
-        presentationStyle="fullScreen"
+        // iOS page sheet: the Add Log overview stays visible behind the
+        // composer and swipe-down dismisses (fires onRequestClose). Android
+        // ignores presentationStyle and keeps the full-screen slide.
+        presentationStyle="pageSheet"
         onRequestClose={() => {
           setShowLogFormModal(false);
           setSelectedLogType(null);
@@ -1769,7 +1947,9 @@ export function EntryForm({
                 borderColor: m3.surface.s100,
                 paddingHorizontal: 16,
                 paddingBottom: 12,
-                paddingTop: 8 + insets.top,
+                // Page sheets hang below the status bar on iOS, so the safe-area
+                // top inset only applies on Android's full-screen fallback.
+                paddingTop: isIOS ? 14 : 8 + insets.top,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1938,71 +2118,6 @@ export function EntryForm({
     );
   };
 
-  const renderInlineLogComposerForm = () => {
-    if (!isInlineComposerMode || !selectedLogType) return null;
-
-    return (
-      <View style={{ marginBottom: 16 }}>
-        {selectedLogType === 'spray' ? (
-          <View
-            style={{
-              marginBottom: 10,
-              padding: 12,
-              borderRadius: radius.md,
-              backgroundColor: colorWithOpacity(m3.colorScheme.secondaryContainer, 0.5),
-            }}
-          >
-            <Text
-              style={{
-                color: m3.colorScheme.onSurfaceVariant,
-                ...m3.typography.labelSmall,
-              }}
-            >
-              {isGrapeFarm
-                ? t('entryForm.phiScope.grapeOnlyEnabled', {
-                    defaultValue: 'PHI safety checks are currently available for grape sprays.',
-                  })
-                : t('entryForm.phiScope.grapeOnlyDisabled', {
-                    defaultValue:
-                      'PHI safety validation is currently available for grape sprays only.',
-                  })}
-            </Text>
-          </View>
-        ) : null}
-        <LogForm
-          selectedLogType={selectedLogType}
-          irrigationData={irrigationData}
-          sprayData={sprayData}
-          harvestData={harvestData}
-          expenseData={expenseData}
-          fertigationData={activeFertigationData}
-          noteData={noteData}
-          onIrrigationChange={setIrrigationData}
-          onSprayChange={setSprayData}
-          onHarvestChange={setHarvestData}
-          onExpenseChange={setExpenseData}
-          onFertigationChange={handleActiveFertigationChange}
-          onNoteChange={setNoteData}
-          onInputFocus={scrollToFocusedInput}
-          onAdd={addLogToSession}
-          isValid={isLogFormValid}
-          hasFarm={hasFarmForCurrentLog}
-          sprayQuickAddItems={sprayQuickAddItems}
-          fertigationQuickAddItems={fertigationQuickAddItems}
-          includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
-          onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
-          sprayCatalogMixes={catalogMixes}
-          sprayHistoryItems={recentSprayChemicals ?? []}
-          sprayPlanItems={fertilizerPlan?.items ?? []}
-          fertigationHistoryItems={recentFertigationItems ?? []}
-          fertigationPlanItems={fertilizerPlan?.items ?? []}
-          fertigationCatalogProducts={fertilizerCatalogProducts}
-          areaAcres={activeFarmAreaAcres}
-        />
-      </View>
-    );
-  };
-
   // Render sticky add entry button above keyboard
   const renderStickyAddButton = () => {
     if (!isLogFormValid || !selectedLogType) return null;
@@ -2064,7 +2179,7 @@ export function EntryForm({
 
   const renderLogContent = () => (
     <>
-      {!farm && !lockFarmSelection && (
+      {!hasCallerProvidedFarm && !lockFarmSelection && !isSingleFarmAccount && (
         <View
           style={{
             backgroundColor: m3.surface.s100,
@@ -2123,79 +2238,23 @@ export function EntryForm({
               color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
           </Pressable>
-          {showLogFarmPicker && farms && (
-            <View
-              style={{
-                backgroundColor: m3.surface.s100,
-                borderRadius: radius.md,
-                marginTop: 8,
-                borderWidth: 1,
-                borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                overflow: 'hidden',
-              }}
-            >
-              {selectedLogType === 'expense' && (
-                <Pressable
-                  key="all-farms"
-                  onPress={() => {
-                    setSelectedFarmId(ALL_FARMS_ID);
-                    setShowLogFarmPicker(false);
-                  }}
-                  style={{
-                    padding: 16,
-                    borderBottomWidth: 1,
-                    borderColor: m3.surface.s100,
-                    backgroundColor: isAllFarmsSelected
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                      : m3.surface.s100,
-                  }}
-                >
-                  <Text
-                    selectable
-                    style={{
-                      color: isAllFarmsSelected
-                        ? m3.colorScheme.primary
-                        : m3.colorScheme.onSurfaceVariant,
-                      fontWeight: isAllFarmsSelected ? '500' : '400',
-                    }}
-                  >
-                    {t('entryForm.allFarms')}
-                  </Text>
-                </Pressable>
-              )}
-              {farms.map((f) => (
-                <Pressable
-                  key={f.id}
-                  onPress={() => {
-                    if (f.id) setSelectedFarmId(f.id);
-                    setShowLogFarmPicker(false);
-                  }}
-                  style={{
-                    padding: 16,
-                    borderBottomWidth: 1,
-                    borderColor: m3.surface.s100,
-                    backgroundColor:
-                      activeFarm?.id === f.id
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                        : m3.surface.s100,
-                  }}
-                >
-                  <Text
-                    selectable
-                    style={{
-                      color:
-                        activeFarm?.id === f.id
-                          ? m3.colorScheme.primary
-                          : m3.colorScheme.onSurfaceVariant,
-                      fontWeight: activeFarm?.id === f.id ? '500' : '400',
-                    }}
-                  >
-                    {f.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
+          <OptionPickerSheet
+            visible={showLogFarmPicker}
+            onClose={() => setShowLogFarmPicker(false)}
+            title={t('entryForm.selectFarm')}
+            selectedKey={isAllFarmsSelected ? 'all-farms' : (activeFarm?.id?.toString() ?? null)}
+            options={[
+              ...(selectedLogType === 'expense'
+                ? [{ key: 'all-farms', label: t('entryForm.allFarms') }]
+                : []),
+              ...(farms ?? [])
+                .filter((f) => f.id)
+                .map((f) => ({ key: String(f.id), label: f.name })),
+            ]}
+            onSelect={(key) => {
+              setSelectedFarmId(key === 'all-farms' ? ALL_FARMS_ID : Number(key));
+            }}
+          />
         </View>
       )}
 
@@ -2231,16 +2290,6 @@ export function EntryForm({
             >
               {t('entryForm.loggingFor', { defaultValue: 'Logging for' })}
             </Text>
-            <Text
-              selectable
-              style={{
-                fontSize: fontSize.xl,
-                fontWeight: '700',
-                color: m3.colorScheme.onSurface,
-              }}
-            >
-              {formatDate(selectedDate, { weekday: 'short', month: 'short', day: 'numeric' })}
-            </Text>
           </View>
 
           {pendingLogs.length > 0 && (
@@ -2269,45 +2318,12 @@ export function EntryForm({
             </View>
           )}
         </View>
-        <Pressable
-          onPress={() => setShowDatePicker(true)}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: m3.surface.s50,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-            borderRadius: radius.md,
-            borderWidth: 1,
-            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <AppIcon name="calendar" size={18} color={m3.colorScheme.primary} />
-            <Text
-              selectable
-              style={{
-                marginLeft: 8,
-                fontSize: fontSize.base,
-                fontWeight: '600',
-                color: m3.colorScheme.onSurface,
-              }}
-            >
-              {formatDate(selectedDate, {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </Text>
-          </View>
-          <AppIcon
-            name="chevron-forward"
-            size={16}
-            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.65)}
-          />
-        </Pressable>
+        <WeekStrip
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          markedDates={loggedDateIsos}
+          onOpenPicker={() => setShowDatePicker(true)}
+        />
       </View>
 
       <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}>
@@ -2323,12 +2339,18 @@ export function EntryForm({
           })}
           onSelect={(type) => {
             setSelectedLogType(type);
-            setShowLogFormModal(!isInlineComposerMode);
+            setShowLogFormModal(true);
           }}
         />
       </GuidedTourTarget>
-      {renderInlineLogComposerForm()}
-      {isInlineComposerMode && pendingLogs.length === 0 && !selectedLogType && (
+      {pendingLogs.length === 0 && !selectedLogType && repeatLastLogSuggestion && (
+        <RepeatLastLog
+          date={repeatLastLogSuggestion.date}
+          items={repeatLastLogSuggestion.items}
+          onAdd={handleRepeatLastLog}
+        />
+      )}
+      {pendingLogs.length === 0 && !selectedLogType && !repeatLastLogSuggestion && (
         <View
           style={{
             borderWidth: 1,
@@ -2470,7 +2492,7 @@ export function EntryForm({
         </View>
       )}
 
-      {!farm && !lockFarmSelection && (
+      {!hasCallerProvidedFarm && !lockFarmSelection && !isSingleFarmAccount && (
         <View style={{ marginBottom: 16 }}>
           <Text
             selectable
@@ -2512,50 +2534,16 @@ export function EntryForm({
               color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
           </Pressable>
-          {showTaskFarmPicker && farms && (
-            <View
-              style={{
-                backgroundColor: m3.surface.s100,
-                borderRadius: radius.md,
-                marginTop: 8,
-                borderWidth: 1,
-                borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                overflow: 'hidden',
-              }}
-            >
-              {farms.map((f) => (
-                <Pressable
-                  key={f.id}
-                  onPress={() => {
-                    if (f.id) setTaskFarmId(f.id);
-                    setShowTaskFarmPicker(false);
-                  }}
-                  style={{
-                    padding: 16,
-                    borderBottomWidth: 1,
-                    borderColor: m3.surface.s100,
-                    backgroundColor:
-                      taskFarmId === f.id
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                        : m3.surface.s100,
-                  }}
-                >
-                  <Text
-                    selectable
-                    style={{
-                      color:
-                        taskFarmId === f.id
-                          ? m3.colorScheme.primary
-                          : m3.colorScheme.onSurfaceVariant,
-                      fontWeight: taskFarmId === f.id ? '500' : '400',
-                    }}
-                  >
-                    {f.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
+          <OptionPickerSheet
+            visible={showTaskFarmPicker}
+            onClose={() => setShowTaskFarmPicker(false)}
+            title={t('entryForm.selectFarm')}
+            selectedKey={taskFarmId?.toString() ?? null}
+            options={(farms ?? [])
+              .filter((f) => f.id)
+              .map((f) => ({ key: String(f.id), label: f.name }))}
+            onSelect={(key) => setTaskFarmId(Number(key))}
+          />
         </View>
       )}
 
@@ -3197,6 +3185,7 @@ export function EntryForm({
           <DateTimePicker
             value={selectedDate}
             mode="date"
+            maximumDate={new Date()}
             onChange={(_, date) => {
               setShowDatePicker(false);
               if (date) setSelectedDate(date);
@@ -3259,6 +3248,7 @@ export function EntryForm({
                 value={selectedDate}
                 mode="date"
                 display="spinner"
+                maximumDate={new Date()}
                 onChange={(_, date) => {
                   if (date) setSelectedDate(date);
                 }}
@@ -3496,14 +3486,10 @@ export function EntryForm({
           {activeTab === 'log' ? renderLogContent() : renderTaskContent()}
         </ScrollView>
 
-        {activeTab === 'log' && !isInlineComposerMode && renderLogFormModal()}
+        {activeTab === 'log' && renderLogFormModal()}
 
         {/* Sticky Add Entry button above keyboard */}
-        {activeTab === 'log' &&
-          isKeyboardVisible &&
-          !showLogFormModal &&
-          !isInlineComposerMode &&
-          renderStickyAddButton()}
+        {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
 
         <View
           onLayout={(event) => {

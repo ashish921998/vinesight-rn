@@ -805,6 +805,12 @@ export const en = {
     saveLogs: 'Save logs ({{count}})',
     retrySaveLogs: 'Retry save ({{count}})',
     saveTask: 'Save task',
+    pickDate: 'Pick date',
+    irrigationFertilizerHint: '+ fertilizers',
+    repeatLastLogTitle: 'Repeat last log?',
+    repeatLastLogLoggedOn: 'Logged {{date}}',
+    repeatLastLogAdd_one: 'Add {{count}} draft',
+    repeatLastLogAdd_other: 'Add {{count}} drafts',
     drafts_one: '{{count}} draft',
     drafts_other: '{{count}} drafts',
     pendingLogs_one: 'Pending logs ({{count}})',
@@ -926,12 +932,6 @@ export const en = {
   fertigationForm: {
     title: 'Fertigation',
     subtitle: 'Log fertilizer application',
-    waterVolume: {
-      label: 'Water volume',
-      placeholder: 'Enter volume',
-      unitLiters: 'Liters',
-      hint: 'Total water used for fertilizer application (optional)',
-    },
     fertilizers: {
       label: 'Fertilizers',
       addFertilizer: 'Add fertilizer',

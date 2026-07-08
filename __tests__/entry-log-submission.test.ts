@@ -210,7 +210,6 @@ describe('submitEntryPendingLog', () => {
         id: 'log-fertigation',
         type: 'fertigation',
         data: {
-          waterVolume: 500,
           fertilizers: [
             {
               name: 'Urea',
@@ -230,7 +229,6 @@ describe('submitEntryPendingLog', () => {
       expect.objectContaining({
         farm_id: 7,
         date: '2026-02-11',
-        water_volume: 500,
         area: 10,
         nutrient_totals_elemental: { N: 1.2 },
         nutrient_totals_elemental_per_acre: { N: 0.12 },
@@ -269,7 +267,6 @@ describe('submitEntryPendingLog', () => {
         id: 'log-fertigation-hectare',
         type: 'fertigation',
         data: {
-          waterVolume: 500,
           fertilizers: [
             {
               name: 'Urea',

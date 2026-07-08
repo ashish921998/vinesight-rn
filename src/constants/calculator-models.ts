@@ -302,6 +302,17 @@ export function getLogType(id: LogTypeId): LogType {
 
 export const ACTIVITY_TYPES = LOG_TYPES.filter((lt) => lt.id !== 'note');
 
+/**
+ * Log types hidden from the add-log activity picker (the chip grid).
+ *
+ * Fertilizer/fertigation is entered inline via the irrigation log ("include
+ * fertilizers"), so it has no standalone chip — but the record TYPE is
+ * retained: the irrigation path still creates fertigation records behind the
+ * scenes, and existing fertigation logs render in timelines. Only the picker
+ * entry point is hidden.
+ */
+export const PICKER_HIDDEN_LOG_TYPE_IDS: ReadonlySet<LogTypeId> = new Set(['fertigation']);
+
 // ============================================================
 // MARK: - Expense Types
 // ============================================================

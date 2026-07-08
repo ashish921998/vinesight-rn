@@ -70,11 +70,14 @@ import type {
   ExpenseRecord,
   FertigationRecord,
 } from '@/types';
-import { mapExpenseRecordTypeToTypeId, mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
-
-function generateId(): string {
-  return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-}
+import { mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
+import {
+  irrigationRecordToFormData,
+  sprayRecordToFormData,
+  harvestRecordToFormData,
+  expenseRecordToFormData,
+  fertigationRecordToFormData,
+} from '@/utils/record-to-form';
 
 interface ActivityEditFormProps {
   visible?: boolean;
@@ -194,177 +197,21 @@ export function ActivityEditForm({
       if (parsedDate) setSelectedDate(parsedDate);
 
       switch (logType) {
-        case 'irrigation': {
-          const r = record as IrrigationRecord;
-          setIrrigationData({ duration: r.duration || 0 });
+        case 'irrigation':
+          setIrrigationData(irrigationRecordToFormData(record as IrrigationRecord));
           break;
-        }
-        case 'spray': {
-          const r = record as SprayRecord;
-          const data = createEmptySprayFormData();
-
-          if (r.dose && r.dose.includes('Water:')) {
-            const waterMatch = r.dose.match(/Water:\s*(\d+(?:\.\d+)?)/);
-            if (waterMatch) {
-              const parsedVolume = parseFloat(waterMatch[1]);
-              data.waterVolume = isNaN(parsedVolume) ? 0 : parsedVolume;
-            } else {
-              console.warn('[EditActivityModal] Water volume parsing failed:', r.dose);
-            }
-          }
-
-          const allowedUnits = ['gm/L', 'ml/L', 'ppm', 'kg', 'gram', 'liter', 'ml'] as const;
-          type AllowedUnit = (typeof allowedUnits)[number];
-          const allowedUnitByLowercase = new Map<string, AllowedUnit>(
-            allowedUnits.map((unit) => [unit.toLowerCase(), unit]),
-          );
-          const normalizeLegacySprayUnit = (rawUnit: string): AllowedUnit | null => {
-            const lowered = rawUnit.trim().toLowerCase();
-            if (
-              lowered === 'gm/liter' ||
-              lowered === 'gm/litre' ||
-              lowered === 'gm/l' ||
-              lowered === 'g/l'
-            ) {
-              return 'gm/L';
-            }
-            if (lowered === 'ml/liter' || lowered === 'ml/litre' || lowered === 'ml/l') {
-              return 'ml/L';
-            }
-            if (lowered === 'gm/acre') return 'gram';
-            if (lowered === 'ml/acre') return 'ml';
-            return allowedUnitByLowercase.get(lowered) ?? null;
-          };
-
-          data.catalogMixId = r.catalog_mix_id ?? null;
-          data.governingPhiDays = r.governing_phi_days ?? null;
-          data.safeHarvestDate = r.safe_harvest_date ?? null;
-          data.phiBlockingComponent = r.phi_blocking_component ?? null;
-          data.phiStatus = r.phi_status ?? null;
-
-          if (r.chemical_items && r.chemical_items.length > 0) {
-            data.chemicals = r.chemical_items.map((item) => ({
-              ...(item.unit?.trim().toLowerCase().includes('/acre')
-                ? ({ quantityBasis: item.quantity_basis ?? 'per_acre' } as const)
-                : ({ quantityBasis: item.quantity_basis ?? 'total' } as const)),
-              id: generateId(),
-              name: item.name,
-              quantity: item.quantity ?? 0,
-              unit:
-                (item.unit ? normalizeLegacySprayUnit(item.unit) : null) ??
-                ('ml/L' as SprayFormData['chemicals'][number]['unit']),
-              warehouseItemId: item.warehouse_item_id ?? null,
-              catalogProductId: item.catalog_product_id ?? null,
-              planItemId: item.plan_item_id ?? null,
-              compositionSnapshot: item.composition_snapshot ?? null,
-              densityKgPerL: item.density_kg_per_l ?? null,
-            }));
-          } else if (r.chemical) {
-            const chemicalParts = r.chemical.split(',').map((part) => part.trim());
-            const chemicals = chemicalParts.map((part) => {
-              const match = part.match(/(.+?)\s*\((\d+\.?\d*)\s*(.+?)\)/);
-              if (match) {
-                const unit = normalizeLegacySprayUnit(match[3]);
-                const parsedQuantity = parseFloat(match[2]);
-                if (isNaN(parsedQuantity)) {
-                  console.warn('[EditActivityModal] Invalid chemical quantity:', match[2]);
-                  return {
-                    id: generateId(),
-                    name: part,
-                    quantity: 0,
-                    unit: 'ml/L' as const,
-                  };
-                }
-                if (!unit) {
-                  console.warn('[EditActivityModal] Invalid unit, using default:', match[3]);
-                  return {
-                    id: generateId(),
-                    name: match[1].trim(),
-                    quantity: parsedQuantity,
-                    unit: 'ml/L' as const,
-                  };
-                }
-                return {
-                  id: generateId(),
-                  name: match[1].trim(),
-                  quantity: parsedQuantity,
-                  unit,
-                  quantityBasis: 'total' as const,
-                  warehouseItemId: null,
-                  catalogProductId: null,
-                  compositionSnapshot: null,
-                  densityKgPerL: null,
-                };
-              }
-              console.warn('[EditActivityModal] Chemical parsing failed, using defaults:', part);
-              return {
-                id: generateId(),
-                name: part,
-                quantity: 0,
-                unit: 'ml/L' as const,
-                quantityBasis: 'total' as const,
-                warehouseItemId: null,
-                catalogProductId: null,
-                compositionSnapshot: null,
-                densityKgPerL: null,
-              };
-            });
-            data.chemicals = chemicals;
-          }
-          setSprayData(data);
+        case 'spray':
+          setSprayData(sprayRecordToFormData(record as SprayRecord));
           break;
-        }
-        case 'harvest': {
-          const r = record as HarvestRecord;
-          setHarvestData({
-            quantity: r.quantity || 0,
-            grade: (r.grade || '') as
-              | ''
-              | 'A'
-              | 'B'
-              | 'C'
-              | 'Export Quality'
-              | 'Premium'
-              | 'Standard'
-              | 'Reject',
-            price: r.price || 0,
-            buyer: r.buyer || '',
-          });
+        case 'harvest':
+          setHarvestData(harvestRecordToFormData(record as HarvestRecord));
           break;
-        }
-        case 'expense': {
-          const r = record as ExpenseRecord;
-          setExpenseData({
-            type: mapExpenseRecordTypeToTypeId(r.type, 'Other'),
-            cost: r.cost || 0,
-            remarks: r.remarks || '',
-          });
+        case 'expense':
+          setExpenseData(expenseRecordToFormData(record as ExpenseRecord));
           break;
-        }
-        case 'fertigation': {
-          const r = record as FertigationRecord;
-          const data = createEmptyFertigationFormData();
-          if (r.water_volume != null) {
-            data.waterVolume = r.water_volume;
-          }
-          if (r.fertilizers && r.fertilizers.length > 0) {
-            data.fertilizers = r.fertilizers.map((f) => ({
-              name: f.name,
-              quantity: f.quantity ?? 0,
-              // Stored units load verbatim — historical spellings ('kg/acre',
-              // web-written strings) render as-is, never coerced (issue #192).
-              unit: f.unit,
-              quantityBasis: f.quantity_basis ?? 'total',
-              warehouseItemId: f.warehouse_item_id ?? null,
-              catalogProductId: f.catalog_product_id ?? null,
-              planItemId: f.plan_item_id ?? null,
-              compositionSnapshot: f.composition_snapshot ?? null,
-              densityKgPerL: f.density_kg_per_l ?? null,
-            }));
-          }
-          setFertigationData(data);
+        case 'fertigation':
+          setFertigationData(fertigationRecordToFormData(record as FertigationRecord));
           break;
-        }
       }
       setInitializedRecordId(record.id);
       setIsInitialized(true);
@@ -401,7 +248,7 @@ export function ActivityEditForm({
           const chemicalStr = sprayData.chemicals
             .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
             .join(', ');
-          const doseStr = `Water: ${sprayData.waterVolume}L`;
+          const doseStr = sprayData.waterVolume != null ? `Water: ${sprayData.waterVolume}L` : '';
           const chemicalItems = sprayData.chemicals
             .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
             .map((c) => ({
@@ -489,13 +336,11 @@ export function ActivityEditForm({
           const nutrientTotals = calculateNutrientTotalsForLog({
             items: fertilizerItems,
             areaAcre: farmAreaAcres ?? 0,
-            waterVolumeL: fertigationData.waterVolume ?? null,
           });
           await updateFertigation.mutateAsync({
             id: r.id,
             updates: {
               fertilizers: fertilizerItems,
-              water_volume: fertigationData.waterVolume,
               nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
               nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
               nutrient_calc_coverage: nutrientTotals.coveragePercent,

@@ -92,7 +92,6 @@ jest.mock('@/components/ui/unit-picker-modal', () => ({
 
 function makeEmptyRowData(): FertigationFormData {
   return {
-    waterVolume: undefined,
     fertilizers: [
       {
         id: 'fert-1',

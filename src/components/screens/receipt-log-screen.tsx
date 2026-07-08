@@ -30,7 +30,12 @@ import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
-import { LOG_TYPES, type LogType, type LogTypeId } from '@/constants/calculator-models';
+import {
+  LOG_TYPES,
+  PICKER_HIDDEN_LOG_TYPE_IDS,
+  type LogType,
+  type LogTypeId,
+} from '@/constants/calculator-models';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { toSupabaseDateString, type DailyNoteRecord } from '@/types/database';
 import type { Farm } from '@/types';
@@ -799,51 +804,52 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
             : t('receiptLog.whatDidYouDo', { defaultValue: 'What did you do?' })}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-          {LOG_TYPES.filter((lt) => !(isDelegatedMode && lt.id === 'expense')).map(
-            (lt: LogType) => (
-              <Pressable
-                key={lt.id}
-                onPress={() => handlePickType(lt.id as LogTypeId)}
-                accessibilityRole="button"
-                accessibilityLabel={t(lt.labelKey)}
+          {LOG_TYPES.filter(
+            (lt) =>
+              !PICKER_HIDDEN_LOG_TYPE_IDS.has(lt.id) && !(isDelegatedMode && lt.id === 'expense'),
+          ).map((lt: LogType) => (
+            <Pressable
+              key={lt.id}
+              onPress={() => handlePickType(lt.id as LogTypeId)}
+              accessibilityRole="button"
+              accessibilityLabel={t(lt.labelKey)}
+              style={{
+                width: '31.5%',
+                minHeight: 84,
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                backgroundColor: m3.surface.s100,
+                borderWidth: 1,
+                borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+                borderRadius: borderRadius.lg,
+                paddingVertical: spacing[3],
+              }}
+            >
+              <View
                 style={{
-                  width: '31.5%',
-                  minHeight: 84,
+                  width: 40,
+                  height: 40,
+                  borderRadius: radius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
-                  backgroundColor: m3.surface.s100,
-                  borderWidth: 1,
-                  borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-                  borderRadius: borderRadius.lg,
-                  paddingVertical: spacing[3],
+                  backgroundColor: `${lt.color}1f`,
                 }}
               >
-                <View
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: radius.full,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: `${lt.color}1f`,
-                  }}
-                >
-                  <Symbol name={resolveSymbolIconName(lt.icon)} size={20} color={lt.color} />
-                </View>
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: '600',
-                    color: m3.colorScheme.onSurface,
-                  }}
-                >
-                  {t(lt.labelKey)}
-                </Text>
-              </Pressable>
-            ),
-          )}
+                <Symbol name={resolveSymbolIconName(lt.icon)} size={20} color={lt.color} />
+              </View>
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: '600',
+                  color: m3.colorScheme.onSurface,
+                }}
+              >
+                {t(lt.labelKey)}
+              </Text>
+            </Pressable>
+          ))}
         </View>
       </ScrollView>
 

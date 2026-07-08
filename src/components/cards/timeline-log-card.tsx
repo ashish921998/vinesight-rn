@@ -149,11 +149,7 @@ export function getSecondaryDetail(
     case 'fertigation': {
       const fertigation = data as FertigationRecord;
       const area = fertigation.area;
-      const waterVolume = fertigation.water_volume;
-      const parts = [];
-      if (area) parts.push(`${area} acres`);
-      if (waterVolume) parts.push(`${waterVolume}L water`);
-      return parts.length > 0 ? parts.join(' • ') : null;
+      return area ? `${area} acres` : null;
     }
     case 'note':
       return null;
