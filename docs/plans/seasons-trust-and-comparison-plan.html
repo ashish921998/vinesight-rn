@@ -149,7 +149,7 @@
   </div>
 
   <div class="task">
-    <h4>A3 · Surface unassigned records in reports <span class="pill m">Medium</span></h4>
+    <h4>A3 · Surface unassigned records in reports <span class="pill m">Medium</span> <span class="pill s">Done</span></h4>
     <div class="meta"><code>src/components/screens/reports/report-filters-panel.tsx</code> (season section ~line 460 and ~920), <code>app/reports.tsx</code>, <code>src/hooks/use-reports.ts</code>; strings in <code>src/i18n/locales/{en,hi,mr}.ts</code></div>
     <p>When a specific season is selected, DB queries filter <code>eq('season_id', …)</code> — null rows vanish with no trace. Add a lightweight count query (one <code>head: true, count: 'exact'</code> per record table where <code>farm_id = X AND season_id IS NULL</code>, summed in a small <code>useUnassignedRecordCount(farmId)</code> hook) and render a notice row under the season picker when a season is selected and count &gt; 0: <em>"N records aren't in any season — visible under All seasons."</em> Tapping it switches the picker to All seasons.</p>
     <p>Deliberately <strong>notice-only</strong>, no "include them anyway" toggle in season mode: merging unassigned rows into a specific season's totals would misattribute them. The existing <code>includeUnassigned</code> logic already handles All-seasons mode correctly (default true).</p>

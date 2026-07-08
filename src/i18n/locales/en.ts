@@ -3187,6 +3187,10 @@ export const en = {
       active: 'Active',
       window: 'Season window: {{from}} to {{to}}',
       noActiveInfo: 'No active season. Use all seasons or select a historical season.',
+      unassignedNotice_one:
+        "{{count}} record isn't in any season — tap to view it under All seasons.",
+      unassignedNotice_other:
+        "{{count}} records aren't in any season — tap to view them under All seasons.",
       presets: {
         active: 'Active season',
         mostRecent: 'Most recent season',

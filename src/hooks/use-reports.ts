@@ -4,8 +4,12 @@
  */
 
 import { useMemo, useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useFarms } from './use-farms';
 import { useFarmSeasons } from './use-farm-seasons';
+import { queryKeys } from './query-keys';
+import { supabase } from '../lib/supabase';
+import { TABLES } from '../types';
 import {
   useIrrigationRecords,
   useSprayRecords,
@@ -387,6 +391,51 @@ export function useReportComparison(filters: ReportFilters) {
   ]);
 
   return { ...current, comparison };
+}
+
+/** The record tables that feed report totals and carry a season_id. */
+const UNASSIGNED_COUNT_TABLES = [
+  TABLES.IRRIGATION_RECORDS,
+  TABLES.SPRAY_RECORDS,
+  TABLES.FERTIGATION_RECORDS,
+  TABLES.HARVEST_RECORDS,
+  TABLES.EXPENSE_RECORDS,
+] as const;
+
+/**
+ * Count of a farm's records that belong to no season (season_id null), summed
+ * across the record tables that feed report totals. When a specific season is
+ * selected, the record queries filter eq('season_id', …) so these rows vanish
+ * from the totals with no trace — the reports screen uses this count to say
+ * so. Pass null to disable (no farm, or no season filter active).
+ */
+export function useUnassignedRecordCount(farmId: number | null) {
+  return useQuery({
+    queryKey: queryKeys.reports.unassignedRecordCount(farmId ?? -1),
+    queryFn: async (): Promise<number> => {
+      if (farmId == null) return 0;
+      const counts = await Promise.all(
+        UNASSIGNED_COUNT_TABLES.map(async (table) => {
+          const { count, error } = await supabase
+            .from(table)
+            .select('id', { count: 'exact', head: true })
+            .eq('farm_id', farmId)
+            .is('season_id', null);
+          if (error) {
+            // Missing table on older schemas — zero, not a broken notice.
+            if (error.code === '42P01') return 0;
+            throw error;
+          }
+          return count ?? 0;
+        }),
+      );
+      return counts.reduce((sum, value) => sum + value, 0);
+    },
+    enabled: farmId != null,
+    // Head-only counts are cheap; stay fresh so the notice tracks recomputes
+    // and newly logged records instead of a 5-minute-stale cache.
+    staleTime: 0,
+  });
 }
 
 /**

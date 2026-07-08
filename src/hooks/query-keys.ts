@@ -232,6 +232,13 @@ export const queryKeys = {
       [...queryKeys.masterCatalog.all, 'product', productId] as const,
   },
 
+  // Reports
+  reports: {
+    all: ['reports'] as const,
+    unassignedRecordCount: (farmId: number) =>
+      [...queryKeys.reports.all, 'unassignedRecordCount', { farmId }] as const,
+  },
+
   // PHI
   phi: {
     all: ['phi'] as const,

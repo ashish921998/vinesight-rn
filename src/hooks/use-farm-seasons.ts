@@ -64,6 +64,7 @@ function invalidateSeasonScopedQueries(
   queryClient.invalidateQueries({
     queryKey: queryKeys.temporaryWorkerEntries.listByFarm(farmId),
   });
+  queryClient.invalidateQueries({ queryKey: queryKeys.reports.unassignedRecordCount(farmId) });
   // Tasks use their own query-key namespace (use-tasks.ts), not the shared
   // queryKeys object — invalidate broadly since it isn't farm-scoped there.
   queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
