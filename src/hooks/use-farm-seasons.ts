@@ -13,6 +13,20 @@ function isRpcFunctionMissing(error: { code?: string; message?: string } | null)
   return typeof error.message === 'string' && /function .* does not exist/i.test(error.message);
 }
 
+/**
+ * A season-start recompute call can fail outright (network/RPC error) without
+ * ever reaching the server-side logic that flags ambiguous assignments in
+ * `season_inference_audit` — so `needsSeasonReview` alone can't surface it.
+ * This key stores that client-only signal in the (persisted) query cache
+ * instead of component state, so it survives remounts/navigation and app
+ * restarts rather than disappearing the moment the warning alert is dismissed.
+ * `setQueryData` is the only writer; it must stay off the `farmSeasons.*`
+ * key hierarchy so unrelated season invalidations don't wipe it out.
+ */
+function recomputeRetryQueryKey(farmId: number) {
+  return ['farm-season-recompute-retry', farmId] as const;
+}
+
 async function recomputeSeasonAssignments(farmId: number): Promise<void> {
   const { error } = await supabase.rpc('recompute_farm_season_assignments', {
     p_farm_id: farmId,
@@ -267,6 +281,9 @@ export function useStartFarmSeason() {
     },
     onSuccess: (newSeason) => {
       invalidateSeasonScopedQueries(queryClient, newSeason.farm_id);
+      if (newSeason.recomputeFailed) {
+        queryClient.setQueryData(recomputeRetryQueryKey(newSeason.farm_id), true);
+      }
     },
   });
 }
@@ -344,6 +361,7 @@ export function useRecomputeFarmSeasonAssignments() {
     },
     onSuccess: (_, { farmId }) => {
       invalidateSeasonScopedQueries(queryClient, farmId);
+      queryClient.setQueryData(recomputeRetryQueryKey(farmId), false);
     },
   });
 }
@@ -367,6 +385,18 @@ export function useFarmSeasonStatus(farmId: number | undefined) {
     },
     enabled: !!farmId && !Number.isNaN(farmId),
   });
+  // Client-only fallback for a recompute that failed outright (network/RPC
+  // error) rather than completing and flagging ambiguity server-side — see
+  // recomputeRetryQueryKey. staleTime: Infinity keeps a routine remount from
+  // silently refetching this back to false; setQueryData (in
+  // useStartFarmSeason / useRecomputeFarmSeasonAssignments) is the only thing
+  // that should change it.
+  const recomputeRetryQuery = useQuery({
+    queryKey: recomputeRetryQueryKey(farmId ?? -1),
+    queryFn: () => false,
+    enabled: !!farmId && !Number.isNaN(farmId),
+    staleTime: Infinity,
+  });
 
   const seasons = seasonsQuery.data ?? [];
   const activeSeason = seasons.find((season) => season.end_date === null) ?? null;
@@ -377,7 +407,7 @@ export function useFarmSeasonStatus(farmId: number | undefined) {
     activeSeason,
     hasActiveSeason: activeSeason !== null,
     lastEndedSeason,
-    needsReview: reviewQuery.data ?? false,
+    needsReview: (reviewQuery.data ?? false) || (recomputeRetryQuery.data ?? false),
     isLoading: seasonsQuery.isLoading || reviewQuery.isLoading,
     refetch: async () => {
       await Promise.all([seasonsQuery.refetch(), reviewQuery.refetch()]);

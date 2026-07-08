@@ -132,13 +132,6 @@ export default function FarmDetailScreen() {
   const recomputeSeasonAssignments = useRecomputeFarmSeasonAssignments();
 
   const [refreshing, setRefreshing] = useState(false);
-  // Local, session-lived fallback for "needs review" — set when a season-start
-  // recompute call fails outright (network/RPC error) rather than completing
-  // and flagging ambiguity server-side. `needsSeasonReview` (from the
-  // `season_inference_audit` table) only reflects the latter case, so without
-  // this flag a failed recompute would lose its recovery path the moment the
-  // one-time warning alert is dismissed.
-  const [recomputeRetryNeeded, setRecomputeRetryNeeded] = useState(false);
 
   const [showSeasonForm, setShowSeasonForm] = useState(false);
   const [seasonFormMode, setSeasonFormMode] = useState<'start' | 'end'>('end');
@@ -622,7 +615,6 @@ export default function FarmDetailScreen() {
       // Android, so any warnings from this flow are merged into one alert.
       const warnings: string[] = [];
       if (createdSeason.recomputeFailed) {
-        setRecomputeRetryNeeded(true);
         warnings.push(t('farmDetails.seasons.warnings.recomputePartial'));
       }
       const targetDateSaveFailedMessage = t('entryForm.phiErrors.targetDateSavePartial', {
@@ -742,14 +734,13 @@ export default function FarmDetailScreen() {
         },
       },
     ];
-    if ((needsSeasonReview || recomputeRetryNeeded) && typeof farm?.id === 'number') {
+    if (needsSeasonReview && typeof farm?.id === 'number') {
       const reviewFarmId = farm.id;
       actions.push({
         text: t('farmDetails.actions.reviewSeasonHistory'),
         onPress: async () => {
           try {
             await recomputeSeasonAssignments.mutateAsync({ farmId: reviewFarmId });
-            setRecomputeRetryNeeded(false);
             toast.success(t('farmDetails.seasons.alerts.reviewQueuedSuccess'));
           } catch (error) {
             const message =
@@ -2596,7 +2587,7 @@ export default function FarmDetailScreen() {
               </View>
               <UiSymbol name="chevron.right" size={16} color={m3.colorScheme.onSurfaceVariant} />
             </Pressable>
-            {(needsSeasonReview || recomputeRetryNeeded) && typeof farm?.id === 'number' ? (
+            {needsSeasonReview && typeof farm?.id === 'number' ? (
               <Pressable
                 onPress={async () => {
                   setShowFarmActionsSheet(false);
@@ -2604,7 +2595,6 @@ export default function FarmDetailScreen() {
                   const reviewFarmId = farm.id;
                   try {
                     await recomputeSeasonAssignments.mutateAsync({ farmId: reviewFarmId });
-                    setRecomputeRetryNeeded(false);
                     toast.success(t('farmDetails.seasons.alerts.reviewQueuedSuccess'));
                   } catch (error) {
                     const message =
