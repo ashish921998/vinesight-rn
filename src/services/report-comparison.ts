@@ -85,6 +85,14 @@ export interface BaselineResolution {
    * for plain date-window baselines.
    */
   elapsedDays: number | null;
+  /**
+   * Set only when the baseline window had to be clamped to a shorter prior
+   * season. Refetching the *current* side with this narrower range keeps the
+   * comparison apples-to-apples — both sides cover the same `elapsedDays`
+   * window instead of comparing a full current season against a truncated
+   * baseline. Null when the current side's own filters already match.
+   */
+  currentFilters: ReportFilters | null;
 }
 
 /**
@@ -127,6 +135,21 @@ export function resolveBaseline(
     // baselineTo gets clamped above, reporting the unclamped `elapsed` would
     // overstate how far the baseline period runs (a UI footnote reading "both
     // seasons measured over their first 30 days" when the baseline only has 14).
+    const clampedElapsedDays = daysBetween(prior.start_date, baselineTo);
+    // The clamp above narrows the *baseline* window. If we compare that against
+    // the current season's full (unclamped) elapsed window, the delta is
+    // apples-to-oranges — e.g. current's first 30 days vs baseline's first 14.
+    // Surface a matching current-side window so the caller refetches both
+    // sides over the same `clampedElapsedDays`.
+    const currentFilters: ReportFilters | null =
+      clampedElapsedDays < elapsed
+        ? {
+            farmId,
+            seasonId: filters.seasonId,
+            dateRange: { from: currentFrom, to: addDaysIso(currentFrom, clampedElapsedDays) },
+            includeUnassigned: false,
+          }
+        : null;
     return {
       filters: {
         farmId,
@@ -135,7 +158,8 @@ export function resolveBaseline(
         includeUnassigned: false,
       },
       baselineSeason: prior,
-      elapsedDays: daysBetween(prior.start_date, baselineTo),
+      elapsedDays: clampedElapsedDays,
+      currentFilters,
     };
   }
 
@@ -151,5 +175,6 @@ export function resolveBaseline(
     },
     baselineSeason: null,
     elapsedDays: null,
+    currentFilters: null,
   };
 }

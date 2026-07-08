@@ -57,6 +57,7 @@ describe('resolveBaseline', () => {
       },
       baselineSeason: prior,
       elapsedDays: 30,
+      currentFilters: null, // no clamp needed — both sides already cover 30 days
     });
   });
 
@@ -87,6 +88,18 @@ describe('resolveBaseline', () => {
     expect(result?.elapsedDays).toBe(14);
   });
 
+  it('surfaces a matching current-side clamp when the baseline is shorter, so the delta stays apples-to-apples', () => {
+    const prior = season(9, '2025-04-01', '2025-04-15'); // ends after 14 days, not 30
+    const current = season(10, '2026-04-01', null);
+    const result = resolveBaseline(baseFilters({ seasonId: 10 }), [current, prior], current, TODAY);
+    expect(result?.currentFilters).toEqual({
+      farmId: 1,
+      seasonId: 10,
+      dateRange: { from: '2026-04-01', to: '2026-04-15' },
+      includeUnassigned: false,
+    });
+  });
+
   it('falls back to the preceding equal-length window with no season selected', () => {
     const filters = baseFilters({ dateRange: { from: '2026-01-01', to: '2026-01-31' } });
     const result = resolveBaseline(filters, [], null, TODAY);
@@ -98,6 +111,7 @@ describe('resolveBaseline', () => {
       },
       baselineSeason: null,
       elapsedDays: null,
+      currentFilters: null,
     });
   });
 });

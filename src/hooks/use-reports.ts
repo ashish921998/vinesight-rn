@@ -343,10 +343,23 @@ export function useReportComparison(filters: ReportFilters) {
   const baselineFilters = baselineResolution?.filters ?? null;
   const baseline = useReportData(baselineFilters ?? filters, { enabled: baselineFilters != null });
 
+  // Only set when the baseline had to be clamped to a shorter prior season —
+  // refetches the current side over that same narrower window so the delta
+  // compares like-for-like instead of a full season against a truncated one.
+  const currentComparisonFilters = baselineResolution?.currentFilters ?? null;
+  const currentComparison = useReportData(currentComparisonFilters ?? filters, {
+    enabled: currentComparisonFilters != null,
+  });
+
   const comparison = useMemo<ReportComparison | null>(() => {
     if (!baselineResolution || !current.preview || !baseline.preview) return null;
     // Must-have-records: an empty prior window is not an honest baseline.
     if (baseline.preview.summary.totalRecords === 0) return null;
+
+    const currentSummary = currentComparisonFilters
+      ? currentComparison.preview?.summary
+      : current.preview.summary;
+    if (!currentSummary) return null;
 
     const currentLabel = current.selectedSeason
       ? formatReportSeasonLabel(current.selectedSeason)
@@ -356,7 +369,7 @@ export function useReportComparison(filters: ReportFilters) {
       : `${baselineResolution.filters.dateRange.from} – ${baselineResolution.filters.dateRange.to}`;
 
     return {
-      deltas: computeReportDeltas(current.preview.summary, baseline.preview.summary),
+      deltas: computeReportDeltas(currentSummary, baseline.preview.summary),
       baselineSummary: baseline.preview.summary,
       baselineLabel,
       currentLabel,
@@ -367,6 +380,8 @@ export function useReportComparison(filters: ReportFilters) {
     current.preview,
     current.selectedSeason,
     baseline.preview,
+    currentComparisonFilters,
+    currentComparison.preview,
     filters.dateRange.from,
     filters.dateRange.to,
   ]);

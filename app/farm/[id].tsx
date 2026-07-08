@@ -644,12 +644,17 @@ export default function FarmDetailScreen() {
         }
       }
       await refetchSeasons();
-      triggerHapticSuccess();
       setShowSeasonForm(false);
       setShowSeasonStartPicker(false);
       setShowSeasonEndPicker(false);
       setShowSeasonTargetPicker(false);
-      showSeasonSuccess('start');
+      // Skip the celebratory success overlay when recompute failed — it reads
+      // as "all done" right after a warning that some records still need
+      // manual review, which is a contradictory pair of signals.
+      if (!createdSeason.recomputeFailed) {
+        triggerHapticSuccess();
+        showSeasonSuccess('start');
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : t('farmDetails.seasons.errors.startFailed');
