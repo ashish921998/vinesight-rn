@@ -64,16 +64,18 @@ export function sprayRecordToFormData(record: SprayRecord): SprayFormData {
     const waterMatch = record.dose.match(/Water:\s*(\d+(?:\.\d+)?)/);
     if (waterMatch) {
       const parsedVolume = parseFloat(waterMatch[1]);
-      data.waterVolume = isNaN(parsedVolume) ? 0 : parsedVolume;
+      // `undefined` is the "not recorded" sentinel downstream (display omits
+      // the label, form validation requires > 0). Only accept a real positive
+      // value here; NaN or non-positive falls back to undefined rather than
+      // fabricating a misleading 0.
+      data.waterVolume = !isNaN(parsedVolume) && parsedVolume > 0 ? parsedVolume : undefined;
     } else {
       console.warn('[recordToForm] Water volume parsing failed:', record.dose);
-      data.waterVolume = 0;
     }
-  } else {
-    // Older records may not store water volume in the dose string; default to 0
-    // so downstream display (e.g. Repeat Last Log) never renders "undefined".
-    data.waterVolume = 0;
   }
+  // else: older records without a "Water:" token leave waterVolume undefined
+  // (the createEmptySprayFormData default), which downstream display treats as
+  // "not recorded" and omits from the description.
 
   data.catalogMixId = record.catalog_mix_id ?? null;
   data.governingPhiDays = record.governing_phi_days ?? null;

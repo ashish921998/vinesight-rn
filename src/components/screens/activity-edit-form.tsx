@@ -248,7 +248,7 @@ export function ActivityEditForm({
           const chemicalStr = sprayData.chemicals
             .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
             .join(', ');
-          const doseStr = `Water: ${sprayData.waterVolume}L`;
+          const doseStr = sprayData.waterVolume != null ? `Water: ${sprayData.waterVolume}L` : '';
           const chemicalItems = sprayData.chemicals
             .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
             .map((c) => ({
