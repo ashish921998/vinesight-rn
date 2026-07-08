@@ -335,6 +335,12 @@ export function EntryForm({
   const [showTaskFarmPicker, setShowTaskFarmPicker] = useState(false);
 
   const isAllFarmsSelected = selectedFarmId === ALL_FARMS_ID;
+  // A caller can hand off a specific farm two ways: the resolved `farm` object
+  // (farm-detail entry points) or just `initialFarmId` (deep links from a task,
+  // a voice-log draft, etc. that only know the id). Either means the farm is
+  // already a fact, not a choice — the picker card should stay hidden, same as
+  // the `farm` prop case, rather than asking the user to reconfirm it.
+  const hasCallerProvidedFarm = Boolean(farm) || initialFarmId != null;
   const activeFarm =
     farm ??
     (selectedFarmId !== null && selectedFarmId !== ALL_FARMS_ID
@@ -2161,7 +2167,7 @@ export function EntryForm({
 
   const renderLogContent = () => (
     <>
-      {!farm && !lockFarmSelection && !isSingleFarmAccount && (
+      {!hasCallerProvidedFarm && !lockFarmSelection && !isSingleFarmAccount && (
         <View
           style={{
             backgroundColor: m3.surface.s100,
@@ -2474,7 +2480,7 @@ export function EntryForm({
         </View>
       )}
 
-      {!farm && !lockFarmSelection && !isSingleFarmAccount && (
+      {!hasCallerProvidedFarm && !lockFarmSelection && !isSingleFarmAccount && (
         <View style={{ marginBottom: 16 }}>
           <Text
             selectable
