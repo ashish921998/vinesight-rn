@@ -236,6 +236,42 @@ describe('EntryForm UI integration', () => {
     expect(mockCreateExpenseMutate).not.toHaveBeenCalled();
   });
 
+  it('does not block saving while season status is still loading', async () => {
+    // activeSeason is null during the in-flight query; the gate must wait for
+    // isLoading to settle rather than falsely blocking an eligible farm.
+    mockUseFarmSeasonStatus.mockReturnValue({
+      activeSeason: null,
+      hasActiveSeason: false,
+      lastEndedSeason: null,
+      needsReview: false,
+      isLoading: true,
+      refetch: jest.fn(),
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm farm={mockFarm} onClose={jest.fn()} tabs={['log']} presentation="screen" />
+      </QueryClientProvider>,
+    );
+
+    // No Start-season CTA while loading, and a draft can still be built + saved.
+    expect(screen.queryByText('farmDetails.seasons.banner.startSeason')).toBeNull();
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+  });
+
   it('submits expense log from UI with normalized backend expense type', async () => {
     const queryClient = new QueryClient({
       defaultOptions: {

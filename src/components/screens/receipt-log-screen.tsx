@@ -220,11 +220,14 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
   // so this banner is the only season-awareness a consultant logging on a
   // farmer's behalf sees. Never blocks — a consultant must be able to log even
   // when the farmer hasn't started a season.
-  const { activeSeason } = useFarmSeasonStatus(farm?.id);
+  const { activeSeason, isLoading: isSeasonStatusLoading } = useFarmSeasonStatus(farm?.id);
   // Farmer path: block save until an active season exists. Consultant/delegated
   // path is EXEMPT — a consultant must be able to log for a farmer who hasn't
   // started a season; there the banner stays soft (informational only).
-  const isBlockedByNoSeason = !isDelegatedMode && farm?.id != null && !activeSeason;
+  // activeSeason is null while the status query loads, so gate on the loading
+  // flag too — otherwise a cold cache falsely blocks an eligible farm.
+  const isBlockedByNoSeason =
+    !isDelegatedMode && farm?.id != null && !isSeasonStatusLoading && !activeSeason;
   const goStartSeason = () => {
     if (farm?.id == null) return;
     onClose();
@@ -720,7 +723,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[6] }}
         keyboardShouldPersistTaps="handled"
       >
-        {farm?.id != null && !activeSeason ? (
+        {farm?.id != null && !isSeasonStatusLoading && !activeSeason ? (
           <NoActiveSeasonBanner
             message={
               isDelegatedMode && farm?.name

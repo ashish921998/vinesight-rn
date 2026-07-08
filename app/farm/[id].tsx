@@ -971,10 +971,17 @@ export default function FarmDetailScreen() {
       });
       // Non-fatal: the start date is already saved; a recompute failure just
       // means some records stay in their old bucket until the next recompute.
+      // Surface the same partial-recompute warning the season-start flow uses,
+      // so the edit isn't reported as fully successful when records may still
+      // be mis-bucketed.
       try {
         await recomputeSeasonAssignments.mutateAsync({ farmId: farm.id });
       } catch (recomputeError) {
         console.warn('[farm] recompute after start-date edit failed:', recomputeError);
+        Alert.alert(
+          t('common.warning', { defaultValue: 'Warning' }),
+          t('farmDetails.seasons.warnings.recomputePartial'),
+        );
       }
       return true;
     } catch (error) {
@@ -1172,7 +1179,9 @@ export default function FarmDetailScreen() {
       const refreshedActiveSeason =
         refreshedSeasons.data?.find((season) => season.end_date === null) ?? null;
       if (!refreshedActiveSeason) {
-        if (isSeasonsLoading) return;
+        // refreshedActiveSeason already reflects the just-refetched list, so no
+        // stale isSeasonsLoading guard is needed here (it would be read from the
+        // pre-refetch render and could wrongly skip opening the form).
         openStartSeasonForm();
         return;
       }

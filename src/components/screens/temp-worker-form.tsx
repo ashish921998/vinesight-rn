@@ -51,9 +51,12 @@ export function TempWorkerForm({
   const createTemporaryWorkerEntry = useCreateTemporaryWorkerEntry();
 
   const resolvedFarmId = externalFarmId ?? selectedFarmId;
-  const { activeSeason } = useFarmSeasonStatus(resolvedFarmId ?? undefined);
-  // Block save until the resolved farm has an active season.
-  const isBlockedByNoSeason = resolvedFarmId != null && !activeSeason;
+  const { activeSeason, isLoading: isSeasonStatusLoading } = useFarmSeasonStatus(
+    resolvedFarmId ?? undefined,
+  );
+  // Block save until the resolved farm has a settled, missing active season —
+  // activeSeason is null while the status query is loading.
+  const isBlockedByNoSeason = resolvedFarmId != null && !isSeasonStatusLoading && !activeSeason;
   const router = useRouter();
   const goStartSeason = () => {
     if (resolvedFarmId == null) return;

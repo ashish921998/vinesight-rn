@@ -53,7 +53,9 @@ export default function LabTestForm({
   const createSoilTest = useCreateSoilTest();
   const createPetioleTest = useCreatePetioleTest();
   const { data: farm } = useFarm(farmId);
-  const { activeSeason } = useFarmSeasonStatus(farmId);
+  const { activeSeason, isLoading: isSeasonStatusLoading } = useFarmSeasonStatus(farmId);
+  // Only a settled "no active season" blocks; activeSeason is null while loading.
+  const isBlockedByNoSeason = !isSeasonStatusLoading && !activeSeason;
   const router = useRouter();
   const goStartSeason = () => {
     onClose();
@@ -307,10 +309,10 @@ export default function LabTestForm({
       onSave={handleSubmit}
       saveLabel={t('labTests.form.saveLabel')}
       isLoading={isLoading}
-      isSaveDisabled={!isValid || !activeSeason}
+      isSaveDisabled={!isValid || isBlockedByNoSeason}
       presentation={presentation}
     >
-      {!activeSeason ? <NoActiveSeasonBanner onStartSeason={goStartSeason} /> : null}
+      {isBlockedByNoSeason ? <NoActiveSeasonBanner onStartSeason={goStartSeason} /> : null}
       <SectionHeader title={t('labTests.form.uploadSectionTitle')} style={{ marginBottom: 12 }} />
       <Pressable
         onPress={handleUploadFile}

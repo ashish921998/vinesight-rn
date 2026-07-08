@@ -52,8 +52,9 @@ export default function SoilProfileForm({
   const insets = useSafeAreaInsets();
   const m3 = useM3();
   const createProfile = useCreateSoilProfile();
-  const { activeSeason } = useFarmSeasonStatus(farmId);
-  const isBlockedByNoSeason = !activeSeason;
+  const { activeSeason, isLoading: isSeasonStatusLoading } = useFarmSeasonStatus(farmId);
+  // activeSeason is null while loading — only a settled no-season blocks.
+  const isBlockedByNoSeason = !isSeasonStatusLoading && !activeSeason;
   const router = useRouter();
   const goStartSeason = () => {
     onClose();

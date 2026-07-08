@@ -364,7 +364,9 @@ export function EntryForm({
   const { data: recentSprayChemicals } = useRecentSprayChemicals(logFarmId ?? undefined);
   const { data: recentFertigationItems } = useRecentFertigationItems(logFarmId ?? undefined);
   const { data: fertilizerPlan } = useFertilizerPlan(logFarmId ?? undefined);
-  const { activeSeason } = useFarmSeasonStatus(logFarmId ?? undefined);
+  const { activeSeason, isLoading: isSeasonStatusLoading } = useFarmSeasonStatus(
+    logFarmId ?? undefined,
+  );
   // Saved records for the selected farm — power the week-strip "already
   // logged" dots and the repeat-last-log suggestion. Query keys are shared
   // with the farm detail screen, so these are usually cache hits.
@@ -896,7 +898,11 @@ export function EntryForm({
   // single resolved farm with no active season; the All-farms expense case is
   // exempt (spans farms, no single season to check). DB stays permissive — this
   // is a UX gate, not a data constraint.
-  const isBlockedByNoSeason = logFarmId != null && !isAllFarmsSelected && !activeSeason;
+  // Gate on the loading flag too: activeSeason is null while the query is in
+  // flight, so without this a cold cache would falsely block a farm that does
+  // have an active season.
+  const isBlockedByNoSeason =
+    logFarmId != null && !isAllFarmsSelected && !isSeasonStatusLoading && !activeSeason;
   const goStartSeason = useCallback(() => {
     if (logFarmId == null) return;
     onClose();
