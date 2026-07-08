@@ -176,6 +176,7 @@ describe('EntryForm UI integration', () => {
       lastEndedSeason: null,
       needsReview: false,
       isLoading: false,
+      hasResolvedSeasons: true,
       refetch: jest.fn(),
     });
     mockUseChemicalMixSearch.mockReturnValue({ data: [], isLoading: false });
@@ -205,6 +206,7 @@ describe('EntryForm UI integration', () => {
       lastEndedSeason: null,
       needsReview: false,
       isLoading: false,
+      hasResolvedSeasons: true,
       refetch: jest.fn(),
     });
     const queryClient = new QueryClient({
@@ -236,15 +238,17 @@ describe('EntryForm UI integration', () => {
     expect(mockCreateExpenseMutate).not.toHaveBeenCalled();
   });
 
-  it('does not block saving while season status is still loading', async () => {
-    // activeSeason is null during the in-flight query; the gate must wait for
-    // isLoading to settle rather than falsely blocking an eligible farm.
+  it('does not block saving until the season lookup is confirmed (loading or errored)', async () => {
+    // activeSeason is null both during the in-flight query and when it errors;
+    // in either case hasResolvedSeasons is false, so the gate must not block an
+    // otherwise-eligible farm.
     mockUseFarmSeasonStatus.mockReturnValue({
       activeSeason: null,
       hasActiveSeason: false,
       lastEndedSeason: null,
       needsReview: false,
-      isLoading: true,
+      isLoading: false,
+      hasResolvedSeasons: false,
       refetch: jest.fn(),
     });
     const queryClient = new QueryClient({
@@ -332,6 +336,7 @@ describe('EntryForm UI integration', () => {
       lastEndedSeason: null,
       needsReview: false,
       isLoading: false,
+      hasResolvedSeasons: true,
       refetch: jest.fn(),
     });
     mockUseChemicalMixSearch.mockReturnValue({

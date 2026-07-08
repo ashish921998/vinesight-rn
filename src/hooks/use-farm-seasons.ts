@@ -445,6 +445,12 @@ export function useFarmSeasonStatus(farmId: number | undefined) {
     lastEndedSeason,
     needsReview: (reviewQuery.data ?? false) || (recomputeRetryQuery.data ?? false),
     isLoading: seasonsQuery.isLoading || reviewQuery.isLoading,
+    // True only once the seasons lookup has settled successfully. Consumers
+    // that hard-block on "no active season" must gate on this rather than
+    // `!isLoading && !activeSeason`: a failed query also leaves activeSeason
+    // null with isLoading false, which would otherwise falsely block a farm
+    // that does have a season.
+    hasResolvedSeasons: seasonsQuery.isSuccess,
     refetch: async () => {
       await Promise.all([
         seasonsQuery.refetch(),

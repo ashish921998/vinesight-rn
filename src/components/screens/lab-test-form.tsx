@@ -53,9 +53,10 @@ export default function LabTestForm({
   const createSoilTest = useCreateSoilTest();
   const createPetioleTest = useCreatePetioleTest();
   const { data: farm } = useFarm(farmId);
-  const { activeSeason, isLoading: isSeasonStatusLoading } = useFarmSeasonStatus(farmId);
-  // Only a settled "no active season" blocks; activeSeason is null while loading.
-  const isBlockedByNoSeason = !isSeasonStatusLoading && !activeSeason;
+  const { activeSeason, hasResolvedSeasons } = useFarmSeasonStatus(farmId);
+  // Block only on a confirmed no-season result — activeSeason is null while the
+  // query loads or errors, so gate on hasResolvedSeasons.
+  const isBlockedByNoSeason = hasResolvedSeasons && !activeSeason;
   const router = useRouter();
   const goStartSeason = () => {
     onClose();
