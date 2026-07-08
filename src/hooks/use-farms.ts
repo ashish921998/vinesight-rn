@@ -251,11 +251,19 @@ export function useCreateFarm() {
       if (!data) {
         throw lastError ?? new Error('Failed to create farm');
       }
-      const seasonName = t('farms.defaultSeasonName', { year: new Date().getFullYear() });
-      try {
-        await ensureInitialFarmSeason(data, userId, seasonName);
-      } catch (seasonError) {
-        console.warn('[useCreateFarm] ensureInitialFarmSeason failed:', seasonError);
+      // Only auto-start the first season when the farmer supplied a pruning
+      // date to anchor it to. Without one, silently defaulting to "today"
+      // yields a meaningless start date that mis-buckets records — instead we
+      // leave the farm season-less so the create flow can prompt the farmer to
+      // pick a start date (see the startSeason redirect in use-farm-form). The
+      // lazy resolver's legacy safety net is intentionally left untouched.
+      if (data.date_of_pruning) {
+        const seasonName = t('farms.defaultSeasonName', { year: new Date().getFullYear() });
+        try {
+          await ensureInitialFarmSeason(data, userId, seasonName);
+        } catch (seasonError) {
+          console.warn('[useCreateFarm] ensureInitialFarmSeason failed:', seasonError);
+        }
       }
       return data;
     },

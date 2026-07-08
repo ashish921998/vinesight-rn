@@ -6,6 +6,7 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { Alert, Keyboard, ScrollView, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
 import {
   useCreateFarm,
   useFarm,
@@ -76,6 +77,7 @@ function getFarmPayloadMetadata(payload: Record<string, unknown>) {
 
 export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onClose: () => void) {
   const { t } = useTranslation();
+  const router = useRouter();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
   const { windowHeight } = useResponsiveHeight();
@@ -1056,6 +1058,18 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
           guidedTourEmit('guidedTour.farmCreated', { farmId: createdFarm.id });
           return;
         }
+      }
+      // No pruning date → no season was auto-started (see useCreateFarm). Send
+      // the farmer to the new farm with the season-start form open so they pick
+      // a real start date instead of getting a silent "today" default. The
+      // guided tour has its own season prompt, so this only applies outside it.
+      if (typeof createdFarm?.id === 'number' && !formState.dateOfPruning) {
+        onClose();
+        router.replace({
+          pathname: '/farm/[id]',
+          params: { id: String(createdFarm.id), startSeason: '1' },
+        });
+        return;
       }
       onClose();
     } catch (_error: unknown) {
