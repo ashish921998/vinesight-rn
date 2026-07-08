@@ -33,6 +33,7 @@ import {
   useStartFarmSeason,
   useEndFarmSeason,
   useUpdateFarmSeasonTargetHarvestDate,
+  useUpdateFarmSeason,
   useFarmSeasonStatus,
   useRecomputeFarmSeasonAssignments,
   useEarliestSafeHarvestForSeason,
@@ -132,6 +133,7 @@ export default function FarmDetailScreen() {
   const startFarmSeason = useStartFarmSeason();
   const endFarmSeason = useEndFarmSeason();
   const updateSeasonTargetHarvestDate = useUpdateFarmSeasonTargetHarvestDate();
+  const updateFarmSeason = useUpdateFarmSeason();
   const recomputeSeasonAssignments = useRecomputeFarmSeasonAssignments();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -146,6 +148,13 @@ export default function FarmDetailScreen() {
   const [isStartingSeasonFlow, setIsStartingSeasonFlow] = useState(false);
   const [isSavingActiveSeasonTargetDate, setIsSavingActiveSeasonTargetDate] = useState(false);
   const [isEditingActiveSeasonTargetIOS, setIsEditingActiveSeasonTargetIOS] = useState(false);
+  // Inline edit of the ACTIVE season's start date (mirrors the target-harvest
+  // editors above). Changing start_date shifts the season window, so a
+  // recompute re-buckets records afterward.
+  const [showActiveSeasonStartPicker, setShowActiveSeasonStartPicker] = useState(false);
+  const [isEditingActiveSeasonStartIOS, setIsEditingActiveSeasonStartIOS] = useState(false);
+  const [isSavingActiveSeasonStartDate, setIsSavingActiveSeasonStartDate] = useState(false);
+  const [activeSeasonStartDraft, setActiveSeasonStartDraft] = useState<Date>(new Date());
   const [seasonTargetHarvestDate, setSeasonTargetHarvestDate] = useState<Date | null>(null);
   const [seasonTargetHarvestDraft, setSeasonTargetHarvestDraft] = useState<Date>(new Date());
   const [guidedSeasonPhase, setGuidedSeasonPhase] = useState<
@@ -929,6 +938,66 @@ export default function FarmDetailScreen() {
     }
   };
 
+  // Persist a new start date for the ACTIVE season, then recompute so records
+  // are re-bucketed into the shifted window. Validated against the previous
+  // season's end (no overlap) and the season's own target harvest date.
+  const saveActiveSeasonStartDate = async (value: Date): Promise<boolean> => {
+    if (!farm?.id || !activeSeasonRecord?.id) return false;
+    if (isSavingActiveSeasonStartDate) return false;
+
+    if (minimumSeasonStartDate && value.getTime() < minimumSeasonStartDate.getTime()) {
+      Alert.alert(t('common.error'), t('farmDetails.seasons.errors.startBeforeAllowed'));
+      return false;
+    }
+    const targetHarvest = activeSeasonRecord.target_harvest_date
+      ? parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date)
+      : null;
+    if (targetHarvest && value.getTime() > targetHarvest.getTime()) {
+      Alert.alert(
+        t('common.error'),
+        t('farmDetails.seasons.errors.startAfterTarget', {
+          defaultValue: 'Season start date cannot be after the target harvest date.',
+        }),
+      );
+      return false;
+    }
+
+    setIsSavingActiveSeasonStartDate(true);
+    try {
+      await updateFarmSeason.mutateAsync({
+        id: activeSeasonRecord.id,
+        farmId: farm.id,
+        updates: { start_date: formatLocalDate(value) },
+      });
+      // Non-fatal: the start date is already saved; a recompute failure just
+      // means some records stay in their old bucket until the next recompute.
+      try {
+        await recomputeSeasonAssignments.mutateAsync({ farmId: farm.id });
+      } catch (recomputeError) {
+        console.warn('[farm] recompute after start-date edit failed:', recomputeError);
+      }
+      return true;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t('farmDetails.seasons.errors.startFailed');
+      Alert.alert(t('common.error'), message);
+      return false;
+    } finally {
+      setIsSavingActiveSeasonStartDate(false);
+    }
+  };
+
+  const openActiveSeasonStartEditor = () => {
+    if (isSavingActiveSeasonStartDate || !activeSeasonRecord) return;
+    const parsed = parseDbDateToLocalDate(activeSeasonRecord.start_date) ?? new Date();
+    setActiveSeasonStartDraft(parsed);
+    if (isIOS) {
+      setIsEditingActiveSeasonStartIOS(true);
+      return;
+    }
+    setShowActiveSeasonStartPicker(true);
+  };
+
   useEffect(() => {
     const isGuidedAddLog = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
     if (!isGuidedAddLog) {
@@ -1564,7 +1633,14 @@ export default function FarmDetailScreen() {
                     marginTop: spacing[2],
                   }}
                 >
-                  <View>
+                  <Pressable
+                    onPress={openActiveSeasonStartEditor}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('farmDetails.a11y.editSeasonStartDate', {
+                      defaultValue: 'Edit season start date',
+                    })}
+                    disabled={isSavingActiveSeasonStartDate}
+                  >
                     <Text
                       style={{
                         fontSize: fontSize['2xs'],
@@ -1583,7 +1659,7 @@ export default function FarmDetailScreen() {
                         ? formatDate(effectiveSeasonStartDate, { month: 'short', day: 'numeric' })
                         : '—'}
                     </Text>
-                  </View>
+                  </Pressable>
                   {daysSincePruning !== null && (
                     <View style={{ alignItems: 'center' }}>
                       <Text
@@ -3299,6 +3375,112 @@ export default function FarmDetailScreen() {
                   backgroundColor: m3.colorScheme.primary,
                 }}
                 disabled={isSavingActiveSeasonTargetDate}
+              >
+                <Text style={{ color: m3.colorScheme.onPrimary, ...m3.typography.labelSmall }}>
+                  {t('common.save')}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
+      )}
+
+      {showActiveSeasonStartPicker && !isIOS && (
+        <DateTimePicker
+          value={activeSeasonStartDraft}
+          mode="date"
+          display="default"
+          minimumDate={minimumSeasonStartDate ?? undefined}
+          maximumDate={
+            activeSeasonRecord?.target_harvest_date
+              ? (parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ?? undefined)
+              : undefined
+          }
+          onChange={(_, date) => {
+            setShowActiveSeasonStartPicker(false);
+            if (isSavingActiveSeasonStartDate) return;
+            if (!date) return;
+            setActiveSeasonStartDraft(date);
+            void saveActiveSeasonStartDate(date);
+          }}
+        />
+      )}
+      {isEditingActiveSeasonStartIOS && isIOS && (
+        <Pressable
+          onPress={() => setIsEditingActiveSeasonStartIOS(false)}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            zIndex: 45,
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderTopLeftRadius: m3.shape.cornerLarge,
+              borderTopRightRadius: m3.shape.cornerLarge,
+              padding: spacing[4],
+              gap: spacing[3],
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+              {t('farmDetails.seasons.startDateLabel')}
+            </Text>
+            <DateTimePicker
+              value={activeSeasonStartDraft}
+              mode="date"
+              display="spinner"
+              minimumDate={minimumSeasonStartDate ?? undefined}
+              maximumDate={
+                activeSeasonRecord?.target_harvest_date
+                  ? (parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ?? undefined)
+                  : undefined
+              }
+              onChange={(_, date) => {
+                if (date) setActiveSeasonStartDraft(date);
+              }}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: spacing[2] }}>
+              <Pressable
+                onPress={() => setIsEditingActiveSeasonStartIOS(false)}
+                style={{
+                  borderRadius: borderRadius.full,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                }}
+              >
+                <Text
+                  style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}
+                >
+                  {t('common.cancel')}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={async () => {
+                  if (isSavingActiveSeasonStartDate) return;
+                  const didSave = await saveActiveSeasonStartDate(activeSeasonStartDraft);
+                  if (didSave) {
+                    setIsEditingActiveSeasonStartIOS(false);
+                  }
+                }}
+                style={{
+                  borderRadius: borderRadius.full,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  backgroundColor: m3.colorScheme.primary,
+                }}
+                disabled={isSavingActiveSeasonStartDate}
               >
                 <Text style={{ color: m3.colorScheme.onPrimary, ...m3.typography.labelSmall }}>
                   {t('common.save')}
