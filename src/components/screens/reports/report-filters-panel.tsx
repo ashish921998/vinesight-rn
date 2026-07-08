@@ -581,10 +581,15 @@ export function ReportFiltersPanel({
                   accessibilityLabel={t('reports.season.unassignedNotice', {
                     count: unassignedRecordCount,
                   })}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: spacing[1],
+                    // Match the preset chips' touch target — this row is the
+                    // only path to the hidden unassigned records.
+                    minHeight: 34,
+                    paddingVertical: spacing[1],
                   }}
                 >
                   <Icon name="info.circle" size={12} color={m3.colorScheme.primary} />

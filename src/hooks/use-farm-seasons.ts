@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
 import { taskQueryKeys } from './use-tasks';
@@ -17,14 +18,46 @@ function isRpcFunctionMissing(error: { code?: string; message?: string } | null)
  * A season-start recompute call can fail outright (network/RPC error) without
  * ever reaching the server-side logic that flags ambiguous assignments in
  * `season_inference_audit` — so `needsSeasonReview` alone can't surface it.
- * This key stores that client-only signal in the (persisted) query cache
- * instead of component state, so it survives remounts/navigation and app
- * restarts rather than disappearing the moment the warning alert is dismissed.
- * `setQueryData` is the only writer; it must stay off the `farmSeasons.*`
- * key hierarchy so unrelated season invalidations don't wipe it out.
+ *
+ * The durable copy of this client-only signal lives in its own AsyncStorage
+ * key, NOT the persisted query cache: the cache has a 24h maxAge/gcTime, so a
+ * flag stored only there silently evaporates while the affected records can
+ * still be sitting at season_id null. The query below reads storage directly
+ * (so a cold start doesn't depend on cache rehydration either) and the two
+ * mutation writers keep storage and cache in sync — setRecomputeRetryFlag is
+ * the only writer. Kept off the `farmSeasons.*` key hierarchy so unrelated
+ * season invalidations don't wipe the in-memory copy.
  */
 function recomputeRetryQueryKey(farmId: number) {
   return ['farm-season-recompute-retry', farmId] as const;
+}
+
+function recomputeRetryStorageKey(farmId: number): string {
+  return `VINESIGHT_SEASON_RECOMPUTE_RETRY_${farmId}`;
+}
+
+async function readRecomputeRetryFlag(farmId: number): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(recomputeRetryStorageKey(farmId))) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setRecomputeRetryFlag(
+  queryClient: ReturnType<typeof useQueryClient>,
+  farmId: number,
+  value: boolean,
+): void {
+  queryClient.setQueryData(recomputeRetryQueryKey(farmId), value);
+  // Fire-and-forget: the in-memory cache above is already correct for this
+  // session; storage failure only costs cross-restart durability.
+  const write = value
+    ? AsyncStorage.setItem(recomputeRetryStorageKey(farmId), '1')
+    : AsyncStorage.removeItem(recomputeRetryStorageKey(farmId));
+  write.catch((error) => {
+    console.warn('[farm-seasons] failed to persist recompute-retry flag:', error);
+  });
 }
 
 async function recomputeSeasonAssignments(farmId: number): Promise<void> {
@@ -283,7 +316,7 @@ export function useStartFarmSeason() {
     onSuccess: (newSeason) => {
       invalidateSeasonScopedQueries(queryClient, newSeason.farm_id);
       if (newSeason.recomputeFailed) {
-        queryClient.setQueryData(recomputeRetryQueryKey(newSeason.farm_id), true);
+        setRecomputeRetryFlag(queryClient, newSeason.farm_id, true);
       }
     },
   });
@@ -362,7 +395,7 @@ export function useRecomputeFarmSeasonAssignments() {
     },
     onSuccess: (_, { farmId }) => {
       invalidateSeasonScopedQueries(queryClient, farmId);
-      queryClient.setQueryData(recomputeRetryQueryKey(farmId), false);
+      setRecomputeRetryFlag(queryClient, farmId, false);
     },
   });
 }
@@ -388,15 +421,17 @@ export function useFarmSeasonStatus(farmId: number | undefined) {
   });
   // Client-only fallback for a recompute that failed outright (network/RPC
   // error) rather than completing and flagging ambiguity server-side — see
-  // recomputeRetryQueryKey. staleTime: Infinity keeps a routine remount from
-  // silently refetching this back to false; setQueryData (in
-  // useStartFarmSeason / useRecomputeFarmSeasonAssignments) is the only thing
-  // that should change it.
+  // recomputeRetryQueryKey. The queryFn reads the durable AsyncStorage copy,
+  // so the flag survives query-cache eviction (24h maxAge) and doesn't depend
+  // on cache rehydration timing at cold start. staleTime: 0 so every mount
+  // re-reads storage (a cheap local read) — a rehydrated cache entry from a
+  // previous session must not mask a storage write the persister's throttle
+  // window dropped.
   const recomputeRetryQuery = useQuery({
     queryKey: recomputeRetryQueryKey(farmId ?? -1),
-    queryFn: () => false,
+    queryFn: () => readRecomputeRetryFlag(farmId ?? -1),
     enabled: !!farmId && !Number.isNaN(farmId),
-    staleTime: Infinity,
+    staleTime: 0,
   });
 
   const seasons = seasonsQuery.data ?? [];
