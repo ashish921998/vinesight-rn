@@ -103,6 +103,11 @@ export default function ReportsScreen() {
 
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  // Baseline the comparison runs against: 'auto' = the season immediately
+  // before the selected one (default), 'off' = no comparison, number = an
+  // explicitly picked season id. Reset to 'auto' whenever the season or farm
+  // changes so a stale explicit pick never silently carries over.
+  const [compareSelection, setCompareSelection] = useState<'auto' | 'off' | number>('auto');
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');
   const [selectedExportFormat, setSelectedExportFormat] = useState<ReportFormat>('pdf');
@@ -119,8 +124,14 @@ export default function ReportsScreen() {
       dateRange,
       seasonId: selectedSeasonId ?? undefined,
       includeUnassigned: selectedSeasonId == null,
+      compare:
+        selectedSeasonId == null || compareSelection === 'auto'
+          ? undefined
+          : compareSelection === 'off'
+            ? { enabled: false }
+            : { enabled: true, baselineSeasonId: compareSelection },
     }),
-    [dateRange, selectedFarmId, selectedSeasonId],
+    [compareSelection, dateRange, selectedFarmId, selectedSeasonId],
   );
 
   const {
@@ -252,6 +263,7 @@ export default function ReportsScreen() {
   const applySeasonSelection = React.useCallback(
     (seasonId: number | null, setWindowRange: boolean) => {
       setSelectedSeasonId(seasonId);
+      setCompareSelection('auto');
       setShowSeasonPicker(false);
 
       if (seasonId == null) {
@@ -521,6 +533,8 @@ export default function ReportsScreen() {
               onApplySeasonPreset={handleApplyPreset}
               showNoActiveSeasonInfo={sortedSeasons.length > 0 && activeSeason == null}
               unassignedRecordCount={unassignedRecordCount}
+              compareSelection={compareSelection}
+              onSelectCompare={setCompareSelection}
               dateFrom={dateRange.from}
               dateTo={dateRange.to}
               onOpenFromDate={() => {

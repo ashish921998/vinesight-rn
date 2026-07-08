@@ -100,6 +100,55 @@ describe('resolveBaseline', () => {
     });
   });
 
+  it('returns null when comparison is switched off', () => {
+    const prior = season(9, '2025-04-01', '2025-09-01');
+    const current = season(10, '2026-04-01', null);
+    const filters = baseFilters({ seasonId: 10, compare: { enabled: false } });
+    expect(resolveBaseline(filters, [current, prior], current, TODAY)).toBeNull();
+  });
+
+  it('uses an explicitly picked baseline season instead of the previous one', () => {
+    const s2024 = season(8, '2024-04-01', '2024-09-01');
+    const s2025 = season(9, '2025-04-01', '2025-09-01');
+    const current = season(10, '2026-04-01', null); // 30 days elapsed by TODAY
+    const filters = baseFilters({
+      seasonId: 10,
+      compare: { enabled: true, baselineSeasonId: 8 },
+    });
+    const result = resolveBaseline(filters, [current, s2025, s2024], current, TODAY);
+    expect(result?.filters.seasonId).toBe(8);
+    expect(result?.filters.dateRange).toEqual({ from: '2024-04-01', to: '2024-05-01' });
+    expect(result?.baselineSeason).toEqual(s2024);
+    expect(result?.elapsedDays).toBe(30);
+  });
+
+  it('refuses a self-comparison (explicit baseline == selected season)', () => {
+    const prior = season(9, '2025-04-01', '2025-09-01');
+    const current = season(10, '2026-04-01', null);
+    const filters = baseFilters({
+      seasonId: 10,
+      compare: { enabled: true, baselineSeasonId: 10 },
+    });
+    expect(resolveBaseline(filters, [current, prior], current, TODAY)).toBeNull();
+  });
+
+  it('clamps an explicitly picked ACTIVE baseline to today, not into the future', () => {
+    // Selected: an ended 153-day season. Baseline: the active season, only 30
+    // days old by TODAY — the window must stop at TODAY where the data stops.
+    const ended = season(9, '2025-04-01', '2025-09-01');
+    const active = season(10, '2026-04-01', null);
+    const filters = baseFilters({
+      seasonId: 9,
+      compare: { enabled: true, baselineSeasonId: 10 },
+    });
+    const result = resolveBaseline(filters, [active, ended], ended, TODAY);
+    expect(result?.filters.seasonId).toBe(10);
+    expect(result?.filters.dateRange.to).toBe(TODAY);
+    expect(result?.elapsedDays).toBe(30);
+    // Current side re-clamps to the same 30-day window for a fair delta.
+    expect(result?.currentFilters?.dateRange).toEqual({ from: '2025-04-01', to: '2025-05-01' });
+  });
+
   it('falls back to the preceding equal-length window with no season selected', () => {
     const filters = baseFilters({ dateRange: { from: '2026-01-01', to: '2026-01-31' } });
     const result = resolveBaseline(filters, [], null, TODAY);

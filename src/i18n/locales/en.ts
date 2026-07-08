@@ -3195,6 +3195,11 @@ export const en = {
         "{{count}} record isn't in any season — tap to view it under All seasons.",
       unassignedNotice_other:
         "{{count}} records aren't in any season — tap to view them under All seasons.",
+      compare: {
+        label: 'Compare with',
+        auto: 'Previous season (auto)',
+        off: 'Off',
+      },
       presets: {
         active: 'Active season',
         mostRecent: 'Most recent season',

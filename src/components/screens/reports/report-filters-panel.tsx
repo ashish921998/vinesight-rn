@@ -59,6 +59,8 @@ interface ReportFiltersPanelProps {
   onApplySeasonPreset: (preset: ReportSeasonPresetKey) => void;
   showNoActiveSeasonInfo: boolean;
   unassignedRecordCount: number;
+  compareSelection: 'auto' | 'off' | number;
+  onSelectCompare: (selection: 'auto' | 'off' | number) => void;
   dateFrom: string;
   dateTo: string;
   onOpenFromDate: () => void;
@@ -249,6 +251,8 @@ export function ReportFiltersPanel({
   onApplySeasonPreset,
   showNoActiveSeasonInfo,
   unassignedRecordCount,
+  compareSelection,
+  onSelectCompare,
   dateFrom,
   dateTo,
   onOpenFromDate,
@@ -599,6 +603,75 @@ export function ReportFiltersPanel({
                     {t('reports.season.unassignedNotice', { count: unassignedRecordCount })}
                   </Text>
                 </Pressable>
+              ) : null}
+
+              {/* Comparison baseline — only meaningful with a season selected.
+                  'auto' keeps the default previous-season behavior. */}
+              {selectedSeasonId != null ? (
+                <View style={{ gap: spacing[1] }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: m3.colorScheme.onSurfaceVariant,
+                      fontWeight: fontWeight.medium,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.4,
+                    }}
+                  >
+                    {t('reports.season.compare.label')}
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: spacing[2], paddingRight: spacing[1] }}
+                  >
+                    {[
+                      { key: 'auto' as const, label: t('reports.season.compare.auto') },
+                      ...seasonOptions
+                        .filter((season) => season.id !== selectedSeasonId)
+                        .map((season) => ({ key: season.id, label: season.label })),
+                      { key: 'off' as const, label: t('reports.season.compare.off') },
+                    ].map((option) => {
+                      const isSelected = compareSelection === option.key;
+                      return (
+                        <Pressable
+                          key={String(option.key)}
+                          onPress={() => onSelectCompare(option.key)}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: isSelected }}
+                          style={{
+                            minHeight: 34,
+                            borderRadius: borderRadius.full,
+                            borderCurve: 'continuous',
+                            paddingHorizontal: spacing[3],
+                            paddingVertical: spacing[1],
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderWidth: 1,
+                            borderColor: isSelected
+                              ? colorWithOpacity(m3.colorScheme.primary, 0.5)
+                              : m3.colorScheme.outlineVariant,
+                            backgroundColor: isSelected
+                              ? colorWithOpacity(m3.colorScheme.primary, 0.14)
+                              : 'transparent',
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: fontSize.xs,
+                              color: isSelected
+                                ? m3.colorScheme.primary
+                                : m3.colorScheme.onSurfaceVariant,
+                              fontWeight: isSelected ? fontWeight.semibold : fontWeight.medium,
+                            }}
+                          >
+                            {option.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
               ) : null}
             </View>
 
