@@ -173,21 +173,21 @@
   <div class="callout good">The hard part — baseline resolution aligned by days-since-season-start, delta math, double-fetch plumbing — is already built and running (<code>useReportComparison</code>). Track B is exposure: let the user pick the baseline, show more than chips, and put it in the export.</div>
 
   <div class="task">
-    <h4>B1 · User-picked comparison season <span class="pill m">Medium</span></h4>
+    <h4>B1 · User-picked comparison season <span class="pill m">Medium</span> <span class="pill s">Done</span></h4>
     <div class="meta"><code>src/types/report.ts:69-81</code> (types exist), <code>src/services/report-comparison.ts</code> (<code>resolveBaseline</code>), <code>report-filters-panel.tsx</code>, <code>app/reports.tsx</code> filter state</div>
     <p>Wire the dormant <code>ReportFilters.compare?.baselineSeasonId</code>: when a season is selected, show a "Compare with" row in the filters panel — options: <em>Previous season (auto)</em> [default, current behavior], each other season by label (<code>formatReportSeasonLabel</code>), and <em>Off</em>. In <code>resolveBaseline</code>, when an explicit id is set, use that season instead of "the one immediately before", keeping the elapsed-window clamp exactly as-is. <code>compare.enabled: false</code> short-circuits to null (chips disappear — already handled by <code>comparison</code> being null).</p>
     <p class="small"><strong>Accept:</strong> pick season 2024–25 as baseline for 2026 → chips recompute against it; Off hides chips; default unchanged.</p>
   </div>
 
   <div class="task">
-    <h4>B2 · Side-by-side comparison section in the report body <span class="pill m">Medium</span></h4>
+    <h4>B2 · Side-by-side comparison section in the report body <span class="pill m">Medium</span> <span class="pill s">Done</span></h4>
     <div class="meta">New <code>src/components/screens/reports/report-season-comparison-section.tsx</code>, consuming the (now fully populated) <code>ReportComparison</code> from <code>useReportComparison</code> in <code>use-reports.ts</code></div>
     <p>Delta chips answer "up or down"; consultants need the actual numbers. <code>ReportComparison</code> already carries the baseline's <code>ReportSummary</code>, baseline/current labels, and the elapsed-days window (populated in <code>useReportComparison</code>) — this task is UI-only. New section (rendered with the other <code>report-section-block</code> sections): a three-column table — metric · current season · baseline season · Δ% — over the seven existing comparison metrics (<code>COMPARISON_METRIC_FIELDS</code> in <code>report-comparison.ts:27</code>), with the footnote <em>"Both seasons measured over their first N days."</em> That footnote is the honesty guarantee — without it a partial season looks like a collapse.</p>
     <p class="small"><strong>Accept:</strong> season selected with a prior season having records → section renders with real numbers and the day-window footnote; hidden when comparison is null.</p>
   </div>
 
   <div class="task">
-    <h4>B3 · Comparison in the exported PDF <span class="pill m">Medium</span></h4>
+    <h4>B3 · Comparison in the exported PDF <span class="pill m">Medium</span> <span class="pill s">Done</span></h4>
     <div class="meta"><code>src/services/report-service.ts</code> — <code>exportPDF</code> (line 1713) and its HTML template; <code>useReportExport</code> in <code>use-reports.ts:358</code>; call sites in <code>app/reports.tsx</code></div>
     <p>The PDF is the consultant's deliverable, and today it carries zero comparison data. Thread an optional <code>comparison</code> block (same extended <code>ReportComparison</code> shape from B2) through <code>exportPDF</code>/<code>downloadPDF</code> and render the same table + footnote in the PDF HTML. CSV stays as-is. Keep the param optional so all existing call sites compile untouched.</p>
     <p class="small"><strong>Accept:</strong> export a season report with an available baseline → PDF contains the comparison table; export with comparison off → PDF unchanged from today.</p>

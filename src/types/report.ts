@@ -356,6 +356,13 @@ export interface MetricDelta {
 /** Per-tile deltas for the executive-summary grid, keyed by tile key. */
 export interface ReportComparison {
   deltas: Record<string, MetricDelta>;
+  /**
+   * The current-side summary the deltas were computed FROM. Usually the main
+   * preview's summary, but when the baseline is shorter and both windows get
+   * clamped, this is the re-fetched clamped current summary — display code
+   * must use this, not the full preview, or the numbers won't match the deltas.
+   */
+  currentSummary: ReportSummary;
   /** The baseline summary the deltas were computed against. */
   baselineSummary: ReportSummary;
   /** Label of the baseline period (season name, or date window). */

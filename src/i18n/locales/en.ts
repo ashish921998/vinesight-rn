@@ -3195,12 +3195,22 @@ export const en = {
         "{{count}} record isn't in any season — tap to view it under All seasons.",
       unassignedNotice_other:
         "{{count}} records aren't in any season — tap to view them under All seasons.",
+      compare: {
+        label: 'Compare with',
+        auto: 'Previous season (auto)',
+        off: 'Off',
+      },
       presets: {
         active: 'Active season',
         mostRecent: 'Most recent season',
         previous: 'Previous season',
         thisYear: 'This year',
       },
+    },
+    comparison: {
+      title: 'Season comparison',
+      footnote_one: 'Both seasons measured over their first {{count}} day.',
+      footnote_other: 'Both seasons measured over their first {{count}} days.',
     },
     selectFromDate: 'Select From Date',
     selectToDate: 'Select To Date',

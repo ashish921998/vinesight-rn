@@ -25,6 +25,8 @@ import {
   ReportSeasonContext,
   ReportPlanItemInput,
   ReportUsageLenses,
+  ReportComparison,
+  MetricDelta,
   NutrientLedger,
   getSectionsForReportType,
 } from '../types/report';
@@ -1274,12 +1276,69 @@ export class ReportService {
   /**
    * Generate PDF HTML content
    */
+  /** Plain-text delta cell for the PDF comparison table. */
+  private static formatComparisonDelta(delta: MetricDelta | undefined): string {
+    if (!delta) return '-';
+    if (delta.isNew) return 'New';
+    if (delta.deltaPct == null) return '-';
+    const rounded = Math.round(Math.abs(delta.deltaPct));
+    if (rounded < 1) return '-';
+    return `${delta.direction > 0 ? '▲' : '▼'} ${rounded}%`;
+  }
+
+  /**
+   * Season-comparison table for the PDF — same seven metrics and clamped
+   * summaries as the in-app section (report-season-comparison-section.tsx),
+   * including the elapsed-days footnote that keeps a partial season from
+   * reading as a collapse.
+   */
+  private static buildComparisonSectionHtml(
+    comparison: ReportComparison,
+    preferredCurrency: string,
+  ): string {
+    const currency = (value: number) =>
+      formatCurrency(value, preferredCurrency, { minimumFractionDigits: 0 });
+    const rows: { label: string; key: string; format: (s: ReportSummary) => string }[] = [
+      { label: 'Total Records', key: 'records', format: (s) => String(s.totalRecords) },
+      { label: 'Water Usage', key: 'water', format: (s) => `${s.totalWaterUsage} L` },
+      { label: 'Total Harvest', key: 'harvest', format: (s) => `${s.totalHarvest} kg` },
+      { label: 'Revenue', key: 'revenue', format: (s) => currency(s.totalRevenue) },
+      { label: 'Expenses', key: 'expenses', format: (s) => currency(s.totalExpenses) },
+      { label: 'Net Profit', key: 'profit', format: (s) => currency(s.netProfit) },
+      { label: 'Stock Items Used', key: 'stock-usage', format: (s) => String(s.stockUsageCount) },
+    ];
+
+    return `
+      <h2>📊 Season Comparison</h2>
+      <table>
+        <tr>
+          <th>Metric</th>
+          <th>${this.escapeHtml(comparison.currentLabel)}</th>
+          <th>${this.escapeHtml(comparison.baselineLabel)}</th>
+          <th>Δ</th>
+        </tr>
+        ${rows
+          .map(
+            (row) =>
+              `<tr><td>${row.label}</td><td>${this.escapeHtml(row.format(comparison.currentSummary))}</td><td>${this.escapeHtml(row.format(comparison.baselineSummary))}</td><td>${this.formatComparisonDelta(comparison.deltas[row.key])}</td></tr>`,
+          )
+          .join('')}
+      </table>
+      ${
+        comparison.elapsedDays != null
+          ? `<p class="more-records">Both seasons measured over their first ${comparison.elapsedDays} day${comparison.elapsedDays === 1 ? '' : 's'}.</p>`
+          : ''
+      }
+    `;
+  }
+
   static generatePDFHtml(
     data: ReportData,
     summary: ReportSummary,
     reportType: ReportType,
     preferredCurrency: string = getDefaultCurrency(),
     areaUnit: AreaUnitPreference = 'acres',
+    comparison?: ReportComparison | null,
   ): string {
     const visibleSections = this.getVisibleSections(reportType);
     const maxRowsPerSection = 20;
@@ -1405,6 +1464,12 @@ export class ReportService {
           </div>
         </div>
     `;
+
+    // Appended outside the template so a comparison-less export stays
+    // byte-identical to the pre-comparison output (locked by snapshot tests).
+    if (comparison) {
+      html += this.buildComparisonSectionHtml(comparison, preferredCurrency);
+    }
 
     const appendSectionTable = (
       title: string,
@@ -1730,8 +1795,16 @@ export class ReportService {
     reportType: ReportType,
     preferredCurrency: string = getDefaultCurrency(),
     areaUnit: AreaUnitPreference = 'acres',
+    comparison?: ReportComparison | null,
   ): Promise<void> {
-    const html = this.generatePDFHtml(data, summary, reportType, preferredCurrency, areaUnit);
+    const html = this.generatePDFHtml(
+      data,
+      summary,
+      reportType,
+      preferredCurrency,
+      areaUnit,
+      comparison,
+    );
 
     const { uri } = await Print.printToFileAsync({
       html,
@@ -1758,8 +1831,16 @@ export class ReportService {
     reportType: ReportType,
     preferredCurrency: string = getDefaultCurrency(),
     areaUnit: AreaUnitPreference = 'acres',
+    comparison?: ReportComparison | null,
   ): Promise<string> {
-    const html = this.generatePDFHtml(data, summary, reportType, preferredCurrency, areaUnit);
+    const html = this.generatePDFHtml(
+      data,
+      summary,
+      reportType,
+      preferredCurrency,
+      areaUnit,
+      comparison,
+    );
 
     const { uri: tempUri } = await Print.printToFileAsync({
       html,

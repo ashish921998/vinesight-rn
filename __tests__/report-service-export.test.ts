@@ -541,3 +541,60 @@ describe('report data ordering', () => {
     expect(report.spray[0]?.dose).toBe('2 kg, 500 ml/acre; Water: 200L');
   });
 });
+
+describe('PDF season comparison section', () => {
+  const COMPARISON = {
+    deltas: {
+      records: { deltaPct: 25, direction: 1, isNew: false },
+      water: { deltaPct: -20, direction: -1, isNew: false },
+      harvest: { deltaPct: null, direction: 1, isNew: true },
+      revenue: { deltaPct: 11.1, direction: 1, isNew: false },
+      expenses: { deltaPct: 0, direction: 0, isNew: false },
+      profit: { deltaPct: 16.7, direction: 1, isNew: false },
+      'stock-usage': { deltaPct: null, direction: 0, isNew: false },
+    },
+    currentSummary: SAMPLE_SUMMARY,
+    baselineSummary: {
+      ...SAMPLE_SUMMARY,
+      totalRecords: 4,
+      totalWaterUsage: 1000,
+      totalHarvest: 0,
+      totalRevenue: 4500,
+      netProfit: 3000,
+    },
+    baselineLabel: 'Season 2025 (Grapes)',
+    currentLabel: 'Season 2026 (Grapes)',
+    elapsedDays: 30,
+  } as const;
+
+  it('renders labels, both summaries, deltas, and the elapsed-days footnote', () => {
+    const html = ReportService.generatePDFHtml(
+      SAMPLE_DATA,
+      SAMPLE_SUMMARY,
+      'comprehensive',
+      'INR',
+      'acres',
+      COMPARISON,
+    );
+    expect(html).toContain('Season Comparison');
+    expect(html).toContain('<th>Season 2026 (Grapes)</th>');
+    expect(html).toContain('<th>Season 2025 (Grapes)</th>');
+    expect(html).toContain('▲ 25%');
+    expect(html).toContain('▼ 20%');
+    expect(html).toContain('<td>New</td>');
+    // Baseline column carries the baseline's numbers, not the current ones.
+    expect(html).toContain('<td>1000 L</td>');
+    expect(html).toContain('Both seasons measured over their first 30 days.');
+  });
+
+  it('leaves the PDF unchanged when no comparison is provided', () => {
+    const html = ReportService.generatePDFHtml(
+      SAMPLE_DATA,
+      SAMPLE_SUMMARY,
+      'comprehensive',
+      'INR',
+      'acres',
+    );
+    expect(html).not.toContain('Season Comparison');
+  });
+});

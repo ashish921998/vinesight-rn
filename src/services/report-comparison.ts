@@ -97,11 +97,12 @@ export interface BaselineResolution {
 
 /**
  * Resolve the baseline period for a comparison, or null when no honest
- * baseline exists (no farm, first season, or a date-window with nothing before
- * it that we can align to).
+ * baseline exists (no farm, first season, comparison switched off, or a
+ * date-window with nothing before it that we can align to).
  *
  * Season selected → the same elapsed window of the season immediately *before*
- * the selected one (relative to the selection, not the active season).
+ * the selected one (relative to the selection, not the active season), unless
+ * filters.compare.baselineSeasonId names a specific season to compare against.
  * No season  → the immediately preceding equal-length date window.
  */
 export function resolveBaseline(
@@ -112,11 +113,17 @@ export function resolveBaseline(
 ): BaselineResolution | null {
   const farmId = filters.farmId;
   if (farmId == null) return null;
+  if (filters.compare?.enabled === false) return null;
 
   if (typeof filters.seasonId === 'number' && selectedSeason?.start_date) {
-    const prior = seasons
-      .filter((s) => s.id != null && s.start_date < selectedSeason.start_date)
-      .sort((a, b) => b.start_date.localeCompare(a.start_date))[0];
+    const explicitBaselineId = filters.compare?.baselineSeasonId;
+    const prior =
+      typeof explicitBaselineId === 'number'
+        ? // Comparing a season against itself is meaningless — treat as no baseline.
+          (seasons.find((s) => s.id === explicitBaselineId && s.id !== filters.seasonId) ?? null)
+        : (seasons
+            .filter((s) => s.id != null && s.start_date < selectedSeason.start_date)
+            .sort((a, b) => b.start_date.localeCompare(a.start_date))[0] ?? null);
     if (!prior || prior.id == null) return null;
 
     const currentFrom = selectedSeason.start_date;
@@ -127,8 +134,12 @@ export function resolveBaseline(
     const elapsed = daysBetween(currentFrom, currentTo);
 
     let baselineTo = addDaysIso(prior.start_date, elapsed);
-    if (prior.end_date && baselineTo > prior.end_date) {
-      baselineTo = prior.end_date;
+    // An ended baseline clamps to its end; an explicitly picked *active*
+    // baseline has no end yet, so clamp to today — data can't extend further,
+    // and elapsedDays below must reflect the window that actually has records.
+    const baselineCap = prior.end_date ?? todayIso;
+    if (baselineTo > baselineCap) {
+      baselineTo = baselineCap;
     }
     // elapsedDays must reflect the window actually being compared, not the
     // current season's elapsed time — when the prior season is shorter and

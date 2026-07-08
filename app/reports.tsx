@@ -45,6 +45,7 @@ import {
   type ReportSeasonPresetOption,
 } from '@/components/screens/reports/report-filters-panel';
 import { ReportExecutiveSummary } from '@/components/screens/reports/report-executive-summary';
+import { ReportSeasonComparisonSection } from '@/components/screens/reports/report-season-comparison-section';
 import { ReportDocumentBody } from '@/components/screens/reports/report-document-body';
 import { ReportExportActions } from '@/components/screens/reports/report-export-actions';
 import type { FarmSeason } from '@/types';
@@ -103,6 +104,11 @@ export default function ReportsScreen() {
 
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  // Baseline the comparison runs against: 'auto' = the season immediately
+  // before the selected one (default), 'off' = no comparison, number = an
+  // explicitly picked season id. Reset to 'auto' whenever the season or farm
+  // changes so a stale explicit pick never silently carries over.
+  const [compareSelection, setCompareSelection] = useState<'auto' | 'off' | number>('auto');
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');
   const [selectedExportFormat, setSelectedExportFormat] = useState<ReportFormat>('pdf');
@@ -119,8 +125,14 @@ export default function ReportsScreen() {
       dateRange,
       seasonId: selectedSeasonId ?? undefined,
       includeUnassigned: selectedSeasonId == null,
+      compare:
+        selectedSeasonId == null || compareSelection === 'auto'
+          ? undefined
+          : compareSelection === 'off'
+            ? { enabled: false }
+            : { enabled: true, baselineSeasonId: compareSelection },
     }),
-    [dateRange, selectedFarmId, selectedSeasonId],
+    [compareSelection, dateRange, selectedFarmId, selectedSeasonId],
   );
 
   const {
@@ -252,6 +264,7 @@ export default function ReportsScreen() {
   const applySeasonSelection = React.useCallback(
     (seasonId: number | null, setWindowRange: boolean) => {
       setSelectedSeasonId(seasonId);
+      setCompareSelection('auto');
       setShowSeasonPicker(false);
 
       if (seasonId == null) {
@@ -307,7 +320,7 @@ export default function ReportsScreen() {
     }
 
     try {
-      await exportReport(preview, format, reportType, areaUnit);
+      await exportReport(preview, format, reportType, areaUnit, comparison);
       telemetry.capture('data_exported', {
         export_type: format,
         scope: 'farm',
@@ -326,7 +339,7 @@ export default function ReportsScreen() {
     }
 
     try {
-      const fileUri = await downloadReport(preview, format, reportType, areaUnit);
+      const fileUri = await downloadReport(preview, format, reportType, areaUnit, comparison);
       telemetry.capture('data_exported', {
         export_type: `${format}_download`,
         scope: 'farm',
@@ -521,6 +534,8 @@ export default function ReportsScreen() {
               onApplySeasonPreset={handleApplyPreset}
               showNoActiveSeasonInfo={sortedSeasons.length > 0 && activeSeason == null}
               unassignedRecordCount={unassignedRecordCount}
+              compareSelection={compareSelection}
+              onSelectCompare={setCompareSelection}
               dateFrom={dateRange.from}
               dateTo={dateRange.to}
               onOpenFromDate={() => {
@@ -558,6 +573,14 @@ export default function ReportsScreen() {
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
                   comparison={comparison}
                 />
+
+                {comparison ? (
+                  <ReportSeasonComparisonSection
+                    comparison={comparison}
+                    preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
+                    panelStyle={panelStyle}
+                  />
+                ) : null}
 
                 <ReportDocumentBody
                   preview={preview}
