@@ -67,7 +67,12 @@ export function sprayRecordToFormData(record: SprayRecord): SprayFormData {
       data.waterVolume = isNaN(parsedVolume) ? 0 : parsedVolume;
     } else {
       console.warn('[recordToForm] Water volume parsing failed:', record.dose);
+      data.waterVolume = 0;
     }
+  } else {
+    // Older records may not store water volume in the dose string; default to 0
+    // so downstream display (e.g. Repeat Last Log) never renders "undefined".
+    data.waterVolume = 0;
   }
 
   data.catalogMixId = record.catalog_mix_id ?? null;

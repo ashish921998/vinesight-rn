@@ -908,11 +908,14 @@ export function EntryForm({
       case 'spray': {
         const spray = data as SprayFormData;
         const mixName = spray.catalogMixName?.trim();
+        const water = spray.waterVolume;
+        const waterLabel = water != null ? `${water}L` : '';
         if (mixName) {
-          return `${mixName} • ${spray.waterVolume}L`;
+          return waterLabel ? `${mixName} • ${waterLabel}` : mixName;
         }
         const chemCount = spray.chemicals.length;
-        return `${spray.waterVolume}L water, ${chemCount} chemical${chemCount !== 1 ? 's' : ''}`;
+        const chemLabel = `${chemCount} chemical${chemCount !== 1 ? 's' : ''}`;
+        return waterLabel ? `${waterLabel} water, ${chemLabel}` : chemLabel;
       }
       case 'harvest': {
         const harvest = data as HarvestFormData;
