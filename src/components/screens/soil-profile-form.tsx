@@ -24,6 +24,8 @@ import DateTimePicker, {
 import { Button } from '@/components/ui';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
+import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
 import { SoilSectionData } from '../../types/database';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
@@ -48,6 +50,7 @@ export default function SoilProfileForm({
   const insets = useSafeAreaInsets();
   const m3 = useM3();
   const createProfile = useCreateSoilProfile();
+  const { activeSeason } = useFarmSeasonStatus(farmId);
 
   const [sections, setSections] = useState<Record<string, string>>({
     top: '',
@@ -205,6 +208,11 @@ export default function SoilProfileForm({
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
+        {!activeSeason ? (
+          <View style={{ marginTop: spacing[4] }}>
+            <NoActiveSeasonBanner />
+          </View>
+        ) : null}
         {/* Date Picker */}
         <View
           style={{

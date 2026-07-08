@@ -1627,6 +1627,48 @@ export default function FarmDetailScreen() {
             </View>
           )}
 
+          {/* Season Strip empty state — when the farm is between seasons the
+              progress card above is skipped entirely, leaving "Start Season"
+              buried in the ⋮ overflow menu. Render a card in the same slot with
+              matching visual weight so starting a season is discoverable. */}
+          {!activeSeasonRecord && !isSeasonsLoading && (
+            <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
+              <Pressable
+                onPress={openStartSeasonForm}
+                accessibilityRole="button"
+                accessibilityLabel={t('farmDetails.actions.startSeason')}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[3],
+                  backgroundColor: m3.surface.s100,
+                  borderWidth: 1,
+                  borderColor: m3.surface.s300,
+                  borderRadius: borderRadius.md,
+                  padding: spacing[4],
+                }}
+              >
+                <UiSymbol name="plus.circle.fill" size={22} color={m3.colorScheme.primary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold }}>
+                    {t('farmDetails.seasons.statusNone')}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.medium,
+                      color: m3.colorScheme.primary,
+                      marginTop: 2,
+                    }}
+                  >
+                    {t('farmDetails.actions.startSeason')}
+                  </Text>
+                </View>
+                <UiSymbol name="chevron.right" size={16} color={m3.surface.s500} />
+              </Pressable>
+            </View>
+          )}
+
           {/* Vital Signs — Soil Water + Weather */}
           <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
             <Text

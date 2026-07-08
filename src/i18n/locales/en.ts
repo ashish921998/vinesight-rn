@@ -348,6 +348,8 @@ export const en = {
       banner: {
         noActiveSeason:
           'No active season for this farm — records will stay unassigned until you start one.',
+        noActiveSeasonNamed:
+          'No active season for {{farm}} — records will stay unassigned until a season is started.',
         startSeason: 'Start season',
       },
       alerts: {

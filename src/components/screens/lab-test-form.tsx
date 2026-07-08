@@ -14,6 +14,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { FormModal, SectionHeader, FormInput } from '@/components/ui/form-components';
+import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
@@ -49,6 +51,7 @@ export default function LabTestForm({
   const createSoilTest = useCreateSoilTest();
   const createPetioleTest = useCreatePetioleTest();
   const { data: farm } = useFarm(farmId);
+  const { activeSeason } = useFarmSeasonStatus(farmId);
 
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -300,6 +303,7 @@ export default function LabTestForm({
       isSaveDisabled={!isValid}
       presentation={presentation}
     >
+      {!activeSeason ? <NoActiveSeasonBanner /> : null}
       <SectionHeader title={t('labTests.form.uploadSectionTitle')} style={{ marginBottom: 12 }} />
       <Pressable
         onPress={handleUploadFile}

@@ -4,6 +4,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { useCreateTemporaryWorkerEntry, useFarms, useCurrency } from '@/hooks';
 import { FormModal, SectionHeader, FormInput, PreviewCard, Button } from '@/components/ui';
+import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
 import { FarmSelectModal } from '@/components/modals/farm-select-modal';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -47,6 +49,7 @@ export function TempWorkerForm({
   const createTemporaryWorkerEntry = useCreateTemporaryWorkerEntry();
 
   const resolvedFarmId = externalFarmId ?? selectedFarmId;
+  const { activeSeason } = useFarmSeasonStatus(resolvedFarmId ?? undefined);
   const parsedHours = parseFloat(hoursWorked);
   const parsedAmount = parseFloat(amountPaid);
   const isHoursValid =
@@ -118,6 +121,7 @@ export function TempWorkerForm({
       onReset={handleReset}
       presentation={presentation}
     >
+      {resolvedFarmId != null && !activeSeason ? <NoActiveSeasonBanner /> : null}
       <SectionHeader
         title={t('workers.tempWorkers.form.sections.workerDetails')}
         style={{ marginBottom: spacing[4] }}

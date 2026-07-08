@@ -30,6 +30,8 @@ import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
+import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
 import {
   LOG_TYPES,
   PICKER_HIDDEN_LOG_TYPE_IDS,
@@ -211,6 +213,11 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
 
   const liveFarmQuery = useFarm(isDelegatedMode ? undefined : (farmId ?? undefined));
   const farm = isDelegatedMode ? delegatedContext.farm : liveFarmQuery.data;
+  // The delegated RPC path writes straight to Postgres (not the client hooks),
+  // so this banner is the only season-awareness a consultant logging on a
+  // farmer's behalf sees. Never blocks — a consultant must be able to log even
+  // when the farmer hasn't started a season.
+  const { activeSeason } = useFarmSeasonStatus(farm?.id);
 
   // In delegated mode use the CLIENT's area-unit preference (the farm owner's),
   // so the payload uses the same acres/hectares basis the record was written
@@ -700,6 +707,15 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[6] }}
         keyboardShouldPersistTaps="handled"
       >
+        {farm?.id != null && !activeSeason ? (
+          <NoActiveSeasonBanner
+            message={
+              isDelegatedMode && farm?.name
+                ? t('farmDetails.seasons.banner.noActiveSeasonNamed', { farm: farm.name })
+                : undefined
+            }
+          />
+        ) : null}
         {/* Receipt list */}
         {entries.length > 0 && (
           <View style={{ marginBottom: spacing[5] }}>
