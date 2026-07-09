@@ -4,7 +4,12 @@
  */
 
 export type ReportFormat = 'pdf' | 'csv';
-export type ReportType = 'operations' | 'financial' | 'comprehensive' | 'stock-usage';
+export type ReportType =
+  | 'operations'
+  | 'financial'
+  | 'comprehensive'
+  | 'stock-usage'
+  | 'fpc-activity';
 export type ReportCompareMode = 'previous' | 'yoy';
 export type ReportSectionKey =
   | 'meta'
@@ -15,11 +20,13 @@ export type ReportSectionKey =
   | 'harvest'
   | 'expense'
   | 'stock'
-  | 'nutrient-ledger';
+  | 'nutrient-ledger'
+  | 'fpc-activity';
 
 export const REPORT_SECTION_ORDER: ReportSectionKey[] = [
   'meta',
   'executive',
+  'fpc-activity',
   'irrigation',
   'spray',
   'fertigation',
@@ -55,6 +62,9 @@ const REPORT_TYPE_SECTION_MAP: Record<ReportType, ReportSectionKey[]> = {
   // not from warehouse stock movement — a stock report showing "N given" would
   // conflate what left the shelf with what reached the vines.
   'stock-usage': ['meta', 'executive', 'stock'],
+  // FPC/buyer-facing activity register (Fratelli format): one chronological
+  // table, one row per product applied, grouped under each date.
+  'fpc-activity': ['meta', 'fpc-activity'],
 };
 
 export function getSectionsForReportType(reportType: ReportType): ReportSectionKey[] {
@@ -121,6 +131,60 @@ export interface ReportData {
   usage?: ReportUsageLenses;
   /** Nutrient ledger for the selected period (issue #200). Optional — absent on old fixtures. */
   nutrientLedger?: NutrientLedger;
+  /** FPC/buyer-facing activity register rows. Optional — absent on old fixtures. */
+  fpcActivity?: FpcActivityDayRow[];
+}
+
+// ============================================================
+// MARK: - FPC activity register (Fratelli format)
+// ============================================================
+
+/**
+ * One product applied on a given date — a spray chemical or a fertigation
+ * fertilizer. Quantity figures are kernel-derived (canonical, render-rounded);
+ * `asLogged` always preserves the farmer's verbatim entry so an unresolvable
+ * unit still appears honestly instead of vanishing.
+ */
+export interface FpcActivityProductRow {
+  key: string;
+  source: 'spray' | 'fertigation';
+  /** Name as logged — for catalog-picked items this is the brand/market name. */
+  marketName: string;
+  /** Catalog technical identity (active ingredient / composition name). Null when free-typed. */
+  technicalName: string | null;
+  /** Kernel-derived rate per acre (e.g. "3 kg"). Null when area unknown or unit unresolvable. */
+  qtyPerAcreDisplay: string | null;
+  /** Kernel-derived plot total (e.g. "9 kg"). Null when unresolvable. */
+  totalQtyDisplay: string | null;
+  /** Verbatim quantity exactly as logged (e.g. "3 kg/acre"). */
+  asLogged: string;
+  /** Label PHI for this product (from verified label claims), else the spray record's governing PHI when attributable. */
+  phiDays: number | null;
+  /** Spray-record safe harvest date (record-level, shown on spray rows). */
+  safeHarvestDate: string | null;
+  /** MRL summary per market (e.g. "EU: 0.5 mg/kg; Codex: 1 mg/kg"). Null when no data. */
+  mrl: string | null;
+}
+
+/**
+ * One dated block of the register: day-level irrigation figures plus every
+ * product applied that day. Mirrors the paper/Excel register FPCs keep —
+ * date columns written once, product rows listed under them.
+ */
+export interface FpcActivityDayRow {
+  /** Render-formatted date. */
+  date: string;
+  /** ISO YYYY-MM-DD sort key. */
+  isoDate: string;
+  daysAfterPruning: number | null;
+  /** Total irrigation hours logged this date. Null when no irrigation. */
+  irrigationHours: number | null;
+  /** Water applied in mm — Σ(duration × system discharge in mm/hr). Null when discharge unknown. */
+  waterMm: number | null;
+  growthStage: string | null;
+  products: FpcActivityProductRow[];
+  /** Unique notes joined from all records on this date. */
+  notes: string | null;
 }
 
 // ============================================================

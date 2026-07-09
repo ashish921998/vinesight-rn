@@ -26,6 +26,8 @@ import {
   ReportPlanItemInput,
   ReportUsageLenses,
   NutrientLedger,
+  FpcActivityDayRow,
+  FpcActivityProductRow,
   getSectionsForReportType,
 } from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
@@ -65,6 +67,21 @@ interface ReportGenerationOptions {
    * hectares-preference farms must be converted before any per-acre math.
    */
   areaUnit?: AreaUnitPreference;
+  /**
+   * FPC register lookups, keyed by catalog product id (chemical_products).
+   * All optional — a missing map only blanks the corresponding column, it
+   * never blocks the report.
+   */
+  fpcLookups?: FpcReportLookups;
+}
+
+export interface FpcReportLookups {
+  /** Technical identity (active ingredient / composition name) per catalog product. */
+  technicalNameByProductId?: Record<number, string>;
+  /** Label-claim PHI days per catalog product (grape claims). */
+  phiDaysByProductId?: Record<number, number>;
+  /** Formatted MRL summary per catalog product (e.g. "EU: 0.5 mg/kg"). */
+  mrlByProductId?: Record<number, string>;
 }
 
 export class ReportService {
@@ -169,6 +186,8 @@ export class ReportService {
         return 'Financial';
       case 'stock-usage':
         return 'Stock Usage';
+      case 'fpc-activity':
+        return 'FPC Activity Register';
       case 'comprehensive':
       default:
         return 'Comprehensive';
@@ -721,6 +740,164 @@ export class ReportService {
   }
 
   /**
+   * FPC activity register (Fratelli format): one chronological table, one row
+   * per product applied, grouped under each date. Day-level columns come from
+   * irrigation records (hours, mm, growth stage); product rows come from
+   * spray chemical items and fertigation fertilizers.
+   *
+   * Water mm = Σ(duration × system discharge). The discharge stored on
+   * records comes from the System Discharge calculator, whose output is
+   * L/m²/hr — i.e. mm/hr — so hours × discharge is depth in mm.
+   */
+  private static buildFpcActivity(
+    farm: Farm,
+    irrigations: IrrigationRecord[],
+    sprays: SprayRecord[],
+    fertigations: FertigationRecord[],
+    options: ReportGenerationOptions,
+  ): FpcActivityDayRow[] {
+    const lookups = options.fpcLookups ?? {};
+    const recordAreaAcres = (area: number | null | undefined): number | null => {
+      const positive = this.positiveOrNull(area ?? null) ?? this.positiveOrNull(farm.area);
+      return positive == null
+        ? null
+        : convertAreaToAcres(positive, resolveAreaUnitPreference(options.areaUnit));
+    };
+
+    const isoDateOf = (record: { date: string }) => record.date.slice(0, 10);
+    const dayKeys = new Set<string>([
+      ...irrigations.map(isoDateOf),
+      ...sprays.map(isoDateOf),
+      ...fertigations.map(isoDateOf),
+    ]);
+
+    const asLoggedLabel = (item: {
+      quantity: number;
+      unit: string;
+      quantityBasis?: QuantityBasis;
+    }) => {
+      const unit = item.unit.trim();
+      const needsPerAcreSuffix =
+        item.quantityBasis === 'per_acre' && !unit.toLowerCase().includes('/acre');
+      return `${item.quantity} ${unit}${needsPerAcreSuffix ? '/acre' : ''}`;
+    };
+
+    const buildProductRows = (
+      source: 'spray' | 'fertigation',
+      keyPrefix: string,
+      items: ReturnType<typeof ReportService.resolveSprayUsageItems>,
+      areaAcres: number | null,
+      waterLiters: number | null,
+      sprayRecord?: SprayRecord,
+    ): FpcActivityProductRow[] =>
+      items.map((item, index) => {
+        const total = totalFor(
+          { quantity: item.quantity, unit: item.unit, quantityBasis: item.quantityBasis },
+          { areaAcres, waterLiters },
+        );
+        const perAcreValue = total && areaAcres != null ? total.value / areaAcres : null;
+
+        const productId = item.catalogProductId ?? null;
+        const technicalName =
+          productId != null ? (lookups.technicalNameByProductId?.[productId] ?? null) : null;
+        const mrl = productId != null ? (lookups.mrlByProductId?.[productId] ?? null) : null;
+
+        // Per-product PHI: label claim first; else the spray record's
+        // governing PHI, but only when it is attributable to this item
+        // (single-item mix, or this item is the blocking component) —
+        // stamping the governing PHI on every co-mixed product would
+        // overstate what the label says about each of them.
+        const claimPhi =
+          productId != null ? (lookups.phiDaysByProductId?.[productId] ?? null) : null;
+        const normalizedItemName = this.normalizeName(item.name);
+        const governingAttributable =
+          sprayRecord != null &&
+          sprayRecord.governing_phi_days != null &&
+          (items.length === 1 ||
+            (sprayRecord.phi_blocking_component != null &&
+              this.normalizeName(sprayRecord.phi_blocking_component) === normalizedItemName));
+        const phiDays =
+          claimPhi ?? (governingAttributable ? sprayRecord!.governing_phi_days! : null);
+
+        return {
+          key: `${keyPrefix}-${index}`,
+          source,
+          marketName: item.name,
+          technicalName,
+          qtyPerAcreDisplay:
+            perAcreValue != null ? formatQuantity(perAcreValue, total!.measure) : null,
+          totalQtyDisplay: total ? formatQuantity(total.value, total.measure) : null,
+          asLogged: asLoggedLabel(item),
+          phiDays,
+          safeHarvestDate: sprayRecord?.safe_harvest_date
+            ? formatDate(sprayRecord.safe_harvest_date)
+            : null,
+          mrl,
+        } satisfies FpcActivityProductRow;
+      });
+
+    const rows: FpcActivityDayRow[] = [...dayKeys].sort().map((isoDate) => {
+      const dayIrrigations = irrigations.filter((r) => isoDateOf(r) === isoDate);
+      const daySprays = sprays.filter((r) => isoDateOf(r) === isoDate);
+      const dayFertigations = fertigations.filter((r) => isoDateOf(r) === isoDate);
+
+      const anyRecord = dayIrrigations[0] ?? daySprays[0] ?? dayFertigations[0];
+      const pruningDate = anyRecord?.date_of_pruning ?? farm.date_of_pruning;
+
+      const irrigationHours = dayIrrigations.reduce((sum, r) => sum + (r.duration || 0), 0);
+      const mmContributions = dayIrrigations.filter(
+        (r) => this.positiveOrNull(r.duration) && this.positiveOrNull(r.system_discharge),
+      );
+      const waterMm = mmContributions.reduce((sum, r) => sum + r.duration * r.system_discharge, 0);
+      const growthStage =
+        dayIrrigations.map((r) => r.growth_stage?.trim()).find((stage) => stage) ?? null;
+
+      const products: FpcActivityProductRow[] = [
+        ...daySprays.flatMap((record, recordIndex) =>
+          buildProductRows(
+            'spray',
+            `${isoDate}-spr${recordIndex}`,
+            this.resolveSprayUsageItems(record),
+            recordAreaAcres(record.area),
+            this.parseWaterVolumeFromDose(record.dose),
+            record,
+          ),
+        ),
+        ...dayFertigations.flatMap((record, recordIndex) =>
+          buildProductRows(
+            'fertigation',
+            `${isoDate}-fert${recordIndex}`,
+            this.resolveFertigationUsageItems(record),
+            recordAreaAcres(record.area),
+            this.positiveOrNull(record.water_volume),
+          ),
+        ),
+      ];
+
+      const notes = [
+        ...new Set(
+          [...dayIrrigations, ...daySprays, ...dayFertigations]
+            .map((r) => r.notes?.trim())
+            .filter((note): note is string => !!note),
+        ),
+      ].join('; ');
+
+      return {
+        date: formatDate(isoDate),
+        isoDate,
+        daysAfterPruning: getDaysAfterPruning(isoDate, pruningDate),
+        irrigationHours: dayIrrigations.length > 0 ? this.toRounded(irrigationHours, 2) : null,
+        waterMm: mmContributions.length > 0 ? this.toRounded(waterMm, 1) : null,
+        growthStage,
+        products,
+        notes: notes || null,
+      } satisfies FpcActivityDayRow;
+    });
+
+    return rows;
+  }
+
+  /**
    * Generate report data from farm records
    */
   static generateReportData(
@@ -842,6 +1019,13 @@ export class ReportService {
         // record.area is raw in this unit too — the ledger converts per record.
         areaUnit: options.areaUnit,
       }),
+      fpcActivity: this.buildFpcActivity(
+        farm,
+        irrigationRecords,
+        sprayRecords,
+        fertigationRecords,
+        options,
+      ),
     };
   }
 
@@ -1009,6 +1193,10 @@ export class ReportService {
     );
     rows.push('');
 
+    if (visibleSections.has('fpc-activity')) {
+      this.appendFpcActivityCSV(rows, data.fpcActivity ?? []);
+    }
+
     if (visibleSections.has('irrigation')) {
       if (data.irrigation.length === 0) {
         pushEmptySection('IRRIGATION RECORDS');
@@ -1124,6 +1312,62 @@ export class ReportService {
     }
 
     return rows.join('\n');
+  }
+
+  /**
+   * FPC activity register CSV: date columns written once per day block,
+   * one row per product under them — the shape FPC field officers keep in
+   * their own Excel registers. No row cap: a buyer audit needs the full
+   * season, not the first 20 rows.
+   */
+  private static appendFpcActivityCSV(rows: string[], days: FpcActivityDayRow[]): void {
+    const productCount = days.reduce((sum, day) => sum + day.products.length, 0);
+    if (days.length === 0) {
+      rows.push('FPC ACTIVITY REGISTER');
+      rows.push(this.EMPTY_SECTION_TEXT);
+      rows.push('');
+      return;
+    }
+
+    rows.push(`FPC ACTIVITY REGISTER (${days.length} days, ${productCount} product applications)`);
+    rows.push(
+      'Date,Day,Irrigation (hrs),Water (mm),Stage,Market Name,Technical Name,Qty/Acre,Total Qty/Plot,As Logged,PHI (days),Safe Harvest,MRL,Details',
+    );
+
+    days.forEach((day) => {
+      const dayCells = [
+        this.escapeCSV(day.date),
+        this.formatDaysAfterPruningValue(day.daysAfterPruning),
+        day.irrigationHours != null ? String(day.irrigationHours) : '',
+        day.waterMm != null ? String(day.waterMm) : '',
+        this.escapeCSV(day.growthStage ?? ''),
+      ];
+      const blankDayCells = ['', '', '', '', ''];
+      const notesCell = this.escapeCSV(day.notes ?? '');
+
+      if (day.products.length === 0) {
+        rows.push([...dayCells, '', '', '', '', '', '', '', '', notesCell].join(','));
+        return;
+      }
+
+      day.products.forEach((product, index) => {
+        rows.push(
+          [
+            ...(index === 0 ? dayCells : blankDayCells),
+            this.escapeCSV(product.marketName),
+            this.escapeCSV(product.technicalName ?? ''),
+            this.escapeCSV(product.qtyPerAcreDisplay ?? ''),
+            this.escapeCSV(product.totalQtyDisplay ?? ''),
+            this.escapeCSV(product.asLogged),
+            product.phiDays != null ? String(product.phiDays) : '',
+            this.escapeCSV(product.safeHarvestDate ?? ''),
+            this.escapeCSV(product.mrl ?? ''),
+            index === 0 ? notesCell : '',
+          ].join(','),
+        );
+      });
+    });
+    rows.push('');
   }
 
   /**
@@ -1306,6 +1550,7 @@ export class ReportService {
         .profit { color: #16a34a; }
         .loss { color: #dc2626; }
         .empty-section { color: #666; font-style: italic; margin: 10px 0 0; }
+        tr.fpc-day-start td { border-top: 2px solid #1a5d1a; }
         .more-records { color: #666; font-size: 12px; margin-top: 6px; }
         .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 11px; color: #666; }
       </style>
@@ -1425,6 +1670,73 @@ export class ReportService {
         ${hiddenCount > 0 ? `<p class="more-records">... and ${hiddenCount} more records</p>` : ''}
       `;
     };
+
+    if (visibleSections.has('fpc-activity')) {
+      // No row cap: the register exists for buyer/FPC audits, which need the
+      // full window — truncation would silently misrepresent the season.
+      const days = data.fpcActivity ?? [];
+      const productCount = days.reduce((sum, day) => sum + day.products.length, 0);
+      html += `<h2>📋 FPC Activity Register (${days.length} days, ${productCount} product applications)</h2>`;
+      if (days.length === 0) {
+        html += `<p class="empty-section">${this.EMPTY_SECTION_TEXT}</p>`;
+      } else {
+        const headers = [
+          'Date',
+          'Day',
+          'Irrigation (hrs)',
+          'Water (mm)',
+          'Stage',
+          'Market Name',
+          'Technical Name',
+          'Qty/Acre',
+          'Total Qty/Plot',
+          'PHI (days)',
+          'Safe Harvest',
+          'MRL',
+          'Details',
+        ];
+        const cell = (value: string | null | undefined) =>
+          `<td>${this.escapeHtml(value ?? '') || '-'}</td>`;
+        const bodyRows = days
+          .map((day) => {
+            const span = Math.max(1, day.products.length);
+            const dayCells =
+              `<td rowspan="${span}">${this.escapeHtml(day.date)}</td>` +
+              `<td rowspan="${span}">${this.formatDaysAfterPruningValue(day.daysAfterPruning)}</td>` +
+              `<td rowspan="${span}">${day.irrigationHours ?? '-'}</td>` +
+              `<td rowspan="${span}">${day.waterMm ?? '-'}</td>` +
+              `<td rowspan="${span}">${this.escapeHtml(day.growthStage ?? '') || '-'}</td>`;
+            const notesCell = `<td rowspan="${span}">${this.escapeHtml(day.notes ?? '') || '-'}</td>`;
+            if (day.products.length === 0) {
+              return `<tr class="fpc-day-start">${dayCells}${'<td>-</td>'.repeat(7)}${notesCell}</tr>`;
+            }
+            return day.products
+              .map((product, index) => {
+                const productCells =
+                  cell(product.marketName) +
+                  cell(product.technicalName) +
+                  // Qty/Acre and Total fall back to the verbatim entry so an
+                  // unresolvable unit is still visible, marked as-logged.
+                  cell(product.qtyPerAcreDisplay ?? `${product.asLogged} (as logged)`) +
+                  cell(product.totalQtyDisplay ?? `${product.asLogged} (as logged)`) +
+                  `<td>${product.phiDays != null ? product.phiDays : '-'}</td>` +
+                  cell(product.safeHarvestDate) +
+                  cell(product.mrl);
+                return index === 0
+                  ? `<tr class="fpc-day-start">${dayCells}${productCells}${notesCell}</tr>`
+                  : `<tr>${productCells}</tr>`;
+              })
+              .join('');
+          })
+          .join('');
+        html += `
+          <table>
+            <tr>${headers.map((header) => `<th>${this.escapeHtml(header)}</th>`).join('')}</tr>
+            ${bodyRows}
+          </table>
+        `;
+      }
+    }
 
     if (visibleSections.has('irrigation')) {
       const visibleRows = data.irrigation.slice(0, maxRowsPerSection);

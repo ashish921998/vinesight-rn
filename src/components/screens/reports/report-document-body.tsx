@@ -23,6 +23,7 @@ const SECTION_ICONS = {
   harvest: 'basket.fill',
   expense: 'dollarsign.circle.fill',
   stock: 'cube.fill',
+  fpcActivity: 'doc.text.fill',
 } as const;
 
 /** Accent color per section (direct theme values). */
@@ -126,6 +127,42 @@ export function ReportDocumentBody({
         { label: t('reports.export.table.remarks'), value: row.remarks || '-' },
       ],
     }));
+
+  const fpcDays = preview.data.fpcActivity ?? [];
+  const fpcRows: ReportSectionRow[] = fpcDays.slice(0, ROW_LIMIT).map((day) => ({
+    id: `fpc-${day.isoDate}`,
+    lines: [
+      { label: t('reports.export.table.date'), value: day.date },
+      {
+        label: t('reports.fpc.day'),
+        value: day.daysAfterPruning != null ? String(day.daysAfterPruning) : '-',
+        monospace: true,
+      },
+      ...(day.irrigationHours != null
+        ? [
+            {
+              label: t('reports.fpc.irrigation'),
+              value: `${formatNumber(day.irrigationHours)} h${
+                day.waterMm != null ? ` · ${formatNumber(day.waterMm)} mm` : ''
+              }`,
+              monospace: true,
+            },
+          ]
+        : []),
+      {
+        label: t('reports.fpc.products'),
+        value:
+          day.products.length > 0
+            ? day.products
+                .map(
+                  (product) =>
+                    `${product.marketName} (${product.totalQtyDisplay ?? product.asLogged})`,
+                )
+                .join(', ')
+            : t('reports.fpc.noProducts'),
+      },
+    ],
+  }));
 
   const matchedStockRows = preview.data.stock.filter((row) => row.matchStrategy !== 'unmatched');
 
@@ -259,7 +296,11 @@ export function ReportDocumentBody({
       lines: [
         { label: t('reports.lenses.product'), value: row.name },
         { label: t('reports.lenses.concentration'), value: row.display, monospace: true },
-        { label: t('reports.lenses.eventsWithWater'), value: String(row.eventCount), monospace: true },
+        {
+          label: t('reports.lenses.eventsWithWater'),
+          value: String(row.eventCount),
+          monospace: true,
+        },
       ],
     }));
 
@@ -296,6 +337,22 @@ export function ReportDocumentBody({
 
   return (
     <View style={{ gap: spacing[5] }}>
+      {/* FPC activity register (Fratelli format) */}
+      {visibleSections.has('fpc-activity')
+        ? renderSectionCard(
+            SECTION_ACCENT_COLORS.fertigation,
+            <ReportSectionBlock
+              title={t('reports.fpc.sectionTitle', { count: fpcDays.length })}
+              rows={fpcRows}
+              hiddenCount={Math.max(0, fpcDays.length - ROW_LIMIT)}
+              variant="compact-inline"
+              icon={SECTION_ICONS.fpcActivity}
+              accentColor={SECTION_ACCENT_COLORS.fertigation}
+              emptyMessage={t('reports.fpc.empty')}
+            />,
+          )
+        : null}
+
       {/* Operations sections */}
       {visibleSections.has('irrigation')
         ? renderSectionCard(
@@ -457,9 +514,7 @@ export function ReportDocumentBody({
               title={t('reports.lenses.perAcreTitle')}
               rows={usage.perAcre.available ? perAcreLensRows : []}
               hiddenCount={
-                usage.perAcre.available
-                  ? Math.max(0, usage.perAcre.rows.length - ROW_LIMIT)
-                  : 0
+                usage.perAcre.available ? Math.max(0, usage.perAcre.rows.length - ROW_LIMIT) : 0
               }
               variant="compact-inline"
               icon="square.grid.2x2.fill"

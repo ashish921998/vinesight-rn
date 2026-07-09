@@ -70,6 +70,11 @@ const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
     labelKey: 'reports.types.stockUsage',
     icon: resolveSymbolIconName(ICON_REGISTRY.stock),
   },
+  {
+    value: 'fpc-activity',
+    labelKey: 'reports.types.fpcActivity',
+    icon: resolveSymbolIconName(ICON_REGISTRY.note),
+  },
 ];
 
 function resolveSeasonEndDate(season: FarmSeason, todayIso: string): string {
