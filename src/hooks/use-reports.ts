@@ -19,8 +19,9 @@ import {
 } from './use-records';
 import { useProfile, useWarehouseItems } from './use-profile';
 import { useFertilizerPlan } from './use-fertilizer-plan';
+import { useMasterProducts } from './use-master-catalog';
 import { useAuthStore } from '@/stores';
-import { ReportService } from '../services/report-service';
+import { ReportService, type FpcReportLookups } from '../services/report-service';
 import {
   DateRange,
   ReportPlanItemInput,
@@ -30,6 +31,8 @@ import {
   ReportFilters,
   ReportSeasonContext,
   ReportComparison,
+  FpcColumnOptions,
+  FPC_LEAN_COLUMNS,
 } from '../types/report';
 import { resolveBaseline, computeReportDeltas } from '../services/report-comparison';
 import { useCurrency } from './use-currency';
@@ -94,6 +97,86 @@ export function clampDateRangeToSeasonBounds(
   return { from: nextFrom, to: nextFrom };
 }
 
+interface LabelClaimLookups {
+  phiDaysByProductId: Record<number, number>;
+  mrlByProductId: Record<number, string>;
+}
+
+const EMPTY_LABEL_CLAIM_LOOKUPS: LabelClaimLookups = {
+  phiDaysByProductId: {},
+  mrlByProductId: {},
+};
+
+/**
+ * Label-claim PHI and MRL summaries keyed by catalog product id, for the FPC
+ * activity register. Reads only active claims; when several claims cover one
+ * product the LONGEST PHI wins (conservative for a buyer-facing register).
+ * Tolerates a pre-migration DB (42P01) and an empty claims table — both just
+ * blank the PHI/MRL columns.
+ */
+function useLabelClaimLookups(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.reports.labelClaimLookups(),
+    queryFn: async (): Promise<LabelClaimLookups> => {
+      const claimsResult = await supabase
+        .from(TABLES.CHEMICAL_LABEL_CLAIMS)
+        .select('id,product_id,phi_min_days,phi_max_days')
+        .eq('is_active', true);
+      if (claimsResult.error) {
+        if (claimsResult.error.code === '42P01') return EMPTY_LABEL_CLAIM_LOOKUPS;
+        throw claimsResult.error;
+      }
+      const claims = claimsResult.data ?? [];
+      if (claims.length === 0) return EMPTY_LABEL_CLAIM_LOOKUPS;
+
+      const phiDaysByProductId: Record<number, number> = {};
+      const productIdByClaimId = new Map<number, number>();
+      claims.forEach((claim) => {
+        productIdByClaimId.set(claim.id, claim.product_id);
+        const phi = claim.phi_max_days ?? claim.phi_min_days;
+        if (phi == null) return;
+        const existing = phiDaysByProductId[claim.product_id];
+        if (existing == null || phi > existing) {
+          phiDaysByProductId[claim.product_id] = phi;
+        }
+      });
+
+      const mrlsResult = await supabase
+        .from(TABLES.CHEMICAL_LABEL_CLAIM_MRLS)
+        .select('claim_id,market,mrl_value,mrl_unit,no_mrl_required')
+        .in(
+          'claim_id',
+          claims.map((claim) => claim.id),
+        );
+      if (mrlsResult.error && mrlsResult.error.code !== '42P01') throw mrlsResult.error;
+
+      const mrlPartsByProductId = new Map<number, Set<string>>();
+      (mrlsResult.data ?? []).forEach((mrl) => {
+        const productId = productIdByClaimId.get(mrl.claim_id);
+        if (productId == null) return;
+        const label = mrl.no_mrl_required
+          ? `${mrl.market}: no MRL required`
+          : mrl.mrl_value != null
+            ? `${mrl.market}: ${mrl.mrl_value} ${mrl.mrl_unit}`
+            : null;
+        if (!label) return;
+        const existing = mrlPartsByProductId.get(productId) ?? new Set<string>();
+        existing.add(label);
+        mrlPartsByProductId.set(productId, existing);
+      });
+
+      const mrlByProductId: Record<number, string> = {};
+      mrlPartsByProductId.forEach((parts, productId) => {
+        mrlByProductId[productId] = [...parts].sort().join('; ');
+      });
+
+      return { phiDaysByProductId, mrlByProductId };
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function formatReportSeasonLabel(season: FarmSeason): string {
   const customName = season.season_name?.trim();
   if (customName) return customName;
@@ -143,6 +226,11 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
   // the loading gate: a farm without a plan (or a failed plan fetch) still
   // gets its report; the compliance section simply stays empty.
   const { data: fertilizerPlan } = useFertilizerPlan(effectiveFarmId);
+  // FPC register lookups (technical name / PHI / MRL). Not part of the loading
+  // gate either: missing lookups only blank the corresponding columns — the
+  // per-record data (quantities, governing PHI) never depends on them.
+  const { data: masterProducts } = useMasterProducts({ enabled: effectiveFarmId != null });
+  const { data: labelClaimLookups } = useLabelClaimLookups(effectiveFarmId != null);
   // farm.area is stored as the raw number the user typed under their area-unit
   // preference — the per-acre lens must know that unit or hectare farms get
   // rates that are silently 2.47× too high (same resolution as app/reports.tsx).
@@ -167,6 +255,19 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
       })),
     [fertilizerPlan],
   );
+
+  const fpcLookups = useMemo<FpcReportLookups>(() => {
+    const technicalNameByProductId: Record<number, string> = {};
+    (masterProducts ?? []).forEach((product) => {
+      const technicalName = product.active_ingredient?.trim() || product.name;
+      technicalNameByProductId[product.id] = technicalName;
+    });
+    return {
+      technicalNameByProductId,
+      phiDaysByProductId: labelClaimLookups?.phiDaysByProductId ?? {},
+      mrlByProductId: labelClaimLookups?.mrlByProductId ?? {},
+    };
+  }, [masterProducts, labelClaimLookups]);
 
   const farm = useMemo(() => {
     if (!farms || !effectiveFarmId) return null;
@@ -279,6 +380,7 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
         seasonWindowById,
         planItems,
         areaUnit,
+        fpcLookups,
       },
     );
   }, [
@@ -287,6 +389,7 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
     expenses,
     farm,
     fertigations,
+    fpcLookups,
     harvests,
     irrigations,
     planItems,
@@ -452,13 +555,14 @@ export function useReportExport() {
       format: ReportFormat,
       reportType: ReportType,
       areaUnit: AreaUnitPreference = 'acres',
+      fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
     ) => {
       setIsProcessing(true);
       setExportError(null);
 
       try {
         if (format === 'csv') {
-          await ReportService.exportCSV(preview.data, reportType, areaUnit);
+          await ReportService.exportCSV(preview.data, reportType, areaUnit, fpcColumns);
         } else {
           await ReportService.exportPDF(
             preview.data,
@@ -466,6 +570,7 @@ export function useReportExport() {
             reportType,
             preferredCurrency,
             areaUnit,
+            fpcColumns,
           );
         }
       } catch (error) {
@@ -485,13 +590,14 @@ export function useReportExport() {
       format: ReportFormat,
       reportType: ReportType,
       areaUnit: AreaUnitPreference = 'acres',
+      fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
     ): Promise<string> => {
       setIsProcessing(true);
       setExportError(null);
 
       try {
         if (format === 'csv') {
-          return await ReportService.downloadCSV(preview.data, reportType, areaUnit);
+          return await ReportService.downloadCSV(preview.data, reportType, areaUnit, fpcColumns);
         }
         return await ReportService.downloadPDF(
           preview.data,
@@ -499,6 +605,7 @@ export function useReportExport() {
           reportType,
           preferredCurrency,
           areaUnit,
+          fpcColumns,
         );
       } catch (error) {
         console.error('Download error:', error);

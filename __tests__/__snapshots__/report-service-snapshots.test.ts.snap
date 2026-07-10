@@ -127,6 +127,7 @@ exports[`report pipeline snapshot lock (#198) comprehensive PDF HTML 1`] = `
         .profit { color: #16a34a; }
         .loss { color: #dc2626; }
         .empty-section { color: #666; font-style: italic; margin: 10px 0 0; }
+        tr.fpc-day-start td { border-top: 2px solid #1a5d1a; }
         .more-records { color: #666; font-size: 12px; margin-top: 6px; }
         .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 11px; color: #666; }
       </style>

@@ -1242,7 +1242,8 @@ export default function FarmDetailScreen() {
         router.push(`/lab-tests?farmId=${encodeURIComponent(farmIdParam)}`);
         break;
       case 'reports':
-        router.push('/reports');
+        if (!farmIdParam) return;
+        router.push(`/reports?farmId=${encodeURIComponent(farmIdParam)}`);
         break;
       case 'soil':
         if (!farmIdParam) return;

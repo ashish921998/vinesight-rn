@@ -5,16 +5,20 @@ import {
   ActivityIndicator,
   View,
   StyleSheet,
+  type GestureResponderEvent,
   type PressableProps,
   type PressableStateCallbackType,
   type StyleProp,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { telemetry } from '@/services/telemetry';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
+import { springs } from '@/styles/motion';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
+import { triggerHaptic } from '@/utils/haptics';
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
   title: string;
@@ -24,6 +28,8 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
+  /** Fire a light haptic on press-down. Defaults to true. Set false for low-signal buttons. */
+  haptic?: boolean;
   style?: StyleProp<ViewStyle> | ((state: PressableStateCallbackType) => StyleProp<ViewStyle>);
 }
 
@@ -35,14 +41,40 @@ export function Button({
   leftIcon,
   rightIcon,
   fullWidth = true,
+  haptic = true,
   disabled,
   style,
   onPress,
+  onPressIn,
+  onPressOut,
   ...props
 }: ButtonProps) {
   const m3 = useM3();
   const isInteractionDisabled = Boolean(disabled) || isLoading;
   const isVisuallyDisabled = Boolean(disabled);
+
+  // Apple fluid-interface principle #1: respond on press-DOWN, instantly. A spring
+  // press-scale (starts from the live value, so it's interruptible) + a light haptic,
+  // fired on the causal event (touch-down), gives every Button direct, physical feedback.
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  const handlePressIn = (event: GestureResponderEvent) => {
+    // Reanimated shared-value writes are the documented API here; the React Compiler's
+    // immutability rule is a known false-positive for `.value` on `useSharedValue`.
+    // eslint-disable-next-line react-hooks/immutability
+    scale.value = withSpring(0.97, springs.press);
+    if (haptic) {
+      triggerHaptic();
+    }
+    onPressIn?.(event);
+  };
+
+  const handlePressOut = (event: GestureResponderEvent) => {
+    // eslint-disable-next-line react-hooks/immutability
+    scale.value = withSpring(1, springs.press);
+    onPressOut?.(event);
+  };
 
   // Base styles
   const baseStyle: ViewStyle = {
@@ -128,55 +160,59 @@ export function Button({
   const stateLayerOpacity = 0.12;
 
   return (
-    <Pressable
-      {...props}
-      disabled={isInteractionDisabled}
-      accessibilityRole={props.accessibilityRole ?? 'button'}
-      accessibilityState={{ disabled: isInteractionDisabled, busy: Boolean(isLoading) }}
-      onPress={(event) => {
-        try {
-          telemetry.capture('ui_button_press', {
-            button_id: props.testID ?? null,
-            label: props.accessibilityLabel ?? null,
-            title,
-            variant,
-            size,
-          });
-        } catch {
-          // Swallow telemetry errors - don't block user interactions
-        }
-        onPress?.(event);
-      }}
-      style={(state) => [containerStyle, typeof style === 'function' ? style(state) : style]}
-    >
-      {(state) => (
-        <>
-          {isLoading ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <ActivityIndicator color={textStyle.color} size="small" />
-              <Text style={[textStyle, { marginLeft: spacing[2] }]}>{title}</Text>
-            </View>
-          ) : (
-            <>
-              {leftIcon && <View style={{ marginRight: spacing[2] }}>{leftIcon}</View>}
-              <Text style={textStyle}>{title}</Text>
-              {rightIcon && <View style={{ marginLeft: spacing[2] }}>{rightIcon}</View>}
-            </>
-          )}
-          <View
-            pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                backgroundColor:
-                  state.pressed && !isInteractionDisabled
-                    ? colorWithOpacity(stateLayerColor, stateLayerOpacity)
-                    : 'transparent',
-              },
-            ]}
-          />
-        </>
-      )}
-    </Pressable>
+    <Animated.View style={[animatedStyle, fullWidth ? { width: '100%' } : undefined]}>
+      <Pressable
+        {...props}
+        disabled={isInteractionDisabled}
+        accessibilityRole={props.accessibilityRole ?? 'button'}
+        accessibilityState={{ disabled: isInteractionDisabled, busy: Boolean(isLoading) }}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={(event) => {
+          try {
+            telemetry.capture('ui_button_press', {
+              button_id: props.testID ?? null,
+              label: props.accessibilityLabel ?? null,
+              title,
+              variant,
+              size,
+            });
+          } catch {
+            // Swallow telemetry errors - don't block user interactions
+          }
+          onPress?.(event);
+        }}
+        style={(state) => [containerStyle, typeof style === 'function' ? style(state) : style]}
+      >
+        {(state) => (
+          <>
+            {isLoading ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <ActivityIndicator color={textStyle.color} size="small" />
+                <Text style={[textStyle, { marginLeft: spacing[2] }]}>{title}</Text>
+              </View>
+            ) : (
+              <>
+                {leftIcon && <View style={{ marginRight: spacing[2] }}>{leftIcon}</View>}
+                <Text style={textStyle}>{title}</Text>
+                {rightIcon && <View style={{ marginLeft: spacing[2] }}>{rightIcon}</View>}
+              </>
+            )}
+            <View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor:
+                    state.pressed && !isInteractionDisabled
+                      ? colorWithOpacity(stateLayerColor, stateLayerOpacity)
+                      : 'transparent',
+                },
+              ]}
+            />
+          </>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }

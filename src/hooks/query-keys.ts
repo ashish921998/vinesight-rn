@@ -237,6 +237,7 @@ export const queryKeys = {
     all: ['reports'] as const,
     unassignedRecordCount: (farmId: number) =>
       [...queryKeys.reports.all, 'unassignedRecordCount', { farmId }] as const,
+    labelClaimLookups: () => [...queryKeys.reports.all, 'labelClaimLookups'] as const,
   },
 
   // PHI

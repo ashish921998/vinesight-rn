@@ -128,6 +128,34 @@ Two theming systems coexist:
 
 ---
 
+## Motion (`src/styles/motion.ts`)
+
+Motion tokens follow Apple's _Designing Fluid Interfaces_ model (WWDC 2018),
+translated to Reanimated 4. Reach for these instead of hand-typing spring configs
+or `Animated.timing` durations per file.
+
+- **Springs** (`springs.*` for `withSpring`): two designer parameters, mirroring
+  Apple's — `dampingRatio` (overshoot: `1` = critically damped, no bounce; `<1`
+  bounces) and `duration` (Apple's "response", not a hard length).
+  - Default to **critically damped** (`springs.default` / `gentle` / `snappy` /
+    `press`) — graceful and non-distracting.
+  - Reserve **bounce** (`springs.momentum` / `drawer` / `rotate`, `dampingRatio ~0.8`)
+    for motion the _gesture itself carried_ — a flick, drag-release, or sheet.
+- **Timing** (`timing.*` / `durations.*` / `easing.*`): for opacity/color
+  cross-fades. Prefer springs for anything a user can touch.
+- **Reduced motion is automatic:** every preset carries
+  `reduceMotion: ReduceMotion.System`, so animations collapse to an instant jump
+  when the OS "Reduce Motion" (iOS) / "Remove animations" (Android) setting is on.
+  Don't add manual `useReducedMotion()` branches for token-driven animations.
+- **Gesture helpers** (momentum projection, soft-boundary rubber-banding) land with
+  the shared BottomSheet / swipe-row work — added when there's a consumer.
+
+Adoption is early: onboarding, `AnimatedOrb`, and the shared `Button` press-scale
+use the fluid model; most sheets still use static `<Modal animationType="slide">`.
+Migrate to `motion.ts` + Reanimated/Gesture Handler opportunistically.
+
+---
+
 ## Enforcement
 
 `eslint.config.js` carries a `no-restricted-syntax` guard that **warns** on raw

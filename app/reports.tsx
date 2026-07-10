@@ -16,7 +16,7 @@ import {
   Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInUp, Layout } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,7 +31,13 @@ import {
   clampDateRangeToSeasonBounds,
   formatReportSeasonLabel,
 } from '@/hooks/use-reports';
-import { DateRange, ReportFormat, ReportType } from '@/types/report';
+import {
+  DateRange,
+  ReportFormat,
+  ReportType,
+  type FpcColumnOptions,
+  FPC_LEAN_COLUMNS,
+} from '@/types/report';
 import { useAuthStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -46,6 +52,7 @@ import {
 } from '@/components/screens/reports/report-filters-panel';
 import { ReportExecutiveSummary } from '@/components/screens/reports/report-executive-summary';
 import { ReportDocumentBody } from '@/components/screens/reports/report-document-body';
+import { ReportFpcColumnToggles } from '@/components/screens/reports/report-fpc-column-toggles';
 import { ReportExportActions } from '@/components/screens/reports/report-export-actions';
 import type { FarmSeason } from '@/types';
 
@@ -69,6 +76,11 @@ const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
     value: 'stock-usage',
     labelKey: 'reports.types.stockUsage',
     icon: resolveSymbolIconName(ICON_REGISTRY.stock),
+  },
+  {
+    value: 'fpc-activity',
+    labelKey: 'reports.types.fpcActivity',
+    icon: resolveSymbolIconName(ICON_REGISTRY.note),
   },
 ];
 
@@ -101,10 +113,19 @@ export default function ReportsScreen() {
     profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
   );
 
-  const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
+  // A `farmId` param (e.g. opened from a farm's screen) preselects that farm so
+  // reports open on the farm the user was just looking at, not an arbitrary default.
+  const { farmId: farmIdParam } = useLocalSearchParams<{ farmId?: string }>();
+  const initialFarmId = useMemo(() => {
+    const parsed = Number(farmIdParam);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [farmIdParam]);
+
+  const [selectedFarmId, setSelectedFarmId] = useState<number | null>(initialFarmId);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');
+  const [fpcColumns, setFpcColumns] = useState<FpcColumnOptions>(FPC_LEAN_COLUMNS);
   const [selectedExportFormat, setSelectedExportFormat] = useState<ReportFormat>('pdf');
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
@@ -136,8 +157,22 @@ export default function ReportsScreen() {
     selectedSeasonId != null ? selectedFarmId : null,
   );
 
+  // `initialFarmId` seeds useState only on first render. If the farmId param
+  // later changes while this screen stays mounted (deep link / notification
+  // routing to another farm's report), re-sync so we never show stale data.
+  // On mount this fires with the value useState already holds — a no-op.
   React.useEffect(() => {
-    if (farms && farms.length > 0 && selectedFarmId == null) {
+    if (initialFarmId != null) {
+      setSelectedFarmId(initialFarmId);
+    }
+  }, [initialFarmId]);
+
+  React.useEffect(() => {
+    if (!farms || farms.length === 0) return;
+    // Nothing valid selected yet, or the current selection isn't among the loaded
+    // farms (e.g. a stale/invalid param) → fall back to the first farm.
+    const hasValidSelection = selectedFarmId != null && farms.some((f) => f.id === selectedFarmId);
+    if (!hasValidSelection) {
       setSelectedFarmId(farms[0].id ?? null);
     }
   }, [farms, selectedFarmId]);
@@ -307,7 +342,7 @@ export default function ReportsScreen() {
     }
 
     try {
-      await exportReport(preview, format, reportType, areaUnit);
+      await exportReport(preview, format, reportType, areaUnit, fpcColumns);
       telemetry.capture('data_exported', {
         export_type: format,
         scope: 'farm',
@@ -326,7 +361,7 @@ export default function ReportsScreen() {
     }
 
     try {
-      const fileUri = await downloadReport(preview, format, reportType, areaUnit);
+      const fileUri = await downloadReport(preview, format, reportType, areaUnit, fpcColumns);
       telemetry.capture('data_exported', {
         export_type: `${format}_download`,
         scope: 'farm',
@@ -477,7 +512,7 @@ export default function ReportsScreen() {
         {farmsLoading ? (
           <Animated.View
             entering={FadeInUp.duration(320)}
-            layout={Layout.springify().damping(18)}
+            layout={Layout.springify().dampingRatio(1)}
             style={[
               panelStyle,
               { alignItems: 'center', justifyContent: 'center', padding: spacing[8] },
@@ -488,7 +523,7 @@ export default function ReportsScreen() {
         ) : !farms || farms.length === 0 ? (
           <Animated.View
             entering={FadeInUp.duration(320)}
-            layout={Layout.springify().damping(18)}
+            layout={Layout.springify().dampingRatio(1)}
             style={[panelStyle, { padding: spacing[6] }]}
           >
             <Text selectable style={{ color: m3.colorScheme.onSurfaceVariant }}>
@@ -539,10 +574,18 @@ export default function ReportsScreen() {
               panelStyle={panelStyle}
             />
 
+            {reportType === 'fpc-activity' ? (
+              <ReportFpcColumnToggles
+                columns={fpcColumns}
+                onChange={setFpcColumns}
+                panelStyle={panelStyle}
+              />
+            ) : null}
+
             {dataLoading ? (
               <Animated.View
                 entering={FadeInUp.duration(320).delay(100)}
-                layout={Layout.springify().damping(18)}
+                layout={Layout.springify().dampingRatio(1)}
                 style={[panelStyle, { alignItems: 'center', gap: spacing[2], padding: spacing[6] }]}
               >
                 <ActivityIndicator size="small" color={m3.colorScheme.primary} />
@@ -563,6 +606,7 @@ export default function ReportsScreen() {
                   preview={preview}
                   reportType={reportType}
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
+                  fpcColumns={fpcColumns}
                   panelStyle={panelStyle}
                 />
               </>
