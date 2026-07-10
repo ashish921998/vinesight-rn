@@ -31,6 +31,8 @@ import {
   ReportFilters,
   ReportSeasonContext,
   ReportComparison,
+  FpcColumnOptions,
+  FPC_LEAN_COLUMNS,
 } from '../types/report';
 import { resolveBaseline, computeReportDeltas } from '../services/report-comparison';
 import { useCurrency } from './use-currency';
@@ -553,13 +555,14 @@ export function useReportExport() {
       format: ReportFormat,
       reportType: ReportType,
       areaUnit: AreaUnitPreference = 'acres',
+      fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
     ) => {
       setIsProcessing(true);
       setExportError(null);
 
       try {
         if (format === 'csv') {
-          await ReportService.exportCSV(preview.data, reportType, areaUnit);
+          await ReportService.exportCSV(preview.data, reportType, areaUnit, fpcColumns);
         } else {
           await ReportService.exportPDF(
             preview.data,
@@ -567,6 +570,7 @@ export function useReportExport() {
             reportType,
             preferredCurrency,
             areaUnit,
+            fpcColumns,
           );
         }
       } catch (error) {
@@ -586,13 +590,14 @@ export function useReportExport() {
       format: ReportFormat,
       reportType: ReportType,
       areaUnit: AreaUnitPreference = 'acres',
+      fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
     ): Promise<string> => {
       setIsProcessing(true);
       setExportError(null);
 
       try {
         if (format === 'csv') {
-          return await ReportService.downloadCSV(preview.data, reportType, areaUnit);
+          return await ReportService.downloadCSV(preview.data, reportType, areaUnit, fpcColumns);
         }
         return await ReportService.downloadPDF(
           preview.data,
@@ -600,6 +605,7 @@ export function useReportExport() {
           reportType,
           preferredCurrency,
           areaUnit,
+          fpcColumns,
         );
       } catch (error) {
         console.error('Download error:', error);

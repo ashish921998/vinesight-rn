@@ -63,8 +63,9 @@ const REPORT_TYPE_SECTION_MAP: Record<ReportType, ReportSectionKey[]> = {
   // conflate what left the shelf with what reached the vines.
   'stock-usage': ['meta', 'executive', 'stock'],
   // FPC/buyer-facing activity register (Fratelli format): one chronological
-  // table, one row per product applied, grouped under each date.
-  'fpc-activity': ['meta', 'fpc-activity'],
+  // table, one row per product applied, grouped under each date, followed by
+  // a nutrient (N-P-K) summary — how much N / P₂O₅ / K₂O the vine received.
+  'fpc-activity': ['meta', 'fpc-activity', 'nutrient-ledger'],
 };
 
 export function getSectionsForReportType(reportType: ReportType): ReportSectionKey[] {
@@ -138,6 +139,54 @@ export interface ReportData {
 // ============================================================
 // MARK: - FPC activity register (Fratelli format)
 // ============================================================
+
+/**
+ * Toggleable columns on the FPC activity register. Date, day-after-pruning,
+ * growth stage, market name, quantity (per-acre + total) and notes are the
+ * always-on spine of the register; these five can be turned off to keep a
+ * buyer-facing register lean. Fratelli asked to drop the irrigation ("drip"),
+ * PHI and MRL columns and make the technical name optional — that request maps
+ * to the `FPC_LEAN_COLUMNS` preset, which is the default for the FPC report.
+ */
+export interface FpcColumnOptions {
+  /** Irrigation (hrs) + Water (mm) — the drip columns. */
+  irrigation: boolean;
+  /** Catalog technical identity (active ingredient / composition). */
+  technicalName: boolean;
+  /** Pre-harvest interval in days. */
+  phi: boolean;
+  /** Record-level safe-harvest date. */
+  safeHarvest: boolean;
+  /** Maximum residue limits per market. */
+  mrl: boolean;
+}
+
+/** Buyer-facing default: only the activity spine, no compliance/drip columns. */
+export const FPC_LEAN_COLUMNS: FpcColumnOptions = {
+  irrigation: false,
+  technicalName: false,
+  phi: false,
+  safeHarvest: false,
+  mrl: false,
+};
+
+/** Audit-facing: every column, for GrapeNet/export-compliance buyers. */
+export const FPC_FULL_COLUMNS: FpcColumnOptions = {
+  irrigation: true,
+  technicalName: true,
+  phi: true,
+  safeHarvest: true,
+  mrl: true,
+};
+
+/** Optional-column keys in display order — drives the UI toggle chips. */
+export const FPC_OPTIONAL_COLUMN_KEYS: (keyof FpcColumnOptions)[] = [
+  'irrigation',
+  'technicalName',
+  'phi',
+  'safeHarvest',
+  'mrl',
+];
 
 /**
  * One product applied on a given date — a spray chemical or a fertigation

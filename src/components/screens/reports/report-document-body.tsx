@@ -9,6 +9,8 @@ import {
   type ReportPreview,
   type ReportType,
   type UsageVerbatimRow,
+  type FpcColumnOptions,
+  FPC_LEAN_COLUMNS,
 } from '@/types/report';
 import { ReportSectionBlock, type ReportSectionRow } from './report-section-block';
 import { NutrientLedgerSection } from './nutrient-ledger-section';
@@ -40,6 +42,9 @@ interface ReportDocumentBodyProps {
   preview: ReportPreview;
   reportType: ReportType;
   preferredCurrency: string;
+  /** FPC register column visibility — mirrors the export so the in-app preview
+   *  shows exactly what will be exported. Defaults to the lean preset. */
+  fpcColumns?: FpcColumnOptions;
   panelStyle: object;
 }
 
@@ -47,6 +52,7 @@ export function ReportDocumentBody({
   preview,
   reportType,
   preferredCurrency,
+  fpcColumns = FPC_LEAN_COLUMNS,
   panelStyle,
 }: ReportDocumentBodyProps) {
   const { t } = useTranslation();
@@ -138,7 +144,7 @@ export function ReportDocumentBody({
         value: day.daysAfterPruning != null ? String(day.daysAfterPruning) : '-',
         monospace: true,
       },
-      ...(day.irrigationHours != null
+      ...(fpcColumns.irrigation && day.irrigationHours != null
         ? [
             {
               label: t('reports.fpc.irrigation'),

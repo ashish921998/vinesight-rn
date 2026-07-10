@@ -28,6 +28,8 @@ import {
   NutrientLedger,
   FpcActivityDayRow,
   FpcActivityProductRow,
+  FpcColumnOptions,
+  FPC_LEAN_COLUMNS,
   getSectionsForReportType,
 } from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
@@ -829,9 +831,17 @@ export class ReportService {
           totalQtyDisplay: total ? formatQuantity(total.value, total.measure) : null,
           asLogged: asLoggedLabel(item),
           phiDays,
-          safeHarvestDate: sprayRecord?.safe_harvest_date
-            ? formatDate(sprayRecord.safe_harvest_date)
-            : null,
+          // Safe harvest is record-level (governed by the mix's strictest
+          // component), so it rides the SAME attribution gate as the fallback
+          // PHI: show it only where the governing PHI is attributable to this
+          // item. Otherwise a co-mixed, non-blocking product would show a blank
+          // PHI beside a filled Safe Harvest — implying a PHI outcome we
+          // intentionally withheld. A per-product label claim (claimPhi) also
+          // qualifies the row, since then the product carries its own PHI.
+          safeHarvestDate:
+            (claimPhi != null || governingAttributable) && sprayRecord?.safe_harvest_date
+              ? formatDate(sprayRecord.safe_harvest_date)
+              : null,
           mrl,
         } satisfies FpcActivityProductRow;
       });
@@ -1161,6 +1171,7 @@ export class ReportService {
     data: ReportData,
     reportType: ReportType,
     areaUnit: AreaUnitPreference = 'acres',
+    fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
   ): string {
     const rows: string[] = [];
     const visibleSections = this.getVisibleSections(reportType);
@@ -1194,7 +1205,7 @@ export class ReportService {
     rows.push('');
 
     if (visibleSections.has('fpc-activity')) {
-      this.appendFpcActivityCSV(rows, data.fpcActivity ?? []);
+      this.appendFpcActivityCSV(rows, data.fpcActivity ?? [], fpcColumns);
     }
 
     if (visibleSections.has('irrigation')) {
@@ -1320,7 +1331,11 @@ export class ReportService {
    * their own Excel registers. No row cap: a buyer audit needs the full
    * season, not the first 20 rows.
    */
-  private static appendFpcActivityCSV(rows: string[], days: FpcActivityDayRow[]): void {
+  private static appendFpcActivityCSV(
+    rows: string[],
+    days: FpcActivityDayRow[],
+    cols: FpcColumnOptions,
+  ): void {
     const productCount = days.reduce((sum, day) => sum + day.products.length, 0);
     if (days.length === 0) {
       rows.push('FPC ACTIVITY REGISTER');
@@ -1331,22 +1346,60 @@ export class ReportService {
 
     rows.push(`FPC ACTIVITY REGISTER (${days.length} days, ${productCount} product applications)`);
     rows.push(
-      'Date,Day,Irrigation (hrs),Water (mm),Stage,Market Name,Technical Name,Qty/Acre,Total Qty/Plot,As Logged,PHI (days),Safe Harvest,MRL,Details',
+      [
+        'Date',
+        'Day',
+        ...(cols.irrigation ? ['Irrigation (hrs)', 'Water (mm)'] : []),
+        'Stage',
+        'Market Name',
+        ...(cols.technicalName ? ['Technical Name'] : []),
+        'Qty/Acre',
+        'Total Qty/Plot',
+        'As Logged',
+        ...(cols.phi ? ['PHI (days)'] : []),
+        ...(cols.safeHarvest ? ['Safe Harvest'] : []),
+        ...(cols.mrl ? ['MRL'] : []),
+        'Details',
+      ].join(','),
     );
+
+    // Product-level column count (used to blank a no-product day's row):
+    // Market + Qty/Acre + Total + As Logged, plus any enabled optionals.
+    const productColCount =
+      4 +
+      (cols.technicalName ? 1 : 0) +
+      (cols.phi ? 1 : 0) +
+      (cols.safeHarvest ? 1 : 0) +
+      (cols.mrl ? 1 : 0);
+
+    const productCells = (product: FpcActivityProductRow): string[] => [
+      this.escapeCSV(product.marketName),
+      ...(cols.technicalName ? [this.escapeCSV(product.technicalName ?? '')] : []),
+      this.escapeCSV(product.qtyPerAcreDisplay ?? ''),
+      this.escapeCSV(product.totalQtyDisplay ?? ''),
+      this.escapeCSV(product.asLogged),
+      ...(cols.phi ? [product.phiDays != null ? String(product.phiDays) : ''] : []),
+      ...(cols.safeHarvest ? [this.escapeCSV(product.safeHarvestDate ?? '')] : []),
+      ...(cols.mrl ? [this.escapeCSV(product.mrl ?? '')] : []),
+    ];
 
     days.forEach((day) => {
       const dayCells = [
         this.escapeCSV(day.date),
         this.formatDaysAfterPruningValue(day.daysAfterPruning),
-        day.irrigationHours != null ? String(day.irrigationHours) : '',
-        day.waterMm != null ? String(day.waterMm) : '',
+        ...(cols.irrigation
+          ? [
+              day.irrigationHours != null ? String(day.irrigationHours) : '',
+              day.waterMm != null ? String(day.waterMm) : '',
+            ]
+          : []),
         this.escapeCSV(day.growthStage ?? ''),
       ];
-      const blankDayCells = ['', '', '', '', ''];
+      const blankDayCells = dayCells.map(() => '');
       const notesCell = this.escapeCSV(day.notes ?? '');
 
       if (day.products.length === 0) {
-        rows.push([...dayCells, '', '', '', '', '', '', '', '', notesCell].join(','));
+        rows.push([...dayCells, ...Array(productColCount).fill(''), notesCell].join(','));
         return;
       }
 
@@ -1354,14 +1407,7 @@ export class ReportService {
         rows.push(
           [
             ...(index === 0 ? dayCells : blankDayCells),
-            this.escapeCSV(product.marketName),
-            this.escapeCSV(product.technicalName ?? ''),
-            this.escapeCSV(product.qtyPerAcreDisplay ?? ''),
-            this.escapeCSV(product.totalQtyDisplay ?? ''),
-            this.escapeCSV(product.asLogged),
-            product.phiDays != null ? String(product.phiDays) : '',
-            this.escapeCSV(product.safeHarvestDate ?? ''),
-            this.escapeCSV(product.mrl ?? ''),
+            ...productCells(product),
             index === 0 ? notesCell : '',
           ].join(','),
         );
@@ -1524,6 +1570,7 @@ export class ReportService {
     reportType: ReportType,
     preferredCurrency: string = getDefaultCurrency(),
     areaUnit: AreaUnitPreference = 'acres',
+    fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
   ): string {
     const visibleSections = this.getVisibleSections(reportType);
     const maxRowsPerSection = 20;
@@ -1680,21 +1727,29 @@ export class ReportService {
       if (days.length === 0) {
         html += `<p class="empty-section">${this.EMPTY_SECTION_TEXT}</p>`;
       } else {
+        const cols = fpcColumns;
         const headers = [
           'Date',
           'Day',
-          'Irrigation (hrs)',
-          'Water (mm)',
+          ...(cols.irrigation ? ['Irrigation (hrs)', 'Water (mm)'] : []),
           'Stage',
           'Market Name',
-          'Technical Name',
+          ...(cols.technicalName ? ['Technical Name'] : []),
           'Qty/Acre',
           'Total Qty/Plot',
-          'PHI (days)',
-          'Safe Harvest',
-          'MRL',
+          ...(cols.phi ? ['PHI (days)'] : []),
+          ...(cols.safeHarvest ? ['Safe Harvest'] : []),
+          ...(cols.mrl ? ['MRL'] : []),
           'Details',
         ];
+        // Product-level column count (Market + Qty/Acre + Total, plus enabled
+        // optionals) — used to fill a day that logged no products.
+        const productColCount =
+          3 +
+          (cols.technicalName ? 1 : 0) +
+          (cols.phi ? 1 : 0) +
+          (cols.safeHarvest ? 1 : 0) +
+          (cols.mrl ? 1 : 0);
         const cell = (value: string | null | undefined) =>
           `<td>${this.escapeHtml(value ?? '') || '-'}</td>`;
         const bodyRows = days
@@ -1703,25 +1758,27 @@ export class ReportService {
             const dayCells =
               `<td rowspan="${span}">${this.escapeHtml(day.date)}</td>` +
               `<td rowspan="${span}">${this.formatDaysAfterPruningValue(day.daysAfterPruning)}</td>` +
-              `<td rowspan="${span}">${day.irrigationHours ?? '-'}</td>` +
-              `<td rowspan="${span}">${day.waterMm ?? '-'}</td>` +
+              (cols.irrigation
+                ? `<td rowspan="${span}">${day.irrigationHours ?? '-'}</td>` +
+                  `<td rowspan="${span}">${day.waterMm ?? '-'}</td>`
+                : '') +
               `<td rowspan="${span}">${this.escapeHtml(day.growthStage ?? '') || '-'}</td>`;
             const notesCell = `<td rowspan="${span}">${this.escapeHtml(day.notes ?? '') || '-'}</td>`;
             if (day.products.length === 0) {
-              return `<tr class="fpc-day-start">${dayCells}${'<td>-</td>'.repeat(7)}${notesCell}</tr>`;
+              return `<tr class="fpc-day-start">${dayCells}${'<td>-</td>'.repeat(productColCount)}${notesCell}</tr>`;
             }
             return day.products
               .map((product, index) => {
                 const productCells =
                   cell(product.marketName) +
-                  cell(product.technicalName) +
+                  (cols.technicalName ? cell(product.technicalName) : '') +
                   // Qty/Acre and Total fall back to the verbatim entry so an
                   // unresolvable unit is still visible, marked as-logged.
                   cell(product.qtyPerAcreDisplay ?? `${product.asLogged} (as logged)`) +
                   cell(product.totalQtyDisplay ?? `${product.asLogged} (as logged)`) +
-                  `<td>${product.phiDays != null ? product.phiDays : '-'}</td>` +
-                  cell(product.safeHarvestDate) +
-                  cell(product.mrl);
+                  (cols.phi ? `<td>${product.phiDays != null ? product.phiDays : '-'}</td>` : '') +
+                  (cols.safeHarvest ? cell(product.safeHarvestDate) : '') +
+                  (cols.mrl ? cell(product.mrl) : '');
                 return index === 0
                   ? `<tr class="fpc-day-start">${dayCells}${productCells}${notesCell}</tr>`
                   : `<tr>${productCells}</tr>`;
@@ -1982,11 +2039,12 @@ export class ReportService {
     data: ReportData,
     reportType: ReportType,
     areaUnit: AreaUnitPreference = 'acres',
+    fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
   ): Promise<void> {
     if (!cacheDirectory) {
       throw new Error('Cache directory is not available on this device');
     }
-    const csv = this.generateCSV(data, reportType, areaUnit);
+    const csv = this.generateCSV(data, reportType, areaUnit, fpcColumns);
     const filename = this.buildReportFileName(data.farmName, 'csv');
     const fileUri = this.joinUri(cacheDirectory, filename);
     try {
@@ -2016,8 +2074,9 @@ export class ReportService {
     data: ReportData,
     reportType: ReportType,
     areaUnit: AreaUnitPreference = 'acres',
+    fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
   ): Promise<string> {
-    const csv = this.generateCSV(data, reportType, areaUnit);
+    const csv = this.generateCSV(data, reportType, areaUnit, fpcColumns);
     const filename = this.buildReportFileName(data.farmName, 'csv');
     const reportsDirectory = await this.ensureReportsDirectory();
     const fileUri = this.joinUri(reportsDirectory, filename);
@@ -2042,8 +2101,16 @@ export class ReportService {
     reportType: ReportType,
     preferredCurrency: string = getDefaultCurrency(),
     areaUnit: AreaUnitPreference = 'acres',
+    fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
   ): Promise<void> {
-    const html = this.generatePDFHtml(data, summary, reportType, preferredCurrency, areaUnit);
+    const html = this.generatePDFHtml(
+      data,
+      summary,
+      reportType,
+      preferredCurrency,
+      areaUnit,
+      fpcColumns,
+    );
 
     const { uri } = await Print.printToFileAsync({
       html,
@@ -2070,8 +2137,16 @@ export class ReportService {
     reportType: ReportType,
     preferredCurrency: string = getDefaultCurrency(),
     areaUnit: AreaUnitPreference = 'acres',
+    fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
   ): Promise<string> {
-    const html = this.generatePDFHtml(data, summary, reportType, preferredCurrency, areaUnit);
+    const html = this.generatePDFHtml(
+      data,
+      summary,
+      reportType,
+      preferredCurrency,
+      areaUnit,
+      fpcColumns,
+    );
 
     const { uri: tempUri } = await Print.printToFileAsync({
       html,

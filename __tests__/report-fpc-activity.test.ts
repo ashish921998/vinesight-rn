@@ -4,7 +4,7 @@
  */
 
 import { ReportService } from '@/services/report-service';
-import type { DateRange } from '@/types/report';
+import { FPC_FULL_COLUMNS, FPC_LEAN_COLUMNS, type DateRange } from '@/types/report';
 import type { Farm, FertigationRecord, IrrigationRecord, SprayRecord } from '@/types/database';
 
 jest.mock('expo-print', () => ({
@@ -222,13 +222,15 @@ describe('buildFpcActivity (via generateReportData)', () => {
       ],
     });
     expect(singleItem.fpcActivity![0].products[0].phiDays).toBe(10);
-    expect(singleItem.fpcActivity![0].products[0].safeHarvestDate).toBeTruthy();
+    // Exact date (not just truthy) so a formatting/null regression is caught.
+    expect(singleItem.fpcActivity![0].products[0].safeHarvestDate).toBe('26-06-2026');
 
     const mix = generate({
       sprays: [
         createSprayRecord({
           governing_phi_days: 10,
           phi_blocking_component: 'Ranman',
+          safe_harvest_date: '2026-06-26',
           chemical_items: [
             { name: 'Ranman', quantity: 60, unit: 'ml', quantity_basis: 'total' },
             { name: 'Proclaim', quantity: 60, unit: 'gm', quantity_basis: 'total' },
@@ -238,8 +240,11 @@ describe('buildFpcActivity (via generateReportData)', () => {
     });
     const [ranman, proclaim] = mix.fpcActivity![0].products;
     expect(ranman.phiDays).toBe(10);
-    // Co-mixed, non-blocking, no claim data: PHI must not be overstated.
+    expect(ranman.safeHarvestDate).toBe('26-06-2026');
+    // Co-mixed, non-blocking, no claim data: PHI must not be overstated — and
+    // the record-level Safe Harvest must NOT ride along on this row either.
     expect(proclaim.phiDays).toBeNull();
+    expect(proclaim.safeHarvestDate).toBeNull();
   });
 
   it('merges unique notes from all records on the date', () => {
@@ -269,8 +274,8 @@ describe('FPC register rendering', () => {
     ],
   });
 
-  it('CSV: writes day cells once and one row per product, uncapped', () => {
-    const csv = ReportService.generateCSV(data, 'fpc-activity');
+  it('CSV (full preset): writes day cells once and one row per product, uncapped', () => {
+    const csv = ReportService.generateCSV(data, 'fpc-activity', 'acres', FPC_FULL_COLUMNS);
     expect(csv).toContain('FPC ACTIVITY REGISTER (1 days, 2 product applications)');
     const lines = csv.split('\n');
     const headerIndex = lines.findIndex((line) => line.startsWith('Date,Day,Irrigation'));
@@ -280,6 +285,7 @@ describe('FPC register rendering', () => {
     expect(first).toContain('0-52-34');
     expect(first).toContain('5'); // irrigation hours
     expect(first).toContain('30'); // mm
+    // Full preset day cells: Date,Day,Irrigation,Water,Stage → 5 blanks on row 2.
     expect(second.startsWith(',,,,,')).toBe(true); // day cells written once
     expect(second).toContain('12-61-00');
     // FPC report shows only the register section.
@@ -287,17 +293,80 @@ describe('FPC register rendering', () => {
     expect(csv).not.toContain('STOCK USAGE SUMMARY');
   });
 
-  it('PDF: renders every product row with day rowspan, no truncation note', () => {
+  it('CSV (lean default): drops irrigation, technical name, PHI, safe harvest and MRL', () => {
+    const csv = ReportService.generateCSV(data, 'fpc-activity');
+    const header = csv.split('\n').find((line) => line.startsWith('Date,Day,')) ?? '';
+    expect(header).toBe('Date,Day,Stage,Market Name,Qty/Acre,Total Qty/Plot,As Logged,Details');
+    expect(header).not.toContain('Irrigation');
+    expect(header).not.toContain('Technical Name');
+    expect(header).not.toContain('PHI');
+    expect(header).not.toContain('MRL');
+    // The spine still renders every product.
+    expect(csv).toContain('0-52-34');
+    expect(csv).toContain('12-61-00');
+  });
+
+  it('PDF (full preset): renders every product row with day rowspan, no truncation note', () => {
+    const html = ReportService.generatePDFHtml(
+      data,
+      ReportService.calculateSummary(data, 'fpc-activity'),
+      'fpc-activity',
+      undefined,
+      undefined,
+      FPC_FULL_COLUMNS,
+    );
+    expect(html).toContain('FPC Activity Register (1 days, 2 product applications)');
+    expect(html).toContain('rowspan="2"');
+    expect(html).toContain('Irrigation (hrs)');
+    expect(html).toContain('MRL');
+    expect(html).toContain('0-52-34');
+    expect(html).toContain('12-61-00');
+    expect(html).not.toContain('more records');
+  });
+
+  it('PDF (lean default): omits toggled-off column headers', () => {
     const html = ReportService.generatePDFHtml(
       data,
       ReportService.calculateSummary(data, 'fpc-activity'),
       'fpc-activity',
     );
-    expect(html).toContain('FPC Activity Register (1 days, 2 product applications)');
+    expect(html).toContain('<th>Stage</th>');
+    expect(html).toContain('<th>Market Name</th>');
+    expect(html).not.toContain('Irrigation (hrs)');
+    expect(html).not.toContain('<th>Technical Name</th>');
+    expect(html).not.toContain('<th>PHI (days)</th>');
+    expect(html).not.toContain('<th>MRL</th>');
+    // rowspan grouping still works with the reduced column set.
     expect(html).toContain('rowspan="2"');
-    expect(html).toContain('0-52-34');
-    expect(html).toContain('12-61-00');
-    expect(html).not.toContain('more records');
+  });
+
+  it('CSV (partial toggle): a single enabled column appears, others stay hidden', () => {
+    const csv = ReportService.generateCSV(data, 'fpc-activity', 'acres', {
+      ...FPC_LEAN_COLUMNS,
+      irrigation: true,
+    });
+    const header = csv.split('\n').find((line) => line.startsWith('Date,Day,')) ?? '';
+    expect(header).toContain('Irrigation (hrs)');
+    expect(header).toContain('Water (mm)');
+    expect(header).not.toContain('Technical Name');
+    expect(header).not.toContain('MRL');
+  });
+
+  it('appends an N-P-K nutrient summary after the register (CSV + PDF)', () => {
+    const csv = ReportService.generateCSV(data, 'fpc-activity');
+    expect(csv).toContain('NUTRIENT LEDGER - NUTRIENTS APPLIED');
+    // Register comes first, nutrient summary after it.
+    expect(csv.indexOf('FPC ACTIVITY REGISTER')).toBeLessThan(
+      csv.indexOf('NUTRIENT LEDGER - NUTRIENTS APPLIED'),
+    );
+
+    const html = ReportService.generatePDFHtml(
+      data,
+      ReportService.calculateSummary(data, 'fpc-activity'),
+      'fpc-activity',
+    );
+    expect(html).toContain('Nutrient Ledger');
+    expect(html.indexOf('FPC Activity Register')).toBeLessThan(html.indexOf('Nutrient Ledger'));
   });
 
   it('CSV: renders the empty state when no activity exists', () => {
