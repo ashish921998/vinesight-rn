@@ -3,7 +3,7 @@
  * generateReportData, plus its CSV/PDF rendering.
  */
 
-import { ReportService } from '@/services/report-service';
+import { ReportService, type FpcReportLookups } from '@/services/report-service';
 import { FPC_FULL_COLUMNS, FPC_LEAN_COLUMNS, type DateRange } from '@/types/report';
 import type { Farm, FertigationRecord, IrrigationRecord, SprayRecord } from '@/types/database';
 
@@ -88,11 +88,7 @@ function generate(records: {
   irrigations?: IrrigationRecord[];
   sprays?: SprayRecord[];
   fertigations?: FertigationRecord[];
-  fpcLookups?: Parameters<typeof ReportService.generateReportData>[8] extends infer O
-    ? O extends { fpcLookups?: infer L }
-      ? L
-      : never
-    : never;
+  fpcLookups?: FpcReportLookups;
 }) {
   return ReportService.generateReportData(
     FARM,

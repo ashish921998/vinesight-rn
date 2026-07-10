@@ -1326,6 +1326,21 @@ export class ReportService {
   }
 
   /**
+   * Count of enabled optional PRODUCT-level columns (technical name, PHI, safe
+   * harvest, MRL). Irrigation is a DAY-level column and is deliberately
+   * excluded. Shared by the CSV and PDF renderers so the header, product cells
+   * and the blank-row padding for a product-less day can never drift apart.
+   */
+  private static countFpcProductOptionalCols(cols: FpcColumnOptions): number {
+    return (
+      (cols.technicalName ? 1 : 0) +
+      (cols.phi ? 1 : 0) +
+      (cols.safeHarvest ? 1 : 0) +
+      (cols.mrl ? 1 : 0)
+    );
+  }
+
+  /**
    * FPC activity register CSV: date columns written once per day block,
    * one row per product under them — the shape FPC field officers keep in
    * their own Excel registers. No row cap: a buyer audit needs the full
@@ -1364,13 +1379,9 @@ export class ReportService {
     );
 
     // Product-level column count (used to blank a no-product day's row):
-    // Market + Qty/Acre + Total + As Logged, plus any enabled optionals.
-    const productColCount =
-      4 +
-      (cols.technicalName ? 1 : 0) +
-      (cols.phi ? 1 : 0) +
-      (cols.safeHarvest ? 1 : 0) +
-      (cols.mrl ? 1 : 0);
+    // 4 fixed CSV product columns (Market, Qty/Acre, Total, As Logged) plus
+    // any enabled optionals — derived from the same flags as the header/cells.
+    const productColCount = 4 + this.countFpcProductOptionalCols(cols);
 
     const productCells = (product: FpcActivityProductRow): string[] => [
       this.escapeCSV(product.marketName),
@@ -1742,14 +1753,10 @@ export class ReportService {
           ...(cols.mrl ? ['MRL'] : []),
           'Details',
         ];
-        // Product-level column count (Market + Qty/Acre + Total, plus enabled
-        // optionals) — used to fill a day that logged no products.
-        const productColCount =
-          3 +
-          (cols.technicalName ? 1 : 0) +
-          (cols.phi ? 1 : 0) +
-          (cols.safeHarvest ? 1 : 0) +
-          (cols.mrl ? 1 : 0);
+        // Product-level column count: 3 fixed PDF product columns (Market,
+        // Qty/Acre, Total) plus enabled optionals — derived from the same flags
+        // as the header/cells so a day with no products fills the right width.
+        const productColCount = 3 + this.countFpcProductOptionalCols(cols);
         const cell = (value: string | null | undefined) =>
           `<td>${this.escapeHtml(value ?? '') || '-'}</td>`;
         const bodyRows = days

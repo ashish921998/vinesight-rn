@@ -157,6 +157,16 @@ export default function ReportsScreen() {
     selectedSeasonId != null ? selectedFarmId : null,
   );
 
+  // `initialFarmId` seeds useState only on first render. If the farmId param
+  // later changes while this screen stays mounted (deep link / notification
+  // routing to another farm's report), re-sync so we never show stale data.
+  // On mount this fires with the value useState already holds — a no-op.
+  React.useEffect(() => {
+    if (initialFarmId != null) {
+      setSelectedFarmId(initialFarmId);
+    }
+  }, [initialFarmId]);
+
   React.useEffect(() => {
     if (!farms || farms.length === 0) return;
     // Nothing valid selected yet, or the current selection isn't among the loaded
