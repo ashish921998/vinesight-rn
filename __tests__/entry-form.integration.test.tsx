@@ -168,12 +168,15 @@ describe('EntryForm UI integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseFarms.mockReturnValue({ data: [] });
+    // Default to an active season so save-flow assertions aren't blocked by the
+    // no-season gate; tests that exercise the gate override this explicitly.
     mockUseFarmSeasonStatus.mockReturnValue({
-      activeSeason: null,
-      hasActiveSeason: false,
+      activeSeason: { id: 1, start_date: '2026-01-01', end_date: null, target_harvest_date: null },
+      hasActiveSeason: true,
       lastEndedSeason: null,
       needsReview: false,
       isLoading: false,
+      hasResolvedSeasons: true,
       refetch: jest.fn(),
     });
     mockUseChemicalMixSearch.mockReturnValue({ data: [], isLoading: false });
@@ -194,6 +197,83 @@ describe('EntryForm UI integration', () => {
     mockUpdateWaterLevelMutate.mockResolvedValue({});
     mockTaskCreateMutate.mockResolvedValue({ id: 201 });
     mockTaskUpdateMutate.mockResolvedValue({ id: 202 });
+  });
+
+  it('gates saving on a single farm with no active season and offers Start season', async () => {
+    mockUseFarmSeasonStatus.mockReturnValue({
+      activeSeason: null,
+      hasActiveSeason: false,
+      lastEndedSeason: null,
+      needsReview: false,
+      isLoading: false,
+      hasResolvedSeasons: true,
+      refetch: jest.fn(),
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm farm={mockFarm} onClose={jest.fn()} tabs={['log']} presentation="screen" />
+      </QueryClientProvider>,
+    );
+
+    // Start-season CTA is shown instead of letting the log be saved.
+    await waitFor(() => {
+      expect(screen.getByText('farmDetails.seasons.banner.startSeason')).toBeTruthy();
+    });
+
+    // Building an expense draft is gated — no Save button appears and nothing
+    // is persisted.
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    expect(screen.queryByText('entryForm.saveLogs')).toBeNull();
+    expect(mockCreateExpenseMutate).not.toHaveBeenCalled();
+  });
+
+  it('does not block saving until the season lookup is confirmed (loading or errored)', async () => {
+    // activeSeason is null both during the in-flight query and when it errors;
+    // in either case hasResolvedSeasons is false, so the gate must not block an
+    // otherwise-eligible farm.
+    mockUseFarmSeasonStatus.mockReturnValue({
+      activeSeason: null,
+      hasActiveSeason: false,
+      lastEndedSeason: null,
+      needsReview: false,
+      isLoading: false,
+      hasResolvedSeasons: false,
+      refetch: jest.fn(),
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm farm={mockFarm} onClose={jest.fn()} tabs={['log']} presentation="screen" />
+      </QueryClientProvider>,
+    );
+
+    // No Start-season CTA while loading, and a draft can still be built + saved.
+    expect(screen.queryByText('farmDetails.seasons.banner.startSeason')).toBeNull();
+    fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
+    });
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
+    fireEvent.press(screen.getByText('entryForm.addEntry'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
   });
 
   it('submits expense log from UI with normalized backend expense type', async () => {
@@ -256,6 +336,7 @@ describe('EntryForm UI integration', () => {
       lastEndedSeason: null,
       needsReview: false,
       isLoading: false,
+      hasResolvedSeasons: true,
       refetch: jest.fn(),
     });
     mockUseChemicalMixSearch.mockReturnValue({

@@ -335,6 +335,12 @@ export const mr = {
       actions: {
         startSeasonToContinue: 'नोंदी जोडण्यासाठी आधी हंगाम सुरू करा.',
       },
+      banner: {
+        noActiveSeason: 'या शेताचा कोणताही सक्रिय हंगाम नाही. नोंदी जोडण्यासाठी हंगाम सुरू करा.',
+        noActiveSeasonNamed:
+          '{{farm}} साठी कोणताही सक्रिय हंगाम नाही — हंगाम सुरू होईपर्यंत नोंदी विनाहंगाम राहतील.',
+        startSeason: 'हंगाम सुरू करा',
+      },
       alerts: {
         startSuccessTitle: 'हंगाम यशस्वीरित्या सुरू झाला',
         startSuccess: 'नवीन हंगाम आता सक्रिय आहे.',

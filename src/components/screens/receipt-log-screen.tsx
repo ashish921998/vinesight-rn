@@ -30,6 +30,10 @@ import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
+import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
+import { createStartSeasonHref } from '@/utils/add-log-navigation';
+import { useRouter } from 'expo-router';
 import {
   LOG_TYPES,
   PICKER_HIDDEN_LOG_TYPE_IDS,
@@ -208,9 +212,27 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
   // saves route through the `create_delegated_log` RPC. Identical UX to the
   // farmer's farm-details-page add log (`/log-entry/quick`).
   const isDelegatedMode = delegatedContext !== undefined;
+  const router = useRouter();
 
   const liveFarmQuery = useFarm(isDelegatedMode ? undefined : (farmId ?? undefined));
   const farm = isDelegatedMode ? delegatedContext.farm : liveFarmQuery.data;
+  // The delegated RPC path writes straight to Postgres (not the client hooks),
+  // so this banner is the only season-awareness a consultant logging on a
+  // farmer's behalf sees. Never blocks — a consultant must be able to log even
+  // when the farmer hasn't started a season.
+  const { activeSeason, hasResolvedSeasons } = useFarmSeasonStatus(farm?.id);
+  // Farmer path: block save until an active season exists. Consultant/delegated
+  // path is EXEMPT — a consultant must be able to log for a farmer who hasn't
+  // started a season; there the banner stays soft (informational only).
+  // Gate on hasResolvedSeasons: activeSeason is null both while the query loads
+  // and when it errors, so only a confirmed no-season result blocks.
+  const isBlockedByNoSeason =
+    !isDelegatedMode && farm?.id != null && hasResolvedSeasons && !activeSeason;
+  const goStartSeason = () => {
+    if (farm?.id == null) return;
+    onClose();
+    router.push(createStartSeasonHref(farm.id));
+  };
 
   // In delegated mode use the CLIENT's area-unit preference (the farm owner's),
   // so the payload uses the same acres/hectares basis the record was written
@@ -293,7 +315,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
     // Guard with a ref, not the `saving` state: state updates are async, so two
     // taps in the same render frame would both pass a `saving` check and submit
     // duplicate records (and race the same water snapshot).
-    if (!activeType || !farm || !draftValid || savingRef.current) return;
+    if (!activeType || !farm || !draftValid || savingRef.current || isBlockedByNoSeason) return;
     savingRef.current = true;
     setSaving(true);
     const savedType = activeType;
@@ -429,6 +451,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
     delegatedContext,
     entries,
     queryClient,
+    isBlockedByNoSeason,
   ]);
 
   const handleRemove = useCallback(
@@ -700,6 +723,18 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[6] }}
         keyboardShouldPersistTaps="handled"
       >
+        {farm?.id != null && hasResolvedSeasons && !activeSeason ? (
+          <NoActiveSeasonBanner
+            message={
+              isDelegatedMode && farm?.name
+                ? t('farmDetails.seasons.banner.noActiveSeasonNamed', { farm: farm.name })
+                : undefined
+            }
+            // Farmer path can start a season inline (Save is gated); the
+            // consultant path is exempt and stays purely informational.
+            onStartSeason={isDelegatedMode ? undefined : goStartSeason}
+          />
+        ) : null}
         {/* Receipt list */}
         {entries.length > 0 && (
           <View style={{ marginBottom: spacing[5] }}>
@@ -1009,10 +1044,10 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
                 }}
               >
                 <Pressable
-                  disabled={!draftValid || saving}
+                  disabled={!draftValid || saving || isBlockedByNoSeason}
                   onPress={handleSave}
                   accessibilityRole="button"
-                  accessibilityState={{ disabled: !draftValid || saving }}
+                  accessibilityState={{ disabled: !draftValid || saving || isBlockedByNoSeason }}
                   accessibilityLabel={
                     activeLogType
                       ? t('receiptLog.saveType', {

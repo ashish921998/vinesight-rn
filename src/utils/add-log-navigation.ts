@@ -22,3 +22,13 @@ export function createAddLogHref({
     },
   } as const;
 }
+
+// Route to a farm's detail screen with the season-start form auto-opened.
+// Used by the "Start season" CTA in logging forms when the farm is between
+// seasons and Save is gated.
+export function createStartSeasonHref(farmId: number | string) {
+  return {
+    pathname: '/farm/[id]',
+    params: { id: String(farmId), startSeason: '1' },
+  } as const;
+}

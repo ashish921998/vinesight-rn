@@ -4,6 +4,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { useCreateTemporaryWorkerEntry, useFarms, useCurrency } from '@/hooks';
 import { FormModal, SectionHeader, FormInput, PreviewCard, Button } from '@/components/ui';
+import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
+import { createStartSeasonHref } from '@/utils/add-log-navigation';
+import { useRouter } from 'expo-router';
 import { FarmSelectModal } from '@/components/modals/farm-select-modal';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -47,6 +51,16 @@ export function TempWorkerForm({
   const createTemporaryWorkerEntry = useCreateTemporaryWorkerEntry();
 
   const resolvedFarmId = externalFarmId ?? selectedFarmId;
+  const { activeSeason, hasResolvedSeasons } = useFarmSeasonStatus(resolvedFarmId ?? undefined);
+  // Block only on a confirmed no-season result — activeSeason is null while the
+  // status query loads or errors, so gate on hasResolvedSeasons.
+  const isBlockedByNoSeason = resolvedFarmId != null && hasResolvedSeasons && !activeSeason;
+  const router = useRouter();
+  const goStartSeason = () => {
+    if (resolvedFarmId == null) return;
+    onClose();
+    router.push(createStartSeasonHref(resolvedFarmId));
+  };
   const parsedHours = parseFloat(hoursWorked);
   const parsedAmount = parseFloat(amountPaid);
   const isHoursValid =
@@ -113,11 +127,12 @@ export function TempWorkerForm({
       onSave={handleSave}
       saveLabel={t('workers.tempWorkers.form.save')}
       isLoading={isSubmitting}
-      isSaveDisabled={!isValid}
+      isSaveDisabled={!isValid || isBlockedByNoSeason}
       showResetButton
       onReset={handleReset}
       presentation={presentation}
     >
+      {isBlockedByNoSeason ? <NoActiveSeasonBanner onStartSeason={goStartSeason} /> : null}
       <SectionHeader
         title={t('workers.tempWorkers.form.sections.workerDetails')}
         style={{ marginBottom: spacing[4] }}

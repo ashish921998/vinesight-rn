@@ -14,6 +14,10 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { FormModal, SectionHeader, FormInput } from '@/components/ui/form-components';
+import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
+import { createStartSeasonHref } from '@/utils/add-log-navigation';
+import { useRouter } from 'expo-router';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
@@ -49,6 +53,15 @@ export default function LabTestForm({
   const createSoilTest = useCreateSoilTest();
   const createPetioleTest = useCreatePetioleTest();
   const { data: farm } = useFarm(farmId);
+  const { activeSeason, hasResolvedSeasons } = useFarmSeasonStatus(farmId);
+  // Block only on a confirmed no-season result — activeSeason is null while the
+  // query loads or errors, so gate on hasResolvedSeasons.
+  const isBlockedByNoSeason = hasResolvedSeasons && !activeSeason;
+  const router = useRouter();
+  const goStartSeason = () => {
+    onClose();
+    router.push(createStartSeasonHref(farmId));
+  };
 
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -297,9 +310,10 @@ export default function LabTestForm({
       onSave={handleSubmit}
       saveLabel={t('labTests.form.saveLabel')}
       isLoading={isLoading}
-      isSaveDisabled={!isValid}
+      isSaveDisabled={!isValid || isBlockedByNoSeason}
       presentation={presentation}
     >
+      {isBlockedByNoSeason ? <NoActiveSeasonBanner onStartSeason={goStartSeason} /> : null}
       <SectionHeader title={t('labTests.form.uploadSectionTitle')} style={{ marginBottom: 12 }} />
       <Pressable
         onPress={handleUploadFile}
