@@ -13,6 +13,7 @@ import { formatNumber } from '@/i18n/format';
 import * as Haptics from 'expo-haptics';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
+import { springs } from '@/styles/motion';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import type { ReportFormat, ReportType } from '@/types/report';
@@ -114,7 +115,9 @@ function SegmentedControl({
     return {
       opacity: 1,
       width: segW - SEGMENT_INSET * 2,
-      transform: [{ translateX: withSpring(activeCol * segW, { damping: 18, stiffness: 200 }) }],
+      // Critically damped (springs.snappy) — a tab-switch is a discrete reposition,
+      // not a gesture-carried flick, so it should settle cleanly with no overshoot.
+      transform: [{ translateX: withSpring(activeCol * segW, springs.snappy) }],
     };
   }, [activeCol, cols]);
 
@@ -413,8 +416,8 @@ export function ReportFiltersPanel({
         {/* ── Expanded filters ── */}
         {expanded ? (
           <Animated.View
-            entering={FadeInDown.duration(250).springify().damping(18)}
-            layout={ReanimatedLayout.springify().damping(18)}
+            entering={FadeInDown.duration(250)}
+            layout={ReanimatedLayout.springify().dampingRatio(1)}
             style={{ gap: spacing[3] }}
           >
             {/* Farm + Season row */}
@@ -903,8 +906,7 @@ export function ReportFiltersPanel({
                           fontSize: fontSize.xs,
                         }}
                       >
-                        {formatNumber(farmItem.area)}{' '}
-                        {t(`units.${areaUnit}`)}
+                        {formatNumber(farmItem.area)} {t(`units.${areaUnit}`)}
                       </Text>
                     </View>
                     {selected ? (
