@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.1] - 2026-07-10
+
+### Added
+- FPC activity register report (Fratelli format) for at-a-glance per-farm activity history.
+- Week-strip date selector on the add-log screen, plus a repeat-last-log suggestion to speed up data entry.
+- Fertilizer recommended-dose layer: prefill from catalog, range guardrail, and seed data.
+- Micronutrient tier (Fe/Zn/Mn/Cu/B/Mo sources) with gram-scale nutrient ledger in the catalog.
+- PostHog `isFeatureEnabled` wrapper providing kill-switch and canary gating for compliance rollouts.
+
+### Changed
+- Farmer logging paths now require an active season, with explicit between-seasons handling so users are never left logging into a void.
+- Catalog collapses branded fertilizer rows and corrects mis-typed spray rows.
+- The governing PHI rule now picks the strictest verified + currently-effective rule, so the safe-harvest date is never too optimistic.
+
 ## [1.7.0] - 2026-07-04
 
 ### Added
