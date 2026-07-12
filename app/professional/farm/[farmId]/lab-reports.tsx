@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback, useRef } from 'react';
-import { ActivityIndicator, findNodeHandle, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import type { ReactNativeElement } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
@@ -111,10 +112,14 @@ export default function LabReportsScreen() {
       const rowNode = rowRefs.current[index];
       const scrollNode = scrollViewRef.current;
       if (!rowNode || !scrollNode) return;
-      const scrollHandle = findNodeHandle(scrollNode);
-      if (!scrollHandle) return;
+      // Pass the ancestor's component instance, not findNodeHandle's numeric
+      // handle — the handle form is deprecated and can silently no-op on newer
+      // RN, which would break this row-into-view scroll on every lower row.
+      // ScrollView satisfies ReactNativeElement at runtime; the cast bridges the
+      // structural gap in its TS typings (system-discharge.tsx measures against a
+      // View ancestor for the same reason).
       rowNode.measureLayout(
-        scrollHandle,
+        scrollNode as unknown as ReactNativeElement,
         (_x, y) => scrollNode.scrollTo({ y: Math.max(y - spacing[4], 0), animated: true }),
         () => {},
       );
@@ -130,9 +135,23 @@ export default function LabReportsScreen() {
     [scrollRowIntoView],
   );
 
-  const closeProductPicker = useCallback(() => {
-    setProductPickerIndex(null);
-    setProductQuery('');
+  // Optional `fromIndex` guards the blur-vs-open race: tapping from one row's
+  // field directly into another fires the first row's deferred blur *after*
+  // openProductPicker has already switched the index. Closing unconditionally
+  // there would snap the newly focused row shut, so a row-scoped close only
+  // acts when the picker still points at that row. Functional updates keep
+  // this correct without depending on a possibly-stale index in closure.
+  const closeProductPicker = useCallback((fromIndex?: number) => {
+    if (fromIndex === undefined) {
+      setProductPickerIndex(null);
+      setProductQuery('');
+      return;
+    }
+    setProductPickerIndex((current) => {
+      if (current !== fromIndex) return current;
+      setProductQuery('');
+      return null;
+    });
   }, []);
 
   const latestSoil = useMemo(() => (soil.data ?? [])[0] ?? null, [soil.data]);
@@ -238,7 +257,19 @@ export default function LabReportsScreen() {
   const resetForm = () => {
     setPlanNotes('');
     setItems([emptyDraft()]);
+    // Clearing picker state here (and in closePlanForm) means reopening the
+    // form can't remount a row with a stale expanded query/results from the
+    // last session — the inline picker always starts collapsed.
+    closeProductPicker();
   };
+
+  // Covers the dismiss paths (close button, Android back, backdrop) — save
+  // goes through resetForm instead. Both must drop picker state so the next
+  // open isn't stale.
+  const closePlanForm = useCallback(() => {
+    setFabOpen(false);
+    closeProductPicker();
+  }, [closeProductPicker]);
 
   // Enables the Send button. At least one product needs a name and a positive
   // quantity; blank extra rows are ignored (see handleSubmit).
@@ -432,7 +463,7 @@ export default function LabReportsScreen() {
       {fabOpen && (
         <FormModal
           visible={fabOpen}
-          onClose={() => setFabOpen(false)}
+          onClose={closePlanForm}
           title={t('professional.reviews.createPlan')}
           onSave={handleSubmit}
           saveLabel={t('professional.reviews.sendPlan')}
@@ -586,7 +617,7 @@ export default function LabReportsScreen() {
                     query={productPickerIndex === index ? productQuery : ''}
                     sections={productPickerIndex === index ? productPickerSections : []}
                     onOpen={() => openProductPicker(index)}
-                    onClose={closeProductPicker}
+                    onClose={() => closeProductPicker(index)}
                     onQueryChange={setProductQuery}
                     onSelect={selectProduct}
                   />

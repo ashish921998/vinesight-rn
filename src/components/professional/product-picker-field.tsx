@@ -3,7 +3,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { ScrollView as GestureScrollView } from 'react-native-gesture-handler';
 import Animated, {
   FadeInDown,
-  Layout as ReanimatedLayout,
+  LinearTransition,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -80,7 +80,7 @@ export function ProductPickerField({
   }));
 
   return (
-    <Animated.View layout={ReanimatedLayout.springify().dampingRatio(1)}>
+    <Animated.View layout={LinearTransition.springify().dampingRatio(1)}>
       <View
         style={{
           flexDirection: 'row',
@@ -150,7 +150,7 @@ export function ProductPickerField({
       {isOpen ? (
         <Animated.View
           entering={FadeInDown.duration(200)}
-          layout={ReanimatedLayout.springify().dampingRatio(1)}
+          layout={LinearTransition.springify().dampingRatio(1)}
           style={{
             marginTop: -1,
             borderWidth: 1,
