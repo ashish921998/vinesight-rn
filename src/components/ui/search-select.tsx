@@ -102,7 +102,10 @@ function SearchSelectBody({
     : t('searchSelect.empty');
 
   return (
-    <View
+    <Pressable
+      onPress={onClose}
+      accessibilityRole="none"
+      testID="search-select-backdrop"
       style={{
         flex: 1,
         backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.25),
@@ -110,7 +113,9 @@ function SearchSelectBody({
         padding: spacing[4],
       }}
     >
-      <View
+      {/* Consumes the touch so tapping the card doesn't bubble to the backdrop's onPress. */}
+      <Pressable
+        onPress={() => {}}
         style={{
           borderRadius: borderRadius.xl,
           backgroundColor: m3.colorScheme.surface,
@@ -257,7 +262,7 @@ function SearchSelectBody({
             </Text>
           </Pressable>
         </View>
-      </View>
-    </View>
+      </Pressable>
+    </Pressable>
   );
 }
