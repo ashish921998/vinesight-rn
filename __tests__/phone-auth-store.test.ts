@@ -650,6 +650,16 @@ describe('state cleanup', () => {
     expect(state.isAuthenticated).toBe(false);
   });
 
+  it('signOut rejects when Supabase cannot clear the session', async () => {
+    const signOutError = new Error('Network unavailable');
+    useAuthStore.setState({ isAuthenticated: true });
+    (supabase.auth.signOut as jest.Mock).mockResolvedValue({ error: signOutError });
+
+    await expect(useAuthStore.getState().signOut()).rejects.toThrow(signOutError);
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().errorMessage).toBe('Network unavailable');
+  });
+
   it('cancelOTPFlow clears pendingOTPPhone', () => {
     useAuthStore.setState({ pendingOTPPhone: '+919876543210' });
     useAuthStore.getState().cancelOTPFlow();

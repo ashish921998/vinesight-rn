@@ -14,11 +14,9 @@ import {
   useSendFertilizerPlan,
 } from '@/hooks/use-consultant-reviews';
 import { useOrgFertilizerPlanItemHistory } from '@/hooks/use-fertilizer-plan';
-import { useMasterProducts } from '@/hooks/use-master-catalog';
 import { SearchSelect } from '@/components/ui/search-select';
 import {
-  fertilizerCatalogToOptions,
-  orgPlanHistoryToOptions,
+  professionalPlanPickerSources,
   type SearchSelectSelection,
 } from '@/components/ui/search-select-logic';
 import { PetioleComparison } from '@/components/lab/petiole-comparison';
@@ -73,33 +71,20 @@ export default function LabReportsScreen() {
   const sendPlan = useSendFertilizerPlan();
 
   const [fabOpen, setFabOpen] = useState(false);
-  const [planTitleInput, setPlanTitleInput] = useState('');
   const [planNotes, setPlanNotes] = useState('');
   const [items, setItems] = useState<DraftItem[]>([emptyDraft()]);
   /** Which draft row the product picker is filling (null = closed). */
   const [productPickerIndex, setProductPickerIndex] = useState<number | null>(null);
 
   // Product picker sections: what this org prescribed before ("you often
-  // prescribe") → fertilizer catalog → custom escape hatch. Plan items store
-  // the picked name verbatim as a string — the canonical catalog name is the
-  // convergence point (no product_id column until Phase W). Both feeds are
-  // gated on the plan sheet being open so merely visiting lab reports never
-  // pays for them.
+  // prescribe") plus SearchSelect's custom-text escape hatch for new products.
+  // The master fertilizer catalog is intentionally not a plan-authoring source.
   const orgPlanHistory = useOrgFertilizerPlanItemHistory(
     fabOpen ? workspace.data?.organization_id : undefined,
   );
-  const { data: fertilizerCatalogProducts = [] } = useMasterProducts({
-    inputTypes: ['fertilizer', 'biostimulant'],
-    stateCode: null,
-    enabled: fabOpen,
-  });
-  const orgHistoryOptions = useMemo(
-    () => orgPlanHistoryToOptions(orgPlanHistory.data ?? []),
+  const productPickerSources = useMemo(
+    () => professionalPlanPickerSources(orgPlanHistory.data ?? []),
     [orgPlanHistory.data],
-  );
-  const catalogOptions = useMemo(
-    () => fertilizerCatalogToOptions(fertilizerCatalogProducts),
-    [fertilizerCatalogProducts],
   );
 
   const latestSoil = useMemo(() => (soil.data ?? [])[0] ?? null, [soil.data]);
@@ -188,7 +173,6 @@ export default function LabReportsScreen() {
   );
 
   const resetForm = () => {
-    setPlanTitleInput('');
     setPlanNotes('');
     setItems([emptyDraft()]);
   };
@@ -254,9 +238,9 @@ export default function LabReportsScreen() {
 
       await sendPlan.mutateAsync({
         reviewId,
-        // Editable plan title; fall back to the first product name so a blank
-        // title still yields a human label (preserves prior behavior).
-        title: planTitleInput.trim() || planItems[0].fertilizer_name,
+        // The backend requires a title. Use the first prescribed product now
+        // that professional-mode plan authoring no longer exposes a title field.
+        title: planItems[0].fertilizer_name,
         notes: planNotes.trim() || null,
         items: planItems,
       });
@@ -393,16 +377,6 @@ export default function LabReportsScreen() {
           isSaveDisabled={!canSend}
           saveFullWidth
         >
-          {/* Plan title — first so the consultant names the plan up front. Falls
-              back to the first product name on submit when left blank. */}
-          <FormInput
-            label={t('professional.reviews.planTitle')}
-            value={planTitleInput}
-            onChangeText={setPlanTitleInput}
-            placeholder={t('professional.reviews.planTitle')}
-            style={{ marginBottom: spacing[5] }}
-          />
-
           {/* Who this plan is going to */}
           {(farmerName || farmName) && (
             <View
@@ -660,8 +634,8 @@ export default function LabReportsScreen() {
             visible={productPickerIndex !== null}
             onClose={() => setProductPickerIndex(null)}
             onSelect={handleProductSelection}
-            historyOptions={orgHistoryOptions}
-            catalogOptions={catalogOptions}
+            historyOptions={productPickerSources.historyOptions}
+            catalogOptions={productPickerSources.catalogOptions}
             title={t('professional.reviews.productName')}
             sectionTitles={{ history: t('professional.reviews.prescribedOften') }}
           />

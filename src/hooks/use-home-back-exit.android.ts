@@ -29,13 +29,16 @@ import { useTranslation } from 'react-i18next';
  * closed. Returning false lets React Navigation dismiss the modal as usual.
  *
  * @param intervalMs Window in which a second back press exits the app.
+ * @param enabled Whether the current screen should behave as an app home.
  */
-export function useHomeBackExit(intervalMs = 2000) {
+export function useHomeBackExit(intervalMs = 2000, enabled = true) {
   const { t } = useTranslation();
   const navigation = useNavigation();
 
   useFocusEffect(
     useCallback(() => {
+      if (!enabled) return;
+
       let lastPressAt = 0;
 
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -60,6 +63,6 @@ export function useHomeBackExit(intervalMs = 2000) {
       });
 
       return () => subscription.remove();
-    }, [t, navigation, intervalMs]),
+    }, [enabled, t, navigation, intervalMs]),
   );
 }

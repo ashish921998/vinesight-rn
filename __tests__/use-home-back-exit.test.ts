@@ -144,4 +144,10 @@ describe('useHomeBackExit', () => {
     expect(toastShow).not.toHaveBeenCalled();
     expect(backExitApp).not.toHaveBeenCalled();
   });
+
+  it('does not register a back handler during sign-out navigation', () => {
+    renderHook(() => useHomeBackExit(2000, false));
+
+    expect(BackHandler.addEventListener).not.toHaveBeenCalled();
+  });
 });

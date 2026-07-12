@@ -203,18 +203,24 @@ export default function TabLayout() {
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('house', focused),
             }}
           />
-          {detailedMode &&
-            DETAILED_TABS.map((tab) => (
-              <Tabs.Screen
-                key={tab.name}
-                name={tab.name}
-                options={{
-                  title: t(tab.titleKey),
-                  headerShown: false,
-                  tabBarIcon: ({ focused }) => renderAndroidTabIcon(tab.android, focused),
-                }}
-              />
-            ))}
+          {/* On Android the `Tabs` navigator auto-discovers a tab for every route
+            file under app/(tabs)/, so simply omitting <Tabs.Screen> does NOT hide
+            the tab — it renders via auto-discovery with default styling. The way to
+            actually suppress the tab bar entry is `options.href = null` (expo-router
+            maps that to tabBarItemStyle { display: 'none' } + a no-op button), so we
+            always render the Screen and toggle href with detailedMode. */}
+          {DETAILED_TABS.map((tab) => (
+            <Tabs.Screen
+              key={tab.name}
+              name={tab.name}
+              options={{
+                href: detailedMode ? undefined : null,
+                title: t(tab.titleKey),
+                headerShown: false,
+                tabBarIcon: ({ focused }) => renderAndroidTabIcon(tab.android, focused),
+              }}
+            />
+          ))}
         </Tabs>
       </>
     );

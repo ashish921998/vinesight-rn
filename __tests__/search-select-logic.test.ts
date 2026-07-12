@@ -8,6 +8,7 @@ import {
   filterAndRankOptions,
   normalizeSearchText,
   orgPlanHistoryToOptions,
+  professionalPlanPickerSources,
   planItemsToOptions,
   recentItemsToOptions,
   type SearchSelectOption,
@@ -695,5 +696,16 @@ describe('orgPlanHistoryToOptions', () => {
     ]);
     expect(options).toHaveLength(1);
     expect(options[0].selection.catalogProductId).toBe(42);
+  });
+});
+
+describe('professionalPlanPickerSources', () => {
+  it('offers past prescriptions without master-catalog products', () => {
+    const sources = professionalPlanPickerSources([
+      { name: 'Calcium Nitrate', quantity: 5, unit: 'kg/acre' },
+    ]);
+
+    expect(sources.historyOptions.map((option) => option.name)).toEqual(['Calcium Nitrate']);
+    expect(sources.catalogOptions).toEqual([]);
   });
 });

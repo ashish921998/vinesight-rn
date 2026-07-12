@@ -24,6 +24,8 @@ const SYMBOL_TO_MATERIAL_ICON: Record<string, keyof typeof MaterialCommunityIcon
   'indianrupeesign.circle.fill': 'currency-inr',
   brain: 'brain',
   'brain.fill': 'brain',
+  'building.2.fill': 'office-building',
+  'rectangle.stack': 'view-dashboard-outline',
 };
 
 // Map SF Symbol names to Ionicons as fallback
