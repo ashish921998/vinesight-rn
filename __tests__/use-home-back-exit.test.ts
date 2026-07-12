@@ -145,9 +145,22 @@ describe('useHomeBackExit', () => {
     expect(backExitApp).not.toHaveBeenCalled();
   });
 
-  it('does not register a back handler during sign-out navigation', () => {
+  it('swallows back presses during sign-out instead of unregistering', () => {
+    // Regression: a slow signOut() used to leave a window with no back handler,
+    // letting a hardware back press fall through to the root navigator and quit
+    // the app. Lock mode keeps the listener but absorbs every press (no toast,
+    // no exit) until sign-out navigation completes.
     renderHook(() => useHomeBackExit(2000, false));
 
-    expect(BackHandler.addEventListener).not.toHaveBeenCalled();
+    expect(BackHandler.addEventListener).toHaveBeenCalledWith(
+      'hardwareBackPress',
+      expect.any(Function),
+    );
+
+    const result = backHandler!();
+
+    expect(result).toBe(true); // swallowed — React Navigation never sees it
+    expect(toastShow).not.toHaveBeenCalled();
+    expect(backExitApp).not.toHaveBeenCalled();
   });
 });

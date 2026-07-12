@@ -29,7 +29,13 @@ import { useTranslation } from 'react-i18next';
  * closed. Returning false lets React Navigation dismiss the modal as usual.
  *
  * @param intervalMs Window in which a second back press exits the app.
- * @param enabled Whether the current screen should behave as an app home.
+ * @param enabled Whether the current screen should behave as an app home. When
+ *   false (e.g. mid-sign-out) the listener is still registered but runs in
+ *   "lock" mode: it swallows every back press (`return true`) so the press can
+ *   never fall through to the root navigator and quit the app, yet never shows
+ *   the exit toast or exits. Simply skipping registration here would reopen the
+ *   very app-exit gap this hook exists to close — a slow `signOut()` leaves a
+ *   window with no listener, and a back press during it escapes the module.
  */
 export function useHomeBackExit(intervalMs = 2000, enabled = true) {
   const { t } = useTranslation();
@@ -37,11 +43,17 @@ export function useHomeBackExit(intervalMs = 2000, enabled = true) {
 
   useFocusEffect(
     useCallback(() => {
-      if (!enabled) return;
-
       let lastPressAt = 0;
 
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        // Lock mode (e.g. an in-flight sign-out): the home-exit path is off,
+        // but we must still ABSORB the press. Returning without registering a
+        // listener lets the hardware back fall through to the root navigator
+        // and quit the app — so swallow it here, with no toast and no exit.
+        if (!enabled) {
+          return true;
+        }
+
         // A modal/deeper screen is on top of this home (still focused underneath,
         // e.g. the full-screen add-log composer): let the navigator dismiss it
         // instead of hijacking the press into the exit toast.
