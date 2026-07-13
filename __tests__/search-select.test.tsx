@@ -129,4 +129,23 @@ describe('SearchSelect', () => {
       isCustom: true,
     });
   });
+
+  it('dismisses on backdrop tap but not on taps inside the card', () => {
+    const onClose = jest.fn();
+    const screen = render(
+      <SearchSelect
+        visible
+        onClose={onClose}
+        onSelect={jest.fn()}
+        historyOptions={historyOptions}
+        catalogOptions={[]}
+      />,
+    );
+
+    fireEvent.press(screen.getByText('Karate'));
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByTestId('search-select-backdrop'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

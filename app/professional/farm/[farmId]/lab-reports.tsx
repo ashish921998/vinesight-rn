@@ -1,10 +1,12 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import type { ReactNativeElement } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius, shadows } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { triggerHaptic } from '@/utils/haptics';
 import { getDaysAfterPruning, formatLocalDate } from '@/utils/date';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { usePetioleTests, useSoilTests } from '@/hooks/use-lab-tests';
@@ -14,13 +16,14 @@ import {
   useSendFertilizerPlan,
 } from '@/hooks/use-consultant-reviews';
 import { useOrgFertilizerPlanItemHistory } from '@/hooks/use-fertilizer-plan';
-import { SearchSelect } from '@/components/ui/search-select';
 import {
+  buildSearchSelectSections,
   professionalPlanPickerSources,
   type SearchSelectSelection,
 } from '@/components/ui/search-select-logic';
 import { PetioleComparison } from '@/components/lab/petiole-comparison';
 import { SoilBaselinePanel } from '@/components/professional/soil-baseline-panel';
+import { ProductPickerField } from '@/components/professional/product-picker-field';
 import { useFarmSoilBaseline } from '@/hooks/use-farm-soil-baseline';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { StackBackButton } from '@/components/ui/stack-back-button';
@@ -75,6 +78,11 @@ export default function LabReportsScreen() {
   const [items, setItems] = useState<DraftItem[]>([emptyDraft()]);
   /** Which draft row the product picker is filling (null = closed). */
   const [productPickerIndex, setProductPickerIndex] = useState<number | null>(null);
+  /** Search text for the open picker's inline results — shared because only one row is open at a time. */
+  const [productQuery, setProductQuery] = useState('');
+  const scrollViewRef = useRef<ScrollView>(null);
+  /** Per-row node, used to scroll an expanding picker into view above the keyboard. */
+  const rowRefs = useRef<Array<View | null>>([]);
 
   // Product picker sections: what this org prescribed before ("you often
   // prescribe") plus SearchSelect's custom-text escape hatch for new products.
@@ -86,6 +94,65 @@ export default function LabReportsScreen() {
     () => professionalPlanPickerSources(orgPlanHistory.data ?? []),
     [orgPlanHistory.data],
   );
+  const productPickerSections = useMemo(
+    () =>
+      buildSearchSelectSections({
+        query: productQuery,
+        history: productPickerSources.historyOptions,
+        catalog: productPickerSources.catalogOptions,
+      }),
+    [productQuery, productPickerSources],
+  );
+
+  // Expanding a lower row pushes everything below it down, potentially past
+  // the keyboard — without this the redesign's whole premise (see results
+  // appear where you tapped) silently breaks on any row but the first.
+  const scrollRowIntoView = useCallback((index: number) => {
+    requestAnimationFrame(() => {
+      const rowNode = rowRefs.current[index];
+      const scrollNode = scrollViewRef.current;
+      if (!rowNode || !scrollNode) return;
+      // Pass the ancestor's component instance, not findNodeHandle's numeric
+      // handle — the handle form is deprecated and can silently no-op on newer
+      // RN, which would break this row-into-view scroll on every lower row.
+      // ScrollView satisfies ReactNativeElement at runtime; the cast bridges the
+      // structural gap in its TS typings (system-discharge.tsx measures against a
+      // View ancestor for the same reason).
+      rowNode.measureLayout(
+        scrollNode as unknown as ReactNativeElement,
+        (_x, y) => scrollNode.scrollTo({ y: Math.max(y - spacing[4], 0), animated: true }),
+        () => {},
+      );
+    });
+  }, []);
+
+  const openProductPicker = useCallback(
+    (index: number) => {
+      setProductPickerIndex(index);
+      setProductQuery('');
+      scrollRowIntoView(index);
+    },
+    [scrollRowIntoView],
+  );
+
+  // Optional `fromIndex` guards the blur-vs-open race: tapping from one row's
+  // field directly into another fires the first row's deferred blur *after*
+  // openProductPicker has already switched the index. Closing unconditionally
+  // there would snap the newly focused row shut, so a row-scoped close only
+  // acts when the picker still points at that row. Functional updates keep
+  // this correct without depending on a possibly-stale index in closure.
+  const closeProductPicker = useCallback((fromIndex?: number) => {
+    if (fromIndex === undefined) {
+      setProductPickerIndex(null);
+      setProductQuery('');
+      return;
+    }
+    setProductPickerIndex((current) => {
+      if (current !== fromIndex) return current;
+      setProductQuery('');
+      return null;
+    });
+  }, []);
 
   const latestSoil = useMemo(() => (soil.data ?? [])[0] ?? null, [soil.data]);
   const latestPetioleTest = useMemo(() => (petiole.data ?? [])[0] ?? null, [petiole.data]);
@@ -125,13 +192,19 @@ export default function LabReportsScreen() {
     });
   }, []);
 
-  const removeItem = useCallback((index: number) => {
-    setItems((prev) => {
-      const next = [...prev];
-      next.splice(index, 1);
-      return next.length === 0 ? [emptyDraft()] : next;
-    });
-  }, []);
+  const removeItem = useCallback(
+    (index: number) => {
+      setItems((prev) => {
+        const next = [...prev];
+        next.splice(index, 1);
+        return next.length === 0 ? [emptyDraft()] : next;
+      });
+      // Removing a row shifts every later index, so a picker left open on one
+      // of them would silently point at the wrong row afterwards.
+      closeProductPicker();
+    },
+    [closeProductPicker],
+  );
 
   const addItem = useCallback(() => {
     setItems((prev) => [...prev, emptyDraft()]);
@@ -172,10 +245,31 @@ export default function LabReportsScreen() {
     [productPickerIndex],
   );
 
+  const selectProduct = useCallback(
+    (selection: SearchSelectSelection) => {
+      triggerHaptic();
+      handleProductSelection(selection);
+      setProductQuery('');
+    },
+    [handleProductSelection],
+  );
+
   const resetForm = () => {
     setPlanNotes('');
     setItems([emptyDraft()]);
+    // Clearing picker state here (and in closePlanForm) means reopening the
+    // form can't remount a row with a stale expanded query/results from the
+    // last session — the inline picker always starts collapsed.
+    closeProductPicker();
   };
+
+  // Covers the dismiss paths (close button, Android back, backdrop) — save
+  // goes through resetForm instead. Both must drop picker state so the next
+  // open isn't stale.
+  const closePlanForm = useCallback(() => {
+    setFabOpen(false);
+    closeProductPicker();
+  }, [closeProductPicker]);
 
   // Enables the Send button. At least one product needs a name and a positive
   // quantity; blank extra rows are ignored (see handleSubmit).
@@ -369,13 +463,14 @@ export default function LabReportsScreen() {
       {fabOpen && (
         <FormModal
           visible={fabOpen}
-          onClose={() => setFabOpen(false)}
+          onClose={closePlanForm}
           title={t('professional.reviews.createPlan')}
           onSave={handleSubmit}
           saveLabel={t('professional.reviews.sendPlan')}
           isLoading={isSubmitting}
           isSaveDisabled={!canSend}
           saveFullWidth
+          scrollViewRef={scrollViewRef}
         >
           {/* Who this plan is going to */}
           {(farmerName || farmName) && (
@@ -440,6 +535,9 @@ export default function LabReportsScreen() {
             {items.map((draft, index) => (
               <View
                 key={index}
+                ref={(el) => {
+                  rowRefs.current[index] = el;
+                }}
                 style={{
                   padding: spacing[4],
                   borderRadius: borderRadius.lg,
@@ -498,9 +596,9 @@ export default function LabReportsScreen() {
                   )}
                 </View>
 
-                {/* Product name — picker only (org history → catalog → custom
-                    escape hatch); the free-text input is deliberately gone so
-                    names converge on the canonical catalog spelling. */}
+                {/* Product name — inline accordion (org history + custom escape
+                    hatch); the free-text input is deliberately gone so names
+                    converge on the canonical catalog spelling. */}
                 <View style={{ marginBottom: spacing[3] }}>
                   <Text
                     style={{
@@ -513,36 +611,16 @@ export default function LabReportsScreen() {
                     {t('professional.reviews.productName')}
                     <Text style={{ color: m3.colorScheme.error }}> *</Text>
                   </Text>
-                  <Pressable
-                    onPress={() => setProductPickerIndex(index)}
-                    accessibilityRole="button"
-                    accessibilityLabel={draft.name || t('professional.reviews.selectProduct')}
-                    accessibilityState={{ expanded: productPickerIndex === index }}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      backgroundColor: m3.surface.s100,
-                      borderWidth: 1,
-                      borderColor: m3.surface.s300,
-                      borderRadius: borderRadius.sm,
-                      minHeight: 48,
-                      paddingHorizontal: spacing[4],
-                      paddingVertical: spacing[3],
-                    }}
-                  >
-                    <Text
-                      numberOfLines={1}
-                      style={{
-                        flex: 1,
-                        fontSize: fontSize.base,
-                        color: draft.name ? m3.surface.s900 : m3.neutral.n400,
-                      }}
-                    >
-                      {draft.name || t('professional.reviews.selectProduct')}
-                    </Text>
-                    <UiSymbol name="chevron.right" size={18} color={m3.surface.s600} />
-                  </Pressable>
+                  <ProductPickerField
+                    productName={draft.name}
+                    isOpen={productPickerIndex === index}
+                    query={productPickerIndex === index ? productQuery : ''}
+                    sections={productPickerIndex === index ? productPickerSections : []}
+                    onOpen={() => openProductPicker(index)}
+                    onClose={() => closeProductPicker(index)}
+                    onQueryChange={setProductQuery}
+                    onSelect={selectProduct}
+                  />
                 </View>
 
                 <FormInput
@@ -628,16 +706,6 @@ export default function LabReportsScreen() {
             multiline
             numberOfLines={3}
             style={{ marginTop: spacing[6], marginBottom: 0 }}
-          />
-
-          <SearchSelect
-            visible={productPickerIndex !== null}
-            onClose={() => setProductPickerIndex(null)}
-            onSelect={handleProductSelection}
-            historyOptions={productPickerSources.historyOptions}
-            catalogOptions={productPickerSources.catalogOptions}
-            title={t('professional.reviews.productName')}
-            sectionTitles={{ history: t('professional.reviews.prescribedOften') }}
           />
         </FormModal>
       )}
