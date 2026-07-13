@@ -49,6 +49,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
         isLoading: false,
         errorMessage: getAuthErrorMessage(error, 'Failed to sign out'),
       });
+      throw error;
     }
   },
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { fontSize } from '@/styles/theme';
-import { Tabs, useRouter, useSegments } from 'expo-router';
+import { Redirect, Tabs, useRouter, useSegments } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -114,29 +114,20 @@ export default function TabLayout() {
     }
   }, [isAuthenticated, isLoading, router, hasRedirected]);
 
-  // If Detailed mode is switched off while the user is sitting on one of the
-  // now-hidden tabs, bounce them back to the dashboard so they don't linger on
-  // a route that has no tab-bar entry (which Expo Router treats as an unmapped
-  // route and can crash on).
-  //
-  // Must wait for the app-mode store to hydrate: on cold start the in-memory
-  // default is `detailedMode: false`, so without this gate a Detailed-mode user
-  // resuming on a hidden tab (e.g. /workers) would be redirected to home before
-  // AsyncStorage restores their persisted choice.
-  useEffect(() => {
-    if (!appModeHydrated) return;
-    if (detailedMode) return;
-    // Inside the (tabs) group the segments are ['(tabs)', '<tab>']. Treat as a
-    // plain array — `useSegments()` returns a union of literal tuples, so a
-    // direct `[1]` access trips TS2493 on the single-segment members.
-    const activeTab = (segments as readonly string[])[1];
-    if (typeof activeTab === 'string' && DETAILED_TABS.some((tab) => tab.name === activeTab)) {
-      router.replace('/(tabs)');
-    }
-  }, [appModeHydrated, detailedMode, segments, router]);
-
   if (isLoading || !isAuthenticated) {
     return null;
+  }
+
+  if (!appModeHydrated) {
+    return null;
+  }
+  const activeTab = (segments as readonly string[])[1];
+  if (
+    !detailedMode &&
+    typeof activeTab === 'string' &&
+    DETAILED_TABS.some((tab) => tab.name === activeTab)
+  ) {
+    return <Redirect href="/(tabs)" />;
   }
 
   if (isAndroid) {
@@ -203,18 +194,24 @@ export default function TabLayout() {
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('house', focused),
             }}
           />
-          {detailedMode &&
-            DETAILED_TABS.map((tab) => (
-              <Tabs.Screen
-                key={tab.name}
-                name={tab.name}
-                options={{
-                  title: t(tab.titleKey),
-                  headerShown: false,
-                  tabBarIcon: ({ focused }) => renderAndroidTabIcon(tab.android, focused),
-                }}
-              />
-            ))}
+          {/* On Android the `Tabs` navigator auto-discovers a tab for every route
+            file under app/(tabs)/, so simply omitting <Tabs.Screen> does NOT hide
+            the tab — it renders via auto-discovery with default styling. The way to
+            actually suppress the tab bar entry is `options.href = null` (expo-router
+            maps that to tabBarItemStyle { display: 'none' } + a no-op button), so we
+            always render the Screen and toggle href with detailedMode. */}
+          {DETAILED_TABS.map((tab) => (
+            <Tabs.Screen
+              key={tab.name}
+              name={tab.name}
+              options={{
+                href: detailedMode ? undefined : null,
+                title: t(tab.titleKey),
+                headerShown: false,
+                tabBarIcon: ({ focused }) => renderAndroidTabIcon(tab.android, focused),
+              }}
+            />
+          ))}
         </Tabs>
       </>
     );

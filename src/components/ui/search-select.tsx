@@ -102,7 +102,11 @@ function SearchSelectBody({
     : t('searchSelect.empty');
 
   return (
-    <View
+    <Pressable
+      onPress={onClose}
+      accessibilityRole="button"
+      accessibilityLabel={t('common.close', { defaultValue: 'Close' })}
+      testID="search-select-backdrop"
       style={{
         flex: 1,
         backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.25),
@@ -110,7 +114,13 @@ function SearchSelectBody({
         padding: spacing[4],
       }}
     >
-      <View
+      {/* Consumes the touch so tapping the card doesn't bubble to the backdrop's
+        onPress. Kept out of the a11y tree (accessible={false}) so screen-reader
+        focus lands on the search input, result rows, and Close button rather
+        than a no-op wrapper that masks them. */}
+      <Pressable
+        onPress={() => {}}
+        accessible={false}
         style={{
           borderRadius: borderRadius.xl,
           backgroundColor: m3.colorScheme.surface,
@@ -257,7 +267,7 @@ function SearchSelectBody({
             </Text>
           </Pressable>
         </View>
-      </View>
-    </View>
+      </Pressable>
+    </Pressable>
   );
 }

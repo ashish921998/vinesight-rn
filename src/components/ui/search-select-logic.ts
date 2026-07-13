@@ -484,6 +484,20 @@ export function orgPlanHistoryToOptions(items: OrgPlanHistoryItem[]): SearchSele
   return options;
 }
 
+/**
+ * Professional fertilizer-plan authoring uses only the organization's past
+ * prescriptions. SearchSelect supplies the custom-text row for new products.
+ */
+export function professionalPlanPickerSources(items: OrgPlanHistoryItem[]): {
+  historyOptions: SearchSelectOption[];
+  catalogOptions: SearchSelectOption[];
+} {
+  return {
+    historyOptions: orgPlanHistoryToOptions(items),
+    catalogOptions: [],
+  };
+}
+
 export interface ChemicalCatalogToOptionsConfig {
   /** When false only mixes are offered (e.g. catalog-only delegated logging). */
   includeProducts?: boolean;

@@ -14,14 +14,17 @@ export default function ProfessionalDirectory() {
   const router = useRouter();
   const m3 = useM3();
   const { t } = useTranslation();
-  // This directory is the root of the consultant experience. Block the Android
-  // hardware back button here (useHomeBackExit) and the iOS root edge-swipe
-  // (gesture guard on the root Stack in app/_layout.tsx) so a stray back can
-  // never escape into the farmer app.
-  useHomeBackExit();
   const signOut = useAuthStore((state) => state.signOut);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [search, setSearch] = useState('');
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  // This directory is the root of the consultant experience. Block the Android
+  // hardware back button here (useHomeBackExit) and the iOS root edge-swipe
+  // (gesture guard on the root Stack in app/_layout.tsx) so a stray back can
+  // never escape into the farmer app. Disable it while sign-out navigates to
+  // the auth stack, otherwise Android can interpret the transition as a
+  // second back press and exit the app.
+  useHomeBackExit(2000, !isSigningOut);
 
   const handleSignOut = () => {
     Alert.alert(t('settings.signOutConfirmTitle'), t('settings.signOutConfirmBody'), [
@@ -30,9 +33,12 @@ export default function ProfessionalDirectory() {
         text: t('settings.signOut'),
         style: 'destructive',
         onPress: async () => {
+          setIsSigningOut(true);
           try {
             await signOut();
+            router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
           } catch (error) {
+            setIsSigningOut(false);
             if (__DEV__) {
               console.error('Sign out error:', error);
             }
