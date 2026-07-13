@@ -66,30 +66,11 @@ export function planItemQuantityDisplay(
 }
 
 /**
- * Consultant/title label shown at the head of every plan card: the plan's own
- * title if set, otherwise a "Plan by {consultant}" fallback (or an unknown-author
- * label). Single source of truth for both the current and previous-plan headers.
- */
-export function planTitle(plan: FertilizerPlan, t: TFunction): string {
-  return (
-    plan.title?.trim() ||
-    (plan.consultant_name
-      ? t('farmDetails.fertilizerPlan.consultantLabel', { name: plan.consultant_name })
-      : t('farmDetails.fertilizerPlan.consultantUnknown'))
-  );
-}
-
-/**
- * The one-line subtitle under a current-plan title: "Plan by {org} · Updated
- * {date}". The org segment is shown only when the title is set (otherwise
- * `planTitle` already fell back to the org name, so repeating it is noise).
- * Renders nothing when there's no org name and no update date.
+ * The one-line subtitle under the consultant name. Renders nothing when there
+ * is no update date.
  */
 export function PlanByline({ plan, m3, t }: { plan: FertilizerPlan; m3: M3; t: TFunction }) {
   const segments = [
-    plan.title?.trim() && plan.consultant_name
-      ? t('farmDetails.fertilizerPlan.consultantLabel', { name: plan.consultant_name })
-      : null,
     plan.updated_at
       ? // Pass the raw string so formatDate applies its date-only UTC handling —
         // wrapping in new Date() shifts date-only values by timezone.
@@ -450,8 +431,8 @@ export function PlanSchedule({
 }
 
 /**
- * A historical plan, rendered as a collapsible card: title + a "created · N inputs"
- * subtitle, expanding to reveal the plan notes and its full schedule.
+ * A historical plan, rendered as a collapsible card: consultant + a
+ * "created · N inputs" subtitle, expanding to reveal its notes and schedule.
  */
 export function PreviousPlanCard({
   plan,
@@ -522,7 +503,11 @@ export function PreviousPlanCard({
                 fontWeight: fontWeight.semibold,
               }}
             >
-              {planTitle(plan, t)}
+              {plan.consultant_name
+                ? t('farmDetails.fertilizerPlan.consultantLabel', {
+                    name: plan.consultant_name,
+                  })
+                : t('farmDetails.fertilizerPlan.consultantUnknown')}
             </Text>
             {subtitle ? (
               <Text

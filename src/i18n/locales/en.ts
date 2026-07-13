@@ -200,7 +200,6 @@ export const en = {
       quantity: 'Quantity',
       unit: 'Unit',
       planNotes: 'Notes for the farmer',
-      planTitle: 'Plan title',
       products: 'Products',
       sendingTo: 'Sending to',
       createPlan: 'Create fertilizer plan',

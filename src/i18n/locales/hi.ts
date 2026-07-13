@@ -188,7 +188,6 @@ export const hi = {
       quantity: 'मात्रा',
       unit: 'इकाई',
       planNotes: 'किसान के लिए नोट्स',
-      planTitle: 'योजना शीर्षक',
       products: 'उत्पाद',
       sendingTo: 'इन्हें भेजा जा रहा है',
       createPlan: 'उर्वरक योजना बनाएं',

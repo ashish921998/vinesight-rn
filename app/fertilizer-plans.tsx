@@ -19,7 +19,6 @@ import {
   PreviousPlanCard,
   SectionLabel,
   PlanByline,
-  planTitle,
 } from '@/components/screens/fertilizer-plan-card';
 import { resolveFertigationPrefill } from '@/constants/fertilizer-units';
 import { useModalStore } from '@/stores';
@@ -373,7 +372,11 @@ export default function FertilizerPlansScreen() {
                     fontWeight: fontWeight.semibold,
                   }}
                 >
-                  {planTitle(currentPlan, t)}
+                  {currentPlan.consultant_name
+                    ? t('farmDetails.fertilizerPlan.consultantLabel', {
+                        name: currentPlan.consultant_name,
+                      })
+                    : t('farmDetails.fertilizerPlan.consultantUnknown')}
                 </Text>
                 <PlanByline plan={currentPlan} m3={m3} t={t} />
               </View>

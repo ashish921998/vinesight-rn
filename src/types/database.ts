@@ -506,7 +506,6 @@ export interface FertilizerPlan {
   review_id: string;
   farm_id: number;
   organization_id: string;
-  title: string;
   notes: string | null;
   items: FertilizerPlanItem[];
   consultant_name?: string | null;

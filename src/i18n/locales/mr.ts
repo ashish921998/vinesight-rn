@@ -189,7 +189,6 @@ export const mr = {
       quantity: 'प्रमाण',
       unit: 'एकक',
       planNotes: 'शेतकऱ्यासाठी नोट्स',
-      planTitle: 'योजना शीर्षक',
       products: 'उत्पादने',
       sendingTo: 'यांना पाठवत आहे',
       createPlan: 'खत योजना तयार करा',
