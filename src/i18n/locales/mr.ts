@@ -3195,10 +3195,10 @@ export const mr = {
       operations: 'ऑपरेशन्स',
       financial: 'आर्थिक',
       stockUsage: 'स्टॉक वापर',
-      fpcActivity: 'FPC नोंदवही',
+      fpcActivity: 'निर्यातदार अहवाल',
     },
     fpc: {
-      sectionTitle: 'FPC नोंदवही ({{count}} दिवस)',
+      sectionTitle: 'निर्यातदार कृती नोंदवही ({{count}} दिवस)',
       day: 'दिवस',
       irrigation: 'सिंचन',
       products: 'उत्पादने',
@@ -3212,6 +3212,26 @@ export const mr = {
         phi: 'PHI',
         safeHarvest: 'सुरक्षित काढणी',
         mrl: 'MRL',
+      },
+      detail: {
+        title: 'अहवाल तपशील',
+        hint: 'निर्यातदार अहवालात समाविष्ट करायची अनुपालन तपशीलाची पातळी निवडा.',
+        standard: {
+          title: 'मानक',
+          description: 'नियमित खरेदीदार शेअरिंगसाठी कृती, वाढ अवस्था, उत्पादन मात्रा आणि नोंदी.',
+        },
+        detailed: {
+          title: 'सविस्तर अनुपालन',
+          description:
+            '$t(glossary.irrigation), तांत्रिक नावे, PHI, सुरक्षित काढणी दिनांक आणि MRL समाविष्ट करते.',
+        },
+      },
+    },
+    exporter: {
+      actions: {
+        title: 'तयार करा आणि शेअर करा',
+        share: '{{format}} शेअर करा',
+        save: '{{format}} जतन करा',
       },
     },
     selectFarmLabel: '$t(glossary.farm) निवडा',

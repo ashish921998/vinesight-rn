@@ -54,6 +54,7 @@ import { ReportExecutiveSummary } from '@/components/screens/reports/report-exec
 import { ReportDocumentBody } from '@/components/screens/reports/report-document-body';
 import { ReportFpcColumnToggles } from '@/components/screens/reports/report-fpc-column-toggles';
 import { ReportExportActions } from '@/components/screens/reports/report-export-actions';
+import { getDefaultReportFormat } from '@/components/screens/reports/report-format';
 import type { FarmSeason } from '@/types';
 
 const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
@@ -568,7 +569,10 @@ export default function ReportsScreen() {
               }}
               reportType={reportType}
               reportTypes={REPORT_TYPES}
-              onSelectReportType={setReportType}
+              onSelectReportType={(nextReportType) => {
+                setReportType(nextReportType);
+                setSelectedExportFormat(getDefaultReportFormat(nextReportType));
+              }}
               selectedExportFormat={selectedExportFormat}
               onSelectExportFormat={setSelectedExportFormat}
               panelStyle={panelStyle}
@@ -629,6 +633,7 @@ export default function ReportsScreen() {
             canExport={Boolean(preview)}
             isExporting={isExporting}
             exportFormat={selectedExportFormat}
+            isExporterReport={reportType === 'fpc-activity'}
             onExportPdf={() => handleExport(selectedExportFormat)}
             onDownload={() => handleDownload(selectedExportFormat)}
             panelStyle={{ paddingBottom: spacing[6] + insets.bottom }}

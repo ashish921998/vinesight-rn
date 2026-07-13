@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol } from '@/components/ui/symbol';
-import { type FpcColumnOptions, FPC_OPTIONAL_COLUMN_KEYS } from '@/types/report';
+import { type FpcColumnOptions, FPC_FULL_COLUMNS, FPC_LEAN_COLUMNS } from '@/types/report';
 
 interface ReportFpcColumnTogglesProps {
   columns: FpcColumnOptions;
@@ -13,13 +13,12 @@ interface ReportFpcColumnTogglesProps {
   panelStyle: object;
 }
 
-/**
- * Optional-column toggles for the FPC activity register. The register ships
- * lean by default (buyer-facing — Fratelli asked to drop irrigation/PHI/MRL and
- * make the technical name optional); each chip turns one column back on for
- * audit-facing exports. Date / Day / Stage / Market / Qty / Notes are the
- * always-on spine and have no toggle.
- */
+function matchesPreset(columns: FpcColumnOptions, preset: FpcColumnOptions): boolean {
+  return Object.keys(preset).every(
+    (key) => columns[key as keyof FpcColumnOptions] === preset[key as keyof FpcColumnOptions],
+  );
+}
+
 export function ReportFpcColumnToggles({
   columns,
   onChange,
@@ -27,9 +26,23 @@ export function ReportFpcColumnToggles({
 }: ReportFpcColumnTogglesProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const selectedPreset = matchesPreset(columns, FPC_FULL_COLUMNS) ? 'detailed' : 'standard';
+
+  const options = [
+    {
+      key: 'standard' as const,
+      columns: FPC_LEAN_COLUMNS,
+      icon: 'doc.text.fill',
+    },
+    {
+      key: 'detailed' as const,
+      columns: FPC_FULL_COLUMNS,
+      icon: 'checkmark.circle.fill',
+    },
+  ];
 
   return (
-    <View style={[panelStyle, { gap: spacing[2] }]}>
+    <View style={[panelStyle, { gap: spacing[3] }]}>
       <Text
         style={{
           fontSize: fontSize.xs,
@@ -39,61 +52,71 @@ export function ReportFpcColumnToggles({
           letterSpacing: 0.4,
         }}
       >
-        {t('reports.fpc.columns.title')}
+        {t('reports.fpc.detail.title')}
       </Text>
       <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-        {t('reports.fpc.columns.hint')}
+        {t('reports.fpc.detail.hint')}
       </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: spacing[2], paddingRight: spacing[1] }}
-      >
-        {FPC_OPTIONAL_COLUMN_KEYS.map((key) => {
-          const active = columns[key];
+      <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+        {options.map((option) => {
+          const active = selectedPreset === option.key;
           return (
             <Pressable
-              key={key}
-              onPress={() => onChange({ ...columns, [key]: !active })}
-              accessibilityRole="switch"
-              accessibilityState={{ checked: active }}
-              accessibilityLabel={t(`reports.fpc.columns.${key}`)}
-              style={{
-                minHeight: 34,
+              key={option.key}
+              onPress={() => onChange(option.columns)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={t(`reports.fpc.detail.${option.key}.title`)}
+              style={({ pressed }) => ({
+                flex: 1,
+                minHeight: 92,
                 flexDirection: 'row',
-                alignItems: 'center',
-                gap: spacing[1],
-                borderRadius: borderRadius.full,
+                alignItems: 'flex-start',
+                gap: spacing[2],
+                borderRadius: borderRadius.xl,
                 borderCurve: 'continuous',
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[1],
+                padding: spacing[3],
                 borderWidth: 1,
                 borderColor: active
                   ? m3.colorScheme.primary
                   : colorWithOpacity(m3.colorScheme.primary, 0.3),
                 backgroundColor: active
-                  ? m3.colorScheme.primary
-                  : colorWithOpacity(m3.colorScheme.primary, 0.06),
-              }}
+                  ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                  : pressed
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                    : colorWithOpacity(m3.colorScheme.primary, 0.04),
+              })}
             >
+              <Symbol name={option.icon} size={18} color={m3.colorScheme.primary} />
+              <View style={{ flex: 1, gap: spacing[1] }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    color: m3.colorScheme.onSurface,
+                  }}
+                >
+                  {t(`reports.fpc.detail.${option.key}.title`)}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    lineHeight: 17,
+                    color: m3.colorScheme.onSurfaceVariant,
+                  }}
+                >
+                  {t(`reports.fpc.detail.${option.key}.description`)}
+                </Text>
+              </View>
               <Symbol
-                name={active ? 'checkmark' : 'plus'}
-                size={12}
-                color={active ? m3.colorScheme.onPrimary : m3.colorScheme.primary}
+                name={active ? 'checkmark.circle.fill' : 'circle'}
+                size={17}
+                color={active ? m3.colorScheme.primary : m3.colorScheme.outline}
               />
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.medium,
-                  color: active ? m3.colorScheme.onPrimary : m3.colorScheme.primary,
-                }}
-              >
-                {t(`reports.fpc.columns.${key}`)}
-              </Text>
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
     </View>
   );
 }

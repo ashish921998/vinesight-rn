@@ -3167,10 +3167,10 @@ export const hi = {
       operations: 'संचालन',
       financial: 'वित्तीय',
       stockUsage: 'स्टॉक उपयोग',
-      fpcActivity: 'FPC रजिस्टर',
+      fpcActivity: 'निर्यातक रिपोर्ट',
     },
     fpc: {
-      sectionTitle: 'FPC गतिविधि रजिस्टर ({{count}} दिन)',
+      sectionTitle: 'निर्यातक गतिविधि रजिस्टर ({{count}} दिन)',
       day: 'दिन',
       irrigation: 'सिंचाई',
       products: 'उत्पाद',
@@ -3184,6 +3184,25 @@ export const hi = {
         phi: 'PHI',
         safeHarvest: 'सुरक्षित कटाई',
         mrl: 'MRL',
+      },
+      detail: {
+        title: 'रिपोर्ट विवरण',
+        hint: 'निर्यातक रिपोर्ट में शामिल अनुपालन विवरण का स्तर चुनें।',
+        standard: {
+          title: 'मानक',
+          description: 'नियमित खरीदार साझा करने के लिए गतिविधि, अवस्था, उत्पाद मात्रा और नोट्स।',
+        },
+        detailed: {
+          title: 'विस्तृत अनुपालन',
+          description: 'सिंचाई, तकनीकी नाम, PHI, सुरक्षित कटाई तिथि और MRL जोड़ता है।',
+        },
+      },
+    },
+    exporter: {
+      actions: {
+        title: 'बनाएँ और साझा करें',
+        share: '{{format}} साझा करें',
+        save: '{{format}} सहेजें',
       },
     },
     selectFarmLabel: 'खेत चुनें',
