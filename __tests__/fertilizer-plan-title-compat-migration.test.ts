@@ -7,7 +7,8 @@ const migrationPath = resolve(
   '../supabase/migrations/20260713160000_restore_optional_fertilizer_plan_title_compat.sql',
 );
 const migration = readFileSync(migrationPath, 'utf8');
-const databaseUrl = process.env.TEST_DATABASE_URL;
+const approvedDatabaseName = 'vinesight_migration_test';
+const databaseUrl = process.env.MIGRATION_TEST_DATABASE_URL;
 const describeWithDatabase = databaseUrl ? describe : describe.skip;
 
 function runSql(sql: string): string {
@@ -22,6 +23,22 @@ function runMigration(): void {
   });
 }
 
+function assertDisposableMigrationDatabase(): void {
+  const configuredDatabaseName = decodeURIComponent(new URL(databaseUrl!).pathname.slice(1));
+  if (configuredDatabaseName !== approvedDatabaseName) {
+    throw new Error(
+      `Refusing destructive migration test against database "${configuredDatabaseName}"; expected "${approvedDatabaseName}".`,
+    );
+  }
+
+  const connectedDatabaseName = runSql('select current_database()');
+  if (connectedDatabaseName !== approvedDatabaseName) {
+    throw new Error(
+      `Refusing destructive migration test against connected database "${connectedDatabaseName}"; expected "${approvedDatabaseName}".`,
+    );
+  }
+}
+
 describe('fertilizer plan title compatibility migration signature', () => {
   it('keeps the optional title as the final function parameter', () => {
     expect(migration).toMatch(
@@ -32,6 +49,7 @@ describe('fertilizer plan title compatibility migration signature', () => {
 
 describeWithDatabase('fertilizer plan title compatibility migration runtime', () => {
   beforeAll(() => {
+    assertDisposableMigrationDatabase();
     runSql(`
       drop schema if exists auth cascade;
       drop schema public cascade;
