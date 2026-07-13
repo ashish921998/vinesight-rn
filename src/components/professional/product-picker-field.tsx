@@ -59,10 +59,26 @@ export function ProductPickerField({
   // make the deferred blur consume it and return without closing, stranding the
   // picker open with no keyboard focus.
   const selectingRef = useRef(false);
+  // Handle to the blur-deferred close so it can be cancelled if the field
+  // unmounts (e.g. the parent collapses the picker) before the 150ms elapses —
+  // otherwise the deferred onClose() fires on a gone component.
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     rotation.value = withSpring(isOpen ? 90 : 0, springs.snappy);
   }, [isOpen, rotation]);
+
+  // Clear any in-flight deferred close on unmount so it never fires after the
+  // field is gone. (On deps change handleBlur is recreated and re-bound, so the
+  // pending timer from the previous closure is cancelled there too.)
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current !== null) {
+        clearTimeout(blurTimeoutRef.current);
+        blurTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const handleBlur = useCallback(() => {
     // Losing focus (tapping another field, dragging to dismiss the keyboard)
@@ -70,7 +86,11 @@ export function ProductPickerField({
     // summary row instead of leaving an open search box with no keyboard.
     // Deferred so a genuine row tap (which blurs first, then fires onPress)
     // isn't preempted mid-selection.
-    setTimeout(() => {
+    if (blurTimeoutRef.current !== null) {
+      clearTimeout(blurTimeoutRef.current);
+    }
+    blurTimeoutRef.current = setTimeout(() => {
+      blurTimeoutRef.current = null;
       if (selectingRef.current) {
         selectingRef.current = false;
         return;

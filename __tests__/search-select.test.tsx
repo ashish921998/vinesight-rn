@@ -142,9 +142,16 @@ describe('SearchSelect', () => {
       />,
     );
 
+    // A tap on a result row selects but never closes the picker.
     fireEvent.press(screen.getByText('Karate'));
     expect(onClose).not.toHaveBeenCalled();
 
+    // A tap on the empty card area (not a row, not the backdrop) is swallowed
+    // by the card wrapper's no-op onPress and must not bubble to the backdrop.
+    fireEvent.press(screen.getByTestId('search-select-card'));
+    expect(onClose).not.toHaveBeenCalled();
+
+    // Only the actual backdrop closes the picker — once.
     fireEvent.press(screen.getByTestId('search-select-backdrop'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });

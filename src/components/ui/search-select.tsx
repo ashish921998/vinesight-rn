@@ -104,9 +104,8 @@ function SearchSelectBody({
   return (
     <Pressable
       onPress={onClose}
-      accessibilityRole="button"
-      accessibilityLabel={t('common.close', { defaultValue: 'Close' })}
       testID="search-select-backdrop"
+      accessible={false}
       style={{
         flex: 1,
         backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.25),
@@ -121,6 +120,7 @@ function SearchSelectBody({
       <Pressable
         onPress={() => {}}
         accessible={false}
+        testID="search-select-card"
         style={{
           borderRadius: borderRadius.xl,
           backgroundColor: m3.colorScheme.surface,

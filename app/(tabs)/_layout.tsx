@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { fontSize } from '@/styles/theme';
-import { Tabs, useRouter, useSegments } from 'expo-router';
+import { Redirect, Tabs, useRouter, useSegments } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -114,29 +114,22 @@ export default function TabLayout() {
     }
   }, [isAuthenticated, isLoading, router, hasRedirected]);
 
-  // If Detailed mode is switched off while the user is sitting on one of the
-  // now-hidden tabs, bounce them back to the dashboard so they don't linger on
-  // a route that has no tab-bar entry (which Expo Router treats as an unmapped
-  // route and can crash on).
-  //
-  // Must wait for the app-mode store to hydrate: on cold start the in-memory
-  // default is `detailedMode: false`, so without this gate a Detailed-mode user
-  // resuming on a hidden tab (e.g. /workers) would be redirected to home before
-  // AsyncStorage restores their persisted choice.
-  useEffect(() => {
-    if (!appModeHydrated) return;
-    if (detailedMode) return;
-    // Inside the (tabs) group the segments are ['(tabs)', '<tab>']. Treat as a
-    // plain array — `useSegments()` returns a union of literal tuples, so a
-    // direct `[1]` access trips TS2493 on the single-segment members.
-    const activeTab = (segments as readonly string[])[1];
-    if (typeof activeTab === 'string' && DETAILED_TABS.some((tab) => tab.name === activeTab)) {
-      router.replace('/(tabs)');
-    }
-  }, [appModeHydrated, detailedMode, segments, router]);
-
   if (isLoading || !isAuthenticated) {
     return null;
+  }
+
+  // Wait for persisted mode before deciding whether this route is allowed.
+  // Redirect during render so detailed-only screens never mount in Simplified mode.
+  if (!appModeHydrated) {
+    return null;
+  }
+  const activeTab = (segments as readonly string[])[1];
+  if (
+    !detailedMode &&
+    typeof activeTab === 'string' &&
+    DETAILED_TABS.some((tab) => tab.name === activeTab)
+  ) {
+    return <Redirect href="/(tabs)" />;
   }
 
   if (isAndroid) {

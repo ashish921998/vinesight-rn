@@ -74,6 +74,7 @@ export default function LabReportsScreen() {
   const sendPlan = useSendFertilizerPlan();
 
   const [fabOpen, setFabOpen] = useState(false);
+  const [planTitleInput, setPlanTitleInput] = useState('');
   const [planNotes, setPlanNotes] = useState('');
   const [items, setItems] = useState<DraftItem[]>([emptyDraft()]);
   /** Which draft row the product picker is filling (null = closed). */
@@ -255,6 +256,7 @@ export default function LabReportsScreen() {
   );
 
   const resetForm = () => {
+    setPlanTitleInput('');
     setPlanNotes('');
     setItems([emptyDraft()]);
     // Clearing picker state here (and in closePlanForm) means reopening the
@@ -332,9 +334,7 @@ export default function LabReportsScreen() {
 
       await sendPlan.mutateAsync({
         reviewId,
-        // The backend requires a title. Use the first prescribed product now
-        // that professional-mode plan authoring no longer exposes a title field.
-        title: planItems[0].fertilizer_name,
+        title: planTitleInput.trim() || planItems[0].fertilizer_name,
         notes: planNotes.trim() || null,
         items: planItems,
       });
@@ -472,6 +472,14 @@ export default function LabReportsScreen() {
           saveFullWidth
           scrollViewRef={scrollViewRef}
         >
+          <FormInput
+            label={t('professional.reviews.planTitle')}
+            value={planTitleInput}
+            onChangeText={setPlanTitleInput}
+            placeholder={t('professional.reviews.planTitle')}
+            style={{ marginBottom: spacing[5] }}
+          />
+
           {/* Who this plan is going to */}
           {(farmerName || farmName) && (
             <View
