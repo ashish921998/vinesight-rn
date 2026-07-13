@@ -16,6 +16,11 @@ describe('repeat fertilizer plan review migration', () => {
   });
 
   it('removes the legacy all-status unique index', () => {
-    expect(migration).toContain('drop index if exists public.idx_petiole_triage_unique_test_org');
+    expect(migration).toContain(
+      'drop index concurrently if exists public.idx_petiole_triage_unique_test_org',
+    );
+    expect(migration).toContain(
+      'create unique index concurrently idx_petiole_triage_unique_active_test_org',
+    );
   });
 });
