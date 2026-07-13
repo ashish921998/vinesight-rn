@@ -53,7 +53,11 @@ export function ProductPickerField({
   const { t } = useTranslation();
   const rotation = useSharedValue(isOpen ? 90 : 0);
   // Set on a result row's touch-down, before the TextInput's blur fires, so
-  // the blur handler's deferred close doesn't unmount the row mid-tap.
+  // the blur handler's deferred close doesn't unmount the row mid-tap. Cleared
+  // on press-out so a cancelled tap (finger dragged off the row — onPressOut
+  // fires but onPress doesn't) doesn't leave the flag latched true: that would
+  // make the deferred blur consume it and return without closing, stranding the
+  // picker open with no keyboard focus.
   const selectingRef = useRef(false);
 
   useEffect(() => {
@@ -209,6 +213,13 @@ export function ProductPickerField({
                         key={option.key}
                         onPressIn={() => {
                           selectingRef.current = true;
+                        }}
+                        // Fires on both a real tap (after onPress) and a
+                        // cancelled one (drag away — no onPress). Resetting here
+                        // un-strands a cancelled press without affecting a real
+                        // one: onPress has already called onSelect by then.
+                        onPressOut={() => {
+                          selectingRef.current = false;
                         }}
                         onPress={() => onSelect(option.selection)}
                         accessibilityRole="button"

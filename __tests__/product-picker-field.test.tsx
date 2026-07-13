@@ -177,4 +177,38 @@ describe('ProductPickerField', () => {
     fireEvent.press(row);
     expect(onSelect).toHaveBeenCalledWith({ kind: 'item', name: 'Karate', isCustom: false });
   });
+
+  it('collapses on blur after a result-row tap is cancelled by dragging away', () => {
+    // Regression: onPressIn sets the selectingRef guard, but a cancelled press
+    // (finger dragged off the row) fires onPressOut — not onPress. Without
+    // resetting the flag on press-out, the deferred blur would consume it and
+    // return without closing, stranding the picker open with no focus.
+    const onClose = jest.fn();
+    const onSelect = jest.fn();
+    const screen = render(
+      <ProductPickerField
+        productName=""
+        isOpen
+        query=""
+        sections={historySections}
+        onOpen={jest.fn()}
+        onClose={onClose}
+        onQueryChange={jest.fn()}
+        onSelect={onSelect}
+      />,
+    );
+
+    const row = screen.getByText('Karate');
+    // Touch-down latches the guard, then the drag-away cancels: press-out with
+    // no subsequent press.
+    fireEvent(row, 'pressIn');
+    fireEvent(row, 'pressOut');
+    fireEvent(screen.getByPlaceholderText('searchSelect.searchPlaceholder'), 'blur');
+
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
 });
