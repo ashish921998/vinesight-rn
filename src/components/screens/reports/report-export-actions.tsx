@@ -10,6 +10,7 @@ interface ReportExportActionsProps {
   canExport: boolean;
   isExporting: boolean;
   exportFormat: string;
+  isExporterReport?: boolean;
   onExportPdf: () => void;
   onDownload: () => void;
   panelStyle: object;
@@ -19,6 +20,7 @@ export function ReportExportActions({
   canExport,
   isExporting,
   exportFormat,
+  isExporterReport = false,
   onExportPdf,
   onDownload,
   panelStyle,
@@ -60,7 +62,7 @@ export function ReportExportActions({
           marginBottom: spacing[1],
         }}
       >
-        {t('reports.exportSection', 'Export Report')}
+        {isExporterReport ? t('reports.exporter.actions.title') : t('reports.exportSection')}
       </Text>
 
       {/* Button row */}
@@ -103,7 +105,9 @@ export function ReportExportActions({
                   color: disabled ? colorWithOpacity(onPrimary, 0.6) : onPrimary,
                 }}
               >
-                {t('reports.exportAs')} {exportFormat.toUpperCase()}
+                {isExporterReport
+                  ? t('reports.exporter.actions.share', { format: exportFormat.toUpperCase() })
+                  : `${t('reports.exportAs')} ${exportFormat.toUpperCase()}`}
               </Text>
             </>
           )}
@@ -146,7 +150,9 @@ export function ReportExportActions({
                   color: disabled ? colorWithOpacity(primary, 0.5) : primary,
                 }}
               >
-                {t('reports.downloadReport')}
+                {isExporterReport
+                  ? t('reports.exporter.actions.save', { format: exportFormat.toUpperCase() })
+                  : t('reports.downloadReport')}
               </Text>
             </>
           )}

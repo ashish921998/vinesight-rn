@@ -56,7 +56,6 @@ export async function createPetioleTriage(input: CreatePetioleTriageInput): Prom
 
 export interface SendFertilizerPlanInput {
   reviewId: string;
-  title: string;
   notes: string | null;
   items: FertilizerPlanItem[];
 }
@@ -66,7 +65,6 @@ export async function sendFertilizerPlan(
 ): Promise<{ plan_id: string }> {
   const { data, error } = await supabase.rpc('send_fertilizer_plan', {
     p_review_id: input.reviewId,
-    p_title: input.title,
     // Pass null through unchanged so the backend can distinguish omitted notes
     // from an explicit empty string (a `?? ''` here would erase that signal).
     p_notes: input.notes,

@@ -200,7 +200,6 @@ export const en = {
       quantity: 'Quantity',
       unit: 'Unit',
       planNotes: 'Notes for the farmer',
-      planTitle: 'Plan title',
       products: 'Products',
       sendingTo: 'Sending to',
       createPlan: 'Create fertilizer plan',
@@ -3183,10 +3182,10 @@ export const en = {
       operations: 'Operations',
       financial: 'Financial',
       stockUsage: 'Stock Usage',
-      fpcActivity: 'FPC Register',
+      fpcActivity: 'Exporter Report',
     },
     fpc: {
-      sectionTitle: 'FPC Activity Register ({{count}} days)',
+      sectionTitle: 'Exporter Activity Register ({{count}} days)',
       day: 'Day',
       irrigation: 'Irrigation',
       products: 'Products',
@@ -3200,6 +3199,26 @@ export const en = {
         phi: 'PHI',
         safeHarvest: 'Safe harvest',
         mrl: 'MRL',
+      },
+      detail: {
+        title: 'Report detail',
+        hint: 'Choose the amount of compliance detail included in the exporter report.',
+        standard: {
+          title: 'Standard',
+          description:
+            'Activity, crop stage, product quantities and notes for routine buyer sharing.',
+        },
+        detailed: {
+          title: 'Detailed compliance',
+          description: 'Adds irrigation, technical names, PHI, safe-harvest dates and MRL values.',
+        },
+      },
+    },
+    exporter: {
+      actions: {
+        title: 'Generate & share',
+        share: 'Share {{format}}',
+        save: 'Save {{format}}',
       },
     },
     selectFarmLabel: 'Select farm',

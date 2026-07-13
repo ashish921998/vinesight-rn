@@ -22,7 +22,6 @@ interface PlanRow {
   id: string;
   farm_id: number;
   organization_id: string | null;
-  title: string | null;
   notes: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -68,7 +67,7 @@ export async function fetchFertilizerPlansForFarm(
   let query = supabase
     .from('fertilizer_plans')
     .select(
-      'id, farm_id, organization_id, title, notes, created_at, updated_at, farm_area_acres, organization:organizations(name), fertilizer_plan_items(id, fertilizer_name, quantity, unit, product_id, quantity_basis, application_date, application_method, application_frequency, notes, sort_order)',
+      'id, farm_id, organization_id, notes, created_at, updated_at, farm_area_acres, organization:organizations(name), fertilizer_plan_items(id, fertilizer_name, quantity, unit, product_id, quantity_basis, application_date, application_method, application_frequency, notes, sort_order)',
     )
     .eq('farm_id', farmId)
     .order('created_at', { ascending: false });
@@ -98,7 +97,6 @@ export async function fetchFertilizerPlansForFarm(
       id: row.id,
       farm_id: row.farm_id,
       organization_id: row.organization_id,
-      title: row.title,
       consultant_name: row.organization?.name ?? null,
       created_at: row.created_at,
       updated_at: row.updated_at ?? row.created_at ?? null,
@@ -153,10 +151,9 @@ export async function fetchOrgFertilizerPlanItemHistory(
   }
 
   const rows = (data ?? []) as unknown as {
-    fertilizer_plan_items: Pick<
-      PlanItemRow,
-      'fertilizer_name' | 'quantity' | 'unit' | 'product_id'
-    >[] | null;
+    fertilizer_plan_items:
+      | Pick<PlanItemRow, 'fertilizer_name' | 'quantity' | 'unit' | 'product_id'>[]
+      | null;
   }[];
 
   // catalogProductId rides through because catalog identity cannot be

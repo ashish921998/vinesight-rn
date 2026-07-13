@@ -33,8 +33,6 @@ export interface FertilizerPlan {
   id: string;
   farm_id: number;
   organization_id: string | null;
-  /** Plan title (DB column, NOT NULL in schema). */
-  title: string | null;
   /** Name of the sending organization (resolved from `organization_id` → organizations). */
   consultant_name: string | null;
   created_at: string | null;
