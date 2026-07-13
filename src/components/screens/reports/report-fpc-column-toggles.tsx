@@ -37,7 +37,7 @@ export function ReportFpcColumnToggles({
     {
       key: 'detailed' as const,
       columns: FPC_FULL_COLUMNS,
-      icon: 'checkmark.circle.fill',
+      icon: 'list.bullet',
     },
   ];
 
@@ -57,7 +57,7 @@ export function ReportFpcColumnToggles({
       <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
         {t('reports.fpc.detail.hint')}
       </Text>
-      <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+      <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', gap: spacing[2] }}>
         {options.map((option) => {
           const active = selectedPreset === option.key;
           return (
