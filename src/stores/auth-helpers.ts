@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import { supabase } from '@/lib/supabase';
-import { queryClient, queryPersister } from '@/lib/query-cache';
+import { queryClient } from '@/lib/query-cache';
 import { telemetry } from '@/services/telemetry';
 import type { User } from '@supabase/supabase-js';
 
@@ -270,11 +270,9 @@ export const upsertProfileNameFromAuthUserBestEffort = async (
 
 export const clearQueryCache = async (context: string) => {
   queryClient.clear();
-  try {
-    await queryPersister.removeClient();
-  } catch (_persisterError) {
-    if (__DEV__) {
-      console.error(`Failed to remove persisted query cache during ${context}`);
-    }
+  if (__DEV__) {
+    console.info(
+      `Cleared in-memory query cache during ${context}; preserved parked offline writes.`,
+    );
   }
 };

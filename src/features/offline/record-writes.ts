@@ -30,6 +30,16 @@ export interface RecordRef {
   farmId?: number | null;
 }
 
+/** A duplicate client UUID whose canonical row is outside the intended farm. */
+export class CrossFarmClientUuidError extends Error {
+  constructor(table: string, clientUuid: string, farmId: number | null | undefined) {
+    super(
+      `idempotentCreate: conflicting ${table} row for client_uuid=${clientUuid} is not readable in farm_id=${farmId ?? '<unknown>'} — uuid collides with a row outside this farm`,
+    );
+    this.name = 'CrossFarmClientUuidError';
+  }
+}
+
 function describeRef(ref: RecordRef): string {
   if (ref.id != null) return `id=${ref.id}`;
   if (ref.clientUuid != null)
@@ -66,9 +76,7 @@ export async function idempotentCreate<T extends object>(
   const { data: existing, error: readError } = await readBack.maybeSingle();
   if (readError) throw readError;
   if (!existing) {
-    throw new Error(
-      `idempotentCreate: conflicting ${table} row for client_uuid=${client_uuid} is not readable in farm_id=${farmId ?? '<unknown>'} — uuid collides with a row outside this farm`,
-    );
+    throw new CrossFarmClientUuidError(table, client_uuid, farmId);
   }
   return existing as Record<string, unknown>;
 }
