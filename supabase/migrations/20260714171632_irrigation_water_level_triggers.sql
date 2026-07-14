@@ -14,10 +14,6 @@ declare
   water_delta numeric;
 begin
   if tg_op = 'INSERT' then
-    if new.client_uuid is null then
-      return new;
-    end if;
-
     select
       total_tank_capacity,
       system_discharge,
