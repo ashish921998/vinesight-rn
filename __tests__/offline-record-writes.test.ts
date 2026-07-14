@@ -1,45 +1,11 @@
 import { supabase } from '@/lib/supabase';
 import { isClientUuid } from '@/features/offline/client-id';
 import { idempotentCreate, targetedUpdate, targetedDelete } from '@/features/offline/record-writes';
+import { makeChain } from '../jest-setup/supabase-chain-mock';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
 
 const mockedFrom = supabase.from as jest.Mock;
-
-type Result = { data?: unknown; error?: unknown };
-
-/**
- * Chainable Supabase mock. Records upsert args / patch / eq calls, resolves
- * `single`/`maybeSingle` (and the chain itself, for delete) to `result`.
- */
-function makeChain(result: Result = { data: null, error: null }) {
-  const calls = {
-    upsertArgs: undefined as undefined | [unknown, unknown],
-    updatePatch: undefined as unknown,
-    eqCalls: [] as Array<[string, unknown]>,
-  };
-  const chain: Record<string, unknown> = {};
-  chain.upsert = jest.fn((payload: unknown, opts: unknown) => {
-    calls.upsertArgs = [payload, opts];
-    return chain;
-  });
-  chain.update = jest.fn((patch: unknown) => {
-    calls.updatePatch = patch;
-    return chain;
-  });
-  chain.delete = jest.fn(() => chain);
-  chain.select = jest.fn(() => chain);
-  chain.eq = jest.fn((col: string, val: unknown) => {
-    calls.eqCalls.push([col, val]);
-    return chain;
-  });
-  chain.single = jest.fn(() => Promise.resolve(result));
-  chain.maybeSingle = jest.fn(() => Promise.resolve(result));
-  // Thenable so `await chain` (delete path) resolves to result.
-  chain.then = (onF: ((v: Result) => unknown) | null, onR?: (e: unknown) => unknown) =>
-    Promise.resolve(result).then(onF, onR);
-  return { chain, calls };
-}
 
 beforeEach(() => mockedFrom.mockReset());
 

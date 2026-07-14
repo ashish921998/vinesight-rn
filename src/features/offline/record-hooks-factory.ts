@@ -16,7 +16,6 @@
  * UX is unchanged until offline pausing exists.
  */
 
-import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/hooks/query-keys';
@@ -61,27 +60,15 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
 
   function useCreate() {
     const queryClient = useQueryClient();
-    const generatedClientUuids = useRef(new WeakMap<TInsert, string>()).current;
-    const getClientUuid = (record: TInsert): string => {
-      if (record.client_uuid != null) return record.client_uuid;
-      const existing = generatedClientUuids.get(record);
-      if (existing) return existing;
-      const generated = newClientUuid();
-      generatedClientUuids.set(record, generated);
-      return generated;
-    };
 
-    return useMutation({
+    const mutation = useMutation({
       mutationFn: async (record: TInsert): Promise<TRow> => {
-        const client_uuid = getClientUuid(record);
         const season_id =
           record.season_id ??
           (await resolveOrCreateSeasonIdForDate({ farmId: record.farm_id, date: record.date }));
-        const row = await idempotentCreate(table, {
-          ...record,
-          season_id,
-          client_uuid,
-        });
+        // client_uuid was stamped into the variables at capture (below);
+        // idempotentCreate generates one only as a last resort.
+        const row = await idempotentCreate(table, { ...record, season_id });
         return row as TRow;
       },
       onSuccess: (row) => {
@@ -94,6 +81,21 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
         }
       },
     });
+
+    // Stamp client_uuid into the mutation VARIABLES at capture, not inside
+    // mutationFn: variables are what TanStack persists, so a paused mutation
+    // rehydrated after relaunch replays with the SAME identity instead of
+    // minting a fresh uuid (which would duplicate the row).
+    const stamp = (record: TInsert): TInsert =>
+      record.client_uuid != null ? record : { ...record, client_uuid: newClientUuid() };
+
+    return {
+      ...mutation,
+      mutate: (record: TInsert, options?: Parameters<typeof mutation.mutate>[1]) =>
+        mutation.mutate(stamp(record), options),
+      mutateAsync: (record: TInsert, options?: Parameters<typeof mutation.mutateAsync>[1]) =>
+        mutation.mutateAsync(stamp(record), options),
+    };
   }
 
   function useUpdate() {

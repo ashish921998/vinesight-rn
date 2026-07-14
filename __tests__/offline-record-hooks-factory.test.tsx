@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { resolveOrCreateSeasonIdForDate } from '@/lib/season-context';
 import { isClientUuid } from '@/features/offline/client-id';
 import { queryKeys } from '@/hooks/query-keys';
+import { makeChain } from '../jest-setup/supabase-chain-mock';
 import {
   useCreateIrrigationRecord,
   useUpdateIrrigationRecord,
@@ -21,36 +22,6 @@ jest.mock('@/lib/season-context', () => ({ resolveOrCreateSeasonIdForDate: jest.
 
 const mockedFrom = supabase.from as jest.Mock;
 const mockedResolveSeason = resolveOrCreateSeasonIdForDate as jest.Mock;
-
-type Result = { data?: unknown; error?: unknown };
-
-function makeChain(result: Result = { data: null, error: null }) {
-  const calls = {
-    upsertArgs: undefined as undefined | [Record<string, unknown>, unknown],
-    updatePatch: undefined as unknown,
-    eqCalls: [] as Array<[string, unknown]>,
-  };
-  const chain: Record<string, unknown> = {};
-  chain.upsert = jest.fn((payload: Record<string, unknown>, opts: unknown) => {
-    calls.upsertArgs = [payload, opts];
-    return chain;
-  });
-  chain.update = jest.fn((patch: unknown) => {
-    calls.updatePatch = patch;
-    return chain;
-  });
-  chain.delete = jest.fn(() => chain);
-  chain.select = jest.fn(() => chain);
-  chain.eq = jest.fn((col: string, val: unknown) => {
-    calls.eqCalls.push([col, val]);
-    return chain;
-  });
-  chain.single = jest.fn(() => Promise.resolve(result));
-  chain.maybeSingle = jest.fn(() => Promise.resolve(result));
-  chain.then = (onF: ((v: Result) => unknown) | null, onR?: (e: unknown) => unknown) =>
-    Promise.resolve(result).then(onF, onR);
-  return { chain, calls };
-}
 
 function setup(mutationRetry: false | number = false) {
   const client = new QueryClient({
