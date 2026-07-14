@@ -99,6 +99,50 @@ function variablesForCompactedOp(
   return item.variables;
 }
 
+// Rebuild a record-write as a fresh paused+pending mutation so resumePausedMutations
+// replays it. Rebuilding (not mutating state) avoids a stale retryer closed over old
+// variables. The registered mutationDefaults supply the mutationFn for the key.
+function rebuildAsPausedRecordWrite(
+  queryClient: QueryClient,
+  table: RecordWriteTable,
+  operation: RecordWriteOperation,
+  variables: Record<string, unknown>,
+) {
+  queryClient.getMutationCache().build(
+    queryClient,
+    { mutationKey: getRecordWriteMutationKey(table, operation) },
+    {
+      context: undefined,
+      data: undefined,
+      error: null,
+      failureCount: 0,
+      failureReason: null,
+      isPaused: true,
+      status: 'pending',
+      variables,
+      submittedAt: Date.now(),
+    },
+  );
+}
+
+// Errored writes parked across sign-out/restore are unsynced but react-query's
+// resumePausedMutations only touches paused ones. Re-queue them as paused so the
+// next resume replays them to Supabase.
+// ponytail: retries on every flush; a permanently-rejected write (e.g. 400) will
+// re-error each reconnect. Add dead-letter/give-up-after-N if that becomes noise.
+function requeueFailedRecordWriteMutations(queryClient: QueryClient) {
+  const mutationCache = queryClient.getMutationCache();
+  const failed = mutationCache
+    .getAll()
+    .filter((mutation) => mutation.state.status === 'error')
+    .map((mutation) => parseRecordWriteMutation(mutation))
+    .filter((item): item is QueueItem => item !== null);
+  for (const item of failed) {
+    rebuildAsPausedRecordWrite(queryClient, item.table, item.operation, item.variables);
+    mutationCache.remove(item.mutation as Parameters<typeof mutationCache.remove>[0]);
+  }
+}
+
 export function compactPausedRecordWriteMutations(queryClient: QueryClient) {
   const mutationCache = queryClient.getMutationCache();
   const items = mutationCache
@@ -126,22 +170,11 @@ export function compactPausedRecordWriteMutations(queryClient: QueryClient) {
       ? [...matching].reverse().find((item) => item.operation === compactedOp.kind)
       : undefined;
     if (compactedOp && selected) {
-      // Rebuild instead of mutating state.variables: an in-memory paused mutation
-      // may already have a retryer that closed over the pre-compaction variables.
-      mutationCache.build(
+      rebuildAsPausedRecordWrite(
         queryClient,
-        { mutationKey: getRecordWriteMutationKey(selected.table, selected.operation) },
-        {
-          context: undefined,
-          data: undefined,
-          error: null,
-          failureCount: 0,
-          failureReason: null,
-          isPaused: true,
-          status: 'pending',
-          variables: variablesForCompactedOp(selected, compactedOp),
-          submittedAt: Date.now(),
-        },
+        selected.table,
+        selected.operation,
+        variablesForCompactedOp(selected, compactedOp),
       );
     }
 
@@ -185,6 +218,7 @@ export function flushPausedRecordWriteMutations(
 
   const generation = flushGeneration;
   activeFlush = (async () => {
+    requeueFailedRecordWriteMutations(queryClient);
     compactPausedRecordWriteMutations(queryClient);
     const hasRecordWrites = hasPausedRecordWriteMutations(queryClient);
     flushInProgress = hasRecordWrites;

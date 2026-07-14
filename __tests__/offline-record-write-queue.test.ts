@@ -221,6 +221,31 @@ describe('flushPausedRecordWriteMutations', () => {
     expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
+  it('re-queues an errored write as a fresh paused mutation so it replays', async () => {
+    const errored: FakeMutation = {
+      options: { mutationKey: ['record-write', 'irrigation_records', 'create'] },
+      state: {
+        variables: {
+          farm_id: 7,
+          date: '2026-07-14',
+          client_uuid: '12345678-1234-4abc-8def-123456789abc',
+        },
+        isPaused: false,
+        status: 'error',
+      },
+    };
+    const { queryClient, built, removed } = createQueryClient([errored]);
+    Object.assign(queryClient, { invalidateQueries: jest.fn().mockResolvedValue(undefined) });
+    const resumePausedMutations = jest.fn().mockResolvedValue(undefined);
+
+    await flushPausedRecordWriteMutations(queryClient, resumePausedMutations);
+
+    expect(removed).toContain(errored);
+    expect(built).toHaveLength(1);
+    expect(built[0].state).toMatchObject({ isPaused: true, status: 'pending' });
+    expect(built[0].state.variables.client_uuid).toBe('12345678-1234-4abc-8def-123456789abc');
+  });
+
   it('resumes an empty paused queue without invalidating queries', async () => {
     const { queryClient } = createQueryClient([]);
     const invalidateQueries = jest.fn().mockResolvedValue(undefined);
