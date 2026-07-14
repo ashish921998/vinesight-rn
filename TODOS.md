@@ -69,3 +69,13 @@
 - Note rollback null-guard fix — v1.2.0 (2026-05-28)
 - Android safe area polish — v1.2.0 (2026-05-28)
 - Onboarding skip notification permission fix — v1.2.0 (2026-05-28)
+
+## Offline support for the delegated / agronomist log path (Phase 2)
+
+**What:** Extend offline create/edit/delete to the consultant-delegated log path (the agronomist logging on behalf of a farm), not just the farmer's own path.
+
+**Why:** The business design doc names the consultant's agronomists doing offline field visits as the strategic primary users. The 2026-06-25 offline plan (docs/plans/2026-06-25-001-feat-offline-activity-logs-plan.md) deliberately scoped v1 to the farmer-direct path because the one paying customer self-logs; the delegated path has paid ₹0 so far.
+
+**Context:** The delegated path writes through RPCs (create_delegated_log / update_delegated_log / delete_delegated_log, src/services/delegated-logs.ts) but lands in the SAME six tables, which already carry professional_creator_id / acting_organization_id / *_name attribution columns. So it can reuse the same client_uuid identity + paused-mutation queue model; the offline mutation just needs to call the delegated RPC (with attribution) instead of the direct insert, and the RPC must accept/forward client_uuid for idempotency.
+
+**Depends on / blocked by:** v1 offline (farmer path) landing first. Requires the delegated RPCs to accept client_uuid and upsert on it.
