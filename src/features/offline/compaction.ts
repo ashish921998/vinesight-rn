@@ -73,6 +73,8 @@ export function compactQueuedOps(ops: readonly CompactableOp[]): CompactableOp[]
         if (current?.kind === 'create') {
           // Created AND deleted before sync — cancel both; never touch the server.
           folded.set(op.handle, null);
+        } else if (current === null) {
+          break; // already cancelled; repeated deletes are moot
         } else {
           // Drops any pending update; the row exists on the server and must go.
           folded.set(op.handle, { kind: 'delete', handle: op.handle });

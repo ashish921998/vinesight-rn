@@ -77,6 +77,16 @@ describe('idempotentCreate', () => {
     expect(readChain.calls.eqCalls).toContainEqual(['client_uuid', 'u1']);
   });
 
+  it('throws a clear error when a skipped insert cannot read the canonical row', async () => {
+    const insertChain = makeChain({ data: null, error: null });
+    const readChain = makeChain({ data: null, error: null });
+    mockedFrom.mockReturnValueOnce(insertChain.chain).mockReturnValueOnce(readChain.chain);
+
+    await expect(
+      idempotentCreate('harvest_records', { farm_id: 7, client_uuid: 'u1' }),
+    ).rejects.toThrow(/conflicting harvest_records row .* was not readable/);
+  });
+
   it('throws when the upsert errors', async () => {
     const { chain } = makeChain({ data: null, error: new Error('insert failed') });
     mockedFrom.mockReturnValue(chain);

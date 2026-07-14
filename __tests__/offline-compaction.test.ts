@@ -87,6 +87,11 @@ describe('compactQueuedOps', () => {
     expect(out).toEqual([]);
   });
 
+  it('ignores repeated deletes after a create+delete cancellation', () => {
+    const out = compactQueuedOps([create('uuid:a', { d: 1 }), del('uuid:a'), del('uuid:a')]);
+    expect(out).toEqual([]);
+  });
+
   it('does not mutate the input ops', () => {
     const input = [create('uuid:a', { d: 1 }), update('uuid:a', { d: 2 })];
     const snapshot = JSON.parse(JSON.stringify(input));

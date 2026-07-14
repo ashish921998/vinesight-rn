@@ -16,6 +16,7 @@
  * UX is unchanged until offline pausing exists.
  */
 
+import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { resolveOrCreateSeasonIdForDate } from '@/lib/season-context';
@@ -48,6 +49,7 @@ interface RowWithFarm {
 interface InsertWithDate {
   farm_id: number;
   date: string;
+  client_uuid?: string | null;
   season_id?: number | null;
 }
 
@@ -58,15 +60,26 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
 
   function useCreate() {
     const queryClient = useQueryClient();
+    const generatedClientUuids = useRef(new WeakMap<TInsert, string>()).current;
+    const getClientUuid = (record: TInsert): string => {
+      if (record.client_uuid != null) return record.client_uuid;
+      const existing = generatedClientUuids.get(record);
+      if (existing) return existing;
+      const generated = newClientUuid();
+      generatedClientUuids.set(record, generated);
+      return generated;
+    };
+
     return useMutation({
       mutationFn: async (record: TInsert): Promise<TRow> => {
+        const client_uuid = getClientUuid(record);
         const season_id =
           record.season_id ??
           (await resolveOrCreateSeasonIdForDate({ farmId: record.farm_id, date: record.date }));
         const row = await idempotentCreate(table, {
           ...record,
           season_id,
-          client_uuid: newClientUuid(),
+          client_uuid,
         });
         return row as TRow;
       },

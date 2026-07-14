@@ -55,8 +55,13 @@ export async function idempotentCreate<T extends object>(
     .from(table)
     .select('*')
     .eq('client_uuid', client_uuid)
-    .single();
+    .maybeSingle();
   if (readError) throw readError;
+  if (!existing) {
+    throw new Error(
+      `idempotentCreate: conflicting ${table} row for client_uuid=${client_uuid} was not readable`,
+    );
+  }
   return existing as Record<string, unknown>;
 }
 
