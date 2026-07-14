@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import { dehydrate, QueryClient } from '@tanstack/react-query';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { createMMKV } from 'react-native-mmkv';
 import {
@@ -41,11 +41,9 @@ const PERSISTED_QUERY_ROOTS = new Set([
   'farmSeasons',
 ]);
 
-export let queryPersister: ReturnType<typeof createAsyncStoragePersister>;
-
-export function createQueryPersister(userId: string | null) {
+function buildQueryPersister(userId: string | null) {
   const storage = createMMKV({ id: `vinesight-query-cache:${userId ?? 'signed-out'}` });
-  queryPersister = createAsyncStoragePersister({
+  return createAsyncStoragePersister({
     storage: {
       getItem: async (key) => storage.getString(key) ?? null,
       setItem: async (key, value) => storage.set(key, value),
@@ -56,10 +54,28 @@ export function createQueryPersister(userId: string | null) {
     key: `${QUERY_CACHE_KEY}:${userId ?? 'signed-out'}`,
     throttleTime: 250,
   });
+}
+
+export let queryPersister = buildQueryPersister(null);
+
+export function createQueryPersister(userId: string | null) {
+  queryPersister = buildQueryPersister(userId);
   return queryPersister;
 }
 
-createQueryPersister(null);
+export async function persistQueryCacheForUser(userId: string) {
+  const clientState = dehydrate(queryClient, queryDehydrateOptions);
+  if (clientState.mutations.length === 0) return;
+  await buildQueryPersister(userId).persistClient({
+    buster: '',
+    timestamp: Date.now(),
+    clientState,
+  });
+}
+
+export async function removeQueryCacheForUser(userId: string) {
+  await buildQueryPersister(userId).removeClient();
+}
 
 export const queryDehydrateOptions = {
   shouldDehydrateMutation: (mutation: {

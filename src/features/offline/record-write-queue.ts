@@ -102,19 +102,30 @@ export function compactPausedRecordWriteMutations(queryClient: QueryClient) {
   if (items.length < 2) return;
 
   const compacted = compactQueuedOps(items.map((item) => item.op));
-  const retained = new Set<QueuedMutation>();
 
   for (const compactedOp of compacted) {
     const matching = items.filter((item) => item.op.handle === compactedOp.handle);
     const operation = compactedOp.kind;
     const selected = [...matching].reverse().find((item) => item.operation === operation);
     if (!selected) continue;
-    selected.mutation.state.variables = variablesForCompactedOp(selected, compactedOp);
-    retained.add(selected.mutation);
+    mutationCache.build(
+      queryClient,
+      { mutationKey: getRecordWriteMutationKey(selected.table, selected.operation) },
+      {
+        context: undefined,
+        data: undefined,
+        error: null,
+        failureCount: 0,
+        failureReason: null,
+        isPaused: true,
+        status: 'pending',
+        variables: variablesForCompactedOp(selected, compactedOp),
+        submittedAt: Date.now(),
+      },
+    );
   }
 
   for (const item of items) {
-    if (retained.has(item.mutation)) continue;
     mutationCache.remove(item.mutation as Parameters<typeof mutationCache.remove>[0]);
   }
 }

@@ -160,13 +160,14 @@ export const initAuthListener = () => {
         needsProfileCompletion: state.needsProfileCompletion || looksLikeNewPhoneUser,
       }));
     } else if (event === 'SIGNED_OUT') {
+      const signedOutUserId = useAuthStore.getState().user?.id ?? null;
       if (__DEV__) {
         console.log('SIGNED_OUT event received, clearing auth state');
       }
       setSentryUser(null);
       telemetry.capture('auth_state_changed', { event: 'SIGNED_OUT' });
       telemetry.reset();
-      void clearQueryCache('SIGNED_OUT event').catch((err) => {
+      void clearQueryCache('SIGNED_OUT event', signedOutUserId).catch((err) => {
         if (__DEV__) {
           console.error('Failed to clear query cache on SIGNED_OUT:', err);
         }

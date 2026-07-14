@@ -23,13 +23,24 @@ function createMutation(
 
 function createQueryClient(mutations: FakeMutation[]) {
   const removed: FakeMutation[] = [];
+  const built: FakeMutation[] = [];
   const mutationCache = {
-    getAll: () => mutations,
+    getAll: () => [...mutations.filter((mutation) => !removed.includes(mutation)), ...built],
     remove: (mutation: FakeMutation) => removed.push(mutation),
+    build: (
+      _queryClient: QueryClient,
+      options: { mutationKey: readonly unknown[] },
+      state: FakeMutation['state'],
+    ) => {
+      const mutation = { options, state };
+      built.push(mutation);
+      return mutation;
+    },
   };
   return {
     queryClient: { getMutationCache: () => mutationCache } as unknown as QueryClient,
     removed,
+    built,
   };
 }
 
@@ -46,12 +57,13 @@ describe('compactPausedRecordWriteMutations', () => {
       farmId: 7,
       updates: { duration: 9, note: 'adjusted' },
     });
-    const { queryClient, removed } = createQueryClient([create, update]);
+    const { queryClient, removed, built } = createQueryClient([create, update]);
 
     compactPausedRecordWriteMutations(queryClient);
 
-    expect(create.state.variables).toMatchObject({ duration: 9, note: 'adjusted' });
-    expect(removed).toEqual([update]);
+    expect(built).toHaveLength(1);
+    expect(built[0].state.variables).toMatchObject({ duration: 9, note: 'adjusted' });
+    expect(removed).toEqual([create, update]);
   });
 
   it('removes every mutation for a record created and deleted before sync', () => {
@@ -64,11 +76,12 @@ describe('compactPausedRecordWriteMutations', () => {
       clientUuid: '76543210-4321-4abc-8def-123456789abc',
       farmId: 7,
     });
-    const { queryClient, removed } = createQueryClient([create, del]);
+    const { queryClient, removed, built } = createQueryClient([create, del]);
 
     compactPausedRecordWriteMutations(queryClient);
 
     expect(removed).toEqual([create, del]);
+    expect(built).toEqual([]);
   });
 });
 
@@ -85,17 +98,9 @@ describe('flushPausedRecordWriteMutations', () => {
       farmId: 7,
       updates: { duration: 9 },
     });
-    const mutations = [create, update];
-    const removed: FakeMutation[] = [];
-    const mutationCache = {
-      getAll: () => mutations.filter((mutation) => !removed.includes(mutation)),
-      remove: (mutation: FakeMutation) => removed.push(mutation),
-    };
+    const { queryClient, removed, built } = createQueryClient([create, update]);
     const invalidateQueries = jest.fn().mockResolvedValue(undefined);
-    const queryClient = {
-      getMutationCache: () => mutationCache,
-      invalidateQueries,
-    } as unknown as QueryClient;
+    Object.assign(queryClient, { invalidateQueries });
     let releaseResume: (() => void) | undefined;
     const resumePausedMutations = jest.fn(
       () =>
@@ -109,11 +114,11 @@ describe('flushPausedRecordWriteMutations', () => {
 
     expect(secondFlush).toBe(firstFlush);
     expect(resumePausedMutations).toHaveBeenCalledTimes(1);
-    expect(removed).toEqual([update]);
+    expect(removed).toEqual([create, update]);
     releaseResume?.();
     await firstFlush;
 
-    expect(create.state.variables).toMatchObject({ duration: 9 });
+    expect(built[0].state.variables).toMatchObject({ duration: 9 });
     expect(invalidateQueries).toHaveBeenCalledTimes(6);
   });
 });
