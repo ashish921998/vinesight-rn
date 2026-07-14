@@ -53,7 +53,7 @@ beforeEach(() => {
 });
 
 describe('factory create hook (irrigation)', () => {
-  it('resolves season, attaches client_uuid, and upserts DO NOTHING on client_uuid', async () => {
+  it('attaches client_uuid, upserts DO NOTHING, then backfills the resolved season', async () => {
     mockedResolveSeason.mockResolvedValue(123);
     const { chain, calls } = makeChain({ data: { id: 1, farm_id: 7 }, error: null });
     mockedFrom.mockReturnValue(chain);
@@ -67,9 +67,11 @@ describe('factory create hook (irrigation)', () => {
 
     expect(mockedResolveSeason).toHaveBeenCalledWith({ farmId: 7, date: '2026-06-01' });
     const [payload, opts] = calls.upsertArgs!;
-    expect(payload.season_id).toBe(123);
+    expect(payload.season_id).toBeNull();
     expect(isClientUuid(payload.client_uuid as string)).toBe(true);
     expect(opts).toEqual({ onConflict: 'client_uuid', ignoreDuplicates: true });
+    expect(calls.updatePatch).toEqual({ season_id: 123 });
+    expect(calls.eqCalls).toContainEqual(['id', 1]);
   });
 
   it('preserves a caller-supplied client_uuid', async () => {
