@@ -55,9 +55,8 @@ begin
   end if;
 
   if tg_op = 'UPDATE' then
-    if new.client_uuid is null
-      or (new.duration is not distinct from old.duration
-          and new.system_discharge is not distinct from old.system_discharge) then
+    if new.duration is not distinct from old.duration
+        and new.system_discharge is not distinct from old.system_discharge then
       return new;
     end if;
 
