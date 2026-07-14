@@ -65,12 +65,12 @@ export function createQueryPersister(userId: string | null) {
 
 export async function persistQueryCacheForUser(userId: string) {
   const clientState = dehydrate(queryClient, queryDehydrateOptions);
-  const persister = buildQueryPersister(userId);
-  if (clientState.mutations.length === 0) {
-    await persister.removeClient();
-    return;
-  }
-  await persister.persistClient({
+  // Never delete a parked cache here: sign-out can call this twice, and the second
+  // call runs after queryClient.clear() has emptied the in-memory mutations. Removing
+  // on an empty cache would wipe the writes the first call just parked. Hard removal
+  // is the explicit job of removeQueryCacheForUser (preserveOfflineWrites: false).
+  if (clientState.mutations.length === 0) return;
+  await buildQueryPersister(userId).persistClient({
     buster: '',
     timestamp: Date.now(),
     clientState,
