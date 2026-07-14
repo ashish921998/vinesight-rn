@@ -263,6 +263,21 @@ describe('factory update + delete hooks (irrigation)', () => {
     });
   });
 
+  it('updates by client UUID when the server id is unavailable', async () => {
+    const clientUuid = '76543210-4321-4abc-8def-123456789abc';
+    const { chain, calls } = makeChain({ data: { farm_id: 7 }, error: null });
+    mockedFrom.mockReturnValue(chain);
+    const { wrapper } = setup();
+
+    const { result } = renderHook(() => useUpdateIrrigationRecord(), { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync({ clientUuid, updates: { duration: 9 } });
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(calls.eqCalls).toContainEqual(['client_uuid', clientUuid]);
+  });
+
   it('deletes by id and invalidates listByFarm(farmId)', async () => {
     const { chain, calls } = makeChain({ error: null });
     mockedFrom.mockReturnValue(chain);
@@ -278,5 +293,20 @@ describe('factory update + delete hooks (irrigation)', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: queryKeys.irrigationRecords.listByFarm(7),
     });
+  });
+
+  it('deletes by client UUID when the server id is unavailable', async () => {
+    const clientUuid = '76543210-4321-4abc-8def-123456789abc';
+    const { chain, calls } = makeChain({ error: null });
+    mockedFrom.mockReturnValue(chain);
+    const { wrapper } = setup();
+
+    const { result } = renderHook(() => useDeleteIrrigationRecord(), { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync({ clientUuid, farmId: 7 });
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(calls.eqCalls).toContainEqual(['client_uuid', clientUuid]);
   });
 });

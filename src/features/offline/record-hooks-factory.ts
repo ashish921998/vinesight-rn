@@ -20,7 +20,7 @@ import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { resolveOrCreateSeasonIdForDate } from '@/lib/season-context';
-import { idempotentCreate, targetedUpdate, targetedDelete } from './record-writes';
+import { idempotentCreate, targetedUpdate, targetedDelete, type RecordRef } from './record-writes';
 import { newClientUuid } from './client-id';
 
 interface RecordQueryKeys {
@@ -97,12 +97,16 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
     return useMutation({
       mutationFn: async ({
         id,
+        clientUuid,
         updates,
-      }: {
-        id: number;
+      }: RecordRef & {
         updates: Partial<TRow>;
       }): Promise<TRow> => {
-        const row = await targetedUpdate(table, { id }, updates as Record<string, unknown>);
+        const row = await targetedUpdate(
+          table,
+          { id, clientUuid },
+          updates as Record<string, unknown>,
+        );
         return row as TRow;
       },
       onSuccess: (row) => {
@@ -114,8 +118,8 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
   function useDelete() {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async ({ id }: { id: number; farmId: number }): Promise<void> => {
-        await targetedDelete(table, { id });
+      mutationFn: async ({ id, clientUuid }: RecordRef & { farmId: number }): Promise<void> => {
+        await targetedDelete(table, { id, clientUuid });
       },
       onSuccess: (_result, { farmId }) => {
         queryClient.invalidateQueries({ queryKey: keys.listByFarm(farmId) });
