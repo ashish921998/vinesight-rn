@@ -20,7 +20,7 @@ export function isRecordWriteFlushInProgress() {
 
 type QueuedMutation = {
   options: { mutationKey?: readonly unknown[] };
-  state: { variables?: unknown; isPaused?: boolean };
+  state: { variables?: unknown; isPaused?: boolean; status?: string };
 };
 
 interface QueueItem {
@@ -102,30 +102,46 @@ export function compactPausedRecordWriteMutations(queryClient: QueryClient) {
   if (items.length < 2) return;
 
   const compacted = compactQueuedOps(items.map((item) => item.op));
+  const compactedByHandle = new Map(compacted.map((operation) => [operation.handle, operation]));
+  const itemsByHandle = new Map<string, QueueItem[]>();
+  for (const item of items) {
+    const matching = itemsByHandle.get(item.op.handle) ?? [];
+    matching.push(item);
+    itemsByHandle.set(item.op.handle, matching);
+  }
+  const replaced = new Set<QueueItem>();
 
-  for (const compactedOp of compacted) {
-    const matching = items.filter((item) => item.op.handle === compactedOp.handle);
-    const operation = compactedOp.kind;
-    const selected = [...matching].reverse().find((item) => item.operation === operation);
-    if (!selected) continue;
-    mutationCache.build(
-      queryClient,
-      { mutationKey: getRecordWriteMutationKey(selected.table, selected.operation) },
-      {
-        context: undefined,
-        data: undefined,
-        error: null,
-        failureCount: 0,
-        failureReason: null,
-        isPaused: true,
-        status: 'pending',
-        variables: variablesForCompactedOp(selected, compactedOp),
-        submittedAt: Date.now(),
-      },
-    );
+  for (const [handle, matching] of itemsByHandle) {
+    if (matching.length < 2) continue;
+
+    const compactedOp = compactedByHandle.get(handle);
+    const selected = compactedOp
+      ? [...matching].reverse().find((item) => item.operation === compactedOp.kind)
+      : undefined;
+    if (compactedOp && selected) {
+      // Rebuild instead of mutating state.variables: an in-memory paused mutation
+      // may already have a retryer that closed over the pre-compaction variables.
+      mutationCache.build(
+        queryClient,
+        { mutationKey: getRecordWriteMutationKey(selected.table, selected.operation) },
+        {
+          context: undefined,
+          data: undefined,
+          error: null,
+          failureCount: 0,
+          failureReason: null,
+          isPaused: true,
+          status: 'pending',
+          variables: variablesForCompactedOp(selected, compactedOp),
+          submittedAt: Date.now(),
+        },
+      );
+    }
+
+    matching.forEach((item) => replaced.add(item));
   }
 
-  for (const item of items) {
+  for (const item of replaced) {
     mutationCache.remove(item.mutation as Parameters<typeof mutationCache.remove>[0]);
   }
 }
@@ -135,6 +151,13 @@ function hasPausedRecordWriteMutations(queryClient: QueryClient) {
     .getMutationCache()
     .getAll()
     .some((mutation) => mutation.state.isPaused && parseRecordWriteMutation(mutation) !== null);
+}
+
+function hasFailedRecordWriteMutations(queryClient: QueryClient) {
+  return queryClient
+    .getMutationCache()
+    .getAll()
+    .some((mutation) => mutation.state.status === 'error' && parseRecordWriteMutation(mutation));
 }
 
 export function registerRecordWriteMutationDefaults(queryClient: QueryClient) {
@@ -159,7 +182,7 @@ export function flushPausedRecordWriteMutations(
     flushInProgress = hasRecordWrites;
     try {
       const result = await resumePausedMutations();
-      if (hasRecordWrites) {
+      if (hasRecordWrites && !hasFailedRecordWriteMutations(queryClient)) {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: queryKeys.irrigationRecords.all }),
           queryClient.invalidateQueries({ queryKey: queryKeys.sprayRecords.all }),

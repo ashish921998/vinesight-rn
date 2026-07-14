@@ -7,7 +7,7 @@ import {
 
 type FakeMutation = {
   options: { mutationKey: readonly unknown[] };
-  state: { variables: Record<string, unknown>; isPaused: boolean };
+  state: { variables: Record<string, unknown>; isPaused: boolean; status?: string };
 };
 
 function createMutation(
@@ -83,6 +83,31 @@ describe('compactPausedRecordWriteMutations', () => {
     expect(removed).toEqual([create, del]);
     expect(built).toEqual([]);
   });
+
+  it('preserves unrelated singleton paused mutations', () => {
+    const create = createMutation('irrigation_records', 'create', {
+      farm_id: 7,
+      date: '2026-07-14',
+      client_uuid: '12345678-1234-4abc-8def-123456789abc',
+      duration: 2,
+    });
+    const update = createMutation('irrigation_records', 'update', {
+      clientUuid: '12345678-1234-4abc-8def-123456789abc',
+      farmId: 7,
+      updates: { duration: 9 },
+    });
+    const unrelated = createMutation('spray_records', 'delete', {
+      id: 42,
+      farmId: 7,
+    });
+    const { queryClient, removed, built } = createQueryClient([create, update, unrelated]);
+
+    compactPausedRecordWriteMutations(queryClient);
+
+    expect(built).toHaveLength(1);
+    expect(removed).toEqual([create, update]);
+    expect(queryClient.getMutationCache().getAll()).toContain(unrelated);
+  });
 });
 
 describe('flushPausedRecordWriteMutations', () => {
@@ -120,5 +145,43 @@ describe('flushPausedRecordWriteMutations', () => {
 
     expect(built[0].state.variables).toMatchObject({ duration: 9 });
     expect(invalidateQueries).toHaveBeenCalledTimes(6);
+  });
+
+  it('skips batch invalidation when a resumed record write fails', async () => {
+    const create = createMutation('irrigation_records', 'create', {
+      farm_id: 7,
+      date: '2026-07-14',
+      client_uuid: '12345678-1234-4abc-8def-123456789abc',
+    });
+    const { queryClient, built } = createQueryClient([
+      create,
+      createMutation('irrigation_records', 'update', {
+        clientUuid: '12345678-1234-4abc-8def-123456789abc',
+        farmId: 7,
+        updates: { duration: 9 },
+      }),
+    ]);
+    const invalidateQueries = jest.fn().mockResolvedValue(undefined);
+    Object.assign(queryClient, { invalidateQueries });
+    const resumePausedMutations = jest.fn(async () => {
+      built[0].state.isPaused = false;
+      built[0].state.status = 'error';
+    });
+
+    await flushPausedRecordWriteMutations(queryClient, resumePausedMutations);
+
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('resumes an empty paused queue without invalidating queries', async () => {
+    const { queryClient } = createQueryClient([]);
+    const invalidateQueries = jest.fn().mockResolvedValue(undefined);
+    Object.assign(queryClient, { invalidateQueries });
+    const resumePausedMutations = jest.fn().mockResolvedValue(undefined);
+
+    await flushPausedRecordWriteMutations(queryClient, resumePausedMutations);
+
+    expect(resumePausedMutations).toHaveBeenCalledTimes(1);
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 });

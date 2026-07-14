@@ -61,12 +61,16 @@ describe('idempotentCreate', () => {
 
   it('uses a typed error when a conflicting UUID is outside the payload farm', async () => {
     const insertChain = makeChain({ data: null, error: null });
-    const readChain = makeChain({ data: null, error: null });
-    mockedFrom.mockReturnValueOnce(insertChain.chain).mockReturnValueOnce(readChain.chain);
+    const { chain: readChain, calls: readCalls } = makeChain({ data: null, error: null });
+    mockedFrom.mockReturnValueOnce(insertChain.chain).mockReturnValueOnce(readChain);
 
     await expect(
       idempotentCreate('harvest_records', { farm_id: 7, client_uuid: 'u1' }),
     ).rejects.toBeInstanceOf(CrossFarmClientUuidError);
+    expect(readCalls.eqCalls).toEqual([
+      ['client_uuid', 'u1'],
+      ['farm_id', 7],
+    ]);
   });
 
   it('throws when the upsert errors', async () => {

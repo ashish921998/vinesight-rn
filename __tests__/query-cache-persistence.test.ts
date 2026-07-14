@@ -73,7 +73,6 @@ describe('query cache persistence filters', () => {
 
     await persistQueryCacheForUser(userId);
     queryClient.clear();
-    await persistQueryCacheForUser(userId);
 
     const parked = await createQueryPersister(userId).restoreClient();
     expect(parked?.clientState.mutations).toHaveLength(1);

@@ -48,10 +48,30 @@ export async function executeRecordWriteMutation(
 ): Promise<unknown> {
   if (operation === 'create') {
     const record = variables as CreateVariables;
-    const season_id =
-      record.season_id ??
-      (await resolveOrCreateSeasonIdForDate({ farmId: record.farm_id, date: record.date }));
-    return idempotentCreate(table, { ...record, season_id });
+    const created = await idempotentCreate(table, {
+      ...record,
+      season_id: record.season_id ?? null,
+    });
+    if (typeof created.season_id === 'number') return created;
+
+    const season_id = await resolveOrCreateSeasonIdForDate({
+      farmId: record.farm_id,
+      date: record.date,
+    });
+    if (season_id === null) return created;
+
+    return targetedUpdate(
+      table,
+      {
+        id: typeof created.id === 'number' ? created.id : null,
+        clientUuid:
+          typeof created.client_uuid === 'string'
+            ? created.client_uuid
+            : (record.client_uuid ?? null),
+        farmId: record.farm_id,
+      },
+      { season_id },
+    );
   }
 
   if (operation === 'update') {
