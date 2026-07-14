@@ -26,12 +26,11 @@ function createSubmitters(): jest.Mocked<EntryLogSubmitters> {
     createExpense: jest.fn().mockResolvedValue({ id: 14 }),
     createFertigation: jest.fn().mockResolvedValue({ id: 15 }),
     upsertDailyNote: jest.fn().mockResolvedValue({ id: 16 }),
-    updateWaterLevel: jest.fn().mockResolvedValue({}),
   };
 }
 
 describe('submitEntryPendingLog', () => {
-  it('submits irrigation log and updates water level', async () => {
+  it('submits irrigation log without a follow-up farm update', async () => {
     const submitters = createSubmitters();
     const result = await submitEntryPendingLog({
       log: {
@@ -53,10 +52,6 @@ describe('submitEntryPendingLog', () => {
       moisture_status: '',
       system_discharge: 50,
       date_of_pruning: '2026-01-01',
-    });
-    expect(submitters.updateWaterLevel).toHaveBeenCalledWith({
-      farmId: 7,
-      remainingWater: 200,
     });
     expect(result).toEqual({
       pendingLogId: 'log-irrigation',

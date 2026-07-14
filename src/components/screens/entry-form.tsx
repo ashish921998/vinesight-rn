@@ -115,7 +115,6 @@ import {
   useDeleteHarvestRecord,
   useDeleteExpenseRecord,
   useDeleteFertigationRecord,
-  useUpdateFarmWaterLevel,
   useFarms,
   useFarmAreaAcres,
   useWarehouseItems,
@@ -625,7 +624,6 @@ export function EntryForm({
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
   const deleteDailyNote = useDeleteDailyNote();
-  const updateWaterLevel = useUpdateFarmWaterLevel();
 
   const scrollToNode = useCallback(
     (nodeHandle: number) => {
@@ -1338,7 +1336,6 @@ export function EntryForm({
         if (error) throw error;
         return (data ?? null) as DailyNoteRecord | null;
       },
-      updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
       deleteIrrigation: async (payload) => deleteIrrigation.mutateAsync(payload),
       deleteSpray: async (payload) => deleteSpray.mutateAsync(payload),
       deleteHarvest: async (payload) => deleteHarvest.mutateAsync(payload),

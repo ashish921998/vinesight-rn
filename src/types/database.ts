@@ -112,6 +112,8 @@ export interface IrrigationRecord {
   created_at?: string | null;
   /** Client-generated dedup handle for offline-first writes. See features/offline/client-id. */
   client_uuid?: string | null;
+  /** Water-level increase this record applied through the database trigger. */
+  applied_water_delta?: number | null;
   professional_creator_id?: string | null;
   acting_organization_id?: string | null;
   professional_creator_name?: string | null;

@@ -42,7 +42,6 @@ function createAdapters(): jest.Mocked<EntryLogSessionAdapters> {
     createFertigation: jest.fn().mockResolvedValue({ id: 15 }),
     upsertDailyNote: jest.fn().mockResolvedValue({ id: 16 }),
     getDailyNote: jest.fn().mockResolvedValue(null),
-    updateWaterLevel: jest.fn().mockResolvedValue({}),
     deleteIrrigation: jest.fn().mockResolvedValue(undefined),
     deleteSpray: jest.fn().mockResolvedValue(undefined),
     deleteHarvest: jest.fn().mockResolvedValue(undefined),

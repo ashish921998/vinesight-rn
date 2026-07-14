@@ -42,7 +42,6 @@ import {
 } from '@/constants/calculator-models';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { toSupabaseDateString, type DailyNoteRecord } from '@/types/database';
-import type { Farm } from '@/types';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { formatDate } from '@/i18n/format';
 import {
@@ -81,7 +80,6 @@ import {
   useDeleteFertigationRecord,
   useDeleteDailyNote,
   useUpsertDailyNote,
-  useUpdateFarmWaterLevel,
   queryKeys,
 } from '@/hooks';
 import { useSaveSingleLog } from '@/features/entry-log-session';
@@ -129,8 +127,6 @@ interface SavedEntry {
   summary: string;
   /** The date this entry was saved on. Stored here so handleRemove uses the correct date even if the picker is changed afterwards. */
   savedDateStr: string;
-  /** Amount this irrigation added to the tank level. Subtracted from the live level on remove (composes across multiple irrigations). */
-  waterDelta?: number;
   /** Snapshot of the daily note that existed before this save. Used to restore the original text on remove instead of deleting the record. */
   previousDailyNote?: DailyNoteRecord | null;
 }
@@ -256,7 +252,6 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
   const deleteFertigation = useDeleteFertigationRecord();
   const deleteDailyNote = useDeleteDailyNote();
   const upsertDailyNote = useUpsertDailyNote();
-  const updateWaterLevel = useUpdateFarmWaterLevel();
 
   const [entries, setEntries] = useState<SavedEntry[]>([]);
   const [activeType, setActiveType] = useState<LogTypeId | null>(null);
@@ -387,7 +382,6 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
           farmId: result.farmId,
           summary: describeEntry(savedType, draft),
           savedDateStr: dateStr,
-          waterDelta: result.waterDelta,
           previousDailyNote: result.previousDailyNote,
         };
         // Notes are one-per-day (shared farm+date row). If a note row already
@@ -497,21 +491,6 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
         switch (entry.type) {
           case 'irrigation':
             await deleteIrrigation.mutateAsync({ id, farmId: entry.farmId });
-            if (entry.waterDelta != null && entry.waterDelta !== 0) {
-              // Subtract this irrigation's contribution from the *current* tank
-              // level (read fresh from cache — each save writes it via setQueryData)
-              // so removing an earlier irrigation doesn't wipe out later ones.
-              const liveFarm = queryClient.getQueryData<Farm>(queryKeys.farms.detail(entry.farmId));
-              const current = liveFarm?.remaining_water ?? 0;
-              const capacity = liveFarm?.total_tank_capacity ?? undefined;
-              let target = current - entry.waterDelta;
-              if (target < 0) target = 0;
-              if (capacity != null && target > capacity) target = capacity;
-              await updateWaterLevel.mutateAsync({
-                farmId: entry.farmId,
-                remainingWater: target,
-              });
-            }
             break;
           case 'spray':
             await deleteSpray.mutateAsync({ id, farmId: entry.farmId });
@@ -565,7 +544,6 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
       deleteFertigation,
       deleteDailyNote,
       upsertDailyNote,
-      updateWaterLevel,
       t,
       isDelegatedMode,
     ],
