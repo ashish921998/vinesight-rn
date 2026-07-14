@@ -84,8 +84,10 @@ export async function removeQueryCacheForUser(userId: string) {
 export const queryDehydrateOptions = {
   shouldDehydrateMutation: (mutation: {
     options: { mutationKey?: readonly unknown[] };
-    state: { isPaused: boolean };
-  }) => mutation.state.isPaused && mutation.options.mutationKey?.[0] === 'record-write',
+    state: { isPaused: boolean; status: string };
+  }) =>
+    (mutation.state.isPaused || mutation.state.status === 'error') &&
+    mutation.options.mutationKey?.[0] === 'record-write',
   shouldDehydrateQuery: (query: { queryKey: readonly unknown[]; state: { status: string } }) =>
     query.state.status === 'success' &&
     typeof query.queryKey[0] === 'string' &&

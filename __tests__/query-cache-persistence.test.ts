@@ -7,23 +7,30 @@ import {
 } from '@/lib/query-cache';
 
 describe('query cache persistence filters', () => {
-  it('persists only paused record-write mutations', () => {
+  it('persists paused and errored record-write mutations', () => {
     expect(
       queryDehydrateOptions.shouldDehydrateMutation({
         options: { mutationKey: ['record-write', 'irrigation_records', 'create'] },
-        state: { isPaused: true },
+        state: { isPaused: true, status: 'pending' },
+      }),
+    ).toBe(true);
+    // Retry-exhausted writes are still unsynced — keep them, don't drop on sign-out.
+    expect(
+      queryDehydrateOptions.shouldDehydrateMutation({
+        options: { mutationKey: ['record-write', 'irrigation_records', 'create'] },
+        state: { isPaused: false, status: 'error' },
       }),
     ).toBe(true);
     expect(
       queryDehydrateOptions.shouldDehydrateMutation({
         options: { mutationKey: ['record-write', 'irrigation_records', 'create'] },
-        state: { isPaused: false },
+        state: { isPaused: false, status: 'success' },
       }),
     ).toBe(false);
     expect(
       queryDehydrateOptions.shouldDehydrateMutation({
         options: { mutationKey: ['other-write'] },
-        state: { isPaused: true },
+        state: { isPaused: true, status: 'pending' },
       }),
     ).toBe(false);
   });

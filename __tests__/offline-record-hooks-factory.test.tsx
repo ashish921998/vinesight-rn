@@ -72,6 +72,12 @@ describe('factory create hook (irrigation)', () => {
     expect(opts).toEqual({ onConflict: 'client_uuid', ignoreDuplicates: true });
     expect(calls.updatePatch).toEqual({ season_id: 123 });
     expect(calls.eqCalls).toContainEqual(['id', 1]);
+
+    // The season backfill is upsert → update({season_id}) → eq('id', 1), in that order.
+    const order = (fn: unknown) => (fn as jest.Mock).mock.invocationCallOrder[0];
+    expect(order(chain.upsert)).toBeLessThan(order(chain.update));
+    expect(order(chain.update)).toBeLessThan(order(chain.eq));
+    expect((chain.eq as jest.Mock).mock.calls[0]).toEqual(['id', 1]);
   });
 
   it('preserves a caller-supplied client_uuid', async () => {
