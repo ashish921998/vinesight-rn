@@ -100,10 +100,10 @@ begin
     return new;
   end if;
 
-  if old.client_uuid is null then
-    return old;
-  end if;
-
+  -- tg_op = 'DELETE'. Subtract the water this record contributed. The
+  -- coalesce(...,0) makes this a no-op for rows that never received a delta
+  -- (e.g. pre-migration data), so delegated/legacy rows (no client_uuid) are
+  -- handled identically to client rows.
   update public.farms
   set remaining_water = greatest(0, coalesce(remaining_water, 0) - coalesce(old.applied_water_delta, 0))
   where id = old.farm_id;

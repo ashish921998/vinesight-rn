@@ -176,16 +176,7 @@ function collectCreatedRecordFromResult(params: {
     };
   }
 
-  if (log.type !== 'irrigation') return null;
-  const orphanedRecordId = (result.reason as { recordId?: number | null } | null)?.recordId ?? null;
-  if (orphanedRecordId === null) return null;
-  return {
-    pendingLogId: log.id,
-    type: log.type,
-    recordId: orphanedRecordId,
-    farmId,
-    previousDailyNote,
-  };
+  return null;
 }
 
 async function submitLogWithSnapshot(params: {

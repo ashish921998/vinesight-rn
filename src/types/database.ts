@@ -122,7 +122,7 @@ export interface IrrigationRecord {
 
 export type IrrigationRecordInsert = Omit<IrrigationRecord, 'id' | 'created_at'>;
 export type IrrigationRecordUpdate = Partial<
-  Omit<IrrigationRecord, 'id' | 'farm_id' | 'created_at'>
+  Omit<IrrigationRecord, 'id' | 'farm_id' | 'created_at' | 'applied_water_delta'>
 >;
 
 // ============================================================
