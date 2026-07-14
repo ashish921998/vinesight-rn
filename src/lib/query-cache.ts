@@ -1,12 +1,21 @@
 import { QueryClient } from '@tanstack/react-query';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { createMMKV } from 'react-native-mmkv';
-import { registerRecordWriteMutationDefaults } from '@/features/offline/record-write-queue';
+import {
+  flushPausedRecordWriteMutations,
+  registerRecordWriteMutationDefaults,
+} from '@/features/offline/record-write-queue';
 
 export const QUERY_CACHE_KEY = 'VINESIGHT_REACT_QUERY_CACHE';
 export const QUERY_CACHE_MAX_AGE_MS = 1000 * 60 * 60 * 24; // 24 hours
 
-export const queryClient = new QueryClient({
+class OfflineQueryClient extends QueryClient {
+  resumePausedMutations() {
+    return flushPausedRecordWriteMutations(this, () => super.resumePausedMutations());
+  }
+}
+
+export const queryClient = new OfflineQueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
@@ -53,8 +62,12 @@ export function createQueryPersister(userId: string | null) {
 createQueryPersister(null);
 
 export const queryDehydrateOptions = {
-  shouldDehydrateMutation: (mutation: { options: { mutationKey?: readonly unknown[] } }) =>
-    mutation.options.mutationKey?.[0] === 'record-write',
-  shouldDehydrateQuery: (query: { queryKey: readonly unknown[] }) =>
-    typeof query.queryKey[0] === 'string' && PERSISTED_QUERY_ROOTS.has(query.queryKey[0]),
+  shouldDehydrateMutation: (mutation: {
+    options: { mutationKey?: readonly unknown[] };
+    state: { isPaused: boolean };
+  }) => mutation.state.isPaused && mutation.options.mutationKey?.[0] === 'record-write',
+  shouldDehydrateQuery: (query: { queryKey: readonly unknown[]; state: { status: string } }) =>
+    query.state.status === 'success' &&
+    typeof query.queryKey[0] === 'string' &&
+    PERSISTED_QUERY_ROOTS.has(query.queryKey[0]),
 };

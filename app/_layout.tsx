@@ -58,7 +58,6 @@ import {
   startOnlineManager,
   subscribeToOnlineStatus,
 } from '@/features/offline/online-manager';
-import { flushPausedRecordWriteMutations } from '@/features/offline/record-write-queue';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -747,7 +746,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
               dehydrateOptions: queryDehydrateOptions,
             }}
             onSuccess={() => {
-              if (!isLoading && userId) void flushPausedRecordWriteMutations(queryClient);
+              if (!isLoading && userId) void queryClient.resumePausedMutations();
             }}
           >
             <ConnectivityIndicator />
@@ -919,7 +918,7 @@ const styles = StyleSheet.create({
   },
   offlineBannerText: {
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '600',
   },
 });

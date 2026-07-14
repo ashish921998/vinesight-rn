@@ -2,7 +2,6 @@ import type { QueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/hooks/query-keys';
 import { compactQueuedOps, type CompactableOp } from './compaction';
-import { recordFlushFailure, recordFlushSuccess } from './online-manager';
 import {
   executeRecordWriteMutation,
   getRecordWriteMutationKey,
@@ -13,6 +12,7 @@ import {
 } from './record-mutations';
 
 let flushInProgress = false;
+let activeFlush: Promise<unknown> | null = null;
 
 export function isRecordWriteFlushInProgress() {
   return flushInProgress;
@@ -119,6 +119,13 @@ export function compactPausedRecordWriteMutations(queryClient: QueryClient) {
   }
 }
 
+function hasPausedRecordWriteMutations(queryClient: QueryClient) {
+  return queryClient
+    .getMutationCache()
+    .getAll()
+    .some((mutation) => mutation.state.isPaused && parseRecordWriteMutation(mutation) !== null);
+}
+
 export function registerRecordWriteMutationDefaults(queryClient: QueryClient) {
   for (const table of RECORD_WRITE_TABLES) {
     for (const operation of RECORD_WRITE_OPERATIONS) {
@@ -129,24 +136,34 @@ export function registerRecordWriteMutationDefaults(queryClient: QueryClient) {
   }
 }
 
-export async function flushPausedRecordWriteMutations(queryClient: QueryClient) {
-  compactPausedRecordWriteMutations(queryClient);
-  flushInProgress = true;
-  try {
-    await queryClient.resumePausedMutations();
-    recordFlushSuccess();
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.irrigationRecords.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.sprayRecords.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.fertigationRecords.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.harvestRecords.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.expenseRecords.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.reports.all }),
-    ]);
-  } catch (error) {
-    recordFlushFailure();
-    throw error;
-  } finally {
-    flushInProgress = false;
-  }
+export function flushPausedRecordWriteMutations(
+  queryClient: QueryClient,
+  resumePausedMutations: () => Promise<unknown>,
+) {
+  if (activeFlush) return activeFlush;
+
+  activeFlush = (async () => {
+    compactPausedRecordWriteMutations(queryClient);
+    const hasRecordWrites = hasPausedRecordWriteMutations(queryClient);
+    flushInProgress = hasRecordWrites;
+    try {
+      const result = await resumePausedMutations();
+      if (hasRecordWrites) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: queryKeys.irrigationRecords.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.sprayRecords.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.fertigationRecords.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.harvestRecords.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.expenseRecords.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.reports.all }),
+        ]);
+      }
+      return result;
+    } finally {
+      flushInProgress = false;
+      activeFlush = null;
+    }
+  })();
+
+  return activeFlush;
 }

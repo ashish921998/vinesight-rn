@@ -1,6 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
 
-import { compactPausedRecordWriteMutations } from '@/features/offline/record-write-queue';
+import {
+  compactPausedRecordWriteMutations,
+  flushPausedRecordWriteMutations,
+} from '@/features/offline/record-write-queue';
 
 type FakeMutation = {
   options: { mutationKey: readonly unknown[] };
@@ -66,5 +69,51 @@ describe('compactPausedRecordWriteMutations', () => {
     compactPausedRecordWriteMutations(queryClient);
 
     expect(removed).toEqual([create, del]);
+  });
+});
+
+describe('flushPausedRecordWriteMutations', () => {
+  it('compacts once and batches invalidation when concurrent resume signals arrive', async () => {
+    const create = createMutation('irrigation_records', 'create', {
+      farm_id: 7,
+      date: '2026-07-14',
+      client_uuid: '12345678-1234-4abc-8def-123456789abc',
+      duration: 2,
+    });
+    const update = createMutation('irrigation_records', 'update', {
+      clientUuid: '12345678-1234-4abc-8def-123456789abc',
+      farmId: 7,
+      updates: { duration: 9 },
+    });
+    const mutations = [create, update];
+    const removed: FakeMutation[] = [];
+    const mutationCache = {
+      getAll: () => mutations.filter((mutation) => !removed.includes(mutation)),
+      remove: (mutation: FakeMutation) => removed.push(mutation),
+    };
+    const invalidateQueries = jest.fn().mockResolvedValue(undefined);
+    const queryClient = {
+      getMutationCache: () => mutationCache,
+      invalidateQueries,
+    } as unknown as QueryClient;
+    let releaseResume: (() => void) | undefined;
+    const resumePausedMutations = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseResume = resolve;
+        }),
+    );
+
+    const firstFlush = flushPausedRecordWriteMutations(queryClient, resumePausedMutations);
+    const secondFlush = flushPausedRecordWriteMutations(queryClient, resumePausedMutations);
+
+    expect(secondFlush).toBe(firstFlush);
+    expect(resumePausedMutations).toHaveBeenCalledTimes(1);
+    expect(removed).toEqual([update]);
+    releaseResume?.();
+    await firstFlush;
+
+    expect(create.state.variables).toMatchObject({ duration: 9 });
+    expect(invalidateQueries).toHaveBeenCalledTimes(6);
   });
 });
