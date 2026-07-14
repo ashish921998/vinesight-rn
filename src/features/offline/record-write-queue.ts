@@ -27,7 +27,7 @@ export function resetRecordWriteFlushState() {
 
 type QueuedMutation = {
   options: { mutationKey?: readonly unknown[] };
-  state: { variables?: unknown; isPaused?: boolean; status?: string };
+  state: { variables?: unknown; isPaused?: boolean; status?: string; submittedAt?: number };
 };
 
 interface QueueItem {
@@ -37,6 +37,9 @@ interface QueueItem {
   variables: Record<string, unknown>;
   handle: string;
   op: CompactableOp;
+  // Original submission time; preserved across requeue/rebuild so compaction and
+  // replay keep create-before-update order for a record (see compactQueuedOps).
+  submittedAt: number;
 }
 
 function parseRecordWriteMutation(mutation: QueuedMutation): QueueItem | null {
@@ -87,6 +90,7 @@ function parseRecordWriteMutation(mutation: QueuedMutation): QueueItem | null {
     variables,
     handle,
     op,
+    submittedAt: typeof mutation.state.submittedAt === 'number' ? mutation.state.submittedAt : 0,
   };
 }
 
@@ -107,6 +111,7 @@ function rebuildAsPausedRecordWrite(
   table: RecordWriteTable,
   operation: RecordWriteOperation,
   variables: Record<string, unknown>,
+  submittedAt: number,
 ) {
   queryClient.getMutationCache().build(
     queryClient,
@@ -120,7 +125,9 @@ function rebuildAsPausedRecordWrite(
       isPaused: true,
       status: 'pending',
       variables,
-      submittedAt: Date.now(),
+      // Preserve the original time: build() appends to the cache tail, so ordering
+      // must come from submittedAt, not insertion order (see compaction sort).
+      submittedAt,
     },
   );
 }
@@ -138,7 +145,13 @@ function requeueFailedRecordWriteMutations(queryClient: QueryClient) {
     .map((mutation) => parseRecordWriteMutation(mutation))
     .filter((item): item is QueueItem => item !== null);
   for (const item of failed) {
-    rebuildAsPausedRecordWrite(queryClient, item.table, item.operation, item.variables);
+    rebuildAsPausedRecordWrite(
+      queryClient,
+      item.table,
+      item.operation,
+      item.variables,
+      item.submittedAt,
+    );
     mutationCache.remove(item.mutation as Parameters<typeof mutationCache.remove>[0]);
   }
 }
@@ -149,7 +162,10 @@ export function compactPausedRecordWriteMutations(queryClient: QueryClient) {
     .getAll()
     .filter((mutation) => mutation.state.isPaused)
     .map((mutation) => parseRecordWriteMutation(mutation))
-    .filter((item): item is QueueItem => item !== null);
+    .filter((item): item is QueueItem => item !== null)
+    // Fold in submission order: a requeued write is rebuilt at the cache tail, so
+    // insertion order can no longer be trusted to keep create-before-update.
+    .sort((a, b) => a.submittedAt - b.submittedAt);
   if (items.length < 2) return;
 
   const compacted = compactQueuedOps(items.map((item) => item.op));
@@ -170,11 +186,15 @@ export function compactPausedRecordWriteMutations(queryClient: QueryClient) {
       ? [...matching].reverse().find((item) => item.operation === compactedOp.kind)
       : undefined;
     if (compactedOp && selected) {
+      // Keep the record's earliest submission time so a later re-compaction still
+      // orders this merged op ahead of any newer write for the same record.
+      const earliest = Math.min(...matching.map((item) => item.submittedAt));
       rebuildAsPausedRecordWrite(
         queryClient,
         selected.table,
         selected.operation,
         variablesForCompactedOp(selected, compactedOp),
+        earliest,
       );
     }
 

@@ -8,17 +8,23 @@ import {
 
 type FakeMutation = {
   options: { mutationKey: readonly unknown[] };
-  state: { variables: Record<string, unknown>; isPaused: boolean; status?: string };
+  state: {
+    variables: Record<string, unknown>;
+    isPaused: boolean;
+    status?: string;
+    submittedAt?: number;
+  };
 };
 
 function createMutation(
   table: string,
   operation: 'create' | 'update' | 'delete',
   variables: Record<string, unknown>,
+  submittedAt?: number,
 ): FakeMutation {
   return {
     options: { mutationKey: ['record-write', table, operation] },
-    state: { variables, isPaused: true },
+    state: { variables, isPaused: true, submittedAt },
   };
 }
 
@@ -244,6 +250,47 @@ describe('flushPausedRecordWriteMutations', () => {
     expect(built).toHaveLength(1);
     expect(built[0].state).toMatchObject({ isPaused: true, status: 'pending' });
     expect(built[0].state.variables.client_uuid).toBe('12345678-1234-4abc-8def-123456789abc');
+  });
+
+  it('folds a requeued errored create ahead of a later offline edit (submission order)', async () => {
+    // Errored create was submitted first; the offline edit came after. Requeue
+    // rebuilds the create at the cache tail, so only submittedAt preserves order.
+    const erroredCreate: FakeMutation = {
+      options: { mutationKey: ['record-write', 'irrigation_records', 'create'] },
+      state: {
+        variables: {
+          farm_id: 7,
+          date: '2026-07-14',
+          client_uuid: '12345678-1234-4abc-8def-123456789abc',
+          duration: 2,
+        },
+        isPaused: false,
+        status: 'error',
+        submittedAt: 1,
+      },
+    };
+    const pausedEdit = createMutation(
+      'irrigation_records',
+      'update',
+      {
+        clientUuid: '12345678-1234-4abc-8def-123456789abc',
+        farmId: 7,
+        updates: { duration: 9, note: 'adjusted' },
+      },
+      2,
+    );
+    const { queryClient, built } = createQueryClient([erroredCreate, pausedEdit]);
+    Object.assign(queryClient, { invalidateQueries: jest.fn().mockResolvedValue(undefined) });
+    const resumePausedMutations = jest.fn().mockResolvedValue(undefined);
+
+    await flushPausedRecordWriteMutations(queryClient, resumePausedMutations);
+
+    // Both writes collapse to a single create carrying the edit's fields — not a
+    // create that clobbered the edit because it was folded last. The compacted
+    // op is the last create rebuilt (after the requeue rebuild).
+    const finalCreate = built.filter((m) => m.options.mutationKey[2] === 'create').at(-1);
+    expect(finalCreate).toBeDefined();
+    expect(finalCreate!.state.variables).toMatchObject({ duration: 9, note: 'adjusted' });
   });
 
   it('resumes an empty paused queue without invalidating queries', async () => {
