@@ -11,6 +11,7 @@ import { signedOutState } from './auth-constants';
 
 export const createAccountActions = (set: SetState, get: GetState) => ({
   signOut: async () => {
+    const userId = get().user?.id ?? null;
     set({ errorMessage: null, isLoading: true });
     telemetry.capture('auth_sign_out');
 
@@ -34,7 +35,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
       set(signedOutState);
       telemetry.reset();
       try {
-        await clearQueryCache('sign out success path');
+        await clearQueryCache('sign out success path', userId);
       } catch (cacheError) {
         if (__DEV__) {
           console.error('Failed to clear query cache after sign out:', cacheError);
@@ -102,7 +103,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
 
       set(signedOutState);
       try {
-        await clearQueryCache('delete account');
+        await clearQueryCache('delete account', userId ?? null, false);
       } catch (cacheError) {
         if (__DEV__) {
           console.error('Failed to clear query cache after delete account:', cacheError);

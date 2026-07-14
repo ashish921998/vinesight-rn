@@ -16,21 +16,24 @@
  * react-native-get-random-values — call sites do not change.
  */
 
+import * as Crypto from 'expo-crypto';
+
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /** Generate a fresh RFC-4122 v4 UUID string for a new offline record. */
 export function newClientUuid(): string {
-  // Layout: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx  (y ∈ {8,9,a,b})
+  const uuid = Crypto.randomUUID();
+  if (isClientUuid(uuid)) return uuid;
+
+  // Jest's Expo mock does not implement randomUUID. This fallback is only used
+  // outside the native Crypto implementation and preserves the v4 contract.
   let out = '';
-  for (let i = 0; i < 36; i += 1) {
-    if (i === 8 || i === 13 || i === 18 || i === 23) {
-      out += '-';
-    } else if (i === 14) {
-      out += '4'; // version
-    } else {
-      const r = (Math.random() * 16) | 0;
-      // Position 19 is the variant nibble: high bits must be 10xx.
-      out += (i === 19 ? (r & 0x3) | 0x8 : r).toString(16);
+  for (let index = 0; index < 36; index += 1) {
+    if (index === 8 || index === 13 || index === 18 || index === 23) out += '-';
+    else if (index === 14) out += '4';
+    else {
+      const randomNibble = (Math.random() * 16) | 0;
+      out += (index === 19 ? (randomNibble & 0x3) | 0x8 : randomNibble).toString(16);
     }
   }
   return out;

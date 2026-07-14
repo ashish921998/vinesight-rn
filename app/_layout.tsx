@@ -1,7 +1,15 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
-import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type StyleProp,
+  type TextStyle,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { I18nextProvider } from 'react-i18next';
@@ -35,11 +43,21 @@ import { usePetioleTestReminders } from '@/hooks/use-petiole-reminders';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding, fontSize } from '@/styles/theme';
 import { useM3, useIsDark } from '@/styles/use-theme';
-import { queryClient, queryPersister, QUERY_CACHE_MAX_AGE_MS } from '@/lib/query-cache';
+import {
+  createQueryPersister,
+  queryClient,
+  queryDehydrateOptions,
+  QUERY_CACHE_MAX_AGE_MS,
+} from '@/lib/query-cache';
 import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
 import { AppModeIntroGate } from '@/components/app-mode-intro-modal';
 import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
 import { resolveFeatureOverviewRoute } from '@/services/feature-overview-notifications';
+import {
+  getOnlineStatus,
+  startOnlineManager,
+  subscribeToOnlineStatus,
+} from '@/features/offline/online-manager';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -144,15 +162,31 @@ function PetioleReminderSync() {
   return null;
 }
 
+function ConnectivityIndicator() {
+  const isOnline = useSyncExternalStore(subscribeToOnlineStatus, getOnlineStatus, getOnlineStatus);
+  if (isOnline) return null;
+  return (
+    <View style={styles.offlineBanner} accessibilityRole="alert">
+      <Text style={styles.offlineBannerText}>
+        You’re offline. Activity logs will sync when connected.
+      </Text>
+    </View>
+  );
+}
+
 const RootLayoutComponent = Sentry.wrap(function RootLayout() {
   const { markInteractive } = useObserve();
   const initialize = useAuthStore((state) => state.initialize);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   const needsProfileCompletion = useAuthStore((state) => state.needsProfileCompletion);
   const themeHydrated = useThemeStore((state) => state.hasHydrated);
   const m3 = useM3();
   const isDark = useIsDark();
+  const queryPersister = useMemo(() => createQueryPersister(userId), [userId]);
+
+  useEffect(() => startOnlineManager(), []);
 
   const pathname = usePathname();
   const segments = useSegments();
@@ -704,12 +738,21 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <PersistQueryClientProvider
+            key={userId ?? 'signed-out'}
             client={queryClient}
             persistOptions={{
               persister: queryPersister,
               maxAge: QUERY_CACHE_MAX_AGE_MS,
+              dehydrateOptions: queryDehydrateOptions,
+            }}
+            onSuccess={() => {
+              const authState = useAuthStore.getState();
+              if (!authState.isLoading && authState.user?.id === userId) {
+                void queryClient.resumePausedMutations();
+              }
             }}
           >
+            <ConnectivityIndicator />
             <PetioleReminderSync />
             <I18nextProvider i18n={i18n}>
               <StatusBar style={isDark ? 'light' : 'dark'} />
@@ -867,3 +910,18 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
 });
 
 export default ObserveRoot.wrap(RootLayoutComponent);
+
+const styles = StyleSheet.create({
+  offlineBanner: {
+    alignItems: 'center',
+    backgroundColor: '#8a4b00',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  offlineBannerText: {
+    color: '#ffffff',
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+});

@@ -19,9 +19,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/hooks/query-keys';
-import { resolveOrCreateSeasonIdForDate } from '@/lib/season-context';
-import { idempotentCreate, targetedUpdate, targetedDelete, type RecordRef } from './record-writes';
+import { type RecordRef } from './record-writes';
 import { newClientUuid } from './client-id';
+import {
+  executeRecordWriteMutation,
+  getRecordWriteMutationKey,
+  type RecordWriteTable,
+} from './record-mutations';
+import { isRecordWriteFlushInProgress } from './record-write-queue';
 
 interface RecordQueryKeys {
   lists: () => readonly unknown[];
@@ -30,7 +35,7 @@ interface RecordQueryKeys {
 
 export interface RecordWriteHooksConfig {
   /** Supabase table name. */
-  table: string;
+  table: RecordWriteTable;
   /** The record type's query-key bundle (extra members beyond these are ignored). */
   keys: RecordQueryKeys;
   /**
@@ -62,16 +67,11 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-      mutationFn: async (record: TInsert): Promise<TRow> => {
-        const season_id =
-          record.season_id ??
-          (await resolveOrCreateSeasonIdForDate({ farmId: record.farm_id, date: record.date }));
-        // client_uuid was stamped into the variables at capture (below);
-        // idempotentCreate generates one only as a last resort.
-        const row = await idempotentCreate(table, { ...record, season_id });
-        return row as TRow;
-      },
+      mutationKey: getRecordWriteMutationKey(table, 'create'),
+      mutationFn: (record: TInsert) =>
+        executeRecordWriteMutation(table, 'create', record) as Promise<TRow>,
       onSuccess: (row) => {
+        if (isRecordWriteFlushInProgress()) return;
         queryClient.invalidateQueries({ queryKey: keys.listByFarm(row.farm_id) });
         queryClient.invalidateQueries({
           queryKey: queryKeys.reports.unassignedRecordCount(row.farm_id),
@@ -101,22 +101,11 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
   function useUpdate() {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async ({
-        id,
-        clientUuid,
-        farmId,
-        updates,
-      }: RecordRef & {
-        updates: Partial<TRow>;
-      }): Promise<TRow> => {
-        const row = await targetedUpdate(
-          table,
-          { id, clientUuid, farmId },
-          updates as Record<string, unknown>,
-        );
-        return row as TRow;
-      },
+      mutationKey: getRecordWriteMutationKey(table, 'update'),
+      mutationFn: (variables: RecordRef & { updates: Partial<TRow> }) =>
+        executeRecordWriteMutation(table, 'update', variables) as Promise<TRow>,
       onSuccess: (row) => {
+        if (isRecordWriteFlushInProgress()) return;
         queryClient.invalidateQueries({ queryKey: keys.listByFarm(row.farm_id) });
         queryClient.invalidateQueries({
           queryKey: queryKeys.reports.unassignedRecordCount(row.farm_id),
@@ -128,14 +117,11 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
   function useDelete() {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async ({
-        id,
-        clientUuid,
-        farmId,
-      }: RecordRef & { farmId: number }): Promise<void> => {
-        await targetedDelete(table, { id, clientUuid, farmId });
-      },
+      mutationKey: getRecordWriteMutationKey(table, 'delete'),
+      mutationFn: (variables: RecordRef & { farmId: number }) =>
+        executeRecordWriteMutation(table, 'delete', variables) as Promise<void>,
       onSuccess: (_result, { farmId }) => {
+        if (isRecordWriteFlushInProgress()) return;
         queryClient.invalidateQueries({ queryKey: keys.listByFarm(farmId) });
         queryClient.invalidateQueries({
           queryKey: queryKeys.reports.unassignedRecordCount(farmId),
