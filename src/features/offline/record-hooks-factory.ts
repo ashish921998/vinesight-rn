@@ -102,13 +102,14 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
       mutationFn: async ({
         id,
         clientUuid,
+        farmId,
         updates,
       }: RecordRef & {
         updates: Partial<TRow>;
       }): Promise<TRow> => {
         const row = await targetedUpdate(
           table,
-          { id, clientUuid },
+          { id, clientUuid, farmId },
           updates as Record<string, unknown>,
         );
         return row as TRow;
@@ -125,8 +126,12 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
   function useDelete() {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async ({ id, clientUuid }: RecordRef & { farmId: number }): Promise<void> => {
-        await targetedDelete(table, { id, clientUuid });
+      mutationFn: async ({
+        id,
+        clientUuid,
+        farmId,
+      }: RecordRef & { farmId: number }): Promise<void> => {
+        await targetedDelete(table, { id, clientUuid, farmId });
       },
       onSuccess: (_result, { farmId }) => {
         queryClient.invalidateQueries({ queryKey: keys.listByFarm(farmId) });

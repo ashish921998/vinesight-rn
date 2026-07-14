@@ -17,15 +17,23 @@
 import { supabase } from '@/lib/supabase';
 import { newClientUuid } from './client-id';
 
-/** A reference to a record: prefer the server `id`; fall back to `client_uuid`. */
+/**
+ * A reference to a record: prefer the server `id`; fall back to `client_uuid`.
+ *
+ * `client_uuid` is client-generated (not unguessable), so it is only a valid
+ * address WITHIN a farm: the fallback branch requires `farmId` and filters by
+ * it, so a stale/reused uuid can never touch another farm's row.
+ */
 export interface RecordRef {
   id?: number | null;
   clientUuid?: string | null;
+  farmId?: number | null;
 }
 
 function describeRef(ref: RecordRef): string {
   if (ref.id != null) return `id=${ref.id}`;
-  if (ref.clientUuid != null) return `client_uuid=${ref.clientUuid}`;
+  if (ref.clientUuid != null)
+    return `client_uuid=${ref.clientUuid} farm_id=${ref.farmId ?? '<missing>'}`;
   return '<empty>';
 }
 
@@ -50,16 +58,16 @@ export async function idempotentCreate<T extends object>(
   if (data) return data as Record<string, unknown>;
 
   // ignoreDuplicates skipped the row → a conflicting row already exists from a
-  // prior replay. Read it back so callers always get the canonical record.
-  const { data: existing, error: readError } = await supabase
-    .from(table)
-    .select('*')
-    .eq('client_uuid', client_uuid)
-    .maybeSingle();
+  // prior replay. Read it back SCOPED TO THIS FARM so a reused/stale uuid can
+  // never make the create "succeed" with another farm's row.
+  const farmId = (record as { farm_id?: number | null }).farm_id;
+  let readBack = supabase.from(table).select('*').eq('client_uuid', client_uuid);
+  if (farmId != null) readBack = readBack.eq('farm_id', farmId);
+  const { data: existing, error: readError } = await readBack.maybeSingle();
   if (readError) throw readError;
   if (!existing) {
     throw new Error(
-      `idempotentCreate: conflicting ${table} row for client_uuid=${client_uuid} was not readable`,
+      `idempotentCreate: conflicting ${table} row for client_uuid=${client_uuid} is not readable in farm_id=${farmId ?? '<unknown>'} — uuid collides with a row outside this farm`,
     );
   }
   return existing as Record<string, unknown>;
@@ -75,11 +83,13 @@ export async function targetedUpdate(
   const filtered =
     ref.id != null
       ? base.eq('id', ref.id)
-      : ref.clientUuid != null
-        ? base.eq('client_uuid', ref.clientUuid)
+      : ref.clientUuid != null && ref.farmId != null
+        ? base.eq('client_uuid', ref.clientUuid).eq('farm_id', ref.farmId)
         : null;
   if (!filtered)
-    throw new Error(`targetedUpdate: ref needs an id or client_uuid (${describeRef(ref)})`);
+    throw new Error(
+      `targetedUpdate: ref needs an id, or a client_uuid + farmId (${describeRef(ref)})`,
+    );
 
   const { data, error } = await filtered.select().single();
   if (error) throw error;
@@ -92,11 +102,13 @@ export async function targetedDelete(table: string, ref: RecordRef): Promise<voi
   const filtered =
     ref.id != null
       ? base.eq('id', ref.id)
-      : ref.clientUuid != null
-        ? base.eq('client_uuid', ref.clientUuid)
+      : ref.clientUuid != null && ref.farmId != null
+        ? base.eq('client_uuid', ref.clientUuid).eq('farm_id', ref.farmId)
         : null;
   if (!filtered)
-    throw new Error(`targetedDelete: ref needs an id or client_uuid (${describeRef(ref)})`);
+    throw new Error(
+      `targetedDelete: ref needs an id, or a client_uuid + farmId (${describeRef(ref)})`,
+    );
 
   const { error } = await filtered;
   if (error) throw error;

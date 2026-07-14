@@ -277,11 +277,12 @@ describe('factory update + delete hooks (irrigation)', () => {
 
     const { result } = renderHook(() => useUpdateIrrigationRecord(), { wrapper });
     await act(async () => {
-      await result.current.mutateAsync({ clientUuid, updates: { duration: 9 } });
+      await result.current.mutateAsync({ clientUuid, farmId: 7, updates: { duration: 9 } });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(calls.eqCalls).toContainEqual(['client_uuid', clientUuid]);
+    expect(calls.eqCalls).toContainEqual(['farm_id', 7]);
   });
 
   it('deletes by id and invalidates listByFarm(farmId)', async () => {
@@ -314,5 +315,6 @@ describe('factory update + delete hooks (irrigation)', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(calls.eqCalls).toContainEqual(['client_uuid', clientUuid]);
+    expect(calls.eqCalls).toContainEqual(['farm_id', 7]);
   });
 });

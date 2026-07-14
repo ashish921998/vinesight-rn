@@ -66,7 +66,7 @@ describe('idempotentCreate', () => {
     expect((calls.upsertArgs![0] as { client_uuid: string }).client_uuid).toBe('fixed-uuid');
   });
 
-  it('reads the canonical row back by client_uuid when the insert was skipped (replay)', async () => {
+  it('reads the canonical row back by client_uuid AND farm_id when the insert was skipped (replay)', async () => {
     const insertChain = makeChain({ data: null, error: null }); // conflict → no row
     const readChain = makeChain({ data: { id: 99, client_uuid: 'u1' }, error: null });
     mockedFrom.mockReturnValueOnce(insertChain.chain).mockReturnValueOnce(readChain.chain);
@@ -75,16 +75,17 @@ describe('idempotentCreate', () => {
 
     expect(out).toEqual({ id: 99, client_uuid: 'u1' });
     expect(readChain.calls.eqCalls).toContainEqual(['client_uuid', 'u1']);
+    expect(readChain.calls.eqCalls).toContainEqual(['farm_id', 7]);
   });
 
-  it('throws a clear error when a skipped insert cannot read the canonical row', async () => {
-    const insertChain = makeChain({ data: null, error: null });
-    const readChain = makeChain({ data: null, error: null });
+  it('throws instead of returning another farm’s row when the conflicting uuid is outside this farm', async () => {
+    const insertChain = makeChain({ data: null, error: null }); // conflict → no row
+    const readChain = makeChain({ data: null, error: null }); // farm-scoped read finds nothing
     mockedFrom.mockReturnValueOnce(insertChain.chain).mockReturnValueOnce(readChain.chain);
 
     await expect(
       idempotentCreate('harvest_records', { farm_id: 7, client_uuid: 'u1' }),
-    ).rejects.toThrow(/conflicting harvest_records row .* was not readable/);
+    ).rejects.toThrow(/not readable in farm_id=7/);
   });
 
   it('throws when the upsert errors', async () => {
@@ -108,19 +109,27 @@ describe('targetedUpdate', () => {
     expect(calls.eqCalls).not.toContainEqual(['client_uuid', expect.anything()]);
   });
 
-  it('falls back to client_uuid when no id', async () => {
+  it('falls back to client_uuid scoped by farm_id when no id', async () => {
     const { chain, calls } = makeChain({ data: { client_uuid: 'u2' }, error: null });
     mockedFrom.mockReturnValue(chain);
 
-    await targetedUpdate('spray_records', { clientUuid: 'u2' }, { notes: 'x' });
+    await targetedUpdate('spray_records', { clientUuid: 'u2', farmId: 7 }, { notes: 'x' });
 
     expect(calls.eqCalls).toContainEqual(['client_uuid', 'u2']);
+    expect(calls.eqCalls).toContainEqual(['farm_id', 7]);
+  });
+
+  it('refuses a client_uuid ref without a farm scope (cross-farm write guard)', async () => {
+    mockedFrom.mockReturnValue(makeChain().chain);
+    await expect(
+      targetedUpdate('spray_records', { clientUuid: 'u2' }, { notes: 'x' }),
+    ).rejects.toThrow(/needs an id, or a client_uuid \+ farmId/);
   });
 
   it('throws when the ref has neither id nor client_uuid', async () => {
     mockedFrom.mockReturnValue(makeChain().chain);
     await expect(targetedUpdate('spray_records', {}, { notes: 'x' })).rejects.toThrow(
-      /needs an id or client_uuid/,
+      /needs an id, or a client_uuid \+ farmId/,
     );
   });
 
@@ -141,19 +150,27 @@ describe('targetedDelete', () => {
     expect(calls.eqCalls).toContainEqual(['id', 8]);
   });
 
-  it('falls back to client_uuid when no id', async () => {
+  it('falls back to client_uuid scoped by farm_id when no id', async () => {
     const { chain, calls } = makeChain({ error: null });
     mockedFrom.mockReturnValue(chain);
 
-    await targetedDelete('irrigation_records', { clientUuid: 'u3' });
+    await targetedDelete('irrigation_records', { clientUuid: 'u3', farmId: 7 });
 
     expect(calls.eqCalls).toContainEqual(['client_uuid', 'u3']);
+    expect(calls.eqCalls).toContainEqual(['farm_id', 7]);
+  });
+
+  it('refuses a client_uuid ref without a farm scope (cross-farm delete guard)', async () => {
+    mockedFrom.mockReturnValue(makeChain().chain);
+    await expect(targetedDelete('irrigation_records', { clientUuid: 'u3' })).rejects.toThrow(
+      /needs an id, or a client_uuid \+ farmId/,
+    );
   });
 
   it('throws when the ref is empty', async () => {
     mockedFrom.mockReturnValue(makeChain().chain);
     await expect(targetedDelete('irrigation_records', {})).rejects.toThrow(
-      /needs an id or client_uuid/,
+      /needs an id, or a client_uuid \+ farmId/,
     );
   });
 
