@@ -60,6 +60,10 @@ describe('executeRecordWriteMutation create', () => {
       }),
     ).resolves.toBe(row);
 
+    expect(mockedCreate).toHaveBeenCalledWith(
+      'irrigation_records',
+      expect.objectContaining({ season_id: 12 }),
+    );
     expect(mockedResolveSeason).not.toHaveBeenCalled();
     expect(mockedUpdate).not.toHaveBeenCalled();
   });
