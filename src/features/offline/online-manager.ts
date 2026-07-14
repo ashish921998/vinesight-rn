@@ -15,12 +15,17 @@ function setOnline(nextOnline: boolean) {
 export function startOnlineManager() {
   if (unsubscribe) return unsubscribe;
 
-  unsubscribe = NetInfo.addEventListener((state) => {
+  const unsubscribeNative = NetInfo.addEventListener((state) => {
     const reachable = state.isInternetReachable;
     setOnline(state.isConnected === true && reachable !== false);
   });
+  const stop = () => {
+    unsubscribeNative();
+    if (unsubscribe === stop) unsubscribe = undefined;
+  };
+  unsubscribe = stop;
 
-  return unsubscribe;
+  return stop;
 }
 
 export function subscribeToOnlineStatus(listener: () => void) {

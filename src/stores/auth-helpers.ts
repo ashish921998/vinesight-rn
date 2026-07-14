@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import { supabase } from '@/lib/supabase';
+import { resetRecordWriteFlushState } from '@/features/offline/record-write-queue';
 import { persistQueryCacheForUser, queryClient, removeQueryCacheForUser } from '@/lib/query-cache';
 import { telemetry } from '@/services/telemetry';
 import type { User } from '@supabase/supabase-js';
@@ -277,6 +278,7 @@ export const clearQueryCache = async (
     if (preserveOfflineWrites) await persistQueryCacheForUser(userId);
     else await removeQueryCacheForUser(userId);
   }
+  resetRecordWriteFlushState();
   queryClient.clear();
   if (__DEV__) {
     console.info(

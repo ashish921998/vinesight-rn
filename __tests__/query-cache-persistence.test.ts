@@ -80,4 +80,18 @@ describe('query cache persistence filters', () => {
     await removeQueryCacheForUser(userId);
     queryClient.clear();
   });
+
+  it('removes a stale parked cache when there are no paused writes to preserve', async () => {
+    const userId = 'offline-user-with-no-writes';
+    const persister = createQueryPersister(userId);
+    await persister.persistClient({
+      buster: '',
+      timestamp: Date.now(),
+      clientState: { mutations: [], queries: [] },
+    });
+
+    await persistQueryCacheForUser(userId);
+
+    await expect(persister.restoreClient()).resolves.toBeUndefined();
+  });
 });

@@ -746,7 +746,10 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
               dehydrateOptions: queryDehydrateOptions,
             }}
             onSuccess={() => {
-              if (!isLoading && userId) void queryClient.resumePausedMutations();
+              const authState = useAuthStore.getState();
+              if (!authState.isLoading && authState.user?.id === userId) {
+                void queryClient.resumePausedMutations();
+              }
             }}
           >
             <ConnectivityIndicator />

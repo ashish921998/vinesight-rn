@@ -65,8 +65,12 @@ export function createQueryPersister(userId: string | null) {
 
 export async function persistQueryCacheForUser(userId: string) {
   const clientState = dehydrate(queryClient, queryDehydrateOptions);
-  if (clientState.mutations.length === 0) return;
-  await buildQueryPersister(userId).persistClient({
+  const persister = buildQueryPersister(userId);
+  if (clientState.mutations.length === 0) {
+    await persister.removeClient();
+    return;
+  }
+  await persister.persistClient({
     buster: '',
     timestamp: Date.now(),
     clientState,

@@ -13,9 +13,16 @@ import {
 
 let flushInProgress = false;
 let activeFlush: Promise<unknown> | null = null;
+let flushGeneration = 0;
 
 export function isRecordWriteFlushInProgress() {
   return flushInProgress;
+}
+
+export function resetRecordWriteFlushState() {
+  flushGeneration += 1;
+  flushInProgress = false;
+  activeFlush = null;
 }
 
 type QueuedMutation = {
@@ -176,13 +183,19 @@ export function flushPausedRecordWriteMutations(
 ) {
   if (activeFlush) return activeFlush;
 
+  const generation = flushGeneration;
   activeFlush = (async () => {
     compactPausedRecordWriteMutations(queryClient);
     const hasRecordWrites = hasPausedRecordWriteMutations(queryClient);
     flushInProgress = hasRecordWrites;
     try {
       const result = await resumePausedMutations();
-      if (hasRecordWrites && !hasFailedRecordWriteMutations(queryClient)) {
+      if (
+        generation === flushGeneration &&
+        hasRecordWrites &&
+        !hasPausedRecordWriteMutations(queryClient) &&
+        !hasFailedRecordWriteMutations(queryClient)
+      ) {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: queryKeys.irrigationRecords.all }),
           queryClient.invalidateQueries({ queryKey: queryKeys.sprayRecords.all }),
@@ -194,8 +207,10 @@ export function flushPausedRecordWriteMutations(
       }
       return result;
     } finally {
-      flushInProgress = false;
-      activeFlush = null;
+      if (generation === flushGeneration) {
+        flushInProgress = false;
+        activeFlush = null;
+      }
     }
   })();
 

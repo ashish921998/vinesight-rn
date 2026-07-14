@@ -3,6 +3,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import {
   compactPausedRecordWriteMutations,
   flushPausedRecordWriteMutations,
+  resetRecordWriteFlushState,
 } from '@/features/offline/record-write-queue';
 
 type FakeMutation = {
@@ -140,6 +141,8 @@ describe('flushPausedRecordWriteMutations', () => {
     expect(secondFlush).toBe(firstFlush);
     expect(resumePausedMutations).toHaveBeenCalledTimes(1);
     expect(removed).toEqual([create, update]);
+    built[0].state.isPaused = false;
+    built[0].state.status = 'success';
     releaseResume?.();
     await firstFlush;
 
@@ -169,6 +172,51 @@ describe('flushPausedRecordWriteMutations', () => {
     });
 
     await flushPausedRecordWriteMutations(queryClient, resumePausedMutations);
+
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('skips batch invalidation when a resumed record write is paused again', async () => {
+    const create = createMutation('irrigation_records', 'create', {
+      farm_id: 7,
+      date: '2026-07-14',
+      client_uuid: '12345678-1234-4abc-8def-123456789abc',
+    });
+    const { queryClient } = createQueryClient([create]);
+    const invalidateQueries = jest.fn().mockResolvedValue(undefined);
+    Object.assign(queryClient, { invalidateQueries });
+    const resumePausedMutations = jest.fn(async () => {
+      create.state.isPaused = false;
+      create.state.status = 'pending';
+      create.state.isPaused = true;
+    });
+
+    await flushPausedRecordWriteMutations(queryClient, resumePausedMutations);
+
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('does not invalidate after a flush is reset for another account', async () => {
+    const create = createMutation('irrigation_records', 'create', {
+      farm_id: 7,
+      date: '2026-07-14',
+      client_uuid: '12345678-1234-4abc-8def-123456789abc',
+    });
+    const { queryClient } = createQueryClient([create]);
+    const invalidateQueries = jest.fn().mockResolvedValue(undefined);
+    Object.assign(queryClient, { invalidateQueries });
+    let releaseResume: (() => void) | undefined;
+    const resumePausedMutations = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseResume = resolve;
+        }),
+    );
+
+    const flush = flushPausedRecordWriteMutations(queryClient, resumePausedMutations);
+    resetRecordWriteFlushState();
+    releaseResume?.();
+    await flush;
 
     expect(invalidateQueries).not.toHaveBeenCalled();
   });
