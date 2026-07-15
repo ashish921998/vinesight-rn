@@ -19,7 +19,7 @@ const googleServicesFile =
 // SENTRY_ALLOW_FAILURE is a sentry-cli env var that the AGP upload task does
 // not reliably honor. Evaluated at prebuild time, so each build environment
 // (EAS secret present vs. local/size build) gets the right behavior.
-const hasSentryAuthToken = Boolean(process.env.SENTRY_AUTH_TOKEN);
+const hasSentryAuthToken = Boolean(process.env.SENTRY_AUTH_TOKEN?.trim());
 
 module.exports = {
   expo: {
