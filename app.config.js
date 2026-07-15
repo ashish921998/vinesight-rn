@@ -13,6 +13,14 @@ const googleServicesFile =
     ? path.join(__dirname, 'google-services.json')
     : undefined);
 
+// Sentry auth: the AGP mapping/native-symbol upload tasks must be gated on a
+// real token. A release build without SENTRY_AUTH_TOKEN would otherwise
+// schedule the upload task with no credential and can fail the Gradle build —
+// SENTRY_ALLOW_FAILURE is a sentry-cli env var that the AGP upload task does
+// not reliably honor. Evaluated at prebuild time, so each build environment
+// (EAS secret present vs. local/size build) gets the right behavior.
+const hasSentryAuthToken = Boolean(process.env.SENTRY_AUTH_TOKEN);
+
 module.exports = {
   expo: {
     name: 'Vinesight',
@@ -130,10 +138,16 @@ module.exports = {
           // Now that release builds run R8 (enableMinifyInReleaseBuilds),
           // Java/Kotlin stack frames are obfuscated. The Sentry Android
           // Gradle plugin uploads the R8/ProGuard mapping so Sentry can
-          // deobfuscate native crashes. It requires SENTRY_AUTH_TOKEN at build
-          // time and is a no-op without it.
+          // deobfuscate native crashes. Every auto-upload task is gated on
+          // SENTRY_AUTH_TOKEN: when present the generated gradle block calls
+          // shouldSentryAutoUpload() (normal upload); when absent it emits
+          // `= false`, so the task is never scheduled and can't fail builds
+          // that lack the token (local dev, size-analysis runs).
           experimental_android: {
             enableAndroidGradlePlugin: true,
+            autoUploadProguardMapping: hasSentryAuthToken,
+            uploadNativeSymbols: hasSentryAuthToken,
+            autoUploadNativeSymbols: hasSentryAuthToken,
           },
         },
       ],
