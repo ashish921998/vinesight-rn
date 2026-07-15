@@ -1,0 +1,19 @@
+plugins/with-gradle-jvm-heap.js
+  s_665822b75d887a::t_7213ce90e53304 24-45,52-53,56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "ddb0559ce6a8b284e55105caca0cef7ef32d89a4",
+  "prompts": {},
+  "sessions": {
+    "s_665822b75d887a": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f666d-a94d-7de2-9c2f-f4e2e299b704",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
