@@ -20,7 +20,6 @@ export type EntryLogCreatedRecord = {
   type: LogTypeId;
   recordId: number | null;
   farmId: number;
-  farmContext?: EntryLogFarmContext;
   previousDailyNote?: DailyNoteRecord | null;
 };
 
@@ -70,7 +69,7 @@ export type SaveEntryLogSessionResult =
       rollbackFailures: EntryLogRollbackFailure[];
     };
 
-export interface EntryLogSessionAdapters extends Omit<EntryLogSubmitters, 'deleteIrrigation'> {
+export interface EntryLogSessionAdapters extends EntryLogSubmitters {
   getDailyNote: (payload: { farmId: number; date: string }) => Promise<DailyNoteRecord | null>;
   deleteIrrigation: (payload: { id: number; farmId: number }) => Promise<unknown>;
   deleteSpray: (payload: { id: number; farmId: number }) => Promise<unknown>;
@@ -97,9 +96,7 @@ function buildFarmContext(
     id: farmItem.id ?? 0,
     area: farmItem.area,
     areaUnit: preferredAreaUnit,
-    total_tank_capacity: farmItem.total_tank_capacity,
     system_discharge: farmItem.system_discharge,
-    remaining_water: farmItem.remaining_water,
     date_of_pruning: farmItem.date_of_pruning,
   };
 }
@@ -116,20 +113,6 @@ async function rollbackCreatedRecords(
       switch (entry.type) {
         case 'irrigation':
           await adapters.deleteIrrigation({ id, farmId: entry.farmId });
-          if (entry.farmContext) {
-            const farm = entry.farmContext;
-            if (
-              farm.total_tank_capacity &&
-              farm.system_discharge &&
-              farm.total_tank_capacity > 0 &&
-              farm.system_discharge > 0
-            ) {
-              await adapters.updateWaterLevel({
-                farmId: entry.farmId,
-                remainingWater: farm.remaining_water ?? 0,
-              });
-            }
-          }
           break;
         case 'spray':
           await adapters.deleteSpray({ id, farmId: entry.farmId });
@@ -179,33 +162,21 @@ async function rollbackCreatedRecords(
 function collectCreatedRecordFromResult(params: {
   log: EntryLogSessionDraft;
   farmId: number;
-  farmContext: EntryLogFarmContext;
   result: PromiseSettledResult<{ pendingLogId: string; type: LogTypeId; recordId: number | null }>;
   previousDailyNote?: DailyNoteRecord | null;
 }): EntryLogCreatedRecord | null {
-  const { log, farmId, farmContext, result, previousDailyNote } = params;
+  const { log, farmId, result, previousDailyNote } = params;
   if (result.status === 'fulfilled') {
     return {
       pendingLogId: log.id,
       type: log.type,
       recordId: result.value.recordId,
       farmId,
-      farmContext,
       previousDailyNote,
     };
   }
 
-  if (log.type !== 'irrigation') return null;
-  const orphanedRecordId = (result.reason as { recordId?: number | null } | null)?.recordId ?? null;
-  if (orphanedRecordId === null) return null;
-  return {
-    pendingLogId: log.id,
-    type: log.type,
-    recordId: orphanedRecordId,
-    farmId,
-    farmContext,
-    previousDailyNote,
-  };
+  return null;
 }
 
 async function submitLogWithSnapshot(params: {
@@ -406,7 +377,6 @@ export async function saveEntryLogSession(
     const created = collectCreatedRecordFromResult({
       log,
       farmId,
-      farmContext,
       result:
         result.status === 'fulfilled'
           ? { status: 'fulfilled', value: result.value.result }

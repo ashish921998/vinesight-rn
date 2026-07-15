@@ -191,7 +191,6 @@ function makeSubmitters() {
       createExpense: jest.fn(reject),
       createFertigation,
       upsertDailyNote: jest.fn(reject),
-      updateWaterLevel: jest.fn(async () => ({})),
     },
     createFertigation,
   };
