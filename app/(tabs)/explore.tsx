@@ -249,18 +249,21 @@ export default function ExploreScreen() {
           />
         }
       />
-      {(farms?.length || 0) > 0 && (
-        <GuidedTourTarget
-          targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
-          enabled={isAddFarmTargetEnabled}
-          style={{
-            position: 'absolute',
-            bottom: fabBottom,
-            right: spacing[6],
-            width: 56,
-            height: 56,
-          }}
-        >
+      {(() => {
+        // Keep the "Add Farm" FAB present in every state — including the
+        // zero-farm onboarding state — so there is always one consistent,
+        // unmissable entry point to create a farm. When farms already exist
+        // the FAB carries the guided-tour target; in the empty state that
+        // target lives on the centered CTA inside FarmsPaneB, so here we
+        // render a plain FAB to avoid a duplicate ADD_FARM_PRIMARY target.
+        const fabPositionStyle = {
+          position: 'absolute' as const,
+          bottom: fabBottom,
+          right: spacing[6],
+          width: 56,
+          height: 56,
+        };
+        const fab = (
           <Pressable
             onPress={handleAddFarm}
             accessibilityRole="button"
@@ -276,8 +279,19 @@ export default function ExploreScreen() {
           >
             <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
           </Pressable>
-        </GuidedTourTarget>
-      )}
+        );
+        return (farms?.length || 0) > 0 ? (
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+            enabled={isAddFarmTargetEnabled}
+            style={fabPositionStyle}
+          >
+            {fab}
+          </GuidedTourTarget>
+        ) : (
+          <View style={fabPositionStyle}>{fab}</View>
+        );
+      })()}
     </View>
   );
 

@@ -437,16 +437,62 @@ export default function DashboardScreen() {
                   ? t(`dashboard.greetingWithName.${greetingKey}`, { name: profile.full_name })
                   : t(`dashboard.greeting.${greetingKey}`)}
               </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  color: colorWithOpacity('#ffffff', 0.7),
-                  lineHeight: 20,
-                  marginBottom: spacing[3],
-                }}
-              >
-                {stats?.farmsCount ? t('dashboard.hero.allClear') : t('dashboard.empty.noFarms')}
-              </Text>
+              {stats?.farmsCount ? (
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    color: colorWithOpacity('#ffffff', 0.7),
+                    lineHeight: 20,
+                    marginBottom: spacing[3],
+                  }}
+                >
+                  {t('dashboard.hero.allClear')}
+                </Text>
+              ) : (
+                <Pressable
+                  onPress={() => router.push('/farm/add')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.cta.addFirstFarm')}
+                  style={({ pressed }) => ({
+                    marginBottom: spacing[3],
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      color: colorWithOpacity('#ffffff', 0.7),
+                      lineHeight: 20,
+                      marginBottom: spacing[2],
+                    }}
+                  >
+                    {t('dashboard.empty.noFarms')}
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      alignSelf: 'flex-start',
+                      gap: spacing[2],
+                      backgroundColor: '#ffffff',
+                      paddingVertical: spacing[2],
+                      paddingHorizontal: spacing[4],
+                      borderRadius: borderRadius.full,
+                    }}
+                  >
+                    <SymbolIcon name="plus" size={16} color={m3.primary.p500} />
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                        color: m3.primary.p500,
+                      }}
+                    >
+                      {t('dashboard.cta.addFirstFarm')}
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
             </>
           )}
         </View>
