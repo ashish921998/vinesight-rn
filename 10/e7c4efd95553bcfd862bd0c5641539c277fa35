@@ -1,0 +1,19 @@
+app.config.js
+  s_6f4b24314f72b2::t_b812c222ca980f 16-23,141-145,148-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "10e7c4efd95553bcfd862bd0c5641539c277fa35",
+  "prompts": {},
+  "sessions": {
+    "s_6f4b24314f72b2": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f65c5-2fb0-7bf0-a8fa-4492abce5a90",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
