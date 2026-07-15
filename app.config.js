@@ -127,6 +127,14 @@ module.exports = {
           url: 'https://sentry.io/',
           project: process.env.SENTRY_PROJECT || 'vinesight-rn',
           organization: process.env.SENTRY_ORG || 'vinesight-6s',
+          // Now that release builds run R8 (enableMinifyInReleaseBuilds),
+          // Java/Kotlin stack frames are obfuscated. The Sentry Android
+          // Gradle plugin uploads the R8/ProGuard mapping so Sentry can
+          // deobfuscate native crashes. It requires SENTRY_AUTH_TOKEN at build
+          // time and is a no-op without it.
+          experimental_android: {
+            enableAndroidGradlePlugin: true,
+          },
         },
       ],
       'expo-localization',
@@ -145,6 +153,14 @@ module.exports = {
             targetSdkVersion: 36,
             buildToolsVersion: '36.0.0',
             useLegacyPackaging: false,
+            // Enable R8 code shrinking in release builds (Play Console
+            // "optimize your app" recommendation). Minify only — resource
+            // shrinking is left off to avoid stripping dynamically-loaded
+            // assets. R8/ProGuard consumer rules are provided by the RN core
+            // and library AARs themselves; no extra keep rules are added here.
+            // If a release smoke test surfaces a stripped-class crash, add the
+            // minimal keep rule for that specific class here.
+            enableMinifyInReleaseBuilds: true,
           },
         },
       ],
