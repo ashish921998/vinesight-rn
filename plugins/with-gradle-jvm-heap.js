@@ -21,16 +21,39 @@ const { withGradleProperties } = require('@expo/config-plugins');
 const GRADLE_JVM_ARGS = '-Xmx4096m -XX:MaxMetaspaceSize=512m';
 const KEY = 'org.gradle.jvmargs';
 
+// Tokens we require to be present (and authoritative) on the Gradle daemon JVM.
+const REQUIRED_TOKENS = GRADLE_JVM_ARGS.split(/\s+/).filter(Boolean);
+
+// "Identity" of a JVM arg = the option name, used to detect conflicting values.
+// `-Xmx4096m` -> `-Xmx`; `-XX:MaxMetaspaceSize=512m` -> `-XX:MaxMetaspaceSize`.
+const identityOf = (token) => {
+  if (token.startsWith('-Xmx')) return '-Xmx';
+  const eq = token.indexOf('=');
+  return eq === -1 ? token : token.slice(0, eq);
+};
+
+// Merge required heap/metaspace values into an existing org.gradle.jvmargs
+// string, overriding only conflicting options while preserving the rest.
+const mergeJvmArgs = (existingValue) => {
+  const override = new Set(REQUIRED_TOKENS.map(identityOf));
+  const preserved = existingValue
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token && !override.has(identityOf(token)));
+  return [...REQUIRED_TOKENS, ...preserved].join(' ');
+};
+
 const withGradleJvmHeap = (config) => {
   return withGradleProperties(config, (cfg) => {
     const props = cfg.modResults;
     const existing = props.find((p) => p.type === 'property' && p.key === KEY);
 
     if (existing) {
-      if (existing.value === GRADLE_JVM_ARGS) {
+      const merged = mergeJvmArgs(existing.value);
+      if (merged === existing.value) {
         return cfg;
       }
-      existing.value = GRADLE_JVM_ARGS;
+      existing.value = merged;
     } else {
       props.push({ type: 'property', key: KEY, value: GRADLE_JVM_ARGS });
     }
