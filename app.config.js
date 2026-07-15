@@ -157,6 +157,7 @@ module.exports = {
       './plugins/android-phone-number-hint',
       './plugins/android-sms-retriever',
       './plugins/with-android-16kb-pages',
+      './plugins/with-gradle-jvm-heap',
       './plugins/with-ios-entitlements-codesign',
       [
         'expo-build-properties',
