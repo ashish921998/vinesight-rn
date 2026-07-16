@@ -2802,7 +2802,7 @@ export const en = {
   },
 
   warehouse: {
-    title: 'Warehouse',
+    title: 'Purchase',
     loading: {
       inventory: 'Loading inventory…',
     },
@@ -2840,11 +2840,12 @@ export const en = {
       equipment: 'Equipment',
     },
     empty: {
-      title: 'No items in warehouse',
-      subtitle: 'Tap the + button to add your first inventory item',
+      title: 'No products added',
+      subtitle: 'Add your first purchased product to start tracking inventory',
     },
     actions: {
       addItem: 'Add Item',
+      addProduct: 'Add Product',
     },
     alerts: {
       deleteItemTitle: 'Delete item',

@@ -621,6 +621,7 @@ export interface WarehouseItem {
   composition?: NutrientCompositionItem[] | null;
   manufacturer?: string | null;
   density_kg_per_l?: number | null;
+  expiry_date?: string | null;
   default_dose_quantity?: number | null;
   default_dose_unit?: string | null;
   default_dose_basis?: QuantityBasis | null;

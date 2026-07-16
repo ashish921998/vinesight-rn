@@ -196,7 +196,7 @@ export function WarehousePaneB({
         icon="cube.fill"
         title={t('warehouse.empty.title')}
         description={t('warehouse.empty.subtitle')}
-        actionLabel={t('warehouse.actions.addItem')}
+        actionLabel={t('warehouse.actions.addProduct')}
         onAction={onAddItem}
       />
     );
@@ -256,6 +256,10 @@ export function WarehousePaneB({
               .join(' ')
           : undefined,
       ].filter(Boolean);
+
+      if (item.expiry_date) {
+        stats.push({ label: `Expires ${item.expiry_date}` });
+      }
 
       const stageLabel = low
         ? t('explore.warehouse.stockLow', { defaultValue: 'Low' })

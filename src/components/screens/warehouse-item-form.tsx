@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useCreateWarehouseItem,
   useUpdateWarehouseItem,
+  useWarehouseItems,
   useMasterProducts,
   isIOS,
   useResponsiveHeight,
@@ -45,6 +46,11 @@ import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/th
 import { colorWithOpacity } from '@/utils/color';
 import { ICON_REGISTRY } from '@/constants/icon-registry';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
+import {
+  getPublishedBulkDensity,
+  isValidExpiryDate,
+  listExistingManufacturers,
+} from '@/features/purchase/product-form-data';
 
 interface WarehouseItemFormProps {
   visible?: boolean;
@@ -64,6 +70,7 @@ interface ManualCatalogueDraft {
   type: WarehouseItemType;
   unit: WarehouseUnit;
   manufacturer: string;
+  densityKgPerL: string;
   compositionRows: CompositionRow[];
 }
 
@@ -215,6 +222,7 @@ export default function WarehouseItemForm({
   const isVisible = visible ?? true;
   const createMutation = useCreateWarehouseItem();
   const updateMutation = useUpdateWarehouseItem();
+  const { data: accountProducts } = useWarehouseItems();
 
   const [name, setName] = useState('');
   const [type, setType] = useState<WarehouseItemType>('fertilizer');
@@ -225,6 +233,7 @@ export default function WarehouseItemForm({
   const [notes, setNotes] = useState('');
   const [manufacturer, setManufacturer] = useState('');
   const [densityKgPerL, setDensityKgPerL] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
   const [compositionRows, setCompositionRows] = useState<CompositionRow[]>([
     createCompositionRow(),
   ]);
@@ -254,10 +263,19 @@ export default function WarehouseItemForm({
     () => catalogProducts.find((product) => product.id === selectedCatalogProductId) ?? null,
     [catalogProducts, selectedCatalogProductId],
   );
+  const existingManufacturers = useMemo(
+    () => listExistingManufacturers(accountProducts),
+    [accountProducts],
+  );
+  const densityPreset = useMemo(
+    () => (selectedCatalogProduct ? getPublishedBulkDensity(selectedCatalogProduct.name) : null),
+    [selectedCatalogProduct],
+  );
+  const densityRequired = unit === 'liter' || unit === 'ml';
 
   // Track previous state to prevent unnecessary updates
-  const prevVisibleRef = useRef(isVisible);
-  const prevEditingItemIdRef = useRef(editingItem?.id);
+  const prevVisibleRef = useRef(false);
+  const prevEditingItemIdRef = useRef<number | undefined>(undefined);
   const filteredCatalogueItems = useMemo(() => {
     const query = catalogueSearchQuery.trim().toLowerCase();
     if (!query) return catalogProducts;
@@ -336,6 +354,7 @@ export default function WarehouseItemForm({
     setNotes('');
     setManufacturer('');
     setDensityKgPerL('');
+    setExpiryDate('');
     setCompositionRows([createCompositionRow()]);
     setCompositionSource('manual');
     setSelectedCatalogProductId(null);
@@ -358,6 +377,7 @@ export default function WarehouseItemForm({
           type,
           unit,
           manufacturer,
+          densityKgPerL,
           compositionRows: compositionRows.map((row) => ({ ...row })),
         },
     );
@@ -366,6 +386,17 @@ export default function WarehouseItemForm({
     setType(nextType);
     setUnit(resolveDefaultWarehouseUnitForProduct(product));
     setManufacturer(product.manufacturer ?? '');
+    const publishedDensity = getPublishedBulkDensity(product.name);
+    const previousPublishedDensity = selectedCatalogProduct
+      ? getPublishedBulkDensity(selectedCatalogProduct.name)
+      : null;
+    const canReplaceDensity =
+      !densityKgPerL.trim() ||
+      (previousPublishedDensity != null &&
+        densityKgPerL.trim() === String(previousPublishedDensity.densityKgPerL));
+    if (canReplaceDensity && publishedDensity) {
+      setDensityKgPerL(String(publishedDensity.densityKgPerL));
+    }
     setCompositionRows(mapCatalogCompositionsToRows(product));
     setCompositionSource('preset');
     setSelectedCatalogProductId(product.id);
@@ -382,6 +413,7 @@ export default function WarehouseItemForm({
       setType(manualCatalogueDraft.type);
       setUnit(manualCatalogueDraft.unit);
       setManufacturer(manualCatalogueDraft.manufacturer);
+      setDensityKgPerL(manualCatalogueDraft.densityKgPerL);
       setCompositionRows(
         manualCatalogueDraft.compositionRows.length > 0
           ? manualCatalogueDraft.compositionRows.map((row) => ({ ...row }))
@@ -454,6 +486,7 @@ export default function WarehouseItemForm({
           setDensityKgPerL(
             editingItem.density_kg_per_l ? String(editingItem.density_kg_per_l) : '',
           );
+          setExpiryDate(editingItem.expiry_date ?? '');
           const existingComposition = editingItem.composition ?? [];
           setCompositionRows(
             existingComposition.length > 0
@@ -490,6 +523,10 @@ export default function WarehouseItemForm({
       Alert.alert(i18n.t('common.error'), i18n.t('common.errors.enterValidUnitPrice'));
       return;
     }
+    if (!isValidExpiryDate(expiryDate)) {
+      Alert.alert(i18n.t('common.error'), 'Enter expiry date as YYYY-MM-DD.');
+      return;
+    }
 
     const composition = parseComposition(compositionRows);
     if (type === 'fertilizer' && composition.length === 0) {
@@ -505,6 +542,10 @@ export default function WarehouseItemForm({
       densityKgPerL.trim().length > 0 && Number.isFinite(densityValue) && densityValue > 0
         ? densityValue
         : null;
+    if (densityRequired && parsedDensity == null) {
+      Alert.alert(i18n.t('common.error'), 'Enter bulk density for products stored by volume.');
+      return;
+    }
     const previousCatalogProductId = editingItem?.catalog_product_id ?? null;
     const previousCatalogMappingStatus = editingItem?.catalog_mapping_status ?? 'unmapped';
     const previousCatalogMappingSource = editingItem?.catalog_mapping_source ?? 'manual';
@@ -530,6 +571,7 @@ export default function WarehouseItemForm({
       notes: notes.trim() || null,
       manufacturer: manufacturer.trim() || null,
       density_kg_per_l: parsedDensity,
+      expiry_date: expiryDate.trim() || null,
       composition,
       composition_source: compositionSource,
       composition_updated_at: new Date().toISOString(),
@@ -592,6 +634,11 @@ export default function WarehouseItemForm({
     unitPrice &&
     Number.isFinite(Number(unitPrice)) &&
     Number(unitPrice) > 0 &&
+    (!densityRequired ||
+      (densityKgPerL.trim().length > 0 &&
+        Number.isFinite(Number(densityKgPerL)) &&
+        Number(densityKgPerL) > 0)) &&
+    isValidExpiryDate(expiryDate) &&
     compositionRequiredSatisfied;
 
   const totalValue =
@@ -608,9 +655,9 @@ export default function WarehouseItemForm({
       <FormModal
         visible={isVisible}
         onClose={onClose}
-        title={isEditing ? 'Edit Item' : 'Add Item'}
+        title={isEditing ? 'Edit Product' : 'Add Product'}
         onSave={handleSubmit}
-        saveLabel={isEditing ? 'Save Changes' : 'Add Item'}
+        saveLabel={isEditing ? 'Save Changes' : 'Add Product'}
         isLoading={isLoading}
         isSaveDisabled={!isValid}
         showResetButton={!isEditing}
@@ -701,12 +748,63 @@ export default function WarehouseItemForm({
           style={{ marginBottom: 12 }}
         />
 
+        {existingManufacturers.length > 0 ? (
+          <View
+            style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: 12 }}
+          >
+            {existingManufacturers.map((existingManufacturer) => (
+              <Pressable
+                key={existingManufacturer}
+                onPress={() => setManufacturer(existingManufacturer)}
+                style={{
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  borderRadius: radius.full,
+                  backgroundColor:
+                    manufacturer.trim().toLocaleLowerCase() ===
+                    existingManufacturer.toLocaleLowerCase()
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.16)
+                      : m3.surface.s100,
+                  borderWidth: 1,
+                  borderColor: m3.surface.s300,
+                }}
+              >
+                <Text style={{ color: m3.colorScheme.onSurface, fontSize: fontSize.sm }}>
+                  {existingManufacturer}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
         <FormInput
-          label="Density (kg/L, Optional)"
+          label={`Bulk Density (kg/L${densityRequired ? '' : ', Optional'})`}
           value={densityKgPerL}
           onChangeText={setDensityKgPerL}
           placeholder="Defaults to 1.00"
           keyboardType="decimal-pad"
+          required={densityRequired}
+          style={{ marginBottom: 16 }}
+        />
+
+        {densityPreset ? (
+          <Text
+            style={{
+              marginTop: -spacing[3],
+              marginBottom: spacing[4],
+              color: m3.colorScheme.onSurfaceVariant,
+              fontSize: fontSize.xs,
+            }}
+          >
+            Suggested from published product data. Verify against the package label if available.
+          </Text>
+        ) : null}
+
+        <FormInput
+          label="Expiry Date (Optional)"
+          value={expiryDate}
+          onChangeText={setExpiryDate}
+          placeholder="YYYY-MM-DD"
           style={{ marginBottom: 16 }}
         />
 
