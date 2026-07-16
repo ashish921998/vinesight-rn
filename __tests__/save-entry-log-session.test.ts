@@ -191,6 +191,47 @@ describe('saveEntryLogSession', () => {
     );
   });
 
+  it('saves linked irrigation before fertigation when the visible stack is reversed', async () => {
+    const adapters = createAdapters();
+    adapters.createIrrigation.mockResolvedValue({ id: 909 });
+    adapters.createFertigation.mockResolvedValue({ id: 777 });
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'fertigation-draft',
+          type: 'fertigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { fertilizers: [{ name: 'Urea', quantity: 5, unit: 'kg' }] },
+          displayDescription: '1 fertilizer',
+          linkIrrigationFromPendingLogId: 'irrigation-draft',
+        },
+        {
+          id: 'irrigation-draft',
+          type: 'irrigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { duration: 2 },
+          displayDescription: '2 hours',
+        },
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('saved');
+    expect(adapters.createIrrigation.mock.invocationCallOrder[0]).toBeLessThan(
+      adapters.createFertigation.mock.invocationCallOrder[0]!,
+    );
+    expect(adapters.createFertigation).toHaveBeenCalledWith(
+      expect.objectContaining({ irrigation_record_id: 909 }),
+    );
+  });
+
   it('saves a fertigation record with a null link when no irrigation is attached', async () => {
     const adapters = createAdapters();
 

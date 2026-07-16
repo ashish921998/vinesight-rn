@@ -216,6 +216,31 @@ async function settleSequentially<T>(
   return results;
 }
 
+function orderSingleFarmLogsForSubmission(
+  pendingLogs: EntryLogSessionDraft[],
+): EntryLogSessionDraft[] {
+  const logById = new Map(pendingLogs.map((log) => [log.id, log]));
+  const ordered: EntryLogSessionDraft[] = [];
+  const visited = new Set<string>();
+
+  const visit = (log: EntryLogSessionDraft) => {
+    if (visited.has(log.id)) return;
+
+    if (log.type === 'fertigation' && log.linkIrrigationFromPendingLogId) {
+      const linkedIrrigation = logById.get(log.linkIrrigationFromPendingLogId);
+      if (linkedIrrigation?.type === 'irrigation') {
+        visit(linkedIrrigation);
+      }
+    }
+
+    visited.add(log.id);
+    ordered.push(log);
+  };
+
+  pendingLogs.forEach(visit);
+  return ordered;
+}
+
 function buildFailedResult(params: {
   pendingLogs: EntryLogSessionDraft[];
   failures: EntryLogSubmissionFailure[];
@@ -336,12 +361,13 @@ export async function saveEntryLogSession(
   }
 
   const farmContext = buildFarmContext(singleFarmContext, preferredAreaUnit);
-  // Logs are submitted strictly in array order, so a fertigation log that was added
-  // alongside an irrigation log can read the created irrigation record id (the irrigation
-  // log is always enqueued first) and stamp it onto its own record to link the two.
+  // Preserve the visible stack order for result reporting, but submit linked irrigation
+  // dependencies first. The UI can render newest-first, which puts the derived fertigation
+  // draft before the irrigation draft it depends on.
+  const submissionLogs = orderSingleFarmLogsForSubmission(pendingLogs);
   const createdRecordIdByPendingLogId = new Map<string, number | null>();
   const results = await settleSequentially(
-    pendingLogs.map((log) => async () => {
+    submissionLogs.map((log) => async () => {
       // A fertigation log linked to an irrigation can only resolve its partner's
       // record id if the irrigation task already succeeded (it runs first and sets
       // the map on success). A missing key means the irrigation failed, so fail
@@ -368,12 +394,15 @@ export async function saveEntryLogSession(
       return outcome;
     }),
   );
+  const resultByPendingLogId = new Map(
+    submissionLogs.map((log, index) => [log.id, results[index]] as const),
+  );
   const failures: EntryLogSubmissionFailure[] = [];
   const createdRecords: EntryLogCreatedRecord[] = [];
 
-  results.forEach((result, index) => {
-    const log = pendingLogs[index];
-    if (!log) return;
+  pendingLogs.forEach((log) => {
+    const result = resultByPendingLogId.get(log.id);
+    if (!result) return;
     const created = collectCreatedRecordFromResult({
       log,
       farmId,
