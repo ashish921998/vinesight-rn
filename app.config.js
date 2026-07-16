@@ -13,6 +13,14 @@ const googleServicesFile =
     ? path.join(__dirname, 'google-services.json')
     : undefined);
 
+// Sentry auth: the AGP mapping/native-symbol upload tasks must be gated on a
+// real token. A release build without SENTRY_AUTH_TOKEN would otherwise
+// schedule the upload task with no credential and can fail the Gradle build —
+// SENTRY_ALLOW_FAILURE is a sentry-cli env var that the AGP upload task does
+// not reliably honor. Evaluated at prebuild time, so each build environment
+// (EAS secret present vs. local/size build) gets the right behavior.
+const hasSentryAuthToken = Boolean(process.env.SENTRY_AUTH_TOKEN?.trim());
+
 module.exports = {
   expo: {
     name: 'Vinesight',
@@ -127,6 +135,20 @@ module.exports = {
           url: 'https://sentry.io/',
           project: process.env.SENTRY_PROJECT || 'vinesight-rn',
           organization: process.env.SENTRY_ORG || 'vinesight-6s',
+          // Now that release builds run R8 (enableMinifyInReleaseBuilds),
+          // Java/Kotlin stack frames are obfuscated. The Sentry Android
+          // Gradle plugin uploads the R8/ProGuard mapping so Sentry can
+          // deobfuscate native crashes. Every auto-upload task is gated on
+          // SENTRY_AUTH_TOKEN: when present the generated gradle block calls
+          // shouldSentryAutoUpload() (normal upload); when absent it emits
+          // `= false`, so the task is never scheduled and can't fail builds
+          // that lack the token (local dev, size-analysis runs).
+          experimental_android: {
+            enableAndroidGradlePlugin: true,
+            autoUploadProguardMapping: hasSentryAuthToken,
+            uploadNativeSymbols: hasSentryAuthToken,
+            autoUploadNativeSymbols: hasSentryAuthToken,
+          },
         },
       ],
       'expo-localization',
@@ -135,6 +157,7 @@ module.exports = {
       './plugins/android-phone-number-hint',
       './plugins/android-sms-retriever',
       './plugins/with-android-16kb-pages',
+      './plugins/with-gradle-jvm-heap',
       './plugins/with-ios-entitlements-codesign',
       [
         'expo-build-properties',
@@ -145,6 +168,14 @@ module.exports = {
             targetSdkVersion: 36,
             buildToolsVersion: '36.0.0',
             useLegacyPackaging: false,
+            // Enable R8 code shrinking in release builds (Play Console
+            // "optimize your app" recommendation). Minify only — resource
+            // shrinking is left off to avoid stripping dynamically-loaded
+            // assets. R8/ProGuard consumer rules are provided by the RN core
+            // and library AARs themselves; no extra keep rules are added here.
+            // If a release smoke test surfaces a stripped-class crash, add the
+            // minimal keep rule for that specific class here.
+            enableMinifyInReleaseBuilds: true,
           },
         },
       ],
