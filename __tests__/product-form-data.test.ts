@@ -2,6 +2,7 @@ import {
   getPublishedBulkDensity,
   isValidExpiryDate,
   listExistingManufacturers,
+  resolveCatalogBulkDensityValue,
 } from '@/features/purchase/product-form-data';
 
 describe('purchase product form data', () => {
@@ -10,6 +11,26 @@ describe('purchase product form data', () => {
       expect.objectContaining({ densityKgPerL: 0.75 }),
     );
     expect(getPublishedBulkDensity('Unknown product')).toBeNull();
+  });
+
+  it('clears a superseded preset when the next product has no published density', () => {
+    expect(
+      resolveCatalogBulkDensityValue({
+        currentValue: '0.75',
+        previousProductName: 'Urea',
+        nextProductName: 'Unknown product',
+      }),
+    ).toBe('');
+  });
+
+  it('preserves a manually entered density when changing catalogue products', () => {
+    expect(
+      resolveCatalogBulkDensityValue({
+        currentValue: '0.82',
+        previousProductName: 'Urea',
+        nextProductName: 'Unknown product',
+      }),
+    ).toBe('0.82');
   });
 
   it('returns unique sorted manufacturers already used by the account', () => {

@@ -2819,6 +2819,7 @@ export const en = {
       unitPrice: 'Unit Price',
       totalValue: 'Value: {{value}}',
       updatedDate: 'Updated {{date}}',
+      expires: 'Expires {{date}}',
     },
     reorderAt: 'Reorder at: {{quantity}} {{unit}}',
     filters: {

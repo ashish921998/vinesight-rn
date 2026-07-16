@@ -2804,6 +2804,7 @@ export const hi = {
       unitPrice: 'इकाई मूल्य',
       totalValue: 'मूल्य: {{value}}',
       updatedDate: 'अपडेट {{date}}',
+      expires: 'समाप्ति: {{date}}',
     },
     reorderAt: 'पुनः ऑर्डर करें: {{quantity}} {{unit}}',
     filters: {
@@ -2813,7 +2814,7 @@ export const hi = {
       equipment: 'उपकरण ({{count}})',
     },
     search: {
-      placeholder: 'इन्वेंटरी खोजें...',
+      placeholder: 'खरीद खोजें...',
       found_one: '{{count}} वस्तु मिली',
       found_other: '{{count}} वस्तुएं मिलीं',
     },

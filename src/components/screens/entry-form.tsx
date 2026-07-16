@@ -48,7 +48,7 @@ import { RepeatLastLog } from '@/components/screens/entry-form/RepeatLastLog';
 import { WeekStrip } from '@/components/ui/week-strip';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { createStartSeasonHref } from '@/utils/add-log-navigation';
-import { calculateKeyboardScrollOffset } from '@/utils/keyboard-scroll';
+import { calculateKeyboardScrollOffset, resolveKeyboardTop } from '@/utils/keyboard-scroll';
 import { useRouter } from 'expo-router';
 import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
 import {
@@ -652,11 +652,11 @@ export function EntryForm({
   // Track keyboard visibility
   useEffect(() => {
     const keyboardShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
-      const screenY = event.endCoordinates.screenY;
-      keyboardTopRef.current =
-        Number.isFinite(screenY) && screenY > 0
-          ? screenY
-          : windowHeight - event.endCoordinates.height;
+      keyboardTopRef.current = resolveKeyboardTop({
+        screenY: event.endCoordinates.screenY,
+        keyboardHeight: event.endCoordinates.height,
+        windowHeight,
+      });
       setIsKeyboardVisible(true);
       const focusedNode = focusedInputRef.current;
       if (focusedNode != null) {

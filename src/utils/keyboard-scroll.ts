@@ -6,6 +6,20 @@ interface KeyboardScrollOffsetParams {
   buffer?: number;
 }
 
+interface ResolveKeyboardTopParams {
+  screenY: number;
+  keyboardHeight: number;
+  windowHeight: number;
+}
+
+export function resolveKeyboardTop({
+  screenY,
+  keyboardHeight,
+  windowHeight,
+}: ResolveKeyboardTopParams): number {
+  return Number.isFinite(screenY) && screenY > 0 ? screenY : windowHeight - keyboardHeight;
+}
+
 export function calculateKeyboardScrollOffset({
   currentOffset,
   inputY,

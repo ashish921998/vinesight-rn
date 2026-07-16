@@ -35,6 +35,28 @@ export function getPublishedBulkDensity(productName: string): BulkDensityPreset 
   return BULK_DENSITY_PRESETS[productName.trim().toLowerCase()] ?? null;
 }
 
+interface ResolveCatalogBulkDensityValueParams {
+  currentValue: string;
+  previousProductName?: string | null;
+  nextProductName: string;
+}
+
+export function resolveCatalogBulkDensityValue({
+  currentValue,
+  previousProductName,
+  nextProductName,
+}: ResolveCatalogBulkDensityValueParams): string {
+  const nextPreset = getPublishedBulkDensity(nextProductName);
+  const previousPreset = previousProductName ? getPublishedBulkDensity(previousProductName) : null;
+  const trimmedCurrentValue = currentValue.trim();
+  const canReplaceValue =
+    !trimmedCurrentValue ||
+    (previousPreset != null && trimmedCurrentValue === String(previousPreset.densityKgPerL));
+
+  if (!canReplaceValue) return currentValue;
+  return nextPreset ? String(nextPreset.densityKgPerL) : '';
+}
+
 export function listExistingManufacturers(items: WarehouseItem[] | undefined): string[] {
   const manufacturers = new Map<string, string>();
 

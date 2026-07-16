@@ -50,6 +50,7 @@ import {
   getPublishedBulkDensity,
   isValidExpiryDate,
   listExistingManufacturers,
+  resolveCatalogBulkDensityValue,
 } from '@/features/purchase/product-form-data';
 
 interface WarehouseItemFormProps {
@@ -386,17 +387,13 @@ export default function WarehouseItemForm({
     setType(nextType);
     setUnit(resolveDefaultWarehouseUnitForProduct(product));
     setManufacturer(product.manufacturer ?? '');
-    const publishedDensity = getPublishedBulkDensity(product.name);
-    const previousPublishedDensity = selectedCatalogProduct
-      ? getPublishedBulkDensity(selectedCatalogProduct.name)
-      : null;
-    const canReplaceDensity =
-      !densityKgPerL.trim() ||
-      (previousPublishedDensity != null &&
-        densityKgPerL.trim() === String(previousPublishedDensity.densityKgPerL));
-    if (canReplaceDensity && publishedDensity) {
-      setDensityKgPerL(String(publishedDensity.densityKgPerL));
-    }
+    setDensityKgPerL(
+      resolveCatalogBulkDensityValue({
+        currentValue: densityKgPerL,
+        previousProductName: selectedCatalogProduct?.name,
+        nextProductName: product.name,
+      }),
+    );
     setCompositionRows(mapCatalogCompositionsToRows(product));
     setCompositionSource('preset');
     setSelectedCatalogProductId(product.id);

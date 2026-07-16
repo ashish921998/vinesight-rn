@@ -2830,6 +2830,7 @@ export const mr = {
       unitPrice: 'युनिट किंमत',
       totalValue: 'मूल्य: {{value}}',
       updatedDate: 'अपडेट {{date}}',
+      expires: 'कालबाह्यता: {{date}}',
     },
     reorderAt: 'पुनर्भरण पातळी: {{quantity}} {{unit}}',
     filters: {
