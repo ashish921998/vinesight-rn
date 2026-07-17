@@ -1,0 +1,19 @@
+__tests__/report-format.test.ts
+  s_ee36abbca0a8ec::t_40ce4a3fd37cb9 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "aeeed31b0a6e9625ca257ef9c40b9cc208fb679c",
+  "prompts": {},
+  "sessions": {
+    "s_ee36abbca0a8ec": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f0d9fe26-9778-4f0d-bf62-e94c4814d02f",
+        "model": "custom:GLM-5.2-0"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
