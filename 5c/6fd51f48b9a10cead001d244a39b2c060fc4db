@@ -1,0 +1,19 @@
+package.json
+  s_e434a2a1e3c968::t_e1883cd394fd41 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "5c6fd51f48b9a10cead001d244a39b2c060fc4db",
+  "prompts": {},
+  "sessions": {
+    "s_e434a2a1e3c968": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7cb60f29-b1cd-455d-ba49-53744196eadb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
