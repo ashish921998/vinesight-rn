@@ -108,7 +108,6 @@ function perAcreUnitTestimony(basisFromUnit?: QuantityBasis): QuantityBasis | un
 
 export interface FertigationFormData {
   fertilizers: FertilizerEntry[];
-  notes?: string;
 }
 
 export interface FertigationQuickAddItem {

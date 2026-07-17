@@ -7,20 +7,12 @@ import type {
   DailyNoteRecord,
 } from '@/types/database';
 import type { Farm } from '@/types';
-import type {
-  IrrigationFormData,
-  SprayFormData,
-  FertigationFormData,
-  HarvestFormData,
-  NoteFormData,
-} from '@/components/forms';
-import { isFertigationUnitRecognized } from '@/constants/fertilizer-units';
-import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
-import { PHI_CALC_VERSION } from '@/services/phi-service';
-import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
+import type { LogTypeId } from '@/constants/calculator-models';
+import { buildEntryLogRecordFields, type EntryLogFormInput } from '@/utils/entry-log-fields';
+import { type AreaUnitPreference } from '@/utils/preferences';
 
 export type ProfessionalRole = 'owner' | 'admin' | 'agronomist';
-export type DelegatedLogType = 'irrigation' | 'spray' | 'fertigation' | 'harvest' | 'note';
+export type DelegatedLogType = Exclude<LogTypeId, 'expense'>;
 
 /**
  * UI-level context that says "this screen is logging on behalf of a farmer
@@ -106,163 +98,15 @@ export interface DelegatedLogFarmContext {
   areaUnit?: AreaUnitPreference | null;
 }
 
-export type DelegatedLogFormInput =
-  | { type: 'irrigation'; data: IrrigationFormData }
-  | { type: 'spray'; data: SprayFormData }
-  | { type: 'fertigation'; data: FertigationFormData }
-  | { type: 'harvest'; data: HarvestFormData }
-  | { type: 'note'; data: NoteFormData };
+export type DelegatedLogFormInput = Extract<EntryLogFormInput, { type: DelegatedLogType }>;
 
-/**
- * Convert a reusable farmer FormData shape into the `create_delegated_log`
- * payload. This is the delegated-path counterpart to `submitEntryPendingLog`
- * (src/utils/entry-log-submission.ts) — the two MUST stay in sync so that a
- * delegated record is stored identically to a farmer-created one. Keys the RPC
- * coalesces server-side (growth_stage, weather, operator) and `date_of_pruning`
- * (sourced from the farm row) are deliberately omitted.
- */
+/** Convert shared form data into the payload consumed by `create_delegated_log`. */
 export function buildDelegatedLogPayload(
   input: DelegatedLogFormInput,
   farm: DelegatedLogFarmContext,
 ): Record<string, unknown> {
-  const farmArea =
-    typeof farm.area === 'number' && Number.isFinite(farm.area) && farm.area > 0 ? farm.area : 0;
-  const areaUnit = resolveAreaUnitPreference(farm.areaUnit ?? 'acres');
-  const perAreaToPerAcreFactor = areaUnit === 'hectares' ? 0.404686 : 1;
-
-  switch (input.type) {
-    case 'irrigation': {
-      const { data } = input;
-      const trimmedNotes = data.notes?.trim();
-      return { duration: data.duration, notes: trimmedNotes || undefined };
-    }
-
-    case 'spray': {
-      const { data } = input;
-      const hasCatalogMix = typeof data.catalogMixId === 'number';
-      const hasResolvedPhi =
-        hasCatalogMix && data.safeHarvestDate != null && data.governingPhiDays != null;
-      const chemicalStr = data.chemicals
-        .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
-        .join(', ');
-      const chemicalItems = data.chemicals
-        .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
-        .map((c) => {
-          const quantityBasis = c.quantityBasis ?? 'total';
-          const quantity =
-            quantityBasis === 'per_acre' ? c.quantity! * perAreaToPerAcreFactor : c.quantity!;
-          return {
-            name: c.name.trim(),
-            unit: c.unit,
-            quantity,
-            quantity_basis: quantityBasis,
-            warehouse_item_id: c.warehouseItemId ?? null,
-            catalog_product_id: c.catalogProductId ?? null,
-            plan_item_id: c.planItemId ?? null,
-            composition_snapshot: c.compositionSnapshot ?? null,
-            density_kg_per_l: c.densityKgPerL ?? null,
-          };
-        });
-      const nutrientTotals = calculateNutrientTotalsForLog({
-        items: chemicalItems,
-        areaAcre: farmArea,
-        waterVolumeL: data.waterVolume ?? null,
-      });
-      const noteParts: string[] = [];
-      if (data.phiOverride) {
-        noteParts.push('[PHI_OVERRIDE] Harvest safety conflict override acknowledged in app.');
-      }
-      if (hasCatalogMix && !hasResolvedPhi) {
-        noteParts.push('[PHI_UNAVAILABLE] Saved without resolved PHI metadata.');
-      }
-      const trimmedNotes = data.notes?.trim();
-      if (trimmedNotes) noteParts.push(trimmedNotes);
-      const notes = noteParts.join(' ').trim();
-
-      const normalizedPhiStatus = hasResolvedPhi
-        ? data.phiStatus && data.phiStatus !== 'unknown'
-          ? data.phiStatus
-          : 'verified'
-        : hasCatalogMix
-          ? 'legacy_unverified'
-          : (data.phiStatus ?? 'unknown');
-
-      return {
-        catalog_mix_id: data.catalogMixId ?? null,
-        chemical: chemicalStr,
-        chemical_items: chemicalItems,
-        dose: data.waterVolume != null ? `Water: ${data.waterVolume}L` : '',
-        governing_phi_days: hasResolvedPhi ? (data.governingPhiDays ?? null) : null,
-        safe_harvest_date: hasResolvedPhi ? (data.safeHarvestDate ?? null) : null,
-        phi_calc_version: hasResolvedPhi ? PHI_CALC_VERSION : null,
-        phi_blocking_component: hasResolvedPhi ? (data.phiBlockingComponent ?? null) : null,
-        phi_status: normalizedPhiStatus,
-        nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
-        nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
-        nutrient_calc_coverage: nutrientTotals.coveragePercent,
-        area: farmArea,
-        notes: notes || undefined,
-      };
-    }
-
-    case 'fertigation': {
-      const { data } = input;
-      const fertilizers = data.fertilizers
-        .filter((f) => f.name.trim() && f.quantity !== undefined && f.quantity > 0)
-        .map((f) => {
-          const quantityBasis = f.quantityBasis ?? 'total';
-          const quantity =
-            quantityBasis === 'per_acre' ? f.quantity! * perAreaToPerAcreFactor : f.quantity!;
-          return {
-            name: f.name.trim(),
-            // Testimony rule (issue #192): the unit string is stored verbatim.
-            // Kernel-unknown strings are flagged for review, never coerced to kg.
-            unit: f.unit,
-            quantity,
-            quantity_basis: quantityBasis,
-            ...(isFertigationUnitRecognized(f.unit) ? {} : { unit_unrecognized: true }),
-            warehouse_item_id: f.warehouseItemId ?? null,
-            catalog_product_id: f.catalogProductId ?? null,
-            // Delegated composers offer no plan section today, so this is
-            // always null — written anyway so the serializer stays total over
-            // FertilizerEntry and can't silently drop a future plan pick.
-            plan_item_id: f.planItemId ?? null,
-            composition_snapshot: f.compositionSnapshot ?? null,
-            density_kg_per_l: f.densityKgPerL ?? null,
-          };
-        });
-      const nutrientTotals = calculateNutrientTotalsForLog({
-        items: fertilizers,
-        areaAcre: farmArea,
-      });
-      const trimmedNotes = data.notes?.trim();
-      return {
-        fertilizers,
-        nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
-        nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
-        nutrient_calc_coverage: nutrientTotals.coveragePercent,
-        area: farmArea,
-        notes: trimmedNotes || undefined,
-      };
-    }
-
-    case 'harvest': {
-      const { data } = input;
-      const trimmedNotes = data.notes?.trim();
-      return {
-        quantity: data.quantity,
-        grade: data.grade,
-        price: data.price || undefined,
-        buyer: data.buyer || undefined,
-        notes: trimmedNotes || undefined,
-      };
-    }
-
-    case 'note': {
-      const { data } = input;
-      return { notes: data.notes?.trim() };
-    }
-  }
+  const mapped = buildEntryLogRecordFields(input, farm);
+  return { ...mapped.fields };
 }
 
 export async function getProfessionalWorkspace(): Promise<ProfessionalWorkspace | null> {

@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 
 export interface IrrigationFormData {
   duration: number | undefined;
-  notes?: string;
 }
 
 interface IrrigationFormProps {

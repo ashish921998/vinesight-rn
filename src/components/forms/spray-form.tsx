@@ -94,7 +94,6 @@ export interface SprayFormData {
   phiBlockingComponent?: string | null;
   phiStatus?: 'verified' | 'legacy_unverified' | 'unknown' | null;
   phiOverride?: boolean;
-  notes?: string;
 }
 
 export interface SprayQuickAddItem {

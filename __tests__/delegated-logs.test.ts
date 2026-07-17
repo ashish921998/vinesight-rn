@@ -57,67 +57,10 @@ describe('buildDelegatedLogPayload', () => {
   it('maps irrigation and note to their minimal payloads', () => {
     expect(
       buildDelegatedLogPayload({ type: 'irrigation', data: { duration: 1.5 } }, { area: 3 }),
-    ).toEqual({ duration: 1.5, notes: undefined });
+    ).toEqual({ duration: 1.5 });
     expect(
       buildDelegatedLogPayload({ type: 'note', data: { notes: '  watch mildew  ' } }, { area: 3 }),
     ).toEqual({ notes: 'watch mildew' });
-  });
-
-  it('forwards trimmed notes for irrigation, harvest, and fertigation', () => {
-    expect(
-      buildDelegatedLogPayload(
-        { type: 'irrigation', data: { duration: 2, notes: '  drip line flush  ' } },
-        { area: 1 },
-      ).notes,
-    ).toBe('drip line flush');
-
-    expect(
-      buildDelegatedLogPayload(
-        { type: 'harvest', data: { quantity: 50, grade: 'Premium', notes: '  row 4 west  ' } },
-        { area: 1 },
-      ).notes,
-    ).toBe('row 4 west');
-
-    const fertPayload = buildDelegatedLogPayload(
-      {
-        type: 'fertigation',
-        data: {
-          fertilizers: [{ id: 'f', name: 'Urea', quantity: 5, unit: 'kg', quantityBasis: 'total' }],
-          notes: '  via venturi  ',
-        },
-      },
-      { area: 1 },
-    );
-    expect(fertPayload.notes).toBe('via venturi');
-  });
-
-  it('omits notes when empty for irrigation, harvest, and fertigation', () => {
-    expect(
-      buildDelegatedLogPayload(
-        { type: 'irrigation', data: { duration: 1, notes: '   ' } },
-        { area: 1 },
-      ).notes,
-    ).toBeUndefined();
-    expect(
-      buildDelegatedLogPayload(
-        { type: 'harvest', data: { quantity: 10, grade: 'A', notes: '' } },
-        { area: 1 },
-      ).notes,
-    ).toBeUndefined();
-    expect(
-      buildDelegatedLogPayload(
-        {
-          type: 'fertigation',
-          data: {
-            fertilizers: [
-              { id: 'f', name: 'Urea', quantity: 1, unit: 'kg', quantityBasis: 'total' },
-            ],
-            notes: '   ',
-          },
-        },
-        { area: 1 },
-      ).notes,
-    ).toBeUndefined();
   });
 
   it('drops empty optional harvest fields', () => {
@@ -131,7 +74,6 @@ describe('buildDelegatedLogPayload', () => {
       grade: 'Premium',
       price: undefined,
       buyer: undefined,
-      notes: undefined,
     });
   });
 
