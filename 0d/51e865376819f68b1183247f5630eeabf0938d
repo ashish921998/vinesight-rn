@@ -1,0 +1,33 @@
+src/components/screens/warehouse-item-form.tsx
+  s_e434a2a1e3c968::t_16728311bf7e10 232
+  s_e434a2a1e3c968::t_f79379536f71c4 656-663,666-677
+  s_e434a2a1e3c968::t_cec2503772e40b 953
+  s_e434a2a1e3c968::t_342cd5f76d938a 482
+  s_e434a2a1e3c968::t_f46ca99e17fd84 52
+  s_e434a2a1e3c968::t_c5bc74597b7f5e 625-635
+  s_e434a2a1e3c968::t_b4163e27d828c6 664-665
+  s_e434a2a1e3c968::t_2fe79fb62e7323 360
+__tests__/product-form-data.test.ts
+  s_e434a2a1e3c968::t_b368dcb9e90c3a 47-51
+  s_e434a2a1e3c968::t_f5f0cea520bfe4 2
+src/features/purchase/product-form-data.ts
+  s_e434a2a1e3c968::t_a3fff03815917d 14-20
+package.json
+  s_e434a2a1e3c968::t_acb91452cce2ef 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "0d51e865376819f68b1183247f5630eeabf0938d",
+  "prompts": {},
+  "sessions": {
+    "s_e434a2a1e3c968": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7cb60f29-b1cd-455d-ba49-53744196eadb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
