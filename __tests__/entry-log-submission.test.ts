@@ -329,4 +329,26 @@ describe('submitEntryPendingLog', () => {
       }),
     );
   });
+
+  it('preserves a client UUID when the created record has no numeric id', async () => {
+    const submitters = createSubmitters();
+    submitters.createIrrigation.mockResolvedValue({
+      id: null,
+      client_uuid: 'irrigation-client-uuid',
+    });
+
+    await expect(
+      submitEntryPendingLog({
+        log: { id: 'log-offline', type: 'irrigation', data: { duration: 2 } },
+        dateStr: '2026-02-11',
+        farm: baseFarm,
+        submitters,
+      }),
+    ).resolves.toEqual({
+      pendingLogId: 'log-offline',
+      type: 'irrigation',
+      recordId: null,
+      clientUuid: 'irrigation-client-uuid',
+    });
+  });
 });

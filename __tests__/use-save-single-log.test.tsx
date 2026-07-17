@@ -10,7 +10,9 @@ import type { AreaUnitPreference } from '@/utils/preferences';
 // Boundary mock: the real submission writes to the DB; these tests cover the hook's
 // result mapping and leave water-level side effects to the database trigger.
 jest.mock('@/utils/entry-log-submission', () => ({
-  submitEntryPendingLog: jest.fn().mockResolvedValue({ recordId: 123 }),
+  submitEntryPendingLog: jest
+    .fn()
+    .mockResolvedValue({ recordId: null, clientUuid: 'single-log-client-uuid' }),
 }));
 
 jest.mock('@/hooks', () => ({
@@ -70,9 +72,10 @@ describe('useSaveSingleLog', () => {
     (submitEntryPendingLog as jest.Mock).mockClear();
   });
 
-  it('still returns the record id and farm id from the submission', async () => {
+  it('preserves UUID identity when the submission has no numeric id', async () => {
     const out = await save(makeFarm({ id: 42 }), 'irrigation', { duration: 5 });
-    expect(out.recordId).toBe(123);
+    expect(out.recordId).toBeNull();
+    expect(out.clientUuid).toBe('single-log-client-uuid');
     expect(out.farmId).toBe(42);
   });
 });

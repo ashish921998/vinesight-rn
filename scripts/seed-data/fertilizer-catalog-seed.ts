@@ -45,6 +45,24 @@ export interface SeedBulkDensity {
 }
 
 /** A `chemical_products` row plus its nutrient compositions. */
+export interface SeedDensityPatch {
+  density_kg_per_l?: number | null;
+  density_source_url?: string | null;
+  density_verified?: false;
+}
+
+export function buildSeedDensityPatch(
+  product: Pick<FertilizerSeedProduct, 'bulkDensity'>,
+  preserveVerifiedDensity: boolean,
+): SeedDensityPatch {
+  if (preserveVerifiedDensity) return {};
+  return {
+    density_kg_per_l: product.bulkDensity?.densityKgPerL ?? null,
+    density_source_url: product.bulkDensity?.sourceUrl ?? null,
+    density_verified: false,
+  };
+}
+
 export interface FertilizerSeedProduct {
   /**
    * Canonical product name — the string stamped verbatim on logged items until

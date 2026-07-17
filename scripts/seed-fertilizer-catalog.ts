@@ -22,6 +22,7 @@ import {
   SEED_COMPOSITION_SOURCE_NOTE,
   SEED_SOURCE_REFERENCE,
   SEED_STATE_CODE,
+  buildSeedDensityPatch,
   type FertilizerSeedProduct,
 } from './seed-data/fertilizer-catalog-seed.ts';
 
@@ -45,6 +46,7 @@ interface ExistingProductRow {
   verification_tier: string | null;
   source_reference: string | null;
   is_active: boolean | null;
+  density_verified: boolean | null;
 }
 
 /**
@@ -76,21 +78,19 @@ async function upsertProduct(
   product: FertilizerSeedProduct,
   existingByLowerName: Map<string, ExistingProductRow>,
 ): Promise<ProductResolution> {
+  const existing = existingByLowerName.get(product.name.toLowerCase());
   const row = {
     name: product.name,
     manufacturer: product.manufacturer,
     active_ingredient: product.grade,
     input_type: 'fertilizer',
     verification_tier: 'provisional',
-    density_kg_per_l: product.bulkDensity?.densityKgPerL ?? null,
-    density_source_url: product.bulkDensity?.sourceUrl ?? null,
-    density_verified: false,
+    ...buildSeedDensityPatch(product, existing?.density_verified === true),
     state_code: SEED_STATE_CODE,
     source_reference: SEED_SOURCE_REFERENCE,
     is_active: true,
   };
 
-  const existing = existingByLowerName.get(product.name.toLowerCase());
   if (existing) {
     // The unique index spans ALL input types, so a non-fertilizer row can hold
     // this (state, name) identity. It is not our product: don't insert (unique
@@ -325,7 +325,7 @@ async function main(): Promise<void> {
   // so curated/foreign rows can be skipped whole.
   const { data: existingRows, error: fetchError } = await supabase
     .from('chemical_products')
-    .select('id,name,input_type,verification_tier,source_reference,is_active')
+    .select('id,name,input_type,verification_tier,source_reference,is_active,density_verified')
     .eq('state_code', SEED_STATE_CODE);
   if (fetchError) throw fetchError;
 

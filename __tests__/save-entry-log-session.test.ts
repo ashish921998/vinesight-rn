@@ -232,9 +232,12 @@ describe('saveEntryLogSession', () => {
     );
   });
 
-  it('does not save linked fertigation when irrigation returns no record id', async () => {
+  it('rolls back UUID-only irrigation when linked fertigation cannot resolve a numeric id', async () => {
     const adapters = createAdapters();
-    adapters.createIrrigation.mockResolvedValue({ id: null } as never);
+    adapters.createIrrigation.mockResolvedValue({
+      id: null,
+      client_uuid: 'irrigation-client-uuid',
+    });
 
     const result = await saveEntryLogSession({
       pendingLogs: [
@@ -265,6 +268,57 @@ describe('saveEntryLogSession', () => {
 
     expect(result.status).toBe('failed');
     expect(adapters.createFertigation).not.toHaveBeenCalled();
+    expect(adapters.deleteIrrigation).toHaveBeenCalledWith({
+      clientUuid: 'irrigation-client-uuid',
+      farmId: 101,
+    });
+    if (result.status === 'failed') expect(result.rollbackFailures).toEqual([]);
+  });
+
+  it('reports a rollback failure when a created event has no usable identity', async () => {
+    const adapters = createAdapters();
+    adapters.createIrrigation.mockResolvedValue({ id: null });
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'irrigation-draft',
+          type: 'irrigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { duration: 2 },
+          displayDescription: '2 hours',
+        },
+        {
+          id: 'fertigation-draft',
+          type: 'fertigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { fertilizers: [{ name: 'Urea', quantity: 5, unit: 'kg' }] },
+          displayDescription: '1 fertilizer',
+          linkIrrigationFromPendingLogId: 'irrigation-draft',
+        },
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('failed');
+    expect(adapters.createFertigation).not.toHaveBeenCalled();
+    expect(adapters.deleteIrrigation).not.toHaveBeenCalled();
+    if (result.status === 'failed') {
+      expect(result.rollbackFailures).toEqual([
+        expect.objectContaining({
+          pendingLogId: 'irrigation-draft',
+          recordId: null,
+          clientUuid: null,
+          error: 'Cannot roll back record: no record ID or client UUID',
+        }),
+      ]);
+    }
   });
 
   it('saves a fertigation record with a null link when no irrigation is attached', async () => {
@@ -292,6 +346,40 @@ describe('saveEntryLogSession', () => {
     expect(adapters.createFertigation).toHaveBeenCalledWith(
       expect.objectContaining({ irrigation_record_id: null }),
     );
+  });
+
+  it('rolls back an earlier UUID-only record when a later draft fails', async () => {
+    const adapters = createAdapters();
+    adapters.createIrrigation.mockResolvedValue({
+      id: null,
+      client_uuid: 'earlier-irrigation-uuid',
+    });
+    adapters.createExpense.mockRejectedValue(new Error('Expense failed'));
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'irrigation-1',
+          type: 'irrigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { duration: 2 },
+          displayDescription: '2 hours',
+        },
+        expenseDraft({ id: 'expense-1', scope: 'single_farm', farmId: 101 }),
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('failed');
+    expect(adapters.deleteIrrigation).toHaveBeenCalledWith({
+      clientUuid: 'earlier-irrigation-uuid',
+      farmId: 101,
+    });
   });
 
   it('restores an existing daily note when a later draft fails', async () => {

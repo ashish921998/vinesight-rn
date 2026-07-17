@@ -16,6 +16,7 @@ import {
 import {
   FERTILIZER_CATALOG_SEED,
   SEED_STATE_CODE,
+  buildSeedDensityPatch,
   compositionKey,
   type SeedComposition,
 } from '../scripts/seed-data/fertilizer-catalog-seed';
@@ -66,6 +67,30 @@ describe('fertilizer catalog seed data', () => {
       expect(product.bulkDensity.densityKgPerL).toBeGreaterThan(0);
       expect(product.bulkDensity.sourceUrl).toMatch(/^https:\/\//);
     }
+  });
+
+  it('builds seed-owned density patches without overwriting verified values', () => {
+    expect(
+      buildSeedDensityPatch(
+        { bulkDensity: { densityKgPerL: 0.75, sourceUrl: 'https://example.com/urea' } },
+        false,
+      ),
+    ).toEqual({
+      density_kg_per_l: 0.75,
+      density_source_url: 'https://example.com/urea',
+      density_verified: false,
+    });
+    expect(buildSeedDensityPatch({}, false)).toEqual({
+      density_kg_per_l: null,
+      density_source_url: null,
+      density_verified: false,
+    });
+    expect(
+      buildSeedDensityPatch(
+        { bulkDensity: { densityKgPerL: 0.75, sourceUrl: 'https://example.com/urea' } },
+        true,
+      ),
+    ).toEqual({});
   });
 
   it('keeps the published density records available to the catalogue', () => {

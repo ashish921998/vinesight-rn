@@ -492,6 +492,7 @@ export default function WarehouseItemForm({
     setName(product.name);
     setType(nextType);
     setUnit(resolveDefaultWarehouseUnitForProduct(product));
+    setManufacturer(product.manufacturer ?? '');
     const densityResolution = resolveCatalogBulkDensityValue({
       currentValue: densityKgPerL,
       isCurrentValueCatalogApplied: isCatalogDensityApplied,
@@ -582,6 +583,7 @@ export default function WarehouseItemForm({
     setNutrientPickerRowId((current) => (current === id ? null : current));
   };
   const handleTypeSelect = (nextType: WarehouseItemType) => {
+    if (nextType === type) return;
     if (isCatalogDensityApplied) setDensityKgPerL('');
     if (compositionSource === 'preset') setCompositionRows([]);
     setIsCatalogDensityApplied(false);
