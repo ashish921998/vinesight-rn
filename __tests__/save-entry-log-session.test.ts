@@ -232,6 +232,41 @@ describe('saveEntryLogSession', () => {
     );
   });
 
+  it('does not save linked fertigation when irrigation returns no record id', async () => {
+    const adapters = createAdapters();
+    adapters.createIrrigation.mockResolvedValue({ id: null } as never);
+
+    const result = await saveEntryLogSession({
+      pendingLogs: [
+        {
+          id: 'irrigation-draft',
+          type: 'irrigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { duration: 2 },
+          displayDescription: '2 hours',
+        },
+        {
+          id: 'fertigation-draft',
+          type: 'fertigation',
+          scope: 'single_farm',
+          farmId: 101,
+          data: { fertilizers: [{ name: 'Urea', quantity: 5, unit: 'kg' }] },
+          displayDescription: '1 fertilizer',
+          linkIrrigationFromPendingLogId: 'irrigation-draft',
+        },
+      ],
+      dateStr: '2026-02-11',
+      currentFarm: farmA,
+      farms: [farmA],
+      preferredAreaUnit: 'acres',
+      adapters,
+    });
+
+    expect(result.status).toBe('failed');
+    expect(adapters.createFertigation).not.toHaveBeenCalled();
+  });
+
   it('saves a fertigation record with a null link when no irrigation is attached', async () => {
     const adapters = createAdapters();
 

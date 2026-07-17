@@ -8,7 +8,11 @@ import {
 describe('purchase product form data', () => {
   it('returns published bulk density for supported catalogue products', () => {
     expect(getPublishedBulkDensity('Urea')).toEqual(
-      expect.objectContaining({ densityKgPerL: 0.75 }),
+      expect.objectContaining({
+        densityKgPerL: 0.75,
+        sourceUrl:
+          'https://www.yara.co.uk/siteassets/crop-nutrition/fertiliser-handling-and-safety/physical-properties-of-fertilisers---yara-uk.pdf',
+      }),
     );
     expect(getPublishedBulkDensity('Unknown product')).toBeNull();
   });
@@ -17,7 +21,7 @@ describe('purchase product form data', () => {
     expect(
       resolveCatalogBulkDensityValue({
         currentValue: '0.75',
-        previousProductName: 'Urea',
+        isCurrentValuePresetApplied: true,
         nextProductName: 'Unknown product',
       }),
     ).toBe('');
@@ -26,11 +30,11 @@ describe('purchase product form data', () => {
   it('preserves a manually entered density when changing catalogue products', () => {
     expect(
       resolveCatalogBulkDensityValue({
-        currentValue: '0.82',
-        previousProductName: 'Urea',
+        currentValue: '0.75',
+        isCurrentValuePresetApplied: false,
         nextProductName: 'Unknown product',
       }),
-    ).toBe('0.82');
+    ).toBe('0.75');
   });
 
   it('returns unique sorted manufacturers already used by the account', () => {

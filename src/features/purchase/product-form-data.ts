@@ -9,12 +9,12 @@ const BULK_DENSITY_PRESETS: Record<string, BulkDensityPreset> = {
   urea: {
     densityKgPerL: 0.75,
     sourceUrl:
-      'https://www.yara.com/siteassets/crop-nutrition/our-global-fertilizer-brands/yaravita/yaravita-foliar-nutrition/documents/factory-to-field.pdf/',
+      'https://www.yara.co.uk/siteassets/crop-nutrition/fertiliser-handling-and-safety/physical-properties-of-fertilisers---yara-uk.pdf',
   },
   'can (calcium ammonium nitrate)': {
     densityKgPerL: 1.05,
     sourceUrl:
-      'https://www.yara.com/siteassets/crop-nutrition/our-global-fertilizer-brands/yaravita/yaravita-foliar-nutrition/documents/factory-to-field.pdf/',
+      'https://www.yara.co.uk/siteassets/crop-nutrition/fertiliser-handling-and-safety/physical-properties-of-fertilisers---yara-uk.pdf',
   },
   'calcium nitrate': {
     densityKgPerL: 1.1,
@@ -37,21 +37,18 @@ export function getPublishedBulkDensity(productName: string): BulkDensityPreset 
 
 interface ResolveCatalogBulkDensityValueParams {
   currentValue: string;
-  previousProductName?: string | null;
+  isCurrentValuePresetApplied: boolean;
   nextProductName: string;
 }
 
 export function resolveCatalogBulkDensityValue({
   currentValue,
-  previousProductName,
+  isCurrentValuePresetApplied,
   nextProductName,
 }: ResolveCatalogBulkDensityValueParams): string {
   const nextPreset = getPublishedBulkDensity(nextProductName);
-  const previousPreset = previousProductName ? getPublishedBulkDensity(previousProductName) : null;
   const trimmedCurrentValue = currentValue.trim();
-  const canReplaceValue =
-    !trimmedCurrentValue ||
-    (previousPreset != null && trimmedCurrentValue === String(previousPreset.densityKgPerL));
+  const canReplaceValue = !trimmedCurrentValue || isCurrentValuePresetApplied;
 
   if (!canReplaceValue) return currentValue;
   return nextPreset ? String(nextPreset.densityKgPerL) : '';

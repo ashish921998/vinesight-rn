@@ -420,6 +420,7 @@ export function EntryForm({
   const logFormScrollViewRef = useRef<ScrollView>(null);
   const focusedInputRef = useRef<number | null>(null);
   const scrollOffsetRef = useRef(0);
+  const logFormScrollOffsetRef = useRef(0);
   const keyboardTopRef = useRef<number | null>(null);
 
   const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
@@ -635,7 +636,7 @@ export function EntryForm({
     const activeScrollView = logFormScrollViewRef;
     UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
       const nextOffset = calculateKeyboardScrollOffset({
-        currentOffset: scrollOffsetRef.current,
+        currentOffset: logFormScrollOffsetRef.current,
         inputY: y,
         inputHeight: height,
         keyboardTop,
@@ -2016,7 +2017,7 @@ export function EntryForm({
               contentContainerStyle={{ padding: 16, paddingBottom: 16 }}
               keyboardShouldPersistTaps="handled"
               onScroll={(event) => {
-                scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+                logFormScrollOffsetRef.current = event.nativeEvent.contentOffset.y;
               }}
               scrollEventThrottle={16}
             >

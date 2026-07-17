@@ -234,6 +234,7 @@ export default function WarehouseItemForm({
   const [notes, setNotes] = useState('');
   const [manufacturer, setManufacturer] = useState('');
   const [densityKgPerL, setDensityKgPerL] = useState('');
+  const [isDensityPresetApplied, setIsDensityPresetApplied] = useState(false);
   const [expiryDate, setExpiryDate] = useState('');
   const [compositionRows, setCompositionRows] = useState<CompositionRow[]>([
     createCompositionRow(),
@@ -355,6 +356,7 @@ export default function WarehouseItemForm({
     setNotes('');
     setManufacturer('');
     setDensityKgPerL('');
+    setIsDensityPresetApplied(false);
     setExpiryDate('');
     setCompositionRows([createCompositionRow()]);
     setCompositionSource('manual');
@@ -387,13 +389,15 @@ export default function WarehouseItemForm({
     setType(nextType);
     setUnit(resolveDefaultWarehouseUnitForProduct(product));
     setManufacturer(product.manufacturer ?? '');
+    const canReplaceDensity = !densityKgPerL.trim() || isDensityPresetApplied;
     setDensityKgPerL(
       resolveCatalogBulkDensityValue({
         currentValue: densityKgPerL,
-        previousProductName: selectedCatalogProduct?.name,
+        isCurrentValuePresetApplied: isDensityPresetApplied,
         nextProductName: product.name,
       }),
     );
+    setIsDensityPresetApplied(canReplaceDensity && getPublishedBulkDensity(product.name) != null);
     setCompositionRows(mapCatalogCompositionsToRows(product));
     setCompositionSource('preset');
     setSelectedCatalogProductId(product.id);
@@ -411,6 +415,7 @@ export default function WarehouseItemForm({
       setUnit(manualCatalogueDraft.unit);
       setManufacturer(manualCatalogueDraft.manufacturer);
       setDensityKgPerL(manualCatalogueDraft.densityKgPerL);
+      setIsDensityPresetApplied(false);
       setCompositionRows(
         manualCatalogueDraft.compositionRows.length > 0
           ? manualCatalogueDraft.compositionRows.map((row) => ({ ...row }))
@@ -483,6 +488,7 @@ export default function WarehouseItemForm({
           setDensityKgPerL(
             editingItem.density_kg_per_l ? String(editingItem.density_kg_per_l) : '',
           );
+          setIsDensityPresetApplied(false);
           setExpiryDate(editingItem.expiry_date ?? '');
           const existingComposition = editingItem.composition ?? [];
           setCompositionRows(
@@ -777,7 +783,10 @@ export default function WarehouseItemForm({
         <FormInput
           label={`Bulk Density (kg/L${densityRequired ? '' : ', Optional'})`}
           value={densityKgPerL}
-          onChangeText={setDensityKgPerL}
+          onChangeText={(value) => {
+            setDensityKgPerL(value);
+            setIsDensityPresetApplied(false);
+          }}
           placeholder="Defaults to 1.00"
           keyboardType="decimal-pad"
           required={densityRequired}

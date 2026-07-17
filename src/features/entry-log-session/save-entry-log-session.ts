@@ -370,18 +370,19 @@ export async function saveEntryLogSession(
     submissionLogs.map((log) => async () => {
       // A fertigation log linked to an irrigation can only resolve its partner's
       // record id if the irrigation task already succeeded (it runs first and sets
-      // the map on success). A missing key means the irrigation failed, so fail
-      // fast here rather than silently persisting the fertigation as standalone —
-      // throwing before submit means no unlinked record is ever created/rolled back.
+      // the map on success). A missing or null ID means no usable irrigation record
+      // was created, so fail fast rather than silently persisting the fertigation as
+      // standalone — throwing before submit means no unlinked record is ever created.
       let linkedIrrigationRecordId: number | null = null;
       if (log.type === 'fertigation' && log.linkIrrigationFromPendingLogId) {
         const sourcePendingLogId = log.linkIrrigationFromPendingLogId;
-        if (!createdRecordIdByPendingLogId.has(sourcePendingLogId)) {
+        const sourceRecordId = createdRecordIdByPendingLogId.get(sourcePendingLogId);
+        if (typeof sourceRecordId !== 'number' || !Number.isFinite(sourceRecordId)) {
           throw new Error(
-            `Missing linked irrigation pending log result for fertigation log ${log.id}`,
+            `Missing valid linked irrigation record ID for fertigation log ${log.id}`,
           );
         }
-        linkedIrrigationRecordId = createdRecordIdByPendingLogId.get(sourcePendingLogId) ?? null;
+        linkedIrrigationRecordId = sourceRecordId;
       }
       const outcome = await submitLogWithSnapshot({
         log,
