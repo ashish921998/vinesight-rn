@@ -2802,7 +2802,7 @@ export const en = {
   },
 
   warehouse: {
-    title: 'Warehouse',
+    title: 'Purchase',
     loading: {
       inventory: 'Loading inventory…',
     },
@@ -2819,6 +2819,7 @@ export const en = {
       unitPrice: 'Unit Price',
       totalValue: 'Value: {{value}}',
       updatedDate: 'Updated {{date}}',
+      expires: 'Expires {{date}}',
     },
     reorderAt: 'Reorder at: {{quantity}} {{unit}}',
     filters: {
@@ -2840,11 +2841,12 @@ export const en = {
       equipment: 'Equipment',
     },
     empty: {
-      title: 'No items in warehouse',
-      subtitle: 'Tap the + button to add your first inventory item',
+      title: 'No products added',
+      subtitle: 'Add your first purchased product to start tracking inventory',
     },
     actions: {
       addItem: 'Add Item',
+      addProduct: 'Add Product',
     },
     alerts: {
       deleteItemTitle: 'Delete item',

@@ -16,6 +16,7 @@ import {
 import {
   FERTILIZER_CATALOG_SEED,
   SEED_STATE_CODE,
+  buildSeedDensityPatch,
   compositionKey,
   type SeedComposition,
 } from '../scripts/seed-data/fertilizer-catalog-seed';
@@ -58,6 +59,53 @@ describe('fertilizer catalog seed data', () => {
     for (const product of FERTILIZER_CATALOG_SEED) {
       expect(product.compositions.length).toBeGreaterThan(0);
     }
+  });
+
+  it('only includes positive bulk-density values with provenance', () => {
+    for (const product of FERTILIZER_CATALOG_SEED) {
+      if (!product.bulkDensity) continue;
+      expect(product.bulkDensity.densityKgPerL).toBeGreaterThan(0);
+      expect(product.bulkDensity.sourceUrl).toMatch(/^https:\/\//);
+    }
+  });
+
+  it('builds seed-owned density patches without overwriting verified values', () => {
+    expect(
+      buildSeedDensityPatch(
+        { bulkDensity: { densityKgPerL: 0.75, sourceUrl: 'https://example.com/urea' } },
+        false,
+      ),
+    ).toEqual({
+      density_kg_per_l: 0.75,
+      density_source_url: 'https://example.com/urea',
+      density_verified: false,
+    });
+    expect(buildSeedDensityPatch({}, false)).toEqual({
+      density_kg_per_l: null,
+      density_source_url: null,
+      density_verified: false,
+    });
+    expect(
+      buildSeedDensityPatch(
+        { bulkDensity: { densityKgPerL: 0.75, sourceUrl: 'https://example.com/urea' } },
+        true,
+      ),
+    ).toEqual({});
+  });
+
+  it('keeps the published density records available to the catalogue', () => {
+    const densityByName = new Map(
+      FERTILIZER_CATALOG_SEED.flatMap((product) =>
+        product.bulkDensity ? [[product.name, product.bulkDensity.densityKgPerL] as const] : [],
+      ),
+    );
+
+    expect(densityByName.get('Urea')).toBe(0.75);
+    expect(densityByName.get('Calcium Nitrate')).toBe(1.1);
+    expect(densityByName.get('CAN (Calcium Ammonium Nitrate)')).toBe(1.05);
+    expect(densityByName.get('NPK 00:52:34 (MKP)')).toBe(1.2);
+    expect(densityByName.get('NPK 13:00:45 (KNO3)')).toBe(1.1);
+    expect(densityByName.has('Ammonium Sulphate')).toBe(false);
   });
 
   it('uses only known nutrient codes so the ledger recognises every row', () => {

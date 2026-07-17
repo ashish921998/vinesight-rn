@@ -2813,7 +2813,7 @@ export const mr = {
   },
 
   warehouse: {
-    title: 'गोदाम',
+    title: 'खरेदी',
     loading: {
       inventory: 'इन्व्हेंटरी लोड होत आहे…',
     },
@@ -2830,6 +2830,7 @@ export const mr = {
       unitPrice: 'युनिट किंमत',
       totalValue: 'मूल्य: {{value}}',
       updatedDate: 'अपडेट {{date}}',
+      expires: 'कालबाह्यता: {{date}}',
     },
     reorderAt: 'पुनर्भरण पातळी: {{quantity}} {{unit}}',
     filters: {
@@ -2839,7 +2840,7 @@ export const mr = {
       equipment: 'उपकरण ({{count}})',
     },
     search: {
-      placeholder: 'गोदाम शोधा...',
+      placeholder: 'खरेदी शोधा...',
       found_one: '{{count}} वस्तू आढळली',
       found_other: '{{count}} वस्तू आढळल्या',
     },
@@ -2851,11 +2852,12 @@ export const mr = {
       equipment: 'उपकरण',
     },
     empty: {
-      title: 'गोदामात वस्तू नाहीत',
-      subtitle: 'पहिली इन्व्हेंटरी वस्तू जोडण्यासाठी + बटण दाबा',
+      title: 'कोणतेही उत्पादन जोडलेले नाही',
+      subtitle: 'साठा ट्रॅक करण्यासाठी पहिले खरेदी केलेले उत्पादन जोडा',
     },
     actions: {
       addItem: 'वस्तू जोडा',
+      addProduct: 'उत्पादन जोडा',
     },
     alerts: {
       deleteItemTitle: 'वस्तू हटवा',

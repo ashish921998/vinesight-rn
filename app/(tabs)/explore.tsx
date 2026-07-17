@@ -305,20 +305,32 @@ export default function ExploreScreen() {
       <Pressable
         onPress={() => openWarehouseItem(null)}
         accessibilityRole="button"
-        accessibilityLabel={t('warehouse.actions.addItem')}
+        accessibilityLabel={t('warehouse.actions.addProduct')}
         style={{
           position: 'absolute',
           bottom: fabBottom,
           right: spacing[6],
-          width: 56,
+          minWidth: 148,
           height: 56,
           borderRadius: borderRadius.full,
+          paddingHorizontal: spacing[5],
+          flexDirection: 'row',
+          gap: spacing[2],
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: m3.primary.p500,
         }}
       >
-        <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
+        <Icon name="plus" size={20} color={m3.colorScheme.onPrimary} />
+        <Text
+          style={{
+            color: m3.colorScheme.onPrimary,
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.semibold,
+          }}
+        >
+          {t('warehouse.actions.addProduct')}
+        </Text>
       </Pressable>
     </View>
   );

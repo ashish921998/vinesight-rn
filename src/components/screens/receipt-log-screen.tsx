@@ -123,6 +123,7 @@ interface SavedEntry {
   key: string;
   type: LogTypeId;
   recordId: number | null;
+  clientUuid: string | null;
   farmId: number;
   summary: string;
   /** The date this entry was saved on. Stored here so handleRemove uses the correct date even if the picker is changed afterwards. */
@@ -362,6 +363,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
         result = {
           type: savedType,
           recordId,
+          clientUuid: null,
           farmId: farm.id ?? 0,
           previousDailyNote: undefined,
         };
@@ -379,6 +381,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
           key: nextKey(),
           type: savedType,
           recordId: result.recordId,
+          clientUuid: result.clientUuid,
           farmId: result.farmId,
           summary: describeEntry(savedType, draft),
           savedDateStr: dateStr,
@@ -460,64 +463,55 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
       try {
         // Delegated path: single-call RPC delete, no water-level undo, no
         // per-table split. Mirrors the create path's RPC simplicity.
-        if (isDelegatedMode && entry.recordId != null && entry.type !== 'expense') {
+        if (isDelegatedMode && entry.type !== 'expense') {
+          if (entry.recordId == null) throw new Error('Delegated log has no record id');
           await deleteDelegatedLog(entry.type as DelegatedLogType, entry.recordId);
           await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
           await queryClient.invalidateQueries({ queryKey: queryKeys.professionalWorkspace.all });
           return;
         }
-        if (entry.recordId == null) {
-          if (entry.type === 'note') {
-            if (entry.previousDailyNote) {
-              await upsertDailyNote.mutateAsync({
-                farm_id: entry.farmId,
-                date: entry.savedDateStr,
-                notes: entry.previousDailyNote.notes ?? null,
-              });
-            } else {
-              // No previous note — delete the newly created record by farm+date
-              // (id is 0 because notes' recordId is always null here; the mutation
-              // handles this by falling back to the farm_id+date key).
-              await deleteDailyNote.mutateAsync({
-                id: 0,
-                farmId: entry.farmId,
-                date: entry.savedDateStr,
-              });
-            }
+
+        if (entry.type === 'note') {
+          if (entry.previousDailyNote) {
+            await upsertDailyNote.mutateAsync({
+              farm_id: entry.farmId,
+              date: entry.savedDateStr,
+              notes: entry.previousDailyNote.notes ?? null,
+            });
+          } else {
+            await deleteDailyNote.mutateAsync({
+              id: entry.recordId ?? 0,
+              farmId: entry.farmId,
+              date: entry.savedDateStr,
+            });
           }
+          await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
           return;
         }
-        const id = entry.recordId;
+
+        if (entry.recordId == null && entry.clientUuid == null) {
+          throw new Error('Saved log has no record id or client UUID');
+        }
+        const ref = {
+          id: entry.recordId,
+          clientUuid: entry.clientUuid,
+          farmId: entry.farmId,
+        };
         switch (entry.type) {
           case 'irrigation':
-            await deleteIrrigation.mutateAsync({ id, farmId: entry.farmId });
+            await deleteIrrigation.mutateAsync(ref);
             break;
           case 'spray':
-            await deleteSpray.mutateAsync({ id, farmId: entry.farmId });
+            await deleteSpray.mutateAsync(ref);
             break;
           case 'harvest':
-            await deleteHarvest.mutateAsync({ id, farmId: entry.farmId });
+            await deleteHarvest.mutateAsync(ref);
             break;
           case 'expense':
-            await deleteExpense.mutateAsync({ id, farmId: entry.farmId });
+            await deleteExpense.mutateAsync(ref);
             break;
           case 'fertigation':
-            await deleteFertigation.mutateAsync({ id, farmId: entry.farmId });
-            break;
-          case 'note':
-            if (entry.previousDailyNote) {
-              await upsertDailyNote.mutateAsync({
-                farm_id: entry.farmId,
-                date: entry.savedDateStr,
-                notes: entry.previousDailyNote.notes ?? null,
-              });
-            } else {
-              await deleteDailyNote.mutateAsync({
-                id,
-                farmId: entry.farmId,
-                date: entry.savedDateStr,
-              });
-            }
+            await deleteFertigation.mutateAsync(ref);
             break;
         }
         await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });

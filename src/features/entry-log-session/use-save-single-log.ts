@@ -41,8 +41,9 @@ export interface SaveSingleLogInput {
 
 export interface SaveSingleLogResult {
   type: LogTypeId;
-  /** Record id from the insert. `null` for notes (daily-note upsert is keyed by farm+date). */
+  /** Record id from the insert. May be null until an offline-created row is reconciled. */
   recordId: number | null;
+  clientUuid: string | null;
   farmId: number;
   /**
    * Snapshot of the daily note that existed before this save. Only set for note entries.
@@ -110,7 +111,13 @@ export function useSaveSingleLog() {
       // error state), so swallow it rather than surfacing an unhandled rejection.
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all }).catch(() => {});
 
-      return { type, recordId: result.recordId, farmId, previousDailyNote };
+      return {
+        type,
+        recordId: result.recordId,
+        clientUuid: result.clientUuid ?? null,
+        farmId,
+        previousDailyNote,
+      };
     },
     [
       queryClient,

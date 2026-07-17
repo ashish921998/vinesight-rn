@@ -2787,7 +2787,7 @@ export const hi = {
   },
 
   warehouse: {
-    title: 'गोदाम',
+    title: 'खरीद',
     loading: {
       inventory: 'इन्वेंटरी लोड हो रही है…',
     },
@@ -2804,6 +2804,7 @@ export const hi = {
       unitPrice: 'इकाई मूल्य',
       totalValue: 'मूल्य: {{value}}',
       updatedDate: 'अपडेट {{date}}',
+      expires: 'समाप्ति: {{date}}',
     },
     reorderAt: 'पुनः ऑर्डर करें: {{quantity}} {{unit}}',
     filters: {
@@ -2813,7 +2814,7 @@ export const hi = {
       equipment: 'उपकरण ({{count}})',
     },
     search: {
-      placeholder: 'इन्वेंटरी खोजें...',
+      placeholder: 'खरीद खोजें...',
       found_one: '{{count}} वस्तु मिली',
       found_other: '{{count}} वस्तुएं मिलीं',
     },
@@ -2825,11 +2826,12 @@ export const hi = {
       equipment: 'उपकरण',
     },
     empty: {
-      title: 'गोदाम में कोई वस्तु नहीं',
-      subtitle: 'अपनी पहली इन्वेंटरी वस्तु जोड़ने के लिए + बटन टैप करें',
+      title: 'कोई उत्पाद नहीं जोड़ा गया',
+      subtitle: 'इन्वेंटरी ट्रैक करने के लिए अपना पहला खरीदा हुआ उत्पाद जोड़ें',
     },
     actions: {
       addItem: 'वस्तु जोड़ें',
+      addProduct: 'उत्पाद जोड़ें',
     },
     alerts: {
       deleteItemTitle: 'वस्तु हटाएं',

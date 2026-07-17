@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/explore-primitives';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { formatCurrency } from '@/i18n/format';
+import { formatCurrency, formatDate } from '@/i18n/format';
 import { useM3 } from '@/styles/use-theme';
 import type { WarehouseItem } from '@/types';
 
@@ -196,7 +196,7 @@ export function WarehousePaneB({
         icon="cube.fill"
         title={t('warehouse.empty.title')}
         description={t('warehouse.empty.subtitle')}
-        actionLabel={t('warehouse.actions.addItem')}
+        actionLabel={t('warehouse.actions.addProduct')}
         onAction={onAddItem}
       />
     );
@@ -256,6 +256,14 @@ export function WarehousePaneB({
               .join(' ')
           : undefined,
       ].filter(Boolean);
+
+      if (item.expiry_date) {
+        stats.push({
+          label: t('warehouse.labels.expires', {
+            date: formatDate(item.expiry_date),
+          }),
+        });
+      }
 
       const stageLabel = low
         ? t('explore.warehouse.stockLow', { defaultValue: 'Low' })

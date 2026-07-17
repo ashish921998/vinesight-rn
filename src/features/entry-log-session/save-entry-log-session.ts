@@ -4,8 +4,10 @@ import {
   submitEntryPendingLog,
   type EntryPendingLogSubmission,
   type EntryLogFarmContext,
+  type EntryLogSubmissionResult,
   type EntryLogSubmitters,
 } from '@/utils/entry-log-submission';
+import type { RecordRef } from '@/features/offline/record-writes';
 import type { AreaUnitPreference } from '@/utils/preferences';
 
 export type EntryLogSessionBlockReason =
@@ -19,6 +21,7 @@ export type EntryLogCreatedRecord = {
   pendingLogId: string;
   type: LogTypeId;
   recordId: number | null;
+  clientUuid: string | null;
   farmId: number;
   previousDailyNote?: DailyNoteRecord | null;
 };
@@ -26,7 +29,8 @@ export type EntryLogCreatedRecord = {
 export type EntryLogRollbackFailure = {
   pendingLogId: string;
   type: LogTypeId;
-  recordId: number;
+  recordId: number | null;
+  clientUuid: string | null;
   farmId: number;
   error: string;
 };
@@ -69,13 +73,15 @@ export type SaveEntryLogSessionResult =
       rollbackFailures: EntryLogRollbackFailure[];
     };
 
+type RollbackRecordRef = RecordRef & { farmId: number };
+
 export interface EntryLogSessionAdapters extends EntryLogSubmitters {
   getDailyNote: (payload: { farmId: number; date: string }) => Promise<DailyNoteRecord | null>;
-  deleteIrrigation: (payload: { id: number; farmId: number }) => Promise<unknown>;
-  deleteSpray: (payload: { id: number; farmId: number }) => Promise<unknown>;
-  deleteHarvest: (payload: { id: number; farmId: number }) => Promise<unknown>;
-  deleteExpense: (payload: { id: number; farmId: number }) => Promise<unknown>;
-  deleteFertigation: (payload: { id: number; farmId: number }) => Promise<unknown>;
+  deleteIrrigation: (payload: RollbackRecordRef) => Promise<unknown>;
+  deleteSpray: (payload: RollbackRecordRef) => Promise<unknown>;
+  deleteHarvest: (payload: RollbackRecordRef) => Promise<unknown>;
+  deleteExpense: (payload: RollbackRecordRef) => Promise<unknown>;
+  deleteFertigation: (payload: RollbackRecordRef) => Promise<unknown>;
   deleteDailyNote: (payload: { id: number; farmId: number; date: string }) => Promise<unknown>;
 }
 
@@ -109,22 +115,30 @@ async function rollbackCreatedRecords(
   const failures: EntryLogRollbackFailure[] = [];
   const rollbackEntry = async (entry: EntryLogCreatedRecord) => {
     try {
-      const id = entry.recordId as number;
+      const ref: RollbackRecordRef = {
+        farmId: entry.farmId,
+        ...(entry.recordId !== null ? { id: entry.recordId } : {}),
+        ...(entry.clientUuid !== null ? { clientUuid: entry.clientUuid } : {}),
+      };
+      if (entry.type !== 'note' && entry.recordId == null && entry.clientUuid == null) {
+        throw new Error('Cannot roll back record: no record ID or client UUID');
+      }
+
       switch (entry.type) {
         case 'irrigation':
-          await adapters.deleteIrrigation({ id, farmId: entry.farmId });
+          await adapters.deleteIrrigation(ref);
           break;
         case 'spray':
-          await adapters.deleteSpray({ id, farmId: entry.farmId });
+          await adapters.deleteSpray(ref);
           break;
         case 'harvest':
-          await adapters.deleteHarvest({ id, farmId: entry.farmId });
+          await adapters.deleteHarvest(ref);
           break;
         case 'expense':
-          await adapters.deleteExpense({ id, farmId: entry.farmId });
+          await adapters.deleteExpense(ref);
           break;
         case 'fertigation':
-          await adapters.deleteFertigation({ id, farmId: entry.farmId });
+          await adapters.deleteFertigation(ref);
           break;
         case 'note':
           if (entry.previousDailyNote) {
@@ -133,8 +147,12 @@ async function rollbackCreatedRecords(
               date: dateStr,
               notes: entry.previousDailyNote.notes ?? null,
             });
-          } else if (typeof id === 'number') {
-            await adapters.deleteDailyNote({ id, farmId: entry.farmId, date: dateStr });
+          } else if (entry.recordId !== null) {
+            await adapters.deleteDailyNote({
+              id: entry.recordId,
+              farmId: entry.farmId,
+              date: dateStr,
+            });
           } else {
             throw new Error('Cannot roll back note: no record ID and no previous note to restore');
           }
@@ -144,16 +162,16 @@ async function rollbackCreatedRecords(
       failures.push({
         pendingLogId: entry.pendingLogId,
         type: entry.type,
-        recordId: entry.recordId as number,
+        recordId: entry.recordId,
+        clientUuid: entry.clientUuid,
         farmId: entry.farmId,
         error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
       });
     }
   };
 
-  const entries = created.filter((entry) => entry.recordId !== null || entry.type === 'note');
-  await Promise.all(entries.filter((entry) => entry.type !== 'note').map(rollbackEntry));
-  for (const entry of entries.filter((item) => item.type === 'note').reverse()) {
+  await Promise.all(created.filter((entry) => entry.type !== 'note').map(rollbackEntry));
+  for (const entry of created.filter((item) => item.type === 'note').reverse()) {
     await rollbackEntry(entry);
   }
   return failures;
@@ -162,7 +180,7 @@ async function rollbackCreatedRecords(
 function collectCreatedRecordFromResult(params: {
   log: EntryLogSessionDraft;
   farmId: number;
-  result: PromiseSettledResult<{ pendingLogId: string; type: LogTypeId; recordId: number | null }>;
+  result: PromiseSettledResult<EntryLogSubmissionResult>;
   previousDailyNote?: DailyNoteRecord | null;
 }): EntryLogCreatedRecord | null {
   const { log, farmId, result, previousDailyNote } = params;
@@ -171,6 +189,7 @@ function collectCreatedRecordFromResult(params: {
       pendingLogId: log.id,
       type: log.type,
       recordId: result.value.recordId,
+      clientUuid: result.value.clientUuid ?? null,
       farmId,
       previousDailyNote,
     };
@@ -186,7 +205,7 @@ async function submitLogWithSnapshot(params: {
   adapters: EntryLogSessionAdapters;
   linkedIrrigationRecordId?: number | null;
 }): Promise<{
-  result: { pendingLogId: string; type: LogTypeId; recordId: number | null };
+  result: EntryLogSubmissionResult;
   previousDailyNote: DailyNoteRecord | null;
 }> {
   const { log, dateStr, farm, adapters, linkedIrrigationRecordId } = params;
@@ -214,6 +233,31 @@ async function settleSequentially<T>(
     }
   }
   return results;
+}
+
+function orderSingleFarmLogsForSubmission(
+  pendingLogs: EntryLogSessionDraft[],
+): EntryLogSessionDraft[] {
+  const logById = new Map(pendingLogs.map((log) => [log.id, log]));
+  const ordered: EntryLogSessionDraft[] = [];
+  const visited = new Set<string>();
+
+  const visit = (log: EntryLogSessionDraft) => {
+    if (visited.has(log.id)) return;
+
+    if (log.type === 'fertigation' && log.linkIrrigationFromPendingLogId) {
+      const linkedIrrigation = logById.get(log.linkIrrigationFromPendingLogId);
+      if (linkedIrrigation?.type === 'irrigation') {
+        visit(linkedIrrigation);
+      }
+    }
+
+    visited.add(log.id);
+    ordered.push(log);
+  };
+
+  pendingLogs.forEach(visit);
+  return ordered;
 }
 
 function buildFailedResult(params: {
@@ -336,26 +380,28 @@ export async function saveEntryLogSession(
   }
 
   const farmContext = buildFarmContext(singleFarmContext, preferredAreaUnit);
-  // Logs are submitted strictly in array order, so a fertigation log that was added
-  // alongside an irrigation log can read the created irrigation record id (the irrigation
-  // log is always enqueued first) and stamp it onto its own record to link the two.
+  // Preserve the visible stack order for result reporting, but submit linked irrigation
+  // dependencies first. The UI can render newest-first, which puts the derived fertigation
+  // draft before the irrigation draft it depends on.
+  const submissionLogs = orderSingleFarmLogsForSubmission(pendingLogs);
   const createdRecordIdByPendingLogId = new Map<string, number | null>();
   const results = await settleSequentially(
-    pendingLogs.map((log) => async () => {
+    submissionLogs.map((log) => async () => {
       // A fertigation log linked to an irrigation can only resolve its partner's
       // record id if the irrigation task already succeeded (it runs first and sets
-      // the map on success). A missing key means the irrigation failed, so fail
-      // fast here rather than silently persisting the fertigation as standalone —
-      // throwing before submit means no unlinked record is ever created/rolled back.
+      // the map on success). A missing or null ID means no usable irrigation record
+      // was created, so fail fast rather than silently persisting the fertigation as
+      // standalone — throwing before submit means no unlinked record is ever created.
       let linkedIrrigationRecordId: number | null = null;
       if (log.type === 'fertigation' && log.linkIrrigationFromPendingLogId) {
         const sourcePendingLogId = log.linkIrrigationFromPendingLogId;
-        if (!createdRecordIdByPendingLogId.has(sourcePendingLogId)) {
+        const sourceRecordId = createdRecordIdByPendingLogId.get(sourcePendingLogId);
+        if (typeof sourceRecordId !== 'number' || !Number.isFinite(sourceRecordId)) {
           throw new Error(
-            `Missing linked irrigation pending log result for fertigation log ${log.id}`,
+            `Missing valid linked irrigation record ID for fertigation log ${log.id}`,
           );
         }
-        linkedIrrigationRecordId = createdRecordIdByPendingLogId.get(sourcePendingLogId) ?? null;
+        linkedIrrigationRecordId = sourceRecordId;
       }
       const outcome = await submitLogWithSnapshot({
         log,
@@ -368,12 +414,15 @@ export async function saveEntryLogSession(
       return outcome;
     }),
   );
+  const resultByPendingLogId = new Map(
+    submissionLogs.map((log, index) => [log.id, results[index]] as const),
+  );
   const failures: EntryLogSubmissionFailure[] = [];
   const createdRecords: EntryLogCreatedRecord[] = [];
 
-  results.forEach((result, index) => {
-    const log = pendingLogs[index];
-    if (!log) return;
+  pendingLogs.forEach((log) => {
+    const result = resultByPendingLogId.get(log.id);
+    if (!result) return;
     const created = collectCreatedRecordFromResult({
       log,
       farmId,

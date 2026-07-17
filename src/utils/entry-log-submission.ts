@@ -47,23 +47,29 @@ export interface EntryLogFarmContext {
   date_of_pruning?: string | null;
 }
 
+interface CreatedRecordIdentity {
+  id?: number | null;
+  client_uuid?: string | null;
+}
+
 export interface EntryLogSubmitters {
-  createIrrigation: (payload: IrrigationRecordInsert) => Promise<{ id?: number | null }>;
-  createSpray: (payload: SprayRecordInsert) => Promise<{ id?: number | null }>;
-  createHarvest: (payload: HarvestRecordInsert) => Promise<{ id?: number | null }>;
-  createExpense: (payload: ExpenseRecordInsert) => Promise<{ id?: number | null }>;
-  createFertigation: (payload: FertigationRecordInsert) => Promise<{ id?: number | null }>;
+  createIrrigation: (payload: IrrigationRecordInsert) => Promise<CreatedRecordIdentity>;
+  createSpray: (payload: SprayRecordInsert) => Promise<CreatedRecordIdentity>;
+  createHarvest: (payload: HarvestRecordInsert) => Promise<CreatedRecordIdentity>;
+  createExpense: (payload: ExpenseRecordInsert) => Promise<CreatedRecordIdentity>;
+  createFertigation: (payload: FertigationRecordInsert) => Promise<CreatedRecordIdentity>;
   upsertDailyNote: (payload: {
     farm_id: number;
     date: string;
     notes: string | null;
-  }) => Promise<{ id?: number | null }>;
+  }) => Promise<CreatedRecordIdentity>;
 }
 
 export interface EntryLogSubmissionResult {
   pendingLogId: string;
   type: LogTypeId;
   recordId: number | null;
+  clientUuid?: string | null;
 }
 
 export async function submitEntryPendingLog(params: {
@@ -80,6 +86,12 @@ export async function submitEntryPendingLog(params: {
   const farmArea =
     typeof farm.area === 'number' && Number.isFinite(farm.area) && farm.area > 0 ? farm.area : 0;
   const perAreaToPerAcreFactor = areaUnit === 'hectares' ? 0.404686 : 1;
+  const toResult = (created: CreatedRecordIdentity): EntryLogSubmissionResult => ({
+    pendingLogId: log.id,
+    type: log.type,
+    recordId: created.id ?? null,
+    ...(created.client_uuid != null ? { clientUuid: created.client_uuid } : {}),
+  });
 
   switch (log.type) {
     case 'irrigation': {
@@ -99,7 +111,7 @@ export async function submitEntryPendingLog(params: {
         date_of_pruning: farm.date_of_pruning,
       });
 
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return toResult(created);
     }
 
     case 'spray': {
@@ -172,7 +184,7 @@ export async function submitEntryPendingLog(params: {
         date_of_pruning: farm.date_of_pruning,
         notes: notes || undefined,
       });
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return toResult(created);
     }
 
     case 'harvest': {
@@ -186,7 +198,7 @@ export async function submitEntryPendingLog(params: {
         buyer: data.buyer || undefined,
         date_of_pruning: farm.date_of_pruning,
       });
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return toResult(created);
     }
 
     case 'expense': {
@@ -200,7 +212,7 @@ export async function submitEntryPendingLog(params: {
         date_of_pruning: farm.date_of_pruning,
         remarks: data.remarks || undefined,
       });
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return toResult(created);
     }
 
     case 'fertigation': {
@@ -241,7 +253,7 @@ export async function submitEntryPendingLog(params: {
         area: farmArea,
         date_of_pruning: farm.date_of_pruning,
       });
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return toResult(created);
     }
 
     case 'note': {
@@ -255,7 +267,7 @@ export async function submitEntryPendingLog(params: {
         date: dateStr,
         notes,
       });
-      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+      return toResult(created);
     }
   }
 }

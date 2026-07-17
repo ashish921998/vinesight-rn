@@ -48,6 +48,7 @@ import { RepeatLastLog } from '@/components/screens/entry-form/RepeatLastLog';
 import { WeekStrip } from '@/components/ui/week-strip';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { createStartSeasonHref } from '@/utils/add-log-navigation';
+import { calculateKeyboardScrollOffset, resolveKeyboardTop } from '@/utils/keyboard-scroll';
 import { useRouter } from 'expo-router';
 import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
 import {
@@ -419,7 +420,8 @@ export function EntryForm({
   const logFormScrollViewRef = useRef<ScrollView>(null);
   const focusedInputRef = useRef<number | null>(null);
   const scrollOffsetRef = useRef(0);
-  const keyboardHeightRef = useRef(0);
+  const logFormScrollOffsetRef = useRef(0);
+  const keyboardTopRef = useRef<number | null>(null);
 
   const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
   // Fertilizers are mostly applied through irrigation, so the irrigation entry can optionally
@@ -625,33 +627,37 @@ export function EntryForm({
   const deleteFertigation = useDeleteFertigationRecord();
   const deleteDailyNote = useDeleteDailyNote();
 
-  const scrollToNode = useCallback(
-    (nodeHandle: number) => {
-      if (!keyboardHeightRef.current) return;
-      const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
-      if (typeof resolvedHandle !== 'number') return;
-      // The focused input lives inside the composer sheet's dedicated ScrollView.
-      const activeScrollView = logFormScrollViewRef;
-      UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
-        const keyboardTop = windowHeight - keyboardHeightRef.current;
-        const inputBottom = y + height;
-        const buffer = 24;
-        if (inputBottom > keyboardTop - buffer) {
-          const scrollBy = inputBottom - (keyboardTop - buffer);
-          activeScrollView.current?.scrollTo({
-            y: Math.max(0, scrollOffsetRef.current + scrollBy),
-            animated: true,
-          });
-        }
+  const scrollToNode = useCallback((nodeHandle: number) => {
+    const keyboardTop = keyboardTopRef.current;
+    if (keyboardTop == null) return;
+    const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
+    if (typeof resolvedHandle !== 'number') return;
+    // The focused input lives inside the composer sheet's dedicated ScrollView.
+    const activeScrollView = logFormScrollViewRef;
+    UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
+      const nextOffset = calculateKeyboardScrollOffset({
+        currentOffset: logFormScrollOffsetRef.current,
+        inputY: y,
+        inputHeight: height,
+        keyboardTop,
       });
-    },
-    [windowHeight],
-  );
+      if (nextOffset != null) {
+        activeScrollView.current?.scrollTo({
+          y: nextOffset,
+          animated: true,
+        });
+      }
+    });
+  }, []);
 
   // Track keyboard visibility
   useEffect(() => {
     const keyboardShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
-      keyboardHeightRef.current = event.endCoordinates.height;
+      keyboardTopRef.current = resolveKeyboardTop({
+        screenY: event.endCoordinates.screenY,
+        keyboardHeight: event.endCoordinates.height,
+        windowHeight,
+      });
       setIsKeyboardVisible(true);
       const focusedNode = focusedInputRef.current;
       if (focusedNode != null) {
@@ -659,7 +665,7 @@ export function EntryForm({
       }
     });
     const keyboardHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      keyboardHeightRef.current = 0;
+      keyboardTopRef.current = null;
       setIsKeyboardVisible(false);
     });
 
@@ -667,7 +673,7 @@ export function EntryForm({
       keyboardShowListener.remove();
       keyboardHideListener.remove();
     };
-  }, [scrollToNode]);
+  }, [scrollToNode, windowHeight]);
 
   // Set initial log type if provided
   useEffect(() => {
@@ -2011,7 +2017,7 @@ export function EntryForm({
               contentContainerStyle={{ padding: 16, paddingBottom: 16 }}
               keyboardShouldPersistTaps="handled"
               onScroll={(event) => {
-                scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+                logFormScrollOffsetRef.current = event.nativeEvent.contentOffset.y;
               }}
               scrollEventThrottle={16}
             >
