@@ -1,0 +1,78 @@
+src/types/catalog.ts
+  s_8d66fcff9088cf::t_23ff9289b152c8 74-77
+__tests__/product-form-data.test.ts
+  s_2327356a722433::t_14d27811946396 45-72
+src/components/ui/form-components.tsx
+  s_8d66fcff9088cf::t_0b33a0cc3bbbcb 54-57,91,107-110,838-839,859,905-910,926
+  s_8d66fcff9088cf::t_33454231a54437 619,692
+  s_8d66fcff9088cf::t_adf1e4eed5784d 689-691,693,699-704
+  s_8d66fcff9088cf::t_e2db26eb484733 627
+  s_8d66fcff9088cf::t_8fa7e10280faee 53
+scripts/seed-data/fertilizer-catalog-seed.ts
+  s_2327356a722433::t_14d27811946396 155,236
+  s_8d66fcff9088cf::t_f5ed5a1d6e55cf 141-144,153-154,156,249-250,253
+  s_2327356a722433::t_9582f4f3d8ec43 211-212,251-252
+  s_8d66fcff9088cf::t_23ff9289b152c8 41-46,58-59,209-210,213,234-235,237
+src/hooks/use-master-catalog.ts
+  s_8d66fcff9088cf::t_23ff9289b152c8 104
+  s_8d66fcff9088cf::t_2405f5cdc895b2 31-42,101,103,106,124-128
+  s_8d66fcff9088cf::t_c4cf1019087f55 132
+scripts/seed-fertilizer-catalog.ts
+  s_8d66fcff9088cf::t_23ff9289b152c8 85-87
+src/features/purchase/product-form-data.ts
+  s_2327356a722433::t_14d27811946396 5-11,16-23,25-28
+supabase/migrations/20260717120000_catalog_product_density.sql
+  s_8d66fcff9088cf::t_23ff9289b152c8 1-14
+src/components/screens/warehouse-item-form.tsx
+  s_8d66fcff9088cf::t_c35d1431da67c2 564
+  s_8d66fcff9088cf::t_5a87524cc1f3e9 456-457,467-476
+  s_8d66fcff9088cf::t_0b33a0cc3bbbcb 800-801,805,820,858-868,1090,1230,1236
+  s_8d66fcff9088cf::t_0fa04043185afd 966-967,969-972,974-977,980-992,1074-1080,1241
+  s_8d66fcff9088cf::t_3caa52d8a380c6 49,83-89,91-109,111-112,208,245-259
+  s_8d66fcff9088cf::t_352997a8461a4f 284,441,521,620
+  s_8d66fcff9088cf::t_c5c062c28df5ee 322,458-466
+  s_8d66fcff9088cf::t_d16981d1af66d7 527-528,571-572,574,626,628-629
+  s_8d66fcff9088cf::t_e2db26eb484733 809-816
+  s_2327356a722433::t_ad54059e58002a 326,936,938-939
+  s_8d66fcff9088cf::t_23ff9289b152c8 325
+  s_8d66fcff9088cf::t_0e8f790cd356c8 90,546-550
+  s_8d66fcff9088cf::t_67eb295a2091e2 46,110
+  s_8d66fcff9088cf::t_94af7c6d366c51 42
+  s_8d66fcff9088cf::t_b75a8fec4a2c22 870,881-882,884-890,892-909,911-925,927-928,933-934,993-994,1064
+  s_8d66fcff9088cf::t_f06bbb4deb669f 286,288-289,328-340,424-427,443,445-446,502-503,505,525,539,551-563,565-567,573,579,581-582,589
+  s_8d66fcff9088cf::t_c0a4c6d8ce1a52 341-354,1007-1008,1014-1015,1024,1029,1035-1036,1044-1045,1062,1254-1256,1258-1292,1294-1306,1308-1363
+  s_8d66fcff9088cf::t_5809b4cec638c4 829
+  s_8d66fcff9088cf::t_47975937884bab 1030,1047,1050,1055-1056,1059-1061,1084-1089,1091-1105,1107-1136,1140-1141,1146,1149-1226,1228-1229,1231-1235,1238-1239
+  s_8d66fcff9088cf::t_f4fda30cd19799 1257,1293
+  s_2327356a722433::t_14d27811946396 7,495-501,585-587,926,929-932,937,943-962,1049
+  s_2327356a722433::t_9582f4f3d8ec43 935,940-942
+  s_2327356a722433::t_f67d67885fc008 260,319-321,323-324,526,568,995,999-1001,1004,1006,1009-1013,1016-1023,1025-1028,1031-1034,1037-1043,1046,1048,1051-1054,1057-1058,1063,1081-1082,1237,1240,1252
+__tests__/fertilizer-catalog-seed.test.ts
+  s_8d66fcff9088cf::t_23ff9289b152c8 63-70
+  s_8d66fcff9088cf::t_ac09a055fb973f 78-82
+  s_8d66fcff9088cf::t_352997a8461a4f 71-77,83-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "0d466ab8567fea984ea1684c95bec3387559bb12",
+  "prompts": {},
+  "sessions": {
+    "s_2327356a722433": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6f0f-f476-77e0-8bea-1d6c09ee7692",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_8d66fcff9088cf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6eb5-b305-7091-a07a-6d1dd95c3bf7",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
