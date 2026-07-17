@@ -1,0 +1,20 @@
+src/utils/entry-log-fields.ts
+  s_ee36abbca0a8ec::t_08e9857432a502 24
+  s_ee36abbca0a8ec::t_f7d1d2a68f8db4 58-60,62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "409ddbfa258166013bd7b81a98200fb4e48306e1",
+  "prompts": {},
+  "sessions": {
+    "s_ee36abbca0a8ec": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f0d9fe26-9778-4f0d-bf62-e94c4814d02f",
+        "model": "custom:GLM-5.2-0"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
