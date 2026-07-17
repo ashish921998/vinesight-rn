@@ -1,0 +1,63 @@
+__tests__/entry-log-submission.test.ts
+  s_0595043004dd70::t_3f8413d56896df 332-353
+__tests__/save-entry-log-session.test.ts
+  s_0595043004dd70::t_b13c5c53e3943e 235,237-240
+  s_0595043004dd70::t_5fc62805b279af 271-321,383
+  s_0595043004dd70::t_a087216f835ad8 351-382
+  s_0595043004dd70::t_e679a7993dbe6c 384
+scripts/seed-data/fertilizer-catalog-seed.ts
+  s_0595043004dd70::t_06993bbdb8fd08 48-65
+src/components/screens/receipt-log-screen.tsx
+  s_0595043004dd70::t_a1a4eb95d1b388 366
+  s_0595043004dd70::t_993245744be771 126
+  s_0595043004dd70::t_5d6cfedc14c873 466-467,473-486,488,491-499,502,505,508,511,514
+  s_0595043004dd70::t_a00b165a3d39f0 384
+src/features/entry-log-session/save-entry-log-session.ts
+  s_0595043004dd70::t_3488bd1caf9b0e 76-77,80-84
+  s_0595043004dd70::t_9cb2686b6419b2 118-122
+  s_0595043004dd70::t_b4c85c61f071a7 123-126,129,132,135,138,141,150-155,165-166,173-174
+  s_0595043004dd70::t_dd094cb0946642 24,32-33
+  s_0595043004dd70::t_6f4a829aa10803 208
+  s_0595043004dd70::t_7ca39e8518f122 183
+  s_0595043004dd70::t_f14b6ed0bc625a 192
+  s_0595043004dd70::t_28728629390dae 7,10
+src/components/screens/warehouse-item-form.tsx
+  s_0595043004dd70::t_100b495ea01d11 586
+  s_0595043004dd70::t_cffd95067c2c20 495
+src/utils/entry-log-submission.ts
+  s_0595043004dd70::t_3acf69ea761db7 89-94
+  s_0595043004dd70::t_9f92b164a4cc6f 50-54,56-60,65,72
+  s_0595043004dd70::t_4e609faa41229a 114,187,201,215,256,270
+src/features/entry-log-session/use-save-single-log.ts
+  s_0595043004dd70::t_1517bc22ae6037 44,46
+  s_0595043004dd70::t_bc244b1bc33154 114-116,118-120
+  s_0595043004dd70::t_2c293997583698 117
+__tests__/use-save-single-log.test.tsx
+  s_0595043004dd70::t_ff70c07bcb4dfc 13-15
+  s_0595043004dd70::t_bc29a4239fac48 75,77-78
+scripts/seed-fertilizer-catalog.ts
+  s_0595043004dd70::t_328ff7469a1dd4 81,88
+  s_0595043004dd70::t_af7d66c30adecc 49
+  s_0595043004dd70::t_d1bd132c864c69 25
+  s_0595043004dd70::t_d68e68782cd498 328
+__tests__/fertilizer-catalog-seed.test.ts
+  s_0595043004dd70::t_099a9d13a6bcea 19
+  s_0595043004dd70::t_d31cf46ce12f0b 72-93
+  s_0595043004dd70::t_33063ce6a8223d 94-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "0e648c3e10a7a6a68b6794ea7b151aa1dadea90d",
+  "prompts": {},
+  "sessions": {
+    "s_0595043004dd70": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f3dce320-e566-42f4-9ef4-30fc66a34215",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
