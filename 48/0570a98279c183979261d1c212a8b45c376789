@@ -1,0 +1,79 @@
+src/services/delegated-logs.ts
+  s_0595043004dd70::t_54445dddffa73d 10,12
+  s_3bc09ea8e17443::t_43d62193ec5c5d 11
+  s_0595043004dd70::t_43244ff23dc91b 109
+  s_0595043004dd70::t_177c54e37fd9a7 108
+  s_8b88f969588d5c::t_57d1a14a2fac62 15,101,103
+src/services/report/report-compute.ts
+  s_8b88f969588d5c::t_9d9205890cabf7 6
+  s_8b88f969588d5c::t_9add4c243471db 1-5,7-760
+__tests__/delegated-logs.test.ts
+  s_3bc09ea8e17443::t_433fd5a14d4829 60
+docs/adr/0001-no-data-access-repository-seam.md
+  s_3bc09ea8e17443::t_fe434d43f00741 1-53
+src/utils/entry-log-fields.ts
+  s_0595043004dd70::t_22ea4e30562218 1-11,13-21,25-48,50-57,141-235
+  s_3bc09ea8e17443::t_6adffdac930c89 24
+  s_3bc09ea8e17443::t_2f00d4cb18fabf 12,22-23,58-138
+  s_0595043004dd70::t_faa2f721da2372 49,139-140,236
+  s_0595043004dd70::t_441d91530a5528 237-239
+src/services/report/report-pdf.ts
+  s_8b88f969588d5c::t_d7ab1ef0034aee 1-490
+src/services/report/report-io.ts
+  s_8b88f969588d5c::t_b0709301195c35 1-177
+src/services/report/report-types.ts
+  s_8b88f969588d5c::t_ce8eaec1ac48f4 1-33
+src/services/report/report-format.ts
+  s_8b88f969588d5c::t_5485989ec07eae 1-210
+  s_8b88f969588d5c::t_2f190b644fdee3 211-213
+src/services/report/report-units.ts
+  s_8b88f969588d5c::t_2029449e6f9778 1-152
+src/utils/entry-log-submission.ts
+  s_0595043004dd70::t_18312bc7b30109 8
+  s_0595043004dd70::t_639539d1a0c9bc 68
+  s_0595043004dd70::t_aaa334b7073288 83-84,86,88
+  s_0595043004dd70::t_d1f646dc2c47c7 87
+  s_3bc09ea8e17443::t_4a449fe68b65b2 17
+  s_0595043004dd70::t_eb7028c85113c9 46-50,52-56,61
+  s_0595043004dd70::t_c6e1b543641a75 80-82,85,90-105,107-116,118-125,127-134,136-144,146-152
+__tests__/entry-log-fields.test.ts
+  s_0595043004dd70::t_91e42c50920ee7 44-72
+  s_0595043004dd70::t_b227b44c5c43f5 3
+  s_3bc09ea8e17443::t_49bbff5291d0eb 1-2,4-43,73-215
+src/services/report/report-csv.ts
+  s_8b88f969588d5c::t_5575f99edc8fb3 1-410
+src/services/report-service.ts
+  s_8b88f969588d5c::t_e9d8c388b51ac2 4-15,18-22,24,27-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "480570a98279c183979261d1c212a8b45c376789",
+  "prompts": {},
+  "sessions": {
+    "s_0595043004dd70": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f3dce320-e566-42f4-9ef4-30fc66a34215",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_3bc09ea8e17443": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "5bdf7c28-f75d-4bd6-9685-93f7f708a0ef",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_8b88f969588d5c": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "0b40857c-8f56-4ff6-8aac-65e0c09a6aac",
+        "model": "auto"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
