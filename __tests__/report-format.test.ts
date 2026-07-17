@@ -22,6 +22,7 @@ describe('escapeCSV', () => {
   it('wraps values containing a carriage return (RFC 4180)', () => {
     expect(escapeCSV('line1\rline2')).toBe('"line1\rline2"');
     expect(escapeCSV('a\rb')).toBe('"a\rb"');
+    expect(escapeCSV('line1\r\nline2')).toBe('"line1\r\nline2"');
   });
 
   it('does not double-quote values lacking special characters', () => {
