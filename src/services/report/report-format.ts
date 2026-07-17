@@ -23,7 +23,7 @@ export function escapeCSV(value: string): string {
     safe = `'${safe}`;
     return `"${safe.replace(/"/g, '""')}"`;
   }
-  if (safe.includes('"') || safe.includes(',') || safe.includes('\n')) {
+  if (safe.includes('"') || safe.includes(',') || safe.includes('\n') || safe.includes('\r')) {
     return `"${safe.replace(/"/g, '""')}"`;
   }
   return safe;
