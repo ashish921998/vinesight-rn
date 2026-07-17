@@ -1,42 +1,10 @@
 import {
-  getPublishedBulkDensity,
   isValidExpiryDate,
   listExistingManufacturers,
   resolveCatalogBulkDensityValue,
 } from '@/features/purchase/product-form-data';
 
 describe('purchase product form data', () => {
-  it('returns published bulk density for supported catalogue products', () => {
-    expect(getPublishedBulkDensity('Urea')).toEqual(
-      expect.objectContaining({
-        densityKgPerL: 0.75,
-        sourceUrl:
-          'https://www.yara.co.uk/siteassets/crop-nutrition/fertiliser-handling-and-safety/physical-properties-of-fertilisers---yara-uk.pdf',
-      }),
-    );
-    expect(getPublishedBulkDensity('Unknown product')).toBeNull();
-  });
-
-  it('clears a superseded preset when the next product has no published density', () => {
-    expect(
-      resolveCatalogBulkDensityValue({
-        currentValue: '0.75',
-        isCurrentValuePresetApplied: true,
-        nextProductName: 'Unknown product',
-      }),
-    ).toBe('');
-  });
-
-  it('preserves a manually entered density when changing catalogue products', () => {
-    expect(
-      resolveCatalogBulkDensityValue({
-        currentValue: '0.75',
-        isCurrentValuePresetApplied: false,
-        nextProductName: 'Unknown product',
-      }),
-    ).toBe('0.75');
-  });
-
   it('returns unique sorted manufacturers already used by the account', () => {
     expect(
       listExistingManufacturers([
@@ -73,5 +41,33 @@ describe('purchase product form data', () => {
     expect(isValidExpiryDate('2027-02-28')).toBe(true);
     expect(isValidExpiryDate('2027-02-29')).toBe(false);
     expect(isValidExpiryDate('28/02/2027')).toBe(false);
+  });
+
+  it('replaces only empty or catalog-applied density values', () => {
+    expect(
+      resolveCatalogBulkDensityValue({
+        currentValue: '',
+        isCurrentValueCatalogApplied: false,
+        nextDensityKgPerL: 0.75,
+      }),
+    ).toEqual({ value: '0.75', isCatalogApplied: true });
+
+    expect(
+      resolveCatalogBulkDensityValue({
+        currentValue: '0.75',
+        isCurrentValueCatalogApplied: false,
+        nextDensityKgPerL: 1.1,
+      }),
+    ).toEqual({ value: '0.75', isCatalogApplied: false });
+  });
+
+  it('clears stale catalog density when the next selection has no density', () => {
+    expect(
+      resolveCatalogBulkDensityValue({
+        currentValue: '0.75',
+        isCurrentValueCatalogApplied: true,
+        nextDensityKgPerL: null,
+      }),
+    ).toEqual({ value: '', isCatalogApplied: false });
   });
 });

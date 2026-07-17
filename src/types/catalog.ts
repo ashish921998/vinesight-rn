@@ -71,6 +71,10 @@ export interface MasterCatalogProduct {
   input_type: CatalogInputType;
   verification_tier: CatalogVerificationTier;
   formulation?: string | null;
+  /** Optional manufacturer/published bulk density for volume-based purchases. */
+  density_kg_per_l?: number | null;
+  density_source_url?: string | null;
+  density_verified?: boolean;
   state_code: string;
   source_reference?: string | null;
   is_active: boolean;

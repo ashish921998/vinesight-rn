@@ -38,6 +38,12 @@ export interface SeedComposition {
   note?: string;
 }
 
+/** Published bulk density for a product sold or measured by volume. */
+export interface SeedBulkDensity {
+  densityKgPerL: number;
+  sourceUrl: string;
+}
+
 /** A `chemical_products` row plus its nutrient compositions. */
 export interface FertilizerSeedProduct {
   /**
@@ -49,6 +55,8 @@ export interface FertilizerSeedProduct {
   /** Grade shorthand (e.g. "46-0-0"), stored as `active_ingredient` for search. */
   grade: string | null;
   compositions: SeedComposition[];
+  /** Omit when no reliable, product-specific published value is available. */
+  bulkDensity?: SeedBulkDensity;
   /**
    * Brand/trade strings that previously had their own product rows but whose
    * declared composition matches this generic (issue #234). Survive as search
@@ -130,6 +138,10 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     grade: '0-52-34',
     // Mono-potassium phosphate.
     compositions: npk(0, 52, 34),
+    bulkDensity: {
+      densityKgPerL: 1.2,
+      sourceUrl: 'https://www.haifa-group.com/haifa-mkp',
+    },
     aliases: ['Mahadhan 00:52:34', 'YaraTera Krista MKP 00:52:34'],
   },
   {
@@ -138,6 +150,10 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     grade: '13-0-45',
     // Potassium nitrate.
     compositions: npk(13, 0, 45),
+    bulkDensity: {
+      densityKgPerL: 1.1,
+      sourceUrl: 'https://www.haifa-group.com/files/Products/Haifa_Group_Catlog.pdf',
+    },
     aliases: ['YaraTera Krista K Plus 13:00:45'],
   },
   {
@@ -190,6 +206,11 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
     grade: '46-0-0',
     // The canonical replacement for the typed "Urea" string (Q7).
     compositions: npk(46, 0, 0),
+    bulkDensity: {
+      densityKgPerL: 0.75,
+      sourceUrl:
+        'https://www.yara.com/siteassets/health-safety-and-environment/factory-to-field.pdf',
+    },
   },
   {
     name: 'Ammonium Sulphate',
@@ -210,6 +231,10 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
       { component_code: 'N', percent: 15.5 },
       { component_code: 'Ca', percent: 19 },
     ],
+    bulkDensity: {
+      densityKgPerL: 1.1,
+      sourceUrl: 'https://www.haifa-group.com/haifa-cal%E2%84%A2-ng',
+    },
     aliases: ['YaraTera Calcinit'],
   },
   {
@@ -221,6 +246,11 @@ export const FERTILIZER_CATALOG_SEED: FertilizerSeedProduct[] = [
       { component_code: 'N', percent: 26 },
       { component_code: 'Ca', percent: 10, note: 'Ca varies 8-11% by source; 10% typical' },
     ],
+    bulkDensity: {
+      densityKgPerL: 1.05,
+      sourceUrl:
+        'https://www.yara.com/siteassets/health-safety-and-environment/factory-to-field.pdf',
+    },
   },
 
   // ── Phosphate straights / soil grades ─────────────────────────────────────

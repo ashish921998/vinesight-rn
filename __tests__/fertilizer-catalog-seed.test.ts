@@ -60,6 +60,29 @@ describe('fertilizer catalog seed data', () => {
     }
   });
 
+  it('only includes positive bulk-density values with provenance', () => {
+    for (const product of FERTILIZER_CATALOG_SEED) {
+      if (!product.bulkDensity) continue;
+      expect(product.bulkDensity.densityKgPerL).toBeGreaterThan(0);
+      expect(product.bulkDensity.sourceUrl).toMatch(/^https:\/\//);
+    }
+  });
+
+  it('keeps the published density records available to the catalogue', () => {
+    const densityByName = new Map(
+      FERTILIZER_CATALOG_SEED.flatMap((product) =>
+        product.bulkDensity ? [[product.name, product.bulkDensity.densityKgPerL] as const] : [],
+      ),
+    );
+
+    expect(densityByName.get('Urea')).toBe(0.75);
+    expect(densityByName.get('Calcium Nitrate')).toBe(1.1);
+    expect(densityByName.get('CAN (Calcium Ammonium Nitrate)')).toBe(1.05);
+    expect(densityByName.get('NPK 00:52:34 (MKP)')).toBe(1.2);
+    expect(densityByName.get('NPK 13:00:45 (KNO3)')).toBe(1.1);
+    expect(densityByName.has('Ammonium Sulphate')).toBe(false);
+  });
+
   it('uses only known nutrient codes so the ledger recognises every row', () => {
     for (const product of FERTILIZER_CATALOG_SEED) {
       for (const composition of product.compositions) {

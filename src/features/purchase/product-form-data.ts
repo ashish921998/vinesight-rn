@@ -1,57 +1,31 @@
 import type { WarehouseItem } from '@/types';
 
-export interface BulkDensityPreset {
-  densityKgPerL: number;
-  sourceUrl: string;
-}
-
-const BULK_DENSITY_PRESETS: Record<string, BulkDensityPreset> = {
-  urea: {
-    densityKgPerL: 0.75,
-    sourceUrl:
-      'https://www.yara.co.uk/siteassets/crop-nutrition/fertiliser-handling-and-safety/physical-properties-of-fertilisers---yara-uk.pdf',
-  },
-  'can (calcium ammonium nitrate)': {
-    densityKgPerL: 1.05,
-    sourceUrl:
-      'https://www.yara.co.uk/siteassets/crop-nutrition/fertiliser-handling-and-safety/physical-properties-of-fertilisers---yara-uk.pdf',
-  },
-  'calcium nitrate': {
-    densityKgPerL: 1.1,
-    sourceUrl: 'https://www.haifa-group.com/haifa-calo',
-  },
-  'npk 00:52:34 (mkp)': {
-    densityKgPerL: 1.2,
-    sourceUrl: 'https://www.haifa-group.com/haifa-mkp',
-  },
-  'npk 13:00:45 (kno3)': {
-    densityKgPerL: 1.1,
-    sourceUrl:
-      'https://www.haifa-group.com/sites/default/files/2024-06/Haifa_Australia_Product_Guide.pdf',
-  },
-};
-
-export function getPublishedBulkDensity(productName: string): BulkDensityPreset | null {
-  return BULK_DENSITY_PRESETS[productName.trim().toLowerCase()] ?? null;
-}
-
 interface ResolveCatalogBulkDensityValueParams {
   currentValue: string;
-  isCurrentValuePresetApplied: boolean;
-  nextProductName: string;
+  isCurrentValueCatalogApplied: boolean;
+  nextDensityKgPerL?: number | null;
+}
+
+export interface CatalogBulkDensityResolution {
+  value: string;
+  isCatalogApplied: boolean;
 }
 
 export function resolveCatalogBulkDensityValue({
   currentValue,
-  isCurrentValuePresetApplied,
-  nextProductName,
-}: ResolveCatalogBulkDensityValueParams): string {
-  const nextPreset = getPublishedBulkDensity(nextProductName);
-  const trimmedCurrentValue = currentValue.trim();
-  const canReplaceValue = !trimmedCurrentValue || isCurrentValuePresetApplied;
+  isCurrentValueCatalogApplied,
+  nextDensityKgPerL,
+}: ResolveCatalogBulkDensityValueParams): CatalogBulkDensityResolution {
+  const canReplaceValue = !currentValue.trim() || isCurrentValueCatalogApplied;
 
-  if (!canReplaceValue) return currentValue;
-  return nextPreset ? String(nextPreset.densityKgPerL) : '';
+  if (!canReplaceValue) {
+    return { value: currentValue, isCatalogApplied: false };
+  }
+
+  return {
+    value: nextDensityKgPerL == null ? '' : String(nextDensityKgPerL),
+    isCatalogApplied: nextDensityKgPerL != null,
+  };
 }
 
 export function listExistingManufacturers(items: WarehouseItem[] | undefined): string[] {

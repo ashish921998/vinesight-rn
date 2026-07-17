@@ -51,6 +51,11 @@ interface FormModalProps {
   contentContainerStyle?: StyleProp<ViewStyle>;
   saveButtonTargetId?: string;
   /**
+   * Caps the top inset used by the in-form header. Useful when this component
+   * renders inside a native sheet, which already sits below the status bar.
+   */
+  headerTopInsetCap?: number;
+  /**
    * When true the primary save button spans the full footer width (a stronger
    * CTA for submit-style forms). Defaults to the standard right-aligned,
    * content-width button. Ignored when `showResetButton` is set.
@@ -83,6 +88,7 @@ export function FormModal({
   contentContainerStyle,
   saveButtonTargetId,
   saveFullWidth = false,
+  headerTopInsetCap,
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -98,7 +104,10 @@ export function FormModal({
   const headerStyle: ViewStyle = {
     borderBottomWidth: 1,
     borderBottomColor: m3.surface.s100,
-    paddingTop: Math.max(insets.top, 12),
+    paddingTop:
+      headerTopInsetCap === undefined
+        ? Math.max(insets.top, 12)
+        : Math.max(12, Math.min(insets.top, headerTopInsetCap)),
     paddingBottom: 12,
     paddingHorizontal: spacing[6],
     backgroundColor: m3.surface.s100,
@@ -607,6 +616,7 @@ interface SegmentedControlProps {
   selectedValue: string;
   onSelect: (value: string) => void;
   selectedTextColor?: string;
+  accessibilityLabel?: string;
 }
 
 export function SegmentedControl({
@@ -614,6 +624,7 @@ export function SegmentedControl({
   selectedValue,
   onSelect,
   selectedTextColor,
+  accessibilityLabel,
 }: SegmentedControlProps) {
   const m3 = useM3();
   const isDark = useIsDark();
@@ -675,13 +686,22 @@ export function SegmentedControl({
   });
 
   return (
-    <View style={containerStyle}>
+    <View
+      style={containerStyle}
+      accessibilityRole="radiogroup"
+      accessibilityLabel={accessibilityLabel ?? 'Options'}
+    >
       {options.map((option) => {
         const selected = selectedValue === option.value;
         return (
           <Pressable
             key={option.value}
-            onPress={() => onSelect(option.value)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected }}
+            onPress={() => {
+              triggerHaptic();
+              onSelect(option.value);
+            }}
             style={({ pressed }) => getSegmentStyle(selected, pressed)}
           >
             <Text style={getSegmentTextStyle(selected)} numberOfLines={2}>
@@ -815,6 +835,8 @@ interface FormInputProps {
   onSubmitEditing?: (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => void;
   returnKeyType?: TextInputProps['returnKeyType'];
   blurOnSubmit?: boolean;
+  /** Keeps the input discoverable to assistive technology when its visual label is omitted. */
+  accessibilityLabel?: string;
 }
 
 export function FormInput({
@@ -834,6 +856,7 @@ export function FormInput({
   onSubmitEditing,
   returnKeyType = multiline ? 'default' : 'done',
   blurOnSubmit = true,
+  accessibilityLabel,
 }: FormInputProps) {
   const m3 = useM3();
   const containerStyle: ViewStyle = {
@@ -879,10 +902,12 @@ export function FormInput({
 
   return (
     <View style={[containerStyle, style]}>
-      <Text style={labelStyle}>
-        {label}
-        {required && <Text style={requiredStyle}> *</Text>}
-      </Text>
+      {label ? (
+        <Text style={labelStyle}>
+          {label}
+          {required && <Text style={requiredStyle}> *</Text>}
+        </Text>
+      ) : null}
       <View style={inputContainerStyle}>
         {prefix && <Text style={[prefixSuffixStyle, { paddingLeft: spacing[4] }]}>{prefix}</Text>}
         <TextInput
@@ -898,6 +923,7 @@ export function FormInput({
           onSubmitEditing={onSubmitEditing}
           returnKeyType={returnKeyType}
           blurOnSubmit={blurOnSubmit}
+          accessibilityLabel={accessibilityLabel ?? label}
           style={[
             inputStyle,
             multiline && { minHeight: numberOfLines * 24, textAlignVertical: 'top' },

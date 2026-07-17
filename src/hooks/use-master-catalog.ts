@@ -28,6 +28,18 @@ type DoseGuidanceRow = {
   source_url: string | null;
 };
 
+function isMissingDensityColumnsError(
+  error: { code?: string; message?: string; details?: string } | null,
+): boolean {
+  if (!error) return false;
+
+  const errorText = `${error.message ?? ''} ${error.details ?? ''}`.toLowerCase();
+  return (
+    (error.code === '42703' || error.code === 'PGRST204') &&
+    /(density_kg_per_l|density_source_url|density_verified)/.test(errorText)
+  );
+}
+
 /** Map a guidance row to the camelCase catalog type at the read boundary. */
 function mapDoseGuidanceRow(row: DoseGuidanceRow): CatalogDoseGuidance {
   const guidance: CatalogDoseGuidance = {
@@ -86,10 +98,12 @@ async function fetchMasterProducts(args: {
 }): Promise<MasterCatalogProduct[]> {
   const stateCode = args.stateCode?.trim().toUpperCase() || null;
 
-  const selectColumns =
+  const baseSelectColumns =
     'id,name,manufacturer,active_ingredient,input_type,verification_tier,formulation,state_code,source_reference,is_active,created_at,updated_at';
+  const densitySelectColumns =
+    'id,name,manufacturer,active_ingredient,input_type,verification_tier,formulation,density_kg_per_l,density_source_url,density_verified,state_code,source_reference,is_active,created_at,updated_at';
 
-  const buildProductQuery = (options?: { stateCode?: string }) => {
+  const buildProductQuery = (selectColumns: string, options?: { stateCode?: string }) => {
     let query = supabase
       .from(TABLES.CHEMICAL_PRODUCTS)
       .select(selectColumns)
@@ -107,11 +121,15 @@ async function fetchMasterProducts(args: {
     return query;
   };
 
-  const productsResult = await buildProductQuery(stateCode ? { stateCode } : undefined);
+  const queryOptions = stateCode ? { stateCode } : undefined;
+  let productsResult = await buildProductQuery(densitySelectColumns, queryOptions);
+  if (isMissingDensityColumnsError(productsResult.error)) {
+    productsResult = await buildProductQuery(baseSelectColumns, queryOptions);
+  }
   if (productsResult.error?.code === '42P01') return [];
   if (productsResult.error) throw productsResult.error;
 
-  const products = (productsResult.data ?? []) as ProductRow[];
+  const products = (productsResult.data ?? []) as unknown as ProductRow[];
   if (products.length === 0) return [];
 
   const productIds = products.map((product) => product.id);
