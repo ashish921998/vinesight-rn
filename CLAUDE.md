@@ -28,6 +28,7 @@ Key routing rules:
 
 ### Custom deploy hooks
 - Pre-merge: `npm run lint && npm run typecheck && npm run test -- --ci`
+- Dead-code scan (advisory, not gating): `npm run knip` — see `knip.json`. Reports unused files, exports, dependencies. Triaged list of known-but-acceptable findings tracked separately.
 - Deploy trigger: `eas update --branch production --platform all --message "Release $(git describe --tags --abbrev=0 2>/dev/null || git log -1 --format=%s)"`
 - Deploy status: check EAS dashboard at https://expo.dev/accounts/vinesight/projects/vinesight-rn/updates
 - Health check: none (mobile app — no HTTP endpoint; verify via EAS dashboard)

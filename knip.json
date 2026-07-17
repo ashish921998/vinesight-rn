@@ -1,0 +1,31 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [
+        "app/**/*.tsx",
+        "jest-setup/**/*.{js,ts}",
+        "plugins/**/*.{js,ts}",
+        "scripts/seed-fertilizer-catalog.ts",
+        "scripts/seed-fertilizer-dose-guidance.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "components/**/*.{ts,tsx}",
+        "app/**/*.{ts,tsx}",
+        "scripts/**/*.{ts,tsx}",
+        "jest-setup/**/*.{ts,tsx}",
+        ".rnstorybook/**/*.{ts,tsx}"
+      ],
+      "ignoreBinaries": ["eas"],
+      "ignoreDependencies": [
+        "expo-updates",
+        "sf-symbols-typescript",
+        "globals",
+        "@expo/config-plugins",
+        "@posthog/core",
+        "typescript-eslint"
+      ]
+    }
+  }
+}
