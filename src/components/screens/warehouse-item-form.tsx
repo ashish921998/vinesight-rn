@@ -49,6 +49,7 @@ import { ICON_REGISTRY } from '@/constants/icon-registry';
 import { NUTRIENT_CODES } from '@/constants/nutrient-definitions';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import {
+  isCatalogBulkDensityValue,
   isValidExpiryDate,
   listExistingManufacturers,
   resolveCatalogBulkDensityValue,
@@ -228,7 +229,7 @@ function parseComposition(rows: CompositionRow[]): NutrientCompositionItem[] {
     if (
       nutrientCode.length > 0 &&
       Number.isFinite(parsedPercent) &&
-      parsedPercent >= 0 &&
+      parsedPercent > 0 &&
       parsedPercent <= 100
     ) {
       result.push({
@@ -356,6 +357,7 @@ export default function WarehouseItemForm({
   // Track previous state to prevent unnecessary updates
   const prevVisibleRef = useRef(false);
   const prevEditingItemIdRef = useRef<number | undefined>(undefined);
+  const densityOwnershipInitializedRef = useRef(false);
   const filteredCatalogueItems = useMemo(() => {
     const query = catalogueSearchQuery.trim().toLowerCase();
     if (!query) return catalogProducts;
@@ -477,6 +479,7 @@ export default function WarehouseItemForm({
   };
 
   const applyCatalogProduct = (product: MasterCatalogProduct) => {
+    densityOwnershipInitializedRef.current = true;
     setManualCatalogueDraft(
       (prev) =>
         prev ?? {
@@ -619,7 +622,17 @@ export default function WarehouseItemForm({
           setDensityKgPerL(
             editingItem.density_kg_per_l ? String(editingItem.density_kg_per_l) : '',
           );
-          setIsCatalogDensityApplied(false);
+          const mappedProduct = catalogProducts.find(
+            (product) => product.id === editingItem.catalog_product_id,
+          );
+          setIsCatalogDensityApplied(
+            isCatalogBulkDensityValue(
+              editingItem.density_kg_per_l,
+              mappedProduct?.density_kg_per_l,
+            ),
+          );
+          densityOwnershipInitializedRef.current =
+            editingItem.catalog_product_id == null || mappedProduct != null;
           setExpiryDate(editingItem.expiry_date ?? '');
           const existingComposition = editingItem.composition ?? [];
           setCompositionRows(
@@ -640,7 +653,28 @@ export default function WarehouseItemForm({
     }
     prevVisibleRef.current = isVisible;
     prevEditingItemIdRef.current = editingItem?.id;
-  }, [isVisible, editingItem]);
+  }, [isVisible, editingItem, catalogProducts]);
+
+  useEffect(() => {
+    if (
+      !isVisible ||
+      !editingItem ||
+      catalogSelectionTouched ||
+      densityOwnershipInitializedRef.current ||
+      !selectedCatalogProduct ||
+      selectedCatalogProduct.id !== editingItem.catalog_product_id
+    ) {
+      return;
+    }
+
+    setIsCatalogDensityApplied(
+      isCatalogBulkDensityValue(
+        editingItem.density_kg_per_l,
+        selectedCatalogProduct.density_kg_per_l,
+      ),
+    );
+    densityOwnershipInitializedRef.current = true;
+  }, [catalogSelectionTouched, editingItem, isVisible, selectedCatalogProduct]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSubmit = async () => {
@@ -916,6 +950,7 @@ export default function WarehouseItemForm({
               label="Bulk Density (kg/L)"
               value={densityKgPerL}
               onChangeText={(value) => {
+                densityOwnershipInitializedRef.current = true;
                 setDensityKgPerL(value);
                 setIsCatalogDensityApplied(false);
               }}

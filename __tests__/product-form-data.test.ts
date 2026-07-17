@@ -1,4 +1,5 @@
 import {
+  isCatalogBulkDensityValue,
   isValidExpiryDate,
   listExistingManufacturers,
   resolveCatalogBulkDensityValue,
@@ -41,6 +42,11 @@ describe('purchase product form data', () => {
     expect(isValidExpiryDate('2027-02-28')).toBe(true);
     expect(isValidExpiryDate('2027-02-29')).toBe(false);
     expect(isValidExpiryDate('28/02/2027')).toBe(false);
+  });
+
+  it('recognizes a saved catalogue density without claiming a manual override', () => {
+    expect(isCatalogBulkDensityValue(0.75, 0.75)).toBe(true);
+    expect(isCatalogBulkDensityValue(0.82, 0.75)).toBe(false);
   });
 
   it('replaces only empty or catalog-applied density values', () => {

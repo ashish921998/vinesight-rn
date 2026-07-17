@@ -11,6 +11,13 @@ export interface CatalogBulkDensityResolution {
   isCatalogApplied: boolean;
 }
 
+export function isCatalogBulkDensityValue(
+  value: number | null | undefined,
+  catalogDensityKgPerL: number | null | undefined,
+): boolean {
+  return value != null && catalogDensityKgPerL != null && value === catalogDensityKgPerL;
+}
+
 export function resolveCatalogBulkDensityValue({
   currentValue,
   isCurrentValueCatalogApplied,

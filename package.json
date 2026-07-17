@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "knip": "knip",
-    "knip:fix": "knip --fix --fix-type files,dependencies",
+    "knip:fix": "knip --fix --fix-type files,dependencies --allow-remove-files",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
