@@ -21,7 +21,7 @@ import type {
 import { mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
 import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
 
-const HECTARES_TO_ACRES = 0.404686;
+const ACRES_TO_HECTARES = 0.404686;
 
 export type EntryLogFormInput =
   | { type: 'irrigation'; data: IrrigationFormData }
@@ -55,9 +55,11 @@ export type EntryLogRecordFields =
   | { type: 'fertigation'; fields: FertigationFields }
   | { type: 'note'; fields: { notes: string } };
 
-/** Multiplier that converts a per-plot-area quantity into a per-acre quantity. */
+/** Multiplier that converts a per-acre quantity into the farm's preferred area unit.
+ *  For hectares-preference farms, a per-acre rate is normalized by ×0.404686
+ *  (1 acre = 0.404686 ha) so the stored quantity matches the per-hectare scale. */
 export function perAcreFactor(areaUnit: AreaUnitPreference | null | undefined): number {
-  return resolveAreaUnitPreference(areaUnit ?? 'acres') === 'hectares' ? HECTARES_TO_ACRES : 1;
+  return resolveAreaUnitPreference(areaUnit ?? 'acres') === 'hectares' ? ACRES_TO_HECTARES : 1;
 }
 
 /** Human-readable "Name (qty unit), ..." summary stored on the spray record. */
