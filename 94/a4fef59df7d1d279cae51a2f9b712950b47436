@@ -1,0 +1,29 @@
+CLAUDE.md
+  s_5511ce53abee8c::t_c18bfca555c58b 31
+package.json
+  s_5511ce53abee8c::t_7165379868be67 138
+  s_5511ce53abee8c::t_713501b02b6a54 12-13
+knip.json
+  s_5511ce53abee8c::t_45460f1855e6b6 9,20
+  s_5511ce53abee8c::t_6f3139b820b11c 10
+  s_5511ce53abee8c::t_5e07e7d74dbd42 6,19,21-27
+  s_5511ce53abee8c::t_1454390cec274f 1-5,7-8,11-18,28-31
+package-lock.json
+  s_5511ce53abee8c::t_7ca7b0fed6b379 106,11071-11080,11273-11288,11492-11504,13576-13585,13760-14235,17827-17836,18416-18428,19479-19488,19809-19818
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "94a4fef59df7d1d279cae51a2f9b712950b47436",
+  "prompts": {},
+  "sessions": {
+    "s_5511ce53abee8c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0915abf18ffenIbr0l2YydgL0U",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
