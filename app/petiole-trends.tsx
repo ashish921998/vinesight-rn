@@ -13,7 +13,7 @@ import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry'
 import { SafeScreen } from '@/components/ui/safe-screen';
 import { useFarm } from '@/hooks/use-farms';
 import { usePetioleTestTrends, PETIOLE_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
-import { useFertigationRecords } from '@/hooks';
+import { useFarmAreaAcres, useFertigationRecords } from '@/hooks';
 import ParameterSelector from '@/components/screens/parameter-selector';
 import { PetioleComparison, type ComparisonTest } from '@/components/lab/petiole-comparison';
 import TrendsChart from '@/components/screens/trends-chart';
@@ -77,6 +77,10 @@ export default function PetioleTrendsScreen() {
   const farmIdNum = Number.isNaN(parsed) ? 0 : parsed;
 
   const { data: farm, isLoading: farmLoading } = useFarm(farmIdNum);
+  // record.area is raw in the farm's preferred unit (acres OR hectares); the
+  // nutrient aggregator needs the resolved unit so it can convert to canonical
+  // acres before per-acre math (issue #257).
+  const { preferredAreaUnit } = useFarmAreaAcres(farm?.area);
   const { data: trends, isLoading: trendsLoading } = usePetioleTestTrends(farmIdNum);
   const { data: fertigationRecords = [], isLoading: fertigationLoading } =
     useFertigationRecords(farmIdNum);
@@ -92,6 +96,7 @@ export default function PetioleTrendsScreen() {
           testDates: trends.tests.map((test) => test.date),
           sprayRecords: [],
           fertigationRecords,
+          areaUnit: preferredAreaUnit,
         })
       : [];
 
