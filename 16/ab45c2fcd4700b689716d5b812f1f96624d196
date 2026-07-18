@@ -1,0 +1,144 @@
+__tests__/nutrient-flow-service-snapshots.test.ts
+  s_118699e91d7240::t_c00723a8901187 386,434,448,497,529
+__tests__/nutrient-flow-service.test.ts
+  s_f53d3d491afa5a::t_6ed1bce3043d7c 162,200
+  s_85ecba22a2bdfd::t_b89e8557b4668c 5
+  s_ba9d7e91b6b376::t_2ae5a7cb12d011 6,208-217,221-253,255-284,286-323,325-354,356-380,382
+  s_380012d627619d::t_fdd9e4db78d133 218-220
+  s_59c6579132c52b::t_7d4bd1b5ee23a2 254,285,324,355,381
+  s_ba9d7e91b6b376::t_d3a7363ad9021e 383
+__tests__/entry-log-fields.test.ts
+  s_0a60a99adfa21d::t_aea5d3540c0a1a 2,229-231
+  s_8e0e6a953e4f66::t_335534d72d1907 218-228,232-359
+  s_9a1de280a6e406::t_fe7a78ef88b226 11
+app/petiole-trends.tsx
+  s_5ae9d226cb73ad::t_846829b389810b 80-83,99
+  s_2fe3fc7fb3a855::t_ca59a08432815b 16
+src/utils/entry-log-fields.ts
+  s_adb52a649c5c9c::t_aa81c5d8388022 22-26,158-164,181,232
+src/services/nutrient-flow-service.ts
+  s_167c77f4725ee6::t_7b74280f1dc779 77-91,252-255,260,280-283,288,330,335-338,357,368
+  s_dbd5525c09c524::t_6982582f5e26e9 560,566
+  s_167c77f4725ee6::t_d021f2ac31ed42 76
+  s_dbd5525c09c524::t_f853c34518c22c 567-569
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "16ab45c2fcd4700b689716d5b812f1f96624d196",
+  "prompts": {},
+  "sessions": {
+    "s_0a60a99adfa21d": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rbB8oujLQuxpVNNr1fk",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_118699e91d7240": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb5hHIX8Yld1OvmlvjU",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_167c77f4725ee6": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb3UnXQjXC27VHJFWPN",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_2fe3fc7fb3a855": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb4qK4VQ1UazesOEJBm",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_380012d627619d": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rbBImLywxb59qUd6edX",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_59c6579132c52b": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb9koSWLKH83Wu4p0Vv",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_5ae9d226cb73ad": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb4eOaR0QOrfC0HYoGq",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_85ecba22a2bdfd": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rbBRZAQLtngSqQclaBb",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_8e0e6a953e4f66": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb7o6KCBxmkiRBsbGzy",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_9a1de280a6e406": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb7cOyePMaS3e2HTqS0",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_adb52a649c5c9c": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb3C7NPjDFZesnurRVi",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_ba9d7e91b6b376": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb8dUx5YqfiqMTf7slU",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_dbd5525c09c524": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb4GHjMKmVG4WbuG1f7",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_f53d3d491afa5a": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033rb5nZJkvBzsNnHX88bg",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
