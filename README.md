@@ -18,7 +18,7 @@ React Native mobile application built with Expo SDK 57 for vineyard management a
 
 - Node.js (Latest LTS)
 - npm or yarn
-- Expo Go app on your mobile device or an emulator
+- A development build / dev client on your device or emulator. Expo Go is **not** supported — this app uses native modules (`@expo/ui`, Compose navigation) that require a custom dev client (`npx expo run:android` / `npx expo run:ios`, or an EAS build).
 
 ### Installation
 

@@ -3220,10 +3220,10 @@ export default function FarmDetailScreen() {
         <DateTimePicker
           value={seasonStartDate}
           mode="date"
-          display="default"
+          presentation="dialog"
           minimumDate={minimumSeasonStartDate ?? undefined}
           maximumDate={seasonFormMode === 'end' ? seasonEndDate : undefined}
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowSeasonStartPicker(false);
             if (!date) return;
             setSeasonStartDate(date);
@@ -3236,6 +3236,7 @@ export default function FarmDetailScreen() {
               });
             }
           }}
+          onDismiss={() => setShowSeasonStartPicker(false)}
         />
       )}
 
@@ -3243,21 +3244,22 @@ export default function FarmDetailScreen() {
         <DateTimePicker
           value={seasonEndDate}
           mode="date"
-          display="default"
+          presentation="dialog"
           minimumDate={effectiveSeasonStartDate}
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowSeasonEndPicker(false);
             if (date) setSeasonEndDate(date);
           }}
+          onDismiss={() => setShowSeasonEndPicker(false)}
         />
       )}
       {showSeasonTargetPicker && seasonFormMode === 'start' && !isIOS && (
         <DateTimePicker
           value={seasonTargetHarvestDraft}
           mode="date"
-          display="default"
+          presentation="dialog"
           minimumDate={seasonStartDate}
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowSeasonTargetPicker(false);
             if (!date) return;
             setSeasonTargetHarvestDraft(date);
@@ -3266,21 +3268,23 @@ export default function FarmDetailScreen() {
               guidedTourEmit('guidedTour.seasonFormPhaseChanged', { phase: 'submit' });
             }
           }}
+          onDismiss={() => setShowSeasonTargetPicker(false)}
         />
       )}
       {showActiveSeasonTargetPicker && !isIOS && (
         <DateTimePicker
           value={activeSeasonTargetHarvestDraft}
           mode="date"
-          display="default"
+          presentation="dialog"
           minimumDate={parseDbDateToLocalDate(activeSeasonRecord?.start_date ?? '') ?? undefined}
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowActiveSeasonTargetPicker(false);
             if (isSavingActiveSeasonTargetDate) return;
             if (!date) return;
             setActiveSeasonTargetHarvestDraft(date);
             void saveActiveSeasonTargetHarvestDate(date);
           }}
+          onDismiss={() => setShowActiveSeasonTargetPicker(false)}
         />
       )}
       {isEditingActiveSeasonTargetIOS && isIOS && (
@@ -3395,20 +3399,21 @@ export default function FarmDetailScreen() {
         <DateTimePicker
           value={activeSeasonStartDraft}
           mode="date"
-          display="default"
+          presentation="dialog"
           minimumDate={minimumSeasonStartDate ?? undefined}
           maximumDate={
             activeSeasonRecord?.target_harvest_date
               ? (parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ?? undefined)
               : undefined
           }
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowActiveSeasonStartPicker(false);
             if (isSavingActiveSeasonStartDate) return;
             if (!date) return;
             setActiveSeasonStartDraft(date);
             void saveActiveSeasonStartDate(date);
           }}
+          onDismiss={() => setShowActiveSeasonStartPicker(false)}
         />
       )}
       {isEditingActiveSeasonStartIOS && isIOS && (
