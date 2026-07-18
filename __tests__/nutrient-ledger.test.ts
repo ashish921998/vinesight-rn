@@ -69,6 +69,7 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       fromDate: '2026-03-01',
       toDate: '2026-03-31',
       areaAcres: 2,
+      areaUnit: 'acres',
     });
 
     // (10 + 20) kg × 46% N = 13.8 kg N; the February record never enters.
@@ -99,6 +100,7 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       fromDate: '2026-03-01',
       toDate: '2026-03-31',
       areaAcres: 2,
+      areaUnit: 'acres',
     });
 
     const phosphorus = ledger.rows.find((row) => row.element === 'P');
@@ -136,6 +138,7 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       fromDate: '2026-03-01',
       toDate: '2026-03-31',
       areaAcres: 2,
+      areaUnit: 'acres',
     });
 
     expect(ledger.rows.map((row) => row.element)).toEqual(['N', 'K', 'Fe', 'Zn']);
@@ -172,6 +175,7 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       fromDate: '2026-03-01',
       toDate: '2026-03-31',
       areaAcres: 2,
+      areaUnit: 'acres',
     });
 
     expect(ledger.rows.map((row) => row.element)).toEqual([
@@ -221,6 +225,7 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       fromDate: '2026-03-01',
       toDate: '2026-03-31',
       areaAcres: 2,
+      areaUnit: 'acres',
     });
 
     // Exactly one Ca row, macro-sorted, merging direct + oxide contributions.
@@ -260,6 +265,7 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       fromDate: '2026-03-01',
       toDate: '2026-03-31',
       areaAcres: 2,
+      areaUnit: 'acres',
     });
 
     // 1/30000 rounds to 0.00 at 2 decimals — must not read as "no data".
@@ -286,6 +292,7 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       fromDate: '2026-03-01',
       toDate: '2026-03-31',
       areaAcres: 2,
+      areaUnit: 'acres',
     });
 
     // Only Urea contributes; the 25 kg mystery mix is never guessed at.
@@ -309,6 +316,7 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       fromDate: '2026-03-01',
       toDate: '2026-03-31',
       areaAcres: 2,
+      areaUnit: 'acres',
     });
 
     expect(ledger.rows).toEqual([]);
@@ -334,6 +342,7 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       fromDate: '2026-03-01',
       toDate: '2026-03-31',
       areaAcres: null,
+      areaUnit: 'acres',
     });
 
     const nitrogen = ledger.rows.find((row) => row.element === 'N');
@@ -375,6 +384,45 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
     expect(nitrogen?.elementalKgPerAcre).toBeCloseTo(5 * 0.46, 4);
   });
 
+  it('converts spray record areas from hectares before per-acre kernel math', () => {
+    // Mirrors the fertigation hectares case above for the spray path, locking
+    // the ledger's raw-hectares-to-acres conversion at lines 568/577.
+    const spray: SprayRecord = {
+      id: 1,
+      farm_id: 1,
+      date: '2026-03-10',
+      chemical: 'Foliar N',
+      dose: 'Water: 200L',
+      area: 2, // hectares under this preference
+      weather: '',
+      operator: '',
+      chemical_items: [
+        {
+          name: 'Urea',
+          unit: 'kg',
+          quantity: 5,
+          quantity_basis: 'per_acre',
+          composition_snapshot: [{ nutrient_code: 'N', percent: 46, basis: 'declared' }],
+        },
+      ],
+    } as SprayRecord;
+
+    const ledger = calculateNutrientLedger({
+      sprayRecords: [spray],
+      fertigationRecords: [],
+      fromDate: '2026-03-01',
+      toDate: '2026-03-31',
+      areaAcres: 2 / 0.404686, // farm area, already converted by the caller
+      areaUnit: 'hectares',
+    });
+
+    const nitrogen = ledger.rows.find((row) => row.element === 'N');
+    const acres = 2 / 0.404686;
+    // 5 kg/acre × 4.9421 acres × 46% N; per-acre recovers the declared rate's N.
+    expect(nitrogen?.elementalKg).toBeCloseTo(5 * acres * 0.46, 3);
+    expect(nitrogen?.elementalKgPerAcre).toBeCloseTo(5 * 0.46, 4);
+  });
+
   it('parses spray water volume from the dose string for concentration items', () => {
     const spray: SprayRecord = {
       id: 1,
@@ -401,6 +449,7 @@ describe('calculateNutrientLedger — period + coverage + dual basis (issue #200
       fromDate: '2026-03-01',
       toDate: '2026-03-31',
       areaAcres: 2,
+      areaUnit: 'acres',
     });
 
     // 2 g/L × 500 L = 1 kg product × 20% B = 0.2 kg B.

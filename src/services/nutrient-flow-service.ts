@@ -503,7 +503,7 @@ export function calculateNutrientLedger({
   toDate: string;
   areaAcres: number | null | undefined;
   /** The user's stored-area unit — record.area is RAW in this unit, not acres. */
-  areaUnit?: AreaUnitPreference | string | null;
+  areaUnit: AreaUnitPreference | string | null;
 }): NutrientLedger {
   const validArea =
     typeof areaAcres === 'number' && Number.isFinite(areaAcres) && areaAcres > 0 ? areaAcres : null;
