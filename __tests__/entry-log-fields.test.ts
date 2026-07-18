@@ -1,4 +1,5 @@
 import type { ChemicalEntry, FertilizerEntry, SprayFormData } from '@/components/forms';
+import type { NutrientCompositionItem } from '@/types';
 import {
   buildEntryLogRecordFields,
   buildFertigationItems,
@@ -7,6 +8,7 @@ import {
   perAcreFactor,
   resolveSprayPhi,
 } from '@/utils/entry-log-fields';
+import { convertAreaToAcres } from '@/utils/preferences';
 
 const HECTARES_TO_ACRES = 0.404686;
 
@@ -211,5 +213,147 @@ describe('resolveSprayPhi', () => {
     expect(result.notes).toBe(
       '[PHI_OVERRIDE] Harvest safety conflict override acknowledged in app. [PHI_UNAVAILABLE] Saved without resolved PHI metadata.',
     );
+  });
+});
+
+// ─── issue #257: hectares-farms get wrong per-acre nutrient totals ────────
+//
+// record.area is stored RAW in the farm's preferred unit. On hectares farms
+// the nutrient kernel's per-acre denominator must be canonical acres (raw ha ×
+// 1/0.404686), not raw hectares — otherwise per-acre totals come out ~2.47×
+// too high. These tests cover the save path for spray + fertigation, both
+// `total` and `per_acre` quantity bases.
+describe('buildEntryLogRecordFields — hectares-farm nutrient math (issue #257)', () => {
+  const farmAreaHa = 2;
+  const farmAreaAcres = convertAreaToAcres(farmAreaHa, 'hectares');
+  const N_COMPOSITION: NutrientCompositionItem[] = [
+    { nutrient_code: 'N', percent: 100, basis: 'declared' },
+  ];
+
+  it('spray: total-basis item — per-acre is 0.404686× the buggy raw-hectare result', () => {
+    const result = buildEntryLogRecordFields(
+      {
+        type: 'spray',
+        data: sprayData({
+          waterVolume: 200,
+          chemicals: [
+            chemical({
+              name: 'Urea',
+              quantity: 10,
+              unit: 'kg',
+              quantityBasis: 'total',
+              compositionSnapshot: N_COMPOSITION,
+            }),
+          ],
+        }),
+      },
+      { area: farmAreaHa, areaUnit: 'hectares' },
+    );
+    expect(result.type).toBe('spray');
+    if (result.type !== 'spray') return;
+
+    // Plot total: 10 kg N (independent of area).
+    expect(result.fields.nutrient_totals_elemental?.N).toBeCloseTo(10, 6);
+    // Corrected per-acre: 10 / 4.942… = 2.023… kg/acre
+    expect(result.fields.nutrient_totals_elemental_per_acre?.N).toBeCloseTo(10 / farmAreaAcres, 6);
+    // Buggy raw-hectare denominator would have given 10 / 2 = 5; the fix is
+    // exactly 0.404686× the buggy value.
+    expect(result.fields.nutrient_totals_elemental_per_acre?.N ?? 0).toBeCloseTo(
+      (10 / farmAreaHa) * HECTARES_TO_ACRES,
+      6,
+    );
+    // Persisted area stays raw (contract preserved).
+    expect(result.fields.area).toBe(farmAreaHa);
+  });
+
+  it('spray: per_acre-basis item — per-acre rate stays stable, plot total uses converted acreage', () => {
+    // User enters 5 kg/ha on a hectares farm. perAcreFactor (0.404686) stores
+    // the canonical per-acre rate (2.023… kg/acre). The kernel must multiply by
+    // converted acres (4.942…) to recover the plot total of 10 kg.
+    const result = buildEntryLogRecordFields(
+      {
+        type: 'spray',
+        data: sprayData({
+          waterVolume: 200,
+          chemicals: [
+            chemical({
+              name: 'Urea',
+              quantity: 5,
+              unit: 'kg',
+              quantityBasis: 'per_acre',
+              compositionSnapshot: N_COMPOSITION,
+            }),
+          ],
+        }),
+      },
+      { area: farmAreaHa, areaUnit: 'hectares' },
+    );
+    if (result.type !== 'spray') return;
+
+    const storedPerAcreRate = 5 * HECTARES_TO_ACRES; // 2.023…
+    // Plot total: storedPerAcreRate × farmAreaAcres = 5 kg/ha × 2 ha = 10 kg.
+    expect(result.fields.nutrient_totals_elemental?.N).toBeCloseTo(
+      storedPerAcreRate * farmAreaAcres,
+      6,
+    );
+    // Per-acre stays stable at the canonical stored rate.
+    expect(result.fields.nutrient_totals_elemental_per_acre?.N).toBeCloseTo(storedPerAcreRate, 6);
+  });
+
+  it('fertigation: total-basis item — per-acre is 0.404686× the buggy raw-hectare result', () => {
+    const result = buildEntryLogRecordFields(
+      {
+        type: 'fertigation',
+        data: {
+          fertilizers: [
+            fertilizer({
+              name: 'Urea',
+              quantity: 10,
+              unit: 'kg',
+              quantityBasis: 'total',
+              compositionSnapshot: N_COMPOSITION,
+            }),
+          ],
+        },
+      },
+      { area: farmAreaHa, areaUnit: 'hectares' },
+    );
+    if (result.type !== 'fertigation') return;
+
+    expect(result.fields.nutrient_totals_elemental?.N).toBeCloseTo(10, 6);
+    expect(result.fields.nutrient_totals_elemental_per_acre?.N).toBeCloseTo(10 / farmAreaAcres, 6);
+    expect(result.fields.nutrient_totals_elemental_per_acre?.N ?? 0).toBeCloseTo(
+      (10 / farmAreaHa) * HECTARES_TO_ACRES,
+      6,
+    );
+    expect(result.fields.area).toBe(farmAreaHa);
+  });
+
+  it('fertigation: per_acre-basis item — per-acre rate stays stable, plot total uses converted acreage', () => {
+    const result = buildEntryLogRecordFields(
+      {
+        type: 'fertigation',
+        data: {
+          fertilizers: [
+            fertilizer({
+              name: 'Urea',
+              quantity: 5,
+              unit: 'kg',
+              quantityBasis: 'per_acre',
+              compositionSnapshot: N_COMPOSITION,
+            }),
+          ],
+        },
+      },
+      { area: farmAreaHa, areaUnit: 'hectares' },
+    );
+    if (result.type !== 'fertigation') return;
+
+    const storedPerAcreRate = 5 * HECTARES_TO_ACRES;
+    expect(result.fields.nutrient_totals_elemental?.N).toBeCloseTo(
+      storedPerAcreRate * farmAreaAcres,
+      6,
+    );
+    expect(result.fields.nutrient_totals_elemental_per_acre?.N).toBeCloseTo(storedPerAcreRate, 6);
   });
 });

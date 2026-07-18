@@ -139,9 +139,7 @@ describe('calculateNutrientTotalsForLog — snapshot / golden vectors', () => {
   it('SNAP: gm/L concentration × waterVolumeL', () => {
     // 2 gm/L × 200 L = 400 g = 0.4 kg × 10% N = 0.04 kg N
     const result = calculateNutrientTotalsForLog({
-      items: [
-        { quantity: 2, unit: 'gm/L', quantity_basis: 'total', composition_snapshot: N_ONLY },
-      ],
+      items: [{ quantity: 2, unit: 'gm/L', quantity_basis: 'total', composition_snapshot: N_ONLY }],
       areaAcre: 1,
       waterVolumeL: 200,
     });
@@ -181,7 +179,9 @@ describe('calculateNutrientTotalsForLog — snapshot / golden vectors', () => {
   it('SNAP: ppm × waterVolumeL', () => {
     // 500 ppm × 100 L ÷ 1_000_000 = 0.05 kg × 10% N = 0.005 kg N
     const result = calculateNutrientTotalsForLog({
-      items: [{ quantity: 500, unit: 'ppm', quantity_basis: 'total', composition_snapshot: N_ONLY }],
+      items: [
+        { quantity: 500, unit: 'ppm', quantity_basis: 'total', composition_snapshot: N_ONLY },
+      ],
       areaAcre: 1,
       waterVolumeL: 100,
     });
@@ -324,9 +324,7 @@ describe('calculateNutrientTotalsForLog — snapshot / golden vectors', () => {
 
   it('SNAP: concentration unit without water volume → item excluded', () => {
     const result = calculateNutrientTotalsForLog({
-      items: [
-        { quantity: 2, unit: 'gm/L', quantity_basis: 'total', composition_snapshot: N_ONLY },
-      ],
+      items: [{ quantity: 2, unit: 'gm/L', quantity_basis: 'total', composition_snapshot: N_ONLY }],
       areaAcre: 1,
       waterVolumeL: null,
     });
@@ -385,6 +383,7 @@ describe('aggregateNutrientsBetweenPetioleTests — snapshot / golden vectors', 
       testDates: ['2026-01-01', '2026-01-10', '2026-01-20'],
       sprayRecords,
       fertigationRecords,
+      areaUnit: 'acres',
     });
 
     expect(intervals).toHaveLength(2);
@@ -432,6 +431,7 @@ describe('aggregateNutrientsBetweenPetioleTests — snapshot / golden vectors', 
       testDates: ['2026-02-01', '2026-02-10'],
       sprayRecords: [],
       fertigationRecords,
+      areaUnit: 'acres',
     });
 
     expect(intervals).toHaveLength(1);
@@ -445,6 +445,7 @@ describe('aggregateNutrientsBetweenPetioleTests — snapshot / golden vectors', 
       testDates: ['2026-01-01'],
       sprayRecords: [],
       fertigationRecords: [],
+      areaUnit: 'acres',
     });
     expect(intervals).toHaveLength(0);
   });
@@ -493,6 +494,7 @@ describe('aggregateNutrientsBetweenPetioleTests — snapshot / golden vectors', 
       testDates: ['2026-01-01', '2026-01-10'],
       sprayRecords: [],
       fertigationRecords,
+      areaUnit: 'acres',
     });
 
     expect(intervals).toHaveLength(1);
@@ -524,6 +526,7 @@ describe('aggregateNutrientsBetweenPetioleTests — snapshot / golden vectors', 
       testDates: ['2026-03-01', '2026-03-10'],
       sprayRecords: [],
       fertigationRecords,
+      areaUnit: 'acres',
     });
 
     expect(intervals).toHaveLength(1);
