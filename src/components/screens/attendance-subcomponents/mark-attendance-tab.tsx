@@ -30,7 +30,7 @@ import { WorkerSelectSheet, FarmSelectSheet } from '@/components/modals';
 import { formatDate as formatDateLocalized } from '@/i18n/format';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { normalizeDate, addDays } from '@/utils/worker-analytics';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 
 const STORAGE_KEYS = {
   ATTENDANCE_RANGE_START: 'attendance_range_start',
@@ -518,23 +518,13 @@ export function MarkAttendanceTab({
     setWorkerSheetVisible(true);
   };
 
-  const handleDateRangeChange = (type: 'from' | 'to', event: DateTimePickerEvent, date?: Date) => {
-    if (event.type === 'dismissed') {
-      if (isAndroid) {
-        if (type === 'from') setShowFromPicker(false);
-        if (type === 'to') setShowToPicker(false);
-      }
-      return;
-    }
-
-    if (date) {
-      const normalized = normalizeDate(date);
-      if (type === 'from') {
-        handleRangeStartChange(normalized);
-      } else {
-        const newStart = addDays(normalized, -(rangeLength - 1));
-        handleRangeStartChange(newStart);
-      }
+  const handleDateRangeChange = (type: 'from' | 'to', date: Date) => {
+    const normalized = normalizeDate(date);
+    if (type === 'from') {
+      handleRangeStartChange(normalized);
+    } else {
+      const newStart = addDays(normalized, -(rangeLength - 1));
+      handleRangeStartChange(newStart);
     }
 
     if (isAndroid) {
@@ -935,10 +925,7 @@ export function MarkAttendanceTab({
                       }
                       mode="date"
                       display="spinner"
-                      onChange={(_event, date) => {
-                        if (date) setTempPickerDate(date);
-                      }}
-                      textColor={m3.colorScheme.onSurface}
+                      onValueChange={(_event, date) => setTempPickerDate(date)}
                       style={{ height: 200 }}
                     />
                     <Pressable
@@ -973,7 +960,8 @@ export function MarkAttendanceTab({
                   value={rangeStart}
                   mode="date"
                   display="default"
-                  onChange={(event, date) => handleDateRangeChange('from', event, date)}
+                  onValueChange={(_, date) => handleDateRangeChange('from', date)}
+                  onDismiss={() => setShowFromPicker(false)}
                 />
               )}
               {showToPicker && (
@@ -981,7 +969,8 @@ export function MarkAttendanceTab({
                   value={rangeEnd}
                   mode="date"
                   display="default"
-                  onChange={(event, date) => handleDateRangeChange('to', event, date)}
+                  onValueChange={(_, date) => handleDateRangeChange('to', date)}
+                  onDismiss={() => setShowToPicker(false)}
                 />
               )}
             </>

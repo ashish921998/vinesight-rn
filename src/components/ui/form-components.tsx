@@ -32,6 +32,7 @@ import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHaptic } from '@/utils/haptics';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { SegmentedControl as ExpoSegmentedControl } from '@expo/ui/community/segmented-control';
 
 interface FormModalProps {
   visible?: boolean;
@@ -628,6 +629,32 @@ export function SegmentedControl({
 }: SegmentedControlProps) {
   const m3 = useM3();
   const isDark = useIsDark();
+
+  if (Platform.OS === 'android') {
+    const selectedIndex = Math.max(
+      0,
+      options.findIndex((option) => option.value === selectedValue),
+    );
+
+    return (
+      <View accessibilityLabel={accessibilityLabel ?? 'Options'}>
+        <ExpoSegmentedControl
+          values={options.map((option) => option.label)}
+          selectedIndex={selectedIndex}
+          onValueChange={(label) => {
+            const selectedOption = options.find((option) => option.label === label);
+            if (!selectedOption) return;
+            triggerHaptic();
+            onSelect(selectedOption.value);
+          }}
+          tintColor={m3.colorScheme.primary}
+          appearance={isDark ? 'dark' : 'light'}
+          style={{ width: '100%', minHeight: 48 }}
+        />
+      </View>
+    );
+  }
+
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     backgroundColor: m3.surface.s200,

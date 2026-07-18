@@ -5,7 +5,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, Alert, ActivityIndicator, Platform, Modal } from 'react-native';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker, { type DateTimePickerChangeEvent } from '@expo/ui/community/datetime-picker';
 import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { toast } from '@/components/ui/toast';
@@ -133,13 +133,11 @@ export default function LabTestForm({
     }
   };
 
-  const handleDateChange = (_: DateTimePickerEvent, selectedDate?: Date) => {
+  const handleDateChange = (_: DateTimePickerChangeEvent, selectedDate: Date) => {
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
     }
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
+    setDate(selectedDate);
   };
 
   const updateParameter = (key: string, value: string) => {
@@ -494,7 +492,7 @@ export default function LabTestForm({
                 value={date}
                 mode="date"
                 display="spinner"
-                onChange={handleDateChange}
+                onValueChange={handleDateChange}
               />
               <Button
                 title={t('common.done')}
@@ -512,7 +510,13 @@ export default function LabTestForm({
         </Modal>
       )}
       {Platform.OS !== 'ios' && showDatePicker && (
-        <DateTimePicker value={date} mode="date" display="default" onChange={handleDateChange} />
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display="default"
+          onValueChange={handleDateChange}
+          onDismiss={() => setShowDatePicker(false)}
+        />
       )}
     </FormModal>
   );

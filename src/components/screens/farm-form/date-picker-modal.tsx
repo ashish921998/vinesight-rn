@@ -7,12 +7,12 @@
 import React from 'react';
 import { fontSize, radius } from '@/styles/theme';
 import { View, Text, Pressable } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { useTranslation } from 'react-i18next';
 import { ModalBackdrop } from '@/components/ui';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { colorWithOpacity } from '@/utils/color';
-import { useM3 } from '@/styles/use-theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { ensureValidDate } from './utils';
 
 interface DatePickerModalProps {
@@ -34,6 +34,7 @@ export function DatePickerModal({
 }: DatePickerModalProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const isDark = useIsDark();
 
   return (
     <ModalBackdrop visible={visible} onDismiss={onClose} opacity={0.5} zIndex={50}>
@@ -77,6 +78,7 @@ export function DatePickerModal({
           value={ensureValidDate(value)}
           mode="date"
           display="spinner"
+          themeVariant={isDark ? 'dark' : 'light'}
           onChange={(event, date) => {
             if (event.type === 'dismissed') return;
             const nextDate =

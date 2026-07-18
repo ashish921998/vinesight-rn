@@ -17,10 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import DateTimePicker, {
-  DateTimePickerAndroid,
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { Button } from '@/components/ui';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
@@ -121,12 +118,6 @@ export default function SoilProfileForm({
     } catch (error) {
       console.error('Error creating soil profile:', error);
       Alert.alert(t('common.error'), t('common.errors.failedToSaveSoilProfile'));
-    }
-  };
-
-  const handleDateChange = (_: DateTimePickerEvent, date?: Date) => {
-    if (date) {
-      setSelectedDate(date);
     }
   };
 
@@ -255,21 +246,7 @@ export default function SoilProfileForm({
             {t('soilProfileForm.date.hint')}
           </Text>
           <Pressable
-            onPress={() => {
-              if (Platform.OS === 'android') {
-                DateTimePickerAndroid.open({
-                  value: selectedDate,
-                  mode: 'date',
-                  onChange: (event, date) => {
-                    if (event.type === 'set' && date) {
-                      setSelectedDate(date);
-                    }
-                  },
-                });
-              } else {
-                setShowDatePicker(true);
-              }
-            }}
+            onPress={() => setShowDatePicker(true)}
             style={{
               backgroundColor: m3.surface.s50,
               borderWidth: 1,
@@ -288,6 +265,19 @@ export default function SoilProfileForm({
             <IconSymbol name="calendar" size={20} color={m3.colorScheme.onSurfaceVariant} />
           </Pressable>
         </View>
+
+        {Platform.OS === 'android' && showDatePicker && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            presentation="dialog"
+            onValueChange={(_, date) => {
+              setSelectedDate(date);
+              setShowDatePicker(false);
+            }}
+            onDismiss={() => setShowDatePicker(false)}
+          />
+        )}
 
         {/* Date Picker Modal - iOS only */}
         {Platform.OS === 'ios' && (
@@ -353,7 +343,7 @@ export default function SoilProfileForm({
                   value={selectedDate}
                   mode="date"
                   display="spinner"
-                  onChange={handleDateChange}
+                  onValueChange={(_, date) => setSelectedDate(date)}
                   style={{ width: '100%' }}
                 />
                 <Button

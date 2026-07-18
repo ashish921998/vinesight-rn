@@ -9,7 +9,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { isIOS } from '@/hooks';
 import { FullScreenForm, SectionHeader, FormInput, InfoCard, Button } from '@/components/ui';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -777,14 +777,11 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         <DateTimePicker
           value={ensureValidDate(form.formState.plantingDate)}
           mode="date"
-          onChange={(event: DateTimePickerEvent, date?: Date) => {
-            if (event.type === 'dismissed') {
-              form.closeDatePicker();
-              return;
-            }
-            if (date) form.commitAndroidPlantingDate(date);
+          onValueChange={(_, date) => {
+            form.commitAndroidPlantingDate(date);
             form.closeDatePicker();
           }}
+          onDismiss={form.closeDatePicker}
         />
       )}
 
@@ -805,14 +802,11 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         <DateTimePicker
           value={form.formState.dateOfPruning ?? new Date()}
           mode="date"
-          onChange={(event: DateTimePickerEvent, date?: Date) => {
-            if (event.type === 'dismissed') {
-              form.closePruningDatePicker();
-              return;
-            }
-            if (date) form.commitAndroidPruningDate(date);
+          onValueChange={(_, date) => {
+            form.commitAndroidPruningDate(date);
             form.closePruningDatePicker();
           }}
+          onDismiss={form.closePruningDatePicker}
         />
       )}
 

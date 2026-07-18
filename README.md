@@ -1,10 +1,10 @@
 # Vinesight-RN
 
-React Native mobile application built with Expo SDK 54 for vineyard management. This is an Android port of the existing iOS Vinesight app.
+React Native mobile application built with Expo SDK 57 for vineyard management across Android and iOS.
 
 ## Tech Stack
 
-- **Framework**: [Expo 54](https://expo.dev/) + [React Native 0.81.5](https://reactnative.dev/)
+- **Framework**: [Expo 57](https://expo.dev/) + [React Native 0.86](https://reactnative.dev/)
 - **Navigation**: [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routing)
 - **Backend**: [Supabase](https://supabase.com/)
 - **Data Fetching**: [TanStack React Query](https://tanstack.com/query/latest)

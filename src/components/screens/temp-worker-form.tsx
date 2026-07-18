@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Platform, View, Text, Pressable, Alert } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { useTranslation } from 'react-i18next';
 import { useCreateTemporaryWorkerEntry, useFarms, useCurrency } from '@/hooks';
 import { FormModal, SectionHeader, FormInput, PreviewCard, Button } from '@/components/ui';

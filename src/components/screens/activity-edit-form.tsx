@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { Button, FormModal, SectionHeader } from '@/components/ui';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';

@@ -16,7 +16,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Picker } from '@react-native-picker/picker';
+import { Picker } from '@expo/ui/community/picker';
 import { Symbol } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import { useFarms } from '@/hooks';
@@ -358,6 +358,8 @@ export default function WidgetConfigurationScreen() {
           </Text>
 
           <View
+            accessible
+            accessibilityLabel={t('widgetConfig.selectFarm', 'Select farm')}
             style={[
               styles.pickerContainer,
               {
@@ -369,7 +371,6 @@ export default function WidgetConfigurationScreen() {
             <Picker
               selectedValue={selectedFarmId}
               onValueChange={(itemValue) => setSelectedFarmId(itemValue)}
-              accessibilityLabel={t('widgetConfig.selectFarm', 'Select farm')}
               style={styles.picker}
             >
               {farms.map((farm) => (

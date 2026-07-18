@@ -25,12 +25,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Sentry from '@sentry/react-native';
 import { AppIcon } from '@/components/ui/app-icon';
 import { ModalBackdrop } from '@/components/ui/modal-backdrop';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { LinearGradient as _LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
-import { useM3 } from '@/styles/use-theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { toast } from '@/components/ui/toast';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
@@ -308,6 +308,7 @@ export function EntryForm({
 }: EntryFormProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const isDark = useIsDark();
   const detailedMode = useAppModeStore((state) => state.detailedMode);
 
   const isVisible = visible ?? true;
@@ -3035,11 +3036,11 @@ export function EntryForm({
                   })()}
                   mode="date"
                   display="spinner"
+                  themeVariant={isDark ? 'dark' : 'light'}
                   onChange={(_, date) => {
                     if (date) setDueDate(formatLocalDate(date));
                   }}
                   style={{ height: 200 }}
-                  textColor={m3.colorScheme.onSurface}
                 />
                 <Pressable
                   onPress={() => setShowDueDatePicker(false)}

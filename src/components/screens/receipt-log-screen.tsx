@@ -23,9 +23,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 
-import { useM3 } from '@/styles/use-theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
@@ -201,6 +201,7 @@ function describeEntry(type: LogTypeId, data: AnyLogData): string {
 export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptLogScreenProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const isDark = useIsDark();
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
 
@@ -653,7 +654,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
                 mode="date"
                 maximumDate={new Date()}
                 display="spinner"
-                textColor={m3.colorScheme.onSurface}
+                themeVariant={isDark ? 'dark' : 'light'}
                 onChange={(_event, date) => {
                   if (date) setSelectedDate(date);
                 }}

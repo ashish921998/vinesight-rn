@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { useTranslation } from 'react-i18next';
 import { useWorkerAttendance, useWorkerTransactions, useWorkers, useCurrency } from '@/hooks';
 import { formatCurrency, formatDate } from '@/i18n/format';
@@ -24,12 +24,13 @@ import {
   type DateRange,
 } from '@/utils/worker-analytics';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
-import { useM3 } from '@/styles/use-theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 export default function WorkerAnalyticsDetailScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
+  const isDark = useIsDark();
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const rawWorkerId = Number(id);
@@ -62,20 +63,12 @@ export default function WorkerAnalyticsDetailScreen() {
     return transactions.filter((tx) => isDateInRange(tx.date, range));
   }, [transactions, range]);
 
-  const handleDateChange = (type: 'from' | 'to', event: DateTimePickerEvent, date?: Date) => {
-    if (event.type === 'dismissed') {
-      if (type === 'from') setShowFromPicker(false);
-      if (type === 'to') setShowToPicker(false);
-      return;
-    }
-
-    if (date) {
-      const normalized = normalizeDate(date);
-      if (type === 'from') {
-        setRange((prev) => ({ ...prev, from: normalized }));
-      } else {
-        setRange((prev) => ({ ...prev, to: normalized }));
-      }
+  const handleDateChange = (type: 'from' | 'to', date: Date) => {
+    const normalized = normalizeDate(date);
+    if (type === 'from') {
+      setRange((prev) => ({ ...prev, from: normalized }));
+    } else {
+      setRange((prev) => ({ ...prev, to: normalized }));
     }
 
     if (Platform.OS === 'android') {
@@ -488,9 +481,9 @@ export default function WorkerAnalyticsDetailScreen() {
               value={range.from}
               mode="date"
               display="spinner"
-              onChange={(event, date) => handleDateChange('from', event, date)}
+              themeVariant={isDark ? 'dark' : 'light'}
+              onValueChange={(_, date) => handleDateChange('from', date)}
               maximumDate={range.to}
-              textColor={m3.colorScheme.onSurface}
               style={{ height: 200 }}
             />
             <Pressable
@@ -515,7 +508,8 @@ export default function WorkerAnalyticsDetailScreen() {
           value={range.from}
           mode="date"
           display="default"
-          onChange={(event, date) => handleDateChange('from', event, date)}
+          onValueChange={(_, date) => handleDateChange('from', date)}
+          onDismiss={() => setShowFromPicker(false)}
           maximumDate={range.to}
         />
       )}
@@ -573,10 +567,10 @@ export default function WorkerAnalyticsDetailScreen() {
               value={range.to}
               mode="date"
               display="spinner"
-              onChange={(event, date) => handleDateChange('to', event, date)}
+              themeVariant={isDark ? 'dark' : 'light'}
+              onValueChange={(_, date) => handleDateChange('to', date)}
               minimumDate={range.from}
               maximumDate={new Date()}
-              textColor={m3.colorScheme.onSurface}
               style={{ height: 200 }}
             />
             <Pressable
@@ -601,7 +595,8 @@ export default function WorkerAnalyticsDetailScreen() {
           value={range.to}
           mode="date"
           display="default"
-          onChange={(event, date) => handleDateChange('to', event, date)}
+          onValueChange={(_, date) => handleDateChange('to', date)}
+          onDismiss={() => setShowToPicker(false)}
           minimumDate={range.from}
           maximumDate={new Date()}
         />

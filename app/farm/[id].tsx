@@ -13,7 +13,7 @@ import {
   Easing,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useIsFocused } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { toast } from '@/components/ui/toast';
@@ -1220,11 +1220,7 @@ export default function FarmDetailScreen() {
           onPress: async () => {
             try {
               const record = log.data as
-                | IrrigationRecord
-                | SprayRecord
-                | HarvestRecord
-                | ExpenseRecord
-                | FertigationRecord;
+                IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
               const farmIdNum =
                 farm?.id ??
                 (record.farm_id
