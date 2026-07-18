@@ -18,7 +18,6 @@ export interface HarvestFormData {
   grade: HarvestGrade | '';
   price?: number;
   buyer?: string;
-  notes?: string;
 }
 
 interface HarvestFormProps {

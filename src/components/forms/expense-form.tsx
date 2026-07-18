@@ -20,7 +20,6 @@ export interface ExpenseFormData {
   type: ExpenseTypeId | '';
   cost: number | undefined;
   remarks?: string;
-  notes?: string;
 }
 
 interface ExpenseFormProps {
