@@ -74,6 +74,22 @@ function resolveDensity(densityKgPerL?: number | null): number {
 }
 
 /**
+ * Convert a stored record.area (raw in the farm's preferred unit — acres OR
+ * hectares) into canonical acres for the nutrient kernel's per-acre math.
+ * Mirrors report-compute.ts: record.area is NEVER acres-by-contract when the
+ * farm prefers hectares; feeding raw hectares inflates per-acre totals
+ * ~2.47×. Hoisted to module scope so the save path, read path, and ledger
+ * all share one conversion.
+ */
+function recordAreaAcres(
+  area: number | null | undefined,
+  areaUnit: AreaUnitPreference | string | null | undefined,
+): number {
+  if (typeof area !== 'number' || !Number.isFinite(area) || area <= 0) return 0;
+  return convertAreaToAcres(area, resolveAreaUnitPreference(areaUnit ?? undefined));
+}
+
+/**
  * Resolve a stored line item into product mass (kg) using the quantity kernel.
  *
  * The kernel (totalFor) handles unit parsing, per-acre and per-liter-water
@@ -233,12 +249,15 @@ export function parseSprayWaterVolumeL(dose: string | null | undefined): number 
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
-function resolveSprayTotalsPerAcre(record: SprayRecord): ResolvedLogIntervalTotals {
+function resolveSprayTotalsPerAcre(
+  record: SprayRecord,
+  areaUnit: AreaUnitPreference,
+): ResolvedLogIntervalTotals {
   const items = (record.chemical_items ?? []) as SprayChemicalItem[];
   if (items.length > 0) {
     const computed = calculateNutrientTotalsForLog({
       items,
-      areaAcre: record.area ?? 0,
+      areaAcre: recordAreaAcres(record.area, areaUnit),
       waterVolumeL: parseSprayWaterVolumeL(record.dose),
     });
     return {
@@ -258,12 +277,15 @@ function resolveSprayTotalsPerAcre(record: SprayRecord): ResolvedLogIntervalTota
   };
 }
 
-function resolveFertigationTotalsPerAcre(record: FertigationRecord): ResolvedLogIntervalTotals {
+function resolveFertigationTotalsPerAcre(
+  record: FertigationRecord,
+  areaUnit: AreaUnitPreference,
+): ResolvedLogIntervalTotals {
   const items = (record.fertilizers ?? []) as FertilizerItem[];
   if (items.length > 0) {
     const computed = calculateNutrientTotalsForLog({
       items,
-      areaAcre: record.area ?? 0,
+      areaAcre: recordAreaAcres(record.area, areaUnit),
       waterVolumeL: record.water_volume ?? null,
     });
     return {
@@ -305,10 +327,15 @@ export function aggregateNutrientsBetweenPetioleTests({
   testDates,
   sprayRecords,
   fertigationRecords,
+  areaUnit,
 }: {
   testDates: string[];
   sprayRecords: SprayRecord[];
   fertigationRecords: FertigationRecord[];
+  /** The farm's preferred area unit — record.area is RAW in this unit, not acres.
+   *  Required so future omitted-unit regressions surface as compile errors, not
+   *  silent ~2.47× per-acre inflation on hectares farms. */
+  areaUnit: AreaUnitPreference;
 }): PetioleIntervalNutrientTotals[] {
   if (testDates.length < 2) return [];
   const sortedDates = [...testDates].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
@@ -327,7 +354,7 @@ export function aggregateNutrientsBetweenPetioleTests({
     sprayRecords.forEach((record) => {
       const recordTs = new Date(record.date).getTime();
       if (!(recordTs > fromTs && recordTs <= toTs)) return;
-      const resolved = resolveSprayTotalsPerAcre(record);
+      const resolved = resolveSprayTotalsPerAcre(record, areaUnit);
       totalsPerAcre = addToTotals(totalsPerAcre, resolved.totalsPerAcre);
       totalLogCount += 1;
       if (resolved.coveragePercent >= 100) {
@@ -338,7 +365,7 @@ export function aggregateNutrientsBetweenPetioleTests({
     fertigationRecords.forEach((record) => {
       const recordTs = new Date(record.date).getTime();
       if (!(recordTs > fromTs && recordTs <= toTs)) return;
-      const resolved = resolveFertigationTotalsPerAcre(record);
+      const resolved = resolveFertigationTotalsPerAcre(record, areaUnit);
       totalsPerAcre = addToTotals(totalsPerAcre, resolved.totalsPerAcre);
       totalLogCount += 1;
       if (resolved.coveragePercent >= 100) {
@@ -530,23 +557,24 @@ export function calculateNutrientLedger({
   // hectares) — same contract as report generation, which converts before any
   // per-acre math. Feeding hectares into the kernel's per_acre context would
   // under-report every per-acre item 2.47105× on hectare-preference farms.
-  const recordAreaAcres = (area: number | null | undefined): number =>
-    typeof area === 'number' && Number.isFinite(area) && area > 0
-      ? convertAreaToAcres(area, resolveAreaUnitPreference(areaUnit ?? undefined))
-      : 0;
+  // Uses the module-scope recordAreaAcres helper.
 
   // Spray records
   inRange(sprayRecords).forEach((record) => {
     const items = (record.chemical_items ?? []) as SprayChemicalItem[];
     if (items.length === 0) return;
-    processItems(items, recordAreaAcres(record.area), parseSprayWaterVolumeL(record.dose));
+    processItems(
+      items,
+      recordAreaAcres(record.area, areaUnit),
+      parseSprayWaterVolumeL(record.dose),
+    );
   });
 
   // Fertigation records
   inRange(fertigationRecords).forEach((record) => {
     const items = (record.fertilizers ?? []) as FertilizerItem[];
     if (items.length === 0) return;
-    processItems(items, recordAreaAcres(record.area), record.water_volume ?? null);
+    processItems(items, recordAreaAcres(record.area, areaUnit), record.water_volume ?? null);
   });
 
   // Build per-acre totals
