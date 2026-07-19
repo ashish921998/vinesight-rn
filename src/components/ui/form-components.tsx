@@ -640,7 +640,9 @@ export function SegmentedControl({
         selectedIndex={selectedIndex}
         onValueChange={(label) => {
           const selectedOption = options.find((option) => option.label === label);
-          if (selectedOption) onSelect(selectedOption.value);
+          if (!selectedOption) return;
+          triggerHaptic();
+          onSelect(selectedOption.value);
         }}
         // tintColor is the selected pill's background on Android (no-op on iOS). Use our
         // faint-green secondaryContainer, NOT primary: primary is a dark green and the
