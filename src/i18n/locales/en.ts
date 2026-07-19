@@ -1561,6 +1561,7 @@ export const en = {
     settings: 'Settings',
     home: 'Home',
     farms: 'Farms',
+    purchases: 'Purchases',
     aiAssistant: 'AI Assistant',
   },
 

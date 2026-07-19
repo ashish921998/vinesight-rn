@@ -1556,6 +1556,7 @@ export const mr = {
     settings: 'सेटिंग्ज',
     home: 'होम',
     farms: '$t(glossary.farm)',
+    purchases: 'खरेदी',
     aiAssistant: 'AI सहाय्यक',
   },
 

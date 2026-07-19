@@ -1546,6 +1546,7 @@ export const hi = {
     settings: 'सेटिंग्स',
     home: 'होम',
     farms: 'खेत',
+    purchases: 'खरीद',
     aiAssistant: 'AI सहायक',
   },
 
