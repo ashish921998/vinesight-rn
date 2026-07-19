@@ -435,7 +435,6 @@ export default function WorkersScreen() {
                 options={TAB_DATA.map((tab) => ({ value: tab.id, label: t(tab.labelKey) }))}
                 selectedValue={selectedTab}
                 onSelect={(value) => setSelectedTab(value as WorkersTab)}
-                selectedTextColor={'#000000'}
               />
             </GuidedTourTarget>
           </GuidedTourTarget>

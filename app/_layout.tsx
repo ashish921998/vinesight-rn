@@ -842,6 +842,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                 />
                 <Stack.Screen name="add-note" options={{ headerShown: false }} />
                 <Stack.Screen name="analytics" options={{ headerShown: true }} />
+                <Stack.Screen name="assistant" options={{ headerShown: false }} />
                 <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
                 <Stack.Screen name="calculator" options={{ headerShown: false }} />
                 <Stack.Screen name="farm/add" options={{ headerShown: false }} />

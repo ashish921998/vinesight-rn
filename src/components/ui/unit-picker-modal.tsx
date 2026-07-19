@@ -1,16 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  Modal,
-  ScrollView,
-  type ViewStyle,
-  type TextStyle,
-} from 'react-native';
+import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
+import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -36,20 +29,6 @@ export function UnitPickerModal<T extends string>({
   const handleSelect = (unit: T) => {
     onSelect(unit);
     onClose();
-  };
-
-  const overlayStyle: ViewStyle = {
-    flex: 1,
-    backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3),
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  };
-
-  const containerStyle: ViewStyle = {
-    backgroundColor: m3.surface.s100,
-    width: '100%',
-    borderTopLeftRadius: borderRadius['3xl'],
-    borderTopRightRadius: borderRadius['3xl'],
   };
 
   const headerStyle: ViewStyle = {
@@ -102,40 +81,44 @@ export function UnitPickerModal<T extends string>({
   });
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={overlayStyle}>
-        <View style={containerStyle}>
-          <View style={headerStyle}>
-            <Pressable onPress={onClose} style={cancelButtonStyle}>
-              <Text style={cancelTextStyle}>{t('common.cancel')}</Text>
-            </Pressable>
-            <Text style={titleTextStyle}>{title}</Text>
-          </View>
-          <ScrollView style={{ maxHeight: 400 }}>
-            {options.map((unit) => {
-              const isSelected = unit === selectedValue;
-              return (
-                <Pressable
-                  key={unit}
-                  onPress={() => handleSelect(unit)}
-                  style={getOptionStyle(isSelected)}
-                >
-                  <View style={optionContentStyle}>
-                    <Text style={getOptionTextStyle(isSelected)}>{unit}</Text>
-                    {isSelected && (
-                      <SymbolIcon
-                        name="checkmark.circle.fill"
-                        size={24}
-                        color={m3.colorScheme.primary}
-                      />
-                    )}
-                  </View>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+    <BottomSheet
+      index={visible ? 0 : -1}
+      snapPoints={['50%', '100%']}
+      enablePanDownToClose
+      onClose={onClose}
+      backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+    >
+      <View style={{ flex: 1 }}>
+        <View style={headerStyle}>
+          <Pressable onPress={onClose} style={cancelButtonStyle}>
+            <Text style={cancelTextStyle}>{t('common.cancel')}</Text>
+          </Pressable>
+          <Text style={titleTextStyle}>{title}</Text>
         </View>
+        <BottomSheetScrollView style={{ maxHeight: 400 }}>
+          {options.map((unit) => {
+            const isSelected = unit === selectedValue;
+            return (
+              <Pressable
+                key={unit}
+                onPress={() => handleSelect(unit)}
+                style={getOptionStyle(isSelected)}
+              >
+                <View style={optionContentStyle}>
+                  <Text style={getOptionTextStyle(isSelected)}>{unit}</Text>
+                  {isSelected && (
+                    <SymbolIcon
+                      name="checkmark.circle.fill"
+                      size={24}
+                      color={m3.colorScheme.primary}
+                    />
+                  )}
+                </View>
+              </Pressable>
+            );
+          })}
+        </BottomSheetScrollView>
       </View>
-    </Modal>
+    </BottomSheet>
   );
 }

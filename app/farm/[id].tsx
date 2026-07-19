@@ -92,7 +92,6 @@ export default function FarmDetailScreen() {
   const router = useRouter();
   const isFocused = useIsFocused();
   const { setEditActivity } = useModalStore();
-  const detailedMode = useAppModeStore((state) => state.detailedMode);
   const { id, startSeason: startSeasonParam } = useLocalSearchParams<{
     id?: string | string[];
     startSeason?: string;
@@ -117,6 +116,7 @@ export default function FarmDetailScreen() {
 
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
   const { isLinked: hasConsultant } = useConsultantLink();
+  const detailedMode = useAppModeStore((s) => s.detailedMode);
   const {
     data: farmSeasons,
     isLoading: isSeasonsLoading,
@@ -238,17 +238,7 @@ export default function FarmDetailScreen() {
   }, [handleBackNavigation, isFocused]);
 
   const workboardActions = useMemo<WorkboardAction[]>(() => {
-    const actions: WorkboardAction[] = [];
-    if (detailedMode) {
-      actions.push({
-        id: 'ai',
-        titleKey: 'farmDetails.workboard.actions.ai',
-        // Match the bottom navbar AI assistant icon.
-        icon: 'brain',
-        color: m3.colorScheme.primary,
-      });
-    }
-    actions.push(
+    const actions: WorkboardAction[] = [
       {
         id: 'lab',
         titleKey: 'farmDetails.workboard.actions.lab',
@@ -261,13 +251,17 @@ export default function FarmDetailScreen() {
         icon: 'receipt',
         color: m3.colorScheme.tertiary,
       },
-      {
+    ];
+    // Soil moisture profiling is a Detailed-mode feature; hide it from the
+    // Simplified experience workboard (the route is Detailed-only too).
+    if (detailedMode) {
+      actions.push({
         id: 'soil',
         titleKey: 'farmDetails.workboard.actions.soilMoisture',
         icon: 'square.stack.3d.up.fill',
         color: domain.category.task,
-      },
-    );
+      });
+    }
     if (hasConsultant) {
       actions.push({
         id: 'fertilizer-plans',
@@ -277,7 +271,7 @@ export default function FarmDetailScreen() {
       });
     }
     return actions;
-  }, [detailedMode, domain.category.fertigation, domain.category.task, m3, hasConsultant]);
+  }, [domain.category.fertigation, domain.category.task, m3, hasConsultant, detailedMode]);
 
   const seasonEndDates = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return [];
@@ -1320,12 +1314,6 @@ export default function FarmDetailScreen() {
   const handleWorkboardAction = (action: WorkboardAction) => {
     triggerHapticMedium();
     switch (action.id) {
-      case 'ai':
-        if (!farmIdParam) return;
-        // Use `navigate` here (instead of `push`) to avoid occasional unmatched-route
-        // resolution issues when switching from Stack -> tabs group.
-        router.navigate(`/(tabs)/assistant?farmId=${encodeURIComponent(farmIdParam)}`);
-        break;
       case 'lab':
         if (!farmIdParam) return;
         router.push(`/lab-tests?farmId=${encodeURIComponent(farmIdParam)}`);

@@ -1,7 +1,6 @@
 import React, { type ReactNode } from 'react';
-import { Pressable } from 'react-native';
+import { BottomSheet, BottomSheetView } from '@expo/ui/community/bottom-sheet';
 import { useM3 } from '@/styles/use-theme';
-import { colorWithOpacity } from '@/utils/color';
 
 export interface ModalBackdropProps {
   visible: boolean;
@@ -13,8 +12,8 @@ export interface ModalBackdropProps {
 }
 
 /**
- * Full-screen modal overlay with shadow background and dismiss-on-tap.
- * Use for bottom sheets, pickers, and dialogs that need a dimmed backdrop.
+ * Native bottom-sheet host with platform-managed scrim and dismissal.
+ * Use for bottom sheets and pickers that should be anchored at the bottom.
  */
 export function ModalBackdrop({
   visible,
@@ -25,23 +24,18 @@ export function ModalBackdrop({
   zIndex,
 }: ModalBackdropProps) {
   const m3 = useM3();
-
-  if (!visible) return null;
-
-  const overlayStyle = {
-    position: 'absolute' as const,
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: colorWithOpacity(m3.colorScheme.shadow, opacity),
-    justifyContent: alignment,
-    ...(zIndex !== undefined && { zIndex }),
-  };
+  void opacity;
+  void zIndex;
 
   return (
-    <Pressable onPress={onDismiss} style={overlayStyle}>
-      {children}
-    </Pressable>
+    <BottomSheet
+      index={visible ? 0 : -1}
+      snapPoints={alignment === 'center' ? ['50%'] : ['65%', '95%']}
+      enablePanDownToClose
+      onClose={onDismiss}
+      backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+    >
+      <BottomSheetView style={{ flex: 1 }}>{children}</BottomSheetView>
+    </BottomSheet>
   );
 }

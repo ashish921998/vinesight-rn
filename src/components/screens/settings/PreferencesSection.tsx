@@ -27,6 +27,7 @@ interface PreferencesSectionProps {
   onAreaUnitChange: (unit: 'hectares' | 'acres') => void;
   onReplayGuidedTour: () => void;
   onDetailedModeChange: (value: boolean) => void;
+  onOpenAssistant: () => void;
 }
 
 export function PreferencesSection({
@@ -44,6 +45,7 @@ export function PreferencesSection({
   onAreaUnitChange,
   onReplayGuidedTour,
   onDetailedModeChange,
+  onOpenAssistant,
 }: PreferencesSectionProps) {
   const { t } = useTranslation();
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
@@ -94,6 +96,20 @@ export function PreferencesSection({
             styles={styles}
             m3={m3}
           />
+          <Pressable
+            onPress={onOpenAssistant}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.aiAssistant.title')}
+          >
+            <SettingsItem
+              icon="sparkles"
+              title={t('settings.aiAssistant.title')}
+              subtitle={t('settings.aiAssistant.subtitle')}
+              isLast={false}
+              styles={styles}
+              m3={m3}
+            />
+          </Pressable>
           <Pressable
             onPress={() => setShowLanguagePicker(true)}
             accessibilityRole="button"
