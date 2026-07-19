@@ -42,6 +42,9 @@ export function ToastHost() {
         while ((toastItem = queueRef.current.shift())) {
           setVariant(toastItem.variant);
           await nextTick(); // let variant/palette flush before showing
+          if (toastItem.variant === 'success') triggerHapticSuccess();
+          else if (toastItem.variant === 'error') triggerHapticError();
+          else triggerHaptic();
           // showSnackbar resolves when the snackbar is dismissed/times out,
           // so awaiting it presents queued toasts one after another.
           await snackbarHostRef.current?.showSnackbar({
@@ -56,10 +59,6 @@ export function ToastHost() {
     };
 
     const onToast = (toastItem: ToastItem) => {
-      if (toastItem.variant === 'success') triggerHapticSuccess();
-      else if (toastItem.variant === 'error') triggerHapticError();
-      else triggerHaptic();
-
       queueRef.current.push(toastItem);
       void drain();
     };
