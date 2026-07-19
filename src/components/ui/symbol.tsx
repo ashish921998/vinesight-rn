@@ -94,6 +94,8 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   receipt: 'receipt',
   'receipt.fill': 'receipt',
   'wallet.pass': 'wallet-outline',
+  cart: 'cart-outline',
+  'cart.fill': 'cart',
 
   // People
   person: 'person-outline',
