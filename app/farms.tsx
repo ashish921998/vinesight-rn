@@ -7,7 +7,6 @@ import {
   RefreshControl,
   ScrollView,
   TextInput,
-  ActivityIndicator,
   Alert,
   StyleSheet,
   Platform,
@@ -19,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useFarms, useDeleteFarm, useFabBottomPosition, useReorderFarms } from '@/hooks';
 import { FarmCard } from '@/components/cards';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import type { Farm } from '@/types';
@@ -703,7 +703,7 @@ export default function FarmsScreen() {
     if (isLoading) {
       return (
         <View style={emptyContainerStyle}>
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
           <Text
             style={{
               fontSize: fontSize.base,

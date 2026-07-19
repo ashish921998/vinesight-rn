@@ -4,10 +4,11 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, Alert, ActivityIndicator, Platform, Modal } from 'react-native';
+import { View, Text, Pressable, Alert, Platform, Modal } from 'react-native';
 import DateTimePicker, { type DateTimePickerChangeEvent } from '@expo/ui/community/datetime-picker';
 import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui';
 import * as ImagePicker from 'expo-image-picker';
@@ -328,7 +329,7 @@ export default function LabTestForm({
       >
         {isParsingPDF ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator color={m3.colorScheme.primary} size="small" />
+            <Spinner color={m3.colorScheme.primary} size="small" />
             <Text
               style={{
                 fontSize: fontSize.base,

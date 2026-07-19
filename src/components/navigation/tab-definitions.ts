@@ -14,6 +14,18 @@ export function baseTabLabelKey(name: string, detailedMode: boolean, fallbackKey
   return fallbackKey;
 }
 
+// The two base destinations also swap their Android vector icon to match the
+// mode label: Simplified shows Home (house) + Farms (barn); Detailed shows
+// Dashboard (grid) + Farming (tractor). DETAILED_TABS always use the same icon.
+export function baseTabIconKey(
+  name: string,
+  detailedMode: boolean,
+): 'home' | 'dashboard' | 'barn' | 'tractor' {
+  if (name === 'index') return detailedMode ? 'dashboard' : 'home';
+  if (name === 'explore') return detailedMode ? 'tractor' : 'barn';
+  return 'dashboard';
+}
+
 export const DETAILED_TABS = [
   {
     name: 'workers',

@@ -13,7 +13,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Alert,
-  ActivityIndicator,
   type TextInputProps,
   Keyboard,
   Platform,
@@ -25,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Sentry from '@sentry/react-native';
 import { AppIcon } from '@/components/ui/app-icon';
 import { ModalBackdrop } from '@/components/ui/modal-backdrop';
+import { Spinner } from '@/components/ui/spinner';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { LinearGradient as _LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -3589,7 +3589,7 @@ export function EntryForm({
                     ]}
                   >
                     {isSubmittingLogs ? (
-                      <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                      <Spinner size="small" color={m3.colorScheme.onPrimary} />
                     ) : (
                       <>
                         <AppIcon
@@ -3695,7 +3695,7 @@ export function EntryForm({
                 ]}
               >
                 {isTaskSaving ? (
-                  <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                  <Spinner size="small" color={m3.colorScheme.onPrimary} />
                 ) : (
                   <>
                     <AppIcon

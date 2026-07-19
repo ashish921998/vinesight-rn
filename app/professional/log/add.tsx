@@ -1,7 +1,8 @@
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ReceiptLogScreen } from '@/components/screens/receipt-log-screen';
+import { Spinner } from '@/components/ui/spinner';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
@@ -25,7 +26,7 @@ export default function AddDelegatedLog() {
     return (
       <>
         {stackScreen}
-        <ActivityIndicator style={{ flex: 1 }} />
+        <Spinner style={{ flex: 1 }} />
       </>
     );
   }

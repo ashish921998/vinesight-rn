@@ -1,14 +1,5 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  StyleSheet,
-  Modal,
-} from 'react-native';
+import { View, Text, ScrollView, Alert, Pressable, StyleSheet, Modal } from 'react-native';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -20,6 +11,7 @@ import { triggerHaptic, triggerHapticMedium, triggerHapticSuccess } from '@/util
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { supabase } from '@/lib/supabase';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
 import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
@@ -577,7 +569,7 @@ export function MarkAttendanceTab({
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+        <Spinner size="large" color={m3.colorScheme.primary} />
       </View>
     );
   }
@@ -1358,7 +1350,7 @@ export function MarkAttendanceTab({
                   gap: spacing[2],
                 }}
               >
-                <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                <Spinner size="small" color={m3.colorScheme.onPrimary} />
                 <Text
                   style={{
                     fontSize: fontSize.base,

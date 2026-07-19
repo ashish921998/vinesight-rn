@@ -20,6 +20,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { FarmsPaneB, type FarmFilter } from '@/components/screens/farms-pane-b';
+import { AddFarmFab } from '@/components/screens/add-farm-fab';
 import { WarehousePaneB, type WarehouseFilter } from '@/components/screens/warehouse-pane-b';
 
 type ExploreTab = 'farms' | 'warehouse';
@@ -276,21 +277,7 @@ export default function ExploreScreen() {
             height: 56,
           }}
         >
-          <Pressable
-            onPress={handleAddFarm}
-            accessibilityRole="button"
-            accessibilityLabel={t('farms.addFarm')}
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: m3.primary.p500,
-            }}
-          >
-            <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
-          </Pressable>
+          <AddFarmFab onPress={handleAddFarm} accessibilityLabel={t('farms.addFarm')} />
         </GuidedTourTarget>
       )}
     </View>

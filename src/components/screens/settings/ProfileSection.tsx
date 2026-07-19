@@ -5,13 +5,13 @@ import {
   Pressable,
   ScrollView,
   TextInput,
-  ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { spacing } from '@/styles/theme';
 import { isIOS } from '@/hooks';
 import type { getM3Theme } from '@/styles/theme';
@@ -240,7 +240,7 @@ export function ProfileSection({
                 style={[styles.saveButton, { backgroundColor: m3.primary.p600 }]}
               >
                 {isSaving ? (
-                  <ActivityIndicator color={m3.colorScheme.onPrimary} />
+                  <Spinner color={m3.colorScheme.onPrimary} />
                 ) : (
                   <Text
                     style={styles.saveButtonText}

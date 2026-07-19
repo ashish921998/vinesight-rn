@@ -8,15 +8,7 @@
  * No drafts, no "Save N logs", no stacked scroll — one short form at a time.
  */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  Platform,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, Pressable, ScrollView, Platform, Alert } from 'react-native';
 import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +19,7 @@ import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
 import { createStartSeasonHref } from '@/utils/add-log-navigation';
@@ -1002,7 +995,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
                 }}
               >
                 {saving ? (
-                  <ActivityIndicator size="small" color={m3.colorScheme.onSurfaceVariant} />
+                  <Spinner size="small" color={m3.colorScheme.onSurfaceVariant} />
                 ) : (
                   <AppIcon
                     name="checkmark-circle"

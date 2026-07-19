@@ -6,7 +6,6 @@ import {
   Pressable,
   BackHandler,
   RefreshControl,
-  ActivityIndicator,
   Alert,
   StyleSheet,
   Animated,
@@ -14,7 +13,9 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useIsFocused } from 'expo-router';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui';
@@ -1345,7 +1346,7 @@ export default function FarmDetailScreen() {
             alignItems: 'center',
           }}
         >
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
           <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[4] }}>
             {t('farmDetails.loadingFarm')}
           </Text>
@@ -2640,45 +2641,22 @@ export default function FarmDetailScreen() {
         </ScrollView>
       </View>
 
-      {showFarmActionsSheet && isAndroid && (
-        <Pressable
-          onPress={() => setShowFarmActionsSheet(false)}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            zIndex: 45,
-          }}
+      {isAndroid && (
+        <BottomSheet
+          index={showFarmActionsSheet ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => setShowFarmActionsSheet(false)}
+          backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
         >
           <View
             style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderTopLeftRadius: m3.shape.cornerLarge,
-              borderTopRightRadius: m3.shape.cornerLarge,
-              paddingTop: spacing[3],
+              paddingTop: spacing[2],
               paddingHorizontal: spacing[4],
               paddingBottom: Math.max(insets.bottom, spacing[4]),
               gap: spacing[1],
             }}
-            onStartShouldSetResponder={() => true}
           >
-            <View
-              style={{
-                alignSelf: 'center',
-                width: 36,
-                height: 4,
-                borderRadius: borderRadius.full,
-                backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5),
-                marginBottom: spacing[2],
-              }}
-            />
             <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
               {t('farmDetails.actions.menuTitle')}
             </Text>
@@ -2847,7 +2825,7 @@ export default function FarmDetailScreen() {
               </Text>
             </Pressable>
           </View>
-        </Pressable>
+        </BottomSheet>
       )}
 
       {showSeasonForm && (
@@ -3275,32 +3253,20 @@ export default function FarmDetailScreen() {
           onDismiss={() => setShowActiveSeasonTargetPicker(false)}
         />
       )}
-      {isEditingActiveSeasonTargetIOS && isIOS && (
-        <Pressable
-          onPress={() => setIsEditingActiveSeasonTargetIOS(false)}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            zIndex: 45,
-          }}
+      {isIOS && (
+        <BottomSheet
+          index={isEditingActiveSeasonTargetIOS ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => setIsEditingActiveSeasonTargetIOS(false)}
+          backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
         >
           <View
             style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderTopLeftRadius: m3.shape.cornerLarge,
-              borderTopRightRadius: m3.shape.cornerLarge,
               padding: spacing[4],
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
               gap: spacing[3],
             }}
-            onStartShouldSetResponder={() => true}
           >
             <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
               {t('safeToSpray.targetDate', { defaultValue: 'Target harvest date' })}
@@ -3380,7 +3346,7 @@ export default function FarmDetailScreen() {
               </Pressable>
             </View>
           </View>
-        </Pressable>
+        </BottomSheet>
       )}
 
       {showActiveSeasonStartPicker && !isIOS && (
@@ -3404,32 +3370,20 @@ export default function FarmDetailScreen() {
           onDismiss={() => setShowActiveSeasonStartPicker(false)}
         />
       )}
-      {isEditingActiveSeasonStartIOS && isIOS && (
-        <Pressable
-          onPress={() => setIsEditingActiveSeasonStartIOS(false)}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            zIndex: 45,
-          }}
+      {isIOS && (
+        <BottomSheet
+          index={isEditingActiveSeasonStartIOS ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => setIsEditingActiveSeasonStartIOS(false)}
+          backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
         >
           <View
             style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderTopLeftRadius: m3.shape.cornerLarge,
-              borderTopRightRadius: m3.shape.cornerLarge,
               padding: spacing[4],
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
               gap: spacing[3],
             }}
-            onStartShouldSetResponder={() => true}
           >
             <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
               {t('farmDetails.seasons.startDateLabel')}
@@ -3487,7 +3441,7 @@ export default function FarmDetailScreen() {
               </Pressable>
             </View>
           </View>
-        </Pressable>
+        </BottomSheet>
       )}
 
       {showSeasonSuccessOverlay && (

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '@/components/ui/spinner';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { useProfessionalFarmActivity } from '@/hooks/use-professional-farm-activity';
 import { TimelineLogCard } from '@/components/cards/timeline-log-card';
@@ -104,7 +105,7 @@ export default function ProfessionalFarm() {
     return result;
   }, [metrics, t]);
 
-  if (workspace.isLoading) return <ActivityIndicator style={{ flex: 1 }} />;
+  if (workspace.isLoading) return <Spinner style={{ flex: 1 }} />;
   if (workspace.isError) {
     return (
       <Pressable onPress={() => void workspace.refetch()} style={{ padding: spacing[4] }}>
@@ -353,7 +354,7 @@ export default function ProfessionalFarm() {
           ListFooterComponent={null}
           ListEmptyComponent={
             activity.isLoading ? (
-              <ActivityIndicator style={{ marginTop: spacing[4] }} />
+              <Spinner style={{ marginTop: spacing[4] }} />
             ) : (
               <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
                 {t('professional.emptyActivity')}

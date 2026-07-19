@@ -1,17 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as SFSymbol } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/use-tasks';
@@ -378,7 +370,7 @@ export default function TasksScreen() {
             justifyContent: 'center',
           }}
         >
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
           <Text style={{ color: m3.surface.s600, marginTop: spacing[4] }}>
             {t('common.loading')}
           </Text>

@@ -5,7 +5,6 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  ActivityIndicator,
   Alert,
   Modal,
   Platform,
@@ -14,6 +13,7 @@ import {
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -491,7 +491,7 @@ export default function LogsScreen() {
             alignItems: 'center',
           }}
         >
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
           <Text style={{ marginTop: spacing[4], color: m3.surface.s500 }}>
             {t('common.loading')}
           </Text>

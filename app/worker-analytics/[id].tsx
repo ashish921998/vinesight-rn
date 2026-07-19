@@ -1,19 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  Platform,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, Platform, StyleSheet } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { useTranslation } from 'react-i18next';
 import { useWorkerAttendance, useWorkerTransactions, useWorkers, useCurrency } from '@/hooks';
 import { formatCurrency, formatDate } from '@/i18n/format';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import {
   computeWorkerMetrics,
@@ -82,7 +75,7 @@ export default function WorkerAnalyticsDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
         </View>
       </>
     );

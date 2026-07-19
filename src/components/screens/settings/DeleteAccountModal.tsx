@@ -5,7 +5,6 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
   Alert,
@@ -13,6 +12,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { spacing, getM3Theme } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { supabase } from '@/lib/supabase';
@@ -877,7 +877,7 @@ export function DeleteAccountModal({
               ]}
             >
               {isDeleting ? (
-                <ActivityIndicator color={m3.colorScheme.onPrimary} />
+                <Spinner color={m3.colorScheme.onPrimary} />
               ) : (
                 <Text
                   style={styles.deleteButtonText}

@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Pressable,
   Text,
-  ActivityIndicator,
   View,
   StyleSheet,
   type GestureResponderEvent,
@@ -18,6 +17,7 @@ import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { springs } from '@/styles/motion';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
+import { Spinner } from '@/components/ui/spinner';
 import { triggerHaptic } from '@/utils/haptics';
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
@@ -188,7 +188,7 @@ export function Button({
           <>
             {isLoading ? (
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <ActivityIndicator color={textStyle.color} size="small" />
+                <Spinner color={textStyle.color} size="small" />
                 <Text style={[textStyle, { marginLeft: spacing[2] }]}>{title}</Text>
               </View>
             ) : (
