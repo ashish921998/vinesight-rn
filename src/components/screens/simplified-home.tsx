@@ -1,18 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  Modal,
-  StyleSheet,
-  RefreshControl,
-  type ViewStyle,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, RefreshControl, type ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
 import { useFarms, useRecentActivities, useWarehouseItems, useCurrency } from '@/hooks';
 import { useModalStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
@@ -108,6 +100,14 @@ export function SimplifiedHome() {
     setShowFarmPicker(false);
     startLogForFarm(farmId);
   };
+
+  const farmOptions = useMemo(
+    () =>
+      (farms ?? [])
+        .filter((farm) => farm.id != null)
+        .map((farm) => ({ key: String(farm.id), label: farm.name })),
+    [farms],
+  );
 
   // Combined recent timeline: farm logs (already sorted) merged with recent
   // purchases by date. Lazy path per handoff — no new unified backend model.
@@ -453,103 +453,14 @@ export function SimplifiedHome() {
         )}
       </ScrollView>
 
-      {/* Farm picker — only reached with 2+ farms */}
-      <Modal
+      {/* Farm picker — only reached with 2+ farms. Expo UI bottom sheet. */}
+      <OptionPickerSheet
         visible={showFarmPicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowFarmPicker(false)}
-      >
-        <View style={{ flex: 1, backgroundColor: colorWithOpacity(m3.colorScheme.scrim, 0.45) }}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('dashboard.farmPicker.dismissA11y')}
-            onPress={() => setShowFarmPicker(false)}
-            style={StyleSheet.absoluteFill}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              borderTopLeftRadius: m3.shape.cornerLarge,
-              borderTopRightRadius: m3.shape.cornerLarge,
-              padding: spacing[4],
-              paddingTop: spacing[6],
-              paddingBottom: Math.max(insets.bottom, spacing[4]),
-              backgroundColor: m3.surface.surfaceContainerLow,
-              maxHeight: '80%',
-            }}
-          >
-            <View
-              style={{
-                alignSelf: 'center',
-                width: 40,
-                height: 4,
-                borderRadius: radius.xs,
-                backgroundColor: m3.colorScheme.outlineVariant,
-                marginBottom: spacing[4],
-              }}
-            />
-            <Text
-              style={{
-                ...m3.typography.titleMedium,
-                color: m3.colorScheme.onSurface,
-                marginBottom: spacing[3],
-              }}
-            >
-              {t('dashboard.farmPicker.title')}
-            </Text>
-            <ScrollView showsVerticalScrollIndicator nestedScrollEnabled style={{ maxHeight: 400 }}>
-              {(farms ?? []).map((farm) => (
-                <Pressable
-                  key={farm.id}
-                  onPress={() => farm.id != null && handleFarmSelected(farm.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('dashboard.farmPicker.selectFarmA11y', { name: farm.name })}
-                  style={({ pressed }) => ({
-                    padding: spacing[4],
-                    minHeight: 48,
-                    borderBottomWidth: 1,
-                    borderBottomColor: m3.colorScheme.outlineVariant,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                      : 'transparent',
-                  })}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        ...m3.typography.bodyMedium,
-                        fontWeight: fontWeight.medium,
-                        color: m3.colorScheme.onSurface,
-                      }}
-                    >
-                      {farm.name}
-                    </Text>
-                    {farm.region ? (
-                      <Text
-                        style={{
-                          fontSize: fontSize.sm,
-                          marginTop: spacing[1],
-                          color: m3.colorScheme.onSurfaceVariant,
-                        }}
-                      >
-                        {farm.region}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <SymbolIcon name="chevron.right" size={20} color={m3.neutral.n300} />
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowFarmPicker(false)}
+        onSelect={(key) => handleFarmSelected(Number(key))}
+        title={t('dashboard.farmPicker.title')}
+        options={farmOptions}
+      />
     </View>
   );
 }
