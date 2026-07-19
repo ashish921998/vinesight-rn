@@ -35,12 +35,13 @@ export function OptionPickerSheet({
   return (
     <BottomSheet
       index={visible ? 0 : -1}
-      snapPoints={['65%', '100%']}
+      enableDynamicSizing
       enablePanDownToClose
       onClose={onClose}
       backgroundStyle={{ backgroundColor: m3.surface.s100 }}
     >
-      <View style={{ flex: 1 }}>
+      {/* No flex:1 — the sheet sizes to content, so a short list has no trailing gap. */}
+      <View>
         <View
           style={{
             paddingHorizontal: spacing[4],
