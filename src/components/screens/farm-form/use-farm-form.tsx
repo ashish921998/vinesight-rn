@@ -38,7 +38,7 @@ import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { notifyGuidedTourTargetChanged } from '@/features/guided-tour/targets';
 
 import type { FarmFormMode, AddFarmFocusField, FormState } from './types';
-import { KNOWN_CROPS, POPULAR_CROPS, CROP_I18N_KEY_MAP, SOIL_TEXTURE_OPTIONS } from './constants';
+import { KNOWN_CROPS, POPULAR_CROPS, CROP_I18N_KEY_MAP } from './constants';
 import {
   buildFormStateFromFarm,
   buildFarmInsertFromCoreFields,
@@ -586,11 +586,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     [windowHeight, pickerAvailableHeight],
   );
 
-  const textureSheetHeight = useMemo(
-    () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
-    [windowHeight, pickerAvailableHeight],
-  );
-
   const isValid = useMemo(
     () =>
       isFarmCoreFieldsValid({
@@ -616,15 +611,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-
-  const getSoilTextureLabel = useCallback(
-    (value?: string) => {
-      if (!value) return '';
-      const match = SOIL_TEXTURE_OPTIONS.find((o) => o.value === value);
-      return match ? t(match.labelKey) : value;
-    },
-    [t],
-  );
 
   const getVarietyLabel = useCallback(
     (value?: string) => {
@@ -1133,10 +1119,8 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   const setClayPercentage = (v: string) => setFormState((prev) => ({ ...prev, clayPercentage: v }));
   const setShowVarietyPicker = (open: boolean) =>
     setFormState((prev) => ({ ...prev, showVarietyPicker: open, varietySearchQuery: '' }));
-  const setShowTexturePicker = (open: boolean) =>
-    setFormState((prev) => ({ ...prev, showTexturePicker: open }));
   const setSoilTextureClass = (value: string) =>
-    setFormState((prev) => ({ ...prev, soilTextureClass: value, showTexturePicker: false }));
+    setFormState((prev) => ({ ...prev, soilTextureClass: value }));
   const closeDatePicker = () => setFormState((prev) => ({ ...prev, showDatePicker: false }));
   const closePruningDatePicker = () =>
     setFormState((prev) => ({ ...prev, showPruningDatePicker: false }));
@@ -1193,7 +1177,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     androidKeyboardLift,
     cropSheetHeight,
     varietySheetHeight,
-    textureSheetHeight,
 
     // Draft dates (iOS)
     iosPlantingDateDraft,
@@ -1228,7 +1211,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
 
     // Render helpers
     renderCropVisual,
-    getSoilTextureLabel,
     getVarietyLabel,
     ensureValidDate,
 
@@ -1252,7 +1234,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     clearPruningDate,
     closeMapPicker,
     setShowVarietyPicker,
-    setShowTexturePicker,
     setSoilTextureClass,
 
     // Simple field setters

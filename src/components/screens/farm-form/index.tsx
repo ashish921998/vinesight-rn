@@ -24,7 +24,8 @@ import { useFarmForm } from './use-farm-form';
 import { DatePickerModal } from './date-picker-modal';
 import { CropPickerSheet } from './crop-picker-sheet';
 import { VarietyPickerSheet } from './variety-picker-sheet';
-import { TexturePickerSheet } from './texture-picker-sheet';
+import { Picker } from '@expo/ui/community/picker';
+import { SOIL_TEXTURE_OPTIONS } from './constants';
 import { ensureValidDate } from './utils';
 import { guidedTourEmit } from '@/features/guided-tour';
 
@@ -665,34 +666,27 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         {/* — Soil texture section — */}
         <SectionHeader title={t('farmForm.sections.soilTexture')} style={{ marginBottom: 16 }} />
 
-        <Pressable
+        <View
           style={{
             backgroundColor: m3.surface.s100,
             borderWidth: 2,
             borderColor: m3.surface.s200,
             borderRadius: borderRadius.xl,
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[4],
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            overflow: 'hidden',
             marginBottom: spacing[5],
           }}
-          onPress={() => form.setShowTexturePicker(true)}
         >
-          <Text
-            style={{
-              fontSize: fontSize.base,
-              color: form.formState.soilTextureClass ? m3.surface.s900 : m3.surface.s400,
-              fontWeight: form.formState.soilTextureClass ? fontWeight.medium : fontWeight.normal,
-            }}
+          <Picker
+            selectedValue={form.formState.soilTextureClass}
+            onValueChange={(value) => form.setSoilTextureClass((value as string) ?? '')}
+            style={{ backgroundColor: m3.surface.s100 }}
           >
-            {form.formState.soilTextureClass
-              ? form.getSoilTextureLabel(form.formState.soilTextureClass)
-              : t('farmForm.soilTexture.selectPlaceholder')}
-          </Text>
-          <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
-        </Pressable>
+            <Picker.Item label={t('farmForm.soilTexture.selectPlaceholder')} value="" />
+            {SOIL_TEXTURE_OPTIONS.map((texture) => (
+              <Picker.Item key={texture.value} label={t(texture.labelKey)} value={texture.value} />
+            ))}
+          </Picker>
+        </View>
 
         {/* Sand / Silt / Clay */}
         <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[5] }}>
@@ -842,16 +836,6 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         onSelectCrop={form.handleSelectCrop}
         onSearchChange={form.setCropSearchQuery}
         renderCropVisual={form.renderCropVisual}
-      />
-
-      {/* ── Texture picker sheet ─────────────────────────────────────────── */}
-      <TexturePickerSheet
-        visible={form.formState.showTexturePicker}
-        selectedTexture={form.formState.soilTextureClass}
-        textureSheetHeight={form.textureSheetHeight}
-        androidKeyboardLift={form.androidKeyboardLift}
-        onClose={() => form.setShowTexturePicker(false)}
-        onSelectTexture={form.setSoilTextureClass}
       />
 
       {/* ── Location picker ──────────────────────────────────────────────── */}
