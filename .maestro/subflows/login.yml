@@ -1,0 +1,43 @@
+# Subflow: sign in with the e2e test account via the email login screen.
+# Deep-links straight to /login — avoids onboarding slides and the phone-first
+# login screen (whose email link sits under LogBox banners on dev builds).
+# Credentials come from MAESTRO_TEST_EMAIL / MAESTRO_TEST_PASSWORD (.env.maestro).
+appId: com.vinesight.ios
+---
+- openLink: vinesight://login
+# Dismiss the iOS "Open in Vinesight?" custom-scheme confirmation if it appears.
+- tapOn:
+    text: 'Open'
+    optional: true
+- tapOn: 'Email'
+- inputText: ${MAESTRO_TEST_EMAIL}
+- tapOn: 'Password'
+- inputText: ${MAESTRO_TEST_PASSWORD}
+# Dismiss the one-time iOS bilingual-keyboard intro if it appears.
+- tapOn:
+    text: 'Continue'
+    optional: true
+# Tap a neutral spot to dismiss the keyboard (hideKeyboard is flaky on iOS).
+- tapOn:
+    point: '50%,15%'
+- tapOn: 'Sign In'
+# Decline the iOS "Save Password?" dialog if it appears.
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- extendedWaitUntil:
+    visible: 'VineSight'
+    timeout: 30000
+# The app now defaults to Simplified mode; dismiss the "We've streamlined
+# VineSight" intro modal by keeping the default.
+- tapOn:
+    text: 'Stay on Simplified'
+    optional: true
+# New accounts land in the onboarding carousel — skip it to reach the dashboard.
+- tapOn:
+    text: 'Skip'
+    optional: true
+# Dismiss the "Guided tour" first-farm setup modal if it appears.
+- tapOn:
+    text: 'Skip'
+    optional: true
