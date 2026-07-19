@@ -6,6 +6,14 @@ export const BASE_TABS = [
   { name: 'explore', titleKey: 'tabs.explore' },
 ] as const;
 
+// The two base destinations are relabelled in Simplified mode (Home / Farms)
+// without changing their routes; Detailed mode keeps Dashboard / Farming.
+export function baseTabLabelKey(name: string, detailedMode: boolean, fallbackKey: string): string {
+  if (name === 'index') return detailedMode ? 'tabs.dashboard' : 'tabs.home';
+  if (name === 'explore') return detailedMode ? 'tabs.explore' : 'tabs.farms';
+  return fallbackKey;
+}
+
 export const DETAILED_TABS = [
   {
     name: 'workers',
@@ -20,14 +28,6 @@ export const DETAILED_TABS = [
     titleKey: 'tabs.tools',
     sf: ['wrench.and.screwdriver', 'wrench.and.screwdriver.fill'] as const,
     ion: ['build-outline', 'build'] as const satisfies readonly ComponentProps<
-      typeof Ionicons
-    >['name'][],
-  },
-  {
-    name: 'assistant',
-    titleKey: 'tabs.aiAssistant',
-    sf: ['brain', 'brain.fill'] as const,
-    ion: ['sparkles-outline', 'sparkles'] as const satisfies readonly ComponentProps<
       typeof Ionicons
     >['name'][],
   },

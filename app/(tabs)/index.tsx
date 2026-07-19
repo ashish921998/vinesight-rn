@@ -37,6 +37,7 @@ import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { useAppModeStore } from '@/stores';
 import { parseDbDateToLocalDate } from '@/utils/date';
 import { createAddLogHref } from '@/utils/add-log-navigation';
+import { SimplifiedHome } from '@/components/screens/simplified-home';
 
 // ============================================================
 // MARK: - Greeting Helper
@@ -56,7 +57,14 @@ function getGreetingKey(): GreetingKey {
 // MARK: - Dashboard Screen
 // ============================================================
 
+// Mode switch: Simplified mode gets an action-forward Home; Detailed mode keeps
+// the existing analytics dashboard below unchanged.
 export default function DashboardScreen() {
+  const detailedMode = useAppModeStore((s) => s.detailedMode);
+  return detailedMode ? <DetailedDashboard /> : <SimplifiedHome />;
+}
+
+function DetailedDashboard() {
   const m3 = useM3();
   const domain = useDomainColors();
   const { t } = useTranslation();
@@ -135,20 +143,12 @@ export default function DashboardScreen() {
     router.push(`/farm/${farmId}`);
   };
 
-  const handleMetricCardPress = (destination: 'farms' | 'workers' | 'tasks' | 'activities') => {
+  const handleMetricCardPress = (destination: 'farms' | 'workers') => {
     if (destination === 'farms') {
       router.push('/(tabs)/explore');
       return;
     }
-    if (destination === 'workers') {
-      router.push('/(tabs)/workers');
-      return;
-    }
-    if (destination === 'tasks') {
-      router.push('/tasks');
-      return;
-    }
-    router.push('/logs');
+    router.push('/(tabs)/workers');
   };
 
   const hasFarms = Boolean(farms && farms.length > 0);
@@ -566,112 +566,8 @@ export default function DashboardScreen() {
                     {t('dashboard.stats.activeWorkers')}
                   </Text>
                 </Pressable>
-
-                {/* Tasks */}
-                <Pressable
-                  onPress={() => handleMetricCardPress('tasks')}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('dashboard.stats.tasks')}
-                  style={({ pressed }) => ({
-                    flex: 1,
-                    minWidth: '45%',
-                    backgroundColor: m3.surface.s100,
-                    borderWidth: 1,
-                    borderColor: m3.surface.s300,
-                    borderRadius: borderRadius.md,
-                    padding: spacing[4],
-                    opacity: pressed ? 0.85 : 1,
-                  })}
-                >
-                  <View
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: radius.md,
-                      backgroundColor: colorWithOpacity(m3.colorScheme.accent, 0.12),
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: spacing[3],
-                    }}
-                  >
-                    <SymbolIcon name="checklist" size={18} color={m3.colorScheme.accent} />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: fontSize['2xl'],
-                      fontWeight: fontWeight.bold,
-                      color: m3.surface.s900,
-                      lineHeight: 28,
-                      marginBottom: spacing[1],
-                    }}
-                  >
-                    {formatNumber(stats?.pendingTasksCount ?? 0, { maximumFractionDigits: 0 })}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.semibold,
-                      color: m3.surface.s500,
-                      letterSpacing: 0,
-                    }}
-                  >
-                    {t('dashboard.stats.tasks')}
-                  </Text>
-                </Pressable>
               </>
             )}
-
-            {/* Activities */}
-            <Pressable
-              onPress={() => handleMetricCardPress('activities')}
-              accessibilityRole="button"
-              accessibilityLabel={t('dashboard.stats.activities')}
-              style={({ pressed }) => ({
-                flex: 1,
-                minWidth: '45%',
-                backgroundColor: m3.surface.s100,
-                borderWidth: 1,
-                borderColor: m3.surface.s300,
-                borderRadius: borderRadius.md,
-                padding: spacing[4],
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(m3.colorScheme.info, 0.12),
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: spacing[3],
-                }}
-              >
-                <SymbolIcon name="chart.bar" size={18} color={m3.colorScheme.info} />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize['2xl'],
-                  fontWeight: fontWeight.bold,
-                  color: m3.surface.s900,
-                  lineHeight: 28,
-                  marginBottom: spacing[1],
-                }}
-              >
-                {formatNumber(stats?.recentActivitiesCount ?? 0, { maximumFractionDigits: 0 })}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s500,
-                  letterSpacing: 0,
-                }}
-              >
-                {t('dashboard.stats.activities')}
-              </Text>
-            </Pressable>
           </View>
 
           {/* Today Needs Attention — Simplified mode hides this section */}

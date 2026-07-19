@@ -1559,8 +1559,18 @@ export const en = {
     workers: 'Workers',
     tools: 'Tools',
     settings: 'Settings',
+    home: 'Home',
     farms: 'Farms',
     aiAssistant: 'AI Assistant',
+  },
+
+  simplifiedHome: {
+    recordPurchase: 'Record Purchase',
+    addFarmLog: 'Add Farm Log',
+    addFirstFarm: 'Add your first farm to start logging',
+    recentRecords: 'Recent Records',
+    viewAll: 'View all',
+    noRecords: 'No records yet',
   },
 
   assistant: {
@@ -2041,11 +2051,15 @@ export const en = {
     selectAreaUnit: 'Select Area Unit',
     appMode: {
       title: 'Detailed mode',
-      subtitle: 'Show workers, tools, AI assistant, and tasks',
+      subtitle: 'Show workers, tools, and tasks',
+    },
+    aiAssistant: {
+      title: 'AI Assistant',
+      subtitle: 'Open the farming assistant',
     },
     appModeIntro: {
       title: "We've streamlined VineSight",
-      body: 'The app now starts in Simplified mode. Workers, tools, the AI assistant, and tasks are hidden by default. You can switch back any time.',
+      body: 'The app now starts in Simplified mode. Workers, tools, and tasks are hidden by default. You can switch back any time.',
       enableDetailed: 'Enable Detailed mode',
       staySimplified: 'Stay on Simplified',
     },

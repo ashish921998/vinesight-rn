@@ -12,7 +12,7 @@ import { useM3, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
 import { ComposeTabBar } from '@/components/navigation/compose-tab-bar';
-import { DETAILED_TABS } from '@/components/navigation/tab-definitions';
+import { DETAILED_TABS, baseTabLabelKey } from '@/components/navigation/tab-definitions';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -157,7 +157,9 @@ export default function TabLayout() {
       >
         <NativeTabs.Trigger name="index">
           {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'), 'grid-outline', 'grid')}
-          <NativeTabs.Trigger.Label>{t('tabs.dashboard')}</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>
+            {t(baseTabLabelKey('index', detailedMode, 'tabs.dashboard'))}
+          </NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="explore">
           <NativeTabs.Trigger.Icon
@@ -172,7 +174,9 @@ export default function TabLayout() {
               ),
             }}
           />
-          <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>
+            {t(baseTabLabelKey('explore', detailedMode, 'tabs.explore'))}
+          </NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         {detailedMode &&
           DETAILED_TABS.map((tab) => (

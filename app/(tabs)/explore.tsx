@@ -12,7 +12,8 @@ import {
   useFabBottomPosition,
   useCurrency,
 } from '@/hooks';
-import { useModalStore } from '@/stores';
+import { useModalStore, useAppModeStore } from '@/stores';
+import { telemetry } from '@/services/telemetry';
 import type { Farm, WarehouseItem } from '@/types';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -41,6 +42,8 @@ export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const fabBottom = useFabBottomPosition();
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
+  // Simplified mode owns farm management only — no Warehouse toggle.
+  const detailedMode = useAppModeStore((s) => s.detailedMode);
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
   const isAddFarmTargetEnabled = isScreenFocused && selectedTab === 'farms';
@@ -160,11 +163,15 @@ export default function ExploreScreen() {
   useFocusEffect(
     useCallback(() => {
       setToday(new Date());
+      telemetry.capture('farms_tab_opened', {
+        app_mode: detailedMode ? 'detailed' : 'simplified',
+        surface: 'farms',
+      });
       return () => {
         setSearchQuery('');
         setIsSearchExpanded(false);
       };
-    }, []),
+    }, [detailedMode]),
   );
 
   const handleFarmPress = (farm: Farm) => {
@@ -173,6 +180,10 @@ export default function ExploreScreen() {
   };
 
   const handleAddFarm = () => {
+    telemetry.capture('add_farm_tapped', {
+      app_mode: detailedMode ? 'detailed' : 'simplified',
+      surface: 'farms',
+    });
     router.push('/farm/add');
   };
 
@@ -368,94 +379,110 @@ export default function ExploreScreen() {
             gap: spacing[2],
           }}
         >
-          {/* Segmented pill toggle */}
-          <View
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: m3.surface.s50,
-              borderRadius: radius.lg,
-              padding: 2,
-              height: 36,
-            }}
-          >
-            {exploreTabs.map((tab) => {
-              const isSelected = selectedTab === tab.id;
-              return (
-                <Animated.View
-                  key={tab.id}
-                  style={{
-                    flex: 1,
-                    transform: [{ scale: tabScaleAnims[tab.id] }],
-                  }}
-                >
-                  <Pressable
-                    onPress={() => handleTabChange(tab.id)}
-                    accessibilityRole="tab"
-                    accessibilityLabel={tab.label}
-                    accessibilityState={{ selected: isSelected }}
+          {/* Segmented pill toggle (Detailed mode only — Simplified mode shows a
+              plain Farms title so there's no Warehouse switch). */}
+          {!detailedMode ? (
+            <View style={{ flex: 1, height: 36, justifyContent: 'center' }}>
+              <Text
+                accessibilityRole="header"
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.bold,
+                  color: m3.colorScheme.onSurface,
+                }}
+              >
+                {t('tabs.farms')}
+              </Text>
+            </View>
+          ) : (
+            <View
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: m3.surface.s50,
+                borderRadius: radius.lg,
+                padding: 2,
+                height: 36,
+              }}
+            >
+              {exploreTabs.map((tab) => {
+                const isSelected = selectedTab === tab.id;
+                return (
+                  <Animated.View
+                    key={tab.id}
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6,
-                      borderRadius: radius.lg,
-                      height: 32,
-                      paddingHorizontal: spacing[2],
-                      backgroundColor: isSelected ? m3.colorScheme.primary : 'transparent',
+                      flex: 1,
+                      transform: [{ scale: tabScaleAnims[tab.id] }],
                     }}
                   >
-                    <Icon
-                      name={tab.icon}
-                      size={14}
-                      color={
-                        isSelected
-                          ? m3.colorScheme.onPrimary
-                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.85)
-                      }
-                    />
-                    <Text
-                      numberOfLines={1}
+                    <Pressable
+                      onPress={() => handleTabChange(tab.id)}
+                      accessibilityRole="tab"
+                      accessibilityLabel={tab.label}
+                      accessibilityState={{ selected: isSelected }}
                       style={{
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                        color: isSelected
-                          ? m3.colorScheme.onPrimary
-                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.95),
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        borderRadius: radius.lg,
+                        height: 32,
+                        paddingHorizontal: spacing[2],
+                        backgroundColor: isSelected ? m3.colorScheme.primary : 'transparent',
                       }}
                     >
-                      {tab.label}
-                    </Text>
-                    {tab.id === 'warehouse' && lowStockCount > 0 && !isSelected ? (
-                      <View
+                      <Icon
+                        name={tab.icon}
+                        size={14}
+                        color={
+                          isSelected
+                            ? m3.colorScheme.onPrimary
+                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.85)
+                        }
+                      />
+                      <Text
+                        numberOfLines={1}
                         style={{
-                          minWidth: 16,
-                          height: 16,
-                          paddingHorizontal: 4,
-                          borderRadius: radius.sm,
-                          backgroundColor: '#D97706',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                          color: isSelected
+                            ? m3.colorScheme.onPrimary
+                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.95),
                         }}
                       >
-                        <Text
+                        {tab.label}
+                      </Text>
+                      {tab.id === 'warehouse' && lowStockCount > 0 && !isSelected ? (
+                        <View
                           style={{
-                            color: '#fff',
-                            fontSize: fontSize['2xs'],
-                            fontWeight: fontWeight.bold,
-                            fontVariant: ['tabular-nums'],
+                            minWidth: 16,
+                            height: 16,
+                            paddingHorizontal: 4,
+                            borderRadius: radius.sm,
+                            backgroundColor: '#D97706',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
                         >
-                          {lowStockCount > 99 ? '99+' : lowStockCount}
-                        </Text>
-                      </View>
-                    ) : null}
-                  </Pressable>
-                </Animated.View>
-              );
-            })}
-          </View>
+                          <Text
+                            style={{
+                              color: '#fff',
+                              fontSize: fontSize['2xs'],
+                              fontWeight: fontWeight.bold,
+                              fontVariant: ['tabular-nums'],
+                            }}
+                          >
+                            {lowStockCount > 99 ? '99+' : lowStockCount}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </Pressable>
+                  </Animated.View>
+                );
+              })}
+            </View>
+          )}
 
           {/* Search icon button */}
           <Pressable
@@ -548,8 +575,8 @@ export default function ExploreScreen() {
           opacity: tabSwitchAnim,
         }}
       >
-        {selectedTab === 'farms' && renderFarmsTab()}
-        {selectedTab === 'warehouse' && renderWarehouseTab()}
+        {(!detailedMode || selectedTab === 'farms') && renderFarmsTab()}
+        {detailedMode && selectedTab === 'warehouse' && renderWarehouseTab()}
       </Animated.View>
 
       {/* Modals are now route-based */}

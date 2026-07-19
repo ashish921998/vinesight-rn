@@ -9,8 +9,7 @@ import dashboardIcon from '../../../assets/tab-icons/dashboard.xml';
 import exploreIcon from '../../../assets/tab-icons/explore.xml';
 import workersIcon from '../../../assets/tab-icons/workers.xml';
 import toolsIcon from '../../../assets/tab-icons/tools.xml';
-import assistantIcon from '../../../assets/tab-icons/assistant.xml';
-import { BASE_TABS, DETAILED_TABS } from './tab-definitions';
+import { BASE_TABS, DETAILED_TABS, baseTabLabelKey } from './tab-definitions';
 
 type TabName = (typeof BASE_TABS)[number]['name'] | (typeof DETAILED_TABS)[number]['name'];
 
@@ -23,7 +22,6 @@ const TAB_ICONS: Record<TabName, number> = {
   explore: exploreIcon,
   workers: workersIcon,
   tools: toolsIcon,
-  assistant: assistantIcon,
 };
 
 export function ComposeTabBar({ state, navigation, insets }: BottomTabBarProps) {
@@ -51,7 +49,7 @@ export function ComposeTabBar({ state, navigation, insets }: BottomTabBarProps) 
         borderTopColor: m3.colorScheme.outlineVariant,
       }}
     >
-      <Host matchContents>
+      <Host matchContents={{ vertical: true }} style={{ width: '100%' }}>
         <NavigationBar containerColor={m3.surface.surfaceContainerLow}>
           {tabs.map((tab) => {
             const route = state.routes.find((r: { name: string }) => r.name === tab.name);
@@ -77,7 +75,7 @@ export function ComposeTabBar({ state, navigation, insets }: BottomTabBarProps) 
                   <Icon source={TAB_ICONS[tab.name]} size={24} />
                 </NavigationBarItem.Icon>
                 <NavigationBarItem.Label>
-                  <Text>{t(tab.titleKey)}</Text>
+                  <Text>{t(baseTabLabelKey(tab.name, detailedMode, tab.titleKey))}</Text>
                 </NavigationBarItem.Label>
               </NavigationBarItem>
             );
