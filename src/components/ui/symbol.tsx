@@ -1,20 +1,35 @@
-import { SymbolView, type SymbolViewProps, SymbolWeight } from 'expo-symbols';
+import { Icon } from '@expo/ui';
 import React from 'react';
 import { View, Text, Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ICON_MAPPING } from '@/utils/icon-mapping';
 import { useM3 } from '@/styles/use-theme';
 import { AppIcon } from './app-icon';
+import { ICON_ASSETS } from './icon-assets';
 
 interface SymbolProps {
   name: string;
   size?: number;
   color?: string;
-  weight?: SymbolWeight;
+  /**
+   * SF Symbol weight. iOS-only on the legacy `SymbolView` path; the universal
+   * `@expo/ui` `Icon` has no weight prop, so this is accepted for call-site
+   * compatibility and ignored on the native universal path.
+   */
+  weight?:
+    | 'ultraLight'
+    | 'thin'
+    | 'light'
+    | 'regular'
+    | 'medium'
+    | 'semibold'
+    | 'bold'
+    | 'heavy'
+    | 'black';
   style?: StyleProp<ViewStyle>;
 }
 
-// Map SF Symbol names to MaterialCommunityIcons for farm/agriculture icons
+// Map SF Symbol names to MaterialCommunityIcons for farm/agriculture icons (web fallback).
 const SYMBOL_TO_MATERIAL_ICON: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
   house: 'barn',
   'house.fill': 'barn',
@@ -28,7 +43,7 @@ const SYMBOL_TO_MATERIAL_ICON: Record<string, keyof typeof MaterialCommunityIcon
   'rectangle.stack': 'view-dashboard-outline',
 };
 
-// Map SF Symbol names to Ionicons as fallback
+// Map SF Symbol names to Ionicons (web fallback).
 const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   // Navigation
   'chevron.left': 'chevron-back',
@@ -117,8 +132,6 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 
   // Money
   banknote: 'cash',
-
-  // Note: 'house' and 'house.fill' are mapped to MaterialCommunityIcons (barn) in SYMBOL_TO_MATERIAL_ICON
 
   // Analytics
   'chart.bar': 'bar-chart-outline',
@@ -215,61 +228,66 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'arrow.triangle.branch': 'git-branch-outline',
   'drop.circle': 'water-outline',
   'drop.circle.fill': 'water',
+  // Web-fallback additions for names that previously had no glyph on Android/web
+  'circle.inset.filled': 'radio-button-on',
+  'creditcard.fill': 'card',
+  'tablecells.fill': 'grid',
+  'xmark.seal.fill': 'close-circle',
+  'cloud.fill': 'cloud',
+  'cloud.drizzle.fill': 'rainy',
+  'alarm.fill': 'alarm',
+  function: 'calculator',
+  scissors: 'cut',
+  'square.and.arrow.down.fill': 'download',
+  'slider.horizontal.3': 'options',
+  'hand.tap.fill': 'hand-right',
+  'line.3.horizontal.decrease': 'options',
+  'line.3.horizontal.decrease.circle': 'options',
 };
 
-export function SymbolComponent({
-  name,
-  size = 24,
-  color,
-  weight = 'regular',
-  style,
-}: SymbolProps) {
+export function SymbolComponent({ name, size = 24, color, style }: SymbolProps) {
   const m3 = useM3();
   const resolvedColor = color ?? m3.colorScheme.onSurface;
   const resolvedName = ICON_MAPPING[name] ?? name;
-  const directIonicon = Object.prototype.hasOwnProperty.call(Ionicons.glyphMap, name)
-    ? (name as keyof typeof Ionicons.glyphMap)
-    : undefined;
-  const materialIcon = SYMBOL_TO_MATERIAL_ICON[resolvedName] || SYMBOL_TO_MATERIAL_ICON[name];
   const isSprayIcon = resolvedName === 'spraycan' || resolvedName === 'spraycan.fill';
   const isFertigationIcon = resolvedName === 'fertigation' || name === 'fertigation';
   const isAssistantIcon = resolvedName === 'assistant' || name === 'assistant';
   const isGrapeSparkleIcon = resolvedName === 'grape-sparkle' || name === 'grape-sparkle';
 
-  // Keep spray icon identical to AppIcon across all platforms.
+  // Keep bespoke AppIcon assets identical across all platforms.
   if (isSprayIcon) return <AppIcon name="spraycan" size={size} color={resolvedColor} />;
   if (isFertigationIcon) return <AppIcon name="fertigation" size={size} color={resolvedColor} />;
   if (isAssistantIcon) return <AppIcon name="assistant" size={size} color={resolvedColor} />;
   if (isGrapeSparkleIcon) return <AppIcon name="grape-sparkle" size={size} color={resolvedColor} />;
 
-  // On iOS 17+, use SF Symbols
-  if (Platform.OS === 'ios') {
-    const fallbackIcon =
-      SYMBOL_TO_IONICON[resolvedName] ||
-      SYMBOL_TO_IONICON[name] ||
-      directIonicon ||
-      'ellipse-outline';
-    return (
-      <SymbolView
-        name={resolvedName as SymbolViewProps['name']}
-        size={size}
-        tintColor={resolvedColor}
-        weight={weight}
-        type="hierarchical"
-        style={style}
-        fallback={
-          <Ionicons
-            name={fallbackIcon}
-            size={size}
-            color={resolvedColor}
-            style={style as StyleProp<TextStyle>}
-          />
-        }
-      />
-    );
+  // Native: universal `@expo/ui` `Icon` — SF Symbol on iOS, Material Symbol XML on Android.
+  // `Icon.select` is rewritten by `@expo/ui/babel-plugin` into a `Platform.OS` ternary
+  // so only the active platform's asset ships in its bundle.
+  if (Platform.OS !== 'web') {
+    const asset = ICON_ASSETS[resolvedName as keyof typeof ICON_ASSETS];
+    if (asset) {
+      // `Icon.style` is `UniversalStyle` (a `Pick<ViewStyle, ...>`), narrower than
+      // RN's `StyleProp<ViewStyle>` (which also allows arrays/falsy). Flatten to a
+      // plain object so only the supported subset is passed through.
+      const flatStyle = (
+        Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style
+      ) as ViewStyle | undefined;
+      return <Icon name={asset} size={size} color={resolvedColor} style={flatStyle} />;
+    }
+    if (__DEV__) {
+      console.warn(
+        `[symbol] no universal Icon mapping for "${resolvedName}"${name !== resolvedName ? ` (from "${name}")` : ''}; falling back to vector-icons`,
+      );
+    }
+    // Fall through to vector-icons below for unmapped names (graceful degradation).
   }
 
-  // On Android/web, check for MaterialCommunityIcons first, then Ionicons
+  // Web (and native unmapped fallback): vector-icons.
+  const directIonicon = Object.prototype.hasOwnProperty.call(Ionicons.glyphMap, resolvedName)
+    ? (resolvedName as keyof typeof Ionicons.glyphMap)
+    : undefined;
+  const materialIcon = SYMBOL_TO_MATERIAL_ICON[resolvedName] || SYMBOL_TO_MATERIAL_ICON[name];
+
   if (materialIcon) {
     return (
       <MaterialCommunityIcons
