@@ -1,5 +1,10 @@
 import React, { type ReactNode } from 'react';
-import { BottomSheet, BottomSheetView } from '@expo/ui/community/bottom-sheet';
+import { type StyleProp, type ViewStyle } from 'react-native';
+import {
+  BottomSheet,
+  BottomSheetView,
+  type BottomSheetProps,
+} from '@expo/ui/community/bottom-sheet';
 import { useM3 } from '@/styles/use-theme';
 
 export interface ModalBackdropProps {
@@ -9,6 +14,9 @@ export interface ModalBackdropProps {
   alignment?: 'center' | 'flex-end';
   opacity?: number;
   zIndex?: number;
+  snapPoints?: BottomSheetProps['snapPoints'];
+  fitToContents?: boolean;
+  contentStyle?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -22,20 +30,27 @@ export function ModalBackdrop({
   alignment = 'flex-end',
   opacity = 0.5,
   zIndex,
+  snapPoints,
+  fitToContents = false,
+  contentStyle,
 }: ModalBackdropProps) {
   const m3 = useM3();
   void opacity;
   void zIndex;
+  const defaultSnapPoints = alignment === 'center' ? ['50%'] : ['65%', '95%'];
 
   return (
     <BottomSheet
       index={visible ? 0 : -1}
-      snapPoints={alignment === 'center' ? ['50%'] : ['65%', '95%']}
+      snapPoints={fitToContents ? undefined : (snapPoints ?? defaultSnapPoints)}
+      enableDynamicSizing={fitToContents}
       enablePanDownToClose
       onClose={onDismiss}
       backgroundStyle={{ backgroundColor: m3.surface.s100 }}
     >
-      <BottomSheetView style={{ flex: 1 }}>{children}</BottomSheetView>
+      <BottomSheetView style={[fitToContents ? { width: '100%' } : { flex: 1 }, contentStyle]}>
+        {children}
+      </BottomSheetView>
     </BottomSheet>
   );
 }

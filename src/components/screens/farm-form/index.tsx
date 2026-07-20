@@ -29,7 +29,7 @@ import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 
 import type { FarmFormProps } from './types';
 import { useFarmForm } from './use-farm-form';
-import { DatePickerModal } from './date-picker-modal';
+import { IOSDatePickerSheet } from './ios-date-picker-sheet';
 import { CropPickerSheet } from './crop-picker-sheet';
 import { VarietyPickerSheet } from './variety-picker-sheet';
 import { SOIL_TEXTURE_OPTIONS } from './constants';
@@ -780,7 +780,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
       {/* ── iOS planting date picker ──────────────────────────────────────── */}
       {form.formState.showDatePicker && isIOS && (
-        <DatePickerModal
+        <IOSDatePickerSheet
           visible
           title={t('farmForm.sections.plantingDate')}
           value={form.iosPlantingDateDraft}
@@ -805,7 +805,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
       {/* ── iOS pruning date picker ───────────────────────────────────────── */}
       {form.formState.showPruningDatePicker && isIOS && (
-        <DatePickerModal
+        <IOSDatePickerSheet
           visible
           title={t('farmForm.fields.pruningDate.label')}
           value={form.iosPruningDateDraft}

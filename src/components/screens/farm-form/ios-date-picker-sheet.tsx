@@ -1,5 +1,5 @@
 /**
- * Farm Form – shared iOS date picker bottom sheet
+ * Farm Form – shared iOS date picker sheet
  * Renders a spinner-style date picker inside a bottom sheet modal.
  * Used for both planting date and pruning date.
  */
@@ -15,7 +15,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { useIsDark, useM3 } from '@/styles/use-theme';
 import { ensureValidDate } from './utils';
 
-interface DatePickerModalProps {
+interface IOSDatePickerSheetProps {
   visible: boolean;
   title: string;
   value: Date;
@@ -24,26 +24,22 @@ interface DatePickerModalProps {
   onConfirm: () => void;
 }
 
-export function DatePickerModal({
+export function IOSDatePickerSheet({
   visible,
   title,
   value,
   onClose,
   onChange,
   onConfirm,
-}: DatePickerModalProps) {
+}: IOSDatePickerSheetProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const isDark = useIsDark();
 
   return (
-    <ModalBackdrop visible={visible} onDismiss={onClose} opacity={0.5} zIndex={50}>
+    <ModalBackdrop visible={visible} onDismiss={onClose} opacity={0.5} zIndex={50} fitToContents>
       <View
         style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
           backgroundColor: m3.surface.s100,
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
@@ -79,15 +75,7 @@ export function DatePickerModal({
           mode="date"
           display="spinner"
           themeVariant={isDark ? 'dark' : 'light'}
-          onChange={(event, date) => {
-            if (event.type === 'dismissed') return;
-            const nextDate =
-              date ??
-              (typeof event.nativeEvent?.timestamp === 'number'
-                ? new Date(event.nativeEvent.timestamp)
-                : undefined);
-            if (nextDate) onChange(ensureValidDate(nextDate));
-          }}
+          onValueChange={(_, date) => onChange(ensureValidDate(date))}
         />
 
         <Pressable

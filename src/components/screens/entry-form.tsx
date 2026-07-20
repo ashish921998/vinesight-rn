@@ -3306,13 +3306,10 @@ export function EntryForm({
             onDismiss={() => setShowTypePicker(false)}
             opacity={0.4}
             zIndex={60}
+            fitToContents
           >
             <View
               style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
                 backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
@@ -3397,13 +3394,10 @@ export function EntryForm({
             onDismiss={() => setShowPriorityPicker(false)}
             opacity={0.4}
             zIndex={60}
+            fitToContents
           >
             <View
               style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
                 backgroundColor: m3.surface.s100,
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
