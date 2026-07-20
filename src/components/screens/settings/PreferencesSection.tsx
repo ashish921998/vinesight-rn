@@ -111,6 +111,7 @@ export function PreferencesSection({
             onPress={() => setShowLanguagePicker(true)}
             accessibilityRole="button"
             accessibilityLabel={t('settings.language')}
+            accessibilityValue={{ text: getLanguageLabel(language) }}
           >
             <SettingsItem
               icon="globe"
@@ -125,6 +126,7 @@ export function PreferencesSection({
             onPress={() => setShowThemePicker(true)}
             accessibilityRole="button"
             accessibilityLabel={t('settings.theme')}
+            accessibilityValue={{ text: getThemeLabel(themeMode) }}
           >
             <SettingsItem
               icon="circle.lefthalf.filled"
@@ -139,6 +141,7 @@ export function PreferencesSection({
             onPress={() => setShowCurrencyPicker(true)}
             accessibilityRole="button"
             accessibilityLabel={t('settings.currency')}
+            accessibilityValue={{ text: getCurrencyLabel(selectedCurrency) }}
           >
             <SettingsItem
               icon="indianrupeesign.circle"
@@ -153,6 +156,7 @@ export function PreferencesSection({
             onPress={() => setShowAreaPicker(true)}
             accessibilityRole="button"
             accessibilityLabel={t('settings.areaUnit')}
+            accessibilityValue={{ text: getAreaUnitLabel(selectedAreaUnit) }}
           >
             <SettingsItem
               icon="square.grid.2x2"

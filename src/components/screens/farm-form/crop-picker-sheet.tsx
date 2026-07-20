@@ -94,6 +94,9 @@ export function CropPickerSheet({
             </Text>
             <Pressable
               onPress={onClose}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close')}
               style={{
                 width: 40,
                 height: 40,

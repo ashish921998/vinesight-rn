@@ -83,7 +83,7 @@ export function VarietyPickerSheet({
               onPress={onClose}
               accessible
               accessibilityRole="button"
-              accessibilityLabel="Close variety picker"
+              accessibilityLabel={t('common.close')}
               style={{
                 width: 40,
                 height: 40,
