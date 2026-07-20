@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { ScrollView, StyleSheet, View, Text, ActivityIndicator, Pressable } from 'react-native';
+import { ScrollView, StyleSheet, View, Text, Pressable } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol } from '@/components/ui/symbol';
 import {
   useFarm,
@@ -237,7 +238,7 @@ export default function FertilizerPlansScreen() {
               alignItems: 'center',
             }}
           >
-            <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+            <Spinner size="small" color={m3.colorScheme.primary} />
           </View>
         ) : !canAccessPlans ? (
           <View
@@ -279,7 +280,7 @@ export default function FertilizerPlansScreen() {
               alignItems: 'center',
             }}
           >
-            <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+            <Spinner size="small" color={m3.colorScheme.primary} />
             <Text
               style={{
                 color: m3.colorScheme.onSurfaceVariant,

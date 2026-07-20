@@ -45,7 +45,6 @@ export type FormState = {
   showPruningDatePicker: boolean;
   showVarietyPicker: boolean;
   showCropPicker: boolean;
-  showTexturePicker: boolean;
   showMapPicker: boolean;
   plantingDateChanged: boolean;
 };

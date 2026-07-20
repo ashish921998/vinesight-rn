@@ -5,16 +5,9 @@
  */
 
 import React from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  ActivityIndicator,
-  type ViewStyle,
-  type TextStyle,
-} from 'react-native';
+import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
@@ -129,7 +122,7 @@ export function StatsCard({
   };
 
   const valueContent = isLoading ? (
-    <ActivityIndicator size="small" color={finalColor} />
+    <Spinner size="small" color={finalColor} />
   ) : (
     <View style={valueContainerStyle}>
       <View style={valueRowStyle}>

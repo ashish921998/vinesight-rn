@@ -326,9 +326,11 @@ export function WarehousePaneB({
     () => (
       <View>
         <HeroPanel label={heroLabel} value={heroValue}>
-          <StockHealthBar buckets={buckets} accentFor={accentFor} t={t} />
+          {buckets.all > 0 && <StockHealthBar buckets={buckets} accentFor={accentFor} t={t} />}
         </HeroPanel>
-        <ChipRow chips={chips} active={activeFilter} onChange={onFilterChange} />
+        {buckets.all > 0 && (
+          <ChipRow chips={chips} active={activeFilter} onChange={onFilterChange} />
+        )}
       </View>
     ),
     [heroLabel, heroValue, buckets, accentFor, t, chips, activeFilter, onFilterChange],

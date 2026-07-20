@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useAnalytics } from '../src/hooks/use-analytics';
@@ -138,7 +139,7 @@ export default function AnalyticsScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         {analyticsHeader}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
           <Text style={{ color: m3.surface.s600, marginTop: spacing[4] }}>
             {t('analytics.loading')}
           </Text>

@@ -4,19 +4,12 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  Pressable,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, Pressable } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Picker } from '@react-native-picker/picker';
+import { Picker } from '@expo/ui/community/picker';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import { useFarms } from '@/hooks';
@@ -254,7 +247,7 @@ export default function WidgetConfigurationScreen() {
   if (farmsLoading || configLoading) {
     return (
       <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+        <Spinner size="large" color={m3.colorScheme.primary} />
       </View>
     );
   }
@@ -358,6 +351,8 @@ export default function WidgetConfigurationScreen() {
           </Text>
 
           <View
+            accessible
+            accessibilityLabel={t('widgetConfig.selectFarm', 'Select farm')}
             style={[
               styles.pickerContainer,
               {
@@ -369,7 +364,6 @@ export default function WidgetConfigurationScreen() {
             <Picker
               selectedValue={selectedFarmId}
               onValueChange={(itemValue) => setSelectedFarmId(itemValue)}
-              accessibilityLabel={t('widgetConfig.selectFarm', 'Select farm')}
               style={styles.picker}
             >
               {farms.map((farm) => (

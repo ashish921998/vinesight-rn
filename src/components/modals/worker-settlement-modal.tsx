@@ -19,7 +19,7 @@ import { Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { Worker } from '@/types';
 import { calculateWorkerSettlement, createWorkerSettlement } from '@/services/worker-service';
-import { Picker } from '@react-native-picker/picker';
+import { Picker } from '@expo/ui/community/picker';
 import { supabase } from '@/lib/supabase';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { SettlementTourCoachmark } from '@/features/guided-tour/settlement-tour-coachmark';
@@ -622,7 +622,6 @@ export function WorkerSettlementModal({
                     }}
                     style={{
                       backgroundColor: m3.surface.surfaceContainerLow,
-                      color: m3.colorScheme.onSurface,
                     }}
                   >
                     {workers.map((worker, index) => (

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import {
@@ -9,6 +10,9 @@ import { useSprayUnitStore } from '@/stores/spray-unit-store';
 import type { RecentInputItem } from '@/hooks/use-records';
 import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 
+jest.mock('@expo/ui/community/bottom-sheet', () =>
+  require('../jest-setup/expo-ui-bottom-sheet-mock'),
+);
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
 
 jest.mock('react-i18next', () => ({

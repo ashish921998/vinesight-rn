@@ -5,7 +5,6 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  ActivityIndicator,
   Alert,
   Modal,
   Platform,
@@ -14,8 +13,9 @@ import {
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
@@ -178,6 +178,7 @@ export default function LogsScreen() {
   const [selectedLogTypes, setSelectedLogTypes] = useState<Set<LogTypeId>>(new Set());
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [activeDatePicker, setActiveDatePicker] = useState<'from' | 'to' | null>(null);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -215,18 +216,6 @@ export default function LogsScreen() {
       }, {}),
     [farms],
   );
-
-  const openAndroidDatePicker = (current: Date | undefined, onSelect: (date: Date) => void) => {
-    DateTimePickerAndroid.open({
-      value: current ?? new Date(),
-      mode: 'date',
-      display: 'default',
-      onChange: (event, date) => {
-        if (event.type !== 'set' || !date) return;
-        onSelect(date);
-      },
-    });
-  };
 
   const combinedLogs = useMemo<CombinedLog[]>(() => {
     const logs: CombinedLog[] = [];
@@ -502,7 +491,7 @@ export default function LogsScreen() {
             alignItems: 'center',
           }}
         >
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
           <Text style={{ marginTop: spacing[4], color: m3.surface.s500 }}>
             {t('common.loading')}
           </Text>
@@ -1902,69 +1891,81 @@ export default function LogsScreen() {
                   </Text>
 
                   {Platform.OS === 'android' ? (
-                    <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-                      <Pressable
-                        onPress={() => openAndroidDatePicker(dateFrom, (date) => setDateFrom(date))}
-                        style={{ flex: 1 }}
-                      >
-                        <View
-                          style={{
-                            backgroundColor: m3.surface.surfaceContainerLow,
-                            paddingHorizontal: spacing[3],
-                            paddingVertical: spacing[2],
-                            borderRadius: borderRadius.xl,
-                            borderWidth: 1,
-                            borderColor: m3.colorScheme.outlineVariant,
-                          }}
-                        >
-                          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                            {t('common.from')}
-                          </Text>
-                          <Text
+                    <>
+                      <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                        <Pressable onPress={() => setActiveDatePicker('from')} style={{ flex: 1 }}>
+                          <View
                             style={{
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.semibold,
-                              color: m3.surface.s900,
+                              backgroundColor: m3.surface.surfaceContainerLow,
+                              paddingHorizontal: spacing[3],
+                              paddingVertical: spacing[2],
+                              borderRadius: borderRadius.xl,
+                              borderWidth: 1,
+                              borderColor: m3.colorScheme.outlineVariant,
                             }}
                           >
-                            {dateFrom
-                              ? formatDate(dateFrom, { month: 'short', day: 'numeric' })
-                              : t('common.selectDate')}
-                          </Text>
-                        </View>
-                      </Pressable>
+                            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
+                              {t('common.from')}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: fontSize.sm,
+                                fontWeight: fontWeight.semibold,
+                                color: m3.surface.s900,
+                              }}
+                            >
+                              {dateFrom
+                                ? formatDate(dateFrom, { month: 'short', day: 'numeric' })
+                                : t('common.selectDate')}
+                            </Text>
+                          </View>
+                        </Pressable>
 
-                      <Pressable
-                        onPress={() => openAndroidDatePicker(dateTo, (date) => setDateTo(date))}
-                        style={{ flex: 1 }}
-                      >
-                        <View
-                          style={{
-                            backgroundColor: m3.surface.surfaceContainerLow,
-                            paddingHorizontal: spacing[3],
-                            paddingVertical: spacing[2],
-                            borderRadius: borderRadius.xl,
-                            borderWidth: 1,
-                            borderColor: m3.colorScheme.outlineVariant,
-                          }}
-                        >
-                          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                            {t('common.to')}
-                          </Text>
-                          <Text
+                        <Pressable onPress={() => setActiveDatePicker('to')} style={{ flex: 1 }}>
+                          <View
                             style={{
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.semibold,
-                              color: m3.surface.s900,
+                              backgroundColor: m3.surface.surfaceContainerLow,
+                              paddingHorizontal: spacing[3],
+                              paddingVertical: spacing[2],
+                              borderRadius: borderRadius.xl,
+                              borderWidth: 1,
+                              borderColor: m3.colorScheme.outlineVariant,
                             }}
                           >
-                            {dateTo
-                              ? formatDate(dateTo, { month: 'short', day: 'numeric' })
-                              : t('common.selectDate')}
-                          </Text>
-                        </View>
-                      </Pressable>
-                    </View>
+                            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
+                              {t('common.to')}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: fontSize.sm,
+                                fontWeight: fontWeight.semibold,
+                                color: m3.surface.s900,
+                              }}
+                            >
+                              {dateTo
+                                ? formatDate(dateTo, { month: 'short', day: 'numeric' })
+                                : t('common.selectDate')}
+                            </Text>
+                          </View>
+                        </Pressable>
+                      </View>
+                      {activeDatePicker && (
+                        <DateTimePicker
+                          value={(activeDatePicker === 'from' ? dateFrom : dateTo) ?? new Date()}
+                          mode="date"
+                          presentation="dialog"
+                          onValueChange={(_, date) => {
+                            if (activeDatePicker === 'from') {
+                              setDateFrom(date);
+                            } else {
+                              setDateTo(date);
+                            }
+                            setActiveDatePicker(null);
+                          }}
+                          onDismiss={() => setActiveDatePicker(null)}
+                        />
+                      )}
+                    </>
                   ) : (
                     <View style={{ gap: spacing[4] }}>
                       <View
@@ -1983,7 +1984,7 @@ export default function LogsScreen() {
                           value={dateFrom || new Date()}
                           mode="date"
                           display="spinner"
-                          onChange={(_, date) => {
+                          onValueChange={(_, date) => {
                             if (date) setDateFrom(date);
                           }}
                           style={{ height: 140 }}
@@ -2005,7 +2006,7 @@ export default function LogsScreen() {
                           value={dateTo || new Date()}
                           mode="date"
                           display="spinner"
-                          onChange={(_, date) => {
+                          onValueChange={(_, date) => {
                             if (date) setDateTo(date);
                           }}
                           style={{ height: 140 }}

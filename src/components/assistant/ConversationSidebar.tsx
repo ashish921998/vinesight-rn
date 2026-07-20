@@ -18,7 +18,6 @@ import {
   Text,
   TouchableOpacity,
   FlatList,
-  ActivityIndicator,
   Alert,
   Animated,
   Modal,
@@ -31,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, shadows, spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { assistantMemoryService } from '@/services/assistant-memory';
 import type { AssistantConversationSummary } from '@/services/assistant-memory';
 import { formatDate } from '@/i18n/format';
@@ -321,7 +321,7 @@ export function ConversationSidebar({
           {/* Conversations list */}
           {isLoading ? (
             <View style={styles.centerContainer} testID="conversations-loading">
-              <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+              <Spinner size="small" color={m3.colorScheme.primary} />
             </View>
           ) : loadError ? (
             <View style={styles.centerContainer} testID="conversations-load-error">

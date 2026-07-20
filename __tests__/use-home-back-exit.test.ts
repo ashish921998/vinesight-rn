@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react-native';
 // Test-only: these platform APIs are mocked below; the split-platform rule is
 // not relevant inside a jest test.
 // eslint-disable-next-line react-native/split-platform-components
-import { BackHandler, ToastAndroid } from 'react-native';
+import { BackHandler, ToastAndroid, type HardwareBackPressEvent } from 'react-native';
 
 // Capture the focus-effect cleanups so we can assert the BackHandler
 // subscription is detached on blur (deeper screens must keep normal back),
@@ -51,7 +51,7 @@ describe('useHomeBackExit', () => {
   const toastShow = jest.fn();
   const backExitApp = jest.fn();
   const removeSubscription = jest.fn();
-  let backHandler: () => boolean;
+  let backHandler: () => boolean | null | undefined;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -65,9 +65,9 @@ describe('useHomeBackExit', () => {
     jest.spyOn(BackHandler, 'exitApp').mockImplementation(backExitApp);
     jest.spyOn(BackHandler, 'addEventListener').mockImplementation(((
       _event: string,
-      cb: () => boolean,
+      cb: (event: HardwareBackPressEvent) => boolean | null | undefined,
     ) => {
-      backHandler = cb;
+      backHandler = () => cb({ type: 'hardwareBackPress', timeStamp: Date.now() });
       return { remove: removeSubscription };
     }) as typeof BackHandler.addEventListener);
   });

@@ -12,15 +12,15 @@ import {
   Modal,
   ScrollView,
   Alert,
-  ActivityIndicator,
   type TextInputProps,
   Keyboard,
   UIManager,
   findNodeHandle,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { Button, FormModal, SectionHeader } from '@/components/ui';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
@@ -379,7 +379,7 @@ export function ActivityEditForm({
             paddingVertical: spacing[10],
           }}
         >
-          <ActivityIndicator size="large" color={m3.primary.p500} />
+          <Spinner size="large" color={m3.primary.p500} />
           <Text selectable style={{ marginTop: spacing[4], color: m3.surface.s500 }}>
             {t('common.loading')}
           </Text>
@@ -557,9 +557,7 @@ export function ActivityEditForm({
                 value={selectedDate}
                 mode="date"
                 display="spinner"
-                onChange={(_, date) => {
-                  if (date) setSelectedDate(date);
-                }}
+                onValueChange={(_, date) => setSelectedDate(date)}
               />
               <Button
                 title={t('common.done')}
@@ -576,10 +574,11 @@ export function ActivityEditForm({
           value={selectedDate}
           mode="date"
           display="default"
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowDatePicker(false);
-            if (date) setSelectedDate(date);
+            setSelectedDate(date);
           }}
+          onDismiss={() => setShowDatePicker(false)}
         />
       )}
     </FormModal>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { View, Text, Pressable, RefreshControl, TextInput, Alert, Animated } from 'react-native';
 import { useRouter, useFocusEffect, useIsFocused } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,13 +12,15 @@ import {
   useFabBottomPosition,
   useCurrency,
 } from '@/hooks';
-import { useModalStore } from '@/stores';
+import { useModalStore, useAppModeStore } from '@/stores';
+import { telemetry } from '@/services/telemetry';
 import type { Farm, WarehouseItem } from '@/types';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { FarmsPaneB, type FarmFilter } from '@/components/screens/farms-pane-b';
+import { ExtendedFab } from '@/components/screens/extended-fab';
 import { WarehousePaneB, type WarehouseFilter } from '@/components/screens/warehouse-pane-b';
 
 type ExploreTab = 'farms' | 'warehouse';
@@ -29,13 +31,25 @@ export default function ExploreScreen() {
 
   const router = useRouter();
   const isScreenFocused = useIsFocused();
+  // Simplified mode labels the Warehouse pane "Purchases"; Detailed keeps "Warehouse".
+  const detailedMode = useAppModeStore((s) => s.detailedMode);
+  // Mirror detailedMode into a ref so focus-effect bodies can read the latest value
+  // without re-registering when it changes (avoids spurious cleanups + telemetry on toggle).
+  const detailedModeRef = useRef(detailedMode);
+  useEffect(() => {
+    detailedModeRef.current = detailedMode;
+  }, [detailedMode]);
   const exploreTabs = useMemo(
     () =>
       [
         { id: 'farms' as const, label: t('tabs.farms'), icon: 'leaf.fill' },
-        { id: 'warehouse' as const, label: t('warehouse.title'), icon: 'cube.fill' },
+        {
+          id: 'warehouse' as const,
+          label: detailedMode ? t('warehouse.title') : t('tabs.purchases'),
+          icon: 'cube.fill',
+        },
       ] as const,
-    [t],
+    [t, detailedMode],
   );
   const { setAddWarehouseItem } = useModalStore();
   const insets = useSafeAreaInsets();
@@ -160,6 +174,10 @@ export default function ExploreScreen() {
   useFocusEffect(
     useCallback(() => {
       setToday(new Date());
+      telemetry.capture('farms_tab_opened', {
+        app_mode: detailedModeRef.current ? 'detailed' : 'simplified',
+        surface: 'farms',
+      });
       return () => {
         setSearchQuery('');
         setIsSearchExpanded(false);
@@ -173,6 +191,10 @@ export default function ExploreScreen() {
   };
 
   const handleAddFarm = () => {
+    telemetry.capture('add_farm_tapped', {
+      app_mode: detailedMode ? 'detailed' : 'simplified',
+      surface: 'farms',
+    });
     router.push('/farm/add');
   };
 
@@ -257,25 +279,10 @@ export default function ExploreScreen() {
             position: 'absolute',
             bottom: fabBottom,
             right: spacing[6],
-            width: 56,
             height: 56,
           }}
         >
-          <Pressable
-            onPress={handleAddFarm}
-            accessibilityRole="button"
-            accessibilityLabel={t('farms.addFarm')}
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: m3.primary.p500,
-            }}
-          >
-            <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
-          </Pressable>
+          <ExtendedFab onPress={handleAddFarm} label={t('farms.addFarm')} />
         </GuidedTourTarget>
       )}
     </View>
@@ -302,36 +309,14 @@ export default function ExploreScreen() {
           />
         }
       />
-      <Pressable
-        onPress={() => openWarehouseItem(null)}
-        accessibilityRole="button"
-        accessibilityLabel={t('warehouse.actions.addProduct')}
-        style={{
-          position: 'absolute',
-          bottom: fabBottom,
-          right: spacing[6],
-          minWidth: 148,
-          height: 56,
-          borderRadius: borderRadius.full,
-          paddingHorizontal: spacing[5],
-          flexDirection: 'row',
-          gap: spacing[2],
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: m3.primary.p500,
-        }}
-      >
-        <Icon name="plus" size={20} color={m3.colorScheme.onPrimary} />
-        <Text
-          style={{
-            color: m3.colorScheme.onPrimary,
-            fontSize: fontSize.sm,
-            fontWeight: fontWeight.semibold,
-          }}
-        >
-          {t('warehouse.actions.addProduct')}
-        </Text>
-      </Pressable>
+      {(warehouseItems?.length || 0) > 0 && (
+        <View style={{ position: 'absolute', bottom: fabBottom, right: spacing[6] }}>
+          <ExtendedFab
+            onPress={() => openWarehouseItem(null)}
+            label={t('warehouse.actions.addProduct')}
+          />
+        </View>
+      )}
     </View>
   );
 
@@ -368,7 +353,7 @@ export default function ExploreScreen() {
             gap: spacing[2],
           }}
         >
-          {/* Segmented pill toggle */}
+          {/* Segmented pill toggle — Farms | Purchases in both modes. */}
           <View
             style={{
               flex: 1,

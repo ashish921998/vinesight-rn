@@ -1,18 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, RefreshControl, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { useWarehouseItems, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
@@ -282,7 +274,7 @@ export default function WarehouseScreen() {
             alignItems: 'center',
           }}
         >
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
           <Text style={{ color: m3.surface.s600, marginTop: spacing[4] }}>
             {t('warehouse.loading.inventory')}
           </Text>

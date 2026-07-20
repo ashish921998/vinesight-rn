@@ -6,15 +6,16 @@ import {
   Pressable,
   BackHandler,
   RefreshControl,
-  ActivityIndicator,
   Alert,
   StyleSheet,
   Animated,
   Easing,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useIsFocused } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui';
@@ -92,7 +93,6 @@ export default function FarmDetailScreen() {
   const router = useRouter();
   const isFocused = useIsFocused();
   const { setEditActivity } = useModalStore();
-  const detailedMode = useAppModeStore((state) => state.detailedMode);
   const { id, startSeason: startSeasonParam } = useLocalSearchParams<{
     id?: string | string[];
     startSeason?: string;
@@ -117,6 +117,7 @@ export default function FarmDetailScreen() {
 
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
   const { isLinked: hasConsultant } = useConsultantLink();
+  const detailedMode = useAppModeStore((s) => s.detailedMode);
   const {
     data: farmSeasons,
     isLoading: isSeasonsLoading,
@@ -238,17 +239,7 @@ export default function FarmDetailScreen() {
   }, [handleBackNavigation, isFocused]);
 
   const workboardActions = useMemo<WorkboardAction[]>(() => {
-    const actions: WorkboardAction[] = [];
-    if (detailedMode) {
-      actions.push({
-        id: 'ai',
-        titleKey: 'farmDetails.workboard.actions.ai',
-        // Match the bottom navbar AI assistant icon.
-        icon: 'brain',
-        color: m3.colorScheme.primary,
-      });
-    }
-    actions.push(
+    const actions: WorkboardAction[] = [
       {
         id: 'lab',
         titleKey: 'farmDetails.workboard.actions.lab',
@@ -261,13 +252,17 @@ export default function FarmDetailScreen() {
         icon: 'receipt',
         color: m3.colorScheme.tertiary,
       },
-      {
+    ];
+    // Soil moisture profiling is a Detailed-mode feature; hide it from the
+    // Simplified experience workboard (the route is Detailed-only too).
+    if (detailedMode) {
+      actions.push({
         id: 'soil',
         titleKey: 'farmDetails.workboard.actions.soilMoisture',
         icon: 'square.stack.3d.up.fill',
         color: domain.category.task,
-      },
-    );
+      });
+    }
     if (hasConsultant) {
       actions.push({
         id: 'fertilizer-plans',
@@ -277,7 +272,7 @@ export default function FarmDetailScreen() {
       });
     }
     return actions;
-  }, [detailedMode, domain.category.fertigation, domain.category.task, m3, hasConsultant]);
+  }, [domain.category.fertigation, domain.category.task, m3, hasConsultant, detailedMode]);
 
   const seasonEndDates = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return [];
@@ -1220,11 +1215,7 @@ export default function FarmDetailScreen() {
           onPress: async () => {
             try {
               const record = log.data as
-                | IrrigationRecord
-                | SprayRecord
-                | HarvestRecord
-                | ExpenseRecord
-                | FertigationRecord;
+                IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
               const farmIdNum =
                 farm?.id ??
                 (record.farm_id
@@ -1324,12 +1315,6 @@ export default function FarmDetailScreen() {
   const handleWorkboardAction = (action: WorkboardAction) => {
     triggerHapticMedium();
     switch (action.id) {
-      case 'ai':
-        if (!farmIdParam) return;
-        // Use `navigate` here (instead of `push`) to avoid occasional unmatched-route
-        // resolution issues when switching from Stack -> tabs group.
-        router.navigate(`/(tabs)/assistant?farmId=${encodeURIComponent(farmIdParam)}`);
-        break;
       case 'lab':
         if (!farmIdParam) return;
         router.push(`/lab-tests?farmId=${encodeURIComponent(farmIdParam)}`);
@@ -1361,7 +1346,7 @@ export default function FarmDetailScreen() {
             alignItems: 'center',
           }}
         >
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
           <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[4] }}>
             {t('farmDetails.loadingFarm')}
           </Text>
@@ -2656,45 +2641,22 @@ export default function FarmDetailScreen() {
         </ScrollView>
       </View>
 
-      {showFarmActionsSheet && isAndroid && (
-        <Pressable
-          onPress={() => setShowFarmActionsSheet(false)}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            zIndex: 45,
-          }}
+      {isAndroid && (
+        <BottomSheet
+          index={showFarmActionsSheet ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => setShowFarmActionsSheet(false)}
+          backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
         >
           <View
             style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderTopLeftRadius: m3.shape.cornerLarge,
-              borderTopRightRadius: m3.shape.cornerLarge,
-              paddingTop: spacing[3],
+              paddingTop: spacing[2],
               paddingHorizontal: spacing[4],
               paddingBottom: Math.max(insets.bottom, spacing[4]),
               gap: spacing[1],
             }}
-            onStartShouldSetResponder={() => true}
           >
-            <View
-              style={{
-                alignSelf: 'center',
-                width: 36,
-                height: 4,
-                borderRadius: borderRadius.full,
-                backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5),
-                marginBottom: spacing[2],
-              }}
-            />
             <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
               {t('farmDetails.actions.menuTitle')}
             </Text>
@@ -2863,7 +2825,7 @@ export default function FarmDetailScreen() {
               </Text>
             </Pressable>
           </View>
-        </Pressable>
+        </BottomSheet>
       )}
 
       {showSeasonForm && (
@@ -3046,7 +3008,7 @@ export default function FarmDetailScreen() {
                     display="spinner"
                     minimumDate={minimumSeasonStartDate ?? undefined}
                     maximumDate={seasonFormMode === 'end' ? seasonEndDate : undefined}
-                    onChange={(_, date) => {
+                    onValueChange={(_, date) => {
                       if (!date) return;
                       setSeasonStartDate(date);
                       if (
@@ -3098,7 +3060,7 @@ export default function FarmDetailScreen() {
                       mode="date"
                       display="spinner"
                       minimumDate={effectiveSeasonStartDate}
-                      onChange={(_, date) => {
+                      onValueChange={(_, date) => {
                         if (date) setSeasonEndDate(date);
                       }}
                     />
@@ -3145,7 +3107,7 @@ export default function FarmDetailScreen() {
                         mode="date"
                         display="spinner"
                         minimumDate={seasonStartDate}
-                        onChange={(_, date) => {
+                        onValueChange={(_, date) => {
                           if (!date) return;
                           setSeasonTargetHarvestDraft(date);
                           setSeasonTargetHarvestDate(date);
@@ -3224,10 +3186,10 @@ export default function FarmDetailScreen() {
         <DateTimePicker
           value={seasonStartDate}
           mode="date"
-          display="default"
+          presentation="dialog"
           minimumDate={minimumSeasonStartDate ?? undefined}
           maximumDate={seasonFormMode === 'end' ? seasonEndDate : undefined}
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowSeasonStartPicker(false);
             if (!date) return;
             setSeasonStartDate(date);
@@ -3240,6 +3202,7 @@ export default function FarmDetailScreen() {
               });
             }
           }}
+          onDismiss={() => setShowSeasonStartPicker(false)}
         />
       )}
 
@@ -3247,21 +3210,22 @@ export default function FarmDetailScreen() {
         <DateTimePicker
           value={seasonEndDate}
           mode="date"
-          display="default"
+          presentation="dialog"
           minimumDate={effectiveSeasonStartDate}
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowSeasonEndPicker(false);
             if (date) setSeasonEndDate(date);
           }}
+          onDismiss={() => setShowSeasonEndPicker(false)}
         />
       )}
       {showSeasonTargetPicker && seasonFormMode === 'start' && !isIOS && (
         <DateTimePicker
           value={seasonTargetHarvestDraft}
           mode="date"
-          display="default"
+          presentation="dialog"
           minimumDate={seasonStartDate}
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowSeasonTargetPicker(false);
             if (!date) return;
             setSeasonTargetHarvestDraft(date);
@@ -3270,49 +3234,39 @@ export default function FarmDetailScreen() {
               guidedTourEmit('guidedTour.seasonFormPhaseChanged', { phase: 'submit' });
             }
           }}
+          onDismiss={() => setShowSeasonTargetPicker(false)}
         />
       )}
       {showActiveSeasonTargetPicker && !isIOS && (
         <DateTimePicker
           value={activeSeasonTargetHarvestDraft}
           mode="date"
-          display="default"
+          presentation="dialog"
           minimumDate={parseDbDateToLocalDate(activeSeasonRecord?.start_date ?? '') ?? undefined}
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowActiveSeasonTargetPicker(false);
             if (isSavingActiveSeasonTargetDate) return;
             if (!date) return;
             setActiveSeasonTargetHarvestDraft(date);
             void saveActiveSeasonTargetHarvestDate(date);
           }}
+          onDismiss={() => setShowActiveSeasonTargetPicker(false)}
         />
       )}
-      {isEditingActiveSeasonTargetIOS && isIOS && (
-        <Pressable
-          onPress={() => setIsEditingActiveSeasonTargetIOS(false)}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            zIndex: 45,
-          }}
+      {isIOS && (
+        <BottomSheet
+          index={isEditingActiveSeasonTargetIOS ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => setIsEditingActiveSeasonTargetIOS(false)}
+          backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
         >
           <View
             style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderTopLeftRadius: m3.shape.cornerLarge,
-              borderTopRightRadius: m3.shape.cornerLarge,
               padding: spacing[4],
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
               gap: spacing[3],
             }}
-            onStartShouldSetResponder={() => true}
           >
             <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
               {t('safeToSpray.targetDate', { defaultValue: 'Target harvest date' })}
@@ -3324,7 +3278,7 @@ export default function FarmDetailScreen() {
               minimumDate={
                 parseDbDateToLocalDate(activeSeasonRecord?.start_date ?? '') ?? undefined
               }
-              onChange={(_, date) => {
+              onValueChange={(_, date) => {
                 if (date) setActiveSeasonTargetHarvestDraft(date);
               }}
             />
@@ -3392,55 +3346,44 @@ export default function FarmDetailScreen() {
               </Pressable>
             </View>
           </View>
-        </Pressable>
+        </BottomSheet>
       )}
 
       {showActiveSeasonStartPicker && !isIOS && (
         <DateTimePicker
           value={activeSeasonStartDraft}
           mode="date"
-          display="default"
+          presentation="dialog"
           minimumDate={minimumSeasonStartDate ?? undefined}
           maximumDate={
             activeSeasonRecord?.target_harvest_date
               ? (parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ?? undefined)
               : undefined
           }
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowActiveSeasonStartPicker(false);
             if (isSavingActiveSeasonStartDate) return;
             if (!date) return;
             setActiveSeasonStartDraft(date);
             void saveActiveSeasonStartDate(date);
           }}
+          onDismiss={() => setShowActiveSeasonStartPicker(false)}
         />
       )}
-      {isEditingActiveSeasonStartIOS && isIOS && (
-        <Pressable
-          onPress={() => setIsEditingActiveSeasonStartIOS(false)}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            zIndex: 45,
-          }}
+      {isIOS && (
+        <BottomSheet
+          index={isEditingActiveSeasonStartIOS ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => setIsEditingActiveSeasonStartIOS(false)}
+          backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
         >
           <View
             style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderTopLeftRadius: m3.shape.cornerLarge,
-              borderTopRightRadius: m3.shape.cornerLarge,
               padding: spacing[4],
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
               gap: spacing[3],
             }}
-            onStartShouldSetResponder={() => true}
           >
             <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
               {t('farmDetails.seasons.startDateLabel')}
@@ -3455,7 +3398,7 @@ export default function FarmDetailScreen() {
                   ? (parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ?? undefined)
                   : undefined
               }
-              onChange={(_, date) => {
+              onValueChange={(_, date) => {
                 if (date) setActiveSeasonStartDraft(date);
               }}
             />
@@ -3498,7 +3441,7 @@ export default function FarmDetailScreen() {
               </Pressable>
             </View>
           </View>
-        </Pressable>
+        </BottomSheet>
       )}
 
       {showSeasonSuccessOverlay && (

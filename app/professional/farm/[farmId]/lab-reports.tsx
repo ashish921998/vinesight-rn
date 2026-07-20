@@ -1,8 +1,9 @@
 import { useMemo, useState, useCallback, useRef } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import type { ReactNativeElement } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '@/components/ui/spinner';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius, shadows } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -365,7 +366,7 @@ export default function LabReportsScreen() {
       />
       <ScrollView contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}>
         {isLoading ? (
-          <ActivityIndicator style={{ marginTop: spacing[4] }} />
+          <Spinner style={{ marginTop: spacing[4] }} />
         ) : isError ? (
           <Text style={{ color: m3.colorScheme.error }}>
             {t('professional.reviews.errors.loadFailed')}

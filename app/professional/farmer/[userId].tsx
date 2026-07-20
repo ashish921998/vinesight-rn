@@ -1,6 +1,7 @@
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '@/components/ui/spinner';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
@@ -15,7 +16,7 @@ export default function ProfessionalFarmer() {
   const { data, isLoading, isError, refetch } = useProfessionalWorkspace();
 
   if (isLoading) {
-    return <ActivityIndicator style={{ flex: 1 }} />;
+    return <Spinner style={{ flex: 1 }} />;
   }
   if (isError) {
     return (

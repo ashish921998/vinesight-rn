@@ -1,7 +1,7 @@
 import React from 'react';
-import { Modal, Pressable, Text } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ChemicalMixComponent } from '@/types/phi';
 import { borderRadius, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -22,31 +22,24 @@ export function ProductDetailSheet({
 }: ProductDetailSheetProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const insets = useSafeAreaInsets();
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable
-        onPress={onClose}
+    <BottomSheet
+      index={visible ? 0 : -1}
+      snapPoints={['35%']}
+      enablePanDownToClose
+      onClose={onClose}
+      backgroundStyle={{ backgroundColor: m3.colorScheme.surface }}
+    >
+      <View
         style={{
           flex: 1,
-          justifyContent: 'flex-end',
-          backgroundColor: colorWithOpacity('#000000', 0.25),
-          padding: spacing[3],
+          paddingHorizontal: spacing[4],
+          paddingTop: spacing[2],
+          paddingBottom: spacing[4],
         }}
       >
-        <Pressable
-          onPress={(event) => event.stopPropagation()}
-          style={{
-            borderRadius: borderRadius.xl,
-            backgroundColor: m3.colorScheme.surface,
-            borderWidth: 1,
-            borderColor: m3.colorScheme.outlineVariant,
-            padding: spacing[4],
-            paddingBottom: spacing[4] + insets.bottom,
-            gap: spacing[2],
-          }}
-        >
+        <View style={{ gap: spacing[2] }}>
           <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
             {component?.product_name ??
               t('productDetail.titleFallback', { defaultValue: 'Product details' })}
@@ -90,8 +83,8 @@ export function ProductDetailSheet({
               {t('common.close', { defaultValue: 'Close' })}
             </Text>
           </Pressable>
-        </Pressable>
-      </Pressable>
-    </Modal>
+        </View>
+      </View>
+    </BottomSheet>
   );
 }

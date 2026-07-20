@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, Pressable, Modal, FlatList, ScrollView, Platform } from 'react-native';
+import { View, Text, Pressable, FlatList, ScrollView, Platform } from 'react-native';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -813,232 +814,220 @@ export function ReportFiltersPanel({
       </View>
 
       {/* ─────────── Farm Picker Modal ─────────── */}
-      <Modal
-        transparent
-        visible={showFarmPicker}
-        animationType="fade"
-        onRequestClose={onToggleFarmPicker}
+      <BottomSheet
+        index={showFarmPicker ? 0 : -1}
+        snapPoints={['55%', '90%']}
+        enablePanDownToClose
+        // Guard: the native sheet also fires onClose when we close it programmatically
+        // (e.g. after selecting a farm). Only toggle for a user-driven dismiss, else the
+        // toggle would flip the just-closed picker back open.
+        onClose={() => {
+          if (showFarmPicker) onToggleFarmPicker();
+        }}
+        backgroundStyle={{ backgroundColor: m3.surface.s100 }}
       >
-        <Pressable
-          onPress={onToggleFarmPicker}
+        <Animated.View
+          entering={FadeIn.duration(200)}
           style={{
-            flex: 1,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.4),
-            justifyContent: 'flex-end',
+            maxHeight: '55%',
+            backgroundColor: m3.surface.s100,
+            borderTopLeftRadius: borderRadius['3xl'],
+            borderTopRightRadius: borderRadius['3xl'],
+            borderCurve: 'continuous',
+            paddingBottom: spacing[6],
           }}
+          onStartShouldSetResponder={() => true}
         >
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            style={{
-              maxHeight: '55%',
-              backgroundColor: m3.surface.s100,
-              borderTopLeftRadius: borderRadius['3xl'],
-              borderTopRightRadius: borderRadius['3xl'],
-              borderCurve: 'continuous',
-              paddingBottom: spacing[6],
-            }}
-            onStartShouldSetResponder={() => true}
-          >
-            <SheetHandle color={m3.colorScheme.onSurface} />
+          <SheetHandle color={m3.colorScheme.onSurface} />
 
-            <View
-              style={{ paddingHorizontal: spacing[5], paddingTop: spacing[2], gap: spacing[1] }}
-            >
-              <Text
-                style={{
-                  color: m3.colorScheme.onSurface,
-                  fontWeight: fontWeight.bold,
-                  fontSize: fontSize.lg,
-                }}
-              >
-                {t('reports.selectFarmLabel')}
-              </Text>
-            </View>
-
-            <FlatList
-              data={farms}
-              keyExtractor={(item) => String(item.id ?? item.name)}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{
-                paddingHorizontal: spacing[4],
-                paddingTop: spacing[3],
-                paddingBottom: spacing[2],
-                gap: spacing[2],
+          <View style={{ paddingHorizontal: spacing[5], paddingTop: spacing[2], gap: spacing[1] }}>
+            <Text
+              style={{
+                color: m3.colorScheme.onSurface,
+                fontWeight: fontWeight.bold,
+                fontSize: fontSize.lg,
               }}
-              renderItem={({ item: farmItem }) => {
-                const selected = farmItem.id === selectedFarmId;
-                return (
-                  <Pressable
-                    onPress={() => onSelectFarm(farmItem.id ?? null)}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: spacing[3],
-                      paddingVertical: spacing[3],
-                      paddingHorizontal: spacing[4],
-                      borderRadius: borderRadius.xl,
-                      borderCurve: 'continuous',
-                      backgroundColor: selected
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.1)
-                        : pressed
-                          ? m3.surface.s200
-                          : m3.surface.s50,
-                    })}
-                  >
-                    <Icon
-                      name="leaf.fill"
-                      size={18}
-                      color={selected ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={{
-                          color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurface,
-                          fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
-                          fontSize: fontSize.base,
-                        }}
-                      >
-                        {farmItem.name}
-                      </Text>
+            >
+              {t('reports.selectFarmLabel')}
+            </Text>
+          </View>
+
+          <FlatList
+            data={farms}
+            keyExtractor={(item) => String(item.id ?? item.name)}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: spacing[4],
+              paddingTop: spacing[3],
+              paddingBottom: spacing[2],
+              gap: spacing[2],
+            }}
+            renderItem={({ item: farmItem }) => {
+              const selected = farmItem.id === selectedFarmId;
+              return (
+                <Pressable
+                  onPress={() => onSelectFarm(farmItem.id ?? null)}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing[3],
+                    paddingVertical: spacing[3],
+                    paddingHorizontal: spacing[4],
+                    borderRadius: borderRadius.xl,
+                    borderCurve: 'continuous',
+                    backgroundColor: selected
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.1)
+                      : pressed
+                        ? m3.surface.s200
+                        : m3.surface.s50,
+                  })}
+                >
+                  <Icon
+                    name="leaf.fill"
+                    size={18}
+                    color={selected ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurface,
+                        fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
+                        fontSize: fontSize.base,
+                      }}
+                    >
+                      {farmItem.name}
+                    </Text>
+                    <Text
+                      style={{
+                        color: m3.colorScheme.onSurfaceVariant,
+                        fontSize: fontSize.xs,
+                      }}
+                    >
+                      {formatNumber(farmItem.area)} {t(`units.${areaUnit}`)}
+                    </Text>
+                  </View>
+                  {selected ? (
+                    <Icon name="checkmark" size={18} color={m3.colorScheme.primary} />
+                  ) : null}
+                </Pressable>
+              );
+            }}
+          />
+        </Animated.View>
+      </BottomSheet>
+
+      {/* ─────────── Season Picker Modal ─────────── */}
+      <BottomSheet
+        index={showSeasonPicker ? 0 : -1}
+        snapPoints={['60%', '90%']}
+        enablePanDownToClose
+        // Guard: see farm picker above — avoid re-opening on programmatic close.
+        onClose={() => {
+          if (showSeasonPicker) onToggleSeasonPicker();
+        }}
+        backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+      >
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          style={{
+            maxHeight: '55%',
+            backgroundColor: m3.surface.s100,
+            borderTopLeftRadius: borderRadius['3xl'],
+            borderTopRightRadius: borderRadius['3xl'],
+            borderCurve: 'continuous',
+            paddingBottom: spacing[6],
+          }}
+          onStartShouldSetResponder={() => true}
+        >
+          <SheetHandle color={m3.colorScheme.onSurface} />
+
+          <View style={{ paddingHorizontal: spacing[5], paddingTop: spacing[2], gap: spacing[1] }}>
+            <Text
+              style={{
+                color: m3.colorScheme.onSurface,
+                fontWeight: fontWeight.bold,
+                fontSize: fontSize.lg,
+              }}
+            >
+              {t('reports.season.label')}
+            </Text>
+          </View>
+
+          <FlatList
+            data={[
+              {
+                id: -1,
+                label: t('reports.season.allSeasons'),
+                startDate: '',
+                endDate: null,
+                isActive: false,
+              },
+              ...seasonOptions,
+            ]}
+            keyExtractor={(item) => String(item.id)}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: spacing[4],
+              paddingTop: spacing[3],
+              paddingBottom: spacing[2],
+              gap: spacing[2],
+            }}
+            renderItem={({ item }) => {
+              const selected =
+                item.id === -1 ? selectedSeasonId == null : selectedSeasonId === item.id;
+              return (
+                <Pressable
+                  onPress={() => onSelectSeason(item.id === -1 ? null : item.id)}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing[3],
+                    paddingVertical: spacing[3],
+                    paddingHorizontal: spacing[4],
+                    borderRadius: borderRadius.xl,
+                    borderCurve: 'continuous',
+                    backgroundColor: selected
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.1)
+                      : pressed
+                        ? m3.surface.s200
+                        : m3.surface.s50,
+                  })}
+                >
+                  <Icon
+                    name={item.isActive ? 'circle.inset.filled' : 'calendar'}
+                    size={18}
+                    color={selected ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurface,
+                        fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
+                        fontSize: fontSize.base,
+                      }}
+                    >
+                      {item.label}
+                    </Text>
+                    {item.id !== -1 ? (
                       <Text
                         style={{
                           color: m3.colorScheme.onSurfaceVariant,
                           fontSize: fontSize.xs,
                         }}
                       >
-                        {formatNumber(farmItem.area)} {t(`units.${areaUnit}`)}
+                        {item.startDate} — {item.endDate ?? t('reports.season.active')}
                       </Text>
-                    </View>
-                    {selected ? (
-                      <Icon name="checkmark" size={18} color={m3.colorScheme.primary} />
                     ) : null}
-                  </Pressable>
-                );
-              }}
-            />
-          </Animated.View>
-        </Pressable>
-      </Modal>
-
-      {/* ─────────── Season Picker Modal ─────────── */}
-      <Modal
-        transparent
-        visible={showSeasonPicker}
-        animationType="fade"
-        onRequestClose={onToggleSeasonPicker}
-      >
-        <Pressable
-          onPress={onToggleSeasonPicker}
-          style={{
-            flex: 1,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.4),
-            justifyContent: 'flex-end',
-          }}
-        >
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            style={{
-              maxHeight: '55%',
-              backgroundColor: m3.surface.s100,
-              borderTopLeftRadius: borderRadius['3xl'],
-              borderTopRightRadius: borderRadius['3xl'],
-              borderCurve: 'continuous',
-              paddingBottom: spacing[6],
+                  </View>
+                  {selected ? (
+                    <Icon name="checkmark" size={18} color={m3.colorScheme.primary} />
+                  ) : null}
+                </Pressable>
+              );
             }}
-            onStartShouldSetResponder={() => true}
-          >
-            <SheetHandle color={m3.colorScheme.onSurface} />
-
-            <View
-              style={{ paddingHorizontal: spacing[5], paddingTop: spacing[2], gap: spacing[1] }}
-            >
-              <Text
-                style={{
-                  color: m3.colorScheme.onSurface,
-                  fontWeight: fontWeight.bold,
-                  fontSize: fontSize.lg,
-                }}
-              >
-                {t('reports.season.label')}
-              </Text>
-            </View>
-
-            <FlatList
-              data={[
-                {
-                  id: -1,
-                  label: t('reports.season.allSeasons'),
-                  startDate: '',
-                  endDate: null,
-                  isActive: false,
-                },
-                ...seasonOptions,
-              ]}
-              keyExtractor={(item) => String(item.id)}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{
-                paddingHorizontal: spacing[4],
-                paddingTop: spacing[3],
-                paddingBottom: spacing[2],
-                gap: spacing[2],
-              }}
-              renderItem={({ item }) => {
-                const selected =
-                  item.id === -1 ? selectedSeasonId == null : selectedSeasonId === item.id;
-                return (
-                  <Pressable
-                    onPress={() => onSelectSeason(item.id === -1 ? null : item.id)}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: spacing[3],
-                      paddingVertical: spacing[3],
-                      paddingHorizontal: spacing[4],
-                      borderRadius: borderRadius.xl,
-                      borderCurve: 'continuous',
-                      backgroundColor: selected
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.1)
-                        : pressed
-                          ? m3.surface.s200
-                          : m3.surface.s50,
-                    })}
-                  >
-                    <Icon
-                      name={item.isActive ? 'circle.inset.filled' : 'calendar'}
-                      size={18}
-                      color={selected ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={{
-                          color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurface,
-                          fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
-                          fontSize: fontSize.base,
-                        }}
-                      >
-                        {item.label}
-                      </Text>
-                      {item.id !== -1 ? (
-                        <Text
-                          style={{
-                            color: m3.colorScheme.onSurfaceVariant,
-                            fontSize: fontSize.xs,
-                          }}
-                        >
-                          {item.startDate} — {item.endDate ?? t('reports.season.active')}
-                        </Text>
-                      ) : null}
-                    </View>
-                    {selected ? (
-                      <Icon name="checkmark" size={18} color={m3.colorScheme.primary} />
-                    ) : null}
-                  </Pressable>
-                );
-              }}
-            />
-          </Animated.View>
-        </Pressable>
-      </Modal>
+          />
+        </Animated.View>
+      </BottomSheet>
     </View>
   );
 }

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
-  ActivityIndicator,
   Alert,
   TextInput,
   FlatList,
@@ -20,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { EmptyState } from '@/components/ui';
+import { Spinner } from '@/components/ui/spinner';
 
 const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
@@ -373,11 +373,7 @@ export default function LocationPicker({
               autoCapitalize="words"
             />
             {isSearching && (
-              <ActivityIndicator
-                size="small"
-                color={m3.colorScheme.primary}
-                style={styles.searchLoader}
-              />
+              <Spinner size="small" color={m3.colorScheme.primary} style={styles.searchLoader} />
             )}
             {searchQuery.length > 0 && !isSearching && (
               <TouchableOpacity onPress={handleClearSearch} style={styles.clearButton}>
@@ -487,7 +483,7 @@ export default function LocationPicker({
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={m3.colorScheme.success} />
+              <Spinner color={m3.colorScheme.success} />
             ) : (
               <>
                 <Ionicons name="navigate" size={20} color={m3.colorScheme.success} />
@@ -502,7 +498,7 @@ export default function LocationPicker({
             disabled={!selectedCoordinate || loading}
           >
             {loading ? (
-              <ActivityIndicator color={m3.colorScheme.onPrimary} />
+              <Spinner color={m3.colorScheme.onPrimary} />
             ) : (
               <Text style={styles.confirmButtonText}>{t('locationPicker.confirm')}</Text>
             )}
@@ -587,17 +583,7 @@ const createStyles = (m3: ReturnType<typeof useM3>) =>
       borderWidth: 1,
       borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.5),
       maxHeight: 200,
-      ...Platform.select({
-        ios: {
-          shadowColor: m3.colorScheme.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        },
-        android: {
-          elevation: 3,
-        },
-      }),
+      boxShadow: `0 2px 4px ${colorWithOpacity(m3.colorScheme.shadow, 0.1)}`,
     },
     resultItem: {
       flexDirection: 'row',
