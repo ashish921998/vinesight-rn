@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, Alert, Pressable, StyleSheet, Modal } from 'react-native';
+import { View, Text, ScrollView, Alert, Pressable, StyleSheet } from 'react-native';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -7,6 +7,7 @@ import Animated, {
   FadeInUp,
   FadeOutUp,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { triggerHaptic, triggerHapticMedium, triggerHapticSuccess } from '@/utils/haptics';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,6 +24,7 @@ import { formatDate as formatDateLocalized } from '@/i18n/format';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { normalizeDate, addDays } from '@/utils/worker-analytics';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 
 const STORAGE_KEYS = {
   ATTENDANCE_RANGE_START: 'attendance_range_start',
@@ -122,6 +124,7 @@ export function MarkAttendanceTab({
 }: MarkAttendanceTabProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const insets = useSafeAreaInsets();
 
   const tabBarInset = useTabBarInset();
   const bottomActionBarHeight = 88;
@@ -518,11 +521,6 @@ export function MarkAttendanceTab({
       const newStart = addDays(normalized, -(rangeLength - 1));
       handleRangeStartChange(newStart);
     }
-
-    if (isAndroid) {
-      if (type === 'from') setShowFromPicker(false);
-      if (type === 'to') setShowToPicker(false);
-    }
   };
 
   const activePickerType: 'from' | 'to' | null = showFromPicker
@@ -866,93 +864,69 @@ export function MarkAttendanceTab({
           </View>
 
           {isIOS ? (
-            activePickerType ? (
-              <Modal transparent animationType="fade" onRequestClose={closePickers}>
-                <Pressable
-                  onPress={closePickers}
-                  style={{
-                    flex: 1,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-                    justifyContent: 'flex-end',
-                  }}
-                >
-                  <View
+            <BottomSheet
+              index={activePickerType ? 0 : -1}
+              enableDynamicSizing
+              enablePanDownToClose
+              onClose={closePickers}
+              backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
+            >
+              <View
+                style={{
+                  padding: spacing[4],
+                  paddingBottom: Math.max(insets.bottom, spacing[4]),
+                  gap: spacing[3],
+                }}
+              >
+                <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+                  {activePickerType === 'from'
+                    ? t('common.from')
+                    : activePickerType === 'to'
+                      ? t('common.to')
+                      : ''}
+                </Text>
+                <DateTimePicker
+                  value={tempPickerDate ?? (activePickerType === 'from' ? rangeStart : rangeEnd)}
+                  mode="date"
+                  display="spinner"
+                  onValueChange={(_event, date) => setTempPickerDate(date)}
+                />
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+                  <Pressable
+                    onPress={confirmPickerDate}
                     style={{
-                      backgroundColor: m3.colorScheme.surface,
-                      borderTopLeftRadius: borderRadius['3xl'],
-                      borderTopRightRadius: borderRadius['3xl'],
-                      padding: spacing[4],
-                      paddingBottom: spacing[6],
+                      paddingVertical: spacing[2],
+                      paddingHorizontal: spacing[4],
+                      borderRadius: m3.shape.cornerMedium,
+                      borderCurve: 'continuous',
+                      alignItems: 'center',
+                      backgroundColor: m3.colorScheme.primary,
                     }}
-                    onStartShouldSetResponder={() => true}
                   >
-                    <View
+                    <Text
                       style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: spacing[3],
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                        color: m3.colorScheme.onPrimary,
                       }}
                     >
-                      <Text
-                        style={{
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.semibold,
-                          color: m3.colorScheme.onSurface,
-                        }}
-                      >
-                        {activePickerType === 'from' ? t('common.from') : t('common.to')}
-                      </Text>
-                      <Pressable onPress={closePickers}>
-                        <UiSymbol
-                          name="xmark"
-                          size={18}
-                          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                        />
-                      </Pressable>
-                    </View>
-                    <DateTimePicker
-                      value={
-                        tempPickerDate ?? (activePickerType === 'from' ? rangeStart : rangeEnd)
-                      }
-                      mode="date"
-                      display="spinner"
-                      onValueChange={(_event, date) => setTempPickerDate(date)}
-                      style={{ height: 200 }}
-                    />
-                    <Pressable
-                      onPress={confirmPickerDate}
-                      style={{
-                        marginTop: spacing[3],
-                        paddingVertical: spacing[3],
-                        borderRadius: m3.shape.cornerMedium,
-                        borderCurve: 'continuous',
-                        alignItems: 'center',
-                        backgroundColor: m3.colorScheme.primary,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: fontSize.sm,
-                          fontWeight: fontWeight.semibold,
-                          color: m3.colorScheme.onPrimary,
-                        }}
-                      >
-                        {t('common.done')}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </Pressable>
-              </Modal>
-            ) : null
+                      {t('common.done')}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </BottomSheet>
           ) : (
             <>
               {showFromPicker && (
                 <DateTimePicker
                   value={rangeStart}
                   mode="date"
-                  display="default"
-                  onValueChange={(_, date) => handleDateRangeChange('from', date)}
+                  presentation="dialog"
+                  onValueChange={(_, date) => {
+                    handleDateRangeChange('from', date);
+                    setShowFromPicker(false);
+                  }}
                   onDismiss={() => setShowFromPicker(false)}
                 />
               )}
@@ -960,8 +934,11 @@ export function MarkAttendanceTab({
                 <DateTimePicker
                   value={rangeEnd}
                   mode="date"
-                  display="default"
-                  onValueChange={(_, date) => handleDateRangeChange('to', date)}
+                  presentation="dialog"
+                  onValueChange={(_, date) => {
+                    handleDateRangeChange('to', date);
+                    setShowToPicker(false);
+                  }}
                   onDismiss={() => setShowToPicker(false)}
                 />
               )}

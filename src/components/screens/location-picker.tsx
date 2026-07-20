@@ -583,17 +583,7 @@ const createStyles = (m3: ReturnType<typeof useM3>) =>
       borderWidth: 1,
       borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.5),
       maxHeight: 200,
-      ...Platform.select({
-        ios: {
-          shadowColor: m3.colorScheme.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        },
-        android: {
-          elevation: 3,
-        },
-      }),
+      boxShadow: `0 2px 4px ${colorWithOpacity(m3.colorScheme.shadow, 0.1)}`,
     },
     resultItem: {
       flexDirection: 'row',

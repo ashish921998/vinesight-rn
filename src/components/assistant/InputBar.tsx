@@ -187,16 +187,8 @@ export function InputBar({
               borderColor: m3.colorScheme.outline,
               borderWidth: 1,
               borderRadius: componentRadius.input,
-              ...Platform.select({
-                ios: {
-                  maxHeight: INPUT_MAX_HEIGHT,
-                  minHeight: INPUT_MIN_HEIGHT,
-                },
-                android: {
-                  maxHeight: INPUT_MAX_HEIGHT,
-                  minHeight: INPUT_MIN_HEIGHT,
-                },
-              }),
+              maxHeight: INPUT_MAX_HEIGHT,
+              minHeight: INPUT_MIN_HEIGHT,
             },
           ]}
           editable={!isLoading && !disabled}

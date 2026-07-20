@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { Button } from '@/components/ui';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
@@ -279,81 +280,36 @@ export default function SoilProfileForm({
           />
         )}
 
-        {/* Date Picker Modal - iOS only */}
+        {/* Date Picker Sheet - iOS only (Android uses presentation="dialog" above) */}
         {Platform.OS === 'ios' && (
-          <Modal
-            visible={showDatePicker}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowDatePicker(false)}
+          <BottomSheet
+            index={showDatePicker ? 0 : -1}
+            enableDynamicSizing
+            enablePanDownToClose
+            onClose={() => setShowDatePicker(false)}
+            backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
           >
-            <Pressable
-              onPress={() => setShowDatePicker(false)}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-              accessibilityHint={t('soilProfileForm.date.closeHint')}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-            >
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3),
-                }}
-              />
-            </Pressable>
             <View
-              pointerEvents="box-none"
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                alignItems: 'center',
-                justifyContent: 'center',
+                padding: spacing[4],
+                paddingBottom: Math.max(insets.bottom, spacing[4]),
+                gap: spacing[3],
               }}
             >
-              <View
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: borderRadius['2xl'],
-                  padding: spacing[4],
-                  width: '85%',
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: fontWeight.bold,
-                    color: m3.surface.s900,
-                    marginBottom: spacing[4],
-                    textAlign: 'center',
-                  }}
-                >
-                  {t('soilProfileForm.date.modalTitle')}
-                </Text>
-                <DateTimePicker
-                  value={selectedDate}
-                  mode="date"
-                  display="spinner"
-                  onValueChange={(_, date) => setSelectedDate(date)}
-                  style={{ width: '100%' }}
-                />
-                <Button
-                  title={t('common.done')}
-                  onPress={() => setShowDatePicker(false)}
-                  style={{ marginTop: spacing[4] }}
-                />
+              <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+                {t('soilProfileForm.date.modalTitle')}
+              </Text>
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="spinner"
+                onValueChange={(_, date) => setSelectedDate(date)}
+              />
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+                <Button title={t('common.done')} onPress={() => setShowDatePicker(false)} />
               </View>
             </View>
-          </Modal>
+          </BottomSheet>
         )}
 
         {/* Section Moisture Inputs */}

@@ -8,16 +8,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  Modal,
 } from 'react-native';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { AppIcon } from '@/components/ui/app-icon';
 import { useFarm, useDailyNoteByDate, useUpsertDailyNote } from '@/hooks';
 import { useM3 } from '@/styles/use-theme';
-import { borderRadius, fontSize, spacing } from '@/styles/theme';
+import { borderRadius, spacing } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate } from '@/utils/date';
 import { colorWithOpacity } from '@/utils/color';
@@ -243,100 +243,62 @@ export default function AddNoteRoute() {
               </View>
               <AppIcon name="chevron-down" size={16} color={m3.colorScheme.onSurfaceVariant} />
             </Pressable>
-            {showDatePicker && Platform.OS !== 'ios' && (
+            {Platform.OS !== 'ios' && showDatePicker && (
               <DateTimePicker
                 value={selectedDate}
                 mode="date"
-                display="default"
+                presentation="dialog"
                 onValueChange={(_event, date) => {
+                  setSelectedDate(date);
                   setShowDatePicker(false);
-                  if (date) {
-                    setSelectedDate(date);
-                  }
                 }}
+                onDismiss={() => setShowDatePicker(false)}
               />
             )}
-            {showDatePicker && Platform.OS === 'ios' && (
-              <Modal
-                transparent
-                visible={showDatePicker}
-                animationType="fade"
-                onRequestClose={() => setShowDatePicker(false)}
+            {Platform.OS === 'ios' && (
+              <BottomSheet
+                index={showDatePicker ? 0 : -1}
+                enableDynamicSizing
+                enablePanDownToClose
+                onClose={() => setShowDatePicker(false)}
+                backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
               >
-                <Pressable
-                  onPress={() => setShowDatePicker(false)}
+                <View
                   style={{
-                    flex: 1,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-                    justifyContent: 'flex-end',
+                    padding: spacing[4],
+                    paddingBottom: Math.max(insets.bottom, spacing[4]),
+                    gap: spacing[3],
                   }}
                 >
-                  <View
-                    style={{
-                      backgroundColor: m3.surface.s100,
-                      borderTopLeftRadius: borderRadius['2xl'],
-                      borderTopRightRadius: borderRadius['2xl'],
-                      padding: spacing[4],
-                    }}
-                    onStartShouldSetResponder={() => true}
-                  >
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: spacing[4],
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: fontSize.lg,
-                          fontWeight: '700',
-                          color: m3.colorScheme.onSurface,
-                        }}
-                      >
-                        {t('entryForm.selectDate')}
-                      </Text>
-                      <Pressable onPress={() => setShowDatePicker(false)}>
-                        <AppIcon
-                          name="close"
-                          size={24}
-                          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                        />
-                      </Pressable>
-                    </View>
-                    <DateTimePicker
-                      value={selectedDate}
-                      mode="date"
-                      display="spinner"
-                      onValueChange={(_event, date) => {
-                        if (date) {
-                          setSelectedDate(date);
-                        }
-                      }}
-                    />
+                  <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+                    {t('entryForm.selectDate')}
+                  </Text>
+                  <DateTimePicker
+                    value={selectedDate}
+                    mode="date"
+                    display="spinner"
+                    onValueChange={(_event, date) => setSelectedDate(date)}
+                  />
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
                     <Pressable
                       onPress={() => setShowDatePicker(false)}
-                      style={{
-                        marginTop: spacing[4],
-                        paddingVertical: spacing[3],
-                        borderRadius: borderRadius.lg,
-                        alignItems: 'center',
-                        backgroundColor: m3.colorScheme.primary,
-                      }}
+                      style={[
+                        {
+                          paddingVertical: spacing[2],
+                          paddingHorizontal: spacing[4],
+                          borderRadius: borderRadius.lg,
+                          alignItems: 'center',
+                        },
+                        { backgroundColor: m3.colorScheme.primary },
+                      ]}
                     >
-                      <Text
-                        style={{
-                          fontWeight: '600',
-                          color: m3.colorScheme.onPrimary,
-                        }}
-                      >
+                      <Text style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
                         {t('entryForm.done')}
                       </Text>
                     </Pressable>
                   </View>
-                </Pressable>
-              </Modal>
+                </View>
+              </BottomSheet>
             )}
           </View>
 
