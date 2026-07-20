@@ -21,7 +21,7 @@ import {
   Button,
   OptionPickerSheet,
 } from '@/components/ui';
-import { spacing, borderRadius, componentRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, radius, componentRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useIsDark } from '@/styles/use-theme';
 import LocationPicker from '../location-picker';
@@ -85,7 +85,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           style={{
             width: 28,
             height: 28,
-            borderRadius: borderRadius.full,
+            borderRadius: radius.full,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
@@ -272,7 +272,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   paddingLeft: spacing[2],
                   paddingRight: spacing[3],
                   paddingVertical: spacing[2],
-                  borderRadius: borderRadius.full,
+                  borderRadius: radius.full,
                   flexDirection: 'row',
                   alignItems: 'center',
                   backgroundColor: isSelected
@@ -288,7 +288,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   style={{
                     width: 22,
                     height: 22,
-                    borderRadius: borderRadius.full,
+                    borderRadius: radius.full,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginRight: spacing[2],

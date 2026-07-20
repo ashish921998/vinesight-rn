@@ -557,9 +557,7 @@ export function ActivityEditForm({
                 value={selectedDate}
                 mode="date"
                 display="spinner"
-                onChange={(_, date) => {
-                  if (date) setSelectedDate(date);
-                }}
+                onValueChange={(_, date) => setSelectedDate(date)}
               />
               <Button
                 title={t('common.done')}
@@ -576,10 +574,11 @@ export function ActivityEditForm({
           value={selectedDate}
           mode="date"
           display="default"
-          onChange={(_, date) => {
+          onValueChange={(_, date) => {
             setShowDatePicker(false);
-            if (date) setSelectedDate(date);
+            setSelectedDate(date);
           }}
+          onDismiss={() => setShowDatePicker(false)}
         />
       )}
     </FormModal>

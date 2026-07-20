@@ -646,7 +646,7 @@ export default function ReportsScreen() {
           value={parseDbDateToLocalDate(dateRange.from) ?? new Date()}
           mode="date"
           display="default"
-          onChange={(_, date) => handleDateChange('from', date)}
+          onValueChange={(_, date) => handleDateChange('from', date)}
           minimumDate={fromMinimumDate}
           maximumDate={fromMaximumDate}
         />
@@ -657,7 +657,7 @@ export default function ReportsScreen() {
           value={parseDbDateToLocalDate(dateRange.to) ?? new Date()}
           mode="date"
           display="default"
-          onChange={(_, date) => handleDateChange('to', date)}
+          onValueChange={(_, date) => handleDateChange('to', date)}
           minimumDate={toMinimumDate}
           maximumDate={toMaximumDate}
         />
@@ -725,7 +725,7 @@ export default function ReportsScreen() {
                   value={parseDbDateToLocalDate(dateRange.from) ?? new Date()}
                   mode="date"
                   display="spinner"
-                  onChange={(_, date) => handleDateChange('from', date)}
+                  onValueChange={(_, date) => handleDateChange('from', date)}
                   minimumDate={fromMinimumDate}
                   maximumDate={fromMaximumDate}
                 />
@@ -735,7 +735,7 @@ export default function ReportsScreen() {
                   value={parseDbDateToLocalDate(dateRange.to) ?? new Date()}
                   mode="date"
                   display="spinner"
-                  onChange={(_, date) => handleDateChange('to', date)}
+                  onValueChange={(_, date) => handleDateChange('to', date)}
                   minimumDate={toMinimumDate}
                   maximumDate={toMaximumDate}
                 />

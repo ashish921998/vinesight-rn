@@ -248,7 +248,7 @@ export default function AddNoteRoute() {
                 value={selectedDate}
                 mode="date"
                 display="default"
-                onChange={(_event, date) => {
+                onValueChange={(_event, date) => {
                   setShowDatePicker(false);
                   if (date) {
                     setSelectedDate(date);
@@ -309,7 +309,7 @@ export default function AddNoteRoute() {
                       value={selectedDate}
                       mode="date"
                       display="spinner"
-                      onChange={(_event, date) => {
+                      onValueChange={(_event, date) => {
                         if (date) {
                           setSelectedDate(date);
                         }

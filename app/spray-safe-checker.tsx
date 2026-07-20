@@ -264,7 +264,7 @@ export default function SpraySafeCheckerScreen() {
             value={parseDbDateToLocalDate(targetDate) ?? new Date()}
             mode="date"
             display="default"
-            onChange={(_, selected) => {
+            onValueChange={(_, selected) => {
               setShowDatePicker(false);
               if (!selected) return;
               setTargetDateOverride(formatLocalDate(selected));
@@ -302,7 +302,7 @@ export default function SpraySafeCheckerScreen() {
                   value={iosPickerDraftDate}
                   mode="date"
                   display="spinner"
-                  onChange={(_, selected) => {
+                  onValueChange={(_, selected) => {
                     if (selected) setIosPickerDraftDate(selected);
                   }}
                 />

@@ -3008,7 +3008,7 @@ export default function FarmDetailScreen() {
                     display="spinner"
                     minimumDate={minimumSeasonStartDate ?? undefined}
                     maximumDate={seasonFormMode === 'end' ? seasonEndDate : undefined}
-                    onChange={(_, date) => {
+                    onValueChange={(_, date) => {
                       if (!date) return;
                       setSeasonStartDate(date);
                       if (
@@ -3060,7 +3060,7 @@ export default function FarmDetailScreen() {
                       mode="date"
                       display="spinner"
                       minimumDate={effectiveSeasonStartDate}
-                      onChange={(_, date) => {
+                      onValueChange={(_, date) => {
                         if (date) setSeasonEndDate(date);
                       }}
                     />
@@ -3107,7 +3107,7 @@ export default function FarmDetailScreen() {
                         mode="date"
                         display="spinner"
                         minimumDate={seasonStartDate}
-                        onChange={(_, date) => {
+                        onValueChange={(_, date) => {
                           if (!date) return;
                           setSeasonTargetHarvestDraft(date);
                           setSeasonTargetHarvestDate(date);
@@ -3278,7 +3278,7 @@ export default function FarmDetailScreen() {
               minimumDate={
                 parseDbDateToLocalDate(activeSeasonRecord?.start_date ?? '') ?? undefined
               }
-              onChange={(_, date) => {
+              onValueChange={(_, date) => {
                 if (date) setActiveSeasonTargetHarvestDraft(date);
               }}
             />
@@ -3398,7 +3398,7 @@ export default function FarmDetailScreen() {
                   ? (parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date) ?? undefined)
                   : undefined
               }
-              onChange={(_, date) => {
+              onValueChange={(_, date) => {
                 if (date) setActiveSeasonStartDraft(date);
               }}
             />

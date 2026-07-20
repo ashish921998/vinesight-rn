@@ -623,9 +623,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
               maximumDate={new Date()}
               display="spinner"
               themeVariant={isDark ? 'dark' : 'light'}
-              onChange={(_event, date) => {
-                if (date) setSelectedDate(date);
-              }}
+              onValueChange={(_event, date) => setSelectedDate(date)}
               style={{ height: 200 }}
             />
             <Pressable
@@ -651,10 +649,11 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
           mode="date"
           maximumDate={new Date()}
           display="default"
-          onChange={(_event, date) => {
+          onValueChange={(_event, date) => {
             setShowDatePicker(false);
-            if (date) setSelectedDate(date);
+            setSelectedDate(date);
           }}
+          onDismiss={() => setShowDatePicker(false)}
         />
       )}
 

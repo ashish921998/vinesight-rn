@@ -1984,7 +1984,7 @@ export default function LogsScreen() {
                           value={dateFrom || new Date()}
                           mode="date"
                           display="spinner"
-                          onChange={(_, date) => {
+                          onValueChange={(_, date) => {
                             if (date) setDateFrom(date);
                           }}
                           style={{ height: 140 }}
@@ -2006,7 +2006,7 @@ export default function LogsScreen() {
                           value={dateTo || new Date()}
                           mode="date"
                           display="spinner"
-                          onChange={(_, date) => {
+                          onValueChange={(_, date) => {
                             if (date) setDateTo(date);
                           }}
                           style={{ height: 140 }}
