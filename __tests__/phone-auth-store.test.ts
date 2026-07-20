@@ -542,8 +542,56 @@ describe('completeProfile', () => {
 
     const state = useAuthStore.getState();
     expect(supabase.auth.updateUser).not.toHaveBeenCalled();
-    expect(state.errorMessage).toContain('An account with this email already exists');
+    expect(state.errorMessage).toContain('already linked to another account');
+    // Recoverable: the UI offers "continue without email" instead of trapping.
+    expect(state.emailAlreadyRegistered).toBe(true);
     expect(state.isLoading).toBe(false);
+  });
+
+  it('flags emailAlreadyRegistered when updateUser reports a duplicate email', async () => {
+    (supabase.auth.updateUser as jest.Mock).mockResolvedValue({
+      error: { message: 'A user with this email address has already been registered' },
+    });
+
+    await useAuthStore.getState().completeProfile({
+      firstName: 'Bob',
+      lastName: 'Jones',
+      email: 'bob@example.com',
+    });
+
+    const state = useAuthStore.getState();
+    expect(state.errorMessage).toContain('already linked to another account');
+    expect(state.emailAlreadyRegistered).toBe(true);
+    expect(state.isLoading).toBe(false);
+  });
+
+  it('recovers by completing without email after a duplicate-email block', async () => {
+    mockProfilesTable({ data: [{ id: 'existing-user-id' }], error: null });
+
+    await useAuthStore.getState().completeProfile({
+      firstName: 'Bob',
+      lastName: 'Jones',
+      email: 'bob@example.com',
+    });
+    expect(useAuthStore.getState().emailAlreadyRegistered).toBe(true);
+
+    // Retrying without the email must clear the block and finish onboarding.
+    const refreshedUser = { id: 'u1', user_metadata: { full_name: 'Bob Jones' } };
+    (supabase.auth.updateUser as jest.Mock).mockResolvedValue({ error: null });
+    (supabase.auth.getUser as jest.Mock).mockResolvedValue({ data: { user: refreshedUser } });
+
+    await useAuthStore.getState().completeProfile({
+      firstName: 'Bob',
+      lastName: 'Jones',
+    });
+
+    const state = useAuthStore.getState();
+    expect(supabase.auth.updateUser).toHaveBeenCalledWith({
+      data: { full_name: 'Bob Jones', first_name: 'Bob', last_name: 'Jones' },
+    });
+    expect(state.emailAlreadyRegistered).toBe(false);
+    expect(state.errorMessage).toBeNull();
+    expect(state.needsProfileCompletion).toBe(false);
   });
 
   it('sets needsProfileCompletion=false on success', async () => {

@@ -14,6 +14,7 @@ export const initialState: AuthState = {
   pendingOTPType: 'email',
   passwordResetEmailSent: false,
   needsProfileCompletion: false,
+  emailAlreadyRegistered: false,
   phoneLinkingPending: false,
   phoneLinkingNumber: null,
   phoneLinkingLoading: false,
