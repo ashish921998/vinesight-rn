@@ -1,0 +1,41 @@
+app/reports.tsx
+  s_b93c251db9cc20::t_7d6b452b4719ca 728,738
+  s_b93c251db9cc20::t_c5f830d2b97711 649,660
+app/logs.tsx
+  s_b93c251db9cc20::t_186266566ec2f0 1987,2009
+src/components/screens/farm-form/index.tsx
+  h_fcdce7b1b8bf31 24,88,275,291
+app/add-note.tsx
+  s_b93c251db9cc20::t_cc713be3ed27e9 312
+  s_b93c251db9cc20::t_6810258521dee8 251
+app/farm/[id].tsx
+  s_b93c251db9cc20::t_5a4ca76a0e3a1e 3110
+  s_b93c251db9cc20::t_6dd36bd9bd60f5 3011
+  s_b93c251db9cc20::t_6866e857933f61 3401
+  s_b93c251db9cc20::t_4914c52a244ba3 3281
+  s_b93c251db9cc20::t_b5ffeffd93120d 3063
+app/spray-safe-checker.tsx
+  s_b93c251db9cc20::t_a40d272c1e5b06 267
+  s_b93c251db9cc20::t_facc5f22a1a017 305
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "eed717f73660b44b576a5477f12bde261aeae952",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_b93c251db9cc20": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_08172b619ffeNmlugoQK3kfoiw",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
