@@ -3037,9 +3037,7 @@ export function EntryForm({
                   mode="date"
                   display="spinner"
                   themeVariant={isDark ? 'dark' : 'light'}
-                  onChange={(_, date) => {
-                    if (date) setDueDate(formatLocalDate(date));
-                  }}
+                  onValueChange={(_, date) => setDueDate(formatLocalDate(date))}
                   style={{ height: 200 }}
                 />
                 <Pressable
@@ -3071,10 +3069,11 @@ export function EntryForm({
             })()}
             mode="date"
             display="default"
-            onChange={(_, date) => {
+            onValueChange={(_, date) => {
               setShowDueDatePicker(false);
-              if (date) setDueDate(formatLocalDate(date));
+              setDueDate(formatLocalDate(date));
             }}
+            onDismiss={() => setShowDueDatePicker(false)}
           />
         )}
       </View>
@@ -3214,10 +3213,11 @@ export function EntryForm({
             value={selectedDate}
             mode="date"
             maximumDate={new Date()}
-            onChange={(_, date) => {
+            onValueChange={(_, date) => {
               setShowDatePicker(false);
-              if (date) setSelectedDate(date);
+              setSelectedDate(date);
             }}
+            onDismiss={() => setShowDatePicker(false)}
           />
         )}
         {showDatePicker && isIOS && (
@@ -3277,9 +3277,7 @@ export function EntryForm({
                 mode="date"
                 display="spinner"
                 maximumDate={new Date()}
-                onChange={(_, date) => {
-                  if (date) setSelectedDate(date);
-                }}
+                onValueChange={(_, date) => setSelectedDate(date)}
               />
               <Pressable
                 onPress={() => setShowDatePicker(false)}
