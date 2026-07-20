@@ -95,8 +95,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   );
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isGuidedTourScrollLocked, setIsGuidedTourScrollLocked] = useState(false);
-  const [iosPlantingDateDraft, setIosPlantingDateDraft] = useState<Date>(() => new Date());
-  const [iosPruningDateDraft, setIosPruningDateDraft] = useState<Date>(() => new Date());
 
   const formScrollViewRef = useRef<ScrollView>(null);
   const nameInputRef = useRef<TextInput>(null);
@@ -639,34 +637,11 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   };
 
   const openPlantingDatePicker = () => {
-    const safeDate = ensureValidDate(formState.plantingDate);
-    setIosPlantingDateDraft(safeDate);
     setFormState((prev) => ({ ...prev, showDatePicker: true }));
   };
 
-  const commitPlantingDateFromDraft = () => {
-    const safeDate = ensureValidDate(iosPlantingDateDraft);
-    setFormState((prev) => ({
-      ...prev,
-      plantingDate: safeDate,
-      plantingDateChanged: true,
-      showDatePicker: false,
-    }));
-  };
-
   const openPruningDatePicker = () => {
-    const safeDate = ensureValidDate(formState.dateOfPruning);
-    setIosPruningDateDraft(safeDate);
     setFormState((prev) => ({ ...prev, showPruningDatePicker: true }));
-  };
-
-  const commitPruningDateFromDraft = () => {
-    const safeDate = ensureValidDate(iosPruningDateDraft);
-    setFormState((prev) => ({
-      ...prev,
-      dateOfPruning: safeDate,
-      showPruningDatePicker: false,
-    }));
   };
 
   const handleLocationSelected = (latitude: number, longitude: number, locationName?: string) => {
@@ -1126,8 +1101,8 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     setFormState((prev) => ({ ...prev, showPruningDatePicker: false }));
   const closeMapPicker = () => setFormState((prev) => ({ ...prev, showMapPicker: false }));
 
-  // Android date-picker changes (committed immediately)
-  const commitAndroidPlantingDate = (date: Date) => {
+  // Date-picker changes (committed immediately on both iOS and Android)
+  const commitPlantingDate = (date: Date) => {
     setFormState((prev) => ({
       ...prev,
       plantingDate: date,
@@ -1135,7 +1110,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       showDatePicker: false,
     }));
   };
-  const commitAndroidPruningDate = (date: Date) => {
+  const commitPruningDate = (date: Date) => {
     setFormState((prev) => ({ ...prev, dateOfPruning: date, showPruningDatePicker: false }));
   };
   const clearPruningDate = () => setFormState((prev) => ({ ...prev, dateOfPruning: null }));
@@ -1178,12 +1153,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     cropSheetHeight,
     varietySheetHeight,
 
-    // Draft dates (iOS)
-    iosPlantingDateDraft,
-    setIosPlantingDateDraft,
-    iosPruningDateDraft,
-    setIosPruningDateDraft,
-
     // Refs
     formScrollViewRef,
     formScrollYRef,
@@ -1224,13 +1193,11 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     openCropPicker,
     closeCropPicker,
     openPlantingDatePicker,
-    commitPlantingDateFromDraft,
     closeDatePicker,
     openPruningDatePicker,
-    commitPruningDateFromDraft,
     closePruningDatePicker,
-    commitAndroidPlantingDate,
-    commitAndroidPruningDate,
+    commitPlantingDate,
+    commitPruningDate,
     clearPruningDate,
     closeMapPicker,
     setShowVarietyPicker,
