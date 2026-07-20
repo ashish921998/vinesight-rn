@@ -5,11 +5,10 @@ import {
   ScrollView,
   RefreshControl,
   Pressable,
-  Modal,
-  StyleSheet,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDashboardStats, useRecentActivities, useFarms, useProfile } from '@/hooks';
@@ -719,183 +718,150 @@ function DetailedDashboard() {
             )}
           </View>
 
-          {/* Farm Picker Modal */}
-          <Modal
-            visible={showFarmPicker}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowFarmPicker(false)}
+          {/* Farm Picker */}
+          <BottomSheet
+            index={showFarmPicker ? 0 : -1}
+            snapPoints={['80%']}
+            enablePanDownToClose
+            onClose={() => setShowFarmPicker(false)}
+            backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
           >
             <View
-              style={{ flex: 1, backgroundColor: colorWithOpacity(m3.colorScheme.scrim, 0.45) }}
+              style={{
+                paddingHorizontal: spacing[4],
+                paddingTop: spacing[4],
+                paddingBottom: Math.max(insets.bottom, spacing[4]),
+              }}
             >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('dashboard.farmPicker.dismissA11y')}
-                onPress={() => setShowFarmPicker(false)}
-                style={StyleSheet.absoluteFill}
-              />
+              {/* Header */}
               <View
                 style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  borderTopLeftRadius: m3.shape.cornerLarge,
-                  borderTopRightRadius: m3.shape.cornerLarge,
-                  padding: spacing[4],
-                  paddingTop: spacing[6],
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  maxHeight: '80%',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[4],
                 }}
               >
-                {/* Handle */}
-                <View
+                <Text
                   style={{
-                    alignSelf: 'center',
-                    width: 40,
-                    height: 4,
-                    borderRadius: radius.xs,
-                    backgroundColor: m3.colorScheme.outlineVariant,
-                    marginBottom: spacing[4],
-                  }}
-                />
-                {/* Header */}
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: spacing[4],
+                    ...m3.typography.titleMedium,
+                    color: m3.colorScheme.onSurface,
                   }}
                 >
-                  <Text
+                  {t('dashboard.farmPicker.title')}
+                </Text>
+                <Pressable
+                  onPress={() => setShowFarmPicker(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.farmPicker.closeA11y')}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+                >
+                  <SymbolIcon name="xmark" size={24} color={m3.neutral.n400} />
+                </Pressable>
+              </View>
+
+              {/* Farm List */}
+              <ScrollView
+                showsVerticalScrollIndicator={true}
+                nestedScrollEnabled={true}
+                style={{ maxHeight: 400 }}
+              >
+                {farms && farms.length > 0 ? (
+                  selectedQuickAction === 'expense' ? (
+                    <Pressable
+                      key="all-farms"
+                      onPress={() => handleFarmSelection(ALL_FARMS_ID)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('dashboard.farmPicker.selectAllFarmsA11y')}
+                      style={({ pressed }) => ({
+                        padding: spacing[4],
+                        borderBottomWidth: 1,
+                        borderBottomColor: m3.colorScheme.outlineVariant,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      })}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={{
+                            ...m3.typography.bodyMedium,
+                            fontWeight: fontWeight.medium,
+                            color: m3.colorScheme.onSurface,
+                          }}
+                        >
+                          {t('dashboard.farmPicker.allFarms')}
+                        </Text>
+                      </View>
+                      <SymbolIcon name="chevron.right" size={20} color={m3.neutral.n300} />
+                    </Pressable>
+                  ) : null
+                ) : null}
+                {farms && farms.length > 0 ? (
+                  farms.map((farm) => (
+                    <Pressable
+                      key={farm.id}
+                      onPress={() => farm.id && handleFarmSelection(farm.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('dashboard.farmPicker.selectFarmA11y', {
+                        name: farm.name,
+                      })}
+                      style={({ pressed }) => ({
+                        padding: spacing[4],
+                        borderBottomWidth: 1,
+                        borderBottomColor: m3.colorScheme.outlineVariant,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      })}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={{
+                            ...m3.typography.bodyMedium,
+                            fontWeight: fontWeight.medium,
+                            color: m3.colorScheme.onSurface,
+                          }}
+                        >
+                          {farm.name}
+                        </Text>
+                        {farm.region && (
+                          <Text
+                            style={{
+                              fontSize: fontSize.sm,
+                              marginTop: spacing[1],
+                              color: m3.colorScheme.onSurfaceVariant,
+                            }}
+                          >
+                            {farm.region}
+                          </Text>
+                        )}
+                      </View>
+                      <SymbolIcon name="chevron.right" size={20} color={m3.neutral.n300} />
+                    </Pressable>
+                  ))
+                ) : (
+                  <View
                     style={{
-                      ...m3.typography.titleMedium,
-                      color: m3.colorScheme.onSurface,
+                      padding: spacing[6],
+                      alignItems: 'center',
                     }}
                   >
-                    {t('dashboard.farmPicker.title')}
-                  </Text>
-                  <Pressable
-                    onPress={() => setShowFarmPicker(false)}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('dashboard.farmPicker.closeA11y')}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-                  >
-                    <SymbolIcon name="xmark" size={24} color={m3.neutral.n400} />
-                  </Pressable>
-                </View>
-
-                {/* Farm List */}
-                <ScrollView
-                  showsVerticalScrollIndicator={true}
-                  nestedScrollEnabled={true}
-                  style={{ maxHeight: 400 }}
-                >
-                  {farms && farms.length > 0 ? (
-                    selectedQuickAction === 'expense' ? (
-                      <Pressable
-                        key="all-farms"
-                        onPress={() => handleFarmSelection(ALL_FARMS_ID)}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('dashboard.farmPicker.selectAllFarmsA11y')}
-                        style={({ pressed }) => ({
-                          padding: spacing[4],
-                          borderBottomWidth: 1,
-                          borderBottomColor: m3.colorScheme.outlineVariant,
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          backgroundColor: pressed
-                            ? colorWithOpacity(
-                                m3.colorScheme.onSurface,
-                                m3.stateLayerOpacity.pressed,
-                              )
-                            : 'transparent',
-                        })}
-                      >
-                        <View style={{ flex: 1 }}>
-                          <Text
-                            style={{
-                              ...m3.typography.bodyMedium,
-                              fontWeight: fontWeight.medium,
-                              color: m3.colorScheme.onSurface,
-                            }}
-                          >
-                            {t('dashboard.farmPicker.allFarms')}
-                          </Text>
-                        </View>
-                        <SymbolIcon name="chevron.right" size={20} color={m3.neutral.n300} />
-                      </Pressable>
-                    ) : null
-                  ) : null}
-                  {farms && farms.length > 0 ? (
-                    farms.map((farm) => (
-                      <Pressable
-                        key={farm.id}
-                        onPress={() => farm.id && handleFarmSelection(farm.id)}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('dashboard.farmPicker.selectFarmA11y', {
-                          name: farm.name,
-                        })}
-                        style={({ pressed }) => ({
-                          padding: spacing[4],
-                          borderBottomWidth: 1,
-                          borderBottomColor: m3.colorScheme.outlineVariant,
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          backgroundColor: pressed
-                            ? colorWithOpacity(
-                                m3.colorScheme.onSurface,
-                                m3.stateLayerOpacity.pressed,
-                              )
-                            : 'transparent',
-                        })}
-                      >
-                        <View style={{ flex: 1 }}>
-                          <Text
-                            style={{
-                              ...m3.typography.bodyMedium,
-                              fontWeight: fontWeight.medium,
-                              color: m3.colorScheme.onSurface,
-                            }}
-                          >
-                            {farm.name}
-                          </Text>
-                          {farm.region && (
-                            <Text
-                              style={{
-                                fontSize: fontSize.sm,
-                                marginTop: spacing[1],
-                                color: m3.colorScheme.onSurfaceVariant,
-                              }}
-                            >
-                              {farm.region}
-                            </Text>
-                          )}
-                        </View>
-                        <SymbolIcon name="chevron.right" size={20} color={m3.neutral.n300} />
-                      </Pressable>
-                    ))
-                  ) : (
-                    <View
-                      style={{
-                        padding: spacing[6],
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
-                        {t('dashboard.farmPicker.noFarms')}
-                      </Text>
-                    </View>
-                  )}
-                </ScrollView>
-              </View>
+                    <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
+                      {t('dashboard.farmPicker.noFarms')}
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
             </View>
-          </Modal>
+          </BottomSheet>
 
           {/* Add Entry Modal */}
           {/* Add Entry handled via route */}

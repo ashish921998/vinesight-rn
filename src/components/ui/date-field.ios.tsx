@@ -1,21 +1,19 @@
 /**
- * DateField (iOS) — renders the native SwiftUI compact date picker inline.
- *
- * `@expo/ui`'s drop-in `DateTimePicker` internally hosts SwiftUI, so no
- * application-level `Host` is needed. `display="compact"` is itself the tappable
- * affordance (a button that expands the native wheel inline), so we do not
- * mount a separate trigger button — just the optional label/hint above/below.
- * This replaces the old per-screen `BottomSheet` + spinner + title + close +
- * Done entirely.
+ * DateField (iOS) — uses the shared app-styled trigger, then presents the native
+ * SwiftUI picker in a sheet. Keeping the native compact picker inline makes it
+ * render as Apple's small pill instead of our full-width form input.
  */
 
-import React from 'react';
-import { View, Text } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
-import { fontSize, spacing } from '@/styles/theme';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { ensureValidDate, type DateFieldProps } from './date-field-shared';
+import { DateFieldTrigger, ensureValidDate, type DateFieldProps } from './date-field-shared';
 
 export function DateField({
   value,
@@ -29,43 +27,108 @@ export function DateField({
   style,
 }: DateFieldProps) {
   const m3 = useM3();
+  const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [draftDate, setDraftDate] = useState(value);
+
+  const close = () => {
+    setDraftDate(value);
+    setOpen(false);
+  };
 
   return (
-    <View style={[{ width: '100%' }, style]}>
-      {label ? (
-        <Text
-          style={{
-            ...m3.typography.labelLarge,
-            marginBottom: spacing[1],
-            color: m3.colorScheme.onSurface,
-          }}
-        >
-          {label}
-        </Text>
-      ) : null}
-      <DateTimePicker
+    <View style={style}>
+      <DateFieldTrigger
         value={value}
-        mode="date"
-        display="compact"
-        minimumDate={minimumDate}
-        maximumDate={maximumDate}
-        accentColor={m3.colorScheme.primary}
+        label={label}
+        hint={hint}
         disabled={disabled}
-        onValueChange={(_, date) => onChange(ensureValidDate(date))}
         testID={testID}
-        style={{ alignSelf: 'flex-start' }}
+        onPress={() => {
+          setDraftDate(value);
+          setOpen(true);
+        }}
       />
-      {hint ? (
-        <Text
+      <BottomSheet
+        index={open ? 0 : -1}
+        enableDynamicSizing
+        enablePanDownToClose
+        onClose={close}
+        backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
+      >
+        <View
           style={{
-            fontSize: fontSize.xs,
-            color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8),
-            marginTop: spacing[2],
+            paddingHorizontal: spacing[4],
+            paddingTop: spacing[4],
+            paddingBottom: Math.max(insets.bottom, spacing[4]),
+            gap: spacing[3],
           }}
         >
-          {hint}
-        </Text>
-      ) : null}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: spacing[3],
+            }}
+          >
+            <Pressable onPress={close} hitSlop={8}>
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.medium,
+                  color: m3.colorScheme.onSurfaceVariant,
+                }}
+              >
+                {t('common.cancel')}
+              </Text>
+            </Pressable>
+            <Text
+              style={{
+                ...m3.typography.titleMedium,
+                color: m3.colorScheme.onSurface,
+                flex: 1,
+                textAlign: 'center',
+              }}
+            >
+              {label ?? t('common.selectDate', { defaultValue: 'Select date' })}
+            </Text>
+            <Pressable
+              onPress={() => {
+                onChange(ensureValidDate(draftDate));
+                setOpen(false);
+              }}
+              hitSlop={8}
+              style={{
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[2],
+                borderRadius: borderRadius.full,
+                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: m3.colorScheme.primary,
+                }}
+              >
+                {t('common.done')}
+              </Text>
+            </Pressable>
+          </View>
+          <DateTimePicker
+            value={draftDate}
+            mode="date"
+            display="spinner"
+            minimumDate={minimumDate}
+            maximumDate={maximumDate}
+            accentColor={m3.colorScheme.primary}
+            onValueChange={(_, date) => setDraftDate(ensureValidDate(date))}
+          />
+        </View>
+      </BottomSheet>
     </View>
   );
 }
