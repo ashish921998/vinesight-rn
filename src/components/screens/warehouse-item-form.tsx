@@ -1289,13 +1289,7 @@ export default function WarehouseItemForm({
       </FormModal>
 
       {nutrientPickerRow && (
-        <ModalBackdrop
-          visible
-          onDismiss={closeNutrientPicker}
-          alignment="flex-end"
-          opacity={0.5}
-          zIndex={2}
-        >
+        <ModalBackdrop visible onDismiss={closeNutrientPicker} alignment="flex-end">
           <Pressable
             onPress={() => {}}
             style={{
@@ -1401,12 +1395,7 @@ export default function WarehouseItemForm({
 
       {/* Catalogue Picker Bottom Sheet */}
       {showCataloguePicker && (
-        <ModalBackdrop
-          visible
-          onDismiss={() => setShowCataloguePicker(false)}
-          alignment="flex-end"
-          opacity={0.5}
-        >
+        <ModalBackdrop visible onDismiss={() => setShowCataloguePicker(false)} alignment="flex-end">
           <KeyboardAvoidingView
             behavior={isIOS ? 'padding' : undefined}
             keyboardVerticalOffset={0}

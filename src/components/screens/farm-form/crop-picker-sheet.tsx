@@ -61,7 +61,7 @@ export function CropPickerSheet({
   if (!visible) return null;
 
   return (
-    <ModalBackdrop visible onDismiss={onClose} alignment="flex-end" opacity={0.5}>
+    <ModalBackdrop visible onDismiss={onClose} alignment="flex-end">
       <KeyboardAvoidingView
         behavior={isIOS ? 'padding' : undefined}
         keyboardVerticalOffset={0}

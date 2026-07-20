@@ -37,7 +37,7 @@ export function IOSDatePickerSheet({
   const isDark = useIsDark();
 
   return (
-    <ModalBackdrop visible={visible} onDismiss={onClose} opacity={0.5} zIndex={50} fitToContents>
+    <ModalBackdrop visible={visible} onDismiss={onClose} fitToContents>
       <View
         style={{
           backgroundColor: m3.surface.s100,

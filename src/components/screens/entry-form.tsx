@@ -3301,13 +3301,7 @@ export function EntryForm({
           </Pressable>
         )}
         {showTypePicker && (
-          <ModalBackdrop
-            visible
-            onDismiss={() => setShowTypePicker(false)}
-            opacity={0.4}
-            zIndex={60}
-            fitToContents
-          >
+          <ModalBackdrop visible onDismiss={() => setShowTypePicker(false)} fitToContents>
             <View
               style={{
                 backgroundColor: m3.surface.s100,
@@ -3389,13 +3383,7 @@ export function EntryForm({
         )}
 
         {showPriorityPicker && (
-          <ModalBackdrop
-            visible
-            onDismiss={() => setShowPriorityPicker(false)}
-            opacity={0.4}
-            zIndex={60}
-            fitToContents
-          >
+          <ModalBackdrop visible onDismiss={() => setShowPriorityPicker(false)} fitToContents>
             <View
               style={{
                 backgroundColor: m3.surface.s100,

@@ -12,8 +12,6 @@ export interface ModalBackdropProps {
   onDismiss: () => void;
   children: ReactNode;
   alignment?: 'center' | 'flex-end';
-  opacity?: number;
-  zIndex?: number;
   snapPoints?: BottomSheetProps['snapPoints'];
   fitToContents?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
@@ -28,15 +26,11 @@ export function ModalBackdrop({
   onDismiss,
   children,
   alignment = 'flex-end',
-  opacity = 0.5,
-  zIndex,
   snapPoints,
   fitToContents = false,
   contentStyle,
 }: ModalBackdropProps) {
   const m3 = useM3();
-  void opacity;
-  void zIndex;
   const defaultSnapPoints = alignment === 'center' ? ['50%'] : ['65%', '95%'];
 
   return (
