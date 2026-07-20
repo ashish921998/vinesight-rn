@@ -1,6 +1,14 @@
 import { Icon } from '@expo/ui';
 import React from 'react';
-import { View, Text, Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import {
+  View,
+  Text,
+  Platform,
+  StyleSheet,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ICON_MAPPING } from '@/utils/icon-mapping';
 import { useM3 } from '@/styles/use-theme';
@@ -267,11 +275,10 @@ export function SymbolComponent({ name, size = 24, color, style }: SymbolProps) 
     const asset = ICON_ASSETS[resolvedName as keyof typeof ICON_ASSETS];
     if (asset) {
       // `Icon.style` is `UniversalStyle` (a `Pick<ViewStyle, ...>`), narrower than
-      // RN's `StyleProp<ViewStyle>` (which also allows arrays/falsy). Flatten to a
-      // plain object so only the supported subset is passed through.
-      const flatStyle = (
-        Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style
-      ) as ViewStyle | undefined;
+      // RN's `StyleProp<ViewStyle>` (which also allows arrays/falsy/registered IDs).
+      // `StyleSheet.flatten` recurses into nested arrays and resolves registered
+      // styles, returning `ViewStyle | undefined` for falsy input.
+      const flatStyle = style ? (StyleSheet.flatten(style) as ViewStyle) : undefined;
       return <Icon name={asset} size={size} color={resolvedColor} style={flatStyle} />;
     }
     if (__DEV__) {
