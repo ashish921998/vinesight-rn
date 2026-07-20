@@ -3,8 +3,8 @@
  */
 
 import React from 'react';
+import { BottomSheet, RNHostView } from '@expo/ui';
 import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView } from 'react-native';
-import { ModalBackdrop } from '@/components/ui';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -48,186 +48,188 @@ export function VarietyPickerSheet({
   if (!visible) return null;
 
   return (
-    <ModalBackdrop visible onDismiss={onClose} alignment="flex-end">
-      <KeyboardAvoidingView
-        behavior={isIOS ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-        style={{
-          flex: 1,
-          width: '100%',
-          justifyContent: 'flex-end',
-          paddingBottom: androidKeyboardLift,
-        }}
-      >
-        <GuidedTourTarget
-          targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
-          onStartShouldSetResponder={() => true}
+    <BottomSheet isPresented onDismiss={onClose} snapPoints={['half', 'full']}>
+      <RNHostView>
+        <KeyboardAvoidingView
+          behavior={isIOS ? 'padding' : undefined}
+          keyboardVerticalOffset={0}
           style={{
-            backgroundColor: m3.surface.s100,
-            borderTopLeftRadius: borderRadius['3xl'],
-            borderTopRightRadius: borderRadius['3xl'],
-            height: varietySheetHeight,
+            flex: 1,
+            width: '100%',
+            justifyContent: 'flex-end',
+            paddingBottom: androidKeyboardLift,
           }}
         >
-          {/* Header */}
-          <View
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
+            onStartShouldSetResponder={() => true}
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: spacing[6],
-              paddingVertical: spacing[4],
-              borderBottomWidth: 1,
-              borderBottomColor: m3.surface.s100,
+              backgroundColor: m3.surface.s100,
+              borderTopLeftRadius: borderRadius['3xl'],
+              borderTopRightRadius: borderRadius['3xl'],
+              height: varietySheetHeight,
             }}
           >
-            <View style={{ width: 40 }} />
-            <Text
-              style={{
-                fontSize: fontSize.lg,
-                fontWeight: fontWeight.semibold,
-                color: m3.surface.s900,
-              }}
-            >
-              {t('farmForm.variety.modalTitle')}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              accessible
-              accessibilityRole="button"
-              accessibilityLabel="Close variety picker"
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: borderRadius.full,
-                backgroundColor: m3.surface.s100,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-            </Pressable>
-          </View>
-
-          {/* Content */}
-          <View style={{ flex: 1 }}>
-            {/* Search bar */}
+            {/* Header */}
             <View
               style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 paddingHorizontal: spacing[6],
-                paddingTop: spacing[4],
-                paddingBottom: spacing[2],
+                paddingVertical: spacing[4],
+                borderBottomWidth: 1,
+                borderBottomColor: m3.surface.s100,
               }}
             >
-              <View
+              <View style={{ width: 40 }} />
+              <Text
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: m3.surface.s200,
-                  borderRadius: borderRadius.xl,
-                  backgroundColor: m3.surface.s50,
-                  paddingHorizontal: spacing[3],
-                  minHeight: 48,
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  color: m3.surface.s900,
                 }}
               >
-                <UISymbol
-                  name="magnifyingglass"
-                  size={18}
-                  color={m3.colorScheme.onSurfaceVariant}
-                />
-                <TextInput
-                  value={varietySearchQuery}
-                  onChangeText={onSearchChange}
-                  placeholder={t('farmForm.variety.searchPlaceholder')}
-                  placeholderTextColor={m3.surface.s400}
-                  style={{
-                    flex: 1,
-                    marginLeft: spacing[2],
-                    color: m3.surface.s900,
-                    fontSize: fontSize.base,
-                  }}
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                />
-              </View>
+                {t('farmForm.variety.modalTitle')}
+              </Text>
+              <Pressable
+                onPress={onClose}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel="Close variety picker"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.full,
+                  backgroundColor: m3.surface.s100,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+              </Pressable>
             </View>
 
-            {/* List */}
-            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
-              {canCreateCustomVariety && (
-                <Pressable
+            {/* Content */}
+            <View style={{ flex: 1 }}>
+              {/* Search bar */}
+              <View
+                style={{
+                  paddingHorizontal: spacing[6],
+                  paddingTop: spacing[4],
+                  paddingBottom: spacing[2],
+                }}
+              >
+                <View
                   style={{
-                    paddingHorizontal: spacing[6],
-                    paddingVertical: spacing[4],
-                    borderBottomWidth: 1,
-                    borderBottomColor: m3.surface.s100,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: m3.surface.s200,
+                    borderRadius: borderRadius.xl,
                     backgroundColor: m3.surface.s50,
+                    paddingHorizontal: spacing[3],
+                    minHeight: 48,
                   }}
-                  onPress={() => onSelectVariety(varietySearchQueryTrimmed)}
                 >
-                  <Text
+                  <UISymbol
+                    name="magnifyingglass"
+                    size={18}
+                    color={m3.colorScheme.onSurfaceVariant}
+                  />
+                  <TextInput
+                    value={varietySearchQuery}
+                    onChangeText={onSearchChange}
+                    placeholder={t('farmForm.variety.searchPlaceholder')}
+                    placeholderTextColor={m3.surface.s400}
                     style={{
+                      flex: 1,
+                      marginLeft: spacing[2],
+                      color: m3.surface.s900,
                       fontSize: fontSize.base,
-                      color: m3.primary.p600,
-                      fontWeight: fontWeight.semibold,
                     }}
-                  >
-                    {t('farmForm.variety.useCustom', {
-                      variety: varietySearchQueryTrimmed,
-                      defaultValue: 'Use "{{variety}}"',
-                    })}
-                  </Text>
-                </Pressable>
-              )}
-              {filteredVarieties.map((variety) => {
-                const isSelected = cropVariety === variety;
-                return (
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                  />
+                </View>
+              </View>
+
+              {/* List */}
+              <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+                {canCreateCustomVariety && (
                   <Pressable
-                    key={variety}
                     style={{
                       paddingHorizontal: spacing[6],
                       paddingVertical: spacing[4],
                       borderBottomWidth: 1,
                       borderBottomColor: m3.surface.s100,
-                      backgroundColor: isSelected ? m3.surface.s50 : m3.surface.s100,
+                      backgroundColor: m3.surface.s50,
                     }}
-                    onPress={() => onSelectVariety(variety)}
+                    onPress={() => onSelectVariety(varietySearchQueryTrimmed)}
                   >
-                    <View
+                    <Text
                       style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
+                        fontSize: fontSize.base,
+                        color: m3.primary.p600,
+                        fontWeight: fontWeight.semibold,
                       }}
                     >
-                      <Text
+                      {t('farmForm.variety.useCustom', {
+                        variety: varietySearchQueryTrimmed,
+                        defaultValue: 'Use "{{variety}}"',
+                      })}
+                    </Text>
+                  </Pressable>
+                )}
+                {filteredVarieties.map((variety) => {
+                  const isSelected = cropVariety === variety;
+                  return (
+                    <Pressable
+                      key={variety}
+                      style={{
+                        paddingHorizontal: spacing[6],
+                        paddingVertical: spacing[4],
+                        borderBottomWidth: 1,
+                        borderBottomColor: m3.surface.s100,
+                        backgroundColor: isSelected ? m3.surface.s50 : m3.surface.s100,
+                      }}
+                      onPress={() => onSelectVariety(variety)}
+                    >
+                      <View
                         style={{
-                          fontSize: fontSize.base,
-                          color: isSelected ? m3.surface.s900 : m3.surface.s700,
-                          fontWeight: isSelected ? fontWeight.semibold : fontWeight.normal,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
                         }}
                       >
-                        {getVarietyLabel(variety)}
-                      </Text>
-                      {isSelected && (
-                        <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
-                      )}
-                    </View>
-                  </Pressable>
-                );
-              })}
-              {filteredVarieties.length === 0 && !canCreateCustomVariety && (
-                <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                  <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
-                    {t('common.noResultsFound')}
-                  </Text>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </GuidedTourTarget>
-      </KeyboardAvoidingView>
-    </ModalBackdrop>
+                        <Text
+                          style={{
+                            fontSize: fontSize.base,
+                            color: isSelected ? m3.surface.s900 : m3.surface.s700,
+                            fontWeight: isSelected ? fontWeight.semibold : fontWeight.normal,
+                          }}
+                        >
+                          {getVarietyLabel(variety)}
+                        </Text>
+                        {isSelected && (
+                          <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
+                        )}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+                {filteredVarieties.length === 0 && !canCreateCustomVariety && (
+                  <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
+                      {t('common.noResultsFound')}
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </GuidedTourTarget>
+        </KeyboardAvoidingView>
+      </RNHostView>
+    </BottomSheet>
   );
 }

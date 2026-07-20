@@ -22,8 +22,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Sentry from '@sentry/react-native';
+import { BottomSheet, RNHostView } from '@expo/ui';
 import { AppIcon } from '@/components/ui/app-icon';
-import { ModalBackdrop } from '@/components/ui/modal-backdrop';
 import { Spinner } from '@/components/ui/spinner';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { LinearGradient as _LinearGradient } from 'expo-linear-gradient';
@@ -3301,49 +3301,133 @@ export function EntryForm({
           </Pressable>
         )}
         {showTypePicker && (
-          <ModalBackdrop visible onDismiss={() => setShowTypePicker(false)} fitToContents>
-            <View
-              style={{
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                padding: 16,
-              }}
-              onStartShouldSetResponder={() => true}
-            >
+          <BottomSheet isPresented onDismiss={() => setShowTypePicker(false)}>
+            <RNHostView matchContents>
               <View
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 12,
+                  backgroundColor: m3.surface.s100,
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 16,
                 }}
+                onStartShouldSetResponder={() => true}
               >
-                <Text
-                  selectable
+                <View
                   style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: '700',
-                    color: m3.colorScheme.onSurface,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 12,
                   }}
                 >
-                  {t('entryForm.selectTaskType')}
-                </Text>
-                <Pressable onPress={() => setShowTypePicker(false)}>
-                  <AppIcon
-                    name="close"
-                    size={24}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                  />
-                </Pressable>
+                  <Text
+                    selectable
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: '700',
+                      color: m3.colorScheme.onSurface,
+                    }}
+                  >
+                    {t('entryForm.selectTaskType')}
+                  </Text>
+                  <Pressable onPress={() => setShowTypePicker(false)}>
+                    <AppIcon
+                      name="close"
+                      size={24}
+                      color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                    />
+                  </Pressable>
+                </View>
+                <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ maxHeight: 320 }}>
+                  {TASK_TYPES.map((taskType) => (
+                    <Pressable
+                      key={taskType}
+                      onPress={() => {
+                        setType(taskType);
+                        setShowTypePicker(false);
+                      }}
+                      style={{
+                        padding: 16,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        borderBottomWidth: 1,
+                        borderColor: m3.surface.s100,
+                        backgroundColor:
+                          type === taskType
+                            ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                            : m3.surface.s100,
+                      }}
+                    >
+                      <AppIcon
+                        name={TASK_TYPE_INFO[taskType].icon}
+                        size={18}
+                        color={TASK_TYPE_INFO[taskType].color}
+                      />
+                      <Text
+                        selectable
+                        style={{
+                          marginLeft: 12,
+                          color:
+                            type === taskType
+                              ? m3.colorScheme.primary
+                              : m3.colorScheme.onSurfaceVariant,
+                          fontWeight: type === taskType ? '500' : '400',
+                        }}
+                      >
+                        {t(TASK_TYPE_INFO[taskType].labelKey)}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
-              <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ maxHeight: 320 }}>
-                {TASK_TYPES.map((taskType) => (
+            </RNHostView>
+          </BottomSheet>
+        )}
+
+        {showPriorityPicker && (
+          <BottomSheet isPresented onDismiss={() => setShowPriorityPicker(false)}>
+            <RNHostView matchContents>
+              <View
+                style={{
+                  backgroundColor: m3.surface.s100,
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 16,
+                }}
+                onStartShouldSetResponder={() => true}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 12,
+                  }}
+                >
+                  <Text
+                    selectable
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: '700',
+                      color: m3.colorScheme.onSurface,
+                    }}
+                  >
+                    {t('entryForm.selectPriority')}
+                  </Text>
+                  <Pressable onPress={() => setShowPriorityPicker(false)}>
+                    <AppIcon
+                      name="close"
+                      size={24}
+                      color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                    />
+                  </Pressable>
+                </View>
+                {PRIORITIES.map((p) => (
                   <Pressable
-                    key={taskType}
+                    key={p}
                     onPress={() => {
-                      setType(taskType);
-                      setShowTypePicker(false);
+                      setPriority(p);
+                      setShowPriorityPicker(false);
                     }}
                     style={{
                       padding: 16,
@@ -3352,129 +3436,49 @@ export function EntryForm({
                       borderBottomWidth: 1,
                       borderColor: m3.surface.s100,
                       backgroundColor:
-                        type === taskType
+                        priority === p
                           ? colorWithOpacity(m3.colorScheme.primary, 0.08)
                           : m3.surface.s100,
                     }}
                   >
-                    <AppIcon
-                      name={TASK_TYPE_INFO[taskType].icon}
-                      size={18}
-                      color={TASK_TYPE_INFO[taskType].color}
-                    />
+                    <View
+                      style={[
+                        {
+                          width: 28,
+                          height: 28,
+                          borderRadius: radius.sm,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        },
+                        { backgroundColor: PRIORITY_INFO[p].bgColor },
+                      ]}
+                    >
+                      <Text
+                        selectable
+                        style={[
+                          { fontSize: fontSize.xs, fontWeight: '700' },
+                          { color: PRIORITY_INFO[p].color },
+                        ]}
+                      >
+                        {p.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
                     <Text
                       selectable
                       style={{
                         marginLeft: 12,
                         color:
-                          type === taskType
-                            ? m3.colorScheme.primary
-                            : m3.colorScheme.onSurfaceVariant,
-                        fontWeight: type === taskType ? '500' : '400',
+                          priority === p ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant,
+                        fontWeight: priority === p ? '500' : '400',
                       }}
                     >
-                      {t(TASK_TYPE_INFO[taskType].labelKey)}
+                      {t(PRIORITY_INFO[p].labelKey)}
                     </Text>
                   </Pressable>
                 ))}
-              </ScrollView>
-            </View>
-          </ModalBackdrop>
-        )}
-
-        {showPriorityPicker && (
-          <ModalBackdrop visible onDismiss={() => setShowPriorityPicker(false)} fitToContents>
-            <View
-              style={{
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                padding: 16,
-              }}
-              onStartShouldSetResponder={() => true}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 12,
-                }}
-              >
-                <Text
-                  selectable
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: '700',
-                    color: m3.colorScheme.onSurface,
-                  }}
-                >
-                  {t('entryForm.selectPriority')}
-                </Text>
-                <Pressable onPress={() => setShowPriorityPicker(false)}>
-                  <AppIcon
-                    name="close"
-                    size={24}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                  />
-                </Pressable>
               </View>
-              {PRIORITIES.map((p) => (
-                <Pressable
-                  key={p}
-                  onPress={() => {
-                    setPriority(p);
-                    setShowPriorityPicker(false);
-                  }}
-                  style={{
-                    padding: 16,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    borderBottomWidth: 1,
-                    borderColor: m3.surface.s100,
-                    backgroundColor:
-                      priority === p
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                        : m3.surface.s100,
-                  }}
-                >
-                  <View
-                    style={[
-                      {
-                        width: 28,
-                        height: 28,
-                        borderRadius: radius.sm,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      },
-                      { backgroundColor: PRIORITY_INFO[p].bgColor },
-                    ]}
-                  >
-                    <Text
-                      selectable
-                      style={[
-                        { fontSize: fontSize.xs, fontWeight: '700' },
-                        { color: PRIORITY_INFO[p].color },
-                      ]}
-                    >
-                      {p.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                  <Text
-                    selectable
-                    style={{
-                      marginLeft: 12,
-                      color:
-                        priority === p ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant,
-                      fontWeight: priority === p ? '500' : '400',
-                    }}
-                  >
-                    {t(PRIORITY_INFO[p].labelKey)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </ModalBackdrop>
+            </RNHostView>
+          </BottomSheet>
         )}
 
         <ScrollView

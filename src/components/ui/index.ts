@@ -3,7 +3,6 @@ export { CropIcon } from './crop-icon';
 export { EmptyState } from './empty-state';
 export { LoadingState } from './loading-state';
 export { Input } from './input';
-export { ModalBackdrop } from './modal-backdrop';
 export { OTPInput } from './otp-input';
 export { SearchSelect } from './search-select';
 export {
