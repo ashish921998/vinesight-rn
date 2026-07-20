@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { View, Text, Pressable, RefreshControl, TextInput, Alert, Animated } from 'react-native';
 import { useRouter, useFocusEffect, useIsFocused } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +33,12 @@ export default function ExploreScreen() {
   const isScreenFocused = useIsFocused();
   // Simplified mode labels the Warehouse pane "Purchases"; Detailed keeps "Warehouse".
   const detailedMode = useAppModeStore((s) => s.detailedMode);
+  // Mirror detailedMode into a ref so focus-effect bodies can read the latest value
+  // without re-registering when it changes (avoids spurious cleanups + telemetry on toggle).
+  const detailedModeRef = useRef(detailedMode);
+  useEffect(() => {
+    detailedModeRef.current = detailedMode;
+  }, [detailedMode]);
   const exploreTabs = useMemo(
     () =>
       [
@@ -169,14 +175,14 @@ export default function ExploreScreen() {
     useCallback(() => {
       setToday(new Date());
       telemetry.capture('farms_tab_opened', {
-        app_mode: detailedMode ? 'detailed' : 'simplified',
+        app_mode: detailedModeRef.current ? 'detailed' : 'simplified',
         surface: 'farms',
       });
       return () => {
         setSearchQuery('');
         setIsSearchExpanded(false);
       };
-    }, [detailedMode]),
+    }, []),
   );
 
   const handleFarmPress = (farm: Farm) => {
