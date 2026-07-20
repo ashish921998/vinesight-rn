@@ -2914,6 +2914,29 @@ export function EntryForm({
           onChange={(date) => setDueDate(formatLocalDate(date))}
           label={t('entryForm.taskForm.selectDueDateTitle')}
         />
+        {dueDate ? (
+          <Pressable
+            onPress={() => setDueDate('')}
+            accessibilityRole="button"
+            accessibilityLabel={t('farmForm.header.clearDate')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              alignSelf: 'flex-start',
+              marginTop: spacing[2],
+              gap: spacing[1],
+            }}
+          >
+            <AppIcon
+              name="close-circle"
+              size={18}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            />
+            <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
+              {t('farmForm.header.clearDate')}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </>
   );
