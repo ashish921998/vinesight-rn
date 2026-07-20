@@ -7,19 +7,11 @@ import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { Alert, Keyboard, ScrollView, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
-import {
-  useCreateFarm,
-  useFarm,
-  useUpdateFarm,
-  isIOS,
-  useResponsiveHeight,
-  useAndroidKeyboardLift,
-} from '@/hooks';
+import { useCreateFarm, useFarm, useUpdateFarm, isIOS } from '@/hooks';
 import type { FarmInsert, FarmUpdate } from '@/types';
 import type { CropType } from '@/constants/crop-varieties';
 import { CROP_VARIETIES } from '@/constants/crop-varieties';
 import { useM3 } from '@/styles/use-theme';
-import { spacing } from '@/styles/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { telemetry } from '@/services/telemetry';
 import * as Sentry from '@sentry/react-native';
@@ -80,7 +72,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   const router = useRouter();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
-  const { windowHeight } = useResponsiveHeight();
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
 
@@ -559,30 +550,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     }
     return null;
   }, [formState.sandPercentage, formState.siltPercentage, formState.clayPercentage, t]);
-
-  const pickerAvailableHeight = useMemo(() => {
-    const baseViewportHeight = windowHeight - insets.top - spacing[2];
-    const keyboardAdjustedHeight = isIOS
-      ? keyboardHeight > 0
-        ? baseViewportHeight - keyboardHeight + insets.bottom
-        : baseViewportHeight
-      : keyboardHeight > 0
-        ? baseViewportHeight - keyboardHeight
-        : baseViewportHeight;
-    return Math.max(220, keyboardAdjustedHeight);
-  }, [windowHeight, insets.top, insets.bottom, keyboardHeight]);
-
-  const androidKeyboardLift = useAndroidKeyboardLift(keyboardHeight, insets.bottom);
-
-  const varietySheetHeight = useMemo(
-    () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
-    [windowHeight, pickerAvailableHeight],
-  );
-
-  const cropSheetHeight = useMemo(
-    () => Math.min(Math.round(windowHeight * 0.72), pickerAvailableHeight),
-    [windowHeight, pickerAvailableHeight],
-  );
 
   const isValid = useMemo(
     () =>
@@ -1149,10 +1116,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     varietySearchQueryTrimmed,
     soilCompositionWarning,
     varieties,
-    androidKeyboardLift,
-    cropSheetHeight,
-    varietySheetHeight,
-
     // Refs
     formScrollViewRef,
     formScrollYRef,

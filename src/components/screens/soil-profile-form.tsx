@@ -17,10 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import DateTimePicker from '@expo/ui/community/datetime-picker';
-import { BottomSheet } from '@expo/ui/community/bottom-sheet';
-import { Button } from '@/components/ui';
-import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { DateField } from '@/components/ui';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
@@ -30,7 +27,6 @@ import { SoilSectionData } from '../../types/database';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { formatDate } from '@/i18n/format';
 
 interface SoilProfileFormProps {
   visible?: boolean;
@@ -74,7 +70,6 @@ export default function SoilProfileForm({
     left: '',
   });
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [fieldPositions, setFieldPositions] = useState<Record<string, number>>({});
   const scrollRef = React.useRef<ScrollView>(null);
 
@@ -85,7 +80,6 @@ export default function SoilProfileForm({
     setFusariumPct('');
     setEcValues({ top: '', bottom: '', right: '', left: '' });
     setSelectedDate(new Date());
-    setShowDatePicker(false);
   };
 
   const handleSubmit = async () => {
@@ -227,90 +221,13 @@ export default function SoilProfileForm({
             backgroundColor: colorWithOpacity(m3.surface.s100, 0.85),
           }}
         >
-          <Text
-            style={{
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.semibold,
-              color: m3.surface.s500,
-              marginBottom: spacing[1],
-            }}
-          >
-            {t('soilProfileForm.date.label')}
-          </Text>
-          <Text
-            style={{
-              fontSize: fontSize.xs,
-              color: m3.surface.s500,
-              marginBottom: spacing[3],
-            }}
-          >
-            {t('soilProfileForm.date.hint')}
-          </Text>
-          <Pressable
-            onPress={() => setShowDatePicker(true)}
-            style={{
-              backgroundColor: m3.surface.s50,
-              borderWidth: 1,
-              borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-              borderRadius: borderRadius.xl,
-              paddingHorizontal: spacing[4],
-              paddingVertical: spacing[3],
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Text style={{ fontSize: fontSize.base, color: m3.surface.s900 }}>
-              {formatDate(selectedDate, { year: 'numeric', month: 'short', day: 'numeric' })}
-            </Text>
-            <IconSymbol name="calendar" size={20} color={m3.colorScheme.onSurfaceVariant} />
-          </Pressable>
-        </View>
-
-        {Platform.OS === 'android' && showDatePicker && (
-          <DateTimePicker
+          <DateField
             value={selectedDate}
-            mode="date"
-            presentation="dialog"
-            onValueChange={(_, date) => {
-              setSelectedDate(date);
-              setShowDatePicker(false);
-            }}
-            onDismiss={() => setShowDatePicker(false)}
+            onChange={setSelectedDate}
+            label={t('soilProfileForm.date.label')}
+            hint={t('soilProfileForm.date.hint')}
           />
-        )}
-
-        {/* Date Picker Sheet - iOS only (Android uses presentation="dialog" above) */}
-        {Platform.OS === 'ios' && (
-          <BottomSheet
-            index={showDatePicker ? 0 : -1}
-            enableDynamicSizing
-            enablePanDownToClose
-            onClose={() => setShowDatePicker(false)}
-            backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
-          >
-            <View
-              style={{
-                padding: spacing[4],
-                paddingBottom: Math.max(insets.bottom, spacing[4]),
-                gap: spacing[3],
-              }}
-            >
-              <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
-                {t('soilProfileForm.date.modalTitle')}
-              </Text>
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                display="spinner"
-                onValueChange={(_, date) => setSelectedDate(date)}
-              />
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-                <Button title={t('common.done')} onPress={() => setShowDatePicker(false)} />
-              </View>
-            </View>
-          </BottomSheet>
-        )}
+        </View>
 
         {/* Section Moisture Inputs */}
         <View

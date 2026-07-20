@@ -1,5 +1,7 @@
 export { Button } from './button';
 export { CropIcon } from './crop-icon';
+export { DateField } from './date-field';
+export type { DateFieldProps } from './date-field-shared';
 export { EmptyState } from './empty-state';
 export { LoadingState } from './loading-state';
 export { Input } from './input';

@@ -8,11 +8,8 @@
 
 import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import { BottomSheet, RNHostView } from '@expo/ui';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
-import DateTimePicker from '@expo/ui/community/datetime-picker';
-import { isIOS } from '@/hooks';
 import {
   FullScreenForm,
   SectionHeader,
@@ -20,12 +17,11 @@ import {
   InfoCard,
   Button,
   OptionPickerSheet,
+  DateField,
 } from '@/components/ui';
 import { spacing, radius, componentRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useIsDark } from '@/styles/use-theme';
 import LocationPicker from '../location-picker';
-import { formatDate } from '@/i18n/format';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 
@@ -40,7 +36,6 @@ import { guidedTourEmit } from '@/features/guided-tour';
 export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const form = useFarmForm(mode, farmId, onClose);
   const { t, m3 } = form;
-  const isDark = useIsDark();
 
   // Soil-texture select: a field-style trigger + shared bottom sheet, matching
   // the crop/variety pickers. (The @expo/ui inline Picker renders a SwiftUI
@@ -399,38 +394,12 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         {/* — Planting date section — */}
         <SectionHeader title={t('farmForm.sections.plantingDate')} style={{ marginBottom: 16 }} />
 
-        <Pressable
-          style={{
-            backgroundColor: m3.surface.s100,
-            borderWidth: 2,
-            borderColor: m3.surface.s200,
-            borderRadius: componentRadius.input,
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[4],
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: spacing[5],
-          }}
-          onPress={form.openPlantingDatePicker}
-        >
-          <UISymbol name="calendar" size={24} color={m3.colorScheme.onSurfaceVariant} />
-          <Text
-            style={{
-              fontSize: fontSize.base,
-              color: m3.surface.s900,
-              fontWeight: fontWeight.medium,
-              marginLeft: spacing[3],
-            }}
-          >
-            {form.formState.plantingDate
-              ? formatDate(ensureValidDate(form.formState.plantingDate), {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })
-              : t('farmForm.plantingDate.selectPlaceholder')}
-          </Text>
-        </Pressable>
+        <DateField
+          value={ensureValidDate(form.formState.plantingDate)}
+          onChange={(date) => form.commitPlantingDate(date)}
+          label={t('farmForm.sections.plantingDate')}
+          style={{ marginBottom: spacing[5] }}
+        />
 
         {/* — Plant spacing section — */}
         <SectionHeader
@@ -511,58 +480,43 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           style={{ marginBottom: 16 }}
         />
 
-        <Pressable
-          style={{
-            backgroundColor: m3.surface.s100,
-            borderWidth: 2,
-            borderColor: m3.surface.s200,
-            borderRadius: componentRadius.input,
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[4],
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: spacing[5],
-          }}
-          onPress={form.openPruningDatePicker}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <UISymbol name="cut-outline" size={24} color={m3.colorScheme.onSurfaceVariant} />
-            <View style={{ marginLeft: spacing[3], flex: 1 }}>
-              <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
-                {t('farmForm.fields.pruningDate.label')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  color: m3.surface.s900,
-                  fontWeight: fontWeight.medium,
-                  marginTop: 2,
-                }}
-              >
-                {form.formState.dateOfPruning
-                  ? formatDate(form.formState.dateOfPruning, {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
-                  : t('farmForm.fields.pruningDate.notSet')}
-              </Text>
-            </View>
-          </View>
-          {form.formState.dateOfPruning && (
+        <View style={{ marginBottom: spacing[5] }}>
+          <DateField
+            value={form.formState.dateOfPruning ?? new Date()}
+            onChange={(date) => form.commitPruningDate(date)}
+            label={t('farmForm.fields.pruningDate.label')}
+          />
+          {form.formState.dateOfPruning ? (
             <Pressable
               onPress={form.clearPruningDate}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.clear', { defaultValue: 'Clear' })}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                alignSelf: 'flex-start',
+                marginTop: spacing[2],
+                gap: spacing[1],
+              }}
             >
               <UISymbol
                 name="xmark.circle.fill"
-                size={24}
+                size={18}
                 color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
               />
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  color: m3.colorScheme.onSurfaceVariant,
+                }}
+              >
+                {t('farmForm.fields.pruningDate.clear', {
+                  defaultValue: 'Clear date',
+                })}
+              </Text>
             </Pressable>
-          )}
-        </Pressable>
+          ) : null}
+        </View>
 
         {/* — Location section — */}
         <SectionHeader
@@ -780,128 +734,6 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         />
       </FullScreenForm>
 
-      {/* ── iOS planting date picker ──────────────────────────────────────── */}
-      {form.formState.showDatePicker && isIOS && (
-        <BottomSheet isPresented onDismiss={form.closeDatePicker}>
-          <RNHostView matchContents>
-            <View
-              style={{
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                padding: 16,
-              }}
-              onStartShouldSetResponder={() => true}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 16,
-                }}
-              >
-                <Text
-                  selectable
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: '700',
-                    color: m3.colorScheme.onSurface,
-                  }}
-                >
-                  {t('farmForm.sections.plantingDate')}
-                </Text>
-                <Pressable onPress={form.closeDatePicker}>
-                  <UISymbol
-                    name="xmark.circle.fill"
-                    size={24}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                  />
-                </Pressable>
-              </View>
-              <DateTimePicker
-                value={ensureValidDate(form.formState.plantingDate)}
-                mode="date"
-                display="spinner"
-                themeVariant={isDark ? 'dark' : 'light'}
-                onValueChange={(_, date) => form.commitPlantingDate(ensureValidDate(date))}
-              />
-            </View>
-          </RNHostView>
-        </BottomSheet>
-      )}
-
-      {/* ── Android planting date picker ─────────────────────────────────── */}
-      {form.formState.showDatePicker && !isIOS && (
-        <DateTimePicker
-          value={ensureValidDate(form.formState.plantingDate)}
-          mode="date"
-          onValueChange={(_, date) => form.commitPlantingDate(date)}
-          onDismiss={form.closeDatePicker}
-        />
-      )}
-
-      {/* ── iOS pruning date picker ───────────────────────────────────────── */}
-      {form.formState.showPruningDatePicker && isIOS && (
-        <BottomSheet isPresented onDismiss={form.closePruningDatePicker}>
-          <RNHostView matchContents>
-            <View
-              style={{
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                padding: 16,
-              }}
-              onStartShouldSetResponder={() => true}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 16,
-                }}
-              >
-                <Text
-                  selectable
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: '700',
-                    color: m3.colorScheme.onSurface,
-                  }}
-                >
-                  {t('farmForm.fields.pruningDate.label')}
-                </Text>
-                <Pressable onPress={form.closePruningDatePicker}>
-                  <UISymbol
-                    name="xmark.circle.fill"
-                    size={24}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                  />
-                </Pressable>
-              </View>
-              <DateTimePicker
-                value={form.formState.dateOfPruning ?? new Date()}
-                mode="date"
-                display="spinner"
-                themeVariant={isDark ? 'dark' : 'light'}
-                onValueChange={(_, date) => form.commitPruningDate(ensureValidDate(date))}
-              />
-            </View>
-          </RNHostView>
-        </BottomSheet>
-      )}
-
-      {/* ── Android pruning date picker ───────────────────────────────────── */}
-      {form.formState.showPruningDatePicker && !isIOS && (
-        <DateTimePicker
-          value={form.formState.dateOfPruning ?? new Date()}
-          mode="date"
-          onValueChange={(_, date) => form.commitPruningDate(date)}
-          onDismiss={form.closePruningDatePicker}
-        />
-      )}
-
       {/* ── Variety picker sheet ─────────────────────────────────────────── */}
       <VarietyPickerSheet
         visible={form.formState.showVarietyPicker}
@@ -910,8 +742,6 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         varietySearchQueryTrimmed={form.varietySearchQueryTrimmed}
         filteredVarieties={form.filteredVarieties}
         canCreateCustomVariety={form.canCreateCustomVariety}
-        varietySheetHeight={form.varietySheetHeight}
-        androidKeyboardLift={form.androidKeyboardLift}
         onClose={() => form.setShowVarietyPicker(false)}
         onSelectVariety={form.handleSelectVariety}
         onSearchChange={form.setVarietySearchQuery}
@@ -928,8 +758,6 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         cropSearchQueryLower={form.cropSearchQueryLower}
         filteredCropOptions={form.filteredCropOptions}
         canCreateCustomCrop={form.canCreateCustomCrop}
-        cropSheetHeight={form.cropSheetHeight}
-        androidKeyboardLift={form.androidKeyboardLift}
         onClose={form.closeCropPicker}
         onSelectCrop={form.handleSelectCrop}
         onSearchChange={form.setCropSearchQuery}

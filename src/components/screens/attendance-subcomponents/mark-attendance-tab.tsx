@@ -7,7 +7,6 @@ import Animated, {
   FadeInUp,
   FadeOutUp,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { triggerHaptic, triggerHapticMedium, triggerHapticSuccess } from '@/utils/haptics';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,13 +17,12 @@ import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus
 import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useTabBarInset, isAndroid, isIOS } from '@/hooks';
+import { useTabBarInset, isAndroid } from '@/hooks';
 import { WorkerSelectSheet, FarmSelectSheet } from '@/components/modals';
 import { formatDate as formatDateLocalized } from '@/i18n/format';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { normalizeDate, addDays } from '@/utils/worker-analytics';
-import DateTimePicker from '@expo/ui/community/datetime-picker';
-import { BottomSheet } from '@expo/ui/community/bottom-sheet';
+import { DateField } from '@/components/ui';
 
 const STORAGE_KEYS = {
   ATTENDANCE_RANGE_START: 'attendance_range_start',
@@ -124,7 +122,6 @@ export function MarkAttendanceTab({
 }: MarkAttendanceTabProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const insets = useSafeAreaInsets();
 
   const tabBarInset = useTabBarInset();
   const bottomActionBarHeight = 88;
@@ -135,9 +132,6 @@ export function MarkAttendanceTab({
   const [selectedFarmIds, setSelectedFarmIds] = useState<number[]>([]);
   const [workerSheetVisible, setWorkerSheetVisible] = useState(false);
   const [farmSheetVisible, setFarmSheetVisible] = useState(false);
-  const [showFromPicker, setShowFromPicker] = useState(false);
-  const [showToPicker, setShowToPicker] = useState(false);
-  const [tempPickerDate, setTempPickerDate] = useState<Date | null>(null);
   const [toast, setToast] = useState<ToastState>({ visible: false, message: '', type: 'success' });
   const [rangeLength, setRangeLength] = useState<number>(7);
   const [isRangeLoaded, setIsRangeLoaded] = useState(false);
@@ -523,30 +517,6 @@ export function MarkAttendanceTab({
     }
   };
 
-  const activePickerType: 'from' | 'to' | null = showFromPicker
-    ? 'from'
-    : showToPicker
-      ? 'to'
-      : null;
-  const closePickers = () => {
-    setShowFromPicker(false);
-    setShowToPicker(false);
-    setTempPickerDate(null);
-  };
-
-  const confirmPickerDate = () => {
-    if (tempPickerDate && activePickerType) {
-      const normalized = normalizeDate(tempPickerDate);
-      if (activePickerType === 'from') {
-        handleRangeStartChange(normalized);
-      } else {
-        const newStart = addDays(normalized, -(rangeLength - 1));
-        handleRangeStartChange(newStart);
-      }
-    }
-    closePickers();
-  };
-
   const isToday = (date: Date): boolean => {
     const today = new Date();
     return (
@@ -558,10 +528,6 @@ export function MarkAttendanceTab({
 
   const getDayName = (date: Date): string => {
     return formatDateLocalized(date, { weekday: 'short' });
-  };
-
-  const formatShortDate = (date: Date) => {
-    return formatDateLocalized(date, { month: 'short', day: 'numeric' });
   };
 
   if (loading) {
@@ -777,175 +743,19 @@ export function MarkAttendanceTab({
           </View>
 
           <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[3] }}>
-            <Pressable
-              onPress={() => {
-                setShowFromPicker(true);
-                setShowToPicker(false);
-                setTempPickerDate(null);
-              }}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[3],
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                ...(pressed
-                  ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.onSurface,
-                        m3.stateLayerOpacity.pressed,
-                      ),
-                    }
-                  : null),
-              })}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.onSurfaceVariant,
-                }}
-              >
-                {t('common.from')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.bold,
-                  marginTop: spacing[1],
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {formatShortDate(rangeStart)}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                setShowToPicker(true);
-                setShowFromPicker(false);
-                setTempPickerDate(null);
-              }}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[3],
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                ...(pressed
-                  ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.onSurface,
-                        m3.stateLayerOpacity.pressed,
-                      ),
-                    }
-                  : null),
-              })}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.onSurfaceVariant,
-                }}
-              >
-                {t('common.to')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.bold,
-                  marginTop: spacing[1],
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {formatShortDate(rangeEnd)}
-              </Text>
-            </Pressable>
+            <DateField
+              value={rangeStart}
+              onChange={(date) => handleDateRangeChange('from', date)}
+              label={t('common.from')}
+              style={{ flex: 1 }}
+            />
+            <DateField
+              value={rangeEnd}
+              onChange={(date) => handleDateRangeChange('to', date)}
+              label={t('common.to')}
+              style={{ flex: 1 }}
+            />
           </View>
-
-          {isIOS ? (
-            <BottomSheet
-              index={activePickerType ? 0 : -1}
-              enableDynamicSizing
-              enablePanDownToClose
-              onClose={closePickers}
-              backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
-            >
-              <View
-                style={{
-                  padding: spacing[4],
-                  paddingBottom: Math.max(insets.bottom, spacing[4]),
-                  gap: spacing[3],
-                }}
-              >
-                <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
-                  {activePickerType === 'from'
-                    ? t('common.from')
-                    : activePickerType === 'to'
-                      ? t('common.to')
-                      : ''}
-                </Text>
-                <DateTimePicker
-                  value={tempPickerDate ?? (activePickerType === 'from' ? rangeStart : rangeEnd)}
-                  mode="date"
-                  display="spinner"
-                  onValueChange={(_event, date) => setTempPickerDate(date)}
-                />
-                <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-                  <Pressable
-                    onPress={confirmPickerDate}
-                    style={{
-                      paddingVertical: spacing[2],
-                      paddingHorizontal: spacing[4],
-                      borderRadius: m3.shape.cornerMedium,
-                      borderCurve: 'continuous',
-                      alignItems: 'center',
-                      backgroundColor: m3.colorScheme.primary,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                        color: m3.colorScheme.onPrimary,
-                      }}
-                    >
-                      {t('common.done')}
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-            </BottomSheet>
-          ) : (
-            <>
-              {showFromPicker && (
-                <DateTimePicker
-                  value={rangeStart}
-                  mode="date"
-                  presentation="dialog"
-                  onValueChange={(_, date) => {
-                    handleDateRangeChange('from', date);
-                    setShowFromPicker(false);
-                  }}
-                  onDismiss={() => setShowFromPicker(false)}
-                />
-              )}
-              {showToPicker && (
-                <DateTimePicker
-                  value={rangeEnd}
-                  mode="date"
-                  presentation="dialog"
-                  onValueChange={(_, date) => {
-                    handleDateRangeChange('to', date);
-                    setShowToPicker(false);
-                  }}
-                  onDismiss={() => setShowToPicker(false)}
-                />
-              )}
-            </>
-          )}
         </View>
 
         {/* ── Day Cells Grid ── */}
