@@ -20,7 +20,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { FarmsPaneB, type FarmFilter } from '@/components/screens/farms-pane-b';
-import { AddFarmFab } from '@/components/screens/add-farm-fab';
+import { ExtendedFab } from '@/components/screens/extended-fab';
 import { WarehousePaneB, type WarehouseFilter } from '@/components/screens/warehouse-pane-b';
 
 type ExploreTab = 'farms' | 'warehouse';
@@ -273,11 +273,10 @@ export default function ExploreScreen() {
             position: 'absolute',
             bottom: fabBottom,
             right: spacing[6],
-            width: 56,
             height: 56,
           }}
         >
-          <AddFarmFab onPress={handleAddFarm} accessibilityLabel={t('farms.addFarm')} />
+          <ExtendedFab onPress={handleAddFarm} label={t('farms.addFarm')} />
         </GuidedTourTarget>
       )}
     </View>
@@ -304,36 +303,14 @@ export default function ExploreScreen() {
           />
         }
       />
-      <Pressable
-        onPress={() => openWarehouseItem(null)}
-        accessibilityRole="button"
-        accessibilityLabel={t('warehouse.actions.addProduct')}
-        style={{
-          position: 'absolute',
-          bottom: fabBottom,
-          right: spacing[6],
-          minWidth: 148,
-          height: 56,
-          borderRadius: borderRadius.full,
-          paddingHorizontal: spacing[5],
-          flexDirection: 'row',
-          gap: spacing[2],
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: m3.primary.p500,
-        }}
-      >
-        <Icon name="plus" size={20} color={m3.colorScheme.onPrimary} />
-        <Text
-          style={{
-            color: m3.colorScheme.onPrimary,
-            fontSize: fontSize.sm,
-            fontWeight: fontWeight.semibold,
-          }}
-        >
-          {t('warehouse.actions.addProduct')}
-        </Text>
-      </Pressable>
+      {(warehouseItems?.length || 0) > 0 && (
+        <View style={{ position: 'absolute', bottom: fabBottom, right: spacing[6] }}>
+          <ExtendedFab
+            onPress={() => openWarehouseItem(null)}
+            label={t('warehouse.actions.addProduct')}
+          />
+        </View>
+      )}
     </View>
   );
 

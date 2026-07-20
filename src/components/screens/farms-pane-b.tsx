@@ -321,15 +321,19 @@ export function FarmsPaneB({
     () => (
       <View>
         <HeroPanel label={heroLabelMemo} value={heroValueMemo}>
-          <SeasonTimeline
-            farms={farms ?? []}
-            today={today}
-            seasonRatio={seasonRatio}
-            isDark={isDark}
-            t={t}
-          />
+          {counts.all > 0 && (
+            <SeasonTimeline
+              farms={farms ?? []}
+              today={today}
+              seasonRatio={seasonRatio}
+              isDark={isDark}
+              t={t}
+            />
+          )}
         </HeroPanel>
-        <ChipRow chips={chips} active={activeFilter} onChange={onFilterChange} />
+        {counts.all > 0 && (
+          <ChipRow chips={chips} active={activeFilter} onChange={onFilterChange} />
+        )}
       </View>
     ),
 
@@ -344,6 +348,7 @@ export function FarmsPaneB({
       chips,
       activeFilter,
       onFilterChange,
+      counts.all,
     ],
   );
 

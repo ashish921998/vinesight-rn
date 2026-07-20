@@ -75,7 +75,9 @@ export default function WorkersScreen() {
 
   const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
   const inactiveWorkers = useMemo(() => workers?.filter((w) => !w.is_active) || [], [workers]);
-  const showPrimaryFab = selectedTab !== 'attendance' || !attendanceActionBarVisible;
+  const showPrimaryFab =
+    (selectedTab !== 'attendance' || !attendanceActionBarVisible) &&
+    (selectedTab !== 'workers' || activeWorkers.length > 0);
 
   // Per-worker attendance map for strip visualization
   const attendanceByWorker = useMemo(() => {

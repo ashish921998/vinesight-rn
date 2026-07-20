@@ -9,6 +9,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('@/styles/use-theme', () => ({
+  useIsDark: () => false,
   useM3: () => ({
     colorScheme: {
       onSecondaryContainer: '#123456',
@@ -17,6 +18,7 @@ jest.mock('@/styles/use-theme', () => ({
       outlineVariant: '#dddddd',
       secondaryContainer: '#eeeeee',
     },
+    primary: { p200: '#cfe8dd' },
     surface: {
       surfaceContainerLow: '#ffffff',
     },

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import { Host, Icon, NavigationBar, NavigationBarItem, Text } from '@expo/ui/jetpack-compose';
-import { useM3 } from '@/styles/use-theme';
+import { useM3, useIsDark } from '@/styles/use-theme';
 import { useAppModeStore } from '@/stores';
 import { getAndroidBottomSystemInset } from '@/utils/android-system-bars';
 import dashboardIcon from '../../../assets/tab-icons/dashboard.xml';
@@ -38,6 +38,7 @@ const BASE_ICON_BY_KEY = {
 export function ComposeTabBar({ state, navigation, insets }: BottomTabBarProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const isDark = useIsDark();
   const detailedMode = useAppModeStore((s) => s.detailedMode);
   const bottomInset = getAndroidBottomSystemInset(insets.bottom);
 
@@ -46,7 +47,9 @@ export function ComposeTabBar({ state, navigation, insets }: BottomTabBarProps) 
   const itemColors = {
     selectedIconColor: m3.colorScheme.onSecondaryContainer,
     selectedTextColor: m3.colorScheme.onSurface,
-    selectedIndicatorColor: m3.colorScheme.secondaryContainer,
+    // Light mode's secondaryContainer (primary[50] #f0f5f2) is so desaturated it
+    // reads gray/blue; bump to a clearly-green rung. Dark's green pill is already fine.
+    selectedIndicatorColor: isDark ? m3.colorScheme.secondaryContainer : m3.primary.p200,
     unselectedIconColor: m3.colorScheme.onSurfaceVariant,
     unselectedTextColor: m3.colorScheme.onSurfaceVariant,
   };
