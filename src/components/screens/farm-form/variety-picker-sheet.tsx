@@ -3,12 +3,11 @@
  */
 
 import React from 'react';
-import { BottomSheet, RNHostView } from '@expo/ui';
-import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView } from 'react-native';
+import { BottomSheet, BottomSheetView } from '@expo/ui/community/bottom-sheet';
+import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { isIOS } from '@/hooks';
 import { useTranslation } from 'react-i18next';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
@@ -20,8 +19,6 @@ interface VarietyPickerSheetProps {
   varietySearchQueryTrimmed: string;
   filteredVarieties: string[];
   canCreateCustomVariety: boolean;
-  varietySheetHeight: number;
-  androidKeyboardLift: number;
   onClose: () => void;
   onSelectVariety: (variety: string) => void;
   onSearchChange: (query: string) => void;
@@ -35,8 +32,6 @@ export function VarietyPickerSheet({
   varietySearchQueryTrimmed,
   filteredVarieties,
   canCreateCustomVariety,
-  varietySheetHeight,
-  androidKeyboardLift,
   onClose,
   onSelectVariety,
   onSearchChange,
@@ -45,191 +40,182 @@ export function VarietyPickerSheet({
   const { t } = useTranslation();
   const m3 = useM3();
 
-  if (!visible) return null;
-
   return (
-    <BottomSheet isPresented onDismiss={onClose} snapPoints={['half', 'full']}>
-      <RNHostView>
-        <KeyboardAvoidingView
-          behavior={isIOS ? 'padding' : undefined}
-          keyboardVerticalOffset={0}
+    <BottomSheet
+      index={visible ? 0 : -1}
+      snapPoints={['70%', '95%']}
+      enablePanDownToClose
+      onClose={onClose}
+      backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+    >
+      <BottomSheetView style={{ flex: 1 }}>
+        <GuidedTourTarget
+          targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
+          onStartShouldSetResponder={() => true}
           style={{
             flex: 1,
-            width: '100%',
-            justifyContent: 'flex-end',
-            paddingBottom: androidKeyboardLift,
+            backgroundColor: m3.surface.s100,
           }}
         >
-          <GuidedTourTarget
-            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
-            onStartShouldSetResponder={() => true}
+          {/* Header */}
+          <View
             style={{
-              backgroundColor: m3.surface.s100,
-              borderTopLeftRadius: borderRadius['3xl'],
-              borderTopRightRadius: borderRadius['3xl'],
-              height: varietySheetHeight,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: spacing[6],
+              paddingVertical: spacing[4],
+              borderBottomWidth: 1,
+              borderBottomColor: m3.surface.s100,
             }}
           >
-            {/* Header */}
-            <View
+            <View style={{ width: 40 }} />
+            <Text
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: spacing[6],
-                paddingVertical: spacing[4],
-                borderBottomWidth: 1,
-                borderBottomColor: m3.surface.s100,
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: m3.surface.s900,
               }}
             >
-              <View style={{ width: 40 }} />
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s900,
-                }}
-              >
-                {t('farmForm.variety.modalTitle')}
-              </Text>
-              <Pressable
-                onPress={onClose}
-                accessible
-                accessibilityRole="button"
-                accessibilityLabel="Close variety picker"
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: m3.surface.s100,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-              </Pressable>
-            </View>
+              {t('farmForm.variety.modalTitle')}
+            </Text>
+            <Pressable
+              onPress={onClose}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel="Close variety picker"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: borderRadius.full,
+                backgroundColor: m3.surface.s100,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+            </Pressable>
+          </View>
 
-            {/* Content */}
-            <View style={{ flex: 1 }}>
-              {/* Search bar */}
+          {/* Content */}
+          <View style={{ flex: 1 }}>
+            {/* Search bar */}
+            <View
+              style={{
+                paddingHorizontal: spacing[6],
+                paddingTop: spacing[4],
+                paddingBottom: spacing[2],
+              }}
+            >
               <View
                 style={{
-                  paddingHorizontal: spacing[6],
-                  paddingTop: spacing[4],
-                  paddingBottom: spacing[2],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: m3.surface.s200,
+                  borderRadius: borderRadius.xl,
+                  backgroundColor: m3.surface.s50,
+                  paddingHorizontal: spacing[3],
+                  minHeight: 48,
                 }}
               >
-                <View
+                <UISymbol
+                  name="magnifyingglass"
+                  size={18}
+                  color={m3.colorScheme.onSurfaceVariant}
+                />
+                <TextInput
+                  value={varietySearchQuery}
+                  onChangeText={onSearchChange}
+                  placeholder={t('farmForm.variety.searchPlaceholder')}
+                  placeholderTextColor={m3.surface.s400}
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    borderWidth: 1,
-                    borderColor: m3.surface.s200,
-                    borderRadius: borderRadius.xl,
-                    backgroundColor: m3.surface.s50,
-                    paddingHorizontal: spacing[3],
-                    minHeight: 48,
+                    flex: 1,
+                    marginLeft: spacing[2],
+                    color: m3.surface.s900,
+                    fontSize: fontSize.base,
                   }}
-                >
-                  <UISymbol
-                    name="magnifyingglass"
-                    size={18}
-                    color={m3.colorScheme.onSurfaceVariant}
-                  />
-                  <TextInput
-                    value={varietySearchQuery}
-                    onChangeText={onSearchChange}
-                    placeholder={t('farmForm.variety.searchPlaceholder')}
-                    placeholderTextColor={m3.surface.s400}
-                    style={{
-                      flex: 1,
-                      marginLeft: spacing[2],
-                      color: m3.surface.s900,
-                      fontSize: fontSize.base,
-                    }}
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                  />
-                </View>
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                />
               </View>
+            </View>
 
-              {/* List */}
-              <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
-                {canCreateCustomVariety && (
+            {/* List */}
+            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+              {canCreateCustomVariety && (
+                <Pressable
+                  style={{
+                    paddingHorizontal: spacing[6],
+                    paddingVertical: spacing[4],
+                    borderBottomWidth: 1,
+                    borderBottomColor: m3.surface.s100,
+                    backgroundColor: m3.surface.s50,
+                  }}
+                  onPress={() => onSelectVariety(varietySearchQueryTrimmed)}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.base,
+                      color: m3.primary.p600,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    {t('farmForm.variety.useCustom', {
+                      variety: varietySearchQueryTrimmed,
+                      defaultValue: 'Use "{{variety}}"',
+                    })}
+                  </Text>
+                </Pressable>
+              )}
+              {filteredVarieties.map((variety) => {
+                const isSelected = cropVariety === variety;
+                return (
                   <Pressable
+                    key={variety}
                     style={{
                       paddingHorizontal: spacing[6],
                       paddingVertical: spacing[4],
                       borderBottomWidth: 1,
                       borderBottomColor: m3.surface.s100,
-                      backgroundColor: m3.surface.s50,
+                      backgroundColor: isSelected ? m3.surface.s50 : m3.surface.s100,
                     }}
-                    onPress={() => onSelectVariety(varietySearchQueryTrimmed)}
+                    onPress={() => onSelectVariety(variety)}
                   >
-                    <Text
+                    <View
                       style={{
-                        fontSize: fontSize.base,
-                        color: m3.primary.p600,
-                        fontWeight: fontWeight.semibold,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                       }}
                     >
-                      {t('farmForm.variety.useCustom', {
-                        variety: varietySearchQueryTrimmed,
-                        defaultValue: 'Use "{{variety}}"',
-                      })}
-                    </Text>
-                  </Pressable>
-                )}
-                {filteredVarieties.map((variety) => {
-                  const isSelected = cropVariety === variety;
-                  return (
-                    <Pressable
-                      key={variety}
-                      style={{
-                        paddingHorizontal: spacing[6],
-                        paddingVertical: spacing[4],
-                        borderBottomWidth: 1,
-                        borderBottomColor: m3.surface.s100,
-                        backgroundColor: isSelected ? m3.surface.s50 : m3.surface.s100,
-                      }}
-                      onPress={() => onSelectVariety(variety)}
-                    >
-                      <View
+                      <Text
                         style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
+                          fontSize: fontSize.base,
+                          color: isSelected ? m3.surface.s900 : m3.surface.s700,
+                          fontWeight: isSelected ? fontWeight.semibold : fontWeight.normal,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontSize: fontSize.base,
-                            color: isSelected ? m3.surface.s900 : m3.surface.s700,
-                            fontWeight: isSelected ? fontWeight.semibold : fontWeight.normal,
-                          }}
-                        >
-                          {getVarietyLabel(variety)}
-                        </Text>
-                        {isSelected && (
-                          <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
-                        )}
-                      </View>
-                    </Pressable>
-                  );
-                })}
-                {filteredVarieties.length === 0 && !canCreateCustomVariety && (
-                  <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
-                      {t('common.noResultsFound')}
-                    </Text>
-                  </View>
-                )}
-              </ScrollView>
-            </View>
-          </GuidedTourTarget>
-        </KeyboardAvoidingView>
-      </RNHostView>
+                        {getVarietyLabel(variety)}
+                      </Text>
+                      {isSelected && (
+                        <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })}
+              {filteredVarieties.length === 0 && !canCreateCustomVariety && (
+                <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                  <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
+                    {t('common.noResultsFound')}
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </GuidedTourTarget>
+      </BottomSheetView>
     </BottomSheet>
   );
 }

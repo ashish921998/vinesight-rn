@@ -15,7 +15,6 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Host } from '@expo/ui';
 import * as SplashScreen from 'expo-splash-screen';
 import { ObserveRoot, useObserve } from 'expo-observe';
 import * as Sentry from '@sentry/react-native';
@@ -736,17 +735,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
 
   const content = (
     <ErrorBoundary>
-      <Host
-        // Theme every `@expo/ui` subtree (universal Icon, BottomSheet, etc.) from
-        // the M3 palette. On Android this generates a Material 3 tonal scheme; on
-        // iOS it sets the SwiftUI tint that propagates to interactive controls.
-        // On web `Host` injects a global `--expo-ui-*` CSS-variable scale derived
-        // from `seedColor` and sets `data-theme` on its wrapping View — harmless
-        // here since nothing else consumes those vars, and `document.body` still
-        // sets the app background explicitly below.
-        seedColor={m3.colorScheme.primary}
-        colorScheme={isDark ? 'dark' : 'light'}
-      >
+      <View style={{ flex: 1 }}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>
             <PersistQueryClientProvider
@@ -903,7 +892,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
             <ToastHost />
           </SafeAreaProvider>
         </GestureHandlerRootView>
-      </Host>
+      </View>
     </ErrorBoundary>
   );
 
