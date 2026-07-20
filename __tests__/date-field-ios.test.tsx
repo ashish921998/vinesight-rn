@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- deferred require, see note below */
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { Pressable, Text, View } from 'react-native';
@@ -74,7 +75,9 @@ jest.mock('@/utils/color', () => ({
   colorWithOpacity: (color: string) => color,
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// Deferred require: the component must load only after the module-scope `mock*`
+// variables above are initialized. A top-level import would load it too early,
+// so the mocked BottomSheet factory would capture an undefined ref.
 const { DateField } =
   require('@/components/ui/date-field.ios') as typeof import('@/components/ui/date-field.ios');
 
