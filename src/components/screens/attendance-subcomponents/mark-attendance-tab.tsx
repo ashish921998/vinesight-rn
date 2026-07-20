@@ -781,6 +781,7 @@ export function MarkAttendanceTab({
               onPress={() => {
                 setShowFromPicker(true);
                 setShowToPicker(false);
+                setTempPickerDate(null);
               }}
               style={({ pressed }) => ({
                 flex: 1,
@@ -823,6 +824,7 @@ export function MarkAttendanceTab({
               onPress={() => {
                 setShowToPicker(true);
                 setShowFromPicker(false);
+                setTempPickerDate(null);
               }}
               style={({ pressed }) => ({
                 flex: 1,
