@@ -6,7 +6,7 @@ import { supabase } from '@/data-access';
 import { resolveOrCreateSeasonIdForDate } from '@/lib/season-context';
 import { isClientUuid } from '@/features/offline/client-id';
 import { queryKeys } from '@/hooks/query-keys';
-import { makeChain } from '../jest-setup/supabase-chain-mock';
+import { makeChain } from '../jest-setup/data-access-chain-mock';
 import {
   useCreateIrrigationRecord,
   useUpdateIrrigationRecord,

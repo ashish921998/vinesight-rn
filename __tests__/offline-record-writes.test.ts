@@ -6,7 +6,7 @@ import {
   targetedUpdate,
   targetedDelete,
 } from '@/features/offline/record-writes';
-import { makeChain } from '../jest-setup/supabase-chain-mock';
+import { makeChain } from '../jest-setup/data-access-chain-mock';
 
 jest.mock('@/data-access', () => {
   const dataAccess = { from: jest.fn() };
