@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import type { FarmSoilBaseline } from '@/types/farm-soil-baseline';
 
 /**
@@ -10,7 +10,7 @@ import type { FarmSoilBaseline } from '@/types/farm-soil-baseline';
  * rather than failing the whole screen.
  */
 export async function fetchFarmSoilBaseline(farmId: number): Promise<FarmSoilBaseline | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from('farms')
     .select(
       'soil_texture_class, sand_percentage, silt_percentage, clay_percentage, cation_exchange_capacity, soil_water_retention, bulk_density',

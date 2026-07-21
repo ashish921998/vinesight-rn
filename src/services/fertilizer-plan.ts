@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import type { FertilizerPlan, FertilizerPlanItem } from '@/types/fertilizer-plan';
 import type { QuantityBasis } from '@/types/database';
 
@@ -62,9 +62,9 @@ export async function fetchFertilizerPlansForFarm(
   farmId: number,
   { limit }: { limit?: number } = {},
 ): Promise<FertilizerPlan[]> {
-  if (!isSupabaseConfigured()) return [];
+  if (!getDataAccess().isConfigured()) return [];
 
-  let query = supabase
+  let query = getDataAccess()
     .from('fertilizer_plans')
     .select(
       'id, farm_id, organization_id, notes, created_at, updated_at, farm_area_acres, organization:organizations(name), fertilizer_plan_items(id, fertilizer_name, quantity, unit, product_id, quantity_basis, application_date, application_method, application_frequency, notes, sort_order)',
@@ -136,9 +136,9 @@ export async function fetchOrgFertilizerPlanItemHistory(
   organizationId: string,
   { planLimit = 30 }: { planLimit?: number } = {},
 ): Promise<OrgFertilizerPlanHistoryItem[]> {
-  if (!isSupabaseConfigured()) return [];
+  if (!getDataAccess().isConfigured()) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from('fertilizer_plans')
     .select('id, created_at, fertilizer_plan_items(fertilizer_name, quantity, unit, product_id)')
     .eq('organization_id', organizationId)
@@ -152,8 +152,7 @@ export async function fetchOrgFertilizerPlanItemHistory(
 
   const rows = (data ?? []) as unknown as {
     fertilizer_plan_items:
-      | Pick<PlanItemRow, 'fertilizer_name' | 'quantity' | 'unit' | 'product_id'>[]
-      | null;
+      Pick<PlanItemRow, 'fertilizer_name' | 'quantity' | 'unit' | 'product_id'>[] | null;
   }[];
 
   // catalogProductId rides through because catalog identity cannot be

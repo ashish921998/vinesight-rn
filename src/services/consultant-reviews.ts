@@ -6,14 +6,14 @@
  * and RPCs already exist in the `vinesight-web` project.
  */
 
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import type { PetioleTriage, PetioleTriageInsert, FertilizerPlanItem } from '@/types/database';
 
 export async function fetchPetioleTriage(
   organizationId: string,
   farmId: number,
 ): Promise<PetioleTriage[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from('petiole_triage')
     .select('*')
     .eq('organization_id', organizationId)
@@ -48,7 +48,11 @@ export async function createPetioleTriage(input: CreatePetioleTriageInput): Prom
     reviewed_at: null,
   };
 
-  const { data, error } = await supabase.from('petiole_triage').insert(insert).select().single();
+  const { data, error } = await getDataAccess()
+    .from('petiole_triage')
+    .insert(insert)
+    .select()
+    .single();
 
   if (error) throw error;
   return data as PetioleTriage;
@@ -63,7 +67,7 @@ export interface SendFertilizerPlanInput {
 export async function sendFertilizerPlan(
   input: SendFertilizerPlanInput,
 ): Promise<{ plan_id: string }> {
-  const { data, error } = await supabase.rpc('send_fertilizer_plan', {
+  const { data, error } = await getDataAccess().rpc('send_fertilizer_plan', {
     p_review_id: input.reviewId,
     // Pass null through unchanged so the backend can distinguish omitted notes
     // from an explicit empty string (a `?? ''` here would erase that signal).

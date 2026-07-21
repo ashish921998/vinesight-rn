@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -56,11 +56,7 @@ export interface ProfessionalWorkspace {
   clients: ProfessionalClient[];
 }
 export type DelegatedActivityRecord =
-  | IrrigationRecord
-  | SprayRecord
-  | FertigationRecord
-  | HarvestRecord
-  | DailyNoteRecord;
+  IrrigationRecord | SprayRecord | FertigationRecord | HarvestRecord | DailyNoteRecord;
 export interface DelegatedActivityItem {
   record_type: DelegatedLogType;
   record_data: DelegatedActivityRecord;
@@ -110,7 +106,7 @@ export function buildDelegatedLogPayload(
 }
 
 export async function getProfessionalWorkspace(): Promise<ProfessionalWorkspace | null> {
-  const { data, error } = await supabase.rpc('get_professional_workspace');
+  const { data, error } = await getDataAccess().rpc('get_professional_workspace');
   if (error) throw error;
   return data as ProfessionalWorkspace | null;
 }
@@ -123,7 +119,7 @@ export async function createDelegatedLog(input: {
   date: string;
   payload: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const { data, error } = await supabase.rpc('create_delegated_log', {
+  const { data, error } = await getDataAccess().rpc('create_delegated_log', {
     p_organization_id: input.organizationId,
     p_client_user_id: input.clientUserId,
     p_farm_id: input.farmId,
@@ -140,7 +136,7 @@ export async function getDelegatedFarmActivity(input: {
   clientUserId: string;
   farmId: number;
 }): Promise<DelegatedActivityItem[]> {
-  const { data, error } = await supabase.rpc('get_delegated_farm_activity', {
+  const { data, error } = await getDataAccess().rpc('get_delegated_farm_activity', {
     p_organization_id: input.organizationId,
     p_client_user_id: input.clientUserId,
     p_farm_id: input.farmId,
@@ -154,7 +150,7 @@ export async function updateDelegatedLog(
   recordId: number,
   notes: string,
 ) {
-  const { data, error } = await supabase.rpc('update_delegated_log', {
+  const { data, error } = await getDataAccess().rpc('update_delegated_log', {
     p_record_type: recordType,
     p_record_id: recordId,
     p_payload: { notes },
@@ -164,7 +160,7 @@ export async function updateDelegatedLog(
 }
 
 export async function deleteDelegatedLog(recordType: DelegatedLogType, recordId: number) {
-  const { error } = await supabase.rpc('delete_delegated_log', {
+  const { error } = await getDataAccess().rpc('delete_delegated_log', {
     p_record_type: recordType,
     p_record_id: recordId,
   });

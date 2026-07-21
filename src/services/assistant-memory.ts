@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import type { ChatMessage } from '@/types/ai';
 import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import { ASSISTANT_MEMORY_RETENTION_DAYS } from '@/constants/assistant-memory';
@@ -55,7 +55,7 @@ class AssistantMemoryService {
       if (!userId) return [];
 
       const limit = Math.max(1, Math.min(input?.limit ?? 25, 100));
-      let conversationQuery = supabase
+      let conversationQuery = getDataAccess()
         .from('assistant_conversations')
         .select('id, farm_id, locale, created_at, updated_at')
         .eq('user_id', userId)
@@ -78,7 +78,7 @@ class AssistantMemoryService {
       if (conversationRows.length === 0) return [];
 
       const conversationIds = conversationRows.map((row) => row.id);
-      const { data: turns, error: turnsError } = await supabase
+      const { data: turns, error: turnsError } = await getDataAccess()
         .from('assistant_turns')
         .select('conversation_id, content, created_at')
         .in('conversation_id', conversationIds)
@@ -139,7 +139,7 @@ class AssistantMemoryService {
       const userId = await getUserId();
       if (!userId) return null;
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from('assistant_conversations')
         .insert({
           user_id: userId,
@@ -166,7 +166,7 @@ class AssistantMemoryService {
     if (!conversationId) return [];
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from('assistant_turns')
         .select('id, conversation_id, role, content, citations, created_at')
         .eq('conversation_id', conversationId)
@@ -214,20 +214,22 @@ class AssistantMemoryService {
       const userId = await getUserId();
       if (!userId) return false;
 
-      const { error } = await supabase.from('assistant_turns').insert({
-        conversation_id: input.conversationId,
-        user_id: userId,
-        farm_id: input.farmId ?? null,
-        role: input.role,
-        content: input.content,
-        input_mode: input.inputMode ?? 'text',
-        trace_id: input.traceId ?? null,
-        latency_ms: input.latencyMs ?? null,
-        citations: input.citations ?? null,
-        safety_flags: input.safety ?? null,
-        provider: input.provider ?? null,
-        model: input.model ?? null,
-      });
+      const { error } = await getDataAccess()
+        .from('assistant_turns')
+        .insert({
+          conversation_id: input.conversationId,
+          user_id: userId,
+          farm_id: input.farmId ?? null,
+          role: input.role,
+          content: input.content,
+          input_mode: input.inputMode ?? 'text',
+          trace_id: input.traceId ?? null,
+          latency_ms: input.latencyMs ?? null,
+          citations: input.citations ?? null,
+          safety_flags: input.safety ?? null,
+          provider: input.provider ?? null,
+          model: input.model ?? null,
+        });
 
       if (error) {
         if (__DEV__) {
@@ -261,16 +263,18 @@ class AssistantMemoryService {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + ASSISTANT_MEMORY_RETENTION_DAYS);
 
-      const { error } = await supabase.from('assistant_memories').insert({
-        conversation_id: input.conversationId,
-        user_id: userId,
-        farm_id: input.farmId ?? null,
-        memory_type: input.memoryType,
-        content: input.content,
-        metadata: input.metadata ?? {},
-        importance: input.importance ?? 0.5,
-        expires_at: expiresAt.toISOString(),
-      });
+      const { error } = await getDataAccess()
+        .from('assistant_memories')
+        .insert({
+          conversation_id: input.conversationId,
+          user_id: userId,
+          farm_id: input.farmId ?? null,
+          memory_type: input.memoryType,
+          content: input.content,
+          metadata: input.metadata ?? {},
+          importance: input.importance ?? 0.5,
+          expires_at: expiresAt.toISOString(),
+        });
 
       if (error && __DEV__) {
         console.warn('Assistant memory write failed:', error.message);
@@ -290,7 +294,7 @@ class AssistantMemoryService {
       const userId = await getUserId();
       if (!userId) return null;
 
-      let query = supabase
+      let query = getDataAccess()
         .from('assistant_conversations')
         .select('id, farm_id, locale, created_at')
         .eq('user_id', userId)
@@ -327,7 +331,7 @@ class AssistantMemoryService {
       const userId = await getUserId();
       if (!userId) return false;
 
-      const { error, count } = await supabase
+      const { error, count } = await getDataAccess()
         .from('assistant_conversations')
         .delete({ count: 'exact' })
         .eq('id', trimmedId)
@@ -354,7 +358,7 @@ class AssistantMemoryService {
     if (!assistantFeatureFlags.memoryEnabled) return null;
 
     try {
-      const { data, error } = await supabase.rpc('assistant_export_user_data');
+      const { data, error } = await getDataAccess().rpc('assistant_export_user_data');
       if (error) {
         if (__DEV__) console.warn('Assistant data export failed:', error.message);
         return null;
@@ -384,7 +388,7 @@ class AssistantMemoryService {
     if (!assistantFeatureFlags.memoryEnabled) return false;
 
     try {
-      const { error } = await supabase.rpc('assistant_delete_user_data');
+      const { error } = await getDataAccess().rpc('assistant_delete_user_data');
       if (error) {
         if (__DEV__) console.warn('Assistant data delete failed:', error.message);
         return false;

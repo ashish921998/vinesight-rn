@@ -1,5 +1,5 @@
 import { addDays, formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { TABLES } from '@/types/database';
 import type {
   ChemicalMix,
@@ -343,7 +343,7 @@ export async function fetchSprayPhiRows(
   farmId: number,
   seasonId?: number | null,
 ): Promise<SprayPhiRow[]> {
-  let query = supabase
+  let query = getDataAccess()
     .from(TABLES.SPRAY_RECORDS)
     .select('safe_harvest_date,phi_blocking_component,chemical,date')
     .eq('farm_id', farmId)

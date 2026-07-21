@@ -3,7 +3,7 @@
  * Handles worker settlement calculations and creation
  */
 
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import type { WorkerSettlement, WorkerSettlementInsert } from '@/types';
 
 interface SettlementCalculation {
@@ -28,7 +28,7 @@ export async function calculateWorkerSettlement(
   periodEnd: string,
 ): Promise<SettlementCalculation> {
   // Get worker's default rate
-  const { data: worker, error: workerError } = await supabase
+  const { data: worker, error: workerError } = await getDataAccess()
     .from('workers')
     .select('*')
     .eq('id', workerId)
@@ -37,7 +37,7 @@ export async function calculateWorkerSettlement(
   if (workerError) throw workerError;
 
   // Get attendance records for period
-  let query = supabase
+  let query = getDataAccess()
     .from('worker_attendance')
     .select('*')
     .eq('worker_id', workerId)
@@ -89,7 +89,7 @@ export async function createWorkerSettlement(
   settlement: WorkerSettlementInsert,
 ): Promise<WorkerSettlement> {
   const status = settlement.status ?? 'confirmed';
-  const { data: createdSettlement, error: insertError } = await supabase
+  const { data: createdSettlement, error: insertError } = await getDataAccess()
     .from('worker_settlements')
     .insert({
       worker_id: settlement.worker_id,
@@ -113,20 +113,22 @@ export async function createWorkerSettlement(
     try {
       // Create advance deduction transaction if applicable
       if (settlement.advance_deducted > 0) {
-        const { error: txError } = await supabase.from('worker_transactions').insert({
-          worker_id: settlement.worker_id,
-          farm_id: settlement.farm_id ?? null,
-          date: new Date().toISOString().split('T')[0],
-          type: 'advance_deducted',
-          amount: settlement.advance_deducted,
-          settlement_id: createdSettlement.id,
-          notes: null,
-        });
+        const { error: txError } = await getDataAccess()
+          .from('worker_transactions')
+          .insert({
+            worker_id: settlement.worker_id,
+            farm_id: settlement.farm_id ?? null,
+            date: new Date().toISOString().split('T')[0],
+            type: 'advance_deducted',
+            amount: settlement.advance_deducted,
+            settlement_id: createdSettlement.id,
+            notes: null,
+          });
 
         if (txError) throw txError;
 
         // Update worker's advance balance
-        const { data: workerData, error: fetchError } = await supabase
+        const { data: workerData, error: fetchError } = await getDataAccess()
           .from('workers')
           .select('advance_balance')
           .eq('id', settlement.worker_id)
@@ -135,7 +137,7 @@ export async function createWorkerSettlement(
         if (fetchError) throw fetchError;
 
         if (workerData) {
-          const { error: updateError } = await supabase
+          const { error: updateError } = await getDataAccess()
             .from('workers')
             .update({
               advance_balance: Math.max(
@@ -151,21 +153,23 @@ export async function createWorkerSettlement(
 
       // Create payment transaction if applicable
       if (settlement.net_payment > 0) {
-        const { error: paymentError } = await supabase.from('worker_transactions').insert({
-          worker_id: settlement.worker_id,
-          farm_id: settlement.farm_id ?? null,
-          date: new Date().toISOString().split('T')[0],
-          type: 'payment',
-          amount: settlement.net_payment,
-          settlement_id: createdSettlement.id,
-          notes: null,
-        });
+        const { error: paymentError } = await getDataAccess()
+          .from('worker_transactions')
+          .insert({
+            worker_id: settlement.worker_id,
+            farm_id: settlement.farm_id ?? null,
+            date: new Date().toISOString().split('T')[0],
+            type: 'payment',
+            amount: settlement.net_payment,
+            settlement_id: createdSettlement.id,
+            notes: null,
+          });
 
         if (paymentError) throw paymentError;
       }
     } catch (error) {
       // Rollback: delete the settlement if any subsequent step fails
-      await supabase.from('worker_settlements').delete().eq('id', createdSettlement.id);
+      await getDataAccess().from('worker_settlements').delete().eq('id', createdSettlement.id);
       throw error;
     }
   }
