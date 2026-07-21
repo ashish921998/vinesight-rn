@@ -1,5 +1,13 @@
 jest.mock('@/data-access', () => {
-  const dataAccess = { rpc: jest.fn() };
+  const dataAccess = {
+    delegatedLogs: {
+      getProfessionalWorkspace: jest.fn(),
+      createDelegatedLog: jest.fn(),
+      getDelegatedFarmActivity: jest.fn(),
+      updateDelegatedLog: jest.fn(),
+      deleteDelegatedLog: jest.fn(),
+    },
+  };
   return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
 });
 
@@ -11,10 +19,10 @@ import {
 } from '@/services/delegated-logs';
 import { supabase } from '@/data-access';
 
-const mockRpc = supabase.rpc as jest.Mock;
+const mockRpc = supabase.delegatedLogs as unknown as Record<string, jest.Mock>;
 
 describe('delegated logs service', () => {
-  beforeEach(() => mockRpc.mockReset());
+  beforeEach(() => Object.values(mockRpc).forEach((mock) => mock.mockReset()));
 
   it('rejects invalid numeric and date inputs before submission', () => {
     expect(isValidDelegatedLogInput('irrigation', '2026-06-21', '.')).toBe(false);
@@ -29,7 +37,7 @@ describe('delegated logs service', () => {
   });
 
   it('uses the authenticated delegated RPC contract', async () => {
-    mockRpc.mockResolvedValue({ data: { id: 7 }, error: null });
+    mockRpc.createDelegatedLog.mockResolvedValue({ id: 7 });
     await createDelegatedLog({
       organizationId: 'org-1',
       clientUserId: 'farmer-1',
@@ -38,7 +46,7 @@ describe('delegated logs service', () => {
       date: '2026-06-21',
       payload: { notes: 'Checked vines' },
     });
-    expect(mockRpc).toHaveBeenCalledWith('create_delegated_log', {
+    expect(mockRpc.createDelegatedLog).toHaveBeenCalledWith({
       p_organization_id: 'org-1',
       p_client_user_id: 'farmer-1',
       p_farm_id: 4,
@@ -49,9 +57,9 @@ describe('delegated logs service', () => {
   });
 
   it('distinguishes a successful non-member lookup from an RPC failure', async () => {
-    mockRpc.mockResolvedValueOnce({ data: null, error: null });
+    mockRpc.getProfessionalWorkspace.mockResolvedValueOnce(null);
     await expect(getProfessionalWorkspace()).resolves.toBeNull();
-    mockRpc.mockResolvedValueOnce({ data: null, error: new Error('offline') });
+    mockRpc.getProfessionalWorkspace.mockRejectedValueOnce(new Error('offline'));
     await expect(getProfessionalWorkspace()).rejects.toThrow('offline');
   });
 });

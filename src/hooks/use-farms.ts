@@ -57,7 +57,7 @@ async function resolveNextFarmDisplayOrder(userId: string): Promise<{
   displayOrder: number;
 }> {
   const { data: firstFarm, error: firstFarmError } = await getDataAccess()
-    .from(TABLES.FARMS)
+    .farms.query(TABLES.FARMS)
     .select('display_order')
     .eq('user_id', userId)
     .order('display_order', { ascending: true, nullsFirst: false })
@@ -99,7 +99,7 @@ export async function ensureInitialFarmSeason(
   // cycle's pruning date and overlap the ended seasons, silently re-capturing
   // historical records. Between-seasons records stay unassigned instead.
   const { data: existingSeason, error: existingSeasonError } = await getDataAccess()
-    .from(TABLES.FARM_SEASONS)
+    .farms.query(TABLES.FARM_SEASONS)
     .select('id')
     .eq('farm_id', farm.id)
     .limit(1)
@@ -114,7 +114,7 @@ export async function ensureInitialFarmSeason(
   const startDate = farm.date_of_pruning ?? formatLocalDate(new Date());
   const seasonName = seasonNameOverride ?? `Season ${new Date().getFullYear()}`;
 
-  const { error: rpcError } = await getDataAccess().rpc('start_farm_season', {
+  const { error: rpcError } = await getDataAccess().farms.call('start_farm_season', {
     p_farm_id: farm.id,
     p_start_date: startDate,
     p_template_key: null,
@@ -128,7 +128,7 @@ export async function ensureInitialFarmSeason(
   }
 
   const { error: insertError } = await getDataAccess()
-    .from(TABLES.FARM_SEASONS)
+    .farms.query(TABLES.FARM_SEASONS)
     .insert({
       farm_id: farm.id,
       user_id: userId,
@@ -152,7 +152,7 @@ export async function ensureInitialFarmSeasonForFarmId(
 ): Promise<void> {
   const userId = await getUserId();
   const { data: farm, error } = await getDataAccess()
-    .from(TABLES.FARMS)
+    .farms.query(TABLES.FARMS)
     .select('*')
     .eq('id', farmId)
     .eq('user_id', userId)
@@ -176,7 +176,7 @@ export function useFarms() {
       const userId = await getUserId();
 
       const { data, error } = await getDataAccess()
-        .from(TABLES.FARMS)
+        .farms.query(TABLES.FARMS)
         .select('*')
         .eq('user_id', userId)
         .order('display_order', { ascending: true, nullsFirst: false })
@@ -184,7 +184,7 @@ export function useFarms() {
 
       if (isMissingDisplayOrderColumn(error)) {
         const { data: fallbackData, error: fallbackError } = await getDataAccess()
-          .from(TABLES.FARMS)
+          .farms.query(TABLES.FARMS)
           .select('*')
           .eq('user_id', userId)
           .order('created_at', { ascending: false });
@@ -208,7 +208,7 @@ export function useFarm(id: number | undefined) {
     queryFn: async (): Promise<Farm> => {
       const userId = await getUserId();
       const { data, error } = await getDataAccess()
-        .from(TABLES.FARMS)
+        .farms.query(TABLES.FARMS)
         .select('*')
         .eq('id', id)
         .eq('user_id', userId)
@@ -243,7 +243,7 @@ export function useCreateFarm() {
           : { ...farmPayload, user_id: userId };
 
         const { data: insertedFarm, error } = await getDataAccess()
-          .from(TABLES.FARMS)
+          .farms.query(TABLES.FARMS)
           .insert(insertPayload)
           .select()
           .single();
@@ -304,7 +304,7 @@ export function useReorderFarms() {
 
   return useMutation({
     mutationFn: async (orderedFarmIds: number[]): Promise<number[]> => {
-      const { error } = await getDataAccess().rpc('reorder_farms', {
+      const { error } = await getDataAccess().farms.call('reorder_farms', {
         p_ordered_farm_ids: orderedFarmIds,
       });
 
@@ -365,7 +365,7 @@ export function useUpdateFarm() {
       const userId = await getUserId();
 
       const { data, error } = await getDataAccess()
-        .from(TABLES.FARMS)
+        .farms.query(TABLES.FARMS)
         .update(updates)
         .eq('id', id)
         .eq('user_id', userId) // Verify ownership
@@ -405,7 +405,7 @@ export function useUpdateFarmWaterLevel() {
       remainingWater: number;
     }): Promise<Farm> => {
       const { data, error } = await getDataAccess()
-        .from(TABLES.FARMS)
+        .farms.query(TABLES.FARMS)
         .update({
           remaining_water: remainingWater,
           water_calculation_updated_at: toSupabaseTimestampString(new Date()),
@@ -442,7 +442,7 @@ export function useDeleteFarm() {
       const userId = await getUserId();
 
       const { error } = await getDataAccess()
-        .from(TABLES.FARMS)
+        .farms.query(TABLES.FARMS)
         .delete()
         .eq('id', id)
         .eq('user_id', userId); // Verify ownership
@@ -499,7 +499,7 @@ export function usePrefetchFarm() {
       queryKey: queryKeys.farms.detail(id),
       queryFn: async () => {
         const { data, error } = await getDataAccess()
-          .from(TABLES.FARMS)
+          .farms.query(TABLES.FARMS)
           .select('*')
           .eq('id', id)
           .single();

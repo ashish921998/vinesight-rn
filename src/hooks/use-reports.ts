@@ -119,7 +119,7 @@ function useLabelClaimLookups(enabled: boolean) {
     queryKey: queryKeys.reports.labelClaimLookups(),
     queryFn: async (): Promise<LabelClaimLookups> => {
       const claimsResult = await getDataAccess()
-        .from(TABLES.CHEMICAL_LABEL_CLAIMS)
+        .reports.query(TABLES.CHEMICAL_LABEL_CLAIMS)
         .select('id,product_id,phi_min_days,phi_max_days')
         .eq('is_active', true);
       if (claimsResult.error) {
@@ -142,7 +142,7 @@ function useLabelClaimLookups(enabled: boolean) {
       });
 
       const mrlsResult = await getDataAccess()
-        .from(TABLES.CHEMICAL_LABEL_CLAIM_MRLS)
+        .reports.query(TABLES.CHEMICAL_LABEL_CLAIM_MRLS)
         .select('claim_id,market,mrl_value,mrl_unit,no_mrl_required')
         .in(
           'claim_id',
@@ -520,7 +520,7 @@ export function useUnassignedRecordCount(farmId: number | null) {
       const counts = await Promise.all(
         UNASSIGNED_COUNT_TABLES.map(async (table) => {
           const { count, error } = await getDataAccess()
-            .from(table)
+            .reports.query(table)
             .select('id', { count: 'exact', head: true })
             .eq('farm_id', farmId)
             .is('season_id', null);

@@ -3,7 +3,11 @@ import { supabase } from '@/data-access';
 import type { Farm } from '@/types';
 
 jest.mock('@/data-access', () => {
-  const dataAccess = { from: jest.fn(), rpc: jest.fn() };
+  const dataAccess = { from: jest.fn(), rpc: jest.fn() } as Record<string, unknown> & {
+    from: jest.Mock;
+    rpc: jest.Mock;
+  };
+  dataAccess.farms = { query: dataAccess.from, call: dataAccess.rpc };
   return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
 });
 

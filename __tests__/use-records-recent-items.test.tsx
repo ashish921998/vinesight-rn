@@ -12,7 +12,8 @@ import {
 } from '@/hooks/use-records';
 
 jest.mock('@/data-access', () => {
-  const dataAccess = { from: jest.fn() };
+  const dataAccess = { from: jest.fn() } as Record<string, unknown> & { from: jest.Mock };
+  dataAccess.records = { query: dataAccess.from };
   return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
 });
 

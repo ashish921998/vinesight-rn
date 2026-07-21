@@ -66,7 +66,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
       if (!userId) return [];
 
       const { data: farms, error: farmsError } = await getDataAccess()
-        .from(TABLES.FARMS)
+        .dashboardStats.query(TABLES.FARMS)
         .select('id, name, remaining_water, total_tank_capacity')
         .eq('user_id', userId);
 
@@ -95,7 +95,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
 
       const [overdueTasksResult, recentLogFarmsResult, phiDeadlinesResult] = await Promise.all([
         getDataAccess()
-          .from('task_reminders')
+          .dashboardStats.query('task_reminders')
           .select('id, farm_id, title, due_date')
           .in('farm_id', farmIds)
           .eq('completed', false)
@@ -104,13 +104,13 @@ export function useTodayNeedsAttention(limit: number = 10) {
           .order('due_date', { ascending: true })
           .limit(limit),
         getDataAccess()
-          .rpc('get_recent_log_farm_ids', {
+          .dashboardStats.call('get_recent_log_farm_ids', {
             p_farm_ids: farmIds,
             p_since: recentLogThresholdStr,
           })
           .returns<RecentLogFarmIdRow[]>(),
         getDataAccess()
-          .from(TABLES.SPRAY_RECORDS)
+          .dashboardStats.query(TABLES.SPRAY_RECORDS)
           .select('id, farm_id, safe_harvest_date, chemical')
           .in('farm_id', farmIds)
           .not('safe_harvest_date', 'is', null)
@@ -248,7 +248,7 @@ export function useDashboardStats() {
 
       // Fetch farms count
       const { count: farmsCount } = await getDataAccess()
-        .from(TABLES.FARMS)
+        .dashboardStats.query(TABLES.FARMS)
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
 
@@ -257,7 +257,7 @@ export function useDashboardStats() {
       let workersCount = 0;
       if (detailedMode) {
         const { count } = await getDataAccess()
-          .from(TABLES.WORKERS)
+          .dashboardStats.query(TABLES.WORKERS)
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId)
           .eq('is_active', true);
@@ -271,7 +271,7 @@ export function useDashboardStats() {
 
       // Get farm IDs first
       const { data: farms } = await getDataAccess()
-        .from(TABLES.FARMS)
+        .dashboardStats.query(TABLES.FARMS)
         .select('id')
         .eq('user_id', userId);
 
@@ -285,27 +285,27 @@ export function useDashboardStats() {
         // hides the tasks card so the query would be wasted.
         const countQueries = [
           getDataAccess()
-            .from(TABLES.IRRIGATION_RECORDS)
+            .dashboardStats.query(TABLES.IRRIGATION_RECORDS)
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
           getDataAccess()
-            .from(TABLES.SPRAY_RECORDS)
+            .dashboardStats.query(TABLES.SPRAY_RECORDS)
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
           getDataAccess()
-            .from(TABLES.HARVEST_RECORDS)
+            .dashboardStats.query(TABLES.HARVEST_RECORDS)
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
           getDataAccess()
-            .from(TABLES.EXPENSE_RECORDS)
+            .dashboardStats.query(TABLES.EXPENSE_RECORDS)
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
           getDataAccess()
-            .from(TABLES.FERTIGATION_RECORDS)
+            .dashboardStats.query(TABLES.FERTIGATION_RECORDS)
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
@@ -313,7 +313,7 @@ export function useDashboardStats() {
         if (detailedMode) {
           countQueries.push(
             getDataAccess()
-              .from('task_reminders')
+              .dashboardStats.query('task_reminders')
               .select('*', { count: 'exact', head: true })
               .in('farm_id', farmIds)
               .eq('completed', false),
@@ -356,7 +356,7 @@ export function useFarmsNeedingAttention() {
       if (!userId) return [];
 
       const { data: farms } = await getDataAccess()
-        .from(TABLES.FARMS)
+        .dashboardStats.query(TABLES.FARMS)
         .select('*')
         .eq('user_id', userId);
 
@@ -388,7 +388,7 @@ export function useRecentActivities(limit: number = 5) {
 
       // Get farms first
       const { data: farms } = await getDataAccess()
-        .from(TABLES.FARMS)
+        .dashboardStats.query(TABLES.FARMS)
         .select('id, name')
         .eq('user_id', userId);
 
@@ -400,37 +400,37 @@ export function useRecentActivities(limit: number = 5) {
       // Fetch recent records from each table
       const [irrigation, spray, harvest, expense, fertigation, dailyNotes] = await Promise.all([
         getDataAccess()
-          .from(TABLES.IRRIGATION_RECORDS)
+          .dashboardStats.query(TABLES.IRRIGATION_RECORDS)
           .select('id, farm_id, date, duration')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
         getDataAccess()
-          .from(TABLES.SPRAY_RECORDS)
+          .dashboardStats.query(TABLES.SPRAY_RECORDS)
           .select('id, farm_id, date, chemical')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
         getDataAccess()
-          .from(TABLES.HARVEST_RECORDS)
+          .dashboardStats.query(TABLES.HARVEST_RECORDS)
           .select('id, farm_id, date, quantity, grade')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
         getDataAccess()
-          .from(TABLES.EXPENSE_RECORDS)
+          .dashboardStats.query(TABLES.EXPENSE_RECORDS)
           .select('id, farm_id, date, type, cost')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
         getDataAccess()
-          .from(TABLES.FERTIGATION_RECORDS)
+          .dashboardStats.query(TABLES.FERTIGATION_RECORDS)
           .select('id, farm_id, date')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
         getDataAccess()
-          .from(TABLES.DAILY_NOTES)
+          .dashboardStats.query(TABLES.DAILY_NOTES)
           .select('id, farm_id, date, notes')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })

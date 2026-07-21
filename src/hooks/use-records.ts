@@ -35,7 +35,7 @@ export function useIrrigationRecords(farmId: number | undefined, seasonId?: numb
     queryKey: [...queryKeys.irrigationRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<IrrigationRecord[]> => {
       let query = getDataAccess()
-        .from(TABLES.IRRIGATION_RECORDS)
+        .records.query(TABLES.IRRIGATION_RECORDS)
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
@@ -59,7 +59,7 @@ export function useIrrigationRecordsByFarms(farmIds: number[]) {
       if (farmIds.length === 0) return [];
 
       const { data, error } = await getDataAccess()
-        .from(TABLES.IRRIGATION_RECORDS)
+        .records.query(TABLES.IRRIGATION_RECORDS)
         .select('*')
         .in('farm_id', farmIds)
         .order('date', { ascending: false });
@@ -89,7 +89,7 @@ export function useSprayRecords(farmId: number | undefined, seasonId?: number) {
     queryKey: [...queryKeys.sprayRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<SprayRecord[]> => {
       let query = getDataAccess()
-        .from(TABLES.SPRAY_RECORDS)
+        .records.query(TABLES.SPRAY_RECORDS)
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
@@ -113,7 +113,7 @@ export function useSprayRecordsByFarms(farmIds: number[]) {
       if (farmIds.length === 0) return [];
 
       const { data, error } = await getDataAccess()
-        .from(TABLES.SPRAY_RECORDS)
+        .records.query(TABLES.SPRAY_RECORDS)
         .select('*')
         .in('farm_id', farmIds)
         .order('date', { ascending: false });
@@ -142,7 +142,7 @@ export function useFertigationRecords(farmId: number | undefined, seasonId?: num
     queryKey: [...queryKeys.fertigationRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<FertigationRecord[]> => {
       let query = getDataAccess()
-        .from(TABLES.FERTIGATION_RECORDS)
+        .records.query(TABLES.FERTIGATION_RECORDS)
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
@@ -166,7 +166,7 @@ export function useFertigationRecordsByFarms(farmIds: number[]) {
       if (farmIds.length === 0) return [];
 
       const { data, error } = await getDataAccess()
-        .from(TABLES.FERTIGATION_RECORDS)
+        .records.query(TABLES.FERTIGATION_RECORDS)
         .select('*')
         .in('farm_id', farmIds)
         .order('date', { ascending: false });
@@ -195,7 +195,7 @@ export function useHarvestRecords(farmId: number | undefined, seasonId?: number)
     queryKey: [...queryKeys.harvestRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<HarvestRecord[]> => {
       let query = getDataAccess()
-        .from(TABLES.HARVEST_RECORDS)
+        .records.query(TABLES.HARVEST_RECORDS)
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
@@ -219,7 +219,7 @@ export function useHarvestRecordsByFarms(farmIds: number[]) {
       if (farmIds.length === 0) return [];
 
       const { data, error } = await getDataAccess()
-        .from(TABLES.HARVEST_RECORDS)
+        .records.query(TABLES.HARVEST_RECORDS)
         .select('*')
         .in('farm_id', farmIds)
         .order('date', { ascending: false });
@@ -248,7 +248,7 @@ export function useExpenseRecords(farmId: number | undefined, seasonId?: number)
     queryKey: [...queryKeys.expenseRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<ExpenseRecord[]> => {
       let query = getDataAccess()
-        .from(TABLES.EXPENSE_RECORDS)
+        .records.query(TABLES.EXPENSE_RECORDS)
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
@@ -272,7 +272,7 @@ export function useExpenseRecordsByFarms(farmIds: number[]) {
       if (farmIds.length === 0) return [];
 
       const { data, error } = await getDataAccess()
-        .from(TABLES.EXPENSE_RECORDS)
+        .records.query(TABLES.EXPENSE_RECORDS)
         .select('*')
         .in('farm_id', farmIds)
         .order('date', { ascending: false });
@@ -301,7 +301,7 @@ export async function fetchDailyNoteByDate(
   date: string,
 ): Promise<DailyNoteRecord | null> {
   const { data, error } = await getDataAccess()
-    .from(TABLES.DAILY_NOTES)
+    .records.query(TABLES.DAILY_NOTES)
     .select('*')
     .eq('farm_id', farmId)
     .eq('date', date)
@@ -315,7 +315,7 @@ export function useDailyNoteByDate(farmId: number | undefined, date: string | un
     queryKey: queryKeys.dailyNotes.byDate(farmId!, date!),
     queryFn: async (): Promise<DailyNoteRecord | null> => {
       const { data, error } = await getDataAccess()
-        .from(TABLES.DAILY_NOTES)
+        .records.query(TABLES.DAILY_NOTES)
         .select('*')
         .eq('farm_id', farmId)
         .eq('date', date)
@@ -333,7 +333,7 @@ export function useDailyNotes(farmId: number | undefined, seasonId?: number) {
     queryKey: [...queryKeys.dailyNotes.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<DailyNoteRecord[]> => {
       let query = getDataAccess()
-        .from(TABLES.DAILY_NOTES)
+        .records.query(TABLES.DAILY_NOTES)
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
@@ -359,7 +359,7 @@ export function useDailyNotesByFarms(farmIds: number[]) {
       if (sortedFarmIds.length === 0) return [];
 
       const { data, error } = await getDataAccess()
-        .from(TABLES.DAILY_NOTES)
+        .records.query(TABLES.DAILY_NOTES)
         .select('*')
         .in('farm_id', sortedFarmIds)
         .order('date', { ascending: false });
@@ -386,7 +386,7 @@ export function useUpsertDailyNote() {
     }): Promise<DailyNoteRecord> => {
       const seasonId = await resolveOrCreateSeasonIdForDate({ farmId: farm_id, date });
       const { data, error } = await getDataAccess()
-        .from(TABLES.DAILY_NOTES)
+        .records.query(TABLES.DAILY_NOTES)
         .upsert(
           {
             farm_id,
@@ -435,7 +435,7 @@ export function useDeleteDailyNote() {
     }): Promise<void> => {
       // Notes are uniquely keyed by farm_id+date; when the caller has no real id
       // (id === 0 for notes saved via the receipt screen) fall back to that key.
-      let query = getDataAccess().from(TABLES.DAILY_NOTES).delete().eq('farm_id', farmId);
+      let query = getDataAccess().records.query(TABLES.DAILY_NOTES).delete().eq('farm_id', farmId);
       if (id > 0) {
         query = query.eq('id', id);
       } else {
@@ -609,7 +609,7 @@ export function useRecentSprayChemicals(farmId?: number, limit = 12) {
     queryKey: [...queryKeys.sprayRecords.lists(), 'recent_chemicals', { farmId: farmId ?? null }],
     queryFn: async (): Promise<RecentInputItem[]> => {
       let query = getDataAccess()
-        .from(TABLES.SPRAY_RECORDS)
+        .records.query(TABLES.SPRAY_RECORDS)
         .select('chemical,date,chemical_items,catalog_mix_id')
         .order('date', { ascending: false })
         .limit(80);
@@ -666,7 +666,7 @@ export function useRecentFertigationItems(farmId?: number, limit = 12) {
     ],
     queryFn: async (): Promise<RecentInputItem[]> => {
       let query = getDataAccess()
-        .from(TABLES.FERTIGATION_RECORDS)
+        .records.query(TABLES.FERTIGATION_RECORDS)
         .select('fertilizers,date')
         .order('date', { ascending: false })
         .limit(80);
