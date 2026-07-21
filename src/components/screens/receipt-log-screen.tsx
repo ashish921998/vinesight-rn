@@ -8,19 +8,19 @@
  * No drafts, no "Save N logs", no stacked scroll — one short form at a time.
  */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, Platform, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import DateTimePicker from '@expo/ui/community/datetime-picker';
 
-import { useIsDark, useM3 } from '@/styles/use-theme';
+import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { DateField } from '@/components/ui';
 import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
 import { createStartSeasonHref } from '@/utils/add-log-navigation';
 import { useRouter } from 'expo-router';
@@ -33,7 +33,6 @@ import {
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { toSupabaseDateString, type DailyNoteRecord } from '@/types/database';
 import { triggerHapticSuccess } from '@/utils/haptics';
-import { formatDate } from '@/i18n/format';
 import {
   IrrigationForm,
   SprayForm,
@@ -191,7 +190,6 @@ function describeEntry(type: LogTypeId, data: AnyLogData): string {
 export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptLogScreenProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const isDark = useIsDark();
   const insets = useSafeAreaInsets();
 
   // Delegated mode: consultant logs on behalf of a farmer client. The farm is
@@ -231,7 +229,6 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
   );
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const dateStr = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
 
   const queryClient = useQueryClient();
@@ -543,27 +540,13 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
               ? `${delegatedContext.clientName} · ${farm?.name ?? t('receiptLog.title', { defaultValue: 'Add activity' })}`
               : (farm?.name ?? t('receiptLog.title', { defaultValue: 'Add activity' }))}
           </Text>
-          <Pressable
-            onPress={() => setShowDatePicker(true)}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel={t('receiptLog.selectDate', { defaultValue: 'Select date' })}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}
-          >
-            <AppIcon
-              name="calendar"
-              size={13}
-              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)}
-            />
-            <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-              {formatDate(selectedDate)}
-            </Text>
-            <AppIcon
-              name="chevron-down"
-              size={13}
-              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-            />
-          </Pressable>
+          <DateField
+            value={selectedDate}
+            onChange={setSelectedDate}
+            maximumDate={new Date()}
+            testID="receipt-log-date-field"
+            style={{ marginTop: 3 }}
+          />
         </View>
         <Pressable onPress={onClose} hitSlop={8} style={{ padding: 4 }}>
           <AppIcon
@@ -573,89 +556,6 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
           />
         </Pressable>
       </View>
-
-      {/* iOS: spinner picker inside a bottom-sheet modal with a Done button
-          (matches the rest of the app). Android: native date dialog. */}
-      {showDatePicker && Platform.OS === 'ios' && (
-        <BottomSheet
-          index={0}
-          snapPoints={['45%']}
-          enablePanDownToClose
-          onClose={() => setShowDatePicker(false)}
-          backgroundStyle={{ backgroundColor: m3.colorScheme.surface }}
-        >
-          <View
-            style={{
-              flex: 1,
-              paddingHorizontal: spacing[4],
-              paddingTop: spacing[2],
-              paddingBottom: spacing[6] + insets.bottom,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: spacing[2],
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: '700',
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {t('receiptLog.selectDate', { defaultValue: 'Select date' })}
-              </Text>
-              <Pressable onPress={() => setShowDatePicker(false)} hitSlop={8}>
-                <AppIcon
-                  name="close-circle"
-                  size={24}
-                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                />
-              </Pressable>
-            </View>
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              maximumDate={new Date()}
-              display="spinner"
-              themeVariant={isDark ? 'dark' : 'light'}
-              onValueChange={(_event, date) => setSelectedDate(date)}
-              style={{ height: 200 }}
-            />
-            <Pressable
-              onPress={() => setShowDatePicker(false)}
-              style={{
-                marginTop: spacing[2],
-                paddingVertical: spacing[3],
-                borderRadius: radius.md,
-                alignItems: 'center',
-                backgroundColor: m3.colorScheme.primary,
-              }}
-            >
-              <Text style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
-                {t('entryForm.done')}
-              </Text>
-            </Pressable>
-          </View>
-        </BottomSheet>
-      )}
-      {showDatePicker && Platform.OS !== 'ios' && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          maximumDate={new Date()}
-          display="default"
-          onValueChange={(_event, date) => {
-            setShowDatePicker(false);
-            setSelectedDate(date);
-          }}
-          onDismiss={() => setShowDatePicker(false)}
-        />
-      )}
 
       <ScrollView
         style={{ flex: 1 }}

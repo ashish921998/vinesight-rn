@@ -1,39 +1,17 @@
-import { Icon } from '@expo/ui';
+import { SymbolView, type SymbolViewProps, type SymbolWeight } from 'expo-symbols';
 import React from 'react';
-import {
-  View,
-  Text,
-  Platform,
-  StyleSheet,
-  type StyleProp,
-  type TextStyle,
-  type ViewStyle,
-} from 'react-native';
+import { View, Text, Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ICON_MAPPING } from '@/utils/icon-mapping';
 import { useM3 } from '@/styles/use-theme';
 import { AppIcon } from './app-icon';
-import { ICON_ASSETS } from './icon-assets';
 
 interface SymbolProps {
   name: string;
   size?: number;
   color?: string;
-  /**
-   * SF Symbol weight. iOS-only on the legacy `SymbolView` path; the universal
-   * `@expo/ui` `Icon` has no weight prop, so this is accepted for call-site
-   * compatibility and ignored on the native universal path.
-   */
-  weight?:
-    | 'ultraLight'
-    | 'thin'
-    | 'light'
-    | 'regular'
-    | 'medium'
-    | 'semibold'
-    | 'bold'
-    | 'heavy'
-    | 'black';
+  /** SF Symbol weight. Applied by `expo-symbols` on iOS. */
+  weight?: SymbolWeight;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -253,7 +231,13 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'line.3.horizontal.decrease.circle': 'options',
 };
 
-export function SymbolComponent({ name, size = 24, color, style }: SymbolProps) {
+export function SymbolComponent({
+  name,
+  size = 24,
+  color,
+  weight = 'regular',
+  style,
+}: SymbolProps) {
   const m3 = useM3();
   const resolvedColor = color ?? m3.colorScheme.onSurface;
   const resolvedName = ICON_MAPPING[name] ?? name;
@@ -268,31 +252,38 @@ export function SymbolComponent({ name, size = 24, color, style }: SymbolProps) 
   if (isAssistantIcon) return <AppIcon name="assistant" size={size} color={resolvedColor} />;
   if (isGrapeSparkleIcon) return <AppIcon name="grape-sparkle" size={size} color={resolvedColor} />;
 
-  // Native: universal `@expo/ui` `Icon` — SF Symbol on iOS, Material Symbol XML on Android.
-  // `Icon.select` is rewritten by `@expo/ui/babel-plugin` into a `Platform.OS` ternary
-  // so only the active platform's asset ships in its bundle.
-  if (Platform.OS !== 'web') {
-    const asset = ICON_ASSETS[resolvedName as keyof typeof ICON_ASSETS];
-    if (asset) {
-      // `Icon.style` is `UniversalStyle` (a `Pick<ViewStyle, ...>`), narrower than
-      // RN's `StyleProp<ViewStyle>` (which also allows arrays/falsy/registered IDs).
-      // `StyleSheet.flatten` recurses into nested arrays and resolves registered
-      // styles, returning `ViewStyle | undefined` for falsy input.
-      const flatStyle = style ? (StyleSheet.flatten(style) as ViewStyle) : undefined;
-      return <Icon name={asset} size={size} color={resolvedColor} style={flatStyle} />;
-    }
-    if (__DEV__) {
-      console.warn(
-        `[symbol] no universal Icon mapping for "${resolvedName}"${name !== resolvedName ? ` (from "${name}")` : ''}; falling back to vector-icons`,
-      );
-    }
-    // Fall through to vector-icons below for unmapped names (graceful degradation).
-  }
-
-  // Web (and native unmapped fallback): vector-icons.
   const directIonicon = Object.prototype.hasOwnProperty.call(Ionicons.glyphMap, resolvedName)
     ? (resolvedName as keyof typeof Ionicons.glyphMap)
     : undefined;
+
+  if (Platform.OS === 'ios') {
+    const fallbackIcon =
+      SYMBOL_TO_IONICON[resolvedName] ||
+      SYMBOL_TO_IONICON[name] ||
+      directIonicon ||
+      'ellipse-outline';
+    return (
+      <SymbolView
+        name={resolvedName as SymbolViewProps['name']}
+        size={size}
+        tintColor={resolvedColor}
+        weight={weight}
+        type="hierarchical"
+        style={style}
+        fallback={
+          <Ionicons
+            name={fallbackIcon}
+            size={size}
+            color={resolvedColor}
+            style={style as StyleProp<TextStyle>}
+          />
+        }
+      />
+    );
+  }
+
+  // Android/web: vector icons stay in the React Native layout tree and cannot
+  // create detached native overlays above modal routes.
   const materialIcon = SYMBOL_TO_MATERIAL_ICON[resolvedName] || SYMBOL_TO_MATERIAL_ICON[name];
 
   if (materialIcon) {

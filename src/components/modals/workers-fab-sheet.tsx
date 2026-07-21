@@ -1,16 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useM3 } from '@/styles/use-theme';
-import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 
-const SHEET_INITIAL_OFFSET = 400;
+type ActionId = 'add_worker' | 'settle_payment' | 'add_temp_worker';
 
 interface Action {
-  id: string;
+  id: ActionId;
   label: string;
   description: string;
   icon: string;
@@ -38,59 +39,17 @@ export function WorkersFabSheet({
   const m3 = useM3();
   const insets = useSafeAreaInsets();
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [pendingAction, setPendingAction] = useState<Action['id'] | null>(null);
+  // Defer navigation until the sheet has finished closing so the action screen
+  // doesn't mount behind a still-visible sheet.
+  const [pendingAction, setPendingAction] = useState<ActionId | null>(null);
 
-  const slideAnimRef = useRef(new Animated.Value(SHEET_INITIAL_OFFSET));
-  const backdropAnimRef = useRef(new Animated.Value(0));
-  const visibleRef = useRef(visible);
-  const animationRunIdRef = useRef(0);
+  const handleActionPress = (actionId: ActionId) => {
+    setPendingAction(actionId);
+    onClose();
+  };
 
-  useEffect(() => {
-    visibleRef.current = visible;
-    const runId = ++animationRunIdRef.current;
-
-    if (visible) {
-      setModalVisible(true);
-      Animated.parallel([
-        Animated.spring(slideAnimRef.current, {
-          toValue: 0,
-          tension: 65,
-          friction: 11,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropAnimRef.current, {
-          toValue: 1,
-          duration: 220,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(slideAnimRef.current, {
-          toValue: SHEET_INITIAL_OFFSET,
-          duration: 220,
-          easing: Easing.in(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropAnimRef.current, {
-          toValue: 0,
-          duration: 200,
-          easing: Easing.in(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        if (runId === animationRunIdRef.current && !visibleRef.current) {
-          setModalVisible(false);
-        }
-      });
-    }
-  }, [visible]);
-
-  useEffect(() => {
-    if (modalVisible || pendingAction === null) return;
-
+  const handleSheetClose = () => {
+    onClose();
     if (pendingAction === 'add_worker') {
       onAddWorker();
     } else if (pendingAction === 'settle_payment') {
@@ -98,13 +57,7 @@ export function WorkersFabSheet({
     } else if (pendingAction === 'add_temp_worker') {
       onAddTempWorker();
     }
-
     setPendingAction(null);
-  }, [modalVisible, onAddTempWorker, onAddWorker, onSettlePayment, pendingAction]);
-
-  const handleActionPress = (actionId: Action['id']) => {
-    setPendingAction(actionId);
-    onClose();
   };
 
   const actions: Action[] = [
@@ -115,9 +68,7 @@ export function WorkersFabSheet({
       icon: 'person.badge.plus',
       color: m3.colorScheme.primary,
       bgColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-      onPress: () => {
-        handleActionPress('add_worker');
-      },
+      onPress: () => handleActionPress('add_worker'),
     },
     {
       id: 'settle_payment',
@@ -126,9 +77,7 @@ export function WorkersFabSheet({
       icon: 'banknote',
       color: m3.colorScheme.secondary || m3.colorScheme.primary,
       bgColor: colorWithOpacity(m3.colorScheme.secondary || m3.colorScheme.primary, 0.1),
-      onPress: () => {
-        handleActionPress('settle_payment');
-      },
+      onPress: () => handleActionPress('settle_payment'),
     },
     {
       id: 'add_temp_worker',
@@ -137,184 +86,129 @@ export function WorkersFabSheet({
       icon: 'person.badge.clock',
       color: m3.colorScheme.warning,
       bgColor: colorWithOpacity(m3.colorScheme.warning, 0.1),
-      onPress: () => {
-        handleActionPress('add_temp_worker');
-      },
+      onPress: () => handleActionPress('add_temp_worker'),
     },
   ];
 
   return (
-    <Modal
-      visible={modalVisible}
-      transparent
-      animationType="none"
-      onRequestClose={onClose}
-      statusBarTranslucent
+    <BottomSheet
+      index={visible ? 0 : -1}
+      enableDynamicSizing
+      enablePanDownToClose
+      onClose={handleSheetClose}
+      backgroundStyle={{ backgroundColor: m3.colorScheme.surface }}
     >
-      {/* Backdrop */}
-      <Animated.View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            // eslint-disable-next-line react-hooks/refs
-            opacity: backdropAnimRef.current,
-          },
-        ]}
-      >
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-      </Animated.View>
-
-      {/* Sheet */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          // eslint-disable-next-line react-hooks/refs
-          transform: [{ translateY: slideAnimRef.current }],
-        }}
-      >
-        <View
+      <View style={{ paddingTop: spacing[2], paddingBottom: Math.max(insets.bottom, spacing[6]) }}>
+        <Text
           style={{
-            backgroundColor: m3.colorScheme.surface,
-            borderTopLeftRadius: borderRadius['2xl'],
-            borderTopRightRadius: borderRadius['2xl'],
-            paddingTop: spacing[2],
-            paddingBottom: Math.max(insets.bottom, spacing[6]),
-            overflow: 'hidden',
+            fontSize: fontSize.xs,
+            fontWeight: fontWeight.semibold,
+            color: m3.colorScheme.onSurfaceVariant,
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            paddingHorizontal: spacing[5],
+            marginBottom: spacing[3],
           }}
         >
-          {/* Drag handle */}
-          <View style={{ alignItems: 'center', paddingBottom: spacing[4] }}>
-            <View
-              style={{
-                width: 36,
-                height: 4,
-                borderRadius: radius.xs,
-                backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.25),
-              }}
-            />
-          </View>
+          {t('workers.actions.title')}
+        </Text>
 
-          {/* Header label */}
-          <Text
-            style={{
-              fontSize: fontSize.xs,
-              fontWeight: fontWeight.semibold,
-              color: m3.colorScheme.onSurfaceVariant,
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              paddingHorizontal: spacing[5],
-              marginBottom: spacing[3],
-            }}
-          >
-            {t('workers.actions.title')}
-          </Text>
-
-          {/* Action rows */}
-          <View style={{ paddingHorizontal: spacing[3], gap: spacing[2] }}>
-            {actions.map((action) => (
-              <Pressable
-                key={action.id}
-                onPress={action.onPress}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
+        <View style={{ paddingHorizontal: spacing[3], gap: spacing[2] }}>
+          {actions.map((action) => (
+            <Pressable
+              key={action.id}
+              testID={`fab-action-${action.id}`}
+              onPress={action.onPress}
+              style={({ pressed }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing[4],
+                paddingVertical: spacing[4],
+                paddingHorizontal: spacing[4],
+                borderRadius: borderRadius.xl,
+                backgroundColor: pressed
+                  ? colorWithOpacity(m3.colorScheme.onSurface, 0.06)
+                  : 'transparent',
+              })}
+            >
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: borderRadius.full,
+                  backgroundColor: action.bgColor,
                   alignItems: 'center',
-                  gap: spacing[4],
-                  paddingVertical: spacing[4],
-                  paddingHorizontal: spacing[4],
-                  borderRadius: borderRadius.xl,
-                  backgroundColor: pressed
-                    ? colorWithOpacity(m3.colorScheme.onSurface, 0.06)
-                    : 'transparent',
-                })}
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
               >
-                {/* Icon bubble */}
-                <View
+                <UiSymbol name={action.icon} size={22} color={action.color} />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <Text
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: borderRadius.full,
-                    backgroundColor: action.bgColor,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: m3.colorScheme.onSurface,
+                    marginBottom: 2,
                   }}
                 >
-                  <UiSymbol name={action.icon} size={22} color={action.color} />
-                </View>
+                  {action.label}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    color: m3.colorScheme.onSurfaceVariant,
+                    lineHeight: 18,
+                  }}
+                >
+                  {action.description}
+                </Text>
+              </View>
 
-                {/* Text */}
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: fontSize.base,
-                      fontWeight: fontWeight.semibold,
-                      color: m3.colorScheme.onSurface,
-                      marginBottom: 2,
-                    }}
-                  >
-                    {action.label}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      color: m3.colorScheme.onSurfaceVariant,
-                      lineHeight: 18,
-                    }}
-                  >
-                    {action.description}
-                  </Text>
-                </View>
-
-                {/* Arrow */}
-                <UiSymbol
-                  name="chevron.right"
-                  size={14}
-                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.4)}
-                />
-              </Pressable>
-            ))}
-          </View>
-
-          {/* Divider */}
-          <View
-            style={{
-              height: 1,
-              backgroundColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.5),
-              marginHorizontal: spacing[4],
-              marginTop: spacing[3],
-              marginBottom: spacing[2],
-            }}
-          />
-
-          {/* Cancel */}
-          <Pressable
-            onPress={onClose}
-            style={({ pressed }) => ({
-              marginHorizontal: spacing[3],
-              paddingVertical: spacing[4],
-              borderRadius: borderRadius.xl,
-              alignItems: 'center',
-              backgroundColor: pressed
-                ? colorWithOpacity(m3.colorScheme.onSurface, 0.06)
-                : 'transparent',
-            })}
-          >
-            <Text
-              style={{
-                fontSize: fontSize.base,
-                fontWeight: fontWeight.semibold,
-                color: m3.colorScheme.onSurfaceVariant,
-              }}
-            >
-              {t('common.cancel')}
-            </Text>
-          </Pressable>
+              <UiSymbol
+                name="chevron.right"
+                size={14}
+                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.4)}
+              />
+            </Pressable>
+          ))}
         </View>
-      </Animated.View>
-    </Modal>
+
+        <View
+          style={{
+            height: 1,
+            backgroundColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.5),
+            marginHorizontal: spacing[4],
+            marginTop: spacing[3],
+            marginBottom: spacing[2],
+          }}
+        />
+
+        <Pressable
+          onPress={onClose}
+          style={({ pressed }) => ({
+            marginHorizontal: spacing[3],
+            paddingVertical: spacing[4],
+            borderRadius: borderRadius.xl,
+            alignItems: 'center',
+            backgroundColor: pressed
+              ? colorWithOpacity(m3.colorScheme.onSurface, 0.06)
+              : 'transparent',
+          })}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: m3.colorScheme.onSurfaceVariant,
+            }}
+          >
+            {t('common.cancel')}
+          </Text>
+        </Pressable>
+      </View>
+    </BottomSheet>
   );
 }

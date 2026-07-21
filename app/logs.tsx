@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spinner } from '@/components/ui/spinner';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
@@ -1455,216 +1456,181 @@ export default function LogsScreen() {
       </View>
 
       {/* Modals are now route-based */}
-      {showFarmSelector && (
-        <Modal
-          transparent
-          visible={showFarmSelector}
-          onRequestClose={() => setShowFarmSelector(false)}
-          animationType="slide"
-        >
-          <View style={{ flex: 1, backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3) }}>
-            <View
+      <BottomSheet
+        index={showFarmSelector ? 0 : -1}
+        snapPoints={['78%']}
+        enablePanDownToClose
+        onClose={() => setShowFarmSelector(false)}
+        backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+      >
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              color: m3.surface.s900,
+              paddingHorizontal: spacing[6],
+              paddingTop: spacing[2],
+              paddingBottom: spacing[4],
+            }}
+          >
+            {t('logs.farmPicker.title')}
+          </Text>
+          <ScrollView style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[6] }}>
+            <Pressable
+              onPress={() => {
+                setSelectedFarmId(undefined);
+                setCurrentPage(1);
+                setShowFarmSelector(false);
+              }}
               style={{
-                flex: 1,
-                marginTop: 'auto',
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: borderRadius['3xl'],
-                borderTopRightRadius: borderRadius['3xl'],
-                overflow: 'hidden',
-                maxHeight: '78%',
-                paddingTop: Math.max(insets.top, spacing[3]),
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: spacing[4],
+                borderRadius: borderRadius['2xl'],
+                marginBottom: spacing[2],
+                backgroundColor:
+                  selectedFarmId === undefined ? m3.colorScheme.primary : m3.surface.s50,
               }}
             >
               <View
                 style={{
-                  width: 48,
-                  height: 4,
-                  backgroundColor: m3.surface.s200,
+                  width: 40,
+                  height: 40,
                   borderRadius: borderRadius.full,
-                  marginHorizontal: 'auto',
-                  marginTop: spacing[3],
-                  marginBottom: spacing[2],
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s900,
-                  paddingHorizontal: spacing[6],
-                  paddingTop: spacing[2],
-                  paddingBottom: spacing[4],
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor:
+                    selectedFarmId === undefined
+                      ? colorWithOpacity(m3.colorScheme.onPrimary, 0.2)
+                      : colorWithOpacity(m3.colorScheme.primary, 0.15),
                 }}
               >
-                {t('logs.farmPicker.title')}
-              </Text>
-              <ScrollView
-                style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[6] }}
-              >
-                <Pressable
-                  onPress={() => {
-                    setSelectedFarmId(undefined);
-                    setCurrentPage(1);
-                    setShowFarmSelector(false);
-                  }}
+                <UiSymbol
+                  name="square.stack.3d.up.fill"
+                  size={20}
+                  color={
+                    selectedFarmId === undefined ? m3.colorScheme.onPrimary : m3.colorScheme.primary
+                  }
+                />
+              </View>
+              <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                <Text
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    padding: spacing[4],
-                    borderRadius: borderRadius['2xl'],
-                    marginBottom: spacing[2],
-                    backgroundColor:
-                      selectedFarmId === undefined ? m3.colorScheme.primary : m3.surface.s50,
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color:
+                      selectedFarmId === undefined ? m3.colorScheme.onPrimary : m3.surface.s900,
                   }}
                 >
-                  <View
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: borderRadius.full,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor:
-                        selectedFarmId === undefined
-                          ? colorWithOpacity(m3.colorScheme.onPrimary, 0.2)
-                          : colorWithOpacity(m3.colorScheme.primary, 0.15),
-                    }}
-                  >
-                    <UiSymbol
-                      name="square.stack.3d.up.fill"
-                      size={20}
-                      color={
-                        selectedFarmId === undefined
-                          ? m3.colorScheme.onPrimary
-                          : m3.colorScheme.primary
-                      }
-                    />
-                  </View>
-                  <View style={{ marginLeft: spacing[3], flex: 1 }}>
-                    <Text
-                      style={{
-                        fontSize: fontSize.base,
-                        fontWeight: fontWeight.semibold,
-                        color:
-                          selectedFarmId === undefined ? m3.colorScheme.onPrimary : m3.surface.s900,
-                      }}
-                    >
-                      {t('logs.farmPicker.allFarms')}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: fontSize.xs,
-                        color:
-                          selectedFarmId === undefined
-                            ? colorWithOpacity(m3.colorScheme.onPrimary, 0.8)
-                            : m3.surface.s500,
-                      }}
-                    >
-                      {t('logs.farmPicker.farmsCount', { count: farms.length })}
-                    </Text>
-                  </View>
-                  {selectedFarmId === undefined && (
-                    <UiSymbol
-                      name="checkmark.circle.fill"
-                      size={22}
-                      color={m3.colorScheme.onPrimary}
-                    />
-                  )}
-                </Pressable>
+                  {t('logs.farmPicker.allFarms')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color:
+                      selectedFarmId === undefined
+                        ? colorWithOpacity(m3.colorScheme.onPrimary, 0.8)
+                        : m3.surface.s500,
+                  }}
+                >
+                  {t('logs.farmPicker.farmsCount', { count: farms.length })}
+                </Text>
+              </View>
+              {selectedFarmId === undefined && (
+                <UiSymbol name="checkmark.circle.fill" size={22} color={m3.colorScheme.onPrimary} />
+              )}
+            </Pressable>
 
-                {farms.map((farm) => (
-                  <Pressable
-                    key={farm.id}
-                    onPress={() => {
-                      setSelectedFarmId(farm.id);
-                      setCurrentPage(1);
-                      setShowFarmSelector(false);
-                    }}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      padding: spacing[4],
-                      borderRadius: borderRadius['2xl'],
-                      marginBottom: spacing[2],
-                      backgroundColor:
-                        selectedFarmId === farm.id ? m3.colorScheme.primary : m3.surface.s50,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: borderRadius.full,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor:
-                          selectedFarmId === farm.id
-                            ? colorWithOpacity(m3.colorScheme.onPrimary, 0.2)
-                            : colorWithOpacity(m3.colorScheme.primary, 0.15),
-                      }}
-                    >
-                      <UiSymbol
-                        name="leaf.fill"
-                        size={20}
-                        color={
-                          selectedFarmId === farm.id
-                            ? m3.colorScheme.onPrimary
-                            : m3.colorScheme.primary
-                        }
-                      />
-                    </View>
-                    <View style={{ marginLeft: spacing[3], flex: 1 }}>
-                      <Text
-                        style={{
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.semibold,
-                          color:
-                            selectedFarmId === farm.id ? m3.colorScheme.onPrimary : m3.surface.s900,
-                        }}
-                      >
-                        {farm.name}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: fontSize.xs,
-                          color:
-                            selectedFarmId === farm.id
-                              ? colorWithOpacity(m3.colorScheme.onPrimary, 0.8)
-                              : m3.surface.s500,
-                        }}
-                      >
-                        {farm.crop} • {farm.area.toFixed(1)} {t('units.acres')}
-                      </Text>
-                    </View>
-                    {selectedFarmId === farm.id && (
-                      <UiSymbol
-                        name="checkmark.circle.fill"
-                        size={22}
-                        color={m3.colorScheme.onPrimary}
-                      />
-                    )}
-                  </Pressable>
-                ))}
-              </ScrollView>
+            {farms.map((farm) => (
               <Pressable
-                onPress={() => setShowFarmSelector(false)}
+                key={farm.id}
+                onPress={() => {
+                  setSelectedFarmId(farm.id);
+                  setCurrentPage(1);
+                  setShowFarmSelector(false);
+                }}
                 style={{
-                  marginHorizontal: spacing[4],
-                  marginBottom: spacing[6],
-                  paddingVertical: spacing[3],
-                  borderRadius: borderRadius.xl,
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: m3.surface.s50,
+                  padding: spacing[4],
+                  borderRadius: borderRadius['2xl'],
+                  marginBottom: spacing[2],
+                  backgroundColor:
+                    selectedFarmId === farm.id ? m3.colorScheme.primary : m3.surface.s50,
                 }}
               >
-                <Text style={{ fontWeight: fontWeight.semibold, color: m3.neutral.n700 }}>
-                  {t('common.cancel')}
-                </Text>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: borderRadius.full,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor:
+                      selectedFarmId === farm.id
+                        ? colorWithOpacity(m3.colorScheme.onPrimary, 0.2)
+                        : colorWithOpacity(m3.colorScheme.primary, 0.15),
+                  }}
+                >
+                  <UiSymbol
+                    name="leaf.fill"
+                    size={20}
+                    color={
+                      selectedFarmId === farm.id ? m3.colorScheme.onPrimary : m3.colorScheme.primary
+                    }
+                  />
+                </View>
+                <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.base,
+                      fontWeight: fontWeight.semibold,
+                      color:
+                        selectedFarmId === farm.id ? m3.colorScheme.onPrimary : m3.surface.s900,
+                    }}
+                  >
+                    {farm.name}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color:
+                        selectedFarmId === farm.id
+                          ? colorWithOpacity(m3.colorScheme.onPrimary, 0.8)
+                          : m3.surface.s500,
+                    }}
+                  >
+                    {farm.crop} • {farm.area.toFixed(1)} {t('units.acres')}
+                  </Text>
+                </View>
+                {selectedFarmId === farm.id && (
+                  <UiSymbol
+                    name="checkmark.circle.fill"
+                    size={22}
+                    color={m3.colorScheme.onPrimary}
+                  />
+                )}
               </Pressable>
-            </View>
-          </View>
-        </Modal>
-      )}
+            ))}
+          </ScrollView>
+          <Pressable
+            onPress={() => setShowFarmSelector(false)}
+            style={{
+              marginHorizontal: spacing[4],
+              marginBottom: spacing[6],
+              paddingVertical: spacing[3],
+              borderRadius: borderRadius.xl,
+              alignItems: 'center',
+              backgroundColor: m3.surface.s50,
+            }}
+          >
+            <Text style={{ fontWeight: fontWeight.semibold, color: m3.neutral.n700 }}>
+              {t('common.cancel')}
+            </Text>
+          </Pressable>
+        </View>
+      </BottomSheet>
 
       {showRecordsPerPageSelector && (
         <Modal
@@ -1753,320 +1719,286 @@ export default function LogsScreen() {
         </Modal>
       )}
 
-      {isFilterSheetOpen && (
-        <Modal
-          transparent
-          visible={isFilterSheetOpen}
-          onRequestClose={() => setIsFilterSheetOpen(false)}
-          animationType="slide"
-          statusBarTranslucent
-        >
+      <BottomSheet
+        index={isFilterSheetOpen ? 0 : -1}
+        snapPoints={['78%']}
+        enablePanDownToClose
+        onClose={() => setIsFilterSheetOpen(false)}
+        backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+      >
+        <View style={{ flex: 1 }}>
           <View
             style={{
-              flex: 1,
-              paddingTop: insets.top,
-              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3),
-              justifyContent: 'flex-end',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: spacing[6],
+              paddingTop: spacing[2],
+              paddingBottom: spacing[4],
             }}
           >
-            <View
+            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
+              {t('common.filter')}
+            </Text>
+            <Pressable onPress={() => setIsFilterSheetOpen(false)}>
+              <UiSymbol
+                name="xmark.circle.fill"
+                size={24}
+                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+              />
+            </Pressable>
+          </View>
+
+          <ScrollView
+            style={{ flex: 1, paddingHorizontal: spacing[6] }}
+            contentContainerStyle={{ paddingBottom: spacing[4] }}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text
               style={{
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: borderRadius['3xl'],
-                borderTopRightRadius: borderRadius['3xl'],
-                overflow: 'hidden',
-                height: '78%',
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                color: m3.surface.s500,
+                marginBottom: spacing[2],
               }}
             >
-              <View style={{ flex: 1 }}>
-                <View
-                  style={{
-                    width: 48,
-                    height: 4,
-                    backgroundColor: m3.surface.s200,
-                    borderRadius: borderRadius.full,
-                    marginHorizontal: 'auto',
-                    marginTop: spacing[3],
-                    marginBottom: spacing[2],
-                  }}
-                />
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingHorizontal: spacing[6],
-                    paddingTop: spacing[2],
-                    paddingBottom: spacing[4],
-                  }}
-                >
-                  <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
-                    {t('common.filter')}
-                  </Text>
-                  <Pressable onPress={() => setIsFilterSheetOpen(false)}>
+              {t('logs.filters.activityTypes')}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+              {LOG_TYPES.map((logType) => {
+                const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
+                return (
+                  <Pressable
+                    key={logType.id}
+                    onPress={() => {
+                      const newSet = new Set(selectedLogTypes);
+                      if (newSet.has(logType.id as LogTypeId)) {
+                        newSet.delete(logType.id as LogTypeId);
+                      } else {
+                        newSet.add(logType.id as LogTypeId);
+                      }
+                      setSelectedLogTypes(newSet);
+                      setCurrentPage(1);
+                    }}
+                    style={({ pressed }) => ({
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: 6,
+                      borderRadius: borderRadius.full,
+                      backgroundColor: isSelected
+                        ? m3.colorScheme.primary
+                        : pressed
+                          ? m3.surface.surfaceContainerHigh
+                          : m3.surface.surfaceContainerLow,
+                      borderWidth: isSelected ? 0 : 1,
+                      borderColor: m3.colorScheme.outlineVariant,
+                    })}
+                  >
                     <UiSymbol
-                      name="xmark.circle.fill"
-                      size={24}
-                      color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                      name={resolveSymbolIconName(logType.icon)}
+                      size={14}
+                      color={isSelected ? m3.colorScheme.onPrimary : logType.color}
                     />
+                    <Text
+                      style={{
+                        marginLeft: spacing[1],
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.semibold,
+                        color: isSelected ? m3.colorScheme.onPrimary : m3.neutral.n700,
+                      }}
+                    >
+                      {t(logType.labelKey)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                color: m3.surface.s500,
+                marginTop: spacing[5],
+                marginBottom: spacing[2],
+              }}
+            >
+              {t('logs.filters.dateRange')}
+            </Text>
+
+            {Platform.OS === 'android' ? (
+              <>
+                <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                  <Pressable onPress={() => setActiveDatePicker('from')} style={{ flex: 1 }}>
+                    <View
+                      style={{
+                        backgroundColor: m3.surface.surfaceContainerLow,
+                        paddingHorizontal: spacing[3],
+                        paddingVertical: spacing[2],
+                        borderRadius: borderRadius.xl,
+                        borderWidth: 1,
+                        borderColor: m3.colorScheme.outlineVariant,
+                      }}
+                    >
+                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
+                        {t('common.from')}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                          color: m3.surface.s900,
+                        }}
+                      >
+                        {dateFrom
+                          ? formatDate(dateFrom, { month: 'short', day: 'numeric' })
+                          : t('common.selectDate')}
+                      </Text>
+                    </View>
+                  </Pressable>
+
+                  <Pressable onPress={() => setActiveDatePicker('to')} style={{ flex: 1 }}>
+                    <View
+                      style={{
+                        backgroundColor: m3.surface.surfaceContainerLow,
+                        paddingHorizontal: spacing[3],
+                        paddingVertical: spacing[2],
+                        borderRadius: borderRadius.xl,
+                        borderWidth: 1,
+                        borderColor: m3.colorScheme.outlineVariant,
+                      }}
+                    >
+                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
+                        {t('common.to')}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                          color: m3.surface.s900,
+                        }}
+                      >
+                        {dateTo
+                          ? formatDate(dateTo, { month: 'short', day: 'numeric' })
+                          : t('common.selectDate')}
+                      </Text>
+                    </View>
                   </Pressable>
                 </View>
-
-                <ScrollView
-                  style={{ flex: 1, paddingHorizontal: spacing[6] }}
-                  contentContainerStyle={{ paddingBottom: spacing[4] }}
-                  showsVerticalScrollIndicator={false}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.bold,
-                      color: m3.surface.s500,
-                      marginBottom: spacing[2],
+                {activeDatePicker && (
+                  <DateTimePicker
+                    value={(activeDatePicker === 'from' ? dateFrom : dateTo) ?? new Date()}
+                    mode="date"
+                    presentation="dialog"
+                    onValueChange={(_, date) => {
+                      if (activeDatePicker === 'from') {
+                        setDateFrom(date);
+                      } else {
+                        setDateTo(date);
+                      }
+                      setActiveDatePicker(null);
                     }}
-                  >
-                    {t('logs.filters.activityTypes')}
-                  </Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-                    {LOG_TYPES.map((logType) => {
-                      const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
-                      return (
-                        <Pressable
-                          key={logType.id}
-                          onPress={() => {
-                            const newSet = new Set(selectedLogTypes);
-                            if (newSet.has(logType.id as LogTypeId)) {
-                              newSet.delete(logType.id as LogTypeId);
-                            } else {
-                              newSet.add(logType.id as LogTypeId);
-                            }
-                            setSelectedLogTypes(newSet);
-                            setCurrentPage(1);
-                          }}
-                          style={({ pressed }) => ({
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            paddingHorizontal: spacing[3],
-                            paddingVertical: 6,
-                            borderRadius: borderRadius.full,
-                            backgroundColor: isSelected
-                              ? m3.colorScheme.primary
-                              : pressed
-                                ? m3.surface.surfaceContainerHigh
-                                : m3.surface.surfaceContainerLow,
-                            borderWidth: isSelected ? 0 : 1,
-                            borderColor: m3.colorScheme.outlineVariant,
-                          })}
-                        >
-                          <UiSymbol
-                            name={resolveSymbolIconName(logType.icon)}
-                            size={14}
-                            color={isSelected ? m3.colorScheme.onPrimary : logType.color}
-                          />
-                          <Text
-                            style={{
-                              marginLeft: spacing[1],
-                              fontSize: fontSize.xs,
-                              fontWeight: fontWeight.semibold,
-                              color: isSelected ? m3.colorScheme.onPrimary : m3.neutral.n700,
-                            }}
-                          >
-                            {t(logType.labelKey)}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.bold,
-                      color: m3.surface.s500,
-                      marginTop: spacing[5],
-                      marginBottom: spacing[2],
-                    }}
-                  >
-                    {t('logs.filters.dateRange')}
-                  </Text>
-
-                  {Platform.OS === 'android' ? (
-                    <>
-                      <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-                        <Pressable onPress={() => setActiveDatePicker('from')} style={{ flex: 1 }}>
-                          <View
-                            style={{
-                              backgroundColor: m3.surface.surfaceContainerLow,
-                              paddingHorizontal: spacing[3],
-                              paddingVertical: spacing[2],
-                              borderRadius: borderRadius.xl,
-                              borderWidth: 1,
-                              borderColor: m3.colorScheme.outlineVariant,
-                            }}
-                          >
-                            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                              {t('common.from')}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: fontSize.sm,
-                                fontWeight: fontWeight.semibold,
-                                color: m3.surface.s900,
-                              }}
-                            >
-                              {dateFrom
-                                ? formatDate(dateFrom, { month: 'short', day: 'numeric' })
-                                : t('common.selectDate')}
-                            </Text>
-                          </View>
-                        </Pressable>
-
-                        <Pressable onPress={() => setActiveDatePicker('to')} style={{ flex: 1 }}>
-                          <View
-                            style={{
-                              backgroundColor: m3.surface.surfaceContainerLow,
-                              paddingHorizontal: spacing[3],
-                              paddingVertical: spacing[2],
-                              borderRadius: borderRadius.xl,
-                              borderWidth: 1,
-                              borderColor: m3.colorScheme.outlineVariant,
-                            }}
-                          >
-                            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                              {t('common.to')}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: fontSize.sm,
-                                fontWeight: fontWeight.semibold,
-                                color: m3.surface.s900,
-                              }}
-                            >
-                              {dateTo
-                                ? formatDate(dateTo, { month: 'short', day: 'numeric' })
-                                : t('common.selectDate')}
-                            </Text>
-                          </View>
-                        </Pressable>
-                      </View>
-                      {activeDatePicker && (
-                        <DateTimePicker
-                          value={(activeDatePicker === 'from' ? dateFrom : dateTo) ?? new Date()}
-                          mode="date"
-                          presentation="dialog"
-                          onValueChange={(_, date) => {
-                            if (activeDatePicker === 'from') {
-                              setDateFrom(date);
-                            } else {
-                              setDateTo(date);
-                            }
-                            setActiveDatePicker(null);
-                          }}
-                          onDismiss={() => setActiveDatePicker(null)}
-                        />
-                      )}
-                    </>
-                  ) : (
-                    <View style={{ gap: spacing[4] }}>
-                      <View
-                        style={{
-                          padding: spacing[3],
-                          borderRadius: borderRadius.xl,
-                          borderWidth: 1,
-                          borderColor: m3.colorScheme.outlineVariant,
-                          backgroundColor: m3.surface.surfaceContainerLow,
-                        }}
-                      >
-                        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                          {t('common.from')}
-                        </Text>
-                        <DateTimePicker
-                          value={dateFrom || new Date()}
-                          mode="date"
-                          display="spinner"
-                          onValueChange={(_, date) => {
-                            if (date) setDateFrom(date);
-                          }}
-                          style={{ height: 140 }}
-                        />
-                      </View>
-                      <View
-                        style={{
-                          padding: spacing[3],
-                          borderRadius: borderRadius.xl,
-                          borderWidth: 1,
-                          borderColor: m3.colorScheme.outlineVariant,
-                          backgroundColor: m3.surface.surfaceContainerLow,
-                        }}
-                      >
-                        <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                          {t('common.to')}
-                        </Text>
-                        <DateTimePicker
-                          value={dateTo || new Date()}
-                          mode="date"
-                          display="spinner"
-                          onValueChange={(_, date) => {
-                            if (date) setDateTo(date);
-                          }}
-                          style={{ height: 140 }}
-                        />
-                      </View>
-                    </View>
-                  )}
-                </ScrollView>
-
+                    onDismiss={() => setActiveDatePicker(null)}
+                  />
+                )}
+              </>
+            ) : (
+              <View style={{ gap: spacing[4] }}>
                 <View
                   style={{
-                    flexDirection: 'row',
-                    gap: spacing[3],
-                    paddingHorizontal: spacing[6],
-                    paddingTop: spacing[3],
-                    paddingBottom: Math.max(insets.bottom, spacing[4]),
-                    borderTopWidth: 1,
-                    borderTopColor: m3.surface.s200,
+                    padding: spacing[3],
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 1,
+                    borderColor: m3.colorScheme.outlineVariant,
+                    backgroundColor: m3.surface.surfaceContainerLow,
                   }}
                 >
-                  <Pressable
-                    onPress={() => {
-                      clearFilters();
-                      setIsFilterSheetOpen(false);
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
+                    {t('common.from')}
+                  </Text>
+                  <DateTimePicker
+                    value={dateFrom || new Date()}
+                    mode="date"
+                    display="spinner"
+                    onValueChange={(_, date) => {
+                      if (date) setDateFrom(date);
                     }}
-                    style={{
-                      flex: 1,
-                      paddingVertical: spacing[3],
-                      borderRadius: borderRadius.xl,
-                      alignItems: 'center',
-                      borderWidth: 1,
-                      borderColor: m3.surface.s200,
+                    style={{ height: 140 }}
+                  />
+                </View>
+                <View
+                  style={{
+                    padding: spacing[3],
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 1,
+                    borderColor: m3.colorScheme.outlineVariant,
+                    backgroundColor: m3.surface.surfaceContainerLow,
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
+                    {t('common.to')}
+                  </Text>
+                  <DateTimePicker
+                    value={dateTo || new Date()}
+                    mode="date"
+                    display="spinner"
+                    onValueChange={(_, date) => {
+                      if (date) setDateTo(date);
                     }}
-                  >
-                    <Text style={{ fontWeight: fontWeight.semibold, color: m3.neutral.n700 }}>
-                      {t('common.clearAll')}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setIsFilterSheetOpen(false)}
-                    style={{
-                      flex: 1,
-                      paddingVertical: spacing[3],
-                      borderRadius: borderRadius.xl,
-                      alignItems: 'center',
-                      backgroundColor: m3.colorScheme.primary,
-                    }}
-                  >
-                    <Text
-                      style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}
-                    >
-                      {t('common.done')}
-                    </Text>
-                  </Pressable>
+                    style={{ height: 140 }}
+                  />
                 </View>
               </View>
-            </View>
+            )}
+          </ScrollView>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: spacing[3],
+              paddingHorizontal: spacing[6],
+              paddingTop: spacing[3],
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
+              borderTopWidth: 1,
+              borderTopColor: m3.surface.s200,
+            }}
+          >
+            <Pressable
+              onPress={() => {
+                clearFilters();
+                setIsFilterSheetOpen(false);
+              }}
+              style={{
+                flex: 1,
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.xl,
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: m3.surface.s200,
+              }}
+            >
+              <Text style={{ fontWeight: fontWeight.semibold, color: m3.neutral.n700 }}>
+                {t('common.clearAll')}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setIsFilterSheetOpen(false)}
+              style={{
+                flex: 1,
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.xl,
+                alignItems: 'center',
+                backgroundColor: m3.colorScheme.primary,
+              }}
+            >
+              <Text style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}>
+                {t('common.done')}
+              </Text>
+            </Pressable>
           </View>
-        </Modal>
-      )}
+        </View>
+      </BottomSheet>
 
       <Modal
         visible={showDeleteConfirmation}
