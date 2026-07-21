@@ -4,7 +4,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { getUserId } from '../lib/auth-utils';
 import { queryKeys } from './query-keys';
 import { useAppModeStore } from '../stores/app-mode-store';
@@ -27,10 +27,7 @@ export interface DashboardStats {
 }
 
 export type TodayNeedAttentionType =
-  | 'overdueTask'
-  | 'noRecentLogs'
-  | 'lowWaterLevel'
-  | 'phiDeadline';
+  'overdueTask' | 'noRecentLogs' | 'lowWaterLevel' | 'phiDeadline';
 
 export type TodayNeedAttentionSeverity = 'high' | 'medium' | 'low';
 
@@ -68,7 +65,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
       const userId = await getUserId();
       if (!userId) return [];
 
-      const { data: farms, error: farmsError } = await supabase
+      const { data: farms, error: farmsError } = await getDataAccess()
         .from(TABLES.FARMS)
         .select('id, name, remaining_water, total_tank_capacity')
         .eq('user_id', userId);
@@ -97,7 +94,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
       const phiDeadlineThresholdStr = toDateString(phiDeadlineThreshold);
 
       const [overdueTasksResult, recentLogFarmsResult, phiDeadlinesResult] = await Promise.all([
-        supabase
+        getDataAccess()
           .from('task_reminders')
           .select('id, farm_id, title, due_date')
           .in('farm_id', farmIds)
@@ -106,13 +103,13 @@ export function useTodayNeedsAttention(limit: number = 10) {
           .lt('due_date', todayStr)
           .order('due_date', { ascending: true })
           .limit(limit),
-        supabase
+        getDataAccess()
           .rpc('get_recent_log_farm_ids', {
             p_farm_ids: farmIds,
             p_since: recentLogThresholdStr,
           })
           .returns<RecentLogFarmIdRow[]>(),
-        supabase
+        getDataAccess()
           .from(TABLES.SPRAY_RECORDS)
           .select('id, farm_id, safe_harvest_date, chemical')
           .in('farm_id', farmIds)
@@ -250,7 +247,7 @@ export function useDashboardStats() {
       if (!userId) throw new Error('Not authenticated');
 
       // Fetch farms count
-      const { count: farmsCount } = await supabase
+      const { count: farmsCount } = await getDataAccess()
         .from(TABLES.FARMS)
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
@@ -259,7 +256,7 @@ export function useDashboardStats() {
       // their count queries to avoid wasted network calls.
       let workersCount = 0;
       if (detailedMode) {
-        const { count } = await supabase
+        const { count } = await getDataAccess()
           .from(TABLES.WORKERS)
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId)
@@ -273,7 +270,10 @@ export function useDashboardStats() {
       const dateStr = toDateString(sevenDaysAgo);
 
       // Get farm IDs first
-      const { data: farms } = await supabase.from(TABLES.FARMS).select('id').eq('user_id', userId);
+      const { data: farms } = await getDataAccess()
+        .from(TABLES.FARMS)
+        .select('id')
+        .eq('user_id', userId);
 
       const farmIds = farms?.map((f) => f.id) ?? [];
 
@@ -284,27 +284,27 @@ export function useDashboardStats() {
         // Only run the task-reminders count in detailed mode; simplified mode
         // hides the tasks card so the query would be wasted.
         const countQueries = [
-          supabase
+          getDataAccess()
             .from(TABLES.IRRIGATION_RECORDS)
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
-          supabase
+          getDataAccess()
             .from(TABLES.SPRAY_RECORDS)
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
-          supabase
+          getDataAccess()
             .from(TABLES.HARVEST_RECORDS)
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
-          supabase
+          getDataAccess()
             .from(TABLES.EXPENSE_RECORDS)
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
-          supabase
+          getDataAccess()
             .from(TABLES.FERTIGATION_RECORDS)
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
@@ -312,7 +312,7 @@ export function useDashboardStats() {
         ];
         if (detailedMode) {
           countQueries.push(
-            supabase
+            getDataAccess()
               .from('task_reminders')
               .select('*', { count: 'exact', head: true })
               .in('farm_id', farmIds)
@@ -355,7 +355,10 @@ export function useFarmsNeedingAttention() {
       const userId = await getUserId();
       if (!userId) return [];
 
-      const { data: farms } = await supabase.from(TABLES.FARMS).select('*').eq('user_id', userId);
+      const { data: farms } = await getDataAccess()
+        .from(TABLES.FARMS)
+        .select('*')
+        .eq('user_id', userId);
 
       if (!farms) return [];
 
@@ -384,7 +387,7 @@ export function useRecentActivities(limit: number = 5) {
       if (!userId) return [];
 
       // Get farms first
-      const { data: farms } = await supabase
+      const { data: farms } = await getDataAccess()
         .from(TABLES.FARMS)
         .select('id, name')
         .eq('user_id', userId);
@@ -396,37 +399,37 @@ export function useRecentActivities(limit: number = 5) {
 
       // Fetch recent records from each table
       const [irrigation, spray, harvest, expense, fertigation, dailyNotes] = await Promise.all([
-        supabase
+        getDataAccess()
           .from(TABLES.IRRIGATION_RECORDS)
           .select('id, farm_id, date, duration')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
-        supabase
+        getDataAccess()
           .from(TABLES.SPRAY_RECORDS)
           .select('id, farm_id, date, chemical')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
-        supabase
+        getDataAccess()
           .from(TABLES.HARVEST_RECORDS)
           .select('id, farm_id, date, quantity, grade')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
-        supabase
+        getDataAccess()
           .from(TABLES.EXPENSE_RECORDS)
           .select('id, farm_id, date, type, cost')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
-        supabase
+        getDataAccess()
           .from(TABLES.FERTIGATION_RECORDS)
           .select('id, farm_id, date')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
-        supabase
+        getDataAccess()
           .from(TABLES.DAILY_NOTES)
           .select('id, farm_id, date, notes')
           .in('farm_id', farmIds)

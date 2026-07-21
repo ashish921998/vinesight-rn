@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useFarms } from './use-farms';
 import { useFarmSeasons } from './use-farm-seasons';
 import { queryKeys } from './query-keys';
-import { supabase } from '../lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { TABLES } from '../types';
 import {
   useIrrigationRecords,
@@ -118,7 +118,7 @@ function useLabelClaimLookups(enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.reports.labelClaimLookups(),
     queryFn: async (): Promise<LabelClaimLookups> => {
-      const claimsResult = await supabase
+      const claimsResult = await getDataAccess()
         .from(TABLES.CHEMICAL_LABEL_CLAIMS)
         .select('id,product_id,phi_min_days,phi_max_days')
         .eq('is_active', true);
@@ -141,7 +141,7 @@ function useLabelClaimLookups(enabled: boolean) {
         }
       });
 
-      const mrlsResult = await supabase
+      const mrlsResult = await getDataAccess()
         .from(TABLES.CHEMICAL_LABEL_CLAIM_MRLS)
         .select('claim_id,market,mrl_value,mrl_unit,no_mrl_required')
         .in(
@@ -519,7 +519,7 @@ export function useUnassignedRecordCount(farmId: number | null) {
       if (farmId == null) return 0;
       const counts = await Promise.all(
         UNASSIGNED_COUNT_TABLES.map(async (table) => {
-          const { count, error } = await supabase
+          const { count, error } = await getDataAccess()
             .from(table)
             .select('id', { count: 'exact', head: true })
             .eq('farm_id', farmId)

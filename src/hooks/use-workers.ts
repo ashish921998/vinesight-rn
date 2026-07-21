@@ -5,7 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { queryKeys } from './query-keys';
 import {
   TABLES,
@@ -34,7 +34,7 @@ async function getUserId(): Promise<string> {
   const {
     data: { session },
     error,
-  } = await supabase.auth.getSession();
+  } = await getDataAccess().auth.getSession();
   if (error || !session) {
     throw new Error('Please sign in to continue');
   }
@@ -51,7 +51,7 @@ export function useWorkers() {
     queryFn: async (): Promise<Worker[]> => {
       const userId = await getUserId();
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKERS)
         .select('*')
         .eq('user_id', userId)
@@ -67,7 +67,11 @@ export function useWorker(id: number | undefined) {
   return useQuery({
     queryKey: queryKeys.workers.detail(id!),
     queryFn: async (): Promise<Worker> => {
-      const { data, error } = await supabase.from(TABLES.WORKERS).select('*').eq('id', id).single();
+      const { data, error } = await getDataAccess()
+        .from(TABLES.WORKERS)
+        .select('*')
+        .eq('id', id)
+        .single();
 
       if (error) throw error;
       return data;
@@ -83,7 +87,7 @@ export function useCreateWorker() {
     mutationFn: async (worker: WorkerInsert): Promise<Worker> => {
       const userId = await getUserId();
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKERS)
         .insert({ ...worker, user_id: userId })
         .select()
@@ -103,7 +107,7 @@ export function useUpdateWorker() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: WorkerUpdate }): Promise<Worker> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKERS)
         .update(updates)
         .eq('id', id)
@@ -127,7 +131,7 @@ export function useDeleteWorker() {
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const { error } = await supabase.from(TABLES.WORKERS).delete().eq('id', id);
+      const { error } = await getDataAccess().from(TABLES.WORKERS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -151,7 +155,7 @@ export function useAllWorkerAttendance() {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
       const cutoff = formatLocalDate(thirtyDaysAgo);
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKER_ATTENDANCE)
         .select('*, workers!inner(user_id)')
         .eq('workers.user_id', userId)
@@ -168,7 +172,7 @@ export function useWorkerAttendance(workerId: number | undefined) {
   return useQuery({
     queryKey: queryKeys.workerAttendance.listByWorker(workerId!),
     queryFn: async (): Promise<WorkerAttendance[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKER_ATTENDANCE)
         .select('*')
         .eq('worker_id', workerId)
@@ -186,7 +190,7 @@ export function useCreateWorkerAttendance() {
 
   return useMutation({
     mutationFn: async (attendance: WorkerAttendanceInsert): Promise<WorkerAttendance> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKER_ATTENDANCE)
         .insert(attendance)
         .select()
@@ -217,7 +221,7 @@ export function useUpdateWorkerAttendance() {
       id: number;
       updates: Partial<WorkerAttendance>;
     }): Promise<WorkerAttendance> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKER_ATTENDANCE)
         .update(updates)
         .eq('id', id)
@@ -249,7 +253,7 @@ export function useDeleteWorkerAttendance() {
       id: number;
       workerId: number;
     }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.WORKER_ATTENDANCE).delete().eq('id', id);
+      const { error } = await getDataAccess().from(TABLES.WORKER_ATTENDANCE).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -272,7 +276,7 @@ export function useWorkerTransactions(workerId: number | undefined) {
   return useQuery({
     queryKey: queryKeys.workerTransactions.listByWorker(workerId!),
     queryFn: async (): Promise<WorkerTransaction[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKER_TRANSACTIONS)
         .select('*')
         .eq('worker_id', workerId)
@@ -291,7 +295,7 @@ export function useAllWorkerTransactions() {
     queryFn: async (): Promise<WorkerTransaction[]> => {
       const userId = await getUserId();
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKER_TRANSACTIONS)
         .select('*, workers!inner(user_id)')
         .eq('workers.user_id', userId)
@@ -308,7 +312,7 @@ export function useCreateWorkerTransaction() {
 
   return useMutation({
     mutationFn: async (transaction: WorkerTransactionInsert): Promise<WorkerTransaction> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKER_TRANSACTIONS)
         .insert(transaction)
         .select()
@@ -338,7 +342,10 @@ export function useDeleteWorkerTransaction() {
       id: number;
       workerId: number;
     }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.WORKER_TRANSACTIONS).delete().eq('id', id);
+      const { error } = await getDataAccess()
+        .from(TABLES.WORKER_TRANSACTIONS)
+        .delete()
+        .eq('id', id);
 
       if (error) throw error;
     },
@@ -359,7 +366,7 @@ export function useWorkerSettlements(workerId: number | undefined) {
   return useQuery({
     queryKey: queryKeys.workerSettlements.listByWorker(workerId!),
     queryFn: async (): Promise<WorkerSettlement[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKER_SETTLEMENTS)
         .select('*')
         .eq('worker_id', workerId)
@@ -377,7 +384,7 @@ export function useCreateWorkerSettlement() {
 
   return useMutation({
     mutationFn: async (settlement: WorkerSettlementInsert): Promise<WorkerSettlement> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKER_SETTLEMENTS)
         .insert(settlement)
         .select()
@@ -406,7 +413,7 @@ export function useUpdateWorkerSettlement() {
       id: number;
       updates: WorkerSettlementUpdate;
     }): Promise<WorkerSettlement> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORKER_SETTLEMENTS)
         .update(updates)
         .eq('id', id)
@@ -435,7 +442,7 @@ export function useWorkTypes() {
       const userId = await getUserId();
 
       // Fetch both user-specific and default work types
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORK_TYPES)
         .select('*')
         .or(`user_id.eq.${userId},user_id.is.null`)
@@ -455,7 +462,7 @@ export function useCreateWorkType() {
     mutationFn: async (name: string): Promise<WorkType> => {
       const userId = await getUserId();
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WORK_TYPES)
         .insert({ name, user_id: userId, is_default: false })
         .select()
@@ -481,7 +488,7 @@ export function useTemporaryWorkerEntries(farmId: number | undefined, seasonId?:
       { seasonId: seasonId ?? null },
     ],
     queryFn: async (): Promise<TemporaryWorkerEntry[]> => {
-      let query = supabase
+      let query = getDataAccess()
         .from(TABLES.TEMPORARY_WORKER_ENTRIES)
         .select('*')
         .eq('farm_id', farmId)
@@ -504,7 +511,7 @@ export function useTemporaryWorkerEntriesByFarms(farmIds: number[]) {
     queryKey: queryKeys.temporaryWorkerEntries.listByFarms(farmIds),
     queryFn: async (): Promise<TemporaryWorkerEntry[]> => {
       if (farmIds.length === 0) return [];
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.TEMPORARY_WORKER_ENTRIES)
         .select('*')
         .in('farm_id', farmIds)
@@ -524,7 +531,7 @@ export function useAllTemporaryWorkerEntries() {
       const userId = await getUserId();
 
       // Join through farms table to get entries for user's farms
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.TEMPORARY_WORKER_ENTRIES)
         .select('*, farms!inner(user_id)')
         .eq('farms.user_id', userId)
@@ -549,7 +556,7 @@ export function useCreateTemporaryWorkerEntry() {
           date: entry.date,
         }));
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.TEMPORARY_WORKER_ENTRIES)
         .insert({ ...entry, season_id: seasonId, user_id: userId })
         .select()
@@ -577,7 +584,10 @@ export function useDeleteTemporaryWorkerEntry() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.TEMPORARY_WORKER_ENTRIES).delete().eq('id', id);
+      const { error } = await getDataAccess()
+        .from(TABLES.TEMPORARY_WORKER_ENTRIES)
+        .delete()
+        .eq('id', id);
 
       if (error) throw error;
     },

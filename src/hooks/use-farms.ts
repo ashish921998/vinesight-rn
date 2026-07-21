@@ -6,7 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmSeason, FarmUpdate } from '../types';
 import { TABLES, toSupabaseTimestampString } from '../types';
@@ -20,7 +20,7 @@ async function getUserId(): Promise<string> {
   const {
     data: { session },
     error,
-  } = await supabase.auth.getSession();
+  } = await getDataAccess().auth.getSession();
   if (error || !session) {
     throw new Error('Please sign in to continue');
   }
@@ -56,7 +56,7 @@ async function resolveNextFarmDisplayOrder(userId: string): Promise<{
   supportsDisplayOrder: boolean;
   displayOrder: number;
 }> {
-  const { data: firstFarm, error: firstFarmError } = await supabase
+  const { data: firstFarm, error: firstFarmError } = await getDataAccess()
     .from(TABLES.FARMS)
     .select('display_order')
     .eq('user_id', userId)
@@ -98,7 +98,7 @@ export async function ensureInitialFarmSeason(
   // auto-started here: the start date below would come from the previous
   // cycle's pruning date and overlap the ended seasons, silently re-capturing
   // historical records. Between-seasons records stay unassigned instead.
-  const { data: existingSeason, error: existingSeasonError } = await supabase
+  const { data: existingSeason, error: existingSeasonError } = await getDataAccess()
     .from(TABLES.FARM_SEASONS)
     .select('id')
     .eq('farm_id', farm.id)
@@ -114,7 +114,7 @@ export async function ensureInitialFarmSeason(
   const startDate = farm.date_of_pruning ?? formatLocalDate(new Date());
   const seasonName = seasonNameOverride ?? `Season ${new Date().getFullYear()}`;
 
-  const { error: rpcError } = await supabase.rpc('start_farm_season', {
+  const { error: rpcError } = await getDataAccess().rpc('start_farm_season', {
     p_farm_id: farm.id,
     p_start_date: startDate,
     p_template_key: null,
@@ -127,14 +127,16 @@ export async function ensureInitialFarmSeason(
     throw rpcError;
   }
 
-  const { error: insertError } = await supabase.from(TABLES.FARM_SEASONS).insert({
-    farm_id: farm.id,
-    user_id: userId,
-    start_date: startDate,
-    end_date: null,
-    season_name: seasonName,
-    crop_type_snapshot: farm.crop,
-  } satisfies Omit<FarmSeason, 'id' | 'created_at' | 'updated_at'>);
+  const { error: insertError } = await getDataAccess()
+    .from(TABLES.FARM_SEASONS)
+    .insert({
+      farm_id: farm.id,
+      user_id: userId,
+      start_date: startDate,
+      end_date: null,
+      season_name: seasonName,
+      crop_type_snapshot: farm.crop,
+    } satisfies Omit<FarmSeason, 'id' | 'created_at' | 'updated_at'>);
 
   if (insertError) {
     if (insertError.code === '42P01') return;
@@ -149,7 +151,7 @@ export async function ensureInitialFarmSeasonForFarmId(
   seasonNameOverride?: string,
 ): Promise<void> {
   const userId = await getUserId();
-  const { data: farm, error } = await supabase
+  const { data: farm, error } = await getDataAccess()
     .from(TABLES.FARMS)
     .select('*')
     .eq('id', farmId)
@@ -173,7 +175,7 @@ export function useFarms() {
     queryFn: async (): Promise<Farm[]> => {
       const userId = await getUserId();
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.FARMS)
         .select('*')
         .eq('user_id', userId)
@@ -181,7 +183,7 @@ export function useFarms() {
         .order('created_at', { ascending: false });
 
       if (isMissingDisplayOrderColumn(error)) {
-        const { data: fallbackData, error: fallbackError } = await supabase
+        const { data: fallbackData, error: fallbackError } = await getDataAccess()
           .from(TABLES.FARMS)
           .select('*')
           .eq('user_id', userId)
@@ -205,7 +207,7 @@ export function useFarm(id: number | undefined) {
     queryKey: queryKeys.farms.detail(id!),
     queryFn: async (): Promise<Farm> => {
       const userId = await getUserId();
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.FARMS)
         .select('*')
         .eq('id', id)
@@ -240,7 +242,7 @@ export function useCreateFarm() {
           ? { ...farmPayload, user_id: userId, display_order: displayOrder }
           : { ...farmPayload, user_id: userId };
 
-        const { data: insertedFarm, error } = await supabase
+        const { data: insertedFarm, error } = await getDataAccess()
           .from(TABLES.FARMS)
           .insert(insertPayload)
           .select()
@@ -302,7 +304,7 @@ export function useReorderFarms() {
 
   return useMutation({
     mutationFn: async (orderedFarmIds: number[]): Promise<number[]> => {
-      const { error } = await supabase.rpc('reorder_farms', {
+      const { error } = await getDataAccess().rpc('reorder_farms', {
         p_ordered_farm_ids: orderedFarmIds,
       });
 
@@ -362,7 +364,7 @@ export function useUpdateFarm() {
     mutationFn: async ({ id, updates }: { id: number; updates: FarmUpdate }): Promise<Farm> => {
       const userId = await getUserId();
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.FARMS)
         .update(updates)
         .eq('id', id)
@@ -402,7 +404,7 @@ export function useUpdateFarmWaterLevel() {
       farmId: number;
       remainingWater: number;
     }): Promise<Farm> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.FARMS)
         .update({
           remaining_water: remainingWater,
@@ -439,7 +441,7 @@ export function useDeleteFarm() {
     mutationFn: async (id: number): Promise<void> => {
       const userId = await getUserId();
 
-      const { error } = await supabase
+      const { error } = await getDataAccess()
         .from(TABLES.FARMS)
         .delete()
         .eq('id', id)
@@ -496,7 +498,11 @@ export function usePrefetchFarm() {
     queryClient.prefetchQuery({
       queryKey: queryKeys.farms.detail(id),
       queryFn: async () => {
-        const { data, error } = await supabase.from(TABLES.FARMS).select('*').eq('id', id).single();
+        const { data, error } = await getDataAccess()
+          .from(TABLES.FARMS)
+          .select('*')
+          .eq('id', id)
+          .single();
 
         if (error) throw error;
         return data;

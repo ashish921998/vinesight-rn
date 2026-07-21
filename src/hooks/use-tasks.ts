@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { TaskReminder, TaskReminderInsert, TaskReminderUpdate } from '../types/task';
 import { formatLocalDate } from '../utils/date';
 import { resolveOrCreateSeasonIdForDate } from '../lib/season-context';
@@ -25,7 +25,7 @@ async function getUserId(): Promise<string> {
   const {
     data: { session },
     error,
-  } = await supabase.auth.getSession();
+  } = await getDataAccess().auth.getSession();
   if (error || !session) {
     throw new Error('Please sign in to continue');
   }
@@ -54,7 +54,7 @@ export function useTasks(farmId?: number, seasonId?: number) {
     queryFn: async (): Promise<TaskReminder[]> => {
       await getUserId(); // Ensure user is logged in
 
-      let query = supabase
+      let query = getDataAccess()
         .from('task_reminders')
         .select('*')
         .order('due_date', { ascending: true, nullsFirst: false });
@@ -83,7 +83,7 @@ export function useAllTasks(seasonId?: number) {
     queryFn: async (): Promise<TaskReminder[]> => {
       await getUserId();
 
-      let query = supabase
+      let query = getDataAccess()
         .from('task_reminders')
         .select('*')
         .order('due_date', { ascending: true, nullsFirst: false });
@@ -124,7 +124,11 @@ export function useCreateTask() {
         created_by: userId,
       };
 
-      const firstAttempt = await supabase.from('task_reminders').insert(payload).select().single();
+      const firstAttempt = await getDataAccess()
+        .from('task_reminders')
+        .insert(payload)
+        .select()
+        .single();
       if (!firstAttempt.error) return firstAttempt.data;
 
       if (!isMissingPlannedInputsColumnError(firstAttempt.error, 'planned_inputs' in payload)) {
@@ -139,7 +143,7 @@ export function useCreateTask() {
         fallbackPayload.description,
         payload.planned_inputs,
       );
-      const fallbackAttempt = await supabase
+      const fallbackAttempt = await getDataAccess()
         .from('task_reminders')
         .insert({
           ...fallbackPayload,
@@ -171,7 +175,7 @@ export function useUpdateTask() {
       id: number;
       updates: TaskReminderUpdate;
     }): Promise<TaskReminder> => {
-      const firstAttempt = await supabase
+      const firstAttempt = await getDataAccess()
         .from('task_reminders')
         .update(updates)
         .eq('id', id)
@@ -192,7 +196,7 @@ export function useUpdateTask() {
         'description' in updates
           ? encodeTaskPlanInDescription(fallbackUpdates.description, updates.planned_inputs)
           : fallbackUpdates.description;
-      const fallbackAttempt = await supabase
+      const fallbackAttempt = await getDataAccess()
         .from('task_reminders')
         .update({
           ...fallbackUpdates,
@@ -219,7 +223,7 @@ export function useCompleteTask() {
 
   return useMutation({
     mutationFn: async (id: number): Promise<TaskReminder> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from('task_reminders')
         .update({
           status: 'completed',
@@ -247,7 +251,7 @@ export function useDeleteTask() {
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const { error } = await supabase.from('task_reminders').delete().eq('id', id);
+      const { error } = await getDataAccess().from('task_reminders').delete().eq('id', id);
 
       if (error) throw error;
     },
