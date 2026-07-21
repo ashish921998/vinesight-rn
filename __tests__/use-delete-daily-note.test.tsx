@@ -2,34 +2,14 @@ import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { supabase } from '@/data-access';
 import { useDeleteDailyNote } from '@/hooks/use-records';
 
+const mockRecords = {
+  deleteDailyNote: jest.fn(),
+};
 jest.mock('@/data-access', () => {
-  const dataAccess = { from: jest.fn() } as Record<string, unknown> & { from: jest.Mock };
-  dataAccess.records = { query: dataAccess.from };
-  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+  return { getDataAccess: jest.fn(() => ({ records: mockRecords })) };
 });
-
-const mockedFrom = supabase.from as jest.Mock;
-
-/**
- * Build a chainable delete-query mock. Every `.eq(col, val)` is recorded so the
- * test can assert WHICH key the note was deleted by (id vs date fallback). The
- * chain is thenable so `await query` resolves to the given result.
- */
-function makeDeleteChain(result: { error: unknown } = { error: null }) {
-  const eqCalls: Array<[string, unknown]> = [];
-  const chain: Record<string, unknown> = {};
-  chain.then = (onFulfilled: ((v: unknown) => unknown) | null) =>
-    Promise.resolve(result).then(onFulfilled);
-  chain.delete = jest.fn(() => chain);
-  chain.eq = jest.fn((col: string, val: unknown) => {
-    eqCalls.push([col, val]);
-    return chain;
-  });
-  return { chain, eqCalls };
-}
 
 function createWrapper() {
   const client = new QueryClient({
@@ -42,12 +22,11 @@ function createWrapper() {
 
 describe('useDeleteDailyNote', () => {
   beforeEach(() => {
-    mockedFrom.mockReset();
+    mockRecords.deleteDailyNote.mockReset();
   });
 
   it('deletes by id when id > 0', async () => {
-    const { chain, eqCalls } = makeDeleteChain();
-    mockedFrom.mockReturnValue(chain);
+    mockRecords.deleteDailyNote.mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useDeleteDailyNote(), { wrapper: createWrapper() });
     await act(async () => {
@@ -55,14 +34,15 @@ describe('useDeleteDailyNote', () => {
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(eqCalls).toContainEqual(['farm_id', 7]);
-    expect(eqCalls).toContainEqual(['id', 42]);
-    expect(eqCalls).not.toContainEqual(['date', '2026-06-01']);
+    expect(mockRecords.deleteDailyNote).toHaveBeenCalledWith({
+      id: 42,
+      farmId: 7,
+      date: '2026-06-01',
+    });
   });
 
   it('falls back to farm_id + date when id === 0 (receipt-screen note)', async () => {
-    const { chain, eqCalls } = makeDeleteChain();
-    mockedFrom.mockReturnValue(chain);
+    mockRecords.deleteDailyNote.mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useDeleteDailyNote(), { wrapper: createWrapper() });
     await act(async () => {
@@ -70,14 +50,15 @@ describe('useDeleteDailyNote', () => {
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(eqCalls).toContainEqual(['farm_id', 7]);
-    expect(eqCalls).toContainEqual(['date', '2026-06-01']);
-    expect(eqCalls).not.toContainEqual(['id', 0]);
+    expect(mockRecords.deleteDailyNote).toHaveBeenCalledWith({
+      id: 0,
+      farmId: 7,
+      date: '2026-06-01',
+    });
   });
 
   it('throws when supabase returns an error', async () => {
-    const { chain } = makeDeleteChain({ error: new Error('delete failed') });
-    mockedFrom.mockReturnValue(chain);
+    mockRecords.deleteDailyNote.mockRejectedValue(new Error('delete failed'));
 
     const { result } = renderHook(() => useDeleteDailyNote(), { wrapper: createWrapper() });
 
