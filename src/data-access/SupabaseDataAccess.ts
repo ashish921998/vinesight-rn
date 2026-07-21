@@ -1,5 +1,18 @@
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import type { DataAccess } from './DataAccess';
+import type {
+  DashboardActivityRows,
+  DashboardTodayStats,
+  DataAccess,
+  FarmSeasonStartPayload,
+} from './DataAccess';
+import type {
+  DailyNoteRecord,
+  ExpenseRecord,
+  FertigationRecord,
+  HarvestRecord,
+  IrrigationRecord,
+  SprayRecord,
+} from '@/types/database';
 
 export class SupabaseDataAccess implements DataAccess {
   readonly isConfigured = isSupabaseConfigured;
@@ -14,7 +27,7 @@ export class SupabaseDataAccess implements DataAccess {
   get storage(): DataAccess['storage'] {
     return supabase.storage;
   }
-  private async listByFarm(table: string, farmId: number, seasonId?: number): Promise<unknown[]> {
+  private async listByFarm<T>(table: string, farmId: number, seasonId?: number): Promise<T[]> {
     let query = supabase
       .from(table)
       .select('*')
@@ -23,17 +36,17 @@ export class SupabaseDataAccess implements DataAccess {
     if (seasonId !== undefined) query = query.eq('season_id', seasonId);
     const { data, error } = await query;
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []) as T[];
   }
 
-  private async listByFarms(table: string, farmIds: number[]): Promise<unknown[]> {
+  private async listByFarms<T>(table: string, farmIds: number[]): Promise<T[]> {
     const { data, error } = await supabase
       .from(table)
       .select('*')
       .in('farm_id', farmIds)
       .order('date', { ascending: false });
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []) as T[];
   }
 
   readonly farms: DataAccess['farms'] = {
@@ -62,7 +75,7 @@ export class SupabaseDataAccess implements DataAccess {
       if (error) throw error;
       return data;
     },
-    startSeason: async (payload) => {
+    startSeason: async (payload: FarmSeasonStartPayload) => {
       const { error } = await supabase.rpc('start_farm_season', payload);
       if (error) throw error;
     },
@@ -138,17 +151,22 @@ export class SupabaseDataAccess implements DataAccess {
   };
   readonly records: DataAccess['records'] = {
     listIrrigationByFarm: (farmId, seasonId) =>
-      this.listByFarm('irrigation_records', farmId, seasonId),
-    listIrrigationByFarms: (farmIds) => this.listByFarms('irrigation_records', farmIds),
-    listSprayByFarm: (farmId, seasonId) => this.listByFarm('spray_records', farmId, seasonId),
-    listSprayByFarms: (farmIds) => this.listByFarms('spray_records', farmIds),
+      this.listByFarm<IrrigationRecord>('irrigation_records', farmId, seasonId),
+    listIrrigationByFarms: (farmIds) =>
+      this.listByFarms<IrrigationRecord>('irrigation_records', farmIds),
+    listSprayByFarm: (farmId, seasonId) =>
+      this.listByFarm<SprayRecord>('spray_records', farmId, seasonId),
+    listSprayByFarms: (farmIds) => this.listByFarms<SprayRecord>('spray_records', farmIds),
     listFertigationByFarm: (farmId, seasonId) =>
-      this.listByFarm('fertigation_records', farmId, seasonId),
-    listFertigationByFarms: (farmIds) => this.listByFarms('fertigation_records', farmIds),
-    listHarvestByFarm: (farmId, seasonId) => this.listByFarm('harvest_records', farmId, seasonId),
-    listHarvestByFarms: (farmIds) => this.listByFarms('harvest_records', farmIds),
-    listExpenseByFarm: (farmId, seasonId) => this.listByFarm('expense_records', farmId, seasonId),
-    listExpenseByFarms: (farmIds) => this.listByFarms('expense_records', farmIds),
+      this.listByFarm<FertigationRecord>('fertigation_records', farmId, seasonId),
+    listFertigationByFarms: (farmIds) =>
+      this.listByFarms<FertigationRecord>('fertigation_records', farmIds),
+    listHarvestByFarm: (farmId, seasonId) =>
+      this.listByFarm<HarvestRecord>('harvest_records', farmId, seasonId),
+    listHarvestByFarms: (farmIds) => this.listByFarms<HarvestRecord>('harvest_records', farmIds),
+    listExpenseByFarm: (farmId, seasonId) =>
+      this.listByFarm<ExpenseRecord>('expense_records', farmId, seasonId),
+    listExpenseByFarms: (farmIds) => this.listByFarms<ExpenseRecord>('expense_records', farmIds),
     getDailyNote: async (farmId, date) => {
       const { data, error } = await supabase
         .from('daily_notes')
@@ -159,8 +177,9 @@ export class SupabaseDataAccess implements DataAccess {
       if (error) throw error;
       return data;
     },
-    listDailyNotesByFarm: (farmId, seasonId) => this.listByFarm('daily_notes', farmId, seasonId),
-    listDailyNotesByFarms: (farmIds) => this.listByFarms('daily_notes', farmIds),
+    listDailyNotesByFarm: (farmId, seasonId) =>
+      this.listByFarm<DailyNoteRecord>('daily_notes', farmId, seasonId),
+    listDailyNotesByFarms: (farmIds) => this.listByFarms<DailyNoteRecord>('daily_notes', farmIds),
     upsertDailyNote: async (payload) => {
       const { data, error } = await supabase
         .from('daily_notes')
@@ -200,14 +219,20 @@ export class SupabaseDataAccess implements DataAccess {
     },
   };
   readonly dashboardStats: DataAccess['dashboardStats'] = {
-    getTodayStats: async ({ userId, limit }) => {
+    getTodayStats: async ({ userId, limit }): Promise<DashboardTodayStats> => {
       const { data: farms, error: farmsError } = await supabase
         .from('farms')
         .select('id, name, remaining_water, total_tank_capacity')
         .eq('user_id', userId);
       if (farmsError) throw farmsError;
       if (!farms?.length)
-        return { farms: [], overdueTasks: [], recentLogFarmIds: [], phiDeadlines: [] };
+        return {
+          farms: [],
+          overdueTasks: [],
+          recentLogFarmIds: [],
+          recentLogError: null,
+          phiDeadlines: [],
+        };
       const farmIds = farms
         .map((farm) => farm.id)
         .filter((id): id is number => typeof id === 'number');
@@ -242,7 +267,7 @@ export class SupabaseDataAccess implements DataAccess {
         recentLogFarmIds: recentLogResult.error ? [] : (recentLogResult.data ?? []),
         recentLogError: recentLogResult.error ?? null,
         phiDeadlines: phiDeadlines.data ?? [],
-      };
+      } as DashboardTodayStats;
     },
     getDashboardCounts: async ({ userId, detailedMode, since }) => {
       const { count: farmsCount, error: farmsError } = await supabase
@@ -313,7 +338,7 @@ export class SupabaseDataAccess implements DataAccess {
       if (error) throw error;
       return data ?? [];
     },
-    getRecentActivities: async ({ userId, limit }) => {
+    getRecentActivities: async ({ userId, limit }): Promise<DashboardActivityRows> => {
       const { data: farms, error: farmsError } = await supabase
         .from('farms')
         .select('id, name')
@@ -358,7 +383,7 @@ export class SupabaseDataAccess implements DataAccess {
         expense: results[3]?.data ?? [],
         fertigation: results[4]?.data ?? [],
         dailyNotes: results[5]?.data ?? [],
-      };
+      } as unknown as DashboardActivityRows;
     },
   };
   readonly reports: DataAccess['reports'] = {

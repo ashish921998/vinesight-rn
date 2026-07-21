@@ -1,4 +1,11 @@
-import type { DataAccess } from './DataAccess';
+import type { DataAccess, DelegatedLogPayload } from './DataAccess';
+import type {
+  Worker,
+  WorkerAttendance,
+  WorkerSettlement,
+  WorkerTransaction,
+} from '@/types/database';
+import type { DelegatedActivityItem, ProfessionalWorkspace } from '@/services/delegated-logs';
 
 /**
  * Small deterministic fake for unit tests and future offline work.
@@ -9,12 +16,12 @@ import type { DataAccess } from './DataAccess';
  */
 export class InMemoryDataAccess implements DataAccess {
   readonly isConfigured = () => false;
-  readonly workersById = new Map<number, Record<string, unknown>>();
-  readonly workerAttendance: Array<Record<string, unknown>> = [];
-  readonly workerSettlements: Array<Record<string, unknown>> = [];
-  readonly workerTransactions: Array<Record<string, unknown>> = [];
-  professionalWorkspace: unknown = null;
-  delegatedActivity: unknown[] = [];
+  readonly workersById = new Map<number, Worker>();
+  readonly workerAttendance: WorkerAttendance[] = [];
+  readonly workerSettlements: WorkerSettlement[] = [];
+  readonly workerTransactions: WorkerTransaction[] = [];
+  professionalWorkspace: ProfessionalWorkspace | null = null;
+  delegatedActivity: DelegatedActivityItem[] = [];
   private readonly unsupported = (operation: string): never => {
     throw new Error(`InMemoryDataAccess does not implement ${operation}`);
   };
@@ -39,10 +46,10 @@ export class InMemoryDataAccess implements DataAccess {
     createSeason: async () => undefined,
     getById: async (farmId) => this.unsupported(`farms.getById(${farmId})`),
     listForUser: async () => [],
-    create: async (payload) => payload,
+    create: async () => this.unsupported('farms.create'),
     reorder: async () => undefined,
-    update: async (_farmId, _userId, updates) => updates,
-    updateWaterLevel: async (_farmId, updates) => updates,
+    update: async () => this.unsupported('farms.update'),
+    updateWaterLevel: async () => this.unsupported('farms.updateWaterLevel'),
     remove: async () => undefined,
   };
   readonly records: DataAccess['records'] = {
@@ -69,6 +76,7 @@ export class InMemoryDataAccess implements DataAccess {
       farms: [],
       overdueTasks: [],
       recentLogFarmIds: [],
+      recentLogError: null,
       phiDeadlines: [],
     }),
     getDashboardCounts: async () => ({
@@ -97,7 +105,7 @@ export class InMemoryDataAccess implements DataAccess {
     getAttendance: async ({ workerId, periodStart, periodEnd, farmId }) =>
       this.workerAttendance.filter((record) => {
         const date = String(record.date);
-        const farmIds = (record.farm_ids as number[] | undefined) ?? [];
+        const farmIds = record.farm_ids ?? [];
         return (
           record.worker_id === workerId &&
           date >= periodStart &&
@@ -107,15 +115,14 @@ export class InMemoryDataAccess implements DataAccess {
         );
       }),
     createSettlement: async (payload) => {
-      const record = { id: this.workerSettlements.length + 1, ...payload };
+      const record: WorkerSettlement = { id: this.workerSettlements.length + 1, ...payload };
       this.workerSettlements.push(record);
       return record;
     },
     createTransaction: async (payload) => {
       this.workerTransactions.push({ id: this.workerTransactions.length + 1, ...payload });
     },
-    getAdvanceBalance: async (workerId) =>
-      (this.workersById.get(workerId)?.advance_balance as number | null | undefined) ?? null,
+    getAdvanceBalance: async (workerId) => this.workersById.get(workerId)?.advance_balance ?? null,
     updateAdvanceBalance: async (workerId, advanceBalance) => {
       const worker = this.workersById.get(workerId);
       if (worker) worker.advance_balance = advanceBalance;
@@ -128,12 +135,10 @@ export class InMemoryDataAccess implements DataAccess {
   readonly delegatedLogs: DataAccess['delegatedLogs'] = {
     getProfessionalWorkspace: async () => this.professionalWorkspace,
     createDelegatedLog: async (payload) => {
-      const record = { id: this.delegatedActivity.length + 1, ...payload };
-      this.delegatedActivity.push(record);
-      return record;
+      return payload.p_payload as DelegatedLogPayload;
     },
     getDelegatedFarmActivity: async () => this.delegatedActivity,
-    updateDelegatedLog: async (payload) => payload,
+    updateDelegatedLog: async () => this.unsupported('delegatedLogs.updateDelegatedLog'),
     deleteDelegatedLog: async () => undefined,
   };
 }

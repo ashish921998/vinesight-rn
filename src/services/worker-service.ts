@@ -28,28 +28,23 @@ export async function calculateWorkerSettlement(
   periodEnd: string,
 ): Promise<SettlementCalculation> {
   // Get worker's default rate
-  const worker = (await getDataAccess().workers.getWorker(workerId)) as {
-    daily_rate: number;
-  };
+  const worker = await getDataAccess().workers.getWorker(workerId);
+  if (!worker) throw new Error(`Worker ${workerId} not found`);
 
   // Get attendance records for period
-  const attendance = (await getDataAccess().workers.getAttendance({
+  const attendance = await getDataAccess().workers.getAttendance({
     workerId,
     periodStart,
     periodEnd,
     farmId,
-  })) as Array<{
-    date: string;
-    daily_rate_override?: number | null;
-    work_status: 'full_day' | 'half_day';
-    work_type: string;
-  }>;
+  });
 
   let totalDays = 0;
   let grossAmount = 0;
   const details: SettlementCalculation['attendance_details'] = [];
 
   for (const record of attendance || []) {
+    if (record.work_status === 'absent') continue;
     const rate = record.daily_rate_override ?? worker.daily_rate;
     const dayFraction = record.work_status === 'full_day' ? 1 : 0.5;
     const earnings = rate * dayFraction;
@@ -80,7 +75,7 @@ export async function createWorkerSettlement(
   settlement: WorkerSettlementInsert,
 ): Promise<WorkerSettlement> {
   const status = settlement.status ?? 'confirmed';
-  const createdSettlement = (await getDataAccess().workers.createSettlement({
+  const createdSettlement = await getDataAccess().workers.createSettlement({
     worker_id: settlement.worker_id,
     farm_id: settlement.farm_id ?? null,
     period_start: settlement.period_start,
@@ -92,7 +87,10 @@ export async function createWorkerSettlement(
     status,
     notes: settlement.notes ?? null,
     confirmed_at: status === 'confirmed' ? new Date().toISOString() : null,
-  })) as WorkerSettlement & { id: number };
+  });
+  if (createdSettlement.id === undefined) {
+    throw new Error('Created worker settlement did not return an id');
+  }
 
   if (status === 'confirmed') {
     try {

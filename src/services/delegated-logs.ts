@@ -1,4 +1,5 @@
 import { getDataAccess } from '@/data-access';
+import type { DelegatedLogPayload } from '@/data-access/DataAccess';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -100,13 +101,13 @@ export type DelegatedLogFormInput = Extract<EntryLogFormInput, { type: Delegated
 export function buildDelegatedLogPayload(
   input: DelegatedLogFormInput,
   farm: DelegatedLogFarmContext,
-): Record<string, unknown> {
+): DelegatedLogPayload {
   const mapped = buildEntryLogRecordFields(input, farm);
   return { ...mapped.fields };
 }
 
 export async function getProfessionalWorkspace(): Promise<ProfessionalWorkspace | null> {
-  return (await getDataAccess().delegatedLogs.getProfessionalWorkspace()) as ProfessionalWorkspace | null;
+  return getDataAccess().delegatedLogs.getProfessionalWorkspace();
 }
 
 export async function createDelegatedLog(input: {
@@ -115,16 +116,16 @@ export async function createDelegatedLog(input: {
   farmId: number;
   recordType: DelegatedLogType;
   date: string;
-  payload: Record<string, unknown>;
-}): Promise<Record<string, unknown>> {
-  return (await getDataAccess().delegatedLogs.createDelegatedLog({
+  payload: DelegatedLogPayload;
+}): Promise<DelegatedLogPayload> {
+  return getDataAccess().delegatedLogs.createDelegatedLog({
     p_organization_id: input.organizationId,
     p_client_user_id: input.clientUserId,
     p_farm_id: input.farmId,
     p_record_type: input.recordType,
     p_date: input.date,
     p_payload: input.payload,
-  })) as Record<string, unknown>;
+  });
 }
 
 export async function getDelegatedFarmActivity(input: {
@@ -132,12 +133,11 @@ export async function getDelegatedFarmActivity(input: {
   clientUserId: string;
   farmId: number;
 }): Promise<DelegatedActivityItem[]> {
-  const data = await getDataAccess().delegatedLogs.getDelegatedFarmActivity({
+  return getDataAccess().delegatedLogs.getDelegatedFarmActivity({
     p_organization_id: input.organizationId,
     p_client_user_id: input.clientUserId,
     p_farm_id: input.farmId,
   });
-  return data as DelegatedActivityItem[];
 }
 
 export async function updateDelegatedLog(

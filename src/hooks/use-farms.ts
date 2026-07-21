@@ -132,7 +132,7 @@ export async function ensureInitialFarmSeasonForFarmId(
   seasonNameOverride?: string,
 ): Promise<void> {
   const userId = await getUserId();
-  const farm = (await getDataAccess().farms.getById(farmId, userId)) as Farm;
+  const farm = await getDataAccess().farms.getById(farmId, userId);
   await ensureInitialFarmSeason(farm, userId, seasonNameOverride);
 }
 
@@ -149,7 +149,7 @@ export function useFarms() {
     queryFn: async (): Promise<Farm[]> => {
       const userId = await getUserId();
 
-      return (await getDataAccess().farms.listForUser(userId)) as Farm[];
+      return getDataAccess().farms.listForUser(userId);
     },
   });
 }
@@ -162,7 +162,7 @@ export function useFarm(id: number | undefined) {
     queryKey: queryKeys.farms.detail(id!),
     queryFn: async (): Promise<Farm> => {
       const userId = await getUserId();
-      return (await getDataAccess().farms.getById(id!, userId)) as Farm;
+      return getDataAccess().farms.getById(id!, userId);
     },
     enabled: !!id && !isNaN(id),
   });
@@ -190,7 +190,7 @@ export function useCreateFarm() {
           : { ...farmPayload, user_id: userId };
 
         try {
-          data = (await getDataAccess().farms.create(insertPayload)) as Farm;
+          data = await getDataAccess().farms.create(insertPayload);
           break;
         } catch (error) {
           const typedError = error as { code?: string; message?: string };
@@ -309,7 +309,7 @@ export function useUpdateFarm() {
     mutationFn: async ({ id, updates }: { id: number; updates: FarmUpdate }): Promise<Farm> => {
       const userId = await getUserId();
 
-      return (await getDataAccess().farms.update(id, userId, updates)) as Farm;
+      return getDataAccess().farms.update(id, userId, updates);
     },
     onSuccess: (updatedFarm) => {
       // Update in cache
@@ -340,10 +340,10 @@ export function useUpdateFarmWaterLevel() {
       farmId: number;
       remainingWater: number;
     }): Promise<Farm> => {
-      return (await getDataAccess().farms.updateWaterLevel(farmId, {
+      return getDataAccess().farms.updateWaterLevel(farmId, {
         remaining_water: remainingWater,
         water_calculation_updated_at: toSupabaseTimestampString(new Date()),
-      })) as Farm;
+      });
     },
     onSuccess: (updatedFarm) => {
       // Update in cache
@@ -420,7 +420,7 @@ export function usePrefetchFarm() {
     queryClient.prefetchQuery({
       queryKey: queryKeys.farms.detail(id),
       queryFn: async () => {
-        return (await getDataAccess().farms.getById(id, await getUserId())) as Farm;
+        return getDataAccess().farms.getById(id, await getUserId());
       },
     });
   };

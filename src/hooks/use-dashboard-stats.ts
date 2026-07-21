@@ -255,9 +255,7 @@ export function useFarmsNeedingAttention() {
       const userId = await getUserId();
       if (!userId) return [];
 
-      const farms = (await getDataAccess().dashboardStats.listFarmsNeedingAttention(
-        userId,
-      )) as Farm[];
+      const farms = await getDataAccess().dashboardStats.listFarmsNeedingAttention(userId);
 
       if (!farms) return [];
 

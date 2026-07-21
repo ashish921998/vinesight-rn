@@ -34,10 +34,7 @@ export function useIrrigationRecords(farmId: number | undefined, seasonId?: numb
   return useQuery({
     queryKey: [...queryKeys.irrigationRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<IrrigationRecord[]> => {
-      return (await getDataAccess().records.listIrrigationByFarm(
-        farmId!,
-        seasonId,
-      )) as IrrigationRecord[];
+      return await getDataAccess().records.listIrrigationByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -49,7 +46,7 @@ export function useIrrigationRecordsByFarms(farmIds: number[]) {
     queryFn: async (): Promise<IrrigationRecord[]> => {
       if (farmIds.length === 0) return [];
 
-      return (await getDataAccess().records.listIrrigationByFarms(farmIds)) as IrrigationRecord[];
+      return getDataAccess().records.listIrrigationByFarms(farmIds);
     },
     enabled: farmIds.length > 0,
   });
@@ -72,7 +69,7 @@ export function useSprayRecords(farmId: number | undefined, seasonId?: number) {
   return useQuery({
     queryKey: [...queryKeys.sprayRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<SprayRecord[]> => {
-      return (await getDataAccess().records.listSprayByFarm(farmId!, seasonId)) as SprayRecord[];
+      return getDataAccess().records.listSprayByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -84,7 +81,7 @@ export function useSprayRecordsByFarms(farmIds: number[]) {
     queryFn: async (): Promise<SprayRecord[]> => {
       if (farmIds.length === 0) return [];
 
-      return (await getDataAccess().records.listSprayByFarms(farmIds)) as SprayRecord[];
+      return getDataAccess().records.listSprayByFarms(farmIds);
     },
     enabled: farmIds.length > 0,
   });
@@ -106,10 +103,7 @@ export function useFertigationRecords(farmId: number | undefined, seasonId?: num
   return useQuery({
     queryKey: [...queryKeys.fertigationRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<FertigationRecord[]> => {
-      return (await getDataAccess().records.listFertigationByFarm(
-        farmId!,
-        seasonId,
-      )) as FertigationRecord[];
+      return await getDataAccess().records.listFertigationByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -121,7 +115,7 @@ export function useFertigationRecordsByFarms(farmIds: number[]) {
     queryFn: async (): Promise<FertigationRecord[]> => {
       if (farmIds.length === 0) return [];
 
-      return (await getDataAccess().records.listFertigationByFarms(farmIds)) as FertigationRecord[];
+      return getDataAccess().records.listFertigationByFarms(farmIds);
     },
     enabled: farmIds.length > 0,
   });
@@ -143,10 +137,7 @@ export function useHarvestRecords(farmId: number | undefined, seasonId?: number)
   return useQuery({
     queryKey: [...queryKeys.harvestRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<HarvestRecord[]> => {
-      return (await getDataAccess().records.listHarvestByFarm(
-        farmId!,
-        seasonId,
-      )) as HarvestRecord[];
+      return await getDataAccess().records.listHarvestByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -158,7 +149,7 @@ export function useHarvestRecordsByFarms(farmIds: number[]) {
     queryFn: async (): Promise<HarvestRecord[]> => {
       if (farmIds.length === 0) return [];
 
-      return (await getDataAccess().records.listHarvestByFarms(farmIds)) as HarvestRecord[];
+      return getDataAccess().records.listHarvestByFarms(farmIds);
     },
     enabled: farmIds.length > 0,
   });
@@ -180,10 +171,7 @@ export function useExpenseRecords(farmId: number | undefined, seasonId?: number)
   return useQuery({
     queryKey: [...queryKeys.expenseRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<ExpenseRecord[]> => {
-      return (await getDataAccess().records.listExpenseByFarm(
-        farmId!,
-        seasonId,
-      )) as ExpenseRecord[];
+      return await getDataAccess().records.listExpenseByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -195,7 +183,7 @@ export function useExpenseRecordsByFarms(farmIds: number[]) {
     queryFn: async (): Promise<ExpenseRecord[]> => {
       if (farmIds.length === 0) return [];
 
-      return (await getDataAccess().records.listExpenseByFarms(farmIds)) as ExpenseRecord[];
+      return getDataAccess().records.listExpenseByFarms(farmIds);
     },
     enabled: farmIds.length > 0,
   });
@@ -217,14 +205,14 @@ export async function fetchDailyNoteByDate(
   farmId: number,
   date: string,
 ): Promise<DailyNoteRecord | null> {
-  return (await getDataAccess().records.getDailyNote(farmId, date)) as DailyNoteRecord | null;
+  return getDataAccess().records.getDailyNote(farmId, date);
 }
 
 export function useDailyNoteByDate(farmId: number | undefined, date: string | undefined) {
   return useQuery({
     queryKey: queryKeys.dailyNotes.byDate(farmId!, date!),
     queryFn: async (): Promise<DailyNoteRecord | null> => {
-      return (await getDataAccess().records.getDailyNote(farmId!, date!)) as DailyNoteRecord | null;
+      return getDataAccess().records.getDailyNote(farmId!, date!);
     },
     enabled: !!farmId && !!date,
   });
@@ -234,10 +222,7 @@ export function useDailyNotes(farmId: number | undefined, seasonId?: number) {
   return useQuery({
     queryKey: [...queryKeys.dailyNotes.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<DailyNoteRecord[]> => {
-      return (await getDataAccess().records.listDailyNotesByFarm(
-        farmId!,
-        seasonId,
-      )) as DailyNoteRecord[];
+      return await getDataAccess().records.listDailyNotesByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -251,9 +236,7 @@ export function useDailyNotesByFarms(farmIds: number[]) {
     queryFn: async (): Promise<DailyNoteRecord[]> => {
       if (sortedFarmIds.length === 0) return [];
 
-      return (await getDataAccess().records.listDailyNotesByFarms(
-        sortedFarmIds,
-      )) as DailyNoteRecord[];
+      return await getDataAccess().records.listDailyNotesByFarms(sortedFarmIds);
     },
     enabled: sortedFarmIds.length > 0,
   });
@@ -273,13 +256,13 @@ export function useUpsertDailyNote() {
       notes: string | null;
     }): Promise<DailyNoteRecord> => {
       const seasonId = await resolveOrCreateSeasonIdForDate({ farmId: farm_id, date });
-      return (await getDataAccess().records.upsertDailyNote({
+      return getDataAccess().records.upsertDailyNote({
         farm_id,
         season_id: seasonId,
         date,
         notes: notes === null ? null : notes.trim(),
         updated_at: new Date().toISOString(),
-      })) as DailyNoteRecord;
+      });
     },
     onSuccess: (savedNote) => {
       queryClient.invalidateQueries({
@@ -480,9 +463,7 @@ export function useRecentSprayChemicals(farmId?: number, limit = 12) {
     queryKey: [...queryKeys.sprayRecords.lists(), 'recent_chemicals', { farmId: farmId ?? null }],
     queryFn: async (): Promise<RecentInputItem[]> => {
       return dedupeRecentItems(
-        parseRecentSprayRecords(
-          (await getDataAccess().records.listRecentSprays(farmId)) as RecentSprayRecordRow[],
-        ),
+        parseRecentSprayRecords(await getDataAccess().records.listRecentSprays(farmId)),
         limit,
       );
     },
@@ -526,11 +507,7 @@ export function useRecentFertigationItems(farmId?: number, limit = 12) {
     ],
     queryFn: async (): Promise<RecentInputItem[]> => {
       return dedupeRecentItems(
-        parseRecentFertigationRecords(
-          (await getDataAccess().records.listRecentFertigations(
-            farmId,
-          )) as RecentFertigationRecordRow[],
-        ),
+        parseRecentFertigationRecords(await getDataAccess().records.listRecentFertigations(farmId)),
         limit,
       );
     },
