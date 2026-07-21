@@ -13,13 +13,18 @@ import React from 'react';
 import { Pressable, Text, View, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol } from '@/components/ui/symbol';
+import { formatDate } from '@/i18n/format';
 import { componentRadius, fontSize, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 export interface DateFieldProps {
-  /** Current date value (controlled). */
-  value: Date;
+  /**
+   * Current date value (controlled). `null` means "no date set" and renders the
+   * placeholder instead of a formatted date — use it for optional dates so an
+   * empty value doesn't masquerade as today.
+   */
+  value: Date | null;
   /** Called when the user confirms a new date. */
   onChange: (date: Date) => void;
   /** Earliest selectable date. */
@@ -28,6 +33,8 @@ export interface DateFieldProps {
   maximumDate?: Date;
   /** Optional label rendered above the trigger. */
   label?: string;
+  /** Placeholder shown when `value` is null. Defaults to "Select date". */
+  placeholder?: string;
   /** Optional hint rendered below the trigger. */
   hint?: string;
   /** Disable the trigger. */
@@ -55,13 +62,15 @@ export function ensureValidDate(value: Date | undefined | null): Date {
 export function DateFieldTrigger({
   value,
   label,
+  placeholder,
   hint,
   disabled,
   testID,
   onPress,
 }: {
-  value: Date;
+  value: Date | null;
   label?: string;
+  placeholder?: string;
   hint?: string;
   disabled?: boolean;
   testID?: string;
@@ -70,11 +79,14 @@ export function DateFieldTrigger({
   const m3 = useM3();
   const { t } = useTranslation();
 
-  const formatted = value.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  // `formatDate` follows the active app language (en/hi/mr), not the device
+  // locale — a plain `toLocaleDateString(undefined)` would ignore the in-app
+  // language setting.
+  const formatted = value
+    ? formatDate(value, { year: 'numeric', month: 'short', day: 'numeric' })
+    : null;
+  const displayText =
+    formatted ?? placeholder ?? t('common.selectDate', { defaultValue: 'Select date' });
 
   return (
     <View style={{ width: '100%' }}>
@@ -95,7 +107,7 @@ export function DateFieldTrigger({
         testID={testID}
         accessibilityRole="button"
         accessibilityLabel={t('common.selectDate', { defaultValue: 'Select date' })}
-        accessibilityValue={{ text: formatted }}
+        accessibilityValue={{ text: displayText }}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -112,10 +124,10 @@ export function DateFieldTrigger({
         <Text
           style={{
             fontSize: fontSize.base,
-            color: m3.colorScheme.onSurface,
+            color: formatted ? m3.colorScheme.onSurface : m3.colorScheme.onSurfaceVariant,
           }}
         >
-          {formatted}
+          {displayText}
         </Text>
         <Symbol name="calendar" size={20} color={m3.colorScheme.onSurfaceVariant} />
       </Pressable>

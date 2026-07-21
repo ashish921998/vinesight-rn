@@ -53,6 +53,16 @@ jest.mock('@/components/ui/symbol', () => ({
   Symbol: () => null,
 }));
 
+// The trigger formats via the app-language formatter; stub it so the test
+// doesn't boot the full i18n stack (and to assert it is used, not the device
+// locale). ISO keeps the assertion locale-independent.
+jest.mock('@/i18n/format', () => ({
+  formatDate: (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+      date.getDate(),
+    ).padStart(2, '0')}`,
+}));
+
 jest.mock('@/styles/use-theme', () => ({
   useM3: () => ({
     colorScheme: {
@@ -121,5 +131,27 @@ describe('DateField iOS', () => {
     fireEvent.press(screen.getByText('common.done'));
 
     expect(onChange).toHaveBeenCalledWith(new Date(2026, 7, 5));
+  });
+
+  it('formats the value via the app-language formatter, not the device locale', () => {
+    const screen = render(<DateField value={new Date(2026, 6, 20)} onChange={jest.fn()} />);
+    // Stubbed formatDate returns ISO — proves the trigger routes through it.
+    expect(screen.getByText('2026-07-20')).toBeTruthy();
+  });
+
+  it('shows a placeholder (not today) when value is null', () => {
+    const screen = render(
+      <DateField value={null} onChange={jest.fn()} placeholder="No due date" />,
+    );
+    expect(screen.getByText('No due date')).toBeTruthy();
+  });
+
+  it('does not commit a date until the user confirms an empty field', () => {
+    const onChange = jest.fn();
+    const screen = render(<DateField value={null} onChange={onChange} />);
+
+    // Opening a null field must not fire onChange (nothing is "set" yet).
+    fireEvent.press(screen.getByLabelText('Select date'));
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

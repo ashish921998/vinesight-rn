@@ -397,7 +397,6 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         <DateField
           value={ensureValidDate(form.formState.plantingDate)}
           onChange={(date) => form.commitPlantingDate(date)}
-          label={t('farmForm.sections.plantingDate')}
           style={{ marginBottom: spacing[5] }}
         />
 
@@ -482,9 +481,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <View style={{ marginBottom: spacing[5] }}>
           <DateField
-            value={form.formState.dateOfPruning ?? new Date()}
+            value={form.formState.dateOfPruning ?? null}
             onChange={(date) => form.commitPruningDate(date)}
-            label={t('farmForm.fields.pruningDate.label')}
           />
           {form.formState.dateOfPruning ? (
             <Pressable

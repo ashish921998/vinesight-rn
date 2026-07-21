@@ -2906,11 +2906,7 @@ export function EntryForm({
 
       <View style={{ marginBottom: 16 }}>
         <DateField
-          value={(() => {
-            if (!dueDate) return new Date();
-            const parsed = parseDbDateToLocalDate(dueDate);
-            return parsed ?? new Date();
-          })()}
+          value={dueDate ? (parseDbDateToLocalDate(dueDate) ?? null) : null}
           onChange={(date) => setDueDate(formatLocalDate(date))}
           label={t('entryForm.taskForm.selectDueDateTitle')}
         />

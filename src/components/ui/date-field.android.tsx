@@ -19,6 +19,7 @@ export function DateField({
   minimumDate,
   maximumDate,
   label,
+  placeholder,
   hint,
   disabled,
   testID,
@@ -32,6 +33,7 @@ export function DateField({
       <DateFieldTrigger
         value={value}
         label={label}
+        placeholder={placeholder}
         hint={hint}
         disabled={disabled}
         testID={testID}
@@ -39,7 +41,7 @@ export function DateField({
       />
       {open ? (
         <DateTimePicker
-          value={value}
+          value={ensureValidDate(value)}
           mode="date"
           presentation="dialog"
           minimumDate={minimumDate}

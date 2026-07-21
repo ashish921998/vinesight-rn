@@ -9,7 +9,7 @@ import { createStartSeasonHref } from '@/utils/add-log-navigation';
 import { useRouter } from 'expo-router';
 import { FarmSelectModal } from '@/components/modals/farm-select-modal';
 import { useM3 } from '@/styles/use-theme';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
 import { formatLocalDate } from '@/utils/date';
 import { triggerHapticSuccess } from '@/utils/haptics';
@@ -145,16 +145,6 @@ export function TempWorkerForm({
         style={{ marginBottom: spacing[3] }}
       />
 
-      <Text
-        style={{
-          fontSize: fontSize.sm,
-          fontWeight: fontWeight.medium,
-          color: m3.surface.s700,
-          marginBottom: spacing[2],
-        }}
-      >
-        {t('workers.tempWorkers.form.fields.date.label')}
-      </Text>
       <DateField
         value={date}
         onChange={setDate}

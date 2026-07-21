@@ -21,6 +21,7 @@ export function DateField({
   minimumDate,
   maximumDate,
   label,
+  placeholder,
   hint,
   disabled,
   testID,
@@ -30,10 +31,12 @@ export function DateField({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [draftDate, setDraftDate] = useState(value);
+  // The picker wheel always needs a concrete date to sit on; when `value` is
+  // null (no date set) we open on today, but only commit via onChange on Done.
+  const [draftDate, setDraftDate] = useState(() => ensureValidDate(value));
 
   const close = () => {
-    setDraftDate(value);
+    setDraftDate(ensureValidDate(value));
     setOpen(false);
   };
 
@@ -42,11 +45,12 @@ export function DateField({
       <DateFieldTrigger
         value={value}
         label={label}
+        placeholder={placeholder}
         hint={hint}
         disabled={disabled}
         testID={testID}
         onPress={() => {
-          setDraftDate(value);
+          setDraftDate(ensureValidDate(value));
           setOpen(true);
         }}
       />
