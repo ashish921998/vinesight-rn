@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { getDataAccess } from '@/data-access';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmSeason, FarmUpdate } from '../types';
-import { TABLES, toSupabaseTimestampString } from '../types';
+import { toSupabaseTimestampString } from '../types';
 import { formatLocalDate } from '../utils/date';
 
 // ============================================================
@@ -56,25 +56,10 @@ async function resolveNextFarmDisplayOrder(userId: string): Promise<{
   supportsDisplayOrder: boolean;
   displayOrder: number;
 }> {
-  const { data: firstFarm, error: firstFarmError } = await getDataAccess()
-    .farms.query(TABLES.FARMS)
-    .select('display_order')
-    .eq('user_id', userId)
-    .order('display_order', { ascending: true, nullsFirst: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (firstFarmError && !isMissingDisplayOrderColumn(firstFarmError)) {
-    throw firstFarmError;
-  }
-
-  const supportsDisplayOrder = !isMissingDisplayOrderColumn(firstFarmError);
-  const displayOrder =
-    supportsDisplayOrder && typeof firstFarm?.display_order === 'number'
-      ? firstFarm.display_order - 1
-      : 0;
-
-  return { supportsDisplayOrder, displayOrder };
+  return (await getDataAccess().farms.getNextDisplayOrder(userId)) as {
+    supportsDisplayOrder: boolean;
+    displayOrder: number;
+  };
 }
 
 /**
@@ -98,38 +83,35 @@ export async function ensureInitialFarmSeason(
   // auto-started here: the start date below would come from the previous
   // cycle's pruning date and overlap the ended seasons, silently re-capturing
   // historical records. Between-seasons records stay unassigned instead.
-  const { data: existingSeason, error: existingSeasonError } = await getDataAccess()
-    .farms.query(TABLES.FARM_SEASONS)
-    .select('id')
-    .eq('farm_id', farm.id)
-    .limit(1)
-    .maybeSingle();
-
-  if (existingSeasonError) {
-    if (existingSeasonError.code === '42P01') return;
-    throw existingSeasonError;
+  let existingSeason: { id?: number } | null;
+  try {
+    existingSeason = (await getDataAccess().farms.getExistingSeason(farm.id)) as {
+      id?: number;
+    } | null;
+  } catch (error) {
+    if ((error as { code?: string }).code === '42P01') return;
+    throw error;
   }
   if (existingSeason?.id) return;
 
   const startDate = farm.date_of_pruning ?? formatLocalDate(new Date());
   const seasonName = seasonNameOverride ?? `Season ${new Date().getFullYear()}`;
 
-  const { error: rpcError } = await getDataAccess().farms.call('start_farm_season', {
-    p_farm_id: farm.id,
-    p_start_date: startDate,
-    p_template_key: null,
-    p_config_json: null,
-    p_season_name: seasonName,
-  });
-
-  if (!rpcError) return;
-  if (!isRpcFunctionMissing(rpcError)) {
-    throw rpcError;
+  try {
+    await getDataAccess().farms.startSeason({
+      p_farm_id: farm.id,
+      p_start_date: startDate,
+      p_template_key: null,
+      p_config_json: null,
+      p_season_name: seasonName,
+    });
+    return;
+  } catch (rpcError) {
+    if (!isRpcFunctionMissing(rpcError as { code?: string; message?: string })) throw rpcError;
   }
 
-  const { error: insertError } = await getDataAccess()
-    .farms.query(TABLES.FARM_SEASONS)
-    .insert({
+  try {
+    await getDataAccess().farms.createSeason({
       farm_id: farm.id,
       user_id: userId,
       start_date: startDate,
@@ -137,11 +119,10 @@ export async function ensureInitialFarmSeason(
       season_name: seasonName,
       crop_type_snapshot: farm.crop,
     } satisfies Omit<FarmSeason, 'id' | 'created_at' | 'updated_at'>);
-
-  if (insertError) {
-    if (insertError.code === '42P01') return;
+  } catch (insertError) {
+    if ((insertError as { code?: string }).code === '42P01') return;
     // A concurrent create or DB trigger may have created the active season after our check.
-    if (insertError.code === '23505') return;
+    if ((insertError as { code?: string }).code === '23505') return;
     throw insertError;
   }
 }
@@ -151,14 +132,7 @@ export async function ensureInitialFarmSeasonForFarmId(
   seasonNameOverride?: string,
 ): Promise<void> {
   const userId = await getUserId();
-  const { data: farm, error } = await getDataAccess()
-    .farms.query(TABLES.FARMS)
-    .select('*')
-    .eq('id', farmId)
-    .eq('user_id', userId)
-    .single();
-
-  if (error) throw error;
+  const farm = (await getDataAccess().farms.getById(farmId, userId)) as Farm;
   await ensureInitialFarmSeason(farm, userId, seasonNameOverride);
 }
 
@@ -175,26 +149,7 @@ export function useFarms() {
     queryFn: async (): Promise<Farm[]> => {
       const userId = await getUserId();
 
-      const { data, error } = await getDataAccess()
-        .farms.query(TABLES.FARMS)
-        .select('*')
-        .eq('user_id', userId)
-        .order('display_order', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: false });
-
-      if (isMissingDisplayOrderColumn(error)) {
-        const { data: fallbackData, error: fallbackError } = await getDataAccess()
-          .farms.query(TABLES.FARMS)
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
-
-        if (fallbackError) throw fallbackError;
-        return fallbackData ?? [];
-      }
-
-      if (error) throw error;
-      return data ?? [];
+      return (await getDataAccess().farms.listForUser(userId)) as Farm[];
     },
   });
 }
@@ -207,15 +162,7 @@ export function useFarm(id: number | undefined) {
     queryKey: queryKeys.farms.detail(id!),
     queryFn: async (): Promise<Farm> => {
       const userId = await getUserId();
-      const { data, error } = await getDataAccess()
-        .farms.query(TABLES.FARMS)
-        .select('*')
-        .eq('id', id)
-        .eq('user_id', userId)
-        .single();
-
-      if (error) throw error;
-      return data;
+      return (await getDataAccess().farms.getById(id!, userId)) as Farm;
     },
     enabled: !!id && !isNaN(id),
   });
@@ -242,20 +189,13 @@ export function useCreateFarm() {
           ? { ...farmPayload, user_id: userId, display_order: displayOrder }
           : { ...farmPayload, user_id: userId };
 
-        const { data: insertedFarm, error } = await getDataAccess()
-          .farms.query(TABLES.FARMS)
-          .insert(insertPayload)
-          .select()
-          .single();
-
-        if (!error) {
-          data = insertedFarm;
+        try {
+          data = (await getDataAccess().farms.create(insertPayload)) as Farm;
           break;
-        }
-
-        lastError = error;
-        if (!isUniqueDisplayOrderViolation(error)) {
-          throw error;
+        } catch (error) {
+          const typedError = error as { code?: string; message?: string };
+          lastError = typedError;
+          if (!isUniqueDisplayOrderViolation(typedError)) throw error;
         }
       }
 
@@ -304,14 +244,19 @@ export function useReorderFarms() {
 
   return useMutation({
     mutationFn: async (orderedFarmIds: number[]): Promise<number[]> => {
-      const { error } = await getDataAccess().farms.call('reorder_farms', {
-        p_ordered_farm_ids: orderedFarmIds,
-      });
-
-      if (isRpcFunctionMissing(error) || isMissingDisplayOrderColumn(error)) {
-        throw new Error('Farm ordering is not available until the latest database migration runs.');
+      try {
+        await getDataAccess().farms.reorder(orderedFarmIds);
+      } catch (error) {
+        if (
+          isRpcFunctionMissing(error as { code?: string; message?: string }) ||
+          isMissingDisplayOrderColumn(error as { code?: string; message?: string })
+        ) {
+          throw new Error(
+            'Farm ordering is not available until the latest database migration runs.',
+          );
+        }
+        throw error;
       }
-      if (error) throw error;
 
       return orderedFarmIds;
     },
@@ -364,16 +309,7 @@ export function useUpdateFarm() {
     mutationFn: async ({ id, updates }: { id: number; updates: FarmUpdate }): Promise<Farm> => {
       const userId = await getUserId();
 
-      const { data, error } = await getDataAccess()
-        .farms.query(TABLES.FARMS)
-        .update(updates)
-        .eq('id', id)
-        .eq('user_id', userId) // Verify ownership
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return (await getDataAccess().farms.update(id, userId, updates)) as Farm;
     },
     onSuccess: (updatedFarm) => {
       // Update in cache
@@ -404,18 +340,10 @@ export function useUpdateFarmWaterLevel() {
       farmId: number;
       remainingWater: number;
     }): Promise<Farm> => {
-      const { data, error } = await getDataAccess()
-        .farms.query(TABLES.FARMS)
-        .update({
-          remaining_water: remainingWater,
-          water_calculation_updated_at: toSupabaseTimestampString(new Date()),
-        })
-        .eq('id', farmId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return (await getDataAccess().farms.updateWaterLevel(farmId, {
+        remaining_water: remainingWater,
+        water_calculation_updated_at: toSupabaseTimestampString(new Date()),
+      })) as Farm;
     },
     onSuccess: (updatedFarm) => {
       // Update in cache
@@ -441,13 +369,7 @@ export function useDeleteFarm() {
     mutationFn: async (id: number): Promise<void> => {
       const userId = await getUserId();
 
-      const { error } = await getDataAccess()
-        .farms.query(TABLES.FARMS)
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId); // Verify ownership
-
-      if (error) throw error;
+      await getDataAccess().farms.remove(id, userId);
     },
     onSuccess: (_, deletedId) => {
       // Remove from cache
@@ -498,14 +420,7 @@ export function usePrefetchFarm() {
     queryClient.prefetchQuery({
       queryKey: queryKeys.farms.detail(id),
       queryFn: async () => {
-        const { data, error } = await getDataAccess()
-          .farms.query(TABLES.FARMS)
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (error) throw error;
-        return data;
+        return (await getDataAccess().farms.getById(id, await getUserId())) as Farm;
       },
     });
   };

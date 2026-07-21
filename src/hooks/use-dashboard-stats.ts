@@ -9,7 +9,7 @@ import { getUserId } from '../lib/auth-utils';
 import { queryKeys } from './query-keys';
 import { useAppModeStore } from '../stores/app-mode-store';
 import type { Farm } from '../types';
-import { TABLES, isLowWater } from '../types';
+import { isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
 import { formatCurrency } from '@/i18n/format';
 import { useCurrency } from './use-currency';
@@ -48,8 +48,6 @@ interface RecentLogFarmIdRow {
   farm_id: number;
 }
 
-const RECENT_LOG_WINDOW_DAYS = 7;
-const PHI_DEADLINE_WINDOW_DAYS = 3;
 const severityRank: Record<TodayNeedAttentionSeverity, number> = {
   high: 0,
   medium: 1,
@@ -65,12 +63,27 @@ export function useTodayNeedsAttention(limit: number = 10) {
       const userId = await getUserId();
       if (!userId) return [];
 
-      const { data: farms, error: farmsError } = await getDataAccess()
-        .dashboardStats.query(TABLES.FARMS)
-        .select('id, name, remaining_water, total_tank_capacity')
-        .eq('user_id', userId);
-
-      if (farmsError) throw farmsError;
+      const todayStats = (await getDataAccess().dashboardStats.getTodayStats({
+        userId,
+        limit,
+      })) as {
+        farms: Array<{
+          id?: number;
+          name?: string;
+          remaining_water?: number | null;
+          total_tank_capacity?: number | null;
+        }>;
+        overdueTasks: Array<{ id?: number; farm_id?: number; title?: string; due_date?: string }>;
+        recentLogFarmIds: RecentLogFarmIdRow[];
+        recentLogError?: { message: string } | null;
+        phiDeadlines: Array<{
+          id?: number;
+          farm_id?: number;
+          safe_harvest_date?: string;
+          chemical?: string;
+        }>;
+      };
+      const { farms, overdueTasks, recentLogFarmIds, recentLogError, phiDeadlines } = todayStats;
       if (!farms || farms.length === 0) return [];
 
       const farmIds = farms
@@ -84,57 +97,20 @@ export function useTodayNeedsAttention(limit: number = 10) {
           .map((farm) => [farm.id as number, farm.name ?? 'Farm']),
       );
 
-      const today = new Date();
-      const todayStr = toDateString(today);
-      const recentLogThreshold = new Date(today);
-      recentLogThreshold.setDate(recentLogThreshold.getDate() - RECENT_LOG_WINDOW_DAYS);
-      const recentLogThresholdStr = toDateString(recentLogThreshold);
-      const phiDeadlineThreshold = new Date(today);
-      phiDeadlineThreshold.setDate(phiDeadlineThreshold.getDate() + PHI_DEADLINE_WINDOW_DAYS);
-      const phiDeadlineThresholdStr = toDateString(phiDeadlineThreshold);
-
-      const [overdueTasksResult, recentLogFarmsResult, phiDeadlinesResult] = await Promise.all([
-        getDataAccess()
-          .dashboardStats.query('task_reminders')
-          .select('id, farm_id, title, due_date')
-          .in('farm_id', farmIds)
-          .eq('completed', false)
-          .not('due_date', 'is', null)
-          .lt('due_date', todayStr)
-          .order('due_date', { ascending: true })
-          .limit(limit),
-        getDataAccess()
-          .dashboardStats.call('get_recent_log_farm_ids', {
-            p_farm_ids: farmIds,
-            p_since: recentLogThresholdStr,
-          })
-          .returns<RecentLogFarmIdRow[]>(),
-        getDataAccess()
-          .dashboardStats.query(TABLES.SPRAY_RECORDS)
-          .select('id, farm_id, safe_harvest_date, chemical')
-          .in('farm_id', farmIds)
-          .not('safe_harvest_date', 'is', null)
-          .gte('safe_harvest_date', todayStr)
-          .lte('safe_harvest_date', phiDeadlineThresholdStr)
-          .order('safe_harvest_date', { ascending: true }),
-      ]);
-
-      if (overdueTasksResult.error) throw overdueTasksResult.error;
-      if (phiDeadlinesResult.error) throw phiDeadlinesResult.error;
       // RPC may not be deployed in all environments — degrade gracefully rather than
       // surfacing a dev warning overlay on every screen.
-      if (recentLogFarmsResult.error) {
+      if (recentLogError) {
         if (__DEV__) {
           console.info(
             '[useTodayNeedsAttention] recentLogFarms RPC unavailable:',
-            recentLogFarmsResult.error.message,
+            recentLogError.message,
           );
         }
       }
 
       const items: TodayNeedAttentionItem[] = [];
 
-      overdueTasksResult.data?.forEach((task) => {
+      overdueTasks.forEach((task) => {
         if (typeof task.farm_id !== 'number') return;
         items.push({
           id: `overdue-task-${task.id}`,
@@ -161,9 +137,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
       });
 
       const farmsWithRecentLogs = new Set<number>();
-      const recentLogFarmRows = Array.isArray(recentLogFarmsResult.data)
-        ? recentLogFarmsResult.data
-        : [];
+      const recentLogFarmRows = Array.isArray(recentLogFarmIds) ? recentLogFarmIds : [];
       recentLogFarmRows.forEach((record: RecentLogFarmIdRow) => {
         if (typeof record.farm_id === 'number') {
           farmsWithRecentLogs.add(record.farm_id);
@@ -172,7 +146,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
 
       // Only flag farms as missing logs when the RPC succeeded; if unavailable,
       // skip the loop entirely to avoid false "needs attention" warnings.
-      if (!recentLogFarmsResult.error) {
+      if (!recentLogError) {
         farms.forEach((farm) => {
           if (typeof farm.id !== 'number') return;
           if (farmsWithRecentLogs.has(farm.id)) return;
@@ -187,7 +161,7 @@ export function useTodayNeedsAttention(limit: number = 10) {
       }
 
       const phiDeadlineFarms = new Set<number>();
-      phiDeadlinesResult.data?.forEach((record) => {
+      phiDeadlines.forEach((record) => {
         if (typeof record.farm_id !== 'number') return;
         if (phiDeadlineFarms.has(record.farm_id)) return;
         phiDeadlineFarms.add(record.farm_id);
@@ -246,98 +220,24 @@ export function useDashboardStats() {
       const userId = await getUserId();
       if (!userId) throw new Error('Not authenticated');
 
-      // Fetch farms count
-      const { count: farmsCount } = await getDataAccess()
-        .dashboardStats.query(TABLES.FARMS)
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-
-      // In simplified mode the workers/tasks metric cards are hidden, so skip
-      // their count queries to avoid wasted network calls.
-      let workersCount = 0;
-      if (detailedMode) {
-        const { count } = await getDataAccess()
-          .dashboardStats.query(TABLES.WORKERS)
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('is_active', true);
-        workersCount = count ?? 0;
-      }
-
-      // Get recent activities count (last 7 days)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const dateStr = toDateString(sevenDaysAgo);
-
-      // Get farm IDs first
-      const { data: farms } = await getDataAccess()
-        .dashboardStats.query(TABLES.FARMS)
-        .select('id')
-        .eq('user_id', userId);
-
-      const farmIds = farms?.map((f) => f.id) ?? [];
-
-      let activitiesCount = 0;
-      let pendingTasksCount = 0;
-
-      if (farmIds.length > 0) {
-        // Only run the task-reminders count in detailed mode; simplified mode
-        // hides the tasks card so the query would be wasted.
-        const countQueries = [
-          getDataAccess()
-            .dashboardStats.query(TABLES.IRRIGATION_RECORDS)
-            .select('*', { count: 'exact', head: true })
-            .in('farm_id', farmIds)
-            .gte('date', dateStr),
-          getDataAccess()
-            .dashboardStats.query(TABLES.SPRAY_RECORDS)
-            .select('*', { count: 'exact', head: true })
-            .in('farm_id', farmIds)
-            .gte('date', dateStr),
-          getDataAccess()
-            .dashboardStats.query(TABLES.HARVEST_RECORDS)
-            .select('*', { count: 'exact', head: true })
-            .in('farm_id', farmIds)
-            .gte('date', dateStr),
-          getDataAccess()
-            .dashboardStats.query(TABLES.EXPENSE_RECORDS)
-            .select('*', { count: 'exact', head: true })
-            .in('farm_id', farmIds)
-            .gte('date', dateStr),
-          getDataAccess()
-            .dashboardStats.query(TABLES.FERTIGATION_RECORDS)
-            .select('*', { count: 'exact', head: true })
-            .in('farm_id', farmIds)
-            .gte('date', dateStr),
-        ];
-        if (detailedMode) {
-          countQueries.push(
-            getDataAccess()
-              .dashboardStats.query('task_reminders')
-              .select('*', { count: 'exact', head: true })
-              .in('farm_id', farmIds)
-              .eq('completed', false),
-          );
-        }
-
-        const counts = await Promise.all(countQueries);
-        const [irrigation, spray, harvest, expense, fertigation] = counts;
-
-        activitiesCount =
-          (irrigation.count ?? 0) +
-          (spray.count ?? 0) +
-          (harvest.count ?? 0) +
-          (expense.count ?? 0) +
-          (fertigation.count ?? 0);
-
-        pendingTasksCount = detailedMode ? (counts[5]?.count ?? 0) : 0;
-      }
-
+      const counts = (await getDataAccess().dashboardStats.getDashboardCounts({
+        userId,
+        detailedMode,
+        since: dateStr,
+      })) as {
+        farmsCount: number;
+        workersCount: number;
+        activitiesCount: number;
+        pendingTasksCount: number;
+      };
       return {
-        farmsCount: farmsCount ?? 0,
-        activeWorkersCount: workersCount,
-        recentActivitiesCount: activitiesCount,
-        pendingTasksCount,
+        farmsCount: counts.farmsCount,
+        activeWorkersCount: counts.workersCount,
+        recentActivitiesCount: counts.activitiesCount,
+        pendingTasksCount: counts.pendingTasksCount,
       };
     },
     staleTime: 30000, // 30 seconds
@@ -355,10 +255,9 @@ export function useFarmsNeedingAttention() {
       const userId = await getUserId();
       if (!userId) return [];
 
-      const { data: farms } = await getDataAccess()
-        .dashboardStats.query(TABLES.FARMS)
-        .select('*')
-        .eq('user_id', userId);
+      const farms = (await getDataAccess().dashboardStats.listFarmsNeedingAttention(
+        userId,
+      )) as Farm[];
 
       if (!farms) return [];
 
@@ -387,60 +286,40 @@ export function useRecentActivities(limit: number = 5) {
       if (!userId) return [];
 
       // Get farms first
-      const { data: farms } = await getDataAccess()
-        .dashboardStats.query(TABLES.FARMS)
-        .select('id, name')
-        .eq('user_id', userId);
+      type RecentRow = {
+        id: string | number;
+        farm_id: number;
+        date: string;
+        duration?: number;
+        chemical?: string;
+        quantity?: number;
+        grade?: string;
+        cost?: number;
+        type?: string;
+        notes?: string;
+      };
+      const recent = (await getDataAccess().dashboardStats.getRecentActivities({
+        userId,
+        limit,
+      })) as {
+        farms: Array<{ id: number; name: string }>;
+        irrigation: RecentRow[];
+        spray: RecentRow[];
+        harvest: RecentRow[];
+        expense: RecentRow[];
+        fertigation: RecentRow[];
+        dailyNotes: RecentRow[];
+      };
+      const { farms, irrigation, spray, harvest, expense, fertigation, dailyNotes } = recent;
 
       if (!farms || farms.length === 0) return [];
 
-      const farmIds = farms.map((f) => f.id);
       const farmMap = new Map(farms.map((f) => [f.id, f.name]));
-
-      // Fetch recent records from each table
-      const [irrigation, spray, harvest, expense, fertigation, dailyNotes] = await Promise.all([
-        getDataAccess()
-          .dashboardStats.query(TABLES.IRRIGATION_RECORDS)
-          .select('id, farm_id, date, duration')
-          .in('farm_id', farmIds)
-          .order('date', { ascending: false })
-          .limit(limit),
-        getDataAccess()
-          .dashboardStats.query(TABLES.SPRAY_RECORDS)
-          .select('id, farm_id, date, chemical')
-          .in('farm_id', farmIds)
-          .order('date', { ascending: false })
-          .limit(limit),
-        getDataAccess()
-          .dashboardStats.query(TABLES.HARVEST_RECORDS)
-          .select('id, farm_id, date, quantity, grade')
-          .in('farm_id', farmIds)
-          .order('date', { ascending: false })
-          .limit(limit),
-        getDataAccess()
-          .dashboardStats.query(TABLES.EXPENSE_RECORDS)
-          .select('id, farm_id, date, type, cost')
-          .in('farm_id', farmIds)
-          .order('date', { ascending: false })
-          .limit(limit),
-        getDataAccess()
-          .dashboardStats.query(TABLES.FERTIGATION_RECORDS)
-          .select('id, farm_id, date')
-          .in('farm_id', farmIds)
-          .order('date', { ascending: false })
-          .limit(limit),
-        getDataAccess()
-          .dashboardStats.query(TABLES.DAILY_NOTES)
-          .select('id, farm_id, date, notes')
-          .in('farm_id', farmIds)
-          .order('date', { ascending: false })
-          .limit(limit),
-      ]);
 
       const activities: RecentActivity[] = [];
 
       // Map irrigation
-      irrigation.data?.forEach((r) => {
+      irrigation.forEach((r) => {
         const duration = r.duration ?? 0;
         const displayDuration = Number.isInteger(duration) ? duration : duration.toFixed(1);
         activities.push({
@@ -454,7 +333,7 @@ export function useRecentActivities(limit: number = 5) {
       });
 
       // Map spray
-      spray.data?.forEach((r) => {
+      spray.forEach((r) => {
         activities.push({
           id: `spray_${r.id}`,
           type: 'spray',
@@ -466,7 +345,7 @@ export function useRecentActivities(limit: number = 5) {
       });
 
       // Map harvest
-      harvest.data?.forEach((r) => {
+      harvest.forEach((r) => {
         activities.push({
           id: `harvest_${r.id}`,
           type: 'harvest',
@@ -478,7 +357,7 @@ export function useRecentActivities(limit: number = 5) {
       });
 
       // Map expense
-      expense.data?.forEach((r) => {
+      expense.forEach((r) => {
         const formattedCost = formatCurrency(r.cost ?? 0, preferredCurrency, {
           minimumFractionDigits: 0,
         });
@@ -493,7 +372,7 @@ export function useRecentActivities(limit: number = 5) {
       });
 
       // Map fertigation
-      fertigation.data?.forEach((r) => {
+      fertigation.forEach((r) => {
         activities.push({
           id: `fertigation_${r.id}`,
           type: 'fertigation',
@@ -505,7 +384,7 @@ export function useRecentActivities(limit: number = 5) {
       });
 
       // Map notes
-      dailyNotes.data?.forEach((r) => {
+      dailyNotes.forEach((r) => {
         const noteText = r.notes?.trim();
         activities.push({
           id: `note_${r.id}`,

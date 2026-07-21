@@ -32,10 +32,66 @@ export class InMemoryDataAccess implements DataAccess {
     invoke: async () => this.unsupported('functions.invoke'),
   } as unknown as DataAccess['functions'];
   readonly storage = {} as DataAccess['storage'];
-  readonly farms = { query: this.from, call: this.rpc };
-  readonly records = { query: this.from };
-  readonly dashboardStats = { query: this.from, call: this.rpc };
-  readonly reports = { query: this.from };
+  readonly farms: DataAccess['farms'] = {
+    getNextDisplayOrder: async () => ({ supportsDisplayOrder: true, displayOrder: 0 }),
+    getExistingSeason: async () => null,
+    startSeason: async () => undefined,
+    createSeason: async () => undefined,
+    getById: async (farmId) => this.unsupported(`farms.getById(${farmId})`),
+    listForUser: async () => [],
+    create: async (payload) => payload,
+    reorder: async () => undefined,
+    update: async (_farmId, _userId, updates) => updates,
+    updateWaterLevel: async (_farmId, updates) => updates,
+    remove: async () => undefined,
+  };
+  readonly records: DataAccess['records'] = {
+    listIrrigationByFarm: async () => [],
+    listIrrigationByFarms: async () => [],
+    listSprayByFarm: async () => [],
+    listSprayByFarms: async () => [],
+    listFertigationByFarm: async () => [],
+    listFertigationByFarms: async () => [],
+    listHarvestByFarm: async () => [],
+    listHarvestByFarms: async () => [],
+    listExpenseByFarm: async () => [],
+    listExpenseByFarms: async () => [],
+    getDailyNote: async () => null,
+    listDailyNotesByFarm: async () => [],
+    listDailyNotesByFarms: async () => [],
+    upsertDailyNote: async (payload) => payload,
+    deleteDailyNote: async () => undefined,
+    listRecentSprays: async () => [],
+    listRecentFertigations: async () => [],
+  };
+  readonly dashboardStats: DataAccess['dashboardStats'] = {
+    getTodayStats: async () => ({
+      farms: [],
+      overdueTasks: [],
+      recentLogFarmIds: [],
+      phiDeadlines: [],
+    }),
+    getDashboardCounts: async () => ({
+      farmsCount: 0,
+      workersCount: 0,
+      activitiesCount: 0,
+      pendingTasksCount: 0,
+    }),
+    listFarmsNeedingAttention: async () => [],
+    getRecentActivities: async () => ({
+      farms: [],
+      irrigation: [],
+      spray: [],
+      harvest: [],
+      expense: [],
+      fertigation: [],
+      dailyNotes: [],
+    }),
+  };
+  readonly reports: DataAccess['reports'] = {
+    getChemicalClaims: async () => ({ claims: [], mrls: [] }),
+    countUnassignedRecords: async () => 0,
+  };
   readonly workers: DataAccess['workers'] = {
     getWorker: async (workerId) => this.workersById.get(workerId) ?? null,
     getAttendance: async ({ workerId, periodStart, periodEnd, farmId }) =>

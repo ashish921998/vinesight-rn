@@ -118,15 +118,28 @@ function useLabelClaimLookups(enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.reports.labelClaimLookups(),
     queryFn: async (): Promise<LabelClaimLookups> => {
-      const claimsResult = await getDataAccess()
-        .reports.query(TABLES.CHEMICAL_LABEL_CLAIMS)
-        .select('id,product_id,phi_min_days,phi_max_days')
-        .eq('is_active', true);
-      if (claimsResult.error) {
-        if (claimsResult.error.code === '42P01') return EMPTY_LABEL_CLAIM_LOOKUPS;
-        throw claimsResult.error;
+      let claimData: {
+        claims: Array<{
+          id: number;
+          product_id: number;
+          phi_min_days?: number | null;
+          phi_max_days?: number | null;
+        }>;
+        mrls: Array<{
+          claim_id: number;
+          market: string;
+          mrl_value?: string | null;
+          mrl_unit?: string | null;
+          no_mrl_required?: boolean;
+        }>;
+      };
+      try {
+        claimData = (await getDataAccess().reports.getChemicalClaims()) as typeof claimData;
+      } catch (error) {
+        if ((error as { code?: string }).code === '42P01') return EMPTY_LABEL_CLAIM_LOOKUPS;
+        throw error;
       }
-      const claims = claimsResult.data ?? [];
+      const claims = claimData.claims;
       if (claims.length === 0) return EMPTY_LABEL_CLAIM_LOOKUPS;
 
       const phiDaysByProductId: Record<number, number> = {};
@@ -141,17 +154,8 @@ function useLabelClaimLookups(enabled: boolean) {
         }
       });
 
-      const mrlsResult = await getDataAccess()
-        .reports.query(TABLES.CHEMICAL_LABEL_CLAIM_MRLS)
-        .select('claim_id,market,mrl_value,mrl_unit,no_mrl_required')
-        .in(
-          'claim_id',
-          claims.map((claim) => claim.id),
-        );
-      if (mrlsResult.error && mrlsResult.error.code !== '42P01') throw mrlsResult.error;
-
       const mrlPartsByProductId = new Map<number, Set<string>>();
-      (mrlsResult.data ?? []).forEach((mrl) => {
+      claimData.mrls.forEach((mrl) => {
         const productId = productIdByClaimId.get(mrl.claim_id);
         if (productId == null) return;
         const label = mrl.no_mrl_required
@@ -519,17 +523,7 @@ export function useUnassignedRecordCount(farmId: number | null) {
       if (farmId == null) return 0;
       const counts = await Promise.all(
         UNASSIGNED_COUNT_TABLES.map(async (table) => {
-          const { count, error } = await getDataAccess()
-            .reports.query(table)
-            .select('id', { count: 'exact', head: true })
-            .eq('farm_id', farmId)
-            .is('season_id', null);
-          if (error) {
-            // Missing table on older schemas — zero, not a broken notice.
-            if (error.code === '42P01') return 0;
-            throw error;
-          }
-          return count ?? 0;
+          return getDataAccess().reports.countUnassignedRecords(table, farmId);
         }),
       );
       return counts.reduce((sum, value) => sum + value, 0);
