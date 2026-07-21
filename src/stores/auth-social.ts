@@ -1,5 +1,5 @@
 import { openAuthSessionAsync } from 'expo-web-browser';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { telemetry } from '@/services/telemetry';
 import {
   getAuthErrorMessage,
@@ -17,7 +17,7 @@ export const createSocialActions = (set: SetState) => ({
     try {
       const redirectUri = 'vinesight://auth/callback';
 
-      const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({
+      const { data: oauthData, error: oauthError } = await getDataAccess().auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUri,
@@ -47,7 +47,7 @@ export const createSocialActions = (set: SetState) => ({
         }
 
         if (code) {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          const { data, error } = await getDataAccess().auth.exchangeCodeForSession(code);
           if (error) throw error;
           await upsertProfileNameFromAuthUserBestEffort(data.user);
           setSentryUser(data.user);
@@ -105,7 +105,7 @@ export const createSocialActions = (set: SetState) => ({
         throw new Error('Apple sign-in did not return an identity token.');
       }
 
-      const { data, error } = await supabase.auth.signInWithIdToken({
+      const { data, error } = await getDataAccess().auth.signInWithIdToken({
         provider: 'apple',
         token: credential.identityToken,
       });

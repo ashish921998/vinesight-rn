@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getDataAccess } from '@/data-access';
 import { TABLES, type FarmSeason } from '../types';
 import { formatLocalDate } from '../utils/date';
 
@@ -29,7 +29,7 @@ function isPostgrestErrorWithCode(error: unknown, code: string): boolean {
 }
 
 export async function getActiveFarmSeason(farmId: number): Promise<FarmSeason | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from(TABLES.FARM_SEASONS)
     .select('*')
     .eq('farm_id', farmId)
@@ -81,10 +81,13 @@ export async function resolveSeasonIdForDate({
   const cached = seasonIdCache.get(seasonCacheKey(farmId, activityDate));
   if (cached !== undefined) return cached;
 
-  const { data: rpcData, error: rpcError } = await supabase.rpc('resolve_farm_season_for_date', {
-    p_farm_id: farmId,
-    p_activity_date: activityDate,
-  });
+  const { data: rpcData, error: rpcError } = await getDataAccess().rpc(
+    'resolve_farm_season_for_date',
+    {
+      p_farm_id: farmId,
+      p_activity_date: activityDate,
+    },
+  );
 
   if (!rpcError) {
     const rpcSeasonId = extractSeasonIdFromRpc(rpcData);
@@ -94,7 +97,7 @@ export async function resolveSeasonIdForDate({
     }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from(TABLES.FARM_SEASONS)
     .select('id,start_date,end_date')
     .eq('farm_id', farmId)
@@ -190,7 +193,7 @@ function pickSeasonForDate(
 }
 
 export async function recomputeSeasonAssignmentsClient(farmId: number): Promise<number> {
-  const { data: seasons, error: seasonsError } = await supabase
+  const { data: seasons, error: seasonsError } = await getDataAccess()
     .from(TABLES.FARM_SEASONS)
     .select('id,start_date,end_date')
     .eq('farm_id', farmId)
@@ -227,7 +230,7 @@ export async function recomputeSeasonAssignmentsClient(farmId: number): Promise<
       ...(config.fallbackDateColumn ? [config.fallbackDateColumn] : []),
     ].join(',');
 
-    const { data: rows, error } = await supabase
+    const { data: rows, error } = await getDataAccess()
       .from(config.table)
       .select(selectColumns)
       .eq('farm_id', farmId);
@@ -255,7 +258,7 @@ export async function recomputeSeasonAssignmentsClient(farmId: number): Promise<
 
       if (existingSeasonId === resolvedSeasonId) continue;
 
-      const { error: updateError } = await supabase
+      const { error: updateError } = await getDataAccess()
         .from(config.table)
         .update({ season_id: resolvedSeasonId })
         .eq('id', rowId)

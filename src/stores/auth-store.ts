@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Sentry from '@sentry/react-native';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { telemetry } from '@/services/telemetry';
 import {
   getEmailDomain,
@@ -27,9 +27,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (!settled) {
         settled = true;
         if (__DEV__) {
-          console.warn('[VineSight] supabase.auth.getSession() timed out after 5 s');
+          console.warn('[VineSight] getDataAccess().auth.getSession() timed out after 5 s');
         }
-        Sentry.captureMessage('supabase.auth.getSession() timed out', {
+        Sentry.captureMessage('getDataAccess().auth.getSession() timed out', {
           level: 'warning',
           extra: { timeoutMs: 5_000 },
         });
@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const {
         data: { session },
         error,
-      } = await supabase.auth.getSession();
+      } = await getDataAccess().auth.getSession();
 
       clearTimeout(safetyTimeout);
       if (!settled) {
@@ -86,7 +86,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const {
         data: { session },
         error,
-      } = await supabase.auth.getSession();
+      } = await getDataAccess().auth.getSession();
 
       if (error) throw error;
 
@@ -124,7 +124,7 @@ let authListener: { data: { subscription: { unsubscribe: () => void } } } | null
 export const initAuthListener = () => {
   if (authListener) return;
 
-  authListener = supabase.auth.onAuthStateChange((event, session) => {
+  authListener = getDataAccess().auth.onAuthStateChange((event, session) => {
     if (__DEV__) {
       console.log('Auth state change:', event, session?.user?.email);
     }
