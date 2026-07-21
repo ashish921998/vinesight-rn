@@ -48,10 +48,23 @@ export interface DateFieldProps {
  * (the `@expo/ui` types declare `date: Date`, but we guard against runtime
  * oddities), fall back to `new Date()` so callers never receive an undefined
  * or NaN date that would corrupt their state.
+ *
+ * When `minimumDate`/`maximumDate` are supplied, the result is clamped into
+ * that range. This matters for the `new Date()` fallback: a nullable field
+ * whose `maximumDate` is in the past opens the picker on today, and pressing
+ * Done without scrolling would otherwise commit an out-of-range date (the
+ * native wheel only clamps its display, not our draft state). Valid in-range
+ * dates pass through untouched.
  */
-export function ensureValidDate(value: Date | undefined | null): Date {
-  if (!value) return new Date();
-  return Number.isNaN(value.getTime()) ? new Date() : value;
+export function ensureValidDate(
+  value: Date | undefined | null,
+  minimumDate?: Date,
+  maximumDate?: Date,
+): Date {
+  const base = !value || Number.isNaN(value.getTime()) ? new Date() : value;
+  if (minimumDate && base.getTime() < minimumDate.getTime()) return minimumDate;
+  if (maximumDate && base.getTime() > maximumDate.getTime()) return maximumDate;
+  return base;
 }
 
 /**
@@ -81,9 +94,11 @@ export function DateFieldTrigger({
 
   // `formatDate` follows the active app language (en/hi/mr), not the device
   // locale — a plain `toLocaleDateString(undefined)` would ignore the in-app
-  // language setting.
+  // language setting. It returns '' for an invalid date, so coerce that empty
+  // string to null too — otherwise `?? placeholder` wouldn't kick in and the
+  // trigger would render blank instead of the placeholder.
   const formatted = value
-    ? formatDate(value, { year: 'numeric', month: 'short', day: 'numeric' })
+    ? formatDate(value, { year: 'numeric', month: 'short', day: 'numeric' }) || null
     : null;
   const displayText =
     formatted ?? placeholder ?? t('common.selectDate', { defaultValue: 'Select date' });

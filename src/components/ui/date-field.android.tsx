@@ -41,14 +41,14 @@ export function DateField({
       />
       {open ? (
         <DateTimePicker
-          value={ensureValidDate(value)}
+          value={ensureValidDate(value, minimumDate, maximumDate)}
           mode="date"
           presentation="dialog"
           minimumDate={minimumDate}
           maximumDate={maximumDate}
           accentColor={m3.colorScheme.primary}
           onValueChange={(_, date) => {
-            onChange(ensureValidDate(date));
+            onChange(ensureValidDate(date, minimumDate, maximumDate));
             setOpen(false);
           }}
           onDismiss={() => setOpen(false)}

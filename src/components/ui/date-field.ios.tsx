@@ -32,11 +32,14 @@ export function DateField({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   // The picker wheel always needs a concrete date to sit on; when `value` is
-  // null (no date set) we open on today, but only commit via onChange on Done.
-  const [draftDate, setDraftDate] = useState(() => ensureValidDate(value));
+  // null (no date set) we open on today, clamped into any min/max range so a
+  // Done-without-scroll can't commit an out-of-range date.
+  const [draftDate, setDraftDate] = useState(() =>
+    ensureValidDate(value, minimumDate, maximumDate),
+  );
 
   const close = () => {
-    setDraftDate(ensureValidDate(value));
+    setDraftDate(ensureValidDate(value, minimumDate, maximumDate));
     setOpen(false);
   };
 
@@ -50,7 +53,7 @@ export function DateField({
         disabled={disabled}
         testID={testID}
         onPress={() => {
-          setDraftDate(ensureValidDate(value));
+          setDraftDate(ensureValidDate(value, minimumDate, maximumDate));
           setOpen(true);
         }}
       />
@@ -100,7 +103,7 @@ export function DateField({
             </Text>
             <Pressable
               onPress={() => {
-                onChange(ensureValidDate(draftDate));
+                onChange(ensureValidDate(draftDate, minimumDate, maximumDate));
                 setOpen(false);
               }}
               hitSlop={8}
@@ -129,7 +132,9 @@ export function DateField({
             minimumDate={minimumDate}
             maximumDate={maximumDate}
             accentColor={m3.colorScheme.primary}
-            onValueChange={(_, date) => setDraftDate(ensureValidDate(date))}
+            onValueChange={(_, date) =>
+              setDraftDate(ensureValidDate(date, minimumDate, maximumDate))
+            }
           />
         </View>
       </BottomSheet>

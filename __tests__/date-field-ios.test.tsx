@@ -57,10 +57,13 @@ jest.mock('@/components/ui/symbol', () => ({
 // doesn't boot the full i18n stack (and to assert it is used, not the device
 // locale). ISO keeps the assertion locale-independent.
 jest.mock('@/i18n/format', () => ({
+  // Mirrors the real formatDate contract: '' for an invalid date.
   formatDate: (date: Date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
-      date.getDate(),
-    ).padStart(2, '0')}`,
+    Number.isNaN(date.getTime())
+      ? ''
+      : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+          date.getDate(),
+        ).padStart(2, '0')}`,
 }));
 
 jest.mock('@/styles/use-theme', () => ({
@@ -153,5 +156,25 @@ describe('DateField iOS', () => {
     // Opening a null field must not fire onChange (nothing is "set" yet).
     fireEvent.press(screen.getByLabelText('Select date'));
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('renders the placeholder for an invalid date (formatDate returns empty)', () => {
+    const screen = render(
+      <DateField value={new Date('not-a-date')} onChange={jest.fn()} placeholder="No due date" />,
+    );
+    // Empty formatted string must fall through to the placeholder, not render blank.
+    expect(screen.getByText('No due date')).toBeTruthy();
+  });
+
+  it('clamps to maximumDate so Done cannot commit an out-of-range date', () => {
+    const onChange = jest.fn();
+    const maximumDate = new Date(2020, 0, 1);
+    const screen = render(<DateField value={null} onChange={onChange} maximumDate={maximumDate} />);
+
+    // A nullable field opens on today (out of range); commit without scrolling.
+    fireEvent.press(screen.getByLabelText('Select date'));
+    fireEvent.press(screen.getByText('common.done'));
+
+    expect(onChange).toHaveBeenCalledWith(maximumDate);
   });
 });
