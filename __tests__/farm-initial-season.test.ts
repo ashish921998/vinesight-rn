@@ -1,10 +1,11 @@
 import { shouldAutoStartInitialSeason, ensureInitialFarmSeason } from '@/hooks/use-farms';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/data-access';
 import type { Farm } from '@/types';
 
-jest.mock('@/lib/supabase', () => ({
-  supabase: { from: jest.fn(), rpc: jest.fn() },
-}));
+jest.mock('@/data-access', () => {
+  const dataAccess = { from: jest.fn(), rpc: jest.fn() };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 
 const mockFrom = supabase.from as jest.Mock;
 const mockRpc = supabase.rpc as jest.Mock;

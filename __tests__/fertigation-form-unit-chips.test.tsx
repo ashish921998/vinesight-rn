@@ -12,7 +12,10 @@ import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 jest.mock('@expo/ui/community/bottom-sheet', () =>
   require('../jest-setup/expo-ui-bottom-sheet-mock'),
 );
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+jest.mock('@/data-access', () => {
+  const dataAccess = { from: jest.fn() };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({

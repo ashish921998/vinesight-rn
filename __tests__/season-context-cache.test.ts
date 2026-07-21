@@ -1,13 +1,14 @@
-jest.mock('@/lib/supabase', () => ({
-  supabase: { rpc: jest.fn(), from: jest.fn() },
-}));
+jest.mock('@/data-access', () => {
+  const dataAccess = { rpc: jest.fn(), from: jest.fn() };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 
 import {
   resolveSeasonIdForDate,
   resolveOptionalSeasonIdForDate,
   invalidateSeasonIdCache,
 } from '@/lib/season-context';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/data-access';
 
 const mockRpc = supabase.rpc as jest.Mock;
 const mockFrom = supabase.from as jest.Mock;

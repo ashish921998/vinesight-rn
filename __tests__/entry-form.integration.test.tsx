@@ -105,15 +105,16 @@ jest.mock('@/hooks/use-tasks', () => ({
   useUpdateTask: () => ({ mutateAsync: mockTaskUpdateMutate, isPending: false }),
 }));
 
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
+jest.mock('@/data-access', () => {
+  const dataAccess = {
     from: jest.fn(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       maybeSingle: mockDailyNoteMaybeSingle,
     })),
-  },
-}));
+  };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 
 jest.mock('@/stores', () => ({
   useAuthStore: (selector: (state: Record<string, unknown>) => unknown) =>

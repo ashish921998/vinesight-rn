@@ -7,6 +7,7 @@ export { InMemoryDataAccess } from './InMemoryDataAccess';
 export { SupabaseDataAccess, supabaseDataAccess } from './SupabaseDataAccess';
 
 export const DataAccessContext = createContext<DataAccess>(supabaseDataAccess);
+export const supabase = supabaseDataAccess;
 
 let currentDataAccess: DataAccess = supabaseDataAccess;
 

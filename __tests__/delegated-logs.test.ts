@@ -1,4 +1,7 @@
-jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
+jest.mock('@/data-access', () => {
+  const dataAccess = { rpc: jest.fn() };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 
 import {
   buildDelegatedLogPayload,
@@ -6,7 +9,7 @@ import {
   getProfessionalWorkspace,
   isValidDelegatedLogInput,
 } from '@/services/delegated-logs';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/data-access';
 
 const mockRpc = supabase.rpc as jest.Mock;
 

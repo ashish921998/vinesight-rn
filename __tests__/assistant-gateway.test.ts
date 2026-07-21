@@ -3,16 +3,17 @@ import { sendAssistantTurn, AssistantGatewayErrorCode } from '@/services/assista
 const mockInvoke = jest.fn();
 const mockGetSession = jest.fn();
 
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
+jest.mock('@/data-access', () => {
+  const dataAccess = {
     functions: {
       invoke: (...args: unknown[]) => mockInvoke(...args),
     },
     auth: {
       getSession: (...args: unknown[]) => mockGetSession(...args),
     },
-  },
-}));
+  };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 
 describe('assistant-gateway', () => {
   beforeEach(() => {

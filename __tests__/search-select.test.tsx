@@ -6,7 +6,10 @@ import {
   type SearchSelectSelection,
 } from '@/components/ui/search-select-logic';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+jest.mock('@/data-access', () => {
+  const dataAccess = { from: jest.fn() };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({

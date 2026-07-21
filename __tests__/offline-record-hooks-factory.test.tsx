@@ -2,7 +2,7 @@ import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/data-access';
 import { resolveOrCreateSeasonIdForDate } from '@/lib/season-context';
 import { isClientUuid } from '@/features/offline/client-id';
 import { queryKeys } from '@/hooks/query-keys';
@@ -17,7 +17,10 @@ import {
   useCreateExpenseRecord,
 } from '@/hooks/use-records';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+jest.mock('@/data-access', () => {
+  const dataAccess = { from: jest.fn() };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 jest.mock('@/lib/season-context', () => ({ resolveOrCreateSeasonIdForDate: jest.fn() }));
 
 const mockedFrom = supabase.from as jest.Mock;

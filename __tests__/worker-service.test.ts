@@ -1,11 +1,12 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/data-access';
 import { calculateWorkerSettlement, createWorkerSettlement } from '@/services/worker-service';
 
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
+jest.mock('@/data-access', () => {
+  const dataAccess = {
     from: jest.fn(),
-  },
-}));
+  };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 
 const mockedFrom = supabase.from as jest.Mock;
 
