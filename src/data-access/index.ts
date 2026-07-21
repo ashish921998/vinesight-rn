@@ -18,7 +18,6 @@ export function DataAccessProvider({
   children: ReactNode;
 }) {
   const dataAccess = value ?? supabaseDataAccess;
-  currentDataAccess = dataAccess;
   return createElement(DataAccessContext.Provider, { value: dataAccess }, children);
 }
 
@@ -28,4 +27,12 @@ export function useDataAccess(): DataAccess {
 
 export function getDataAccess(): DataAccess {
   return currentDataAccess;
+}
+
+export function setDataAccess(dataAccess: DataAccess): () => void {
+  const previousDataAccess = currentDataAccess;
+  currentDataAccess = dataAccess;
+  return () => {
+    currentDataAccess = previousDataAccess;
+  };
 }
