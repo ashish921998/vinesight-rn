@@ -1,5 +1,5 @@
 jest.mock('@/data-access', () => {
-  const dataAccess = {
+  const mockDataAccess = {
     delegatedLogs: {
       getProfessionalWorkspace: jest.fn(),
       createDelegatedLog: jest.fn(),
@@ -8,7 +8,7 @@ jest.mock('@/data-access', () => {
       deleteDelegatedLog: jest.fn(),
     },
   };
-  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+  return { getDataAccess: jest.fn(() => mockDataAccess) };
 });
 
 import {
@@ -17,9 +17,10 @@ import {
   getProfessionalWorkspace,
   isValidDelegatedLogInput,
 } from '@/services/delegated-logs';
-import { supabase } from '@/data-access';
-
-const mockRpc = supabase.delegatedLogs as unknown as Record<string, jest.Mock>;
+const mockRpc = jest.requireMock('@/data-access').getDataAccess().delegatedLogs as Record<
+  string,
+  jest.Mock
+>;
 
 describe('delegated logs service', () => {
   beforeEach(() => Object.values(mockRpc).forEach((mock) => mock.mockReset()));

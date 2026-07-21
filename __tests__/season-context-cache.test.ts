@@ -1,18 +1,14 @@
-jest.mock('@/data-access', () => {
-  const dataAccess = { rpc: jest.fn(), from: jest.fn() };
-  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
-});
+const mockRpc = jest.fn();
+const mockFrom = jest.fn();
+jest.mock('@/data-access', () => ({
+  getDataAccess: jest.fn(() => ({ rpc: mockRpc, from: mockFrom })),
+}));
 
 import {
   resolveSeasonIdForDate,
   resolveOptionalSeasonIdForDate,
   invalidateSeasonIdCache,
 } from '@/lib/season-context';
-import { supabase } from '@/data-access';
-
-const mockRpc = supabase.rpc as jest.Mock;
-const mockFrom = supabase.from as jest.Mock;
-
 /**
  * Chainable mock for `supabase.from(table).select(cols).eq(col, val).order(col, opts)`.
  * The `.order(...)` terminal is thenable so `await`-ing the chain resolves to `result`.

@@ -1,4 +1,3 @@
-import { supabase } from '@/data-access';
 import { isClientUuid } from '@/features/offline/client-id';
 import {
   CrossFarmClientUuidError,
@@ -8,12 +7,12 @@ import {
 } from '@/features/offline/record-writes';
 import { makeChain } from '../jest-setup/data-access-chain-mock';
 
-jest.mock('@/data-access', () => {
-  const dataAccess = { from: jest.fn() };
-  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
-});
+const mockFrom = jest.fn();
+jest.mock('@/data-access', () => ({
+  getDataAccess: jest.fn(() => ({ from: mockFrom })),
+}));
 
-const mockedFrom = supabase.from as jest.Mock;
+const mockedFrom = mockFrom;
 
 beforeEach(() => mockedFrom.mockReset());
 

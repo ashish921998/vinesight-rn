@@ -1,22 +1,19 @@
-import { supabase } from '@/data-access';
 import { calculateWorkerSettlement, createWorkerSettlement } from '@/services/worker-service';
 
+const mockWorkers = {
+  getWorker: jest.fn(),
+  getAttendance: jest.fn(),
+  createSettlement: jest.fn(),
+  createTransaction: jest.fn(),
+  getAdvanceBalance: jest.fn(),
+  updateAdvanceBalance: jest.fn(),
+  deleteSettlement: jest.fn(),
+};
 jest.mock('@/data-access', () => {
-  const dataAccess = {
-    workers: {
-      getWorker: jest.fn(),
-      getAttendance: jest.fn(),
-      createSettlement: jest.fn(),
-      createTransaction: jest.fn(),
-      getAdvanceBalance: jest.fn(),
-      updateAdvanceBalance: jest.fn(),
-      deleteSettlement: jest.fn(),
-    },
-  };
-  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+  return { getDataAccess: jest.fn(() => ({ workers: mockWorkers })) };
 });
 
-const mockedWorkers = supabase.workers as unknown as Record<string, jest.Mock>;
+const mockedWorkers = mockWorkers;
 
 beforeEach(() => {
   jest.clearAllMocks();
