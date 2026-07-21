@@ -106,9 +106,7 @@ export function buildDelegatedLogPayload(
 }
 
 export async function getProfessionalWorkspace(): Promise<ProfessionalWorkspace | null> {
-  const { data, error } = await getDataAccess().rpc('get_professional_workspace');
-  if (error) throw error;
-  return data as ProfessionalWorkspace | null;
+  return (await getDataAccess().delegatedLogs.getProfessionalWorkspace()) as ProfessionalWorkspace | null;
 }
 
 export async function createDelegatedLog(input: {
@@ -119,16 +117,14 @@ export async function createDelegatedLog(input: {
   date: string;
   payload: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const { data, error } = await getDataAccess().rpc('create_delegated_log', {
+  return (await getDataAccess().delegatedLogs.createDelegatedLog({
     p_organization_id: input.organizationId,
     p_client_user_id: input.clientUserId,
     p_farm_id: input.farmId,
     p_record_type: input.recordType,
     p_date: input.date,
     p_payload: input.payload,
-  });
-  if (error) throw error;
-  return data as Record<string, unknown>;
+  })) as Record<string, unknown>;
 }
 
 export async function getDelegatedFarmActivity(input: {
@@ -136,13 +132,12 @@ export async function getDelegatedFarmActivity(input: {
   clientUserId: string;
   farmId: number;
 }): Promise<DelegatedActivityItem[]> {
-  const { data, error } = await getDataAccess().rpc('get_delegated_farm_activity', {
+  const data = await getDataAccess().delegatedLogs.getDelegatedFarmActivity({
     p_organization_id: input.organizationId,
     p_client_user_id: input.clientUserId,
     p_farm_id: input.farmId,
   });
-  if (error) throw error;
-  return (data ?? []) as DelegatedActivityItem[];
+  return data as DelegatedActivityItem[];
 }
 
 export async function updateDelegatedLog(
@@ -150,19 +145,16 @@ export async function updateDelegatedLog(
   recordId: number,
   notes: string,
 ) {
-  const { data, error } = await getDataAccess().rpc('update_delegated_log', {
+  return getDataAccess().delegatedLogs.updateDelegatedLog({
     p_record_type: recordType,
     p_record_id: recordId,
     p_payload: { notes },
   });
-  if (error) throw error;
-  return data;
 }
 
 export async function deleteDelegatedLog(recordType: DelegatedLogType, recordId: number) {
-  const { error } = await getDataAccess().rpc('delete_delegated_log', {
+  await getDataAccess().delegatedLogs.deleteDelegatedLog({
     p_record_type: recordType,
     p_record_id: recordId,
   });
-  if (error) throw error;
 }
