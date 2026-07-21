@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
 import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
@@ -1257,7 +1257,7 @@ async function fetchAttendanceForWorker(
   startDate: string,
   endDate: string,
 ): Promise<WorkerAttendance[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from('worker_attendance')
     .select('*')
     .eq('worker_id', workerId)
@@ -1273,7 +1273,7 @@ async function fetchAttendanceForWorker(
 }
 
 async function createAttendance(data: WorkerAttendanceInsert): Promise<WorkerAttendance> {
-  const { data: result, error } = await supabase
+  const { data: result, error } = await getDataAccess()
     .from('worker_attendance')
     .insert(data)
     .select()
@@ -1290,7 +1290,7 @@ async function updateAttendance(
   id: number,
   data: Partial<WorkerAttendanceInsert>,
 ): Promise<WorkerAttendance> {
-  const { data: result, error } = await supabase
+  const { data: result, error } = await getDataAccess()
     .from('worker_attendance')
     .update(data)
     .eq('id', id)
@@ -1305,7 +1305,7 @@ async function updateAttendance(
 }
 
 async function deleteAttendance(id: number): Promise<void> {
-  const { error } = await supabase.from('worker_attendance').delete().eq('id', id);
+  const { error } = await getDataAccess().from('worker_attendance').delete().eq('id', id);
 
   if (error) {
     throw new Error('Failed to delete attendance');

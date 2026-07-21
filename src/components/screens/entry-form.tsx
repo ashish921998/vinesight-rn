@@ -172,7 +172,7 @@ import {
   stripTaskPlanFromDescription,
 } from '@/utils/task-plan';
 import { isPhiConflict } from '@/services/phi-service';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 
 interface EntryFormProps {
   visible?: boolean;
@@ -1331,7 +1331,7 @@ export function EntryForm({
       createFertigation: async (payload) => createFertigation.mutateAsync(payload),
       upsertDailyNote: async (payload) => upsertDailyNote.mutateAsync(payload),
       getDailyNote: async ({ farmId, date }) => {
-        const { data, error } = await supabase
+        const { data, error } = await getDataAccess()
           .from(TABLES.DAILY_NOTES)
           .select('*')
           .eq('farm_id', farmId)

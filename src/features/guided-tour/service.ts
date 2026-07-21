@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { telemetry } from '@/services/telemetry';
 import type { GuidedTourPatchPayload, GuidedTourServerState } from './types';
 
@@ -95,7 +95,7 @@ async function updatePushDeviceRow(
   const featureOverviewEnabled = options.featureOverviewEnabled ?? true;
   const notificationsEnabled = options.notificationsEnabled ?? true;
 
-  const { data: existingRow, error: existingError } = await supabase
+  const { data: existingRow, error: existingError } = await getDataAccess()
     .from(PUSH_DEVICES_TABLE)
     .select('id,feature_overview_started_at')
     .eq('user_id', userId)
@@ -108,7 +108,7 @@ async function updatePushDeviceRow(
     featureOverviewEnabled && !existingRow?.feature_overview_started_at ? now : undefined;
 
   if (existingRow?.id) {
-    const { error } = await supabase
+    const { error } = await getDataAccess()
       .from(PUSH_DEVICES_TABLE)
       .update({
         platform: Platform.OS === 'ios' ? 'ios' : 'android',
@@ -129,18 +129,20 @@ async function updatePushDeviceRow(
     return;
   }
 
-  const { error } = await supabase.from(PUSH_DEVICES_TABLE).insert({
-    user_id: userId,
-    expo_push_token: expoPushToken,
-    platform: Platform.OS === 'ios' ? 'ios' : 'android',
-    locale,
-    timezone,
-    notifications_enabled: notificationsEnabled,
-    feature_overview_enabled: featureOverviewEnabled,
-    feature_overview_started_at: featureOverviewEnabled ? now : null,
-    last_seen_at: now,
-    updated_at: now,
-  });
+  const { error } = await getDataAccess()
+    .from(PUSH_DEVICES_TABLE)
+    .insert({
+      user_id: userId,
+      expo_push_token: expoPushToken,
+      platform: Platform.OS === 'ios' ? 'ios' : 'android',
+      locale,
+      timezone,
+      notifications_enabled: notificationsEnabled,
+      feature_overview_enabled: featureOverviewEnabled,
+      feature_overview_started_at: featureOverviewEnabled ? now : null,
+      last_seen_at: now,
+      updated_at: now,
+    });
 
   if (error) throw error;
 }
@@ -148,14 +150,14 @@ async function updatePushDeviceRow(
 async function getUserId(): Promise<string | null> {
   const {
     data: { session },
-  } = await supabase.auth.getSession();
+  } = await getDataAccess().auth.getSession();
   return session?.user.id ?? null;
 }
 
 export async function fetchGuidedTourServerState(): Promise<GuidedTourServerState | null> {
   const userId = await getUserId();
   if (!userId) return null;
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from(GUIDED_TOUR_TABLE)
     .select('*')
     .eq('user_id', userId)
@@ -167,7 +169,7 @@ export async function fetchGuidedTourServerState(): Promise<GuidedTourServerStat
 export async function upsertGuidedTourServerState(patch: GuidedTourPatchPayload): Promise<void> {
   const userId = await getUserId();
   if (!userId) return;
-  const { error } = await supabase.rpc('upsert_user_guided_tour_state', {
+  const { error } = await getDataAccess().rpc('upsert_user_guided_tour_state', {
     p_tour_status: patch.tour_status ?? null,
     p_current_step: patch.current_step ?? null,
     p_skipped_at_step: patch.skipped_at_step ?? null,
@@ -187,7 +189,7 @@ export async function upsertGuidedTourServerState(patch: GuidedTourPatchPayload)
 export async function userHasAnyFarms(): Promise<boolean> {
   const userId = await getUserId();
   if (!userId) return false;
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from(FARMS_TABLE)
     .select('id')
     .eq('user_id', userId)
@@ -207,7 +209,7 @@ export async function syncPushDeviceRegistration(
   // `fetch_token` = Expo/APNs/FCM token fetch, `update_row` = Supabase upsert.
   let stage: 'fetch_token' | 'update_row' = 'fetch_token';
   try {
-    // getUserId() calls supabase.auth.getSession(), which can reject. Keep it
+    // getUserId() calls getDataAccess().auth.getSession(), which can reject. Keep it
     // inside the try so this function never throws — callers fire-and-forget it.
     const userId = await getUserId();
     if (!userId) return false;

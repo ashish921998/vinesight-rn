@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Alert, Pressable } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import type { Worker, WorkerAttendance, WorkStatus } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
@@ -476,7 +476,7 @@ async function fetchAttendanceForWorker(
   startDate: string,
   endDate: string,
 ): Promise<WorkerAttendance[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from('worker_attendance')
     .select('*')
     .eq('worker_id', workerId)
