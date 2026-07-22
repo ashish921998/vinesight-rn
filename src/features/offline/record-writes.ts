@@ -14,7 +14,7 @@
  *     a record that was itself created offline and hasn't synced yet.
  */
 
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { newClientUuid } from './client-id';
 
 /**
@@ -59,7 +59,7 @@ export async function idempotentCreate<T extends object>(
   const client_uuid = record.client_uuid ?? newClientUuid();
   const payload = { ...record, client_uuid };
 
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from(table)
     .upsert(payload, { onConflict: 'client_uuid', ignoreDuplicates: true })
     .select()
@@ -71,7 +71,7 @@ export async function idempotentCreate<T extends object>(
   // prior replay. Read it back SCOPED TO THIS FARM so a reused/stale uuid can
   // never make the create "succeed" with another farm's row.
   const farmId = (record as { farm_id?: number | null }).farm_id;
-  let readBack = supabase.from(table).select('*').eq('client_uuid', client_uuid);
+  let readBack = getDataAccess().from(table).select('*').eq('client_uuid', client_uuid);
   if (farmId != null) readBack = readBack.eq('farm_id', farmId);
   const { data: existing, error: readError } = await readBack.maybeSingle();
   if (readError) throw readError;
@@ -87,7 +87,7 @@ export async function targetedUpdate(
   ref: RecordRef,
   patch: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
-  const base = supabase.from(table).update(patch);
+  const base = getDataAccess().from(table).update(patch);
   const filtered =
     ref.id != null
       ? base.eq('id', ref.id)
@@ -106,7 +106,7 @@ export async function targetedUpdate(
 
 /** Delete a record addressed by `id` (preferred) or `client_uuid`. */
 export async function targetedDelete(table: string, ref: RecordRef): Promise<void> {
-  const base = supabase.from(table).delete();
+  const base = getDataAccess().from(table).delete();
   const filtered =
     ref.id != null
       ? base.eq('id', ref.id)

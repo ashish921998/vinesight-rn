@@ -1,42 +1,19 @@
-import { supabase } from '@/lib/supabase';
 import { calculateWorkerSettlement, createWorkerSettlement } from '@/services/worker-service';
 
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: jest.fn(),
-  },
-}));
+const mockWorkers = {
+  getWorker: jest.fn(),
+  getAttendance: jest.fn(),
+  createSettlement: jest.fn(),
+  createTransaction: jest.fn(),
+  getAdvanceBalance: jest.fn(),
+  updateAdvanceBalance: jest.fn(),
+  deleteSettlement: jest.fn(),
+};
+jest.mock('@/data-access', () => {
+  return { getDataAccess: jest.fn(() => ({ workers: mockWorkers })) };
+});
 
-const mockedFrom = supabase.from as jest.Mock;
-
-/** Build a chainable query mock where terminal methods resolve to the given result.
- *  Non-terminal methods are also thenable so awaiting any point in the chain resolves to terminalResult. */
-function mockChain(terminalResult: { data: unknown; error: unknown }) {
-  const chain: Record<string, jest.Mock> & { then?: typeof Promise.prototype.then } = {};
-  const self = () => chain;
-
-  // Make the chain itself thenable so `await chain.insert(...)` resolves correctly
-  chain.then = function (
-    onFulfilled?: ((v: unknown) => unknown) | null,
-    onRejected?: ((r: unknown) => unknown) | null,
-  ) {
-    return Promise.resolve(terminalResult).then(onFulfilled, onRejected);
-  } as typeof Promise.prototype.then;
-
-  chain.select = jest.fn(self);
-  chain.insert = jest.fn(self);
-  chain.update = jest.fn(self);
-  chain.delete = jest.fn(self);
-  chain.eq = jest.fn(self);
-  chain.neq = jest.fn(self);
-  chain.gte = jest.fn(self);
-  chain.lte = jest.fn(self);
-  chain.contains = jest.fn(self);
-  chain.order = jest.fn(self);
-  chain.single = jest.fn().mockResolvedValue(terminalResult);
-
-  return chain;
-}
+const mockedWorkers = mockWorkers;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -47,16 +24,12 @@ describe('calculateWorkerSettlement', () => {
     workerResult: { data: unknown; error: unknown },
     attendanceResult: { data: unknown; error: unknown },
   ) {
-    const workerChain = mockChain(workerResult);
-    const attendanceChain = mockChain(attendanceResult);
-
-    mockedFrom.mockImplementation((table: string) => {
-      if (table === 'workers') return workerChain;
-      if (table === 'worker_attendance') return attendanceChain;
-      return mockChain({ data: null, error: null });
-    });
-
-    return { workerChain, attendanceChain };
+    if (workerResult.error) mockedWorkers.getWorker.mockRejectedValue(workerResult.error);
+    else mockedWorkers.getWorker.mockResolvedValue(workerResult.data);
+    if (attendanceResult.error)
+      mockedWorkers.getAttendance.mockRejectedValue(attendanceResult.error);
+    else mockedWorkers.getAttendance.mockResolvedValue(attendanceResult.data ?? []);
+    return { attendance: mockedWorkers.getAttendance };
   }
 
   it('calculates gross amount for full_day attendance', async () => {
@@ -160,14 +133,19 @@ describe('calculateWorkerSettlement', () => {
   });
 
   it('applies contains filter when farmId is provided', async () => {
-    const { attendanceChain } = setupMocks(
+    const { attendance } = setupMocks(
       { data: { id: 1, daily_rate: 500 }, error: null },
       { data: [], error: null },
     );
 
     await calculateWorkerSettlement(1, 42, '2024-06-01', '2024-06-30');
 
-    expect(attendanceChain.contains).toHaveBeenCalledWith('farm_ids', [42]);
+    expect(attendance).toHaveBeenCalledWith({
+      workerId: 1,
+      periodStart: '2024-06-01',
+      periodEnd: '2024-06-30',
+      farmId: 42,
+    });
   });
 
   it('throws when attendance fetch fails', async () => {
@@ -198,19 +176,12 @@ describe('createWorkerSettlement', () => {
     };
 
     const createdRecord = { id: 42, ...settlement };
-    const settlementChain = mockChain({ data: createdRecord, error: null });
-    const transactionChain = mockChain({ data: null, error: null });
-
-    mockedFrom.mockImplementation((table: string) => {
-      if (table === 'worker_settlements') return settlementChain;
-      if (table === 'worker_transactions') return transactionChain;
-      return mockChain({ data: null, error: null });
-    });
+    mockedWorkers.createSettlement.mockResolvedValue(createdRecord);
+    mockedWorkers.createTransaction.mockResolvedValue(undefined);
 
     const result = await createWorkerSettlement(settlement);
 
-    expect(mockedFrom).toHaveBeenCalledWith('worker_settlements');
-    expect(settlementChain.insert).toHaveBeenCalledWith(
+    expect(mockedWorkers.createSettlement).toHaveBeenCalledWith(
       expect.objectContaining({
         worker_id: 1,
         farm_id: 10,
@@ -226,8 +197,7 @@ describe('createWorkerSettlement', () => {
     );
 
     // net_payment > 0 triggers a payment transaction insert
-    expect(mockedFrom).toHaveBeenCalledWith('worker_transactions');
-    expect(transactionChain.insert).toHaveBeenCalledWith(
+    expect(mockedWorkers.createTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
         worker_id: 1,
         type: 'payment',
@@ -251,8 +221,7 @@ describe('createWorkerSettlement', () => {
       status: 'draft' as const,
     };
 
-    const chain = mockChain({ data: null, error: { message: 'Insert failed' } });
-    mockedFrom.mockImplementation(() => chain);
+    mockedWorkers.createSettlement.mockRejectedValue({ message: 'Insert failed' });
 
     await expect(createWorkerSettlement(settlement)).rejects.toEqual({
       message: 'Insert failed',

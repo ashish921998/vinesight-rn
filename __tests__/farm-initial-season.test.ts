@@ -1,25 +1,16 @@
 import { shouldAutoStartInitialSeason, ensureInitialFarmSeason } from '@/hooks/use-farms';
-import { supabase } from '@/lib/supabase';
 import type { Farm } from '@/types';
 
-jest.mock('@/lib/supabase', () => ({
-  supabase: { from: jest.fn(), rpc: jest.fn() },
-}));
-
-const mockFrom = supabase.from as jest.Mock;
-const mockRpc = supabase.rpc as jest.Mock;
-
-// Chainable query builder whose terminal `maybeSingle` resolves to the given
-// result — mirrors the existing-season lookup in ensureInitialFarmSeason.
-function mockExistingSeasonLookup(result: { data: unknown; error: unknown }) {
-  const builder: Record<string, jest.Mock> = {};
-  for (const method of ['select', 'eq', 'limit']) {
-    builder[method] = jest.fn(() => builder);
-  }
-  builder.maybeSingle = jest.fn().mockResolvedValue(result);
-  mockFrom.mockReturnValue(builder);
-  return builder;
-}
+const mockFarms = {
+  getExistingSeason: jest.fn(),
+  startSeason: jest.fn(),
+  createSeason: jest.fn(),
+};
+jest.mock('@/data-access', () => {
+  return {
+    getDataAccess: jest.fn(() => ({ farms: mockFarms })),
+  };
+});
 
 const baseFarm = (overrides: Partial<Farm>): Farm =>
   ({
@@ -42,13 +33,14 @@ describe('shouldAutoStartInitialSeason', () => {
 
 describe('ensureInitialFarmSeason', () => {
   beforeEach(() => {
-    mockFrom.mockReset();
-    mockRpc.mockReset();
+    mockFarms.getExistingSeason.mockReset();
+    mockFarms.startSeason.mockReset();
+    mockFarms.createSeason.mockReset();
   });
 
   it('anchors the auto-started season to the pruning date', async () => {
-    mockExistingSeasonLookup({ data: null, error: null });
-    mockRpc.mockResolvedValue({ data: null, error: null });
+    mockFarms.getExistingSeason.mockResolvedValue(null);
+    mockFarms.startSeason.mockResolvedValue(undefined);
 
     await ensureInitialFarmSeason(
       baseFarm({ date_of_pruning: '2026-01-15' }),
@@ -56,17 +48,16 @@ describe('ensureInitialFarmSeason', () => {
       'Season 2026',
     );
 
-    expect(mockRpc).toHaveBeenCalledWith(
-      'start_farm_season',
+    expect(mockFarms.startSeason).toHaveBeenCalledWith(
       expect.objectContaining({ p_farm_id: 42, p_start_date: '2026-01-15' }),
     );
   });
 
   it('does not create a second season when one already exists', async () => {
-    mockExistingSeasonLookup({ data: { id: 7 }, error: null });
+    mockFarms.getExistingSeason.mockResolvedValue({ id: 7 });
 
     await ensureInitialFarmSeason(baseFarm({ date_of_pruning: '2026-01-15' }), 'user-1');
 
-    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockFarms.startSeason).not.toHaveBeenCalled();
   });
 });

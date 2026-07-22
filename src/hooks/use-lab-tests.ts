@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { getDataAccess } from '@/data-access';
 import {
   SoilTestRecord,
   SoilTestRecordInsert,
@@ -44,7 +44,7 @@ async function backfillMissingPetiolePruningDates(
     return tests;
   }
 
-  const { data: farmData, error: farmError } = await supabase
+  const { data: farmData, error: farmError } = await getDataAccess()
     .from('farms')
     .select('date_of_pruning')
     .eq('id', farmId)
@@ -55,7 +55,7 @@ async function backfillMissingPetiolePruningDates(
   }
 
   const pruningDate = farmData.date_of_pruning;
-  const { error: updateError } = await supabase
+  const { error: updateError } = await getDataAccess()
     .from('petiole_test_records')
     .update({ date_of_pruning: pruningDate })
     .in('id', idsToBackfill);
@@ -80,7 +80,7 @@ export function useSoilTests(farmId: number, seasonId?: number) {
   return useQuery({
     queryKey: [...labTestQueryKeys.soilTests.forFarm(farmId), { seasonId: seasonId ?? null }],
     queryFn: async () => {
-      let query = supabase
+      let query = getDataAccess()
         .from('soil_test_records')
         .select('*')
         .eq('farm_id', farmId)
@@ -105,7 +105,7 @@ export function usePetioleTests(farmId: number, seasonId?: number) {
   return useQuery({
     queryKey: [...labTestQueryKeys.petioleTests.forFarm(farmId), { seasonId: seasonId ?? null }],
     queryFn: async () => {
-      let query = supabase
+      let query = getDataAccess()
         .from('petiole_test_records')
         .select('*')
         .eq('farm_id', farmId)
@@ -138,7 +138,7 @@ export function useCreateSoilTest() {
           farmId: record.farm_id,
           date: record.date,
         }));
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from('soil_test_records')
         .insert({ ...record, season_id: seasonId })
         .select()
@@ -169,7 +169,7 @@ export function useCreatePetioleTest() {
           farmId: record.farm_id,
           date: record.date,
         }));
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from('petiole_test_records')
         .insert({ ...record, season_id: seasonId })
         .select()
@@ -194,7 +194,7 @@ export function useDeleteSoilTest() {
 
   return useMutation({
     mutationFn: async ({ id, farmId }: { id: number; farmId: number }) => {
-      const { error } = await supabase.from('soil_test_records').delete().eq('id', id);
+      const { error } = await getDataAccess().from('soil_test_records').delete().eq('id', id);
 
       if (error) throw error;
       return { id, farmId };
@@ -215,7 +215,7 @@ export function useDeletePetioleTest() {
 
   return useMutation({
     mutationFn: async ({ id, farmId }: { id: number; farmId: number }) => {
-      const { error } = await supabase.from('petiole_test_records').delete().eq('id', id);
+      const { error } = await getDataAccess().from('petiole_test_records').delete().eq('id', id);
 
       if (error) throw error;
       return { id, farmId };
@@ -282,7 +282,7 @@ export function useSoilTestTrends(farmId: number) {
   return useQuery({
     queryKey: labTestQueryKeys.soilTrends(farmId),
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from('soil_test_records')
         .select('*')
         .eq('farm_id', farmId)
@@ -301,7 +301,7 @@ export function usePetioleTestTrends(farmId: number) {
   return useQuery({
     queryKey: labTestQueryKeys.petioleTrends(farmId),
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from('petiole_test_records')
         .select('*')
         .eq('farm_id', farmId)

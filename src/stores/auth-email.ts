@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { telemetry } from '@/services/telemetry';
 import i18n from '@/i18n';
 import {
@@ -19,7 +19,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
 
     try {
       const signInRequest = () =>
-        supabase.auth.signInWithPassword({
+        getDataAccess().auth.signInWithPassword({
           email: email.trim(),
           password,
         });
@@ -69,7 +69,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     try {
       const metadata = name ? { full_name: name } : undefined;
 
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await getDataAccess().auth.signUp({
         email: email.trim(),
         password,
         options: { data: metadata },
@@ -134,7 +134,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     try {
       const metadata = name ? { full_name: name } : undefined;
 
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await getDataAccess().auth.signUp({
         email: trimmedEmail,
         password,
         options: { data: metadata },
@@ -192,7 +192,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     telemetry.capture('auth_otp_send_started');
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({ email: trimmedEmail });
+      const { error } = await getDataAccess().auth.signInWithOtp({ email: trimmedEmail });
       if (error) throw error;
 
       telemetry.capture('auth_otp_send_succeeded');
@@ -226,7 +226,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     telemetry.capture('auth_otp_verify_started', { type: pendingOTPType });
 
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
+      const { data, error } = await getDataAccess().auth.verifyOtp({
         email,
         token: trimmedCode,
         type: pendingOTPType,
@@ -278,7 +278,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
       set({ isLoading: true, otpSentSuccessfully: false });
 
       try {
-        const { error } = await supabase.auth.resend({
+        const { error } = await getDataAccess().auth.resend({
           email: pendingOTPEmail,
           type: 'signup',
         });
@@ -325,7 +325,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
       // PKCE flow: the recovery email links back to the app's auth callback
       // with a `code` to exchange. The `type=recovery` marker tells the
       // callback to route into the set-new-password screen instead of home.
-      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+      const { error } = await getDataAccess().auth.resetPasswordForEmail(trimmedEmail, {
         redirectTo: 'vinesight://auth/callback?type=recovery',
       });
 
@@ -353,7 +353,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
     telemetry.capture('auth_password_update_started');
 
     try {
-      const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+      const { data, error } = await getDataAccess().auth.updateUser({ password: newPassword });
 
       if (error) throw error;
 

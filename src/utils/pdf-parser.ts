@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { validateAndCleanParameters } from './lab-test-utils';
 
 export interface ParsedLabTest {
@@ -58,7 +58,7 @@ export async function parseLabTestFromImage(
   try {
     const { dataUrl, filename } = await readFileAsBase64(fileUri);
 
-    const { data, error } = await supabase.functions.invoke('dynamic-api', {
+    const { data, error } = await getDataAccess().functions.invoke('dynamic-api', {
       body: {
         action: 'parse',
         file_data: dataUrl,

@@ -20,7 +20,10 @@ import type { MasterCatalogProduct } from '@/types/catalog';
 
 // search-select-logic reuses the per-liter dose normalizer from phi-service,
 // whose module graph reaches the supabase client.
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+jest.mock('@/data-access', () => {
+  const dataAccess = { from: jest.fn() };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 
 const option = (name: string, overrides?: Partial<SearchSelectOption>): SearchSelectOption => ({
   key: name,

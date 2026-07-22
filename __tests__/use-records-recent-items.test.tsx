@@ -2,7 +2,6 @@ import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { supabase } from '@/lib/supabase';
 import {
   dedupeRecentItems,
   parseRecentFertigationRecords,
@@ -11,9 +10,13 @@ import {
   type RecentInputItem,
 } from '@/hooks/use-records';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
-
-const mockedFrom = supabase.from as jest.Mock;
+const mockRecords = {
+  listRecentSprays: jest.fn(),
+  listRecentFertigations: jest.fn(),
+};
+jest.mock('@/data-access', () => ({
+  getDataAccess: jest.fn(() => ({ records: mockRecords })),
+}));
 
 describe('parseRecentSprayRecords', () => {
   it('passes identity fields through and stamps the record-level catalog_mix_id on every row', () => {
@@ -233,24 +236,6 @@ describe('dedupeRecentItems', () => {
   });
 });
 
-/**
- * Chainable mock for `supabase.from(table).select(...).order(...).limit(...)[.eq(...)]`.
- * The chain is thenable so `await`-ing it resolves to `result`.
- */
-function makeSelectChain(result: { data: unknown; error: unknown }) {
-  const calls: Record<string, unknown[][]> = { select: [], order: [], limit: [], eq: [] };
-  const chain: Record<string, unknown> = {};
-  chain.then = (onFulfilled: ((v: unknown) => unknown) | null) =>
-    Promise.resolve(result).then(onFulfilled);
-  for (const method of Object.keys(calls)) {
-    chain[method] = jest.fn((...args: unknown[]) => {
-      calls[method].push(args);
-      return chain;
-    });
-  }
-  return { chain, calls };
-}
-
 function createWrapper() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -261,39 +246,32 @@ function createWrapper() {
 }
 
 describe('useRecentSprayChemicals', () => {
-  beforeEach(() => {
-    mockedFrom.mockReset();
-  });
+  beforeEach(() => mockRecords.listRecentSprays.mockReset());
 
   it('selects catalog_mix_id alongside chemical_items and stamps it onto deduped rows', async () => {
-    const { chain, calls } = makeSelectChain({
-      data: [
-        {
-          chemical: 'Karate (2 ml/L)',
-          date: '2026-06-02',
-          catalog_mix_id: 77,
-          chemical_items: [{ name: 'Karate', unit: 'ml/L', quantity: 2, catalog_product_id: 5 }],
-        },
-        {
-          chemical: 'Karate old (1 ml/L)',
-          date: '2026-06-01',
-          catalog_mix_id: null,
-          chemical_items: [
-            { name: 'Karate old name', unit: 'ml/L', quantity: 1, catalog_product_id: 5 },
-          ],
-        },
-      ],
-      error: null,
-    });
-    mockedFrom.mockReturnValue(chain);
+    mockRecords.listRecentSprays.mockResolvedValue([
+      {
+        chemical: 'Karate (2 ml/L)',
+        date: '2026-06-02',
+        catalog_mix_id: 77,
+        chemical_items: [{ name: 'Karate', unit: 'ml/L', quantity: 2, catalog_product_id: 5 }],
+      },
+      {
+        chemical: 'Karate old (1 ml/L)',
+        date: '2026-06-01',
+        catalog_mix_id: null,
+        chemical_items: [
+          { name: 'Karate old name', unit: 'ml/L', quantity: 1, catalog_product_id: 5 },
+        ],
+      },
+    ]);
 
     const { result } = renderHook(() => useRecentSprayChemicals(3), {
       wrapper: createWrapper(),
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(calls.select).toEqual([['chemical,date,chemical_items,catalog_mix_id']]);
-    expect(calls.eq).toEqual([['farm_id', 3]]);
+    expect(mockRecords.listRecentSprays).toHaveBeenCalledWith(3);
     // Both records share catalog_product_id 5 → identity dedupe keeps the most recent.
     expect(result.current.data).toEqual([
       {

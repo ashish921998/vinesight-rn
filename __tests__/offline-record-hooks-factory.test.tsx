@@ -2,11 +2,10 @@ import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { supabase } from '@/lib/supabase';
 import { resolveOrCreateSeasonIdForDate } from '@/lib/season-context';
 import { isClientUuid } from '@/features/offline/client-id';
 import { queryKeys } from '@/hooks/query-keys';
-import { makeChain } from '../jest-setup/supabase-chain-mock';
+import { makeChain } from '../jest-setup/data-access-chain-mock';
 import {
   useCreateIrrigationRecord,
   useUpdateIrrigationRecord,
@@ -17,10 +16,13 @@ import {
   useCreateExpenseRecord,
 } from '@/hooks/use-records';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+const mockFrom = jest.fn();
+jest.mock('@/data-access', () => ({
+  getDataAccess: jest.fn(() => ({ from: mockFrom })),
+}));
 jest.mock('@/lib/season-context', () => ({ resolveOrCreateSeasonIdForDate: jest.fn() }));
 
-const mockedFrom = supabase.from as jest.Mock;
+const mockedFrom = mockFrom;
 const mockedResolveSeason = resolveOrCreateSeasonIdForDate as jest.Mock;
 
 function setup(mutationRetry: false | number = false) {

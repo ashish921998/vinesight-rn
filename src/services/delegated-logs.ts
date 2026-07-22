@@ -1,18 +1,25 @@
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import type {
-  IrrigationRecord,
-  SprayRecord,
-  FertigationRecord,
-  HarvestRecord,
-  DailyNoteRecord,
-} from '@/types/database';
+  DelegatedActivityItem,
+  DelegatedLogPayload,
+  DelegatedLogType,
+  ProfessionalWorkspace,
+} from '@/data-access/DataAccess';
 import type { Farm } from '@/types';
-import type { LogTypeId } from '@/constants/calculator-models';
 import { buildEntryLogRecordFields, type EntryLogFormInput } from '@/utils/entry-log-fields';
 import { type AreaUnitPreference } from '@/utils/preferences';
 
-export type ProfessionalRole = 'owner' | 'admin' | 'agronomist';
-export type DelegatedLogType = Exclude<LogTypeId, 'expense'>;
+// These domain types moved to the DataAccess port (the port must not import
+// from services); re-exported here so existing importers keep working.
+export type {
+  DelegatedActivityItem,
+  DelegatedActivityRecord,
+  DelegatedLogType,
+  ProfessionalClient,
+  ProfessionalFarm,
+  ProfessionalRole,
+  ProfessionalWorkspace,
+} from '@/data-access/DataAccess';
 
 /**
  * UI-level context that says "this screen is logging on behalf of a farmer
@@ -34,38 +41,6 @@ export interface DelegatedContext {
    */
   clientAreaUnitPreference?: AreaUnitPreference | null;
 }
-export interface ProfessionalFarm {
-  id: number;
-  name: string;
-  region: string;
-  area: number;
-  crop: string;
-  crop_variety: string;
-}
-export interface ProfessionalClient {
-  user_id: string;
-  full_name: string;
-  phone: string | null;
-  area_unit_preference?: AreaUnitPreference | null;
-  farms: ProfessionalFarm[];
-}
-export interface ProfessionalWorkspace {
-  organization_id: string;
-  organization_name: string;
-  role: ProfessionalRole;
-  clients: ProfessionalClient[];
-}
-export type DelegatedActivityRecord =
-  | IrrigationRecord
-  | SprayRecord
-  | FertigationRecord
-  | HarvestRecord
-  | DailyNoteRecord;
-export interface DelegatedActivityItem {
-  record_type: DelegatedLogType;
-  record_data: DelegatedActivityRecord;
-}
-
 export function isValidDelegatedLogInput(
   recordType: DelegatedLogType,
   date: string,
@@ -104,15 +79,13 @@ export type DelegatedLogFormInput = Extract<EntryLogFormInput, { type: Delegated
 export function buildDelegatedLogPayload(
   input: DelegatedLogFormInput,
   farm: DelegatedLogFarmContext,
-): Record<string, unknown> {
+): DelegatedLogPayload {
   const mapped = buildEntryLogRecordFields(input, farm);
   return { ...mapped.fields };
 }
 
 export async function getProfessionalWorkspace(): Promise<ProfessionalWorkspace | null> {
-  const { data, error } = await supabase.rpc('get_professional_workspace');
-  if (error) throw error;
-  return data as ProfessionalWorkspace | null;
+  return getDataAccess().delegatedLogs.getProfessionalWorkspace();
 }
 
 export async function createDelegatedLog(input: {
@@ -121,9 +94,9 @@ export async function createDelegatedLog(input: {
   farmId: number;
   recordType: DelegatedLogType;
   date: string;
-  payload: Record<string, unknown>;
-}): Promise<Record<string, unknown>> {
-  const { data, error } = await supabase.rpc('create_delegated_log', {
+  payload: DelegatedLogPayload;
+}): Promise<DelegatedLogPayload> {
+  return getDataAccess().delegatedLogs.createDelegatedLog({
     p_organization_id: input.organizationId,
     p_client_user_id: input.clientUserId,
     p_farm_id: input.farmId,
@@ -131,8 +104,6 @@ export async function createDelegatedLog(input: {
     p_date: input.date,
     p_payload: input.payload,
   });
-  if (error) throw error;
-  return data as Record<string, unknown>;
 }
 
 export async function getDelegatedFarmActivity(input: {
@@ -140,13 +111,11 @@ export async function getDelegatedFarmActivity(input: {
   clientUserId: string;
   farmId: number;
 }): Promise<DelegatedActivityItem[]> {
-  const { data, error } = await supabase.rpc('get_delegated_farm_activity', {
+  return getDataAccess().delegatedLogs.getDelegatedFarmActivity({
     p_organization_id: input.organizationId,
     p_client_user_id: input.clientUserId,
     p_farm_id: input.farmId,
   });
-  if (error) throw error;
-  return (data ?? []) as DelegatedActivityItem[];
 }
 
 export async function updateDelegatedLog(
@@ -154,19 +123,16 @@ export async function updateDelegatedLog(
   recordId: number,
   notes: string,
 ) {
-  const { data, error } = await supabase.rpc('update_delegated_log', {
+  return getDataAccess().delegatedLogs.updateDelegatedLog({
     p_record_type: recordType,
     p_record_id: recordId,
     p_payload: { notes },
   });
-  if (error) throw error;
-  return data;
 }
 
 export async function deleteDelegatedLog(recordType: DelegatedLogType, recordId: number) {
-  const { error } = await supabase.rpc('delete_delegated_log', {
+  await getDataAccess().delegatedLogs.deleteDelegatedLog({
     p_record_type: recordType,
     p_record_id: recordId,
   });
-  if (error) throw error;
 }

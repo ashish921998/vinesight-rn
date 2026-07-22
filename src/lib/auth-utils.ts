@@ -1,9 +1,9 @@
-import { supabase } from './supabase';
+import { getDataAccess } from '@/data-access';
 
 export async function getUserId(): Promise<string | null> {
   const {
     data: { session },
-  } = await supabase.auth.getSession();
+  } = await getDataAccess().auth.getSession();
   return session?.user?.id ?? null;
 }
 

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import * as Sentry from '@sentry/react-native';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -28,7 +28,8 @@ export default function AuthCallback() {
 
       if (code) {
         try {
-          const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+          const { data, error: sessionError } =
+            await getDataAccess().auth.exchangeCodeForSession(code);
           if (sessionError) throw sessionError;
           if (data.session) {
             // Password recovery links sign the user in with a temporary session;
