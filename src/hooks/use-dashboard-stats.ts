@@ -63,26 +63,10 @@ export function useTodayNeedsAttention(limit: number = 10) {
       const userId = await getUserId();
       if (!userId) return [];
 
-      const todayStats = (await getDataAccess().dashboardStats.getTodayStats({
+      const todayStats = await getDataAccess().dashboardStats.getTodayStats({
         userId,
         limit,
-      })) as {
-        farms: Array<{
-          id?: number;
-          name?: string;
-          remaining_water?: number | null;
-          total_tank_capacity?: number | null;
-        }>;
-        overdueTasks: Array<{ id?: number; farm_id?: number; title?: string; due_date?: string }>;
-        recentLogFarmIds: RecentLogFarmIdRow[];
-        recentLogError?: { message: string } | null;
-        phiDeadlines: Array<{
-          id?: number;
-          farm_id?: number;
-          safe_harvest_date?: string;
-          chemical?: string;
-        }>;
-      };
+      });
       const { farms, overdueTasks, recentLogFarmIds, recentLogError, phiDeadlines } = todayStats;
       if (!farms || farms.length === 0) return [];
 
@@ -223,16 +207,11 @@ export function useDashboardStats() {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const dateStr = toDateString(sevenDaysAgo);
-      const counts = (await getDataAccess().dashboardStats.getDashboardCounts({
+      const counts = await getDataAccess().dashboardStats.getDashboardCounts({
         userId,
         detailedMode,
         since: dateStr,
-      })) as {
-        farmsCount: number;
-        workersCount: number;
-        activitiesCount: number;
-        pendingTasksCount: number;
-      };
+      });
       return {
         farmsCount: counts.farmsCount,
         activeWorkersCount: counts.workersCount,
@@ -283,31 +262,10 @@ export function useRecentActivities(limit: number = 5) {
       const userId = await getUserId();
       if (!userId) return [];
 
-      // Get farms first
-      type RecentRow = {
-        id: string | number;
-        farm_id: number;
-        date: string;
-        duration?: number;
-        chemical?: string;
-        quantity?: number;
-        grade?: string;
-        cost?: number;
-        type?: string;
-        notes?: string;
-      };
-      const recent = (await getDataAccess().dashboardStats.getRecentActivities({
+      const recent = await getDataAccess().dashboardStats.getRecentActivities({
         userId,
         limit,
-      })) as {
-        farms: Array<{ id: number; name: string }>;
-        irrigation: RecentRow[];
-        spray: RecentRow[];
-        harvest: RecentRow[];
-        expense: RecentRow[];
-        fertigation: RecentRow[];
-        dailyNotes: RecentRow[];
-      };
+      });
       const { farms, irrigation, spray, harvest, expense, fertigation, dailyNotes } = recent;
 
       if (!farms || farms.length === 0) return [];

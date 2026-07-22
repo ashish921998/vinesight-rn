@@ -432,7 +432,7 @@ export class SupabaseDataAccess implements DataAccess {
         .from('workers')
         .select('*')
         .eq('id', workerId)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },

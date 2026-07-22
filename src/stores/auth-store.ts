@@ -27,9 +27,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (!settled) {
         settled = true;
         if (__DEV__) {
-          console.warn('[VineSight] getDataAccess().auth.getSession() timed out after 5 s');
+          console.warn('[VineSight] supabase.auth.getSession() timed out after 5 s');
         }
-        Sentry.captureMessage('getDataAccess().auth.getSession() timed out', {
+        // Keep this exact string: Sentry alert rules match on it.
+        Sentry.captureMessage('supabase.auth.getSession() timed out', {
           level: 'warning',
           extra: { timeoutMs: 5_000 },
         });
