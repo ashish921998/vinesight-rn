@@ -20,6 +20,8 @@ import type {
   WorkerTransaction,
 } from '@/types/database';
 import type { TaskReminder } from '@/types/task';
+import type { LogTypeId } from '@/constants/calculator-models';
+import type { AreaUnitPreference } from '@/utils/preferences';
 
 export type FarmSeasonStartPayload = {
   p_farm_id: number;
@@ -86,6 +88,35 @@ export type DelegatedLogMutation = {
   p_record_id: number;
   p_payload?: Partial<DelegatedLogPayload>;
 };
+export type ProfessionalRole = 'owner' | 'admin' | 'agronomist';
+export type DelegatedLogType = Exclude<LogTypeId, 'expense'>;
+export interface ProfessionalFarm {
+  id: number;
+  name: string;
+  region: string;
+  area: number;
+  crop: string;
+  crop_variety: string;
+}
+export interface ProfessionalClient {
+  user_id: string;
+  full_name: string;
+  phone: string | null;
+  area_unit_preference?: AreaUnitPreference | null;
+  farms: ProfessionalFarm[];
+}
+export interface ProfessionalWorkspace {
+  organization_id: string;
+  organization_name: string;
+  role: ProfessionalRole;
+  clients: ProfessionalClient[];
+}
+export type DelegatedActivityRecord =
+  IrrigationRecord | SprayRecord | FertigationRecord | HarvestRecord | DailyNoteRecord;
+export interface DelegatedActivityItem {
+  record_type: DelegatedLogType;
+  record_data: DelegatedActivityRecord;
+}
 
 /**
  * Application persistence port.
@@ -177,15 +208,13 @@ export interface DataAccess {
     deleteSettlement: (settlementId: number) => Promise<void>;
   };
   delegatedLogs: {
-    getProfessionalWorkspace: () => Promise<
-      import('@/services/delegated-logs').ProfessionalWorkspace | null
-    >;
+    getProfessionalWorkspace: () => Promise<ProfessionalWorkspace | null>;
     createDelegatedLog: (payload: DelegatedLogRpcInput) => Promise<DelegatedLogPayload>;
     getDelegatedFarmActivity: (payload: {
       p_organization_id: string;
       p_client_user_id: string;
       p_farm_id: number;
-    }) => Promise<import('@/services/delegated-logs').DelegatedActivityItem[]>;
+    }) => Promise<DelegatedActivityItem[]>;
     updateDelegatedLog: (payload: DelegatedLogMutation) => Promise<DelegatedLogPayload>;
     deleteDelegatedLog: (
       payload: Pick<DelegatedLogMutation, 'p_record_type' | 'p_record_id'>,

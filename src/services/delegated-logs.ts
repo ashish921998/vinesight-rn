@@ -1,19 +1,25 @@
 import { getDataAccess } from '@/data-access';
-import type { DelegatedLogPayload } from '@/data-access/DataAccess';
 import type {
-  IrrigationRecord,
-  SprayRecord,
-  FertigationRecord,
-  HarvestRecord,
-  DailyNoteRecord,
-} from '@/types/database';
+  DelegatedActivityItem,
+  DelegatedLogPayload,
+  DelegatedLogType,
+  ProfessionalWorkspace,
+} from '@/data-access/DataAccess';
 import type { Farm } from '@/types';
-import type { LogTypeId } from '@/constants/calculator-models';
 import { buildEntryLogRecordFields, type EntryLogFormInput } from '@/utils/entry-log-fields';
 import { type AreaUnitPreference } from '@/utils/preferences';
 
-export type ProfessionalRole = 'owner' | 'admin' | 'agronomist';
-export type DelegatedLogType = Exclude<LogTypeId, 'expense'>;
+// These domain types moved to the DataAccess port (the port must not import
+// from services); re-exported here so existing importers keep working.
+export type {
+  DelegatedActivityItem,
+  DelegatedActivityRecord,
+  DelegatedLogType,
+  ProfessionalClient,
+  ProfessionalFarm,
+  ProfessionalRole,
+  ProfessionalWorkspace,
+} from '@/data-access/DataAccess';
 
 /**
  * UI-level context that says "this screen is logging on behalf of a farmer
@@ -35,34 +41,6 @@ export interface DelegatedContext {
    */
   clientAreaUnitPreference?: AreaUnitPreference | null;
 }
-export interface ProfessionalFarm {
-  id: number;
-  name: string;
-  region: string;
-  area: number;
-  crop: string;
-  crop_variety: string;
-}
-export interface ProfessionalClient {
-  user_id: string;
-  full_name: string;
-  phone: string | null;
-  area_unit_preference?: AreaUnitPreference | null;
-  farms: ProfessionalFarm[];
-}
-export interface ProfessionalWorkspace {
-  organization_id: string;
-  organization_name: string;
-  role: ProfessionalRole;
-  clients: ProfessionalClient[];
-}
-export type DelegatedActivityRecord =
-  IrrigationRecord | SprayRecord | FertigationRecord | HarvestRecord | DailyNoteRecord;
-export interface DelegatedActivityItem {
-  record_type: DelegatedLogType;
-  record_data: DelegatedActivityRecord;
-}
-
 export function isValidDelegatedLogInput(
   recordType: DelegatedLogType,
   date: string,

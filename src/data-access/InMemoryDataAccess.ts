@@ -1,11 +1,15 @@
-import type { DataAccess, DelegatedLogPayload } from './DataAccess';
+import type {
+  DataAccess,
+  DelegatedActivityItem,
+  DelegatedLogPayload,
+  ProfessionalWorkspace,
+} from './DataAccess';
 import type {
   Worker,
   WorkerAttendance,
   WorkerSettlement,
   WorkerTransaction,
 } from '@/types/database';
-import type { DelegatedActivityItem, ProfessionalWorkspace } from '@/services/delegated-logs';
 
 /**
  * Small deterministic fake for unit tests and future offline work.
