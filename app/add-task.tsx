@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
+import { withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import { EntryForm } from '@/components/screens/entry-form';
 import { useModalStore } from '@/stores';
@@ -56,10 +56,4 @@ function AddTaskScreen() {
   );
 }
 
-export default function AddTaskRoute() {
-  return (
-    <AdvancedRouteGuard>
-      <AddTaskScreen />
-    </AdvancedRouteGuard>
-  );
-}
+export default withAdvancedRouteGuard(AddTaskScreen);

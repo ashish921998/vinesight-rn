@@ -24,3 +24,24 @@ export function AdvancedRouteGuard({ children }: { children: React.ReactNode }) 
   if (!detailedMode) return <Redirect href="/(tabs)" />;
   return <>{children}</>;
 }
+
+/**
+ * Wraps a screen component in {@link AdvancedRouteGuard} for use as a route's
+ * default export, e.g. `export default withAdvancedRouteGuard(TasksScreen)`.
+ * Keeps the guard as the mounted route component (so it runs before the inner
+ * screen's data hooks) without repeating the wrapper JSX in every advanced
+ * route file.
+ */
+export function withAdvancedRouteGuard<P extends object>(
+  Screen: React.ComponentType<P>,
+): React.ComponentType<P> {
+  function GuardedRoute(props: P) {
+    return (
+      <AdvancedRouteGuard>
+        <Screen {...props} />
+      </AdvancedRouteGuard>
+    );
+  }
+  GuardedRoute.displayName = `withAdvancedRouteGuard(${Screen.displayName ?? Screen.name ?? 'Screen'})`;
+  return GuardedRoute;
+}

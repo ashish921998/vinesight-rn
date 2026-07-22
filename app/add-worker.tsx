@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { WorkerForm } from '@/components/screens/worker-form';
 import { useModalStore } from '@/stores';
-import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
+import { withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 function AddWorkerScreen() {
   const router = useRouter();
@@ -23,10 +23,4 @@ function AddWorkerScreen() {
   );
 }
 
-export default function AddWorkerRoute() {
-  return (
-    <AdvancedRouteGuard>
-      <AddWorkerScreen />
-    </AdvancedRouteGuard>
-  );
-}
+export default withAdvancedRouteGuard(AddWorkerScreen);

@@ -23,7 +23,7 @@ import {
 import { resolveFertigationPrefill } from '@/constants/fertilizer-units';
 import { useModalStore } from '@/stores';
 import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
-import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
+import { withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 function FertilizerPlansScreen() {
   const { t } = useTranslation();
@@ -445,10 +445,4 @@ function FertilizerPlansScreen() {
   );
 }
 
-export default function FertilizerPlansRoute() {
-  return (
-    <AdvancedRouteGuard>
-      <FertilizerPlansScreen />
-    </AdvancedRouteGuard>
-  );
-}
+export default withAdvancedRouteGuard(FertilizerPlansScreen);

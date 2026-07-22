@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
+import { withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import { Symbol } from '@/components/ui/symbol';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -801,10 +801,4 @@ function SoilProfilingScreen() {
   );
 }
 
-export default function SoilProfilingRoute() {
-  return (
-    <AdvancedRouteGuard>
-      <SoilProfilingScreen />
-    </AdvancedRouteGuard>
-  );
-}
+export default withAdvancedRouteGuard(SoilProfilingScreen);

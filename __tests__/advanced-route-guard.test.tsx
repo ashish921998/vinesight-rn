@@ -2,7 +2,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import { render } from '@testing-library/react-native';
 
-import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
+import { AdvancedRouteGuard, withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 import { useAppModeStore } from '@/stores';
 import { ADVANCED_ROUTE_SEGMENTS, isAdvancedRoute } from '@/constants/advanced-routes';
 
@@ -57,6 +57,24 @@ describe('AdvancedRouteGuard', () => {
     );
     expect(queryByTestId('child')).not.toBeNull();
     expect(mockRedirect).not.toHaveBeenCalled();
+  });
+});
+
+describe('withAdvancedRouteGuard', () => {
+  it('renders the wrapped screen in Detailed mode', () => {
+    setMode({ detailedMode: true, hydrated: true });
+    const Guarded = withAdvancedRouteGuard(Child);
+    const { queryByTestId } = render(<Guarded />);
+    expect(queryByTestId('child')).not.toBeNull();
+    expect(mockRedirect).not.toHaveBeenCalled();
+  });
+
+  it('redirects home in Simplified mode instead of rendering the screen', () => {
+    setMode({ detailedMode: false, hydrated: true });
+    const Guarded = withAdvancedRouteGuard(Child);
+    const { queryByTestId } = render(<Guarded />);
+    expect(queryByTestId('child')).toBeNull();
+    expect(mockRedirect).toHaveBeenCalledWith('/(tabs)');
   });
 });
 

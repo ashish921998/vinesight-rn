@@ -20,7 +20,7 @@ import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { useDomainColors } from '@/styles/use-domain-colors';
 import { colorWithOpacity } from '@/utils/color';
-import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
+import { withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 type ViewMode = 'table' | 'chart';
 
@@ -283,10 +283,4 @@ function SoilTrendsScreen() {
   );
 }
 
-export default function SoilTrendsRoute() {
-  return (
-    <AdvancedRouteGuard>
-      <SoilTrendsScreen />
-    </AdvancedRouteGuard>
-  );
-}
+export default withAdvancedRouteGuard(SoilTrendsScreen);

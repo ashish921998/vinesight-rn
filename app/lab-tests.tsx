@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
+import { withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { LabTestDetailsModal } from '@/components/screens/lab-test-details-modal';
@@ -805,10 +805,4 @@ function LabTestsScreen() {
   );
 }
 
-export default function LabTestsRoute() {
-  return (
-    <AdvancedRouteGuard>
-      <LabTestsScreen />
-    </AdvancedRouteGuard>
-  );
-}
+export default withAdvancedRouteGuard(LabTestsScreen);

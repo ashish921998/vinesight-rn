@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
+import { withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import SoilProfileForm from '@/components/screens/soil-profile-form';
 import { spacing, fontSize, fontWeight } from '@/styles/theme';
@@ -71,10 +71,4 @@ function AddSoilProfileScreen() {
   );
 }
 
-export default function AddSoilProfileRoute() {
-  return (
-    <AdvancedRouteGuard>
-      <AddSoilProfileScreen />
-    </AdvancedRouteGuard>
-  );
-}
+export default withAdvancedRouteGuard(AddSoilProfileScreen);

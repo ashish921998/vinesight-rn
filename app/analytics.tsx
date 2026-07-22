@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
-import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
+import { withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -1042,10 +1042,4 @@ function AnalyticsScreen() {
   );
 }
 
-export default function AnalyticsRoute() {
-  return (
-    <AdvancedRouteGuard>
-      <AnalyticsScreen />
-    </AdvancedRouteGuard>
-  );
-}
+export default withAdvancedRouteGuard(AnalyticsScreen);

@@ -10,7 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
+import { withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Symbol as SFSymbol } from '@/components/ui/symbol';
@@ -847,10 +847,4 @@ function TasksScreen() {
   );
 }
 
-export default function TasksRoute() {
-  return (
-    <AdvancedRouteGuard>
-      <TasksScreen />
-    </AdvancedRouteGuard>
-  );
-}
+export default withAdvancedRouteGuard(TasksScreen);
