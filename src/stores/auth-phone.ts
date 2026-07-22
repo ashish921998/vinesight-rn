@@ -18,6 +18,15 @@ import {
 } from './auth-helpers';
 import type { SetState, GetState } from './auth-types';
 
+/**
+ * Builds a profile `full_name` from a first and (optional) last name. Last name
+ * is optional (see profile-completion), so a blank last name still yields a
+ * valid non-empty full name from the first name alone — `buildFullName('Asha',
+ * '') === 'Asha'`.
+ */
+export const buildFullName = (firstName: string, lastName: string): string =>
+  [firstName, lastName].filter(Boolean).join(' ').trim();
+
 export const createPhoneActions = (set: SetState, get: GetState) => ({
   signInWithPhone: async (phone: string, mode: 'signin' | 'signup' = 'signin', name?: string) => {
     const trimmedPhone = phone.trim();
@@ -306,9 +315,9 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
       const lastName = data.lastName.trim();
       const email = data.email?.trim().toLowerCase();
 
-      if (!firstName || !lastName) {
+      if (!firstName) {
         set({
-          errorMessage: 'Please enter first name and last name.',
+          errorMessage: 'Please enter your name.',
           isLoading: false,
         });
         return;
@@ -348,7 +357,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
         }
       }
 
-      const fullName = `${firstName} ${lastName}`.trim();
+      const fullName = buildFullName(firstName, lastName);
       const updateData: Record<string, string> = {
         full_name: fullName,
         first_name: firstName,

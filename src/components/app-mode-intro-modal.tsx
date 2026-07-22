@@ -15,22 +15,24 @@ interface Props {
 }
 
 /**
- * One-time "Simplified mode" intro prompt. Shown the first time a user lands on
- * Simplified mode after the app-mode toggle ships. Offers a direct path back to
- * Detailed mode so existing users don't lose features silently.
+ * "Simplified mode" intro prompt. Shown once to *migrating* users who never ran
+ * the onboarding pager (new users are marked seen at onboarding completion, so
+ * they never reach this). Offers a direct path to Detailed mode so migrating
+ * users don't lose features silently.
  *
- * The backdrop is intentionally NOT tap-to-dismiss — the user must pick one of
- * the two actions so they can't accidentally lose the easy path to Detailed.
- * `onRequestClose` is a no-op so the Android hardware back button can't bypass
- * that explicit-choice flow either.
+ * The modal is dismissable: tapping the backdrop or pressing Android hardware
+ * back both fall through to "stay simplified" (which marks it seen), so it can't
+ * become a blocking teaching gate. The inner card stops touch propagation so
+ * taps inside it don't dismiss.
  */
 export function AppModeIntroModal({ visible, onEnableDetailed, onStaySimplified }: Props) {
   const { t } = useTranslation();
   const m3 = useM3();
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => {}}>
-      <View
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onStaySimplified}>
+      <Pressable
+        onPress={onStaySimplified}
         style={{
           flex: 1,
           justifyContent: 'center',
@@ -38,7 +40,8 @@ export function AppModeIntroModal({ visible, onEnableDetailed, onStaySimplified 
           backgroundColor: colorWithOpacity('#000000', 0.5),
         }}
       >
-        <View
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
           style={{
             backgroundColor: m3.surface.surfaceContainer,
             borderRadius: borderRadius['2xl'],
@@ -136,22 +139,60 @@ export function AppModeIntroModal({ visible, onEnableDetailed, onStaySimplified 
               {t('settings.appModeIntro.staySimplified')}
             </Text>
           </Pressable>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
 
 /**
- * Mount beside the app's global overlays (e.g. GuidedTourController). Decides
- * whether to show the one-time Simplified-mode intro and wires the actions.
+ * Inputs to {@link shouldShowAppModeIntro}, mirroring the store fields the gate
+ * reads. Kept as a plain object so the visibility rule is unit-testable without
+ * mounting the component or the stores.
+ */
+export interface AppModeIntroVisibilityState {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  needsProfileCompletion: boolean;
+  detailedMode: boolean;
+  modeHydrated: boolean;
+  hasSeenIntro: boolean;
+  introHydrated: boolean;
+  tourIsPresenting: boolean;
+}
+
+/**
+ * Pure predicate: should the Simplified-mode intro modal be shown?
  *
- * Visible only when: authenticated, not mid-profile-completion, BOTH the intro
- * store and the app-mode store have hydrated (so a Detailed-mode user can't
- * briefly flip themselves to Simplified before AsyncStorage restores their
- * choice), the user hasn't seen it yet, they're currently on Simplified mode,
- * and the guided tour isn't actively presenting (so the two overlays never
- * stack).
+ * True only when the user is authenticated, not mid-profile-completion, both the
+ * intro and app-mode stores have hydrated (so a Detailed-mode user can't briefly
+ * flip to Simplified before AsyncStorage restores their choice), they haven't
+ * seen it yet, they're currently on Simplified mode, and the guided tour isn't
+ * actively presenting (so the two overlays never stack). New users never satisfy
+ * `!hasSeenIntro` because onboarding completion marks it seen — leaving only the
+ * migrating cohort that never ran onboarding.
+ */
+export function shouldShowAppModeIntro(state: AppModeIntroVisibilityState): boolean {
+  return (
+    state.isAuthenticated &&
+    !state.isLoading &&
+    !state.needsProfileCompletion &&
+    state.introHydrated &&
+    state.modeHydrated &&
+    !state.hasSeenIntro &&
+    !state.detailedMode &&
+    !state.tourIsPresenting
+  );
+}
+
+/**
+ * Mount beside the app's global overlays (e.g. GuidedTourController). Decides
+ * whether to show the Simplified-mode intro and wires the actions.
+ *
+ * This modal now targets only *migrating* users who never ran the onboarding
+ * pager — new users are marked seen at onboarding completion, so they never
+ * reach this gate. See {@link shouldShowAppModeIntro} for the visibility rule
+ * (still guarded by `!tourIsPresenting` so the two overlays never stack).
  */
 export function AppModeIntroGate() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -173,15 +214,16 @@ export function AppModeIntroGate() {
   // including it here would suppress this intro for every such user.
   const tourIsPresenting = guidedTourStatus === 'in_progress';
 
-  const visible =
-    isAuthenticated &&
-    !isLoading &&
-    !needsProfileCompletion &&
-    introHydrated &&
-    modeHydrated &&
-    !hasSeenIntro &&
-    !detailedMode &&
-    !tourIsPresenting;
+  const visible = shouldShowAppModeIntro({
+    isAuthenticated,
+    isLoading,
+    needsProfileCompletion,
+    detailedMode,
+    modeHydrated,
+    hasSeenIntro,
+    introHydrated,
+    tourIsPresenting,
+  });
 
   if (!visible) return null;
 

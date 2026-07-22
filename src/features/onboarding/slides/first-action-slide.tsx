@@ -19,7 +19,7 @@ interface FirstActionSlideProps {
   onSkip: () => void;
 }
 
-const ACTIONS: Array<{
+export const ACTIONS: Array<{
   type: OnboardingActionType;
   icon: string;
   titleKey: string;
@@ -36,12 +36,6 @@ const ACTIONS: Array<{
     icon: 'doc.text.fill',
     titleKey: 'onboarding.firstAction.actions.note.title',
     descriptionKey: 'onboarding.firstAction.actions.note.description',
-  },
-  {
-    type: 'task',
-    icon: 'checklist',
-    titleKey: 'onboarding.firstAction.actions.task.title',
-    descriptionKey: 'onboarding.firstAction.actions.task.description',
   },
 ];
 

@@ -12,12 +12,12 @@ import { ensureInitialFarmSeasonForFarmId, useFarms } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
-import { useAuthStore, useLanguageStore, useNotificationStore } from '@/stores';
+import { useLanguageStore, useNotificationStore } from '@/stores';
 import { useOnboardingStore } from '@/stores/onboarding-store';
 import type { OnboardingActionType, OnboardingStep } from '@/types/onboarding';
 import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
-import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { colorWithOpacity } from '@/utils/color';
+import { applyOnboardingCompletionEffects } from './finish';
 import { OnboardingButton } from './components/onboarding-button';
 import { PageIndicator } from './components/page-indicator';
 import { FirstFarmSlide } from './slides/first-farm-slide';
@@ -42,6 +42,15 @@ const pageIndexForStep = (step: OnboardingStep): number => {
   return index >= 0 ? index : 0;
 };
 
+/**
+ * Resolves the next pager index from the current one, clamped so it never runs
+ * past the last page. Returns the current index when already on the final page.
+ */
+export const resolveNextPageIndex = (currentPageIndex: number): number => {
+  const nextPage = currentPageIndex + 1;
+  return nextPage >= TOTAL_PAGES ? currentPageIndex : nextPage;
+};
+
 export function OnboardingScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -62,9 +71,7 @@ export function OnboardingScreen() {
   const [createdFarmId, setCreatedFarmId] = useState<number | null>(
     onboardingActivation.farmId ?? null,
   );
-  const hasAtLeastOneFarm = farms.length > 0 || onboardingActivation.farmCreated;
   const hasCompletedFirstAction = onboardingActivation.firstActionCompletedAt !== null;
-  const hasSkippedFirstAction = onboardingActivation.firstActionSkipped;
   const firstAvailableFarmId = farms.find((farm) => typeof farm.id === 'number')?.id ?? null;
   const resolvedFirstActionFarmId =
     createdFarmId ?? onboardingActivation.farmId ?? firstAvailableFarmId;
@@ -101,18 +108,9 @@ export function OnboardingScreen() {
   const handleMomentumEnd = useCallback(
     (event: { nativeEvent: { contentOffset: { x: number } } }) => {
       const page = Math.round(event.nativeEvent.contentOffset.x / width);
-      if (page > FIRST_FARM_PAGE_INDEX && !hasAtLeastOneFarm && !farmCreatedRef.current) {
-        scrollRef.current?.scrollTo({ x: FIRST_FARM_PAGE_INDEX * width, animated: true });
-        setCurrentPageIndex(FIRST_FARM_PAGE_INDEX);
-        handleSlideChange(FIRST_FARM_PAGE_INDEX);
-        return;
-      }
-      if (page > FIRST_ACTION_PAGE_INDEX && !hasCompletedFirstAction && !hasSkippedFirstAction) {
-        scrollRef.current?.scrollTo({ x: FIRST_ACTION_PAGE_INDEX * width, animated: true });
-        setCurrentPageIndex(FIRST_ACTION_PAGE_INDEX);
-        handleSlideChange(FIRST_ACTION_PAGE_INDEX);
-        return;
-      }
+      // firstFarm/firstAction are non-blocking: the user can swipe past them
+      // without creating a farm or completing an action (explicit "Skip for now"
+      // affordances make this obvious). We only track navigation direction here.
       if (page < currentPageIndex) {
         setHasManuallyNavigatedBack(true);
       } else if (page > currentPageIndex) {
@@ -121,19 +119,12 @@ export function OnboardingScreen() {
       setCurrentPageIndex(page);
       handleSlideChange(page);
     },
-    [
-      currentPageIndex,
-      handleSlideChange,
-      hasAtLeastOneFarm,
-      hasCompletedFirstAction,
-      hasSkippedFirstAction,
-      width,
-    ],
+    [currentPageIndex, handleSlideChange, width],
   );
 
   const handleNext = useCallback(() => {
-    const nextPage = currentPageIndex + 1;
-    if (nextPage >= TOTAL_PAGES) return;
+    const nextPage = resolveNextPageIndex(currentPageIndex);
+    if (nextPage === currentPageIndex) return;
     setHasManuallyNavigatedBack(false);
     scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
     setCurrentPageIndex(nextPage);
@@ -143,7 +134,6 @@ export function OnboardingScreen() {
   const finishOnboarding = useCallback(
     async (notificationsEnabled: boolean) => {
       const latestActivation = useOnboardingStore.getState().activation;
-      useOnboardingStore.getState().setPreferences({ notificationsEnabled });
 
       if (notificationsEnabled && (language === 'en' || language === 'hi' || language === 'mr')) {
         // Fire-and-forget: registering the push device makes a network call
@@ -160,22 +150,23 @@ export function OnboardingScreen() {
       }
 
       setHasManuallyNavigatedBack(false);
-      useNotificationStore.getState().setNotificationPermissionPrompted(true);
-      useAuthStore.getState().setHasSeenOnboarding(true);
-      useOnboardingStore.getState().completeOnboarding();
+      const resolvedFarmId = createdFarmId ?? latestActivation.farmId;
+      // Apply all the store side-effects (complete onboarding, mark tour complete
+      // and mode-intro seen so neither reappears as a duplicate first-run gate)
+      // and resolve where to land. Navigation stays component-side.
+      const route = applyOnboardingCompletionEffects({
+        resolvedFarmId: typeof resolvedFarmId === 'number' ? resolvedFarmId : null,
+        notificationsEnabled,
+      });
       telemetry.capture('onboarding_completed', {
         notifications_enabled: notificationsEnabled,
         first_action_type: latestActivation.firstActionType,
         farm_id: latestActivation.farmId,
       });
-      const resolvedFarmId = createdFarmId ?? latestActivation.farmId;
-      if (typeof resolvedFarmId === 'number') {
-        useGuidedTourStore.getState().startTourAtStep('add_log', { farmId: resolvedFarmId });
-        router.replace('/(tabs)');
-        router.push(`/farm/${resolvedFarmId}`);
-        return;
+      router.replace(route.replace);
+      if (route.push) {
+        router.push(route.push);
       }
-      router.replace('/(tabs)');
     },
     [createdFarmId, language],
   );
@@ -192,9 +183,13 @@ export function OnboardingScreen() {
   const handleSkip = useCallback(() => {
     const latestActivation = useOnboardingStore.getState().activation;
     setHasManuallyNavigatedBack(false);
-    useNotificationStore.getState().setNotificationPermissionPrompted(true);
-    useAuthStore.getState().setHasSeenOnboarding(true);
-    useOnboardingStore.getState().completeOnboarding();
+    // Preserve whatever notification preference is already set — skipping must
+    // not flip it. The helper also marks the tour complete and the mode-intro
+    // seen so neither resurfaces as a duplicate first-run gate on the dashboard.
+    applyOnboardingCompletionEffects({
+      resolvedFarmId: null,
+      notificationsEnabled: useOnboardingStore.getState().preferences.notificationsEnabled,
+    });
     telemetry.capture('onboarding_skipped', {
       slide: currentPageIndex,
       farm_id: latestActivation.farmId,
@@ -253,6 +248,9 @@ export function OnboardingScreen() {
           return;
         }
 
+        // Only `log` and `note` are offered during onboarding — the `task`
+        // first-action option was removed (task creation is a Detailed-mode
+        // feature), so there is no `/add-task` branch here.
         if (actionType === 'note') {
           router.push({
             pathname: '/add-note',
@@ -262,17 +260,7 @@ export function OnboardingScreen() {
               onboardingActionType: actionType,
             },
           });
-          return;
         }
-
-        router.push({
-          pathname: '/add-task',
-          params: {
-            farmId: String(resolvedFarmId),
-            onboarding: 'true',
-            onboardingActionType: actionType,
-          },
-        });
       } catch (navigationError) {
         firstActionStartInFlightRef.current = false;
         throw navigationError;
@@ -391,7 +379,11 @@ export function OnboardingScreen() {
           <ValuePropsSlide isActive={activatedSlides.has(1)} />
         </View>
         <View style={[styles.slide, { width }]}>
-          <FirstFarmSlide isActive={activatedSlides.has(2)} onResolved={handleFarmResolved} />
+          <FirstFarmSlide
+            isActive={activatedSlides.has(2)}
+            onResolved={handleFarmResolved}
+            onSkip={() => jumpToPage(FIRST_ACTION_PAGE_INDEX)}
+          />
         </View>
         <View style={[styles.slide, { width }]}>
           <FirstActionSlide
@@ -424,9 +416,13 @@ export function OnboardingScreen() {
           </Text>
         </View>
         <PageIndicator totalPages={TOTAL_PAGES} currentPage={currentPage} />
-        {currentPageIndex < FIRST_FARM_PAGE_INDEX && (
+        {currentPageIndex < NOTIFICATIONS_PAGE_INDEX && (
           <View style={styles.nextButtonContainer}>
-            <OnboardingButton label="Next" onPress={handleNext} variant="primary" />
+            <OnboardingButton
+              label={currentPageIndex < FIRST_FARM_PAGE_INDEX ? 'Next' : 'Skip for now'}
+              onPress={handleNext}
+              variant="primary"
+            />
           </View>
         )}
       </View>

@@ -1960,7 +1960,7 @@ export const en = {
     title: 'Complete Your Profile',
     subtitle: 'Tell us a bit about yourself',
     firstName: 'First name',
-    lastName: 'Last name',
+    lastName: 'Last name (optional)',
     fullName: 'Full Name',
     fullNamePlaceholder: 'Enter your full name',
     emailOptional: 'Email',
@@ -2044,10 +2044,10 @@ export const en = {
       subtitle: 'Show workers, tools, AI assistant, and tasks',
     },
     appModeIntro: {
-      title: "We've streamlined VineSight",
-      body: 'The app now starts in Simplified mode. Workers, tools, the AI assistant, and tasks are hidden by default. You can switch back any time.',
+      title: 'VineSight is simpler now',
+      body: "You're in Simplified mode — farms, logging, warehouse, and reports. Workers, tools, tasks, and the AI assistant are one tap away in Detailed mode. Switch any time in Settings.",
       enableDetailed: 'Enable Detailed mode',
-      staySimplified: 'Stay on Simplified',
+      staySimplified: 'Got it',
     },
     errors: {
       signOutFailed: 'Failed to sign out. Please try again.',

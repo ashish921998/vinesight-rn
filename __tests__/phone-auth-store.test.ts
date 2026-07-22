@@ -398,16 +398,34 @@ describe('completeProfile', () => {
     });
   });
 
-  it('rejects missing required fields', async () => {
+  it('rejects a missing first name (last name is optional)', async () => {
+    await useAuthStore.getState().completeProfile({
+      firstName: '',
+      lastName: 'Smith',
+    });
+
+    const state = useAuthStore.getState();
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+    expect(state.errorMessage).toBe('Please enter your name.');
+    expect(state.isLoading).toBe(false);
+  });
+
+  it('allows a blank last name and stores full_name as the first name alone', async () => {
+    (supabase.auth.updateUser as jest.Mock).mockResolvedValue({ error: null });
+    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      data: { user: { id: 'u1', user_metadata: { full_name: 'Alice', first_name: 'Alice' } } },
+    });
+
     await useAuthStore.getState().completeProfile({
       firstName: 'Alice',
       lastName: '',
     });
 
-    const state = useAuthStore.getState();
-    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
-    expect(state.errorMessage).toBe('Please enter first name and last name.');
-    expect(state.isLoading).toBe(false);
+    expect(supabase.auth.updateUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ full_name: 'Alice', first_name: 'Alice', last_name: '' }),
+      }),
+    );
   });
 
   it('rejects invalid email format', async () => {

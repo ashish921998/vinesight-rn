@@ -29,10 +29,12 @@ import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
+import { OnboardingButton } from '../components/onboarding-button';
 
 interface FirstFarmSlideProps {
   isActive: boolean;
   onResolved: (farmId: number | null) => void;
+  onSkip: () => void;
 }
 
 interface KnownCropOption {
@@ -69,7 +71,7 @@ const INITIAL_STATE: FarmSetupState = {
   showVarietyPicker: false,
 };
 
-export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
+export function FirstFarmSlide({ isActive, onResolved, onSkip }: FirstFarmSlideProps) {
   const { t } = useTranslation();
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -482,6 +484,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
               isLoading={createFarm.isPending}
               disabled={!isValid}
             />
+            <OnboardingButton label="Skip for now" onPress={onSkip} variant="ghost" />
           </Animated.View>
         </ScrollView>
       </View>

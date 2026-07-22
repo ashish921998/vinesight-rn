@@ -133,7 +133,8 @@ export default function ProfileCompletionScreen() {
 
     const trimmedFirstName = firstNameValue.trim();
     const trimmedLastName = lastNameValue.trim();
-    if (!trimmedFirstName || !trimmedLastName) return;
+    // Only the first/display name is required — last name is optional.
+    if (!trimmedFirstName) return;
     const trimmedEmail = emailValue.trim();
     if (trimmedEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -415,9 +416,7 @@ export default function ProfileCompletionScreen() {
                 }
                 onPress={handleContinue}
                 isLoading={isLoading || joinPending}
-                disabled={
-                  !firstNameValue.trim() || !lastNameValue.trim() || isLoading || joinPending
-                }
+                disabled={!firstNameValue.trim() || isLoading || joinPending}
                 style={{ marginTop: spacing[4] }}
               />
             </View>
