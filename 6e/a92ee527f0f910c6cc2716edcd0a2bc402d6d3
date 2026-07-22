@@ -1,0 +1,19 @@
+.gitignore
+  s_9c1d8bc018dcb7::t_4344db2289222c 70-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "6ea92ee527f0f910c6cc2716edcd0a2bc402d6d3",
+  "prompts": {},
+  "sessions": {
+    "s_9c1d8bc018dcb7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_07ae237edffet7iiMm8QeedD4V",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": null
+    }
+  }
+}
