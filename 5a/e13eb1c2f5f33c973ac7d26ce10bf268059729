@@ -1,0 +1,23 @@
+src/i18n/locales/en.ts
+  s_b9cc5522d6c09b::t_d4945807b75853 803-808,1581-1583,2448
+src/i18n/locales/hi.ts
+  s_b9cc5522d6c09b::t_a24e3313b3ccbf 791-796,1566-1568,2441
+src/i18n/locales/mr.ts
+  s_b9cc5522d6c09b::t_ff4c3ae7851683 794-799,1576-1578,2457
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "5ae13eb1c2f5f33c973ac7d26ce10bf268059729",
+  "prompts": {},
+  "sessions": {
+    "s_b9cc5522d6c09b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab07840c-f2bd-466e-aa86-dfe0158364d7",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
