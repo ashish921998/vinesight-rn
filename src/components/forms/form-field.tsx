@@ -43,12 +43,8 @@ export function FormField({
 
   return (
     <View style={{ marginBottom: spacing[4] }}>
+      {/* Label is text-only; the field's icon renders once, inside the input box. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-        {icon && (
-          <View style={{ marginRight: 6 }}>
-            <Symbol name={icon} size={16} color={m3.primary.p600} />
-          </View>
-        )}
         <Text
           style={{
             fontSize: fontSize.sm,
@@ -208,12 +204,8 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
 
   return (
     <View style={{ marginBottom: spacing[4] }}>
+      {/* Label is text-only; the field's icon renders once, inside the input box. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-        {props.icon && (
-          <View style={{ marginRight: 6 }}>
-            <Symbol name={props.icon} size={16} color={m3.primary.p600} />
-          </View>
-        )}
         <Text
           style={{
             fontSize: fontSize.sm,
@@ -231,7 +223,9 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: spacing[4],
-          paddingVertical: spacing[2],
+          // spacing[3] matches FormField and DateField — the whole input family
+          // shares one height so a 16px radius reads identically across them.
+          paddingVertical: spacing[3],
           borderRadius: componentRadius.input,
           borderWidth: 1,
           borderColor,

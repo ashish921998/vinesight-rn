@@ -125,7 +125,7 @@ describe('basis-fused unit chips', () => {
 
     fireEvent.press(screen.getByText('kg/acre'));
 
-    const next = onChange.mock.calls[0][0] as FertigationFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({ unit: 'kg', quantityBasis: 'per_acre' });
   });
 
@@ -136,7 +136,7 @@ describe('basis-fused unit chips', () => {
     fireEvent.press(screen.getByText('fertigationForm.fertilizers.moreUnits'));
     fireEvent.press(screen.getByText('g'));
 
-    const next = onChange.mock.calls[0][0] as FertigationFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({ unit: 'gram', quantityBasis: 'total' });
   });
 
@@ -166,7 +166,7 @@ describe('smart defaults', () => {
     const screen = render(<FertigationForm data={data} onChange={onChange} />);
     fireEvent.press(screen.getByText('fertigationForm.fertilizers.addFertilizer'));
 
-    const next = onChange.mock.calls[0][0] as FertigationFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers).toHaveLength(2);
     expect(next.fertilizers[1]).toMatchObject({ unit: 'kg', quantityBasis: 'total' });
   });
@@ -189,9 +189,11 @@ describe('smart defaults', () => {
       />,
     );
 
+    fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
+    fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'Plan');
     fireEvent.press(screen.getByText('PlanUrea'));
 
-    const next = onChange.mock.calls[0][0] as FertigationFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({
       name: 'PlanUrea',
       unit: 'kg',
@@ -210,9 +212,11 @@ describe('smart defaults', () => {
       />,
     );
 
+    fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
+    fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'Hum');
     fireEvent.press(screen.getByText('Humic acid'));
 
-    const next = onChange.mock.calls[0][0] as FertigationFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({
       name: 'Humic acid',
       unit: 'liter',
@@ -220,10 +224,7 @@ describe('smart defaults', () => {
     });
   });
 
-  it('quick-add with a different basis appends a row — never overwrites the other-basis row', () => {
-    // Existing row: Urea 5 kg/acre. Quick-add: Urea 10 kg TOTAL. Same unit
-    // string ('kg'), different fused chip — filling would silently rewrite
-    // the rate row's basis, so it must append a second row instead.
+  it('a typeahead selection replaces the active row with the selected basis', () => {
     const onChange = jest.fn();
     const screen = render(
       <FertigationForm
@@ -237,23 +238,21 @@ describe('smart defaults', () => {
       />,
     );
 
+    fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
+    fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'ure');
+    onChange.mockClear();
     fireEvent.press(screen.getByText('urea'));
 
-    const next = onChange.mock.calls[0][0] as FertigationFormData;
-    expect(next.fertilizers).toHaveLength(2);
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
+    expect(next.fertilizers).toHaveLength(1);
     expect(next.fertilizers[0]).toMatchObject({
-      name: 'Urea',
-      quantity: 5,
-      quantityBasis: 'per_acre',
-    });
-    expect(next.fertilizers[1]).toMatchObject({
       name: 'urea',
-      quantity: 10,
+      quantity: 5,
       quantityBasis: 'total',
     });
   });
 
-  it('quick-add with the SAME fused chip stays a duplicate — no second row, no change', () => {
+  it('a same-basis typeahead selection keeps one row', () => {
     const onChange = jest.fn();
     const screen = render(
       <FertigationForm
@@ -272,9 +271,14 @@ describe('smart defaults', () => {
       />,
     );
 
+    fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
+    fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'ure');
+    onChange.mockClear();
     fireEvent.press(screen.getByText('urea'));
 
-    expect(onChange).not.toHaveBeenCalled();
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
+    expect(next.fertilizers).toHaveLength(1);
+    expect(next.fertilizers[0]).toMatchObject({ name: 'urea', quantityBasis: 'total' });
   });
 
   it('a history quick-add keeps the basis it carries', () => {
@@ -287,9 +291,11 @@ describe('smart defaults', () => {
       />,
     );
 
+    fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
+    fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'Ure');
     fireEvent.press(screen.getByText('Urea'));
 
-    const next = onChange.mock.calls[0][0] as FertigationFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({
       name: 'Urea',
       unit: 'kg',

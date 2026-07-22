@@ -37,6 +37,8 @@ export interface SaveSingleLogInput {
   farm: Farm;
   dateStr: string;
   preferredAreaUnit: AreaUnitPreference;
+  /** For fertigation saved alongside an irrigation: the irrigation record to link to. */
+  linkedIrrigationRecordId?: number | null;
 }
 
 export interface SaveSingleLogResult {
@@ -79,7 +81,7 @@ export function useSaveSingleLog() {
 
   return useCallback(
     async (input: SaveSingleLogInput): Promise<SaveSingleLogResult> => {
-      const { type, data, farm, dateStr, preferredAreaUnit } = input;
+      const { type, data, farm, dateStr, preferredAreaUnit, linkedIrrigationRecordId } = input;
       const farmId = farm.id;
       if (typeof farmId !== 'number') {
         throw new Error('Cannot save log: farm has no id');
@@ -102,6 +104,7 @@ export function useSaveSingleLog() {
         dateStr,
         farm: buildFarmContext(farm, preferredAreaUnit),
         submitters,
+        linkedIrrigationRecordId,
       });
 
       // Refresh the dashboard in the background — don't block the caller (and the

@@ -21,7 +21,7 @@ export default function EditLogEntryRoute() {
 
   return (
     <>
-      <FarmLogForm mode="edit" onClose={goBack} />
+      <FarmLogForm onClose={goBack} />
     </>
   );
 }

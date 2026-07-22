@@ -113,6 +113,8 @@ interface SprayFormProps {
   onChange: (data: SprayFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
   quickAddItems?: SprayQuickAddItem[];
+  /** Keep quick-add data for typed suggestions without rendering duplicate chips. */
+  showQuickAddSection?: boolean;
   catalogOnly?: boolean;
   catalogMixes?: ChemicalMix[];
   /** This farm's recent spray items (identity-rich) for the picker's history section. */
@@ -130,6 +132,7 @@ export function SprayForm({
   onChange,
   onInputFocus,
   quickAddItems = [],
+  showQuickAddSection = true,
   catalogOnly = false,
   catalogMixes = [],
   historyItems = [],
@@ -610,7 +613,7 @@ export function SprayForm({
               </View>
             ) : null}
 
-            {quickAddItems.length > 0 && !catalogOnly ? (
+            {showQuickAddSection && quickAddItems.length > 0 && !catalogOnly ? (
               <View style={{ marginBottom: spacing[3] }}>
                 <Text
                   style={{
@@ -1284,4 +1287,25 @@ export function createEmptySprayFormData(): SprayFormData {
       },
     ],
   };
+}
+
+/**
+ * Finalize a spray draft for submission. PHI fields are only trusted on a
+ * grape farm with a verified catalog-mix computation; otherwise they are
+ * cleared and the status downgraded, so a stale computation from a previous
+ * date/mix never rides along on the saved record.
+ */
+export function finalizeSprayFormData(input: SprayFormData, isGrapeFarm: boolean): SprayFormData {
+  return isGrapeFarm &&
+    input.catalogMixId &&
+    input.safeHarvestDate &&
+    input.governingPhiDays != null
+    ? { ...input }
+    : {
+        ...input,
+        governingPhiDays: null,
+        safeHarvestDate: null,
+        phiBlockingComponent: null,
+        phiStatus: input.phiStatus ?? (input.catalogMixId ? 'legacy_unverified' : 'unknown'),
+      };
 }

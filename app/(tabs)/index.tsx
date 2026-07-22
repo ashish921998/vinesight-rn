@@ -28,21 +28,8 @@ import { guidedTourEmit } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { useAppModeStore } from '@/stores';
 import { createAddLogHref } from '@/utils/add-log-navigation';
+import { getGreetingKey } from '@/utils/greeting';
 import { SimplifiedHome } from '@/components/screens/simplified-home';
-
-// ============================================================
-// MARK: - Greeting Helper
-// ============================================================
-
-type GreetingKey = 'morning' | 'afternoon' | 'evening' | 'night';
-
-function getGreetingKey(): GreetingKey {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 21) return 'evening';
-  return 'night';
-}
 
 // ============================================================
 // MARK: - Dashboard Screen

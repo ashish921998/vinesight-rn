@@ -788,6 +788,12 @@ export const hi = {
     },
   },
 
+  quickLog: {
+    title: '{{type}} लॉग करें',
+    loggingTo: '{{farm}} में लॉग हो रहा है',
+    saveType: '{{type}} सहेजें',
+  },
+
   entryForm: {
     logSaved: 'लॉग सहेजा गया',
     taskSaved: 'कार्य सहेजा गया',
@@ -1557,6 +1563,9 @@ export const hi = {
     recentRecords: 'हाल के रिकॉर्ड',
     viewAll: 'सभी देखें',
     noRecords: 'अभी तक कोई रिकॉर्ड नहीं',
+    loggingTo: 'लॉगिंग कर रहे हैं',
+    switch: 'बदलें',
+    loggingToNoFarm: 'अभी कोई खेत नहीं है',
   },
   assistant: {
     placeholder: 'आपका AI कृषि सहायक — फसल, मिट्टी और शेड्यूल के बारे में पूछें',
@@ -2429,6 +2438,7 @@ export const hi = {
       title: 'त्वरित क्रियाएं',
       irrigation: 'सिंचाई',
       spray: 'छिड़काव',
+      harvest: 'कटाई',
       expense: 'खर्च',
       note: 'नोट',
     },

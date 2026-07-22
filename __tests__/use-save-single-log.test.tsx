@@ -50,7 +50,12 @@ function makeFarm(overrides: Partial<Farm>): Farm {
 
 const AREA_UNIT = 'acre' as AreaUnitPreference;
 
-async function save(farm: Farm, type: string, data: Record<string, unknown>) {
+async function save(
+  farm: Farm,
+  type: string,
+  data: Record<string, unknown>,
+  extra?: { linkedIrrigationRecordId?: number | null },
+) {
   const { result } = renderHook(() => useSaveSingleLog(), { wrapper: createWrapper() });
   let out: Awaited<ReturnType<typeof result.current>> | undefined;
   await act(async () => {
@@ -62,6 +67,7 @@ async function save(farm: Farm, type: string, data: Record<string, unknown>) {
       farm,
       dateStr: '2026-06-08',
       preferredAreaUnit: AREA_UNIT,
+      ...extra,
     });
   });
   return out!;
@@ -77,5 +83,19 @@ describe('useSaveSingleLog', () => {
     expect(out.recordId).toBeNull();
     expect(out.clientUuid).toBe('single-log-client-uuid');
     expect(out.farmId).toBe(42);
+  });
+
+  it('passes linkedIrrigationRecordId through to the submission (quick-sheet fertigation rider)', async () => {
+    await save(
+      makeFarm({ id: 42 }),
+      'fertigation',
+      { fertilizers: [] },
+      {
+        linkedIrrigationRecordId: 77,
+      },
+    );
+    expect(submitEntryPendingLog).toHaveBeenCalledWith(
+      expect.objectContaining({ linkedIrrigationRecordId: 77 }),
+    );
   });
 });

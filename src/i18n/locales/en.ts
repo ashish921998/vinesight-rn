@@ -800,6 +800,12 @@ export const en = {
     },
   },
 
+  quickLog: {
+    title: 'Log {{type}}',
+    loggingTo: 'Logging to {{farm}}',
+    saveType: 'Save {{type}}',
+  },
+
   entryForm: {
     logSaved: 'Log saved',
     taskSaved: 'Task saved',
@@ -1572,6 +1578,9 @@ export const en = {
     recentRecords: 'Recent Records',
     viewAll: 'View all',
     noRecords: 'No records yet',
+    loggingTo: 'Logging to',
+    switch: 'Switch',
+    loggingToNoFarm: 'No farm yet',
   },
 
   assistant: {
@@ -2436,6 +2445,7 @@ export const en = {
       title: 'Quick actions',
       irrigation: 'Irrigation',
       spray: 'Spray',
+      harvest: 'Harvest',
       expense: 'Expense',
       note: 'Note',
     },

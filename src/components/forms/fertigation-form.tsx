@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
+import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { SearchSelect } from '@/components/ui/search-select';
 import {
@@ -182,17 +182,6 @@ export function FertigationForm({
   );
   const hasPickerOptions =
     historyOptions.length > 0 || planOptions.length > 0 || catalogOptions.length > 0;
-
-  // Split quick-add items into water-concentration (ppm, g/L …) and regular
-  // items so each group renders consistently without inline filter calls in JSX.
-  const ppmQuickAddItems = useMemo(
-    () => quickAddItems.filter((item) => isWaterConcentrationUnit(item.unit)),
-    [quickAddItems],
-  );
-  const regularQuickAddItems = useMemo(
-    () => quickAddItems.filter((item) => !isWaterConcentrationUnit(item.unit)),
-    [quickAddItems],
-  );
 
   const addFertilizer = () => {
     if (data.fertilizers.length < MAX_PRODUCT_ROWS) {
@@ -395,74 +384,6 @@ export function FertigationForm({
             paddingTop: showDetailsGuidance ? spacing[2] : 0,
           }}
         >
-          {quickAddItems.length > 0 ? (
-            <View style={{ marginBottom: spacing[3] }}>
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s500,
-                  marginBottom: spacing[2],
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.4,
-                }}
-              >
-                {t('fertigationForm.quickAdd')}
-              </Text>
-              {/* ppm and other water-concentration plan items cannot be one-tap
-                  added (no valid fertigation chip), so we show an explanatory
-                  notice for each one rather than a tappable chip. Tapping a
-                  ppm chip would silently enter a wrong unit — never allowed
-                  (issue #197, acceptance criterion 2). */}
-              {ppmQuickAddItems.map((item, index) => (
-                <View
-                  key={`ppm-notice-${item.name}-${item.unit ?? 'unit'}-${index}`}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: spacing[1],
-                    gap: 6,
-                  }}
-                >
-                  <IconSymbol name="info.circle" size={13} color={m3.surface.s500} />
-                  <Text style={{ flex: 1, fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                    {t('fertigationForm.ppmPlanItemNotice', {
-                      name: item.name,
-                      defaultValue: "{{name}}: ppm doses can't be quick-added — enter manually",
-                    })}
-                  </Text>
-                </View>
-              ))}
-              {regularQuickAddItems.length > 0 ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {regularQuickAddItems.map((item, index) => (
-                    <Pressable
-                      key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
-                      onPress={() => addQuickFertilizer(item)}
-                      style={{
-                        marginRight: spacing[2],
-                        paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[2],
-                        borderRadius: borderRadius.full,
-                        backgroundColor: m3.surface.s100,
-                        borderWidth: 1,
-                        borderColor: m3.surface.s200,
-                      }}
-                    >
-                      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
-                        {item.name}
-                      </Text>
-                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                        {item.quantity ? `${item.quantity} ` : ''}
-                        {item.unit ?? 'kg'}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              ) : null}
-            </View>
-          ) : null}
-
           <View
             style={{
               flexDirection: 'row',
@@ -686,6 +607,7 @@ function FertilizerRow({
   const m3 = useM3();
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [isNameFocused, setIsNameFocused] = useState(false);
+  const [nameText, setNameText] = useState(fertilizer.name);
   const [isQuantityFocused, setIsQuantityFocused] = useState(false);
   const quantityRef = useRef<TextInput>(null);
   const [quantityText, setQuantityText] = useState(
@@ -699,13 +621,24 @@ function FertilizerRow({
       ? fertilizer.quantity.toString()
       : '';
   const nameSuggestions = useMemo(
-    () => filterNameSuggestions(quickAddItems, fertilizer.name),
-    [fertilizer.name, quickAddItems],
+    () =>
+      filterNameSuggestions(
+        quickAddItems.filter((item) => !isWaterConcentrationUnit(item.unit)),
+        nameText,
+      ),
+    [nameText, quickAddItems],
   );
   const showNoMatchHint =
-    isNameFocused && fertilizer.name.trim().length >= 2 && nameSuggestions.length === 0;
+    isNameFocused && nameText.trim().length >= 2 && nameSuggestions.length === 0;
   const shouldShowSuggestions =
-    isNameFocused && fertilizer.name.trim().length >= 2 && nameSuggestions.length > 0;
+    isNameFocused && nameText.trim().length >= 2 && nameSuggestions.length > 0;
+
+  useEffect(() => {
+    if (isNameFocused) return;
+    if (nameText === fertilizer.name) return;
+    const frame = requestAnimationFrame(() => setNameText(fertilizer.name));
+    return () => cancelAnimationFrame(frame);
+  }, [fertilizer.name, isNameFocused, nameText]);
 
   useEffect(() => {
     if (isQuantityEditing) return;
@@ -888,8 +821,11 @@ function FertilizerRow({
             }}
             placeholder="Fertilizer name"
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-            value={fertilizer.name}
-            onChangeText={(name) => onUpdate({ name })}
+            value={nameText}
+            onChangeText={(name) => {
+              setNameText(name);
+              onUpdate({ name });
+            }}
             onFocus={(event) => {
               setIsNameFocused(true);
               onInputFocus?.(event);

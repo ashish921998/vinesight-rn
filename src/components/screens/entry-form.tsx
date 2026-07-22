@@ -87,8 +87,7 @@ import {
   createEmptyExpenseFormData,
   createEmptyFertigationFormData,
   createEmptyNoteFormData,
-  type SprayQuickAddItem,
-  type FertigationQuickAddItem,
+  finalizeSprayFormData,
   type IrrigationFormData,
   type SprayFormData,
   type HarvestFormData,
@@ -102,8 +101,7 @@ import {
   HARVEST_GRADES,
   CHEMICAL_UNITS,
 } from '@/constants/calculator-models';
-import { resolveFertigationPrefill, resolveFertigationUnit } from '@/constants/fertilizer-units';
-import { fertigationChipForEntry } from '@/components/forms/fertigation-unit-chips';
+import { resolveFertigationPrefill } from '@/constants/fertilizer-units';
 import {
   useCreateIrrigationRecord,
   useCreateSprayRecord,
@@ -117,16 +115,13 @@ import {
   useDeleteFertigationRecord,
   useFarms,
   useFarmAreaAcres,
-  useWarehouseItems,
-  useRecentSprayChemicals,
-  useRecentFertigationItems,
   useUpsertDailyNote,
   useDeleteDailyNote,
   useFarmSeasonStatus,
   useChemicalMixSearch,
   usePhiComputation,
-  useFertilizerPlan,
-  useMasterProducts,
+  useSprayInputSources,
+  useFertigationInputSources,
   useIrrigationRecords,
   useSprayRecords,
   useHarvestRecords,
@@ -214,20 +209,6 @@ const PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
 
 function isValidChemicalUnit(unit: string): unit is SprayFormData['chemicals'][number]['unit'] {
   return CHEMICAL_UNITS.includes(unit as SprayFormData['chemicals'][number]['unit']);
-}
-
-// Fertigation unit resolution goes through the quantity kernel
-// (`resolveFertigationUnit` / `resolveFertigationPrefill` in
-// `@/constants/fertilizer-units`) — unknown unit strings stay verbatim and are
-// never coerced to kg (issue #192).
-
-function inferWarehouseFertilizerQuantityBasis(
-  unit: string | null | undefined,
-): 'per_acre' | undefined {
-  if (typeof unit !== 'string') return undefined;
-  const normalized = unit.trim().toLowerCase();
-  if (!normalized) return undefined;
-  return normalized.includes('/acre') || normalized.includes('per acre') ? 'per_acre' : undefined;
 }
 
 function normalizeSprayDoseUnit(unit: string): string {
@@ -358,11 +339,7 @@ export function EntryForm({
   );
   const isGrapeFarm = isGrapeCrop(activeFarm?.crop, activeFarm?.crop_variety);
   const logFarmId = activeFarm?.id;
-  const { data: sprayWarehouseItems } = useWarehouseItems('spray');
-  const { data: fertilizerWarehouseItems } = useWarehouseItems('fertilizer');
-  const { data: recentSprayChemicals } = useRecentSprayChemicals(logFarmId ?? undefined);
-  const { data: recentFertigationItems } = useRecentFertigationItems(logFarmId ?? undefined);
-  const { data: fertilizerPlan } = useFertilizerPlan(logFarmId ?? undefined);
+  const spraySources = useSprayInputSources(logFarmId ?? undefined);
   const { activeSeason, hasResolvedSeasons } = useFarmSeasonStatus(logFarmId ?? undefined);
   // Saved records for the selected farm — power the week-strip "already
   // logged" dots and the repeat-last-log suggestion. Query keys are shared
@@ -426,15 +403,11 @@ export function EntryForm({
   // carry a fertigation log. When on, the fertigation section (reusing `fertigationData`) is
   // shown inside the irrigation flow and saved as a linked record.
   const [irrigationIncludesFertilizers, setIrrigationIncludesFertilizers] = useState(false);
-  // Fertilizer catalog for the fertigation picker's catalog section. Includes
-  // biostimulants (fertigation-applied), matching the warehouse fertilizer
-  // grouping; the section simply hides when the catalog has no rows. Fetched
-  // only when a flow that mounts the fertigation form is active (irrigation
-  // embeds it behind the include-fertilizers toggle).
-  const { data: fertilizerCatalogProducts = [] } = useMasterProducts({
-    inputTypes: ['fertilizer', 'biostimulant'],
-    stateCode: null,
-    enabled:
+  // Fertigation picker sources. The catalog fetch is gated on a flow that
+  // actually mounts the fertigation form (irrigation embeds it behind the
+  // include-fertilizers toggle).
+  const fertigationSources = useFertigationInputSources(logFarmId ?? undefined, {
+    catalogEnabled:
       selectedLogType === 'fertigation' ||
       (selectedLogType === 'irrigation' && irrigationIncludesFertilizers),
   });
@@ -488,44 +461,7 @@ export function EntryForm({
   const [plannedItemQty, setPlannedItemQty] = useState('');
   const [plannedItemUnit, setPlannedItemUnit] = useState('');
 
-  const sprayQuickAddItems = useMemo<SprayQuickAddItem[]>(() => {
-    const byWarehouse = (sprayWarehouseItems ?? []).map((item) => ({
-      name: item.name,
-      unit: undefined,
-      quantity: null,
-      quantityBasis: undefined,
-      warehouseItemId: item.id ?? null,
-      catalogProductId: item.catalog_product_id ?? null,
-      composition: item.composition ?? null,
-      densityKgPerL: item.density_kg_per_l ?? null,
-    }));
-    const byRecent = (recentSprayChemicals ?? []).map((item) => ({
-      name: item.name,
-      unit: item.unit,
-      quantity: item.quantity ?? null,
-      quantityBasis: undefined,
-    }));
-    const deduped = new Map<string, SprayQuickAddItem>();
-    [...byWarehouse, ...byRecent].forEach((item) => {
-      const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
-      const existing = deduped.get(key);
-      if (!existing) {
-        deduped.set(key, item);
-        return;
-      }
-      if (
-        (existing.quantity === null || existing.quantity === undefined) &&
-        item.quantity != null
-      ) {
-        deduped.set(key, {
-          ...existing,
-          quantity: item.quantity,
-          quantityBasis: item.quantityBasis ?? existing.quantityBasis,
-        });
-      }
-    });
-    return Array.from(deduped.values()).slice(0, 15);
-  }, [sprayWarehouseItems, recentSprayChemicals]);
+  const sprayQuickAddItems = spraySources.quickAddItems;
 
   useEffect(() => {
     if (!sprayPhiComputation) return;
@@ -549,68 +485,7 @@ export function EntryForm({
     });
   }, [sprayPhiComputation]);
 
-  const fertigationQuickAddItems = useMemo<FertigationQuickAddItem[]>(() => {
-    const byPlan = (fertilizerPlan?.items ?? []).map((item) => {
-      // Plan doses are per-acre rates by contract: bare form units ('kg') keep
-      // per_acre; unrepresentable/unknown units stay verbatim with the sniffed
-      // basis (resolveFertigationPrefill — same path as plan one-tap prefill).
-      const prefill = resolveFertigationPrefill(item.unit);
-      return {
-        name: item.name,
-        unit: prefill.unit,
-        quantity: item.quantity ?? null,
-        quantityBasis: prefill.quantityBasis,
-        warehouseItemId: null,
-        catalogProductId: null,
-        planItemId: item.id,
-      };
-    });
-    const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
-      name: item.name,
-      unit: resolveFertigationUnit(item.unit).unit,
-      quantity: null,
-      quantityBasis: inferWarehouseFertilizerQuantityBasis(item.unit),
-      warehouseItemId: item.id ?? null,
-      catalogProductId: item.catalog_product_id ?? null,
-      composition: item.composition ?? null,
-      densityKgPerL: item.density_kg_per_l ?? null,
-    }));
-    const byRecent = (recentFertigationItems ?? []).map((item) => ({
-      name: item.name,
-      unit: item.unit,
-      quantity: item.quantity ?? null,
-      // History carries its own basis — a total logged as bare 'kg' must not
-      // re-enter as a rate (or vice versa) now that chips fuse unit + basis.
-      quantityBasis: item.quantityBasis,
-    }));
-    const deduped = new Map<string, FertigationQuickAddItem>();
-    [...byPlan, ...byWarehouse, ...byRecent].forEach((item) => {
-      // Dedupe on fused chip identity (unit + basis), not the unit string —
-      // 'kg total' and 'kg/acre' both store unit 'kg' but are distinct chips.
-      // Outside the chip vocabulary, fall back to unit + raw basis.
-      const unitKey = (item.unit ?? '').trim().toLowerCase();
-      const chipKey =
-        fertigationChipForEntry(item.unit ?? '', item.quantityBasis)?.key ??
-        `${unitKey}::${item.quantityBasis ?? ''}`;
-      const key = `${item.name.trim().toLowerCase()}::${chipKey}`;
-      const existing = deduped.get(key);
-      if (!existing) {
-        deduped.set(key, item);
-        return;
-      }
-      if (
-        (existing.quantity === null || existing.quantity === undefined) &&
-        item.quantity != null
-      ) {
-        deduped.set(key, {
-          ...existing,
-          quantity: item.quantity,
-          quantityBasis: item.quantityBasis ?? existing.quantityBasis,
-        });
-      }
-    });
-    return Array.from(deduped.values()).slice(0, 15);
-  }, [fertilizerPlan, fertilizerWarehouseItems, recentFertigationItems]);
+  const fertigationQuickAddItems = fertigationSources.quickAddItems;
 
   const createIrrigation = useCreateIrrigationRecord();
   const createSpray = useCreateSprayRecord();
@@ -1016,18 +891,7 @@ export function EntryForm({
   // copied/repeated spray must not inherit verified fields. Centralized here so
   // the add flow and the repeat-last-log flow share one rule.
   const buildSprayPendingData = useCallback(
-    (input: SprayFormData): SprayFormData =>
-      isGrapeFarm && input.catalogMixId && input.safeHarvestDate && input.governingPhiDays != null
-        ? {
-            ...input,
-          }
-        : {
-            ...input,
-            governingPhiDays: null,
-            safeHarvestDate: null,
-            phiBlockingComponent: null,
-            phiStatus: input.phiStatus ?? (input.catalogMixId ? 'legacy_unverified' : 'unknown'),
-          },
+    (input: SprayFormData): SprayFormData => finalizeSprayFormData(input, isGrapeFarm),
     [isGrapeFarm],
   );
 
@@ -2068,11 +1932,11 @@ export function EntryForm({
                 includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
                 onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
                 sprayCatalogMixes={catalogMixes}
-                sprayHistoryItems={recentSprayChemicals ?? []}
-                sprayPlanItems={fertilizerPlan?.items ?? []}
-                fertigationHistoryItems={recentFertigationItems ?? []}
-                fertigationPlanItems={fertilizerPlan?.items ?? []}
-                fertigationCatalogProducts={fertilizerCatalogProducts}
+                sprayHistoryItems={spraySources.historyItems}
+                sprayPlanItems={spraySources.planItems}
+                fertigationHistoryItems={fertigationSources.historyItems}
+                fertigationPlanItems={fertigationSources.planItems}
+                fertigationCatalogProducts={fertigationSources.catalogProducts}
                 areaAcres={activeFarmAreaAcres}
                 showSaveButton={false}
               />

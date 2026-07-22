@@ -791,6 +791,12 @@ export const mr = {
     },
   },
 
+  quickLog: {
+    title: '{{type}} नोंदवा',
+    loggingTo: '{{farm}} मध्ये नोंदवत आहे',
+    saveType: '{{type}} जतन करा',
+  },
+
   entryForm: {
     logSaved: 'नोंद जतन केली',
     taskSaved: 'कार्य जतन केले',
@@ -1567,6 +1573,9 @@ export const mr = {
     recentRecords: 'अलीकडील नोंदी',
     viewAll: 'सर्व पहा',
     noRecords: 'अद्याप कोणत्याही नोंदी नाहीत',
+    loggingTo: 'नोंद करत आहे',
+    switch: 'बदला',
+    loggingToNoFarm: 'अद्याप शेत नाही',
   },
   assistant: {
     placeholder: 'तुमचे प्रश्न विचारा — मी कशी मदत करू?',
@@ -2445,6 +2454,7 @@ export const mr = {
       title: 'त्वरित क्रिया',
       irrigation: '$t(glossary.irrigation)',
       spray: '$t(glossary.spray)',
+      harvest: '$t(glossary.harvest)',
       expense: '$t(glossary.expense)',
       note: 'नोंद',
     },
