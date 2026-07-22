@@ -12,8 +12,9 @@ import { useDomainColors } from '@/styles/use-domain-colors';
 import { ProductDetailSheet } from '@/components/sheets/product-detail-sheet';
 import { useChemicalCatalog } from '@/hooks';
 import type { ChemicalMix, ChemicalMixComponent } from '@/types/phi';
+import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
 
-export default function SprayCatalogScreen() {
+function SprayCatalogScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const m3 = useM3();
@@ -467,5 +468,13 @@ export default function SprayCatalogScreen() {
         onClose={() => setShowSheet(false)}
       />
     </View>
+  );
+}
+
+export default function SprayCatalogRoute() {
+  return (
+    <AdvancedRouteGuard>
+      <SprayCatalogScreen />
+    </AdvancedRouteGuard>
   );
 }

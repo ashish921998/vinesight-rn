@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,7 +40,7 @@ const SECTION_HEADER_STYLE = {
   letterSpacing: 0.8,
 };
 
-export default function AnalyticsScreen() {
+function AnalyticsScreen() {
   const m3 = useM3();
   const { t } = useTranslation();
   const router = useRouter();
@@ -1038,5 +1039,13 @@ export default function AnalyticsScreen() {
         </ScrollView>
       </View>
     </SafeAreaView>
+  );
+}
+
+export default function AnalyticsRoute() {
+  return (
+    <AdvancedRouteGuard>
+      <AnalyticsScreen />
+    </AdvancedRouteGuard>
   );
 }

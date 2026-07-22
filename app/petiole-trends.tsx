@@ -23,6 +23,7 @@ import { useDomainColors } from '@/styles/use-domain-colors';
 import { colorWithOpacity } from '@/utils/color';
 import { aggregateNutrientsBetweenPetioleTests } from '@/services/nutrient-flow-service';
 import { formatDate } from '@/i18n/format';
+import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 type ViewMode = 'table' | 'chart';
 
@@ -66,7 +67,7 @@ function mapPetioleParamToElement(paramKey: string): string | null {
   }
 }
 
-export default function PetioleTrendsScreen() {
+function PetioleTrendsScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
   const domain = useDomainColors();
@@ -520,5 +521,13 @@ export default function PetioleTrendsScreen() {
         </View>
       </ScrollView>
     </SafeScreen>
+  );
+}
+
+export default function PetioleTrendsRoute() {
+  return (
+    <AdvancedRouteGuard>
+      <PetioleTrendsScreen />
+    </AdvancedRouteGuard>
   );
 }

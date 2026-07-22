@@ -10,6 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Symbol as SFSymbol } from '@/components/ui/symbol';
@@ -98,7 +99,7 @@ const computeSummaryCounts = (tasks: TaskReminder[] | null | undefined) => {
   return { pending, dueToday, overdue };
 };
 
-export default function TasksScreen() {
+function TasksScreen() {
   const m3 = useM3();
   const { t } = useTranslation();
 
@@ -843,5 +844,13 @@ export default function TasksScreen() {
 
       {/* Add Task handled via route */}
     </SafeAreaView>
+  );
+}
+
+export default function TasksRoute() {
+  return (
+    <AdvancedRouteGuard>
+      <TasksScreen />
+    </AdvancedRouteGuard>
   );
 }

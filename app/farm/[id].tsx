@@ -63,7 +63,8 @@ import { useDomainColors } from '@/styles/use-domain-colors';
 import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from '@/utils/haptics';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { telemetry } from '@/services/telemetry';
-import { createAddLogHref } from '@/utils/add-log-navigation';
+import { createQuickLogHref } from '@/utils/add-log-navigation';
+import { buildWorkboardActions, type WorkboardAction } from '@/utils/farm-workboard';
 import {
   GUIDED_TOUR_TARGET_IDS,
   GuidedTourTarget,
@@ -72,14 +73,7 @@ import {
   useGuidedTourStore,
 } from '@/features/guided-tour';
 
-// Workboard action type
-interface WorkboardAction {
-  id: string;
-  titleKey: string;
-  icon: string;
-  color: string;
-  route?: string;
-}
+// Workboard action type + builder live in a testable util module.
 
 const NOW_TICK_MS = 60_000;
 
@@ -223,7 +217,7 @@ export default function FarmDetailScreen() {
       router.back();
       return true;
     }
-    router.replace('/farms');
+    router.replace('/(tabs)/explore');
     return true;
   }, [router]);
 
@@ -237,47 +231,21 @@ export default function FarmDetailScreen() {
     return () => subscription.remove();
   }, [handleBackNavigation, isFocused]);
 
-  const workboardActions = useMemo<WorkboardAction[]>(() => {
-    const actions: WorkboardAction[] = [];
-    if (detailedMode) {
-      actions.push({
-        id: 'ai',
-        titleKey: 'farmDetails.workboard.actions.ai',
-        // Match the bottom navbar AI assistant icon.
-        icon: 'brain',
-        color: m3.colorScheme.primary,
-      });
-    }
-    actions.push(
-      {
-        id: 'lab',
-        titleKey: 'farmDetails.workboard.actions.lab',
-        icon: 'flask.fill',
-        color: m3.colorScheme.secondary,
-      },
-      {
-        id: 'reports',
-        titleKey: 'farmDetails.workboard.actions.reports',
-        icon: 'receipt',
-        color: m3.colorScheme.tertiary,
-      },
-      {
-        id: 'soil',
-        titleKey: 'farmDetails.workboard.actions.soilMoisture',
-        icon: 'square.stack.3d.up.fill',
-        color: domain.category.task,
-      },
-    );
-    if (hasConsultant) {
-      actions.push({
-        id: 'fertilizer-plans',
-        titleKey: 'farmDetails.fertilizerPlan.title',
-        icon: 'leaf.fill',
-        color: domain.category.fertigation,
-      });
-    }
-    return actions;
-  }, [detailedMode, domain.category.fertigation, domain.category.task, m3, hasConsultant]);
+  const workboardActions = useMemo<WorkboardAction[]>(
+    () =>
+      buildWorkboardActions({
+        detailedMode,
+        hasConsultant,
+        colors: {
+          ai: m3.colorScheme.primary,
+          lab: m3.colorScheme.secondary,
+          reports: m3.colorScheme.tertiary,
+          soil: domain.category.task,
+          fertilizerPlans: domain.category.fertigation,
+        },
+      }),
+    [detailedMode, domain.category.fertigation, domain.category.task, m3, hasConsultant],
+  );
 
   const seasonEndDates = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return [];
@@ -1186,7 +1154,7 @@ export default function FarmDetailScreen() {
         return;
       }
     }
-    router.push(createAddLogHref({ farmId: farm.id, lockFarmSelection: true }));
+    router.push(createQuickLogHref({ farmId: farm.id }));
   };
 
   const handleEditActivity = (log: (typeof recentLogs)[number]) => {
@@ -1294,7 +1262,7 @@ export default function FarmDetailScreen() {
                 telemetry.capture('farm_deleted', {
                   farm_id: farmId,
                 });
-                router.replace('/farms');
+                router.replace('/(tabs)/explore');
               },
               onError: (error: Error) => {
                 const normalized = `${error.name ?? ''} ${error.message ?? ''}`.toLowerCase();

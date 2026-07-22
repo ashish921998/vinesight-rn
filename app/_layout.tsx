@@ -53,6 +53,7 @@ import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
 import { AppModeIntroGate } from '@/components/app-mode-intro-modal';
 import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
 import { resolveFeatureOverviewRoute } from '@/services/feature-overview-notifications';
+import { isAdvancedRoute } from '@/constants/advanced-routes';
 import {
   getOnlineStatus,
   startOnlineManager,
@@ -145,13 +146,12 @@ if (globalThisWithSplash[splashKey] !== true) {
 WebBrowser.maybeCompleteAuthSession();
 
 /**
- * Destinations that are only reachable in Detailed mode. A notification that
- * would route here in Simplified mode falls back to home instead.
+ * A notification whose deep-link target is an advanced (Detailed-mode only)
+ * route falls back to home in Simplified mode. Advanced membership is the
+ * single source of truth in `@/constants/advanced-routes`.
  */
-const DETAILED_ONLY_ROUTES = new Set(['/(tabs)/workers', '/tasks']);
-
 function resolveNotificationTarget<R extends string>(route: R): R | '/(tabs)' {
-  if (!useAppModeStore.getState().detailedMode && DETAILED_ONLY_ROUTES.has(route)) {
+  if (!useAppModeStore.getState().detailedMode && isAdvancedRoute(route)) {
     return '/(tabs)';
   }
   return route;
@@ -606,8 +606,12 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
         const rawFarmId = data.farmId;
         const farmId =
           typeof rawFarmId === 'number' ? rawFarmId : rawFarmId ? Number(rawFarmId) : Number.NaN;
+        // fertilizer-plans is an advanced route — gate the deep link so a
+        // Simplified user lands home instead of on a guarded screen.
         currentRouter.push(
-          Number.isFinite(farmId) ? `/fertilizer-plans?farmId=${farmId}` : '/fertilizer-plans',
+          resolveNotificationTarget(
+            Number.isFinite(farmId) ? `/fertilizer-plans?farmId=${farmId}` : '/fertilizer-plans',
+          ),
         );
       } else if (data?.type === 'custom') {
         // Custom notifications have no navigation target
@@ -834,7 +838,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                 />
                 <Stack.Screen
                   name="log-entry/quick"
-                  options={{ presentation: 'modal', headerShown: false }}
+                  options={{ presentation: 'fullScreenModal', headerShown: false }}
                 />
                 <Stack.Screen
                   name="edit-activity/[id]"
@@ -847,14 +851,6 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="farm/add" options={{ headerShown: false }} />
                 <Stack.Screen name="farm/[id]" options={{ headerShown: true }} />
                 <Stack.Screen name="farm/[id]/edit" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="farms"
-                  options={{
-                    headerShown: true,
-                    title: i18n.t('tabs.farms'),
-                    headerBackTitle: i18n.t('common.back'),
-                  }}
-                />
                 <Stack.Screen name="fertilizer-plans" options={{ headerShown: true }} />
                 <Stack.Screen name="lab-tests" options={{ headerShown: true }} />
                 <Stack.Screen name="logs" options={{ headerShown: true }} />

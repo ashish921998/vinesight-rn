@@ -1,12 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import LabTestForm from '@/components/screens/lab-test-form';
 import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 
-export default function AddLabTestRoute() {
+function AddLabTestScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const m3 = useM3();
@@ -82,5 +83,13 @@ export default function AddLabTestRoute() {
         testType={testType}
       />
     </>
+  );
+}
+
+export default function AddLabTestRoute() {
+  return (
+    <AdvancedRouteGuard>
+      <AddLabTestScreen />
+    </AdvancedRouteGuard>
   );
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import { EntryForm } from '@/components/screens/entry-form';
 import { useModalStore } from '@/stores';
@@ -8,7 +9,7 @@ import {
   parseOnboardingFlag,
 } from '@/features/onboarding/activation';
 
-export default function AddTaskRoute() {
+function AddTaskScreen() {
   const router = useRouter();
   const { addEntry, setAddEntry } = useModalStore();
   const params = useLocalSearchParams<{
@@ -52,5 +53,13 @@ export default function AddTaskRoute() {
       initialTab="task"
       onTaskSaveSuccess={handleTaskSaveSuccess}
     />
+  );
+}
+
+export default function AddTaskRoute() {
+  return (
+    <AdvancedRouteGuard>
+      <AddTaskScreen />
+    </AdvancedRouteGuard>
   );
 }

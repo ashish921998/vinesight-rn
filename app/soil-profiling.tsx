@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import { Symbol } from '@/components/ui/symbol';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -37,7 +38,7 @@ import { colorWithOpacity } from '@/utils/color';
 
 type TabType = 'history' | 'trends';
 
-export default function SoilProfilingScreen() {
+function SoilProfilingScreen() {
   const m3 = useM3();
   const { t } = useTranslation();
 
@@ -565,7 +566,7 @@ export default function SoilProfilingScreen() {
               {t('soilProfiling.noFarm.subtitle')}
             </Text>
             <Pressable
-              onPress={() => router.push('/farms')}
+              onPress={() => router.push('/(tabs)/explore')}
               style={{
                 marginTop: spacing[6],
                 paddingHorizontal: spacing[6],
@@ -797,5 +798,13 @@ export default function SoilProfilingScreen() {
       {/* Add Modal */}
       {/* Soil profile creation handled via route */}
     </View>
+  );
+}
+
+export default function SoilProfilingRoute() {
+  return (
+    <AdvancedRouteGuard>
+      <SoilProfilingScreen />
+    </AdvancedRouteGuard>
   );
 }

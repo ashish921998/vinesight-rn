@@ -1,12 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import SoilProfileForm from '@/components/screens/soil-profile-form';
 import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 
-export default function AddSoilProfileRoute() {
+function AddSoilProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const m3 = useM3();
@@ -67,5 +68,13 @@ export default function AddSoilProfileRoute() {
     <>
       <SoilProfileForm onClose={() => router.back()} presentation="screen" farmId={farmId} />
     </>
+  );
+}
+
+export default function AddSoilProfileRoute() {
+  return (
+    <AdvancedRouteGuard>
+      <AddSoilProfileScreen />
+    </AdvancedRouteGuard>
   );
 }

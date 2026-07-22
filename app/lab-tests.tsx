@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { AdvancedRouteGuard } from '@/components/advanced-route-guard';
 
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { LabTestDetailsModal } from '@/components/screens/lab-test-details-modal';
@@ -51,7 +52,7 @@ const formatDate = (dateString: string): string => {
   return `${day}-${month}-${year}`;
 };
 
-export default function LabTestsScreen() {
+function LabTestsScreen() {
   const m3 = useM3();
   const domain = useDomainColors();
   const { t } = useTranslation();
@@ -801,5 +802,13 @@ export default function LabTestsScreen() {
         onAddPetioleTest={() => navigateToAddLabTest('petiole')}
       />
     </View>
+  );
+}
+
+export default function LabTestsRoute() {
+  return (
+    <AdvancedRouteGuard>
+      <LabTestsScreen />
+    </AdvancedRouteGuard>
   );
 }
