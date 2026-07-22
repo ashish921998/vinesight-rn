@@ -50,7 +50,6 @@ import {
   QUERY_CACHE_MAX_AGE_MS,
 } from '@/lib/query-cache';
 import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
-import { DataAccessProvider } from '@/data-access';
 import { AppModeIntroGate } from '@/components/app-mode-intro-modal';
 import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
 import { resolveFeatureOverviewRoute } from '@/services/feature-overview-notifications';
@@ -735,54 +734,53 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
   if (!themeHydrated) return null;
 
   const content = (
-    <DataAccessProvider>
-      <ErrorBoundary>
-        <View style={{ flex: 1 }}>
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaProvider>
-              <PersistQueryClientProvider
-                key={userId ?? 'signed-out'}
-                client={queryClient}
-                persistOptions={{
-                  persister: queryPersister,
-                  maxAge: QUERY_CACHE_MAX_AGE_MS,
-                  dehydrateOptions: queryDehydrateOptions,
-                }}
-                onSuccess={() => {
-                  const authState = useAuthStore.getState();
-                  if (!authState.isLoading && authState.user?.id === userId) {
-                    void queryClient.resumePausedMutations();
-                  }
-                }}
-              >
-                <ConnectivityIndicator />
-                <PetioleReminderSync />
-                <I18nextProvider i18n={i18n}>
-                  <StatusBar style={isDark ? 'light' : 'dark'} />
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                      contentStyle: { backgroundColor: m3.colorScheme.background },
-                      headerStyle: {
-                        backgroundColor: m3.colorScheme.surface,
-                      },
-                      headerTitleStyle: {
-                        color: m3.colorScheme.onSurface,
-                        fontWeight: '600',
-                        fontSize: fontSize.lg,
-                      },
-                      headerTintColor: m3.colorScheme.primary,
-                      headerShadowVisible: false,
-                    }}
-                  >
-                    <Stack.Screen name="index" />
-                    <Stack.Screen
-                      name="language-selection"
-                      options={{ headerShown: false, gestureEnabled: false }}
-                    />
-                    <Stack.Screen name="(auth)" />
-                    <Stack.Screen name="(tabs)" />
-                    {/*
+    <ErrorBoundary>
+      <View style={{ flex: 1 }}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <SafeAreaProvider>
+            <PersistQueryClientProvider
+              key={userId ?? 'signed-out'}
+              client={queryClient}
+              persistOptions={{
+                persister: queryPersister,
+                maxAge: QUERY_CACHE_MAX_AGE_MS,
+                dehydrateOptions: queryDehydrateOptions,
+              }}
+              onSuccess={() => {
+                const authState = useAuthStore.getState();
+                if (!authState.isLoading && authState.user?.id === userId) {
+                  void queryClient.resumePausedMutations();
+                }
+              }}
+            >
+              <ConnectivityIndicator />
+              <PetioleReminderSync />
+              <I18nextProvider i18n={i18n}>
+                <StatusBar style={isDark ? 'light' : 'dark'} />
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: m3.colorScheme.background },
+                    headerStyle: {
+                      backgroundColor: m3.colorScheme.surface,
+                    },
+                    headerTitleStyle: {
+                      color: m3.colorScheme.onSurface,
+                      fontWeight: '600',
+                      fontSize: fontSize.lg,
+                    },
+                    headerTintColor: m3.colorScheme.primary,
+                    headerShadowVisible: false,
+                  }}
+                >
+                  <Stack.Screen name="index" />
+                  <Stack.Screen
+                    name="language-selection"
+                    options={{ headerShown: false, gestureEnabled: false }}
+                  />
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="(tabs)" />
+                  {/*
                   iOS: disable the root edge-swipe for the professional module so
                   /professional can't be popped back into the farmer app. The
                   escape happens at THIS (root) Stack — the directory's nested
@@ -790,113 +788,112 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                   screen in the root Stack (the professional/ directory's own
                   _layout.tsx renders the nested navigator).
                 */}
-                    <Stack.Screen name="professional" options={{ gestureEnabled: false }} />
-                    <Stack.Screen
-                      name="add-activity"
-                      options={{ presentation: 'fullScreenModal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="add-entry"
-                      options={{ presentation: 'fullScreenModal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="add-task"
-                      options={{ presentation: 'fullScreenModal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="add-worker"
-                      options={{ presentation: 'modal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="add-soil-profile"
-                      options={{ presentation: 'modal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="add-stock"
-                      options={{ presentation: 'modal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="add-warehouse-item"
-                      options={{ presentation: 'modal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="add-lab-test"
-                      options={{ presentation: 'modal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="water-level"
-                      options={{ presentation: 'modal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="log-entry/add"
-                      options={{ presentation: 'fullScreenModal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="log-entry/edit/[id]"
-                      options={{ presentation: 'fullScreenModal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="log-entry/quick"
-                      options={{ presentation: 'modal', headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="edit-activity/[id]"
-                      options={{ presentation: 'fullScreenModal', headerShown: false }}
-                    />
-                    <Stack.Screen name="add-note" options={{ headerShown: false }} />
-                    <Stack.Screen name="analytics" options={{ headerShown: true }} />
-                    <Stack.Screen name="assistant" options={{ headerShown: false }} />
-                    <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
-                    <Stack.Screen name="calculator" options={{ headerShown: false }} />
-                    <Stack.Screen name="farm/add" options={{ headerShown: false }} />
-                    <Stack.Screen name="farm/[id]" options={{ headerShown: true }} />
-                    <Stack.Screen name="farm/[id]/edit" options={{ headerShown: false }} />
-                    <Stack.Screen
-                      name="farms"
-                      options={{
-                        headerShown: true,
-                        title: i18n.t('tabs.farms'),
-                        headerBackTitle: i18n.t('common.back'),
-                      }}
-                    />
-                    <Stack.Screen name="fertilizer-plans" options={{ headerShown: true }} />
-                    <Stack.Screen name="lab-tests" options={{ headerShown: true }} />
-                    <Stack.Screen name="logs" options={{ headerShown: true }} />
-                    <Stack.Screen
-                      name="onboarding"
-                      options={{ headerShown: false, gestureEnabled: false }}
-                    />
-                    <Stack.Screen name="petiole-trends" options={{ headerShown: true }} />
-                    <Stack.Screen name="reports" options={{ headerShown: true }} />
-                    <Stack.Screen name="soil-profiling" options={{ headerShown: true }} />
-                    <Stack.Screen name="soil-trends" options={{ headerShown: true }} />
-                    <Stack.Screen name="spray-catalog" options={{ headerShown: true }} />
-                    <Stack.Screen name="spray-safe-checker" options={{ headerShown: true }} />
-                    <Stack.Screen name="tasks" options={{ headerShown: true }} />
-                    <Stack.Screen name="warehouse" options={{ headerShown: true }} />
-                    <Stack.Screen name="weather" options={{ headerShown: true }} />
-                    <Stack.Screen
-                      name="app-settings"
-                      options={{
-                        headerShown: true,
-                        title: i18n.t('tabs.settings'),
-                        headerBackTitle: i18n.t('common.back'),
-                      }}
-                    />
-                    <Stack.Screen name="widget-configuration" options={{ headerShown: true }} />
-                    <Stack.Screen name="widgets-showcase" options={{ headerShown: true }} />
-                    <Stack.Screen name="worker-analytics/[id]" options={{ headerShown: true }} />
-                  </Stack>
-                  <GuidedTourController />
-                  <AppModeIntroGate />
-                </I18nextProvider>
-              </PersistQueryClientProvider>
-              <ToastHost />
-            </SafeAreaProvider>
-          </GestureHandlerRootView>
-        </View>
-      </ErrorBoundary>
-    </DataAccessProvider>
+                  <Stack.Screen name="professional" options={{ gestureEnabled: false }} />
+                  <Stack.Screen
+                    name="add-activity"
+                    options={{ presentation: 'fullScreenModal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="add-entry"
+                    options={{ presentation: 'fullScreenModal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="add-task"
+                    options={{ presentation: 'fullScreenModal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="add-worker"
+                    options={{ presentation: 'modal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="add-soil-profile"
+                    options={{ presentation: 'modal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="add-stock"
+                    options={{ presentation: 'modal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="add-warehouse-item"
+                    options={{ presentation: 'modal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="add-lab-test"
+                    options={{ presentation: 'modal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="water-level"
+                    options={{ presentation: 'modal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="log-entry/add"
+                    options={{ presentation: 'fullScreenModal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="log-entry/edit/[id]"
+                    options={{ presentation: 'fullScreenModal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="log-entry/quick"
+                    options={{ presentation: 'modal', headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="edit-activity/[id]"
+                    options={{ presentation: 'fullScreenModal', headerShown: false }}
+                  />
+                  <Stack.Screen name="add-note" options={{ headerShown: false }} />
+                  <Stack.Screen name="analytics" options={{ headerShown: true }} />
+                  <Stack.Screen name="assistant" options={{ headerShown: false }} />
+                  <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+                  <Stack.Screen name="calculator" options={{ headerShown: false }} />
+                  <Stack.Screen name="farm/add" options={{ headerShown: false }} />
+                  <Stack.Screen name="farm/[id]" options={{ headerShown: true }} />
+                  <Stack.Screen name="farm/[id]/edit" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="farms"
+                    options={{
+                      headerShown: true,
+                      title: i18n.t('tabs.farms'),
+                      headerBackTitle: i18n.t('common.back'),
+                    }}
+                  />
+                  <Stack.Screen name="fertilizer-plans" options={{ headerShown: true }} />
+                  <Stack.Screen name="lab-tests" options={{ headerShown: true }} />
+                  <Stack.Screen name="logs" options={{ headerShown: true }} />
+                  <Stack.Screen
+                    name="onboarding"
+                    options={{ headerShown: false, gestureEnabled: false }}
+                  />
+                  <Stack.Screen name="petiole-trends" options={{ headerShown: true }} />
+                  <Stack.Screen name="reports" options={{ headerShown: true }} />
+                  <Stack.Screen name="soil-profiling" options={{ headerShown: true }} />
+                  <Stack.Screen name="soil-trends" options={{ headerShown: true }} />
+                  <Stack.Screen name="spray-catalog" options={{ headerShown: true }} />
+                  <Stack.Screen name="spray-safe-checker" options={{ headerShown: true }} />
+                  <Stack.Screen name="tasks" options={{ headerShown: true }} />
+                  <Stack.Screen name="warehouse" options={{ headerShown: true }} />
+                  <Stack.Screen name="weather" options={{ headerShown: true }} />
+                  <Stack.Screen
+                    name="app-settings"
+                    options={{
+                      headerShown: true,
+                      title: i18n.t('tabs.settings'),
+                      headerBackTitle: i18n.t('common.back'),
+                    }}
+                  />
+                  <Stack.Screen name="widget-configuration" options={{ headerShown: true }} />
+                  <Stack.Screen name="widgets-showcase" options={{ headerShown: true }} />
+                  <Stack.Screen name="worker-analytics/[id]" options={{ headerShown: true }} />
+                </Stack>
+                <GuidedTourController />
+                <AppModeIntroGate />
+              </I18nextProvider>
+            </PersistQueryClientProvider>
+            <ToastHost />
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
+      </View>
+    </ErrorBoundary>
   );
 
   if (!telemetryEnabled || Platform.OS === 'web' || !posthogClient) return content;

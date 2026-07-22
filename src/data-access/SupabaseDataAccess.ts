@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import { formatLocalDate } from '@/utils/date';
 import type {
   DashboardActivityRows,
   DashboardTodayStats,
@@ -236,9 +237,14 @@ export class SupabaseDataAccess implements DataAccess {
       const farmIds = farms
         .map((farm) => farm.id)
         .filter((id): id is number => typeof id === 'number');
-      const today = new Date().toISOString().slice(0, 10);
-      const since = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-      const deadline = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+      const now = new Date();
+      const today = formatLocalDate(now);
+      const sinceDate = new Date(now);
+      sinceDate.setDate(sinceDate.getDate() - 7);
+      const since = formatLocalDate(sinceDate);
+      const deadlineDate = new Date(now);
+      deadlineDate.setDate(deadlineDate.getDate() + 3);
+      const deadline = formatLocalDate(deadlineDate);
       const [overdueTasks, recentLogResult, phiDeadlines] = await Promise.all([
         supabase
           .from('task_reminders')
@@ -270,26 +276,20 @@ export class SupabaseDataAccess implements DataAccess {
       } as DashboardTodayStats;
     },
     getDashboardCounts: async ({ userId, detailedMode, since }) => {
-      const { count: farmsCount, error: farmsError } = await supabase
+      const { count: farmsCount } = await supabase
         .from('farms')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
-      if (farmsError) throw farmsError;
       let workersCount = 0;
       if (detailedMode) {
-        const { count, error } = await supabase
+        const { count } = await supabase
           .from('workers')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId)
           .eq('is_active', true);
-        if (error) throw error;
         workersCount = count ?? 0;
       }
-      const { data: farms, error: farmsListError } = await supabase
-        .from('farms')
-        .select('id')
-        .eq('user_id', userId);
-      if (farmsListError) throw farmsListError;
+      const { data: farms } = await supabase.from('farms').select('id').eq('user_id', userId);
       const farmIds = farms?.map((farm) => farm.id) ?? [];
       if (!farmIds.length)
         return {
@@ -314,16 +314,13 @@ export class SupabaseDataAccess implements DataAccess {
             .gte('date', since),
         ),
       );
-      if (countQueries.some((result) => result.error))
-        throw countQueries.find((result) => result.error)?.error;
       let pendingTasksCount = 0;
       if (detailedMode) {
-        const { count, error } = await supabase
+        const { count } = await supabase
           .from('task_reminders')
           .select('*', { count: 'exact', head: true })
           .in('farm_id', farmIds)
           .eq('completed', false);
-        if (error) throw error;
         pendingTasksCount = count ?? 0;
       }
       return {
@@ -334,16 +331,11 @@ export class SupabaseDataAccess implements DataAccess {
       };
     },
     listFarmsNeedingAttention: async (userId) => {
-      const { data, error } = await supabase.from('farms').select('*').eq('user_id', userId);
-      if (error) throw error;
+      const { data } = await supabase.from('farms').select('*').eq('user_id', userId);
       return data ?? [];
     },
     getRecentActivities: async ({ userId, limit }): Promise<DashboardActivityRows> => {
-      const { data: farms, error: farmsError } = await supabase
-        .from('farms')
-        .select('id, name')
-        .eq('user_id', userId);
-      if (farmsError) throw farmsError;
+      const { data: farms } = await supabase.from('farms').select('id, name').eq('user_id', userId);
       if (!farms?.length)
         return {
           farms: [],
@@ -373,8 +365,6 @@ export class SupabaseDataAccess implements DataAccess {
             .limit(limit),
         ),
       );
-      const error = results.find((result) => result.error)?.error;
-      if (error) throw error;
       return {
         farms,
         irrigation: results[0]?.data ?? [],

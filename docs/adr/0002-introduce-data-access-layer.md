@@ -67,10 +67,20 @@ This creates a single persistence boundary for the application:
 1. Create `src/data-access/` containing `DataAccess.ts`,
    `SupabaseDataAccess.ts`, `InMemoryDataAccess.ts`.
 2. Move queries into the adapter; replace
-   `import { supabase } from "@/lib/supabase"` with `useDataAccess()`.
+   `import { supabase } from "@/lib/supabase"` with `getDataAccess()`.
 3. Convert hooks incrementally (`use-farms`, `use-records`,
    `use-dashboard-stats`, `use-reports`, ...).
 4. Delete direct Supabase imports outside the adapter.
+
+### Injection mechanism
+
+The adapter is injected via a module-level singleton (`getDataAccess()` /
+`setDataAccess()`), not React context. This is deliberate: many call sites
+are non-React modules (services, stores, lib utilities) that cannot use
+hooks. Tests swap the adapter with `setDataAccess()` and restore it in
+teardown via the returned function. A React context provider was considered
+but rejected because it would create a disconnect between React and non-React
+consumers — all consumers must share the same adapter instance.
 
 ## Success Criteria
 

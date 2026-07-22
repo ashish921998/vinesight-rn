@@ -42,15 +42,15 @@ export class InMemoryDataAccess implements DataAccess {
   readonly farms: DataAccess['farms'] = {
     getNextDisplayOrder: async () => ({ supportsDisplayOrder: true, displayOrder: 0 }),
     getExistingSeason: async () => null,
-    startSeason: async () => undefined,
-    createSeason: async () => undefined,
+    startSeason: async () => this.unsupported('farms.startSeason'),
+    createSeason: async () => this.unsupported('farms.createSeason'),
     getById: async (farmId) => this.unsupported(`farms.getById(${farmId})`),
     listForUser: async () => [],
     create: async () => this.unsupported('farms.create'),
-    reorder: async () => undefined,
+    reorder: async () => this.unsupported('farms.reorder'),
     update: async () => this.unsupported('farms.update'),
     updateWaterLevel: async () => this.unsupported('farms.updateWaterLevel'),
-    remove: async () => undefined,
+    remove: async () => this.unsupported('farms.remove'),
   };
   readonly records: DataAccess['records'] = {
     listIrrigationByFarm: async () => [],
@@ -66,8 +66,8 @@ export class InMemoryDataAccess implements DataAccess {
     getDailyNote: async () => null,
     listDailyNotesByFarm: async () => [],
     listDailyNotesByFarms: async () => [],
-    upsertDailyNote: async (payload) => payload,
-    deleteDailyNote: async () => undefined,
+    upsertDailyNote: async () => this.unsupported('records.upsertDailyNote'),
+    deleteDailyNote: async () => this.unsupported('records.deleteDailyNote'),
     listRecentSprays: async () => [],
     listRecentFertigations: async () => [],
   };
@@ -139,6 +139,6 @@ export class InMemoryDataAccess implements DataAccess {
     },
     getDelegatedFarmActivity: async () => this.delegatedActivity,
     updateDelegatedLog: async () => this.unsupported('delegatedLogs.updateDelegatedLog'),
-    deleteDelegatedLog: async () => undefined,
+    deleteDelegatedLog: async () => this.unsupported('delegatedLogs.deleteDelegatedLog'),
   };
 }
