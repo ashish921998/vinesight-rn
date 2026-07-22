@@ -1,0 +1,115 @@
+src/data-access/index.ts
+  s_d4399a20d7df6d::t_86f84ac6cf37cd 8-15,22-25
+docs/adr/0002-introduce-data-access-layer.md
+  s_a4fdbf31f29d27::t_747a8cee5291e5 70,75-83
+  s_a4fdbf31f29d27::t_5ef43dadc5a606 84
+app/_layout.tsx
+  s_65c4511fe145a8::t_f688e45f6fe5ba 737-740
+  s_65c4511fe145a8::t_0a752f78027429 741-743
+src/data-access/InMemoryDataAccess.ts
+  s_480f80aae059fb::t_645c22ca5f3695 69-70
+  s_43dfcb70bb2943::t_50c9c285948efd 142
+  s_d7d2a924ff9c1a::t_288a68c774af34 45-46,50,53
+src/data-access/SupabaseDataAccess.ts
+  s_28312e2a5c943f::t_576cf729827233 2
+  s_6f263eea5bfd5e::t_bb73fb7220886d 279,285,292,319
+  s_d6ec33a9150ba9::t_390708b034c879 338
+  s_9e6527edf25244::t_5557fe0e1b95df 240-247
+  s_e376340877a9a5::t_5e69a74d58d70c 334
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "34603b44c4799acda3360e5e3a57820643a7d597",
+  "prompts": {},
+  "sessions": {
+    "s_28312e2a5c943f": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsWhQiEdxiGNvwb8RPE",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_43dfcb70bb2943": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsXzdSuFNUbaivDFj5g",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_480f80aae059fb": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsXtNUfbq032a19HGAV",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_65c4511fe145a8": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsaN0fH3MnsR4w2oK3s",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_6f263eea5bfd5e": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsWzTONw7B70lBBW5WF",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_9e6527edf25244": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsWsPJeuP9Fu3ubNRoM",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_a4fdbf31f29d27": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsYtaaNVdOZRIdqFr29",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_d4399a20d7df6d": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsYA6IBwbtdMu0pwXkO",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_d6ec33a9150ba9": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsXGs0cx5klcsZ0S7eO",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_d7d2a924ff9c1a": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsXiRuSSrhjBgwNGhua",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_e376340877a9a5": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033tsXTutnsaWAyjlhD8Bu",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
