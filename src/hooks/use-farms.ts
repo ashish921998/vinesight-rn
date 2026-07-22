@@ -6,7 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { getDataAccess } from '@/data-access';
+import { getDataAccess, isMissingDisplayOrderColumnError } from '@/data-access';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmSeason, FarmUpdate } from '../types';
 import { toSupabaseTimestampString } from '../types';
@@ -31,16 +31,6 @@ function isRpcFunctionMissing(error: { code?: string; message?: string } | null)
   if (!error) return false;
   if (error.code === '42883' || error.code === 'PGRST202') return true;
   return typeof error.message === 'string' && /function .* does not exist/i.test(error.message);
-}
-
-function isMissingDisplayOrderColumn(error: { code?: string; message?: string } | null): boolean {
-  if (!error) return false;
-  const message = error.message ?? '';
-  return (
-    error.code === '42703' ||
-    /column ["']?display_order["']? does not exist/i.test(message) ||
-    /could not find .*display_order.* schema cache/i.test(message)
-  );
 }
 
 function isUniqueDisplayOrderViolation(error: { code?: string; message?: string } | null): boolean {
@@ -249,7 +239,7 @@ export function useReorderFarms() {
       } catch (error) {
         if (
           isRpcFunctionMissing(error as { code?: string; message?: string }) ||
-          isMissingDisplayOrderColumn(error as { code?: string; message?: string })
+          isMissingDisplayOrderColumnError(error as { code?: string; message?: string })
         ) {
           throw new Error(
             'Farm ordering is not available until the latest database migration runs.',

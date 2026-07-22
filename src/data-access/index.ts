@@ -3,7 +3,11 @@ import { supabaseDataAccess } from './SupabaseDataAccess';
 
 export type { DataAccess } from './DataAccess';
 export { InMemoryDataAccess } from './InMemoryDataAccess';
-export { SupabaseDataAccess, supabaseDataAccess } from './SupabaseDataAccess';
+export {
+  SupabaseDataAccess,
+  supabaseDataAccess,
+  isMissingDisplayOrderColumnError,
+} from './SupabaseDataAccess';
 
 /**
  * Global adapter instance.

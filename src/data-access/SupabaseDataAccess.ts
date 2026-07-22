@@ -15,6 +15,24 @@ import type {
   SprayRecord,
 } from '@/types/database';
 
+/**
+ * Detects a missing farms.display_order column (pre-migration database).
+ * Matches by Postgres/PostgREST code and by message because PostgREST
+ * schema-cache errors don't always carry a code. Shared with useReorderFarms,
+ * which classifies errors thrown by farms.reorder.
+ */
+export function isMissingDisplayOrderColumnError(
+  error: { code?: string; message?: string } | null,
+): boolean {
+  if (!error) return false;
+  if (error.code === '42703' || error.code === 'PGRST204') return true;
+  const message = error.message ?? '';
+  return (
+    /column ["']?display_order["']? does not exist/i.test(message) ||
+    /could not find .*display_order.* schema cache/i.test(message)
+  );
+}
+
 export class SupabaseDataAccess implements DataAccess {
   readonly isConfigured = isSupabaseConfigured;
   readonly from: DataAccess['from'] = (...args) => supabase.from(...args);
@@ -59,7 +77,7 @@ export class SupabaseDataAccess implements DataAccess {
         .order('display_order', { ascending: true, nullsFirst: false })
         .limit(1)
         .maybeSingle();
-      if (error && !['42703', 'PGRST204'].includes(error.code ?? '')) throw error;
+      if (error && !isMissingDisplayOrderColumnError(error)) throw error;
       return {
         supportsDisplayOrder: !error,
         displayOrder:
@@ -101,7 +119,7 @@ export class SupabaseDataAccess implements DataAccess {
         .eq('user_id', userId)
         .order('display_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
-      if (error?.code === '42703') {
+      if (error && isMissingDisplayOrderColumnError(error)) {
         ({ data, error } = await supabase
           .from('farms')
           .select('*')
