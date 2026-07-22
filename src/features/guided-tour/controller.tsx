@@ -60,12 +60,17 @@ function isAddFarmScrollLockedPhase(
   );
 }
 
-function isAddLogFlowRoute(pathname: string | null, segments: string[]): boolean {
-  if (pathname === '/log-entry/add' || pathname === '/add-entry' || pathname === '/add-activity') {
+export function isAddLogFlowRoute(pathname: string | null, segments: string[]): boolean {
+  if (
+    pathname === '/log-entry/add' ||
+    pathname === '/log-entry/quick' ||
+    pathname === '/add-entry' ||
+    pathname === '/add-activity'
+  ) {
     return true;
   }
   return (
-    (segments[0] === 'log-entry' && segments[1] === 'add') ||
+    (segments[0] === 'log-entry' && (segments[1] === 'add' || segments[1] === 'quick')) ||
     segments[0] === 'add-entry' ||
     segments[0] === 'add-activity'
   );

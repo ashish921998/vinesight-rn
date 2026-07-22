@@ -53,7 +53,7 @@ import { getExpenseIconName } from '@/utils/expense-icons';
 import { useM3 } from '@/styles/use-theme';
 import { useDomainColors } from '@/styles/use-domain-colors';
 import { getDaysAfterPruning } from '@/utils/date';
-import { createAddLogHref } from '@/utils/add-log-navigation';
+import { createAddLogHref, createQuickLogHref } from '@/utils/add-log-navigation';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
 
 interface CombinedLog {
@@ -485,7 +485,7 @@ export default function LogsScreen() {
       router.push(createAddLogHref({ farmId: 'all', lockFarmSelection: true }));
       return;
     }
-    router.push(createAddLogHref({ farmId: selectedFarmId, lockFarmSelection: true }));
+    router.push(createQuickLogHref({ farmId: selectedFarmId }));
   }, [router, selectedFarmId]);
 
   const hasActiveFilters = selectedLogTypes.size > 0 || dateFrom || dateTo;

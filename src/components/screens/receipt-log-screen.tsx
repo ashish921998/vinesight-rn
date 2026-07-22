@@ -109,6 +109,19 @@ interface ReceiptLogScreenProps {
    * from a farm's details page (`/log-entry/quick`).
    */
   delegatedContext?: DelegatedContext;
+  /**
+   * When set, the matching activity sheet is opened once on mount (e.g. the
+   * farmer taps "Irrigation" from a dashboard Quick Action and lands straight
+   * on the irrigation form). Ignored if the type is hidden from the picker
+   * (`PICKER_HIDDEN_LOG_TYPE_IDS`). Guarded so re-renders / date changes never
+   * reopen it.
+   */
+  initialLogType?: LogTypeId | null;
+  /**
+   * Invoked after a successful non-delegated (farmer) save. The farmer
+   * fast-path route uses this to complete the onboarding first action.
+   */
+  onLogSaved?: () => void;
 }
 
 type AnyLogData =
@@ -198,7 +211,13 @@ function describeEntry(type: LogTypeId, data: AnyLogData): string {
   }
 }
 
-export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptLogScreenProps) {
+export function ReceiptLogScreen({
+  farmId,
+  onClose,
+  delegatedContext,
+  initialLogType,
+  onLogSaved,
+}: ReceiptLogScreenProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
@@ -304,6 +323,19 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
   const closeSheet = useCallback(() => {
     setActiveType(null);
   }, []);
+
+  // Auto-open the requested activity sheet once on mount (farmer fast path:
+  // tapping "Irrigation" on the dashboard lands straight on the irrigation
+  // form). Guarded by a ref so re-renders / date changes never reopen it, and
+  // it respects the picker-hidden types (e.g. fertigation has no sheet here).
+  const didAutoOpenRef = useRef(false);
+  useEffect(() => {
+    if (didAutoOpenRef.current) return;
+    if (!initialLogType) return;
+    didAutoOpenRef.current = true;
+    if (PICKER_HIDDEN_LOG_TYPE_IDS.has(initialLogType)) return;
+    openSheet(initialLogType);
+  }, [initialLogType, openSheet]);
 
   const draftValid = activeType ? isDataValid(activeType, draft) : false;
 
@@ -424,6 +456,12 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
       });
       triggerHapticSuccess();
       setActiveType(null);
+      // Farmer fast-path completion hook (e.g. onboarding first action). Only
+      // fires for the non-delegated farmer save; the consultant/delegated path
+      // has its own workspace flow and never carries this callback.
+      if (!isDelegatedMode) {
+        onLogSaved?.();
+      }
     } catch (error) {
       Alert.alert(
         t('common.error', { defaultValue: 'Something went wrong' }),
@@ -449,6 +487,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
     entries,
     queryClient,
     isBlockedByNoSeason,
+    onLogSaved,
   ]);
 
   const handleRemove = useCallback(
