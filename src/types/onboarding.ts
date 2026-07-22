@@ -4,12 +4,7 @@
  */
 
 export type OnboardingStep =
-  | 'welcome'
-  | 'features'
-  | 'firstFarm'
-  | 'firstAction'
-  | 'notifications'
-  | 'complete';
+  'welcome' | 'features' | 'firstFarm' | 'firstAction' | 'notifications' | 'complete';
 
 export type OnboardingActionType = 'log' | 'note' | 'task';
 
@@ -43,14 +38,7 @@ export interface OnboardingFeature {
   color: string;
 }
 
-export const ONBOARDING_STEPS: OnboardingStep[] = [
-  'welcome',
-  'features',
-  'firstFarm',
-  'firstAction',
-  'notifications',
-  'complete',
-];
+export const ONBOARDING_STEPS: OnboardingStep[] = ['firstFarm', 'complete'];
 
 export const DEFAULT_ONBOARDING_ACTIVATION_STATE: OnboardingActivationState = {
   farmCreated: false,

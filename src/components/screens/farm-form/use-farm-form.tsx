@@ -21,6 +21,7 @@ import { triggerHapticSuccess } from '@/utils/haptics';
 import { validateAndParseOptionalFarmNumbers } from '@/utils/farm-form-submit-validation';
 import { getCropVisual, type KnownCrop } from '@/utils/farm-crop-visuals';
 import { colorWithOpacity } from '@/utils/color';
+import { createAddLogHref } from '@/utils/add-log-navigation';
 import { CropIcon } from '@/components/ui';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 
@@ -987,16 +988,20 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
           return;
         }
       }
-      // No pruning date → no season was auto-started (see useCreateFarm). Send
-      // the farmer to the new farm with the season-start form open so they pick
-      // a real start date instead of getting a silent "today" default. The
-      // guided tour has its own season prompt, so this only applies outside it.
-      if (typeof createdFarm?.id === 'number' && !formState.dateOfPruning) {
+      // One-tap first log: route straight into a pre-filled irrigation log for
+      // the new farm. A season was already auto-started in useCreateFarm
+      // (anchored to the most recent Feb 1st, or the pruning date when given),
+      // so the log form's save gate is clear and the farmer can log immediately.
+      // The guided tour has its own post-create flow and returns above.
+      if (typeof createdFarm?.id === 'number') {
         onClose();
-        router.replace({
-          pathname: '/farm/[id]',
-          params: { id: String(createdFarm.id), startSeason: '1' },
-        });
+        router.replace(
+          createAddLogHref({
+            farmId: createdFarm.id,
+            initialLogType: 'irrigation',
+            lockFarmSelection: true,
+          }),
+        );
         return;
       }
       onClose();

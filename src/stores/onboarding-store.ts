@@ -34,7 +34,7 @@ interface OnboardingStore extends OnboardingState {
 const initialState: OnboardingState = {
   isComplete: false,
   hasHydrated: false,
-  currentStep: 'welcome',
+  currentStep: 'firstFarm',
   preferences: {
     country: '',
     currency: '',
@@ -170,12 +170,18 @@ export const useOnboardingStore = create<OnboardingStore>()(
           currentStep: 'complete',
         }),
 
-      resetOnboarding: () => set(initialState),
+      resetOnboarding: () =>
+        set((state) => ({
+          ...initialState,
+          // Reset can happen after storage has hydrated during signup. Keeping
+          // this flag avoids trapping the root route on its loading screen.
+          hasHydrated: state.hasHydrated,
+        })),
       _setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: 'vinesight-onboarding',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => onboardingStorage),
       migrate: (persistedState, version) => {
         const state = persistedState as Record<string, unknown>;
@@ -206,8 +212,14 @@ export const useOnboardingStore = create<OnboardingStore>()(
           }
         }
 
+        if (version <= 2 && state.isComplete !== true) {
+          // The streamlined flow only asks a new farmer to create a farm.
+          // Resume every incomplete legacy onboarding at that required task.
+          currentStep = 'firstFarm';
+        }
+
         if (!ONBOARDING_STEPS.includes(currentStep as OnboardingStep)) {
-          currentStep = 'welcome';
+          currentStep = 'firstFarm';
         }
 
         return {

@@ -78,12 +78,26 @@ async function resolveNextFarmDisplayOrder(userId: string): Promise<{
 }
 
 /**
- * A newly created farm should only auto-start its first season when the farmer
- * supplied a pruning date to anchor it to. Without one, the create flow prompts
- * the farmer to pick a start date instead of silently defaulting to "today".
+ * Season start-date anchor for a newly created farm: the most recent February
+ * 1st. January rolls back to last year's Feb 1 (the current agronomic year
+ * started the previous February); every other month uses this year's Feb 1.
+ * A deterministic anchor means a first-time farmer's farm is immediately
+ * loggable — they don't hit a "start season" wall before their first record.
  */
-export function shouldAutoStartInitialSeason(farm: Pick<Farm, 'date_of_pruning'>): boolean {
-  return Boolean(farm.date_of_pruning);
+export function getInitialSeasonStartDate(now: Date = new Date()): Date {
+  const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+  return new Date(year, 1, 1); // month 1 = February
+}
+
+/**
+ * A newly created farm always auto-starts its first season, anchored to the
+ * most recent February 1st (see getInitialSeasonStartDate) — or to a supplied
+ * pruning date when the farmer provided one. This keeps the farm immediately
+ * loggable so the one-tap first log after creation isn't blocked by a missing
+ * season.
+ */
+export function shouldAutoStartInitialSeason(_farm: Pick<Farm, 'date_of_pruning'>): boolean {
+  return true;
 }
 
 export async function ensureInitialFarmSeason(
@@ -111,7 +125,7 @@ export async function ensureInitialFarmSeason(
   }
   if (existingSeason?.id) return;
 
-  const startDate = farm.date_of_pruning ?? formatLocalDate(new Date());
+  const startDate = farm.date_of_pruning ?? formatLocalDate(getInitialSeasonStartDate());
   const seasonName = seasonNameOverride ?? `Season ${new Date().getFullYear()}`;
 
   const { error: rpcError } = await supabase.rpc('start_farm_season', {
@@ -260,12 +274,12 @@ export function useCreateFarm() {
       if (!data) {
         throw lastError ?? new Error('Failed to create farm');
       }
-      // Only auto-start the first season when the farmer supplied a pruning
-      // date to anchor it to. Without one, silently defaulting to "today"
-      // yields a meaningless start date that mis-buckets records — instead we
-      // leave the farm season-less so the create flow can prompt the farmer to
-      // pick a start date (see the startSeason redirect in use-farm-form). The
-      // lazy resolver's legacy safety net is intentionally left untouched.
+      // Always auto-start the first season so the farm is immediately
+      // loggable — the one-tap first log after creation must not hit a missing-
+      // season wall. The season is anchored to the most recent February 1st
+      // (or the farmer's pruning date when supplied). The "don't re-capture an
+      // existing/between-seasons farm" guard lives inside
+      // ensureInitialFarmSeason and stays intact.
       if (shouldAutoStartInitialSeason(data)) {
         const seasonName = t('farms.defaultSeasonName', { year: new Date().getFullYear() });
         try {

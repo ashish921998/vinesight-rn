@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -20,6 +21,7 @@ import {
   DateField,
 } from '@/components/ui';
 import { spacing, radius, componentRadius, fontSize, fontWeight } from '@/styles/theme';
+import { springs } from '@/styles/motion';
 import { colorWithOpacity } from '@/utils/color';
 import LocationPicker from '../location-picker';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
@@ -41,6 +43,16 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   // the crop/variety pickers. (The @expo/ui inline Picker renders a SwiftUI
   // wheel on iOS, which collapses/misrenders inline in the form.)
   const [showSoilTexturePicker, setShowSoilTexturePicker] = React.useState(false);
+  // Quick-create collapses every non-essential field behind one optional
+  // section. The default is collapsed (false); tapping the header toggles it.
+  const [isAgronomyDetailsOpen, setIsAgronomyDetailsOpen] = React.useState(false);
+  const agronomyChevronRotation = useSharedValue(0);
+  React.useEffect(() => {
+    agronomyChevronRotation.value = withSpring(isAgronomyDetailsOpen ? 90 : 0, springs.snappy);
+  }, [isAgronomyDetailsOpen, agronomyChevronRotation]);
+  const agronomyChevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${agronomyChevronRotation.value}deg` }],
+  }));
   const soilTextureOptions = SOIL_TEXTURE_OPTIONS.map((tx) => ({
     key: tx.value,
     label: t(tx.labelKey),
@@ -160,33 +172,6 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               blurOnSubmit={false}
               onSubmitEditing={() => {
                 if (form.formState.name.trim().length === 0) return;
-                form.regionInputRef.current?.focus();
-              }}
-              style={{ marginBottom: 0 }}
-            />
-          </GuidedTourTarget>
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_REGION}>
-            <FormInput
-              label={t('farmForm.fields.region.label')}
-              inputRef={form.regionInputRef}
-              value={form.formState.region}
-              onChangeText={(v) => {
-                form.setRegion(v);
-                if (form.getIsGuidedAddFarm()) {
-                  guidedTourEmit('guidedTour.addFarmRegionEntered', {
-                    isFilled: v.trim().length > 0,
-                  });
-                }
-              }}
-              placeholder={t('farmForm.fields.region.placeholder')}
-              required
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => {
-                if (form.formState.region.trim().length === 0) return;
                 form.areaInputRef.current?.focus();
               }}
               style={{ marginBottom: 0 }}
@@ -329,11 +314,394 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           />
         )}
 
-        {/* — Variety section — */}
-        <SectionHeader title={t('farmForm.sections.variety')} style={{ marginBottom: 16 }} />
+        {/* — Collapsible agronomy details — */}
+        {/* Quick-create: every non-essential field lives behind one optional
+            section, collapsed by default. Tapping the header reveals region,
+            variety, planting date, spacing, irrigation, location, soil, etc. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: isAgronomyDetailsOpen }}
+          onPress={() => setIsAgronomyDetailsOpen((prev) => !prev)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: m3.surface.s100,
+            borderWidth: 1,
+            borderColor: m3.surface.s200,
+            borderRadius: componentRadius.input,
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[4],
+            marginBottom: spacing[5],
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontSize: fontSize.base,
+                color: m3.surface.s900,
+                fontWeight: fontWeight.semibold,
+              }}
+            >
+              {t('farmForm.sections.agronomyDetails')}
+            </Text>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                color: m3.colorScheme.onSurfaceVariant,
+                marginTop: spacing[1],
+              }}
+            >
+              {t('farmForm.sections.agronomyDetailsHint')}
+            </Text>
+          </View>
+          <Animated.View style={agronomyChevronStyle}>
+            <UISymbol name="chevron.right" size={20} color={m3.colorScheme.onSurfaceVariant} />
+          </Animated.View>
+        </Pressable>
 
-        <View style={{ marginBottom: spacing[5] }}>
-          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY}>
+        {isAgronomyDetailsOpen && (
+          <>
+            {/* — Variety section — */}
+            <SectionHeader title={t('farmForm.sections.variety')} style={{ marginBottom: 16 }} />
+
+            <View style={{ marginBottom: 12 }}>
+              <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_REGION}>
+                <FormInput
+                  label={t('farmForm.fields.region.label')}
+                  inputRef={form.regionInputRef}
+                  value={form.formState.region}
+                  onChangeText={(v) => {
+                    form.setRegion(v);
+                    if (form.getIsGuidedAddFarm()) {
+                      guidedTourEmit('guidedTour.addFarmRegionEntered', {
+                        isFilled: v.trim().length > 0,
+                      });
+                    }
+                  }}
+                  placeholder={t('farmForm.fields.region.placeholder')}
+                  returnKeyType="next"
+                  blurOnSubmit
+                  style={{ marginBottom: 0 }}
+                />
+              </GuidedTourTarget>
+            </View>
+
+            <View style={{ marginBottom: spacing[5] }}>
+              <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY}>
+                <Pressable
+                  style={{
+                    backgroundColor: m3.surface.s100,
+                    borderWidth: 2,
+                    borderColor: m3.surface.s200,
+                    borderRadius: componentRadius.input,
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[4],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                  onPress={() => form.setShowVarietyPicker(true)}
+                  onPressIn={() => {
+                    if (form.getIsGuidedAddFarm()) {
+                      guidedTourEmit('guidedTour.addFarmVarietyPickerOpened', {});
+                    }
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.base,
+                      color: form.formState.cropVariety ? m3.surface.s900 : m3.surface.s400,
+                      fontWeight: form.formState.cropVariety
+                        ? fontWeight.medium
+                        : fontWeight.normal,
+                    }}
+                  >
+                    {form.formState.cropVariety
+                      ? form.getVarietyLabel(form.formState.cropVariety)
+                      : t('farmForm.variety.selectPlaceholder')}
+                  </Text>
+                  <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
+                </Pressable>
+              </GuidedTourTarget>
+            </View>
+
+            {form.formState.cropVariety === 'Custom' && (
+              <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CUSTOM_VARIETY}>
+                <FormInput
+                  label={t('farmForm.variety.customNameLabel')}
+                  inputRef={form.customVarietyInputRef}
+                  value={form.formState.customVariety}
+                  onChangeText={(v) => {
+                    form.setCustomVariety(v);
+                    if (form.getIsGuidedAddFarm() && v.trim().length > 0) {
+                      guidedTourEmit('guidedTour.addFarmCustomVarietyEntered', {});
+                    }
+                  }}
+                  placeholder={t('farmForm.variety.customNamePlaceholder')}
+                  required
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => form.vineSpacingInputRef.current?.focus()}
+                  style={{ marginBottom: 20 }}
+                />
+              </GuidedTourTarget>
+            )}
+
+            {/* — Planting date section — */}
+            <SectionHeader
+              title={t('farmForm.sections.plantingDate')}
+              style={{ marginBottom: 16 }}
+            />
+
+            <DateField
+              value={ensureValidDate(form.formState.plantingDate)}
+              onChange={(date) => form.commitPlantingDate(date)}
+              style={{ marginBottom: spacing[5] }}
+            />
+
+            {/* — Plant spacing section — */}
+            <SectionHeader
+              title={t('farmForm.sections.plantSpacingOptional')}
+              style={{ marginBottom: 16 }}
+            />
+
+            <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[5] }}>
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  label={t('farmForm.fields.vineSpacing.label')}
+                  inputRef={form.vineSpacingInputRef}
+                  value={form.formState.vineSpacing}
+                  onChangeText={form.setVineSpacing}
+                  placeholder="1.8"
+                  keyboardType="decimal-pad"
+                  suffix={t('units.meter')}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => form.rowSpacingInputRef.current?.focus()}
+                  style={{ marginBottom: 0 }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  label={t('farmForm.fields.rowSpacing.label')}
+                  inputRef={form.rowSpacingInputRef}
+                  value={form.formState.rowSpacing}
+                  onChangeText={form.setRowSpacing}
+                  placeholder="3.0"
+                  keyboardType="decimal-pad"
+                  suffix={t('units.meter')}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => form.tankCapacityInputRef.current?.focus()}
+                  style={{ marginBottom: 0 }}
+                />
+              </View>
+            </View>
+
+            {/* — Irrigation section — */}
+            <SectionHeader
+              title={t('farmForm.sections.irrigationDetailsOptional')}
+              style={{ marginBottom: 16 }}
+            />
+
+            <FormInput
+              label={t('farmForm.fields.tankCapacity.label')}
+              inputRef={form.tankCapacityInputRef}
+              value={form.formState.totalTankCapacity}
+              onChangeText={form.setTotalTankCapacity}
+              placeholder="1000"
+              keyboardType="decimal-pad"
+              suffix={t('units.millimeter')}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => form.systemDischargeInputRef.current?.focus()}
+              style={{ marginBottom: 12 }}
+            />
+
+            <FormInput
+              label={t('farmForm.fields.systemDischarge.label')}
+              inputRef={form.systemDischargeInputRef}
+              value={form.formState.systemDischarge}
+              onChangeText={form.setSystemDischarge}
+              placeholder="10"
+              keyboardType="decimal-pad"
+              suffix={t('units.mmPerHour')}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => form.locationNameInputRef.current?.focus()}
+              style={{ marginBottom: 20 }}
+            />
+
+            {/* — Pruning date section — */}
+            <SectionHeader
+              title={t('farmForm.sections.pruningDateOptional')}
+              style={{ marginBottom: 16 }}
+            />
+
+            <View style={{ marginBottom: spacing[5] }}>
+              <DateField
+                value={form.formState.dateOfPruning ?? null}
+                onChange={(date) => form.commitPruningDate(date)}
+              />
+              {form.formState.dateOfPruning ? (
+                <Pressable
+                  onPress={form.clearPruningDate}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.clear', { defaultValue: 'Clear' })}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    alignSelf: 'flex-start',
+                    marginTop: spacing[2],
+                    gap: spacing[1],
+                  }}
+                >
+                  <UISymbol
+                    name="xmark.circle.fill"
+                    size={18}
+                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                  />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      color: m3.colorScheme.onSurfaceVariant,
+                    }}
+                  >
+                    {t('farmForm.fields.pruningDate.clear', {
+                      defaultValue: 'Clear date',
+                    })}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+
+            {/* — Location section — */}
+            <SectionHeader
+              title={t('farmForm.sections.locationOptional')}
+              style={{ marginBottom: 16 }}
+            />
+
+            <FormInput
+              label={t('farmForm.fields.locationName.label')}
+              inputRef={form.locationNameInputRef}
+              value={form.formState.locationName}
+              onChangeText={form.setLocationName}
+              placeholder={t('farmForm.fields.locationName.placeholder')}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => form.latitudeInputRef.current?.focus()}
+              style={{ marginBottom: 12 }}
+            />
+
+            <Button
+              title={t('farmForm.location.selectOnMap')}
+              variant="outline"
+              size="sm"
+              leftIcon={<UISymbol name="location.fill" size={20} color={m3.primary.p500} />}
+              onPress={form.handleOpenMapPicker}
+              style={{ marginBottom: 12 }}
+            />
+
+            <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[3] }}>
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  label={t('farmForm.fields.latitude.label')}
+                  inputRef={form.latitudeInputRef}
+                  value={form.formState.latitude}
+                  onChangeText={form.setLatitude}
+                  placeholder="0.000000"
+                  keyboardType="decimal-pad"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => form.longitudeInputRef.current?.focus()}
+                  style={{ marginBottom: 0 }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  label={t('farmForm.fields.longitude.label')}
+                  inputRef={form.longitudeInputRef}
+                  value={form.formState.longitude}
+                  onChangeText={form.setLongitude}
+                  placeholder="0.000000"
+                  keyboardType="decimal-pad"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => form.elevationInputRef.current?.focus()}
+                  style={{ marginBottom: 0 }}
+                />
+              </View>
+            </View>
+
+            <FormInput
+              label={t('farmForm.fields.elevation.label')}
+              inputRef={form.elevationInputRef}
+              value={form.formState.elevation}
+              onChangeText={form.setElevation}
+              placeholder="0"
+              keyboardType="decimal-pad"
+              suffix={t('units.feet')}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => form.bulkDensityInputRef.current?.focus()}
+              style={{ marginBottom: 20 }}
+            />
+
+            {/* — Soil properties section — */}
+            <SectionHeader
+              title={t('farmForm.sections.soilPropertiesOptional')}
+              style={{ marginBottom: 16 }}
+            />
+
+            <FormInput
+              label={t('farmForm.fields.bulkDensity.label')}
+              inputRef={form.bulkDensityInputRef}
+              value={form.formState.bulkDensity}
+              onChangeText={form.setBulkDensity}
+              placeholder="1200"
+              keyboardType="decimal-pad"
+              suffix={t('units.kilogramPerMeterCubed')}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => form.cecInputRef.current?.focus()}
+              style={{ marginBottom: 12 }}
+            />
+
+            <FormInput
+              label={t('farmForm.fields.cationExchangeCapacity.label')}
+              inputRef={form.cecInputRef}
+              value={form.formState.cationExchangeCapacity}
+              onChangeText={form.setCationExchangeCapacity}
+              placeholder="15"
+              keyboardType="decimal-pad"
+              suffix="cmol/kg"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => form.soilWaterRetentionInputRef.current?.focus()}
+              style={{ marginBottom: 12 }}
+            />
+
+            <FormInput
+              label={t('farmForm.fields.soilWaterRetention.label')}
+              inputRef={form.soilWaterRetentionInputRef}
+              value={form.formState.soilWaterRetention}
+              onChangeText={form.setSoilWaterRetention}
+              placeholder="25"
+              keyboardType="decimal-pad"
+              suffix="%"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => form.sandInputRef.current?.focus()}
+              style={{ marginBottom: 20 }}
+            />
+
+            {/* — Soil texture section — */}
+            <SectionHeader
+              title={t('farmForm.sections.soilTexture')}
+              style={{ marginBottom: 16 }}
+            />
+
             <Pressable
               style={{
                 backgroundColor: m3.surface.s100,
@@ -342,394 +710,91 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                 borderRadius: componentRadius.input,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[4],
+                marginBottom: spacing[5],
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
               }}
-              onPress={() => form.setShowVarietyPicker(true)}
-              onPressIn={() => {
-                if (form.getIsGuidedAddFarm()) {
-                  guidedTourEmit('guidedTour.addFarmVarietyPickerOpened', {});
-                }
-              }}
+              onPress={() => setShowSoilTexturePicker(true)}
             >
               <Text
                 style={{
                   fontSize: fontSize.base,
-                  color: form.formState.cropVariety ? m3.surface.s900 : m3.surface.s400,
-                  fontWeight: form.formState.cropVariety ? fontWeight.medium : fontWeight.normal,
+                  color: selectedSoilTextureLabel ? m3.surface.s900 : m3.surface.s400,
+                  fontWeight: selectedSoilTextureLabel ? fontWeight.medium : fontWeight.normal,
                 }}
               >
-                {form.formState.cropVariety
-                  ? form.getVarietyLabel(form.formState.cropVariety)
-                  : t('farmForm.variety.selectPlaceholder')}
+                {selectedSoilTextureLabel ?? t('farmForm.soilTexture.selectPlaceholder')}
               </Text>
               <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
             </Pressable>
-          </GuidedTourTarget>
-        </View>
 
-        {form.formState.cropVariety === 'Custom' && (
-          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CUSTOM_VARIETY}>
-            <FormInput
-              label={t('farmForm.variety.customNameLabel')}
-              inputRef={form.customVarietyInputRef}
-              value={form.formState.customVariety}
-              onChangeText={(v) => {
-                form.setCustomVariety(v);
-                if (form.getIsGuidedAddFarm() && v.trim().length > 0) {
-                  guidedTourEmit('guidedTour.addFarmCustomVarietyEntered', {});
-                }
-              }}
-              placeholder={t('farmForm.variety.customNamePlaceholder')}
-              required
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => form.vineSpacingInputRef.current?.focus()}
-              style={{ marginBottom: 20 }}
-            />
-          </GuidedTourTarget>
-        )}
+            {/* Sand / Silt / Clay */}
+            <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[5] }}>
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  label={t('farmForm.fields.sandPercentage.label')}
+                  inputRef={form.sandInputRef}
+                  value={form.formState.sandPercentage}
+                  onChangeText={form.setSandPercentage}
+                  placeholder="40"
+                  keyboardType="decimal-pad"
+                  suffix="%"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => form.siltInputRef.current?.focus()}
+                  style={{ marginBottom: 0 }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  label={t('farmForm.fields.siltPercentage.label')}
+                  inputRef={form.siltInputRef}
+                  value={form.formState.siltPercentage}
+                  onChangeText={form.setSiltPercentage}
+                  placeholder="40"
+                  keyboardType="decimal-pad"
+                  suffix="%"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => form.clayInputRef.current?.focus()}
+                  style={{ marginBottom: 0 }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  label={t('farmForm.fields.clayPercentage.label')}
+                  inputRef={form.clayInputRef}
+                  value={form.formState.clayPercentage}
+                  onChangeText={form.setClayPercentage}
+                  placeholder="20"
+                  keyboardType="decimal-pad"
+                  suffix="%"
+                  returnKeyType="done"
+                  blurOnSubmit
+                  style={{ marginBottom: 0 }}
+                />
+              </View>
+            </View>
 
-        {/* — Planting date section — */}
-        <SectionHeader title={t('farmForm.sections.plantingDate')} style={{ marginBottom: 16 }} />
-
-        <DateField
-          value={ensureValidDate(form.formState.plantingDate)}
-          onChange={(date) => form.commitPlantingDate(date)}
-          style={{ marginBottom: spacing[5] }}
-        />
-
-        {/* — Plant spacing section — */}
-        <SectionHeader
-          title={t('farmForm.sections.plantSpacingOptional')}
-          style={{ marginBottom: 16 }}
-        />
-
-        <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[5] }}>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label={t('farmForm.fields.vineSpacing.label')}
-              inputRef={form.vineSpacingInputRef}
-              value={form.formState.vineSpacing}
-              onChangeText={form.setVineSpacing}
-              placeholder="1.8"
-              keyboardType="decimal-pad"
-              suffix={t('units.meter')}
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => form.rowSpacingInputRef.current?.focus()}
-              style={{ marginBottom: 0 }}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label={t('farmForm.fields.rowSpacing.label')}
-              inputRef={form.rowSpacingInputRef}
-              value={form.formState.rowSpacing}
-              onChangeText={form.setRowSpacing}
-              placeholder="3.0"
-              keyboardType="decimal-pad"
-              suffix={t('units.meter')}
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => form.tankCapacityInputRef.current?.focus()}
-              style={{ marginBottom: 0 }}
-            />
-          </View>
-        </View>
-
-        {/* — Irrigation section — */}
-        <SectionHeader
-          title={t('farmForm.sections.irrigationDetailsOptional')}
-          style={{ marginBottom: 16 }}
-        />
-
-        <FormInput
-          label={t('farmForm.fields.tankCapacity.label')}
-          inputRef={form.tankCapacityInputRef}
-          value={form.formState.totalTankCapacity}
-          onChangeText={form.setTotalTankCapacity}
-          placeholder="1000"
-          keyboardType="decimal-pad"
-          suffix={t('units.millimeter')}
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => form.systemDischargeInputRef.current?.focus()}
-          style={{ marginBottom: 12 }}
-        />
-
-        <FormInput
-          label={t('farmForm.fields.systemDischarge.label')}
-          inputRef={form.systemDischargeInputRef}
-          value={form.formState.systemDischarge}
-          onChangeText={form.setSystemDischarge}
-          placeholder="10"
-          keyboardType="decimal-pad"
-          suffix={t('units.mmPerHour')}
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => form.locationNameInputRef.current?.focus()}
-          style={{ marginBottom: 20 }}
-        />
-
-        {/* — Pruning date section — */}
-        <SectionHeader
-          title={t('farmForm.sections.pruningDateOptional')}
-          style={{ marginBottom: 16 }}
-        />
-
-        <View style={{ marginBottom: spacing[5] }}>
-          <DateField
-            value={form.formState.dateOfPruning ?? null}
-            onChange={(date) => form.commitPruningDate(date)}
-          />
-          {form.formState.dateOfPruning ? (
-            <Pressable
-              onPress={form.clearPruningDate}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.clear', { defaultValue: 'Clear' })}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                alignSelf: 'flex-start',
-                marginTop: spacing[2],
-                gap: spacing[1],
-              }}
-            >
-              <UISymbol
-                name="xmark.circle.fill"
-                size={18}
-                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            {form.soilCompositionWarning && (
+              <InfoCard
+                icon="exclamationmark.triangle.fill"
+                iconColor={m3.colorScheme.warning}
+                backgroundColor={colorWithOpacity(m3.colorScheme.warning, 0.2)}
+                message={form.soilCompositionWarning}
+                style={{ marginBottom: 20 }}
               />
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  color: m3.colorScheme.onSurfaceVariant,
-                }}
-              >
-                {t('farmForm.fields.pruningDate.clear', {
-                  defaultValue: 'Clear date',
-                })}
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
+            )}
 
-        {/* — Location section — */}
-        <SectionHeader
-          title={t('farmForm.sections.locationOptional')}
-          style={{ marginBottom: 16 }}
-        />
-
-        <FormInput
-          label={t('farmForm.fields.locationName.label')}
-          inputRef={form.locationNameInputRef}
-          value={form.formState.locationName}
-          onChangeText={form.setLocationName}
-          placeholder={t('farmForm.fields.locationName.placeholder')}
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => form.latitudeInputRef.current?.focus()}
-          style={{ marginBottom: 12 }}
-        />
-
-        <Button
-          title={t('farmForm.location.selectOnMap')}
-          variant="outline"
-          size="sm"
-          leftIcon={<UISymbol name="location.fill" size={20} color={m3.primary.p500} />}
-          onPress={form.handleOpenMapPicker}
-          style={{ marginBottom: 12 }}
-        />
-
-        <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[3] }}>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label={t('farmForm.fields.latitude.label')}
-              inputRef={form.latitudeInputRef}
-              value={form.formState.latitude}
-              onChangeText={form.setLatitude}
-              placeholder="0.000000"
-              keyboardType="decimal-pad"
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => form.longitudeInputRef.current?.focus()}
-              style={{ marginBottom: 0 }}
+            <InfoCard
+              icon="information-circle"
+              iconColor={m3.colorScheme.success}
+              backgroundColor={colorWithOpacity(m3.colorScheme.success, 0.2)}
+              message={t('farmForm.infoCardMessage')}
             />
-          </View>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label={t('farmForm.fields.longitude.label')}
-              inputRef={form.longitudeInputRef}
-              value={form.formState.longitude}
-              onChangeText={form.setLongitude}
-              placeholder="0.000000"
-              keyboardType="decimal-pad"
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => form.elevationInputRef.current?.focus()}
-              style={{ marginBottom: 0 }}
-            />
-          </View>
-        </View>
-
-        <FormInput
-          label={t('farmForm.fields.elevation.label')}
-          inputRef={form.elevationInputRef}
-          value={form.formState.elevation}
-          onChangeText={form.setElevation}
-          placeholder="0"
-          keyboardType="decimal-pad"
-          suffix={t('units.feet')}
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => form.bulkDensityInputRef.current?.focus()}
-          style={{ marginBottom: 20 }}
-        />
-
-        {/* — Soil properties section — */}
-        <SectionHeader
-          title={t('farmForm.sections.soilPropertiesOptional')}
-          style={{ marginBottom: 16 }}
-        />
-
-        <FormInput
-          label={t('farmForm.fields.bulkDensity.label')}
-          inputRef={form.bulkDensityInputRef}
-          value={form.formState.bulkDensity}
-          onChangeText={form.setBulkDensity}
-          placeholder="1200"
-          keyboardType="decimal-pad"
-          suffix={t('units.kilogramPerMeterCubed')}
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => form.cecInputRef.current?.focus()}
-          style={{ marginBottom: 12 }}
-        />
-
-        <FormInput
-          label={t('farmForm.fields.cationExchangeCapacity.label')}
-          inputRef={form.cecInputRef}
-          value={form.formState.cationExchangeCapacity}
-          onChangeText={form.setCationExchangeCapacity}
-          placeholder="15"
-          keyboardType="decimal-pad"
-          suffix="cmol/kg"
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => form.soilWaterRetentionInputRef.current?.focus()}
-          style={{ marginBottom: 12 }}
-        />
-
-        <FormInput
-          label={t('farmForm.fields.soilWaterRetention.label')}
-          inputRef={form.soilWaterRetentionInputRef}
-          value={form.formState.soilWaterRetention}
-          onChangeText={form.setSoilWaterRetention}
-          placeholder="25"
-          keyboardType="decimal-pad"
-          suffix="%"
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => form.sandInputRef.current?.focus()}
-          style={{ marginBottom: 20 }}
-        />
-
-        {/* — Soil texture section — */}
-        <SectionHeader title={t('farmForm.sections.soilTexture')} style={{ marginBottom: 16 }} />
-
-        <Pressable
-          style={{
-            backgroundColor: m3.surface.s100,
-            borderWidth: 2,
-            borderColor: m3.surface.s200,
-            borderRadius: componentRadius.input,
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[4],
-            marginBottom: spacing[5],
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-          onPress={() => setShowSoilTexturePicker(true)}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.base,
-              color: selectedSoilTextureLabel ? m3.surface.s900 : m3.surface.s400,
-              fontWeight: selectedSoilTextureLabel ? fontWeight.medium : fontWeight.normal,
-            }}
-          >
-            {selectedSoilTextureLabel ?? t('farmForm.soilTexture.selectPlaceholder')}
-          </Text>
-          <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
-        </Pressable>
-
-        {/* Sand / Silt / Clay */}
-        <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[5] }}>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label={t('farmForm.fields.sandPercentage.label')}
-              inputRef={form.sandInputRef}
-              value={form.formState.sandPercentage}
-              onChangeText={form.setSandPercentage}
-              placeholder="40"
-              keyboardType="decimal-pad"
-              suffix="%"
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => form.siltInputRef.current?.focus()}
-              style={{ marginBottom: 0 }}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label={t('farmForm.fields.siltPercentage.label')}
-              inputRef={form.siltInputRef}
-              value={form.formState.siltPercentage}
-              onChangeText={form.setSiltPercentage}
-              placeholder="40"
-              keyboardType="decimal-pad"
-              suffix="%"
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => form.clayInputRef.current?.focus()}
-              style={{ marginBottom: 0 }}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label={t('farmForm.fields.clayPercentage.label')}
-              inputRef={form.clayInputRef}
-              value={form.formState.clayPercentage}
-              onChangeText={form.setClayPercentage}
-              placeholder="20"
-              keyboardType="decimal-pad"
-              suffix="%"
-              returnKeyType="done"
-              blurOnSubmit
-              style={{ marginBottom: 0 }}
-            />
-          </View>
-        </View>
-
-        {form.soilCompositionWarning && (
-          <InfoCard
-            icon="exclamationmark.triangle.fill"
-            iconColor={m3.colorScheme.warning}
-            backgroundColor={colorWithOpacity(m3.colorScheme.warning, 0.2)}
-            message={form.soilCompositionWarning}
-            style={{ marginBottom: 20 }}
-          />
+          </>
         )}
-
-        <InfoCard
-          icon="information-circle"
-          iconColor={m3.colorScheme.success}
-          backgroundColor={colorWithOpacity(m3.colorScheme.success, 0.2)}
-          message={t('farmForm.infoCardMessage')}
-        />
       </FullScreenForm>
 
       {/* ── Variety picker sheet ─────────────────────────────────────────── */}

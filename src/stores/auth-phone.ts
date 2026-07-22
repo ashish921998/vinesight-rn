@@ -17,6 +17,7 @@ import {
   PROFILE_CURRENT_QUERY_KEY,
 } from './auth-helpers';
 import type { SetState, GetState } from './auth-types';
+import { initializeNewFarmerExperience } from './new-farmer-experience';
 
 export const createPhoneActions = (set: SetState, get: GetState) => ({
   signInWithPhone: async (phone: string, mode: 'signin' | 'signup' = 'signin', name?: string) => {
@@ -195,6 +196,10 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
 
       const isSignup = pendingPhoneMode === 'signup';
       const needsProfileCompletion = !hasCompletedProfileName(data.user);
+
+      if (isSignup) {
+        initializeNewFarmerExperience();
+      }
 
       // Set auth state FIRST before any side-effects that could throw
       if (isSignup && data.user) {

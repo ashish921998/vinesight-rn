@@ -1,4 +1,8 @@
-import { shouldAutoStartInitialSeason, ensureInitialFarmSeason } from '@/hooks/use-farms';
+import {
+  shouldAutoStartInitialSeason,
+  ensureInitialFarmSeason,
+  getInitialSeasonStartDate,
+} from '@/hooks/use-farms';
 import { supabase } from '@/lib/supabase';
 import type { Farm } from '@/types';
 
@@ -31,12 +35,15 @@ const baseFarm = (overrides: Partial<Farm>): Farm =>
   }) as Farm;
 
 describe('shouldAutoStartInitialSeason', () => {
+  // The gate is now always-on: every new farm auto-starts a season so it is
+  // immediately loggable (the one-tap first log must not hit a missing-season
+  // wall). The anchor date logic is covered by getInitialSeasonStartDate below.
   it('is true when the farm has a pruning date', () => {
     expect(shouldAutoStartInitialSeason({ date_of_pruning: '2026-01-15' })).toBe(true);
   });
 
-  it('is false when the farm has no pruning date', () => {
-    expect(shouldAutoStartInitialSeason({ date_of_pruning: null })).toBe(false);
+  it('is still true when the farm has no pruning date (always-on)', () => {
+    expect(shouldAutoStartInitialSeason({ date_of_pruning: null })).toBe(true);
   });
 });
 
@@ -59,6 +66,32 @@ describe('ensureInitialFarmSeason', () => {
     expect(mockRpc).toHaveBeenCalledWith(
       'start_farm_season',
       expect.objectContaining({ p_farm_id: 42, p_start_date: '2026-01-15' }),
+    );
+  });
+
+  it('falls back to the most recent February 1st when no pruning date is given', async () => {
+    mockExistingSeasonLookup({ data: null, error: null });
+    mockRpc.mockResolvedValue({ data: null, error: null });
+
+    // No pruning date → season anchors to the most recent Feb 1st (via the
+    // same helper the production code uses), not "today".
+    await ensureInitialFarmSeason(baseFarm({ date_of_pruning: null }), 'user-1');
+
+    expect(mockRpc).toHaveBeenCalledWith(
+      'start_farm_season',
+      expect.objectContaining({ p_farm_id: 42 }),
+    );
+    const calledRpc = mockRpc.mock.calls[0];
+    const expectedAnchor = new Date(
+      getInitialSeasonStartDate().getFullYear(),
+      getInitialSeasonStartDate().getMonth(),
+      getInitialSeasonStartDate().getDate(),
+    );
+    expect(calledRpc[1].p_start_date).toBe(
+      `${expectedAnchor.getFullYear()}-${String(expectedAnchor.getMonth() + 1).padStart(
+        2,
+        '0',
+      )}-${String(expectedAnchor.getDate()).padStart(2, '0')}`,
     );
   });
 

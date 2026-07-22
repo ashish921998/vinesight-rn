@@ -517,6 +517,8 @@ export const en = {
       locationOptional: 'Location (Optional)',
       soilPropertiesOptional: 'Soil Properties (Optional)',
       soilTexture: 'Soil Texture',
+      agronomyDetails: 'Add agronomy details (optional)',
+      agronomyDetailsHint: 'Variety, spacing, irrigation, location, soil & more',
     },
     fields: {
       name: {
