@@ -1,14 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { Button, CropIcon, FormInput } from '@/components/ui';
@@ -73,8 +64,6 @@ const INITIAL_STATE: FarmSetupState = {
 
 export function FirstFarmSlide({ isActive, onResolved, onSkip }: FirstFarmSlideProps) {
   const { t } = useTranslation();
-  const { height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const m3 = useM3();
   const createFarm = useCreateFarm();
   const { data: farms = [], isLoading: farmsLoading } = useFarms();
@@ -166,7 +155,6 @@ export function FirstFarmSlide({ isActive, onResolved, onSkip }: FirstFarmSlideP
     customVariety: state.customVariety,
   });
 
-  const pickerHeight = Math.min(Math.round(height * 0.68), height - insets.top - 88);
   const hasFarm = farms.length > 0;
   const primaryFarm = farms[0];
 
@@ -498,8 +486,6 @@ export function FirstFarmSlide({ isActive, onResolved, onSkip }: FirstFarmSlideP
         cropSearchQueryLower={cropSearchQueryLower}
         filteredCropOptions={filteredCropOptions}
         canCreateCustomCrop={canCreateCustomCrop}
-        cropSheetHeight={pickerHeight}
-        androidKeyboardLift={0}
         onClose={() =>
           setState((prev) => ({ ...prev, showCropPicker: false, cropSearchQuery: '' }))
         }
@@ -515,8 +501,6 @@ export function FirstFarmSlide({ isActive, onResolved, onSkip }: FirstFarmSlideP
         varietySearchQueryTrimmed={varietySearchQueryTrimmed}
         filteredVarieties={filteredVarieties}
         canCreateCustomVariety={canCreateCustomVariety}
-        varietySheetHeight={pickerHeight}
-        androidKeyboardLift={0}
         onClose={() =>
           setState((prev) => ({ ...prev, showVarietyPicker: false, varietySearchQuery: '' }))
         }

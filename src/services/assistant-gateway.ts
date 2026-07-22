@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import { normalizeAssistantCitations } from '@/services/rag-citations';
 import { telemetry } from '@/services/telemetry';
@@ -71,7 +71,7 @@ async function resolveUserId(): Promise<string | null> {
   try {
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await getDataAccess().auth.getSession();
     return session?.user?.id ?? null;
   } catch {
     return null;
@@ -194,10 +194,13 @@ export async function sendAssistantTurn(
     let data: AssistantGatewayResponse | null = null;
     let error: unknown = null;
     try {
-      const invokeResult = await supabase.functions.invoke<AssistantGatewayResponse>('ai-gateway', {
-        body: payload,
-        signal: controller.signal,
-      });
+      const invokeResult = await getDataAccess().functions.invoke<AssistantGatewayResponse>(
+        'ai-gateway',
+        {
+          body: payload,
+          signal: controller.signal,
+        },
+      );
       data = invokeResult.data ?? null;
       error = invokeResult.error;
     } finally {

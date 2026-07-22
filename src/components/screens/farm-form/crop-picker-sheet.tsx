@@ -3,12 +3,11 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView } from 'react-native';
-import { ModalBackdrop } from '@/components/ui';
+import { BottomSheet, BottomSheetView } from '@expo/ui/community/bottom-sheet';
+import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { isIOS } from '@/hooks';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import type { CropType } from '@/constants/crop-varieties';
@@ -31,8 +30,6 @@ interface CropPickerSheetProps {
   cropSearchQueryLower: string;
   filteredCropOptions: KnownCropOption[];
   canCreateCustomCrop: boolean;
-  cropSheetHeight: number;
-  androidKeyboardLift: number;
   onClose: () => void;
   onSelectCrop: (crop: CropType, customCropName?: string) => void;
   onSearchChange: (query: string) => void;
@@ -48,8 +45,6 @@ export function CropPickerSheet({
   cropSearchQueryLower,
   filteredCropOptions,
   canCreateCustomCrop,
-  cropSheetHeight,
-  androidKeyboardLift,
   onClose,
   onSelectCrop,
   onSearchChange,
@@ -58,28 +53,21 @@ export function CropPickerSheet({
   const { t } = useTranslation();
   const m3 = useM3();
 
-  if (!visible) return null;
-
   return (
-    <ModalBackdrop visible onDismiss={onClose} alignment="flex-end" opacity={0.5}>
-      <KeyboardAvoidingView
-        behavior={isIOS ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-        style={{
-          flex: 1,
-          width: '100%',
-          justifyContent: 'flex-end',
-          paddingBottom: androidKeyboardLift,
-        }}
-      >
+    <BottomSheet
+      index={visible ? 0 : -1}
+      snapPoints={['72%', '95%']}
+      enablePanDownToClose
+      onClose={onClose}
+      backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+    >
+      <BottomSheetView style={{ flex: 1 }}>
         <GuidedTourTarget
           targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP_SHEET}
           onStartShouldSetResponder={() => true}
           style={{
+            flex: 1,
             backgroundColor: m3.surface.s100,
-            borderTopLeftRadius: borderRadius['3xl'],
-            borderTopRightRadius: borderRadius['3xl'],
-            height: cropSheetHeight,
           }}
         >
           {/* Header */}
@@ -106,6 +94,9 @@ export function CropPickerSheet({
             </Text>
             <Pressable
               onPress={onClose}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close')}
               style={{
                 width: 40,
                 height: 40,
@@ -283,7 +274,7 @@ export function CropPickerSheet({
             </ScrollView>
           </View>
         </GuidedTourTarget>
-      </KeyboardAvoidingView>
-    </ModalBackdrop>
+      </BottomSheetView>
+    </BottomSheet>
   );
 }

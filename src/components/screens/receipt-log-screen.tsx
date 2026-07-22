@@ -8,29 +8,19 @@
  * No drafts, no "Save N logs", no stacked scroll — one short form at a time.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  Modal,
-  ScrollView,
-  KeyboardAvoidingView,
-  Keyboard,
-  Platform,
-  ActivityIndicator,
-  Alert,
-  useWindowDimensions,
-} from 'react-native';
+import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { DateField } from '@/components/ui';
 import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
 import { createStartSeasonHref } from '@/utils/add-log-navigation';
 import { useRouter } from 'expo-router';
@@ -43,7 +33,6 @@ import {
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { toSupabaseDateString, type DailyNoteRecord } from '@/types/database';
 import { triggerHapticSuccess } from '@/utils/haptics';
-import { formatDate } from '@/i18n/format';
 import {
   IrrigationForm,
   SprayForm,
@@ -221,7 +210,6 @@ export function ReceiptLogScreen({
   const { t } = useTranslation();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
-  const { height: screenHeight } = useWindowDimensions();
 
   // Delegated mode: consultant logs on behalf of a farmer client. The farm is
   // taken from the context (no fetch); `expense` is hidden from the picker;
@@ -260,7 +248,6 @@ export function ReceiptLogScreen({
   );
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const dateStr = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
 
   const queryClient = useQueryClient();
@@ -279,22 +266,6 @@ export function ReceiptLogScreen({
   const [saving, setSaving] = useState(false);
   // Synchronous re-entrancy guard for handleSave (the `saving` state flips a tick later).
   const savingRef = useRef(false);
-
-  // Android Modals don't resize for the soft keyboard, so the bottom-anchored
-  // entry sheet would sit behind it. Track the keyboard height and lift the
-  // sheet by that amount. (iOS uses KeyboardAvoidingView padding instead.)
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  useEffect(() => {
-    if (Platform.OS !== 'android') return;
-    const show = Keyboard.addListener('keyboardDidShow', (e) =>
-      setKeyboardHeight(e.endCoordinates.height),
-    );
-    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardHeight(0));
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
 
   const openSheet = useCallback(
     (type: LogTypeId) => {
@@ -608,27 +579,13 @@ export function ReceiptLogScreen({
               ? `${delegatedContext.clientName} · ${farm?.name ?? t('receiptLog.title', { defaultValue: 'Add activity' })}`
               : (farm?.name ?? t('receiptLog.title', { defaultValue: 'Add activity' }))}
           </Text>
-          <Pressable
-            onPress={() => setShowDatePicker(true)}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel={t('receiptLog.selectDate', { defaultValue: 'Select date' })}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}
-          >
-            <AppIcon
-              name="calendar"
-              size={13}
-              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)}
-            />
-            <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-              {formatDate(selectedDate)}
-            </Text>
-            <AppIcon
-              name="chevron-down"
-              size={13}
-              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-            />
-          </Pressable>
+          <DateField
+            value={selectedDate}
+            onChange={setSelectedDate}
+            maximumDate={new Date()}
+            testID="receipt-log-date-field"
+            style={{ marginTop: 3 }}
+          />
         </View>
         <Pressable onPress={onClose} hitSlop={8} style={{ padding: 4 }}>
           <AppIcon
@@ -638,96 +595,6 @@ export function ReceiptLogScreen({
           />
         </Pressable>
       </View>
-
-      {/* iOS: spinner picker inside a bottom-sheet modal with a Done button
-          (matches the rest of the app). Android: native date dialog. */}
-      {showDatePicker && Platform.OS === 'ios' && (
-        <Modal
-          transparent
-          animationType="slide"
-          visible
-          onRequestClose={() => setShowDatePicker(false)}
-        >
-          <Pressable
-            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
-            onPress={() => setShowDatePicker(false)}
-          >
-            <Pressable
-              onPress={(e) => e.stopPropagation()}
-              style={{
-                backgroundColor: m3.colorScheme.surface,
-                borderTopLeftRadius: radius.xl,
-                borderTopRightRadius: radius.xl,
-                padding: spacing[4],
-                paddingBottom: spacing[6] + insets.bottom,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: spacing[2],
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: '700',
-                    color: m3.colorScheme.onSurface,
-                  }}
-                >
-                  {t('receiptLog.selectDate', { defaultValue: 'Select date' })}
-                </Text>
-                <Pressable onPress={() => setShowDatePicker(false)} hitSlop={8}>
-                  <AppIcon
-                    name="close-circle"
-                    size={24}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                  />
-                </Pressable>
-              </View>
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                maximumDate={new Date()}
-                display="spinner"
-                textColor={m3.colorScheme.onSurface}
-                onChange={(_event, date) => {
-                  if (date) setSelectedDate(date);
-                }}
-                style={{ height: 200 }}
-              />
-              <Pressable
-                onPress={() => setShowDatePicker(false)}
-                style={{
-                  marginTop: spacing[2],
-                  paddingVertical: spacing[3],
-                  borderRadius: radius.md,
-                  alignItems: 'center',
-                  backgroundColor: m3.colorScheme.primary,
-                }}
-              >
-                <Text style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
-                  {t('entryForm.done')}
-                </Text>
-              </Pressable>
-            </Pressable>
-          </Pressable>
-        </Modal>
-      )}
-      {showDatePicker && Platform.OS !== 'ios' && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          maximumDate={new Date()}
-          display="default"
-          onChange={(_event, date) => {
-            setShowDatePicker(false);
-            if (date) setSelectedDate(date);
-          }}
-        />
-      )}
 
       <ScrollView
         style={{ flex: 1 }}
@@ -936,185 +803,171 @@ export function ReceiptLogScreen({
       )}
 
       {/* Entry sheet */}
-      <Modal
-        visible={activeType !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={closeSheet}
+      <BottomSheet
+        index={activeType === null ? -1 : 0}
+        snapPoints={['75%', '95%']}
+        enablePanDownToClose
+        onClose={closeSheet}
+        backgroundStyle={{ backgroundColor: m3.colorScheme.background }}
       >
-        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-          <Pressable
-            onPress={closeSheet}
-            style={{ flex: 1, backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.45) }}
-          />
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={{ flex: 1 }}>
+          <View style={{ flex: 1 }}>
+            {/* Sheet header */}
             <View
               style={{
-                backgroundColor: m3.colorScheme.background,
-                borderTopLeftRadius: radius.xl,
-                borderTopRightRadius: radius.xl,
-                maxHeight: screenHeight - insets.top,
-                marginBottom: keyboardHeight,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing[3],
+                paddingHorizontal: spacing[4],
+                paddingTop: spacing[4],
+                paddingBottom: spacing[2],
               }}
             >
-              {/* Sheet header */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing[3],
-                  paddingHorizontal: spacing[4],
-                  paddingTop: spacing[4],
-                  paddingBottom: spacing[2],
-                }}
-              >
-                {activeLogType ? (
-                  <View
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: radius.full,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: `${activeLogType.color}1f`,
-                    }}
-                  >
-                    <Symbol
-                      name={resolveSymbolIconName(activeLogType.icon)}
-                      size={18}
-                      color={activeLogType.color}
-                    />
-                  </View>
-                ) : null}
-                <Text
+              {activeLogType ? (
+                <View
                   style={{
-                    flex: 1,
-                    fontSize: fontSize.lg,
-                    fontWeight: '700',
-                    color: m3.colorScheme.onSurface,
+                    width: 34,
+                    height: 34,
+                    borderRadius: radius.full,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: `${activeLogType.color}1f`,
                   }}
                 >
-                  {activeLogType ? t(activeLogType.labelKey) : ''}
-                </Text>
-                <Pressable onPress={closeSheet} hitSlop={8} style={{ padding: 4 }}>
-                  <AppIcon
-                    name="close-circle"
-                    size={24}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                  <Symbol
+                    name={resolveSymbolIconName(activeLogType.icon)}
+                    size={18}
+                    color={activeLogType.color}
                   />
-                </Pressable>
-              </View>
-
-              <ScrollView
-                style={{ flexShrink: 1 }}
-                contentContainerStyle={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}
-                keyboardShouldPersistTaps="handled"
-              >
-                {activeType === 'irrigation' && (
-                  <IrrigationForm
-                    data={draft as IrrigationFormData}
-                    onChange={setDraft}
-                    farmArea={farm?.area ?? undefined}
-                    systemDischarge={farm?.system_discharge ?? undefined}
-                    showHeader={false}
-                  />
-                )}
-                {activeType === 'spray' && (
-                  <SprayForm
-                    data={draft as SprayFormData}
-                    onChange={setDraft}
-                    areaAcres={farmAreaAcres}
-                    compact
-                  />
-                )}
-                {activeType === 'harvest' && (
-                  <HarvestForm data={draft as HarvestFormData} onChange={setDraft} compact />
-                )}
-                {activeType === 'expense' && (
-                  <ExpenseForm data={draft as ExpenseFormData} onChange={setDraft} compact />
-                )}
-                {activeType === 'fertigation' && (
-                  <FertigationForm
-                    data={draft as FertigationFormData}
-                    onChange={setDraft}
-                    areaAcres={farmAreaAcres}
-                    compact
-                  />
-                )}
-                {activeType === 'note' && (
-                  <NoteForm data={draft as NoteFormData} onChange={setDraft} />
-                )}
-              </ScrollView>
-
-              {/* Sheet CTA — saves this entry and returns to the receipt list */}
-              <View
+                </View>
+              ) : null}
+              <Text
                 style={{
-                  paddingHorizontal: spacing[4],
-                  paddingTop: spacing[2],
-                  paddingBottom: Math.max(spacing[4], insets.bottom),
+                  flex: 1,
+                  fontSize: fontSize.lg,
+                  fontWeight: '700',
+                  color: m3.colorScheme.onSurface,
                 }}
               >
-                <Pressable
-                  disabled={!draftValid || saving || isBlockedByNoSeason}
-                  onPress={handleSave}
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: !draftValid || saving || isBlockedByNoSeason }}
-                  accessibilityLabel={
-                    activeLogType
+                {activeLogType ? t(activeLogType.labelKey) : ''}
+              </Text>
+              <Pressable onPress={closeSheet} hitSlop={8} style={{ padding: 4 }}>
+                <AppIcon
+                  name="close-circle"
+                  size={24}
+                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              style={{ flexShrink: 1 }}
+              contentContainerStyle={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}
+              keyboardShouldPersistTaps="handled"
+            >
+              {activeType === 'irrigation' && (
+                <IrrigationForm
+                  data={draft as IrrigationFormData}
+                  onChange={setDraft}
+                  farmArea={farm?.area ?? undefined}
+                  systemDischarge={farm?.system_discharge ?? undefined}
+                  showHeader={false}
+                />
+              )}
+              {activeType === 'spray' && (
+                <SprayForm
+                  data={draft as SprayFormData}
+                  onChange={setDraft}
+                  areaAcres={farmAreaAcres}
+                  compact
+                />
+              )}
+              {activeType === 'harvest' && (
+                <HarvestForm data={draft as HarvestFormData} onChange={setDraft} compact />
+              )}
+              {activeType === 'expense' && (
+                <ExpenseForm data={draft as ExpenseFormData} onChange={setDraft} compact />
+              )}
+              {activeType === 'fertigation' && (
+                <FertigationForm
+                  data={draft as FertigationFormData}
+                  onChange={setDraft}
+                  areaAcres={farmAreaAcres}
+                  compact
+                />
+              )}
+              {activeType === 'note' && (
+                <NoteForm data={draft as NoteFormData} onChange={setDraft} />
+              )}
+            </ScrollView>
+
+            {/* Sheet CTA — saves this entry and returns to the receipt list */}
+            <View
+              style={{
+                paddingHorizontal: spacing[4],
+                paddingTop: spacing[2],
+                paddingBottom: Math.max(spacing[4], insets.bottom),
+              }}
+            >
+              <Pressable
+                disabled={!draftValid || saving || isBlockedByNoSeason}
+                onPress={handleSave}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !draftValid || saving || isBlockedByNoSeason }}
+                accessibilityLabel={
+                  activeLogType
+                    ? t('receiptLog.saveType', {
+                        defaultValue: 'Save {{type}}',
+                        type: t(activeLogType.labelKey),
+                      })
+                    : t('receiptLog.save', { defaultValue: 'Save' })
+                }
+                style={{
+                  paddingVertical: 14,
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  gap: 8,
+                  backgroundColor: draftValid && !saving ? m3.colorScheme.primary : m3.surface.s50,
+                }}
+              >
+                {saving ? (
+                  <Spinner size="small" color={m3.colorScheme.onSurfaceVariant} />
+                ) : (
+                  <AppIcon
+                    name="checkmark-circle"
+                    size={20}
+                    color={
+                      draftValid
+                        ? m3.colorScheme.onPrimary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)
+                    }
+                  />
+                )}
+                <Text
+                  style={{
+                    fontWeight: '700',
+                    color:
+                      draftValid && !saving
+                        ? m3.colorScheme.onPrimary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5),
+                  }}
+                >
+                  {saving
+                    ? t('common.saving', { defaultValue: 'Saving…' })
+                    : activeLogType
                       ? t('receiptLog.saveType', {
                           defaultValue: 'Save {{type}}',
                           type: t(activeLogType.labelKey),
                         })
-                      : t('receiptLog.save', { defaultValue: 'Save' })
-                  }
-                  style={{
-                    paddingVertical: 14,
-                    borderRadius: borderRadius.xl,
-                    alignItems: 'center',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    gap: 8,
-                    backgroundColor:
-                      draftValid && !saving ? m3.colorScheme.primary : m3.surface.s50,
-                  }}
-                >
-                  {saving ? (
-                    <ActivityIndicator size="small" color={m3.colorScheme.onSurfaceVariant} />
-                  ) : (
-                    <AppIcon
-                      name="checkmark-circle"
-                      size={20}
-                      color={
-                        draftValid
-                          ? m3.colorScheme.onPrimary
-                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)
-                      }
-                    />
-                  )}
-                  <Text
-                    style={{
-                      fontWeight: '700',
-                      color:
-                        draftValid && !saving
-                          ? m3.colorScheme.onPrimary
-                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5),
-                    }}
-                  >
-                    {saving
-                      ? t('common.saving', { defaultValue: 'Saving…' })
-                      : activeLogType
-                        ? t('receiptLog.saveType', {
-                            defaultValue: 'Save {{type}}',
-                            type: t(activeLogType.labelKey),
-                          })
-                        : t('receiptLog.save', { defaultValue: 'Save' })}
-                  </Text>
-                </Pressable>
-              </View>
+                      : t('receiptLog.save', { defaultValue: 'Save' })}
+                </Text>
+              </Pressable>
             </View>
-          </KeyboardAvoidingView>
+          </View>
         </View>
-      </Modal>
+      </BottomSheet>
     </View>
   );
 }

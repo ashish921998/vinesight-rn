@@ -1,5 +1,5 @@
 /**
- * Chainable Supabase query-builder mock shared by the offline write tests.
+ * Chainable data-access query-builder mock shared by the offline write tests.
  *
  * Records upsert args / update patch / eq calls; resolves `single` /
  * `maybeSingle` (and the chain itself, via `then`, for the delete path)

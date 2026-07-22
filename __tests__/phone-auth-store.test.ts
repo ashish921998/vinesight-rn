@@ -1,23 +1,24 @@
 import { useAuthStore } from '@/stores/auth-store';
-import { supabase } from '@/lib/supabase';
 import { openAuthSessionAsync } from 'expo-web-browser';
 
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: jest.fn(),
-    auth: {
-      signInWithOtp: jest.fn(),
-      signInWithOAuth: jest.fn(),
-      verifyOtp: jest.fn(),
-      updateUser: jest.fn(),
-      getUser: jest.fn(),
-      getSession: jest.fn(),
-      exchangeCodeForSession: jest.fn(),
-      setSession: jest.fn(),
-      signOut: jest.fn(),
-    },
+const mockDataAccess = {
+  from: jest.fn(),
+  auth: {
+    signInWithOtp: jest.fn(),
+    signInWithOAuth: jest.fn(),
+    verifyOtp: jest.fn(),
+    updateUser: jest.fn(),
+    getUser: jest.fn(),
+    getSession: jest.fn(),
+    exchangeCodeForSession: jest.fn(),
+    setSession: jest.fn(),
+    signOut: jest.fn(),
   },
+};
+jest.mock('@/data-access', () => ({
+  getDataAccess: jest.fn(() => mockDataAccess),
 }));
+const supabase = mockDataAccess;
 
 jest.mock('expo-web-browser', () => ({
   openAuthSessionAsync: jest.fn(),

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Alert, Pressable } from 'react-native';
+import { View, Text, ScrollView, Alert, Pressable } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { supabase } from '@/lib/supabase';
+import { Spinner } from '@/components/ui/spinner';
+import { getDataAccess } from '@/data-access';
 import type { Worker, WorkerAttendance, WorkStatus } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
@@ -272,7 +273,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
 
           {loading ? (
             <View style={{ paddingVertical: spacing[8], alignItems: 'center' }}>
-              <ActivityIndicator size="small" color={UI.primary} />
+              <Spinner size="small" color={UI.primary} />
             </View>
           ) : (
             <>
@@ -475,7 +476,7 @@ async function fetchAttendanceForWorker(
   startDate: string,
   endDate: string,
 ): Promise<WorkerAttendance[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from('worker_attendance')
     .select('*')
     .eq('worker_id', workerId)

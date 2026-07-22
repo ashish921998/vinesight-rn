@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react-native';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { resetRecordWriteFlushState } from '@/features/offline/record-write-queue';
 import { persistQueryCacheForUser, queryClient, removeQueryCacheForUser } from '@/lib/query-cache';
 import { telemetry } from '@/services/telemetry';
@@ -220,7 +220,7 @@ export const upsertProfileNameFromAuthUser = async (
 ): Promise<void> => {
   if (!user?.id) return;
 
-  const { data: existingProfile, error: readError } = await supabase
+  const { data: existingProfile, error: readError } = await getDataAccess()
     .from('profiles')
     .select('full_name,email')
     .eq('id', user.id)
@@ -241,7 +241,7 @@ export const upsertProfileNameFromAuthUser = async (
     upsertPayload.email = user.email;
   }
 
-  const { error: upsertError } = await supabase
+  const { error: upsertError } = await getDataAccess()
     .from('profiles')
     .upsert(upsertPayload, { onConflict: 'id' });
   if (upsertError) throw upsertError;

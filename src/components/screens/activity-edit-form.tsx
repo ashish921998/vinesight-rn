@@ -8,23 +8,17 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import {
   View,
   Text,
-  Pressable,
-  Modal,
   ScrollView,
   Alert,
-  ActivityIndicator,
   type TextInputProps,
   Keyboard,
   UIManager,
   findNodeHandle,
 } from 'react-native';
-import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { Button, FormModal, SectionHeader } from '@/components/ui';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { formatDate } from '@/i18n/format';
+import { Spinner } from '@/components/ui/spinner';
+import { DateField, FormModal, SectionHeader } from '@/components/ui';
+import { spacing } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
-import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
@@ -58,7 +52,6 @@ import {
   useUpdateExpenseRecord,
   useUpdateFertigationRecord,
   useFarmAreaAcres,
-  isIOS,
   useResponsiveHeight,
 } from '@/hooks';
 import { toSupabaseDateString, fromSupabaseDateString } from '@/types';
@@ -104,7 +97,6 @@ export function ActivityEditForm({
   const isVisible = visible ?? true;
   const { windowHeight } = useResponsiveHeight();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [initializedRecordId, setInitializedRecordId] = useState<number | undefined>(undefined);
@@ -379,7 +371,7 @@ export function ActivityEditForm({
             paddingVertical: spacing[10],
           }}
         >
-          <ActivityIndicator size="large" color={m3.primary.p500} />
+          <Spinner size="large" color={m3.primary.p500} />
           <Text selectable style={{ marginTop: spacing[4], color: m3.surface.s500 }}>
             {t('common.loading')}
           </Text>
@@ -455,133 +447,14 @@ export function ActivityEditForm({
         style={{ marginBottom: spacing[4] }}
       />
 
-      <View style={{ marginBottom: spacing[6] }}>
-        <Text
-          style={{
-            fontSize: fontSize.sm,
-            fontWeight: fontWeight.medium,
-            color: m3.surface.s700,
-            marginBottom: spacing[2],
-          }}
-        >
-          {t('activityEdit.dateLabel')}
-        </Text>
-        <Pressable
-          onPress={() => setShowDatePicker(true)}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: m3.surface.s100,
-            borderRadius: borderRadius.xl,
-            borderWidth: 2,
-            borderColor: m3.surface.s200,
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[3],
-          }}
-        >
-          <View
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: m3.primary.p50,
-              marginRight: spacing[3],
-            }}
-          >
-            <UISymbol name="calendar" size={16} color={m3.primary.p600} />
-          </View>
-          <Text style={{ fontSize: fontSize.base, fontWeight: fontWeight.medium }}>
-            {formatDate(selectedDate, {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </Text>
-        </Pressable>
-      </View>
+      <DateField
+        value={selectedDate}
+        onChange={setSelectedDate}
+        label={t('activityEdit.dateLabel')}
+        style={{ marginBottom: spacing[6] }}
+      />
 
       {renderForm()}
-
-      {showDatePicker && isIOS && (
-        <Modal
-          visible
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowDatePicker(false)}
-        >
-          <View style={{ flex: 1 }}>
-            <Pressable
-              onPress={() => setShowDatePicker(false)}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-              }}
-            />
-            <View
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: borderRadius['2xl'],
-                borderTopRightRadius: borderRadius['2xl'],
-                padding: spacing[4],
-              }}
-              onStartShouldSetResponder={() => true}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  marginBottom: spacing[4],
-                }}
-              >
-                <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
-                  {t('common.selectDate')}
-                </Text>
-                <Pressable onPress={() => setShowDatePicker(false)}>
-                  <UISymbol name="xmark.circle.fill" size={24} color={m3.surface.s500} />
-                </Pressable>
-              </View>
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                display="spinner"
-                onChange={(_, date) => {
-                  if (date) setSelectedDate(date);
-                }}
-              />
-              <Button
-                title={t('common.done')}
-                onPress={() => setShowDatePicker(false)}
-                style={{ marginTop: spacing[4] }}
-              />
-            </View>
-          </View>
-        </Modal>
-      )}
-
-      {showDatePicker && !isIOS && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display="default"
-          onChange={(_, date) => {
-            setShowDatePicker(false);
-            if (date) setSelectedDate(date);
-          }}
-        />
-      )}
     </FormModal>
   );
 }

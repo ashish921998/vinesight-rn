@@ -6,42 +6,13 @@ import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useAppModeStore } from '@/stores';
-import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useM3, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
-import { getAndroidBottomSystemInset } from '@/utils/android-system-bars';
-
-/**
- * Tabs gated behind "Detailed mode". Defined once so the Android and iOS tab
- * bars stay in sync — add/remove a tab here and both render paths update.
- */
-const DETAILED_TABS = [
-  {
-    name: 'workers',
-    titleKey: 'tabs.workers',
-    android: 'person.2',
-    sf: ['person.2', 'person.2.fill'] as const,
-    ion: ['people-outline', 'people'] as const,
-  },
-  {
-    name: 'tools',
-    titleKey: 'tabs.tools',
-    android: 'wrench.and.screwdriver',
-    sf: ['wrench.and.screwdriver', 'wrench.and.screwdriver.fill'] as const,
-    ion: ['build-outline', 'build'] as const,
-  },
-  {
-    name: 'assistant',
-    titleKey: 'tabs.aiAssistant',
-    android: 'brain',
-    sf: ['brain', 'brain.fill'] as const,
-    ion: ['sparkles-outline', 'sparkles'] as const,
-  },
-] as const;
+import { ComposeTabBar } from '@/components/navigation/compose-tab-bar';
+import { DETAILED_TABS, baseTabLabelKey } from '@/components/navigation/tab-definitions';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -52,7 +23,6 @@ export default function TabLayout() {
   const appModeHydrated = useAppModeStore((state) => state.hydrated);
   const segments = useSegments();
   const [hasRedirected, setHasRedirected] = useState(false);
-  const insets = useSafeAreaInsets();
   const m3 = useM3();
   const isDark = useIsDark();
   const defaultHeaderOptions = useMemo(
@@ -131,85 +101,30 @@ export default function TabLayout() {
   }
 
   if (isAndroid) {
-    const bottomSystemInset = getAndroidBottomSystemInset(insets.bottom);
-    const renderAndroidTabIcon = (name: string, focused: boolean) => {
-      const scaleMap: Record<string, number> = {
-        house: 1.1,
-        'house.fill': 1.1,
-        'wrench.and.screwdriver': 0.9,
-        'wrench.and.screwdriver.fill': 0.9,
-      };
-      const iconName = focused ? name + '.fill' : name;
-      const scale = scaleMap[iconName] ?? 1;
-      return (
-        <SymbolIcon
-          name={iconName}
-          size={24}
-          color={focused ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
-          style={{ transform: [{ scale }] }}
-        />
-      );
-    };
-
+    // Bottom bar is @expo/ui's Material 3 NavigationBar (see ComposeTabBar).
+    // We keep expo-router's <Tabs> for routing/screen mounting and only swap the
+    // rendered bar via `tabBar`. All screens stay declared so they're navigable;
+    // ComposeTabBar filters which get a button based on detailedMode.
     return (
       <>
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <Tabs
           backBehavior="history"
+          tabBar={(props) => <ComposeTabBar {...props} />}
           screenOptions={{
-            tabBarActiveTintColor: m3.colorScheme.primary,
-            tabBarInactiveTintColor: m3.colorScheme.onSurfaceVariant,
-            tabBarStyle: {
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderTopColor: m3.colorScheme.outline,
-              borderTopWidth: 1,
-              paddingTop: 8,
-              paddingBottom: bottomSystemInset + 8,
-              height: 64 + bottomSystemInset,
-            },
-            tabBarLabelStyle: {
-              fontSize: fontSize.xs,
-              fontWeight: '600',
-              marginTop: 4,
-            },
             headerStyle: defaultHeaderOptions.headerStyle,
             headerTitleStyle: defaultHeaderOptions.headerTitleStyle as never,
             headerTintColor: defaultHeaderOptions.headerTintColor,
             headerTransparent: defaultHeaderOptions.headerTransparent,
           }}
         >
-          <Tabs.Screen
-            name="index"
-            options={{
-              title: t('tabs.dashboard'),
-              headerShown: false,
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('square.grid.2x2', focused),
-            }}
-          />
-          <Tabs.Screen
-            name="explore"
-            options={{
-              title: t('tabs.explore'),
-              headerShown: false,
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('house', focused),
-            }}
-          />
-          {/* On Android the `Tabs` navigator auto-discovers a tab for every route
-            file under app/(tabs)/, so simply omitting <Tabs.Screen> does NOT hide
-            the tab — it renders via auto-discovery with default styling. The way to
-            actually suppress the tab bar entry is `options.href = null` (expo-router
-            maps that to tabBarItemStyle { display: 'none' } + a no-op button), so we
-            always render the Screen and toggle href with detailedMode. */}
+          <Tabs.Screen name="index" options={{ title: t('tabs.dashboard'), headerShown: false }} />
+          <Tabs.Screen name="explore" options={{ title: t('tabs.explore'), headerShown: false }} />
           {DETAILED_TABS.map((tab) => (
             <Tabs.Screen
               key={tab.name}
               name={tab.name}
-              options={{
-                href: detailedMode ? undefined : null,
-                title: t(tab.titleKey),
-                headerShown: false,
-                tabBarIcon: ({ focused }) => renderAndroidTabIcon(tab.android, focused),
-              }}
+              options={{ title: t(tab.titleKey), headerShown: false }}
             />
           ))}
         </Tabs>
@@ -242,7 +157,9 @@ export default function TabLayout() {
       >
         <NativeTabs.Trigger name="index">
           {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'), 'grid-outline', 'grid')}
-          <NativeTabs.Trigger.Label>{t('tabs.dashboard')}</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>
+            {t(baseTabLabelKey('index', detailedMode, 'tabs.dashboard'))}
+          </NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="explore">
           <NativeTabs.Trigger.Icon
@@ -257,7 +174,9 @@ export default function TabLayout() {
               ),
             }}
           />
-          <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>
+            {t(baseTabLabelKey('explore', detailedMode, 'tabs.explore'))}
+          </NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         {detailedMode &&
           DETAILED_TABS.map((tab) => (

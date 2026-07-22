@@ -4,12 +4,12 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, Alert, ActivityIndicator, Platform, Modal } from 'react-native';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { View, Text, Pressable, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from '@/components/ui/toast';
-import { Button } from '@/components/ui';
+import { DateField } from '@/components/ui';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -19,8 +19,6 @@ import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
 import { createStartSeasonHref } from '@/utils/add-log-navigation';
 import { useRouter } from 'expo-router';
 import { useM3 } from '@/styles/use-theme';
-import { colorWithOpacity } from '@/utils/color';
-import { formatDate } from '@/i18n/format';
 import {
   useCreateSoilTest,
   useCreatePetioleTest,
@@ -64,8 +62,6 @@ export default function LabTestForm({
   };
 
   const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [originalDate, setOriginalDate] = useState<Date | null>(null);
   const [parameters, setParameters] = useState<Record<string, string>>({});
   const [recommendations, setRecommendations] = useState('');
   const [notes, setNotes] = useState('');
@@ -130,15 +126,6 @@ export default function LabTestForm({
     } catch (error) {
       console.error('Error creating lab test:', error);
       Alert.alert(t('common.error'), t('common.errors.failedToSaveLabTest'));
-    }
-  };
-
-  const handleDateChange = (_: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-    if (selectedDate) {
-      setDate(selectedDate);
     }
   };
 
@@ -330,7 +317,7 @@ export default function LabTestForm({
       >
         {isParsingPDF ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator color={m3.colorScheme.primary} size="small" />
+            <Spinner color={m3.colorScheme.primary} size="small" />
             <Text
               style={{
                 fontSize: fontSize.base,
@@ -364,40 +351,7 @@ export default function LabTestForm({
       </Pressable>
 
       <SectionHeader title={t('labTests.form.detailsSectionTitle')} style={{ marginBottom: 12 }} />
-      <Pressable
-        onPress={() => {
-          setOriginalDate(date);
-          setShowDatePicker(true);
-        }}
-        style={{
-          backgroundColor: m3.surface.s100,
-          borderRadius: borderRadius.xl,
-          borderWidth: 2,
-          borderColor: m3.surface.s200,
-          paddingVertical: 14,
-          paddingHorizontal: spacing[4],
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: spacing[6],
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <IconSymbol name="calendar" size={18} color={m3.surface.s500} />
-          <Text
-            style={{
-              fontSize: fontSize.base,
-              color: m3.surface.s900,
-              marginLeft: spacing[2],
-            }}
-            textBreakStrategy="highQuality"
-            lineBreakStrategyIOS="standard"
-          >
-            {formatDate(date, { year: 'numeric', month: 'short', day: 'numeric' })}
-          </Text>
-        </View>
-        <IconSymbol name="chevron.down" size={18} color={m3.surface.s500} />
-      </Pressable>
+      <DateField value={date} onChange={setDate} style={{ marginBottom: spacing[6] }} />
 
       <SectionHeader
         title={t('labTests.form.parametersSectionTitle', { type: testTypeLabel })}
@@ -439,81 +393,6 @@ export default function LabTestForm({
         multiline
         numberOfLines={3}
       />
-
-      {Platform.OS === 'ios' && showDatePicker && (
-        <Modal transparent animationType="slide" onRequestClose={() => setShowDatePicker(false)}>
-          <Pressable
-            style={{
-              flex: 1,
-              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-              justifyContent: 'flex-end',
-            }}
-            onPress={() => {
-              if (originalDate) {
-                setDate(originalDate);
-              }
-              setShowDatePicker(false);
-              setOriginalDate(null);
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: borderRadius['2xl'],
-                borderTopRightRadius: borderRadius['2xl'],
-                padding: spacing[4],
-              }}
-              onStartShouldSetResponder={() => true}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: spacing[4],
-                }}
-              >
-                <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
-                  {t('common.selectDate')}
-                </Text>
-                <Pressable
-                  onPress={() => {
-                    if (originalDate) {
-                      setDate(originalDate);
-                    }
-                    setShowDatePicker(false);
-                    setOriginalDate(null);
-                  }}
-                  accessibilityLabel={t('common.close')}
-                  accessibilityRole="button"
-                >
-                  <IconSymbol name="xmark.circle.fill" size={24} color={m3.surface.s500} />
-                </Pressable>
-              </View>
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display="spinner"
-                onChange={handleDateChange}
-              />
-              <Button
-                title={t('common.done')}
-                variant="primary"
-                fullWidth={false}
-                onPress={() => {
-                  setShowDatePicker(false);
-                  setOriginalDate(null);
-                }}
-                accessibilityLabel={t('common.done')}
-                style={{ marginTop: spacing[4] }}
-              />
-            </View>
-          </Pressable>
-        </Modal>
-      )}
-      {Platform.OS !== 'ios' && showDatePicker && (
-        <DateTimePicker value={date} mode="date" display="default" onChange={handleDateChange} />
-      )}
     </FormModal>
   );
 }

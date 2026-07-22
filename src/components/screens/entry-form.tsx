@@ -13,7 +13,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Alert,
-  ActivityIndicator,
   type TextInputProps,
   Keyboard,
   Platform,
@@ -23,14 +22,14 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Sentry from '@sentry/react-native';
+import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
 import { AppIcon } from '@/components/ui/app-icon';
-import { ModalBackdrop } from '@/components/ui/modal-backdrop';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { Spinner } from '@/components/ui/spinner';
 import { LinearGradient as _LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3 } from '@/styles/use-theme';
+import { DateField } from '@/components/ui';
 import { colorWithOpacity } from '@/utils/color';
 import { toast } from '@/components/ui/toast';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
@@ -173,7 +172,7 @@ import {
   stripTaskPlanFromDescription,
 } from '@/utils/task-plan';
 import { isPhiConflict } from '@/services/phi-service';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 
 interface EntryFormProps {
   visible?: boolean;
@@ -406,7 +405,6 @@ export function EntryForm({
 
   // Log state
   const [selectedDate, setSelectedDate] = useState<Date>(() => parsedInitialLogDate ?? new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedLogType, setSelectedLogType] = useState<LogTypeId | null>(null);
   const [showLogFormModal, setShowLogFormModal] = useState(false);
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
@@ -1333,7 +1331,7 @@ export function EntryForm({
       createFertigation: async (payload) => createFertigation.mutateAsync(payload),
       upsertDailyNote: async (payload) => upsertDailyNote.mutateAsync(payload),
       getDailyNote: async ({ farmId, date }) => {
-        const { data, error } = await supabase
+        const { data, error } = await getDataAccess()
           .from(TABLES.DAILY_NOTES)
           .select('*')
           .eq('farm_id', farmId)
@@ -1651,7 +1649,6 @@ export function EntryForm({
     }
   }, [isSingleFarmAccount, taskFarmId, farms]);
   const [dueDate, setDueDate] = useState('');
-  const [showDueDatePicker, setShowDueDatePicker] = useState(false);
   const [showTypePicker, setShowTypePicker] = useState(false);
   const [showPriorityPicker, setShowPriorityPicker] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -1666,7 +1663,6 @@ export function EntryForm({
     setType('note');
     setPriority('medium');
     setDueDate('');
-    setShowDueDatePicker(false);
     setShowTypePicker(false);
     setShowPriorityPicker(false);
     setShowTemplates(false);
@@ -2349,7 +2345,6 @@ export function EntryForm({
           selectedDate={selectedDate}
           onSelectDate={setSelectedDate}
           markedDates={loggedDateIsos}
-          onOpenPicker={() => setShowDatePicker(true)}
         />
       </View>
 
@@ -2910,172 +2905,34 @@ export function EntryForm({
       )}
 
       <View style={{ marginBottom: 16 }}>
-        <Text
-          selectable
-          style={{
-            fontSize: fontSize.sm,
-            fontWeight: '500',
-            color: m3.colorScheme.onSurfaceVariant,
-            marginBottom: 8,
-          }}
-        >
-          {t('entryForm.taskForm.dueDateLabel')}
-        </Text>
-        <Pressable
-          onPress={() => setShowDueDatePicker(true)}
-          style={{
-            backgroundColor: m3.surface.s100,
-            borderRadius: radius.md,
-            paddingHorizontal: 16,
-            paddingVertical: 12,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderWidth: 1,
-            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <AppIcon
-              name="calendar"
-              size={18}
-              color={
-                dueDate
-                  ? m3.colorScheme.primary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
-              }
-            />
-            <Text
-              selectable
-              style={[
-                { marginLeft: 8, fontSize: fontSize.base },
-                {
-                  color: dueDate
-                    ? m3.colorScheme.onSurface
-                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-                },
-              ]}
-            >
-              {dueDate
-                ? formatDate(parseDbDateToLocalDate(dueDate) ?? dueDate, {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })
-                : t('entryForm.taskForm.selectDueDate')}
-            </Text>
-          </View>
-          {dueDate && (
-            <Pressable onPress={() => setDueDate('')} style={{ marginLeft: 8, padding: 4 }}>
-              <AppIcon
-                name="close-circle"
-                size={20}
-                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-              />
-            </Pressable>
-          )}
-        </Pressable>
-        {showDueDatePicker && isIOS && (
-          <Modal
-            transparent
-            visible={showDueDatePicker}
-            onRequestClose={() => setShowDueDatePicker(false)}
-            animationType="fade"
-          >
-            <Pressable
-              style={{
-                flex: 1,
-                backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-                justifyContent: 'flex-end',
-              }}
-              onPress={() => setShowDueDatePicker(false)}
-            >
-              <View
-                style={{
-                  backgroundColor: m3.surface.s100,
-                  borderTopLeftRadius: 24,
-                  borderTopRightRadius: 24,
-                  padding: 16,
-                  paddingBottom: 40,
-                }}
-                onStartShouldSetResponder={() => true}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 16,
-                  }}
-                >
-                  <Text
-                    selectable
-                    style={{
-                      fontSize: fontSize.lg,
-                      fontWeight: '700',
-                      color: m3.colorScheme.onSurface,
-                    }}
-                  >
-                    {t('entryForm.taskForm.selectDueDateTitle')}
-                  </Text>
-                  <Pressable onPress={() => setShowDueDatePicker(false)}>
-                    <AppIcon
-                      name="close"
-                      size={24}
-                      color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                    />
-                  </Pressable>
-                </View>
-                <DateTimePicker
-                  value={(() => {
-                    if (!dueDate) return new Date();
-                    const parsed = parseDbDateToLocalDate(dueDate);
-                    return parsed ?? new Date();
-                  })()}
-                  mode="date"
-                  display="spinner"
-                  onChange={(_, date) => {
-                    if (date) setDueDate(formatLocalDate(date));
-                  }}
-                  style={{ height: 200 }}
-                  textColor={m3.colorScheme.onSurface}
-                />
-                <Pressable
-                  onPress={() => setShowDueDatePicker(false)}
-                  style={[
-                    {
-                      marginTop: 16,
-                      paddingVertical: 12,
-                      borderRadius: componentRadius.button,
-                      alignItems: 'center',
-                    },
-                    { backgroundColor: m3.colorScheme.primary },
-                  ]}
-                >
-                  <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
-                    {t('entryForm.done')}
-                  </Text>
-                </Pressable>
-              </View>
-            </Pressable>
-          </Modal>
-        )}
-        {showDueDatePicker && !isIOS && (
-          <DateTimePicker
-            value={(() => {
-              if (!dueDate) return new Date();
-              const parsed = parseDbDateToLocalDate(dueDate);
-              return parsed ?? new Date();
-            })()}
-            mode="date"
-            display="default"
-            onChange={(_, date) => {
-              setShowDueDatePicker(false);
-              if (date) setDueDate(formatLocalDate(date));
+        <DateField
+          value={dueDate ? (parseDbDateToLocalDate(dueDate) ?? null) : null}
+          onChange={(date) => setDueDate(formatLocalDate(date))}
+          label={t('entryForm.taskForm.selectDueDateTitle')}
+        />
+        {dueDate ? (
+          <Pressable
+            onPress={() => setDueDate('')}
+            accessibilityRole="button"
+            accessibilityLabel={t('farmForm.header.clearDate')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              alignSelf: 'flex-start',
+              marginTop: spacing[2],
+              gap: spacing[1],
             }}
-          />
-        )}
+          >
+            <AppIcon
+              name="close-circle"
+              size={18}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            />
+            <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
+              {t('farmForm.header.clearDate')}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </>
   );
@@ -3208,240 +3065,60 @@ export function EntryForm({
 
         <Tabs tabs={resolvedTabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {showDatePicker && !isIOS && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            maximumDate={new Date()}
-            onChange={(_, date) => {
-              setShowDatePicker(false);
-              if (date) setSelectedDate(date);
-            }}
-          />
-        )}
-        {showDatePicker && isIOS && (
-          <Pressable
-            onPress={() => setShowDatePicker(false)}
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-              zIndex: 50,
-            }}
-          >
+        {activeTab === 'log' ? (
+          <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+            <DateField
+              value={selectedDate}
+              onChange={setSelectedDate}
+              maximumDate={new Date()}
+              label={t('entryForm.selectDate')}
+            />
+          </View>
+        ) : null}
+        <BottomSheet
+          index={showTypePicker ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => setShowTypePicker(false)}
+          backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+        >
+          <View style={{ padding: 16 }}>
             <View
               style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                padding: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 12,
               }}
-              onStartShouldSetResponder={() => true}
             >
-              <View
+              <Text
+                selectable
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 16,
+                  fontSize: fontSize.lg,
+                  fontWeight: '700',
+                  color: m3.colorScheme.onSurface,
                 }}
               >
-                <Text
-                  selectable
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: '700',
-                    color: m3.colorScheme.onSurface,
-                  }}
-                >
-                  {t('entryForm.selectDate')}
-                </Text>
-                <Pressable onPress={() => setShowDatePicker(false)}>
-                  <AppIcon
-                    name="close"
-                    size={24}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                  />
-                </Pressable>
-              </View>
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                display="spinner"
-                maximumDate={new Date()}
-                onChange={(_, date) => {
-                  if (date) setSelectedDate(date);
-                }}
-              />
-              <Pressable
-                onPress={() => setShowDatePicker(false)}
-                style={[
-                  {
-                    marginTop: 16,
-                    paddingVertical: 12,
-                    borderRadius: componentRadius.button,
-                    alignItems: 'center',
-                  },
-                  { backgroundColor: m3.colorScheme.primary },
-                ]}
-              >
-                <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
-                  {t('entryForm.done')}
-                </Text>
+                {t('entryForm.selectTaskType')}
+              </Text>
+              <Pressable onPress={() => setShowTypePicker(false)}>
+                <AppIcon
+                  name="close"
+                  size={24}
+                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                />
               </Pressable>
             </View>
-          </Pressable>
-        )}
-        {showTypePicker && (
-          <ModalBackdrop
-            visible
-            onDismiss={() => setShowTypePicker(false)}
-            opacity={0.4}
-            zIndex={60}
-          >
-            <View
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                padding: 16,
-              }}
-              onStartShouldSetResponder={() => true}
+            <BottomSheetScrollView
+              contentInsetAdjustmentBehavior="automatic"
+              style={{ maxHeight: 320 }}
             >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 12,
-                }}
-              >
-                <Text
-                  selectable
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: '700',
-                    color: m3.colorScheme.onSurface,
-                  }}
-                >
-                  {t('entryForm.selectTaskType')}
-                </Text>
-                <Pressable onPress={() => setShowTypePicker(false)}>
-                  <AppIcon
-                    name="close"
-                    size={24}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                  />
-                </Pressable>
-              </View>
-              <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ maxHeight: 320 }}>
-                {TASK_TYPES.map((taskType) => (
-                  <Pressable
-                    key={taskType}
-                    onPress={() => {
-                      setType(taskType);
-                      setShowTypePicker(false);
-                    }}
-                    style={{
-                      padding: 16,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      borderBottomWidth: 1,
-                      borderColor: m3.surface.s100,
-                      backgroundColor:
-                        type === taskType
-                          ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                          : m3.surface.s100,
-                    }}
-                  >
-                    <AppIcon
-                      name={TASK_TYPE_INFO[taskType].icon}
-                      size={18}
-                      color={TASK_TYPE_INFO[taskType].color}
-                    />
-                    <Text
-                      selectable
-                      style={{
-                        marginLeft: 12,
-                        color:
-                          type === taskType
-                            ? m3.colorScheme.primary
-                            : m3.colorScheme.onSurfaceVariant,
-                        fontWeight: type === taskType ? '500' : '400',
-                      }}
-                    >
-                      {t(TASK_TYPE_INFO[taskType].labelKey)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-          </ModalBackdrop>
-        )}
-
-        {showPriorityPicker && (
-          <ModalBackdrop
-            visible
-            onDismiss={() => setShowPriorityPicker(false)}
-            opacity={0.4}
-            zIndex={60}
-          >
-            <View
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                padding: 16,
-              }}
-              onStartShouldSetResponder={() => true}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 12,
-                }}
-              >
-                <Text
-                  selectable
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: '700',
-                    color: m3.colorScheme.onSurface,
-                  }}
-                >
-                  {t('entryForm.selectPriority')}
-                </Text>
-                <Pressable onPress={() => setShowPriorityPicker(false)}>
-                  <AppIcon
-                    name="close"
-                    size={24}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                  />
-                </Pressable>
-              </View>
-              {PRIORITIES.map((p) => (
+              {TASK_TYPES.map((taskType) => (
                 <Pressable
-                  key={p}
+                  key={taskType}
                   onPress={() => {
-                    setPriority(p);
-                    setShowPriorityPicker(false);
+                    setType(taskType);
+                    setShowTypePicker(false);
                   }}
                   style={{
                     padding: 16,
@@ -3450,49 +3127,125 @@ export function EntryForm({
                     borderBottomWidth: 1,
                     borderColor: m3.surface.s100,
                     backgroundColor:
-                      priority === p
+                      type === taskType
                         ? colorWithOpacity(m3.colorScheme.primary, 0.08)
                         : m3.surface.s100,
                   }}
                 >
-                  <View
-                    style={[
-                      {
-                        width: 28,
-                        height: 28,
-                        borderRadius: radius.sm,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      },
-                      { backgroundColor: PRIORITY_INFO[p].bgColor },
-                    ]}
-                  >
-                    <Text
-                      selectable
-                      style={[
-                        { fontSize: fontSize.xs, fontWeight: '700' },
-                        { color: PRIORITY_INFO[p].color },
-                      ]}
-                    >
-                      {p.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
+                  <AppIcon
+                    name={TASK_TYPE_INFO[taskType].icon}
+                    size={18}
+                    color={TASK_TYPE_INFO[taskType].color}
+                  />
                   <Text
                     selectable
                     style={{
                       marginLeft: 12,
                       color:
-                        priority === p ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant,
-                      fontWeight: priority === p ? '500' : '400',
+                        type === taskType
+                          ? m3.colorScheme.primary
+                          : m3.colorScheme.onSurfaceVariant,
+                      fontWeight: type === taskType ? '500' : '400',
                     }}
                   >
-                    {t(PRIORITY_INFO[p].labelKey)}
+                    {t(TASK_TYPE_INFO[taskType].labelKey)}
                   </Text>
                 </Pressable>
               ))}
+            </BottomSheetScrollView>
+          </View>
+        </BottomSheet>
+
+        <BottomSheet
+          index={showPriorityPicker ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => setShowPriorityPicker(false)}
+          backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+        >
+          <View style={{ padding: 16 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 12,
+              }}
+            >
+              <Text
+                selectable
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: '700',
+                  color: m3.colorScheme.onSurface,
+                }}
+              >
+                {t('entryForm.selectPriority')}
+              </Text>
+              <Pressable onPress={() => setShowPriorityPicker(false)}>
+                <AppIcon
+                  name="close"
+                  size={24}
+                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                />
+              </Pressable>
             </View>
-          </ModalBackdrop>
-        )}
+            {PRIORITIES.map((p) => (
+              <Pressable
+                key={p}
+                onPress={() => {
+                  setPriority(p);
+                  setShowPriorityPicker(false);
+                }}
+                style={{
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderBottomWidth: 1,
+                  borderColor: m3.surface.s100,
+                  backgroundColor:
+                    priority === p
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                      : m3.surface.s100,
+                }}
+              >
+                <View
+                  style={[
+                    {
+                      width: 28,
+                      height: 28,
+                      borderRadius: radius.sm,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    },
+                    { backgroundColor: PRIORITY_INFO[p].bgColor },
+                  ]}
+                >
+                  <Text
+                    selectable
+                    style={[
+                      { fontSize: fontSize.xs, fontWeight: '700' },
+                      { color: PRIORITY_INFO[p].color },
+                    ]}
+                  >
+                    {p.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <Text
+                  selectable
+                  style={{
+                    marginLeft: 12,
+                    color:
+                      priority === p ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant,
+                    fontWeight: priority === p ? '500' : '400',
+                  }}
+                >
+                  {t(PRIORITY_INFO[p].labelKey)}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </BottomSheet>
 
         <ScrollView
           ref={contentScrollViewRef}
@@ -3588,7 +3341,7 @@ export function EntryForm({
                     ]}
                   >
                     {isSubmittingLogs ? (
-                      <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                      <Spinner size="small" color={m3.colorScheme.onPrimary} />
                     ) : (
                       <>
                         <AppIcon
@@ -3694,7 +3447,7 @@ export function EntryForm({
                 ]}
               >
                 {isTaskSaving ? (
-                  <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                  <Spinner size="small" color={m3.colorScheme.onPrimary} />
                 ) : (
                   <>
                     <AppIcon

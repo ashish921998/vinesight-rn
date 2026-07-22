@@ -25,3 +25,8 @@ declare module '*.mp3' {
   const value: number;
   export default value;
 }
+
+declare module '*.xml' {
+  const value: number;
+  export default value;
+}

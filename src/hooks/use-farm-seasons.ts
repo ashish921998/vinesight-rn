@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { queryKeys } from './query-keys';
 import { taskQueryKeys } from './use-tasks';
 import type { FarmSeason, FarmSeasonInsert, FarmSeasonUpdate } from '../types';
@@ -61,7 +61,7 @@ function setRecomputeRetryFlag(
 }
 
 async function recomputeSeasonAssignments(farmId: number): Promise<void> {
-  const { error } = await supabase.rpc('recompute_farm_season_assignments', {
+  const { error } = await getDataAccess().rpc('recompute_farm_season_assignments', {
     p_farm_id: farmId,
   });
   if (error) {
@@ -122,7 +122,7 @@ export function useFarmSeasons(farmId: number | undefined) {
     queryKey: queryKeys.farmSeasons.listByFarm(farmId ?? -1),
     queryFn: async (): Promise<FarmSeason[]> => {
       if (!farmId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.FARM_SEASONS)
         .select('*')
         .eq('farm_id', farmId);
@@ -143,7 +143,7 @@ export function useCreateFarmSeason() {
 
   return useMutation({
     mutationFn: async (season: FarmSeasonInsert): Promise<FarmSeason> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.FARM_SEASONS)
         .insert(season)
         .select()
@@ -178,7 +178,7 @@ export function useUpdateFarmSeason() {
       farmId: number;
       updates: FarmSeasonUpdate;
     }): Promise<FarmSeason> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.FARM_SEASONS)
         .update(updates)
         .eq('id', id)
@@ -246,7 +246,7 @@ export function useStartFarmSeason() {
       configJson?: Record<string, unknown> | null;
     }): Promise<FarmSeason & { recomputeFailed: boolean }> => {
       const startSeason = async (): Promise<FarmSeason> => {
-        const { data: rpcData, error: rpcError } = await supabase.rpc('start_farm_season', {
+        const { data: rpcData, error: rpcError } = await getDataAccess().rpc('start_farm_season', {
           p_farm_id: farmId,
           p_start_date: startDate,
           p_template_key: templateKey ?? null,
@@ -259,7 +259,7 @@ export function useStartFarmSeason() {
             return rpcData as FarmSeason;
           }
           // Fallback refetch path if rpc returns scalar/void.
-          const { data: latest, error: latestError } = await supabase
+          const { data: latest, error: latestError } = await getDataAccess()
             .from(TABLES.FARM_SEASONS)
             .select('*')
             .eq('farm_id', farmId)
@@ -274,7 +274,7 @@ export function useStartFarmSeason() {
           throw rpcError;
         }
 
-        const { data, error } = await supabase
+        const { data, error } = await getDataAccess()
           .from(TABLES.FARM_SEASONS)
           .insert({
             farm_id: farmId,
@@ -333,7 +333,7 @@ export function useEndFarmSeason() {
       farmId: number;
       endDate: string;
     }): Promise<FarmSeason> => {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('end_farm_season', {
+      const { data: rpcData, error: rpcError } = await getDataAccess().rpc('end_farm_season', {
         p_farm_id: farmId,
         p_end_date: endDate,
       });
@@ -342,7 +342,7 @@ export function useEndFarmSeason() {
         if (rpcData && typeof rpcData === 'object' && 'id' in rpcData) {
           return rpcData as FarmSeason;
         }
-        const { data: latestEnded, error: latestEndedError } = await supabase
+        const { data: latestEnded, error: latestEndedError } = await getDataAccess()
           .from(TABLES.FARM_SEASONS)
           .select('*')
           .eq('farm_id', farmId)
@@ -357,7 +357,7 @@ export function useEndFarmSeason() {
         throw rpcError;
       }
 
-      const { data: activeSeason, error: activeSeasonError } = await supabase
+      const { data: activeSeason, error: activeSeasonError } = await getDataAccess()
         .from(TABLES.FARM_SEASONS)
         .select('*')
         .eq('farm_id', farmId)
@@ -367,7 +367,7 @@ export function useEndFarmSeason() {
         .single();
       if (activeSeasonError) throw activeSeasonError;
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.FARM_SEASONS)
         .update({ end_date: endDate })
         .eq('id', activeSeason.id)
@@ -406,7 +406,7 @@ export function useFarmSeasonStatus(farmId: number | undefined) {
     queryKey: [...queryKeys.farmSeasons.listByFarm(farmId ?? -1), 'reviewStatus'],
     queryFn: async (): Promise<boolean> => {
       if (!farmId) return false;
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from('season_inference_audit')
         .select('status')
         .eq('farm_id', farmId)

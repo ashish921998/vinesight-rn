@@ -3,12 +3,11 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView } from 'react-native';
-import { ModalBackdrop } from '@/components/ui';
+import { BottomSheet, BottomSheetView } from '@expo/ui/community/bottom-sheet';
+import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { isIOS } from '@/hooks';
 import { useTranslation } from 'react-i18next';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
@@ -20,8 +19,6 @@ interface VarietyPickerSheetProps {
   varietySearchQueryTrimmed: string;
   filteredVarieties: string[];
   canCreateCustomVariety: boolean;
-  varietySheetHeight: number;
-  androidKeyboardLift: number;
   onClose: () => void;
   onSelectVariety: (variety: string) => void;
   onSearchChange: (query: string) => void;
@@ -35,8 +32,6 @@ export function VarietyPickerSheet({
   varietySearchQueryTrimmed,
   filteredVarieties,
   canCreateCustomVariety,
-  varietySheetHeight,
-  androidKeyboardLift,
   onClose,
   onSelectVariety,
   onSearchChange,
@@ -45,28 +40,21 @@ export function VarietyPickerSheet({
   const { t } = useTranslation();
   const m3 = useM3();
 
-  if (!visible) return null;
-
   return (
-    <ModalBackdrop visible onDismiss={onClose} alignment="flex-end" opacity={0.5}>
-      <KeyboardAvoidingView
-        behavior={isIOS ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-        style={{
-          flex: 1,
-          width: '100%',
-          justifyContent: 'flex-end',
-          paddingBottom: androidKeyboardLift,
-        }}
-      >
+    <BottomSheet
+      index={visible ? 0 : -1}
+      snapPoints={['70%', '95%']}
+      enablePanDownToClose
+      onClose={onClose}
+      backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+    >
+      <BottomSheetView style={{ flex: 1 }}>
         <GuidedTourTarget
           targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
           onStartShouldSetResponder={() => true}
           style={{
+            flex: 1,
             backgroundColor: m3.surface.s100,
-            borderTopLeftRadius: borderRadius['3xl'],
-            borderTopRightRadius: borderRadius['3xl'],
-            height: varietySheetHeight,
           }}
         >
           {/* Header */}
@@ -95,7 +83,7 @@ export function VarietyPickerSheet({
               onPress={onClose}
               accessible
               accessibilityRole="button"
-              accessibilityLabel="Close variety picker"
+              accessibilityLabel={t('common.close')}
               style={{
                 width: 40,
                 height: 40,
@@ -227,7 +215,7 @@ export function VarietyPickerSheet({
             </ScrollView>
           </View>
         </GuidedTourTarget>
-      </KeyboardAvoidingView>
-    </ModalBackdrop>
+      </BottomSheetView>
+    </BottomSheet>
   );
 }

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { queryClient } from '@/lib/query-cache';
 import { telemetry } from '@/services/telemetry';
 import type { Profile } from '@/types';
@@ -66,7 +66,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
         }
       }
 
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await getDataAccess().auth.signInWithOtp({
         phone: trimmedPhone,
         options,
       });
@@ -136,7 +136,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
 
       let effectiveMode: 'signup' | 'signin' = 'signup';
 
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await getDataAccess().auth.signInWithOtp({
         phone: trimmedPhone,
         options: signupOptions,
       });
@@ -147,7 +147,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
           if (__DEV__) {
             console.log('[auth] signInWithPhoneAuto - signup disabled, falling back to signin');
           }
-          const { error: signinError } = await supabase.auth.signInWithOtp({
+          const { error: signinError } = await getDataAccess().auth.signInWithOtp({
             phone: trimmedPhone,
             options: { shouldCreateUser: false },
           });
@@ -194,7 +194,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
     telemetry.capture('auth_phone_otp_verify_started');
 
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
+      const { data, error } = await getDataAccess().auth.verifyOtp({
         phone,
         token: trimmedCode,
         type: 'sms',
@@ -333,7 +333,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
 
       if (email) {
         const currentUserId = get().user?.id;
-        let query = supabase.from('profiles').select('id').eq('email', email);
+        let query = getDataAccess().from('profiles').select('id').eq('email', email);
         if (currentUserId) {
           query = query.neq('id', currentUserId);
         }
@@ -372,7 +372,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
         updateUserPayload.data.email = email;
       }
 
-      const { error } = await supabase.auth.updateUser(updateUserPayload);
+      const { error } = await getDataAccess().auth.updateUser(updateUserPayload);
 
       if (error) throw error;
 
@@ -381,16 +381,18 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
         throw new Error('Missing authenticated user while completing profile');
       }
 
-      const { error: profileError } = await supabase.from('profiles').upsert(
-        {
-          id: currentUserId,
-          full_name: fullName,
-          email: email ?? get().user?.email ?? null,
-          area_unit_preference:
-            get().user?.user_metadata?.area_unit === 'hectares' ? 'hectares' : 'acres',
-        },
-        { onConflict: 'id' },
-      );
+      const { error: profileError } = await getDataAccess()
+        .from('profiles')
+        .upsert(
+          {
+            id: currentUserId,
+            full_name: fullName,
+            email: email ?? get().user?.email ?? null,
+            area_unit_preference:
+              get().user?.user_metadata?.area_unit === 'hectares' ? 'hectares' : 'acres',
+          },
+          { onConflict: 'id' },
+        );
       if (profileError) throw profileError;
 
       const normalizedAreaUnit =
@@ -410,7 +412,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
       const {
         data: { user },
         error: getUserError,
-      } = await supabase.auth.getUser();
+      } = await getDataAccess().auth.getUser();
 
       if (getUserError) {
         if (__DEV__) {
@@ -449,7 +451,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
     telemetry.capture('phone_linking_started');
 
     try {
-      const { error } = await supabase.auth.updateUser({ phone: trimmedPhone });
+      const { error } = await getDataAccess().auth.updateUser({ phone: trimmedPhone });
       if (error) throw error;
 
       telemetry.capture('phone_linking_otp_sent');
@@ -483,7 +485,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
     telemetry.capture('phone_linking_verify_started');
 
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
+      const { data, error } = await getDataAccess().auth.verifyOtp({
         phone,
         token: trimmedCode,
         type: 'phone_change',

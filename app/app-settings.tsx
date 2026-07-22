@@ -382,6 +382,7 @@ export default function SettingsScreen() {
         onAreaUnitChange={handleAreaUnitChange}
         onReplayGuidedTour={handleReplayGuidedTour}
         onDetailedModeChange={setDetailedMode}
+        onOpenAssistant={() => router.push('/assistant')}
       />
 
       <AccountSection

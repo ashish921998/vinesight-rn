@@ -75,7 +75,9 @@ export default function WorkersScreen() {
 
   const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
   const inactiveWorkers = useMemo(() => workers?.filter((w) => !w.is_active) || [], [workers]);
-  const showPrimaryFab = selectedTab !== 'attendance' || !attendanceActionBarVisible;
+  const showPrimaryFab =
+    (selectedTab !== 'attendance' || !attendanceActionBarVisible) &&
+    (selectedTab !== 'workers' || activeWorkers.length > 0);
 
   // Per-worker attendance map for strip visualization
   const attendanceByWorker = useMemo(() => {
@@ -435,7 +437,6 @@ export default function WorkersScreen() {
                 options={TAB_DATA.map((tab) => ({ value: tab.id, label: t(tab.labelKey) }))}
                 selectedValue={selectedTab}
                 onSelect={(value) => setSelectedTab(value as WorkersTab)}
-                selectedTextColor={'#000000'}
               />
             </GuidedTourTarget>
           </GuidedTourTarget>

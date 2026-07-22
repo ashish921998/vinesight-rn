@@ -199,11 +199,7 @@ function FocusRing({
           borderWidth: 2,
           borderColor: accentColor,
           backgroundColor: 'transparent',
-          shadowColor: accentColor,
-          shadowOpacity: Platform.OS === 'android' ? 0 : 0.14,
-          shadowRadius: Platform.OS === 'android' ? 0 : 14,
-          shadowOffset: { width: 0, height: Platform.OS === 'android' ? 0 : 6 },
-          elevation: Platform.OS === 'android' ? 3 : 0,
+          boxShadow: `0 6px 14px ${colorWithOpacity(accentColor, 0.14)}`,
         }}
       />
     </>

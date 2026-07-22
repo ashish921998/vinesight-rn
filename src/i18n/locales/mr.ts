@@ -1554,8 +1554,19 @@ export const mr = {
     workers: '$t(glossary.worker)',
     tools: 'साधने',
     settings: 'सेटिंग्ज',
+    home: 'होम',
     farms: '$t(glossary.farm)',
+    purchases: 'खरेदी',
     aiAssistant: 'AI सहाय्यक',
+  },
+
+  simplifiedHome: {
+    recordPurchase: 'खरेदी नोंदवा',
+    addFarmLog: 'शेत नोंद जोडा',
+    addFirstFarm: 'नोंदी सुरू करण्यासाठी तुमचे पहिले शेत जोडा',
+    recentRecords: 'अलीकडील नोंदी',
+    viewAll: 'सर्व पहा',
+    noRecords: 'अद्याप कोणत्याही नोंदी नाहीत',
   },
   assistant: {
     placeholder: 'तुमचे प्रश्न विचारा — मी कशी मदत करू?',
@@ -2043,11 +2054,15 @@ export const mr = {
     selectAreaUnit: 'क्षेत्रफळ एकक निवडा',
     appMode: {
       title: 'विस्तृत मोड',
-      subtitle: 'कामगार, साधने, एआय सहाय्यक आणि कार्ये दर्शवा',
+      subtitle: 'कामगार, साधने आणि कार्ये दर्शवा',
+    },
+    aiAssistant: {
+      title: 'एआय सहाय्यक',
+      subtitle: 'शेती सहाय्यक उघडा',
     },
     appModeIntro: {
       title: 'आम्ही VineSight सोपे केले आहे',
-      body: 'अॅप आता सोप्या मोडमध्ये सुरू होतो. कामगार, साधने, एआय सहाय्यक आणि कार्ये डिफॉल्टनुसार लपवलेली आहेत. तुम्ही कधीही परत स्विच करू शकता.',
+      body: 'अॅप आता सोप्या मोडमध्ये सुरू होतो. कामगार, साधने आणि कार्ये डिफॉल्टनुसार लपवलेली आहेत. तुम्ही कधीही परत स्विच करू शकता.',
       enableDetailed: 'विस्तृत मोड चालू करा',
       staySimplified: 'सोप्या मोडमध्ये राहा',
     },

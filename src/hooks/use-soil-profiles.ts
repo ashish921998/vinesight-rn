@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { SoilProfile, SoilProfileInsert, SoilSectionData } from '../types/database';
 import i18n from '@/i18n';
 import { formatDate } from '@/i18n/format';
@@ -23,7 +23,7 @@ export function useSoilProfiles(farmId: number, seasonId?: number) {
   return useQuery({
     queryKey: [...soilProfileQueryKeys.profiles(farmId), { seasonId: seasonId ?? null }],
     queryFn: async () => {
-      let query = supabase
+      let query = getDataAccess()
         .from('soil_profiles')
         .select('*')
         .eq('farm_id', farmId)
@@ -56,7 +56,7 @@ export function useCreateSoilProfile() {
           farmId: profile.farm_id,
           date: formatLocalDate(new Date(createdAt)),
         }));
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from('soil_profiles')
         .insert({
           ...profile,
@@ -85,7 +85,7 @@ export function useDeleteSoilProfile() {
 
   return useMutation({
     mutationFn: async ({ id, farmId }: { id: number; farmId: number }) => {
-      const { error } = await supabase.from('soil_profiles').delete().eq('id', id);
+      const { error } = await getDataAccess().from('soil_profiles').delete().eq('id', id);
 
       if (error) throw error;
       return { id, farmId };

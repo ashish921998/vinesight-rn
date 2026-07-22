@@ -1,15 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  Platform,
-  Modal,
-  TextInput,
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { ScrollView, StyleSheet, View, Text, Pressable, Platform, TextInput } from 'react-native';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -264,7 +256,7 @@ export default function SpraySafeCheckerScreen() {
             value={parseDbDateToLocalDate(targetDate) ?? new Date()}
             mode="date"
             display="default"
-            onChange={(_, selected) => {
+            onValueChange={(_, selected) => {
               setShowDatePicker(false);
               if (!selected) return;
               setTargetDateOverride(formatLocalDate(selected));
@@ -273,80 +265,66 @@ export default function SpraySafeCheckerScreen() {
         ) : null}
 
         {Platform.OS === 'ios' ? (
-          <Modal
-            visible={showDatePicker}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowDatePicker(false)}
+          <BottomSheet
+            index={showDatePicker ? 0 : -1}
+            enableDynamicSizing
+            enablePanDownToClose
+            onClose={() => setShowDatePicker(false)}
+            backgroundStyle={{ backgroundColor: m3.colorScheme.surface }}
           >
-            <Pressable
-              onPress={() => setShowDatePicker(false)}
+            <View
               style={{
-                flex: 1,
-                justifyContent: 'center',
-                backgroundColor: colorWithOpacity('#000000', 0.2),
-                padding: spacing[4],
+                paddingHorizontal: spacing[4],
+                paddingTop: spacing[3],
+                paddingBottom: Math.max(insets.bottom, spacing[4]),
               }}
             >
-              <Pressable
-                onPress={(event) => event.stopPropagation()}
+              <DateTimePicker
+                value={iosPickerDraftDate}
+                mode="date"
+                display="spinner"
+                onValueChange={(_, selected) => {
+                  if (selected) setIosPickerDraftDate(selected);
+                }}
+              />
+              <View
                 style={{
-                  borderRadius: borderRadius.xl,
-                  backgroundColor: m3.colorScheme.surface,
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                  padding: spacing[3],
+                  flexDirection: 'row',
+                  justifyContent: 'flex-end',
+                  gap: spacing[2],
+                  marginTop: spacing[2],
                 }}
               >
-                <DateTimePicker
-                  value={iosPickerDraftDate}
-                  mode="date"
-                  display="spinner"
-                  onChange={(_, selected) => {
-                    if (selected) setIosPickerDraftDate(selected);
-                  }}
-                />
-                <View
+                <Pressable
+                  onPress={() => setShowDatePicker(false)}
                   style={{
-                    flexDirection: 'row',
-                    justifyContent: 'flex-end',
-                    gap: spacing[2],
-                    marginTop: spacing[2],
+                    borderRadius: borderRadius.full,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                    backgroundColor: m3.surface.surfaceContainerHigh,
                   }}
                 >
-                  <Pressable
-                    onPress={() => setShowDatePicker(false)}
-                    style={{
-                      borderRadius: borderRadius.full,
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[2],
-                      backgroundColor: m3.surface.surfaceContainerHigh,
-                    }}
-                  >
-                    <Text style={{ color: m3.colorScheme.onSurface }}>{t('common.cancel')}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => {
-                      setTargetDateOverride(formatLocalDate(iosPickerDraftDate));
-                      setShowDatePicker(false);
-                    }}
-                    style={{
-                      borderRadius: borderRadius.full,
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[2],
-                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
-                    }}
-                  >
-                    <Text
-                      style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}
-                    >
-                      {t('common.done')}
-                    </Text>
-                  </Pressable>
-                </View>
-              </Pressable>
-            </Pressable>
-          </Modal>
+                  <Text style={{ color: m3.colorScheme.onSurface }}>{t('common.cancel')}</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setTargetDateOverride(formatLocalDate(iosPickerDraftDate));
+                    setShowDatePicker(false);
+                  }}
+                  style={{
+                    borderRadius: borderRadius.full,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
+                  }}
+                >
+                  <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
+                    {t('common.done')}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </BottomSheet>
         ) : null}
 
         {activeSeason?.id ? (

@@ -187,7 +187,6 @@ export const buildFormStateFromFarm = (farm?: Farm | null) => {
     showPruningDatePicker: false,
     showVarietyPicker: false,
     showCropPicker: false,
-    showTexturePicker: false,
     showMapPicker: false,
     plantingDateChanged: false,
   };

@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useHomeBackExit } from '@/hooks/use-home-back-exit';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { deriveProfessionalRole } from '@/utils/professional-role';
 import { useAuthStore } from '@/stores';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
@@ -109,7 +110,7 @@ export default function ProfessionalDirectory() {
         }}
       />
       {isLoading ? (
-        <ActivityIndicator />
+        <Spinner />
       ) : isError ? (
         <Pressable accessibilityRole="button" onPress={() => refetch()}>
           <Text style={{ color: m3.colorScheme.error }}>{t('professional.errors.farmers')}</Text>

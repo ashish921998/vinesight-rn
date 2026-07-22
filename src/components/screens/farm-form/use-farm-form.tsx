@@ -7,19 +7,11 @@ import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { Alert, Keyboard, ScrollView, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
-import {
-  useCreateFarm,
-  useFarm,
-  useUpdateFarm,
-  isIOS,
-  useResponsiveHeight,
-  useAndroidKeyboardLift,
-} from '@/hooks';
+import { useCreateFarm, useFarm, useUpdateFarm, isIOS } from '@/hooks';
 import type { FarmInsert, FarmUpdate } from '@/types';
 import type { CropType } from '@/constants/crop-varieties';
 import { CROP_VARIETIES } from '@/constants/crop-varieties';
 import { useM3 } from '@/styles/use-theme';
-import { spacing } from '@/styles/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { telemetry } from '@/services/telemetry';
 import * as Sentry from '@sentry/react-native';
@@ -38,7 +30,7 @@ import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { notifyGuidedTourTargetChanged } from '@/features/guided-tour/targets';
 
 import type { FarmFormMode, AddFarmFocusField, FormState } from './types';
-import { KNOWN_CROPS, POPULAR_CROPS, CROP_I18N_KEY_MAP, SOIL_TEXTURE_OPTIONS } from './constants';
+import { KNOWN_CROPS, POPULAR_CROPS, CROP_I18N_KEY_MAP } from './constants';
 import {
   buildFormStateFromFarm,
   buildFarmInsertFromCoreFields,
@@ -80,7 +72,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   const router = useRouter();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
-  const { windowHeight } = useResponsiveHeight();
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
 
@@ -95,8 +86,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   );
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isGuidedTourScrollLocked, setIsGuidedTourScrollLocked] = useState(false);
-  const [iosPlantingDateDraft, setIosPlantingDateDraft] = useState<Date>(() => new Date());
-  const [iosPruningDateDraft, setIosPruningDateDraft] = useState<Date>(() => new Date());
 
   const formScrollViewRef = useRef<ScrollView>(null);
   const nameInputRef = useRef<TextInput>(null);
@@ -562,35 +551,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     return null;
   }, [formState.sandPercentage, formState.siltPercentage, formState.clayPercentage, t]);
 
-  const pickerAvailableHeight = useMemo(() => {
-    const baseViewportHeight = windowHeight - insets.top - spacing[2];
-    const keyboardAdjustedHeight = isIOS
-      ? keyboardHeight > 0
-        ? baseViewportHeight - keyboardHeight + insets.bottom
-        : baseViewportHeight
-      : keyboardHeight > 0
-        ? baseViewportHeight - keyboardHeight
-        : baseViewportHeight;
-    return Math.max(220, keyboardAdjustedHeight);
-  }, [windowHeight, insets.top, insets.bottom, keyboardHeight]);
-
-  const androidKeyboardLift = useAndroidKeyboardLift(keyboardHeight, insets.bottom);
-
-  const varietySheetHeight = useMemo(
-    () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
-    [windowHeight, pickerAvailableHeight],
-  );
-
-  const cropSheetHeight = useMemo(
-    () => Math.min(Math.round(windowHeight * 0.72), pickerAvailableHeight),
-    [windowHeight, pickerAvailableHeight],
-  );
-
-  const textureSheetHeight = useMemo(
-    () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
-    [windowHeight, pickerAvailableHeight],
-  );
-
   const isValid = useMemo(
     () =>
       isFarmCoreFieldsValid({
@@ -616,15 +576,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-
-  const getSoilTextureLabel = useCallback(
-    (value?: string) => {
-      if (!value) return '';
-      const match = SOIL_TEXTURE_OPTIONS.find((o) => o.value === value);
-      return match ? t(match.labelKey) : value;
-    },
-    [t],
-  );
 
   const getVarietyLabel = useCallback(
     (value?: string) => {
@@ -653,34 +604,11 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   };
 
   const openPlantingDatePicker = () => {
-    const safeDate = ensureValidDate(formState.plantingDate);
-    setIosPlantingDateDraft(safeDate);
     setFormState((prev) => ({ ...prev, showDatePicker: true }));
   };
 
-  const commitPlantingDateFromDraft = () => {
-    const safeDate = ensureValidDate(iosPlantingDateDraft);
-    setFormState((prev) => ({
-      ...prev,
-      plantingDate: safeDate,
-      plantingDateChanged: true,
-      showDatePicker: false,
-    }));
-  };
-
   const openPruningDatePicker = () => {
-    const safeDate = ensureValidDate(formState.dateOfPruning);
-    setIosPruningDateDraft(safeDate);
     setFormState((prev) => ({ ...prev, showPruningDatePicker: true }));
-  };
-
-  const commitPruningDateFromDraft = () => {
-    const safeDate = ensureValidDate(iosPruningDateDraft);
-    setFormState((prev) => ({
-      ...prev,
-      dateOfPruning: safeDate,
-      showPruningDatePicker: false,
-    }));
   };
 
   const handleLocationSelected = (latitude: number, longitude: number, locationName?: string) => {
@@ -1133,17 +1061,15 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   const setClayPercentage = (v: string) => setFormState((prev) => ({ ...prev, clayPercentage: v }));
   const setShowVarietyPicker = (open: boolean) =>
     setFormState((prev) => ({ ...prev, showVarietyPicker: open, varietySearchQuery: '' }));
-  const setShowTexturePicker = (open: boolean) =>
-    setFormState((prev) => ({ ...prev, showTexturePicker: open }));
   const setSoilTextureClass = (value: string) =>
-    setFormState((prev) => ({ ...prev, soilTextureClass: value, showTexturePicker: false }));
+    setFormState((prev) => ({ ...prev, soilTextureClass: value }));
   const closeDatePicker = () => setFormState((prev) => ({ ...prev, showDatePicker: false }));
   const closePruningDatePicker = () =>
     setFormState((prev) => ({ ...prev, showPruningDatePicker: false }));
   const closeMapPicker = () => setFormState((prev) => ({ ...prev, showMapPicker: false }));
 
-  // Android date-picker changes (committed immediately)
-  const commitAndroidPlantingDate = (date: Date) => {
+  // Date-picker changes (committed immediately on both iOS and Android)
+  const commitPlantingDate = (date: Date) => {
     setFormState((prev) => ({
       ...prev,
       plantingDate: date,
@@ -1151,7 +1077,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       showDatePicker: false,
     }));
   };
-  const commitAndroidPruningDate = (date: Date) => {
+  const commitPruningDate = (date: Date) => {
     setFormState((prev) => ({ ...prev, dateOfPruning: date, showPruningDatePicker: false }));
   };
   const clearPruningDate = () => setFormState((prev) => ({ ...prev, dateOfPruning: null }));
@@ -1190,17 +1116,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     varietySearchQueryTrimmed,
     soilCompositionWarning,
     varieties,
-    androidKeyboardLift,
-    cropSheetHeight,
-    varietySheetHeight,
-    textureSheetHeight,
-
-    // Draft dates (iOS)
-    iosPlantingDateDraft,
-    setIosPlantingDateDraft,
-    iosPruningDateDraft,
-    setIosPruningDateDraft,
-
     // Refs
     formScrollViewRef,
     formScrollYRef,
@@ -1228,7 +1143,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
 
     // Render helpers
     renderCropVisual,
-    getSoilTextureLabel,
     getVarietyLabel,
     ensureValidDate,
 
@@ -1242,17 +1156,14 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     openCropPicker,
     closeCropPicker,
     openPlantingDatePicker,
-    commitPlantingDateFromDraft,
     closeDatePicker,
     openPruningDatePicker,
-    commitPruningDateFromDraft,
     closePruningDatePicker,
-    commitAndroidPlantingDate,
-    commitAndroidPruningDate,
+    commitPlantingDate,
+    commitPruningDate,
     clearPruningDate,
     closeMapPicker,
     setShowVarietyPicker,
-    setShowTexturePicker,
     setSoilTextureClass,
 
     // Simple field setters

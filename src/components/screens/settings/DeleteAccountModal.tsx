@@ -5,7 +5,6 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
   Alert,
@@ -13,9 +12,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { spacing, getM3Theme } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { telemetry } from '@/services/telemetry';
 import { isIOS } from '@/hooks';
 import type { SettingsStyles } from './settings-styles';
@@ -122,7 +122,7 @@ export function DeleteAccountModal({
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
       const { error } = await Promise.race([
-        supabase.auth.signInWithOtp({
+        getDataAccess().auth.signInWithOtp({
           phone: deleteVerificationPhone,
           options: { shouldCreateUser: false },
         }),
@@ -193,7 +193,7 @@ export function DeleteAccountModal({
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
       const { error } = await Promise.race([
-        supabase.auth.verifyOtp({
+        getDataAccess().auth.verifyOtp({
           phone: deleteVerificationPhone,
           token: deletePhoneOtp.trim(),
           type: 'sms',
@@ -259,7 +259,7 @@ export function DeleteAccountModal({
     try {
       const {
         data: { session: currentSession },
-      } = await supabase.auth.getSession();
+      } = await getDataAccess().auth.getSession();
       const accessToken = currentSession?.access_token;
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
       if (!accessToken) {
@@ -383,7 +383,7 @@ export function DeleteAccountModal({
     try {
       const {
         data: { session: currentSession },
-      } = await supabase.auth.getSession();
+      } = await getDataAccess().auth.getSession();
       const accessToken = currentSession?.access_token;
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
       if (!accessToken) {
@@ -877,7 +877,7 @@ export function DeleteAccountModal({
               ]}
             >
               {isDeleting ? (
-                <ActivityIndicator color={m3.colorScheme.onPrimary} />
+                <Spinner color={m3.colorScheme.onPrimary} />
               ) : (
                 <Text
                   style={styles.deleteButtonText}

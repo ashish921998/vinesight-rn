@@ -4,10 +4,11 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { SafeScreen } from '@/components/ui/safe-screen';
@@ -143,7 +144,7 @@ function PetioleTrendsScreen() {
       <SafeScreen backgroundColor={m3.colorScheme.background}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={domain.labTest.petiole} />
+          <Spinner size="large" color={domain.labTest.petiole} />
           <Text
             style={{
               color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8),

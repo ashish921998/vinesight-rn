@@ -19,8 +19,8 @@ import { Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { Worker } from '@/types';
 import { calculateWorkerSettlement, createWorkerSettlement } from '@/services/worker-service';
-import { Picker } from '@react-native-picker/picker';
-import { supabase } from '@/lib/supabase';
+import { Picker } from '@expo/ui/community/picker';
+import { getDataAccess } from '@/data-access';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { SettlementTourCoachmark } from '@/features/guided-tour/settlement-tour-coachmark';
 import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
@@ -317,7 +317,7 @@ export function WorkerSettlementModal({
 
     setIsConfirming(true);
     try {
-      const { data: freshWorker, error: freshWorkerError } = await supabase
+      const { data: freshWorker, error: freshWorkerError } = await getDataAccess()
         .from('workers')
         .select('advance_balance')
         .eq('id', selectedWorker.id)
@@ -622,7 +622,6 @@ export function WorkerSettlementModal({
                     }}
                     style={{
                       backgroundColor: m3.surface.surfaceContainerLow,
-                      color: m3.colorScheme.onSurface,
                     }}
                   >
                     {workers.map((worker, index) => (

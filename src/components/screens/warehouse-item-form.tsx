@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
+  BottomSheet,
+  BottomSheetScrollView,
+  BottomSheetView,
+  BottomSheetTextInput,
+} from '@expo/ui/community/bottom-sheet';
+import {
   Alert,
   BackHandler,
   Keyboard,
-  KeyboardAvoidingView,
   Linking,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
@@ -41,7 +45,6 @@ import {
   PreviewCard,
   SegmentedControl,
 } from '../ui/form-components';
-import { ModalBackdrop } from '../ui/modal-backdrop';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, componentRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -1288,231 +1291,80 @@ export default function WarehouseItemForm({
         />
       </FormModal>
 
-      {nutrientPickerRow && (
-        <ModalBackdrop
-          visible
-          onDismiss={closeNutrientPicker}
-          alignment="flex-end"
-          opacity={0.5}
-          zIndex={2}
-        >
-          <Pressable
-            onPress={() => {}}
+      <BottomSheet
+        index={nutrientPickerRow ? 0 : -1}
+        snapPoints={['50%', '85%']}
+        enablePanDownToClose
+        onClose={closeNutrientPicker}
+        backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+      >
+        <BottomSheetView style={{ flex: 1, maxHeight: nutrientSheetHeight }}>
+          <View
             style={{
-              height: nutrientSheetHeight,
-              backgroundColor: m3.surface.s100,
-              borderTopLeftRadius: borderRadius['3xl'],
-              borderTopRightRadius: borderRadius['3xl'],
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: spacing[6],
+              paddingVertical: spacing[4],
+              borderBottomWidth: 1,
+              borderBottomColor: m3.surface.s200,
             }}
           >
-            <View
+            <View style={{ width: 40 }} />
+            <Text
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: spacing[6],
-                paddingVertical: spacing[4],
-                borderBottomWidth: 1,
-                borderBottomColor: m3.surface.s200,
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: m3.surface.s900,
               }}
             >
-              <View style={{ width: 40 }} />
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s900,
-                }}
-              >
-                Select nutrient
-              </Text>
-              <Pressable
-                onPress={closeNutrientPicker}
-                accessibilityRole="button"
-                accessibilityLabel="Close nutrient picker"
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: borderRadius.full,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-              </Pressable>
-            </View>
-
-            <ScrollView keyboardShouldPersistTaps="handled">
-              {OTHER_NUTRIENT_OPTIONS.map((option) => {
-                const isSelected =
-                  normalizeNutrientCode(nutrientPickerRow.nutrient_code) ===
-                  normalizeNutrientCode(option.code);
-                const isUnavailable = selectedOtherNutrientCodes.has(
-                  normalizeNutrientCode(option.code),
-                );
-
-                return (
-                  <Pressable
-                    key={option.code}
-                    disabled={isUnavailable}
-                    onPress={() => {
-                      updateCompositionRow(nutrientPickerRow.id, { nutrient_code: option.code });
-                      setNutrientPickerRowId(null);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={option.label}
-                    accessibilityState={{ disabled: isUnavailable, selected: isSelected }}
-                    style={{
-                      paddingHorizontal: spacing[6],
-                      paddingVertical: spacing[4],
-                      borderBottomWidth: 1,
-                      borderBottomColor: m3.surface.s100,
-                      backgroundColor: isSelected ? m3.surface.s50 : m3.surface.s100,
-                      opacity: isUnavailable ? 0.45 : 1,
-                    }}
-                  >
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: m3.surface.s900,
-                          fontSize: fontSize.base,
-                          fontWeight: isSelected ? fontWeight.semibold : fontWeight.normal,
-                        }}
-                      >
-                        {option.label}
-                      </Text>
-                      {isSelected ? (
-                        <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
-                      ) : null}
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </Pressable>
-        </ModalBackdrop>
-      )}
-
-      {/* Catalogue Picker Bottom Sheet */}
-      {showCataloguePicker && (
-        <ModalBackdrop
-          visible
-          onDismiss={() => setShowCataloguePicker(false)}
-          alignment="flex-end"
-          opacity={0.5}
-        >
-          <KeyboardAvoidingView
-            behavior={isIOS ? 'padding' : undefined}
-            keyboardVerticalOffset={0}
-            style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
-          >
+              Select nutrient
+            </Text>
             <Pressable
-              onPress={() => {}}
+              onPress={closeNutrientPicker}
+              accessibilityRole="button"
+              accessibilityLabel="Close nutrient picker"
               style={{
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: borderRadius['3xl'],
-                borderTopRightRadius: borderRadius['3xl'],
-                height: catalogueSheetHeight,
+                width: 40,
+                height: 40,
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              {/* Header */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: spacing[6],
-                  paddingVertical: spacing[4],
-                  borderBottomWidth: 1,
-                  borderBottomColor: m3.surface.s200,
-                }}
-              >
-                <View style={{ width: 40 }} />
-                <Text
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: fontWeight.semibold,
-                    color: m3.surface.s900,
-                  }}
-                >
-                  Select from Catalogue
-                </Text>
-                <Pressable
-                  onPress={() => setShowCataloguePicker(false)}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: borderRadius.full,
-                    backgroundColor: m3.surface.s100,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-                </Pressable>
-              </View>
+              <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+            </Pressable>
+          </View>
 
-              {/* Search */}
-              <View
-                style={{
-                  paddingHorizontal: spacing[6],
-                  paddingTop: spacing[4],
-                  paddingBottom: spacing[2],
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    borderWidth: 1,
-                    borderColor: m3.surface.s200,
-                    borderRadius: borderRadius.xl,
-                    backgroundColor: m3.surface.s50,
-                    paddingHorizontal: spacing[3],
-                    minHeight: 48,
-                  }}
-                >
-                  <UISymbol
-                    name="magnifyingglass"
-                    size={18}
-                    color={m3.colorScheme.onSurfaceVariant}
-                  />
-                  <TextInput
-                    value={catalogueSearchQuery}
-                    onChangeText={setCatalogueSearchQuery}
-                    placeholder="Search by product, grade, or manufacturer"
-                    placeholderTextColor={m3.surface.s400}
-                    style={{
-                      flex: 1,
-                      marginLeft: spacing[2],
-                      color: m3.surface.s900,
-                      fontSize: fontSize.base,
-                    }}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
-              </View>
+          <BottomSheetScrollView keyboardShouldPersistTaps="handled">
+            {OTHER_NUTRIENT_OPTIONS.map((option) => {
+              const isSelected =
+                !!nutrientPickerRow &&
+                normalizeNutrientCode(nutrientPickerRow.nutrient_code) ===
+                  normalizeNutrientCode(option.code);
+              const isUnavailable = selectedOtherNutrientCodes.has(
+                normalizeNutrientCode(option.code),
+              );
 
-              {/* "Skip / No selection" option */}
-              <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+              return (
                 <Pressable
+                  key={option.code}
+                  disabled={isUnavailable || !nutrientPickerRow}
+                  onPress={() => {
+                    if (!nutrientPickerRow) return;
+                    updateCompositionRow(nutrientPickerRow.id, { nutrient_code: option.code });
+                    setNutrientPickerRowId(null);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={option.label}
+                  accessibilityState={{ disabled: isUnavailable, selected: isSelected }}
                   style={{
+                    paddingHorizontal: spacing[6],
                     paddingVertical: spacing[4],
-                    paddingLeft: spacing[8],
-                    paddingRight: spacing[6],
                     borderBottomWidth: 1,
                     borderBottomColor: m3.surface.s100,
-                    backgroundColor: !selectedCatalogProductId ? m3.surface.s50 : m3.surface.s100,
-                  }}
-                  onPress={() => {
-                    clearCatalogSelection();
+                    backgroundColor: isSelected ? m3.surface.s50 : m3.surface.s100,
+                    opacity: isUnavailable ? 0.45 : 1,
                   }}
                 >
                   <View
@@ -1524,111 +1376,239 @@ export default function WarehouseItemForm({
                   >
                     <Text
                       style={{
-                        fontSize: fontSize.base,
                         color: m3.surface.s900,
-                        fontWeight: !selectedCatalogProductId
-                          ? fontWeight.semibold
-                          : fontWeight.medium,
-                        fontStyle: 'italic',
+                        fontSize: fontSize.base,
+                        fontWeight: isSelected ? fontWeight.semibold : fontWeight.normal,
                       }}
                     >
-                      Skip (manual entry)
+                      {option.label}
                     </Text>
-                    {!selectedCatalogProductId && (
+                    {isSelected ? (
                       <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
-                    )}
+                    ) : null}
                   </View>
                 </Pressable>
+              );
+            })}
+          </BottomSheetScrollView>
+        </BottomSheetView>
+      </BottomSheet>
 
-                {/* Catalogue items */}
-                {visibleCatalogueItems.map((product) => (
-                  <Pressable
-                    key={product.id}
-                    style={{
-                      paddingVertical: spacing[4],
-                      paddingLeft: spacing[8],
-                      paddingRight: spacing[6],
-                      borderBottomWidth: 1,
-                      borderBottomColor: m3.surface.s100,
-                      backgroundColor:
-                        selectedCatalogProductId === product.id ? m3.surface.s50 : m3.surface.s100,
-                    }}
-                    onPress={() => {
-                      applyCatalogProduct(product);
-                      setShowCataloguePicker(false);
-                    }}
-                  >
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <View style={{ flex: 1, marginRight: spacing[3] }}>
-                        <Text
-                          style={{
-                            fontSize: fontSize.base,
-                            color: m3.surface.s900,
-                            fontWeight:
-                              selectedCatalogProductId === product.id
-                                ? fontWeight.semibold
-                                : fontWeight.medium,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {formatCatalogueProductDisplayName(product)}
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: fontSize.xs,
-                            color: m3.surface.s600,
-                            marginTop: 2,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {formatCatalogueProductSubtitle(product)}
-                        </Text>
-                      </View>
-                      {selectedCatalogProductId === product.id && (
-                        <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
-                      )}
-                    </View>
-                  </Pressable>
-                ))}
-
-                {catalogProductsLoading && (
-                  <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
-                      Loading catalogue items...
-                    </Text>
-                  </View>
-                )}
-
-                {!catalogProductsLoading && catalogProductsError && (
-                  <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.error }}>
-                      Could not load catalogue items. Please try again later.
-                    </Text>
-                  </View>
-                )}
-
-                {!catalogProductsLoading &&
-                  !catalogProductsError &&
-                  visibleCatalogueItems.length === 0 && (
-                    <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
-                        {catalogProducts.length === 0
-                          ? 'No catalogue items available yet. PHI catalog may not be seeded in this environment.'
-                          : 'No catalogue matches found.'}
-                      </Text>
-                    </View>
-                  )}
-              </ScrollView>
+      {/* Catalogue Picker Bottom Sheet */}
+      <BottomSheet
+        index={showCataloguePicker ? 0 : -1}
+        snapPoints={['55%', '90%']}
+        enablePanDownToClose
+        onClose={() => setShowCataloguePicker(false)}
+        backgroundStyle={{ backgroundColor: m3.surface.s100 }}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            height: catalogueSheetHeight,
+            paddingBottom: androidKeyboardLift,
+          }}
+        >
+          {/* Header */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: spacing[6],
+              paddingVertical: spacing[4],
+              borderBottomWidth: 1,
+              borderBottomColor: m3.surface.s200,
+            }}
+          >
+            <View style={{ width: 40 }} />
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: m3.surface.s900,
+              }}
+            >
+              Select from Catalogue
+            </Text>
+            <Pressable
+              onPress={() => setShowCataloguePicker(false)}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: borderRadius.full,
+                backgroundColor: m3.surface.s100,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
             </Pressable>
-          </KeyboardAvoidingView>
-        </ModalBackdrop>
-      )}
+          </View>
+
+          {/* Search */}
+          <View
+            style={{
+              paddingHorizontal: spacing[6],
+              paddingTop: spacing[4],
+              paddingBottom: spacing[2],
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: m3.surface.s200,
+                borderRadius: borderRadius.xl,
+                backgroundColor: m3.surface.s50,
+                paddingHorizontal: spacing[3],
+                minHeight: 48,
+              }}
+            >
+              <UISymbol name="magnifyingglass" size={18} color={m3.colorScheme.onSurfaceVariant} />
+              <BottomSheetTextInput
+                value={catalogueSearchQuery}
+                onChangeText={setCatalogueSearchQuery}
+                placeholder="Search by product, grade, or manufacturer"
+                placeholderTextColor={m3.surface.s400}
+                style={{
+                  flex: 1,
+                  marginLeft: spacing[2],
+                  color: m3.surface.s900,
+                  fontSize: fontSize.base,
+                }}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+          </View>
+
+          {/* "Skip / No selection" option */}
+          <BottomSheetScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+            <Pressable
+              style={{
+                paddingVertical: spacing[4],
+                paddingLeft: spacing[8],
+                paddingRight: spacing[6],
+                borderBottomWidth: 1,
+                borderBottomColor: m3.surface.s100,
+                backgroundColor: !selectedCatalogProductId ? m3.surface.s50 : m3.surface.s100,
+              }}
+              onPress={() => {
+                clearCatalogSelection();
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    color: m3.surface.s900,
+                    fontWeight: !selectedCatalogProductId ? fontWeight.semibold : fontWeight.medium,
+                    fontStyle: 'italic',
+                  }}
+                >
+                  Skip (manual entry)
+                </Text>
+                {!selectedCatalogProductId && (
+                  <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
+                )}
+              </View>
+            </Pressable>
+
+            {/* Catalogue items */}
+            {visibleCatalogueItems.map((product) => (
+              <Pressable
+                key={product.id}
+                style={{
+                  paddingVertical: spacing[4],
+                  paddingLeft: spacing[8],
+                  paddingRight: spacing[6],
+                  borderBottomWidth: 1,
+                  borderBottomColor: m3.surface.s100,
+                  backgroundColor:
+                    selectedCatalogProductId === product.id ? m3.surface.s50 : m3.surface.s100,
+                }}
+                onPress={() => {
+                  applyCatalogProduct(product);
+                  setShowCataloguePicker(false);
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <View style={{ flex: 1, marginRight: spacing[3] }}>
+                    <Text
+                      style={{
+                        fontSize: fontSize.base,
+                        color: m3.surface.s900,
+                        fontWeight:
+                          selectedCatalogProductId === product.id
+                            ? fontWeight.semibold
+                            : fontWeight.medium,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {formatCatalogueProductDisplayName(product)}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: fontSize.xs,
+                        color: m3.surface.s600,
+                        marginTop: 2,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {formatCatalogueProductSubtitle(product)}
+                    </Text>
+                  </View>
+                  {selectedCatalogProductId === product.id && (
+                    <UISymbol name="checkmark" size={20} color={m3.primary.p500} />
+                  )}
+                </View>
+              </Pressable>
+            ))}
+
+            {catalogProductsLoading && (
+              <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
+                  Loading catalogue items...
+                </Text>
+              </View>
+            )}
+
+            {!catalogProductsLoading && catalogProductsError && (
+              <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.error }}>
+                  Could not load catalogue items. Please try again later.
+                </Text>
+              </View>
+            )}
+
+            {!catalogProductsLoading &&
+              !catalogProductsError &&
+              visibleCatalogueItems.length === 0 && (
+                <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                  <Text style={{ fontSize: fontSize.sm, color: m3.surface.s500 }}>
+                    {catalogProducts.length === 0
+                      ? 'No catalogue items available yet. PHI catalog may not be seeded in this environment.'
+                      : 'No catalogue matches found.'}
+                  </Text>
+                </View>
+              )}
+          </BottomSheetScrollView>
+        </BottomSheetView>
+      </BottomSheet>
     </View>
   );
 }

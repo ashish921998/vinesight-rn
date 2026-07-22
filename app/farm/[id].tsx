@@ -1188,11 +1188,7 @@ export default function FarmDetailScreen() {
           onPress: async () => {
             try {
               const record = log.data as
-                | IrrigationRecord
-                | SprayRecord
-                | HarvestRecord
-                | ExpenseRecord
-                | FertigationRecord;
+                IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
               const farmIdNum =
                 farm?.id ??
                 (record.farm_id
@@ -1296,7 +1292,7 @@ export default function FarmDetailScreen() {
         if (!farmIdParam) return;
         // Use `navigate` here (instead of `push`) to avoid occasional unmatched-route
         // resolution issues when switching from Stack -> tabs group.
-        router.navigate(`/(tabs)/assistant?farmId=${encodeURIComponent(farmIdParam)}`);
+        router.navigate(`/assistant?farmId=${encodeURIComponent(farmIdParam)}`);
         break;
       case 'lab':
         if (!farmIdParam) return;

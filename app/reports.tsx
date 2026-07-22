@@ -4,22 +4,14 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  Platform,
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { View, ScrollView, Alert, Pressable, StyleSheet, Text, Platform } from 'react-native';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInUp, Layout } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol } from '@/components/ui/symbol';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useFarms, useProfile } from '@/hooks';
@@ -519,7 +511,7 @@ export default function ReportsScreen() {
               { alignItems: 'center', justifyContent: 'center', padding: spacing[8] },
             ]}
           >
-            <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+            <Spinner size="large" color={m3.colorScheme.primary} />
           </Animated.View>
         ) : !farms || farms.length === 0 ? (
           <Animated.View
@@ -592,7 +584,7 @@ export default function ReportsScreen() {
                 layout={Layout.springify().dampingRatio(1)}
                 style={[panelStyle, { alignItems: 'center', gap: spacing[2], padding: spacing[6] }]}
               >
-                <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+                <Spinner size="small" color={m3.colorScheme.primary} />
                 <Text selectable style={{ color: m3.colorScheme.onSurfaceVariant }}>
                   {t('reports.loading.preview')}
                 </Text>
@@ -646,7 +638,7 @@ export default function ReportsScreen() {
           value={parseDbDateToLocalDate(dateRange.from) ?? new Date()}
           mode="date"
           display="default"
-          onChange={(_, date) => handleDateChange('from', date)}
+          onValueChange={(_, date) => handleDateChange('from', date)}
           minimumDate={fromMinimumDate}
           maximumDate={fromMaximumDate}
         />
@@ -657,110 +649,82 @@ export default function ReportsScreen() {
           value={parseDbDateToLocalDate(dateRange.to) ?? new Date()}
           mode="date"
           display="default"
-          onChange={(_, date) => handleDateChange('to', date)}
+          onValueChange={(_, date) => handleDateChange('to', date)}
           minimumDate={toMinimumDate}
           maximumDate={toMaximumDate}
         />
       )}
 
       {Platform.OS === 'ios' && (showFromPicker || showToPicker) && (
-        <Modal
-          transparent
-          visible={showFromPicker || showToPicker}
-          animationType="fade"
-          onRequestClose={() => {
+        <BottomSheet
+          index={0}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => {
             setShowFromPicker(false);
             setShowToPicker(false);
           }}
+          backgroundStyle={{ backgroundColor: m3.surface.s100 }}
         >
-          <Pressable
-            onPress={() => {
-              setShowFromPicker(false);
-              setShowToPicker(false);
-            }}
+          <View
             style={{
-              flex: 1,
-              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.4),
-              justifyContent: 'flex-end',
+              padding: spacing[4],
+              paddingTop: spacing[2],
+              paddingBottom: spacing[4] + insets.bottom,
+              gap: spacing[3],
             }}
           >
-            <View
+            <Text
+              selectable
               style={{
-                backgroundColor: m3.surface.s100,
-                borderTopLeftRadius: borderRadius['3xl'],
-                borderTopRightRadius: borderRadius['3xl'],
-                borderCurve: 'continuous',
-                padding: spacing[4],
-                paddingTop: spacing[2],
-                paddingBottom: spacing[4] + insets.bottom,
-                gap: spacing[3],
+                color: m3.colorScheme.onSurface,
+                fontWeight: '600',
+                fontSize: fontSize.lg,
               }}
-              onStartShouldSetResponder={() => true}
             >
-              {/* Sheet handle */}
-              <View style={{ alignItems: 'center', paddingBottom: spacing[1] }}>
-                <View
-                  style={{
-                    width: 36,
-                    height: 5,
-                    borderRadius: borderRadius.full,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.onSurface, 0.3),
-                  }}
-                />
-              </View>
+              {showFromPicker ? t('reports.selectFromDate') : t('reports.selectToDate')}
+            </Text>
 
-              <Text
-                selectable
-                style={{
-                  color: m3.colorScheme.onSurface,
-                  fontWeight: '600',
-                  fontSize: fontSize.lg,
-                }}
-              >
-                {showFromPicker ? t('reports.selectFromDate') : t('reports.selectToDate')}
+            {showFromPicker && (
+              <DateTimePicker
+                value={parseDbDateToLocalDate(dateRange.from) ?? new Date()}
+                mode="date"
+                display="spinner"
+                onValueChange={(_, date) => handleDateChange('from', date)}
+                minimumDate={fromMinimumDate}
+                maximumDate={fromMaximumDate}
+              />
+            )}
+            {showToPicker && (
+              <DateTimePicker
+                value={parseDbDateToLocalDate(dateRange.to) ?? new Date()}
+                mode="date"
+                display="spinner"
+                onValueChange={(_, date) => handleDateChange('to', date)}
+                minimumDate={toMinimumDate}
+                maximumDate={toMaximumDate}
+              />
+            )}
+
+            <Pressable
+              onPress={() => {
+                setShowFromPicker(false);
+                setShowToPicker(false);
+              }}
+              style={{
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.xl,
+                borderCurve: 'continuous',
+                alignItems: 'center',
+                backgroundColor: m3.colorScheme.primary,
+              }}
+            >
+              <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                {t('common.done')}
               </Text>
-
-              {showFromPicker && (
-                <DateTimePicker
-                  value={parseDbDateToLocalDate(dateRange.from) ?? new Date()}
-                  mode="date"
-                  display="spinner"
-                  onChange={(_, date) => handleDateChange('from', date)}
-                  minimumDate={fromMinimumDate}
-                  maximumDate={fromMaximumDate}
-                />
-              )}
-              {showToPicker && (
-                <DateTimePicker
-                  value={parseDbDateToLocalDate(dateRange.to) ?? new Date()}
-                  mode="date"
-                  display="spinner"
-                  onChange={(_, date) => handleDateChange('to', date)}
-                  minimumDate={toMinimumDate}
-                  maximumDate={toMaximumDate}
-                />
-              )}
-
-              <Pressable
-                onPress={() => {
-                  setShowFromPicker(false);
-                  setShowToPicker(false);
-                }}
-                style={{
-                  paddingVertical: spacing[3],
-                  borderRadius: borderRadius.xl,
-                  borderCurve: 'continuous',
-                  alignItems: 'center',
-                  backgroundColor: m3.colorScheme.primary,
-                }}
-              >
-                <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
-                  {t('common.done')}
-                </Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Modal>
+            </Pressable>
+          </View>
+        </BottomSheet>
       )}
     </SafeAreaView>
   );

@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useWorker, useWorkerAttendance, useFarms, isAndroid } from '@/hooks';
 import { useModalStore } from '@/stores';
@@ -190,7 +191,7 @@ export default function WorkerDetailScreen() {
           justifyContent: 'center',
         }}
       >
-        <ActivityIndicator color={m3.colorScheme.primary} />
+        <Spinner color={m3.colorScheme.primary} />
       </View>
     );
   }

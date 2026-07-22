@@ -1,18 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  RefreshControl,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
 import type { TFunction } from 'i18next';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { useFarms } from '../src/hooks';
@@ -245,7 +238,7 @@ export default function WeatherScreen() {
             justifyContent: 'center',
           }}
         >
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
           <Text style={{ color: m3.surface.s600, marginTop: spacing[4] }}>
             {t('common.loading')}
           </Text>

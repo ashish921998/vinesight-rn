@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -90,7 +91,7 @@ export function ReportExportActions({
           })}
         >
           {isExporting ? (
-            <ActivityIndicator size="small" color={onPrimary} />
+            <Spinner size="small" color={onPrimary} />
           ) : (
             <>
               <Icon
@@ -135,7 +136,7 @@ export function ReportExportActions({
           })}
         >
           {isExporting ? (
-            <ActivityIndicator size="small" color={primary} />
+            <Spinner size="small" color={primary} />
           ) : (
             <>
               <Icon

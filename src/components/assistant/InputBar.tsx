@@ -17,7 +17,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Platform,
@@ -26,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { useM3, useIsDark } from '@/styles/use-theme';
 import { componentRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { Spinner } from '@/components/ui/spinner';
 import type { AIMessageAttachmentInput } from '@/types/ai';
 
 const INPUT_MAX_HEIGHT = 120;
@@ -187,16 +187,8 @@ export function InputBar({
               borderColor: m3.colorScheme.outline,
               borderWidth: 1,
               borderRadius: componentRadius.input,
-              ...Platform.select({
-                ios: {
-                  maxHeight: INPUT_MAX_HEIGHT,
-                  minHeight: INPUT_MIN_HEIGHT,
-                },
-                android: {
-                  maxHeight: INPUT_MAX_HEIGHT,
-                  minHeight: INPUT_MIN_HEIGHT,
-                },
-              }),
+              maxHeight: INPUT_MAX_HEIGHT,
+              minHeight: INPUT_MIN_HEIGHT,
             },
           ]}
           editable={!isLoading && !disabled}
@@ -210,7 +202,7 @@ export function InputBar({
         {/* Send / Mic button */}
         {isLoading ? (
           <View style={styles.iconButton} accessibilityLabel={t('assistant.chat.thinking')}>
-            <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+            <Spinner size="small" color={m3.colorScheme.primary} />
           </View>
         ) : hasText ? (
           <TouchableOpacity

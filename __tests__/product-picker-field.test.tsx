@@ -3,7 +3,10 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import { ProductPickerField } from '@/components/professional/product-picker-field';
 import { buildSearchSelectSections } from '@/components/ui/search-select-logic';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+jest.mock('@/data-access', () => {
+  const dataAccess = { from: jest.fn() };
+  return { getDataAccess: jest.fn(() => dataAccess), supabase: dataAccess };
+});
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({

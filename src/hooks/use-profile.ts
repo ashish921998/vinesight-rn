@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { queryKeys } from './query-keys';
 import {
   TABLES,
@@ -33,7 +33,7 @@ async function getUserId(): Promise<string> {
   const {
     data: { session },
     error,
-  } = await supabase.auth.getSession();
+  } = await getDataAccess().auth.getSession();
   if (error || !session) {
     throw new Error('Please sign in to continue');
   }
@@ -51,7 +51,7 @@ export function useProfile(options?: { enabled?: boolean }) {
     queryFn: async (): Promise<Profile | null> => {
       const userId = await getUserId();
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.PROFILES)
         .select('*')
         .eq('id', userId)
@@ -76,7 +76,7 @@ export function useUpdateProfile() {
       const userId = await getUserId();
       const payload: ProfileUpdate & { id: string } = { ...updates, id: userId };
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.PROFILES)
         .upsert(payload, { onConflict: 'id' })
         .select()
@@ -101,7 +101,7 @@ export function useWarehouseItems(type?: string) {
     queryFn: async (): Promise<WarehouseItem[]> => {
       const userId = await getUserId();
 
-      let query = supabase
+      let query = getDataAccess()
         .from(TABLES.WAREHOUSE_ITEMS)
         .select('*')
         .eq('user_id', userId)
@@ -126,7 +126,7 @@ export function useCreateWarehouseItem() {
     mutationFn: async (item: WarehouseItemInsert): Promise<WarehouseItem> => {
       const userId = await getUserId();
 
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WAREHOUSE_ITEMS)
         .insert({ ...item, user_id: userId })
         .select()
@@ -152,7 +152,7 @@ export function useUpdateWarehouseItem() {
       id: number;
       updates: WarehouseItemUpdate;
     }): Promise<WarehouseItem> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.WAREHOUSE_ITEMS)
         .update(updates)
         .eq('id', id)
@@ -173,7 +173,7 @@ export function useDeleteWarehouseItem() {
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const { error } = await supabase.from(TABLES.WAREHOUSE_ITEMS).delete().eq('id', id);
+      const { error } = await getDataAccess().from(TABLES.WAREHOUSE_ITEMS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -191,7 +191,7 @@ export function useSoilTestRecords(farmId: number | undefined, seasonId?: number
   return useQuery({
     queryKey: [...queryKeys.soilTestRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<SoilTestRecord[]> => {
-      let query = supabase
+      let query = getDataAccess()
         .from(TABLES.SOIL_TEST_RECORDS)
         .select('*')
         .eq('farm_id', farmId)
@@ -220,7 +220,7 @@ export function useCreateSoilTestRecord() {
           farmId: record.farm_id,
           date: record.date,
         }));
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.SOIL_TEST_RECORDS)
         .insert({ ...record, season_id: seasonId })
         .select()
@@ -248,7 +248,7 @@ export function useUpdateSoilTestRecord() {
       id: number;
       updates: Partial<SoilTestRecord>;
     }): Promise<SoilTestRecord> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.SOIL_TEST_RECORDS)
         .update(updates)
         .eq('id', id)
@@ -271,7 +271,7 @@ export function useDeleteSoilTestRecord() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.SOIL_TEST_RECORDS).delete().eq('id', id);
+      const { error } = await getDataAccess().from(TABLES.SOIL_TEST_RECORDS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -291,7 +291,7 @@ export function usePetioleTestRecords(farmId: number | undefined, seasonId?: num
   return useQuery({
     queryKey: [...queryKeys.petioleTestRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<PetioleTestRecord[]> => {
-      let query = supabase
+      let query = getDataAccess()
         .from(TABLES.PETIOLE_TEST_RECORDS)
         .select('*')
         .eq('farm_id', farmId)
@@ -320,7 +320,7 @@ export function useCreatePetioleTestRecord() {
           farmId: record.farm_id,
           date: record.date,
         }));
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.PETIOLE_TEST_RECORDS)
         .insert({ ...record, season_id: seasonId })
         .select()
@@ -348,7 +348,7 @@ export function useUpdatePetioleTestRecord() {
       id: number;
       updates: Partial<PetioleTestRecord>;
     }): Promise<PetioleTestRecord> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.PETIOLE_TEST_RECORDS)
         .update(updates)
         .eq('id', id)
@@ -371,7 +371,10 @@ export function useDeletePetioleTestRecord() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.PETIOLE_TEST_RECORDS).delete().eq('id', id);
+      const { error } = await getDataAccess()
+        .from(TABLES.PETIOLE_TEST_RECORDS)
+        .delete()
+        .eq('id', id);
 
       if (error) throw error;
     },
@@ -391,7 +394,7 @@ export function useSoilProfiles(farmId: number | undefined, seasonId?: number) {
   return useQuery({
     queryKey: [...queryKeys.soilProfiles.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<SoilProfile[]> => {
-      let query = supabase
+      let query = getDataAccess()
         .from(TABLES.SOIL_PROFILES)
         .select('*')
         .eq('farm_id', farmId)
@@ -421,7 +424,7 @@ export function useCreateSoilProfile() {
           farmId: profile.farm_id,
           date: formatLocalDate(new Date(createdAt)),
         }));
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.SOIL_PROFILES)
         .insert({ ...profile, season_id: seasonId, created_at: createdAt })
         .select()
@@ -449,7 +452,7 @@ export function useUpdateSoilProfile() {
       id: number;
       updates: Partial<SoilProfile>;
     }): Promise<SoilProfile> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.SOIL_PROFILES)
         .update(updates)
         .eq('id', id)
@@ -472,7 +475,7 @@ export function useDeleteSoilProfile() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.SOIL_PROFILES).delete().eq('id', id);
+      const { error } = await getDataAccess().from(TABLES.SOIL_PROFILES).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -492,7 +495,7 @@ export function useCalculationHistory(farmId: number | undefined, type?: string)
   return useQuery({
     queryKey: queryKeys.calculationHistory.listByFarm(farmId!, type),
     queryFn: async (): Promise<CalculationHistory[]> => {
-      let query = supabase
+      let query = getDataAccess()
         .from(TABLES.CALCULATION_HISTORY)
         .select('*')
         .eq('farm_id', farmId)
@@ -516,7 +519,7 @@ export function useCreateCalculationHistory() {
 
   return useMutation({
     mutationFn: async (history: CalculationHistoryInsert): Promise<CalculationHistory> => {
-      const { data, error } = await supabase
+      const { data, error } = await getDataAccess()
         .from(TABLES.CALCULATION_HISTORY)
         .insert(history)
         .select()

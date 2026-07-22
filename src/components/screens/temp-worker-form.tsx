@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
-import { Platform, View, Text, Pressable, Alert } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { View, Text, Pressable, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useCreateTemporaryWorkerEntry, useFarms, useCurrency } from '@/hooks';
-import { FormModal, SectionHeader, FormInput, PreviewCard, Button } from '@/components/ui';
+import { FormModal, SectionHeader, FormInput, PreviewCard, DateField } from '@/components/ui';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { useFarmSeasonStatus } from '@/hooks/use-farm-seasons';
 import { createStartSeasonHref } from '@/utils/add-log-navigation';
 import { useRouter } from 'expo-router';
 import { FarmSelectModal } from '@/components/modals/farm-select-modal';
 import { useM3 } from '@/styles/use-theme';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { formatDate, formatCurrency } from '@/i18n/format';
+import { spacing, borderRadius, fontSize } from '@/styles/theme';
+import { formatCurrency } from '@/i18n/format';
 import { formatLocalDate } from '@/utils/date';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
-import { colorWithOpacity } from '@/utils/color';
 
 interface TempWorkerFormProps {
   visible?: boolean;
@@ -45,7 +43,6 @@ export function TempWorkerForm({
   const [notes, setNotes] = useState('');
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(externalFarmId ?? null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [showFarmModal, setShowFarmModal] = useState(false);
 
   const createTemporaryWorkerEntry = useCreateTemporaryWorkerEntry();
@@ -148,53 +145,12 @@ export function TempWorkerForm({
         style={{ marginBottom: spacing[3] }}
       />
 
-      <Text
-        style={{
-          fontSize: fontSize.sm,
-          fontWeight: fontWeight.medium,
-          color: m3.surface.s700,
-          marginBottom: spacing[2],
-        }}
-      >
-        {t('workers.tempWorkers.form.fields.date.label')}
-      </Text>
-      <Pressable
-        onPress={() => setShowDatePicker(true)}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: m3.surface.s100,
-          borderRadius: borderRadius.xl,
-          borderWidth: 2,
-          borderColor: m3.surface.s200,
-          paddingHorizontal: spacing[4],
-          paddingVertical: spacing[3],
-          marginBottom: spacing[3],
-        }}
-      >
-        <View
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: borderRadius.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-            marginRight: spacing[3],
-          }}
-        >
-          <IconSymbol name="calendar" size={16} color={m3.colorScheme.primary} />
-        </View>
-        <Text
-          style={{
-            fontSize: fontSize.base,
-            fontWeight: fontWeight.medium,
-            color: m3.colorScheme.onSurface,
-          }}
-        >
-          {formatDate(date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-        </Text>
-      </Pressable>
+      <DateField
+        value={date}
+        onChange={setDate}
+        label={t('workers.tempWorkers.form.fields.date.label')}
+        style={{ marginBottom: spacing[3] }}
+      />
 
       <SectionHeader
         title={t('workers.tempWorkers.form.sections.workDetails')}
@@ -291,95 +247,6 @@ export function TempWorkerForm({
               value: `${formatCurrency(parsedAmount / parsedHours, currency)}${t('workers.tempWorkers.form.perHour')}`,
             },
           ]}
-        />
-      )}
-
-      {showDatePicker && Platform.OS === 'ios' && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 50,
-          }}
-        >
-          <Pressable
-            onPress={() => setShowDatePicker(false)}
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            }}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: m3.surface.s100,
-              borderTopLeftRadius: borderRadius['2xl'],
-              borderTopRightRadius: borderRadius['2xl'],
-              padding: spacing[4],
-            }}
-            onStartShouldSetResponder={() => true}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginBottom: spacing[4],
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {t('common.selectDate')}
-              </Text>
-              <Pressable
-                onPress={() => setShowDatePicker(false)}
-                accessibilityRole="button"
-                accessibilityLabel="Close date picker"
-                accessible={true}
-              >
-                <IconSymbol name="xmark.circle.fill" size={24} color={m3.surface.s500} />
-              </Pressable>
-            </View>
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display="spinner"
-              onChange={(_, selectedDate) => {
-                if (selectedDate) setDate(selectedDate);
-              }}
-            />
-            <Button
-              title={t('common.done')}
-              onPress={() => setShowDatePicker(false)}
-              style={{ marginTop: spacing[4] }}
-            />
-          </View>
-        </View>
-      )}
-
-      {showDatePicker && Platform.OS !== 'ios' && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={(_, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) setDate(selectedDate);
-          }}
         />
       )}
 

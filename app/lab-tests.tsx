@@ -4,19 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { withAdvancedRouteGuard } from '@/components/advanced-route-guard';
 
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { LabTestDetailsModal } from '@/components/screens/lab-test-details-modal';
 import { LabTestsFabSheet } from '@/components/modals/lab-tests-fab-sheet';
@@ -700,7 +693,7 @@ function LabTestsScreen() {
       {/* Content */}
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
           <Text
             style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[2] }}
             textBreakStrategy="highQuality"

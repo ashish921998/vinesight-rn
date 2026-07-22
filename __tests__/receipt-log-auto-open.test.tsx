@@ -97,7 +97,8 @@ jest.mock('@/styles/use-theme', () => ({
       onPrimary: '#fff',
       shadow: '#000',
     },
-    surface: { s50: '#eee', s100: '#f5f5f5', s300: '#ddd' },
+    surface: { s50: '#eee', s100: '#f5f5f5', s300: '#ddd', surfaceContainerLow: '#f0f0f0' },
+    typography: { titleMedium: {} },
   }),
 }));
 

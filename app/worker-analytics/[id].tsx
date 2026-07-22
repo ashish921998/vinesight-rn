@@ -1,19 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  Platform,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, Platform, StyleSheet } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { useWorkerAttendance, useWorkerTransactions, useWorkers, useCurrency } from '@/hooks';
 import { formatCurrency, formatDate } from '@/i18n/format';
+import { Spinner } from '@/components/ui/spinner';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import {
   computeWorkerMetrics,
@@ -24,12 +18,13 @@ import {
   type DateRange,
 } from '@/utils/worker-analytics';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
-import { useM3 } from '@/styles/use-theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 export default function WorkerAnalyticsDetailScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
+  const isDark = useIsDark();
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const rawWorkerId = Number(id);
@@ -62,25 +57,12 @@ export default function WorkerAnalyticsDetailScreen() {
     return transactions.filter((tx) => isDateInRange(tx.date, range));
   }, [transactions, range]);
 
-  const handleDateChange = (type: 'from' | 'to', event: DateTimePickerEvent, date?: Date) => {
-    if (event.type === 'dismissed') {
-      if (type === 'from') setShowFromPicker(false);
-      if (type === 'to') setShowToPicker(false);
-      return;
-    }
-
-    if (date) {
-      const normalized = normalizeDate(date);
-      if (type === 'from') {
-        setRange((prev) => ({ ...prev, from: normalized }));
-      } else {
-        setRange((prev) => ({ ...prev, to: normalized }));
-      }
-    }
-
-    if (Platform.OS === 'android') {
-      if (type === 'from') setShowFromPicker(false);
-      if (type === 'to') setShowToPicker(false);
+  const handleDateChange = (type: 'from' | 'to', date: Date) => {
+    const normalized = normalizeDate(date);
+    if (type === 'from') {
+      setRange((prev) => ({ ...prev, from: normalized }));
+    } else {
+      setRange((prev) => ({ ...prev, to: normalized }));
     }
   };
 
@@ -89,7 +71,7 @@ export default function WorkerAnalyticsDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+          <Spinner size="large" color={m3.colorScheme.primary} />
         </View>
       </>
     );
@@ -434,174 +416,120 @@ export default function WorkerAnalyticsDetailScreen() {
         )}
       </ScrollView>
 
-      {showFromPicker && Platform.OS === 'ios' && (
-        <Pressable
-          onPress={() => setShowFromPicker(false)}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            zIndex: 50,
-          }}
+      {Platform.OS === 'ios' && (
+        <BottomSheet
+          index={showFromPicker ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => setShowFromPicker(false)}
+          backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
         >
           <View
             style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: m3.surface.surfaceContainerHigh,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
               padding: spacing[4],
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
+              gap: spacing[3],
             }}
-            onStartShouldSetResponder={() => true}
           >
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginBottom: spacing[4],
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.bold,
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {t('common.from')}
-              </Text>
-              <Pressable onPress={() => setShowFromPicker(false)}>
-                <UiSymbol
-                  name="xmark.circle.fill"
-                  size={24}
-                  color={m3.colorScheme.onSurfaceVariant}
-                />
-              </Pressable>
-            </View>
+            <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+              {t('common.from')}
+            </Text>
             <DateTimePicker
               value={range.from}
               mode="date"
               display="spinner"
-              onChange={(event, date) => handleDateChange('from', event, date)}
+              themeVariant={isDark ? 'dark' : 'light'}
+              onValueChange={(_, date) => handleDateChange('from', date)}
               maximumDate={range.to}
-              textColor={m3.colorScheme.onSurface}
-              style={{ height: 200 }}
             />
-            <Pressable
-              onPress={() => setShowFromPicker(false)}
-              style={{
-                marginTop: spacing[4],
-                paddingVertical: spacing[3],
-                borderRadius: borderRadius.lg,
-                alignItems: 'center',
-                backgroundColor: m3.colorScheme.primary,
-              }}
-            >
-              <Text style={{ fontWeight: fontWeight.bold, color: m3.colorScheme.onPrimary }}>
-                {t('common.done')}
-              </Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+              <Pressable
+                onPress={() => setShowFromPicker(false)}
+                style={{
+                  paddingVertical: spacing[2],
+                  paddingHorizontal: spacing[4],
+                  borderRadius: borderRadius.lg,
+                  alignItems: 'center',
+                  backgroundColor: m3.colorScheme.primary,
+                }}
+              >
+                <Text style={{ fontWeight: fontWeight.bold, color: m3.colorScheme.onPrimary }}>
+                  {t('common.done')}
+                </Text>
+              </Pressable>
+            </View>
           </View>
-        </Pressable>
+        </BottomSheet>
       )}
-      {showFromPicker && Platform.OS !== 'ios' && (
+      {Platform.OS !== 'ios' && showFromPicker && (
         <DateTimePicker
           value={range.from}
           mode="date"
-          display="default"
-          onChange={(event, date) => handleDateChange('from', event, date)}
+          presentation="dialog"
+          onValueChange={(_, date) => {
+            handleDateChange('from', date);
+            setShowFromPicker(false);
+          }}
+          onDismiss={() => setShowFromPicker(false)}
           maximumDate={range.to}
         />
       )}
-      {showToPicker && Platform.OS === 'ios' && (
-        <Pressable
-          onPress={() => setShowToPicker(false)}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            zIndex: 50,
-          }}
+      {Platform.OS === 'ios' && (
+        <BottomSheet
+          index={showToPicker ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={() => setShowToPicker(false)}
+          backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
         >
           <View
             style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: m3.surface.surfaceContainerHigh,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
               padding: spacing[4],
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
+              gap: spacing[3],
             }}
-            onStartShouldSetResponder={() => true}
           >
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginBottom: spacing[4],
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.bold,
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {t('common.to')}
-              </Text>
-              <Pressable onPress={() => setShowToPicker(false)}>
-                <UiSymbol
-                  name="xmark.circle.fill"
-                  size={24}
-                  color={m3.colorScheme.onSurfaceVariant}
-                />
-              </Pressable>
-            </View>
+            <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+              {t('common.to')}
+            </Text>
             <DateTimePicker
               value={range.to}
               mode="date"
               display="spinner"
-              onChange={(event, date) => handleDateChange('to', event, date)}
+              themeVariant={isDark ? 'dark' : 'light'}
+              onValueChange={(_, date) => handleDateChange('to', date)}
               minimumDate={range.from}
               maximumDate={new Date()}
-              textColor={m3.colorScheme.onSurface}
-              style={{ height: 200 }}
             />
-            <Pressable
-              onPress={() => setShowToPicker(false)}
-              style={{
-                marginTop: spacing[4],
-                paddingVertical: spacing[3],
-                borderRadius: borderRadius.lg,
-                alignItems: 'center',
-                backgroundColor: m3.colorScheme.primary,
-              }}
-            >
-              <Text style={{ fontWeight: fontWeight.bold, color: m3.colorScheme.onPrimary }}>
-                {t('common.done')}
-              </Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+              <Pressable
+                onPress={() => setShowToPicker(false)}
+                style={{
+                  paddingVertical: spacing[2],
+                  paddingHorizontal: spacing[4],
+                  borderRadius: borderRadius.lg,
+                  alignItems: 'center',
+                  backgroundColor: m3.colorScheme.primary,
+                }}
+              >
+                <Text style={{ fontWeight: fontWeight.bold, color: m3.colorScheme.onPrimary }}>
+                  {t('common.done')}
+                </Text>
+              </Pressable>
+            </View>
           </View>
-        </Pressable>
+        </BottomSheet>
       )}
-      {showToPicker && Platform.OS !== 'ios' && (
+      {Platform.OS !== 'ios' && showToPicker && (
         <DateTimePicker
           value={range.to}
           mode="date"
-          display="default"
-          onChange={(event, date) => handleDateChange('to', event, date)}
+          presentation="dialog"
+          onValueChange={(_, date) => {
+            handleDateChange('to', date);
+            setShowToPicker(false);
+          }}
+          onDismiss={() => setShowToPicker(false)}
           minimumDate={range.from}
           maximumDate={new Date()}
         />

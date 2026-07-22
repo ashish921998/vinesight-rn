@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { queryKeys } from '@/hooks/query-keys';
 import { TABLES } from '@/types/database';
 import { formatLocalDate } from '@/utils/date';
@@ -140,7 +140,7 @@ function mapCatalogData(
 }
 
 async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
-  const mixesResult = await supabase
+  const mixesResult = await getDataAccess()
     .from(TABLES.CHEMICAL_MIXES)
     .select('id,name,target_problem,application_mode,source_page,is_active')
     .eq('is_active', true)
@@ -155,7 +155,7 @@ async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
 
   const componentsPromise =
     mixIds.length > 0
-      ? supabase
+      ? getDataAccess()
           .from(TABLES.CHEMICAL_MIX_COMPONENTS)
           .select(
             'id,mix_id,product_id,product_name_snapshot,active_ingredient_snapshot,dose_value,dose_unit,dose_basis,base_tank_liters,sequence_no',
@@ -179,7 +179,7 @@ async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
   );
   const phiPromise =
     productIds.length > 0
-      ? supabase
+      ? getDataAccess()
           .from(TABLES.CHEMICAL_PHI_RULES)
           .select('product_id,crop,phi_days,verified,source_note,effective_from,effective_to')
           .in('product_id', productIds)

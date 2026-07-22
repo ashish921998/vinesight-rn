@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { telemetry } from '@/services/telemetry';
 import {
   getErrorMessage,
@@ -22,7 +22,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
 
       // 'local' scope signs out only this device. Other devices logged in
       // with the same account keep their sessions alive.
-      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      const { error } = await getDataAccess().auth.signOut({ scope: 'local' });
       if (error) throw error;
 
       if (__DEV__) {
@@ -96,7 +96,7 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
         }
       }
 
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      const { error } = await getDataAccess().auth.signOut({ scope: 'global' });
       if (error) throw error;
 
       setSentryUser(null);
@@ -145,13 +145,13 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
     set({ errorMessage: null });
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { error } = await getDataAccess().auth.updateUser({
         data: { country: trimmedCountry },
       });
 
       if (error) throw error;
 
-      const { data, error: getUserError } = await supabase.auth.getUser();
+      const { data, error: getUserError } = await getDataAccess().auth.getUser();
 
       if (getUserError) {
         if (__DEV__) {
@@ -180,13 +180,13 @@ export const createAccountActions = (set: SetState, get: GetState) => ({
   updateUserAreaUnit: async (areaUnit: 'hectares' | 'acres') => {
     set({ errorMessage: null });
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { error } = await getDataAccess().auth.updateUser({
         data: { area_unit: areaUnit },
       });
 
       if (error) throw error;
 
-      const { data, error: getUserError } = await supabase.auth.getUser();
+      const { data, error: getUserError } = await getDataAccess().auth.getUser();
 
       if (getUserError) {
         if (__DEV__) {

@@ -1,6 +1,6 @@
 # ADR 0001: No data-access / repository seam over Supabase
 
-- Status: Accepted
+- Status: Superseded by [ADR 0002](./0002-introduce-data-access-layer.md)
 - Date: 2026-07-17
 
 ## Context

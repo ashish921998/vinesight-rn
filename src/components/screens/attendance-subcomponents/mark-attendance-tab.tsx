@@ -1,14 +1,5 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  StyleSheet,
-  Modal,
-} from 'react-native';
+import { View, Text, ScrollView, Alert, Pressable, StyleSheet } from 'react-native';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -20,17 +11,18 @@ import { triggerHaptic, triggerHapticMedium, triggerHapticSuccess } from '@/util
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { supabase } from '@/lib/supabase';
+import { Spinner } from '@/components/ui/spinner';
+import { getDataAccess } from '@/data-access';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
 import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useTabBarInset, isAndroid, isIOS } from '@/hooks';
+import { useTabBarInset, isAndroid } from '@/hooks';
 import { WorkerSelectSheet, FarmSelectSheet } from '@/components/modals';
 import { formatDate as formatDateLocalized } from '@/i18n/format';
 import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { normalizeDate, addDays } from '@/utils/worker-analytics';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { DateField } from '@/components/ui';
 
 const STORAGE_KEYS = {
   ATTENDANCE_RANGE_START: 'attendance_range_start',
@@ -140,9 +132,6 @@ export function MarkAttendanceTab({
   const [selectedFarmIds, setSelectedFarmIds] = useState<number[]>([]);
   const [workerSheetVisible, setWorkerSheetVisible] = useState(false);
   const [farmSheetVisible, setFarmSheetVisible] = useState(false);
-  const [showFromPicker, setShowFromPicker] = useState(false);
-  const [showToPicker, setShowToPicker] = useState(false);
-  const [tempPickerDate, setTempPickerDate] = useState<Date | null>(null);
   const [toast, setToast] = useState<ToastState>({ visible: false, message: '', type: 'success' });
   const [rangeLength, setRangeLength] = useState<number>(7);
   const [isRangeLoaded, setIsRangeLoaded] = useState(false);
@@ -518,53 +507,14 @@ export function MarkAttendanceTab({
     setWorkerSheetVisible(true);
   };
 
-  const handleDateRangeChange = (type: 'from' | 'to', event: DateTimePickerEvent, date?: Date) => {
-    if (event.type === 'dismissed') {
-      if (isAndroid) {
-        if (type === 'from') setShowFromPicker(false);
-        if (type === 'to') setShowToPicker(false);
-      }
-      return;
+  const handleDateRangeChange = (type: 'from' | 'to', date: Date) => {
+    const normalized = normalizeDate(date);
+    if (type === 'from') {
+      handleRangeStartChange(normalized);
+    } else {
+      const newStart = addDays(normalized, -(rangeLength - 1));
+      handleRangeStartChange(newStart);
     }
-
-    if (date) {
-      const normalized = normalizeDate(date);
-      if (type === 'from') {
-        handleRangeStartChange(normalized);
-      } else {
-        const newStart = addDays(normalized, -(rangeLength - 1));
-        handleRangeStartChange(newStart);
-      }
-    }
-
-    if (isAndroid) {
-      if (type === 'from') setShowFromPicker(false);
-      if (type === 'to') setShowToPicker(false);
-    }
-  };
-
-  const activePickerType: 'from' | 'to' | null = showFromPicker
-    ? 'from'
-    : showToPicker
-      ? 'to'
-      : null;
-  const closePickers = () => {
-    setShowFromPicker(false);
-    setShowToPicker(false);
-    setTempPickerDate(null);
-  };
-
-  const confirmPickerDate = () => {
-    if (tempPickerDate && activePickerType) {
-      const normalized = normalizeDate(tempPickerDate);
-      if (activePickerType === 'from') {
-        handleRangeStartChange(normalized);
-      } else {
-        const newStart = addDays(normalized, -(rangeLength - 1));
-        handleRangeStartChange(newStart);
-      }
-    }
-    closePickers();
   };
 
   const isToday = (date: Date): boolean => {
@@ -580,14 +530,10 @@ export function MarkAttendanceTab({
     return formatDateLocalized(date, { weekday: 'short' });
   };
 
-  const formatShortDate = (date: Date) => {
-    return formatDateLocalized(date, { month: 'short', day: 'numeric' });
-  };
-
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+        <Spinner size="large" color={m3.colorScheme.primary} />
       </View>
     );
   }
@@ -797,195 +743,19 @@ export function MarkAttendanceTab({
           </View>
 
           <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[3] }}>
-            <Pressable
-              onPress={() => {
-                setShowFromPicker(true);
-                setShowToPicker(false);
-              }}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[3],
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                ...(pressed
-                  ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.onSurface,
-                        m3.stateLayerOpacity.pressed,
-                      ),
-                    }
-                  : null),
-              })}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.onSurfaceVariant,
-                }}
-              >
-                {t('common.from')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.bold,
-                  marginTop: spacing[1],
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {formatShortDate(rangeStart)}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                setShowToPicker(true);
-                setShowFromPicker(false);
-              }}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[3],
-                borderRadius: m3.shape.cornerMedium,
-                borderCurve: 'continuous',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                ...(pressed
-                  ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.onSurface,
-                        m3.stateLayerOpacity.pressed,
-                      ),
-                    }
-                  : null),
-              })}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.onSurfaceVariant,
-                }}
-              >
-                {t('common.to')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.bold,
-                  marginTop: spacing[1],
-                  color: m3.colorScheme.onSurface,
-                }}
-              >
-                {formatShortDate(rangeEnd)}
-              </Text>
-            </Pressable>
+            <DateField
+              value={rangeStart}
+              onChange={(date) => handleDateRangeChange('from', date)}
+              label={t('common.from')}
+              style={{ flex: 1 }}
+            />
+            <DateField
+              value={rangeEnd}
+              onChange={(date) => handleDateRangeChange('to', date)}
+              label={t('common.to')}
+              style={{ flex: 1 }}
+            />
           </View>
-
-          {isIOS ? (
-            activePickerType ? (
-              <Modal transparent animationType="fade" onRequestClose={closePickers}>
-                <Pressable
-                  onPress={closePickers}
-                  style={{
-                    flex: 1,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-                    justifyContent: 'flex-end',
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: m3.colorScheme.surface,
-                      borderTopLeftRadius: borderRadius['3xl'],
-                      borderTopRightRadius: borderRadius['3xl'],
-                      padding: spacing[4],
-                      paddingBottom: spacing[6],
-                    }}
-                    onStartShouldSetResponder={() => true}
-                  >
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: spacing[3],
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.semibold,
-                          color: m3.colorScheme.onSurface,
-                        }}
-                      >
-                        {activePickerType === 'from' ? t('common.from') : t('common.to')}
-                      </Text>
-                      <Pressable onPress={closePickers}>
-                        <UiSymbol
-                          name="xmark"
-                          size={18}
-                          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                        />
-                      </Pressable>
-                    </View>
-                    <DateTimePicker
-                      value={
-                        tempPickerDate ?? (activePickerType === 'from' ? rangeStart : rangeEnd)
-                      }
-                      mode="date"
-                      display="spinner"
-                      onChange={(_event, date) => {
-                        if (date) setTempPickerDate(date);
-                      }}
-                      textColor={m3.colorScheme.onSurface}
-                      style={{ height: 200 }}
-                    />
-                    <Pressable
-                      onPress={confirmPickerDate}
-                      style={{
-                        marginTop: spacing[3],
-                        paddingVertical: spacing[3],
-                        borderRadius: m3.shape.cornerMedium,
-                        borderCurve: 'continuous',
-                        alignItems: 'center',
-                        backgroundColor: m3.colorScheme.primary,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: fontSize.sm,
-                          fontWeight: fontWeight.semibold,
-                          color: m3.colorScheme.onPrimary,
-                        }}
-                      >
-                        {t('common.done')}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </Pressable>
-              </Modal>
-            ) : null
-          ) : (
-            <>
-              {showFromPicker && (
-                <DateTimePicker
-                  value={rangeStart}
-                  mode="date"
-                  display="default"
-                  onChange={(event, date) => handleDateRangeChange('from', event, date)}
-                />
-              )}
-              {showToPicker && (
-                <DateTimePicker
-                  value={rangeEnd}
-                  mode="date"
-                  display="default"
-                  onChange={(event, date) => handleDateRangeChange('to', event, date)}
-                />
-              )}
-            </>
-          )}
         </View>
 
         {/* ── Day Cells Grid ── */}
@@ -1369,7 +1139,7 @@ export function MarkAttendanceTab({
                   gap: spacing[2],
                 }}
               >
-                <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                <Spinner size="small" color={m3.colorScheme.onPrimary} />
                 <Text
                   style={{
                     fontSize: fontSize.base,
@@ -1487,7 +1257,7 @@ async function fetchAttendanceForWorker(
   startDate: string,
   endDate: string,
 ): Promise<WorkerAttendance[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getDataAccess()
     .from('worker_attendance')
     .select('*')
     .eq('worker_id', workerId)
@@ -1503,7 +1273,7 @@ async function fetchAttendanceForWorker(
 }
 
 async function createAttendance(data: WorkerAttendanceInsert): Promise<WorkerAttendance> {
-  const { data: result, error } = await supabase
+  const { data: result, error } = await getDataAccess()
     .from('worker_attendance')
     .insert(data)
     .select()
@@ -1520,7 +1290,7 @@ async function updateAttendance(
   id: number,
   data: Partial<WorkerAttendanceInsert>,
 ): Promise<WorkerAttendance> {
-  const { data: result, error } = await supabase
+  const { data: result, error } = await getDataAccess()
     .from('worker_attendance')
     .update(data)
     .eq('id', id)
@@ -1535,7 +1305,7 @@ async function updateAttendance(
 }
 
 async function deleteAttendance(id: number): Promise<void> {
-  const { error } = await supabase.from('worker_attendance').delete().eq('id', id);
+  const { error } = await getDataAccess().from('worker_attendance').delete().eq('id', id);
 
   if (error) {
     throw new Error('Failed to delete attendance');

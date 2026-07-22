@@ -32,6 +32,7 @@ import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHaptic } from '@/utils/haptics';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { SegmentedControl as ExpoSegmentedControl } from '@expo/ui/community/segmented-control';
 
 interface FormModalProps {
   visible?: boolean;
@@ -615,7 +616,6 @@ interface SegmentedControlProps {
   options: SegmentOption[];
   selectedValue: string;
   onSelect: (value: string) => void;
-  selectedTextColor?: string;
   accessibilityLabel?: string;
 }
 
@@ -623,93 +623,35 @@ export function SegmentedControl({
   options,
   selectedValue,
   onSelect,
-  selectedTextColor,
   accessibilityLabel,
 }: SegmentedControlProps) {
   const m3 = useM3();
   const isDark = useIsDark();
-  const containerStyle: ViewStyle = {
-    flexDirection: 'row',
-    backgroundColor: m3.surface.s200,
-    borderColor: m3.surface.s300,
-    borderWidth: Platform.OS === 'ios' ? 0.5 : 1,
-    borderRadius: borderRadius.full,
-    padding: spacing[1],
-    gap: spacing[1],
-    borderCurve: 'continuous',
-  };
 
-  const getSegmentStyle = (selected: boolean, pressed: boolean): ViewStyle => ({
-    flex: 1,
-    paddingVertical: spacing[2],
-    paddingHorizontal: Platform.OS === 'android' ? spacing[1] : spacing[3],
-    minHeight: Platform.OS === 'android' ? 40 : 44,
-    borderRadius: borderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: selected
-      ? isDark
-        ? m3.primary.p600
-        : '#FFFFFF'
-      : pressed
-        ? m3.surface.s300
-        : 'transparent',
-    borderWidth: 0,
-    borderCurve: 'continuous',
-  });
-
-  const getSegmentTextStyle = (selected: boolean): TextStyle => ({
-    fontSize: Platform.OS === 'android' ? fontSize.xs : fontSize.sm,
-    lineHeight: Platform.OS === 'android' ? 16 : fontSize.sm + 6,
-    fontWeight:
-      Platform.OS === 'android'
-        ? selected
-          ? fontWeight.semibold
-          : fontWeight.medium
-        : selected
-          ? fontWeight.semibold
-          : fontWeight.medium,
-    color: selected
-      ? (selectedTextColor ?? (isDark ? '#FFFFFF' : m3.neutral.n900))
-      : m3.neutral.n500,
-    textAlign: 'center',
-    ...(Platform.OS === 'android'
-      ? {
-          includeFontPadding: false,
-          textAlignVertical: 'center',
-          paddingBottom: 0,
-          paddingLeft: 0,
-          paddingRight: 0,
-          letterSpacing: 0,
-        }
-      : null),
-  });
+  const selectedIndex = Math.max(
+    0,
+    options.findIndex((option) => option.value === selectedValue),
+  );
 
   return (
-    <View
-      style={containerStyle}
-      accessibilityRole="radiogroup"
-      accessibilityLabel={accessibilityLabel ?? 'Options'}
-    >
-      {options.map((option) => {
-        const selected = selectedValue === option.value;
-        return (
-          <Pressable
-            key={option.value}
-            accessibilityRole="radio"
-            accessibilityState={{ selected }}
-            onPress={() => {
-              triggerHaptic();
-              onSelect(option.value);
-            }}
-            style={({ pressed }) => getSegmentStyle(selected, pressed)}
-          >
-            <Text style={getSegmentTextStyle(selected)} numberOfLines={2}>
-              {option.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+    <View accessibilityLabel={accessibilityLabel ?? 'Options'}>
+      <ExpoSegmentedControl
+        values={options.map((option) => option.label)}
+        selectedIndex={selectedIndex}
+        onValueChange={(label) => {
+          const selectedOption = options.find((option) => option.label === label);
+          if (!selectedOption) return;
+          triggerHaptic();
+          onSelect(selectedOption.value);
+        }}
+        // tintColor is the selected pill's background on Android (no-op on iOS). Use our
+        // faint-green secondaryContainer, NOT primary: primary is a dark green and the
+        // label stays M3's dark onSecondaryContainer, so dark-on-dark was unreadable.
+        // A light-green pill keeps the dark label legible and matches the design system.
+        tintColor={m3.colorScheme.secondaryContainer}
+        appearance={isDark ? 'dark' : 'light'}
+        style={{ width: '100%', minHeight: 48 }}
+      />
     </View>
   );
 }

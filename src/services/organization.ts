@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 
 /**
  * Result of a self-serve org join (the join_organization_by_slug RPC, added in
@@ -85,7 +85,7 @@ export async function joinOrganizationBySlug(rawSlug: string): Promise<JoinOrgRe
   } | null = null;
 
   try {
-    const { data: rpcData, error } = await supabase.rpc('join_organization_by_slug', {
+    const { data: rpcData, error } = await getDataAccess().rpc('join_organization_by_slug', {
       p_slug: slug,
     });
     if (error) {

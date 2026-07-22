@@ -5,7 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { queryKeys } from './query-keys';
 import {
   TABLES,
@@ -34,19 +34,7 @@ export function useIrrigationRecords(farmId: number | undefined, seasonId?: numb
   return useQuery({
     queryKey: [...queryKeys.irrigationRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<IrrigationRecord[]> => {
-      let query = supabase
-        .from(TABLES.IRRIGATION_RECORDS)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
+      return await getDataAccess().records.listIrrigationByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -58,14 +46,7 @@ export function useIrrigationRecordsByFarms(farmIds: number[]) {
     queryFn: async (): Promise<IrrigationRecord[]> => {
       if (farmIds.length === 0) return [];
 
-      const { data, error } = await supabase
-        .from(TABLES.IRRIGATION_RECORDS)
-        .select('*')
-        .in('farm_id', farmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
+      return getDataAccess().records.listIrrigationByFarms(farmIds);
     },
     enabled: farmIds.length > 0,
   });
@@ -88,19 +69,7 @@ export function useSprayRecords(farmId: number | undefined, seasonId?: number) {
   return useQuery({
     queryKey: [...queryKeys.sprayRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<SprayRecord[]> => {
-      let query = supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
+      return getDataAccess().records.listSprayByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -112,14 +81,7 @@ export function useSprayRecordsByFarms(farmIds: number[]) {
     queryFn: async (): Promise<SprayRecord[]> => {
       if (farmIds.length === 0) return [];
 
-      const { data, error } = await supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .select('*')
-        .in('farm_id', farmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
+      return getDataAccess().records.listSprayByFarms(farmIds);
     },
     enabled: farmIds.length > 0,
   });
@@ -141,19 +103,7 @@ export function useFertigationRecords(farmId: number | undefined, seasonId?: num
   return useQuery({
     queryKey: [...queryKeys.fertigationRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<FertigationRecord[]> => {
-      let query = supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
+      return await getDataAccess().records.listFertigationByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -165,14 +115,7 @@ export function useFertigationRecordsByFarms(farmIds: number[]) {
     queryFn: async (): Promise<FertigationRecord[]> => {
       if (farmIds.length === 0) return [];
 
-      const { data, error } = await supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .select('*')
-        .in('farm_id', farmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
+      return getDataAccess().records.listFertigationByFarms(farmIds);
     },
     enabled: farmIds.length > 0,
   });
@@ -194,19 +137,7 @@ export function useHarvestRecords(farmId: number | undefined, seasonId?: number)
   return useQuery({
     queryKey: [...queryKeys.harvestRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<HarvestRecord[]> => {
-      let query = supabase
-        .from(TABLES.HARVEST_RECORDS)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
+      return await getDataAccess().records.listHarvestByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -218,14 +149,7 @@ export function useHarvestRecordsByFarms(farmIds: number[]) {
     queryFn: async (): Promise<HarvestRecord[]> => {
       if (farmIds.length === 0) return [];
 
-      const { data, error } = await supabase
-        .from(TABLES.HARVEST_RECORDS)
-        .select('*')
-        .in('farm_id', farmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
+      return getDataAccess().records.listHarvestByFarms(farmIds);
     },
     enabled: farmIds.length > 0,
   });
@@ -247,19 +171,7 @@ export function useExpenseRecords(farmId: number | undefined, seasonId?: number)
   return useQuery({
     queryKey: [...queryKeys.expenseRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<ExpenseRecord[]> => {
-      let query = supabase
-        .from(TABLES.EXPENSE_RECORDS)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
+      return await getDataAccess().records.listExpenseByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -271,14 +183,7 @@ export function useExpenseRecordsByFarms(farmIds: number[]) {
     queryFn: async (): Promise<ExpenseRecord[]> => {
       if (farmIds.length === 0) return [];
 
-      const { data, error } = await supabase
-        .from(TABLES.EXPENSE_RECORDS)
-        .select('*')
-        .in('farm_id', farmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
+      return getDataAccess().records.listExpenseByFarms(farmIds);
     },
     enabled: farmIds.length > 0,
   });
@@ -300,29 +205,14 @@ export async function fetchDailyNoteByDate(
   farmId: number,
   date: string,
 ): Promise<DailyNoteRecord | null> {
-  const { data, error } = await supabase
-    .from(TABLES.DAILY_NOTES)
-    .select('*')
-    .eq('farm_id', farmId)
-    .eq('date', date)
-    .maybeSingle();
-  if (error) throw error;
-  return data ?? null;
+  return getDataAccess().records.getDailyNote(farmId, date);
 }
 
 export function useDailyNoteByDate(farmId: number | undefined, date: string | undefined) {
   return useQuery({
     queryKey: queryKeys.dailyNotes.byDate(farmId!, date!),
     queryFn: async (): Promise<DailyNoteRecord | null> => {
-      const { data, error } = await supabase
-        .from(TABLES.DAILY_NOTES)
-        .select('*')
-        .eq('farm_id', farmId)
-        .eq('date', date)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data ?? null;
+      return getDataAccess().records.getDailyNote(farmId!, date!);
     },
     enabled: !!farmId && !!date,
   });
@@ -332,19 +222,7 @@ export function useDailyNotes(farmId: number | undefined, seasonId?: number) {
   return useQuery({
     queryKey: [...queryKeys.dailyNotes.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<DailyNoteRecord[]> => {
-      let query = supabase
-        .from(TABLES.DAILY_NOTES)
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: false });
-      if (seasonId !== undefined) {
-        query = query.eq('season_id', seasonId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data ?? [];
+      return await getDataAccess().records.listDailyNotesByFarm(farmId!, seasonId);
     },
     enabled: !!farmId,
   });
@@ -358,14 +236,7 @@ export function useDailyNotesByFarms(farmIds: number[]) {
     queryFn: async (): Promise<DailyNoteRecord[]> => {
       if (sortedFarmIds.length === 0) return [];
 
-      const { data, error } = await supabase
-        .from(TABLES.DAILY_NOTES)
-        .select('*')
-        .in('farm_id', sortedFarmIds)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
+      return await getDataAccess().records.listDailyNotesByFarms(sortedFarmIds);
     },
     enabled: sortedFarmIds.length > 0,
   });
@@ -385,23 +256,13 @@ export function useUpsertDailyNote() {
       notes: string | null;
     }): Promise<DailyNoteRecord> => {
       const seasonId = await resolveOrCreateSeasonIdForDate({ farmId: farm_id, date });
-      const { data, error } = await supabase
-        .from(TABLES.DAILY_NOTES)
-        .upsert(
-          {
-            farm_id,
-            season_id: seasonId,
-            date,
-            notes: notes === null ? null : notes.trim(),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'farm_id,date' },
-        )
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return getDataAccess().records.upsertDailyNote({
+        farm_id,
+        season_id: seasonId,
+        date,
+        notes: notes === null ? null : notes.trim(),
+        updated_at: new Date().toISOString(),
+      });
     },
     onSuccess: (savedNote) => {
       queryClient.invalidateQueries({
@@ -435,14 +296,7 @@ export function useDeleteDailyNote() {
     }): Promise<void> => {
       // Notes are uniquely keyed by farm_id+date; when the caller has no real id
       // (id === 0 for notes saved via the receipt screen) fall back to that key.
-      let query = supabase.from(TABLES.DAILY_NOTES).delete().eq('farm_id', farmId);
-      if (id > 0) {
-        query = query.eq('id', id);
-      } else {
-        query = query.eq('date', date);
-      }
-      const { error } = await query;
-      if (error) throw error;
+      await getDataAccess().records.deleteDailyNote({ id, farmId, date });
     },
     onSuccess: (_, { farmId, date }) => {
       queryClient.invalidateQueries({
@@ -608,21 +462,8 @@ export function useRecentSprayChemicals(farmId?: number, limit = 12) {
   return useQuery({
     queryKey: [...queryKeys.sprayRecords.lists(), 'recent_chemicals', { farmId: farmId ?? null }],
     queryFn: async (): Promise<RecentInputItem[]> => {
-      let query = supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .select('chemical,date,chemical_items,catalog_mix_id')
-        .order('date', { ascending: false })
-        .limit(80);
-
-      if (farmId !== undefined) {
-        query = query.eq('farm_id', farmId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
       return dedupeRecentItems(
-        parseRecentSprayRecords((data ?? []) as RecentSprayRecordRow[]),
+        parseRecentSprayRecords(await getDataAccess().records.listRecentSprays(farmId)),
         limit,
       );
     },
@@ -665,21 +506,8 @@ export function useRecentFertigationItems(farmId?: number, limit = 12) {
       { farmId: farmId ?? null },
     ],
     queryFn: async (): Promise<RecentInputItem[]> => {
-      let query = supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .select('fertilizers,date')
-        .order('date', { ascending: false })
-        .limit(80);
-
-      if (farmId !== undefined) {
-        query = query.eq('farm_id', farmId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
       return dedupeRecentItems(
-        parseRecentFertigationRecords((data ?? []) as RecentFertigationRecordRow[]),
+        parseRecentFertigationRecords(await getDataAccess().records.listRecentFertigations(farmId)),
         limit,
       );
     },

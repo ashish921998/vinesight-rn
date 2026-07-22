@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { getDataAccess } from '@/data-access';
 import { queryKeys } from '@/hooks/query-keys';
 import { TABLES } from '@/types/database';
 import type {
@@ -104,7 +104,7 @@ async function fetchMasterProducts(args: {
     'id,name,manufacturer,active_ingredient,input_type,verification_tier,formulation,density_kg_per_l,density_source_url,density_verified,state_code,source_reference,is_active,created_at,updated_at';
 
   const buildProductQuery = (selectColumns: string, options?: { stateCode?: string }) => {
-    let query = supabase
+    let query = getDataAccess()
       .from(TABLES.CHEMICAL_PRODUCTS)
       .select(selectColumns)
       .eq('is_active', true)
@@ -135,11 +135,11 @@ async function fetchMasterProducts(args: {
   const productIds = products.map((product) => product.id);
 
   const [aliasesResult, compositionsResult, guidanceResult] = await Promise.all([
-    supabase
+    getDataAccess()
       .from(TABLES.CHEMICAL_PRODUCT_ALIASES)
       .select('id,product_id,alias,locale,alias_kind,source,created_at')
       .in('product_id', productIds),
-    supabase
+    getDataAccess()
       .from(TABLES.CHEMICAL_PRODUCT_COMPOSITIONS)
       .select(
         'id,product_id,component_code,component_type,percent,basis,verified,source_note,created_at,updated_at',
@@ -147,7 +147,7 @@ async function fetchMasterProducts(args: {
       .in('product_id', productIds),
     // Recommended-dose layer (#236): only active advisory rows. 42P01-tolerated
     // like the alias/composition reads so a pre-migration DB stays usable.
-    supabase
+    getDataAccess()
       .from(TABLES.CHEMICAL_PRODUCT_DOSE_GUIDANCE)
       .select(
         'product_id,application_route,min_value,max_value,unit,applications_per_month,source_note,source_url',
