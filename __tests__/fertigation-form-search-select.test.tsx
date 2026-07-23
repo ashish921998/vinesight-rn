@@ -1,11 +1,10 @@
 import React from 'react';
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import {
   FertigationForm,
   createEmptyFertigationFormData,
   type FertigationFormData,
 } from '@/components/forms/fertigation-form';
-import { SEARCH_SELECT_DEBOUNCE_MS } from '@/components/ui/search-select';
 import type { RecentInputItem } from '@/hooks/use-records';
 import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 import type { MasterCatalogProduct } from '@/types/catalog';
@@ -118,7 +117,7 @@ const catalogProducts: MasterCatalogProduct[] = [
 
 function renderFertigationForm(onChange: (data: FertigationFormData) => void) {
   const data = createEmptyFertigationFormData();
-  const screen = render(
+  return render(
     <FertigationForm
       data={data}
       onChange={onChange}
@@ -127,20 +126,23 @@ function renderFertigationForm(onChange: (data: FertigationFormData) => void) {
       catalogProducts={catalogProducts}
     />,
   );
-  // "Add fertilizer" opens the sectioned picker (there are options to pick from).
-  fireEvent.press(screen.getByText('fertigationForm.fertilizers.addFertilizer'));
-  return screen;
 }
 
-describe('FertigationForm × SearchSelect adoption', () => {
-  it('fills the empty row with identity when a history row is tapped (warehouse id passes through)', () => {
+/** Type into the empty row's name field so the typeahead opens. */
+function typeName(screen: ReturnType<typeof render>, text: string) {
+  fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
+  fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), text);
+}
+
+describe('FertigationForm typeahead adoption', () => {
+  it('fills the row with identity when a history option is tapped (warehouse id passes through)', () => {
     const onChange = jest.fn();
     const screen = renderFertigationForm(onChange);
 
+    typeName(screen, 'Ware');
     fireEvent.press(screen.getByText('WarehouseUrea'));
 
-    expect(onChange).toHaveBeenCalledTimes(1);
-    const next = onChange.mock.calls[0][0] as FertigationFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers).toHaveLength(1);
     expect(next.fertilizers[0]).toMatchObject({
       name: 'WarehouseUrea',
@@ -159,9 +161,10 @@ describe('FertigationForm × SearchSelect adoption', () => {
     const onChange = jest.fn();
     const screen = renderFertigationForm(onChange);
 
+    typeName(screen, 'Plan');
     fireEvent.press(screen.getByText('PlanUrea'));
 
-    const next = onChange.mock.calls[0][0] as FertigationFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({
       name: 'PlanUrea',
       quantity: 5,
@@ -177,9 +180,10 @@ describe('FertigationForm × SearchSelect adoption', () => {
     const onChange = jest.fn();
     const screen = renderFertigationForm(onChange);
 
+    typeName(screen, '19:19');
     fireEvent.press(screen.getByText('19:19:19'));
 
-    const next = onChange.mock.calls[0][0] as FertigationFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({
       name: '19:19:19',
       catalogProductId: 500,
@@ -189,55 +193,33 @@ describe('FertigationForm × SearchSelect adoption', () => {
     });
   });
 
-  it('finds the canonical "19:19:19" catalog row when searching "19-19-19"', () => {
-    jest.useFakeTimers();
-    try {
-      const onChange = jest.fn();
-      const screen = renderFertigationForm(onChange);
+  it('finds the canonical "19:19:19" catalog row when typing "19-19-19"', () => {
+    const onChange = jest.fn();
+    const screen = renderFertigationForm(onChange);
 
-      fireEvent.changeText(
-        screen.getByPlaceholderText('searchSelect.searchPlaceholder'),
-        '19-19-19',
-      );
-      act(() => {
-        jest.advanceTimersByTime(SEARCH_SELECT_DEBOUNCE_MS + 50);
-      });
-      fireEvent.press(screen.getByText('19:19:19'));
+    typeName(screen, '19-19-19');
+    fireEvent.press(screen.getByText('19:19:19'));
 
-      const next = onChange.mock.calls[0][0] as FertigationFormData;
-      // The canonical catalog name is stored, not the typed spelling.
-      expect(next.fertilizers[0]).toMatchObject({ name: '19:19:19', catalogProductId: 500 });
-    } finally {
-      jest.useRealTimers();
-    }
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
+    // The canonical catalog name is stored, not the typed spelling.
+    expect(next.fertilizers[0]).toMatchObject({ name: '19:19:19', catalogProductId: 500 });
   });
 
   it('adds a plain custom row from the escape hatch', () => {
-    jest.useFakeTimers();
-    try {
-      const onChange = jest.fn();
-      const screen = renderFertigationForm(onChange);
+    const onChange = jest.fn();
+    const screen = renderFertigationForm(onChange);
 
-      fireEvent.changeText(
-        screen.getByPlaceholderText('searchSelect.searchPlaceholder'),
-        'Brand New Fert',
-      );
-      act(() => {
-        jest.advanceTimersByTime(SEARCH_SELECT_DEBOUNCE_MS + 50);
-      });
-      fireEvent.press(screen.getByText('searchSelect.addCustom:Brand New Fert'));
+    typeName(screen, 'Brand New Fert');
+    fireEvent.press(screen.getByText('searchSelect.addCustom:Brand New Fert'));
 
-      const next = onChange.mock.calls[0][0] as FertigationFormData;
-      expect(next.fertilizers[0]).toMatchObject({
-        name: 'Brand New Fert',
-        unit: 'kg',
-        warehouseItemId: null,
-        catalogProductId: null,
-        planItemId: null,
-        compositionSnapshot: null,
-      });
-    } finally {
-      jest.useRealTimers();
-    }
+    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
+    expect(next.fertilizers[0]).toMatchObject({
+      name: 'Brand New Fert',
+      unit: 'kg',
+      warehouseItemId: null,
+      catalogProductId: null,
+      planItemId: null,
+      compositionSnapshot: null,
+    });
   });
 });

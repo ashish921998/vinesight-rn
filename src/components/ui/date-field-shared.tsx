@@ -9,7 +9,7 @@
  * the trigger button both renderers mount.
  */
 
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { Pressable, Text, View, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol } from '@/components/ui/symbol';
@@ -41,6 +41,40 @@ export interface DateFieldProps {
   disabled?: boolean;
   testID?: string;
   style?: ViewStyle;
+  /** Replaces the standard field trigger while preserving the native picker. */
+  renderTrigger?: (openPicker: () => void) => ReactNode;
+  /**
+   * iOS only: present the picker in a React Native `Modal` overlay (on top of
+   * whatever is behind it) instead of a nested `@expo/ui` bottom sheet.
+   * Required when the field lives inside another `@expo/ui` BottomSheet — that
+   * library presents one sheet at a time, so a nested picker sheet would
+   * dismiss its host. No-op on Android.
+   */
+  overlay?: boolean;
+  /**
+   * Show "Today"/"Yesterday" instead of the formatted date for those two days
+   * (older/future dates still render the absolute date). Opt-in because it only
+   * reads well for "when did this happen" logs — not planting dates, DOB, etc.
+   */
+  relativeLabels?: boolean;
+}
+
+/** Local midnight of a date, for whole-day comparisons. */
+function startOfDay(d: Date): number {
+  const c = new Date(d);
+  c.setHours(0, 0, 0, 0);
+  return c.getTime();
+}
+
+/**
+ * Whole-day offset of `value` from `now`: 0 = today, 1 = yesterday, else null.
+ * Normalizes to local midnight first, so DST (a 23h/25h day) still rounds to a
+ * clean day count. Only today/yesterday get a relative label; everything else
+ * falls back to the absolute date.
+ */
+export function relativeDayOffset(value: Date, now: Date): 0 | 1 | null {
+  const days = Math.round((startOfDay(now) - startOfDay(value)) / 86_400_000);
+  return days === 0 ? 0 : days === 1 ? 1 : null;
 }
 
 /**
@@ -80,6 +114,7 @@ export function DateFieldTrigger({
   disabled,
   testID,
   onPress,
+  relativeLabels,
 }: {
   value: Date | null;
   label?: string;
@@ -88,6 +123,7 @@ export function DateFieldTrigger({
   disabled?: boolean;
   testID?: string;
   onPress: () => void;
+  relativeLabels?: boolean;
 }) {
   const m3 = useM3();
   const { t } = useTranslation();
@@ -97,9 +133,11 @@ export function DateFieldTrigger({
   // language setting. It returns '' for an invalid date, so coerce that empty
   // string to null too — otherwise `?? placeholder` wouldn't kick in and the
   // trigger would render blank instead of the placeholder.
-  const formatted = value
-    ? formatDate(value, { year: 'numeric', month: 'short', day: 'numeric' }) || null
-    : null;
+  const offset = value && relativeLabels ? relativeDayOffset(value, new Date()) : null;
+  const relative = offset === 0 ? t('common.today') : offset === 1 ? t('common.yesterday') : null;
+  const formatted =
+    relative ??
+    (value ? formatDate(value, { year: 'numeric', month: 'short', day: 'numeric' }) || null : null);
   const displayText =
     formatted ?? placeholder ?? t('common.selectDate', { defaultValue: 'Select date' });
 

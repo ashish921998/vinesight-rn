@@ -791,6 +791,23 @@ export const mr = {
     },
   },
 
+  quickLog: {
+    title: '{{type}} नोंदवा',
+    loggingTo: '{{farm}} मध्ये नोंदवत आहे',
+    saveType: '{{type}} जतन करा',
+    durationQuestion: 'पाणी किती वेळ चालू होते?',
+    waterQuestion: 'टाकीत किती पाणी?',
+    tankQuestion: 'टाकीत काय टाकले?',
+    fertilizerQuestion: 'पाण्यात खत दिले का?',
+    optionalTag: 'ऐच्छिक',
+    emptyFertilizerHint: 'खत नाही? हरकत नाही — फक्त पाण्याची नोंद जतन करा.',
+    phiSafeTitle: 'तुमच्या काढणीसाठी सुरक्षित',
+    phiSafeBody: 'या फवारणीनंतर {{date}} पासून काढणी सुरक्षित आहे.',
+    phiRiskTitle: 'सावधान — काढणी जवळ आहे',
+    phiRiskBody:
+      'या फवारणीनंतर {{date}} पर्यंत काढणी करू नका — ही तुमच्या नियोजित काढणीनंतर ({{target}}) आहे. जतन केल्यास ओव्हरराइड म्हणून नोंद होईल.',
+  },
+
   entryForm: {
     logSaved: 'नोंद जतन केली',
     taskSaved: 'कार्य जतन केले',
@@ -848,7 +865,6 @@ export const mr = {
       selectDueDate: 'देय दिनांक निवडा',
       selectDueDateTitle: 'देय दिनांक निवडा',
     },
-    pickDate: 'तारीख निवडा',
     irrigationFertilizerHint: '+ खते',
     repeatLastLogTitle: 'मागील नोंद पुन्हा करायची?',
     repeatLastLogLoggedOn: '{{date}} रोजी नोंदवले',
@@ -917,7 +933,6 @@ export const mr = {
         lowLastLog: 'मात्रा तपासा — तुमच्या मागील नोंदीच्या ({{reference}}) सुमारे 1/{{ratio}}',
       },
     },
-    quickAdd: 'जलद जोडा',
     catalogOnly: {
       title: 'कॅटलॉग मिक्स',
       selectedMix: 'निवडलेले: {{name}}',
@@ -965,7 +980,6 @@ export const mr = {
           'प्रमाण तपासा — टाकले {{entered}}; लेबल {{min}}–{{max}} {{unit}} शिफारस करते',
       },
     },
-    quickAdd: 'जलद जोडा',
     /** ppm/g-per-L plan items shown as informational rows, never tappable chips (issue #197). */
     ppmPlanItemNotice: '{{name}}: ppm मात्रा जलद जोडता येत नाही — स्वतः भरा',
     noMatchesHint: 'जुळणारे सापडले नाही. सानुकूल $t(glossary.fertigation) नावासह पुढे जा.',
@@ -1567,6 +1581,9 @@ export const mr = {
     recentRecords: 'अलीकडील नोंदी',
     viewAll: 'सर्व पहा',
     noRecords: 'अद्याप कोणत्याही नोंदी नाहीत',
+    loggingTo: 'नोंद करत आहे',
+    switch: 'बदला',
+    loggingToNoFarm: 'अद्याप शेत नाही',
   },
   assistant: {
     placeholder: 'तुमचे प्रश्न विचारा — मी कशी मदत करू?',
@@ -2445,6 +2462,7 @@ export const mr = {
       title: 'त्वरित क्रिया',
       irrigation: '$t(glossary.irrigation)',
       spray: '$t(glossary.spray)',
+      harvest: '$t(glossary.harvest)',
       expense: '$t(glossary.expense)',
       note: 'नोंद',
     },

@@ -1,11 +1,12 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
+import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
 import { SearchSelect } from '@/components/ui/search-select';
 import {
   chemicalCatalogToOptions,
   planItemsToOptions,
   recentItemsToOptions,
+  type SearchSelectOption,
   type SearchSelectSelection,
 } from '@/components/ui/search-select-logic';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
@@ -21,12 +22,11 @@ import { toKernelSpelling } from '@/constants/unit-text';
 import {
   MAX_PRODUCT_ROWS,
   allProductRowsComplete,
-  applyQuickAdd,
-  filterNameSuggestions,
   isProductRowComplete,
   sanitizeQuantityInput,
 } from './product-rows';
-import { NameSuggestionOverlay } from './name-suggestion-overlay';
+import { ProductTypeahead } from './product-typeahead';
+import { QtyUnitField } from './qty-unit-field';
 import {
   SPRAY_UNIT_CHIPS,
   SPRAY_UNIT_OVERFLOW_CHIPS,
@@ -112,30 +112,34 @@ interface SprayFormProps {
   data: SprayFormData;
   onChange: (data: SprayFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
-  quickAddItems?: SprayQuickAddItem[];
   catalogOnly?: boolean;
   catalogMixes?: ChemicalMix[];
-  /** This farm's recent spray items (identity-rich) for the picker's history section. */
+  /** This farm's recent spray items (identity-rich) for the typeahead's history section. */
   historyItems?: RecentInputItem[];
-  /** This farm's active plan items for the picker's plan section. */
+  /** This farm's active plan items for the typeahead's plan section. */
   planItems?: FertilizerPlanItem[];
   /** Farm area in acres — resolves per-acre doses into the tank echo. */
   areaAcres?: number | null;
   /** Hide the decorative header (inline log composer). */
   compact?: boolean;
+  /** Hide the "Chemicals *" mini-header when the host supplies its own label. */
+  showSectionHeader?: boolean;
+  /** Hide the water-volume input when the host renders its own control. */
+  showWaterInput?: boolean;
 }
 
 export function SprayForm({
   data,
   onChange,
   onInputFocus,
-  quickAddItems = [],
   catalogOnly = false,
   catalogMixes = [],
   historyItems = [],
   planItems = [],
   areaAcres = null,
   compact = false,
+  showSectionHeader = true,
+  showWaterInput = true,
 }: SprayFormProps) {
   const m3 = useM3();
   const { t } = useTranslation();
@@ -196,7 +200,12 @@ export function SprayForm({
   }, [data.chemicals]);
 
   const waterVolumeRef = useRef<NumericInputHandle>(null);
+  // catalogOnly (delegated logging) keeps the modal mix picker; everyone else
+  // picks through the row typeahead.
   const [showProductPicker, setShowProductPicker] = useState(false);
+  // Which complete row is open for editing. Incomplete rows are always open;
+  // complete rows collapse to receipt lines and re-open on tap — one at a time.
+  const [editingRowKey, setEditingRowKey] = useState<string | null>(null);
   const selectedCatalogMix = useMemo(
     () => catalogMixes.find((mix) => mix.id === data.catalogMixId) ?? null,
     [catalogMixes, data.catalogMixId],
@@ -216,9 +225,6 @@ export function SprayForm({
     () => chemicalCatalogToOptions(catalogMixes, { includeProducts: !catalogOnly }),
     [catalogMixes, catalogOnly],
   );
-  const hasPickerOptions =
-    historyOptions.length > 0 || planOptions.length > 0 || catalogOptions.length > 0;
-
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
@@ -246,26 +252,27 @@ export function SprayForm({
   }, [data]);
 
   const addChemical = () => {
-    if (data.chemicals.length < MAX_PRODUCT_ROWS) {
-      onChange({
-        ...data,
-        chemicals: clampChemicalRows([
-          ...data.chemicals,
-          {
-            id: generateId(),
-            name: '',
-            quantity: undefined,
-            unit: DEFAULT_CHEMICAL_UNIT,
-            quantityBasis: 'total',
-            warehouseItemId: null,
-            catalogProductId: null,
-            planItemId: null,
-            compositionSnapshot: null,
-            densityKgPerL: null,
-          },
-        ]),
-      });
-    }
+    if (data.chemicals.length >= MAX_PRODUCT_ROWS) return;
+    const id = generateId();
+    onChange({
+      ...data,
+      chemicals: clampChemicalRows([
+        ...data.chemicals,
+        {
+          id,
+          name: '',
+          quantity: undefined,
+          unit: DEFAULT_CHEMICAL_UNIT,
+          quantityBasis: 'total',
+          warehouseItemId: null,
+          catalogProductId: null,
+          planItemId: null,
+          compositionSnapshot: null,
+          densityKgPerL: null,
+        },
+      ]),
+    });
+    setEditingRowKey(id);
   };
 
   const updateChemical = (id: string, updates: Partial<ChemicalEntry>) => {
@@ -278,77 +285,33 @@ export function SprayForm({
     onChange({ ...data, chemicals: clampChemicalRows(newChemicals) });
   };
 
-  const addQuickChemical = useCallback(
-    (item: SprayQuickAddItem) => {
-      // Items with no unit of their own default to the product's last-used
-      // chip (per-product persistence, issue #194) before the g/L fallback.
-      const lastUsed = item.unit?.trim() ? null : lastUsedChipFor(item.name, item.catalogProductId);
-      const validatedUnit = lastUsed?.unit ?? resolveChemicalUnit(item.unit);
-      const normalizedName = item.name.trim().toLowerCase();
-      // Duplicate identity is the fused chip (unit + basis), not the unit
-      // string alone — 'kg total' and 'kg/acre' share unit 'kg' but are
-      // distinct entries. Rows outside the chip vocabulary fall back to the
-      // unit string.
-      const incomingBasis =
-        item.quantityBasis ??
-        lastUsed?.basis ??
-        resolveChemicalQuantityBasis(item.unit?.trim() ?? validatedUnit);
-      const incomingChipKey = chipForEntry(validatedUnit, incomingBasis)?.key ?? validatedUnit;
-      const nextChemicals = applyQuickAdd(data.chemicals, {
-        isDuplicate: (chemical) =>
-          chemical.name.trim().toLowerCase() === normalizedName &&
-          (chipForEntry(chemical.unit, chemical.quantityBasis)?.key ?? chemical.unit) ===
-            incomingChipKey,
-        fillRow: (current) => ({
-          ...current,
-          name: item.name.trim(),
-          unit: validatedUnit,
-          quantity:
-            current.quantity !== undefined && current.quantity > 0
-              ? current.quantity
-              : (item.quantity ?? undefined),
-          // An explicit item basis (fully-prefilled picker selections) wins over
-          // the pristine row's default 'total'; legacy quick-add producers never
-          // set one, so their behavior is unchanged. The last-used chip's basis
-          // only applies when the item brought no unit at all.
-          quantityBasis:
-            item.quantityBasis ??
-            lastUsed?.basis ??
-            current.quantityBasis ??
-            resolveChemicalQuantityBasis(item.unit?.trim() ?? validatedUnit),
-          warehouseItemId: item.warehouseItemId ?? null,
-          catalogProductId: item.catalogProductId ?? null,
-          planItemId: item.planItemId ?? null,
-          compositionSnapshot: item.composition ?? null,
-          densityKgPerL: item.densityKgPerL ?? null,
-        }),
-        appendRow: () => ({
-          id: generateId(),
-          name: item.name.trim(),
-          quantity: item.quantity ?? undefined,
-          unit: validatedUnit,
-          quantityBasis: resolveChemicalQuantityBasis(
-            item.unit?.trim() ?? validatedUnit,
-            item.quantityBasis ?? lastUsed?.basis,
-          ),
-          warehouseItemId: item.warehouseItemId ?? null,
-          catalogProductId: item.catalogProductId ?? null,
-          planItemId: item.planItemId ?? null,
-          compositionSnapshot: item.composition ?? null,
-          densityKgPerL: item.densityKgPerL ?? null,
-        }),
-      });
-      if (nextChemicals) onChange({ ...data, chemicals: clampChemicalRows(nextChemicals) });
-    },
-    [data, onChange, lastUsedChipFor],
-  );
-
   const applyCatalogMix = useCallback(
-    (mix: ChemicalMix) => {
+    (mix: ChemicalMix, replaceRowId?: string) => {
+      // Rows the user actually entered survive a mix pick — only the triggering
+      // row (whose name still holds the typeahead query) and pristine blank rows
+      // are dropped. This is the "keep mine, add the mix" behaviour: picking a
+      // mix into a fresh tank fills it, but picking one alongside custom rows
+      // appends the mix's components instead of wiping the tank.
+      const keptRows = dataRef.current.chemicals.filter(
+        (c) => c.id !== replaceRowId && c.name.trim().length > 0,
+      );
+      const keptProductIds = new Set(
+        keptRows.map((c) => c.catalogProductId).filter((id): id is number => id != null),
+      );
+      const keptNames = new Set(keptRows.map((c) => normalizeDedupeText(c.name)));
+
       const dedupeKeySet = new Set<string>();
-      const chemicals = mix.components.flatMap((component) => {
+      const mixChemicals = mix.components.flatMap((component) => {
         const perLiter = normalizeMixComponentToPerLiterDose(component);
         if (!perLiter) return [];
+        // Skip a component already present as a kept custom row (same catalog
+        // product, or same name) so a mix pick never duplicates the user's rows.
+        if (
+          (component.product_id != null && keptProductIds.has(component.product_id)) ||
+          keptNames.has(normalizeDedupeText(component.product_name))
+        ) {
+          return [];
+        }
         const normalizedProductName = normalizeDedupeText(component.product_name);
         const canonicalDoseValue = normalizeDedupeNumber(perLiter.quantity);
         const canonicalDoseUnit = normalizeDedupeText(perLiter.unit);
@@ -375,17 +338,36 @@ export function SprayForm({
         };
       });
 
-      if (chemicals.length === 0) {
-        return;
-      }
-      if (chemicals.length > MAX_PRODUCT_ROWS) {
+      // Nothing new to add (empty mix, or every component already present): the
+      // tank is just the retained rows, NOT this mix, so drop any prior mix
+      // identity/PHI (stale otherwise — retained rows could inherit another
+      // mix's safe-harvest date) and commit the cleaned rows so the triggering
+      // row's stale typeahead query goes too.
+      if (mixChemicals.length === 0) {
+        onChange({
+          ...dataRef.current,
+          catalogMixId: null,
+          catalogMixName: null,
+          governingPhiDays: null,
+          safeHarvestDate: null,
+          phiBlockingComponent: null,
+          phiStatus: null,
+          phiOverride: false,
+          chemicals: clampChemicalRows(keptRows),
+        });
         return;
       }
 
+      const chemicals = clampChemicalRows([...keptRows, ...mixChemicals]);
+      // Mix identity + PHI only hold when the tank IS exactly this mix. Combined
+      // with custom rows, the mix's harvest-safety verdict can't vouch for the
+      // extras, so drop the identity — the tank then reads as unverified (safe).
+      const isPureMix = keptRows.length === 0;
+
       onChange({
         ...dataRef.current,
-        catalogMixId: mix.id,
-        catalogMixName: mix.name,
+        catalogMixId: isPureMix ? mix.id : null,
+        catalogMixName: isPureMix ? mix.name : null,
         governingPhiDays: null,
         safeHarvestDate: null,
         phiBlockingComponent: null,
@@ -397,38 +379,43 @@ export function SprayForm({
     [onChange],
   );
 
+  // Whole-mix prefill: catalog mix rows, and history rows whose record was
+  // logged as a catalog mix (record-level mix identity). Returns false when
+  // the mix is not in the cached catalog so callers fall back to the
+  // single-item prefill.
+  const applyCatalogMixById = useCallback(
+    (mixId: number, replaceRowId?: string): boolean => {
+      const mix = catalogMixes.find((candidate) => candidate.id === mixId);
+      if (!mix) return false;
+      applyCatalogMix(mix, replaceRowId);
+      return true;
+    },
+    [catalogMixes, applyCatalogMix],
+  );
+
+  // Removing the mix tag clears mix identity + PHI fields but keeps the
+  // chemical rows — they are real entries the user may have edited.
+  const clearCatalogMix = useCallback(() => {
+    onChange({
+      ...dataRef.current,
+      catalogMixId: null,
+      catalogMixName: null,
+      governingPhiDays: null,
+      safeHarvestDate: null,
+      phiBlockingComponent: null,
+      phiStatus: null,
+      phiOverride: false,
+    });
+  }, [onChange]);
+
+  // catalogOnly's modal picker offers mixes only (includeProducts: false,
+  // allowCustom: false), so this handler never sees single items.
   const handleSearchSelection = useCallback(
     (selection: SearchSelectSelection) => {
       setShowProductPicker(false);
-      // Whole-mix prefill: catalog mix rows, and history rows whose record was
-      // logged as a catalog mix (record-level mix identity). Falls back to the
-      // single-item prefill when the mix is not in the cached catalog.
-      const mix =
-        selection.catalogMixId != null
-          ? (catalogMixes.find((candidate) => candidate.id === selection.catalogMixId) ?? null)
-          : null;
-      if (mix) {
-        applyCatalogMix(mix);
-        return;
-      }
-      if (selection.kind === 'mix') return;
-      addQuickChemical({
-        name: selection.name,
-        unit: selection.prefill?.unit,
-        quantity: selection.prefill?.quantity,
-        // Resolve the basis from the original unit string ('kg/acre' → per_acre)
-        // before resolveChemicalUnit collapses it to a bare scale.
-        quantityBasis:
-          selection.prefill?.quantityBasis ?? resolveChemicalQuantityBasis(selection.prefill?.unit),
-        warehouseItemId: selection.warehouseItemId ?? null,
-        catalogProductId: selection.catalogProductId ?? null,
-        planItemId: selection.planItemId ?? null,
-        // No spray option builder sets composition today; forwarded anyway so
-        // spray and fertigation stamp identically when one ever does.
-        composition: selection.composition ?? null,
-      });
+      if (selection.catalogMixId != null) applyCatalogMixById(selection.catalogMixId);
     },
-    [catalogMixes, applyCatalogMix, addQuickChemical],
+    [applyCatalogMixById],
   );
 
   const focusFirstChemicalName = () => {
@@ -501,26 +488,28 @@ export function SprayForm({
             paddingTop: showDetailsGuidance ? spacing[2] : 0,
           }}
         >
-          {/* Water Volume Input */}
-          <NumericInput
-            label={t('sprayForm.waterVolume.label')}
-            placeholder={t('sprayForm.waterVolume.placeholder')}
-            value={data.waterVolume}
-            onValueChange={(waterVolume) => onChange({ ...data, waterVolume })}
-            unit={t('sprayForm.waterVolume.unitLiters')}
-            required
-            decimals={2}
-            hint={t('sprayForm.waterVolume.hint')}
-            ref={waterVolumeRef}
-            onSubmitEditing={focusFirstChemicalName}
-            blurOnSubmit={false}
-            returnKeyType="next"
-            onFocus={onInputFocus}
-          />
+          {/* Water Volume Input — hidden when the host renders its own hero. */}
+          {showWaterInput ? (
+            <NumericInput
+              label={t('sprayForm.waterVolume.label')}
+              placeholder={t('sprayForm.waterVolume.placeholder')}
+              value={data.waterVolume}
+              onValueChange={(waterVolume) => onChange({ ...data, waterVolume })}
+              unit={t('sprayForm.waterVolume.unitLiters')}
+              required
+              decimals={2}
+              hint={t('sprayForm.waterVolume.hint')}
+              ref={waterVolumeRef}
+              onSubmitEditing={focusFirstChemicalName}
+              blurOnSubmit={false}
+              returnKeyType="next"
+              onFocus={onInputFocus}
+            />
+          ) : null}
 
           {/* Chemicals Section */}
           <View style={{ marginTop: spacing[2] }}>
-            {catalogMixes.length > 0 ? (
+            {catalogOnly && catalogMixes.length > 0 ? (
               <View style={{ marginBottom: spacing[3] }}>
                 <Text
                   style={{
@@ -532,11 +521,7 @@ export function SprayForm({
                     letterSpacing: 0.4,
                   }}
                 >
-                  {catalogOnly
-                    ? t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })
-                    : t('sprayForm.catalogOptional.title', {
-                        defaultValue: 'Catalog mix (optional)',
-                      })}
+                  {t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })}
                 </Text>
                 <Pressable
                   onPress={() => setShowProductPicker(true)}
@@ -598,87 +583,84 @@ export function SprayForm({
                       color: m3.surface.s600,
                     }}
                   >
-                    {catalogOnly
-                      ? t('sprayForm.catalogOnly.requiredHint', {
-                          defaultValue: 'Choose a catalog mix to continue',
-                        })
-                      : t('sprayForm.catalogOptional.hint', {
-                          defaultValue: 'Optional: choose a catalog mix to enable PHI checks',
-                        })}
+                    {t('sprayForm.catalogOnly.requiredHint', {
+                      defaultValue: 'Choose a catalog mix to continue',
+                    })}
                   </Text>
                 )}
               </View>
             ) : null}
 
-            {quickAddItems.length > 0 && !catalogOnly ? (
-              <View style={{ marginBottom: spacing[3] }}>
+            {showSectionHeader ? (
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}
+              >
+                <View style={{ marginRight: 6 }}>
+                  <Symbol name="flask" size={16} color={m3.primary.p600} />
+                </View>
                 <Text
                   style={{
-                    fontSize: fontSize.xs,
+                    fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
-                    color: m3.surface.s500,
-                    marginBottom: spacing[2],
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.4,
+                    color: m3.surface.s800,
                   }}
                 >
-                  {t('sprayForm.quickAdd')}
+                  {t('sprayForm.chemicals.label')}{' '}
+                  <Text style={{ color: m3.colorScheme.error }}>*</Text>
                 </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {quickAddItems.map((item, index) => (
-                    <Pressable
-                      key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
-                      onPress={() => addQuickChemical(item)}
-                      style={{
-                        marginRight: spacing[2],
-                        paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[2],
-                        borderRadius: borderRadius.full,
-                        backgroundColor: m3.surface.s100,
-                        borderWidth: 1,
-                        borderColor: m3.surface.s200,
-                      }}
-                    >
-                      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
-                        {item.name}
-                      </Text>
-                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                        {item.quantity ? `${item.quantity} ` : ''}
-                        {item.unit ?? DEFAULT_CHEMICAL_UNIT}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
               </View>
             ) : null}
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
-              <View style={{ marginRight: 6 }}>
-                <Symbol name="flask" size={16} color={m3.primary.p600} />
-              </View>
-              <Text
+            {/* Selected mix tag — mixes are picked through the row typeahead;
+                the tag is the removable record of that pick (clears mix
+                identity + PHI, keeps the chemical rows). */}
+            {!catalogOnly && data.catalogMixId != null ? (
+              <Pressable
+                onPress={clearCatalogMix}
+                accessibilityRole="button"
+                accessibilityLabel={t('sprayForm.clearMix', {
+                  defaultValue: 'Remove mix {{name}}',
+                  name: selectedCatalogMix?.name ?? data.catalogMixName ?? '',
+                })}
                 style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s800,
+                  alignSelf: 'flex-start',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[1],
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  borderRadius: borderRadius.full,
+                  backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.14),
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.tertiary, 0.4),
+                  marginBottom: spacing[3],
                 }}
               >
-                {t('sprayForm.chemicals.label')}{' '}
-                <Text style={{ color: m3.colorScheme.error }}>*</Text>
-              </Text>
-            </View>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    color: m3.colorScheme.tertiary,
+                  }}
+                >
+                  {selectedCatalogMix?.name ?? data.catalogMixName ?? ''}
+                </Text>
+                <Symbol name="xmark.circle.fill" size={16} color={m3.colorScheme.tertiary} />
+              </Pressable>
+            ) : null}
 
-            {/* Chemicals List */}
+            {/* Chemicals List — complete rows collapse to receipt lines; the
+                tapped (or newly added) row expands for editing, one at a time. */}
             {data.chemicals.map((chemical, index) => (
               <ChemicalRow
                 key={chemical.id}
                 chemical={chemical}
                 index={index}
                 chemicalCount={data.chemicals.length}
-                quickAddItems={quickAddItems}
                 onUpdate={(updates) => updateChemical(chemical.id, updates)}
                 onRemove={() => removeChemical(chemical.id)}
-                showRemove={data.chemicals.length > 1}
+                expanded={!isProductRowComplete(chemical) || editingRowKey === chemical.id}
+                onExpand={() => setEditingRowKey(chemical.id)}
                 nameRef={chemicalRefs[index].name}
                 quantityRef={chemicalRefs[index].quantity}
                 onNextChemical={focusNextChemicalName}
@@ -688,29 +670,38 @@ export function SprayForm({
                 areaAcres={areaAcres}
                 historyItems={historyItems}
                 planItems={planItems}
+                historyOptions={historyOptions}
+                planOptions={planOptions}
+                catalogOptions={catalogOptions}
+                onMixPick={applyCatalogMixById}
                 lastUsedChipFor={lastUsedChipFor}
               />
             ))}
 
-            {/* Add Chemical Button — opens the sectioned product picker when
-                there is anything to pick from; falls back to a blank row. */}
+            {/* Add Chemical — appends a blank editing row; its name field's
+                typeahead is the picker now (history / plan / catalog / custom). */}
             {data.chemicals.length < MAX_PRODUCT_ROWS && !catalogOnly && (
               <Pressable
-                onPress={() => (hasPickerOptions ? setShowProductPicker(true) : addChemical())}
+                onPress={addChemical}
                 accessibilityRole="button"
                 accessibilityLabel={t('sprayForm.chemicals.addChemical')}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   paddingVertical: spacing[3],
                   marginTop: spacing[2],
+                  borderRadius: borderRadius.xl,
+                  borderWidth: 1.5,
+                  borderStyle: 'dashed',
+                  borderColor: m3.surface.s300,
                 }}
               >
                 <Symbol name="plus.circle.fill" size={20} color={m3.colorScheme.tertiary} />
                 <Text
                   style={{
                     fontSize: fontSize.sm,
-                    fontWeight: fontWeight.medium,
+                    fontWeight: fontWeight.semibold,
                     color: m3.colorScheme.tertiary,
                     marginLeft: spacing[2],
                   }}
@@ -739,51 +730,53 @@ export function SprayForm({
         </Text>
       ) : null}
 
-      {/* Validation indicator */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginTop: spacing[4],
-          paddingTop: spacing[4],
-          borderTopWidth: 1,
-          borderTopColor: m3.surface.s100,
-        }}
-      >
-        <Symbol
-          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
-          size={16}
-          color={
-            isValid
-              ? m3.colorScheme.success
-              : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
-          }
-        />
-        <Text
+      {/* Validation indicator (full composer only — the sheet's Save button
+          disabled state carries this in compact mode). */}
+      {!compact ? (
+        <View
           style={{
-            fontSize: fontSize.sm,
-            marginLeft: spacing[2],
-            color: isValid ? m3.colorScheme.success : m3.surface.s500,
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: spacing[4],
+            paddingTop: spacing[4],
+            borderTopWidth: 1,
+            borderTopColor: m3.surface.s100,
           }}
         >
-          {isValid ? t('sprayForm.validation.ready') : t('sprayForm.validation.incomplete')}
-        </Text>
-      </View>
+          <Symbol
+            name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
+            size={16}
+            color={
+              isValid
+                ? m3.colorScheme.success
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+            }
+          />
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              marginLeft: spacing[2],
+              color: isValid ? m3.colorScheme.success : m3.surface.s500,
+            }}
+          >
+            {isValid ? t('sprayForm.validation.ready') : t('sprayForm.validation.incomplete')}
+          </Text>
+        </View>
+      ) : null}
 
-      <SearchSelect
-        visible={showProductPicker}
-        onClose={() => setShowProductPicker(false)}
-        onSelect={handleSearchSelection}
-        historyOptions={historyOptions}
-        planOptions={planOptions}
-        catalogOptions={catalogOptions}
-        allowCustom={!catalogOnly}
-        title={
-          catalogOnly
-            ? t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })
-            : t('sprayForm.chemicals.addChemical')
-        }
-      />
+      {/* Modal mix picker — catalogOnly (delegated logging) only. */}
+      {catalogOnly ? (
+        <SearchSelect
+          visible={showProductPicker}
+          onClose={() => setShowProductPicker(false)}
+          onSelect={handleSearchSelection}
+          historyOptions={historyOptions}
+          planOptions={planOptions}
+          catalogOptions={catalogOptions}
+          allowCustom={false}
+          title={t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })}
+        />
+      ) : null}
     </View>
   );
 }
@@ -793,10 +786,11 @@ interface ChemicalRowProps {
   chemical: ChemicalEntry;
   index: number;
   chemicalCount: number;
-  quickAddItems: SprayQuickAddItem[];
   onUpdate: (updates: Partial<ChemicalEntry>) => void;
   onRemove: () => void;
-  showRemove: boolean;
+  /** Complete rows render as receipt lines when false; tap re-opens editing. */
+  expanded: boolean;
+  onExpand: () => void;
   nameRef: React.RefObject<TextInput | null>;
   quantityRef: React.RefObject<TextInput | null>;
   onNextChemical: (index: number) => void;
@@ -806,6 +800,16 @@ interface ChemicalRowProps {
   areaAcres?: number | null;
   historyItems?: RecentInputItem[];
   planItems?: FertilizerPlanItem[];
+  /** Typeahead sections (built once at form level). */
+  historyOptions?: SearchSelectOption[];
+  planOptions?: SearchSelectOption[];
+  catalogOptions?: SearchSelectOption[];
+  /**
+   * Whole-mix restore; returns false when the mix is not in the cached catalog.
+   * `replaceRowId` is the row that triggered the pick — dropped so its in-progress
+   * query text isn't kept as a stray custom row alongside the mix's components.
+   */
+  onMixPick: (mixId: number, replaceRowId?: string) => boolean;
   /** Resolves a product's last-used chip — owned by SprayForm (one subscription). */
   lastUsedChipFor: (name: string, catalogProductId?: number | null) => SprayUnitChip | null;
 }
@@ -814,10 +818,10 @@ function ChemicalRow({
   chemical,
   index,
   chemicalCount,
-  quickAddItems,
   onUpdate,
   onRemove,
-  showRemove,
+  expanded,
+  onExpand,
   nameRef,
   quantityRef,
   onNextChemical,
@@ -827,6 +831,10 @@ function ChemicalRow({
   areaAcres = null,
   historyItems = [],
   planItems = [],
+  historyOptions = [],
+  planOptions = [],
+  catalogOptions = [],
+  onMixPick,
   lastUsedChipFor,
 }: ChemicalRowProps) {
   const { t } = useTranslation();
@@ -836,13 +844,11 @@ function ChemicalRow({
     chemical.quantity !== undefined && chemical.quantity > 0 ? chemical.quantity.toString() : '',
   );
   const [isNameFocused, setIsNameFocused] = useState(false);
-  const [isQuantityFocused, setIsQuantityFocused] = useState(false);
   // Reads route through the parent's lastUsedChipFor; only the write (recording
   // a chip selection) is local — that keeps one store subscription, in SprayForm.
   const setLastUsedChip = useSprayUnitStore((s) => s.setLastUsedChip);
 
   const activeChip = chipForEntry(chemical.unit, chemical.quantityBasis);
-  const activeOverflowChip = SPRAY_UNIT_OVERFLOW_CHIPS.find((chip) => chip.key === activeChip?.key);
   const unitLabel = activeChip?.key ?? chemical.unit;
 
   const tankEcho = useMemo(
@@ -892,14 +898,7 @@ function ChemicalRow({
     [chemical, planReference, historyReference, waterLiters, areaAcres],
   );
 
-  const nameSuggestions = useMemo(
-    () => filterNameSuggestions(quickAddItems, chemical.name),
-    [chemical.name, quickAddItems],
-  );
-  const showNoMatchHint =
-    !readOnly && isNameFocused && chemical.name.trim().length >= 2 && nameSuggestions.length === 0;
-  const shouldShowSuggestions =
-    !readOnly && isNameFocused && chemical.name.trim().length >= 2 && nameSuggestions.length > 0;
+  const showTypeahead = !readOnly && isNameFocused && chemical.name.trim().length >= 1;
 
   const handleQuantityChange = (text: string) => {
     const { text: sanitizedText, quantity } = sanitizeQuantityInput(text);
@@ -947,6 +946,29 @@ function ChemicalRow({
     quantityRef.current?.focus();
   };
 
+  // Typeahead pick → whole-mix restore when the selection carries mix
+  // identity (catalog mixes AND history rows logged as a mix), else the
+  // single-item fill path shared with suggestions.
+  const handleTypeaheadSelect = (selection: SearchSelectSelection) => {
+    if (selection.catalogMixId != null && onMixPick(selection.catalogMixId, chemical.id)) return;
+    if (selection.kind === 'mix') return;
+    applySuggestion({
+      name: selection.name,
+      unit: selection.prefill?.unit,
+      quantity: selection.prefill?.quantity,
+      // Resolve the basis from the original unit string ('kg/acre' → per_acre)
+      // before resolveChemicalUnit collapses it to a bare scale.
+      quantityBasis:
+        selection.prefill?.quantityBasis ?? resolveChemicalQuantityBasis(selection.prefill?.unit),
+      warehouseItemId: selection.warehouseItemId ?? null,
+      catalogProductId: selection.catalogProductId ?? null,
+      planItemId: selection.planItemId ?? null,
+      // No spray option builder sets composition today; forwarded anyway so
+      // spray and fertigation stamp identically when one ever does.
+      composition: selection.composition ?? null,
+    });
+  };
+
   const handleNameChange = (name: string) => {
     const updates: Partial<ChemicalEntry> = { name };
     // Typed products preselect their last-used chip while the row is still
@@ -967,6 +989,63 @@ function ChemicalRow({
     const productKey = sprayProductKey(chemical.name, chemical.catalogProductId);
     if (productKey) setLastUsedChip(productKey, chip.key);
   };
+
+  // Collapsed receipt line — tap anywhere to re-open for editing (readOnly
+  // rows stay receipts: delegated mixes are not editable).
+  if (!expanded) {
+    const echoSuffix = tankEcho ? ` · ≈ ${tankEcho.totalText}` : '';
+    return (
+      <Pressable
+        onPress={readOnly ? undefined : onExpand}
+        disabled={readOnly}
+        accessibilityRole="button"
+        accessibilityLabel={chemical.name}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing[3],
+          borderRadius: borderRadius.xl,
+          padding: spacing[3],
+          marginBottom: spacing[3],
+          borderWidth: 1,
+          backgroundColor: m3.surface.s50,
+          borderColor: m3.surface.s200,
+        }}
+      >
+        <View
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: borderRadius.full,
+            backgroundColor: m3.colorScheme.tertiary,
+          }}
+        />
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.bold,
+              color: m3.surface.s900,
+            }}
+          >
+            {chemical.name}
+          </Text>
+          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s600, marginTop: 1 }}>
+            {`${chemical.quantity ?? 0} ${unitLabel}${echoSuffix}`}
+          </Text>
+        </View>
+        {!readOnly ? (
+          <Pressable onPress={onRemove} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Symbol
+              name="minus.circle.fill"
+              size={22}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            />
+          </Pressable>
+        ) : null}
+      </Pressable>
+    );
+  }
 
   return (
     <View
@@ -1012,28 +1091,18 @@ function ChemicalRow({
             blurOnSubmit={false}
           />
 
-          {shouldShowSuggestions ? (
-            <NameSuggestionOverlay
-              items={nameSuggestions}
-              onSelect={applySuggestion}
-              fallbackUnitLabel={DEFAULT_CHEMICAL_UNIT}
+          {showTypeahead ? (
+            <ProductTypeahead
+              query={chemical.name}
+              history={historyOptions}
+              plan={planOptions}
+              catalog={catalogOptions}
+              onSelect={handleTypeaheadSelect}
+              accentColor={m3.colorScheme.tertiary}
             />
           ) : null}
-
-          {showNoMatchHint ? (
-            <Text
-              style={{
-                marginTop: spacing[1],
-                marginLeft: spacing[1],
-                fontSize: fontSize.xs,
-                color: m3.surface.s600,
-              }}
-            >
-              {t('sprayForm.noMatchesHint')}
-            </Text>
-          ) : null}
         </View>
-        {showRemove && !readOnly && (
+        {!readOnly && (
           <Pressable
             onPress={onRemove}
             style={{ marginLeft: spacing[2], padding: spacing[2] }}
@@ -1048,56 +1117,26 @@ function ChemicalRow({
         )}
       </View>
 
-      {/* Quantity + unit-suffix row. The unit lives inline as a muted suffix
-          so "5 ppm" reads naturally; chips below are the only way to change it. */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginTop: spacing[2],
-          borderRadius: borderRadius.lg,
-          backgroundColor: m3.surface.s100,
-          borderWidth: 1,
-          borderColor: isQuantityFocused ? m3.colorScheme.tertiary : m3.surface.s200,
-        }}
-      >
-        <TextInput
-          ref={quantityRef}
-          style={{
-            flex: 1,
-            paddingHorizontal: spacing[3],
-            paddingVertical: 10,
-            fontSize: fontSize.base,
-            color: m3.surface.s900,
-            textAlign: 'center',
-          }}
-          placeholder={t('sprayForm.chemicals.qtyPlaceholder')}
-          placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-          keyboardType="decimal-pad"
+      {/* Fused quantity + unit input — the unit segment opens the unit menu. */}
+      <View style={{ marginTop: spacing[2] }}>
+        <QtyUnitField
           value={quantityText}
           onChangeText={handleQuantityChange}
+          unitLabel={unitLabel}
+          onUnitPress={() => setShowUnitPicker(true)}
+          accentColor={m3.colorScheme.tertiary}
+          placeholder={t('sprayForm.chemicals.qtyPlaceholder')}
           editable={!readOnly}
+          inputRef={quantityRef}
           onFocus={(event) => {
             if (readOnly) return;
-            setIsQuantityFocused(true);
             onInputFocus?.(event);
           }}
-          onBlur={() => setIsQuantityFocused(false)}
           onSubmitEditing={handleQuantitySubmit}
           returnKeyType={index < chemicalCount - 1 ? 'next' : 'done'}
           blurOnSubmit={index >= chemicalCount - 1}
+          unitAccessibilityLabel={t('sprayForm.chemicals.selectUnit')}
         />
-        <Text
-          style={{
-            paddingHorizontal: spacing[3],
-            paddingVertical: 10,
-            fontSize: fontSize.sm,
-            fontWeight: fontWeight.semibold,
-            color: m3.surface.s600,
-          }}
-        >
-          {unitLabel}
-        </Text>
       </View>
 
       {/* Live tank echo — the entered rate resolved into tank reality. */}
@@ -1153,99 +1192,19 @@ function ChemicalRow({
         </View>
       ) : null}
 
-      {/* Basis-fused unit chips: g/L · mL/L · g/acre · mL/acre · ppm + overflow. */}
-      {!readOnly ? (
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            marginTop: spacing[2],
-            gap: 8,
-          }}
-        >
-          {SPRAY_UNIT_CHIPS.map((chip) => {
-            const selected = activeChip?.key === chip.key;
-            return (
-              <Pressable
-                key={chip.key}
-                onPress={() => handleChipSelect(chip)}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                accessibilityLabel={t('sprayForm.chemicals.quickUnitLabel', {
-                  defaultValue: 'Use {{unit}} as chemical quantity unit',
-                  unit: chip.key,
-                })}
-                style={{
-                  borderRadius: borderRadius.full,
-                  paddingHorizontal: spacing[3],
-                  paddingVertical: spacing[1],
-                  backgroundColor: selected ? m3.colorScheme.tertiary : m3.surface.s100,
-                  borderWidth: 1,
-                  borderColor: selected
-                    ? m3.colorScheme.tertiary
-                    : colorWithOpacity(m3.colorScheme.outline, 0.2),
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    color: selected ? m3.surface.s100 : m3.surface.s700,
-                    fontWeight: '600',
-                  }}
-                >
-                  {chip.key}
-                </Text>
-              </Pressable>
-            );
-          })}
-          <Pressable
-            onPress={() => setShowUnitPicker(true)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: activeOverflowChip !== undefined }}
-            accessibilityLabel={t('sprayForm.chemicals.moreUnits', { defaultValue: 'More units' })}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              borderRadius: borderRadius.full,
-              paddingHorizontal: spacing[3],
-              paddingVertical: spacing[1],
-              backgroundColor: activeOverflowChip ? m3.colorScheme.tertiary : m3.surface.s100,
-              borderWidth: 1,
-              borderColor: activeOverflowChip
-                ? m3.colorScheme.tertiary
-                : colorWithOpacity(m3.colorScheme.outline, 0.2),
-            }}
-          >
-            <Text
-              style={{
-                fontSize: fontSize.xs,
-                color: activeOverflowChip ? m3.surface.s100 : m3.surface.s700,
-                fontWeight: '600',
-              }}
-            >
-              {activeOverflowChip?.key ??
-                t('sprayForm.chemicals.moreUnits', { defaultValue: 'More units' })}
-            </Text>
-            <Symbol
-              name="chevron.down"
-              size={12}
-              color={activeOverflowChip ? m3.surface.s100 : m3.surface.s600}
-            />
-          </Pressable>
-        </View>
-      ) : null}
-
-      {/* Overflow menu: rare total/per-acre shapes. */}
+      {/* Unit menu: common chips first (g/L · mL/L · g/acre · mL/acre · ppm),
+          then the rare total/per-acre shapes. */}
       <UnitPickerModal
         visible={!readOnly && showUnitPicker}
         onClose={() => setShowUnitPicker(false)}
         onSelect={(key) => {
-          const chip = SPRAY_UNIT_OVERFLOW_CHIPS.find((candidate) => candidate.key === key);
+          const chip = [...SPRAY_UNIT_CHIPS, ...SPRAY_UNIT_OVERFLOW_CHIPS].find(
+            (candidate) => candidate.key === key,
+          );
           if (chip) handleChipSelect(chip);
         }}
-        selectedValue={activeOverflowChip?.key ?? ''}
-        options={SPRAY_UNIT_OVERFLOW_CHIPS.map((chip) => chip.key)}
+        selectedValue={activeChip?.key ?? ''}
+        options={[...SPRAY_UNIT_CHIPS, ...SPRAY_UNIT_OVERFLOW_CHIPS].map((chip) => chip.key)}
         title={t('sprayForm.chemicals.selectUnit')}
       />
     </View>
@@ -1284,4 +1243,25 @@ export function createEmptySprayFormData(): SprayFormData {
       },
     ],
   };
+}
+
+/**
+ * Finalize a spray draft for submission. PHI fields are only trusted on a
+ * grape farm with a verified catalog-mix computation; otherwise they are
+ * cleared and the status downgraded, so a stale computation from a previous
+ * date/mix never rides along on the saved record.
+ */
+export function finalizeSprayFormData(input: SprayFormData, isGrapeFarm: boolean): SprayFormData {
+  return isGrapeFarm &&
+    input.catalogMixId &&
+    input.safeHarvestDate &&
+    input.governingPhiDays != null
+    ? { ...input }
+    : {
+        ...input,
+        governingPhiDays: null,
+        safeHarvestDate: null,
+        phiBlockingComponent: null,
+        phiStatus: input.phiStatus ?? (input.catalogMixId ? 'legacy_unverified' : 'unknown'),
+      };
 }

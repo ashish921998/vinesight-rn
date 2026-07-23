@@ -1,10 +1,8 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
-import {
-  FertigationForm,
-  type FertigationFormData,
-  type FertigationQuickAddItem,
-} from '@/components/forms/fertigation-form';
+import { FertigationForm, type FertigationFormData } from '@/components/forms/fertigation-form';
+import type { RecentInputItem } from '@/hooks/use-records';
+import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -104,11 +102,14 @@ function makeEmptyRowData(): FertigationFormData {
   };
 }
 
-function quickAdd(quickAddItems: FertigationQuickAddItem[], pressLabel: string) {
+/** Type into the empty row's name field and pick a history suggestion. */
+function selectTypeaheadSuggestion(historyItems: RecentInputItem[], pressLabel: string) {
   const onChange = jest.fn();
   const screen = render(
-    <FertigationForm data={makeEmptyRowData()} onChange={onChange} quickAddItems={quickAddItems} />,
+    <FertigationForm data={makeEmptyRowData()} onChange={onChange} historyItems={historyItems} />,
   );
+  fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
+  fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), pressLabel.slice(0, 3));
   fireEvent.press(screen.getByText(pressLabel));
   const latestState = onChange.mock.calls.at(-1)?.[0] as FertigationFormData | undefined;
   expect(latestState).toBeDefined();
@@ -116,8 +117,11 @@ function quickAdd(quickAddItems: FertigationQuickAddItem[], pressLabel: string) 
 }
 
 describe('FertigationForm regression', () => {
-  it('keeps per_acre basis when quick-add unit is normalized from /acre', () => {
-    const state = quickAdd([{ name: 'Urea', unit: 'kg/acre', quantity: 10 }], 'Urea');
+  it('keeps per_acre basis when a history unit is normalized from /acre', () => {
+    const state = selectTypeaheadSuggestion(
+      [{ name: 'Urea', unit: 'kg/acre', quantity: 10 }],
+      'Urea',
+    );
     expect(state.fertilizers[0]).toEqual(
       expect.objectContaining({
         name: 'Urea',
@@ -128,8 +132,11 @@ describe('FertigationForm regression', () => {
     );
   });
 
-  it("quick-adding an 'L/acre' plan item stays volume + per_acre (issue #192 AC1)", () => {
-    const state = quickAdd([{ name: 'Humic acid', unit: 'L/acre', quantity: 2 }], 'Humic acid');
+  it("picking an 'L/acre' history item stays volume + per_acre (issue #192 AC1)", () => {
+    const state = selectTypeaheadSuggestion(
+      [{ name: 'Humic acid', unit: 'L/acre', quantity: 2 }],
+      'Humic acid',
+    );
     expect(state.fertilizers[0]).toEqual(
       expect.objectContaining({
         name: 'Humic acid',
@@ -140,8 +147,8 @@ describe('FertigationForm regression', () => {
     );
   });
 
-  it('quick-adding an unknown unit keeps it verbatim — never kg (issue #192 AC2)', () => {
-    const state = quickAdd(
+  it('picking an unknown unit keeps it verbatim — never kg (issue #192 AC2)', () => {
+    const state = selectTypeaheadSuggestion(
       [{ name: 'Mystery mix', unit: 'banana/acre', quantity: 5 }],
       'Mystery mix',
     );
@@ -156,42 +163,45 @@ describe('FertigationForm regression', () => {
     expect(state.fertilizers[0].unit).not.toBe('kg');
   });
 
-  it('ppm quick-add items render as an explanatory notice, not a tappable chip (issue #197 AC2)', () => {
-    // ppm items cannot be one-tap added — tapping a chip would silently
-    // enter a water-concentration dose without a water volume. Instead the
-    // form shows an informational row via the ppmPlanItemNotice translation key.
-    // The t-mock returns the translation key itself so we can look for it in the tree.
+  it('excludes ppm plan items from the typeahead (issue #197)', () => {
+    const planItems: FertilizerPlanItem[] = [
+      {
+        id: 'p9',
+        name: 'GA3',
+        quantity: 100,
+        unit: 'ppm',
+        application_date: null,
+        application_method: null,
+        application_frequency: null,
+        notes: null,
+        sort_order: null,
+        product_id: null,
+        quantity_basis: null,
+      },
+    ];
     const onChange = jest.fn();
     const screen = render(
-      <FertigationForm
-        data={makeEmptyRowData()}
-        onChange={onChange}
-        quickAddItems={[{ name: 'GA3', unit: 'ppm', quantity: 100 }]}
-      />,
+      <FertigationForm data={makeEmptyRowData()} onChange={onChange} planItems={planItems} />,
     );
-    // The notice row is present (via the translated key, t-mock returns key as-is).
-    expect(screen.queryByText('fertigationForm.ppmPlanItemNotice')).toBeTruthy();
-    // No pressable chip — the item is NOT in the horizontal chip scroll.
-    // After rendering, onChange must NOT have been called (no side effect on mount).
+    expect(screen.queryByText('GA3')).toBeNull();
     expect(onChange).not.toHaveBeenCalled();
+    fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
+    fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'GA');
+    expect(screen.queryByText('GA3')).toBeNull();
   });
 
-  it('verbatim non-ppm units (unknown strings) still appear as tappable chips', () => {
-    // Only water-concentration units (ppm, g/L …) are excluded from chips.
-    // Truly unknown strings like 'banana/acre' remain in the chip row.
+  it('shows verbatim non-ppm history units through the typeahead', () => {
     const onChange = jest.fn();
     const screen = render(
       <FertigationForm
         data={makeEmptyRowData()}
         onChange={onChange}
-        quickAddItems={[{ name: 'Mystery mix', unit: 'banana/acre', quantity: 5 }]}
+        historyItems={[{ name: 'Mystery mix', unit: 'banana/acre', quantity: 5 }]}
       />,
     );
-    // 'Mystery mix' chip is present (non-ppm verbatim unit renders as a chip).
-    const allMysteryTexts = screen.queryAllByText('Mystery mix');
-    // There should be at least one occurrence (the chip).
-    expect(allMysteryTexts.length).toBeGreaterThan(0);
-    // Notice key should NOT appear for a non-ppm unit.
-    expect(screen.queryByText('fertigationForm.ppmPlanItemNotice')).toBeNull();
+    expect(screen.queryByText('Mystery mix')).toBeNull();
+    fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
+    fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'Mys');
+    expect(screen.getByText('Mystery mix')).toBeTruthy();
   });
 });

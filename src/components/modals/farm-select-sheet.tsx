@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, Pressable, FlatList } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { Symbol } from '@/components/ui/symbol';
+import { SheetHeader } from '@/components/ui/sheet-header';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import type { Farm } from '@/types';
@@ -25,6 +27,7 @@ export function FarmSelectSheet({
 }: FarmSelectSheetProps) {
   const insets = useSafeAreaInsets();
   const m3 = useM3();
+  const { t } = useTranslation();
   const [draftIds, setDraftIds] = useState<number[]>(() => selectedFarmIds || []);
   const ui = useMemo(
     () => ({
@@ -68,146 +71,118 @@ export function FarmSelectSheet({
       <View
         style={{
           flex: 1,
-          paddingHorizontal: spacing[5],
-          paddingTop: spacing[5],
           paddingBottom: Math.max(insets.bottom, 16),
         }}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: spacing[3],
-          }}
-        >
-          <View style={{ flex: 1, paddingRight: spacing[3] }}>
-            <Text
-              style={{
-                color: ui.text,
-                fontSize: fontSize.lg,
-                fontWeight: fontWeight.bold,
-              }}
-            >
-              Select Farms
-            </Text>
-            <Text style={{ color: ui.muted, fontSize: fontSize.sm, marginTop: spacing[1] }}>
-              Choose farms to apply attendance
-            </Text>
-          </View>
-          <Pressable
-            onPress={onClose}
-            style={{
-              backgroundColor: ui.primarySoft,
-              width: 36,
-              height: 36,
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Symbol name="xmark" size={18} color={ui.primary} />
-          </Pressable>
-        </View>
-
-        <FlatList
-          data={farms}
-          keyExtractor={(item) => item.id?.toString() ?? item.name}
-          showsVerticalScrollIndicator={false}
-          style={{ maxHeight: 360 }}
-          renderItem={({ item }) => {
-            const farmId = item.id ?? 0;
-            const isSelected = draftIds.includes(farmId);
-            return (
-              <Pressable
-                onPress={() => item.id && toggleFarm(item.id)}
-                style={{
-                  backgroundColor: isSelected ? m3.colorScheme.primaryContainer : m3.surface.s50,
-                  borderColor: isSelected
-                    ? colorWithOpacity(m3.colorScheme.primary, 0.35)
-                    : ui.border,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: spacing[4],
-                  paddingVertical: spacing[3],
-                  borderRadius: borderRadius['2xl'],
-                  marginBottom: spacing[2],
-                  borderWidth: 1,
-                }}
-              >
-                <View>
-                  <Text
-                    style={{
-                      color: ui.text,
-                      fontSize: fontSize.base,
-                      fontWeight: fontWeight.semibold,
-                    }}
-                  >
-                    {item.name}
-                  </Text>
-                  <Text
-                    style={{
-                      color: ui.muted,
-                      fontSize: fontSize.xs,
-                      marginTop: spacing[1],
-                    }}
-                  >
-                    {item.region}
-                  </Text>
-                </View>
-                <Symbol
-                  name={isSelected ? 'checkmark.circle.fill' : 'circle'}
-                  size={20}
-                  color={isSelected ? ui.primary : m3.surface.s500}
-                />
-              </Pressable>
-            );
-          }}
+        <SheetHeader
+          title={t('attendance.filters.selectFarms')}
+          subtitle={t('attendance.filters.chooseFarms', {
+            defaultValue: 'Choose farms to apply attendance',
+          })}
         />
 
-        <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
-          <Pressable
-            onPress={() => {
-              setDraftIds(
-                farms
-                  .map((f) => f.id)
-                  .filter((id): id is number => id !== undefined && id !== null),
+        <View style={{ paddingHorizontal: spacing[5], flex: 1 }}>
+          <FlatList
+            data={farms}
+            keyExtractor={(item) => item.id?.toString() ?? item.name}
+            showsVerticalScrollIndicator={false}
+            style={{ maxHeight: 360 }}
+            renderItem={({ item }) => {
+              const farmId = item.id ?? 0;
+              const isSelected = draftIds.includes(farmId);
+              return (
+                <Pressable
+                  onPress={() => item.id && toggleFarm(item.id)}
+                  style={{
+                    backgroundColor: isSelected ? m3.colorScheme.primaryContainer : m3.surface.s50,
+                    borderColor: isSelected
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.35)
+                      : ui.border,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[3],
+                    borderRadius: borderRadius['2xl'],
+                    marginBottom: spacing[2],
+                    borderWidth: 1,
+                  }}
+                >
+                  <View>
+                    <Text
+                      style={{
+                        color: ui.text,
+                        fontSize: fontSize.base,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+                    <Text
+                      style={{
+                        color: ui.muted,
+                        fontSize: fontSize.xs,
+                        marginTop: spacing[1],
+                      }}
+                    >
+                      {item.region}
+                    </Text>
+                  </View>
+                  <Symbol
+                    name={isSelected ? 'checkmark.circle.fill' : 'circle'}
+                    size={20}
+                    color={isSelected ? ui.primary : m3.surface.s500}
+                  />
+                </Pressable>
               );
             }}
-            style={{
-              flex: 1,
-              paddingVertical: spacing[3],
-              borderRadius: borderRadius['2xl'],
-              alignItems: 'center',
-              borderWidth: 1,
-              borderColor: colorWithOpacity(m3.colorScheme.primary, 0.25),
-            }}
-          >
-            <Text style={{ color: ui.primary, fontSize: fontSize.sm, fontWeight: fontWeight.bold }}>
-              Select All
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={handleApply}
-            style={{
-              flex: 1,
-              paddingVertical: spacing[3],
-              borderRadius: borderRadius['2xl'],
-              alignItems: 'center',
-              backgroundColor: ui.primary,
-            }}
-          >
-            <Text
+          />
+
+          <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
+            <Pressable
+              onPress={() => {
+                setDraftIds(
+                  farms
+                    .map((f) => f.id)
+                    .filter((id): id is number => id !== undefined && id !== null),
+                );
+              }}
               style={{
-                color: m3.colorScheme.onPrimary,
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.bold,
+                flex: 1,
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius['2xl'],
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: colorWithOpacity(m3.colorScheme.primary, 0.25),
               }}
             >
-              Apply
-            </Text>
-          </Pressable>
+              <Text
+                style={{ color: ui.primary, fontSize: fontSize.sm, fontWeight: fontWeight.bold }}
+              >
+                Select All
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={handleApply}
+              style={{
+                flex: 1,
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius['2xl'],
+                alignItems: 'center',
+                backgroundColor: ui.primary,
+              }}
+            >
+              <Text
+                style={{
+                  color: m3.colorScheme.onPrimary,
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.bold,
+                }}
+              >
+                Apply
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </BottomSheet>

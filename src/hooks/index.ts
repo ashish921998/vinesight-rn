@@ -246,3 +246,6 @@ export { useFabBottomPosition } from './use-fab-bottom-position';
 export { usePlatform, isIOS, isAndroid, platform } from './use-platform';
 export { useAndroidKeyboardLift } from './use-android-keyboard-lift';
 export { useResponsiveHeight } from './use-responsive-height';
+
+// Log composer input sources (spray/fertigation pickers)
+export { useSprayInputSources, useFertigationInputSources } from './use-log-input-sources';

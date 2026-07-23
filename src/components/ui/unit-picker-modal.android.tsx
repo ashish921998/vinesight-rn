@@ -1,8 +1,8 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
-import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { SheetHeader } from '@/components/ui/sheet-header';
 import { fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -25,7 +25,6 @@ export function UnitPickerModal<T extends string>({
   title,
 }: UnitPickerModalProps<T>) {
   const m3 = useM3();
-  const { t } = useTranslation();
 
   return (
     <BottomSheet
@@ -36,39 +35,7 @@ export function UnitPickerModal<T extends string>({
       backgroundStyle={{ backgroundColor: m3.surface.s100 }}
     >
       <View style={{ flex: 1 }}>
-        <View
-          style={{
-            paddingHorizontal: spacing[4],
-            paddingBottom: spacing[4],
-            borderBottomWidth: 1,
-            borderBottomColor: m3.surface.s300,
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}
-        >
-          <Pressable onPress={onClose} hitSlop={8}>
-            <Text
-              style={{
-                color: m3.colorScheme.onSurfaceVariant,
-                fontWeight: fontWeight.semibold,
-              }}
-            >
-              {t('common.cancel')}
-            </Text>
-          </Pressable>
-          <Text
-            style={{
-              flex: 1,
-              paddingRight: 48,
-              textAlign: 'center',
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.bold,
-              color: m3.colorScheme.onSurface,
-            }}
-          >
-            {title}
-          </Text>
-        </View>
+        <SheetHeader title={title} />
         <BottomSheetScrollView>
           {options.map((unit) => {
             const isSelected = unit === selectedValue;

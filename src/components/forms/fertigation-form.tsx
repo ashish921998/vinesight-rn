@@ -1,23 +1,22 @@
-import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
-import { SearchSelect } from '@/components/ui/search-select';
 import {
   fertigationPlanItemsToOptions,
   fertilizerCatalogToOptions,
   recentItemsToOptions,
+  type SearchSelectOption,
   type SearchSelectSelection,
 } from '@/components/ui/search-select-logic';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import {
   MAX_PRODUCT_ROWS,
   allProductRowsComplete,
-  applyQuickAdd,
-  filterNameSuggestions,
   isProductRowComplete,
   sanitizeQuantityInput,
 } from './product-rows';
-import { NameSuggestionOverlay } from './name-suggestion-overlay';
+import { ProductTypeahead } from './product-typeahead';
+import { QtyUnitField } from './qty-unit-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import type { FertilizerUnit } from '../../constants/calculator-models';
 import { resolveFertigationUnit } from '@/constants/fertilizer-units';
@@ -83,19 +82,6 @@ function generateRowId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function resolveQuickAddQuantityBasis(
-  item: FertigationQuickAddItem,
-  basisFromUnit?: QuantityBasis,
-): QuantityBasis {
-  if (item.quantityBasis) return item.quantityBasis;
-  const unit = item.unit?.trim();
-  // No unit at all → total, matching the manual-add default (issue #195):
-  // nothing about the item testifies a rate, and plan items always arrive
-  // with an explicit per_acre basis (resolveFertigationPrefill).
-  if (!unit) return 'total';
-  return basisFromUnit ?? resolveQuantityBasis(unit);
-}
-
 /**
  * resolveFertigationUnit collapses 'kg/acre' → bare 'kg' + basisFromUnit;
  * the string's per-acre testimony must survive that collapse and beat the
@@ -126,29 +112,30 @@ interface FertigationFormProps {
   data: FertigationFormData;
   onChange: (data: FertigationFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
-  quickAddItems?: FertigationQuickAddItem[];
-  /** This farm's recent fertigation items (identity-rich) for the picker's history section. */
+  /** This farm's recent fertigation items (identity-rich) for the typeahead's history section. */
   historyItems?: RecentInputItem[];
-  /** This farm's active plan items for the picker's plan section. */
+  /** This farm's active plan items for the typeahead's plan section. */
   planItems?: FertilizerPlanItem[];
-  /** Master fertilizer catalog products for the picker's catalog section. */
+  /** Master fertilizer catalog products for the typeahead's catalog section. */
   catalogProducts?: MasterCatalogProduct[];
   /** Farm area in acres — powers the bidirectional per-acre ↔ total echo. */
   areaAcres?: number | null;
   /** Hide the decorative header + summary/validation chrome (inline log composer). */
   compact?: boolean;
+  /** Hide the "Fertilizers *" mini-header when the host supplies its own label. */
+  showSectionHeader?: boolean;
 }
 
 export function FertigationForm({
   data,
   onChange,
   onInputFocus,
-  quickAddItems = [],
   historyItems = [],
   planItems = [],
   catalogProducts = [],
   areaAcres = null,
   compact = false,
+  showSectionHeader = true,
 }: FertigationFormProps) {
   const m3 = useM3();
   const { t } = useTranslation();
@@ -158,17 +145,18 @@ export function FertigationForm({
   const showDetailsGuidance =
     guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
 
-  const [showProductPicker, setShowProductPicker] = useState(false);
+  // Which complete row is open for editing. Incomplete rows are always open;
+  // complete rows collapse to receipt lines and re-open on tap — one at a time.
+  const [editingRowKey, setEditingRowKey] = useState<string | null>(null);
 
-  // Picker sections: this farm's history → active plan items → fertilizer
+  // Typeahead sections: this farm's history → active plan items → fertilizer
   // catalog → custom escape hatch. No warehouse section — warehouse identity
   // only passes through history rows that already carry it (issue #196).
   const historyOptions = useMemo(() => recentItemsToOptions(historyItems), [historyItems]);
-  // ppm/water-concentration plan items are excluded from the picker for the
-  // same reason as the quick-add chips: the fertigation form has no chip for
-  // them, so selecting one would drop a verbatim ppm unit into a form that
-  // can't represent it. The plan card surfaces them as an explanatory notice
-  // instead (issue #197, acceptance criterion 2) — one consistent exclusion.
+  // ppm/water-concentration plan items are excluded from the typeahead: the
+  // fertigation form has no chip for them, so selecting one would drop a
+  // verbatim ppm unit into a form that can't represent it. The plan card
+  // surfaces them as an explanatory notice instead (issue #197).
   const planOptions = useMemo(
     () =>
       fertigationPlanItemsToOptions(
@@ -180,43 +168,31 @@ export function FertigationForm({
     () => fertilizerCatalogToOptions(catalogProducts),
     [catalogProducts],
   );
-  const hasPickerOptions =
-    historyOptions.length > 0 || planOptions.length > 0 || catalogOptions.length > 0;
-
-  // Split quick-add items into water-concentration (ppm, g/L …) and regular
-  // items so each group renders consistently without inline filter calls in JSX.
-  const ppmQuickAddItems = useMemo(
-    () => quickAddItems.filter((item) => isWaterConcentrationUnit(item.unit)),
-    [quickAddItems],
-  );
-  const regularQuickAddItems = useMemo(
-    () => quickAddItems.filter((item) => !isWaterConcentrationUnit(item.unit)),
-    [quickAddItems],
-  );
 
   const addFertilizer = () => {
-    if (data.fertilizers.length < MAX_PRODUCT_ROWS) {
-      onChange({
-        ...data,
-        fertilizers: [
-          ...data.fertilizers,
-          {
-            id: generateRowId(),
-            name: '',
-            quantity: 0,
-            // Manual add lands on the bare 'kg' chip — total for the plot
-            // (issue #195); plan picks arrive with their own per_acre basis.
-            unit: 'kg',
-            quantityBasis: 'total',
-            warehouseItemId: null,
-            catalogProductId: null,
-            planItemId: null,
-            compositionSnapshot: null,
-            densityKgPerL: null,
-          },
-        ],
-      });
-    }
+    if (data.fertilizers.length >= MAX_PRODUCT_ROWS) return;
+    const id = generateRowId();
+    onChange({
+      ...data,
+      fertilizers: [
+        ...data.fertilizers,
+        {
+          id,
+          name: '',
+          quantity: 0,
+          // Manual add lands on the bare 'kg' chip — total for the plot
+          // (issue #195); plan picks arrive with their own per_acre basis.
+          unit: 'kg',
+          quantityBasis: 'total',
+          warehouseItemId: null,
+          catalogProductId: null,
+          planItemId: null,
+          compositionSnapshot: null,
+          densityKgPerL: null,
+        },
+      ],
+    });
+    setEditingRowKey(id);
   };
 
   const updateFertilizer = (index: number, updates: Partial<FertilizerEntry>) => {
@@ -229,113 +205,6 @@ export function FertigationForm({
     const newFertilizers = data.fertilizers.filter((_, i) => i !== index);
     onChange({ ...data, fertilizers: newFertilizers });
   };
-
-  const addQuickFertilizer = useCallback(
-    (item: FertigationQuickAddItem) => {
-      const resolved = resolveFertigationUnit(item.unit);
-      const validatedUnit = resolved.unit;
-      const normalizedName = item.name.trim().toLowerCase();
-      // Duplicate identity is the fused chip (unit + basis), not the unit
-      // string alone — 'kg total' and 'kg/acre' share unit 'kg' but are
-      // distinct entries (same rule as spray). Rows outside the chip
-      // vocabulary fall back to the case-folded unit string ('PPM' ≡ 'ppm').
-      const incomingBasis =
-        item.quantityBasis ??
-        perAcreUnitTestimony(resolved.basisFromUnit) ??
-        resolveQuickAddQuantityBasis(item, resolved.basisFromUnit);
-      const incomingChipKey =
-        fertigationChipForEntry(validatedUnit, incomingBasis)?.key ??
-        validatedUnit.trim().toLowerCase();
-      // Whether the item's quantity actually reached the input — false when
-      // fillRow preserves a quantity the user already typed. Read by the
-      // prefill telemetry so it counts prefills that landed, not picks.
-      let quantityApplied = false;
-      const nextFertilizers = applyQuickAdd(data.fertilizers, {
-        isDuplicate: (fertilizer) =>
-          fertilizer.name.trim().toLowerCase() === normalizedName &&
-          (fertigationChipForEntry(fertilizer.unit, fertilizer.quantityBasis)?.key ??
-            fertilizer.unit.trim().toLowerCase()) === incomingChipKey,
-        fillRow: (current) => {
-          quantityApplied = !(current.quantity !== undefined && current.quantity > 0);
-          return {
-            ...current,
-            name: item.name.trim(),
-            unit: validatedUnit,
-            quantity:
-              current.quantity !== undefined && current.quantity > 0
-                ? current.quantity
-                : (item.quantity ?? 0),
-            // An explicit item basis (fully-prefilled picker selections) wins,
-            // then the unit string's own per-acre testimony ('kg/acre' collapsed
-            // to bare 'kg' must not inherit the pristine row's 'total'), then
-            // the current row, then the quick-add default.
-            quantityBasis:
-              item.quantityBasis ??
-              perAcreUnitTestimony(resolved.basisFromUnit) ??
-              current.quantityBasis ??
-              resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
-            warehouseItemId: item.warehouseItemId ?? null,
-            catalogProductId: item.catalogProductId ?? null,
-            planItemId: item.planItemId ?? null,
-            compositionSnapshot: item.composition ?? null,
-            densityKgPerL: item.densityKgPerL ?? null,
-          };
-        },
-        appendRow: () => {
-          quantityApplied = true;
-          return {
-            id: generateRowId(),
-            name: item.name.trim(),
-            quantity: item.quantity ?? 0,
-            unit: validatedUnit,
-            quantityBasis: resolveQuickAddQuantityBasis(item, resolved.basisFromUnit),
-            warehouseItemId: item.warehouseItemId ?? null,
-            catalogProductId: item.catalogProductId ?? null,
-            planItemId: item.planItemId ?? null,
-            compositionSnapshot: item.composition ?? null,
-            densityKgPerL: item.densityKgPerL ?? null,
-          };
-        },
-      });
-      if (nextFertilizers) onChange({ ...data, fertilizers: nextFertilizers });
-      return nextFertilizers != null && quantityApplied;
-    },
-    [data, onChange],
-  );
-
-  const handleSearchSelection = useCallback(
-    (selection: SearchSelectSelection) => {
-      setShowProductPicker(false);
-      // The fertigation picker never offers catalog mixes.
-      if (selection.kind === 'mix') return;
-      const prefillApplied = addQuickFertilizer({
-        name: selection.name,
-        unit: selection.prefill?.unit,
-        quantity: selection.prefill?.quantity,
-        quantityBasis: selection.prefill?.quantityBasis,
-        warehouseItemId: selection.warehouseItemId ?? null,
-        catalogProductId: selection.catalogProductId ?? null,
-        planItemId: selection.planItemId ?? null,
-        // Catalog picks carry declared nutrient composition; stamped exactly
-        // like warehouse picks so the nutrient ledger sees them (issue #200).
-        composition: selection.composition ?? null,
-      });
-      // Telemetry: count when a recommended-dose prefill (#236) actually
-      // REACHED the input — gated on the quick-add result, because fillRow
-      // preserves a quantity the user already typed and counting those picks
-      // would inflate the adoption metric.
-      if (
-        selection.catalogProductId != null &&
-        selection.prefill?.quantity != null &&
-        prefillApplied
-      ) {
-        telemetry.capture('recommended_dose_prefilled', {
-          productId: selection.catalogProductId,
-        });
-      }
-    },
-    [addQuickFertilizer],
-  );
 
   // Calculate total inputs count
   const totalInputs = data.fertilizers.filter(isProductRowComplete).length;
@@ -395,154 +264,100 @@ export function FertigationForm({
             paddingTop: showDetailsGuidance ? spacing[2] : 0,
           }}
         >
-          {quickAddItems.length > 0 ? (
-            <View style={{ marginBottom: spacing[3] }}>
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s500,
-                  marginBottom: spacing[2],
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.4,
-                }}
-              >
-                {t('fertigationForm.quickAdd')}
-              </Text>
-              {/* ppm and other water-concentration plan items cannot be one-tap
-                  added (no valid fertigation chip), so we show an explanatory
-                  notice for each one rather than a tappable chip. Tapping a
-                  ppm chip would silently enter a wrong unit — never allowed
-                  (issue #197, acceptance criterion 2). */}
-              {ppmQuickAddItems.map((item, index) => (
-                <View
-                  key={`ppm-notice-${item.name}-${item.unit ?? 'unit'}-${index}`}
+          {showSectionHeader ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: spacing[3],
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ marginRight: 6 }}>
+                  <IconSymbol name="flask" size={16} color={m3.primary.p600} />
+                </View>
+                <Text
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: spacing[1],
-                    gap: 6,
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    color: m3.surface.s800,
                   }}
                 >
-                  <IconSymbol name="info.circle" size={13} color={m3.surface.s500} />
-                  <Text style={{ flex: 1, fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                    {t('fertigationForm.ppmPlanItemNotice', {
-                      name: item.name,
-                      defaultValue: "{{name}}: ppm doses can't be quick-added — enter manually",
-                    })}
+                  Fertilizers <Text style={{ color: m3.colorScheme.error }}>*</Text>
+                </Text>
+              </View>
+              {totalInputs > 0 && (
+                <View
+                  style={{
+                    backgroundColor: colorWithOpacity(m3.colorScheme.success, 0.16),
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: borderRadius.full,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                      color: m3.colorScheme.success,
+                    }}
+                  >
+                    {totalInputs} input{totalInputs !== 1 ? 's' : ''}
                   </Text>
                 </View>
-              ))}
-              {regularQuickAddItems.length > 0 ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {regularQuickAddItems.map((item, index) => (
-                    <Pressable
-                      key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
-                      onPress={() => addQuickFertilizer(item)}
-                      style={{
-                        marginRight: spacing[2],
-                        paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[2],
-                        borderRadius: borderRadius.full,
-                        backgroundColor: m3.surface.s100,
-                        borderWidth: 1,
-                        borderColor: m3.surface.s200,
-                      }}
-                    >
-                      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
-                        {item.name}
-                      </Text>
-                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                        {item.quantity ? `${item.quantity} ` : ''}
-                        {item.unit ?? 'kg'}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              ) : null}
+              )}
             </View>
           ) : null}
 
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: spacing[3],
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{ marginRight: 6 }}>
-                <IconSymbol name="flask" size={16} color={m3.primary.p600} />
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s800,
-                }}
-              >
-                Fertilizers <Text style={{ color: m3.colorScheme.error }}>*</Text>
-              </Text>
-            </View>
-            {totalInputs > 0 && (
-              <View
-                style={{
-                  backgroundColor: colorWithOpacity(m3.colorScheme.success, 0.16),
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderRadius: borderRadius.full,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.medium,
-                    color: m3.colorScheme.success,
-                  }}
-                >
-                  {totalInputs} input{totalInputs !== 1 ? 's' : ''}
-                </Text>
-              </View>
-            )}
-          </View>
+          {/* Fertilizers List — complete rows collapse to receipt lines; the
+              tapped (or newly added) row expands for editing, one at a time. */}
+          {data.fertilizers.map((fertilizer, index) => {
+            const rowKey = fertilizer.id ?? `idx-${index}`;
+            return (
+              <FertilizerRow
+                key={rowKey}
+                fertilizer={fertilizer}
+                onUpdate={(updates) => updateFertilizer(index, updates)}
+                onRemove={() => removeFertilizer(index)}
+                expanded={!isProductRowComplete(fertilizer) || editingRowKey === rowKey}
+                onExpand={() => setEditingRowKey(rowKey)}
+                onInputFocus={onInputFocus}
+                areaAcres={areaAcres}
+                historyItems={historyItems}
+                planItems={planItems}
+                catalogProducts={catalogProducts}
+                historyOptions={historyOptions}
+                planOptions={planOptions}
+                catalogOptions={catalogOptions}
+              />
+            );
+          })}
 
-          {/* Fertilizers List */}
-          {data.fertilizers.map((fertilizer, index) => (
-            <FertilizerRow
-              key={fertilizer.id ?? index}
-              fertilizer={fertilizer}
-              quickAddItems={quickAddItems}
-              onUpdate={(updates) => updateFertilizer(index, updates)}
-              onRemove={() => removeFertilizer(index)}
-              showRemove={data.fertilizers.length > 1}
-              onInputFocus={onInputFocus}
-              areaAcres={areaAcres}
-              historyItems={historyItems}
-              planItems={planItems}
-              catalogProducts={catalogProducts}
-            />
-          ))}
-
-          {/* Add Fertilizer Button — opens the sectioned product picker when
-              there is anything to pick from; falls back to a blank row. */}
+          {/* Add Fertilizer — appends a blank editing row; its name field's
+              typeahead is the picker now (history / plan / catalog / custom). */}
           {data.fertilizers.length < MAX_PRODUCT_ROWS && (
             <Pressable
-              onPress={() => (hasPickerOptions ? setShowProductPicker(true) : addFertilizer())}
+              onPress={addFertilizer}
               accessibilityRole="button"
               accessibilityLabel={t('fertigationForm.fertilizers.addFertilizer')}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
+                justifyContent: 'center',
                 paddingVertical: spacing[3],
                 marginTop: spacing[2],
+                borderRadius: borderRadius.xl,
+                borderWidth: 1.5,
+                borderStyle: 'dashed',
+                borderColor: m3.surface.s300,
               }}
             >
               <IconSymbol name="plus.circle.fill" size={20} color={m3.colorScheme.success} />
               <Text
                 style={{
                   fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
+                  fontWeight: fontWeight.semibold,
                   color: m3.colorScheme.success,
                   marginLeft: spacing[2],
                 }}
@@ -553,16 +368,6 @@ export function FertigationForm({
           )}
         </View>
       </GuidedTourTarget>
-
-      <SearchSelect
-        visible={showProductPicker}
-        onClose={() => setShowProductPicker(false)}
-        onSelect={handleSearchSelection}
-        historyOptions={historyOptions}
-        planOptions={planOptions}
-        catalogOptions={catalogOptions}
-        title={t('fertigationForm.fertilizers.addFertilizer')}
-      />
 
       {/* Summary */}
       {!compact && totalInputs > 0 && (
@@ -658,35 +463,43 @@ export function FertigationForm({
 // Fertilizer Row Component
 interface FertilizerRowProps {
   fertilizer: FertilizerEntry;
-  quickAddItems: FertigationQuickAddItem[];
   onUpdate: (updates: Partial<FertilizerEntry>) => void;
   onRemove: () => void;
-  showRemove: boolean;
+  /** Complete rows render as receipt lines when false; tap re-opens editing. */
+  expanded: boolean;
+  onExpand: () => void;
   onInputFocus?: TextInputProps['onFocus'];
   areaAcres?: number | null;
   historyItems?: RecentInputItem[];
   planItems?: FertilizerPlanItem[];
   /** Catalog products — used to resolve a row's recommended-dose range guardrail (#236). */
   catalogProducts?: MasterCatalogProduct[];
+  /** Typeahead sections (built once at form level). */
+  historyOptions?: SearchSelectOption[];
+  planOptions?: SearchSelectOption[];
+  catalogOptions?: SearchSelectOption[];
 }
 
 function FertilizerRow({
   fertilizer,
-  quickAddItems,
   onUpdate,
   onRemove,
-  showRemove,
+  expanded,
+  onExpand,
   onInputFocus,
   areaAcres = null,
   historyItems = [],
   planItems = [],
   catalogProducts = [],
+  historyOptions = [],
+  planOptions = [],
+  catalogOptions = [],
 }: FertilizerRowProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [isNameFocused, setIsNameFocused] = useState(false);
-  const [isQuantityFocused, setIsQuantityFocused] = useState(false);
+  const [nameText, setNameText] = useState(fertilizer.name);
   const quantityRef = useRef<TextInput>(null);
   const [quantityText, setQuantityText] = useState(
     fertilizer.quantity !== undefined && fertilizer.quantity > 0
@@ -698,14 +511,14 @@ function FertilizerRow({
     fertilizer.quantity !== undefined && fertilizer.quantity > 0
       ? fertilizer.quantity.toString()
       : '';
-  const nameSuggestions = useMemo(
-    () => filterNameSuggestions(quickAddItems, fertilizer.name),
-    [fertilizer.name, quickAddItems],
-  );
-  const showNoMatchHint =
-    isNameFocused && fertilizer.name.trim().length >= 2 && nameSuggestions.length === 0;
-  const shouldShowSuggestions =
-    isNameFocused && fertilizer.name.trim().length >= 2 && nameSuggestions.length > 0;
+  const showTypeahead = isNameFocused && nameText.trim().length >= 1;
+
+  useEffect(() => {
+    if (isNameFocused) return;
+    if (nameText === fertilizer.name) return;
+    const frame = requestAnimationFrame(() => setNameText(fertilizer.name));
+    return () => cancelAnimationFrame(frame);
+  }, [fertilizer.name, isNameFocused, nameText]);
 
   useEffect(() => {
     if (isQuantityEditing) return;
@@ -725,9 +538,6 @@ function FertilizerRow({
   const isRowComplete = isProductRowComplete(fertilizer);
 
   const activeChip = fertigationChipForEntry(fertilizer.unit, fertilizer.quantityBasis);
-  const activeOverflowChip = FERTIGATION_UNIT_OVERFLOW_CHIPS.find(
-    (chip) => chip.key === activeChip?.key,
-  );
   const unitLabel = activeChip?.key ?? fertilizer.unit;
 
   const areaEcho = useMemo(
@@ -850,14 +660,99 @@ function FertilizerRow({
     });
     if (currentQuantity <= 0 && item.quantity !== null && item.quantity !== undefined) {
       setQuantityText(item.quantity.toString());
+      // Telemetry: a dose prefill (#236) actually REACHED the input — an
+      // already-typed quantity is preserved above and must not count.
+      if (item.catalogProductId != null) {
+        telemetry.capture('recommended_dose_prefilled', { productId: item.catalogProductId });
+      }
     }
     quantityRef.current?.focus();
+  };
+
+  // Typeahead pick → same fill path as suggestions. Fertigation options never
+  // contain mixes, so every selection is a single item.
+  const handleTypeaheadSelect = (selection: SearchSelectSelection) => {
+    if (selection.kind === 'mix') return;
+    setNameText(selection.name);
+    applySuggestion({
+      name: selection.name,
+      unit: selection.prefill?.unit,
+      quantity: selection.prefill?.quantity,
+      quantityBasis: selection.prefill?.quantityBasis,
+      warehouseItemId: selection.warehouseItemId ?? null,
+      catalogProductId: selection.catalogProductId ?? null,
+      planItemId: selection.planItemId ?? null,
+      // Catalog picks carry declared nutrient composition; stamped exactly
+      // like warehouse picks so the nutrient ledger sees them (issue #200).
+      composition: selection.composition ?? null,
+    });
   };
 
   const handleChipSelect = (chip: FertigationUnitChip) => {
     // The chip is the single source of unit + basis — no separate toggle.
     onUpdate({ unit: chip.unit, quantityBasis: chip.basis });
   };
+
+  // Collapsed receipt line — tap anywhere to re-open for editing.
+  if (!expanded) {
+    const perAcreMarker =
+      !activeChip && fertilizer.quantityBasis === 'per_acre'
+        ? ` (${t('fertigationForm.fertilizers.perAcre')})`
+        : '';
+    // approxText carries its own '≈ ' prefix; to_total resolves the plot total
+    // ("≈ 25 kg"), the other direction resolves a rate — mark it "/acre".
+    const echoSuffix = areaEcho
+      ? ` · ${areaEcho.approxText}${areaEcho.direction === 'to_total' ? '' : '/acre'}`
+      : '';
+    return (
+      <Pressable
+        onPress={onExpand}
+        accessibilityRole="button"
+        accessibilityLabel={fertilizer.name}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing[3],
+          borderRadius: borderRadius.xl,
+          padding: spacing[3],
+          marginBottom: spacing[3],
+          borderWidth: 1,
+          backgroundColor: m3.surface.s50,
+          borderColor: m3.surface.s200,
+        }}
+      >
+        <View
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: borderRadius.full,
+            backgroundColor: m3.colorScheme.success,
+          }}
+        />
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.bold,
+              color: m3.surface.s900,
+            }}
+          >
+            {fertilizer.name}
+          </Text>
+          <Text style={{ fontSize: fontSize.xs, color: m3.surface.s600, marginTop: 1 }}>
+            {`${fertilizer.quantity ?? 0} ${unitLabel}${perAcreMarker}${echoSuffix}`}
+          </Text>
+        </View>
+        <Pressable onPress={onRemove} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <IconSymbol
+            name="minus.circle.fill"
+            size={22}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+          />
+        </Pressable>
+      </Pressable>
+    );
+  }
 
   return (
     <View
@@ -888,8 +783,11 @@ function FertilizerRow({
             }}
             placeholder="Fertilizer name"
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-            value={fertilizer.name}
-            onChangeText={(name) => onUpdate({ name })}
+            value={nameText}
+            onChangeText={(name) => {
+              setNameText(name);
+              onUpdate({ name });
+            }}
             onFocus={(event) => {
               setIsNameFocused(true);
               onInputFocus?.(event);
@@ -897,88 +795,47 @@ function FertilizerRow({
             onBlur={() => setIsNameFocused(false)}
           />
 
-          {shouldShowSuggestions ? (
-            <NameSuggestionOverlay
-              items={nameSuggestions}
-              onSelect={applySuggestion}
-              fallbackUnitLabel="kg"
+          {showTypeahead ? (
+            <ProductTypeahead
+              query={nameText}
+              history={historyOptions}
+              plan={planOptions}
+              catalog={catalogOptions}
+              onSelect={handleTypeaheadSelect}
+              accentColor={m3.colorScheme.success}
             />
-          ) : null}
-
-          {showNoMatchHint ? (
-            <Text
-              style={{
-                marginTop: spacing[1],
-                marginLeft: spacing[1],
-                fontSize: fontSize.xs,
-                color: m3.surface.s600,
-              }}
-            >
-              {t('fertigationForm.noMatchesHint')}
-            </Text>
           ) : null}
         </View>
-        {showRemove && (
-          <Pressable
-            onPress={onRemove}
-            style={{ marginLeft: spacing[2], padding: spacing[2] }}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <IconSymbol
-              name="minus.circle.fill"
-              size={24}
-              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-            />
-          </Pressable>
-        )}
+        <Pressable
+          onPress={onRemove}
+          style={{ marginLeft: spacing[2], padding: spacing[2] }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <IconSymbol
+            name="minus.circle.fill"
+            size={24}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+          />
+        </Pressable>
       </View>
 
-      {/* Quantity and Unit Row */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}>
-        <TextInput
-          ref={quantityRef}
-          style={{
-            flex: 1,
-            borderRadius: borderRadius.lg,
-            paddingHorizontal: spacing[3],
-            paddingVertical: 10,
-            fontSize: fontSize.base,
-            color: m3.surface.s900,
-            textAlign: 'center',
-            backgroundColor: m3.surface.s100,
-            borderWidth: 1,
-            borderColor: isQuantityFocused ? m3.colorScheme.success : m3.surface.s200,
-          }}
-          placeholder="Qty"
-          placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-          keyboardType="decimal-pad"
+      {/* Fused quantity + unit input — the unit segment opens the unit menu. */}
+      <View style={{ marginTop: spacing[2] }}>
+        <QtyUnitField
           value={isQuantityEditing ? quantityText : syncedQuantityText}
           onChangeText={handleQuantityChange}
+          unitLabel={unitLabel}
+          onUnitPress={() => setShowUnitPicker(true)}
+          accentColor={m3.colorScheme.success}
+          placeholder="Qty"
+          inputRef={quantityRef}
           onFocus={(event) => {
-            setIsQuantityFocused(true);
             setIsQuantityEditing(true);
             onInputFocus?.(event);
           }}
-          onBlur={() => {
-            setIsQuantityFocused(false);
-            setIsQuantityEditing(false);
-          }}
+          onBlur={() => setIsQuantityEditing(false)}
+          unitAccessibilityLabel={t('fertigationForm.fertilizers.selectUnit')}
         />
-
-        {/* Current unit label — the chips below are the only way to change it. */}
-        <View
-          style={{
-            backgroundColor: m3.surface.s100,
-            borderRadius: borderRadius.lg,
-            paddingHorizontal: spacing[3],
-            paddingVertical: 10,
-            marginLeft: spacing[2],
-            borderWidth: 1,
-            borderColor: m3.surface.s200,
-          }}
-        >
-          <Text style={{ fontSize: fontSize.base, color: m3.surface.s900 }}>{unitLabel}</Text>
-        </View>
       </View>
 
       {/* Live area echo — total ↔ per-acre, both directions, kernel-resolved. */}
@@ -1066,76 +923,9 @@ function FertilizerRow({
         </View>
       ) : null}
 
-      {/* Basis-fused unit chips: kg/acre · L/acre · kg · L + the g/mL overflow.
-          Verbatim units (ppm, kg/ha, unknown strings) are outside the chip
-          vocabulary — their raw text renders here instead, never coerced. */}
-      {activeChip ? (
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            marginTop: spacing[2],
-            gap: 8,
-          }}
-        >
-          {FERTIGATION_UNIT_CHIPS.map((chip) => {
-            const selected = activeChip.key === chip.key;
-            return (
-              <Pressable
-                key={chip.key}
-                onPress={() => handleChipSelect(chip)}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                accessibilityLabel={t('fertigationForm.fertilizers.quickUnitLabel', {
-                  unit: chip.key,
-                })}
-                style={{
-                  borderRadius: borderRadius.full,
-                  paddingHorizontal: spacing[3],
-                  paddingVertical: spacing[1],
-                  backgroundColor: selected
-                    ? colorWithOpacity(m3.colorScheme.success, 0.2)
-                    : m3.surface.s100,
-                  borderWidth: 1,
-                  borderColor: selected
-                    ? colorWithOpacity(m3.colorScheme.success, 0.5)
-                    : colorWithOpacity(m3.colorScheme.outline, 0.2),
-                }}
-              >
-                <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
-                  {chip.key}
-                </Text>
-              </Pressable>
-            );
-          })}
-          <Pressable
-            onPress={() => setShowUnitPicker(true)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: activeOverflowChip !== undefined }}
-            accessibilityLabel={t('fertigationForm.fertilizers.moreUnits')}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              borderRadius: borderRadius.full,
-              paddingHorizontal: spacing[3],
-              paddingVertical: spacing[1],
-              backgroundColor: activeOverflowChip
-                ? colorWithOpacity(m3.colorScheme.success, 0.2)
-                : m3.surface.s100,
-              borderWidth: 1,
-              borderColor: activeOverflowChip
-                ? colorWithOpacity(m3.colorScheme.success, 0.5)
-                : colorWithOpacity(m3.colorScheme.outline, 0.2),
-            }}
-          >
-            <Text style={{ fontSize: fontSize.xs, color: m3.surface.s800, fontWeight: '600' }}>
-              {activeOverflowChip?.key ?? t('fertigationForm.fertilizers.moreUnits')}
-            </Text>
-            <IconSymbol name="chevron.down" size={12} color={m3.surface.s600} />
-          </Pressable>
-        </View>
-      ) : (
+      {/* Verbatim units (ppm, kg/ha, unknown strings) are outside the chip
+          vocabulary — their raw text renders in the unit segment, never coerced. */}
+      {!activeChip ? (
         <Text
           style={{
             marginTop: spacing[2],
@@ -1146,18 +936,22 @@ function FertilizerRow({
         >
           {t('fertigationForm.fertilizers.verbatimUnitHint', { unit: fertilizer.unit })}
         </Text>
-      )}
+      ) : null}
 
-      {/* Overflow menu: the gram/mL family. */}
+      {/* Unit menu: common chips first, then the gram/mL family. */}
       <UnitPickerModal
         visible={showUnitPicker}
         onClose={() => setShowUnitPicker(false)}
         onSelect={(key) => {
-          const chip = FERTIGATION_UNIT_OVERFLOW_CHIPS.find((candidate) => candidate.key === key);
+          const chip = [...FERTIGATION_UNIT_CHIPS, ...FERTIGATION_UNIT_OVERFLOW_CHIPS].find(
+            (candidate) => candidate.key === key,
+          );
           if (chip) handleChipSelect(chip);
         }}
-        selectedValue={activeOverflowChip?.key ?? ''}
-        options={FERTIGATION_UNIT_OVERFLOW_CHIPS.map((chip) => chip.key)}
+        selectedValue={activeChip?.key ?? ''}
+        options={[...FERTIGATION_UNIT_CHIPS, ...FERTIGATION_UNIT_OVERFLOW_CHIPS].map(
+          (chip) => chip.key,
+        )}
         title={t('fertigationForm.fertilizers.selectUnit')}
       />
     </View>
@@ -1173,6 +967,7 @@ export function createEmptyFertigationFormData(): FertigationFormData {
   return {
     fertilizers: [
       {
+        id: generateRowId(),
         name: '',
         quantity: 0,
         // Manual entry defaults to the bare 'kg' chip — total for the plot.

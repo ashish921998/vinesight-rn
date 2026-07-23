@@ -24,21 +24,28 @@ export function DateField({
   disabled,
   testID,
   style,
+  renderTrigger,
+  relativeLabels,
 }: DateFieldProps) {
   const m3 = useM3();
   const [open, setOpen] = useState(false);
 
   return (
     <View style={style}>
-      <DateFieldTrigger
-        value={value}
-        label={label}
-        placeholder={placeholder}
-        hint={hint}
-        disabled={disabled}
-        testID={testID}
-        onPress={() => setOpen(true)}
-      />
+      {renderTrigger ? (
+        renderTrigger(() => setOpen(true))
+      ) : (
+        <DateFieldTrigger
+          value={value}
+          label={label}
+          placeholder={placeholder}
+          hint={hint}
+          disabled={disabled}
+          testID={testID}
+          onPress={() => setOpen(true)}
+          relativeLabels={relativeLabels}
+        />
+      )}
       {open ? (
         <DateTimePicker
           value={ensureValidDate(value, minimumDate, maximumDate)}

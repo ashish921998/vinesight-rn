@@ -800,6 +800,23 @@ export const en = {
     },
   },
 
+  quickLog: {
+    title: 'Log {{type}}',
+    loggingTo: 'Logging to {{farm}}',
+    saveType: 'Save {{type}}',
+    durationQuestion: 'How long did the water run?',
+    waterQuestion: 'How much water in the tank?',
+    tankQuestion: 'What went in the tank?',
+    fertilizerQuestion: 'Fertilizer in the water?',
+    optionalTag: 'optional',
+    emptyFertilizerHint: 'No fertilizer? That’s fine — just save the watering.',
+    phiSafeTitle: 'Safe for your harvest',
+    phiSafeBody: 'Produce from this spray is safe to pick from {{date}}.',
+    phiRiskTitle: 'Careful — close to harvest',
+    phiRiskBody:
+      'After this spray, wait until {{date}} to pick — that’s after your planned harvest ({{target}}). Saving will mark it as an override.',
+  },
+
   entryForm: {
     logSaved: 'Log saved',
     taskSaved: 'Task saved',
@@ -818,7 +835,6 @@ export const en = {
     saveLogs: 'Save logs ({{count}})',
     retrySaveLogs: 'Retry save ({{count}})',
     saveTask: 'Save task',
-    pickDate: 'Pick date',
     irrigationFertilizerHint: '+ fertilizers',
     repeatLastLogTitle: 'Repeat last log?',
     repeatLastLogLoggedOn: 'Logged {{date}}',
@@ -924,7 +940,6 @@ export const en = {
         lowLastLog: 'Check dose — about 1/{{ratio}} of your last logged dose ({{reference}})',
       },
     },
-    quickAdd: 'Quick Add',
     catalogOnly: {
       title: 'Catalog Mixes',
       selectedMix: 'Selected: {{name}}',
@@ -971,7 +986,6 @@ export const en = {
           'Check quantity — entered {{entered}}; label recommends {{min}}–{{max}} {{unit}}',
       },
     },
-    quickAdd: 'Quick Add',
     /** ppm/g-per-L plan items shown as informational rows, never tappable chips (issue #197). */
     ppmPlanItemNotice: "{{name}}: ppm doses can't be quick-added — enter manually",
     noMatchesHint: 'No matches. Continue with custom fertilizer name.',
@@ -1572,6 +1586,9 @@ export const en = {
     recentRecords: 'Recent Records',
     viewAll: 'View all',
     noRecords: 'No records yet',
+    loggingTo: 'Logging to',
+    switch: 'Switch',
+    loggingToNoFarm: 'No farm yet',
   },
 
   assistant: {
@@ -2436,6 +2453,7 @@ export const en = {
       title: 'Quick actions',
       irrigation: 'Irrigation',
       spray: 'Spray',
+      harvest: 'Harvest',
       expense: 'Expense',
       note: 'Note',
     },

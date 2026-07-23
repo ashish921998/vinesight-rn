@@ -103,3 +103,13 @@ All notable changes to this project will be documented in this file.
 - Overdue task label uses the correct i18n key with Hindi/Marathi translations
 
 ## [Unreleased]
+
+### Added
+- Focused quick-log drawers on the home screen: tap an activity (irrigation, spray, harvest, expense) to log it straight to the selected farm, no full form. Irrigation carries optional fertilizers inline; spray gets catalog mixes, history/plan pickers, and a live harvest-safety (PHI) verdict.
+- Date fields can show relative "Today"/"Yesterday" labels for recent-activity logs.
+
+### Changed
+- Spray/irrigation quick-log sheets open at full height and scroll cleanly; the quantity+unit field height now matches the name inputs.
+
+### Fixed
+- Picking a catalog mix no longer wipes chemical rows the user already typed — the mix's components are merged in and deduped instead.

@@ -86,6 +86,13 @@ jest.mock('@/hooks', () => ({
   usePhiComputation: (...args: unknown[]) => mockUsePhiComputation(...args),
   useFertilizerPlan: () => ({ data: null, isLoading: false, error: null }),
   useMasterProducts: () => ({ data: [], isLoading: false, error: null }),
+  useSprayInputSources: () => ({ quickAddItems: [], historyItems: [], planItems: [] }),
+  useFertigationInputSources: () => ({
+    quickAddItems: [],
+    historyItems: [],
+    planItems: [],
+    catalogProducts: [],
+  }),
   // Saved-record hooks power the week-strip dots + repeat-last-log suggestion.
   useIrrigationRecords: () => ({ data: [] }),
   useSprayRecords: () => ({ data: [] }),
@@ -402,11 +409,19 @@ describe('EntryForm UI integration', () => {
     });
 
     fireEvent.changeText(screen.getByPlaceholderText('sprayForm.waterVolume.placeholder'), '200');
-    fireEvent.press(screen.getByText('sprayForm.catalogOnly.title'));
+    // Mixes are picked through the chemical name typeahead now.
+    fireEvent(screen.getByPlaceholderText('sprayForm.chemicals.namePlaceholder'), 'focus', {
+      target: null,
+    });
+    fireEvent.changeText(
+      screen.getByPlaceholderText('sprayForm.chemicals.namePlaceholder'),
+      'Demo',
+    );
     fireEvent.press(screen.getByText('Demo Mix'));
 
     await waitFor(() => {
-      expect(screen.getByText('sprayForm.catalogOnly.selectedMix')).toBeTruthy();
+      // The selected mix renders as the removable tag above the rows.
+      expect(screen.getByText('Demo Mix')).toBeTruthy();
     });
 
     fireEvent.press(screen.getByText('entryForm.addEntry'));

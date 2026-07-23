@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +26,9 @@ export function DateField({
   disabled,
   testID,
   style,
+  renderTrigger,
+  overlay,
+  relativeLabels,
 }: DateFieldProps) {
   const m3 = useM3();
   const insets = useSafeAreaInsets();
@@ -43,101 +46,143 @@ export function DateField({
     setOpen(false);
   };
 
-  return (
-    <View style={style}>
-      <DateFieldTrigger
-        value={value}
-        label={label}
-        placeholder={placeholder}
-        hint={hint}
-        disabled={disabled}
-        testID={testID}
-        onPress={() => {
-          setDraftDate(ensureValidDate(value, minimumDate, maximumDate));
-          setOpen(true);
+  const openPicker = () => {
+    setDraftDate(ensureValidDate(value, minimumDate, maximumDate));
+    setOpen(true);
+  };
+
+  const commit = () => {
+    onChange(ensureValidDate(draftDate, minimumDate, maximumDate));
+    setOpen(false);
+  };
+
+  const panel = (
+    <View
+      style={{
+        paddingHorizontal: spacing[4],
+        paddingTop: spacing[3],
+        paddingBottom: Math.max(insets.bottom, spacing[4]),
+        gap: spacing[2],
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: spacing[3],
         }}
-      />
-      <BottomSheet
-        index={open ? 0 : -1}
-        enableDynamicSizing
-        enablePanDownToClose
-        onClose={close}
-        backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
       >
-        <View
-          style={{
-            paddingHorizontal: spacing[4],
-            paddingTop: spacing[4],
-            paddingBottom: Math.max(insets.bottom, spacing[4]),
-            gap: spacing[3],
-          }}
-        >
-          <View
+        <Pressable onPress={close} hitSlop={8}>
+          <Text
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: spacing[3],
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.medium,
+              color: m3.colorScheme.onSurfaceVariant,
             }}
           >
-            <Pressable onPress={close} hitSlop={8}>
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.onSurfaceVariant,
-                }}
-              >
-                {t('common.cancel')}
-              </Text>
-            </Pressable>
-            <Text
-              style={{
-                ...m3.typography.titleMedium,
-                color: m3.colorScheme.onSurface,
-                flex: 1,
-                textAlign: 'center',
-              }}
-            >
-              {label ?? t('common.selectDate', { defaultValue: 'Select date' })}
-            </Text>
+            {t('common.cancel')}
+          </Text>
+        </Pressable>
+        <Text
+          style={{
+            ...m3.typography.titleMedium,
+            color: m3.colorScheme.onSurface,
+            flex: 1,
+            textAlign: 'center',
+          }}
+        >
+          {label ?? t('common.selectDate', { defaultValue: 'Select date' })}
+        </Text>
+        <Pressable
+          onPress={commit}
+          hitSlop={8}
+          style={{
+            paddingHorizontal: spacing[3],
+            paddingVertical: spacing[2],
+            borderRadius: borderRadius.full,
+            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: m3.colorScheme.primary,
+            }}
+          >
+            {t('common.done')}
+          </Text>
+        </Pressable>
+      </View>
+      <DateTimePicker
+        value={draftDate}
+        mode="date"
+        display="spinner"
+        minimumDate={minimumDate}
+        maximumDate={maximumDate}
+        accentColor={m3.colorScheme.primary}
+        onValueChange={(_, date) => setDraftDate(ensureValidDate(date, minimumDate, maximumDate))}
+      />
+    </View>
+  );
+
+  return (
+    <View style={style}>
+      {renderTrigger ? (
+        renderTrigger(openPicker)
+      ) : (
+        <DateFieldTrigger
+          value={value}
+          label={label}
+          placeholder={placeholder}
+          hint={hint}
+          disabled={disabled}
+          testID={testID}
+          onPress={openPicker}
+          relativeLabels={relativeLabels}
+        />
+      )}
+      {/* Overlay mode presents the picker in a React Native Modal, which
+          layers ON TOP of whatever is behind it — used inside another @expo/ui
+          BottomSheet, where a nested picker sheet would dismiss its host.
+          Otherwise present it in its own bottom sheet. */}
+      {overlay ? (
+        <Modal
+          visible={open}
+          transparent
+          animationType="slide"
+          onRequestClose={close}
+          supportedOrientations={['portrait', 'landscape']}
+        >
+          <Pressable
+            onPress={close}
+            style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}
+          >
+            {/* Swallow taps on the panel so only the backdrop dismisses. */}
             <Pressable
-              onPress={() => {
-                onChange(ensureValidDate(draftDate, minimumDate, maximumDate));
-                setOpen(false);
-              }}
-              hitSlop={8}
+              onPress={() => {}}
               style={{
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[2],
-                borderRadius: borderRadius.full,
-                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
+                backgroundColor: m3.surface.surfaceContainerLow,
+                borderTopLeftRadius: borderRadius['2xl'],
+                borderTopRightRadius: borderRadius['2xl'],
               }}
             >
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.colorScheme.primary,
-                }}
-              >
-                {t('common.done')}
-              </Text>
+              {panel}
             </Pressable>
-          </View>
-          <DateTimePicker
-            value={draftDate}
-            mode="date"
-            display="spinner"
-            minimumDate={minimumDate}
-            maximumDate={maximumDate}
-            accentColor={m3.colorScheme.primary}
-            onValueChange={(_, date) =>
-              setDraftDate(ensureValidDate(date, minimumDate, maximumDate))
-            }
-          />
-        </View>
-      </BottomSheet>
+          </Pressable>
+        </Modal>
+      ) : (
+        <BottomSheet
+          index={open ? 0 : -1}
+          enableDynamicSizing
+          enablePanDownToClose
+          onClose={close}
+          backgroundStyle={{ backgroundColor: m3.surface.surfaceContainerLow }}
+        >
+          {panel}
+        </BottomSheet>
+      )}
     </View>
   );
 }

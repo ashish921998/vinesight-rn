@@ -8,6 +8,7 @@ export {
   SprayForm,
   validateSprayForm,
   createEmptySprayFormData,
+  finalizeSprayFormData,
   type SprayFormData,
   type ChemicalEntry,
   type SprayQuickAddItem,

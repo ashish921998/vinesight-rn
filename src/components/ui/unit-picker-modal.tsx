@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
 import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
-import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { SheetHeader } from '@/components/ui/sheet-header';
 import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -25,39 +25,9 @@ export function UnitPickerModal<T extends string>({
   title,
 }: UnitPickerModalProps<T>) {
   const m3 = useM3();
-  const { t } = useTranslation();
   const handleSelect = (unit: T) => {
     onSelect(unit);
     onClose();
-  };
-
-  const headerStyle: ViewStyle = {
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: m3.surface.s300,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  };
-
-  const cancelButtonStyle: ViewStyle = {
-    padding: spacing[2],
-    marginLeft: -spacing[2],
-  };
-
-  const cancelTextStyle: TextStyle = {
-    color: m3.colorScheme.onSurfaceVariant,
-    fontWeight: fontWeight.semibold,
-  };
-
-  const titleTextStyle: TextStyle = {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    color: m3.surface.s900,
-    flex: 1,
-    textAlign: 'center',
-    paddingRight: 48,
   };
 
   const getOptionStyle = (isSelected: boolean): ViewStyle => ({
@@ -89,12 +59,7 @@ export function UnitPickerModal<T extends string>({
       backgroundStyle={{ backgroundColor: m3.surface.s100 }}
     >
       <View style={{ flex: 1 }}>
-        <View style={headerStyle}>
-          <Pressable onPress={onClose} style={cancelButtonStyle}>
-            <Text style={cancelTextStyle}>{t('common.cancel')}</Text>
-          </Pressable>
-          <Text style={titleTextStyle}>{title}</Text>
-        </View>
+        <SheetHeader title={title} />
         <BottomSheetScrollView style={{ maxHeight: 400 }}>
           {options.map((unit) => {
             const isSelected = unit === selectedValue;

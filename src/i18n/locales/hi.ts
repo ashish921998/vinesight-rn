@@ -788,6 +788,23 @@ export const hi = {
     },
   },
 
+  quickLog: {
+    title: '{{type}} लॉग करें',
+    loggingTo: '{{farm}} में लॉग हो रहा है',
+    saveType: '{{type}} सहेजें',
+    durationQuestion: 'पानी कितनी देर चला?',
+    waterQuestion: 'टैंक में कितना पानी?',
+    tankQuestion: 'टैंक में क्या डाला?',
+    fertilizerQuestion: 'पानी में खाद डाली?',
+    optionalTag: 'वैकल्पिक',
+    emptyFertilizerHint: 'खाद नहीं डाली? कोई बात नहीं — सिर्फ़ पानी का लॉग सहेजें।',
+    phiSafeTitle: 'आपकी फ़सल के लिए सुरक्षित',
+    phiSafeBody: 'इस छिड़काव के बाद {{date}} से तुड़ाई सुरक्षित है।',
+    phiRiskTitle: 'सावधान — तुड़ाई नज़दीक है',
+    phiRiskBody:
+      'इस छिड़काव के बाद {{date}} तक तुड़ाई न करें — यह आपकी नियोजित तुड़ाई ({{target}}) के बाद है। सहेजने पर इसे ओवरराइड के रूप में चिह्नित किया जाएगा।',
+  },
+
   entryForm: {
     logSaved: 'लॉग सहेजा गया',
     taskSaved: 'कार्य सहेजा गया',
@@ -806,7 +823,6 @@ export const hi = {
     saveLogs: 'लॉग सहेजें ({{count}})',
     retrySaveLogs: 'फिर से सहेजें ({{count}})',
     saveTask: 'कार्य सहेजें',
-    pickDate: 'तारीख चुनें',
     irrigationFertilizerHint: '+ खाद',
     repeatLastLogTitle: 'पिछला लॉग दोहराएँ?',
     repeatLastLogLoggedOn: '{{date}} को लॉग किया गया',
@@ -913,7 +929,6 @@ export const hi = {
         lowLastLog: 'खुराक जांचें — आपकी पिछली एंट्री ({{reference}}) का लगभग 1/{{ratio}}',
       },
     },
-    quickAdd: 'त्वरित जोड़',
     catalogOnly: {
       title: 'कैटलॉग मिक्स',
       selectedMix: 'चयनित: {{name}}',
@@ -958,7 +973,6 @@ export const hi = {
         recommendedLow: 'मात्रा जांचें — दर्ज {{entered}}; लेबल {{min}}–{{max}} {{unit}} अनुशंसित',
       },
     },
-    quickAdd: 'त्वरित जोड़',
     /** ppm/g-per-L plan items shown as informational rows, never tappable chips (issue #197). */
     ppmPlanItemNotice: '{{name}}: ppm मात्रा त्वरित नहीं जोड़ी जा सकती — स्वयं दर्ज करें',
     noMatchesHint: 'कोई मिलान नहीं मिला। कस्टम उर्वरक नाम के साथ जारी रखें।',
@@ -1557,6 +1571,9 @@ export const hi = {
     recentRecords: 'हाल के रिकॉर्ड',
     viewAll: 'सभी देखें',
     noRecords: 'अभी तक कोई रिकॉर्ड नहीं',
+    loggingTo: 'लॉगिंग कर रहे हैं',
+    switch: 'बदलें',
+    loggingToNoFarm: 'अभी कोई खेत नहीं है',
   },
   assistant: {
     placeholder: 'आपका AI कृषि सहायक — फसल, मिट्टी और शेड्यूल के बारे में पूछें',
@@ -2429,6 +2446,7 @@ export const hi = {
       title: 'त्वरित क्रियाएं',
       irrigation: 'सिंचाई',
       spray: 'छिड़काव',
+      harvest: 'कटाई',
       expense: 'खर्च',
       note: 'नोट',
     },

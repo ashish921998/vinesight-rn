@@ -93,6 +93,25 @@ jest.mock('@/utils/color', () => ({
 // so the mocked BottomSheet factory would capture an undefined ref.
 const { DateField } =
   require('@/components/ui/date-field.ios') as typeof import('@/components/ui/date-field.ios');
+const { relativeDayOffset } =
+  require('@/components/ui/date-field-shared') as typeof import('@/components/ui/date-field-shared');
+
+describe('relativeDayOffset', () => {
+  const now = new Date(2026, 6, 23, 15, 0, 0); // 23 Jul 2026, afternoon
+
+  it('returns 0 for any time on the same day', () => {
+    expect(relativeDayOffset(new Date(2026, 6, 23, 1, 0), now)).toBe(0);
+  });
+
+  it('returns 1 for the previous calendar day', () => {
+    expect(relativeDayOffset(new Date(2026, 6, 22, 23, 0), now)).toBe(1);
+  });
+
+  it('returns null for older dates and future dates', () => {
+    expect(relativeDayOffset(new Date(2026, 6, 21), now)).toBeNull();
+    expect(relativeDayOffset(new Date(2026, 6, 24), now)).toBeNull();
+  });
+});
 
 describe('DateField iOS', () => {
   beforeEach(() => {
@@ -164,6 +183,24 @@ describe('DateField iOS', () => {
     );
     // Empty formatted string must fall through to the placeholder, not render blank.
     expect(screen.getByText('No due date')).toBeTruthy();
+  });
+
+  it('overlay mode presents the picker in a Modal, not a nested bottom sheet', () => {
+    const onChange = jest.fn();
+    const screen = render(
+      <DateField value={new Date(2026, 6, 20)} onChange={onChange} overlay label="Date" />,
+    );
+
+    // No nested @expo/ui sheet — that is the whole point inside another sheet.
+    expect(mockBottomSheet).not.toHaveBeenCalled();
+
+    // The picker lives in a Modal; opening flips it visible and commits on Done.
+    fireEvent.press(screen.getByLabelText('Select date'));
+    fireEvent.press(screen.getByTestId('native-date-picker'));
+    fireEvent.press(screen.getByText('common.done'));
+
+    expect(onChange).toHaveBeenCalledWith(new Date(2026, 7, 5));
+    expect(mockBottomSheet).not.toHaveBeenCalled();
   });
 
   it('clamps to maximumDate so Done cannot commit an out-of-range date', () => {
