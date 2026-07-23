@@ -6,19 +6,21 @@
  * The farm is the dashboard's selected farm and is NOT repeated here (it's
  * already visible in the "Logging to" bar); the date defaults to today.
  *
- * Irrigation carries an optional "add fertilizers" switch that saves a linked
- * fertigation record. Spray gets the full picker sources (catalog mixes,
- * warehouse, history, plan) plus the PHI harvest-safety check on Save.
+ * Irrigation renders fertilizers as a first-class (but optional) section —
+ * ~99% of irrigations carry them, so there is no gating switch: the farm's
+ * known products show as toggleable roster chips, and any ticked rows save as
+ * a linked fertigation record. Spray gets the full picker sources (catalog
+ * mixes, warehouse, history, plan) plus the PHI harvest-safety check on Save.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, Pressable, Alert, Switch } from 'react-native';
+import { View, Text, Pressable, Alert } from 'react-native';
 import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { useM3 } from '@/styles/use-theme';
-import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
+import { borderRadius, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
@@ -50,7 +52,6 @@ import {
   createEmptySprayFormData,
   createEmptyExpenseFormData,
   createEmptyHarvestFormData,
-  createEmptyFertigationFormData,
   finalizeSprayFormData,
   type IrrigationFormData,
   type SprayFormData,
@@ -98,10 +99,12 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   const [irrigationDraft, setIrrigationDraft] = useState<IrrigationFormData>({
     duration: undefined,
   });
-  const [includeFertilizers, setIncludeFertilizers] = useState(false);
-  const [fertigationDraft, setFertigationDraft] = useState<FertigationFormData>(() =>
-    createEmptyFertigationFormData(),
-  );
+  // Starts with NO rows (unlike createEmptyFertigationFormData's one blank
+  // row): fertilizers are optional here, and a lingering blank row would
+  // block an irrigation-only save.
+  const [fertigationDraft, setFertigationDraft] = useState<FertigationFormData>({
+    fertilizers: [],
+  });
   const [sprayDraft, setSprayDraft] = useState<SprayFormData>(() => createEmptySprayFormData());
   const [expenseDraft, setExpenseDraft] = useState<ExpenseFormData>(() =>
     createEmptyExpenseFormData(),
@@ -113,13 +116,12 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   // Synchronous re-entrancy guard (the `saving` state flips a tick later).
   const savingRef = useRef(false);
 
-  // Fresh sheet per open: today's date, empty drafts, fertilizers off.
+  // Fresh sheet per open: today's date, empty drafts.
   useEffect(() => {
     if (!type) return;
     setSelectedDate(new Date());
     setIrrigationDraft({ duration: undefined });
-    setIncludeFertilizers(false);
-    setFertigationDraft(createEmptyFertigationFormData());
+    setFertigationDraft({ fertilizers: [] });
     setSprayDraft(createEmptySprayFormData());
     setExpenseDraft(createEmptyExpenseFormData());
     setHarvestDraft(createEmptyHarvestFormData());
@@ -128,7 +130,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   // Picker sources — catalog for spray (per design), plan/warehouse/history for both.
   const spraySources = useSprayInputSources(farmId);
   const fertigationSources = useFertigationInputSources(farmId, {
-    catalogEnabled: type === 'irrigation' && includeFertilizers,
+    catalogEnabled: type === 'irrigation',
   });
   const { data: catalogMixes = [] } = useChemicalMixSearch('', isGrapeFarm);
 
@@ -163,10 +165,14 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   // immediate retry only saves its fertigation rider instead of duplicating it.
   const pendingIrrigationRef = useRef<Awaited<ReturnType<typeof saveLog>> | null>(null);
 
+  // Fertilizers ride along whenever any rows exist (they're optional, so an
+  // empty list is simply "none today" — but partial rows block Save).
+  const hasFertilizers = fertigationDraft.fertilizers.length > 0;
+
   const isValid =
     type === 'irrigation'
       ? validateIrrigationForm(irrigationDraft) &&
-        (!includeFertilizers || validateFertigationForm(fertigationDraft))
+        (!hasFertilizers || validateFertigationForm(fertigationDraft))
       : type === 'spray'
         ? validateSprayForm(sprayDraft)
         : type === 'expense'
@@ -208,7 +214,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
               preferredAreaUnit,
             }));
           pendingIrrigationRef.current = irrigationResult;
-          if (includeFertilizers) {
+          if (hasFertilizers) {
             try {
               await saveLog({
                 type: 'fertigation',
@@ -297,7 +303,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
       saveLog,
       deleteIrrigation,
       irrigationDraft,
-      includeFertilizers,
+      hasFertilizers,
       fertigationDraft,
       sprayDraft,
       expenseDraft,
@@ -459,6 +465,40 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
 
         {type === 'irrigation' && (
           <>
+            {/* Duration chips — the common values one tap away; the numeric
+                input below stays as the custom escape hatch. */}
+            <View style={{ flexDirection: 'row', gap: spacing[2], marginBottom: spacing[3] }}>
+              {[1, 2, 3, 4, 5].map((hours) => {
+                const selected = irrigationDraft.duration === hours;
+                return (
+                  <Pressable
+                    key={hours}
+                    onPress={() => setIrrigationDraft({ duration: hours })}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`${hours} ${t('irrigationForm.durationUnit')}`}
+                    style={{
+                      flex: 1,
+                      paddingVertical: spacing[3],
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      backgroundColor: selected ? m3.colorScheme.primary : m3.surface.s100,
+                      borderWidth: 1,
+                      borderColor: selected ? m3.colorScheme.primary : m3.surface.s300,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: '700',
+                        color: selected ? m3.colorScheme.onPrimary : m3.colorScheme.onSurface,
+                      }}
+                    >
+                      {hours}h
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
             {/* No farmArea: the farm is fixed by the dashboard, so the area
                 chip is noise here — only the Est. Water echo earns its spot. */}
             <IrrigationForm
@@ -467,74 +507,21 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
               systemDischarge={farm?.system_discharge ?? undefined}
               showHeader={false}
             />
-            {/* Fertigation rider — a switch, per design: irrigation and its
-                  fertilizers are one field visit, saved as linked records. */}
-            <View
-              style={{
-                marginTop: spacing[4],
-                backgroundColor: m3.surface.s100,
-                borderRadius: borderRadius.xl,
-                borderWidth: 1,
-                borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-                overflow: 'hidden',
-              }}
-            >
-              <Pressable
-                onPress={() => setIncludeFertilizers((v) => !v)}
-                accessibilityRole="switch"
-                accessibilityState={{ checked: includeFertilizers }}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  padding: spacing[4],
-                  gap: spacing[3],
-                }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: '600', color: m3.colorScheme.onSurface }}>
-                    {t('irrigationForm.addFertilizers.title')}
-                  </Text>
-                  <Text
-                    style={{
-                      marginTop: 2,
-                      fontSize: fontSize.xs,
-                      color: m3.colorScheme.onSurfaceVariant,
-                    }}
-                  >
-                    {t('irrigationForm.addFertilizers.subtitle')}
-                  </Text>
-                </View>
-                <Switch
-                  value={includeFertilizers}
-                  onValueChange={setIncludeFertilizers}
-                  trackColor={{
-                    false: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.24),
-                    true: m3.colorScheme.primary,
-                  }}
-                />
-              </Pressable>
-              {includeFertilizers && (
-                <View
-                  style={{
-                    paddingHorizontal: spacing[4],
-                    paddingBottom: spacing[4],
-                    paddingTop: spacing[4],
-                    borderTopWidth: 1,
-                    borderTopColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-                  }}
-                >
-                  <FertigationForm
-                    data={fertigationDraft}
-                    onChange={setFertigationDraft}
-                    quickAddItems={fertigationSources.quickAddItems}
-                    historyItems={fertigationSources.historyItems}
-                    planItems={fertigationSources.planItems}
-                    catalogProducts={fertigationSources.catalogProducts}
-                    areaAcres={farmAreaAcres}
-                    compact
-                  />
-                </View>
-              )}
+            {/* Fertilizers — first-class, no gating switch (~99% of irrigations
+                carry them). Roster chips toggle prefilled rows; zero rows
+                simply means "none today" and saves irrigation alone. */}
+            <View style={{ marginTop: spacing[4] }}>
+              <FertigationForm
+                data={fertigationDraft}
+                onChange={setFertigationDraft}
+                quickAddItems={fertigationSources.quickAddItems}
+                showQuickAddSection
+                historyItems={fertigationSources.historyItems}
+                planItems={fertigationSources.planItems}
+                catalogProducts={fertigationSources.catalogProducts}
+                areaAcres={farmAreaAcres}
+                compact
+              />
             </View>
           </>
         )}

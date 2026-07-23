@@ -137,6 +137,12 @@ interface FertigationFormProps {
   areaAcres?: number | null;
   /** Hide the decorative header + summary/validation chrome (inline log composer). */
   compact?: boolean;
+  /**
+   * Show the farm's known products (quickAddItems) as toggleable roster chips
+   * above the rows — tap adds a prefilled row, tap again removes it. The
+   * quick-log sheet's primary entry path; the picker stays for new products.
+   */
+  showQuickAddSection?: boolean;
 }
 
 export function FertigationForm({
@@ -149,6 +155,7 @@ export function FertigationForm({
   catalogProducts = [],
   areaAcres = null,
   compact = false,
+  showQuickAddSection = false,
 }: FertigationFormProps) {
   const m3 = useM3();
   const { t } = useTranslation();
@@ -367,6 +374,86 @@ export function FertigationForm({
           </View>
         </View>
       )}
+
+      {/* Roster chips — the farm's known products (history + warehouse + plan,
+          already merged/deduped upstream). Tap toggles a prefilled row in and
+          out; matching is name-only, same vocabulary the farmer thinks in. */}
+      {showQuickAddSection && quickAddItems.length > 0 ? (
+        <View style={{ marginBottom: spacing[2] }}>
+          <Text
+            style={{
+              fontSize: fontSize.xs,
+              fontWeight: fontWeight.semibold,
+              color: m3.surface.s500,
+              marginBottom: spacing[2],
+              textTransform: 'uppercase',
+              letterSpacing: 0.4,
+            }}
+          >
+            {t('fertigationForm.quickAdd')}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+            {quickAddItems.map((item, index) => {
+              const normalizedName = item.name.trim().toLowerCase();
+              const rowIndex = data.fertilizers.findIndex(
+                (f) => f.name.trim().toLowerCase() === normalizedName,
+              );
+              const selected = rowIndex >= 0;
+              return (
+                <Pressable
+                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  onPress={() => (selected ? removeFertilizer(rowIndex) : addQuickFertilizer(item))}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={item.name}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing[1],
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                    borderRadius: borderRadius.full,
+                    backgroundColor: selected
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.14)
+                      : m3.surface.s100,
+                    borderWidth: 1,
+                    borderColor: selected ? m3.colorScheme.primary : m3.surface.s200,
+                  }}
+                >
+                  {selected ? (
+                    <IconSymbol
+                      name="checkmark.circle.fill"
+                      size={14}
+                      color={m3.colorScheme.primary}
+                    />
+                  ) : null}
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: selected ? fontWeight.semibold : fontWeight.normal,
+                      color: selected ? m3.colorScheme.primary : m3.surface.s900,
+                    }}
+                  >
+                    {item.name}
+                  </Text>
+                  {item.quantity ? (
+                    <Text
+                      style={{
+                        fontSize: fontSize.xs,
+                        color: selected
+                          ? colorWithOpacity(m3.colorScheme.primary, 0.8)
+                          : m3.surface.s500,
+                      }}
+                    >
+                      {item.quantity} {item.unit ?? ''}
+                    </Text>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
 
       <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_FERTIGATION_DETAILS}>
         <View
