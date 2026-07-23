@@ -1,0 +1,19 @@
+app/farm/[id].tsx
+  s_73acc62b01f057::t_8c7492c40be501 85-91,94-102,1249-1251,1253-1254,1256-1259,1263,1265,1268
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "9bec9bd463e2bad85f54eb3fc4f50e9df57dd482",
+  "prompts": {},
+  "sessions": {
+    "s_73acc62b01f057": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0701fa839ffeUCSgFkDQumLdv3",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
