@@ -1,0 +1,20 @@
+src/components/sheets/quick-log-sheet.tsx
+  s_4965a28c6b7b66::t_bdc7b3213a3ffa 372
+  s_4965a28c6b7b66::t_5a6478a66a957b 231-236
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "16e8db7c8daf834aa039472c5a631484134ec064",
+  "prompts": {},
+  "sessions": {
+    "s_4965a28c6b7b66": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "59eb5968-c0fb-4152-8ca0-91c40053c561",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
