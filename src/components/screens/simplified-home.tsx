@@ -7,22 +7,20 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { AppIcon } from '@/components/ui/app-icon';
 import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
 import { Spinner } from '@/components/ui/spinner';
-import { useFarms, useProfile, useRecentActivities } from '@/hooks';
+import { useFarms, useRecentActivities } from '@/hooks';
 import { useSelectedFarmStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
 import { useDomainColors } from '@/styles/use-domain-colors';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
-import { getGreetingKey } from '@/utils/greeting';
 import { telemetry } from '@/services/telemetry';
 import { QuickLogSheet, type QuickLogType } from '@/components/sheets/quick-log-sheet';
 import type { LogTypeId } from '@/constants/calculator-models';
 
-// Simplified-mode Home. An action screen — not an analytics dashboard.
-// Green hero → "Logging to" context bar → quick actions (log directly to the
-// selected farm) → colored-dot recent activity timeline. Detailed mode keeps
-// its own dashboard (see app/(tabs)/index.tsx).
+// Home screen for BOTH simplified and detailed mode. An action screen — not an
+// analytics dashboard. Farm-as-title header → quick actions (log directly to
+// the selected farm) → colored-dot recent activity timeline.
 
 const ANALYTICS_BASE = { app_mode: 'simplified', surface: 'home' } as const;
 const RECENT_LIMIT = 6;
@@ -46,7 +44,6 @@ export function SimplifiedHome() {
   const insets = useSafeAreaInsets();
 
   const { data: farms, refetch: refetchFarms, isLoading: isLoadingFarms } = useFarms();
-  const { data: profile } = useProfile();
   const {
     data: recentActivities,
     refetch: refetchActivities,
@@ -71,7 +68,6 @@ export function SimplifiedHome() {
 
   const hasFarms = selectedFarmHydrated && Boolean(farms && farms.length > 0);
   const canSwitch = selectedFarmHydrated && Boolean(farms && farms.length > 1);
-  const greetingKey = getGreetingKey();
 
   useEffect(() => {
     telemetry.capture('simplified_home_viewed', ANALYTICS_BASE);
@@ -165,229 +161,110 @@ export function SimplifiedHome() {
           />
         }
       >
-        {/* Hero — green header with brand, greeting, and settings. */}
-        <View
-          style={{
-            backgroundColor: m3.colorScheme.primary,
-            paddingTop: insets.top + spacing[3],
-            paddingHorizontal: spacing[5],
-            paddingBottom: spacing[5],
-            borderBottomLeftRadius: borderRadius.lg,
-            borderBottomRightRadius: borderRadius.lg,
-            marginBottom: spacing[5],
-          }}
-        >
-          {/* Top bar: avatar + brand (left), settings gear (right) */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: spacing[3],
-              marginBottom: spacing[4],
-            }}
-          >
-            <Pressable
-              onPress={() => router.push('/app-settings')}
-              accessibilityRole="button"
-              accessibilityLabel={t('assistant.settingsButtonA11y')}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              style={({ pressed }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
-                flex: 1,
-                minWidth: 0,
-                gap: spacing[3],
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <View
-                style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: radius.xl,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: colorWithOpacity('#ffffff', 0.2),
-                  borderWidth: 1,
-                  borderColor: colorWithOpacity('#ffffff', 0.28),
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize.base,
-                    fontWeight: fontWeight.semibold,
-                    color: '#ffffff',
-                    letterSpacing: 0.2,
-                  }}
-                >
-                  {(profile?.full_name?.trim()?.charAt(0) || 'V').toUpperCase()}
-                </Text>
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    fontSize: fontSize.xl,
-                    color: '#ffffff',
-                    fontWeight: fontWeight.semibold,
-                    letterSpacing: -0.3,
-                    lineHeight: 25,
-                  }}
-                >
-                  {t('app.name', { defaultValue: 'VineSight' })}
-                </Text>
-              </View>
-            </Pressable>
-
-            <Pressable
-              onPress={() => router.push('/app-settings')}
-              accessibilityRole="button"
-              accessibilityLabel={t('assistant.settingsGearA11y')}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={({ pressed }) => ({
-                width: 38,
-                height: 38,
-                borderRadius: radius.lg,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: colorWithOpacity('#ffffff', pressed ? 0.28 : 0.16),
-                borderWidth: 1,
-                borderColor: colorWithOpacity('#ffffff', 0.2),
-              })}
-            >
-              <SymbolIcon name="gearshape.fill" size={17} color="#ffffff" />
-            </Pressable>
-          </View>
-
-          <Text
-            style={{
-              fontSize: fontSize['2xl'],
-              fontWeight: fontWeight.normal,
-              color: '#ffffff',
-              lineHeight: 30,
-            }}
-          >
-            {profile?.full_name
-              ? t(`dashboard.greetingWithName.${greetingKey}`, { name: profile.full_name })
-              : t(`dashboard.greeting.${greetingKey}`)}
-          </Text>
-        </View>
-
         <View style={{ paddingHorizontal: spacing[4] }}>
-          {/* "Logging to" context bar — surfaces the selected farm and a Switch
-              affordance. Quick actions below log to this farm without a picker. */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: spacing[3],
-              paddingHorizontal: spacing[4],
-              paddingVertical: spacing[3],
-              borderRadius: borderRadius.md,
-              backgroundColor: m3.surface.s100,
-              borderWidth: 1,
-              borderColor: m3.surface.s300,
-              marginBottom: spacing[5],
-            }}
-          >
+          {/* Header — the selected farm IS the screen title (Apple Home /
+              SmartThings pattern): an "LOGGING TO" eyebrow, then the farm name as a
+              big tappable title balanced on its row against a single settings gear.
+              No time-of-day greeting, no green hero, no separate "Logging to" bar. */}
+          <View style={{ paddingTop: insets.top + spacing[3], marginBottom: spacing[6] }}>
+            {/* Eyebrow — the farm that quick logs save to. */}
             <View
               style={{
-                flex: 1,
-                minWidth: 0,
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: spacing[2],
+                gap: spacing[1],
+                marginBottom: spacing[1],
               }}
             >
-              <SymbolIcon name="mappin" size={16} color={m3.surface.s500} />
-              <View style={{ flex: 1, minWidth: 0 }}>
+              <SymbolIcon name="mappin" size={13} color={m3.surface.s500} />
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.semibold,
+                  color: m3.surface.s500,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}
+              >
+                {t('simplifiedHome.loggingTo')}
+              </Text>
+            </View>
+
+            {/* Title row — farm name (tap to switch/add) balanced against settings. */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: spacing[3],
+              }}
+            >
+              <Pressable
+                onPress={canSwitch ? handleSwitchFarm : goAddFarm}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  canSwitch ? t('simplifiedHome.switch') : t('simplifiedHome.addFirstFarm')
+                }
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                style={({ pressed }) => ({
+                  flex: 1,
+                  minWidth: 0,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                  opacity: pressed ? 0.6 : 1,
+                })}
+              >
                 <Text
                   numberOfLines={1}
                   style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.semibold,
-                    color: m3.surface.s500,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  {t('simplifiedHome.loggingTo')}
-                </Text>
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    fontSize: fontSize.base,
-                    fontWeight: fontWeight.semibold,
+                    flexShrink: 1,
+                    fontSize: fontSize['3xl'],
+                    fontWeight: fontWeight.bold,
                     color: m3.surface.s900,
+                    letterSpacing: -0.5,
                   }}
                 >
                   {selectedFarm?.name ?? t('simplifiedHome.loggingToNoFarm')}
                 </Text>
-              </View>
+                {canSwitch ? (
+                  <View
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: radius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+                    }}
+                  >
+                    <SymbolIcon name="chevron.down" size={13} color={m3.colorScheme.primary} />
+                  </View>
+                ) : !hasFarms ? (
+                  <SymbolIcon name="plus.circle.fill" size={22} color={m3.colorScheme.primary} />
+                ) : null}
+              </Pressable>
+
+              <Pressable
+                onPress={() => router.push('/app-settings')}
+                accessibilityRole="button"
+                accessibilityLabel={t('assistant.settingsGearA11y')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={({ pressed }) => ({
+                  width: 40,
+                  height: 40,
+                  borderRadius: radius.lg,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: m3.surface.s100,
+                  borderWidth: 1,
+                  borderColor: m3.surface.s300,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <SymbolIcon name="gearshape.fill" size={18} color={m3.surface.s700} />
+              </Pressable>
             </View>
-            {canSwitch ? (
-              <Pressable
-                onPress={handleSwitchFarm}
-                accessibilityRole="button"
-                accessibilityLabel={t('simplifiedHome.switch')}
-                hitSlop={8}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing[1],
-                  paddingHorizontal: spacing[3],
-                  paddingVertical: spacing[2],
-                  borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, pressed ? 0.16 : 0.1),
-                  opacity: pressed ? 0.85 : 1,
-                })}
-              >
-                <SymbolIcon
-                  name="arrow.left.arrow.right"
-                  size={14}
-                  color={m3.colorScheme.primary}
-                />
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.semibold,
-                    color: m3.colorScheme.primary,
-                  }}
-                >
-                  {t('simplifiedHome.switch')}
-                </Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={goAddFarm}
-                accessibilityRole="button"
-                accessibilityLabel={t('simplifiedHome.addFirstFarm')}
-                hitSlop={8}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing[1],
-                  paddingHorizontal: spacing[3],
-                  paddingVertical: spacing[2],
-                  borderRadius: radius.md,
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, pressed ? 0.16 : 0.1),
-                  opacity: pressed ? 0.85 : 1,
-                })}
-              >
-                <SymbolIcon name="plus" size={14} color={m3.colorScheme.primary} />
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.semibold,
-                    color: m3.colorScheme.primary,
-                  }}
-                >
-                  {t('dashboard.cta.addFirstFarm')}
-                </Text>
-              </Pressable>
-            )}
           </View>
 
           {/* Quick Actions — four domain-colored buttons. Log direct to farm. */}
@@ -403,50 +280,50 @@ export function SimplifiedHome() {
             >
               {t('dashboard.quickActions.title')}
             </Text>
-            <View
-              style={{
-                borderRadius: borderRadius.md,
-                padding: spacing[4],
-                paddingHorizontal: spacing[3],
-                backgroundColor: m3.surface.s100,
-                borderWidth: 1,
-                borderColor: m3.surface.s300,
-              }}
-            >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-                {quickActions.map((action) => (
-                  <Pressable
-                    key={action.type}
-                    onPress={() => handleQuickAction(action)}
-                    style={{ alignItems: 'center', minWidth: 68 }}
-                    accessibilityRole="button"
-                    accessibilityLabel={t(action.labelKey)}
+            {/* 2×2 grid — big targets for gloved/sunlit field use, room for a
+                real label per tile (vs the old 4-across icon strip). */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
+              {quickActions.map((action) => (
+                <Pressable
+                  key={action.type}
+                  onPress={() => handleQuickAction(action)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(action.labelKey)}
+                  style={({ pressed }) => ({
+                    flexBasis: '45%',
+                    flexGrow: 1,
+                    borderRadius: borderRadius.md,
+                    padding: spacing[4],
+                    backgroundColor: m3.surface.s100,
+                    borderWidth: 1,
+                    borderColor: m3.surface.s300,
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: radius.md,
+                      backgroundColor: colorWithOpacity(action.color, 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: spacing[2],
+                    }}
                   >
-                    <View
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: radius.md,
-                        backgroundColor: colorWithOpacity(action.color, 0.12),
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <AppIcon name={action.icon} size={20} color={action.color} />
-                    </View>
-                    <Text
-                      style={{
-                        fontSize: fontSize.xs,
-                        fontWeight: fontWeight.medium,
-                        color: m3.surface.s500,
-                        marginTop: spacing[1] + 2,
-                      }}
-                    >
-                      {t(action.labelKey)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+                    <AppIcon name={action.icon} size={22} color={action.color} />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.surface.s900,
+                    }}
+                  >
+                    {t(action.labelKey)}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
           </View>
 
@@ -527,8 +404,8 @@ export function SimplifiedHome() {
                   >
                     <View
                       style={{
-                        width: 8,
-                        height: 8,
+                        width: 4,
+                        height: 36,
                         borderRadius: radius.xs,
                         backgroundColor:
                           activity.type === 'irrigation'
