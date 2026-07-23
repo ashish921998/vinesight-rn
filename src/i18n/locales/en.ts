@@ -804,6 +804,17 @@ export const en = {
     title: 'Log {{type}}',
     loggingTo: 'Logging to {{farm}}',
     saveType: 'Save {{type}}',
+    durationQuestion: 'How long did the water run?',
+    waterQuestion: 'How much water in the tank?',
+    tankQuestion: 'What went in the tank?',
+    fertilizerQuestion: 'Fertilizer in the water?',
+    optionalTag: 'optional',
+    emptyFertilizerHint: 'No fertilizer? That’s fine — just save the watering.',
+    phiSafeTitle: 'Safe for your harvest',
+    phiSafeBody: 'Produce from this spray is safe to pick from {{date}}.',
+    phiRiskTitle: 'Careful — close to harvest',
+    phiRiskBody:
+      'After this spray, wait until {{date}} to pick — that’s after your planned harvest ({{target}}). Saving will mark it as an override.',
   },
 
   entryForm: {

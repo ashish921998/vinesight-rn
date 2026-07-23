@@ -795,6 +795,17 @@ export const mr = {
     title: '{{type}} नोंदवा',
     loggingTo: '{{farm}} मध्ये नोंदवत आहे',
     saveType: '{{type}} जतन करा',
+    durationQuestion: 'पाणी किती वेळ चालू होते?',
+    waterQuestion: 'टाकीत किती पाणी?',
+    tankQuestion: 'टाकीत काय टाकले?',
+    fertilizerQuestion: 'पाण्यात खत दिले का?',
+    optionalTag: 'ऐच्छिक',
+    emptyFertilizerHint: 'खत नाही? हरकत नाही — फक्त पाण्याची नोंद जतन करा.',
+    phiSafeTitle: 'तुमच्या काढणीसाठी सुरक्षित',
+    phiSafeBody: 'या फवारणीनंतर {{date}} पासून काढणी सुरक्षित आहे.',
+    phiRiskTitle: 'सावधान — काढणी जवळ आहे',
+    phiRiskBody:
+      'या फवारणीनंतर {{date}} पर्यंत काढणी करू नका — ही तुमच्या नियोजित काढणीनंतर ({{target}}) आहे. जतन केल्यास ओव्हरराइड म्हणून नोंद होईल.',
   },
 
   entryForm: {

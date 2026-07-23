@@ -1927,8 +1927,6 @@ export function EntryForm({
                 onAdd={addLogToSession}
                 isValid={isLogFormValid}
                 hasFarm={hasFarmForCurrentLog}
-                sprayQuickAddItems={sprayQuickAddItems}
-                fertigationQuickAddItems={fertigationQuickAddItems}
                 includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
                 onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
                 sprayCatalogMixes={catalogMixes}

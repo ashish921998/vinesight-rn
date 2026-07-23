@@ -13,14 +13,26 @@
  * harvest-safety check on Save.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  Alert,
+  Keyboard,
+  UIManager,
+  findNodeHandle,
+  useWindowDimensions,
+  type ScrollView,
+  type TextInputProps,
+} from 'react-native';
 import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { useM3 } from '@/styles/use-theme';
-import { borderRadius, radius, spacing } from '@/styles/theme';
+import { useDomainColors } from '@/styles/use-domain-colors';
+import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
@@ -35,11 +47,14 @@ import type { Farm } from '@/types';
 import { isGrapeCrop } from '@/utils/crop';
 import { isPhiConflict } from '@/services/phi-service';
 import { createStartSeasonHref } from '@/utils/add-log-navigation';
+import { calculateKeyboardScrollOffset, resolveKeyboardTop } from '@/utils/keyboard-scroll';
+import { formatDate } from '@/i18n/format';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { telemetry } from '@/services/telemetry';
 import { guidedTourEmit } from '@/features/guided-tour';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import {
-  IrrigationForm,
   SprayForm,
   ExpenseForm,
   HarvestForm,
@@ -79,9 +94,201 @@ interface QuickLogSheetProps {
   onClose: () => void;
 }
 
+interface HeroStepperProps {
+  value: number | undefined;
+  onChange: (value: number | undefined) => void;
+  unitLabel: string;
+  presets: number[];
+  formatPreset: (preset: number) => string;
+  step: number;
+  accentColor: string;
+  /** Quiet plain-words echo under the presets ("≈ 12.5 mm of water"). */
+  echo?: string | null;
+}
+
+/**
+ * The drawer's main-number control (v2 design): a big value with −/+ steppers
+ * and one row of preset chips — irrigation hours and spray tank litres share
+ * it. One glance, one thumb; the presets cover the common answers.
+ */
+function HeroStepper({
+  value,
+  onChange,
+  unitLabel,
+  presets,
+  formatPreset,
+  step,
+  accentColor,
+  echo,
+}: HeroStepperProps) {
+  const m3 = useM3();
+  const current = value ?? 0;
+  // Round to 2dp so 0.1-steps never accumulate float dust; 0 clears back to
+  // undefined so validation still reads "not answered".
+  const setValue = (next: number) => {
+    const rounded = Math.round(next * 100) / 100;
+    onChange(rounded > 0 ? rounded : undefined);
+  };
+  const displayValue = Number.isInteger(current) ? String(current) : current.toFixed(1);
+
+  return (
+    <View
+      style={{
+        backgroundColor: m3.surface.s100,
+        borderWidth: 1,
+        borderColor: m3.surface.s200,
+        borderRadius: borderRadius.xl,
+        paddingVertical: spacing[4],
+        paddingHorizontal: spacing[3],
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: spacing[5],
+        }}
+      >
+        <Pressable
+          onPress={() => setValue(current - step)}
+          disabled={current <= 0}
+          accessibilityRole="button"
+          accessibilityLabel="−"
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: borderRadius.full,
+            borderWidth: 1.5,
+            borderColor: m3.surface.s300,
+            backgroundColor: m3.surface.s50,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: current <= 0 ? 0.4 : 1,
+          }}
+        >
+          <Symbol name="minus" size={20} color={m3.surface.s900} />
+        </Pressable>
+        <View style={{ minWidth: 110, alignItems: 'center' }}>
+          <Text
+            style={{
+              fontSize: fontSize['5xl'],
+              fontWeight: fontWeight.bold,
+              letterSpacing: -1,
+              color: m3.surface.s900,
+              lineHeight: 54,
+            }}
+          >
+            {displayValue}
+          </Text>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: m3.surface.s500,
+            }}
+          >
+            {unitLabel}
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => setValue(current + step)}
+          accessibilityRole="button"
+          accessibilityLabel="+"
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: borderRadius.full,
+            borderWidth: 1.5,
+            borderColor: m3.surface.s300,
+            backgroundColor: m3.surface.s50,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Symbol name="plus" size={20} color={m3.surface.s900} />
+        </Pressable>
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[4] }}>
+        {presets.map((preset) => {
+          const selected = value === preset;
+          return (
+            <Pressable
+              key={preset}
+              onPress={() => setValue(preset)}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              accessibilityLabel={`${formatPreset(preset)} ${unitLabel}`}
+              style={{
+                flex: 1,
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                backgroundColor: selected ? accentColor : m3.surface.s50,
+                borderWidth: 1,
+                borderColor: selected ? accentColor : m3.surface.s300,
+              }}
+            >
+              <Text
+                style={{
+                  fontWeight: fontWeight.bold,
+                  fontSize: fontSize.sm,
+                  color: selected ? m3.surface.s50 : m3.colorScheme.onSurface,
+                }}
+              >
+                {formatPreset(preset)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {echo ? (
+        <Text
+          style={{
+            marginTop: spacing[3],
+            textAlign: 'center',
+            fontSize: fontSize.xs,
+            color: m3.surface.s600,
+          }}
+        >
+          {echo}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+/** Uppercase plain-question section label above each drawer section. */
+function SectionLabel({ children, optional }: { children: string; optional?: string }) {
+  const m3 = useM3();
+  return (
+    <Text
+      style={{
+        fontSize: fontSize.xs,
+        fontWeight: fontWeight.bold,
+        letterSpacing: 0.6,
+        textTransform: 'uppercase',
+        color: m3.surface.s500,
+        marginBottom: spacing[2],
+      }}
+    >
+      {children}
+      {optional ? (
+        <Text style={{ fontWeight: fontWeight.medium, color: m3.surface.s400 }}>
+          {'  ·  '}
+          {optional}
+        </Text>
+      ) : null}
+    </Text>
+  );
+}
+
 export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const domainColors = useDomainColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -115,6 +322,73 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   const [saving, setSaving] = useState(false);
   // Synchronous re-entrancy guard (the `saving` state flips a tick later).
   const savingRef = useRef(false);
+
+  // Keyboard-aware scrolling (same mechanics as EntryForm): the sheet keeps
+  // its height while the keyboard overlays it, so a focused input — and the
+  // typeahead dropdown that opens under the name field — must be scrolled
+  // into the visible strip above the keyboard.
+  const { height: windowHeight } = useWindowDimensions();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollOffsetRef = useRef(0);
+  const keyboardTopRef = useRef<number | null>(null);
+  const focusedInputRef = useRef<number | null>(null);
+  const [keyboardPadding, setKeyboardPadding] = useState(0);
+
+  const scrollToNode = useCallback((nodeHandle: number) => {
+    const keyboardTop = keyboardTopRef.current;
+    if (keyboardTop == null) return;
+    UIManager.measureInWindow(nodeHandle, (_x, y, _width, height) => {
+      const nextOffset = calculateKeyboardScrollOffset({
+        currentOffset: scrollOffsetRef.current,
+        inputY: y,
+        inputHeight: height,
+        keyboardTop,
+        // The native sheet shrinks above the keyboard and keeps its Save
+        // footer pinned, so the real occluder sits ~90pt above keyboardTop;
+        // add the typeahead dropdown's height on top of that so the list is
+        // on screen, not just the input's caret. ponytail: fixed budget
+        // instead of measuring the footer — revisit if footer height changes.
+        buffer: 360,
+      });
+      if (nextOffset != null) {
+        scrollViewRef.current?.scrollTo({ y: nextOffset, animated: true });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const showListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      keyboardTopRef.current = resolveKeyboardTop({
+        screenY: event.endCoordinates.screenY,
+        keyboardHeight: event.endCoordinates.height,
+        windowHeight,
+      });
+      setKeyboardPadding(event.endCoordinates.height);
+      const focusedNode = focusedInputRef.current;
+      if (focusedNode != null) {
+        requestAnimationFrame(() => scrollToNode(focusedNode));
+      }
+    });
+    const hideListener = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardTopRef.current = null;
+      setKeyboardPadding(0);
+    });
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, [scrollToNode, windowHeight]);
+
+  const handleInputFocus = useCallback<NonNullable<TextInputProps['onFocus']>>(
+    (event) => {
+      const target = (event as { target?: unknown } | undefined)?.target ?? null;
+      const nodeHandle = findNodeHandle(target as unknown as number | React.Component | null);
+      if (typeof nodeHandle !== 'number') return;
+      focusedInputRef.current = nodeHandle;
+      requestAnimationFrame(() => scrollToNode(nodeHandle));
+    },
+    [scrollToNode],
+  );
 
   // Fresh sheet per open: today's date, empty drafts.
   useEffect(() => {
@@ -168,6 +442,24 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   // Fertilizers ride along whenever any rows exist (they're optional, so an
   // empty list is simply "none today" — but partial rows block Save).
   const hasFertilizers = fertigationDraft.fertilizers.length > 0;
+
+  // Duration hero echo — duration × system discharge, the same mm estimate
+  // IrrigationForm showed, phrased as one quiet line.
+  const estimatedWaterEcho = useMemo(() => {
+    const discharge = farm?.system_discharge;
+    const duration = irrigationDraft.duration;
+    if (!discharge || !duration || duration <= 0) return null;
+    return `${t('irrigationForm.estimatedWaterLabel')}: ≈ ${(duration * discharge).toFixed(1)} ${t('units.millimeter')}`;
+  }, [farm?.system_discharge, irrigationDraft.duration, t]);
+
+  // Same PHI gate the Save path double-confirms on, surfaced live as a card.
+  const sprayPhiConflict =
+    isGrapeFarm && sprayDraft.catalogMixId != null && sprayDraft.safeHarvestDate != null
+      ? isPhiConflict({
+          safeHarvestDate: sprayDraft.safeHarvestDate,
+          targetHarvestDate: activeSeason?.target_harvest_date ?? null,
+        })
+      : false;
 
   const isValid =
     type === 'irrigation'
@@ -410,15 +702,22 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
           continue to hug their content. The scroll view owns keyboard-safe
           overflow in both presentations. */}
       <BottomSheetScrollView
+        ref={scrollViewRef}
         style={usesFullHeight ? { flex: 1 } : undefined}
         contentContainerStyle={{
           paddingHorizontal: spacing[4],
           // Small gap below the native drag handle; SheetHeader adds its own
           // top padding for the rest of the breathing room.
           paddingTop: spacing[2],
-          paddingBottom: spacing[5],
+          // Keyboard padding keeps enough scroll runway for the focused
+          // input + its typeahead dropdown to sit above the keyboard.
+          paddingBottom: spacing[5] + keyboardPadding,
         }}
         keyboardShouldPersistTaps="handled"
+        onScroll={(event) => {
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
       >
         {/* One shared header contract for every activity type. */}
         <SheetHeader
@@ -465,85 +764,176 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
 
         {type === 'irrigation' && (
           <>
-            {/* Duration chips — the common values one tap away; the numeric
-                input below stays as the custom escape hatch. */}
-            <View style={{ flexDirection: 'row', gap: spacing[2], marginBottom: spacing[3] }}>
-              {[1, 2, 3, 4, 5].map((hours) => {
-                const selected = irrigationDraft.duration === hours;
-                return (
-                  <Pressable
-                    key={hours}
-                    onPress={() => setIrrigationDraft({ duration: hours })}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    accessibilityLabel={`${hours} ${t('irrigationForm.durationUnit')}`}
-                    style={{
-                      flex: 1,
-                      paddingVertical: spacing[3],
-                      borderRadius: borderRadius.full,
-                      alignItems: 'center',
-                      backgroundColor: selected ? m3.colorScheme.primary : m3.surface.s100,
-                      borderWidth: 1,
-                      borderColor: selected ? m3.colorScheme.primary : m3.surface.s300,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: '700',
-                        color: selected ? m3.colorScheme.onPrimary : m3.colorScheme.onSurface,
-                      }}
-                    >
-                      {hours}h
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-            {/* No farmArea: the farm is fixed by the dashboard, so the area
-                chip is noise here — only the Est. Water echo earns its spot. */}
-            <IrrigationForm
-              data={irrigationDraft}
-              onChange={setIrrigationDraft}
-              systemDischarge={farm?.system_discharge ?? undefined}
-              showHeader={false}
-            />
+            {/* Duration hero — big value, −/+ in half-hour steps, hour presets.
+                The litres/mm echo translates the answer into water reality. */}
+            <SectionLabel>{t('quickLog.durationQuestion')}</SectionLabel>
+            <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_IRRIGATION_DURATION}>
+              <HeroStepper
+                value={irrigationDraft.duration}
+                onChange={(duration) => setIrrigationDraft({ duration })}
+                unitLabel={t('irrigationForm.durationUnit')}
+                presets={[1, 2, 3, 4, 5]}
+                formatPreset={(hours) => `${hours}h`}
+                step={0.5}
+                accentColor={domainColors.category.irrigation}
+                echo={estimatedWaterEcho}
+              />
+            </GuidedTourTarget>
+
             {/* Fertilizers — first-class, no gating switch (~99% of irrigations
                 carry them). Zero rows simply means "none today" and saves
                 irrigation alone. */}
-            <View style={{ marginTop: spacing[4] }}>
+            <View style={{ marginTop: spacing[5] }}>
+              <SectionLabel optional={t('quickLog.optionalTag')}>
+                {t('quickLog.fertilizerQuestion')}
+              </SectionLabel>
               <FertigationForm
                 data={fertigationDraft}
                 onChange={setFertigationDraft}
-                quickAddItems={fertigationSources.quickAddItems}
+                onInputFocus={handleInputFocus}
                 historyItems={fertigationSources.historyItems}
                 planItems={fertigationSources.planItems}
                 catalogProducts={fertigationSources.catalogProducts}
                 areaAcres={farmAreaAcres}
                 compact
+                showSectionHeader={false}
               />
+              {!hasFertilizers ? (
+                <Text
+                  style={{
+                    marginTop: spacing[2],
+                    textAlign: 'center',
+                    fontSize: fontSize.xs,
+                    color: m3.surface.s500,
+                  }}
+                >
+                  {t('quickLog.emptyFertilizerHint')}
+                </Text>
+              ) : null}
             </View>
           </>
         )}
 
         {type === 'spray' && (
-          <SprayForm
-            data={sprayDraft}
-            onChange={setSprayDraft}
-            quickAddItems={spraySources.quickAddItems}
-            catalogMixes={catalogMixes}
-            historyItems={spraySources.historyItems}
-            planItems={spraySources.planItems}
-            areaAcres={farmAreaAcres}
+          <>
+            {/* Tank water hero — litres with −/+ in 50 L steps and presets. */}
+            <SectionLabel>{t('quickLog.waterQuestion')}</SectionLabel>
+            <HeroStepper
+              value={sprayDraft.waterVolume}
+              onChange={(waterVolume) => setSprayDraft((prev) => ({ ...prev, waterVolume }))}
+              unitLabel={t('sprayForm.waterVolume.unitLiters')}
+              presets={[100, 200, 400, 500, 1000]}
+              formatPreset={(litres) => String(litres)}
+              step={50}
+              accentColor={domainColors.category.spray}
+            />
+
+            <View style={{ marginTop: spacing[5] }}>
+              <SectionLabel>{t('quickLog.tankQuestion')}</SectionLabel>
+              <SprayForm
+                data={sprayDraft}
+                onChange={setSprayDraft}
+                onInputFocus={handleInputFocus}
+                catalogMixes={catalogMixes}
+                historyItems={spraySources.historyItems}
+                planItems={spraySources.planItems}
+                areaAcres={farmAreaAcres}
+                compact
+                showSectionHeader={false}
+                showWaterInput={false}
+              />
+            </View>
+
+            {/* Harvest-safety verdict in plain words — green when the PHI
+                window clears the planned harvest, amber when it crosses it.
+                Same isPhiConflict gate the Save path double-confirms on. */}
+            {isGrapeFarm && sprayDraft.catalogMixId && sprayDraft.safeHarvestDate ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  gap: spacing[2],
+                  marginTop: spacing[4],
+                  padding: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  borderWidth: 1,
+                  backgroundColor: colorWithOpacity(
+                    sprayPhiConflict ? m3.colorScheme.warning : m3.colorScheme.success,
+                    0.12,
+                  ),
+                  borderColor: colorWithOpacity(
+                    sprayPhiConflict ? m3.colorScheme.warning : m3.colorScheme.success,
+                    0.35,
+                  ),
+                }}
+              >
+                <Symbol
+                  name={
+                    sprayPhiConflict ? 'exclamationmark.triangle.fill' : 'checkmark.circle.fill'
+                  }
+                  size={18}
+                  color={sprayPhiConflict ? m3.colorScheme.warning : m3.colorScheme.success}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.bold,
+                      color: m3.surface.s900,
+                    }}
+                  >
+                    {sprayPhiConflict ? t('quickLog.phiRiskTitle') : t('quickLog.phiSafeTitle')}
+                  </Text>
+                  <Text
+                    style={{
+                      marginTop: 2,
+                      fontSize: fontSize.xs,
+                      color: m3.surface.s600,
+                      lineHeight: 17,
+                    }}
+                  >
+                    {sprayPhiConflict
+                      ? t('quickLog.phiRiskBody', {
+                          date: formatDate(sprayDraft.safeHarvestDate, {
+                            day: 'numeric',
+                            month: 'short',
+                          }),
+                          target: activeSeason?.target_harvest_date
+                            ? formatDate(activeSeason.target_harvest_date, {
+                                day: 'numeric',
+                                month: 'short',
+                              })
+                            : '-',
+                        })
+                      : t('quickLog.phiSafeBody', {
+                          date: formatDate(sprayDraft.safeHarvestDate, {
+                            day: 'numeric',
+                            month: 'short',
+                          }),
+                        })}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+          </>
+        )}
+
+        {type === 'expense' && (
+          <ExpenseForm
+            data={expenseDraft}
+            onChange={setExpenseDraft}
+            onInputFocus={handleInputFocus}
             compact
           />
         )}
 
-        {type === 'expense' && (
-          <ExpenseForm data={expenseDraft} onChange={setExpenseDraft} compact />
-        )}
-
         {type === 'harvest' && (
-          <HarvestForm data={harvestDraft} onChange={setHarvestDraft} compact />
+          <HarvestForm
+            data={harvestDraft}
+            onChange={setHarvestDraft}
+            onInputFocus={handleInputFocus}
+            compact
+          />
         )}
       </BottomSheetScrollView>
 

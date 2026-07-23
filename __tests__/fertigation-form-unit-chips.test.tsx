@@ -102,45 +102,42 @@ function fertilizerRow(
   return { ...createEmptyFertigationFormData().fertilizers[0], id: 'row-1', ...overrides };
 }
 
-describe('basis-fused unit chips', () => {
-  it('renders exactly kg/acre, L/acre, kg, L plus the overflow trigger; the basis toggle is gone', () => {
+describe('fused quantity + unit input', () => {
+  it('renders one unit segment instead of an inline chip row', () => {
     const screen = render(<FertigationForm data={fertigationData()} onChange={jest.fn()} />);
 
-    for (const label of ['kg/acre', 'L/acre', 'L']) {
-      expect(screen.getByText(label)).toBeTruthy();
-    }
-    // 'kg' appears twice: as the selected chip and as the row's unit label.
-    expect(screen.getAllByText('kg').length).toBe(2);
-    expect(screen.getByText('fertigationForm.fertilizers.moreUnits')).toBeTruthy();
-    // The old separate per-acre/total toggle must not exist, and bare chips
-    // carry no "total" wording.
+    // Only the fused input's unit segment shows the active chip key.
+    expect(screen.getAllByText('kg').length).toBe(1);
+    // No inline chips, no overflow trigger, and the old basis toggle stays gone.
+    expect(screen.queryByText('kg/acre')).toBeNull();
+    expect(screen.queryByText('fertigationForm.fertilizers.moreUnits')).toBeNull();
     expect(screen.queryByText('Total Qty')).toBeNull();
     expect(screen.queryByText('Per acre')).toBeNull();
-    expect(screen.queryByText(/total/i)).toBeNull();
   });
 
-  it('selecting kg/acre stores the existing bare unit spelling plus explicit per_acre basis', () => {
+  it('selecting kg/acre from the unit menu stores the bare unit plus explicit per_acre basis', () => {
     const onChange = jest.fn();
     const screen = render(<FertigationForm data={fertigationData()} onChange={onChange} />);
 
+    fireEvent.press(screen.getByText('kg')); // unit segment → opens menu
     fireEvent.press(screen.getByText('kg/acre'));
 
     const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({ unit: 'kg', quantityBasis: 'per_acre' });
   });
 
-  it('selecting a bare overflow chip keeps the unchanged total storage shape', () => {
+  it('selecting a bare overflow unit keeps the unchanged total storage shape', () => {
     const onChange = jest.fn();
     const screen = render(<FertigationForm data={fertigationData()} onChange={onChange} />);
 
-    fireEvent.press(screen.getByText('fertigationForm.fertilizers.moreUnits'));
+    fireEvent.press(screen.getByText('kg')); // unit segment → opens menu
     fireEvent.press(screen.getByText('g'));
 
     const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({ unit: 'gram', quantityBasis: 'total' });
   });
 
-  it('an overflow selection renders as the active overflow trigger', () => {
+  it('an overflow selection renders as the active unit segment', () => {
     const data = fertigationData({
       fertilizers: [fertilizerRow({ unit: 'gram', quantityBasis: 'per_acre' })],
     });
@@ -162,7 +159,6 @@ describe('smart defaults', () => {
     const data = fertigationData({
       fertilizers: [fertilizerRow({ name: 'Urea', quantity: 5 })],
     });
-    // No picker options → the add button appends a blank manual row.
     const screen = render(<FertigationForm data={data} onChange={onChange} />);
     fireEvent.press(screen.getByText('fertigationForm.fertilizers.addFertilizer'));
 
@@ -171,27 +167,15 @@ describe('smart defaults', () => {
     expect(next.fertilizers[1]).toMatchObject({ unit: 'kg', quantityBasis: 'total' });
   });
 
-  it('a plan quick-add lands on the per-acre chip via its explicit prefill basis', () => {
+  it('a plan pick lands on the per-acre chip via its explicit prefill basis', () => {
     const onChange = jest.fn();
     const screen = render(
-      <FertigationForm
-        data={fertigationData()}
-        onChange={onChange}
-        quickAddItems={[
-          {
-            name: 'PlanUrea',
-            unit: 'kg',
-            quantity: 5,
-            quantityBasis: 'per_acre',
-            planItemId: 'p1',
-          },
-        ]}
-      />,
+      <FertigationForm data={fertigationData()} onChange={onChange} planItems={planItems} />,
     );
 
     fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
     fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'Plan');
-    fireEvent.press(screen.getByText('PlanUrea'));
+    fireEvent.press(screen.getAllByText('PlanUrea')[0]);
 
     const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({
@@ -202,13 +186,13 @@ describe('smart defaults', () => {
     });
   });
 
-  it("a quick-add unit's own '/acre' testimony beats the pristine row's total default", () => {
+  it("a history unit's own '/acre' testimony beats the pristine row's total default", () => {
     const onChange = jest.fn();
     const screen = render(
       <FertigationForm
         data={fertigationData()}
         onChange={onChange}
-        quickAddItems={[{ name: 'Humic acid', unit: 'L/acre', quantity: 2 }]}
+        historyItems={[{ name: 'Humic acid', unit: 'L/acre', quantity: 2 }]}
       />,
     );
 
@@ -234,10 +218,12 @@ describe('smart defaults', () => {
           ],
         })}
         onChange={onChange}
-        quickAddItems={[{ name: 'urea', unit: 'kg', quantity: 10, quantityBasis: 'total' }]}
+        historyItems={[{ name: 'urea', unit: 'kg', quantity: 10, quantityBasis: 'total' }]}
       />,
     );
 
+    // Complete rows render as receipts — tap to re-open for editing.
+    fireEvent.press(screen.getAllByText('Urea')[0]);
     fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
     fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'ure');
     onChange.mockClear();
@@ -252,48 +238,19 @@ describe('smart defaults', () => {
     });
   });
 
-  it('a same-basis typeahead selection keeps one row', () => {
-    const onChange = jest.fn();
-    const screen = render(
-      <FertigationForm
-        data={fertigationData({
-          fertilizers: [
-            fertilizerRow({
-              name: 'Urea',
-              unit: 'kg',
-              quantity: 5,
-              quantityBasis: 'total',
-            }),
-          ],
-        })}
-        onChange={onChange}
-        quickAddItems={[{ name: 'urea', unit: 'kg', quantity: 10, quantityBasis: 'total' }]}
-      />,
-    );
-
-    fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
-    fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'ure');
-    onChange.mockClear();
-    fireEvent.press(screen.getByText('urea'));
-
-    const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
-    expect(next.fertilizers).toHaveLength(1);
-    expect(next.fertilizers[0]).toMatchObject({ name: 'urea', quantityBasis: 'total' });
-  });
-
-  it('a history quick-add keeps the basis it carries', () => {
+  it('a history pick keeps the basis it carries', () => {
     const onChange = jest.fn();
     const screen = render(
       <FertigationForm
         data={fertigationData()}
         onChange={onChange}
-        quickAddItems={[{ name: 'Urea', unit: 'kg', quantity: 10, quantityBasis: 'total' }]}
+        historyItems={[{ name: 'Urea', unit: 'kg', quantity: 10, quantityBasis: 'total' }]}
       />,
     );
 
     fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
     fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), 'Ure');
-    fireEvent.press(screen.getByText('Urea'));
+    fireEvent.press(screen.getAllByText('Urea')[0]);
 
     const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({
@@ -311,6 +268,8 @@ describe('bidirectional area echo', () => {
     });
     const screen = render(<FertigationForm data={data} onChange={jest.fn()} areaAcres={3.5} />);
 
+    // Complete rows render as receipts — expand to see the full echo line.
+    fireEvent.press(screen.getAllByText('Urea')[0]);
     expect(
       screen.getByText('fertigationForm.fertilizers.areaEcho.toPerAcre:10 kg → ≈ 2.86 kg/acre'),
     ).toBeTruthy();
@@ -324,6 +283,7 @@ describe('bidirectional area echo', () => {
     });
     const screen = render(<FertigationForm data={data} onChange={jest.fn()} areaAcres={3.5} />);
 
+    fireEvent.press(screen.getAllByText('Urea')[0]);
     expect(
       screen.getByText('fertigationForm.fertilizers.areaEcho.toTotal:3 kg/acre → ≈ 10.5 kg total'),
     ).toBeTruthy();
@@ -335,6 +295,7 @@ describe('bidirectional area echo', () => {
     });
     const screen = render(<FertigationForm data={data} onChange={jest.fn()} />);
 
+    fireEvent.press(screen.getAllByText('Urea')[0]);
     expect(screen.queryByText(/areaEcho/)).toBeNull();
   });
 });
@@ -356,6 +317,7 @@ describe('dose guardrail', () => {
       <FertigationForm data={data} onChange={jest.fn()} planItems={planItems} areaAcres={3.5} />,
     );
 
+    fireEvent.press(screen.getAllByText('PlanUrea')[0]);
     expect(
       screen.getByText('fertigationForm.fertilizers.doseGuard.highPlan:10:5 kg/acre'),
     ).toBeTruthy();
@@ -371,6 +333,7 @@ describe('dose guardrail', () => {
       <FertigationForm data={data} onChange={jest.fn()} historyItems={historyItems} />,
     );
 
+    fireEvent.press(screen.getAllByText('Urea')[0]);
     expect(
       screen.getByText('fertigationForm.fertilizers.doseGuard.highLastLog:1000:10 kg'),
     ).toBeTruthy();
@@ -384,12 +347,13 @@ describe('dose guardrail', () => {
       <FertigationForm data={data} onChange={jest.fn()} historyItems={historyItems} />,
     );
 
+    fireEvent.press(screen.getAllByText('Brand New Fert')[0]);
     expect(screen.queryByText(/doseGuard/)).toBeNull();
   });
 });
 
 describe('verbatim units (#192 testimony rule)', () => {
-  it('renders the raw unit text where the chip row would be — no chips, never coerced', () => {
+  it('renders the raw unit text in the unit segment — never coerced', () => {
     const data = fertigationData({
       fertilizers: [
         fertilizerRow({
@@ -402,20 +366,21 @@ describe('verbatim units (#192 testimony rule)', () => {
     });
     const screen = render(<FertigationForm data={data} onChange={jest.fn()} areaAcres={3.5} />);
 
-    // The row's unit label shows the verbatim string…
+    fireEvent.press(screen.getAllByText('Mystery mix')[0]);
+    // The fused input's unit segment shows the verbatim string…
     expect(screen.getByText('banana/acre')).toBeTruthy();
-    // …the chip row is replaced by the verbatim hint…
+    // …with the verbatim hint below…
     expect(
       screen.getByText('fertigationForm.fertilizers.verbatimUnitHint:banana/acre'),
     ).toBeTruthy();
-    // …and no chip or overflow control renders.
+    // …and no chip vocabulary leaks in (the unit menu stays closed).
     expect(screen.queryByText('kg/acre')).toBeNull();
     expect(screen.queryByText('fertigationForm.fertilizers.moreUnits')).toBeNull();
     // Kernel-unknown units also keep the echo silent (no guessed conversion).
     expect(screen.queryByText(/areaEcho/)).toBeNull();
   });
 
-  it('ppm rows stay verbatim and chipless', () => {
+  it('ppm rows stay verbatim', () => {
     const data = fertigationData({
       fertilizers: [
         fertilizerRow({ name: 'GA3', quantity: 100, unit: 'ppm', quantityBasis: 'total' }),
@@ -423,6 +388,7 @@ describe('verbatim units (#192 testimony rule)', () => {
     });
     const screen = render(<FertigationForm data={data} onChange={jest.fn()} areaAcres={3.5} />);
 
+    fireEvent.press(screen.getAllByText('GA3')[0]);
     expect(screen.getByText('ppm')).toBeTruthy();
     expect(screen.getByText('fertigationForm.fertilizers.verbatimUnitHint:ppm')).toBeTruthy();
     expect(screen.queryByText('fertigationForm.fertilizers.moreUnits')).toBeNull();

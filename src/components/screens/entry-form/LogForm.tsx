@@ -7,8 +7,6 @@ import type {
   ExpenseFormData,
   FertigationFormData,
   NoteFormData,
-  SprayQuickAddItem,
-  FertigationQuickAddItem,
 } from '@/components/forms';
 import { SprayForm, HarvestForm, ExpenseForm, FertigationForm, NoteForm } from '@/components/forms';
 import { NumericInput, type NumericInputHandle } from '@/components/forms/form-field';
@@ -48,8 +46,6 @@ interface LogFormProps {
   onAdd: () => void;
   isValid: boolean;
   hasFarm: boolean;
-  sprayQuickAddItems: SprayQuickAddItem[];
-  fertigationQuickAddItems: FertigationQuickAddItem[];
   sprayCatalogOnly?: boolean;
   sprayCatalogMixes?: ChemicalMix[];
   sprayHistoryItems?: RecentInputItem[];
@@ -83,8 +79,6 @@ export function LogForm({
   onAdd,
   isValid,
   hasFarm,
-  sprayQuickAddItems,
-  fertigationQuickAddItems,
   sprayCatalogOnly = false,
   sprayCatalogMixes = [],
   sprayHistoryItems = [],
@@ -274,7 +268,6 @@ export function LogForm({
                 data={fertigationData}
                 onChange={onFertigationChange}
                 onInputFocus={onInputFocus}
-                quickAddItems={fertigationQuickAddItems}
                 historyItems={fertigationHistoryItems}
                 planItems={fertigationPlanItems}
                 catalogProducts={fertigationCatalogProducts}
@@ -305,7 +298,6 @@ export function LogForm({
           data={sprayData}
           onChange={onSprayChange}
           onInputFocus={onInputFocus}
-          quickAddItems={sprayQuickAddItems}
           catalogOnly={sprayCatalogOnly}
           catalogMixes={sprayCatalogMixes}
           historyItems={sprayHistoryItems}
@@ -335,7 +327,6 @@ export function LogForm({
           data={fertigationData}
           onChange={onFertigationChange}
           onInputFocus={onInputFocus}
-          quickAddItems={fertigationQuickAddItems}
           historyItems={fertigationHistoryItems}
           planItems={fertigationPlanItems}
           catalogProducts={fertigationCatalogProducts}

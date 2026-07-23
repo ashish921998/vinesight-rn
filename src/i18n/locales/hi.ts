@@ -792,6 +792,17 @@ export const hi = {
     title: '{{type}} लॉग करें',
     loggingTo: '{{farm}} में लॉग हो रहा है',
     saveType: '{{type}} सहेजें',
+    durationQuestion: 'पानी कितनी देर चला?',
+    waterQuestion: 'टैंक में कितना पानी?',
+    tankQuestion: 'टैंक में क्या डाला?',
+    fertilizerQuestion: 'पानी में खाद डाली?',
+    optionalTag: 'वैकल्पिक',
+    emptyFertilizerHint: 'खाद नहीं डाली? कोई बात नहीं — सिर्फ़ पानी का लॉग सहेजें।',
+    phiSafeTitle: 'आपकी फ़सल के लिए सुरक्षित',
+    phiSafeBody: 'इस छिड़काव के बाद {{date}} से तुड़ाई सुरक्षित है।',
+    phiRiskTitle: 'सावधान — तुड़ाई नज़दीक है',
+    phiRiskBody:
+      'इस छिड़काव के बाद {{date}} तक तुड़ाई न करें — यह आपकी नियोजित तुड़ाई ({{target}}) के बाद है। सहेजने पर इसे ओवरराइड के रूप में चिह्नित किया जाएगा।',
   },
 
   entryForm: {

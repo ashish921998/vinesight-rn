@@ -1,10 +1,8 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
-import {
-  FertigationForm,
-  type FertigationFormData,
-  type FertigationQuickAddItem,
-} from '@/components/forms/fertigation-form';
+import { FertigationForm, type FertigationFormData } from '@/components/forms/fertigation-form';
+import type { RecentInputItem } from '@/hooks/use-records';
+import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -104,10 +102,11 @@ function makeEmptyRowData(): FertigationFormData {
   };
 }
 
-function selectTypeaheadSuggestion(quickAddItems: FertigationQuickAddItem[], pressLabel: string) {
+/** Type into the empty row's name field and pick a history suggestion. */
+function selectTypeaheadSuggestion(historyItems: RecentInputItem[], pressLabel: string) {
   const onChange = jest.fn();
   const screen = render(
-    <FertigationForm data={makeEmptyRowData()} onChange={onChange} quickAddItems={quickAddItems} />,
+    <FertigationForm data={makeEmptyRowData()} onChange={onChange} historyItems={historyItems} />,
   );
   fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
   fireEvent.changeText(screen.getByPlaceholderText('Fertilizer name'), pressLabel.slice(0, 3));
@@ -118,7 +117,7 @@ function selectTypeaheadSuggestion(quickAddItems: FertigationQuickAddItem[], pre
 }
 
 describe('FertigationForm regression', () => {
-  it('keeps per_acre basis when quick-add unit is normalized from /acre', () => {
+  it('keeps per_acre basis when a history unit is normalized from /acre', () => {
     const state = selectTypeaheadSuggestion(
       [{ name: 'Urea', unit: 'kg/acre', quantity: 10 }],
       'Urea',
@@ -133,7 +132,7 @@ describe('FertigationForm regression', () => {
     );
   });
 
-  it("quick-adding an 'L/acre' plan item stays volume + per_acre (issue #192 AC1)", () => {
+  it("picking an 'L/acre' history item stays volume + per_acre (issue #192 AC1)", () => {
     const state = selectTypeaheadSuggestion(
       [{ name: 'Humic acid', unit: 'L/acre', quantity: 2 }],
       'Humic acid',
@@ -148,7 +147,7 @@ describe('FertigationForm regression', () => {
     );
   });
 
-  it('quick-adding an unknown unit keeps it verbatim — never kg (issue #192 AC2)', () => {
+  it('picking an unknown unit keeps it verbatim — never kg (issue #192 AC2)', () => {
     const state = selectTypeaheadSuggestion(
       [{ name: 'Mystery mix', unit: 'banana/acre', quantity: 5 }],
       'Mystery mix',
@@ -164,16 +163,26 @@ describe('FertigationForm regression', () => {
     expect(state.fertilizers[0].unit).not.toBe('kg');
   });
 
-  it('does not render a standalone quick-add section for ppm items', () => {
+  it('excludes ppm plan items from the typeahead (issue #197)', () => {
+    const planItems: FertilizerPlanItem[] = [
+      {
+        id: 'p9',
+        name: 'GA3',
+        quantity: 100,
+        unit: 'ppm',
+        application_date: null,
+        application_method: null,
+        application_frequency: null,
+        notes: null,
+        sort_order: null,
+        product_id: null,
+        quantity_basis: null,
+      },
+    ];
     const onChange = jest.fn();
     const screen = render(
-      <FertigationForm
-        data={makeEmptyRowData()}
-        onChange={onChange}
-        quickAddItems={[{ name: 'GA3', unit: 'ppm', quantity: 100 }]}
-      />,
+      <FertigationForm data={makeEmptyRowData()} onChange={onChange} planItems={planItems} />,
     );
-    expect(screen.queryByText('fertigationForm.quickAdd')).toBeNull();
     expect(screen.queryByText('GA3')).toBeNull();
     expect(onChange).not.toHaveBeenCalled();
     fireEvent(screen.getByPlaceholderText('Fertilizer name'), 'focus');
@@ -181,13 +190,13 @@ describe('FertigationForm regression', () => {
     expect(screen.queryByText('GA3')).toBeNull();
   });
 
-  it('shows verbatim non-ppm units through typeahead instead of standalone chips', () => {
+  it('shows verbatim non-ppm history units through the typeahead', () => {
     const onChange = jest.fn();
     const screen = render(
       <FertigationForm
         data={makeEmptyRowData()}
         onChange={onChange}
-        quickAddItems={[{ name: 'Mystery mix', unit: 'banana/acre', quantity: 5 }]}
+        historyItems={[{ name: 'Mystery mix', unit: 'banana/acre', quantity: 5 }]}
       />,
     );
     expect(screen.queryByText('Mystery mix')).toBeNull();

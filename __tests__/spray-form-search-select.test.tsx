@@ -1,11 +1,10 @@
-import React from 'react';
-import { act, fireEvent, render } from '@testing-library/react-native';
+import React, { useState } from 'react';
+import { fireEvent, render } from '@testing-library/react-native';
 import {
   SprayForm,
   createEmptySprayFormData,
   type SprayFormData,
 } from '@/components/forms/spray-form';
-import { SEARCH_SELECT_DEBOUNCE_MS } from '@/components/ui/search-select';
 import type { RecentInputItem } from '@/hooks/use-records';
 import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 import type { ChemicalMix } from '@/types/phi';
@@ -25,6 +24,10 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('@/components/ui/symbol', () => ({ Symbol: () => null }));
+
+jest.mock('@/components/ui/unit-picker-modal', () => ({
+  UnitPickerModal: () => null,
+}));
 
 jest.mock('@/utils/color', () => ({
   colorWithOpacity: (color: string) => color,
@@ -159,33 +162,55 @@ const catalogMixes: ChemicalMix[] = [
   },
 ];
 
+/**
+ * Stateful harness: the ChemicalRow name field is parent-controlled, so the
+ * typeahead only opens when onChange round-trips into fresh data.
+ */
+function Harness({
+  initial,
+  onChange,
+}: {
+  initial: SprayFormData;
+  onChange: (data: SprayFormData) => void;
+}) {
+  const [data, setData] = useState(initial);
+  return (
+    <SprayForm
+      data={data}
+      onChange={(next) => {
+        setData(next);
+        onChange(next);
+      }}
+      historyItems={historyItems}
+      planItems={planItems}
+      catalogMixes={catalogMixes}
+    />
+  );
+}
+
 function renderSprayForm(
   onChange: (data: SprayFormData) => void,
   data: SprayFormData = createEmptySprayFormData(),
 ) {
-  const screen = render(
-    <SprayForm
-      data={data}
-      onChange={onChange}
-      historyItems={historyItems}
-      planItems={planItems}
-      catalogMixes={catalogMixes}
-    />,
-  );
-  // "Add chemical" opens the sectioned picker (there are options to pick from).
-  fireEvent.press(screen.getByText('sprayForm.chemicals.addChemical'));
-  return screen;
+  return render(<Harness initial={data} onChange={onChange} />);
 }
 
-describe('SprayForm × SearchSelect adoption', () => {
-  it('fills the empty row with full identity when a plain history row is tapped', () => {
+/** Type into the empty row's name field so the typeahead opens. */
+function typeName(screen: ReturnType<typeof render>, text: string) {
+  const input = screen.getByPlaceholderText('sprayForm.chemicals.namePlaceholder');
+  fireEvent(input, 'focus', { target: null });
+  fireEvent.changeText(input, text);
+}
+
+describe('SprayForm typeahead adoption', () => {
+  it('fills the row with full identity when a plain history option is tapped', () => {
     const onChange = jest.fn();
     const screen = renderSprayForm(onChange);
 
+    typeName(screen, 'Sol');
     fireEvent.press(screen.getByText('Solo'));
 
-    expect(onChange).toHaveBeenCalledTimes(1);
-    const next = onChange.mock.calls[0][0] as SprayFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as SprayFormData;
     expect(next.chemicals).toHaveLength(1);
     expect(next.chemicals[0]).toMatchObject({
       name: 'Solo',
@@ -200,16 +225,16 @@ describe('SprayForm × SearchSelect adoption', () => {
     expect(next.catalogMixId ?? null).toBeNull();
   });
 
-  it('restores the whole mix when a history row logged as a mix is tapped', () => {
+  it('restores the whole mix when a history option logged as a mix is tapped', () => {
     const onChange = jest.fn();
     const screen = renderSprayForm(onChange);
 
     // 'Karate' also exists as a derived catalog product row; the history
     // section renders first, so the first match is the history row.
+    typeName(screen, 'Kar');
     fireEvent.press(screen.getAllByText('Karate')[0]);
 
-    expect(onChange).toHaveBeenCalledTimes(1);
-    const next = onChange.mock.calls[0][0] as SprayFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as SprayFormData;
     expect(next.catalogMixId).toBe(77);
     expect(next.catalogMixName).toBe('Downy special');
     expect(next.chemicals.map((c) => c.name)).toEqual(['Karate', 'Curzate']);
@@ -221,9 +246,10 @@ describe('SprayForm × SearchSelect adoption', () => {
     const onChange = jest.fn();
     const screen = renderSprayForm(onChange);
 
-    fireEvent.press(screen.getByText('PlanUrea'));
+    typeName(screen, 'PlanUrea');
+    fireEvent.press(screen.getAllByText('PlanUrea')[0]);
 
-    const next = onChange.mock.calls[0][0] as SprayFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as SprayFormData;
     expect(next.chemicals[0]).toMatchObject({
       name: 'PlanUrea',
       quantity: 5,
@@ -238,9 +264,10 @@ describe('SprayForm × SearchSelect adoption', () => {
     const onChange = jest.fn();
     const screen = renderSprayForm(onChange);
 
-    fireEvent.press(screen.getByText('PlanMagnesium'));
+    typeName(screen, 'PlanMag');
+    fireEvent.press(screen.getAllByText('PlanMagnesium')[0]);
 
-    const next = onChange.mock.calls[0][0] as SprayFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as SprayFormData;
     expect(next.chemicals[0]).toMatchObject({
       name: 'PlanMagnesium',
       quantity: 3,
@@ -254,9 +281,10 @@ describe('SprayForm × SearchSelect adoption', () => {
     const onChange = jest.fn();
     const screen = renderSprayForm(onChange);
 
-    fireEvent.press(screen.getByText('PlanZinc'));
+    typeName(screen, 'PlanZinc');
+    fireEvent.press(screen.getAllByText('PlanZinc')[0]);
 
-    const next = onChange.mock.calls[0][0] as SprayFormData;
+    const next = onChange.mock.calls.at(-1)?.[0] as SprayFormData;
     expect(next.chemicals[0]).toMatchObject({
       name: 'PlanZinc',
       quantity: 200,
@@ -266,88 +294,21 @@ describe('SprayForm × SearchSelect adoption', () => {
     });
   });
 
-  it('quick-add dedupes on the fused chip: same name + unit with a different basis is a new row', () => {
-    const onChange = jest.fn();
-    const data = createEmptySprayFormData();
-    data.chemicals = [
-      {
-        id: 'row1',
-        name: 'PlanUrea',
-        quantity: 4,
-        unit: 'kg',
-        quantityBasis: 'total',
-        warehouseItemId: null,
-        catalogProductId: null,
-        planItemId: null,
-        compositionSnapshot: null,
-        densityKgPerL: null,
-      },
-    ];
-    const screen = renderSprayForm(onChange, data);
-
-    // Plan pick resolves to kg + per_acre — a different chip than kg total.
-    fireEvent.press(screen.getByText('PlanUrea'));
-
-    expect(onChange).toHaveBeenCalledTimes(1);
-    const next = onChange.mock.calls[0][0] as SprayFormData;
-    expect(next.chemicals).toHaveLength(2);
-    expect(next.chemicals[1]).toMatchObject({
-      name: 'PlanUrea',
-      unit: 'kg',
-      quantityBasis: 'per_acre',
-    });
-  });
-
-  it('quick-add still blocks a true duplicate (same name, same fused chip)', () => {
-    const onChange = jest.fn();
-    const data = createEmptySprayFormData();
-    data.chemicals = [
-      {
-        id: 'row1',
-        name: 'PlanUrea',
-        quantity: 4,
-        unit: 'kg',
-        quantityBasis: 'per_acre',
-        warehouseItemId: null,
-        catalogProductId: null,
-        planItemId: null,
-        compositionSnapshot: null,
-        densityKgPerL: null,
-      },
-    ];
-    const screen = renderSprayForm(onChange, data);
-
-    fireEvent.press(screen.getByText('PlanUrea'));
-
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
   it('adds a plain custom row from the escape hatch', () => {
-    jest.useFakeTimers();
-    try {
-      const onChange = jest.fn();
-      const screen = renderSprayForm(onChange);
+    const onChange = jest.fn();
+    const screen = renderSprayForm(onChange);
 
-      fireEvent.changeText(
-        screen.getByPlaceholderText('searchSelect.searchPlaceholder'),
-        'Brand New Chem',
-      );
-      act(() => {
-        jest.advanceTimersByTime(SEARCH_SELECT_DEBOUNCE_MS + 50);
-      });
-      fireEvent.press(screen.getByText('searchSelect.addCustom:Brand New Chem'));
+    typeName(screen, 'Brand New Chem');
+    fireEvent.press(screen.getByText('searchSelect.addCustom:Brand New Chem'));
 
-      const next = onChange.mock.calls[0][0] as SprayFormData;
-      expect(next.chemicals[0]).toMatchObject({
-        name: 'Brand New Chem',
-        unit: 'gm/L',
-        catalogProductId: null,
-        warehouseItemId: null,
-        planItemId: null,
-      });
-      expect(next.catalogMixId ?? null).toBeNull();
-    } finally {
-      jest.useRealTimers();
-    }
+    const next = onChange.mock.calls.at(-1)?.[0] as SprayFormData;
+    expect(next.chemicals[0]).toMatchObject({
+      name: 'Brand New Chem',
+      unit: 'gm/L',
+      catalogProductId: null,
+      warehouseItemId: null,
+      planItemId: null,
+    });
+    expect(next.catalogMixId ?? null).toBeNull();
   });
 });

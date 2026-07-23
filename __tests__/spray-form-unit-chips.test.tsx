@@ -105,24 +105,26 @@ beforeEach(() => {
   useSprayUnitStore.setState({ lastUsedChips: {} });
 });
 
-describe('basis-fused unit chips', () => {
-  it('renders exactly the five main chips plus the overflow trigger; the basis toggle is gone', () => {
+describe('fused quantity + unit input', () => {
+  it('renders one unit segment instead of an inline chip row', () => {
     const screen = render(<SprayForm data={sprayData()} onChange={jest.fn()} />);
 
+    // Only the fused input's unit segment shows the active chip key.
+    expect(screen.getAllByText('g/L').length).toBe(1);
+    // No inline chips, no overflow trigger, and the old basis toggle stays gone.
     for (const label of ['mL/L', 'g/acre', 'mL/acre', 'ppm']) {
-      expect(screen.getByText(label)).toBeTruthy();
+      expect(screen.queryByText(label)).toBeNull();
     }
-    // 'g/L' appears twice: as the selected chip and as the row's unit label.
-    expect(screen.getAllByText('g/L').length).toBe(2);
-    expect(screen.getByText('sprayForm.chemicals.moreUnits')).toBeTruthy();
+    expect(screen.queryByText('sprayForm.chemicals.moreUnits')).toBeNull();
     expect(screen.queryByText('sprayForm.chemicals.totalQty')).toBeNull();
     expect(screen.queryByText('sprayForm.chemicals.perAcre')).toBeNull();
   });
 
-  it('selecting g/acre stores the existing bare unit spelling plus explicit per_acre basis', () => {
+  it('selecting g/acre from the unit menu stores the bare unit plus explicit per_acre basis', () => {
     const onChange = jest.fn();
     const screen = render(<SprayForm data={sprayData()} onChange={onChange} />);
 
+    fireEvent.press(screen.getByText('g/L')); // unit segment → opens menu
     fireEvent.press(screen.getByText('g/acre'));
 
     const next = onChange.mock.calls[0][0] as SprayFormData;
@@ -133,20 +135,19 @@ describe('basis-fused unit chips', () => {
     const onChange = jest.fn();
     const screen = render(<SprayForm data={sprayData()} onChange={onChange} />);
 
-    fireEvent.press(screen.getByText('sprayForm.chemicals.moreUnits'));
+    fireEvent.press(screen.getByText('g/L')); // unit segment → opens menu
     fireEvent.press(screen.getByText('kg total'));
 
     const next = onChange.mock.calls[0][0] as SprayFormData;
     expect(next.chemicals[0]).toMatchObject({ unit: 'kg', quantityBasis: 'total' });
   });
 
-  it('a plan prefill row (kg + per_acre) renders its overflow chip as the active selection', () => {
+  it('a plan prefill row (kg + per_acre) renders its chip as the active unit segment', () => {
     const data = sprayData({
       chemicals: [chemicalRow({ name: 'PlanUrea', unit: 'kg', quantityBasis: 'per_acre' })],
     });
     const screen = render(<SprayForm data={data} onChange={jest.fn()} />);
 
-    // The overflow trigger shows the active chip key instead of "More units".
     expect(screen.getAllByText('kg/acre').length).toBeGreaterThan(0);
     expect(screen.queryByText('sprayForm.chemicals.moreUnits')).toBeNull();
   });
@@ -154,21 +155,19 @@ describe('basis-fused unit chips', () => {
 
 describe('tank echo line', () => {
   it('shows the kernel-resolved tank total for a g/L dose and updates with the entry', () => {
-    const data = sprayData({
-      waterVolume: 400,
-      chemicals: [chemicalRow({ name: 'Copper', quantity: 2, unit: 'gm/L' })],
-    });
+    const row = chemicalRow({ name: 'Copper', quantity: 2, unit: 'gm/L' });
+    const data = sprayData({ waterVolume: 400, chemicals: [row] });
     const screen = render(<SprayForm data={data} onChange={jest.fn()} />);
 
+    // Complete rows render as receipts — expand to see the full echo line.
+    fireEvent.press(screen.getByText('Copper'));
     expect(screen.getByText('sprayForm.chemicals.tankEcho.water:2 g/L × 400 = 800 g')).toBeTruthy();
 
-    // Live: the echo re-derives from the controlled data on every change.
+    // Live: the echo re-derives from the controlled data on every change
+    // (same row id, so the expanded editing state persists).
     screen.rerender(
       <SprayForm
-        data={sprayData({
-          waterVolume: 400,
-          chemicals: [chemicalRow({ name: 'Copper', quantity: 3, unit: 'gm/L' })],
-        })}
+        data={sprayData({ waterVolume: 400, chemicals: [{ ...row, quantity: 3 }] })}
         onChange={jest.fn()}
       />,
     );
@@ -186,6 +185,7 @@ describe('tank echo line', () => {
     });
     const screen = render(<SprayForm data={data} onChange={jest.fn()} areaAcres={2.5} />);
 
+    fireEvent.press(screen.getByText('Copper'));
     expect(
       screen.getByText('sprayForm.chemicals.tankEcho.area:100 g/acre × 2.5 = 250 g'),
     ).toBeTruthy();
@@ -213,6 +213,7 @@ describe('dose guardrail', () => {
       <SprayForm data={data} onChange={jest.fn()} historyItems={historyItems} />,
     );
 
+    fireEvent.press(screen.getByText('Karate'));
     // Reference units keep their stored casing ('ml/L') — the old lowercase
     // rendering was an artifact of the deleted foldUnitText (#207).
     expect(screen.getByText('sprayForm.chemicals.doseGuard.highLastLog:1000:2 ml/L')).toBeTruthy();
@@ -233,6 +234,7 @@ describe('dose guardrail', () => {
     });
     const screen = render(<SprayForm data={data} onChange={jest.fn()} planItems={planItems} />);
 
+    fireEvent.press(screen.getByText('PlanUrea'));
     expect(screen.getByText('sprayForm.chemicals.doseGuard.highPlan:10:5 kg/acre')).toBeTruthy();
   });
 
@@ -256,6 +258,7 @@ describe('last-used chip persistence', () => {
     });
     const screen = render(<SprayForm data={data} onChange={jest.fn()} />);
 
+    fireEvent.press(screen.getByText('g/L')); // unit segment → opens menu
     fireEvent.press(screen.getByText('ppm'));
 
     expect(useSprayUnitStore.getState().lastUsedChips['catalog:100']).toBe('ppm');
