@@ -286,11 +286,32 @@ export function SprayForm({
   };
 
   const applyCatalogMix = useCallback(
-    (mix: ChemicalMix) => {
+    (mix: ChemicalMix, replaceRowId?: string) => {
+      // Rows the user actually entered survive a mix pick — only the triggering
+      // row (whose name still holds the typeahead query) and pristine blank rows
+      // are dropped. This is the "keep mine, add the mix" behaviour: picking a
+      // mix into a fresh tank fills it, but picking one alongside custom rows
+      // appends the mix's components instead of wiping the tank.
+      const keptRows = dataRef.current.chemicals.filter(
+        (c) => c.id !== replaceRowId && c.name.trim().length > 0,
+      );
+      const keptProductIds = new Set(
+        keptRows.map((c) => c.catalogProductId).filter((id): id is number => id != null),
+      );
+      const keptNames = new Set(keptRows.map((c) => normalizeDedupeText(c.name)));
+
       const dedupeKeySet = new Set<string>();
-      const chemicals = mix.components.flatMap((component) => {
+      const mixChemicals = mix.components.flatMap((component) => {
         const perLiter = normalizeMixComponentToPerLiterDose(component);
         if (!perLiter) return [];
+        // Skip a component already present as a kept custom row (same catalog
+        // product, or same name) so a mix pick never duplicates the user's rows.
+        if (
+          (component.product_id != null && keptProductIds.has(component.product_id)) ||
+          keptNames.has(normalizeDedupeText(component.product_name))
+        ) {
+          return [];
+        }
         const normalizedProductName = normalizeDedupeText(component.product_name);
         const canonicalDoseValue = normalizeDedupeNumber(perLiter.quantity);
         const canonicalDoseUnit = normalizeDedupeText(perLiter.unit);
@@ -317,17 +338,21 @@ export function SprayForm({
         };
       });
 
-      if (chemicals.length === 0) {
-        return;
-      }
-      if (chemicals.length > MAX_PRODUCT_ROWS) {
+      // Nothing new to add (empty mix, or every component already present).
+      if (mixChemicals.length === 0) {
         return;
       }
 
+      const chemicals = clampChemicalRows([...keptRows, ...mixChemicals]);
+      // Mix identity + PHI only hold when the tank IS exactly this mix. Combined
+      // with custom rows, the mix's harvest-safety verdict can't vouch for the
+      // extras, so drop the identity — the tank then reads as unverified (safe).
+      const isPureMix = keptRows.length === 0;
+
       onChange({
         ...dataRef.current,
-        catalogMixId: mix.id,
-        catalogMixName: mix.name,
+        catalogMixId: isPureMix ? mix.id : null,
+        catalogMixName: isPureMix ? mix.name : null,
         governingPhiDays: null,
         safeHarvestDate: null,
         phiBlockingComponent: null,
@@ -344,10 +369,10 @@ export function SprayForm({
   // the mix is not in the cached catalog so callers fall back to the
   // single-item prefill.
   const applyCatalogMixById = useCallback(
-    (mixId: number): boolean => {
+    (mixId: number, replaceRowId?: string): boolean => {
       const mix = catalogMixes.find((candidate) => candidate.id === mixId);
       if (!mix) return false;
-      applyCatalogMix(mix);
+      applyCatalogMix(mix, replaceRowId);
       return true;
     },
     [catalogMixes, applyCatalogMix],
@@ -764,8 +789,12 @@ interface ChemicalRowProps {
   historyOptions?: SearchSelectOption[];
   planOptions?: SearchSelectOption[];
   catalogOptions?: SearchSelectOption[];
-  /** Whole-mix restore; returns false when the mix is not in the cached catalog. */
-  onMixPick: (mixId: number) => boolean;
+  /**
+   * Whole-mix restore; returns false when the mix is not in the cached catalog.
+   * `replaceRowId` is the row that triggered the pick — dropped so its in-progress
+   * query text isn't kept as a stray custom row alongside the mix's components.
+   */
+  onMixPick: (mixId: number, replaceRowId?: string) => boolean;
   /** Resolves a product's last-used chip — owned by SprayForm (one subscription). */
   lastUsedChipFor: (name: string, catalogProductId?: number | null) => SprayUnitChip | null;
 }
@@ -906,7 +935,7 @@ function ChemicalRow({
   // identity (catalog mixes AND history rows logged as a mix), else the
   // single-item fill path shared with suggestions.
   const handleTypeaheadSelect = (selection: SearchSelectSelection) => {
-    if (selection.catalogMixId != null && onMixPick(selection.catalogMixId)) return;
+    if (selection.catalogMixId != null && onMixPick(selection.catalogMixId, chemical.id)) return;
     if (selection.kind === 'mix') return;
     applySuggestion({
       name: selection.name,

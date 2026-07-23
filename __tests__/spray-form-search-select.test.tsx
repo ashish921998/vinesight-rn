@@ -294,6 +294,31 @@ describe('SprayForm typeahead adoption', () => {
     });
   });
 
+  it('keeps existing custom rows and appends the mix instead of wiping them', () => {
+    const onChange = jest.fn();
+    const base = createEmptySprayFormData();
+    const initial: SprayFormData = {
+      ...base,
+      waterVolume: 200,
+      chemicals: [
+        { ...base.chemicals[0], id: 'custom1', name: 'My Custom Chem', quantity: 3 },
+        { ...base.chemicals[0], id: 'blank1' },
+      ],
+    };
+    const screen = renderSprayForm(onChange, initial);
+
+    // Pick a catalog mix from the still-blank second row's typeahead.
+    typeName(screen, 'Kar');
+    fireEvent.press(screen.getAllByText('Karate')[0]);
+
+    const next = onChange.mock.calls.at(-1)?.[0] as SprayFormData;
+    // Custom row survives; the mix's components are appended after it.
+    expect(next.chemicals.map((c) => c.name)).toEqual(['My Custom Chem', 'Karate', 'Curzate']);
+    expect(next.chemicals[0]).toMatchObject({ name: 'My Custom Chem', quantity: 3 });
+    // Combined tank → mix identity/PHI dropped (can't vouch for the custom row).
+    expect(next.catalogMixId ?? null).toBeNull();
+  });
+
   it('adds a plain custom row from the escape hatch', () => {
     const onChange = jest.fn();
     const screen = renderSprayForm(onChange);
