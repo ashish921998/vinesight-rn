@@ -319,6 +319,45 @@ describe('SprayForm typeahead adoption', () => {
     expect(next.catalogMixId ?? null).toBeNull();
   });
 
+  it('drops the stale triggering row when every mix component is already present', () => {
+    const onChange = jest.fn();
+    const base = createEmptySprayFormData();
+    const initial: SprayFormData = {
+      ...base,
+      waterVolume: 200,
+      chemicals: [
+        // Both of mix 77's components (product_id 100 + 200) already in the tank.
+        {
+          ...base.chemicals[0],
+          id: 'a',
+          name: 'Alpha',
+          catalogProductId: 100,
+          quantity: 2,
+          unit: 'ml/L',
+        },
+        {
+          ...base.chemicals[0],
+          id: 'b',
+          name: 'Beta',
+          catalogProductId: 200,
+          quantity: 150,
+          unit: 'gm/L',
+        },
+        { ...base.chemicals[0], id: 'blank1' },
+      ],
+    };
+    const screen = renderSprayForm(onChange, initial);
+
+    // Type a query into the blank row, then pick the mix — nothing new to add.
+    typeName(screen, 'Kar');
+    fireEvent.press(screen.getAllByText('Karate')[0]);
+
+    const next = onChange.mock.calls.at(-1)?.[0] as SprayFormData;
+    // Existing rows survive; the triggering row (its stale "Kar" query) is gone —
+    // no duplicates appended, no stale row left behind.
+    expect(next.chemicals.map((c) => c.name)).toEqual(['Alpha', 'Beta']);
+  });
+
   it('adds a plain custom row from the escape hatch', () => {
     const onChange = jest.fn();
     const screen = renderSprayForm(onChange);

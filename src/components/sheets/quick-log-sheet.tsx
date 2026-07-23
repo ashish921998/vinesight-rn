@@ -654,6 +654,18 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   const handleSave = useCallback(() => {
     if (!isValid || savingRef.current) return;
     if (type === 'spray') {
+      // PHI computation for a selected mix is async (usePhiComputation stamps
+      // it a tick after selection). Until it lands, phiStatus is null and both
+      // gates below no-op — so an immediate save could persist a mix with no
+      // governing PHI / safe-harvest date and skip the conflict prompt. Block
+      // until it resolves.
+      if (isGrapeFarm && sprayDraft.catalogMixId != null && sprayDraft.phiStatus == null) {
+        Alert.alert(
+          t('entryForm.phiErrors.computeFailedTitle'),
+          t('entryForm.phiErrors.computeFailedBody'),
+        );
+        return;
+      }
       // Same harvest-safety gate as EntryForm: a catalog mix whose PHI window
       // crosses the season's target harvest needs an explicit double-confirm.
       if (
@@ -801,7 +813,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
                 presets={[1, 2, 3, 4, 5]}
                 formatPreset={(hours) => `${hours}h`}
                 step={0.5}
-                maxValue={48}
+                maxValue={999}
                 accentColor={domainColors.category.irrigation}
                 echo={estimatedWaterEcho}
               />

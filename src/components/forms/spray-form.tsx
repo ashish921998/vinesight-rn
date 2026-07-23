@@ -339,7 +339,13 @@ export function SprayForm({
       });
 
       // Nothing new to add (empty mix, or every component already present).
+      // Still commit the cleaned rows so the triggering row's stale typeahead
+      // query is dropped; leave mix identity/PHI untouched (no new mix formed).
+      // Skip the update entirely when nothing actually changed.
       if (mixChemicals.length === 0) {
+        if (keptRows.length !== dataRef.current.chemicals.length) {
+          onChange({ ...dataRef.current, chemicals: clampChemicalRows(keptRows) });
+        }
         return;
       }
 
