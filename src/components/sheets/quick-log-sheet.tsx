@@ -228,8 +228,12 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
                 });
                 pendingIrrigationRef.current = null;
               } catch {
-                // Keep the result in the ref: retrying will attach the rider to
-                // this record instead of creating another irrigation.
+                // The delete threw, so the record's existence is ambiguous
+                // (committed on the server but response lost, or genuinely
+                // failed). Drop the ref: a retry must build a fresh irrigation
+                // rather than link a rider to a record that may already be gone
+                // — and stale edits/dates must not be silently discarded.
+                pendingIrrigationRef.current = null;
               }
               throw error;
             }
@@ -365,6 +369,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
           t('entryForm.phiErrors.computeFailedTitle'),
           t('entryForm.phiErrors.computeFailedBody'),
         );
+        return;
       }
     }
     void performSave();
