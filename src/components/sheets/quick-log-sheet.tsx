@@ -683,27 +683,22 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
 
   const logType = type ? getLogType(type) : null;
   const saveDisabled = !isValid || saving || isBlockedByNoSeason;
-  // Spray and irrigation can grow into multi-section workspaces (catalog,
-  // product rows, PHI, or linked fertigation). Give them a full-screen
-  // detent from the start; harvest and expense stay content-sized quick tasks.
-  const usesFullHeight = type === 'spray' || type === 'irrigation';
 
   return (
     <BottomSheet
       key={type ?? 'closed'}
       index={type === null ? -1 : 0}
-      snapPoints={usesFullHeight ? ['100%'] : undefined}
-      enableDynamicSizing={!usesFullHeight}
+      enableDynamicSizing
       enablePanDownToClose
       onClose={onClose}
       backgroundStyle={{ backgroundColor: m3.colorScheme.background }}
     >
-      {/* Long operational forms use the full-height detent above; short forms
-          continue to hug their content. The scroll view owns keyboard-safe
-          overflow in both presentations. */}
+      {/* Every activity sizes to its content and grows as sections/rows are
+          added (dynamic sizing clamps to the screen; the scroll view then
+          owns keyboard-safe overflow). No forced full-height detent — that
+          left dead space below the footer when the form was short. */}
       <BottomSheetScrollView
         ref={scrollViewRef}
-        style={usesFullHeight ? { flex: 1 } : undefined}
         contentContainerStyle={{
           paddingHorizontal: spacing[4],
           // Small gap below the native drag handle; SheetHeader adds its own
@@ -753,6 +748,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
             maximumDate={new Date()}
             label={t('activityEdit.dateLabel', { defaultValue: 'Date' })}
             testID="quick-log-date-field"
+            overlay
           />
         </View>
 

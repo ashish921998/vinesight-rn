@@ -43,6 +43,14 @@ export interface DateFieldProps {
   style?: ViewStyle;
   /** Replaces the standard field trigger while preserving the native picker. */
   renderTrigger?: (openPicker: () => void) => ReactNode;
+  /**
+   * iOS only: present the picker in a React Native `Modal` overlay (on top of
+   * whatever is behind it) instead of a nested `@expo/ui` bottom sheet.
+   * Required when the field lives inside another `@expo/ui` BottomSheet — that
+   * library presents one sheet at a time, so a nested picker sheet would
+   * dismiss its host. No-op on Android.
+   */
+  overlay?: boolean;
 }
 
 /**

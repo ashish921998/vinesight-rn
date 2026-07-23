@@ -166,6 +166,24 @@ describe('DateField iOS', () => {
     expect(screen.getByText('No due date')).toBeTruthy();
   });
 
+  it('overlay mode presents the picker in a Modal, not a nested bottom sheet', () => {
+    const onChange = jest.fn();
+    const screen = render(
+      <DateField value={new Date(2026, 6, 20)} onChange={onChange} overlay label="Date" />,
+    );
+
+    // No nested @expo/ui sheet — that is the whole point inside another sheet.
+    expect(mockBottomSheet).not.toHaveBeenCalled();
+
+    // The picker lives in a Modal; opening flips it visible and commits on Done.
+    fireEvent.press(screen.getByLabelText('Select date'));
+    fireEvent.press(screen.getByTestId('native-date-picker'));
+    fireEvent.press(screen.getByText('common.done'));
+
+    expect(onChange).toHaveBeenCalledWith(new Date(2026, 7, 5));
+    expect(mockBottomSheet).not.toHaveBeenCalled();
+  });
+
   it('clamps to maximumDate so Done cannot commit an out-of-range date', () => {
     const onChange = jest.fn();
     const maximumDate = new Date(2020, 0, 1);
