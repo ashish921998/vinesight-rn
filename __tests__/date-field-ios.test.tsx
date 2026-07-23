@@ -93,6 +93,25 @@ jest.mock('@/utils/color', () => ({
 // so the mocked BottomSheet factory would capture an undefined ref.
 const { DateField } =
   require('@/components/ui/date-field.ios') as typeof import('@/components/ui/date-field.ios');
+const { relativeDayOffset } =
+  require('@/components/ui/date-field-shared') as typeof import('@/components/ui/date-field-shared');
+
+describe('relativeDayOffset', () => {
+  const now = new Date(2026, 6, 23, 15, 0, 0); // 23 Jul 2026, afternoon
+
+  it('returns 0 for any time on the same day', () => {
+    expect(relativeDayOffset(new Date(2026, 6, 23, 1, 0), now)).toBe(0);
+  });
+
+  it('returns 1 for the previous calendar day', () => {
+    expect(relativeDayOffset(new Date(2026, 6, 22, 23, 0), now)).toBe(1);
+  });
+
+  it('returns null for older dates and future dates', () => {
+    expect(relativeDayOffset(new Date(2026, 6, 21), now)).toBeNull();
+    expect(relativeDayOffset(new Date(2026, 6, 24), now)).toBeNull();
+  });
+});
 
 describe('DateField iOS', () => {
   beforeEach(() => {

@@ -66,8 +66,10 @@ export function QtyUnitField({
         style={{
           flex: 1,
           paddingHorizontal: spacing[3],
-          paddingVertical: 12,
-          fontSize: fontSize.lg,
+          // Match the fertilizer/spray name input's height (paddingVertical 10 +
+          // base font) — lg/12 made this field noticeably taller and looked odd.
+          paddingVertical: 10,
+          fontSize: fontSize.base,
           fontWeight: fontWeight.bold,
           color: m3.surface.s900,
           textAlign: 'center',

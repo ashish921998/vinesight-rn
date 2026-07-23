@@ -27,9 +27,10 @@ export function SheetHeader({
         alignItems: 'center',
         gap: spacing[3],
         paddingHorizontal: spacing[5],
-        paddingTop: spacing[5],
+        // Compact, like the farm-details add-log modal header — the native
+        // grabber already sits above, so a tall top pad just wasted space.
+        paddingTop: spacing[3],
         paddingBottom: spacing[2],
-        marginBottom: spacing[2],
       }}
     >
       {leading}

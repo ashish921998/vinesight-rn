@@ -25,6 +25,7 @@ export function DateField({
   testID,
   style,
   renderTrigger,
+  relativeLabels,
 }: DateFieldProps) {
   const m3 = useM3();
   const [open, setOpen] = useState(false);
@@ -42,6 +43,7 @@ export function DateField({
           disabled={disabled}
           testID={testID}
           onPress={() => setOpen(true)}
+          relativeLabels={relativeLabels}
         />
       )}
       {open ? (

@@ -32,16 +32,14 @@ import { useTranslation } from 'react-i18next';
 
 import { useM3 } from '@/styles/use-theme';
 import { useDomainColors } from '@/styles/use-domain-colors';
-import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
-import { SheetHeader } from '@/components/ui/sheet-header';
 import { Spinner } from '@/components/ui/spinner';
 import { DateField } from '@/components/ui';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { getLogType, type LogTypeId } from '@/constants/calculator-models';
-import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { toSupabaseDateString } from '@/types/database';
 import type { Farm } from '@/types';
 import { isGrapeCrop } from '@/utils/crop';
@@ -332,7 +330,6 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   const scrollOffsetRef = useRef(0);
   const keyboardTopRef = useRef<number | null>(null);
   const focusedInputRef = useRef<number | null>(null);
-  const [keyboardPadding, setKeyboardPadding] = useState(0);
 
   const scrollToNode = useCallback((nodeHandle: number) => {
     const keyboardTop = keyboardTopRef.current;
@@ -363,7 +360,6 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
         keyboardHeight: event.endCoordinates.height,
         windowHeight,
       });
-      setKeyboardPadding(event.endCoordinates.height);
       const focusedNode = focusedInputRef.current;
       if (focusedNode != null) {
         requestAnimationFrame(() => scrollToNode(focusedNode));
@@ -371,7 +367,6 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
     });
     const hideListener = Keyboard.addListener('keyboardDidHide', () => {
       keyboardTopRef.current = null;
-      setKeyboardPadding(0);
     });
     return () => {
       showListener.remove();
@@ -684,29 +679,37 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   const logType = type ? getLogType(type) : null;
   const saveDisabled = !isValid || saving || isBlockedByNoSeason;
 
+  // Spray & irrigation are tall, multi-row forms (chemical/fertilizer rows, each
+  // with a typeahead + unit control, plus the keyboard) — they need full space,
+  // so present them at a fixed near-full-height detent that scrolls cleanly.
+  // Expense & harvest are short, so they keep content sizing (a tall detent
+  // would just leave dead space below the footer).
+  const fullHeight = type === 'spray' || type === 'irrigation';
+
   return (
     <BottomSheet
       key={type ?? 'closed'}
       index={type === null ? -1 : 0}
-      enableDynamicSizing
+      enableDynamicSizing={!fullHeight}
+      snapPoints={fullHeight ? ['92%'] : undefined}
       enablePanDownToClose
       onClose={onClose}
       backgroundStyle={{ backgroundColor: m3.colorScheme.background }}
     >
-      {/* Every activity sizes to its content and grows as sections/rows are
-          added (dynamic sizing clamps to the screen; the scroll view then
-          owns keyboard-safe overflow). No forced full-height detent — that
-          left dead space below the footer when the form was short. */}
       <BottomSheetScrollView
         ref={scrollViewRef}
+        // Full-height sheets (spray/irrigation): fill the fixed detent and scroll
+        // within it. Content-sized sheets (expense/harvest): cap the height so a
+        // form that ever grows past the screen still has overflow to scroll —
+        // otherwise fitToContents grows the sheet past the top and clips it,
+        // with no way to scroll up. Short forms never reach the cap.
+        style={fullHeight ? { flex: 1 } : { maxHeight: windowHeight * 0.72 }}
         contentContainerStyle={{
           paddingHorizontal: spacing[4],
-          // Small gap below the native drag handle; SheetHeader adds its own
-          // top padding for the rest of the breathing room.
-          paddingTop: spacing[2],
-          // Keyboard padding keeps enough scroll runway for the focused
-          // input + its typeahead dropdown to sit above the keyboard.
-          paddingBottom: spacing[5] + keyboardPadding,
+          // Gap below the native drag handle — the form (date field) starts
+          // right here now that the title header is gone.
+          paddingTop: spacing[3],
+          paddingBottom: spacing[5],
         }}
         keyboardShouldPersistTaps="handled"
         onScroll={(event) => {
@@ -714,34 +717,13 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
         }}
         scrollEventThrottle={16}
       >
-        {/* One shared header contract for every activity type. */}
-        <SheetHeader
-          title={logType ? t('quickLog.title', { type: t(logType.labelKey) }) : ''}
-          subtitle={farm ? t('quickLog.loggingTo', { farm: farm.name }) : undefined}
-          leading={
-            logType ? (
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: radius.lg,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: colorWithOpacity(logType.color, 0.14),
-                }}
-              >
-                <Symbol
-                  name={resolveSymbolIconName(logType.icon)}
-                  size={20}
-                  color={logType.color}
-                />
-              </View>
-            ) : null
-          }
-        />
+        {/* No title header: the farmer just tapped a labelled quick action
+            ("Irrigation"/"Spray"…) and the target farm shows in the home
+            header above the sheet, so a "Log Irrigation / Logging to Sassy"
+            block only ate vertical space. The form starts at the date. */}
 
         {/* Date — its own row, defaults to today. */}
-        <View style={{ marginTop: spacing[4], marginBottom: spacing[5] }}>
+        <View style={{ marginBottom: spacing[5] }}>
           <DateField
             value={selectedDate}
             onChange={setSelectedDate}
@@ -749,6 +731,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
             label={t('activityEdit.dateLabel', { defaultValue: 'Date' })}
             testID="quick-log-date-field"
             overlay
+            relativeLabels
           />
         </View>
 

@@ -28,6 +28,7 @@ export function DateField({
   style,
   renderTrigger,
   overlay,
+  relativeLabels,
 }: DateFieldProps) {
   const m3 = useM3();
   const insets = useSafeAreaInsets();
@@ -59,9 +60,9 @@ export function DateField({
     <View
       style={{
         paddingHorizontal: spacing[4],
-        paddingTop: spacing[4],
+        paddingTop: spacing[3],
         paddingBottom: Math.max(insets.bottom, spacing[4]),
-        gap: spacing[3],
+        gap: spacing[2],
       }}
     >
       <View
@@ -139,6 +140,7 @@ export function DateField({
           disabled={disabled}
           testID={testID}
           onPress={openPicker}
+          relativeLabels={relativeLabels}
         />
       )}
       {/* Overlay mode presents the picker in a React Native Modal, which
