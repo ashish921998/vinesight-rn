@@ -1,5 +1,6 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, Pressable, ScrollView, Platform, Appearance } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Sentry from '@sentry/react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { getM3Theme, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -78,7 +79,8 @@ export class ErrorBoundary extends Component<Props, State> {
       const m3 = getM3Theme(resolvedMode === 'dark');
 
       return (
-        <View
+        <SafeAreaView
+          edges={['top', 'bottom', 'left', 'right']}
           style={{
             flex: 1,
             backgroundColor: m3.neutral.n50,
@@ -178,7 +180,7 @@ export class ErrorBoundary extends Component<Props, State> {
               Try Again
             </Text>
           </Pressable>
-        </View>
+        </SafeAreaView>
       );
     }
 

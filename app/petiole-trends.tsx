@@ -256,7 +256,11 @@ export default function PetioleTrendsScreen() {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Parameter Selector */}
         <View style={{ paddingTop: spacing[2] }}>
           <ParameterSelector

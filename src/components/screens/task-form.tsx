@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 
 import { useFarms } from '../../hooks';
@@ -71,6 +72,7 @@ export default function TaskForm({
 }: Props) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const insets = useSafeAreaInsets();
 
   const isVisible = visible ?? true;
   const { data: farms } = useFarms();
@@ -283,7 +285,7 @@ export default function TaskForm({
             borderBottomColor: m3.surface.s200,
             paddingHorizontal: spacing[4],
             paddingBottom: spacing[3],
-            paddingTop: spacing[2],
+            paddingTop: insets.top + spacing[2],
           }}
         >
           <View style={{ alignItems: 'center', marginBottom: spacing[3] }}>
@@ -342,7 +344,10 @@ export default function TaskForm({
         </View>
 
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+          contentContainerStyle={{
+            padding: spacing[4],
+            paddingBottom: Math.max(insets.bottom + spacing[4], spacing[8]),
+          }}
           contentInsetAdjustmentBehavior="automatic"
           automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
           keyboardShouldPersistTaps="handled"

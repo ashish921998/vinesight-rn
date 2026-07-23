@@ -127,6 +127,7 @@ module.exports = {
       'expo-router',
       'expo-asset',
       'expo-system-ui',
+      ['expo-navigation-bar', { enforceContrast: false }],
       'expo-audio',
       'expo-notifications',
       [
