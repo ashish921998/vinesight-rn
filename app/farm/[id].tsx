@@ -164,6 +164,8 @@ export default function FarmDetailScreen() {
   const [activeSeasonTargetHarvestDraft, setActiveSeasonTargetHarvestDraft] = useState<Date>(
     new Date(),
   );
+  const [isAddLogNavigationInFlight, setIsAddLogNavigationInFlight] = useState(false);
+  const addLogNavigationInFlightRef = React.useRef(false);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), NOW_TICK_MS);
@@ -180,6 +182,12 @@ export default function FarmDetailScreen() {
   const guidedTourSeasonAutoOpenedRef = React.useRef(false);
   const isGuidedSeasonStep =
     guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && showSeasonForm;
+
+  useEffect(() => {
+    if (!isFocused) return;
+    addLogNavigationInFlightRef.current = false;
+    setIsAddLogNavigationInFlight(false);
+  }, [isFocused]);
 
   useEffect(() => {
     const isGuidedAddLog = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
@@ -1162,26 +1170,44 @@ export default function FarmDetailScreen() {
 
   const handleAddActivity = async () => {
     if (!farm?.id) return;
-    // Guided-tour teaching moment: during onboarding's add_log step, steer a
-    // between-seasons farm to start a season first. This is an intentional
-    // teaching gate, not a data-integrity block. Outside the tour, logging is
-    // never blocked — a between-seasons farm just gets a non-blocking nudge
-    // inside the add-log form (records save with a null season_id, the DB
-    // trigger is permissive). The refetch guards against gating a season that
-    // was just started but not yet reflected in the cached list.
-    if (!activeSeasonRecord && guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log') {
-      const refreshedSeasons = await refetchSeasons();
-      const refreshedActiveSeason =
-        refreshedSeasons.data?.find((season) => season.end_date === null) ?? null;
-      if (!refreshedActiveSeason) {
-        // refreshedActiveSeason already reflects the just-refetched list, so no
-        // stale isSeasonsLoading guard is needed here (it would be read from the
-        // pre-refetch render and could wrongly skip opening the form).
-        openStartSeasonForm();
-        return;
+    if (addLogNavigationInFlightRef.current) return;
+
+    addLogNavigationInFlightRef.current = true;
+    setIsAddLogNavigationInFlight(true);
+    let didStartNavigation = false;
+
+    try {
+      // Guided-tour teaching moment: during onboarding's add_log step, steer a
+      // between-seasons farm to start a season first. This is an intentional
+      // teaching gate, not a data-integrity block. Outside the tour, logging is
+      // never blocked — a between-seasons farm just gets a non-blocking nudge
+      // inside the add-log form (records save with a null season_id, the DB
+      // trigger is permissive). The refetch guards against gating a season that
+      // was just started but not yet reflected in the cached list.
+      if (
+        !activeSeasonRecord &&
+        guidedTourStatus === 'in_progress' &&
+        guidedTourStep === 'add_log'
+      ) {
+        const refreshedSeasons = await refetchSeasons();
+        const refreshedActiveSeason =
+          refreshedSeasons.data?.find((season) => season.end_date === null) ?? null;
+        if (!refreshedActiveSeason) {
+          // refreshedActiveSeason already reflects the just-refetched list, so no
+          // stale isSeasonsLoading guard is needed here (it would be read from the
+          // pre-refetch render and could wrongly skip opening the form).
+          openStartSeasonForm();
+          return;
+        }
+      }
+      router.push(createAddLogHref({ farmId: farm.id, lockFarmSelection: true }));
+      didStartNavigation = true;
+    } finally {
+      if (!didStartNavigation) {
+        addLogNavigationInFlightRef.current = false;
+        setIsAddLogNavigationInFlight(false);
       }
     }
-    router.push(createAddLogHref({ farmId: farm.id, lockFarmSelection: true }));
   };
 
   const handleEditActivity = (log: (typeof recentLogs)[number]) => {
@@ -3527,8 +3553,10 @@ export default function FarmDetailScreen() {
       >
         <Pressable
           onPress={handleAddActivity}
+          disabled={isAddLogNavigationInFlight}
           accessibilityRole="button"
           accessibilityLabel={t('farmDetails.actions.addActivity')}
+          accessibilityState={{ disabled: isAddLogNavigationInFlight }}
           style={{
             width: '100%',
             height: '100%',
@@ -3537,6 +3565,7 @@ export default function FarmDetailScreen() {
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
+            opacity: isAddLogNavigationInFlight ? 0.7 : 1,
           }}
         >
           {({ pressed }) => (

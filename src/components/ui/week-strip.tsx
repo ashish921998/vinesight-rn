@@ -1,8 +1,8 @@
 /**
  * WeekStrip — horizontal 7-day date selector.
- * Shows the week ending at the selected day (or today), with a marker dot on
- * days that already have saved logs. Tapping a day selects it; the calendar
- * button hands off to a full date picker for anything outside the window.
+ * Shows the Sunday-Saturday week containing the selected day, with a marker dot
+ * on days that already have saved logs. Future dates stay empty because logs
+ * can only be created for today or the past.
  */
 
 import React, { useMemo } from 'react';
@@ -50,22 +50,15 @@ export function WeekStrip({
   const selectedDay = startOfDay(selectedDate);
   const selectedIso = toSupabaseDateString(selectedDay);
 
-  // Today sits at the middle-right of the strip (index 4 of 7), so the default
-  // window runs from latestDay-4 to latestDay+2. When the calendar-selected date
-  // falls outside that window (only the past is reachable — maxDate blocks the
-  // future), re-anchor the window on the selected date so it stays visible.
-  const windowEnd =
-    selectedDay.getTime() < addDays(latestDay, -4).getTime()
-      ? addDays(selectedDay, 2)
-      : addDays(latestDay, 2);
+  const weekStart = addDays(selectedDay, -selectedDay.getDay());
 
   const days = useMemo(() => {
     return Array.from({ length: 7 }, (_, index) => {
-      const date = addDays(windowEnd, index - 6);
+      const date = addDays(weekStart, index);
       return { date, iso: toSupabaseDateString(date) };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowEnd.getTime()]);
+  }, [weekStart.getTime()]);
 
   return (
     <View>
@@ -77,17 +70,7 @@ export function WeekStrip({
           marginBottom: 8,
         }}
       >
-        <Text
-          selectable
-          style={{
-            fontSize: fontSize.sm,
-            fontWeight: '700',
-            color: m3.colorScheme.onSurface,
-          }}
-        >
-          {formatDate(selectedDate, { month: 'long', year: 'numeric' })}
-        </Text>
-        {onOpenPicker && (
+        {onOpenPicker ? (
           <Pressable
             onPress={onOpenPicker}
             accessibilityRole="button"
@@ -95,38 +78,74 @@ export function WeekStrip({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
+              gap: 6,
               paddingHorizontal: 10,
-              paddingVertical: 6,
+              paddingVertical: 7,
               borderRadius: radius.full,
+              borderWidth: 1,
+              borderColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
               backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
             }}
           >
-            <AppIcon name="calendar" size={14} color={m3.colorScheme.primary} />
+            <AppIcon name="calendar" size={15} color={m3.colorScheme.primary} />
             <Text
               style={{
-                marginLeft: 6,
-                fontSize: fontSize.xs,
+                fontSize: fontSize.sm,
                 fontWeight: '700',
                 color: m3.colorScheme.primary,
               }}
             >
-              {t('entryForm.pickDate', { defaultValue: 'Pick date' })}
+              {formatDate(selectedDate, { month: 'long', year: 'numeric' })}
             </Text>
+            <AppIcon name="chevron-right" size={14} color={m3.colorScheme.primary} />
           </Pressable>
+        ) : (
+          <Text
+            selectable
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: '700',
+              color: m3.colorScheme.onSurface,
+            }}
+          >
+            {formatDate(selectedDate, { month: 'long', year: 'numeric' })}
+          </Text>
         )}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 5, marginBottom: 2 }}>
+        {days.map(({ date, iso }) => (
+          <Text
+            key={`weekday-${iso}`}
+            style={{
+              flex: 1,
+              textAlign: 'center',
+              fontSize: fontSize['2xs'],
+              fontWeight: '700',
+              letterSpacing: 0.5,
+              textTransform: 'uppercase',
+              color: m3.colorScheme.onSurfaceVariant,
+            }}
+          >
+            {formatDate(date, { weekday: 'short' })}
+          </Text>
+        ))}
       </View>
       <View style={{ flexDirection: 'row', gap: 5 }}>
         {days.map(({ date, iso }) => {
           const isSelected = iso === selectedIso;
-          const isDisabled = date.getTime() > latestDay.getTime();
+          const isFuture = date.getTime() > latestDay.getTime();
           const hasLogs = markedDates?.has(iso) ?? false;
+
+          if (isFuture) {
+            return <View key={iso} style={{ flex: 1, minHeight: 54 }} />;
+          }
+
           return (
             <Pressable
               key={iso}
-              disabled={isDisabled}
               onPress={() => onSelectDate(date)}
               accessibilityRole="button"
-              accessibilityState={{ selected: isSelected, disabled: isDisabled }}
+              accessibilityState={{ selected: isSelected }}
               accessibilityLabel={formatDate(date, {
                 weekday: 'long',
                 month: 'long',
@@ -135,36 +154,17 @@ export function WeekStrip({
               style={{
                 flex: 1,
                 alignItems: 'center',
-                paddingVertical: 8,
+                justifyContent: 'center',
+                minHeight: 54,
                 borderRadius: radius.md,
                 backgroundColor: isSelected ? m3.colorScheme.primary : 'transparent',
               }}
             >
               <Text
                 style={{
-                  fontSize: fontSize['2xs'],
-                  fontWeight: '700',
-                  letterSpacing: 0.5,
-                  textTransform: 'uppercase',
-                  color: isSelected
-                    ? colorWithOpacity(m3.colorScheme.onPrimary, 0.8)
-                    : isDisabled
-                      ? colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.35)
-                      : m3.colorScheme.onSurfaceVariant,
-                }}
-              >
-                {formatDate(date, { weekday: 'short' })}
-              </Text>
-              <Text
-                style={{
-                  marginTop: 2,
                   fontSize: fontSize.base,
                   fontWeight: '700',
-                  color: isSelected
-                    ? m3.colorScheme.onPrimary
-                    : isDisabled
-                      ? colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.35)
-                      : m3.colorScheme.onSurface,
+                  color: isSelected ? m3.colorScheme.onPrimary : m3.colorScheme.onSurface,
                 }}
               >
                 {date.getDate()}

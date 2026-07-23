@@ -26,6 +26,7 @@ export function DateField({
   disabled,
   testID,
   style,
+  renderTrigger,
 }: DateFieldProps) {
   const m3 = useM3();
   const insets = useSafeAreaInsets();
@@ -43,20 +44,26 @@ export function DateField({
     setOpen(false);
   };
 
+  const openPicker = () => {
+    setDraftDate(ensureValidDate(value, minimumDate, maximumDate));
+    setOpen(true);
+  };
+
   return (
     <View style={style}>
-      <DateFieldTrigger
-        value={value}
-        label={label}
-        placeholder={placeholder}
-        hint={hint}
-        disabled={disabled}
-        testID={testID}
-        onPress={() => {
-          setDraftDate(ensureValidDate(value, minimumDate, maximumDate));
-          setOpen(true);
-        }}
-      />
+      {renderTrigger ? (
+        renderTrigger(openPicker)
+      ) : (
+        <DateFieldTrigger
+          value={value}
+          label={label}
+          placeholder={placeholder}
+          hint={hint}
+          disabled={disabled}
+          testID={testID}
+          onPress={openPicker}
+        />
+      )}
       <BottomSheet
         index={open ? 0 : -1}
         enableDynamicSizing

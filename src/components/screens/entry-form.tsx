@@ -27,6 +27,7 @@ import { AppIcon } from '@/components/ui/app-icon';
 import { Spinner } from '@/components/ui/spinner';
 import { LinearGradient as _LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3 } from '@/styles/use-theme';
 import { DateField } from '@/components/ui';
@@ -44,7 +45,6 @@ import {
 } from '@/styles/theme';
 import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
 import { RepeatLastLog } from '@/components/screens/entry-form/RepeatLastLog';
-import { WeekStrip } from '@/components/ui/week-strip';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
 import { createStartSeasonHref } from '@/utils/add-log-navigation';
 import { calculateKeyboardScrollOffset, resolveKeyboardTop } from '@/utils/keyboard-scroll';
@@ -2205,10 +2205,49 @@ export function EntryForm({
             </View>
           )}
         </View>
-        <WeekStrip
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-          markedDates={loggedDateIsos}
+        <DateField
+          value={selectedDate}
+          onChange={setSelectedDate}
+          maximumDate={new Date()}
+          label={t('entryForm.selectDate')}
+          renderTrigger={(openPicker) => {
+            const isToday = formatLocalDate(selectedDate) === formatLocalDate(new Date());
+            return (
+              <Pressable
+                onPress={openPicker}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.selectDate', { defaultValue: 'Select date' })}
+                style={{
+                  minHeight: 58,
+                  paddingHorizontal: 16,
+                  borderRadius: radius.md,
+                  borderWidth: 1.5,
+                  borderColor: m3.colorScheme.onSurface,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                }}
+              >
+                <AppIcon name="calendar" size={20} color={m3.colorScheme.onSurface} />
+                <Text
+                  style={{
+                    flex: 1,
+                    fontSize: fontSize.base,
+                    color: m3.colorScheme.onSurface,
+                  }}
+                >
+                  {isToday
+                    ? t('common.today', { defaultValue: 'Today' })
+                    : formatDate(selectedDate, {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                </Text>
+                <AppIcon name="chevron-down" size={18} color={m3.colorScheme.onSurface} />
+              </Pressable>
+            );
+          }}
         />
       </View>
 
@@ -2929,16 +2968,6 @@ export function EntryForm({
 
         <Tabs tabs={resolvedTabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {activeTab === 'log' ? (
-          <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-            <DateField
-              value={selectedDate}
-              onChange={setSelectedDate}
-              maximumDate={new Date()}
-              label={t('entryForm.selectDate')}
-            />
-          </View>
-        ) : null}
         <BottomSheet
           index={showTypePicker ? 0 : -1}
           enableDynamicSizing

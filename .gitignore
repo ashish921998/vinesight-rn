@@ -67,6 +67,13 @@ storybook-static
 agent-orchestrator.yaml
 .gstack/
 .worktrees/
+.codex/
+.cursor/
+.opencode/
+.mcp.json
+opencode.json
+skills-lock.json
 
 # Xcode local env (machine-specific paths)
 ios/.xcode.env.local
+.agents

@@ -9,7 +9,7 @@
  * the trigger button both renderers mount.
  */
 
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { Pressable, Text, View, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol } from '@/components/ui/symbol';
@@ -41,6 +41,8 @@ export interface DateFieldProps {
   disabled?: boolean;
   testID?: string;
   style?: ViewStyle;
+  /** Replaces the standard field trigger while preserving the native picker. */
+  renderTrigger?: (openPicker: () => void) => ReactNode;
 }
 
 /**
