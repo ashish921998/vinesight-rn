@@ -919,7 +919,6 @@ export const hi = {
         lowLastLog: 'खुराक जांचें — आपकी पिछली एंट्री ({{reference}}) का लगभग 1/{{ratio}}',
       },
     },
-    quickAdd: 'त्वरित जोड़',
     catalogOnly: {
       title: 'कैटलॉग मिक्स',
       selectedMix: 'चयनित: {{name}}',
@@ -964,7 +963,6 @@ export const hi = {
         recommendedLow: 'मात्रा जांचें — दर्ज {{entered}}; लेबल {{min}}–{{max}} {{unit}} अनुशंसित',
       },
     },
-    quickAdd: 'त्वरित जोड़',
     /** ppm/g-per-L plan items shown as informational rows, never tappable chips (issue #197). */
     ppmPlanItemNotice: '{{name}}: ppm मात्रा त्वरित नहीं जोड़ी जा सकती — स्वयं दर्ज करें',
     noMatchesHint: 'कोई मिलान नहीं मिला। कस्टम उर्वरक नाम के साथ जारी रखें।',

@@ -930,7 +930,6 @@ export const en = {
         lowLastLog: 'Check dose — about 1/{{ratio}} of your last logged dose ({{reference}})',
       },
     },
-    quickAdd: 'Quick Add',
     catalogOnly: {
       title: 'Catalog Mixes',
       selectedMix: 'Selected: {{name}}',
@@ -977,7 +976,6 @@ export const en = {
           'Check quantity — entered {{entered}}; label recommends {{min}}–{{max}} {{unit}}',
       },
     },
-    quickAdd: 'Quick Add',
     /** ppm/g-per-L plan items shown as informational rows, never tappable chips (issue #197). */
     ppmPlanItemNotice: "{{name}}: ppm doses can't be quick-added — enter manually",
     noMatchesHint: 'No matches. Continue with custom fertilizer name.',

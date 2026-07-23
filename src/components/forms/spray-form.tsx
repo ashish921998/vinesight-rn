@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
+import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
 import { SearchSelect } from '@/components/ui/search-select';
 import {
@@ -112,9 +112,8 @@ interface SprayFormProps {
   data: SprayFormData;
   onChange: (data: SprayFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
+  /** Feeds typed name-suggestions inside rows (no chip section is rendered). */
   quickAddItems?: SprayQuickAddItem[];
-  /** Keep quick-add data for typed suggestions without rendering duplicate chips. */
-  showQuickAddSection?: boolean;
   catalogOnly?: boolean;
   catalogMixes?: ChemicalMix[];
   /** This farm's recent spray items (identity-rich) for the picker's history section. */
@@ -132,7 +131,6 @@ export function SprayForm({
   onChange,
   onInputFocus,
   quickAddItems = [],
-  showQuickAddSection = true,
   catalogOnly = false,
   catalogMixes = [],
   historyItems = [],
@@ -610,48 +608,6 @@ export function SprayForm({
                         })}
                   </Text>
                 )}
-              </View>
-            ) : null}
-
-            {showQuickAddSection && quickAddItems.length > 0 && !catalogOnly ? (
-              <View style={{ marginBottom: spacing[3] }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.semibold,
-                    color: m3.surface.s500,
-                    marginBottom: spacing[2],
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.4,
-                  }}
-                >
-                  {t('sprayForm.quickAdd')}
-                </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {quickAddItems.map((item, index) => (
-                    <Pressable
-                      key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
-                      onPress={() => addQuickChemical(item)}
-                      style={{
-                        marginRight: spacing[2],
-                        paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[2],
-                        borderRadius: borderRadius.full,
-                        backgroundColor: m3.surface.s100,
-                        borderWidth: 1,
-                        borderColor: m3.surface.s200,
-                      }}
-                    >
-                      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
-                        {item.name}
-                      </Text>
-                      <Text style={{ fontSize: fontSize.xs, color: m3.surface.s500 }}>
-                        {item.quantity ? `${item.quantity} ` : ''}
-                        {item.unit ?? DEFAULT_CHEMICAL_UNIT}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
               </View>
             ) : null}
 

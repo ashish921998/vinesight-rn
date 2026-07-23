@@ -7,10 +7,10 @@
  * already visible in the "Logging to" bar); the date defaults to today.
  *
  * Irrigation renders fertilizers as a first-class (but optional) section —
- * ~99% of irrigations carry them, so there is no gating switch: the farm's
- * known products show as toggleable roster chips, and any ticked rows save as
- * a linked fertigation record. Spray gets the full picker sources (catalog
- * mixes, warehouse, history, plan) plus the PHI harvest-safety check on Save.
+ * ~99% of irrigations carry them, so there is no gating switch: any added
+ * rows save as a linked fertigation record. Spray gets the full picker
+ * sources (catalog mixes, warehouse, history, plan) plus the PHI
+ * harvest-safety check on Save.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
@@ -508,14 +508,13 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
               showHeader={false}
             />
             {/* Fertilizers — first-class, no gating switch (~99% of irrigations
-                carry them). Roster chips toggle prefilled rows; zero rows
-                simply means "none today" and saves irrigation alone. */}
+                carry them). Zero rows simply means "none today" and saves
+                irrigation alone. */}
             <View style={{ marginTop: spacing[4] }}>
               <FertigationForm
                 data={fertigationDraft}
                 onChange={setFertigationDraft}
                 quickAddItems={fertigationSources.quickAddItems}
-                showQuickAddSection
                 historyItems={fertigationSources.historyItems}
                 planItems={fertigationSources.planItems}
                 catalogProducts={fertigationSources.catalogProducts}
@@ -531,7 +530,6 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
             data={sprayDraft}
             onChange={setSprayDraft}
             quickAddItems={spraySources.quickAddItems}
-            showQuickAddSection={false}
             catalogMixes={catalogMixes}
             historyItems={spraySources.historyItems}
             planItems={spraySources.planItems}

@@ -923,7 +923,6 @@ export const mr = {
         lowLastLog: 'मात्रा तपासा — तुमच्या मागील नोंदीच्या ({{reference}}) सुमारे 1/{{ratio}}',
       },
     },
-    quickAdd: 'जलद जोडा',
     catalogOnly: {
       title: 'कॅटलॉग मिक्स',
       selectedMix: 'निवडलेले: {{name}}',
@@ -971,7 +970,6 @@ export const mr = {
           'प्रमाण तपासा — टाकले {{entered}}; लेबल {{min}}–{{max}} {{unit}} शिफारस करते',
       },
     },
-    quickAdd: 'जलद जोडा',
     /** ppm/g-per-L plan items shown as informational rows, never tappable chips (issue #197). */
     ppmPlanItemNotice: '{{name}}: ppm मात्रा जलद जोडता येत नाही — स्वतः भरा',
     noMatchesHint: 'जुळणारे सापडले नाही. सानुकूल $t(glossary.fertigation) नावासह पुढे जा.',
