@@ -1,9 +1,6 @@
-// Android edge-to-edge can report a zero bottom safe-area inset when the system
-// navigation bar is transparent, even though 3-button navigation still occupies
-// physical space. Keep bottom UI above those controls by reserving a conservative
-// fallback inset whenever the reported bottom inset is smaller.
-const ANDROID_NAV_BAR_FALLBACK_INSET = 32;
-
+// Safe-area-context reports the actual inset for the device's current navigation
+// mode. Do not replace it with a fixed estimate: gesture and three-button modes
+// have different geometry, and the inset can change while the app is running.
 export function getAndroidBottomSystemInset(reportedBottomInset: number) {
-  return Math.max(reportedBottomInset, ANDROID_NAV_BAR_FALLBACK_INSET);
+  return Math.max(0, reportedBottomInset);
 }

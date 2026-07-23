@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback, useRef } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import type { ReactNativeElement } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '@/components/ui/spinner';
 import { useM3 } from '@/styles/use-theme';
@@ -64,6 +65,7 @@ export default function LabReportsScreen() {
   const { farmId, userId } = useLocalSearchParams<{ farmId: string; userId: string }>();
   const m3 = useM3();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const workspace = useProfessionalWorkspace();
   const numericFarmId = Number(farmId);
 
@@ -364,7 +366,12 @@ export default function LabReportsScreen() {
           ),
         }}
       />
-      <ScrollView contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}>
+      <ScrollView
+        contentContainerStyle={{
+          padding: spacing[4],
+          paddingBottom: insets.bottom + FAB_BOTTOM + FAB_SIZE + spacing[4],
+        }}
+      >
         {isLoading ? (
           <Spinner style={{ marginTop: spacing[4] }} />
         ) : isError ? (
@@ -441,7 +448,7 @@ export default function LabReportsScreen() {
         onPress={() => setFabOpen(true)}
         style={({ pressed }) => ({
           position: 'absolute',
-          bottom: FAB_BOTTOM,
+          bottom: insets.bottom + FAB_BOTTOM,
           right: FAB_RIGHT,
           width: FAB_SIZE,
           height: FAB_SIZE,

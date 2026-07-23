@@ -11,6 +11,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { NavigationBar } from 'expo-navigation-bar';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -734,10 +735,10 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
   if (!themeHydrated) return null;
 
   const content = (
-    <ErrorBoundary>
-      <View style={{ flex: 1 }}>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <SafeAreaProvider>
+    <SafeAreaProvider>
+      <ErrorBoundary>
+        <View style={{ flex: 1 }}>
+          <GestureHandlerRootView style={{ flex: 1 }}>
             <PersistQueryClientProvider
               key={userId ?? 'signed-out'}
               client={queryClient}
@@ -757,6 +758,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
               <PetioleReminderSync />
               <I18nextProvider i18n={i18n}>
                 <StatusBar style={isDark ? 'light' : 'dark'} />
+                <NavigationBar style={isDark ? 'light' : 'dark'} />
                 <Stack
                   screenOptions={{
                     headerShown: false,
@@ -890,10 +892,10 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
               </I18nextProvider>
             </PersistQueryClientProvider>
             <ToastHost />
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
-      </View>
-    </ErrorBoundary>
+          </GestureHandlerRootView>
+        </View>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 
   if (!telemetryEnabled || Platform.OS === 'web' || !posthogClient) return content;

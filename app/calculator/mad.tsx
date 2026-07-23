@@ -191,7 +191,7 @@ export default function MADCalculatorScreen() {
             contentContainerStyle={{
               paddingTop: spacing[4],
               paddingHorizontal: 16,
-              paddingBottom: 32,
+              paddingBottom: Math.max(insets.bottom + spacing[4], spacing[8]),
             }}
             contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
