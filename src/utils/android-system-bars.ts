@@ -1,6 +1,7 @@
-// Safe-area-context reports the actual inset for the device's current navigation
-// mode. Do not replace it with a fixed estimate: gesture and three-button modes
-// have different geometry, and the inset can change while the app is running.
+// Some Android edge-to-edge configurations report zero for three-button
+// navigation. Keep bottom controls reachable when the native inset is missing.
+const ANDROID_NAV_BAR_FALLBACK_INSET = 32;
+
 export function getAndroidBottomSystemInset(reportedBottomInset: number) {
-  return Math.max(0, reportedBottomInset);
+  return Math.max(reportedBottomInset, ANDROID_NAV_BAR_FALLBACK_INSET);
 }

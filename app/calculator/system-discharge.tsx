@@ -371,7 +371,10 @@ export default function SystemDischargeScreen() {
             contentContainerStyle={{
               paddingTop: 0,
               paddingHorizontal: 16,
-              paddingBottom: Math.max(insets.bottom + spacing[4], spacing[8]),
+              paddingBottom: Math.max(
+                Platform.OS === 'android' ? insets.bottom + spacing[4] : spacing[4],
+                spacing[8],
+              ),
             }}
             contentInsetAdjustmentBehavior="automatic"
             automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
