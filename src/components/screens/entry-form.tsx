@@ -341,7 +341,7 @@ export function EntryForm({
   const logFarmId = activeFarm?.id;
   const spraySources = useSprayInputSources(logFarmId ?? undefined);
   const { activeSeason, hasResolvedSeasons } = useFarmSeasonStatus(logFarmId ?? undefined);
-  // Saved records for the selected farm — power the week-strip "already
+  // Saved records for the selected farm — power the date field's "already
   // logged" dots and the repeat-last-log suggestion. Query keys are shared
   // with the farm detail screen, so these are usually cache hits.
   const { data: farmIrrigationRecords } = useIrrigationRecords(logFarmId ?? undefined);

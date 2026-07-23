@@ -835,7 +835,6 @@ export const en = {
     saveLogs: 'Save logs ({{count}})',
     retrySaveLogs: 'Retry save ({{count}})',
     saveTask: 'Save task',
-    pickDate: 'Pick date',
     irrigationFertilizerHint: '+ fertilizers',
     repeatLastLogTitle: 'Repeat last log?',
     repeatLastLogLoggedOn: 'Logged {{date}}',

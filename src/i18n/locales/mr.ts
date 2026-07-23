@@ -865,7 +865,6 @@ export const mr = {
       selectDueDate: 'देय दिनांक निवडा',
       selectDueDateTitle: 'देय दिनांक निवडा',
     },
-    pickDate: 'तारीख निवडा',
     irrigationFertilizerHint: '+ खते',
     repeatLastLogTitle: 'मागील नोंद पुन्हा करायची?',
     repeatLastLogLoggedOn: '{{date}} रोजी नोंदवले',

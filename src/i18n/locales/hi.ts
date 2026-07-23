@@ -823,7 +823,6 @@ export const hi = {
     saveLogs: 'लॉग सहेजें ({{count}})',
     retrySaveLogs: 'फिर से सहेजें ({{count}})',
     saveTask: 'कार्य सहेजें',
-    pickDate: 'तारीख चुनें',
     irrigationFertilizerHint: '+ खाद',
     repeatLastLogTitle: 'पिछला लॉग दोहराएँ?',
     repeatLastLogLoggedOn: '{{date}} को लॉग किया गया',
