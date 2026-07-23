@@ -1,0 +1,83 @@
+src/components/screens/farm-form/crop-picker-sheet.tsx
+  s_ae6925612d2289::t_c1550b519eca49 75
+  s_ae6925612d2289::t_f1d45f891b9752 9
+src/components/screens/farm-form/variety-picker-sheet.tsx
+  s_ae6925612d2289::t_3d84d0b46dd213 62
+  s_ae6925612d2289::t_7a00bbe37aa92d 9
+src/components/modals/farm-select-sheet.tsx
+  s_ae6925612d2289::t_56db7b4c02b022 30
+  s_ae6925612d2289::t_bf702d2c22e987 77-81,84
+  s_ae6925612d2289::t_592eb2577fae78 3,6
+  s_ae6925612d2289::t_c8e18e79b9d6bc 175
+  s_ae6925612d2289::t_cad6cccbce6543 85-136,139-149,151-156,159-174,176-185
+src/components/ui/option-picker-sheet.android.tsx
+  s_ae6925612d2289::t_b5af6604dd5ba9 5
+  s_ae6925612d2289::t_9e17517da37624 44
+src/components/ui/unit-picker-modal.android.tsx
+  s_ae6925612d2289::t_c4e2e625cede58 5
+  s_ae6925612d2289::t_df2cfa01a922f7 38
+src/components/modals/farm-assistant-modal.tsx
+  s_ae6925612d2289::t_2775698eab8790 7
+  s_ae6925612d2289::t_ae1e6c25e79d18 326-329,331
+  s_ae6925612d2289::t_ab00bd677a2af0 332-333,335-338,341-353,355-357,359-360,362-370,372-404,406-408,410,415,420-424,426-428
+src/components/ui/sheet-header.tsx
+  s_ae6925612d2289::t_131a94b019bb5b 1-55
+src/components/ui/option-picker-sheet.tsx
+  s_ae6925612d2289::t_2977a4fdcf8c1d 11
+  s_ae6925612d2289::t_ab3faa47b9e7b7 50
+src/components/screens/reports/report-filters-panel.tsx
+  s_ae6925612d2289::t_06b4fe08a32ffd 935
+  s_ae6925612d2289::t_4160ad86d17522 16
+  s_ae6925612d2289::t_41067f0e2336cd 844
+src/components/sheets/product-detail-sheet.tsx
+  s_ae6925612d2289::t_d3b197104df80c 2,6-7
+  s_ae6925612d2289::t_7952b7ee0de13b 34-41
+src/components/modals/workers-fab-sheet.tsx
+  s_ae6925612d2289::t_315e87bb55368e 6
+  s_ae6925612d2289::t_9d105bd3e2a18c 102-103
+src/components/modals/lab-tests-fab-sheet.tsx
+  s_ae6925612d2289::t_13064c8c93ab90 92-93
+  s_ae6925612d2289::t_395d29f5233625 6
+src/components/modals/worker-select-sheet.tsx
+  s_ae6925612d2289::t_5e6ef1ea606033 114
+  s_ae6925612d2289::t_37e058fa06b26b 5
+  s_ae6925612d2289::t_01d724d1b1d1f2 60,62
+  s_ae6925612d2289::t_acca2dfbf65e3f 63-88,91-93,96,98-113,115-119
+src/components/modals/farm-select-modal.tsx
+  s_ae6925612d2289::t_8cdeb099fcdbef 116
+  s_ae6925612d2289::t_4be955edea3afd 6
+  s_ae6925612d2289::t_937bbb52804807 58,60
+  s_ae6925612d2289::t_a8ea5bd76cdef4 61-90,93-95,98,100-115,117-121
+src/components/sheets/quick-log-sheet.tsx
+  s_ae6925612d2289::t_b99b38da71f55b 25
+  s_4965a28c6b7b66::t_c67d87860f4985 232-237
+  s_ae6925612d2289::t_285a830a93e63d 418-422,425-427,429-430,433-437
+  s_ae6925612d2289::t_5f9d5d67467eec 410-412
+  s_ae6925612d2289::t_ea207c1a35ec70 439-441
+src/components/ui/unit-picker-modal.tsx
+  s_ae6925612d2289::t_7c9ac06a73323e 5,62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "3efa6e3f59ca4258f206b0a928ae515946e1f632",
+  "prompts": {},
+  "sessions": {
+    "s_4965a28c6b7b66": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "59eb5968-c0fb-4152-8ca0-91c40053c561",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_ae6925612d2289": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ec50bfef-1983-49c2-8f64-6b60d066214f",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
