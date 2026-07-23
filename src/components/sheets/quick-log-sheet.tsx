@@ -16,6 +16,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   View,
   Text,
+  TextInput,
   Pressable,
   Alert,
   Keyboard,
@@ -100,6 +101,9 @@ interface HeroStepperProps {
   formatPreset: (preset: number) => string;
   step: number;
   accentColor: string;
+  /** Upper bound; typed or stepped values clamp here so absurd inputs (and the
+   *  layout blow-out they cause) can't happen. */
+  maxValue: number;
   /** Quiet plain-words echo under the presets ("≈ 12.5 mm of water"). */
   echo?: string | null;
 }
@@ -117,17 +121,45 @@ function HeroStepper({
   formatPreset,
   step,
   accentColor,
+  maxValue,
   echo,
 }: HeroStepperProps) {
   const m3 = useM3();
   const current = value ?? 0;
-  // Round to 2dp so 0.1-steps never accumulate float dust; 0 clears back to
-  // undefined so validation still reads "not answered".
-  const setValue = (next: number) => {
-    const rounded = Math.round(next * 100) / 100;
-    onChange(rounded > 0 ? rounded : undefined);
-  };
   const displayValue = Number.isInteger(current) ? String(current) : current.toFixed(1);
+  // Shrink the hero font as digits grow so wide values (up to maxValue) stay
+  // centered without shoving the −/+ buttons off the row.
+  const heroFontSize = (shown: string) =>
+    shown.length > 5 ? fontSize['3xl'] : shown.length > 3 ? fontSize['4xl'] : fontSize['5xl'];
+
+  // Keyboard entry for exact values, no UI change: the hero number doubles as
+  // a decimal-pad TextInput. Local draft holds partial input ("1.") while
+  // focused so the −/+ rounding never fights the keystroke.
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  // Round to 2dp so 0.1-steps never accumulate float dust; 0 clears back to
+  // undefined so validation still reads "not answered". Keep the draft in sync
+  // so tapping −/+ or a preset mid-edit updates the on-screen number too.
+  const setValue = (next: number) => {
+    const rounded = Math.min(Math.round(next * 100) / 100, maxValue);
+    const clamped = rounded > 0 ? rounded : undefined;
+    onChange(clamped);
+    if (editing) setDraft(clamped === undefined ? '' : String(clamped));
+  };
+  const onTypedChange = (raw: string) => {
+    // Keep digits and a single decimal separator only.
+    const cleaned = raw.replace(',', '.').replace(/[^0-9.]/g, '');
+    const normalized = cleaned.split('.').slice(0, 2).join('.');
+    const parsed = parseFloat(normalized);
+    if (Number.isFinite(parsed) && parsed > maxValue) {
+      // Snap over-cap input back to the ceiling instead of accepting garbage.
+      setDraft(String(maxValue));
+      onChange(maxValue);
+      return;
+    }
+    setDraft(normalized);
+    onChange(Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed * 100) / 100 : undefined);
+  };
 
   return (
     <View
@@ -156,6 +188,7 @@ function HeroStepper({
           style={{
             width: 52,
             height: 52,
+            flexShrink: 0,
             borderRadius: borderRadius.full,
             borderWidth: 1.5,
             borderColor: m3.surface.s300,
@@ -167,18 +200,31 @@ function HeroStepper({
         >
           <Symbol name="minus" size={20} color={m3.surface.s900} />
         </Pressable>
-        <View style={{ minWidth: 110, alignItems: 'center' }}>
-          <Text
+        <View style={{ flex: 1, minWidth: 0, alignItems: 'center' }}>
+          <TextInput
+            value={editing ? draft : displayValue}
+            onChangeText={onTypedChange}
+            onFocus={() => {
+              setEditing(true);
+              setDraft(current > 0 ? displayValue : '');
+            }}
+            onBlur={() => setEditing(false)}
+            keyboardType="decimal-pad"
+            selectTextOnFocus
+            numberOfLines={1}
+            maxLength={String(Math.floor(maxValue)).length + 3}
+            accessibilityLabel={unitLabel}
             style={{
-              fontSize: fontSize['5xl'],
+              fontSize: heroFontSize(editing ? draft : displayValue),
               fontWeight: fontWeight.bold,
               letterSpacing: -1,
               color: m3.surface.s900,
               lineHeight: 54,
+              textAlign: 'center',
+              alignSelf: 'stretch',
+              padding: 0,
             }}
-          >
-            {displayValue}
-          </Text>
+          />
           <Text
             style={{
               fontSize: fontSize.sm,
@@ -196,6 +242,7 @@ function HeroStepper({
           style={{
             width: 52,
             height: 52,
+            flexShrink: 0,
             borderRadius: borderRadius.full,
             borderWidth: 1.5,
             borderColor: m3.surface.s300,
@@ -754,6 +801,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
                 presets={[1, 2, 3, 4, 5]}
                 formatPreset={(hours) => `${hours}h`}
                 step={0.5}
+                maxValue={48}
                 accentColor={domainColors.category.irrigation}
                 echo={estimatedWaterEcho}
               />
@@ -804,6 +852,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
               presets={[100, 200, 400, 500, 1000]}
               formatPreset={(litres) => String(litres)}
               step={50}
+              maxValue={10000}
               accentColor={domainColors.category.spray}
             />
 
