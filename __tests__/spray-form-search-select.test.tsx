@@ -325,6 +325,12 @@ describe('SprayForm typeahead adoption', () => {
     const initial: SprayFormData = {
       ...base,
       waterVolume: 200,
+      // Stale identity + verified PHI from a previously selected mix.
+      catalogMixId: 999,
+      catalogMixName: 'Old mix',
+      governingPhiDays: 7,
+      safeHarvestDate: '2026-12-31',
+      phiStatus: 'verified',
       chemicals: [
         // Both of mix 77's components (product_id 100 + 200) already in the tank.
         {
@@ -356,6 +362,13 @@ describe('SprayForm typeahead adoption', () => {
     // Existing rows survive; the triggering row (its stale "Kar" query) is gone —
     // no duplicates appended, no stale row left behind.
     expect(next.chemicals.map((c) => c.name)).toEqual(['Alpha', 'Beta']);
+    // The tank isn't this mix, so prior identity + PHI are dropped (never
+    // inherit another mix's verified safe-harvest date).
+    expect(next.catalogMixId ?? null).toBeNull();
+    expect(next.catalogMixName ?? null).toBeNull();
+    expect(next.safeHarvestDate ?? null).toBeNull();
+    expect(next.governingPhiDays ?? null).toBeNull();
+    expect(next.phiStatus ?? null).toBeNull();
   });
 
   it('adds a plain custom row from the escape hatch', () => {

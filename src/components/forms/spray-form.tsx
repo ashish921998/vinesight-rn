@@ -338,14 +338,23 @@ export function SprayForm({
         };
       });
 
-      // Nothing new to add (empty mix, or every component already present).
-      // Still commit the cleaned rows so the triggering row's stale typeahead
-      // query is dropped; leave mix identity/PHI untouched (no new mix formed).
-      // Skip the update entirely when nothing actually changed.
+      // Nothing new to add (empty mix, or every component already present): the
+      // tank is just the retained rows, NOT this mix, so drop any prior mix
+      // identity/PHI (stale otherwise — retained rows could inherit another
+      // mix's safe-harvest date) and commit the cleaned rows so the triggering
+      // row's stale typeahead query goes too.
       if (mixChemicals.length === 0) {
-        if (keptRows.length !== dataRef.current.chemicals.length) {
-          onChange({ ...dataRef.current, chemicals: clampChemicalRows(keptRows) });
-        }
+        onChange({
+          ...dataRef.current,
+          catalogMixId: null,
+          catalogMixName: null,
+          governingPhiDays: null,
+          safeHarvestDate: null,
+          phiBlockingComponent: null,
+          phiStatus: null,
+          phiOverride: false,
+          chemicals: clampChemicalRows(keptRows),
+        });
         return;
       }
 
