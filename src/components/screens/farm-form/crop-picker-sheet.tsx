@@ -6,6 +6,7 @@ import React from 'react';
 import { BottomSheet, BottomSheetView } from '@expo/ui/community/bottom-sheet';
 import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
+import { SheetHeader } from '@/components/ui/sheet-header';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -71,44 +72,7 @@ export function CropPickerSheet({
           }}
         >
           {/* Header */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: spacing[6],
-              paddingVertical: spacing[4],
-              borderBottomWidth: 1,
-              borderBottomColor: m3.surface.s100,
-            }}
-          >
-            <View style={{ width: 40 }} />
-            <Text
-              style={{
-                fontSize: fontSize.lg,
-                fontWeight: fontWeight.semibold,
-                color: m3.surface.s900,
-              }}
-            >
-              {t('farmForm.cropPicker.modalTitle')}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              accessible
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: borderRadius.full,
-                backgroundColor: m3.surface.s100,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-            </Pressable>
-          </View>
+          <SheetHeader title={t('farmForm.cropPicker.modalTitle')} />
 
           {/* Content */}
           <View style={{ flex: 1 }}>

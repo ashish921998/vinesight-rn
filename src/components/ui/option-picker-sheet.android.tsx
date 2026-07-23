@@ -1,8 +1,8 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
-import { useTranslation } from 'react-i18next';
 import { AppIcon } from '@/components/ui/app-icon';
+import { SheetHeader } from '@/components/ui/sheet-header';
 import { fontSize, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -30,7 +30,6 @@ export function OptionPickerSheet({
   title,
 }: OptionPickerSheetProps) {
   const m3 = useM3();
-  const { t } = useTranslation();
 
   return (
     <BottomSheet
@@ -42,40 +41,7 @@ export function OptionPickerSheet({
     >
       {/* No flex:1 — the sheet sizes to content, so a short list has no trailing gap. */}
       <View>
-        <View
-          style={{
-            paddingHorizontal: spacing[4],
-            paddingBottom: spacing[4],
-            borderBottomWidth: 1,
-            borderBottomColor: m3.surface.s300,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Text
-            selectable
-            style={{
-              fontSize: fontSize.lg,
-              fontWeight: '700',
-              color: m3.colorScheme.onSurface,
-            }}
-          >
-            {title}
-          </Text>
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.close', { defaultValue: 'Close' })}
-            hitSlop={8}
-          >
-            <AppIcon
-              name="close-circle"
-              size={24}
-              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-            />
-          </Pressable>
-        </View>
+        <SheetHeader title={title} />
         <BottomSheetScrollView contentContainerStyle={{ paddingBottom: spacing[8] }}>
           {options.map((option) => {
             const isSelected = option.key === selectedKey;

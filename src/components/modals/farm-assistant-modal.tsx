@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { SheetHeader } from '@/components/ui/sheet-header';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -319,144 +320,112 @@ export function FarmAssistantModal({ visible, onClose, controller }: FarmAssista
       <View
         style={{
           flex: 1,
-          paddingHorizontal: spacing[5],
-          paddingTop: spacing[5],
           paddingBottom: Math.max(insets.bottom, 16),
         }}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: spacing[4],
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-            <SymbolIcon name="lightbulb.fill" size={18} color={ui.primary} />
-            <Text
+        <SheetHeader
+          title={t('farmAssistant.title')}
+          leading={<SymbolIcon name="lightbulb.fill" size={18} color={ui.primary} />}
+        />
+
+        <View style={{ paddingHorizontal: spacing[5] }}>
+          {transcript && status !== 'idle' && (
+            <View
               style={{
-                color: ui.text,
-                fontSize: fontSize.lg,
-                fontWeight: fontWeight.bold,
+                backgroundColor: colorWithOpacity(ui.primary, 0.06),
+                borderRadius: borderRadius.lg,
+                padding: spacing[3],
+                marginBottom: spacing[3],
               }}
             >
-              {t('farmAssistant.title')}
-            </Text>
-          </View>
-          <Pressable
-            onPress={handleClose}
-            accessibilityLabel={t('farmAssistant.a11y.closeAssistant')}
-            accessibilityRole="button"
-            style={{
-              backgroundColor: ui.primarySoft,
-              width: 36,
-              height: 36,
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <SymbolIcon name="xmark" size={16} color={ui.primary} />
-          </Pressable>
-        </View>
+              <Text
+                style={{
+                  color: ui.muted,
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.medium,
+                  marginBottom: spacing[1],
+                }}
+              >
+                {t('farmAssistant.yourQuestion')}
+              </Text>
+              <Text style={{ color: ui.text, fontSize: fontSize.sm }}>{transcript}</Text>
+            </View>
+          )}
 
-        {transcript && status !== 'idle' && (
-          <View
-            style={{
-              backgroundColor: colorWithOpacity(ui.primary, 0.06),
-              borderRadius: borderRadius.lg,
-              padding: spacing[3],
-              marginBottom: spacing[3],
-            }}
-          >
-            <Text
+          <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 0 }}>
+            {renderContent()}
+          </ScrollView>
+
+          {status === 'idle' && (
+            <View
               style={{
-                color: ui.muted,
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.medium,
-                marginBottom: spacing[1],
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing[2],
+                marginTop: spacing[4],
+                backgroundColor: m3.surface.s50,
+                borderRadius: borderRadius.xl,
+                borderWidth: 1,
+                borderColor: ui.border,
+                paddingHorizontal: spacing[3],
               }}
             >
-              {t('farmAssistant.yourQuestion')}
-            </Text>
-            <Text style={{ color: ui.text, fontSize: fontSize.sm }}>{transcript}</Text>
-          </View>
-        )}
-
-        <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 0 }}>
-          {renderContent()}
-        </ScrollView>
-
-        {status === 'idle' && (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: spacing[2],
-              marginTop: spacing[4],
-              backgroundColor: m3.surface.s50,
-              borderRadius: borderRadius.xl,
-              borderWidth: 1,
-              borderColor: ui.border,
-              paddingHorizontal: spacing[3],
-            }}
-          >
-            <TextInput
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder={t('farmAssistant.askAboutFarmData')}
-              placeholderTextColor={ui.muted}
-              accessibilityLabel={t('farmAssistant.askAboutFarmData')}
-              returnKeyType="send"
-              onSubmitEditing={handleSubmit}
-              style={{
-                flex: 1,
-                paddingVertical: spacing[3],
-                fontSize: fontSize.base,
-                color: ui.text,
-              }}
-            />
-            {isMicAvailable && (
+              <TextInput
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder={t('farmAssistant.askAboutFarmData')}
+                placeholderTextColor={ui.muted}
+                accessibilityLabel={t('farmAssistant.askAboutFarmData')}
+                returnKeyType="send"
+                onSubmitEditing={handleSubmit}
+                style={{
+                  flex: 1,
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: ui.text,
+                }}
+              />
+              {isMicAvailable && (
+                <Pressable
+                  onPress={startListening}
+                  accessibilityLabel={t('farmAssistant.a11y.openAssistant')}
+                  accessibilityRole="button"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: ui.primarySoft,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <SymbolIcon name="lightbulb.fill" size={16} color={ui.primary} />
+                </Pressable>
+              )}
               <Pressable
-                onPress={startListening}
-                accessibilityLabel={t('farmAssistant.a11y.openAssistant')}
+                onPress={handleSubmit}
+                disabled={!inputText.trim()}
+                accessibilityLabel={t('farmAssistant.a11y.submitQuery')}
                 accessibilityRole="button"
+                accessibilityState={{ disabled: !inputText.trim() }}
                 style={{
                   width: 36,
                   height: 36,
                   borderRadius: borderRadius.full,
-                  backgroundColor: ui.primarySoft,
+                  backgroundColor: inputText.trim() ? ui.primary : ui.primarySoft,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <SymbolIcon name="lightbulb.fill" size={16} color={ui.primary} />
+                <SymbolIcon
+                  name="arrow.up"
+                  size={16}
+                  color={inputText.trim() ? m3.colorScheme.onPrimary : ui.primary}
+                />
               </Pressable>
-            )}
-            <Pressable
-              onPress={handleSubmit}
-              disabled={!inputText.trim()}
-              accessibilityLabel={t('farmAssistant.a11y.submitQuery')}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !inputText.trim() }}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: borderRadius.full,
-                backgroundColor: inputText.trim() ? ui.primary : ui.primarySoft,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <SymbolIcon
-                name="arrow.up"
-                size={16}
-                color={inputText.trim() ? m3.colorScheme.onPrimary : ui.primary}
-              />
-            </Pressable>
-          </View>
-        )}
+            </View>
+          )}
+        </View>
       </View>
     </BottomSheet>
   );

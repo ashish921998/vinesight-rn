@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
 import * as Haptics from 'expo-haptics';
 import { Symbol as Icon } from '@/components/ui/symbol';
+import { SheetHeader } from '@/components/ui/sheet-header';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { springs } from '@/styles/motion';
 import { useM3 } from '@/styles/use-theme';
@@ -840,17 +841,7 @@ export function ReportFiltersPanel({
         >
           <SheetHandle color={m3.colorScheme.onSurface} />
 
-          <View style={{ paddingHorizontal: spacing[5], paddingTop: spacing[2], gap: spacing[1] }}>
-            <Text
-              style={{
-                color: m3.colorScheme.onSurface,
-                fontWeight: fontWeight.bold,
-                fontSize: fontSize.lg,
-              }}
-            >
-              {t('reports.selectFarmLabel')}
-            </Text>
-          </View>
+          <SheetHeader title={t('reports.selectFarmLabel')} />
 
           <FlatList
             data={farms}
@@ -941,17 +932,7 @@ export function ReportFiltersPanel({
         >
           <SheetHandle color={m3.colorScheme.onSurface} />
 
-          <View style={{ paddingHorizontal: spacing[5], paddingTop: spacing[2], gap: spacing[1] }}>
-            <Text
-              style={{
-                color: m3.colorScheme.onSurface,
-                fontWeight: fontWeight.bold,
-                fontSize: fontSize.lg,
-              }}
-            >
-              {t('reports.season.label')}
-            </Text>
-          </View>
+          <SheetHeader title={t('reports.season.label')} />
 
           <FlatList
             data={[

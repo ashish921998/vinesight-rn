@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { SheetHeader } from '@/components/ui/sheet-header';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -98,20 +99,8 @@ export function WorkersFabSheet({
       onClose={handleSheetClose}
       backgroundStyle={{ backgroundColor: m3.colorScheme.surface }}
     >
-      <View style={{ paddingTop: spacing[2], paddingBottom: Math.max(insets.bottom, spacing[6]) }}>
-        <Text
-          style={{
-            fontSize: fontSize.xs,
-            fontWeight: fontWeight.semibold,
-            color: m3.colorScheme.onSurfaceVariant,
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-            paddingHorizontal: spacing[5],
-            marginBottom: spacing[3],
-          }}
-        >
-          {t('workers.actions.title')}
-        </Text>
+      <View style={{ paddingBottom: Math.max(insets.bottom, spacing[6]) }}>
+        <SheetHeader title={t('workers.actions.title')} />
 
         <View style={{ paddingHorizontal: spacing[3], gap: spacing[2] }}>
           {actions.map((action) => (
@@ -175,39 +164,6 @@ export function WorkersFabSheet({
             </Pressable>
           ))}
         </View>
-
-        <View
-          style={{
-            height: 1,
-            backgroundColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.5),
-            marginHorizontal: spacing[4],
-            marginTop: spacing[3],
-            marginBottom: spacing[2],
-          }}
-        />
-
-        <Pressable
-          onPress={onClose}
-          style={({ pressed }) => ({
-            marginHorizontal: spacing[3],
-            paddingVertical: spacing[4],
-            borderRadius: borderRadius.xl,
-            alignItems: 'center',
-            backgroundColor: pressed
-              ? colorWithOpacity(m3.colorScheme.onSurface, 0.06)
-              : 'transparent',
-          })}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.base,
-              fontWeight: fontWeight.semibold,
-              color: m3.colorScheme.onSurfaceVariant,
-            }}
-          >
-            {t('common.cancel')}
-          </Text>
-        </Pressable>
       </View>
     </BottomSheet>
   );

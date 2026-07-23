@@ -22,6 +22,7 @@ import { borderRadius, fontSize, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol } from '@/components/ui/symbol';
+import { SheetHeader } from '@/components/ui/sheet-header';
 import { Spinner } from '@/components/ui/spinner';
 import { DateField } from '@/components/ui';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
@@ -228,11 +229,12 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
                 });
                 pendingIrrigationRef.current = null;
               } catch {
-                // The delete threw, so the record's existence is ambiguous
-                // (committed on the server but response lost, or genuinely
-                // failed). Drop the ref: a retry must build a fresh irrigation
-                // rather than link a rider to a record that may already be gone
-                // — and stale edits/dates must not be silently discarded.
+                // Delete threw on an offline-queued path that usually commits on
+                // replay, so the irrigation is likely already gone. Drop the ref
+                // so a retry rebuilds rather than linking the rider to a deleted
+                // record (FK failure/orphan) — a deletable duplicate beats a
+                // dangling link. ponytail: fully-correct fix is idempotent
+                // re-save via original client_uuid; needs save-path plumbing.
                 pendingIrrigationRef.current = null;
               }
               throw error;
@@ -405,96 +407,38 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
         style={usesFullHeight ? { flex: 1 } : undefined}
         contentContainerStyle={{
           paddingHorizontal: spacing[4],
-          // Leave breathing room below the native drag handle so the header
-          // never appears to spill above the sheet boundary.
-          paddingTop: spacing[6],
+          // Small gap below the native drag handle; SheetHeader adds its own
+          // top padding for the rest of the breathing room.
+          paddingTop: spacing[2],
           paddingBottom: spacing[5],
         }}
         keyboardShouldPersistTaps="handled"
       >
         {/* One shared header contract for every activity type. */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: spacing[3],
-            minHeight: 64,
-            padding: spacing[3],
-            borderRadius: borderRadius.xl,
-            backgroundColor: logType ? colorWithOpacity(logType.color, 0.08) : m3.surface.s100,
-            borderWidth: 1,
-            borderColor: logType ? colorWithOpacity(logType.color, 0.16) : m3.surface.s200,
-          }}
-        >
-          {logType ? (
-            <View
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: radius.lg,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: colorWithOpacity(logType.color, 0.14),
-              }}
-            >
-              <Symbol name={resolveSymbolIconName(logType.icon)} size={20} color={logType.color} />
-            </View>
-          ) : null}
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text
-              accessibilityRole="header"
-              numberOfLines={1}
-              style={{
-                fontSize: fontSize.lg,
-                fontWeight: '700',
-                color: m3.colorScheme.onSurface,
-              }}
-            >
-              {logType ? t('quickLog.title', { type: t(logType.labelKey) }) : ''}
-            </Text>
-            {farm ? (
+        <SheetHeader
+          title={logType ? t('quickLog.title', { type: t(logType.labelKey) }) : ''}
+          subtitle={farm ? t('quickLog.loggingTo', { farm: farm.name }) : undefined}
+          leading={
+            logType ? (
               <View
                 style={{
-                  flexDirection: 'row',
+                  width: 40,
+                  height: 40,
+                  borderRadius: radius.lg,
                   alignItems: 'center',
-                  gap: spacing[1],
-                  marginTop: 2,
+                  justifyContent: 'center',
+                  backgroundColor: colorWithOpacity(logType.color, 0.14),
                 }}
               >
-                <AppIcon name="location" size={13} color={m3.colorScheme.onSurfaceVariant} />
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    flex: 1,
-                    fontSize: fontSize.xs,
-                    color: m3.colorScheme.onSurfaceVariant,
-                  }}
-                >
-                  {t('quickLog.loggingTo', { farm: farm.name })}
-                </Text>
+                <Symbol
+                  name={resolveSymbolIconName(logType.icon)}
+                  size={20}
+                  color={logType.color}
+                />
               </View>
-            ) : null}
-          </View>
-          <Pressable
-            onPress={onClose}
-            hitSlop={4}
-            style={({ pressed }) => ({
-              width: 40,
-              height: 40,
-              borderRadius: radius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: colorWithOpacity(
-                m3.colorScheme.onSurfaceVariant,
-                pressed ? 0.12 : 0.06,
-              ),
-            })}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.close', { defaultValue: 'Close' })}
-          >
-            <AppIcon name="close" size={20} color={m3.colorScheme.onSurfaceVariant} />
-          </Pressable>
-        </View>
+            ) : null
+          }
+        />
 
         {/* Date — its own row, defaults to today. */}
         <View style={{ marginTop: spacing[4], marginBottom: spacing[5] }}>
