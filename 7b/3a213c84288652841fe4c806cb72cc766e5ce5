@@ -1,0 +1,28 @@
+__tests__/tab-definitions.test.ts
+  s_f6e1e1f8eb64a2::t_2c5904e787393e 1,3-12,15-19,23-26,28-31
+src/components/navigation/tab-definitions.ts
+  s_f6e1e1f8eb64a2::t_0f5ca38db38b44 4,6-7,9-18,20-41,45-47,52-54,56
+app/(tabs)/_layout.tsx
+  s_f6e1e1f8eb64a2::t_5d815624a005ee 14,157-162
+src/components/navigation/compose-tab-bar.android.tsx
+  s_f6e1e1f8eb64a2::t_fb05dc1167bcc4 15,30,41
+  s_f6e1e1f8eb64a2::t_c2e81552917609 90
+  s_f6e1e1f8eb64a2::t_8ff8354c2f4cbd 22-24
+  s_f6e1e1f8eb64a2::t_817c3af9f462a8 132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "7b3a213c84288652841fe4c806cb72cc766e5ce5",
+  "prompts": {},
+  "sessions": {
+    "s_f6e1e1f8eb64a2": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f95c1-f03c-7dec-9cf5-1a8006be68e5",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
