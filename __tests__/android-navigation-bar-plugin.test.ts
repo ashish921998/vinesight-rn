@@ -1,19 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const navigationBarPlugin = require('../plugins/with-android-navigation-bar');
 
-const { upsertBool, upsertColor, upsertStyleItem } = navigationBarPlugin;
+const { upsertBool, upsertColor } = navigationBarPlugin;
 
 /** Count `<tag name="name"` / `<tag name='name'` occurrences (either quote). */
 const countEntries = (xml: string, tag: string, name: string): number =>
   (xml.match(new RegExp(`<${tag}\\s+name=["']${name}["']`, 'g')) || []).length;
-
-/** Return the inner content of the first <style name="name">…</style> block. */
-const styleBody = (xml: string, name: string): string | null => {
-  const match = xml.match(
-    new RegExp(`<style\\b[^>]*\\bname=["']${name}["'][^>]*>([\\s\\S]*?)</style>`),
-  );
-  return match ? match[1] : null;
-};
 
 describe('with-android-navigation-bar', () => {
   it('adds the color resource and remains idempotent', () => {
@@ -76,6 +68,16 @@ describe('with-android-navigation-bar', () => {
     expect(output).toContain('<color name="vinesight_navigation_bar">#2E342F</color>');
   });
 
+  it('preserves resources when the closing tag contains whitespace', () => {
+    const input = '<resources>\n  <color name="other">#FFFFFF</color>\n</resources >';
+
+    const output = upsertColor(input, 'vinesight_navigation_bar', '#2E342F');
+
+    expect(output).toContain('<color name="other">#FFFFFF</color>');
+    expect(output).toContain('<color name="vinesight_navigation_bar">#2E342F</color>');
+    expect(output).toContain('</resources>');
+  });
+
   it('writes a boolean resource and remains idempotent', () => {
     const input = '<resources>\n</resources>';
 
@@ -85,40 +87,5 @@ describe('with-android-navigation-bar', () => {
     expect(twice).toBe(once);
     expect(countEntries(twice, 'bool', 'vinesight_light_navigation_bar')).toBe(1);
     expect(twice).toContain('<bool name="vinesight_light_navigation_bar">true</bool>');
-  });
-
-  it('sets the cold-start button appearance on an existing Android theme', () => {
-    const input = '<resources>\n  <style name="AppTheme"></style>\n</resources>';
-
-    const once = upsertStyleItem(
-      input,
-      'AppTheme',
-      'android:windowLightNavigationBar',
-      '@bool/vinesight_light_navigation_bar',
-    );
-    const twice = upsertStyleItem(
-      once,
-      'AppTheme',
-      'android:windowLightNavigationBar',
-      '@bool/vinesight_light_navigation_bar',
-    );
-
-    expect(twice).toBe(once);
-    // exactly one item overall, nested inside the AppTheme style block
-    expect(countEntries(twice, 'item', 'android:windowLightNavigationBar')).toBe(1);
-    expect(styleBody(twice, 'AppTheme')).toContain(
-      '<item name="android:windowLightNavigationBar">@bool/vinesight_light_navigation_bar</item>',
-    );
-  });
-
-  it('rejects malformed styles.xml instead of erasing unrelated resources', () => {
-    expect(() =>
-      upsertStyleItem(
-        '<resources><style name="UnrelatedStyle"></style>', // missing </resources>
-        'AppTheme',
-        'android:windowLightNavigationBar',
-        'false',
-      ),
-    ).toThrow('Cannot update Android styles: expected a complete <resources> document');
   });
 });

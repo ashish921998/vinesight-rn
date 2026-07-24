@@ -57,7 +57,6 @@ const withAndroidNavigationBarColor = (config) => {
       const nightColorsPath = path.join(resDir, 'values-night', 'colors.xml');
       const boolsPath = path.join(resDir, 'values', 'bools.xml');
       const nightBoolsPath = path.join(resDir, 'values-night', 'bools.xml');
-      const nightStylesPath = path.join(resDir, 'values-night', 'styles.xml');
 
       let contents;
       try {
@@ -70,12 +69,6 @@ const withAndroidNavigationBarColor = (config) => {
 
       const bools = upsertBool(readResourceFile(boolsPath), LIGHT_BUTTONS_NAME, 'true');
       const nightBools = upsertBool(readResourceFile(nightBoolsPath), LIGHT_BUTTONS_NAME, 'false');
-      const nightStyles = upsertStyleItem(
-        readResourceFile(nightStylesPath),
-        'AppTheme',
-        'android:windowLightNavigationBar',
-        'false',
-      );
 
       // Let filesystem failures abort prebuild. Continuing would leave the
       // generated style pointing at a missing night resource and turn the real
@@ -84,7 +77,6 @@ const withAndroidNavigationBarColor = (config) => {
       fs.writeFileSync(nightColorsPath, contents);
       fs.writeFileSync(boolsPath, bools);
       fs.writeFileSync(nightBoolsPath, nightBools);
-      fs.writeFileSync(nightStylesPath, nightStyles);
 
       return cfg;
     },
@@ -99,6 +91,12 @@ const withAndroidNavigationBarColor = (config) => {
       parent: AndroidConfig.Styles.getAppThemeGroup(),
       name: 'android:navigationBarColor',
       value: `@color/${COLOR_NAME}`,
+    });
+    cfg.modResults = AndroidConfig.Styles.assignStylesValue(cfg.modResults, {
+      add: true,
+      parent: AndroidConfig.Styles.getAppThemeGroup(),
+      name: 'android:windowLightNavigationBar',
+      value: `@bool/${LIGHT_BUTTONS_NAME}`,
     });
     cfg.modResults = AndroidConfig.Styles.assignStylesValue(cfg.modResults, {
       add: true,
@@ -137,12 +135,12 @@ function upsertResource(contents, tag, name, value) {
     '',
   );
 
-  if (!/<resources[\s>]/.test(contents) || !/<\/resources>/.test(contents)) {
+  if (!/<resources[\s>]/.test(contents) || !/<\/resources\s*>/.test(contents)) {
     contents = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>';
   }
 
   const entry = `  <${tag} name="${name}">${value}</${tag}>`;
-  return contents.replace('</resources>', `${entry}\n</resources>`);
+  return contents.replace(/<\/resources\s*>/, `${entry}\n</resources>`);
 }
 
 function readResourceFile(filePath) {
@@ -156,31 +154,7 @@ function readResourceFile(filePath) {
   }
 }
 
-function upsertStyleItem(contents, styleName, itemName, value) {
-  // Never replace an existing malformed document: it may contain unrelated
-  // resources that a minimal fallback would silently erase.
-  if (!/<resources[\s>]/.test(contents) || !/<\/resources>/.test(contents)) {
-    throw new Error('Cannot update Android styles: expected a complete <resources> document');
-  }
-
-  const escapedStyleName = styleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const stylePattern = new RegExp(
-    `(<style\\b[^>]*\\bname=["']${escapedStyleName}["'][^>]*>)([\\s\\S]*?)(</style>)`,
-  );
-  const match = contents.match(stylePattern);
-  if (!match) {
-    const style = `  <style name="${styleName}">\n    <item name="${itemName}">${value}</item>\n  </style>`;
-    return contents.replace('</resources>', `${style}\n</resources>`);
-  }
-
-  const itemPattern = new RegExp(`\\s*<item\\s+name=["']${itemName}["'][^>]*>[^<]*<\\/item>`, 'g');
-  const body = match[2].replace(itemPattern, '').replace(/\s+$/, ''); // trim so repeated prebuilds don't accumulate blank lines
-  const item = `\n    <item name="${itemName}">${value}</item>`;
-  return contents.replace(stylePattern, `${match[1]}${body}${item}\n  ${match[3]}`);
-}
-
 withAndroidNavigationBarColor.upsertColor = upsertColor;
 withAndroidNavigationBarColor.upsertBool = upsertBool;
-withAndroidNavigationBarColor.upsertStyleItem = upsertStyleItem;
 
 module.exports = withAndroidNavigationBarColor;

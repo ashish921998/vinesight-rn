@@ -114,16 +114,8 @@ module.exports = {
         backgroundColor: 'transparent',
         barStyle: 'auto',
       },
-      // Nav-bar *background* is owned by ./plugins/with-android-navigation-bar
-      // (a night-qualified color resource, since one static color can't
-      // contrast both the light and dark app backgrounds). `barStyle` here only
-      // seeds the initial button tint; the runtime <NavigationBar> component in
-      // app/_layout.tsx drives it per theme.
-      navigationBar: {
-        // Expo's `dark` means dark buttons for the default light resource.
-        // The custom plugin adds the night-qualified light-button override.
-        barStyle: 'dark',
-      },
+      // Navigation-bar background and cold-start button contrast are owned by
+      // ./plugins/with-android-navigation-bar; app/_layout.tsx drives runtime contrast.
     },
     web: {
       favicon: './assets/favicon.png',
@@ -133,8 +125,8 @@ module.exports = {
       'expo-router',
       'expo-asset',
       'expo-system-ui',
-      ['expo-navigation-bar', { enforceContrast: false, style: 'dark' }],
       './plugins/with-android-navigation-bar',
+      ['expo-navigation-bar', { enforceContrast: false }],
       'expo-audio',
       'expo-notifications',
       [
