@@ -151,7 +151,7 @@ export function StatStrip({ stats, style }: StatStripProps) {
       {stats.map((stat, index) => {
         const color = toneColor(stat.tone);
         return (
-          <React.Fragment key={index}>
+          <React.Fragment key={`${stat.icon ?? ''}-${stat.label ?? ''}-${stat.number ?? ''}`}>
             {index > 0 ? (
               <Text
                 style={{

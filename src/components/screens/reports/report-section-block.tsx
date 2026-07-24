@@ -239,9 +239,9 @@ export function ReportSectionBlock({
           </Text>
           {secondaryParts.length > 0 ? (
             <View style={{ gap: 2 }}>
-              {secondaryParts.map((line, idx) => (
+              {secondaryParts.map((line) => (
                 <View
-                  key={`${row.id}-detail-${idx}`}
+                  key={`${row.id}-${line.label}`}
                   style={{
                     flexDirection: 'row',
                     justifyContent: 'space-between',

@@ -79,7 +79,7 @@ export default function LogsScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
-  const { setEditActivity } = useModalStore();
+  const setEditActivity = useModalStore((s) => s.setEditActivity);
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const insets = useSafeAreaInsets();
   const currency = useCurrency();

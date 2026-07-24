@@ -61,7 +61,8 @@ export default function AddEntryRoute() {
     onboardingActionType?: string;
     lockFarmSelection?: string;
   }>();
-  const { addEntry, setAddEntry } = useModalStore();
+  const addEntry = useModalStore((s) => s.addEntry);
+  const setAddEntry = useModalStore((s) => s.setAddEntry);
 
   const initialFarmId = useMemo(() => {
     if (!params.farmId) return undefined;

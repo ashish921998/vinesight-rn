@@ -6,7 +6,8 @@ import { useSafeBack } from '@/hooks/use-safe-back';
 
 export default function EditActivityRoute() {
   const goBack = useSafeBack();
-  const { editActivity, setEditActivity } = useModalStore();
+  const editActivity = useModalStore((s) => s.editActivity);
+  const setEditActivity = useModalStore((s) => s.setEditActivity);
 
   useEffect(() => {
     if (!editActivity) {

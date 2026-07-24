@@ -239,7 +239,7 @@ export function useReportData(filters: ReportFilters, options?: { enabled?: bool
   // preference — the per-acre lens must know that unit or hectare farms get
   // rates that are silently 2.47× too high (same resolution as app/reports.tsx).
   const { data: profile, isLoading: profileLoading } = useProfile();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const areaUnit = resolveAreaUnitPreference(
     profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
   );

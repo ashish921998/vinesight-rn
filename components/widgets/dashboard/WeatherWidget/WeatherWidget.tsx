@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { BaseWidgetProps, LoadingState } from '@widgets/shared/types';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, shadows, borderRadius, fontSize, fontWeight } from '@/styles/theme';

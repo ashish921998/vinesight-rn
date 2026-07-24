@@ -47,7 +47,9 @@ export function WorkerForm({
   const isEditMode = !!worker;
 
   // Fire the Add Worker tour once on first add (not on edit)
-  const { _hydrated, hasSeenAddWorkerTour, startAddWorkerTour } = useWorkersTourStore();
+  const _hydrated = useWorkersTourStore((s) => s._hydrated);
+  const hasSeenAddWorkerTour = useWorkersTourStore((s) => s.hasSeenAddWorkerTour);
+  const startAddWorkerTour = useWorkersTourStore((s) => s.startAddWorkerTour);
   useEffect(() => {
     if (!_hydrated) return;
     if (isVisible && !isEditMode && !hasSeenAddWorkerTour) {

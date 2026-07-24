@@ -259,9 +259,9 @@ export function WorkerCard({
           {strip && (
             <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ flexDirection: 'row', gap: 2, flex: 1 }}>
-                {strip.map((s, i) => (
+                {strip.map((s) => (
                   <View
-                    key={i}
+                    key={s ?? 'empty'}
                     style={{
                       flex: 1,
                       height: 14,

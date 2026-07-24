@@ -1,14 +1,15 @@
 /**
  * LoadingState — shared interaction-state component for loading screens.
  *
- * A centered column with an ActivityIndicator tinted with the M3 primary role
+ * A centered column with a platform-native spinner tinted with the M3 primary role
  * and an optional muted label below it.
  */
 
 import React from 'react';
-import { View, Text, ActivityIndicator, type ViewStyle } from 'react-native';
+import { View, Text, type ViewStyle } from 'react-native';
 import { fontSize, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
+import { Spinner } from './spinner';
 
 interface LoadingStateProps {
   /** Optional muted label shown beneath the spinner. */
@@ -20,7 +21,7 @@ export function LoadingState({ label }: LoadingStateProps) {
 
   return (
     <View style={containerStyle}>
-      <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+      <Spinner size="large" color={m3.colorScheme.primary} />
       {label ? (
         <Text
           style={{

@@ -1,5 +1,14 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, RefreshControl, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  SectionList,
+  SectionListRenderItemInfo,
+  Pressable,
+  Alert,
+  RefreshControl,
+  StyleSheet,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -23,6 +32,10 @@ import { parseDbDateToLocalDate } from '@/utils/date';
 // Cellar Ledger: Filter and due status types
 type FilterType = 'pending' | 'overdue' | 'completed' | 'all';
 type TaskDueStatus = 'overdue' | 'today' | 'upcoming' | 'done';
+type TaskSection = {
+  type: 'overdue' | 'dueToday' | 'thisWeek' | 'upcoming' | 'completed';
+  data: TaskReminder[];
+};
 
 const cleanupTaskNotifications = (
   taskId: string,
@@ -100,11 +113,11 @@ export default function TasksScreen() {
     farmId?: string;
     filter?: FilterType;
   }>();
-  const { setAddEntry } = useModalStore();
+  const setAddEntry = useModalStore((s) => s.setAddEntry);
   const { data: farms } = useFarms();
   const { data: tasks, isLoading, refetch, isRefetching } = useAllTasks();
-  const completeMutation = useCompleteTask();
-  const deleteMutation = useDeleteTask();
+  const { mutate: completeTask } = useCompleteTask();
+  const { mutate: deleteTask } = useDeleteTask();
   const taskSchedules = useNotificationStore((s) => s.taskSchedules);
   const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
 
@@ -124,10 +137,13 @@ export default function TasksScreen() {
   }, [initialFilter]);
 
   // Get farm name by ID
-  const getFarmName = (farmId: number) => {
-    const farm = farms?.find((f) => f.id === farmId);
-    return farm?.name || t('tasks.unknownFarm');
-  };
+  const getFarmName = useCallback(
+    (farmId: number) => {
+      const farm = farms?.find((f) => f.id === farmId);
+      return farm?.name || t('tasks.unknownFarm');
+    },
+    [farms, t],
+  );
 
   // Farm-scoped tasks
   const scopedTasks = useMemo(() => {
@@ -182,105 +198,229 @@ export default function TasksScreen() {
     };
   }, [pendingTasks]);
 
-  const handleComplete = (task: TaskReminder) => {
-    if (!task.id) return;
-    Alert.alert(
-      t('tasks.alerts.completeTitle'),
-      t('tasks.alerts.completeBody', { title: task.title }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.complete'),
-          onPress: () => {
-            const schedule = taskSchedules[String(task.id!)];
+  const handleComplete = useCallback(
+    (task: TaskReminder) => {
+      if (!task.id) return;
+      Alert.alert(
+        t('tasks.alerts.completeTitle'),
+        t('tasks.alerts.completeBody', { title: task.title }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.complete'),
+            onPress: () => {
+              const schedule = taskSchedules[String(task.id!)];
 
-            // Calculate due_offset_days using calendar days
-            let dueOffsetDays: number | null = null;
-            if (task.due_date) {
-              const dueDate = dueDateToStartOfDay(task.due_date);
-              const today = startOfDay(new Date());
-              const dayMs = 1000 * 60 * 60 * 24;
-              const diffTime = dueDate.getTime() - today.getTime();
-              dueOffsetDays = Math.round(diffTime / dayMs);
-            }
+              // Calculate due_offset_days using calendar days
+              let dueOffsetDays: number | null = null;
+              if (task.due_date) {
+                const dueDate = dueDateToStartOfDay(task.due_date);
+                const today = startOfDay(new Date());
+                const dayMs = 1000 * 60 * 60 * 24;
+                const diffTime = dueDate.getTime() - today.getTime();
+                dueOffsetDays = Math.round(diffTime / dayMs);
+              }
 
-            completeMutation.mutate(task.id!, {
-              onSuccess: () => {
-                if (schedule) {
-                  cleanupTaskNotifications(String(task.id!), taskSchedules, removeTaskSchedule);
-                }
-                telemetry.capture('task_completed', {
-                  task_type: task.type,
-                  priority: task.priority,
-                  due_offset_days: dueOffsetDays,
-                  farm_id: task.farm_id,
-                });
-                telemetry.capture('meaningful_action', {
-                  action_type: 'task_completed',
-                  feature_name: task.type,
-                });
-              },
-            });
-          },
-        },
-      ],
-    );
-  };
-
-  const handleDelete = (task: TaskReminder) => {
-    if (!task.id) return;
-    Alert.alert(
-      t('tasks.alerts.deleteTitle'),
-      t('tasks.alerts.deleteBody', { title: task.title }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: () => {
-            const schedule = taskSchedules[String(task.id!)];
-            deleteMutation.mutate(task.id!, {
-              onSuccess: () => {
-                if (schedule) {
-                  cleanupTaskNotifications(String(task.id!), taskSchedules, removeTaskSchedule);
-                }
-              },
-            });
-          },
-        },
-      ],
-    );
-  };
-
-  const handleLogFromTask = (task: TaskReminder) => {
-    if (!task.id || (task.type !== 'spray' && task.type !== 'fertigation')) return;
-    const planned =
-      task.planned_inputs && task.planned_inputs.length > 0
-        ? task.planned_inputs
-        : decodeTaskPlanFromDescription(task.description);
-    setAddEntry({
-      tabs: ['log'],
-      initialTab: 'log',
-      initialFarmId: task.farm_id,
-      initialLogType: task.type,
-      sourceTaskId: task.id,
-      logPrefill:
-        task.type === 'spray'
-          ? { sprayChemicals: planned }
-          : {
-              fertigationItems: planned,
+              completeTask(task.id!, {
+                onSuccess: () => {
+                  if (schedule) {
+                    cleanupTaskNotifications(String(task.id!), taskSchedules, removeTaskSchedule);
+                  }
+                  telemetry.capture('task_completed', {
+                    task_type: task.type,
+                    priority: task.priority,
+                    due_offset_days: dueOffsetDays,
+                    farm_id: task.farm_id,
+                  });
+                  telemetry.capture('meaningful_action', {
+                    action_type: 'task_completed',
+                    feature_name: task.type,
+                  });
+                },
+              });
             },
-    });
-    router.push({
-      pathname: '/add-entry',
-      params: {
-        tabs: 'log',
+          },
+        ],
+      );
+    },
+    [completeTask, removeTaskSchedule, t, taskSchedules],
+  );
+
+  const handleDelete = useCallback(
+    (task: TaskReminder) => {
+      if (!task.id) return;
+      Alert.alert(
+        t('tasks.alerts.deleteTitle'),
+        t('tasks.alerts.deleteBody', { title: task.title }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.delete'),
+            style: 'destructive',
+            onPress: () => {
+              const schedule = taskSchedules[String(task.id!)];
+              deleteTask(task.id!, {
+                onSuccess: () => {
+                  if (schedule) {
+                    cleanupTaskNotifications(String(task.id!), taskSchedules, removeTaskSchedule);
+                  }
+                },
+              });
+            },
+          },
+        ],
+      );
+    },
+    [deleteTask, removeTaskSchedule, t, taskSchedules],
+  );
+
+  const handleLogFromTask = useCallback(
+    (task: TaskReminder) => {
+      if (!task.id || (task.type !== 'spray' && task.type !== 'fertigation')) return;
+      const planned =
+        task.planned_inputs && task.planned_inputs.length > 0
+          ? task.planned_inputs
+          : decodeTaskPlanFromDescription(task.description);
+      setAddEntry({
+        tabs: ['log'],
         initialTab: 'log',
-        farmId: String(task.farm_id),
+        initialFarmId: task.farm_id,
         initialLogType: task.type,
-      },
-    });
-  };
+        sourceTaskId: task.id,
+        logPrefill:
+          task.type === 'spray'
+            ? { sprayChemicals: planned }
+            : {
+                fertigationItems: planned,
+              },
+      });
+      router.push({
+        pathname: '/add-entry',
+        params: {
+          tabs: 'log',
+          initialTab: 'log',
+          farmId: String(task.farm_id),
+          initialLogType: task.type,
+        },
+      });
+    },
+    [router, setAddEntry],
+  );
+
+  const handleEdit = useCallback(
+    (item: TaskReminder) => {
+      setAddEntry({ tabs: ['task'], initialTab: 'task', editingTask: item });
+      router.push({ pathname: '/add-entry', params: { tabs: 'task', initialTab: 'task' } });
+    },
+    [setAddEntry, router],
+  );
+
+  const sections = useMemo<TaskSection[]>(() => {
+    const showPending = filter === 'all' || filter === 'pending';
+    const result: TaskSection[] = [];
+    if ((showPending || filter === 'overdue') && overdueTasks.length) {
+      result.push({ type: 'overdue', data: overdueTasks });
+    }
+    if (showPending && dueTodayTasks.length) {
+      result.push({ type: 'dueToday', data: dueTodayTasks });
+    }
+    if (showPending && thisWeekTasks.length) {
+      result.push({ type: 'thisWeek', data: thisWeekTasks });
+    }
+    if (showPending && upcomingTasks.length) {
+      result.push({ type: 'upcoming', data: upcomingTasks });
+    }
+    if ((filter === 'all' || filter === 'completed') && completedTasks.length) {
+      result.push({ type: 'completed', data: completedExpanded ? completedTasks : [] });
+    }
+    return result;
+  }, [
+    filter,
+    overdueTasks,
+    dueTodayTasks,
+    thisWeekTasks,
+    upcomingTasks,
+    completedTasks,
+    completedExpanded,
+  ]);
+
+  const keyExtractor = useCallback((item: TaskReminder) => String(item.id), []);
+
+  const renderTaskItem = useCallback(
+    (info: SectionListRenderItemInfo<TaskReminder>) => {
+      const section = info.section as unknown as TaskSection;
+      return (
+        <View style={{ marginBottom: spacing[3], opacity: section.type === 'completed' ? 0.8 : 1 }}>
+          <TaskRow
+            task={info.item}
+            showFarmName
+            farmName={getFarmName(info.item.farm_id)}
+            onComplete={handleComplete}
+            onLogFromTask={handleLogFromTask}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </View>
+      );
+    },
+    [getFarmName, handleComplete, handleLogFromTask, handleEdit, handleDelete],
+  );
+
+  const renderEmptyState = () => (
+    <View
+      style={{
+        backgroundColor: m3.surface.s100,
+        borderRadius: borderRadius['2xl'],
+        padding: spacing[8],
+        alignItems: 'center',
+      }}
+    >
+      <SFSymbol
+        name="square"
+        size={48}
+        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+      />
+      <Text
+        style={{
+          color: m3.surface.s600,
+          marginTop: spacing[4],
+          textAlign: 'center',
+        }}
+      >
+        {t('tasks.empty.title')}
+      </Text>
+      <Text
+        style={{
+          color: m3.surface.s500,
+          fontSize: fontSize.sm,
+          marginTop: spacing[1],
+          textAlign: 'center',
+        }}
+      >
+        {t('tasks.empty.subtitleAll')}
+      </Text>
+      <Pressable
+        onPress={() => {
+          setAddEntry({ tabs: ['task'], initialTab: 'task' });
+          router.push({
+            pathname: '/add-entry',
+            params: { tabs: 'task', initialTab: 'task' },
+          });
+        }}
+        style={{
+          marginTop: spacing[4],
+          backgroundColor: m3.colorScheme.primary,
+          paddingHorizontal: spacing[6],
+          paddingVertical: spacing[3],
+          borderRadius: borderRadius.xl,
+        }}
+      >
+        <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
+          {t('tasks.cta.addTask')}
+        </Text>
+      </Pressable>
+    </View>
+  );
 
   // Custom JS header (avoids iOS 26 native bar-button glass capsule)
   const renderHeader = () => (
@@ -387,8 +527,162 @@ export default function TasksScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       {renderHeader()}
 
-      <ScrollView
+      <SectionList
+        sections={sections}
+        renderItem={renderTaskItem}
+        keyExtractor={keyExtractor}
+        renderSectionHeader={({ section: s }) => {
+          const sec = s as unknown as TaskSection;
+          if (sec.type === 'completed') {
+            return (
+              <Pressable
+                onPress={() => setCompletedExpanded(!completedExpanded)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: spacing[3],
+                  paddingHorizontal: spacing[2],
+                  backgroundColor: m3.surface.s100,
+                  borderRadius: borderRadius.md,
+                  borderWidth: 1,
+                  borderColor: m3.surface.s300,
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('tasks.sections.completed')}
+                accessibilityState={{ expanded: completedExpanded }}
+              >
+                <SFSymbol
+                  name={completedExpanded ? 'chevron.down' : 'chevron.right'}
+                  size={16}
+                  color={m3.surface.s500}
+                  style={{ marginRight: spacing[2] }}
+                />
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    color: m3.surface.s700,
+                    flex: 1,
+                  }}
+                >
+                  {t('tasks.sections.completed')}
+                </Text>
+                <View
+                  style={{
+                    backgroundColor: m3.surface.s200,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.pill,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                      color: m3.surface.s600,
+                    }}
+                  >
+                    {formatNumber(completedTasks.length, { maximumFractionDigits: 0 })}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          }
+          return (
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.semibold,
+                textTransform: 'uppercase',
+                letterSpacing: 0.8,
+                marginBottom: spacing[2],
+                marginTop: spacing[4],
+                paddingHorizontal: spacing[1],
+                color: sec.type === 'overdue' ? m3.colorScheme.error : m3.surface.s400,
+              }}
+            >
+              {t(`tasks.sections.${sec.type}`)}
+            </Text>
+          );
+        }}
+        ListHeaderComponent={
+          // Cellar Ledger: Summary Bar
+          (() => {
+            const summary = computeSummaryCounts(scopedTasks);
+            return (
+              <View
+                style={{
+                  marginBottom: spacing[4],
+                  paddingVertical: spacing[2],
+                  paddingHorizontal: spacing[4],
+                  backgroundColor: m3.surface.s100,
+                  borderRadius: borderRadius.xs,
+                  borderWidth: 1,
+                  borderColor: m3.surface.s300,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    color: m3.surface.s900,
+                  }}
+                >
+                  {formatNumber(summary.pending, { maximumFractionDigits: 0 })}{' '}
+                  {t('tasks.summary.pending')}
+                </Text>
+                <View
+                  style={{
+                    width: 3,
+                    height: 3,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: m3.surface.s400,
+                    marginHorizontal: spacing[3],
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    color: m3.colorScheme.warning,
+                  }}
+                >
+                  {formatNumber(summary.dueToday, { maximumFractionDigits: 0 })}{' '}
+                  {t('tasks.summary.dueToday')}
+                </Text>
+                <View
+                  style={{
+                    width: 3,
+                    height: 3,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: m3.surface.s400,
+                    marginHorizontal: spacing[3],
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    color: m3.colorScheme.error,
+                  }}
+                >
+                  {formatNumber(summary.overdue, { maximumFractionDigits: 0 })}{' '}
+                  {t('tasks.summary.overdue')}
+                </Text>
+              </View>
+            );
+          })()
+        }
+        ListEmptyComponent={renderEmptyState}
+        ListFooterComponent={
+          sections.length > 0 && sections.every((section) => section.data.length === 0)
+            ? renderEmptyState
+            : undefined
+        }
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[24] }}
+        stickySectionHeadersEnabled={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -396,414 +690,7 @@ export default function TasksScreen() {
             tintColor={m3.colorScheme.primary}
           />
         }
-      >
-        {/* Cellar Ledger: Summary Bar */}
-        {(() => {
-          const summary = computeSummaryCounts(scopedTasks);
-          return (
-            <View
-              style={{
-                marginBottom: spacing[4],
-                paddingVertical: spacing[2],
-                paddingHorizontal: spacing[4],
-                backgroundColor: m3.surface.s100,
-                borderRadius: borderRadius.xs,
-                borderWidth: 1,
-                borderColor: m3.surface.s300,
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: m3.surface.s900,
-                }}
-              >
-                {formatNumber(summary.pending, { maximumFractionDigits: 0 })}{' '}
-                {t('tasks.summary.pending')}
-              </Text>
-              <View
-                style={{
-                  width: 3,
-                  height: 3,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: m3.surface.s400,
-                  marginHorizontal: spacing[3],
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.warning,
-                }}
-              >
-                {formatNumber(summary.dueToday, { maximumFractionDigits: 0 })}{' '}
-                {t('tasks.summary.dueToday')}
-              </Text>
-              <View
-                style={{
-                  width: 3,
-                  height: 3,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: m3.surface.s400,
-                  marginHorizontal: spacing[3],
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.error,
-                }}
-              >
-                {formatNumber(summary.overdue, { maximumFractionDigits: 0 })}{' '}
-                {t('tasks.summary.overdue')}
-              </Text>
-            </View>
-          );
-        })()}
-
-        {/* Task List - Pending Tasks */}
-        {/* Apply route filter: 'overdue' shows only overdue, 'completed' shows only completed,
-           'pending' shows all pending groups, 'all' shows everything */}
-        {(
-          filter === 'overdue'
-            ? overdueTasks.length === 0
-            : filter === 'completed'
-              ? completedTasks.length === 0
-              : filter === 'pending'
-                ? overdueTasks.length === 0 &&
-                  dueTodayTasks.length === 0 &&
-                  thisWeekTasks.length === 0 &&
-                  upcomingTasks.length === 0
-                : overdueTasks.length === 0 &&
-                  dueTodayTasks.length === 0 &&
-                  thisWeekTasks.length === 0 &&
-                  upcomingTasks.length === 0 &&
-                  completedTasks.length === 0
-        ) ? (
-          <View
-            style={{
-              backgroundColor: m3.surface.s100,
-              borderRadius: borderRadius['2xl'],
-              padding: spacing[8],
-              alignItems: 'center',
-            }}
-          >
-            <SFSymbol
-              name="square"
-              size={48}
-              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-            />
-            <Text
-              style={{
-                color: m3.surface.s600,
-                marginTop: spacing[4],
-                textAlign: 'center',
-              }}
-            >
-              {t('tasks.empty.title')}
-            </Text>
-            <Text
-              style={{
-                color: m3.surface.s500,
-                fontSize: fontSize.sm,
-                marginTop: spacing[1],
-                textAlign: 'center',
-              }}
-            >
-              {t('tasks.empty.subtitleAll')}
-            </Text>
-            <Pressable
-              onPress={() => {
-                setAddEntry({ tabs: ['task'], initialTab: 'task' });
-                router.push({
-                  pathname: '/add-entry',
-                  params: { tabs: 'task', initialTab: 'task' },
-                });
-              }}
-              style={{
-                marginTop: spacing[4],
-                backgroundColor: m3.colorScheme.primary,
-                paddingHorizontal: spacing[6],
-                paddingVertical: spacing[3],
-                borderRadius: borderRadius.xl,
-              }}
-            >
-              <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
-                {t('tasks.cta.addTask')}
-              </Text>
-            </Pressable>
-          </View>
-        ) : (
-          <View>
-            {/* Overdue Section */}
-            {(filter === 'all' || filter === 'pending' || filter === 'overdue') &&
-              overdueTasks.length > 0 && (
-                <>
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.semibold,
-                      color: m3.colorScheme.error,
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.8,
-                      marginBottom: spacing[2],
-                      paddingHorizontal: spacing[1],
-                    }}
-                  >
-                    {t('tasks.sections.overdue')}
-                  </Text>
-                  {overdueTasks.map((task) => (
-                    <View key={task.id} style={{ marginBottom: spacing[3] }}>
-                      <TaskRow
-                        task={task}
-                        showFarmName
-                        farmName={getFarmName(task.farm_id)}
-                        onComplete={(item) => handleComplete(item)}
-                        onLogFromTask={(item) => handleLogFromTask(item)}
-                        onEdit={(item) => {
-                          setAddEntry({
-                            tabs: ['task'],
-                            initialTab: 'task',
-                            editingTask: item,
-                          });
-                          router.push({
-                            pathname: '/add-entry',
-                            params: { tabs: 'task', initialTab: 'task' },
-                          });
-                        }}
-                        onDelete={(item) => handleDelete(item)}
-                      />
-                    </View>
-                  ))}
-                </>
-              )}
-
-            {/* Due Today Section */}
-            {(filter === 'all' || filter === 'pending') && dueTodayTasks.length > 0 && (
-              <>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.semibold,
-                    color: m3.surface.s400,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.8,
-                    marginBottom: spacing[2],
-                    marginTop: overdueTasks.length > 0 ? spacing[4] : 0,
-                    paddingHorizontal: spacing[1],
-                  }}
-                >
-                  {t('tasks.sections.dueToday')}
-                </Text>
-                {dueTodayTasks.map((task) => (
-                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
-                    <TaskRow
-                      task={task}
-                      showFarmName
-                      farmName={getFarmName(task.farm_id)}
-                      onComplete={(item) => handleComplete(item)}
-                      onLogFromTask={(item) => handleLogFromTask(item)}
-                      onEdit={(item) => {
-                        setAddEntry({
-                          tabs: ['task'],
-                          initialTab: 'task',
-                          editingTask: item,
-                        });
-                        router.push({
-                          pathname: '/add-entry',
-                          params: { tabs: 'task', initialTab: 'task' },
-                        });
-                      }}
-                      onDelete={(item) => handleDelete(item)}
-                    />
-                  </View>
-                ))}
-              </>
-            )}
-
-            {/* This Week Section */}
-            {(filter === 'all' || filter === 'pending') && thisWeekTasks.length > 0 && (
-              <>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.semibold,
-                    color: m3.surface.s400,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.8,
-                    marginTop: spacing[4],
-                    marginBottom: spacing[2],
-                    paddingHorizontal: spacing[1],
-                  }}
-                >
-                  {t('tasks.sections.thisWeek')}
-                </Text>
-                {thisWeekTasks.map((task) => (
-                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
-                    <TaskRow
-                      task={task}
-                      showFarmName
-                      farmName={getFarmName(task.farm_id)}
-                      onComplete={(item) => handleComplete(item)}
-                      onLogFromTask={(item) => handleLogFromTask(item)}
-                      onEdit={(item) => {
-                        setAddEntry({
-                          tabs: ['task'],
-                          initialTab: 'task',
-                          editingTask: item,
-                        });
-                        router.push({
-                          pathname: '/add-entry',
-                          params: { tabs: 'task', initialTab: 'task' },
-                        });
-                      }}
-                      onDelete={(item) => handleDelete(item)}
-                    />
-                  </View>
-                ))}
-              </>
-            )}
-
-            {/* Upcoming Section */}
-            {(filter === 'all' || filter === 'pending') && upcomingTasks.length > 0 && (
-              <>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.semibold,
-                    color: m3.surface.s400,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.8,
-                    marginTop: spacing[4],
-                    marginBottom: spacing[2],
-                    paddingHorizontal: spacing[1],
-                  }}
-                >
-                  {t('tasks.sections.upcoming')}
-                </Text>
-                {upcomingTasks.map((task) => (
-                  <View key={task.id} style={{ marginBottom: spacing[3] }}>
-                    <TaskRow
-                      task={task}
-                      showFarmName
-                      farmName={getFarmName(task.farm_id)}
-                      onComplete={(item) => handleComplete(item)}
-                      onLogFromTask={(item) => handleLogFromTask(item)}
-                      onEdit={(item) => {
-                        setAddEntry({
-                          tabs: ['task'],
-                          initialTab: 'task',
-                          editingTask: item,
-                        });
-                        router.push({
-                          pathname: '/add-entry',
-                          params: { tabs: 'task', initialTab: 'task' },
-                        });
-                      }}
-                      onDelete={(item) => handleDelete(item)}
-                    />
-                  </View>
-                ))}
-              </>
-            )}
-
-            {/* Cellar Ledger: Collapsible Completed Section */}
-            {(filter === 'all' || filter === 'completed') && completedTasks.length > 0 && (
-              <View style={{ marginTop: spacing[6] }}>
-                {/* Section Header */}
-                <Pressable
-                  onPress={() => setCompletedExpanded(!completedExpanded)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: spacing[3],
-                    paddingHorizontal: spacing[2],
-                    backgroundColor: m3.surface.s100,
-                    borderRadius: borderRadius.md,
-                    borderWidth: 1,
-                    borderColor: m3.surface.s300,
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('tasks.sections.completed')}
-                  accessibilityState={{ expanded: completedExpanded }}
-                >
-                  {/* Toggle Arrow */}
-                  <SFSymbol
-                    name={completedExpanded ? 'chevron.down' : 'chevron.right'}
-                    size={16}
-                    color={m3.surface.s500}
-                    style={{ marginRight: spacing[2] }}
-                  />
-                  {/* Completed Label */}
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                      color: m3.surface.s700,
-                      flex: 1,
-                    }}
-                  >
-                    {t('tasks.sections.completed')}
-                  </Text>
-                  {/* Count Badge */}
-                  <View
-                    style={{
-                      backgroundColor: m3.surface.s200,
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[1],
-                      borderRadius: borderRadius.pill,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: fontSize.xs,
-                        fontWeight: fontWeight.medium,
-                        color: m3.surface.s600,
-                      }}
-                    >
-                      {formatNumber(completedTasks.length, { maximumFractionDigits: 0 })}
-                    </Text>
-                  </View>
-                </Pressable>
-
-                {/* Completed Tasks - Collapsed by default */}
-                {completedExpanded && (
-                  <View style={{ marginTop: spacing[3] }}>
-                    {completedTasks.map((task) => (
-                      <View key={task.id} style={{ marginBottom: spacing[3], opacity: 0.8 }}>
-                        <TaskRow
-                          task={task}
-                          showFarmName
-                          farmName={getFarmName(task.farm_id)}
-                          onComplete={(item) => handleComplete(item)}
-                          onLogFromTask={(item) => handleLogFromTask(item)}
-                          onEdit={(item) => {
-                            setAddEntry({
-                              tabs: ['task'],
-                              initialTab: 'task',
-                              editingTask: item,
-                            });
-                            router.push({
-                              pathname: '/add-entry',
-                              params: { tabs: 'task', initialTab: 'task' },
-                            });
-                          }}
-                          onDelete={(item) => handleDelete(item)}
-                        />
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-        )}
-      </ScrollView>
+      />
 
       {/* FAB */}
       <Pressable

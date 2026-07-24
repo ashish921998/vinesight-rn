@@ -54,7 +54,7 @@ export default function WorkerDetailScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
   const isDark = useIsDark();
-  const { setAddWorker } = useModalStore();
+  const setAddWorker = useModalStore((s) => s.setAddWorker);
 
   const rawId = Array.isArray(id) ? id[0] : id;
   const parsedWorkerId = rawId ? Number(rawId) : undefined;
@@ -526,14 +526,14 @@ export default function WorkerDetailScreen() {
             </View>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 10 }}>
-              {calendarDays.map(({ date, status }, i) => {
+              {calendarDays.map(({ date, status }) => {
                 const { num } = dayLabel(date);
                 const bg = cellColor(status);
                 const label = cellLabel(status);
                 const isOff = status === null;
                 return (
                   <View
-                    key={i}
+                    key={date}
                     style={{
                       width: '14.5%',
                       aspectRatio: 1,
@@ -590,8 +590,8 @@ export default function WorkerDetailScreen() {
                   label: t('attendance.status.noRecord', { defaultValue: 'No record' }),
                   border: true,
                 },
-              ].map((s, i) => (
-                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              ].map((s) => (
+                <View key={s.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <View
                     style={{
                       width: 10,

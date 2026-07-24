@@ -47,6 +47,12 @@ import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+
+const EMPTY_HISTORY_ITEMS: RecentInputItem[] = [];
+const EMPTY_PLAN_ITEMS: FertilizerPlanItem[] = [];
+const EMPTY_CATALOG_PRODUCTS: MasterCatalogProduct[] = [];
+const EMPTY_SEARCH_OPTIONS: SearchSelectOption[] = [];
+
 export interface FertilizerEntry {
   id?: string;
   name: string;
@@ -130,9 +136,9 @@ export function FertigationForm({
   data,
   onChange,
   onInputFocus,
-  historyItems = [],
-  planItems = [],
-  catalogProducts = [],
+  historyItems = EMPTY_HISTORY_ITEMS,
+  planItems = EMPTY_PLAN_ITEMS,
+  catalogProducts = EMPTY_CATALOG_PRODUCTS,
   areaAcres = null,
   compact = false,
   showSectionHeader = true,
@@ -390,10 +396,11 @@ export function FertigationForm({
             Fertilizers Summary
           </Text>
           {data.fertilizers.filter(isProductRowComplete).map((f, idx) => {
+            const summaryKey = f.id ?? `summary-${idx}`;
             const chip = fertigationChipForEntry(f.unit, f.quantityBasis);
             return (
               <View
-                key={idx}
+                key={summaryKey}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -488,12 +495,12 @@ function FertilizerRow({
   onExpand,
   onInputFocus,
   areaAcres = null,
-  historyItems = [],
-  planItems = [],
-  catalogProducts = [],
-  historyOptions = [],
-  planOptions = [],
-  catalogOptions = [],
+  historyItems = EMPTY_HISTORY_ITEMS,
+  planItems = EMPTY_PLAN_ITEMS,
+  catalogProducts = EMPTY_CATALOG_PRODUCTS,
+  historyOptions = EMPTY_SEARCH_OPTIONS,
+  planOptions = EMPTY_SEARCH_OPTIONS,
+  catalogOptions = EMPTY_SEARCH_OPTIONS,
 }: FertilizerRowProps) {
   const { t } = useTranslation();
   const m3 = useM3();

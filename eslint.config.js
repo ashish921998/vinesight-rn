@@ -111,6 +111,12 @@ module.exports = [
       'react-native/no-color-literals': 'off',
       'react-native/no-raw-text': 'off',
       'react-native/no-single-element-style-arrays': 'warn',
+      // Perf guards: catch the two classes of bug that cause real re-render /
+      // reconciliation issues. Object/array default props get a fresh identity
+      // every render (defeats React.memo, can loop effects); array-index keys
+      // break reconciliation on reorder/insert. Both are zero-tolerance.
+      'react/no-object-type-as-default-prop': 'error',
+      'react/no-array-index-key': 'error',
     },
   },
   prettierConfig,

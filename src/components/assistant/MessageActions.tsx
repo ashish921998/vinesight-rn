@@ -26,9 +26,9 @@ export function MessageActions({ actions, onActionPress, disabled = false }: Mes
 
   return (
     <View style={styles.container}>
-      {actions.map((action, i) => (
+      {actions.map((action) => (
         <TouchableOpacity
-          key={`action-${i}`}
+          key={`action-${action.label}`}
           style={[
             styles.button,
             {

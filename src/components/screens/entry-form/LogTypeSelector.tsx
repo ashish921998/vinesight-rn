@@ -26,6 +26,8 @@ interface LogTypeSelectorProps {
   allowedTypes?: LogTypeId[];
 }
 
+const EMPTY_PENDING_LOG_TYPES: LogTypeId[] = [];
+
 // The two everyday activities get large hero tiles; the rest share a compact
 // row. Fertigation is logged inside the irrigation flow, so it never appears
 // as its own tile — the irrigation tile names it instead.
@@ -35,7 +37,7 @@ export function LogTypeSelector({
   selectedLogType,
   onSelect,
   hasPendingDrafts = false,
-  pendingLogTypes = [],
+  pendingLogTypes = EMPTY_PENDING_LOG_TYPES,
   hintText,
   allowedTypes,
 }: LogTypeSelectorProps) {

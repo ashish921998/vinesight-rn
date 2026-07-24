@@ -209,7 +209,7 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const insets = useSafeAreaInsets();
   const language = useLanguageStore((s) => s.language) ?? 'en';
   const router = useRouter();
-  const { setAddEntry } = useModalStore();
+  const setAddEntry = useModalStore((s) => s.setAddEntry);
   const { data: farms } = useFarms();
   const tabBarInset = useTabBarInset();
 

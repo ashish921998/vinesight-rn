@@ -44,15 +44,13 @@ export default function ProfileCompletionScreen() {
   const [joinFailed, setJoinFailed] = useState(false);
   const hasRedirectedRef = useRef(false);
 
-  const {
-    isLoading,
-    errorMessage,
-    isAuthenticated,
-    needsProfileCompletion,
-    user,
-    completeProfile,
-    clearError,
-  } = useAuthStore();
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const errorMessage = useAuthStore((s) => s.errorMessage);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
+  const user = useAuthStore((s) => s.user);
+  const completeProfile = useAuthStore((s) => s.completeProfile);
+  const clearError = useAuthStore((s) => s.clearError);
   const { data: profile, isLoading: profileLoading } = useProfile({
     enabled: isAuthenticated,
   });

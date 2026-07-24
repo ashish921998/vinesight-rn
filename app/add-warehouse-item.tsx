@@ -6,7 +6,8 @@ import { useModalStore } from '@/stores';
 
 export default function AddWarehouseItemRoute() {
   const router = useRouter();
-  const { addWarehouseItem, setAddWarehouseItem } = useModalStore();
+  const addWarehouseItem = useModalStore((s) => s.addWarehouseItem);
+  const setAddWarehouseItem = useModalStore((s) => s.setAddWarehouseItem);
 
   useEffect(() => {
     return () => setAddWarehouseItem(null);

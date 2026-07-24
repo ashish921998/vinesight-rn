@@ -29,7 +29,7 @@ interface MessageBubbleProps {
   onActionPress?: (action: AssistantMessageAction) => void;
 }
 
-export function MessageBubble({
+export const MessageBubble = React.memo(function MessageBubble({
   message,
   isLoading = false,
   isStreaming = false,
@@ -241,7 +241,7 @@ export function MessageBubble({
       </Text>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -92,7 +92,7 @@ export default function FarmDetailScreen() {
 
   const router = useRouter();
   const isFocused = useIsFocused();
-  const { setEditActivity } = useModalStore();
+  const setEditActivity = useModalStore((s) => s.setEditActivity);
   const { id, startSeason: startSeasonParam } = useLocalSearchParams<{
     id?: string | string[];
     startSeason?: string;
@@ -227,6 +227,14 @@ export default function FarmDetailScreen() {
   const seasonSuccessScale = React.useRef(new Animated.Value(0.92)).current;
   const seasonSuccessOpacity = React.useRef(new Animated.Value(0)).current;
   const seasonSuccessTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(() => {
+    return () => {
+      if (seasonSuccessTimerRef.current) {
+        clearTimeout(seasonSuccessTimerRef.current);
+        seasonSuccessTimerRef.current = null;
+      }
+    };
+  }, []);
   const handleBackNavigation = React.useCallback(() => {
     if (router.canGoBack()) {
       router.back();

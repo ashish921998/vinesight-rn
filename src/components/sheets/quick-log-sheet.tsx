@@ -26,7 +26,7 @@ import {
   type ScrollView,
   type TextInputProps,
 } from 'react-native';
-import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
+import { BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +40,7 @@ import { Symbol } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
 import { DateField } from '@/components/ui';
 import { NoActiveSeasonBanner } from '@/components/ui/no-active-season-banner';
+import { QuickLogSheetContainer } from './quick-log-sheet-container';
 import { getLogType, type LogTypeId } from '@/constants/calculator-models';
 import { toSupabaseDateString } from '@/types/database';
 import type { Farm } from '@/types';
@@ -746,14 +747,12 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   const fullHeight = type === 'spray' || type === 'irrigation';
 
   return (
-    <BottomSheet
+    <QuickLogSheetContainer
       key={type ?? 'closed'}
-      index={type === null ? -1 : 0}
-      enableDynamicSizing={!fullHeight}
-      snapPoints={fullHeight ? ['92%'] : undefined}
-      enablePanDownToClose
+      open={type !== null}
+      fullHeight={fullHeight}
       onClose={onClose}
-      backgroundStyle={{ backgroundColor: m3.colorScheme.background }}
+      backgroundColor={m3.colorScheme.background}
     >
       <BottomSheetScrollView
         ref={scrollViewRef}
@@ -1036,6 +1035,6 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
           </Text>
         </Pressable>
       </View>
-    </BottomSheet>
+    </QuickLogSheetContainer>
   );
 }

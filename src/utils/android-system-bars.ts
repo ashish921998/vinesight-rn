@@ -1,7 +1,5 @@
-// Some Android edge-to-edge configurations report zero for three-button
-// navigation. Keep bottom controls reachable when the native inset is missing.
-const ANDROID_NAV_BAR_FALLBACK_INSET = 32;
-
 export function getAndroidBottomSystemInset(reportedBottomInset: number) {
-  return Math.max(reportedBottomInset, ANDROID_NAV_BAR_FALLBACK_INSET);
+  // Edge-to-edge devices legitimately report zero here. Adding a synthetic
+  // inset creates a second system-bar-sized band below native Compose bars.
+  return Math.max(0, reportedBottomInset);
 }

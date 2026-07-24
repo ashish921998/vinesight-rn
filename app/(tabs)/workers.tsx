@@ -49,7 +49,7 @@ export default function WorkersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const fabBottom = useFabBottomPosition();
-  const { setAddWorker } = useModalStore();
+  const setAddWorker = useModalStore((s) => s.setAddWorker);
   const queryClient = useQueryClient();
   const { data: workers, isLoading, refetch } = useWorkers();
   const { data: allAttendance, refetch: refetchAllAttendance } = useAllWorkerAttendance();
@@ -62,7 +62,10 @@ export default function WorkersScreen() {
   const [fabSheetVisible, setFabSheetVisible] = useState(false);
   const [attendanceActionBarVisible, setAttendanceActionBarVisible] = useState(false);
 
-  const { _hydrated, hasSeenTour, isActive: isTourActive, startTour } = useWorkersTourStore();
+  const _hydrated = useWorkersTourStore((s) => s._hydrated);
+  const hasSeenTour = useWorkersTourStore((s) => s.hasSeenTour);
+  const isTourActive = useWorkersTourStore((s) => s.isActive);
+  const startTour = useWorkersTourStore((s) => s.startTour);
   useEffect(() => {
     if (!_hydrated) return;
     if (!hasSeenTour && !isTourActive) {

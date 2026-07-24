@@ -12,13 +12,18 @@ import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useProfessionalWorkspace } from '@/hooks/use-professional-workspace';
 import { resolveAuthenticatedRoute } from '@/utils/professional-routing';
+import { hasCompletedProfileName } from '@/stores/auth-helpers';
 
 /**
  * Entry point of the app
  * Redirects to auth or main tabs based on authentication state
  */
 export default function Index() {
-  const { isAuthenticated, isLoading, needsProfileCompletion, hasSeenOnboarding } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
+  const hasSeenOnboarding = useAuthStore((s) => s.hasSeenOnboarding);
+  const user = useAuthStore((s) => s.user);
   const onboardingHydrated = useOnboardingStore((s) => s.hasHydrated);
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const { languageHydrated, hasSelectedLanguage, language } = useLanguageStore(
@@ -28,8 +33,8 @@ export default function Index() {
       language: s.language,
     })),
   );
-  const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
-  const { data: professionalWorkspace, isLoading: workspaceLoading } = useProfessionalWorkspace({
+  const { data: profile, isPending: profilePending } = useProfile({ enabled: isAuthenticated });
+  const { data: professionalWorkspace, isPending: workspacePending } = useProfessionalWorkspace({
     enabled: isAuthenticated,
   });
   const configStatus = getConfigurationStatus();
@@ -110,7 +115,12 @@ export default function Index() {
     );
   }
 
-  if (isAuthenticated && (profileLoading || workspaceLoading)) {
+  // Use isPending (not isLoading) so the splash stays up during
+  // PersistQueryClientProvider cache restoration, when queries are paused:
+  // isLoading = isPending && isFetching, which is false during the pause even
+  // though data is still undefined — causing a premature redirect to
+  // profile-completion. isPending is true whenever data hasn't arrived.
+  if (isAuthenticated && (profilePending || workspacePending)) {
     return <AnimatedSplash duration={2500} />;
   }
 
@@ -118,7 +128,14 @@ export default function Index() {
     return <AnimatedSplash duration={2500} />;
   }
 
-  const hasProfileName = Boolean(profile?.full_name && profile.full_name.trim().length > 0);
+  // Fall back to auth metadata (user.user_metadata) if the profiles row
+  // hasn't loaded yet or is missing full_name. hasCompletedProfileName checks
+  // user_metadata.full_name or first_name + last_name, so a user who completed
+  // profile (which writes both metadata and the profiles row) is never
+  // wrongly sent to profile-completion.
+  const hasProfileName =
+    Boolean(profile?.full_name && profile.full_name.trim().length > 0) ||
+    hasCompletedProfileName(user);
 
   // Redirect based on auth state. If the workspace lookup errored, professionalWorkspace
   // is undefined and resolveAuthenticatedRoute falls through to the farmer route — a

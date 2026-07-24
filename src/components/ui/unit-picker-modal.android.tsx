@@ -1,11 +1,12 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
+import { ScrollView } from 'react-native';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { SheetHeader } from '@/components/ui/sheet-header';
 import { fontSize, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { AndroidModalSheet } from '@/components/ui/android-modal-sheet';
 
 interface UnitPickerModalProps<T extends string> {
   visible: boolean;
@@ -27,16 +28,10 @@ export function UnitPickerModal<T extends string>({
   const m3 = useM3();
 
   return (
-    <BottomSheet
-      index={visible ? 0 : -1}
-      snapPoints={['50%', '100%']}
-      enablePanDownToClose
-      onClose={onClose}
-      backgroundStyle={{ backgroundColor: m3.surface.s100 }}
-    >
+    <AndroidModalSheet visible={visible} onClose={onClose} backgroundColor={m3.surface.s100}>
       <View style={{ flex: 1 }}>
         <SheetHeader title={title} />
-        <BottomSheetScrollView>
+        <ScrollView keyboardShouldPersistTaps="handled">
           {options.map((unit) => {
             const isSelected = unit === selectedValue;
             return (
@@ -85,8 +80,8 @@ export function UnitPickerModal<T extends string>({
               </Pressable>
             );
           })}
-        </BottomSheetScrollView>
+        </ScrollView>
       </View>
-    </BottomSheet>
+    </AndroidModalSheet>
   );
 }

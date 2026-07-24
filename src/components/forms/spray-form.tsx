@@ -51,6 +51,11 @@ import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { guidedTourOn } from '@/features/guided-tour/events';
 
+const EMPTY_CATALOG_MIXES: ChemicalMix[] = [];
+const EMPTY_HISTORY_ITEMS: RecentInputItem[] = [];
+const EMPTY_PLAN_ITEMS: FertilizerPlanItem[] = [];
+const EMPTY_SEARCH_OPTIONS: SearchSelectOption[] = [];
+
 export interface ChemicalEntry {
   id: string;
   name: string;
@@ -133,9 +138,9 @@ export function SprayForm({
   onChange,
   onInputFocus,
   catalogOnly = false,
-  catalogMixes = [],
-  historyItems = [],
-  planItems = [],
+  catalogMixes = EMPTY_CATALOG_MIXES,
+  historyItems = EMPTY_HISTORY_ITEMS,
+  planItems = EMPTY_PLAN_ITEMS,
   areaAcres = null,
   compact = false,
   showSectionHeader = true,
@@ -829,11 +834,11 @@ function ChemicalRow({
   readOnly = false,
   waterLiters = null,
   areaAcres = null,
-  historyItems = [],
-  planItems = [],
-  historyOptions = [],
-  planOptions = [],
-  catalogOptions = [],
+  historyItems = EMPTY_HISTORY_ITEMS,
+  planItems = EMPTY_PLAN_ITEMS,
+  historyOptions = EMPTY_SEARCH_OPTIONS,
+  planOptions = EMPTY_SEARCH_OPTIONS,
+  catalogOptions = EMPTY_SEARCH_OPTIONS,
   onMixPick,
   lastUsedChipFor,
 }: ChemicalRowProps) {

@@ -46,7 +46,7 @@ export default function FertilizerPlansScreen() {
   const { farmAreaAcres: currentFarmAreaAcres } = useFarmAreaAcres(farm?.area);
   const { data: fertilizerPlans, isLoading } = useFertilizerPlans(farmId);
   const { data: farms, isLoading: isFarmsLoading } = useFarms();
-  const { setAddEntry } = useModalStore();
+  const setAddEntry = useModalStore((s) => s.setAddEntry);
 
   // Two paths to this screen: a consultant (has consultant_organization_id)
   // reviewing a client's farm, or the farm owner viewing plans sent to them.

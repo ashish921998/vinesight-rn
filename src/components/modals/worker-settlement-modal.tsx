@@ -161,7 +161,9 @@ export function WorkerSettlementModal({
     }
   }, [visible, workers, initialWorkerId, selectedWorker]);
 
-  const { _hydrated, hasSeenSettlementTour, startSettlementTour } = useWorkersTourStore();
+  const _hydrated = useWorkersTourStore((s) => s._hydrated);
+  const hasSeenSettlementTour = useWorkersTourStore((s) => s.hasSeenSettlementTour);
+  const startSettlementTour = useWorkersTourStore((s) => s.startSettlementTour);
   useEffect(() => {
     if (!_hydrated) return;
     if (visible && !hasSeenSettlementTour) {

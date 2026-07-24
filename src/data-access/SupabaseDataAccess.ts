@@ -294,24 +294,30 @@ export class SupabaseDataAccess implements DataAccess {
       } as DashboardTodayStats;
     },
     getDashboardCounts: async ({ userId, detailedMode, since }) => {
-      const { count: farmsCount } = await supabase
+      const farmsCountQuery = supabase
         .from('farms')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
-      let workersCount = 0;
-      if (detailedMode) {
-        const { count } = await supabase
-          .from('workers')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('is_active', true);
-        workersCount = count ?? 0;
-      }
-      const { data: farms } = await supabase.from('farms').select('id').eq('user_id', userId);
-      const farmIds = farms?.map((farm) => farm.id) ?? [];
+      const workersCountQuery = detailedMode
+        ? supabase
+            .from('workers')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('is_active', true)
+        : null;
+      const farmsIdQuery = supabase.from('farms').select('id').eq('user_id', userId);
+
+      const [farmsCountRes, workersRes, farmsRes] = await Promise.all([
+        farmsCountQuery,
+        workersCountQuery ?? Promise.resolve(null),
+        farmsIdQuery,
+      ]);
+      const farmsCount = farmsCountRes.count ?? 0;
+      const workersCount = workersRes?.count ?? 0;
+      const farmIds = farmsRes.data?.map((farm) => farm.id) ?? [];
       if (!farmIds.length)
         return {
-          farmsCount: farmsCount ?? 0,
+          farmsCount,
           workersCount,
           activitiesCount: 0,
           pendingTasksCount: 0,
@@ -323,29 +329,30 @@ export class SupabaseDataAccess implements DataAccess {
         'expense_records',
         'fertigation_records',
       ];
-      const countQueries = await Promise.all(
-        tables.map((table) =>
-          supabase
-            .from(table)
+      const pendingTasksQuery = detailedMode
+        ? supabase
+            .from('task_reminders')
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
-            .gte('date', since),
+            .eq('completed', false)
+        : null;
+      const [countQueries, pendingTasksRes] = await Promise.all([
+        Promise.all(
+          tables.map((table) =>
+            supabase
+              .from(table)
+              .select('*', { count: 'exact', head: true })
+              .in('farm_id', farmIds)
+              .gte('date', since),
+          ),
         ),
-      );
-      let pendingTasksCount = 0;
-      if (detailedMode) {
-        const { count } = await supabase
-          .from('task_reminders')
-          .select('*', { count: 'exact', head: true })
-          .in('farm_id', farmIds)
-          .eq('completed', false);
-        pendingTasksCount = count ?? 0;
-      }
+        pendingTasksQuery ?? Promise.resolve(null),
+      ]);
       return {
-        farmsCount: farmsCount ?? 0,
+        farmsCount,
         workersCount,
         activitiesCount: countQueries.reduce((sum, result) => sum + (result.count ?? 0), 0),
-        pendingTasksCount,
+        pendingTasksCount: pendingTasksRes?.count ?? 0,
       };
     },
     listFarmsNeedingAttention: async (userId) => {

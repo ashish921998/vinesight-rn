@@ -1121,9 +1121,9 @@ export default function WeatherScreen() {
               <Text style={{ fontSize: fontSize.sm, color: m3.surface.s700 }}>
                 {alerts.irrigation.reason}
               </Text>
-              {alerts.irrigation.recommendations.map((rec, i) => (
+              {alerts.irrigation.recommendations.map((rec) => (
                 <View
-                  key={i}
+                  key={rec}
                   style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
                 >
                   <Icon name="checkmark.circle.fill" size={14} color={m3.colorScheme.primary} />
@@ -1203,14 +1203,14 @@ export default function WeatherScreen() {
                   </Text>
                 </View>
               </View>
-              {alerts.pest.conditions.map((cond, i) => (
-                <Text key={i} style={{ fontSize: fontSize.sm, color: m3.surface.s700 }}>
+              {alerts.pest.conditions.map((cond) => (
+                <Text key={cond} style={{ fontSize: fontSize.sm, color: m3.surface.s700 }}>
                   {cond}
                 </Text>
               ))}
-              {alerts.pest.precautions.map((prec, i) => (
+              {alerts.pest.precautions.map((prec) => (
                 <View
-                  key={i}
+                  key={prec}
                   style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
                 >
                   <Icon name="checkmark.shield.fill" size={14} color={m3.colorScheme.warning} />
@@ -1298,9 +1298,9 @@ export default function WeatherScreen() {
               <Text style={{ fontSize: fontSize.sm, color: m3.surface.s700 }}>
                 {alerts.harvest.conditions}
               </Text>
-              {alerts.harvest.recommendations.map((rec, i) => (
+              {alerts.harvest.recommendations.map((rec) => (
                 <View
-                  key={i}
+                  key={rec}
                   style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
                 >
                   <Icon name="checkmark.circle.fill" size={14} color={m3.colorScheme.tertiary} />
@@ -1334,9 +1334,9 @@ export default function WeatherScreen() {
             >
               {t('weather.sections.irrigationSchedule')}
             </Text>
-            {irrigationSchedule.schedule.map((item, i) => (
+            {irrigationSchedule.schedule.map((item) => (
               <View
-                key={i}
+                key={item.date}
                 style={{
                   backgroundColor: m3.surface.s100,
                   borderRadius: borderRadius.xl,

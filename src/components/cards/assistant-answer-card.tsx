@@ -175,7 +175,7 @@ export function AssistantAnswerCard({ answer, onAskAnother }: AssistantAnswerCar
         <View style={{ gap: spacing[1] }}>
           {answer.rows.map((row, index) => (
             <View
-              key={`${row.date}-${index}`}
+              key={`${row.date}-${row.farmName}-${row.primary}`}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',

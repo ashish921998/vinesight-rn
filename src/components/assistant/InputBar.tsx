@@ -31,6 +31,8 @@ import type { AIMessageAttachmentInput } from '@/types/ai';
 const INPUT_MAX_HEIGHT = 120;
 const INPUT_MIN_HEIGHT = 44;
 
+const EMPTY_ATTACHMENTS: AIMessageAttachmentInput[] = [];
+
 interface InputBarProps {
   value: string;
   onChangeText: (text: string) => void;
@@ -51,7 +53,7 @@ export function InputBar({
   onAttachPress,
   isLoading = false,
   disabled = false,
-  attachments = [],
+  attachments = EMPTY_ATTACHMENTS,
   onRemoveAttachment,
 }: InputBarProps) {
   const m3 = useM3();
@@ -91,7 +93,7 @@ export function InputBar({
           contentContainerStyle={styles.thumbnailsContent}
         >
           {attachments.map((attachment, index) => (
-            <View key={index} style={styles.thumbnailWrapper}>
+            <View key={attachment.name} style={styles.thumbnailWrapper}>
               {attachment.dataUrl != null ? (
                 <Image
                   source={{ uri: attachment.dataUrl }}

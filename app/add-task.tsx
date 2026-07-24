@@ -10,7 +10,8 @@ import {
 
 export default function AddTaskRoute() {
   const router = useRouter();
-  const { addEntry, setAddEntry } = useModalStore();
+  const addEntry = useModalStore((s) => s.addEntry);
+  const setAddEntry = useModalStore((s) => s.setAddEntry);
   const params = useLocalSearchParams<{
     farmId?: string;
     onboarding?: string;

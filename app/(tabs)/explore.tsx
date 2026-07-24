@@ -51,7 +51,7 @@ export default function ExploreScreen() {
       ] as const,
     [t, detailedMode],
   );
-  const { setAddWarehouseItem } = useModalStore();
+  const setAddWarehouseItem = useModalStore((s) => s.setAddWarehouseItem);
   const insets = useSafeAreaInsets();
   const fabBottom = useFabBottomPosition();
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');

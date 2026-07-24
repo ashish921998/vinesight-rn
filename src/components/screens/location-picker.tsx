@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
@@ -70,6 +70,12 @@ class MapErrorBoundary extends Component<MapErrorBoundaryProps, MapErrorBoundary
   }
 }
 
+function ResultSeparator() {
+  const m3 = useM3();
+  const styles = createStyles(m3);
+  return <View style={styles.resultSeparator} />;
+}
+
 export default function LocationPicker({
   visible,
   onClose,
@@ -95,6 +101,8 @@ export default function LocationPicker({
   const mapRef = useRef<MapView>(null);
   const wasVisibleRef = useRef(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     if (!visible) {
@@ -121,6 +129,19 @@ export default function LocationPicker({
     }
   }, [initialLatitude, initialLongitude, visible]);
 
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+        searchTimeoutRef.current = null;
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, []);
+
   const performSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -137,6 +158,13 @@ export default function LocationPicker({
       return;
     }
 
+    const myRequestId = ++requestIdRef.current;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setIsSearching(true);
     setShowResults(true);
     setSearchError(false);
@@ -144,9 +172,12 @@ export default function LocationPicker({
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${GOOGLE_PLACES_API_KEY}&language=en`,
+        { signal: controller.signal },
       );
 
       const data = await response.json();
+
+      if (requestIdRef.current !== myRequestId) return;
 
       if (__DEV__) {
         console.log('Google Places results for', query, ':', JSON.stringify(data, null, 2));
@@ -173,26 +204,40 @@ export default function LocationPicker({
 
       setSearchResults(results);
     } catch (error) {
+      if (controller.signal.aborted || (error as Error)?.name === 'AbortError') return;
       console.error('Error searching location:', error);
+      if (requestIdRef.current !== myRequestId) return;
       setSearchResults([]);
       setSearchError(true);
     } finally {
-      setIsSearching(false);
+      if (requestIdRef.current === myRequestId) {
+        setIsSearching(false);
+      }
     }
   }, []);
 
   const getPlaceDetails = useCallback(
-    async (placeId: string): Promise<{ lat: number; lng: number } | null> => {
+    async (placeId: string): Promise<{ lat: number; lng: number } | null | undefined> => {
       if (!GOOGLE_PLACES_API_KEY) {
         return null;
       }
 
+      const myRequestId = ++requestIdRef.current;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       try {
         const response = await fetch(
           `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${GOOGLE_PLACES_API_KEY}`,
+          { signal: controller.signal },
         );
 
         const data = await response.json();
+
+        if (requestIdRef.current !== myRequestId) return undefined;
 
         if (data.status === 'OK' && data.result?.geometry?.location) {
           return data.result.geometry.location;
@@ -200,6 +245,7 @@ export default function LocationPicker({
 
         return null;
       } catch (error) {
+        if (controller.signal.aborted || (error as Error)?.name === 'AbortError') return undefined;
         console.error('Error fetching place details:', error);
         return null;
       }
@@ -240,6 +286,8 @@ export default function LocationPicker({
 
     try {
       const location = await getPlaceDetails(result.placeId);
+
+      if (location === undefined) return;
 
       if (location && Number.isFinite(location.lat) && Number.isFinite(location.lng)) {
         setSelectedCoordinate({ latitude: location.lat, longitude: location.lng });
@@ -400,7 +448,7 @@ export default function LocationPicker({
                     </TouchableOpacity>
                   );
                 }}
-                ItemSeparatorComponent={() => <View style={styles.resultSeparator} />}
+                ItemSeparatorComponent={ResultSeparator}
                 ListEmptyComponent={
                   isSearching ? null : (
                     <View style={styles.emptyResultsWrap}>

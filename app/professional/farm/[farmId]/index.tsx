@@ -22,6 +22,10 @@ import { formatDate, formatNumber } from '@/i18n/format';
 
 const SAFE_HARVEST_COLOR = '#0b8d32';
 
+function ActivityItemSeparator() {
+  return <View style={{ height: spacing[3] }} />;
+}
+
 interface StatusChip {
   key: string;
   icon: string;
@@ -350,7 +354,7 @@ export default function ProfessionalFarm() {
           keyExtractor={(item) => `${item.record_type}-${item.record_data.id}`}
           contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}
           ListHeaderComponent={header}
-          ItemSeparatorComponent={() => <View style={{ height: spacing[3] }} />}
+          ItemSeparatorComponent={ActivityItemSeparator}
           ListFooterComponent={null}
           ListEmptyComponent={
             activity.isLoading ? (

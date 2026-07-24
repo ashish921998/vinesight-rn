@@ -1,7 +1,8 @@
 import { SymbolView, type SymbolViewProps, type SymbolWeight } from 'expo-symbols';
 import React from 'react';
 import { View, Text, Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ICON_MAPPING } from '@/utils/icon-mapping';
 import { useM3 } from '@/styles/use-theme';
 import { AppIcon } from './app-icon';
@@ -88,6 +89,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'calendar.badge.exclamationmark': 'calendar-outline',
   clock: 'time-outline',
   'clock.fill': 'time',
+  mappin: 'location-outline',
   location: 'location-outline',
   'location.fill': 'location',
   'dollarsign.circle': 'cash-outline',

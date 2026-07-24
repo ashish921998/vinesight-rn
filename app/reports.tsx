@@ -100,7 +100,7 @@ export default function ReportsScreen() {
   const { t } = useTranslation();
   const { data: farms, isLoading: farmsLoading } = useFarms();
   const { data: profile } = useProfile();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
 
   const areaUnit = resolveAreaUnitPreference(
     profile?.area_unit_preference ?? user?.user_metadata?.area_unit,

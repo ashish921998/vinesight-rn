@@ -116,18 +116,16 @@ export default function PhoneLoginScreen() {
     };
   }, []);
 
-  const {
-    isLoading,
-    errorMessage,
-    pendingOTPPhone,
-    pendingOTPPhoneMode,
-    isAuthenticated,
-    needsProfileCompletion,
-    signInWithPhoneAuto,
-    signInWithApple,
-    signInWithGoogle,
-    clearError,
-  } = useAuthStore();
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const errorMessage = useAuthStore((s) => s.errorMessage);
+  const pendingOTPPhone = useAuthStore((s) => s.pendingOTPPhone);
+  const pendingOTPPhoneMode = useAuthStore((s) => s.pendingOTPPhoneMode);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
+  const signInWithPhoneAuto = useAuthStore((s) => s.signInWithPhoneAuto);
+  const signInWithApple = useAuthStore((s) => s.signInWithApple);
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
+  const clearError = useAuthStore((s) => s.clearError);
 
   useEffect(() => {
     if (pendingOTPPhone && lastNavigatedPhoneRef.current !== pendingOTPPhone) {

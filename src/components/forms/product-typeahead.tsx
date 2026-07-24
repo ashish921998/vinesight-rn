@@ -10,6 +10,8 @@ import {
   type SearchSelectSelection,
 } from '@/components/ui/search-select-logic';
 
+const EMPTY_SEARCH_OPTIONS: SearchSelectOption[] = [];
+
 interface ProductTypeaheadProps {
   /** Raw text typed in the name field; matching/ranking is shared with SearchSelect. */
   query: string;
@@ -31,9 +33,9 @@ interface ProductTypeaheadProps {
  */
 export function ProductTypeahead({
   query,
-  history = [],
-  plan = [],
-  catalog = [],
+  history = EMPTY_SEARCH_OPTIONS,
+  plan = EMPTY_SEARCH_OPTIONS,
+  catalog = EMPTY_SEARCH_OPTIONS,
   onSelect,
   accentColor,
   maxPerSection = 3,

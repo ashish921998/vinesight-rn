@@ -5,7 +5,8 @@ import { useModalStore } from '@/stores';
 
 export default function AddWorkerRoute() {
   const router = useRouter();
-  const { addWorker, setAddWorker } = useModalStore();
+  const addWorker = useModalStore((s) => s.addWorker);
+  const setAddWorker = useModalStore((s) => s.setAddWorker);
 
   useEffect(() => {
     return () => setAddWorker(null);
