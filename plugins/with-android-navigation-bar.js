@@ -73,6 +73,7 @@ const withAndroidNavigationBarColor = (config) => {
       // Let filesystem failures abort prebuild. Continuing would leave the
       // generated style pointing at a missing night resource and turn the real
       // error into a much less actionable Android resource-link failure.
+      fs.mkdirSync(path.dirname(boolsPath), { recursive: true });
       fs.mkdirSync(path.dirname(nightColorsPath), { recursive: true });
       fs.writeFileSync(nightColorsPath, contents);
       fs.writeFileSync(boolsPath, bools);

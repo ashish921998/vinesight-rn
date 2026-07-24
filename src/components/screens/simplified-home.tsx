@@ -419,11 +419,11 @@ export function SimplifiedHome() {
                       key={activity.id}
                       onPress={() => router.push(`/farm/${activity.farmId}`)}
                       accessibilityRole="button"
-                      accessibilityLabel={
+                      accessibilityLabel={`${
                         activity.farmName
                           ? t('dashboard.recentActivity.openFarm', { name: activity.farmName })
                           : t('dashboard.recentActivity.openFarmDetails')
-                      }
+                      }, ${activity.description}, ${activityDate}`}
                       style={({ pressed }) => ({
                         flexDirection: 'row',
                         alignItems: 'flex-start',
