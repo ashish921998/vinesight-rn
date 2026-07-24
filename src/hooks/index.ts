@@ -249,3 +249,7 @@ export { useResponsiveHeight } from './use-responsive-height';
 
 // Log composer input sources (spray/fertigation pickers)
 export { useSprayInputSources, useFertigationInputSources } from './use-log-input-sources';
+
+// Canonical log-type presentation (icon + color) shared by quick actions and
+// the recent-activity list.
+export { useLogPresentation } from './use-log-presentation';

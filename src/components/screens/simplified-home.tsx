@@ -6,16 +6,14 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { AppIcon } from '@/components/ui/app-icon';
 import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
-import { Spinner } from '@/components/ui/spinner';
-import { useFarms, useRecentActivities } from '@/hooks';
+import { useFarms, useRecentActivities, useLogPresentation } from '@/hooks';
 import { useSelectedFarmStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
-import { useDomainColors } from '@/styles/use-domain-colors';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { formatDate } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
 import { QuickLogSheet, type QuickLogType } from '@/components/sheets/quick-log-sheet';
+import { RecentActivityList } from './recent-activity';
 import type { LogTypeId } from '@/constants/calculator-models';
 
 // Home screen for BOTH simplified and detailed mode. An action screen — not an
@@ -27,8 +25,6 @@ const RECENT_LIMIT = 6;
 
 type QuickAction = {
   type: Extract<LogTypeId, 'irrigation' | 'spray' | 'harvest' | 'expense'>;
-  icon: 'water' | 'spraycan' | 'basket' | 'receipt';
-  color: string;
   labelKey:
     | 'dashboard.quickActions.irrigation'
     | 'dashboard.quickActions.spray'
@@ -36,14 +32,19 @@ type QuickAction = {
     | 'dashboard.quickActions.expense';
 };
 
-type ActivityPresentation = {
-  icon: 'water' | 'spraycan' | 'basket' | 'receipt' | 'fertigation' | 'document';
-  color: string;
-};
+// The four prime quick-log slots. Icon + color are NOT duplicated here — they
+// are derived from the canonical log-type presentation (useLogPresentation) at
+// render time, so the grid and the recent-activity list can never disagree.
+const QUICK_ACTIONS: readonly QuickAction[] = [
+  { type: 'irrigation', labelKey: 'dashboard.quickActions.irrigation' },
+  { type: 'spray', labelKey: 'dashboard.quickActions.spray' },
+  { type: 'harvest', labelKey: 'dashboard.quickActions.harvest' },
+  { type: 'expense', labelKey: 'dashboard.quickActions.expense' },
+];
 
 export function SimplifiedHome() {
   const m3 = useM3();
-  const domain = useDomainColors();
+  const presentation = useLogPresentation();
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -123,52 +124,6 @@ export function SimplifiedHome() {
         .map((farm) => ({ key: String(farm.id), label: farm.name })),
     [farms],
   );
-
-  const quickActions: QuickAction[] = [
-    {
-      type: 'irrigation',
-      icon: 'water',
-      color: domain.category.irrigation,
-      labelKey: 'dashboard.quickActions.irrigation',
-    },
-    {
-      type: 'spray',
-      icon: 'spraycan',
-      color: domain.category.spray,
-      labelKey: 'dashboard.quickActions.spray',
-    },
-    {
-      type: 'harvest',
-      icon: 'basket',
-      color: domain.category.harvest,
-      labelKey: 'dashboard.quickActions.harvest',
-    },
-    {
-      type: 'expense',
-      icon: 'receipt',
-      color: domain.category.expense,
-      labelKey: 'dashboard.quickActions.expense',
-    },
-  ];
-
-  const getActivityPresentation = (type: LogTypeId): ActivityPresentation => {
-    switch (type) {
-      case 'irrigation':
-        return { icon: 'water', color: domain.category.irrigation };
-      case 'spray':
-        return { icon: 'spraycan', color: domain.category.spray };
-      case 'harvest':
-        return { icon: 'basket', color: domain.category.harvest };
-      case 'expense':
-        return { icon: 'receipt', color: domain.category.expense };
-      case 'fertigation':
-        return { icon: 'fertigation', color: domain.category.fertigation };
-      case 'note':
-        return { icon: 'document', color: domain.category.note };
-      default:
-        return { icon: 'document', color: m3.colorScheme.primary };
-    }
-  };
 
   const bottomPadding = Math.max(insets.bottom + spacing[12], spacing[16]);
 
@@ -307,222 +262,61 @@ export function SimplifiedHome() {
             {/* 2×2 grid — big targets for gloved/sunlit field use, room for a
                 real label per tile (vs the old 4-across icon strip). */}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
-              {quickActions.map((action) => (
-                <Pressable
-                  key={action.type}
-                  onPress={() => handleQuickAction(action)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t(action.labelKey)}
-                  style={({ pressed }) => ({
-                    flexBasis: '45%',
-                    flexGrow: 1,
-                    borderRadius: borderRadius.md,
-                    padding: spacing[4],
-                    backgroundColor: m3.surface.s100,
-                    borderWidth: 1,
-                    borderColor: m3.surface.s300,
-                    opacity: pressed ? 0.85 : 1,
-                  })}
-                >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: radius.md,
-                      backgroundColor: colorWithOpacity(action.color, 0.12),
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: spacing[2],
-                    }}
+              {QUICK_ACTIONS.map((action) => {
+                const p = presentation[action.type];
+                return (
+                  <Pressable
+                    key={action.type}
+                    onPress={() => handleQuickAction(action)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(action.labelKey)}
+                    style={({ pressed }) => ({
+                      flexBasis: '45%',
+                      flexGrow: 1,
+                      borderRadius: borderRadius.md,
+                      padding: spacing[4],
+                      backgroundColor: m3.surface.s100,
+                      borderWidth: 1,
+                      borderColor: m3.surface.s300,
+                      opacity: pressed ? 0.85 : 1,
+                    })}
                   >
-                    <AppIcon name={action.icon} size={22} color={action.color} />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                      color: m3.surface.s900,
-                    }}
-                  >
-                    {t(action.labelKey)}
-                  </Text>
-                </Pressable>
-              ))}
+                    <View
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: radius.md,
+                        backgroundColor: colorWithOpacity(p.color, 0.12),
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: spacing[2],
+                      }}
+                    >
+                      <AppIcon name={p.icon} size={22} color={p.color} />
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                        color: m3.surface.s900,
+                      }}
+                    >
+                      {t(action.labelKey)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 
           {/* Recent Activity — compact log cards, still secondary to capture actions. */}
-          <View style={{ marginBottom: spacing[6] }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: spacing[2],
-              }}
-            >
-              <Text
-                accessibilityRole="header"
-                style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.semibold,
-                  color: m3.surface.s900,
-                }}
-              >
-                {t('dashboard.recentActivity.title')}
-              </Text>
-              {recentActivities && recentActivities.length > 0 ? (
-                <Pressable
-                  onPress={() => router.push('/logs')}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('simplifiedHome.viewAll')}
-                  hitSlop={8}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                      color: m3.colorScheme.primary,
-                    }}
-                  >
-                    {t('simplifiedHome.viewAll')}
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-
-            {isLoadingActivities || isLoadingFarms ? (
-              <View
-                style={{
-                  borderRadius: borderRadius.md,
-                  padding: spacing[8],
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: m3.surface.s100,
-                  borderWidth: 1,
-                  borderColor: m3.surface.s300,
-                }}
-              >
-                <Spinner color={m3.colorScheme.primary} />
-              </View>
-            ) : recentActivities && recentActivities.length > 0 ? (
-              <View style={{ gap: spacing[1] }}>
-                {recentActivities.map((activity) => {
-                  const presentation = getActivityPresentation(activity.type);
-                  const activityDate = formatDate(activity.date, {
-                    month: 'short',
-                    day: 'numeric',
-                  });
-
-                  return (
-                    <Pressable
-                      key={activity.id}
-                      onPress={() => router.push(`/farm/${activity.farmId}`)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${
-                        activity.farmName
-                          ? t('dashboard.recentActivity.openFarm', { name: activity.farmName })
-                          : t('dashboard.recentActivity.openFarmDetails')
-                      }, ${activity.description}, ${activityDate}`}
-                      style={({ pressed }) => ({
-                        flexDirection: 'row',
-                        alignItems: 'flex-start',
-                        gap: spacing[2],
-                        paddingHorizontal: spacing[2],
-                        paddingVertical: spacing[2],
-                        borderRadius: borderRadius.md,
-                        backgroundColor: pressed ? m3.surface.s200 : m3.surface.s100,
-                        borderWidth: 1,
-                        borderColor: m3.surface.s200,
-                        opacity: pressed ? 0.9 : 1,
-                      })}
-                    >
-                      <View
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: radius.md,
-                          backgroundColor: colorWithOpacity(presentation.color, 0.12),
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <AppIcon name={presentation.icon} size={16} color={presentation.color} />
-                      </View>
-                      <View style={{ flex: 1, minWidth: 0 }}>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'flex-start',
-                            gap: spacing[2],
-                          }}
-                        >
-                          <Text
-                            numberOfLines={2}
-                            style={{
-                              flex: 1,
-                              minWidth: 0,
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.semibold,
-                              color: m3.surface.s900,
-                              lineHeight: 18,
-                            }}
-                          >
-                            {activity.description}
-                          </Text>
-                          <Text
-                            numberOfLines={1}
-                            style={{
-                              fontSize: fontSize.xs,
-                              color: m3.surface.s500,
-                              lineHeight: 17,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {activityDate}
-                          </Text>
-                        </View>
-                        <Text
-                          numberOfLines={1}
-                          style={{
-                            fontSize: fontSize.xs,
-                            color: m3.surface.s500,
-                            lineHeight: 15,
-                          }}
-                        >
-                          {activity.farmName}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : (
-              <View
-                style={{
-                  borderRadius: borderRadius.md,
-                  padding: spacing[6],
-                  alignItems: 'center',
-                  backgroundColor: m3.surface.s100,
-                  borderWidth: 1,
-                  borderColor: m3.surface.s300,
-                }}
-              >
-                <SymbolIcon name="clock" size={48} color={m3.surface.s400} />
-                <Text
-                  style={{
-                    textAlign: 'center',
-                    marginTop: spacing[3],
-                    fontSize: fontSize.sm,
-                    color: m3.surface.s500,
-                  }}
-                >
-                  {hasFarms ? t('dashboard.empty.recentActivity') : t('dashboard.empty.noFarms')}
-                </Text>
-              </View>
-            )}
-          </View>
+          <RecentActivityList
+            activities={recentActivities}
+            isLoading={isLoadingActivities || isLoadingFarms}
+            hasFarms={hasFarms}
+            onOpenFarm={(farmId) => router.push(`/farm/${farmId}`)}
+            onViewAll={() => router.push('/logs')}
+          />
         </View>
       </ScrollView>
 
