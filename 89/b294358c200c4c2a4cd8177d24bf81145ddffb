@@ -1,0 +1,34 @@
+plugins/with-android-navigation-bar.js
+  s_01f05e35f4e437::t_61358cbb77d262 89
+  s_01f05e35f4e437::t_af4cc81fe96235 140-161,164
+  s_00cadf22314562::t_fa002837d77172 25-27
+__tests__/android-navigation-bar-plugin.test.ts
+  s_01f05e35f4e437::t_17f22e208bad11 6-9,98,114-116,118
+  s_01f05e35f4e437::t_ec51efb89180b1 4,96-97,99-113,117,119-140
+  s_01f05e35f4e437::t_73463348ed4e93 5
+  s_01f05e35f4e437::t_14fe89877c158f 141
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "89b294358c200c4c2a4cd8177d24bf81145ddffb",
+  "prompts": {},
+  "sessions": {
+    "s_00cadf22314562": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f959a-043f-7c22-a84b-cf16d737aa9b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_01f05e35f4e437": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f9596-48a7-7c60-8711-4381b43ada47",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
