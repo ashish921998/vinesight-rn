@@ -1,0 +1,22 @@
+__tests__/android-navigation-bar-plugin.test.ts
+  s_00cadf22314562::t_fd51f8cdf52fea 11-15,18,121-127,131-144,148-153
+  s_00cadf22314562::t_47e0d7011c3650 16-17,128-130,145-147
+app.config.js
+  s_00cadf22314562::t_fd51f8cdf52fea 129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "570b1e7ff897de596b55b57867634dd44dbcc388",
+  "prompts": {},
+  "sessions": {
+    "s_00cadf22314562": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f959a-043f-7c22-a84b-cf16d737aa9b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
