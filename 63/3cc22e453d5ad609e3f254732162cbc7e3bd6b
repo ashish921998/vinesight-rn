@@ -1,0 +1,19 @@
+eslint.config.js
+  s_ebe152c7fb47ca::t_471663a0f654d3 114-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "633cc22e453d5ad609e3f254732162cbc7e3bd6b",
+  "prompts": {},
+  "sessions": {
+    "s_ebe152c7fb47ca": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06fc40760ffelyy8KPRwnKXEbR",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
