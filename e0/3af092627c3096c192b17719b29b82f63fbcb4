@@ -1,0 +1,22 @@
+src/constants/calculator-models.ts
+  s_f6e1e1f8eb64a2::t_378c968e47bb8e 7,109,270-271
+src/hooks/use-log-presentation.ts
+  s_f6e1e1f8eb64a2::t_7dcbe36a6cded2 3,6,10-18,23-28,30-35
+  s_f6e1e1f8eb64a2::t_a25cce0c407700 36-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "e03af092627c3096c192b17719b29b82f63fbcb4",
+  "prompts": {},
+  "sessions": {
+    "s_f6e1e1f8eb64a2": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f95c1-f03c-7dec-9cf5-1a8006be68e5",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
