@@ -127,9 +127,13 @@ function upsertBool(contents, name, value) {
 }
 
 function upsertResource(contents, tag, name, value) {
+  const quoteClass = '["\']'; // accept either valid XML quote style
   // Drop any prior entry so repeated prebuilds don't accumulate duplicates.
   contents = contents.replace(
-    new RegExp('\\s*<' + tag + '\\s+name="' + name + '"[^>]*>[^<]*<\\/' + tag + '>', 'g'),
+    new RegExp(
+      '\\s*<' + tag + '\\s+name=' + quoteClass + name + quoteClass + '[^>]*>[^<]*<\\/' + tag + '>',
+      'g',
+    ),
     '',
   );
 
@@ -144,12 +148,21 @@ function upsertResource(contents, tag, name, value) {
 function readResourceFile(filePath) {
   try {
     return fs.readFileSync(filePath, 'utf8');
-  } catch {
-    return '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>';
+  } catch (error) {
+    if (error && error.code === 'ENOENT') {
+      return '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>';
+    }
+    throw error;
   }
 }
 
 function upsertStyleItem(contents, styleName, itemName, value) {
+  // Never replace an existing malformed document: it may contain unrelated
+  // resources that a minimal fallback would silently erase.
+  if (!/<resources[\s>]/.test(contents) || !/<\/resources>/.test(contents)) {
+    throw new Error('Cannot update Android styles: expected a complete <resources> document');
+  }
+
   const escapedStyleName = styleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const stylePattern = new RegExp(
     `(<style\\b[^>]*\\bname=["']${escapedStyleName}["'][^>]*>)([\\s\\S]*?)(</style>)`,
@@ -161,7 +174,7 @@ function upsertStyleItem(contents, styleName, itemName, value) {
   }
 
   const itemPattern = new RegExp(`\\s*<item\\s+name=["']${itemName}["'][^>]*>[^<]*<\\/item>`, 'g');
-  const body = match[2].replace(itemPattern, '');
+  const body = match[2].replace(itemPattern, '').replace(/\s+$/, ''); // trim so repeated prebuilds don't accumulate blank lines
   const item = `\n    <item name="${itemName}">${value}</item>`;
   return contents.replace(stylePattern, `${match[1]}${body}${item}\n  ${match[3]}`);
 }
