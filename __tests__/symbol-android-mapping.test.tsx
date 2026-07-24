@@ -1,12 +1,10 @@
 import { Platform } from 'react-native';
 import { render } from '@testing-library/react-native';
-// JSON imports resolve to the raw glyphmap objects exported by react-native-vector-icons.
-import materialGlyphs from '@expo/vector-icons/build/vendor/react-native-vector-icons/glyphmaps/MaterialCommunityIcons.json';
-import ionGlyphs from '@expo/vector-icons/build/vendor/react-native-vector-icons/glyphmaps/Ionicons.json';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Symbol } from '@/components/ui/symbol';
 
-const glyphMap = materialGlyphs as Record<string, number>;
-const ionGlyphMap = ionGlyphs as Record<string, number>;
+const glyphMap = MaterialCommunityIcons.glyphMap as Record<string, number>;
+const ionGlyphMap = Ionicons.glyphMap as Record<string, number>;
 
 describe('Android settings icon mappings', () => {
   it.each(['office-building', 'view-dashboard-outline'])(

@@ -17,6 +17,10 @@ describe('useSafeBack', () => {
     mockCanGoBack.mockReset();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('pops the stack when there is a screen to go back to', () => {
     mockCanGoBack.mockReturnValue(true);
     const { result } = renderHook(() => useSafeBack());
@@ -44,7 +48,6 @@ describe('useSafeBack', () => {
 
     expect(mockCanGoBack).toHaveBeenCalledTimes(2);
     expect(mockBack).toHaveBeenCalledTimes(2);
-    jest.useRealTimers();
   });
 
   it('replaces to the tabs home when the stack has nothing to pop', () => {

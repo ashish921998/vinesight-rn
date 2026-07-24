@@ -34,6 +34,7 @@ const path = require('path');
  * — so each layer is clearly distinct from the app background in both themes.
  */
 const COLOR_NAME = 'vinesight_navigation_bar';
+const LIGHT_BUTTONS_NAME = 'vinesight_light_navigation_bar';
 const LIGHT_COLOR = '#D9D0C4'; // surface[300] / surfaceContainerHigh — light
 const DARK_COLOR = '#2E342F'; // surface[300] / surfaceContainerHigh — dark
 
@@ -54,6 +55,9 @@ const withAndroidNavigationBarColor = (config) => {
     (cfg) => {
       const resDir = path.join(cfg.modRequest.platformProjectRoot, 'app', 'src', 'main', 'res');
       const nightColorsPath = path.join(resDir, 'values-night', 'colors.xml');
+      const boolsPath = path.join(resDir, 'values', 'bools.xml');
+      const nightBoolsPath = path.join(resDir, 'values-night', 'bools.xml');
+      const nightStylesPath = path.join(resDir, 'values-night', 'styles.xml');
 
       let contents;
       try {
@@ -64,11 +68,23 @@ const withAndroidNavigationBarColor = (config) => {
 
       contents = upsertColor(contents, COLOR_NAME, DARK_COLOR);
 
+      const bools = upsertBool(readResourceFile(boolsPath), LIGHT_BUTTONS_NAME, 'true');
+      const nightBools = upsertBool(readResourceFile(nightBoolsPath), LIGHT_BUTTONS_NAME, 'false');
+      const nightStyles = upsertStyleItem(
+        readResourceFile(nightStylesPath),
+        'AppTheme',
+        'android:windowLightNavigationBar',
+        'false',
+      );
+
       // Let filesystem failures abort prebuild. Continuing would leave the
       // generated style pointing at a missing night resource and turn the real
       // error into a much less actionable Android resource-link failure.
       fs.mkdirSync(path.dirname(nightColorsPath), { recursive: true });
       fs.writeFileSync(nightColorsPath, contents);
+      fs.writeFileSync(boolsPath, bools);
+      fs.writeFileSync(nightBoolsPath, nightBools);
+      fs.writeFileSync(nightStylesPath, nightStyles);
 
       return cfg;
     },
@@ -84,6 +100,12 @@ const withAndroidNavigationBarColor = (config) => {
       name: 'android:navigationBarColor',
       value: `@color/${COLOR_NAME}`,
     });
+    cfg.modResults = AndroidConfig.Styles.assignStylesValue(cfg.modResults, {
+      add: true,
+      parent: { name: 'Theme.App.SplashScreen' },
+      name: 'android:windowLightNavigationBar',
+      value: `@bool/${LIGHT_BUTTONS_NAME}`,
+    });
     return cfg;
   });
 
@@ -97,20 +119,55 @@ const withAndroidNavigationBarColor = (config) => {
  * regex-safe identifier (only word chars / underscores).
  */
 function upsertColor(contents, name, value) {
+  return upsertResource(contents, 'color', name, value);
+}
+
+function upsertBool(contents, name, value) {
+  return upsertResource(contents, 'bool', name, value);
+}
+
+function upsertResource(contents, tag, name, value) {
   // Drop any prior entry so repeated prebuilds don't accumulate duplicates.
   contents = contents.replace(
-    new RegExp('\\s*<color\\s+name="' + name + '"[^>]*>[^<]*<\\/color>', 'g'),
+    new RegExp('\\s*<' + tag + '\\s+name="' + name + '"[^>]*>[^<]*<\\/' + tag + '>', 'g'),
     '',
   );
 
-  if (!/<resources[\s>]/.test(contents)) {
+  if (!/<resources[\s>]/.test(contents) || !/<\/resources>/.test(contents)) {
     contents = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>';
   }
 
-  const entry = `  <color name="${name}">${value}</color>`;
+  const entry = `  <${tag} name="${name}">${value}</${tag}>`;
   return contents.replace('</resources>', `${entry}\n</resources>`);
 }
 
+function readResourceFile(filePath) {
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>';
+  }
+}
+
+function upsertStyleItem(contents, styleName, itemName, value) {
+  const escapedStyleName = styleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const stylePattern = new RegExp(
+    `(<style\\b[^>]*\\bname=["']${escapedStyleName}["'][^>]*>)([\\s\\S]*?)(</style>)`,
+  );
+  const match = contents.match(stylePattern);
+  if (!match) {
+    const style = `  <style name="${styleName}">\n    <item name="${itemName}">${value}</item>\n  </style>`;
+    return contents.replace('</resources>', `${style}\n</resources>`);
+  }
+
+  const itemPattern = new RegExp(`\\s*<item\\s+name=["']${itemName}["'][^>]*>[^<]*<\\/item>`, 'g');
+  const body = match[2].replace(itemPattern, '');
+  const item = `\n    <item name="${itemName}">${value}</item>`;
+  return contents.replace(stylePattern, `${match[1]}${body}${item}\n  ${match[3]}`);
+}
+
 withAndroidNavigationBarColor.upsertColor = upsertColor;
+withAndroidNavigationBarColor.upsertBool = upsertBool;
+withAndroidNavigationBarColor.upsertStyleItem = upsertStyleItem;
 
 module.exports = withAndroidNavigationBarColor;

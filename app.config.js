@@ -120,7 +120,9 @@ module.exports = {
       // seeds the initial button tint; the runtime <NavigationBar> component in
       // app/_layout.tsx drives it per theme.
       navigationBar: {
-        barStyle: 'auto',
+        // Expo's `dark` means dark buttons for the default light resource.
+        // The custom plugin adds the night-qualified light-button override.
+        barStyle: 'dark',
       },
     },
     web: {
@@ -131,7 +133,7 @@ module.exports = {
       'expo-router',
       'expo-asset',
       'expo-system-ui',
-      ['expo-navigation-bar', { enforceContrast: false }],
+      ['expo-navigation-bar', { enforceContrast: false, style: 'dark' }],
       './plugins/with-android-navigation-bar',
       'expo-audio',
       'expo-notifications',
