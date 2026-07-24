@@ -1,0 +1,306 @@
+app/professional/farm/[farmId]/lab-reports.tsx
+  s_d432d62c8fbdb9::t_ff68cae64ce74c 544
+  s_d432d62c8fbdb9::t_1e0fb58b0b43c7 53,61,63
+src/components/screens/settings/LinkPhoneModal.tsx
+  s_ebe152c7fb47ca::t_339c0d8f3a0f56 83-90
+src/data-access/SupabaseDataAccess.ts
+  s_ebe152c7fb47ca::t_38980452363ce5 297,301-317,320,332-334,337-347,349-350,352,355
+components/widgets/dashboard/QuickStatsWidget/QuickStatsWidget.tsx
+  s_73acc62b01f057::t_1cc0bd1c027dd0 3
+app/(auth)/otp-verification.tsx
+  s_ebe152c7fb47ca::t_a4f24e09288283 45-56
+components/widgets/templates/WidgetTemplate.tsx
+  s_73acc62b01f057::t_ae1ff6938c2662 3
+src/components/forms/spray-form.tsx
+  s_7442d761beb0a6::t_4578b45e2e74c2 837-841
+  s_7442d761beb0a6::t_e3f642ff29d7aa 141-143
+  s_7442d761beb0a6::t_7a618e4ec84c8c 54-58
+metro.config.js
+  s_73acc62b01f057::t_0c256fdb8fb462 5-11
+  s_73acc62b01f057::t_3ddb4786780144 4,12
+src/components/screens/farm-log-form.tsx
+  s_6cfa0b707df325::t_da63ad88061b9e 21
+src/hooks/use-reports.ts
+  s_ebe152c7fb47ca::t_e0c231d62c2bfe 242
+app/worker-detail/[id].tsx
+  s_6cfa0b707df325::t_a09062512efa35 57
+  s_d432d62c8fbdb9::t_107cae023e478a 529,536
+  s_d432d62c8fbdb9::t_67c2557a1939c6 593-594
+app/warehouse.tsx
+  s_6cfa0b707df325::t_acba96056e1b79 41-42
+components/widgets/dashboard/TaskSummaryWidget/TaskSummaryWidget.tsx
+  s_73acc62b01f057::t_bcb3b07ade7e62 3
+src/components/assistant/RichMessageContent.tsx
+  s_f227f7d7773c7b::t_125ee652c6279d 187
+  s_f227f7d7773c7b::t_28cc608d385d6c 115
+  s_f227f7d7773c7b::t_e2a5fde028118b 149
+  s_f227f7d7773c7b::t_ec2e8a7e0e5af2 33
+  s_f227f7d7773c7b::t_05c9e7cf2473a1 184
+  s_f227f7d7773c7b::t_a7174c1d4727a2 78
+components/widgets/dashboard/WeatherWidget/WeatherWidget.tsx
+  s_73acc62b01f057::t_44ba6ea9ccccac 3
+src/components/screens/trends-table.tsx
+  s_7600dcd0b5ec39::t_25321610aedab0 186
+  s_7600dcd0b5ec39::t_0eb5d539a37507 179
+  s_7600dcd0b5ec39::t_4d1ab642dcfb61 227
+app/_layout.tsx
+  s_ebe152c7fb47ca::t_487fc77865e9bb 216
+app/spray-catalog.tsx
+  s_73acc62b01f057::t_dbcda6a886fd7d 6
+app/farm/[id].tsx
+  s_6cfa0b707df325::t_9443b0fb73cc03 95
+  s_ebe152c7fb47ca::t_7b4aeb7af884c1 230-237
+__tests__/chat-screen.test.tsx
+  s_ebe152c7fb47ca::t_dfe9dc0b2dd9e8 252-253
+src/components/cards/timeline-log-card.tsx
+  s_ebe152c7fb47ca::t_3ba659b5c7de83 164
+  s_ebe152c7fb47ca::t_6de027f8eb75ba 429
+app/professional/farm/[farmId]/index.tsx
+  s_6fc3aa0abcc021::t_53caa03580df0f 25-28
+  s_6fc3aa0abcc021::t_cfaeb76ffa7fd1 357
+app/log-entry/edit/[id].tsx
+  s_6cfa0b707df325::t_ba6cac46213d09 8-9
+src/hooks/use-voice-mode.ts
+  s_ebe152c7fb47ca::t_daef0288bc07c6 164
+__tests__/otp-verification.test.tsx
+  s_ebe152c7fb47ca::t_6e4710a2326f61 44-50
+src/components/screens/location-picker.tsx
+  s_595048062ebfb4::t_a020a1bb5a7936 161-167,175,180-181,207,209,213-215
+  s_6fc3aa0abcc021::t_e6b26cd780605b 449
+  s_595048062ebfb4::t_c5ef15b61f9eb2 104-105
+  s_6fc3aa0abcc021::t_b65defae7cc078 73-78
+  s_73acc62b01f057::t_c67543b99d305a 16
+  s_595048062ebfb4::t_2d4f8113f2ca9a 225-231,235,240-241,248
+  s_595048062ebfb4::t_ceb409766f5a01 132-144
+src/components/ui/otp-input.tsx
+  s_ebe152c7fb47ca::t_149be13928849b 50,63-65,67-68
+  s_34862d5832b357::t_4faab725eb0a00 171-173,177
+src/components/assistant/SuggestionChips.tsx
+  s_f227f7d7773c7b::t_fb68903d969dab 56
+  s_f227f7d7773c7b::t_567856df0ca5a2 52
+src/components/screens/reports/report-section-block.tsx
+  s_7600dcd0b5ec39::t_29914d54dfa8b7 242,244
+src/components/cards/worker-card.tsx
+  s_7600dcd0b5ec39::t_ab97b17b6cc2b0 262,264
+app/(auth)/phone-login.tsx
+  s_ebe152c7fb47ca::t_ec0dea8bd0efd7 119-128
+app/(auth)/forgot-password.tsx
+  s_ebe152c7fb47ca::t_51e4924422895c 33-38
+src/components/assistant/ChatScreen.tsx
+  s_6cfa0b707df325::t_c207baaeb299ee 212
+app/fertilizer-plans.tsx
+  s_6cfa0b707df325::t_3e1e29d8c20564 49
+app/logs.tsx
+  s_6cfa0b707df325::t_3ac47debb1d70b 82
+src/components/forms/product-typeahead.tsx
+  s_7442d761beb0a6::t_f8612ceb3fd4f2 36-38
+  s_7442d761beb0a6::t_e38d11eebb67af 13-14
+src/components/screens/entry-form/LogTypeSelector.tsx
+  s_fe00c375f666e5::t_805810d18659c9 40
+  s_fe00c375f666e5::t_b8d30bb52754a4 29-30
+src/components/ui/safe-screen.tsx
+  s_34862d5832b357::t_b53a2687d0f61e 10-11,15
+  s_34862d5832b357::t_a5706ca39d90cb 2
+app/index.tsx
+  s_2ff4da09340cd4::t_1456dd1cf83842 36
+  s_2ff4da09340cd4::t_5423517bc588ea 15
+  s_ebe152c7fb47ca::t_00f350003aee55 22-26
+  s_2ff4da09340cd4::t_98407adfee064b 37
+  s_2ff4da09340cd4::t_ee73d0cccc379b 118-123,131-138
+src/components/cards/assistant-answer-card.tsx
+  s_f227f7d7773c7b::t_555f6df30b62d5 178
+app/weather.tsx
+  s_d432d62c8fbdb9::t_8f00ca079803dc 1301,1303
+  s_d432d62c8fbdb9::t_59f9e895bcac61 1211,1213
+  s_d432d62c8fbdb9::t_4da2f2b71c525f 1337,1339
+  s_d432d62c8fbdb9::t_ac0134706d6fbe 1124,1126
+  s_d432d62c8fbdb9::t_1722af287d6bf8 1206-1207
+app/tasks.tsx
+  s_6cfa0b707df325::t_9da37a5d324f64 103
+app/add-worker.tsx
+  s_6cfa0b707df325::t_97d059015df5da 8-9
+app/add-entry.tsx
+  s_6cfa0b707df325::t_3b9011bc137a5f 64-65
+app/(auth)/login.tsx
+  s_ebe152c7fb47ca::t_d2e2c59e4d9b7c 48-56
+src/components/forms/fertigation-form.tsx
+  s_7442d761beb0a6::t_1f0ec15ebb3cd5 498-503
+  s_7442d761beb0a6::t_6930cc65e9bf54 50-55
+  s_7442d761beb0a6::t_9bbb370098ca75 139-141
+  s_7442d761beb0a6::t_a4b1f885b8c066 399,403
+app/analytics.tsx
+  s_d432d62c8fbdb9::t_18477b4ccc3872 930,932
+  s_d432d62c8fbdb9::t_613872a914360f 987
+__tests__/phone-number-hint.test.tsx
+  s_ebe152c7fb47ca::t_661348fa077d46 43-44
+src/hooks/use-assistant.ts
+  s_595048062ebfb4::t_4478944202e0f0 236,253,265
+  s_595048062ebfb4::t_8bdf2b06788738 160,179,198
+  s_595048062ebfb4::t_c81e5a9460007a 336,340,346
+  s_595048062ebfb4::t_a0c7865d2e1e46 15
+  s_595048062ebfb4::t_1b8a659a91286c 93-104
+src/components/screens/entry-form/PendingLogs.tsx
+  s_fe00c375f666e5::t_00f612dadf9f8c 53-57
+  s_fe00c375f666e5::t_c6edff4212c261 51-52
+app/add-stock.tsx
+  s_6cfa0b707df325::t_564be6742318fb 9-10
+src/components/modals/worker-settlement-modal.tsx
+  s_6cfa0b707df325::t_2f6aeac1ae85c9 164-166
+src/components/ui/explore-primitives.tsx
+  s_34862d5832b357::t_48e3427a8dff05 154
+src/components/screens/attendance-subcomponents/calendar-attendance-tab.tsx
+  s_7600dcd0b5ec39::t_e77073b6625e5d 318
+  s_7600dcd0b5ec39::t_613d5478738b39 308
+  s_7600dcd0b5ec39::t_f35aa1c91ce855 288-289
+app/(tabs)/explore.tsx
+  s_6cfa0b707df325::t_658f3d67388cc4 54
+app/add-warehouse-item.tsx
+  s_6cfa0b707df325::t_92e5ce512889f9 9-10
+src/components/screens/farms-pane-b.tsx
+  s_7600dcd0b5ec39::t_acdc4116145914 456
+  s_7600dcd0b5ec39::t_4c27cc8c422427 545,547
+app/edit-activity/[id].tsx
+  s_6cfa0b707df325::t_26cda5549a3105 9-10
+src/components/screens/entry-form/LogForm.tsx
+  s_fe00c375f666e5::t_b23ac09d6c8f56 31-35
+  s_fe00c375f666e5::t_0264e89cbe9c41 88-93
+src/components/ui/form-components.tsx
+  s_34862d5832b357::t_7c1bc88128075b 1094-1095
+  s_34862d5832b357::t_d9268222b869d6 543-544,550
+app/reports.tsx
+  s_ebe152c7fb47ca::t_b1d6d2d2e76018 103
+app/app-settings.tsx
+  s_ebe152c7fb47ca::t_053a7acd9faa18 93-99
+src/components/assistant/MessageBubble.tsx
+  s_ebe152c7fb47ca::t_d38506c03ffc15 32
+  s_ebe152c7fb47ca::t_3e8551abde05ac 244
+app/(tabs)/workers.tsx
+  s_6cfa0b707df325::t_e9a0ef08cce3f6 65-68
+  s_6cfa0b707df325::t_b31626f3666432 52
+app/(auth)/reset-password.tsx
+  s_ebe152c7fb47ca::t_7f1a5cf9270173 33-36
+app/add-task.tsx
+  s_6cfa0b707df325::t_e42bc61a593ee7 13-14
+components/widgets/dashboard/VineyardHealthWidget/VineyardHealthWidget.tsx
+  s_73acc62b01f057::t_ecb2a484204f05 3
+  s_34862d5832b357::t_6b3cd18ce142b2 98-102,109
+app/(auth)/profile-completion.tsx
+  s_ebe152c7fb47ca::t_7ea1bacf6e2d3e 47-53
+src/components/ui/symbol.tsx
+  s_73acc62b01f057::t_ed966b930175ab 4-5
+src/components/assistant/InputBar.tsx
+  s_f227f7d7773c7b::t_a6db4b9cd22c8b 34-35
+  s_f227f7d7773c7b::t_dfe93c28bd44eb 96
+  s_f227f7d7773c7b::t_0c50d952be194e 56
+src/components/screens/worker-form.tsx
+  s_6cfa0b707df325::t_c291405da26361 50-52
+package.json
+  s_73acc62b01f057::t_364ceb67b5dfcf 49
+src/components/assistant/MessageActions.tsx
+  s_f227f7d7773c7b::t_217ab2395104a5 31
+  s_f227f7d7773c7b::t_29c9052dd9c392 29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "49aa594185b5a4867da8155414b624a70b9f83a8",
+  "prompts": {},
+  "sessions": {
+    "s_2ff4da09340cd4": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06fc102d8ffenbuJ0rPJEKF566",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_34862d5832b357": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06fbeac6bffeqOJLq3bjoDLpLN",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_595048062ebfb4": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06f91556cffeyEpi8bWQ8FNbM6",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_6cfa0b707df325": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06f91557cffemKmnYvIkvtnkE4",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_6fc3aa0abcc021": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06fbe8c87ffe88wJXnqS0XkTaT",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_73acc62b01f057": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0701fa839ffeUCSgFkDQumLdv3",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_7442d761beb0a6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06fbeac93ffewLa9AVtlnohUkV",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_7600dcd0b5ec39": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06fbe8c95ffeitTVNVq9YoON3h",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_d432d62c8fbdb9": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06fbe8ca4ffeuZIj5C3V3g6w9u",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_ebe152c7fb47ca": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06fc40760ffelyy8KPRwnKXEbR",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_f227f7d7773c7b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06fbeac76ffeanK5EcdwK1FD1r",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_fe00c375f666e5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06fbeac83ffewZiJWtP7FX5wSr",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
