@@ -1,18 +1,24 @@
-import { baseTabLabelKey } from '@/components/navigation/tab-definitions';
+import { baseTabIconKey, baseTabLabelKey } from '@/components/navigation/tab-definitions';
 
 describe('baseTabLabelKey', () => {
-  it('relabels the base destinations to Home/Farms in Simplified mode', () => {
-    expect(baseTabLabelKey('index', false, 'tabs.dashboard')).toBe('tabs.home');
-    expect(baseTabLabelKey('explore', false, 'tabs.explore')).toBe('tabs.farms');
+  it('labels the base destinations Home / Farming (same in both modes)', () => {
+    expect(baseTabLabelKey('index', 'tabs.dashboard')).toBe('tabs.home');
+    expect(baseTabLabelKey('explore', 'tabs.explore')).toBe('tabs.explore');
   });
 
-  it('keeps Dashboard/Farming labels in Detailed mode', () => {
-    expect(baseTabLabelKey('index', true, 'tabs.dashboard')).toBe('tabs.dashboard');
-    expect(baseTabLabelKey('explore', true, 'tabs.explore')).toBe('tabs.explore');
+  it('falls back to the tab title key for non-base tabs', () => {
+    expect(baseTabLabelKey('workers', 'tabs.workers')).toBe('tabs.workers');
+    expect(baseTabLabelKey('tools', 'tabs.tools')).toBe('tabs.tools');
+  });
+});
+
+describe('baseTabIconKey', () => {
+  it('maps the base destinations to home / tractor (same in both modes)', () => {
+    expect(baseTabIconKey('index')).toBe('home');
+    expect(baseTabIconKey('explore')).toBe('tractor');
   });
 
-  it('falls back to the tab title key for non-base tabs in either mode', () => {
-    expect(baseTabLabelKey('workers', false, 'tabs.workers')).toBe('tabs.workers');
-    expect(baseTabLabelKey('tools', true, 'tabs.tools')).toBe('tabs.tools');
+  it('defaults to home for any other route', () => {
+    expect(baseTabIconKey('workers')).toBe('home');
   });
 });

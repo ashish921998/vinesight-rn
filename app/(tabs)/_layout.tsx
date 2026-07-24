@@ -12,7 +12,7 @@ import { useM3, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
 import { ComposeTabBar } from '@/components/navigation/compose-tab-bar';
-import { DETAILED_TABS, baseTabLabelKey } from '@/components/navigation/tab-definitions';
+import { DETAILED_TABS } from '@/components/navigation/tab-definitions';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -118,7 +118,7 @@ export default function TabLayout() {
             headerTransparent: defaultHeaderOptions.headerTransparent,
           }}
         >
-          <Tabs.Screen name="index" options={{ title: t('tabs.dashboard'), headerShown: false }} />
+          <Tabs.Screen name="index" options={{ title: t('tabs.home'), headerShown: false }} />
           <Tabs.Screen name="explore" options={{ title: t('tabs.explore'), headerShown: false }} />
           {DETAILED_TABS.map((tab) => (
             <Tabs.Screen
@@ -158,7 +158,7 @@ export default function TabLayout() {
         <NativeTabs.Trigger name="index">
           {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'), 'grid-outline', 'grid')}
           <NativeTabs.Trigger.Label>
-            {t(baseTabLabelKey('index', detailedMode, 'tabs.dashboard'))}
+            {t(detailedMode ? 'tabs.dashboard' : 'tabs.home')}
           </NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="explore">
@@ -175,7 +175,7 @@ export default function TabLayout() {
             }}
           />
           <NativeTabs.Trigger.Label>
-            {t(baseTabLabelKey('explore', detailedMode, 'tabs.explore'))}
+            {t(detailedMode ? 'tabs.explore' : 'tabs.farms')}
           </NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         {detailedMode &&

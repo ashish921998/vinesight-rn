@@ -25,7 +25,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.3.1',
+    version: '3.3.2',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
@@ -80,7 +80,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 39,
+      versionCode: 40,
       // Required for FCM so `FirebaseApp.initializeApp` runs at build time;
       // without it `getExpoPushTokenAsync` fails on Android with
       // E_REGISTRATION_FAILED ("Default FirebaseApp is not initialized").
@@ -114,8 +114,12 @@ module.exports = {
         backgroundColor: 'transparent',
         barStyle: 'auto',
       },
+      // Nav-bar *background* is owned by ./plugins/with-android-navigation-bar
+      // (a night-qualified color resource, since one static color can't
+      // contrast both the light and dark app backgrounds). `barStyle` here only
+      // seeds the initial button tint; the runtime <NavigationBar> component in
+      // app/_layout.tsx drives it per theme.
       navigationBar: {
-        backgroundColor: 'transparent',
         barStyle: 'auto',
       },
     },
@@ -128,6 +132,7 @@ module.exports = {
       'expo-asset',
       'expo-system-ui',
       ['expo-navigation-bar', { enforceContrast: false }],
+      './plugins/with-android-navigation-bar',
       'expo-audio',
       'expo-notifications',
       [

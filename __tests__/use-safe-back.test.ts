@@ -27,6 +27,26 @@ describe('useSafeBack', () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
+  it('dispatches only once when dismissal is requested twice before navigation updates', () => {
+    jest.useFakeTimers();
+    mockCanGoBack.mockReturnValue(true);
+    const { result } = renderHook(() => useSafeBack());
+
+    result.current();
+    result.current();
+
+    expect(mockCanGoBack).toHaveBeenCalledTimes(1);
+    expect(mockBack).toHaveBeenCalledTimes(1);
+    expect(mockReplace).not.toHaveBeenCalled();
+
+    jest.advanceTimersByTime(500);
+    result.current();
+
+    expect(mockCanGoBack).toHaveBeenCalledTimes(2);
+    expect(mockBack).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
+  });
+
   it('replaces to the tabs home when the stack has nothing to pop', () => {
     // This is the GO_BACK-orphan case: a modal reached as a root route.
     mockCanGoBack.mockReturnValue(false);

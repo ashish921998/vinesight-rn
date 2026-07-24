@@ -419,11 +419,12 @@ function SeasonTimeline({ farms, today, seasonRatio, isDark, t }: SeasonTimeline
         if (days == null) return null;
         const ratio = Math.min(1, days / SEASON_LENGTH_DAYS);
         return {
+          id: String(f.id),
           x: TIMELINE_HORIZONTAL_PAD + ratio * usableWidth,
           color: getFarmAccentColor(f.id, isDark),
         };
       })
-      .filter((x): x is { x: number; color: string } => x != null);
+      .filter((x): x is { id: string; x: number; color: string } => x != null);
   }, [farms, today, isDark, usableWidth]);
 
   const railColor = colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.3);
@@ -544,7 +545,7 @@ function SeasonTimeline({ farms, today, seasonRatio, isDark, t }: SeasonTimeline
       {trackWidth > 0
         ? farmDots.map((dot) => (
             <View
-              key={dot.x}
+              key={dot.id}
               style={{
                 position: 'absolute',
                 width: 10,

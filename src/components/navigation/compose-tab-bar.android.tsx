@@ -1,46 +1,57 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
-import { Host, Icon, NavigationBar, NavigationBarItem, Text } from '@expo/ui/jetpack-compose';
+import { Box, Host, Icon, NavigationBar, NavigationBarItem, Text } from '@expo/ui/jetpack-compose';
+import agricultureOutlinedIcon from '@expo/material-symbols/agriculture.xml';
+import buildOutlinedIcon from '@expo/material-symbols/build.xml';
+import groupOutlinedIcon from '@expo/material-symbols/group.xml';
+import homeOutlinedIcon from '@expo/material-symbols/home.xml';
 import { useM3, useIsDark } from '@/styles/use-theme';
 import { useAppModeStore } from '@/stores';
-import { getAndroidBottomSystemInset } from '@/utils/android-system-bars';
-import dashboardIcon from '../../../assets/tab-icons/dashboard.xml';
-import homeIcon from '../../../assets/tab-icons/home.xml';
-import barnIcon from '../../../assets/tab-icons/barn.xml';
-import tractorIcon from '../../../assets/tab-icons/tractor.xml';
-import workersIcon from '../../../assets/tab-icons/workers.xml';
-import toolsIcon from '../../../assets/tab-icons/tools.xml';
+import homeFilledIcon from '../../../assets/tab-icons/material-home-filled.xml';
+import agricultureFilledIcon from '../../../assets/tab-icons/material-agriculture-filled.xml';
+import groupFilledIcon from '../../../assets/tab-icons/material-group-filled.xml';
+import buildFilledIcon from '../../../assets/tab-icons/material-build-filled.xml';
 import { BASE_TABS, DETAILED_TABS, baseTabIconKey, baseTabLabelKey } from './tab-definitions';
 
 type TabName = (typeof BASE_TABS)[number]['name'] | (typeof DETAILED_TABS)[number]['name'];
+type IconKey = 'home' | 'tractor' | 'workers' | 'tools';
 
 // Android bottom nav via @expo/ui's Material 3 NavigationBar. It is a pure
 // renderer with no routing, so we drive it from expo-router's <Tabs> navigator
 // state (passed in as BottomTabBarProps) — selection from state.index, taps via
 // navigation.emit/navigate. Icons must be Android XML vector drawables.
 //
-// The two base destinations swap their icon with the mode label:
-//   index   → home (Simplified) / dashboard (Detailed)
-//   explore → barn (Simplified, "Farms") / tractor (Detailed, "Farming")
-const DETAILED_TAB_ICONS: Record<(typeof DETAILED_TABS)[number]['name'], number> = {
-  workers: workersIcon,
-  tools: toolsIcon,
+// The two base destinations keep the same label/icon in both Simple and
+// Detailed mode: index → Home (home), explore → Farming (tractor).
+//
+// NOTE on the `icon` slot: this @expo/ui build exposes NavigationBarItem.SelectedIcon
+// in TS, but the Android Kotlin view only reads `icon` and `label`. Keep selected
+// treatment in the single supported slot.
+//
+const FILLED_ICONS: Record<IconKey, number> = {
+  home: homeFilledIcon,
+  tractor: agricultureFilledIcon,
+  workers: groupFilledIcon,
+  tools: buildFilledIcon,
 };
 
-const BASE_ICON_BY_KEY = {
-  home: homeIcon,
-  dashboard: dashboardIcon,
-  barn: barnIcon,
-  tractor: tractorIcon,
-} as const;
+// Both states use official Material Symbols with the same name, optical size,
+// and 960-unit geometry. Inactive tabs render only the outline. Selected tabs
+// layer the matching outline over its filled variant for a coherent two-tone
+// glyph while NavigationBar owns the native indicator transition.
+const OUTLINED_ICONS: Record<IconKey, number> = {
+  home: homeOutlinedIcon,
+  tractor: agricultureOutlinedIcon,
+  workers: groupOutlinedIcon,
+  tools: buildOutlinedIcon,
+};
 
-export function ComposeTabBar({ state, navigation, insets }: BottomTabBarProps) {
+export function ComposeTabBar({ state, navigation }: BottomTabBarProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const isDark = useIsDark();
   const detailedMode = useAppModeStore((s) => s.detailedMode);
-  const bottomInset = getAndroidBottomSystemInset(insets.bottom);
 
   const tabs = detailedMode ? [...BASE_TABS, ...DETAILED_TABS] : BASE_TABS;
   const activeName = state.routes[state.index]?.name;
@@ -54,28 +65,38 @@ export function ComposeTabBar({ state, navigation, insets }: BottomTabBarProps) 
     unselectedTextColor: m3.colorScheme.onSurfaceVariant,
   };
 
-  const iconFor = (tabName: TabName): number => {
+  const iconKeyFor = (tabName: TabName): IconKey => {
     if (tabName === 'index' || tabName === 'explore') {
-      return BASE_ICON_BY_KEY[baseTabIconKey(tabName, detailedMode)];
+      return baseTabIconKey(tabName);
     }
-    return DETAILED_TAB_ICONS[tabName as (typeof DETAILED_TABS)[number]['name']];
+    return tabName as Extract<IconKey, 'workers' | 'tools'>;
   };
 
   return (
     <View
       style={{
-        backgroundColor: m3.surface.surfaceContainerLow,
-        paddingBottom: bottomInset,
+        // M3 NavigationBar spec (m3.material.io/components/navigation-bar/specs):
+        // the container color role is `surface container` (surface[200]), not
+        // surfaceContainerLow — at surface[100] the bar blends into the app bg.
+        //
+        // NO manual bottom padding: the native Compose NavigationBar already applies
+        // `navigationBarsPadding()` (windowInsets) internally, so its container color
+        // extends behind the system gesture/3-button bar. Adding `insets.bottom` here
+        // on top double-counts it and produces the extra bottom gap (large in 3-button
+        // mode, smaller in gesture mode). See NavigationBarView.kt — it calls the M3
+        // `NavigationBar` composable without overriding `windowInsets`.
+        backgroundColor: m3.surface.surfaceContainer,
         borderTopWidth: StyleSheet.hairlineWidth,
         borderTopColor: m3.colorScheme.outlineVariant,
       }}
     >
       <Host matchContents={{ vertical: true }} style={{ width: '100%' }}>
-        <NavigationBar containerColor={m3.surface.surfaceContainerLow}>
+        <NavigationBar containerColor={m3.surface.surfaceContainer}>
           {tabs.map((tab) => {
             const route = state.routes.find((r: { name: string }) => r.name === tab.name);
             if (!route) return null;
             const focused = activeName === tab.name;
+            const iconKey = iconKeyFor(tab.name);
             return (
               <NavigationBarItem
                 key={tab.name}
@@ -93,10 +114,33 @@ export function ComposeTabBar({ state, navigation, insets }: BottomTabBarProps) 
                 }}
               >
                 <NavigationBarItem.Icon>
-                  <Icon source={iconFor(tab.name)} size={tab.name === 'tools' ? 22 : 24} />
+                  <Box contentAlignment="center">
+                    {focused ? (
+                      <Icon source={FILLED_ICONS[iconKey]} size={24} tint={m3.primary.p500} />
+                    ) : null}
+                    <Icon
+                      source={OUTLINED_ICONS[iconKey]}
+                      size={24}
+                      tint={
+                        focused
+                          ? m3.colorScheme.onSecondaryContainer
+                          : m3.colorScheme.onSurfaceVariant
+                      }
+                    />
+                  </Box>
                 </NavigationBarItem.Icon>
                 <NavigationBarItem.Label>
-                  <Text>{t(baseTabLabelKey(tab.name, detailedMode, tab.titleKey))}</Text>
+                  {/*
+                    typography: 'labelMedium' matches the M3 NavigationBar spec
+                    (12sp / weight 500 — what Play Store & Google apps use). The
+                    @expo/ui Text does NOT inherit the label style that
+                    NavigationBarItem provides via ProvideTextStyle; without this it
+                    falls back to Compose TextStyle.Default (16sp / weight 400),
+                    which looks too large and too thin.
+                  */}
+                  <Text style={{ typography: 'labelMedium' }}>
+                    {t(baseTabLabelKey(tab.name, tab.titleKey))}
+                  </Text>
                 </NavigationBarItem.Label>
               </NavigationBarItem>
             );

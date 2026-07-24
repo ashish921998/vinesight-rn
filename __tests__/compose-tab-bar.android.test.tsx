@@ -18,9 +18,10 @@ jest.mock('@/styles/use-theme', () => ({
       outlineVariant: '#dddddd',
       secondaryContainer: '#eeeeee',
     },
-    primary: { p200: '#cfe8dd' },
+    primary: { p200: '#cfe8dd', p500: '#355847' },
     surface: {
       surfaceContainerLow: '#ffffff',
+      surfaceContainer: '#ffffff',
     },
   }),
 }));
@@ -58,7 +59,18 @@ jest.mock('@expo/ui/jetpack-compose', () => {
         {children}
       </NativeView>
     ),
-    Icon: () => <NativeView />,
+    AnimatedVisibility: ({ children, visible }: { children: React.ReactNode; visible: boolean }) =>
+      visible ? <NativeView>{children}</NativeView> : null,
+    Box: ({ children }: { children: React.ReactNode }) => <NativeView>{children}</NativeView>,
+    EnterTransition: {
+      fadeIn: () => ({ plus: () => ({}) }),
+      scaleIn: () => ({}),
+    },
+    ExitTransition: {
+      fadeOut: () => ({ plus: () => ({}) }),
+      scaleOut: () => ({}),
+    },
+    Icon: (props: { source: number; tint?: string }) => <NativeView testID="tab-icon" {...props} />,
     NavigationBar: ({ children }: { children: React.ReactNode }) => (
       <NativeView>{children}</NativeView>
     ),
@@ -129,5 +141,36 @@ describe('ComposeTabBar Android layout', () => {
     expect(getByText('tabs.workers')).toBeTruthy();
     expect(getByText('tabs.tools')).toBeTruthy();
     expect(queryByText('tabs.aiAssistant')).toBeNull();
+  });
+
+  it('renders one icon layer when inactive and two layers when selected', () => {
+    mockDetailedMode = true;
+    const state = {
+      index: 0,
+      routes: [
+        { key: 'index-key', name: 'index' },
+        { key: 'explore-key', name: 'explore' },
+        { key: 'workers-key', name: 'workers' },
+        { key: 'tools-key', name: 'tools' },
+      ],
+    };
+
+    const { getAllByTestId } = render(
+      <ComposeTabBar
+        state={state}
+        navigation={{
+          emit: jest.fn(() => ({ defaultPrevented: false })),
+          navigate: jest.fn(),
+        }}
+        descriptors={{}}
+        insets={{ top: 0, right: 0, bottom: 24, left: 0 }}
+      />,
+    );
+
+    // Four base glyphs plus the selected Home tab's accent overlay.
+    expect(getAllByTestId('tab-icon')).toHaveLength(5);
+    expect(getAllByTestId('tab-icon').filter((icon) => icon.props.tint === '#355847')).toHaveLength(
+      1,
+    );
   });
 });

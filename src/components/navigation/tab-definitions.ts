@@ -6,24 +6,21 @@ export const BASE_TABS = [
   { name: 'explore', titleKey: 'tabs.explore' },
 ] as const;
 
-// The two base destinations are relabelled in Simplified mode (Home / Farms)
-// without changing their routes; Detailed mode keeps Dashboard / Farming.
-export function baseTabLabelKey(name: string, detailedMode: boolean, fallbackKey: string): string {
-  if (name === 'index') return detailedMode ? 'tabs.dashboard' : 'tabs.home';
-  if (name === 'explore') return detailedMode ? 'tabs.explore' : 'tabs.farms';
+// The two base destinations keep ONE label + icon in both Simple and Detailed
+// mode. (They previously swapped Home/Farms ↔ Dashboard/Farming per mode, which
+// made the tab bar read differently between modes — same routes, different
+// chrome.) index is Home (house); explore is Farming (tractor). Routes unchanged.
+export function baseTabLabelKey(name: string, fallbackKey: string): string {
+  if (name === 'index') return 'tabs.home';
+  if (name === 'explore') return 'tabs.explore';
   return fallbackKey;
 }
 
-// The two base destinations also swap their Android vector icon to match the
-// mode label: Simplified shows Home (house) + Farms (barn); Detailed shows
-// Dashboard (grid) + Farming (tractor). DETAILED_TABS always use the same icon.
-export function baseTabIconKey(
-  name: string,
-  detailedMode: boolean,
-): 'home' | 'dashboard' | 'barn' | 'tractor' {
-  if (name === 'index') return detailedMode ? 'dashboard' : 'home';
-  if (name === 'explore') return detailedMode ? 'tractor' : 'barn';
-  return 'dashboard';
+// Base-destination Android vector icon matches the label above:
+// index → home (house), explore → tractor. DETAILED_TABS use their own icons.
+export function baseTabIconKey(name: string): 'home' | 'tractor' {
+  if (name === 'explore') return 'tractor';
+  return 'home';
 }
 
 export const DETAILED_TABS = [
