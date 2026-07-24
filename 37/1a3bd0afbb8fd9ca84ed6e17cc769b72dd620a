@@ -1,0 +1,79 @@
+src/components/screens/farms-pane-b.tsx
+  s_cf4aad7da221c5::t_ad3c90920252b8 422,427,548
+src/components/navigation/compose-tab-bar.android.tsx
+  s_d7103aa1612bda::t_03d4885802ebf2 14
+  s_cf4aad7da221c5::t_b67432dd365cbd 46,78-83,125-130,133-135
+  s_cf4aad7da221c5::t_e8dc7d688125e2 18,27,39-44,68
+  s_cf4aad7da221c5::t_b3b9d004f0f5f8 84
+  s_cf4aad7da221c5::t_b79a7cdfffb9a3 28-36,123
+  s_d7103aa1612bda::t_edd5f75dda99b8 117-122
+  s_cf4aad7da221c5::t_50b31a37cbb2c2 25-26
+  s_d7103aa1612bda::t_00788ee6476721 11-13
+  s_cf4aad7da221c5::t_8391ece8a5ca05 45
+  s_cf4aad7da221c5::t_e13c8bedc0a972 47-48
+  s_cf4aad7da221c5::t_55b4c8ae741f5f 85-87
+  s_cf4aad7da221c5::t_b5472878f27018 124
+  s_cf4aad7da221c5::t_3cf7b74155f8e3 136-138
+__tests__/tab-definitions.test.ts
+  s_cf4aad7da221c5::t_270191f9f96502 1,4-6,9-18,21-22
+__tests__/compose-tab-bar.android.test.tsx
+  s_cf4aad7da221c5::t_eda14a2457b564 24
+__tests__/symbol-android-mapping.test.tsx
+  s_cf4aad7da221c5::t_151bed49637d3d 28,31,40,46,60-71
+  s_cf4aad7da221c5::t_71a6df7f975451 35,39,47-59
+  s_cf4aad7da221c5::t_763d9f5ed7c798 25-27
+  s_cf4aad7da221c5::t_ec9ecdfc01a06f 29-30
+  s_cf4aad7da221c5::t_de494baf05b8b6 32-34
+  s_cf4aad7da221c5::t_a516f1b789f555 36-38
+  s_cf4aad7da221c5::t_0eb0e85f5167f3 41-45
+  s_cf4aad7da221c5::t_c2393936e43c89 72
+  s_cf4aad7da221c5::t_8a9df160980c81 1-9,11,19-24
+src/components/navigation/tab-definitions.ts
+  s_cf4aad7da221c5::t_05eb26afb205e1 9-15,19-23
+src/hooks/use-tab-bar-inset.android.ts
+  s_cf4aad7da221c5::t_665081553a3c0f 8-11
+plugins/with-android-navigation-bar.js
+  s_cf4aad7da221c5::t_8faecaf739f9ab 29-34,37-38
+  s_b608104a77af05::t_6bce883e214263 43-46
+  s_b608104a77af05::t_dce08676a76c24 1-28,35-36,39-42,47-116
+app.config.js
+  s_b608104a77af05::t_4a30592a03c125 117-121,135
+  s_b608104a77af05::t_b90bb2f7708e6a 28,83
+src/components/ui/symbol.tsx
+  s_cf4aad7da221c5::t_8c767146a96e14 31-34
+  s_cf4aad7da221c5::t_50fa4449b4fa0c 35-36,52,54-55
+app/(tabs)/_layout.tsx
+  s_cf4aad7da221c5::t_966761fc1a18a6 121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "371a3bd0afbb8fd9ca84ed6e17cc769b72dd620a",
+  "prompts": {},
+  "sessions": {
+    "s_b608104a77af05": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f9370-3f23-7102-9eb1-940eaa9a657f",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_cf4aad7da221c5": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f938a-ce77-7e20-b7e3-80c2085f9a81",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_d7103aa1612bda": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f93db-da07-78ac-a37f-355444967217",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
