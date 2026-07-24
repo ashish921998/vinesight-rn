@@ -8,6 +8,14 @@ type AndroidStyle = {
   item?: Array<{ $: { name: string }; _: string }>;
 };
 
+const getStyle = (
+  styles: { resources: { style: AndroidStyle[] } },
+  name: string,
+): AndroidStyle | undefined => styles.resources.style.find((style) => style.$.name === name);
+
+const countStyleItems = (style: AndroidStyle | undefined, name: string, value: string): number =>
+  style?.item?.filter((item) => item.$.name === name && item._ === value).length ?? 0;
+
 /** Count `<tag name="name"` / `<tag name='name'` occurrences (either quote). */
 const countEntries = (xml: string, tag: string, name: string): number =>
   (xml.match(new RegExp(`<${tag}\\s+name=["']${name}["']`, 'g')) || []).length;
@@ -110,33 +118,38 @@ describe('with-android-navigation-bar', () => {
       },
     };
 
-    const output = assignNavigationBarStyles(styles);
-    const appTheme = output.resources.style.find(
-      (style: AndroidStyle) => style.$.name === 'AppTheme',
-    );
-    const splashTheme = output.resources.style.find(
-      (style: AndroidStyle) => style.$.name === 'Theme.App.SplashScreen',
-    );
+    const once = assignNavigationBarStyles(styles);
+    const output = assignNavigationBarStyles(once);
+    const appTheme = getStyle(output, 'AppTheme');
+    const splashTheme = getStyle(output, 'Theme.App.SplashScreen');
 
-    expect(appTheme.item).toEqual(
-      expect.arrayContaining([
-        {
-          $: { name: 'android:navigationBarColor' },
-          _: '@color/vinesight_navigation_bar',
-        },
-        {
-          $: { name: 'android:windowLightNavigationBar' },
-          _: '@bool/vinesight_light_navigation_bar',
-        },
-      ]),
-    );
-    expect(splashTheme.item).toEqual(
-      expect.arrayContaining([
-        {
-          $: { name: 'android:windowLightNavigationBar' },
-          _: '@bool/vinesight_light_navigation_bar',
-        },
-      ]),
-    );
+    expect(appTheme).toBeDefined();
+    expect(splashTheme).toBeDefined();
+    expect(
+      countStyleItems(appTheme, 'android:navigationBarColor', '@color/vinesight_navigation_bar'),
+    ).toBe(1);
+    expect(
+      countStyleItems(
+        appTheme,
+        'android:windowLightNavigationBar',
+        '@bool/vinesight_light_navigation_bar',
+      ),
+    ).toBe(1);
+    expect(
+      countStyleItems(
+        splashTheme,
+        'android:windowLightNavigationBar',
+        '@bool/vinesight_light_navigation_bar',
+      ),
+    ).toBe(1);
+    expect(
+      appTheme?.item?.filter((item) => item.$.name === 'android:navigationBarColor'),
+    ).toHaveLength(1);
+    expect(
+      appTheme?.item?.filter((item) => item.$.name === 'android:windowLightNavigationBar'),
+    ).toHaveLength(1);
+    expect(
+      splashTheme?.item?.filter((item) => item.$.name === 'android:windowLightNavigationBar'),
+    ).toHaveLength(1);
   });
 });

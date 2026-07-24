@@ -125,8 +125,8 @@ module.exports = {
       'expo-router',
       'expo-asset',
       'expo-system-ui',
-      './plugins/with-android-navigation-bar',
       ['expo-navigation-bar', { enforceContrast: false }],
+      './plugins/with-android-navigation-bar',
       'expo-audio',
       'expo-notifications',
       [
