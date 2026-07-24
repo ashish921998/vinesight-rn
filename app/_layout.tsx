@@ -213,10 +213,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
   const router = useRouter();
   const routerRef = useRef(router);
-
-  useEffect(() => {
-    routerRef.current = router;
-  });
+  routerRef.current = router;
 
   useEffect(() => {
     // Initialize auth state

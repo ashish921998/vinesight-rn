@@ -45,17 +45,15 @@ export default function LoginScreen() {
   }, [redirect]);
   const requestedMode = mode === 'signup' ? 'signup' : 'signin';
 
-  const {
-    isLoading,
-    errorMessage,
-    pendingOTPEmail,
-    signIn,
-    signUpWithOTP,
-    clearError,
-    isAuthenticated,
-    signInWithApple,
-    signInWithGoogle,
-  } = useAuthStore();
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const errorMessage = useAuthStore((s) => s.errorMessage);
+  const pendingOTPEmail = useAuthStore((s) => s.pendingOTPEmail);
+  const signIn = useAuthStore((s) => s.signIn);
+  const signUpWithOTP = useAuthStore((s) => s.signUpWithOTP);
+  const clearError = useAuthStore((s) => s.clearError);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const signInWithApple = useAuthStore((s) => s.signInWithApple);
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
 
   // Navigate to OTP screen when pending
   useEffect(() => {

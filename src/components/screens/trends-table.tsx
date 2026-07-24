@@ -176,14 +176,14 @@ export default function TrendsTable({
         {/* Header */}
         <View style={styles.headerRow}>
           <Text style={[styles.headerCell, styles.nutrientCell]}>{t('trends.table.nutrient')}</Text>
-          {trendData.map((item, index) => {
+          {trendData.map((item) => {
             const date = new Date(item.date);
             const pruningDate =
               testType === 'petiole' && item.dateOfPruning ? new Date(item.dateOfPruning) : null;
             const hasPruningDate = pruningDate !== null && !Number.isNaN(pruningDate.getTime());
             const daysAfterPruning = hasPruningDate ? getDaysAfterPruning(date, pruningDate) : null;
             return (
-              <View key={`header-${item.date}-${index}`} style={styles.headerDateContainer}>
+              <View key={`header-${item.date}`} style={styles.headerDateContainer}>
                 {testType === 'petiole' && (
                   <View style={styles.headerDateBlock}>
                     <Text style={styles.headerDateLabel}>
@@ -224,10 +224,7 @@ export default function TrendsTable({
               const changeIndicator = getTrendIndicator(value ?? null, prevValue ?? null);
               const cellStyle = getCellColor(value ?? null, trend);
               return (
-                <View
-                  key={`${trend.key}-${item.date}-${colIndex}`}
-                  style={[styles.cell, cellStyle]}
-                >
+                <View key={`${trend.key}-${item.date}`} style={[styles.cell, cellStyle]}>
                   <Text style={styles.cellText}>
                     {value != null ? value.toFixed(2) : '-'}
                     {changeIndicator}

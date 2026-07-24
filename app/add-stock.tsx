@@ -6,7 +6,8 @@ import { useModalStore } from '@/stores';
 
 export default function AddStockRoute() {
   const router = useRouter();
-  const { addStock, setAddStock } = useModalStore();
+  const addStock = useModalStore((s) => s.addStock);
+  const setAddStock = useModalStore((s) => s.setAddStock);
 
   useEffect(() => {
     return () => setAddStock(null);

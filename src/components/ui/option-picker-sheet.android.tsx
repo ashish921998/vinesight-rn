@@ -1,11 +1,12 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
+import { ScrollView } from 'react-native';
 import { AppIcon } from '@/components/ui/app-icon';
 import { SheetHeader } from '@/components/ui/sheet-header';
 import { fontSize, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { AndroidModalSheet } from '@/components/ui/android-modal-sheet';
 
 export interface OptionPickerSheetOption {
   key: string;
@@ -32,17 +33,14 @@ export function OptionPickerSheet({
   const m3 = useM3();
 
   return (
-    <BottomSheet
-      index={visible ? 0 : -1}
-      enableDynamicSizing
-      enablePanDownToClose
-      onClose={onClose}
-      backgroundStyle={{ backgroundColor: m3.surface.s100 }}
-    >
+    <AndroidModalSheet visible={visible} onClose={onClose} backgroundColor={m3.surface.s100}>
       {/* No flex:1 — the sheet sizes to content, so a short list has no trailing gap. */}
       <View>
         <SheetHeader title={title} />
-        <BottomSheetScrollView contentContainerStyle={{ paddingBottom: spacing[8] }}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: spacing[8] }}
+        >
           {options.map((option) => {
             const isSelected = option.key === selectedKey;
             return (
@@ -81,8 +79,8 @@ export function OptionPickerSheet({
               </Pressable>
             );
           })}
-        </BottomSheetScrollView>
+        </ScrollView>
       </View>
-    </BottomSheet>
+    </AndroidModalSheet>
   );
 }

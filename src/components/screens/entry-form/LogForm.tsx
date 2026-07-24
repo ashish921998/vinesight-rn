@@ -28,6 +28,11 @@ import type { MasterCatalogProduct } from '@/types/catalog';
 import type { RecentInputItem } from '@/hooks/use-records';
 import type { FertilizerPlanItem } from '@/types/fertilizer-plan';
 
+const EMPTY_SPRAY_CATALOG_MIXES: ChemicalMix[] = [];
+const EMPTY_RECENT_INPUT_ITEMS: RecentInputItem[] = [];
+const EMPTY_FERTILIZER_PLAN_ITEMS: FertilizerPlanItem[] = [];
+const EMPTY_CATALOG_PRODUCTS: MasterCatalogProduct[] = [];
+
 interface LogFormProps {
   selectedLogType: LogTypeId | null;
   irrigationData: IrrigationFormData;
@@ -80,12 +85,12 @@ export function LogForm({
   isValid,
   hasFarm,
   sprayCatalogOnly = false,
-  sprayCatalogMixes = [],
-  sprayHistoryItems = [],
-  sprayPlanItems = [],
-  fertigationHistoryItems = [],
-  fertigationPlanItems = [],
-  fertigationCatalogProducts = [],
+  sprayCatalogMixes = EMPTY_SPRAY_CATALOG_MIXES,
+  sprayHistoryItems = EMPTY_RECENT_INPUT_ITEMS,
+  sprayPlanItems = EMPTY_FERTILIZER_PLAN_ITEMS,
+  fertigationHistoryItems = EMPTY_RECENT_INPUT_ITEMS,
+  fertigationPlanItems = EMPTY_FERTILIZER_PLAN_ITEMS,
+  fertigationCatalogProducts = EMPTY_CATALOG_PRODUCTS,
   areaAcres = null,
   showSaveButton = true,
   includeFertilizersWithIrrigation = false,

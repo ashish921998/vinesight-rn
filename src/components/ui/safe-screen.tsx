@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { useM3 } from '@/styles/use-theme';
 
 interface SafeScreenProps extends ComponentProps<typeof SafeAreaView> {
@@ -7,10 +7,12 @@ interface SafeScreenProps extends ComponentProps<typeof SafeAreaView> {
   children: ReactNode;
 }
 
+const DEFAULT_EDGES: Edge[] = ['top', 'left', 'right'];
+
 export function SafeScreen({
   backgroundColor,
   style,
-  edges = ['top', 'left', 'right'],
+  edges = DEFAULT_EDGES,
   children,
   ...props
 }: SafeScreenProps) {

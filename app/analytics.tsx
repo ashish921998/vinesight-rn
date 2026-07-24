@@ -927,9 +927,9 @@ export default function AnalyticsScreen() {
                   {t('analytics.sections.recommendations')}
                 </Text>
               </View>
-              {performanceMetrics.recommendations.map((rec, index) => (
+              {performanceMetrics.recommendations.map((rec) => (
                 <View
-                  key={index}
+                  key={rec}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'flex-start',
@@ -984,7 +984,7 @@ export default function AnalyticsScreen() {
                   };
                   return (
                     <View
-                      key={index}
+                      key={`${activity.date}-${activity.type}-${activity.details}`}
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',

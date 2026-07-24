@@ -90,15 +90,13 @@ export default function SettingsScreen() {
     }
   }, [sentryDsnConfigured, t]);
 
-  const {
-    user,
-    session,
-    signOut,
-    deleteAccount,
-    updateUserAreaUnit,
-    clearError,
-    isLoading: authLoading,
-  } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const session = useAuthStore((s) => s.session);
+  const signOut = useAuthStore((s) => s.signOut);
+  const deleteAccount = useAuthStore((s) => s.deleteAccount);
+  const updateUserAreaUnit = useAuthStore((s) => s.updateUserAreaUnit);
+  const clearError = useAuthStore((s) => s.clearError);
+  const authLoading = useAuthStore((s) => s.isLoading);
 
   const language = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);

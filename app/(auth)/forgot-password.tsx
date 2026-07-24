@@ -30,14 +30,12 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState(typeof emailParam === 'string' ? emailParam : '');
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  const {
-    isLoading,
-    errorMessage,
-    passwordResetEmailSent,
-    resetPasswordForEmail,
-    clearPasswordResetState,
-    clearError,
-  } = useAuthStore();
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const errorMessage = useAuthStore((s) => s.errorMessage);
+  const passwordResetEmailSent = useAuthStore((s) => s.passwordResetEmailSent);
+  const resetPasswordForEmail = useAuthStore((s) => s.resetPasswordForEmail);
+  const clearPasswordResetState = useAuthStore((s) => s.clearPasswordResetState);
+  const clearError = useAuthStore((s) => s.clearError);
 
   // Clear any stale reset/error state on mount and when leaving the screen.
   useEffect(() => {

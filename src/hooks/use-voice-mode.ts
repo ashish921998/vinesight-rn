@@ -161,7 +161,7 @@ export function useVoiceMode(options: UseVoiceModeOptions): UseVoiceModeReturn {
   const optionsRef = useRef(options);
   useEffect(() => {
     optionsRef.current = options;
-  });
+  }, [options]);
 
   // Tracks whether voice mode is still open when an async response arrives
   const isOpenRef = useRef(false);

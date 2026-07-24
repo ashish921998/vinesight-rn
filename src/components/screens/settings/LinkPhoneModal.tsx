@@ -80,16 +80,14 @@ export function LinkPhoneModal({
 }: LinkPhoneModalProps) {
   const { t } = useTranslation();
 
-  const {
-    linkPhoneNumber,
-    verifyPhoneLinking,
-    cancelPhoneLinking,
-    phoneLinkingPending,
-    phoneLinkingNumber,
-    phoneLinkingLoading,
-    clearError,
-    errorMessage: authErrorMessage,
-  } = useAuthStore();
+  const linkPhoneNumber = useAuthStore((s) => s.linkPhoneNumber);
+  const verifyPhoneLinking = useAuthStore((s) => s.verifyPhoneLinking);
+  const cancelPhoneLinking = useAuthStore((s) => s.cancelPhoneLinking);
+  const phoneLinkingPending = useAuthStore((s) => s.phoneLinkingPending);
+  const phoneLinkingNumber = useAuthStore((s) => s.phoneLinkingNumber);
+  const phoneLinkingLoading = useAuthStore((s) => s.phoneLinkingLoading);
+  const clearError = useAuthStore((s) => s.clearError);
+  const authErrorMessage = useAuthStore((s) => s.errorMessage);
 
   const [linkPhoneInput, setLinkPhoneInput] = useState('');
   const [linkPhoneCode, setLinkPhoneCode] = useState('');

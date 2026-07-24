@@ -249,9 +249,8 @@ jest.mock('expo-router', () => ({
 }));
 
 jest.mock('@/stores/modal-store', () => ({
-  useModalStore: () => ({
-    setAddEntry: mockSetAddEntry,
-  }),
+  useModalStore: (selector?: (s: { setAddEntry: unknown }) => unknown) =>
+    selector ? selector({ setAddEntry: mockSetAddEntry }) : { setAddEntry: mockSetAddEntry },
 }));
 
 // Allow tests to override farms data

@@ -100,7 +100,7 @@ export default function TasksScreen() {
     farmId?: string;
     filter?: FilterType;
   }>();
-  const { setAddEntry } = useModalStore();
+  const setAddEntry = useModalStore((s) => s.setAddEntry);
   const { data: farms } = useFarms();
   const { data: tasks, isLoading, refetch, isRefetching } = useAllTasks();
   const completeMutation = useCompleteTask();

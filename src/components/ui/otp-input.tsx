@@ -47,7 +47,7 @@ export function OTPInput({
   // Cursor blinking animation
   useEffect(() => {
     if (isFocused) {
-      Animated.loop(
+      const loop = Animated.loop(
         Animated.sequence([
           Animated.timing(cursorAnim, {
             toValue: 1,
@@ -60,10 +60,12 @@ export function OTPInput({
             useNativeDriver: true,
           }),
         ]),
-      ).start();
-    } else {
-      cursorAnim.setValue(0);
+      );
+      loop.start();
+      return () => loop.stop();
     }
+    cursorAnim.setValue(0);
+    return undefined;
   }, [isFocused, cursorAnim]);
 
   const handleChange = (text: string) => {
@@ -166,13 +168,13 @@ export function OTPInput({
       {/* Visual OTP boxes */}
       <Pressable onPress={handlePress}>
         <View style={containerStyle}>
-          {Array.from({ length }).map((_, index) => {
-            const digit = getDigit(index);
-            const isActive = isDigitActive(index);
+          {Array.from({ length }, (_, i) => i).map((pos) => {
+            const digit = getDigit(pos);
+            const isActive = isDigitActive(pos);
             const isFilled = digit !== '';
 
             return (
-              <View key={index} style={getBoxStyle(index)}>
+              <View key={`otp-box-${pos}`} style={getBoxStyle(pos)}>
                 {isFilled ? (
                   <Text style={digitTextStyle}>{digit}</Text>
                 ) : isActive ? (

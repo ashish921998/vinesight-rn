@@ -30,7 +30,7 @@ export function RichMessageContent({ cards }: RichMessageContentProps) {
     <View style={styles.container}>
       {cards.map((card, cardIndex) => (
         <View
-          key={`card-${cardIndex}`}
+          key={`${card.type}-${card.title ?? ''}`}
           style={[
             styles.card,
             {
@@ -75,7 +75,7 @@ function DataTableCard({ rows }: { rows: DataTableRow[] }) {
     <View style={styles.rowsContainer}>
       {rows.map((row, i) => (
         <View
-          key={`row-${i}`}
+          key={`row-${row.label}`}
           style={[
             styles.row,
             i < rows.length - 1 && {
@@ -112,7 +112,7 @@ function WorkerListCard({ rows }: { rows: WorkerListRow[] }) {
     <View style={styles.rowsContainer}>
       {rows.map((row, i) => (
         <View
-          key={`worker-${i}`}
+          key={`worker-${row.name}`}
           style={[
             styles.workerRow,
             i < rows.length - 1 && {
@@ -146,7 +146,7 @@ function PhiConflictCard({ rows }: { rows: PhiConflictRow[] }) {
     <View style={styles.rowsContainer}>
       {rows.map((row, i) => (
         <View
-          key={`phi-${i}`}
+          key={`phi-${row.label}`}
           style={[
             styles.row,
             i < rows.length - 1 && {
@@ -181,10 +181,10 @@ function AlertListCard({ rows }: { rows: AlertListRow[] }) {
   const m3 = useM3();
   return (
     <View style={styles.rowsContainer}>
-      {rows.map((row, i) => {
+      {rows.map((row) => {
         const iconColor = row.color ?? m3.colorScheme.primary;
         return (
-          <View key={`alert-${i}`} style={styles.alertRow}>
+          <View key={`alert-${row.text}`} style={styles.alertRow}>
             {row.icon && (
               <SymbolIcon name={row.icon} size={14} color={iconColor} style={styles.alertIcon} />
             )}

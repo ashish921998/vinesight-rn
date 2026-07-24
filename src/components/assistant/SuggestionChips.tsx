@@ -49,11 +49,11 @@ export function SuggestionChips({
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        {suggestions.map((suggestion, index) => {
+        {suggestions.map((suggestion) => {
           const text = resolveText(suggestion);
           return (
             <TouchableOpacity
-              key={`${suggestion}-${index}`}
+              key={suggestion}
               style={[
                 styles.chip,
                 {

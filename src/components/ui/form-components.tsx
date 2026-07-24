@@ -540,12 +540,14 @@ interface PillSelectorProps {
   style?: ViewStyle;
 }
 
+const EMPTY_SELECTED_VALUES: string[] = [];
+
 export function PillSelector({
   options,
   selectedValue,
   onSelect,
   multiSelect = false,
-  selectedValues = [],
+  selectedValues = EMPTY_SELECTED_VALUES,
   style,
 }: PillSelectorProps) {
   const m3 = useM3();
@@ -1089,8 +1091,8 @@ export function PreviewCard({ title, items, backgroundColor }: PreviewCardProps)
     <View style={containerStyle}>
       <Text style={titleTextStyle}>{title}</Text>
       <View style={itemsContainerStyle}>
-        {items.map((item, index) => (
-          <View key={index} style={itemStyle}>
+        {items.map((item) => (
+          <View key={`${item.label}-${item.value}`} style={itemStyle}>
             <Text style={labelTextStyle}>{item.label}</Text>
             <Text style={item.compactValue ? compactValueTextStyle : valueTextStyle}>
               {item.value}

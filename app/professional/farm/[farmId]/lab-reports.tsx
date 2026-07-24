@@ -50,6 +50,7 @@ const FAB_RIGHT = 20;
 const FAB_BOTTOM = 24;
 
 interface DraftItem {
+  id: number;
   name: string;
   quantity: string;
   measure: FertilizerMeasure;
@@ -57,8 +58,9 @@ interface DraftItem {
   productId: number | null;
 }
 
+let draftIdSeq = 0;
 function emptyDraft(): DraftItem {
-  return { name: '', quantity: '', measure: 'kg', productId: null };
+  return { id: ++draftIdSeq, name: '', quantity: '', measure: 'kg', productId: null };
 }
 
 export default function LabReportsScreen() {
@@ -539,7 +541,7 @@ export default function LabReportsScreen() {
           <View style={{ gap: spacing[3] }}>
             {items.map((draft, index) => (
               <View
-                key={index}
+                key={draft.id}
                 ref={(el) => {
                   rowRefs.current[index] = el;
                 }}

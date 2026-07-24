@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { BaseWidgetProps, StatusType, LoadingState } from '@widgets/shared/types';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, shadows, fontSize, fontWeight } from '@/styles/theme';
@@ -95,13 +95,18 @@ const getBadgeColors = (status: StatusType, scheme: ReturnType<typeof useM3>['co
   }
 };
 
+const DEFAULT_OVERALL_STATUS: { status: StatusType; labelKey: string } = {
+  status: OVERALL_STATUS,
+  labelKey: OVERALL_LABEL_KEY,
+};
+
 export const VineyardHealthWidget: React.FC<VineyardHealthWidgetProps> = ({
   testID,
   accessibilityLabel = 'Vineyard Health Widget',
   style,
   title,
   metrics = DEMO_METRICS,
-  overallStatus = { status: OVERALL_STATUS, labelKey: OVERALL_LABEL_KEY },
+  overallStatus = DEFAULT_OVERALL_STATUS,
   loadingState = 'idle',
   onRetry,
 }) => {

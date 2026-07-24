@@ -285,8 +285,8 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                   borderColor: UI.border,
                 }}
               >
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                  <View key={`day-${index}`} style={{ flex: 1 }}>
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
+                  <View key={day} style={{ flex: 1 }}>
                     <Text
                       style={{
                         fontSize: fontSize.xs,
@@ -305,7 +305,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingTop: spacing[2] }}>
                 {(() => {
                   const today = new Date();
-                  return calendarDays.map((day, index) => {
+                  return calendarDays.map((day) => {
                     const status = getAttendanceForDate(day);
                     const isCurrentMonth = isSameMonth(day);
                     const isTodayDate =
@@ -315,7 +315,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
 
                     return (
                       <View
-                        key={index}
+                        key={day.getTime()}
                         style={{ width: '14.28%', aspectRatio: 1, marginBottom: spacing[2] }}
                       >
                         {day.getTime() ? (

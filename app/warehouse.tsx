@@ -38,7 +38,8 @@ export default function WarehouseScreen() {
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { setAddWarehouseItem, setAddStock } = useModalStore();
+  const setAddWarehouseItem = useModalStore((s) => s.setAddWarehouseItem);
+  const setAddStock = useModalStore((s) => s.setAddStock);
   const { data: items, isLoading, refetch, isRefetching } = useWarehouseItems();
   const deleteItemMutation = useDeleteWarehouseItem();
 

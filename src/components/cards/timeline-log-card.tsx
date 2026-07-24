@@ -161,7 +161,7 @@ export function getSecondaryDetail(
 const SWIPE_THRESHOLD = 80;
 const MAX_SWIPE = 120;
 
-export function TimelineLogCard({
+export const TimelineLogCard = React.memo(function TimelineLogCard({
   type,
   date,
   description,
@@ -426,4 +426,4 @@ export function TimelineLogCard({
       </Animated.View>
     </View>
   );
-}
+});

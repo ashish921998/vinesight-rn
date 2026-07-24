@@ -48,7 +48,13 @@ interface PendingLogsProps {
   onRemove: (id: string) => void;
 }
 
-export function PendingLogs({ pendingLogs, failures = {}, onRemove }: PendingLogsProps) {
+const DEFAULT_FAILURES: Record<string, PendingLogFailure> = {};
+
+export function PendingLogs({
+  pendingLogs,
+  failures = DEFAULT_FAILURES,
+  onRemove,
+}: PendingLogsProps) {
   const m3 = useM3();
   const { t } = useTranslation();
   const failedDraftCount = pendingLogs.filter((log) => failures[log.id]).length;

@@ -93,7 +93,7 @@ export function ComposeTabBar({ state, navigation, insets }: BottomTabBarProps) 
                 }}
               >
                 <NavigationBarItem.Icon>
-                  <Icon source={iconFor(tab.name)} size={24} />
+                  <Icon source={iconFor(tab.name)} size={tab.name === 'tools' ? 22 : 24} />
                 </NavigationBarItem.Icon>
                 <NavigationBarItem.Label>
                   <Text>{t(baseTabLabelKey(tab.name, detailedMode, tab.titleKey))}</Text>

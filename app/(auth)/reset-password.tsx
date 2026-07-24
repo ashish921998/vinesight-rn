@@ -30,7 +30,10 @@ export default function ResetPasswordScreen() {
   const [localError, setLocalError] = useState<string | null>(null);
   const [succeeded, setSucceeded] = useState(false);
 
-  const { isLoading, errorMessage, updatePassword, clearError } = useAuthStore();
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const errorMessage = useAuthStore((s) => s.errorMessage);
+  const updatePassword = useAuthStore((s) => s.updatePassword);
+  const clearError = useAuthStore((s) => s.clearError);
 
   const handleUpdate = async () => {
     setLocalError(null);

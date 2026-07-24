@@ -453,7 +453,7 @@ function SeasonTimeline({ farms, today, seasonRatio, isDark, t }: SeasonTimeline
       {milestones.map((m, i) => {
         const x = xFor(m.ratio);
         return (
-          <React.Fragment key={i}>
+          <React.Fragment key={m.label}>
             <View
               style={{
                 position: 'absolute',
@@ -542,9 +542,9 @@ function SeasonTimeline({ farms, today, seasonRatio, isDark, t }: SeasonTimeline
 
       {/* Farm dots (no labels — color-coded to match the row accent below). */}
       {trackWidth > 0
-        ? farmDots.map((dot, i) => (
+        ? farmDots.map((dot) => (
             <View
-              key={i}
+              key={dot.x}
               style={{
                 position: 'absolute',
                 width: 10,

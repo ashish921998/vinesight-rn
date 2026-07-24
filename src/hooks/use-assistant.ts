@@ -12,7 +12,7 @@
  * Sends messages via assistant-gateway service.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   sendAssistantTurn,
   cancelPendingAssistantTurnRequest,
@@ -90,6 +90,18 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
   // Used to cancel superseded requests when a new message is sent mid-flight.
   const currentRequestIdRef = useRef<string | null>(null);
   const loadConversationRequestRef = useRef(0);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      if (currentRequestIdRef.current) {
+        cancelPendingAssistantTurnRequest(currentRequestIdRef.current);
+        currentRequestIdRef.current = null;
+      }
+      loadConversationRequestRef.current += 1;
+    };
+  }, []);
 
   const sendMessage = useCallback(
     async (text?: string) => {
@@ -145,6 +157,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
         );
 
         // If superseded by a newer request, discard this response
+        if (!mountedRef.current) return;
         if (currentRequestIdRef.current !== requestId) return;
         currentRequestIdRef.current = null;
 
@@ -163,6 +176,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
         }
       } catch (err) {
         // If superseded by a newer request, silently ignore this error
+        if (!mountedRef.current) return;
         if (currentRequestIdRef.current !== requestId) return;
         currentRequestIdRef.current = null;
 
@@ -181,7 +195,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
         setError(normalizedError);
       } finally {
         // Only clear loading state when no newer request is in flight
-        if (currentRequestIdRef.current === null) {
+        if (mountedRef.current && currentRequestIdRef.current === null) {
           setIsLoading(false);
         }
       }
@@ -219,6 +233,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
         { requestId },
       );
 
+      if (!mountedRef.current) return;
       if (currentRequestIdRef.current !== requestId) return;
       currentRequestIdRef.current = null;
 
@@ -235,6 +250,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
         setVoiceLogAction(response.voiceLogAction);
       }
     } catch (err) {
+      if (!mountedRef.current) return;
       if (currentRequestIdRef.current !== requestId) return;
       currentRequestIdRef.current = null;
 
@@ -246,7 +262,7 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
         err instanceof AssistantGatewayError || err instanceof Error ? err : new Error(String(err));
       setError(normalizedError);
     } finally {
-      if (currentRequestIdRef.current === null) {
+      if (mountedRef.current && currentRequestIdRef.current === null) {
         setIsLoading(false);
       }
     }
@@ -317,15 +333,17 @@ export function useAssistant(options: UseAssistantOptions): UseAssistantReturn {
 
     try {
       const loaded = await assistantMemoryService.loadRecentMessages(conversationId);
+      if (!mountedRef.current) return;
       if (loadConversationRequestRef.current !== loadRequestId) return;
       setMessages(loaded);
     } catch (err) {
+      if (!mountedRef.current) return;
       if (loadConversationRequestRef.current !== loadRequestId) return;
       const normalizedError =
         err instanceof AssistantGatewayError || err instanceof Error ? err : new Error(String(err));
       setError(normalizedError);
     } finally {
-      if (loadConversationRequestRef.current === loadRequestId) {
+      if (mountedRef.current && loadConversationRequestRef.current === loadRequestId) {
         setIsLoading(false);
       }
     }

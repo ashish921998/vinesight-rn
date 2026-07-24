@@ -18,7 +18,7 @@ interface FarmLogFormProps {
 export function FarmLogForm({ onClose }: FarmLogFormProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const { editActivity } = useModalStore();
+  const editActivity = useModalStore((s) => s.editActivity);
 
   useEffect(() => {
     if (!editActivity) {

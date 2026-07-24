@@ -42,20 +42,18 @@ export default function OTPVerificationScreen() {
   const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN);
   const [otpFocusKey, setOtpFocusKey] = useState(0);
 
-  const {
-    isLoading,
-    errorMessage,
-    isAuthenticated,
-    otpSentSuccessfully,
-    needsProfileCompletion,
-    verifyOTP,
-    verifyPhoneOTP,
-    resendOTP,
-    resendPhoneOTP,
-    cancelOTPFlow,
-    cancelPhoneOTPFlow,
-    clearError,
-  } = useAuthStore();
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const errorMessage = useAuthStore((s) => s.errorMessage);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const otpSentSuccessfully = useAuthStore((s) => s.otpSentSuccessfully);
+  const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
+  const verifyOTP = useAuthStore((s) => s.verifyOTP);
+  const verifyPhoneOTP = useAuthStore((s) => s.verifyPhoneOTP);
+  const resendOTP = useAuthStore((s) => s.resendOTP);
+  const resendPhoneOTP = useAuthStore((s) => s.resendPhoneOTP);
+  const cancelOTPFlow = useAuthStore((s) => s.cancelOTPFlow);
+  const cancelPhoneOTPFlow = useAuthStore((s) => s.cancelPhoneOTPFlow);
+  const clearError = useAuthStore((s) => s.clearError);
 
   const lastOtpSentSuccessRef = useRef(otpSentSuccessfully);
   const verificationTriggeredRef = useRef(false);

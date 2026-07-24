@@ -41,9 +41,13 @@ jest.mock('expo-router', () => ({
 }));
 
 jest.mock('@/stores', () => ({
-  useAuthStore: Object.assign(() => mockAuthState, {
-    getState: () => mockAuthState,
-  }),
+  useAuthStore: Object.assign(
+    (selector?: (s: typeof mockAuthState) => unknown) =>
+      selector ? selector(mockAuthState) : mockAuthState,
+    {
+      getState: () => mockAuthState,
+    },
+  ),
 }));
 
 jest.mock('@/services/android-sms-retriever', () => ({

@@ -40,7 +40,8 @@ jest.mock('@/services/phone-number-hint', () => ({
 }));
 
 jest.mock('@/stores', () => ({
-  useAuthStore: () => mockAuthState,
+  useAuthStore: (selector?: (s: typeof mockAuthState) => unknown) =>
+    selector ? selector(mockAuthState) : mockAuthState,
 }));
 
 jest.mock('react-i18next', () => ({
