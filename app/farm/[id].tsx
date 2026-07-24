@@ -83,6 +83,48 @@ interface WorkboardAction {
   route?: string;
 }
 
+type FarmActivityLog = {
+  id: string;
+  type: LogTypeId;
+  date: string;
+  data:
+    | IrrigationRecord
+    | SprayRecord
+    | HarvestRecord
+    | ExpenseRecord
+    | FertigationRecord
+    | DailyNoteRecord;
+};
+
+interface RecentActivityCardProps {
+  log: FarmActivityLog;
+  farmName?: string;
+  onEdit: (log: FarmActivityLog) => void;
+  onDelete: (log: FarmActivityLog) => void;
+}
+
+const RecentActivityCard = React.memo(function RecentActivityCard({
+  log,
+  farmName,
+  onEdit,
+  onDelete,
+}: RecentActivityCardProps) {
+  const handleEdit = React.useCallback(() => onEdit(log), [log, onEdit]);
+  const handleDelete = React.useCallback(() => onDelete(log), [log, onDelete]);
+
+  return (
+    <TimelineLogCard
+      type={log.type}
+      date={log.date}
+      data={log.data}
+      farmName={farmName}
+      onEdit={handleEdit}
+      onDelete={log.type === 'note' ? undefined : handleDelete}
+      onPress={handleEdit}
+    />
+  );
+});
+
 const NOW_TICK_MS = 60_000;
 
 export default function FarmDetailScreen() {
@@ -1072,18 +1114,7 @@ export default function FarmDetailScreen() {
   // Activity logs - combine, filter, and sort
   const RECENT_ACTIVITY_LIMIT = 5;
   const allLogs = useMemo(() => {
-    const logs: Array<{
-      id: string;
-      type: LogTypeId;
-      date: string;
-      data:
-        | IrrigationRecord
-        | SprayRecord
-        | HarvestRecord
-        | ExpenseRecord
-        | FertigationRecord
-        | DailyNoteRecord;
-    }> = [];
+    const logs: FarmActivityLog[] = [];
 
     irrigationRecords?.forEach((r) =>
       logs.push({
@@ -1219,7 +1250,7 @@ export default function FarmDetailScreen() {
     }
   };
 
-  const handleEditActivity = (log: (typeof recentLogs)[number]) => {
+  const handleEditActivity = React.useCallback((log: FarmActivityLog) => {
     if (!farm) return;
     if (log.type === 'note') {
       router.push({ pathname: '/add-note', params: { farmId: String(farm.id), date: log.date } });
@@ -1232,9 +1263,9 @@ export default function FarmDetailScreen() {
       record,
     });
     router.push(`/log-entry/edit/${log.id}`);
-  };
+  }, [farm, router, setEditActivity]);
 
-  const handleDeleteActivity = (log: (typeof recentLogs)[number]) => {
+  const handleDeleteActivity = React.useCallback((log: FarmActivityLog) => {
     triggerHapticWarning();
     Alert.alert(
       t('logs.delete.title'),
@@ -1298,7 +1329,7 @@ export default function FarmDetailScreen() {
         },
       ],
     );
-  };
+  }, [deleteExpense, deleteFertigation, deleteHarvest, deleteIrrigation, deleteSpray, farm?.id, t]);
 
   const handleDeleteFarm = () => {
     if (!farmId || !farm) return;
@@ -2418,15 +2449,12 @@ export default function FarmDetailScreen() {
                 }}
               >
                 {recentLogs.map((log) => (
-                  <TimelineLogCard
+                  <RecentActivityCard
                     key={log.id}
-                    type={log.type}
-                    date={log.date}
-                    data={log.data}
+                    log={log}
                     farmName={farm?.name ?? undefined}
-                    onEdit={() => handleEditActivity(log)}
-                    onDelete={log.type === 'note' ? undefined : () => handleDeleteActivity(log)}
-                    onPress={() => handleEditActivity(log)}
+                    onEdit={handleEditActivity}
+                    onDelete={handleDeleteActivity}
                   />
                 ))}
               </View>

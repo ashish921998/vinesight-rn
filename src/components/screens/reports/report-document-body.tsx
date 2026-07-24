@@ -52,7 +52,7 @@ interface ReportDocumentBodyProps {
   panelStyle: object;
 }
 
-export function ReportDocumentBody({
+function ReportDocumentBodyComponent({
   preview,
   reportType,
   preferredCurrency,
@@ -653,3 +653,5 @@ export function ReportDocumentBody({
     </View>
   );
 }
+
+export const ReportDocumentBody = React.memo(ReportDocumentBodyComponent);
