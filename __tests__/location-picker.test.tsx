@@ -52,6 +52,10 @@ describe('LocationPicker', () => {
   it('does not report an error when a new search cancels place details', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    let resolveDetailsAbort: () => void = () => undefined;
+    const detailsAborted = new Promise<void>((resolve) => {
+      resolveDetailsAbort = resolve;
+    });
     const fetchMock = jest
       .spyOn(global, 'fetch')
       .mockResolvedValueOnce({
@@ -70,6 +74,7 @@ describe('LocationPicker', () => {
         return new Promise((_resolve, reject) => {
           init?.signal?.addEventListener('abort', () => {
             reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+            queueMicrotask(resolveDetailsAbort);
           });
         });
       })
@@ -92,6 +97,7 @@ describe('LocationPicker', () => {
       fireEvent(input, 'submitEditing');
 
       await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+      await detailsAborted;
       expect(alertSpy).not.toHaveBeenCalled();
     } finally {
       fetchMock.mockRestore();
