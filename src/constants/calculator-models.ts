@@ -4,7 +4,7 @@
  * Ported from iOS CalculatorModels.swift
  */
 
-import { ICON_REGISTRY } from './icon-registry';
+import { ICON_REGISTRY, type RegistryIconName } from './icon-registry';
 
 // ============================================================
 // MARK: - Water Growth Stages with Kc Values (FAO-56 Standard)
@@ -106,13 +106,7 @@ export function getWaterStatus(waterLevel: number): WaterStatus {
 // ============================================================
 
 export type GrapeGrowthStageId =
-  | 'dormant'
-  | 'budbreak'
-  | 'flowering'
-  | 'fruitSet'
-  | 'veraison'
-  | 'harvest'
-  | 'postHarvest';
+  'dormant' | 'budbreak' | 'flowering' | 'fruitSet' | 'veraison' | 'harvest' | 'postHarvest';
 
 export interface GrapeGrowthStage {
   id: GrapeGrowthStageId;
@@ -273,7 +267,8 @@ export type LogTypeId = 'irrigation' | 'spray' | 'harvest' | 'expense' | 'fertig
 export interface LogType {
   id: LogTypeId;
   labelKey: string;
-  icon: string;
+  /** Canonical app-icon name (narrowed from ICON_REGISTRY), not an open string. */
+  icon: RegistryIconName;
   color: string;
 }
 

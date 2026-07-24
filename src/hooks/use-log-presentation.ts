@@ -1,32 +1,39 @@
 import { useMemo } from 'react';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
+import { type RegistryIconName } from '@/constants/icon-registry';
 import { useDomainColors } from '@/styles/use-domain-colors';
 
-type LogPresentation = { icon: string; color: string };
+type LogPresentation = { icon: RegistryIconName; color: string };
 
 /**
  * Single typed presentation (icon + color) for every log type. Icons come from
- * the canonical LOG_TYPES model (ICON_REGISTRY); colors come from the dark-aware
- * domain ramp. Both the quick-action grid and the recent-activity list read from
- * this one map, so a log type can never render with two different glyphs/colors.
+ * the canonical LOG_TYPES model; colors come from the dark-aware domain ramp,
+ * indexed directly by LogTypeId — `domain.category` is keyed by a superset of
+ * every LogTypeId, so there is no per-type color map to drift out of sync.
+ *
+ * The map is an explicit object literal keyed by every LogTypeId and checked
+ * with `satisfies Record<LogTypeId, LogPresentation>`, so adding a new LogTypeId
+ * without a branch here is a compile-time error — there is no unsafe
+ * `as Record<...>` assertion that could mask a missing entry. Consumers can
+ * therefore index `presentation[activity.type]` knowing it is always present.
  */
 export function useLogPresentation(): Record<LogTypeId, LogPresentation> {
   const domain = useDomainColors();
   return useMemo(() => {
-    const colorFor: Record<LogTypeId, string> = {
-      irrigation: domain.category.irrigation,
-      spray: domain.category.spray,
-      harvest: domain.category.harvest,
-      expense: domain.category.expense,
-      fertigation: domain.category.fertigation,
-      note: domain.category.note,
+    const presentationFor = (id: LogTypeId): LogPresentation => {
+      const icon = LOG_TYPES.find((lt) => lt.id === id)?.icon;
+      if (icon === undefined) {
+        throw new Error(`useLogPresentation: LOG_TYPES has no icon for "${id}"`);
+      }
+      return { icon, color: domain.category[id] };
     };
-    return LOG_TYPES.reduce(
-      (acc, { id, icon }) => {
-        acc[id] = { icon, color: colorFor[id] };
-        return acc;
-      },
-      {} as Record<LogTypeId, LogPresentation>,
-    );
+    return {
+      irrigation: presentationFor('irrigation'),
+      spray: presentationFor('spray'),
+      harvest: presentationFor('harvest'),
+      expense: presentationFor('expense'),
+      fertigation: presentationFor('fertigation'),
+      note: presentationFor('note'),
+    } satisfies Record<LogTypeId, LogPresentation>;
   }, [domain]);
 }
