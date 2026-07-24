@@ -1,0 +1,27 @@
+src/components/screens/recent-activity.tsx
+  s_f6e1e1f8eb64a2::t_02beb34d1f3d9c 1-210
+src/components/screens/simplified-home.tsx
+  s_f6e1e1f8eb64a2::t_cfcadf715ec20d 9,16,35-43,47,265-282,284-308,313-319
+src/hooks/index.ts
+  s_f6e1e1f8eb64a2::t_98047840c7375a 252-254
+  s_f6e1e1f8eb64a2::t_1ddf7b389a6608 255
+src/hooks/use-log-presentation.ts
+  s_f6e1e1f8eb64a2::t_d2dd12a485a861 1-4,6-32
+  s_f6e1e1f8eb64a2::t_c401b5f17f0e6d 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "889dddb1cae4d93ac9dfd8f17367c6ae1d16baa2",
+  "prompts": {},
+  "sessions": {
+    "s_f6e1e1f8eb64a2": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f95c1-f03c-7dec-9cf5-1a8006be68e5",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
