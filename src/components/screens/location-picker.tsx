@@ -217,7 +217,7 @@ export default function LocationPicker({
   }, []);
 
   const getPlaceDetails = useCallback(
-    async (placeId: string): Promise<{ lat: number; lng: number } | null> => {
+    async (placeId: string): Promise<{ lat: number; lng: number } | null | undefined> => {
       if (!GOOGLE_PLACES_API_KEY) {
         return null;
       }
@@ -237,7 +237,7 @@ export default function LocationPicker({
 
         const data = await response.json();
 
-        if (requestIdRef.current !== myRequestId) return null;
+        if (requestIdRef.current !== myRequestId) return undefined;
 
         if (data.status === 'OK' && data.result?.geometry?.location) {
           return data.result.geometry.location;
@@ -245,7 +245,7 @@ export default function LocationPicker({
 
         return null;
       } catch (error) {
-        if (controller.signal.aborted || (error as Error)?.name === 'AbortError') return null;
+        if (controller.signal.aborted || (error as Error)?.name === 'AbortError') return undefined;
         console.error('Error fetching place details:', error);
         return null;
       }
@@ -286,6 +286,8 @@ export default function LocationPicker({
 
     try {
       const location = await getPlaceDetails(result.placeId);
+
+      if (location === undefined) return;
 
       if (location && Number.isFinite(location.lat) && Number.isFinite(location.lng)) {
         setSelectedCoordinate({ latitude: location.lat, longitude: location.lng });

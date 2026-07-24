@@ -1,4 +1,5 @@
-import { render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -45,6 +46,57 @@ describe('LocationPicker', () => {
       });
     } finally {
       consoleErrorSpy.mockRestore();
+    }
+  });
+
+  it('does not report an error when a new search cancels place details', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValueOnce({
+        json: async () => ({
+          status: 'OK',
+          predictions: [
+            {
+              place_id: 'first-place',
+              description: 'First place',
+              structured_formatting: { main_text: 'First place' },
+            },
+          ],
+        }),
+      } as Response)
+      .mockImplementationOnce((_url, init) => {
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+          });
+        });
+      })
+      .mockResolvedValueOnce({
+        json: async () => ({ status: 'ZERO_RESULTS', predictions: [] }),
+      } as Response);
+
+    try {
+      const { getByPlaceholderText, getByText } = render(
+        <LocationPicker visible onClose={() => null} onLocationSelect={() => null} />,
+      );
+      const input = getByPlaceholderText('locationPicker.searchPlaceholder');
+
+      fireEvent.changeText(input, 'First');
+      fireEvent(input, 'submitEditing');
+      await waitFor(() => expect(getByText('First place')).toBeTruthy());
+
+      fireEvent.press(getByText('First place'));
+      fireEvent.changeText(input, 'Second');
+      fireEvent(input, 'submitEditing');
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+      expect(alertSpy).not.toHaveBeenCalled();
+    } finally {
+      fetchMock.mockRestore();
+      consoleErrorSpy.mockRestore();
+      alertSpy.mockRestore();
     }
   });
 });
