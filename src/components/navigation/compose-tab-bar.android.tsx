@@ -12,24 +12,22 @@ import homeFilledIcon from '../../../assets/tab-icons/material-home-filled.xml';
 import agricultureFilledIcon from '../../../assets/tab-icons/material-agriculture-filled.xml';
 import groupFilledIcon from '../../../assets/tab-icons/material-group-filled.xml';
 import buildFilledIcon from '../../../assets/tab-icons/material-build-filled.xml';
-import { BASE_TABS, DETAILED_TABS, baseTabIconKey, baseTabLabelKey } from './tab-definitions';
-
-type TabName = (typeof BASE_TABS)[number]['name'] | (typeof DETAILED_TABS)[number]['name'];
-type IconKey = 'home' | 'tractor' | 'workers' | 'tools';
+import { BASE_TABS, DETAILED_TABS, type TabIconKey } from './tab-definitions';
 
 // Android bottom nav via @expo/ui's Material 3 NavigationBar. It is a pure
 // renderer with no routing, so we drive it from expo-router's <Tabs> navigator
 // state (passed in as BottomTabBarProps) — selection from state.index, taps via
 // navigation.emit/navigate. Icons must be Android XML vector drawables.
 //
-// The two base destinations keep the same label/icon in both Simple and
-// Detailed mode: index → Home (home), explore → Farming (tractor).
+// Tab labels and the Android icon key come straight from the canonical
+// BASE_TABS / DETAILED_TABS model in tab-definitions.ts, so this bar always
+// matches the iOS NativeTabs chrome.
 //
 // NOTE on the `icon` slot: this @expo/ui build exposes NavigationBarItem.SelectedIcon
 // in TS, but the Android Kotlin view only reads `icon` and `label`. Keep selected
 // treatment in the single supported slot.
 //
-const FILLED_ICONS: Record<IconKey, number> = {
+const FILLED_ICONS: Record<TabIconKey, number> = {
   home: homeFilledIcon,
   tractor: agricultureFilledIcon,
   workers: groupFilledIcon,
@@ -40,7 +38,7 @@ const FILLED_ICONS: Record<IconKey, number> = {
 // and 960-unit geometry. Inactive tabs render only the outline. Selected tabs
 // layer the matching outline over its filled variant for a coherent two-tone
 // glyph while NavigationBar owns the native indicator transition.
-const OUTLINED_ICONS: Record<IconKey, number> = {
+const OUTLINED_ICONS: Record<TabIconKey, number> = {
   home: homeOutlinedIcon,
   tractor: agricultureOutlinedIcon,
   workers: groupOutlinedIcon,
@@ -63,13 +61,6 @@ export function ComposeTabBar({ state, navigation }: BottomTabBarProps) {
     selectedIndicatorColor: isDark ? m3.colorScheme.secondaryContainer : m3.primary.p200,
     unselectedIconColor: m3.colorScheme.onSurfaceVariant,
     unselectedTextColor: m3.colorScheme.onSurfaceVariant,
-  };
-
-  const iconKeyFor = (tabName: TabName): IconKey => {
-    if (tabName === 'index' || tabName === 'explore') {
-      return baseTabIconKey(tabName);
-    }
-    return tabName as Extract<IconKey, 'workers' | 'tools'>;
   };
 
   return (
@@ -96,7 +87,7 @@ export function ComposeTabBar({ state, navigation }: BottomTabBarProps) {
             const route = state.routes.find((r: { name: string }) => r.name === tab.name);
             if (!route) return null;
             const focused = activeName === tab.name;
-            const iconKey = iconKeyFor(tab.name);
+            const iconKey = tab.androidIconKey;
             return (
               <NavigationBarItem
                 key={tab.name}
@@ -138,9 +129,7 @@ export function ComposeTabBar({ state, navigation }: BottomTabBarProps) {
                     falls back to Compose TextStyle.Default (16sp / weight 400),
                     which looks too large and too thin.
                   */}
-                  <Text style={{ typography: 'labelMedium' }}>
-                    {t(baseTabLabelKey(tab.name, tab.titleKey))}
-                  </Text>
+                  <Text style={{ typography: 'labelMedium' }}>{t(tab.titleKey)}</Text>
                 </NavigationBarItem.Label>
               </NavigationBarItem>
             );

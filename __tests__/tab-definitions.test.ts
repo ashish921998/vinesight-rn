@@ -1,24 +1,33 @@
-import { baseTabIconKey, baseTabLabelKey } from '@/components/navigation/tab-definitions';
+import { BASE_TABS, DETAILED_TABS } from '@/components/navigation/tab-definitions';
 
-describe('baseTabLabelKey', () => {
-  it('labels the base destinations Home / Farming (same in both modes)', () => {
-    expect(baseTabLabelKey('index', 'tabs.dashboard')).toBe('tabs.home');
-    expect(baseTabLabelKey('explore', 'tabs.explore')).toBe('tabs.explore');
+describe('BASE_TABS', () => {
+  it('gives each base destination one label + Android icon shared across modes', () => {
+    const index = BASE_TABS.find((t) => t.name === 'index');
+    const explore = BASE_TABS.find((t) => t.name === 'explore');
+
+    // No mode-dependent Dashboard/Home or Farms/Explore swap — a single title.
+    expect(index?.titleKey).toBe('tabs.home');
+    expect(explore?.titleKey).toBe('tabs.explore');
+    expect(index?.androidIconKey).toBe('home');
+    expect(explore?.androidIconKey).toBe('tractor');
   });
 
-  it('falls back to the tab title key for non-base tabs', () => {
-    expect(baseTabLabelKey('workers', 'tabs.workers')).toBe('tabs.workers');
-    expect(baseTabLabelKey('tools', 'tabs.tools')).toBe('tabs.tools');
+  it('exposes an iOS SF pair and Ionicons pair for every base tab', () => {
+    for (const tab of BASE_TABS) {
+      expect(tab.sf).toHaveLength(2);
+      expect(tab.ion).toHaveLength(2);
+    }
   });
 });
 
-describe('baseTabIconKey', () => {
-  it('maps the base destinations to home / tractor (same in both modes)', () => {
-    expect(baseTabIconKey('index')).toBe('home');
-    expect(baseTabIconKey('explore')).toBe('tractor');
-  });
+describe('DETAILED_TABS', () => {
+  it('carries the Android icon key and single title for each detailed tab', () => {
+    const workers = DETAILED_TABS.find((t) => t.name === 'workers');
+    const tools = DETAILED_TABS.find((t) => t.name === 'tools');
 
-  it('defaults to home for any other route', () => {
-    expect(baseTabIconKey('workers')).toBe('home');
+    expect(workers?.titleKey).toBe('tabs.workers');
+    expect(workers?.androidIconKey).toBe('workers');
+    expect(tools?.titleKey).toBe('tabs.tools');
+    expect(tools?.androidIconKey).toBe('tools');
   });
 });

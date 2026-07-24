@@ -4,7 +4,6 @@ import { Redirect, Tabs, useRouter, useSegments } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useAppModeStore } from '@/stores';
@@ -12,7 +11,7 @@ import { useM3, useIsDark } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
 import { ComposeTabBar } from '@/components/navigation/compose-tab-bar';
-import { DETAILED_TABS } from '@/components/navigation/tab-definitions';
+import { BASE_TABS, DETAILED_TABS } from '@/components/navigation/tab-definitions';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -155,29 +154,12 @@ export default function TabLayout() {
         backgroundColor={m3.surface.surfaceContainerLow}
         shadowColor={colorWithOpacity(m3.colorScheme.shadow, isDark ? 0.6 : 0.05)}
       >
-        <NativeTabs.Trigger name="index">
-          {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'), 'grid-outline', 'grid')}
-          <NativeTabs.Trigger.Label>
-            {t(detailedMode ? 'tabs.dashboard' : 'tabs.home')}
-          </NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="explore">
-          <NativeTabs.Trigger.Icon
-            sf={{ default: sf('house'), selected: sf('house.fill') }}
-            selectedColor={m3.colorScheme.primary}
-            src={{
-              default: (
-                <NativeTabs.Trigger.VectorIcon family={MaterialCommunityIcons} name="barn" />
-              ),
-              selected: (
-                <NativeTabs.Trigger.VectorIcon family={MaterialCommunityIcons} name="barn" />
-              ),
-            }}
-          />
-          <NativeTabs.Trigger.Label>
-            {t(detailedMode ? 'tabs.explore' : 'tabs.farms')}
-          </NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
+        {BASE_TABS.map((tab) => (
+          <NativeTabs.Trigger key={tab.name} name={tab.name}>
+            {renderTabIcon(sf(tab.sf[0]), sf(tab.sf[1]), tab.ion[0], tab.ion[1])}
+            <NativeTabs.Trigger.Label>{t(tab.titleKey)}</NativeTabs.Trigger.Label>
+          </NativeTabs.Trigger>
+        ))}
         {detailedMode &&
           DETAILED_TABS.map((tab) => (
             <NativeTabs.Trigger key={tab.name} name={tab.name}>
