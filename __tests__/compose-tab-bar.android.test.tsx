@@ -143,7 +143,7 @@ describe('ComposeTabBar Android layout', () => {
     expect(queryByText('tabs.aiAssistant')).toBeNull();
   });
 
-  it('renders one icon layer when inactive and two layers when selected', () => {
+  it('renders one icon per tab — filled + green for selected, outline for the rest', () => {
     mockDetailedMode = true;
     const state = {
       index: 0,
@@ -167,10 +167,12 @@ describe('ComposeTabBar Android layout', () => {
       />,
     );
 
-    // Four base glyphs plus the selected Home tab's accent overlay.
-    expect(getAllByTestId('tab-icon')).toHaveLength(5);
-    expect(getAllByTestId('tab-icon').filter((icon) => icon.props.tint === '#355847')).toHaveLength(
-      1,
-    );
+    const icons = getAllByTestId('tab-icon');
+    // One icon per tab — no outline-drawn-over-filled overlay.
+    expect(icons).toHaveLength(4);
+    // The selected tab (index) is the filled glyph tinted green.
+    expect(icons.filter((icon) => icon.props.tint === '#355847')).toHaveLength(1);
+    // The three inactive tabs are the outline glyph in onSurfaceVariant.
+    expect(icons.filter((icon) => icon.props.tint === '#666666')).toHaveLength(3);
   });
 });

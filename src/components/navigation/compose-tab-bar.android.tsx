@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
-import { Box, Host, Icon, NavigationBar, NavigationBarItem, Text } from '@expo/ui/jetpack-compose';
+import { Host, Icon, NavigationBar, NavigationBarItem, Text } from '@expo/ui/jetpack-compose';
 import agricultureOutlinedIcon from '@expo/material-symbols/agriculture.xml';
 import buildOutlinedIcon from '@expo/material-symbols/build.xml';
 import groupOutlinedIcon from '@expo/material-symbols/group.xml';
@@ -34,10 +34,9 @@ const FILLED_ICONS: Record<TabIconKey, number> = {
   tools: buildFilledIcon,
 };
 
-// Both states use official Material Symbols with the same name, optical size,
-// and 960-unit geometry. Inactive tabs render only the outline. Selected tabs
-// layer the matching outline over its filled variant for a coherent two-tone
-// glyph while NavigationBar owns the native indicator transition.
+// Inactive tabs show the outlined glyph; the selected tab swaps to the filled
+// one (standard Material behavior). The filled set ships as custom assets
+// because @expo/material-symbols only provides the outlined style.
 const OUTLINED_ICONS: Record<TabIconKey, number> = {
   home: homeOutlinedIcon,
   tractor: agricultureOutlinedIcon,
@@ -105,20 +104,11 @@ export function ComposeTabBar({ state, navigation }: BottomTabBarProps) {
                 }}
               >
                 <NavigationBarItem.Icon>
-                  <Box contentAlignment="center">
-                    {focused ? (
-                      <Icon source={FILLED_ICONS[iconKey]} size={24} tint={m3.primary.p500} />
-                    ) : null}
-                    <Icon
-                      source={OUTLINED_ICONS[iconKey]}
-                      size={24}
-                      tint={
-                        focused
-                          ? m3.colorScheme.onSecondaryContainer
-                          : m3.colorScheme.onSurfaceVariant
-                      }
-                    />
-                  </Box>
+                  <Icon
+                    source={focused ? FILLED_ICONS[iconKey] : OUTLINED_ICONS[iconKey]}
+                    size={24}
+                    tint={focused ? m3.primary.p500 : m3.colorScheme.onSurfaceVariant}
+                  />
                 </NavigationBarItem.Icon>
                 <NavigationBarItem.Label>
                   {/*
