@@ -1,0 +1,21 @@
+src/components/screens/simplified-home.tsx
+  s_d2b2e63b9cd851::t_780d5ff4e7f3af 422,426
+plugins/with-android-navigation-bar.js
+  s_d2b2e63b9cd851::t_780d5ff4e7f3af 76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "09e061c11398969da7be4eed6df9c02b8d6cb0ae",
+  "prompts": {},
+  "sessions": {
+    "s_d2b2e63b9cd851": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f95ab-3194-7571-830a-abc56bfbf716",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
