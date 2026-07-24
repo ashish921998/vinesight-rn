@@ -1,0 +1,25 @@
+app/tasks.tsx
+  s_51b0be3d84e424::t_4d7a8fc723a41c 298-305
+  s_51b0be3d84e424::t_218d4bc1d828c9 669
+  s_51b0be3d84e424::t_9d469c14e3858f 306-355
+  s_51b0be3d84e424::t_c9320adc60c141 35-38
+  s_51b0be3d84e424::t_bfa31d86ac066e 462-471,473-480,482-484,486-509,513-514,517,519-557,560-562,565-566,568-576,579-581,584-585,587-595,598-600,603-604,606-613,616-618,622-624,628-637,639-640,643,645-652,654-658,662,664,666-668,670-680
+  s_51b0be3d84e424::t_e6dfdd8eed00b6 1-11
+  s_51b0be3d84e424::t_b25f5c1952db1c 356
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "918e7fbeb7ddb1a9ab2a475181896deb0b2a845a",
+  "prompts": {},
+  "sessions": {
+    "s_51b0be3d84e424": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06dc1843bffevACN7vXwtN0xKv",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
