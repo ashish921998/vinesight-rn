@@ -30,7 +30,16 @@ jest.mock('react-native-maps', () => {
   };
 });
 
-import LocationPicker from '../src/components/screens/location-picker';
+const originalApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY = 'test-api-key';
+const LocationPicker = jest.requireActual<
+  typeof import('../src/components/screens/location-picker')
+>('../src/components/screens/location-picker').default;
+if (originalApiKey === undefined) {
+  delete process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+} else {
+  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY = originalApiKey;
+}
 
 describe('LocationPicker', () => {
   it('does not crash when MapView throws during render', async () => {
