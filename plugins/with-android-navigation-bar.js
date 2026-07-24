@@ -119,8 +119,25 @@ function upsertResource(contents, tag, name, value) {
     '',
   );
 
-  if (!/<resources[\s>]/.test(contents) || !/<\/resources\s*>/.test(contents)) {
+  // A genuinely empty/whitespace file has nothing to destroy — normalize it to
+  // a fresh <resources> doc. (Missing files are already seeded as one by
+  // readResourceFile on ENOENT.)
+  if (contents.trim().length === 0) {
     contents = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>';
+  }
+
+  // Fail loudly on an existing-but-unrecognized resources document instead of
+  // silently wiping unrelated generated resources. A formatting variant, a
+  // malformed entry, or an unsupported structure must surface here rather than
+  // turn into a mysterious Android resource-link failure downstream. Prefer a
+  // real XML parser over this regex mutation if the files grow more complex.
+  if (!/<resources[\s>]/.test(contents) || !/<\/resources\s*>/.test(contents)) {
+    throw new Error(
+      `[with-android-navigation-bar] Refusing to mutate <${tag} name="${name}">: ` +
+        `the existing resources document is not a recognizable <resources>…</resources> file. ` +
+        `Fix or parse it with a real XML tool; not overwriting it. Head:\n` +
+        contents.slice(0, 200),
+    );
   }
 
   const entry = `  <${tag} name="${name}">${value}</${tag}>`;

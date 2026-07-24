@@ -51,22 +51,25 @@ describe('with-android-navigation-bar', () => {
     expect(twice).not.toContain('#000000');
   });
 
-  it('recovers from malformed input with a valid resources document', () => {
-    const output = upsertColor('not xml', 'vinesight_navigation_bar', '#2E342F');
-
-    expect(output).toBe(
-      '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n  <color name="vinesight_navigation_bar">#2E342F</color>\n</resources>',
+  it('throws on malformed input instead of destroying it', () => {
+    expect(() => upsertColor('not xml', 'vinesight_navigation_bar', '#2E342F')).toThrow(
+      /not a recognizable/,
     );
   });
 
-  it.each(['<resources>', '</resources>'])(
-    'recovers when the resources document only contains %s',
-    (input) => {
-      const output = upsertColor(input, 'vinesight_navigation_bar', '#2E342F');
+  it('normalizes an empty/whitespace file to a fresh resources document (non-destructive)', () => {
+    const output = upsertColor('   \n  ', 'vinesight_navigation_bar', '#2E342F');
 
-      expect(output).toContain('<resources>');
-      expect(output).toContain('</resources>');
-      expect(countEntries(output, 'color', 'vinesight_navigation_bar')).toBe(1);
+    expect(output).toContain('<resources>');
+    expect(output).toContain('<color name="vinesight_navigation_bar">#2E342F</color>');
+  });
+
+  it.each(['<resources>', '</resources>'])(
+    'throws when the resources document only contains %s',
+    (input) => {
+      expect(() => upsertColor(input, 'vinesight_navigation_bar', '#2E342F')).toThrow(
+        /not a recognizable/,
+      );
     },
   );
 
