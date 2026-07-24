@@ -1,0 +1,21 @@
+__tests__/compose-tab-bar.android.test.tsx
+  s_f6e1e1f8eb64a2::t_20d977ab9bd229 146,170-176
+src/components/navigation/compose-tab-bar.android.tsx
+  s_f6e1e1f8eb64a2::t_19398ff6ff863e 4,37-39,107-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "f665938c0215ddbd47390583e7b4dfa4cccf0420",
+  "prompts": {},
+  "sessions": {
+    "s_f6e1e1f8eb64a2": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f95c1-f03c-7dec-9cf5-1a8006be68e5",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
