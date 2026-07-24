@@ -111,9 +111,20 @@ function upsertBool(contents, name, value) {
 function upsertResource(contents, tag, name, value) {
   const quoteClass = '["\']'; // accept either valid XML quote style
   // Drop any prior entry so repeated prebuilds don't accumulate duplicates.
+  // `name="…"` is matched anywhere inside the opening tag (not only right
+  // after the tag name), so an entry like `<color format="hex" name="x">`
+  // is removed too — otherwise it would survive and duplicate on re-run.
   contents = contents.replace(
     new RegExp(
-      '\\s*<' + tag + '\\s+name=' + quoteClass + name + quoteClass + '[^>]*>[^<]*<\\/' + tag + '>',
+      '\\s*<' +
+        tag +
+        '\\s[^>]*\\bname=' +
+        quoteClass +
+        name +
+        quoteClass +
+        '[^>]*>[^<]*<\\/' +
+        tag +
+        '>',
       'g',
     ),
     '',

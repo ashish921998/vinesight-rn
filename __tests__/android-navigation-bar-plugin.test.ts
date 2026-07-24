@@ -73,6 +73,21 @@ describe('with-android-navigation-bar', () => {
     },
   );
 
+  it('removes a prior entry whose name attribute is preceded by another attribute (no duplicate)', () => {
+    const input = [
+      '<resources>',
+      '  <color format="hex" name="vinesight_navigation_bar">#000000</color>',
+      '</resources>',
+    ].join('\n');
+
+    const output = upsertColor(input, 'vinesight_navigation_bar', '#2E342F');
+
+    const matches = output.match(/<color\b[^>]*\bname=["']vinesight_navigation_bar["']/g) || [];
+    expect(matches).toHaveLength(1);
+    expect(output).not.toContain('#000000');
+    expect(output).toContain('<color name="vinesight_navigation_bar">#2E342F</color>');
+  });
+
   it('dedupes a single-quoted existing entry and writes it back with double quotes', () => {
     const input = `<resources>\n  <color name='vinesight_navigation_bar'>#000000</color>\n</resources>`;
 
