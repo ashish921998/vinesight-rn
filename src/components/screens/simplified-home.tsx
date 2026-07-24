@@ -36,6 +36,11 @@ type QuickAction = {
     | 'dashboard.quickActions.expense';
 };
 
+type ActivityPresentation = {
+  icon: 'water' | 'spraycan' | 'basket' | 'receipt' | 'fertigation' | 'document';
+  color: string;
+};
+
 export function SimplifiedHome() {
   const m3 = useM3();
   const domain = useDomainColors();
@@ -145,6 +150,25 @@ export function SimplifiedHome() {
       labelKey: 'dashboard.quickActions.expense',
     },
   ];
+
+  const getActivityPresentation = (type: LogTypeId): ActivityPresentation => {
+    switch (type) {
+      case 'irrigation':
+        return { icon: 'water', color: domain.category.irrigation };
+      case 'spray':
+        return { icon: 'spraycan', color: domain.category.spray };
+      case 'harvest':
+        return { icon: 'basket', color: domain.category.harvest };
+      case 'expense':
+        return { icon: 'receipt', color: domain.category.expense };
+      case 'fertigation':
+        return { icon: 'fertigation', color: domain.category.fertigation };
+      case 'note':
+        return { icon: 'document', color: domain.category.note };
+      default:
+        return { icon: 'document', color: m3.colorScheme.primary };
+    }
+  };
 
   const bottomPadding = Math.max(insets.bottom + spacing[12], spacing[16]);
 
@@ -327,7 +351,7 @@ export function SimplifiedHome() {
             </View>
           </View>
 
-          {/* Recent Activity — colored-dot timeline (logs only). */}
+          {/* Recent Activity — compact log cards, still secondary to capture actions. */}
           <View style={{ marginBottom: spacing[6] }}>
             <View
               style={{
@@ -382,72 +406,97 @@ export function SimplifiedHome() {
                 <Spinner color={m3.colorScheme.primary} />
               </View>
             ) : recentActivities && recentActivities.length > 0 ? (
-              <View style={{ borderTopWidth: 1, borderTopColor: m3.surface.s200 }}>
-                {recentActivities.map((activity, index) => (
-                  <Pressable
-                    key={activity.id}
-                    onPress={() => router.push(`/farm/${activity.farmId}`)}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      activity.farmName
-                        ? t('dashboard.recentActivity.openFarm', { name: activity.farmName })
-                        : t('dashboard.recentActivity.openFarmDetails')
-                    }
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: spacing[3],
-                      paddingVertical: spacing[3],
-                      borderBottomWidth: index < recentActivities.length - 1 ? 1 : 0,
-                      borderBottomColor: m3.surface.s200,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 4,
-                        height: 36,
-                        borderRadius: radius.xs,
-                        backgroundColor:
-                          activity.type === 'irrigation'
-                            ? domain.category.irrigation
-                            : activity.type === 'expense'
-                              ? domain.category.expense
-                              : activity.type === 'spray'
-                                ? domain.category.spray
-                                : activity.type === 'harvest'
-                                  ? domain.category.harvest
-                                  : activity.type === 'note'
-                                    ? domain.category.labour
-                                    : m3.colorScheme.primary,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text
+              <View style={{ gap: spacing[1] }}>
+                {recentActivities.map((activity) => {
+                  const presentation = getActivityPresentation(activity.type);
+                  const activityDate = formatDate(activity.date, {
+                    month: 'short',
+                    day: 'numeric',
+                  });
+
+                  return (
+                    <Pressable
+                      key={activity.id}
+                      onPress={() => router.push(`/farm/${activity.farmId}`)}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        activity.farmName
+                          ? t('dashboard.recentActivity.openFarm', { name: activity.farmName })
+                          : t('dashboard.recentActivity.openFarmDetails')
+                      }
+                      style={({ pressed }) => ({
+                        flexDirection: 'row',
+                        alignItems: 'flex-start',
+                        gap: spacing[2],
+                        paddingHorizontal: spacing[2],
+                        paddingVertical: spacing[2],
+                        borderRadius: borderRadius.md,
+                        backgroundColor: pressed ? m3.surface.s200 : m3.surface.s100,
+                        borderWidth: 1,
+                        borderColor: m3.surface.s200,
+                        opacity: pressed ? 0.9 : 1,
+                      })}
+                    >
+                      <View
                         style={{
-                          fontSize: fontSize.sm,
-                          fontWeight: fontWeight.medium,
-                          color: m3.surface.s900,
-                          lineHeight: 20,
+                          width: 32,
+                          height: 32,
+                          borderRadius: radius.md,
+                          backgroundColor: colorWithOpacity(presentation.color, 0.12),
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
                         }}
                       >
-                        {activity.description}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: fontSize.xs,
-                          color: m3.surface.s500,
-                          lineHeight: 16,
-                        }}
-                      >
-                        {activity.farmName}
-                      </Text>
-                    </View>
-                    <Text style={{ fontSize: fontSize.xs, color: m3.surface.s400, flexShrink: 0 }}>
-                      {formatDate(activity.date, { month: 'short', day: 'numeric' })}
-                    </Text>
-                  </Pressable>
-                ))}
+                        <AppIcon name={presentation.icon} size={16} color={presentation.color} />
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'flex-start',
+                            gap: spacing[2],
+                          }}
+                        >
+                          <Text
+                            numberOfLines={2}
+                            style={{
+                              flex: 1,
+                              minWidth: 0,
+                              fontSize: fontSize.sm,
+                              fontWeight: fontWeight.semibold,
+                              color: m3.surface.s900,
+                              lineHeight: 18,
+                            }}
+                          >
+                            {activity.description}
+                          </Text>
+                          <Text
+                            numberOfLines={1}
+                            style={{
+                              fontSize: fontSize.xs,
+                              color: m3.surface.s500,
+                              lineHeight: 17,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {activityDate}
+                          </Text>
+                        </View>
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            fontSize: fontSize.xs,
+                            color: m3.surface.s500,
+                            lineHeight: 15,
+                          }}
+                        >
+                          {activity.farmName}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </View>
             ) : (
               <View
