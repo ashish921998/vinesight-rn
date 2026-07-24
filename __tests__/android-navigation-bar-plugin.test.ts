@@ -1,7 +1,12 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const navigationBarPlugin = require('../plugins/with-android-navigation-bar');
 
-const { upsertBool, upsertColor } = navigationBarPlugin;
+const { assignNavigationBarStyles, upsertBool, upsertColor } = navigationBarPlugin;
+
+type AndroidStyle = {
+  $: { name: string; parent?: string };
+  item?: Array<{ $: { name: string }; _: string }>;
+};
 
 /** Count `<tag name="name"` / `<tag name='name'` occurrences (either quote). */
 const countEntries = (xml: string, tag: string, name: string): number =>
@@ -87,5 +92,51 @@ describe('with-android-navigation-bar', () => {
     expect(twice).toBe(once);
     expect(countEntries(twice, 'bool', 'vinesight_light_navigation_bar')).toBe(1);
     expect(twice).toContain('<bool name="vinesight_light_navigation_bar">true</bool>');
+  });
+
+  it('assigns the AppTheme navigation bar color and button style resources', () => {
+    const styles: { resources: { style: AndroidStyle[] } } = {
+      resources: {
+        style: [
+          {
+            $: { name: 'AppTheme', parent: 'Theme.AppCompat.DayNight.NoActionBar' },
+            item: [],
+          },
+          {
+            $: { name: 'Theme.App.SplashScreen' },
+            item: [],
+          },
+        ],
+      },
+    };
+
+    const output = assignNavigationBarStyles(styles);
+    const appTheme = output.resources.style.find(
+      (style: AndroidStyle) => style.$.name === 'AppTheme',
+    );
+    const splashTheme = output.resources.style.find(
+      (style: AndroidStyle) => style.$.name === 'Theme.App.SplashScreen',
+    );
+
+    expect(appTheme.item).toEqual(
+      expect.arrayContaining([
+        {
+          $: { name: 'android:navigationBarColor' },
+          _: '@color/vinesight_navigation_bar',
+        },
+        {
+          $: { name: 'android:windowLightNavigationBar' },
+          _: '@bool/vinesight_light_navigation_bar',
+        },
+      ]),
+    );
+    expect(splashTheme.item).toEqual(
+      expect.arrayContaining([
+        {
+          $: { name: 'android:windowLightNavigationBar' },
+          _: '@bool/vinesight_light_navigation_bar',
+        },
+      ]),
+    );
   });
 });

@@ -22,9 +22,9 @@ const path = require('path');
  * WHAT: defines a `<color>` resource in `values/` (light) and `values-night/`
  * (dark) and points `android:navigationBarColor` at it. AppTheme is
  * Theme.AppCompat.DayNight, so Android picks the right tone per device theme —
- * including during the splash / cold start, before JS loads. The button tint
- * (windowLightNavigationBar) stays driven at runtime by the <NavigationBar>
- * component in app/_layout.tsx.
+ * including during the splash / cold start, before JS loads. The cold-start
+ * button tint uses matching boolean resources, then app/_layout.tsx keeps it
+ * synced to Vinesight's persisted app theme once JS hydrates.
  *
  * Tones use the M3 surfaceContainer ramp. The bottom tab bar sits at
  * `surfaceContainer` (surface[200]) — per the M3 NavigationBar spec
@@ -86,24 +86,7 @@ const withAndroidNavigationBarColor = (config) => {
   //    any literal color (and is itself idempotent), so it stays correct even
   //    if the static config or another plugin writes the same attribute.
   config = withAndroidStyles(config, (cfg) => {
-    cfg.modResults = AndroidConfig.Styles.assignStylesValue(cfg.modResults, {
-      add: true,
-      parent: AndroidConfig.Styles.getAppThemeGroup(),
-      name: 'android:navigationBarColor',
-      value: `@color/${COLOR_NAME}`,
-    });
-    cfg.modResults = AndroidConfig.Styles.assignStylesValue(cfg.modResults, {
-      add: true,
-      parent: AndroidConfig.Styles.getAppThemeGroup(),
-      name: 'android:windowLightNavigationBar',
-      value: `@bool/${LIGHT_BUTTONS_NAME}`,
-    });
-    cfg.modResults = AndroidConfig.Styles.assignStylesValue(cfg.modResults, {
-      add: true,
-      parent: { name: 'Theme.App.SplashScreen' },
-      name: 'android:windowLightNavigationBar',
-      value: `@bool/${LIGHT_BUTTONS_NAME}`,
-    });
+    cfg.modResults = assignNavigationBarStyles(cfg.modResults);
     return cfg;
   });
 
@@ -154,7 +137,30 @@ function readResourceFile(filePath) {
   }
 }
 
+function assignNavigationBarStyles(styles) {
+  styles = AndroidConfig.Styles.assignStylesValue(styles, {
+    add: true,
+    parent: AndroidConfig.Styles.getAppThemeGroup(),
+    name: 'android:navigationBarColor',
+    value: `@color/${COLOR_NAME}`,
+  });
+  styles = AndroidConfig.Styles.assignStylesValue(styles, {
+    add: true,
+    parent: AndroidConfig.Styles.getAppThemeGroup(),
+    name: 'android:windowLightNavigationBar',
+    value: `@bool/${LIGHT_BUTTONS_NAME}`,
+  });
+  styles = AndroidConfig.Styles.assignStylesValue(styles, {
+    add: true,
+    parent: { name: 'Theme.App.SplashScreen' },
+    name: 'android:windowLightNavigationBar',
+    value: `@bool/${LIGHT_BUTTONS_NAME}`,
+  });
+  return styles;
+}
+
 withAndroidNavigationBarColor.upsertColor = upsertColor;
 withAndroidNavigationBarColor.upsertBool = upsertBool;
+withAndroidNavigationBarColor.assignNavigationBarStyles = assignNavigationBarStyles;
 
 module.exports = withAndroidNavigationBarColor;
