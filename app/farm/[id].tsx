@@ -1256,7 +1256,9 @@ export default function FarmDetailScreen() {
   };
 
   const farmRef = React.useRef(farm);
-  farmRef.current = farm;
+  useEffect(() => {
+    farmRef.current = farm;
+  }, [farm]);
 
   const handleEditActivity = React.useCallback((log: FarmActivityLog) => {
     const currentFarm = farmRef.current;
@@ -1294,7 +1296,7 @@ export default function FarmDetailScreen() {
               const record = log.data as
                 IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
               const farmIdNum =
-                farm?.id ??
+                farmRef.current?.id ??
                 (record.farm_id
                   ? typeof record.farm_id === 'string'
                     ? parseInt(record.farm_id, 10)
@@ -1340,7 +1342,7 @@ export default function FarmDetailScreen() {
         },
       ],
     );
-  }, [deleteExpense, deleteFertigation, deleteHarvest, deleteIrrigation, deleteSpray, farm?.id, t]);
+  }, [deleteExpense, deleteFertigation, deleteHarvest, deleteIrrigation, deleteSpray, t]);
 
   const handleDeleteFarm = () => {
     if (!farmId || !farm) return;
