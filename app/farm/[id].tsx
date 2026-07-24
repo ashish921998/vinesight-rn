@@ -83,18 +83,23 @@ interface WorkboardAction {
   route?: string;
 }
 
-type FarmActivityLog = {
-  id: string;
-  type: LogTypeId;
-  date: string;
-  data:
-    | IrrigationRecord
-    | SprayRecord
-    | HarvestRecord
-    | ExpenseRecord
-    | FertigationRecord
-    | DailyNoteRecord;
+type FarmActivityRecordByType = {
+  irrigation: IrrigationRecord;
+  spray: SprayRecord;
+  harvest: HarvestRecord;
+  expense: ExpenseRecord;
+  fertigation: FertigationRecord;
+  note: DailyNoteRecord;
 };
+
+type FarmActivityLog = {
+  [Type in LogTypeId]: {
+    id: string;
+    type: Type;
+    date: string;
+    data: FarmActivityRecordByType[Type];
+  };
+}[LogTypeId];
 
 interface RecentActivityCardProps {
   log: FarmActivityLog;
@@ -1250,20 +1255,26 @@ export default function FarmDetailScreen() {
     }
   };
 
+  const farmRef = React.useRef(farm);
+  farmRef.current = farm;
+
   const handleEditActivity = React.useCallback((log: FarmActivityLog) => {
-    if (!farm) return;
+    const currentFarm = farmRef.current;
+    if (!currentFarm) return;
     if (log.type === 'note') {
-      router.push({ pathname: '/add-note', params: { farmId: String(farm.id), date: log.date } });
+      router.push({
+        pathname: '/add-note',
+        params: { farmId: String(currentFarm.id), date: log.date },
+      });
       return;
     }
-    const record = log.data as Exclude<typeof log.data, DailyNoteRecord>;
     setEditActivity({
-      farm,
+      farm: currentFarm,
       logType: log.type,
-      record,
+      record: log.data,
     });
     router.push(`/log-entry/edit/${log.id}`);
-  }, [farm, router, setEditActivity]);
+  }, [router, setEditActivity]);
 
   const handleDeleteActivity = React.useCallback((log: FarmActivityLog) => {
     triggerHapticWarning();
