@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomSheet } from '@expo/ui/community/bottom-sheet';
+import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { SheetHeader } from '@/components/ui/sheet-header';
 import { useM3 } from '@/styles/use-theme';
@@ -99,7 +99,14 @@ export function WorkersFabSheet({
       onClose={handleSheetClose}
       backgroundStyle={{ backgroundColor: m3.colorScheme.surface }}
     >
-      <View style={{ paddingBottom: Math.max(insets.bottom, spacing[6]) }}>
+      <BottomSheetScrollView
+        nestedScrollEnabled
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: Math.max(insets.bottom, spacing[6]),
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         <SheetHeader title={t('workers.actions.title')} />
 
         <View style={{ paddingHorizontal: spacing[3], gap: spacing[2] }}>
@@ -164,7 +171,7 @@ export function WorkersFabSheet({
             </Pressable>
           ))}
         </View>
-      </View>
+      </BottomSheetScrollView>
     </BottomSheet>
   );
 }
