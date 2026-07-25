@@ -1,46 +1,56 @@
 import type Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
 
-export const BASE_TABS = [
-  { name: 'index', titleKey: 'tabs.dashboard' },
-  { name: 'explore', titleKey: 'tabs.explore' },
-] as const;
+type IonName = ComponentProps<typeof Ionicons>['name'];
 
-// The two base destinations are relabelled in Simplified mode (Home / Farms)
-// without changing their routes; Detailed mode keeps Dashboard / Farming.
-export function baseTabLabelKey(name: string, detailedMode: boolean, fallbackKey: string): string {
-  if (name === 'index') return detailedMode ? 'tabs.dashboard' : 'tabs.home';
-  if (name === 'explore') return detailedMode ? 'tabs.explore' : 'tabs.farms';
-  return fallbackKey;
-}
+/** Android vector-drawable icon key (maps to filled/outlined Material XML). */
+export type TabIconKey = 'home' | 'tractor' | 'workers' | 'tools';
 
-// The two base destinations also swap their Android vector icon to match the
-// mode label: Simplified shows Home (house) + Farms (barn); Detailed shows
-// Dashboard (grid) + Farming (tractor). DETAILED_TABS always use the same icon.
-export function baseTabIconKey(
-  name: string,
-  detailedMode: boolean,
-): 'home' | 'dashboard' | 'barn' | 'tractor' {
-  if (name === 'index') return detailedMode ? 'dashboard' : 'home';
-  if (name === 'explore') return detailedMode ? 'tractor' : 'barn';
-  return 'dashboard';
-}
+export type Tab = {
+  name: string;
+  /** Single label in both Simple and Detailed mode. */
+  titleKey: string;
+  androidIconKey: TabIconKey;
+  /** iOS SF Symbols: [default, selected]. */
+  sf: readonly [string, string];
+  /** iOS vector icon (Ionicons): [default, selected]. */
+  ion: readonly [IonName, IonName];
+};
 
-export const DETAILED_TABS = [
+// The two base destinations keep ONE label + icon across Simple and Detailed
+// mode, so the same routes present identical chrome on every platform/mode —
+// index is Home (house); explore is Farms (agriculture). Both renderers (iOS
+// NativeTabs and Android Compose) read from this single source of truth.
+export const BASE_TABS: readonly Tab[] = [
+  {
+    name: 'index',
+    titleKey: 'tabs.home',
+    androidIconKey: 'home',
+    sf: ['house', 'house.fill'],
+    ion: ['home-outline', 'home'],
+  },
+  {
+    name: 'explore',
+    titleKey: 'tabs.explore',
+    androidIconKey: 'tractor',
+    sf: ['leaf', 'leaf.fill'],
+    ion: ['leaf-outline', 'leaf'],
+  },
+];
+
+export const DETAILED_TABS: readonly Tab[] = [
   {
     name: 'workers',
     titleKey: 'tabs.workers',
-    sf: ['person.2', 'person.2.fill'] as const,
-    ion: ['people-outline', 'people'] as const satisfies readonly ComponentProps<
-      typeof Ionicons
-    >['name'][],
+    androidIconKey: 'workers',
+    sf: ['person.2', 'person.2.fill'],
+    ion: ['people-outline', 'people'],
   },
   {
     name: 'tools',
     titleKey: 'tabs.tools',
-    sf: ['wrench.and.screwdriver', 'wrench.and.screwdriver.fill'] as const,
-    ion: ['build-outline', 'build'] as const satisfies readonly ComponentProps<
-      typeof Ionicons
-    >['name'][],
+    androidIconKey: 'tools',
+    sf: ['wrench.and.screwdriver', 'wrench.and.screwdriver.fill'],
+    ion: ['build-outline', 'build'],
   },
-] as const;
+];

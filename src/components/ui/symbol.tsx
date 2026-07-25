@@ -28,6 +28,12 @@ const SYMBOL_TO_MATERIAL_ICON: Record<string, keyof typeof MaterialCommunityIcon
   'brain.fill': 'brain',
   'building.2.fill': 'office-building',
   'rectangle.stack': 'view-dashboard-outline',
+  // Theme/Appearance settings row — SF "circle.lefthalf.filled" (a circle split
+  // half light / half dark). Without this it fell through to the "•" placeholder
+  // and rendered as a dot on Android.
+  'circle.lefthalf.filled': 'theme-light-dark',
+  // SF "note.text" (note/document with text lines).
+  'note.text': 'note-text-outline',
 };
 
 // Map SF Symbol names to Ionicons (web fallback).
@@ -43,7 +49,10 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 
   // Actions
   plus: 'add',
+  'plus.circle': 'add-circle-outline',
   'plus.circle.fill': 'add-circle',
+  minus: 'remove',
+  'minus.circle': 'remove-circle-outline',
   'minus.circle.fill': 'remove-circle',
   checkmark: 'checkmark',
   'checkmark.circle.fill': 'checkmark-circle',

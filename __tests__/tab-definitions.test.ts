@@ -1,18 +1,33 @@
-import { baseTabLabelKey } from '@/components/navigation/tab-definitions';
+import { BASE_TABS, DETAILED_TABS } from '@/components/navigation/tab-definitions';
 
-describe('baseTabLabelKey', () => {
-  it('relabels the base destinations to Home/Farms in Simplified mode', () => {
-    expect(baseTabLabelKey('index', false, 'tabs.dashboard')).toBe('tabs.home');
-    expect(baseTabLabelKey('explore', false, 'tabs.explore')).toBe('tabs.farms');
+describe('BASE_TABS', () => {
+  it('gives each base destination one label + Android icon shared across modes', () => {
+    const index = BASE_TABS.find((t) => t.name === 'index');
+    const explore = BASE_TABS.find((t) => t.name === 'explore');
+
+    // No mode-dependent Dashboard/Home or Farms/Explore swap — a single title.
+    expect(index?.titleKey).toBe('tabs.home');
+    expect(explore?.titleKey).toBe('tabs.explore');
+    expect(index?.androidIconKey).toBe('home');
+    expect(explore?.androidIconKey).toBe('tractor');
   });
 
-  it('keeps Dashboard/Farming labels in Detailed mode', () => {
-    expect(baseTabLabelKey('index', true, 'tabs.dashboard')).toBe('tabs.dashboard');
-    expect(baseTabLabelKey('explore', true, 'tabs.explore')).toBe('tabs.explore');
+  it('exposes an iOS SF pair and Ionicons pair for every base tab', () => {
+    for (const tab of BASE_TABS) {
+      expect(tab.sf).toHaveLength(2);
+      expect(tab.ion).toHaveLength(2);
+    }
   });
+});
 
-  it('falls back to the tab title key for non-base tabs in either mode', () => {
-    expect(baseTabLabelKey('workers', false, 'tabs.workers')).toBe('tabs.workers');
-    expect(baseTabLabelKey('tools', true, 'tabs.tools')).toBe('tabs.tools');
+describe('DETAILED_TABS', () => {
+  it('carries the Android icon key and single title for each detailed tab', () => {
+    const workers = DETAILED_TABS.find((t) => t.name === 'workers');
+    const tools = DETAILED_TABS.find((t) => t.name === 'tools');
+
+    expect(workers?.titleKey).toBe('tabs.workers');
+    expect(workers?.androidIconKey).toBe('workers');
+    expect(tools?.titleKey).toBe('tabs.tools');
+    expect(tools?.androidIconKey).toBe('tools');
   });
 });

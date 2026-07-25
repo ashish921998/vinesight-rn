@@ -1,5 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useRouter, type Href } from 'expo-router';
+
+const DISMISS_GUARD_MS = 500;
 
 /**
  * Returns a stable callback that dismisses the current screen safely.
@@ -20,7 +22,27 @@ import { useRouter, type Href } from 'expo-router';
  */
 export function useSafeBack(fallback: Href = '/(tabs)') {
   const router = useRouter();
+  const isDismissingRef = useRef(false);
+  const guardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (guardTimerRef.current) clearTimeout(guardTimerRef.current);
+    },
+    [],
+  );
+
   return useCallback(() => {
+    // Navigation actions are queued. A second effect invocation or quick
+    // double-tap can therefore observe the old stack and dispatch another
+    // GO_BACK before the first one is handled.
+    if (isDismissingRef.current) return;
+    isDismissingRef.current = true;
+    guardTimerRef.current = setTimeout(() => {
+      isDismissingRef.current = false;
+      guardTimerRef.current = null;
+    }, DISMISS_GUARD_MS);
+
     if (router.canGoBack()) {
       router.back();
     } else {
