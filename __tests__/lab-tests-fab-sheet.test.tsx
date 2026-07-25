@@ -10,6 +10,7 @@ const mockBottomSheet = jest.fn(({ children }: { children: React.ReactNode }) =>
 jest.mock('@expo/ui/community/bottom-sheet', () => ({
   __esModule: true,
   BottomSheet: mockBottomSheet,
+  BottomSheetScrollView: require('react-native').View,
 }));
 
 jest.mock('react-native-safe-area-context', () => ({

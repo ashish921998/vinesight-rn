@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { BottomSheet } from '@expo/ui/community/bottom-sheet';
+import { BottomSheet, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import type { ChemicalMixComponent } from '@/types/phi';
 import { SheetHeader } from '@/components/ui/sheet-header';
@@ -31,7 +31,11 @@ export function ProductDetailSheet({
       onClose={onClose}
       backgroundStyle={{ backgroundColor: m3.colorScheme.surface }}
     >
-      <View style={{ flex: 1, paddingBottom: spacing[4] }}>
+      <BottomSheetScrollView
+        nestedScrollEnabled
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: spacing[4] }}
+        showsVerticalScrollIndicator={false}
+      >
         <SheetHeader
           title={
             component?.product_name ??
@@ -58,7 +62,7 @@ export function ProductDetailSheet({
             })}
           </Text>
         </View>
-      </View>
+      </BottomSheetScrollView>
     </BottomSheet>
   );
 }
