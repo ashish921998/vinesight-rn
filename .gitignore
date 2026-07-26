@@ -57,6 +57,9 @@ Certificates*.p12
 lint-results.json
 *-results.json
 
+# RNRepo pre-built artifact cache (downloaded at build time; not source)
+**/.rnrepo-cache/
+
 # Storybook
 *storybook.log
 storybook-static

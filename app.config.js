@@ -25,7 +25,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.3.2',
+    version: '3.3.3',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
@@ -80,7 +80,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 40,
+      versionCode: 41,
       // Required for FCM so `FirebaseApp.initializeApp` runs at build time;
       // without it `getExpoPushTokenAsync` fails on Android with
       // E_REGISTRATION_FAILED ("Default FirebaseApp is not initialized").
@@ -122,6 +122,11 @@ module.exports = {
       bundler: 'metro',
     },
     plugins: [
+      // RNRepo: substitutes supported native libraries with pre-built,
+      // GPG-signed artifacts from the public Maven repo instead of compiling
+      // from source. Unsupported libraries / RN versions automatically fall
+      // back to source compilation. Verify via "[📦 RNRepo]" build logs.
+      '@rnrepo/expo-config-plugin',
       'expo-router',
       'expo-asset',
       'expo-system-ui',
