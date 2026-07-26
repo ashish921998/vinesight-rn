@@ -8,23 +8,29 @@ import { useLogPresentation, type RecentActivity } from '@/hooks';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { relativeDayKey } from '@/utils/date';
 import { formatDate } from '@/i18n/format';
 
 interface RecentActivityListProps {
   activities: RecentActivity[] | undefined;
   isLoading: boolean;
   hasFarms: boolean;
+  /** Only true with 2+ farms — with one farm the header already names it. */
+  showFarmName: boolean;
   onOpenFarm: (farmId: number) => void;
   onViewAll: () => void;
 }
 
 // Compact recent-activity timeline for the home screen. Derives every log
-// type's icon + color from the single useLogPresentation map (icons from the
+// type's icon + color + label from the single useLogPresentation map (from the
 // canonical LOG_TYPES model), so it stays in sync with the quick-action grid.
+// The log TYPE is the row title — a bare "4h" or a chemical name tells a farmer
+// nothing on its own — with the amount/detail as the supporting line.
 export function RecentActivityList({
   activities,
   isLoading,
   hasFarms,
+  showFarmName,
   onOpenFarm,
   onViewAll,
 }: RecentActivityListProps) {
@@ -92,27 +98,31 @@ export function RecentActivityList({
         <View style={{ gap: spacing[1] }}>
           {activityList.map((activity) => {
             const p = presentation[activity.type];
-            const activityDate = formatDate(activity.date, {
-              month: 'short',
-              day: 'numeric',
-            });
+            const dayKey = relativeDayKey(activity.date);
+            const activityDate = dayKey
+              ? t(`common.${dayKey}`)
+              : formatDate(activity.date, { month: 'short', day: 'numeric' });
+            // Amount/detail first, farm only when the farmer has more than one.
+            const detail = [activity.description, showFarmName ? activity.farmName : null]
+              .filter((part) => part)
+              .join(' · ');
 
             return (
               <Pressable
                 key={activity.id}
                 onPress={() => onOpenFarm(activity.farmId)}
                 accessibilityRole="button"
-                accessibilityLabel={`${
+                accessibilityLabel={`${p.label}${detail ? `, ${detail}` : ''}, ${activityDate}, ${
                   activity.farmName
                     ? t('dashboard.recentActivity.openFarm', { name: activity.farmName })
                     : t('dashboard.recentActivity.openFarmDetails')
-                }, ${activity.description}, ${activityDate}`}
+                }`}
                 style={({ pressed }) => ({
                   flexDirection: 'row',
-                  alignItems: 'flex-start',
-                  gap: spacing[2],
-                  paddingHorizontal: spacing[2],
-                  paddingVertical: spacing[2],
+                  alignItems: 'center',
+                  gap: spacing[3],
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[3],
                   borderRadius: borderRadius.md,
                   backgroundColor: pressed ? m3.surface.s200 : m3.surface.s100,
                   borderWidth: 1,
@@ -122,8 +132,8 @@ export function RecentActivityList({
               >
                 <View
                   style={{
-                    width: 32,
-                    height: 32,
+                    width: 40,
+                    height: 40,
                     borderRadius: radius.md,
                     backgroundColor: colorWithOpacity(p.color, 0.12),
                     alignItems: 'center',
@@ -131,51 +141,51 @@ export function RecentActivityList({
                     flexShrink: 0,
                   }}
                 >
-                  <AppIcon name={p.icon} size={16} color={p.color} />
+                  <AppIcon name={p.icon} size={20} color={p.color} />
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <View
                     style={{
                       flexDirection: 'row',
-                      alignItems: 'flex-start',
+                      alignItems: 'center',
                       gap: spacing[2],
                     }}
                   >
                     <Text
-                      numberOfLines={2}
+                      numberOfLines={1}
                       style={{
                         flex: 1,
                         minWidth: 0,
-                        fontSize: fontSize.sm,
+                        fontSize: fontSize.base,
                         fontWeight: fontWeight.semibold,
                         color: m3.surface.s900,
-                        lineHeight: 18,
                       }}
                     >
-                      {activity.description}
+                      {p.label}
                     </Text>
                     <Text
                       numberOfLines={1}
                       style={{
                         fontSize: fontSize.xs,
                         color: m3.surface.s500,
-                        lineHeight: 17,
                         flexShrink: 0,
                       }}
                     >
                       {activityDate}
                     </Text>
                   </View>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      fontSize: fontSize.xs,
-                      color: m3.surface.s500,
-                      lineHeight: 15,
-                    }}
-                  >
-                    {activity.farmName}
-                  </Text>
+                  {detail ? (
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        marginTop: 1,
+                        fontSize: fontSize.sm,
+                        color: m3.surface.s500,
+                      }}
+                    >
+                      {detail}
+                    </Text>
+                  ) : null}
                 </View>
               </Pressable>
             );

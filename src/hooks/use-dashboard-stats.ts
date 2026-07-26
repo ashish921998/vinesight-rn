@@ -294,21 +294,23 @@ export function useRecentActivities(limit: number = 5) {
           id: `spray_${r.id}`,
           type: 'spray',
           date: r.date,
-          description: r.chemical ?? 'Spray application',
+          description: r.chemical?.trim() ?? '',
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? 'Unknown',
+          farmName: farmMap.get(r.farm_id) ?? '',
         });
       });
 
       // Map harvest
       harvest.forEach((r) => {
+        const grade = r.grade?.trim();
+        const quantity = `${r.quantity?.toFixed(0) ?? 0} kg`;
         activities.push({
           id: `harvest_${r.id}`,
           type: 'harvest',
           date: r.date,
-          description: `${r.quantity?.toFixed(0) ?? 0} kg - ${r.grade ?? 'Unknown grade'}`,
+          description: grade ? `${quantity} · ${grade}` : quantity,
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? 'Unknown',
+          farmName: farmMap.get(r.farm_id) ?? '',
         });
       });
 
@@ -317,13 +319,14 @@ export function useRecentActivities(limit: number = 5) {
         const formattedCost = formatCurrency(r.cost ?? 0, preferredCurrency, {
           minimumFractionDigits: 0,
         });
+        const expenseType = r.type?.trim();
         activities.push({
           id: `expense_${r.id}`,
           type: 'expense',
           date: r.date,
-          description: `${formattedCost} - ${r.type ?? 'Expense'}`,
+          description: expenseType ? `${formattedCost} · ${expenseType}` : formattedCost,
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? 'Unknown',
+          farmName: farmMap.get(r.farm_id) ?? '',
         });
       });
 
@@ -333,22 +336,21 @@ export function useRecentActivities(limit: number = 5) {
           id: `fertigation_${r.id}`,
           type: 'fertigation',
           date: r.date,
-          description: 'Fertigation applied',
+          description: '',
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? 'Unknown',
+          farmName: farmMap.get(r.farm_id) ?? '',
         });
       });
 
       // Map notes
       dailyNotes.forEach((r) => {
-        const noteText = r.notes?.trim();
         activities.push({
           id: `note_${r.id}`,
           type: 'note',
           date: r.date,
-          description: noteText && noteText.length > 0 ? noteText : 'Note',
+          description: r.notes?.trim() ?? '',
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? 'Unknown',
+          farmName: farmMap.get(r.farm_id) ?? '',
         });
       });
 
