@@ -1,0 +1,29 @@
+src/hooks/use-log-presentation.ts
+  s_e6180d4611adac::t_466521fb16b5c4 2,7,10-11,23,26-28,30,40
+src/components/screens/recent-activity.tsx
+  s_e6180d4611adac::t_466521fb16b5c4 11,18-19,25,27-28,33,101-108,115,119,122-125,135-136,144,150,155,159,164,177-188
+src/utils/date.ts
+  s_e6180d4611adac::t_466521fb16b5c4 25-37
+src/components/screens/simplified-home.tsx
+  s_e6180d4611adac::t_466521fb16b5c4 25-29,97,102-103,235-281,283-299,307
+src/hooks/use-dashboard-stats.ts
+  s_e6180d4611adac::t_466521fb16b5c4 297,299,305-306,311,313,322,327,329,339,341,351,353
+__tests__/relative-day-key.test.ts
+  s_e6180d4611adac::t_466521fb16b5c4 1-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "128fbb2416c6702506bb698e492a3ca35604e514",
+  "prompts": {},
+  "sessions": {
+    "s_e6180d4611adac": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f9c5e-4682-7d61-b2e6-fc19df16983c",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
