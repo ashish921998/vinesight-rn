@@ -1,0 +1,31 @@
+__tests__/bottom-sheet-gesture-guard.test.ts
+  s_e6180d4611adac::t_466521fb16b5c4 1-38
+__tests__/lab-tests-fab-sheet.test.tsx
+  s_e6180d4611adac::t_466521fb16b5c4 9-11,16,58-74
+src/components/screens/reports/report-filters-panel.tsx
+  s_e6180d4611adac::t_466521fb16b5c4 846,937
+src/components/modals/farm-select-modal.tsx
+  s_e6180d4611adac::t_466521fb16b5c4 62
+src/components/modals/worker-select-sheet.tsx
+  s_e6180d4611adac::t_466521fb16b5c4 64
+src/components/screens/receipt-log-screen.tsx
+  s_e6180d4611adac::t_466521fb16b5c4 825
+src/components/modals/farm-assistant-modal.tsx
+  s_e6180d4611adac::t_466521fb16b5c4 355-359
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "373db2d8eca54ed843d129b8ea00f2a4a17fbd72",
+  "prompts": {},
+  "sessions": {
+    "s_e6180d4611adac": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f9c5e-4682-7d61-b2e6-fc19df16983c",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
