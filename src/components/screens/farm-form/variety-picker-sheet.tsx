@@ -52,7 +52,6 @@ export function VarietyPickerSheet({
       <BottomSheetView style={{ flex: 1 }}>
         <GuidedTourTarget
           targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
-          onStartShouldSetResponder={() => true}
           style={{
             flex: 1,
             backgroundColor: m3.surface.s100,

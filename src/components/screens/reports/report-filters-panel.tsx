@@ -837,13 +837,13 @@ export function ReportFiltersPanel({
             borderCurve: 'continuous',
             paddingBottom: spacing[6],
           }}
-          onStartShouldSetResponder={() => true}
         >
           <SheetHandle color={m3.colorScheme.onSurface} />
 
           <SheetHeader title={t('reports.selectFarmLabel')} />
 
           <FlatList
+            nestedScrollEnabled
             data={farms}
             keyExtractor={(item) => String(item.id ?? item.name)}
             showsVerticalScrollIndicator={false}
@@ -928,13 +928,13 @@ export function ReportFiltersPanel({
             borderCurve: 'continuous',
             paddingBottom: spacing[6],
           }}
-          onStartShouldSetResponder={() => true}
         >
           <SheetHandle color={m3.colorScheme.onSurface} />
 
           <SheetHeader title={t('reports.season.label')} />
 
           <FlatList
+            nestedScrollEnabled
             data={[
               {
                 id: -1,

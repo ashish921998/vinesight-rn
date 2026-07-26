@@ -822,6 +822,7 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
             </View>
 
             <ScrollView
+              nestedScrollEnabled
               style={{ flexShrink: 1 }}
               contentContainerStyle={{ paddingHorizontal: spacing[4], paddingTop: spacing[2] }}
               keyboardShouldPersistTaps="handled"
