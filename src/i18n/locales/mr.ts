@@ -2077,12 +2077,6 @@ export const mr = {
       title: 'एआय सहाय्यक',
       subtitle: 'शेती सहाय्यक उघडा',
     },
-    appModeIntro: {
-      title: 'आम्ही VineSight सोपे केले आहे',
-      body: 'अॅप आता सोप्या मोडमध्ये सुरू होतो. कामगार, साधने आणि कार्ये डिफॉल्टनुसार लपवलेली आहेत. तुम्ही कधीही परत स्विच करू शकता.',
-      enableDetailed: 'विस्तृत मोड चालू करा',
-      staySimplified: 'सोप्या मोडमध्ये राहा',
-    },
     errors: {
       signOutFailed: 'साइन आउट अयशस्वी. पुन्हा प्रयत्न करा.',
       notificationsPermissionDenied: 'सूचना परवानगी मंजूर झाली नाही.',
@@ -2457,14 +2451,6 @@ export const mr = {
           'मुदत संपलेली $t(glossary.task), PHI मुदती आणि इतर तातडीचे शेतातील प्रश्न पाहण्यासाठी पुन्हा प्रयत्न करा.',
         cta: 'पुन्हा प्रयत्न करा',
       },
-    },
-    quickActions: {
-      title: 'त्वरित क्रिया',
-      irrigation: '$t(glossary.irrigation)',
-      spray: '$t(glossary.spray)',
-      harvest: '$t(glossary.harvest)',
-      expense: '$t(glossary.expense)',
-      note: 'नोंद',
     },
     recentActivity: {
       title: 'अलीकडील क्रियाकलाप',
