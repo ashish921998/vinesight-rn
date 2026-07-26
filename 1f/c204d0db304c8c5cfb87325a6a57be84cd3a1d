@@ -1,0 +1,27 @@
+app.config.js
+  s_e6180d4611adac::t_466521fb16b5c4 28,83,125-129
+.fingerprintignore
+  s_e6180d4611adac::t_466521fb16b5c4 1-4
+package.json
+  s_e6180d4611adac::t_466521fb16b5c4 49
+.gitignore
+  s_e6180d4611adac::t_466521fb16b5c4 60-62
+package-lock.json
+  s_e6180d4611adac::t_16bd9f31af9913 17,5354-5375
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "1fc204d0db304c8c5cfb87325a6a57be84cd3a1d",
+  "prompts": {},
+  "sessions": {
+    "s_e6180d4611adac": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f9c5e-4682-7d61-b2e6-fc19df16983c",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
