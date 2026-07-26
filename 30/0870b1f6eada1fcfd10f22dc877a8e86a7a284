@@ -1,0 +1,23 @@
+src/stores/app-mode-store.ts
+  s_e6180d4611adac::t_466521fb16b5c4 4,24-47,53-56,65-68,73-74,79-82
+src/services/feature-flags.ts
+  s_e6180d4611adac::t_466521fb16b5c4 52-67,76
+__tests__/app-mode-store.test.ts
+  s_e6180d4611adac::t_466521fb16b5c4 1-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "300870b1f6eada1fcfd10f22dc877a8e86a7a284",
+  "prompts": {},
+  "sessions": {
+    "s_e6180d4611adac": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f9c5e-4682-7d61-b2e6-fc19df16983c",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
