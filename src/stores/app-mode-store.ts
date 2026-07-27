@@ -16,6 +16,12 @@ interface AppModeState {
   detailedMode: boolean;
   /** False until AsyncStorage has delivered the persisted value. */
   hydrated: boolean;
+  /**
+   * Reactive mirror of FORCE_SIMPLE_MODE, so the Settings toggle can hide itself
+   * instead of rendering a switch that snaps back when tapped. Derived from the
+   * flag on every refresh — never persisted.
+   */
+  forcedSimple: boolean;
   setDetailedMode: (value: boolean) => void;
 }
 
@@ -40,7 +46,9 @@ function reportAppMode(detailedMode: boolean) {
  * Simplified even after the flag is turned off again.
  */
 function enforceSimpleMode() {
-  if (!isFeatureEnabled(FLAG_KEYS.FORCE_SIMPLE_MODE)) return;
+  const forcedSimple = isFeatureEnabled(FLAG_KEYS.FORCE_SIMPLE_MODE);
+  useAppModeStore.setState({ forcedSimple });
+  if (!forcedSimple) return;
   if (!useAppModeStore.getState().detailedMode) return;
   useAppModeStore.getState().setDetailedMode(false);
 }
@@ -50,6 +58,7 @@ export const useAppModeStore = create<AppModeState>()(
     (set) => ({
       detailedMode: false,
       hydrated: false,
+      forcedSimple: false,
       setDetailedMode: (value) => {
         // Kill-switch: when FORCE_SIMPLE_MODE is active, refuse to enter
         // Detailed mode so the Settings toggle can't bypass enforcement

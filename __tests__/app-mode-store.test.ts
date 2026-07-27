@@ -39,7 +39,7 @@ const { useAppModeStore } = store;
 beforeEach(() => {
   jest.clearAllMocks();
   mockIsFeatureEnabled.mockReturnValue(false);
-  useAppModeStore.setState({ detailedMode: false });
+  useAppModeStore.setState({ detailedMode: false, forcedSimple: false });
 });
 
 it('defaults to Simplified mode', () => {
@@ -73,6 +73,18 @@ it('refuses to enter Detailed mode via the setter while FORCE_SIMPLE_MODE is on'
 
   expect(useAppModeStore.getState().detailedMode).toBe(false);
   expect(mockRegister).not.toHaveBeenCalled();
+});
+
+// `forcedSimple` is what hides the Settings toggle; if it stopped tracking the
+// flag, users would face a switch that refuses to move.
+it('mirrors the flag into forcedSimple so the Settings toggle can hide', () => {
+  mockIsFeatureEnabled.mockReturnValue(true);
+  flagsCallback?.();
+  expect(useAppModeStore.getState().forcedSimple).toBe(true);
+
+  mockIsFeatureEnabled.mockReturnValue(false);
+  flagsCallback?.();
+  expect(useAppModeStore.getState().forcedSimple).toBe(false);
 });
 
 it("leaves a user's own Detailed choice alone while the flag is off", () => {

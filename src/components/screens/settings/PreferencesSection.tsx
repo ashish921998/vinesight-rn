@@ -16,6 +16,8 @@ interface PreferencesSectionProps {
   selectedAreaUnit: 'acres' | 'hectares';
   isResettingGuidedTour: boolean;
   detailedMode: boolean;
+  /** When true the App-mode row is hidden — FORCE_SIMPLE_MODE owns the setting. */
+  forcedSimple: boolean;
   styles: SettingsStyles;
   m3: ReturnType<typeof getM3Theme>;
   onLanguageChange: (code: SupportedLanguageCode) => void;
@@ -34,6 +36,7 @@ export function PreferencesSection({
   selectedAreaUnit,
   isResettingGuidedTour,
   detailedMode,
+  forcedSimple,
   styles,
   m3,
   onLanguageChange,
@@ -84,15 +87,19 @@ export function PreferencesSection({
           {t('settings.sectionGeneral')}
         </Text>
         <View style={styles.sectionContent}>
-          <SettingsItem
-            icon="rectangle.stack"
-            title={t('settings.appMode.title')}
-            subtitle={t('settings.appMode.subtitle')}
-            toggle={{ value: detailedMode, onValueChange: onDetailedModeChange }}
-            isLast={false}
-            styles={styles}
-            m3={m3}
-          />
+          {/* Hidden while FORCE_SIMPLE_MODE is on: the store refuses Detailed
+              mode, so the switch would snap back with no explanation. */}
+          {!forcedSimple && (
+            <SettingsItem
+              icon="rectangle.stack"
+              title={t('settings.appMode.title')}
+              subtitle={t('settings.appMode.subtitle')}
+              toggle={{ value: detailedMode, onValueChange: onDetailedModeChange }}
+              isLast={false}
+              styles={styles}
+              m3={m3}
+            />
+          )}
           <Pressable
             onPress={onOpenAssistant}
             accessibilityRole="button"
