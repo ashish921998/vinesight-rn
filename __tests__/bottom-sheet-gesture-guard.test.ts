@@ -35,4 +35,15 @@ describe('dismissible Android bottom sheets', () => {
     expect(source).toContain('<BottomSheetScrollView');
     expect(source).toContain('nestedScrollEnabled');
   });
+
+  it.each([
+    'components/screens/farm-form/crop-picker-sheet.tsx',
+    'components/screens/farm-form/variety-picker-sheet.tsx',
+  ])('%s sets nestedScrollEnabled on its inner ScrollView', (relativePath) => {
+    const source = fs.readFileSync(path.join(srcRoot, relativePath), 'utf8');
+
+    const scrollViews = source.match(/<ScrollView[^>]*>/g) ?? [];
+    expect(scrollViews.length).toBeGreaterThan(0);
+    expect(scrollViews.every((tag) => tag.includes('nestedScrollEnabled'))).toBe(true);
+  });
 });

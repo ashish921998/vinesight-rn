@@ -118,7 +118,7 @@ export function CropPickerSheet({
             </View>
 
             {/* Crop list */}
-            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+            <ScrollView style={{ flex: 1 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
               {filteredCropOptions.map((cropOption) => {
                 const isSelected = selectedCrop !== 'Other' && selectedCrop === cropOption.value;
                 return (

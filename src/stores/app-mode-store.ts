@@ -51,6 +51,10 @@ export const useAppModeStore = create<AppModeState>()(
       detailedMode: false,
       hydrated: false,
       setDetailedMode: (value) => {
+        // Kill-switch: when FORCE_SIMPLE_MODE is active, refuse to enter
+        // Detailed mode so the Settings toggle can't bypass enforcement
+        // before the next flag refresh runs enforceSimpleMode().
+        if (value && isFeatureEnabled(FLAG_KEYS.FORCE_SIMPLE_MODE)) return;
         set({ detailedMode: value });
         reportAppMode(value);
       },

@@ -105,7 +105,7 @@ export function VarietyPickerSheet({
             </View>
 
             {/* List */}
-            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+            <ScrollView style={{ flex: 1 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
               {canCreateCustomVariety && (
                 <Pressable
                   style={{

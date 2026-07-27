@@ -66,6 +66,15 @@ it('pulls Detailed-mode users back to Simplified when FORCE_SIMPLE_MODE is on', 
   expect(mockRegister).toHaveBeenCalledWith({ app_mode: 'simplified' });
 });
 
+it('refuses to enter Detailed mode via the setter while FORCE_SIMPLE_MODE is on', () => {
+  mockIsFeatureEnabled.mockReturnValue(true);
+
+  useAppModeStore.getState().setDetailedMode(true);
+
+  expect(useAppModeStore.getState().detailedMode).toBe(false);
+  expect(mockRegister).not.toHaveBeenCalled();
+});
+
 it("leaves a user's own Detailed choice alone while the flag is off", () => {
   useAppModeStore.setState({ detailedMode: true });
 
