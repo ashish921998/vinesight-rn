@@ -1,0 +1,68 @@
+src/components/screens/farm-form/variety-picker-sheet.tsx
+  s_0a3dd746763cfe::t_d611326ccbaf37 108
+__tests__/bottom-sheet-gesture-guard.test.ts
+  s_1fb189839a2429::t_c3fa48963920bd 38,44,48
+  s_81124bd5d046bc::t_9bcb1a8bccc8ee 39-43,45-47
+__tests__/app-mode-store.test.ts
+  s_56030e17a347b8::t_c79253b69a6342 69-77
+src/stores/app-mode-store.ts
+  s_960b79542e54d1::t_451b2b7376167d 54-57
+src/components/screens/farm-form/crop-picker-sheet.tsx
+  s_08b75eea81ddfb::t_0b62bfcee82dd8 121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "49cf104816fac7757d1bc1adc4ceffad60f1772e",
+  "prompts": {},
+  "sessions": {
+    "s_08b75eea81ddfb": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033wb9M9R0LLTP2mVc1kBy",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_0a3dd746763cfe": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033wb9SCdbFpcLlLectTOl",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_1fb189839a2429": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033wb9pKfOCtaWfz0Rqr1p",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_56030e17a347b8": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033wagjqqHAcwEGqplci5o",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_81124bd5d046bc": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033wbBNJpIVyE3bh7oSela",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_960b79542e54d1": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-033wafJAZj9Fx3x7MGsSRv",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
