@@ -105,6 +105,7 @@ export default function SettingsScreen() {
   const detailedMode = useAppModeStore((s) => s.detailedMode);
   const setDetailedMode = useAppModeStore((s) => s.setDetailedMode);
   const forcedSimple = useAppModeStore((s) => s.forcedSimple);
+  const appModeHydrated = useAppModeStore((s) => s.hydrated);
 
   const { data: profile, refetch: refetchProfile } = useProfile();
   const updateProfile = useUpdateProfile();
@@ -373,7 +374,7 @@ export default function SettingsScreen() {
         selectedAreaUnit={selectedAreaUnit}
         isResettingGuidedTour={isResettingGuidedTour}
         detailedMode={detailedMode}
-        forcedSimple={forcedSimple}
+        showAppModeToggle={appModeHydrated && !forcedSimple}
         styles={styles}
         m3={m3}
         onLanguageChange={handleLanguageChange}
