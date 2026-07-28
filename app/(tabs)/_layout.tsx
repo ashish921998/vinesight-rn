@@ -1,17 +1,12 @@
-import { useEffect, useMemo, useState, type ComponentProps } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { fontSize } from '@/styles/theme';
 import { Redirect, Tabs, useRouter, useSegments } from 'expo-router';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import type { SFSymbol } from 'sf-symbols-typescript';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useAppModeStore } from '@/stores';
 import { useM3, useIsDark } from '@/styles/use-theme';
-import { colorWithOpacity } from '@/utils/color';
-import { isAndroid } from '@/hooks';
-import { ComposeTabBar } from '@/components/navigation/compose-tab-bar';
-import { BASE_TABS, DETAILED_TABS } from '@/components/navigation/tab-definitions';
+import { GlassTabBar } from '@/components/navigation/glass-tab-bar';
+import { DETAILED_TABS } from '@/components/navigation/tab-definitions';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -39,24 +34,6 @@ export default function TabLayout() {
       headerTransparent: false,
     }),
     [m3],
-  );
-
-  const sf = (name: string) => name as SFSymbol;
-
-  const renderTabIcon = (
-    sfDefault: SFSymbol,
-    sfSelected: SFSymbol,
-    ionDefault: ComponentProps<typeof Ionicons>['name'],
-    ionSelected: ComponentProps<typeof Ionicons>['name'],
-  ) => (
-    <NativeTabs.Trigger.Icon
-      sf={{ default: sfDefault, selected: sfSelected }}
-      selectedColor={m3.colorScheme.primary}
-      src={{
-        default: <NativeTabs.Trigger.VectorIcon family={Ionicons} name={ionDefault} />,
-        selected: <NativeTabs.Trigger.VectorIcon family={Ionicons} name={ionSelected} />,
-      }}
-    />
   );
 
   useEffect(() => {
@@ -99,75 +76,29 @@ export default function TabLayout() {
     return <Redirect href="/(tabs)" />;
   }
 
-  if (isAndroid) {
-    // Bottom bar is @expo/ui's Material 3 NavigationBar (see ComposeTabBar).
-    // We keep expo-router's <Tabs> for routing/screen mounting and only swap the
-    // rendered bar via `tabBar`. All screens stay declared so they're navigable;
-    // ComposeTabBar filters which get a button based on detailedMode.
-    return (
-      <>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <Tabs
-          backBehavior="history"
-          tabBar={(props) => <ComposeTabBar {...props} />}
-          screenOptions={{
-            headerStyle: defaultHeaderOptions.headerStyle,
-            headerTitleStyle: defaultHeaderOptions.headerTitleStyle as never,
-            headerTintColor: defaultHeaderOptions.headerTintColor,
-            headerTransparent: defaultHeaderOptions.headerTransparent,
-          }}
-        >
-          <Tabs.Screen name="index" options={{ title: t('tabs.home'), headerShown: false }} />
-          <Tabs.Screen name="explore" options={{ title: t('tabs.explore'), headerShown: false }} />
-          {DETAILED_TABS.map((tab) => (
-            <Tabs.Screen
-              key={tab.name}
-              name={tab.name}
-              options={{ title: t(tab.titleKey), headerShown: false }}
-            />
-          ))}
-        </Tabs>
-      </>
-    );
-  }
-
   return (
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <NativeTabs
-        tintColor={m3.colorScheme.primary}
-        iconColor={{
-          default: m3.colorScheme.onSurfaceVariant,
-          selected: m3.colorScheme.primary,
+      <Tabs
+        backBehavior="history"
+        tabBar={(props) => <GlassTabBar {...props} />}
+        screenOptions={{
+          headerStyle: defaultHeaderOptions.headerStyle,
+          headerTitleStyle: defaultHeaderOptions.headerTitleStyle as never,
+          headerTintColor: defaultHeaderOptions.headerTintColor,
+          headerTransparent: defaultHeaderOptions.headerTransparent,
         }}
-        labelStyle={{
-          default: {
-            fontSize: fontSize.xs,
-            fontWeight: '500',
-            color: m3.colorScheme.onSurfaceVariant,
-          },
-          selected: {
-            color: m3.colorScheme.primary,
-            fontWeight: '600',
-          },
-        }}
-        backgroundColor={m3.surface.surfaceContainerLow}
-        shadowColor={colorWithOpacity(m3.colorScheme.shadow, isDark ? 0.6 : 0.05)}
       >
-        {BASE_TABS.map((tab) => (
-          <NativeTabs.Trigger key={tab.name} name={tab.name}>
-            {renderTabIcon(sf(tab.sf[0]), sf(tab.sf[1]), tab.ion[0], tab.ion[1])}
-            <NativeTabs.Trigger.Label>{t(tab.titleKey)}</NativeTabs.Trigger.Label>
-          </NativeTabs.Trigger>
+        <Tabs.Screen name="index" options={{ title: t('tabs.home'), headerShown: false }} />
+        <Tabs.Screen name="explore" options={{ title: t('tabs.explore'), headerShown: false }} />
+        {DETAILED_TABS.map((tab) => (
+          <Tabs.Screen
+            key={tab.name}
+            name={tab.name}
+            options={{ title: t(tab.titleKey), headerShown: false }}
+          />
         ))}
-        {detailedMode &&
-          DETAILED_TABS.map((tab) => (
-            <NativeTabs.Trigger key={tab.name} name={tab.name}>
-              {renderTabIcon(sf(tab.sf[0]), sf(tab.sf[1]), tab.ion[0], tab.ion[1])}
-              <NativeTabs.Trigger.Label>{t(tab.titleKey)}</NativeTabs.Trigger.Label>
-            </NativeTabs.Trigger>
-          ))}
-      </NativeTabs>
+      </Tabs>
     </>
   );
 }
