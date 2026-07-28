@@ -1,7 +1,5 @@
 import * as React from 'react';
-// expo-router 56 bundles react-navigation; import the tab-bar-height context from its
-// bundled copy so the context instance matches the one expo-router's <Tabs> provides.
-import { BottomTabBarHeightContext } from 'expo-router/build/react-navigation/bottom-tabs';
+import { BottomTabBarHeightContext } from 'expo-router/js-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAndroidBottomSystemInset } from '@/utils/android-system-bars';
 

@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -182,17 +182,7 @@ export function GlassTabBar({ state, navigation, insets }: BottomTabBarProps) {
         runOnJS(selectIndex)(index);
       });
 
-    const tap = Gesture.Tap()
-      .maxDistance(16)
-      .maxDuration(400)
-      .onEnd((event, success) => {
-        if (!success) return;
-        const index = Math.round(indexAtX(event.x));
-        slideIndex.value = withSpring(index, SLIDE_SPRING);
-        runOnJS(selectIndex)(index);
-      });
-
-    return Gesture.Race(pan, tap);
+    return pan;
   }, [dragging, itemWidth, lastTicked, selectIndex, slideIndex, tabs.length, tick]);
 
   const highlightStyle = useAnimatedStyle(() => ({

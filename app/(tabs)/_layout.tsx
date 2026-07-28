@@ -26,7 +26,7 @@ export default function TabLayout() {
         borderBottomWidth: 0,
       },
       headerTitleStyle: {
-        fontWeight: '600',
+        fontWeight: '600' as const,
         fontSize: fontSize.lg,
         color: m3.colorScheme.onSurface,
       },
@@ -84,7 +84,7 @@ export default function TabLayout() {
         tabBar={(props) => <GlassTabBar {...props} />}
         screenOptions={{
           headerStyle: defaultHeaderOptions.headerStyle,
-          headerTitleStyle: defaultHeaderOptions.headerTitleStyle as never,
+          headerTitleStyle: defaultHeaderOptions.headerTitleStyle,
           headerTintColor: defaultHeaderOptions.headerTintColor,
           headerTransparent: defaultHeaderOptions.headerTransparent,
         }}

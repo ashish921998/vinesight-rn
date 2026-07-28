@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 
 let mockDetailedMode = false;
+let mockPanGesture: Record<string, unknown>;
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -45,28 +46,30 @@ jest.mock('expo-linear-gradient', () => {
   return { LinearGradient: View };
 });
 
+jest.mock('expo-haptics', () => ({
+  selectionAsync: jest.fn(),
+}));
+
 jest.mock('react-native-gesture-handler', () => {
   const chain = () => {
     const gesture: Record<string, unknown> = {};
-    for (const method of [
-      'activeOffsetX',
-      'failOffsetY',
-      'maxDistance',
-      'maxDuration',
-      'onStart',
-      'onUpdate',
-      'onFinalize',
-      'onEnd',
-    ]) {
+    for (const method of ['activeOffsetX', 'failOffsetY']) {
       gesture[method] = () => gesture;
+    }
+    for (const method of ['onStart', 'onUpdate', 'onFinalize']) {
+      gesture[method] = (callback: (...args: unknown[]) => unknown) => {
+        gesture[`_${method}`] = callback;
+        return gesture;
+      };
     }
     return gesture;
   };
   return {
     Gesture: {
-      Pan: chain,
-      Tap: chain,
-      Race: (...gestures: unknown[]) => gestures,
+      Pan: () => {
+        mockPanGesture = chain();
+        return mockPanGesture;
+      },
     },
     GestureDetector: ({ children }: { children: import('react').ReactNode }) => children,
   };
@@ -142,5 +145,28 @@ describe('GlassTabBar', () => {
       selected: true,
     });
     expect(getByRole('tab', { name: 'tabs.tools' })).toBeTruthy();
+  });
+
+  it('navigates once when a horizontal scrub finishes', () => {
+    const emit = jest.fn(() => ({ defaultPrevented: false }));
+    const navigate = jest.fn();
+    render(
+      <GlassTabBar
+        state={{ index: 0, routes }}
+        navigation={{ emit, navigate }}
+        descriptors={{}}
+        insets={{ top: 0, right: 0, bottom: 24, left: 0 }}
+      />,
+    );
+
+    act(() => {
+      (mockPanGesture._onStart as () => void)();
+      (mockPanGesture._onUpdate as (event: { x: number }) => void)({ x: 10_000 });
+      (mockPanGesture._onFinalize as () => void)();
+    });
+
+    expect(emit).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith('explore');
   });
 });

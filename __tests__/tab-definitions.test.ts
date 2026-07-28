@@ -10,10 +10,11 @@ describe('BASE_TABS', () => {
     expect(explore?.titleKey).toBe('tabs.explore');
   });
 
-  it('exposes an inactive and selected Ionicons pair for every base tab', () => {
-    for (const tab of BASE_TABS) {
-      expect(tab.ion).toHaveLength(2);
-    }
+  it('exposes the expected inactive and selected Ionicons pairs', () => {
+    expect(Object.fromEntries(BASE_TABS.map((tab) => [tab.name, tab.ion]))).toEqual({
+      index: ['home-outline', 'home'],
+      explore: ['leaf-outline', 'leaf'],
+    });
   });
 });
 
@@ -23,8 +24,8 @@ describe('DETAILED_TABS', () => {
     const tools = DETAILED_TABS.find((t) => t.name === 'tools');
 
     expect(workers?.titleKey).toBe('tabs.workers');
-    expect(workers?.ion).toHaveLength(2);
+    expect(workers?.ion).toEqual(['people-outline', 'people']);
     expect(tools?.titleKey).toBe('tabs.tools');
-    expect(tools?.ion).toHaveLength(2);
+    expect(tools?.ion).toEqual(['build-outline', 'build']);
   });
 });
