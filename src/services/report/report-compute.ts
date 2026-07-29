@@ -544,6 +544,11 @@ export function generateReportData(
 
   return {
     farmName: farm.name,
+    farmVariety: farm.crop_variety?.trim() || farm.crop?.trim() || null,
+    pruningDate:
+      seasonContext?.mode === 'season'
+        ? (seasonContext.seasonStart ?? farm.date_of_pruning ?? null)
+        : (farm.date_of_pruning ?? null),
     farmArea: farm.area,
     farmRegion: farm.region,
     dateRange,

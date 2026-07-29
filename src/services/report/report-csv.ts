@@ -47,13 +47,13 @@ function appendFpcActivityCSV(
     rows.push('Sr.No,Days,Date,Product Name,Technical Name,Qty Per Liter,PHI,MRL');
     let serial = 0;
     days.forEach((day) => {
-      day.products.forEach((product) => {
-        serial += 1;
+      if (day.products.length > 0) serial += 1;
+      day.products.forEach((product, index) => {
         rows.push(
           [
-            String(serial),
-            formatDaysAfterPruningValue(day.daysAfterPruning),
-            escapeCSV(day.date),
+            index === 0 ? String(serial) : '',
+            index === 0 ? formatDaysAfterPruningValue(day.daysAfterPruning) : '',
+            index === 0 ? escapeCSV(day.date) : '',
             escapeCSV(product.marketName),
             escapeCSV(product.technicalName ?? ''),
             escapeCSV(product.asLogged),
@@ -296,24 +296,32 @@ export function generateCSV(
   const matchedStockRows = data.stock.filter((row) => row.matchStrategy !== 'unmatched');
   const unmatchedStockRows = data.stock.filter((row) => row.matchStrategy === 'unmatched');
 
-  // Header
-  rows.push(`Farm Report - ${data.farmName}`);
-  rows.push(`Report Type: ${formatReportType(reportType)}`);
-  rows.push(`Region: ${data.farmRegion}`);
-  // farm.area is stored as the raw number typed under the user's area-unit
-  // preference — print it verbatim with its label. Converting "from acres"
-  // here contradicted the per-acre lens heading on hectare farms.
-  rows.push(`Area: ${data.farmArea} ${areaUnitLabel}`);
-  rows.push(`Date Range: ${formatDate(data.dateRange.from)} to ${formatDate(data.dateRange.to)}`);
-  rows.push(`Season: ${formatSeasonContextLabel(data.seasonContext)}`);
-  if (data.seasonContext?.mode === 'season') {
+  // The buyer register follows Fratelli's three-line identity block. Other
+  // reports retain the richer farmer-facing metadata below.
+  if (reportType === 'fpc-activity') {
+    rows.push(`Farmer Name: ${escapeCSV(data.farmName)}`);
+    rows.push(`Variety: ${escapeCSV(data.farmVariety ?? '-')}`);
+    rows.push(`Pruning Date: ${data.pruningDate ? formatDate(data.pruningDate) : '-'}`);
+  } else {
+    rows.push(`Farm Report - ${data.farmName}`);
+    rows.push(`Report Type: ${formatReportType(reportType)}`);
+    rows.push(`Region: ${data.farmRegion}`);
+    // farm.area is stored as the raw number typed under the user's area-unit
+    // preference — print it verbatim with its label.
+    rows.push(`Area: ${data.farmArea} ${areaUnitLabel}`);
+    rows.push(`Date Range: ${formatDate(data.dateRange.from)} to ${formatDate(data.dateRange.to)}`);
+    rows.push(`Season: ${formatSeasonContextLabel(data.seasonContext)}`);
+  }
+  if (reportType !== 'fpc-activity' && data.seasonContext?.mode === 'season') {
     rows.push(
       `Season Window: ${data.seasonContext.seasonStart ? formatDate(data.seasonContext.seasonStart) : '-'} to ${data.seasonContext.seasonEnd ? formatDate(data.seasonContext.seasonEnd) : 'Active'}`,
     );
   }
-  rows.push(
-    `Generated: ${formatDate(new Date(), { year: 'numeric', month: 'short', day: 'numeric' })}`,
-  );
+  if (reportType !== 'fpc-activity') {
+    rows.push(
+      `Generated: ${formatDate(new Date(), { year: 'numeric', month: 'short', day: 'numeric' })}`,
+    );
+  }
   rows.push('');
 
   if (visibleSections.has('fpc-activity')) {

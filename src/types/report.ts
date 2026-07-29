@@ -3,7 +3,7 @@
  * Types for report generation and export
  */
 
-export type ReportFormat = 'pdf' | 'csv';
+export type ReportFormat = 'pdf' | 'csv' | 'xlsx';
 export type ReportType =
   'operations' | 'financial' | 'comprehensive' | 'stock-usage' | 'fpc-activity';
 export type ReportCompareMode = 'previous' | 'yoy';
@@ -116,6 +116,9 @@ export type ReportDataType =
 
 export interface ReportData {
   farmName: string;
+  /** Buyer-register identity fields. Farm name is used when no separate owner name is available. */
+  farmVariety?: string | null;
+  pruningDate?: string | null;
   farmArea: number;
   farmRegion: string;
   dateRange: DateRange;

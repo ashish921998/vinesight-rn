@@ -133,6 +133,7 @@ exports[`report pipeline snapshot lock (#198) comprehensive PDF HTML 1`] = `
       </style>
     </head>
       <body>
+        
         <div class="header">
           <h1>🍇 Golden Vineyard</h1>
           <p class="meta">
@@ -143,6 +144,7 @@ exports[`report pipeline snapshot lock (#198) comprehensive PDF HTML 1`] = `
             
           </p>
         </div>
+      
         
         <div class="summary">
           <h3 style="margin-top: 0;">Summary</h3>
@@ -150,6 +152,7 @@ exports[`report pipeline snapshot lock (#198) comprehensive PDF HTML 1`] = `
             <div class="summary-item"><div class="summary-value ">21</div><div class="summary-label">Total Records</div></div><div class="summary-item"><div class="summary-value ">15</div><div class="summary-label">Unique Stock Items Used</div></div><div class="summary-item"><div class="summary-value ">0 kg</div><div class="summary-label">Total Harvest</div></div><div class="summary-item"><div class="summary-value ">₹0</div><div class="summary-label">Revenue</div></div><div class="summary-item"><div class="summary-value ">₹0</div><div class="summary-label">Expenses</div></div><div class="summary-item"><div class="summary-value profit">₹0</div><div class="summary-label">Net Profit</div></div>
           </div>
         </div>
+      
     <h2>💧 Irrigation Records (0)</h2><p class="empty-section">No records in selected range</p><h2>🧪 Spray Records (3)</h2>
         <table>
           <tr><th>Date</th><th>DAP</th><th>Season</th><th>Chemical</th><th>Dose</th></tr>

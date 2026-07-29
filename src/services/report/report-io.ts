@@ -8,6 +8,7 @@ import {
   getInfoAsync,
   makeDirectoryAsync,
   deleteAsync,
+  EncodingType,
 } from 'expo-file-system/legacy';
 import {
   ReportData,
@@ -20,6 +21,7 @@ import { getDefaultCurrency } from '@/i18n/currency';
 import type { AreaUnitPreference } from '@/utils/preferences';
 import { generateCSV } from './report-csv';
 import { generatePDFHtml } from './report-pdf';
+import { generateFpcWorkbook } from './report-xlsx';
 
 const REPORTS_DIR_NAME = 'reports';
 
@@ -33,10 +35,35 @@ function sanitizeFileNamePart(value: string, fallback: string = 'farm'): string 
   return sanitized || fallback;
 }
 
-function buildReportFileName(farmName: string, extension: 'csv' | 'pdf'): string {
+function buildReportFileName(farmName: string, extension: 'csv' | 'pdf' | 'xlsx'): string {
   const safeFarmName = sanitizeFileNamePart(farmName);
   const timestamp = Date.now();
   return `${safeFarmName}_report_${new Date().toISOString().split('T')[0]}_${timestamp}.${extension}`;
+}
+
+async function writeWorkbook(data: ReportData, directory: string): Promise<string> {
+  const filename = buildReportFileName(data.farmName, 'xlsx');
+  const fileUri = joinUri(directory, filename);
+  const workbook = generateFpcWorkbook(data);
+  await writeAsStringAsync(fileUri, workbook.base64, { encoding: EncodingType.Base64 });
+  return fileUri;
+}
+
+export async function exportXLSX(data: ReportData): Promise<void> {
+  if (!cacheDirectory) throw new Error('Cache directory is not available on this device');
+  const fileUri = await writeWorkbook(data, cacheDirectory);
+  if (!(await Sharing.isAvailableAsync())) {
+    throw new Error('Sharing is not available on this device');
+  }
+  await Sharing.shareAsync(fileUri, {
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    dialogTitle: 'Export Activity Register',
+    UTI: 'org.openxmlformats.spreadsheetml.sheet',
+  });
+}
+
+export async function downloadXLSX(data: ReportData): Promise<string> {
+  return writeWorkbook(data, await ensureReportsDirectory());
 }
 
 function joinUri(base: string, filename: string): string {

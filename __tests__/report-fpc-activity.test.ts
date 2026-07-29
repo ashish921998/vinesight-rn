@@ -6,6 +6,8 @@
 import { ReportService, type FpcReportLookups } from '@/services/report-service';
 import { FPC_FULL_COLUMNS, FPC_LEAN_COLUMNS, type DateRange } from '@/types/report';
 import type { Farm, FertigationRecord, IrrigationRecord, SprayRecord } from '@/types/database';
+import { generateFpcWorkbook } from '@/services/report/report-xlsx';
+import { strFromU8, unzipSync } from 'fflate';
 
 jest.mock('expo-print', () => ({
   printToFileAsync: jest.fn(),
@@ -291,6 +293,10 @@ describe('FPC register rendering', () => {
 
   it('CSV (simple default): matches Fratelli’s eight-column register', () => {
     const csv = ReportService.generateCSV(data, 'fpc-activity');
+    expect(csv).toContain('Farmer Name: Fratelli Plot');
+    expect(csv).toContain('Variety: Thompson');
+    expect(csv).toContain('Pruning Date: 06-05-2026');
+    expect(csv).not.toContain('Report Type:');
     const header = csv.split('\n').find((line) => line.startsWith('Sr.No,Days,')) ?? '';
     expect(header).toBe('Sr.No,Days,Date,Product Name,Technical Name,Qty Per Liter,PHI,MRL');
     expect(header).not.toContain('Irrigation');
@@ -298,6 +304,11 @@ describe('FPC register rendering', () => {
     expect(header).not.toContain('Stage');
     expect(csv).toContain('0-52-34');
     expect(csv).toContain('12-61-00');
+    const rows = csv.split('\n');
+    const firstProduct = rows.find((line) => line.includes('0-52-34')) ?? '';
+    const continuation = rows.find((line) => line.includes('12-61-00')) ?? '';
+    expect(firstProduct.startsWith('1,41,16-06-2026,')).toBe(true);
+    expect(continuation.startsWith(',,,')).toBe(true);
     expect(csv).not.toContain('NUTRIENT LEDGER');
   });
 
@@ -332,9 +343,34 @@ describe('FPC register rendering', () => {
     expect(html).toContain('<th>Qty Per Liter</th>');
     expect(html).toContain('<th>PHI</th>');
     expect(html).toContain('<th>MRL</th>');
+    expect(html).toContain('Farmer Name: Fratelli Plot');
+    expect(html).toContain('Variety: Thompson');
+    expect(html).toContain('Pruning Date: 06-05-2026');
+    expect(html).not.toContain('Report Type: FPC Activity');
+    expect(html).not.toContain('<h3 style="margin-top: 0;">Summary</h3>');
+    expect(html).toContain('<td>-</td><td>-</td><td>-</td><td>12-61-00</td>');
     expect(html).not.toContain('Irrigation (hrs)');
     expect(html).not.toContain('<th>Stage</th>');
     expect(html).not.toContain('Nutrient Ledger');
+  });
+
+  it('XLSX: creates a Fratelli workbook with merged identity rows and grouped products', () => {
+    const workbook = generateFpcWorkbook(data);
+    const files = unzipSync(Uint8Array.from(Buffer.from(workbook.base64, 'base64')));
+    const sheet = strFromU8(files['xl/worksheets/sheet1.xml']);
+
+    expect(workbook.mimeType).toBe(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    expect(files['[Content_Types].xml']).toBeDefined();
+    expect(files['xl/workbook.xml']).toBeDefined();
+    expect(sheet).toContain('Farmer Name : Fratelli Plot');
+    expect(sheet).toContain('Variety : Thompson');
+    expect(sheet).toContain('Pruning Date : 06-05-2026');
+    expect(sheet).toContain('<mergeCell ref="A1:H1"/>');
+    expect(sheet).toContain('<t xml:space="preserve">1</t>');
+    expect(sheet).toContain('<t xml:space="preserve">0-52-34</t>');
+    expect(sheet).toContain('<t xml:space="preserve">12-61-00</t>');
   });
 
   it('CSV (partial toggle): a single enabled column appears, others stay hidden', () => {

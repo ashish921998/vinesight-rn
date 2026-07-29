@@ -127,11 +127,19 @@ export function generatePDFHtml(
       : []),
   ];
 
-  let html = `
-      <!DOCTYPE html>
-      <html>
-      <head>${styles}</head>
-      <body>
+  const header =
+    reportType === 'fpc-activity'
+      ? `
+        <div class="header">
+          <h1>${escapeHtml(data.farmName)}</h1>
+          <p class="meta">
+            Farmer Name: ${escapeHtml(data.farmName)}<br>
+            Variety: ${escapeHtml(data.farmVariety ?? '-')}<br>
+            Pruning Date: ${data.pruningDate ? formatDate(data.pruningDate) : '-'}
+          </p>
+        </div>
+      `
+      : `
         <div class="header">
           <h1>🍇 ${escapeHtml(data.farmName)}</h1>
           <p class="meta">
@@ -146,7 +154,11 @@ export function generatePDFHtml(
             }
           </p>
         </div>
-        
+      `;
+  const summaryMarkup =
+    reportType === 'fpc-activity'
+      ? ''
+      : `
         <div class="summary">
           <h3 style="margin-top: 0;">Summary</h3>
           <div class="summary-grid">
@@ -158,6 +170,15 @@ export function generatePDFHtml(
               .join('')}
           </div>
         </div>
+      `;
+
+  let html = `
+      <!DOCTYPE html>
+      <html>
+      <head>${styles}</head>
+      <body>
+        ${header}
+        ${summaryMarkup}
     `;
 
   const appendSectionTable = (
@@ -220,8 +241,8 @@ export function generatePDFHtml(
           if (simple) {
             return day.products
               .map((product, index) => {
-                serial += 1;
-                return `<tr class="${index === 0 ? 'fpc-day-start' : ''}">${cell(String(serial))}${cell(formatDaysAfterPruningValue(day.daysAfterPruning))}${cell(day.date)}${cell(product.marketName)}${cell(product.technicalName)}${cell(product.asLogged)}${cell(product.phiDays != null ? String(product.phiDays) : null)}${cell(product.mrl)}</tr>`;
+                if (index === 0) serial += 1;
+                return `<tr class="${index === 0 ? 'fpc-day-start' : ''}">${cell(index === 0 ? String(serial) : '')}${cell(index === 0 ? formatDaysAfterPruningValue(day.daysAfterPruning) : '')}${cell(index === 0 ? day.date : '')}${cell(product.marketName)}${cell(product.technicalName)}${cell(product.asLogged)}${cell(product.phiDays != null ? String(product.phiDays) : null)}${cell(product.mrl)}</tr>`;
               })
               .join('');
           }

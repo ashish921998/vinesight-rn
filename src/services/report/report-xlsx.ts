@@ -1,0 +1,170 @@
+import { strToU8, zipSync } from 'fflate';
+import { formatDate } from '@/i18n/format';
+import type { ReportData } from '@/types/report';
+import { formatDaysAfterPruningValue } from './report-format';
+
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function columnName(index: number): string {
+  let value = index + 1;
+  let name = '';
+  while (value > 0) {
+    value -= 1;
+    name = String.fromCharCode(65 + (value % 26)) + name;
+    value = Math.floor(value / 26);
+  }
+  return name;
+}
+
+function inlineCell(row: number, column: number, value: string, style: number): string {
+  const reference = `${columnName(column)}${row}`;
+  return `<c r="${reference}" t="inlineStr" s="${style}"><is><t xml:space="preserve">${escapeXml(value)}</t></is></c>`;
+}
+
+function toBase64(bytes: Uint8Array): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let output = '';
+  for (let index = 0; index < bytes.length; index += 3) {
+    const first = bytes[index];
+    const second = bytes[index + 1];
+    const third = bytes[index + 2];
+    const triple = (first << 16) | ((second ?? 0) << 8) | (third ?? 0);
+    output += alphabet[(triple >> 18) & 63];
+    output += alphabet[(triple >> 12) & 63];
+    output += second == null ? '=' : alphabet[(triple >> 6) & 63];
+    output += third == null ? '=' : alphabet[triple & 63];
+  }
+  return output;
+}
+
+function buildSheetXml(data: ReportData): string {
+  const rows: string[] = [];
+  const addMergedIdentityRow = (row: number, label: string, style: number) => {
+    rows.push(`<row r="${row}">${inlineCell(row, 0, label, style)}</row>`);
+  };
+
+  addMergedIdentityRow(1, `Farmer Name : ${data.farmName}`, 1);
+  addMergedIdentityRow(2, `Variety : ${data.farmVariety ?? '-'}`, 2);
+  addMergedIdentityRow(
+    3,
+    `Pruning Date : ${data.pruningDate ? formatDate(data.pruningDate) : '-'}`,
+    3,
+  );
+
+  const headers = [
+    'Sr.No',
+    'Days',
+    'Date',
+    'Product Name',
+    'Technical Name',
+    'Qty Per Liter',
+    'PHI',
+    'MRL',
+  ];
+  rows.push(
+    `<row r="4">${headers.map((header, index) => inlineCell(4, index, header, 4)).join('')}</row>`,
+  );
+
+  let rowNumber = 5;
+  let serial = 0;
+  for (const day of data.fpcActivity ?? []) {
+    if (day.products.length > 0) serial += 1;
+    day.products.forEach((product, index) => {
+      const values = [
+        index === 0 ? String(serial) : '',
+        index === 0 ? formatDaysAfterPruningValue(day.daysAfterPruning) : '',
+        index === 0 ? day.date : '',
+        product.marketName,
+        product.technicalName ?? '',
+        product.asLogged,
+        product.phiDays != null ? String(product.phiDays) : '',
+        product.mrl ?? '',
+      ];
+      rows.push(
+        `<row r="${rowNumber}">${values
+          .map((value, column) =>
+            inlineCell(rowNumber, column, value, column >= 3 && column <= 4 ? 6 : 5),
+          )
+          .join('')}</row>`,
+      );
+      rowNumber += 1;
+    });
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <cols>
+    <col min="1" max="1" width="9" customWidth="1"/>
+    <col min="2" max="2" width="9" customWidth="1"/>
+    <col min="3" max="3" width="14" customWidth="1"/>
+    <col min="4" max="4" width="20" customWidth="1"/>
+    <col min="5" max="5" width="42" customWidth="1"/>
+    <col min="6" max="6" width="18" customWidth="1"/>
+    <col min="7" max="8" width="10" customWidth="1"/>
+  </cols>
+  <sheetData>${rows.join('')}</sheetData>
+  <mergeCells count="3"><mergeCell ref="A1:H1"/><mergeCell ref="A2:H2"/><mergeCell ref="A3:H3"/></mergeCells>
+</worksheet>`;
+}
+
+export function generateFpcWorkbook(data: ReportData): {
+  base64: string;
+  mimeType: string;
+} {
+  const files = {
+    '[Content_Types].xml': strToU8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`),
+    '_rels/.rels': strToU8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`),
+    'xl/workbook.xml': strToU8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="Activity Register" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`),
+    'xl/_rels/workbook.xml.rels': strToU8(
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`,
+    ),
+    'xl/styles.xml': strToU8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="2"><font><sz val="11"/><name val="Arial"/></font><font><b/><sz val="11"/><name val="Arial"/></font></fonts>
+  <fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDDEBCB"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF2CC"/><bgColor indexed="64"/></patternFill></fill></fills>
+  <borders count="2"><border/><border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="7">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
+  </cellXfs>
+</styleSheet>`),
+    'xl/worksheets/sheet1.xml': strToU8(buildSheetXml(data)),
+  };
+
+  return {
+    base64: toBase64(zipSync(files, { level: 6 })),
+    mimeType: XLSX_MIME,
+  };
+}

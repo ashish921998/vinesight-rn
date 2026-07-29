@@ -565,7 +565,9 @@ export function useReportExport() {
       setExportError(null);
 
       try {
-        if (format === 'csv') {
+        if (format === 'xlsx') {
+          await ReportService.exportXLSX(preview.data);
+        } else if (format === 'csv') {
           await ReportService.exportCSV(preview.data, reportType, areaUnit, fpcColumns);
         } else {
           await ReportService.exportPDF(
@@ -600,6 +602,9 @@ export function useReportExport() {
       setExportError(null);
 
       try {
+        if (format === 'xlsx') {
+          return await ReportService.downloadXLSX(preview.data);
+        }
         if (format === 'csv') {
           return await ReportService.downloadCSV(preview.data, reportType, areaUnit, fpcColumns);
         }

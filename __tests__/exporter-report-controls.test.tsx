@@ -39,7 +39,7 @@ jest.mock('@/utils/color', () => ({
 
 describe('Exporter report controls', () => {
   it('uses CSV for exporter reports and PDF for other report types', () => {
-    expect(getDefaultReportFormat('fpc-activity')).toBe('csv');
+    expect(getDefaultReportFormat('fpc-activity')).toBe('xlsx');
     expect(getDefaultReportFormat('comprehensive')).toBe('pdf');
     expect(getDefaultReportFormat('operations')).toBe('pdf');
     expect(getDefaultReportFormat('financial')).toBe('pdf');
