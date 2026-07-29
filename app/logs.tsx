@@ -221,14 +221,35 @@ export default function LogsScreen() {
   const combinedLogs = useMemo<CombinedLog[]>(() => {
     const logs: CombinedLog[] = [];
 
+    // Fertigation logged with an irrigation folds into that irrigation's row
+    // ("5 hours (Urea, MAP)") instead of appearing as a second entry. Only
+    // fold when the irrigation row is actually in the display list, so a
+    // linked fertigation never silently disappears.
+    const irrigationIds = new Set(displayIrrigationRecords.map((r) => r.id));
+    const linkedFertigationByIrrigationId = new Map<number, FertigationRecord[]>();
+    displayFertigationRecords.forEach((r) => {
+      if (r.irrigation_record_id == null || !irrigationIds.has(r.irrigation_record_id)) return;
+      const list = linkedFertigationByIrrigationId.get(r.irrigation_record_id) ?? [];
+      list.push(r);
+      linkedFertigationByIrrigationId.set(r.irrigation_record_id, list);
+    });
+
     displayIrrigationRecords.forEach((r) => {
       const duration = r.duration ?? 0;
       const displayDuration = Number.isInteger(duration) ? duration : duration.toFixed(1);
+      const linked = r.id != null ? linkedFertigationByIrrigationId.get(r.id) : undefined;
+      const fertilizerNames =
+        linked?.flatMap((f) => (f.fertilizers ?? []).map((item) => item.name)).filter(Boolean) ??
+        [];
+      const base = t('logs.irrigationDurationHoursShort', { hours: displayDuration });
       logs.push({
         id: `irrigation-${r.id}`,
         type: 'irrigation',
         date: r.date,
-        description: t('logs.irrigationDurationHoursShort', { hours: displayDuration }),
+        description: fertilizerNames.length ? `${base} (${fertilizerNames.join(', ')})` : base,
+        searchableText: fertilizerNames.length
+          ? fertilizerNames.join(' ').toLowerCase()
+          : undefined,
         daysAfterPruning: getDaysAfterPruning(
           r.date,
           r.date_of_pruning ?? farmPruningDateByFarmId[r.farm_id],
@@ -286,6 +307,8 @@ export default function LogsScreen() {
     );
 
     displayFertigationRecords.forEach((r) => {
+      // Folded into the linked irrigation row above — skip the standalone card.
+      if (r.irrigation_record_id != null && irrigationIds.has(r.irrigation_record_id)) return;
       const description = getFertigationDescription(r);
       const searchableText = r.fertilizers
         ? r.fertilizers.map((f) => f.name.toLowerCase()).join(' ')
