@@ -1,0 +1,12 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "257f646b64c57beef94566d95580fdb50878cb76",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
