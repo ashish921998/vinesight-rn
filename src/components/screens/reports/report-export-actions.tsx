@@ -18,7 +18,7 @@ interface ReportExportActionsProps {
   isExporting: boolean;
   exportFormat: ReportFormat;
   onSelectFormat: (format: ReportFormat) => void;
-  onExportPdf: () => void;
+  onShare: () => void;
   onDownload: () => void;
   panelStyle: object;
 }
@@ -28,7 +28,7 @@ export function ReportExportActions({
   isExporting,
   exportFormat,
   onSelectFormat,
-  onExportPdf,
+  onShare,
   onDownload,
   panelStyle,
 }: ReportExportActionsProps) {
@@ -42,6 +42,7 @@ export function ReportExportActions({
   return (
     <View
       style={[
+        panelStyle,
         {
           backgroundColor: m3.colorScheme.surface,
           borderWidth: 1,
@@ -53,7 +54,6 @@ export function ReportExportActions({
           paddingHorizontal: spacing[3],
           gap: spacing[2],
         },
-        panelStyle,
       ]}
     >
       <View
@@ -107,7 +107,7 @@ export function ReportExportActions({
         </View>
 
         <Pressable
-          onPress={onExportPdf}
+          onPress={onShare}
           disabled={disabled}
           style={({ pressed }) => ({
             flex: 1,

@@ -501,7 +501,7 @@ export default function ReportsScreen() {
                   isExporting={isExporting}
                   exportFormat={selectedExportFormat}
                   onSelectFormat={setSelectedExportFormat}
-                  onExportPdf={() => runExport('share', selectedExportFormat)}
+                  onShare={() => runExport('share', selectedExportFormat)}
                   onDownload={() => runExport('download', selectedExportFormat)}
                   panelStyle={panelStyle}
                 />

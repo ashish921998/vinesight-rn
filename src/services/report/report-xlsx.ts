@@ -3,7 +3,7 @@ import { formatDate } from '@/i18n/format';
 import type { ReportData } from '@/types/report';
 import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows } from './report-fpc-simple';
 
-const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+export const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 function escapeXml(value: string): string {
   return value
@@ -52,11 +52,11 @@ function buildSheetXml(data: ReportData): string {
     rows.push(`<row r="${row}">${inlineCell(row, 0, label, style)}</row>`);
   };
 
-  addMergedIdentityRow(1, `Farmer Name : ${data.farmName}`, 1);
-  addMergedIdentityRow(2, `Variety : ${data.farmVariety ?? '-'}`, 2);
+  addMergedIdentityRow(1, `Farmer Name: ${data.farmName}`, 1);
+  addMergedIdentityRow(2, `Variety: ${data.farmVariety ?? '-'}`, 2);
   addMergedIdentityRow(
     3,
-    `Pruning Date : ${data.pruningDate ? formatDate(data.pruningDate) : '-'}`,
+    `Pruning Date: ${data.pruningDate ? formatDate(data.pruningDate) : '-'}`,
     3,
   );
 

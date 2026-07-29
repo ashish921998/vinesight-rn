@@ -73,7 +73,7 @@ describe('Exporter report controls', () => {
         isExporting={false}
         exportFormat="csv"
         onSelectFormat={jest.fn()}
-        onExportPdf={onShare}
+        onShare={onShare}
         onDownload={onSave}
         panelStyle={{}}
       />,
@@ -94,7 +94,7 @@ describe('Exporter report controls', () => {
         isExporting={false}
         exportFormat="csv"
         onSelectFormat={onSelectFormat}
-        onExportPdf={jest.fn()}
+        onShare={jest.fn()}
         onDownload={jest.fn()}
         panelStyle={{}}
       />,

@@ -364,9 +364,9 @@ describe('FPC register rendering', () => {
     );
     expect(files['[Content_Types].xml']).toBeDefined();
     expect(files['xl/workbook.xml']).toBeDefined();
-    expect(sheet).toContain('Farmer Name : Fratelli Plot');
-    expect(sheet).toContain('Variety : Thompson');
-    expect(sheet).toContain('Pruning Date : 06-05-2026');
+    expect(sheet).toContain('Farmer Name: Fratelli Plot');
+    expect(sheet).toContain('Variety: Thompson');
+    expect(sheet).toContain('Pruning Date: 06-05-2026');
     expect(sheet).toContain('<mergeCell ref="A1:H1"/>');
     expect(sheet).toContain('<t xml:space="preserve">1</t>');
     expect(sheet).toContain('<t xml:space="preserve">0-52-34</t>');

@@ -21,7 +21,7 @@ import { getDefaultCurrency } from '@/i18n/currency';
 import type { AreaUnitPreference } from '@/utils/preferences';
 import { generateCSV } from './report-csv';
 import { generatePDFHtml } from './report-pdf';
-import { generateFpcWorkbook } from './report-xlsx';
+import { generateFpcWorkbook, XLSX_MIME } from './report-xlsx';
 
 const REPORTS_DIR_NAME = 'reports';
 
@@ -56,7 +56,7 @@ export async function exportXLSX(data: ReportData): Promise<void> {
     throw new Error('Sharing is not available on this device');
   }
   await Sharing.shareAsync(fileUri, {
-    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    mimeType: XLSX_MIME,
     dialogTitle: 'Export Activity Register',
     UTI: 'org.openxmlformats.spreadsheetml.sheet',
   });
