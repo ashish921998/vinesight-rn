@@ -80,8 +80,9 @@ export function ReportExportActions({
               <Pressable
                 key={format}
                 onPress={() => onSelectFormat(format)}
+                disabled={disabled}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: active }}
+                accessibilityState={{ selected: active, disabled }}
                 style={{
                   minWidth: 46,
                   paddingHorizontal: spacing[2],
