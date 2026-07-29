@@ -3251,6 +3251,7 @@ export const mr = {
     switchFarmLabel: '$t(glossary.farm) बदला',
     dateRange: {
       label: 'दिनांक श्रेणी',
+      to: 'पर्यंत',
     },
     season: {
       label: 'हंगाम',

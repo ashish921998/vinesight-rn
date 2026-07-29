@@ -3223,6 +3223,7 @@ export const hi = {
     switchFarmLabel: 'खेत बदलें',
     dateRange: {
       label: 'तारीख़ सीमा',
+      to: 'तक',
     },
     season: {
       label: 'सीज़न',

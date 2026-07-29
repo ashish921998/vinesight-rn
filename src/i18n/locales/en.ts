@@ -3238,6 +3238,7 @@ export const en = {
     switchFarmLabel: 'Switch farm',
     dateRange: {
       label: 'Date Range',
+      to: 'to',
     },
     season: {
       label: 'Season',
