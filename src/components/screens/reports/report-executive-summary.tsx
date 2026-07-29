@@ -168,7 +168,10 @@ export function ReportExecutiveSummary({
                 flexBasis: '47%',
                 flexGrow: 1,
                 minHeight: CARD_MIN_HEIGHT,
-                borderRadius: radius['2xl'],
+                // Matches the record cards and filter panel either side of these
+                // tiles. `2xl` (28) is the large-feature-surface rung and made
+                // them the only surface on the screen at a different radius.
+                borderRadius: radius.xl,
                 borderCurve: 'continuous',
                 backgroundColor: colorWithOpacity(tile.color, 0.1),
                 borderWidth: 1,
