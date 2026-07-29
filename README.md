@@ -1,5 +1,7 @@
 # Vinesight-RN
 
+[![Greptile: The War on Bugs](https://www.greptile.com/badge.svg)](https://www.greptile.com/?utm_source=oss_badge&utm_medium=readme&utm_campaign=greptile_for_open_source)
+
 React Native mobile application built with Expo SDK 57 for vineyard management across Android and iOS.
 
 ## Tech Stack
