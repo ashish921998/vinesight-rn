@@ -119,31 +119,31 @@ describe('resolveBaseline', () => {
 describe('computeReportDeltas', () => {
   it('computes a positive percentage change', () => {
     const deltas = computeReportDeltas(
-      summary({ totalWaterUsage: 1200 }),
-      summary({ totalWaterUsage: 1000 }),
+      summary({ totalHarvest: 1200 }),
+      summary({ totalHarvest: 1000 }),
     );
-    expect(deltas.water).toEqual({ deltaPct: 20, direction: 1, isNew: false });
+    expect(deltas.harvest).toEqual({ deltaPct: 20, direction: 1, isNew: false });
   });
 
   it('computes a negative percentage change', () => {
     const deltas = computeReportDeltas(
-      summary({ totalWaterUsage: 800 }),
-      summary({ totalWaterUsage: 1000 }),
+      summary({ totalHarvest: 800 }),
+      summary({ totalHarvest: 1000 }),
     );
-    expect(deltas.water).toEqual({ deltaPct: -20, direction: -1, isNew: false });
+    expect(deltas.harvest).toEqual({ deltaPct: -20, direction: -1, isNew: false });
   });
 
   it('treats a zero baseline with positive current as "New"', () => {
     const deltas = computeReportDeltas(
-      summary({ totalWaterUsage: 500 }),
-      summary({ totalWaterUsage: 0 }),
+      summary({ totalHarvest: 500 }),
+      summary({ totalHarvest: 0 }),
     );
-    expect(deltas.water).toEqual({ deltaPct: null, direction: 1, isNew: true });
+    expect(deltas.harvest).toEqual({ deltaPct: null, direction: 1, isNew: true });
   });
 
   it('shows no delta when both periods are zero', () => {
     const deltas = computeReportDeltas(summary({}), summary({}));
-    expect(deltas.water).toEqual({ deltaPct: null, direction: 0, isNew: false });
+    expect(deltas.harvest).toEqual({ deltaPct: null, direction: 0, isNew: false });
   });
 
   it('reads a less-negative net profit as an improvement (up)', () => {

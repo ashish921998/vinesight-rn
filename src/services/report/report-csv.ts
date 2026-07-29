@@ -7,6 +7,7 @@ import {
   FpcActivityDayRow,
   FpcActivityProductRow,
   ReportUsageLenses,
+  isFpcSimpleReport,
 } from '../../types/report';
 import { formatDate } from '@/i18n/format';
 import type { AreaUnitPreference } from '@/utils/preferences';
@@ -21,6 +22,7 @@ import {
   countFpcProductOptionalCols,
   EMPTY_SECTION_TEXT,
 } from './report-format';
+import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows, fpcSimpleRowCells } from './report-fpc-simple';
 
 /**
  * FPC activity register CSV: date columns written once per day block,
@@ -42,6 +44,31 @@ function appendFpcActivityCSV(
   }
 
   rows.push(`FPC ACTIVITY REGISTER (${days.length} days, ${productCount} product applications)`);
+  if (isFpcSimpleReport(cols)) {
+    rows.push(FPC_SIMPLE_HEADERS.join(','));
+    for (const row of buildFpcSimpleRows(days)) {
+      // Order is owned by fpcSimpleRowCells; escaping mirrors the detailed FPC
+      // path below — Sr.No / Days / PHI are numeric sentinels and stay raw, so
+      // a missing pruning date renders as "-" (not "'-" — escapeCSV's
+      // formula guard would prefix a force-text apostrophe that Excel surfaces).
+      const [srNo, daysCell, date, productName, technicalName, qtyPerLiter, phi, mrl] =
+        fpcSimpleRowCells(row);
+      rows.push(
+        [
+          srNo,
+          daysCell,
+          escapeCSV(date),
+          escapeCSV(productName),
+          escapeCSV(technicalName),
+          escapeCSV(qtyPerLiter),
+          phi,
+          escapeCSV(mrl),
+        ].join(','),
+      );
+    }
+    rows.push('');
+    return;
+  }
   rows.push(
     [
       'Date',
@@ -262,7 +289,7 @@ export function generateCSV(
   fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
 ): string {
   const rows: string[] = [];
-  const visibleSections = getVisibleSections(reportType);
+  const visibleSections = getVisibleSections(reportType, fpcColumns);
   const areaUnitLabel = areaUnit === 'hectares' ? 'hectares' : 'acres';
   const pushEmptySection = (title: string) => {
     rows.push(title);
@@ -272,24 +299,32 @@ export function generateCSV(
   const matchedStockRows = data.stock.filter((row) => row.matchStrategy !== 'unmatched');
   const unmatchedStockRows = data.stock.filter((row) => row.matchStrategy === 'unmatched');
 
-  // Header
-  rows.push(`Farm Report - ${data.farmName}`);
-  rows.push(`Report Type: ${formatReportType(reportType)}`);
-  rows.push(`Region: ${data.farmRegion}`);
-  // farm.area is stored as the raw number typed under the user's area-unit
-  // preference — print it verbatim with its label. Converting "from acres"
-  // here contradicted the per-acre lens heading on hectare farms.
-  rows.push(`Area: ${data.farmArea} ${areaUnitLabel}`);
-  rows.push(`Date Range: ${formatDate(data.dateRange.from)} to ${formatDate(data.dateRange.to)}`);
-  rows.push(`Season: ${formatSeasonContextLabel(data.seasonContext)}`);
-  if (data.seasonContext?.mode === 'season') {
+  // The buyer register follows Fratelli's three-line identity block. Other
+  // reports retain the richer farmer-facing metadata below.
+  if (reportType === 'fpc-activity') {
+    rows.push(`Farmer Name: ${escapeCSV(data.farmName)}`);
+    rows.push(`Variety: ${escapeCSV(data.farmVariety ?? '-')}`);
+    rows.push(`Pruning Date: ${data.pruningDate ? formatDate(data.pruningDate) : '-'}`);
+  } else {
+    rows.push(`Farm Report - ${data.farmName}`);
+    rows.push(`Report Type: ${formatReportType(reportType)}`);
+    rows.push(`Region: ${data.farmRegion}`);
+    // farm.area is stored as the raw number typed under the user's area-unit
+    // preference — print it verbatim with its label.
+    rows.push(`Area: ${data.farmArea} ${areaUnitLabel}`);
+    rows.push(`Date Range: ${formatDate(data.dateRange.from)} to ${formatDate(data.dateRange.to)}`);
+    rows.push(`Season: ${formatSeasonContextLabel(data.seasonContext)}`);
+  }
+  if (reportType !== 'fpc-activity' && data.seasonContext?.mode === 'season') {
     rows.push(
       `Season Window: ${data.seasonContext.seasonStart ? formatDate(data.seasonContext.seasonStart) : '-'} to ${data.seasonContext.seasonEnd ? formatDate(data.seasonContext.seasonEnd) : 'Active'}`,
     );
   }
-  rows.push(
-    `Generated: ${formatDate(new Date(), { year: 'numeric', month: 'short', day: 'numeric' })}`,
-  );
+  if (reportType !== 'fpc-activity') {
+    rows.push(
+      `Generated: ${formatDate(new Date(), { year: 'numeric', month: 'short', day: 'numeric' })}`,
+    );
+  }
   rows.push('');
 
   if (visibleSections.has('fpc-activity')) {

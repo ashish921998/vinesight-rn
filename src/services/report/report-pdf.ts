@@ -4,6 +4,7 @@ import {
   ReportType,
   FpcColumnOptions,
   FPC_LEAN_COLUMNS,
+  isFpcSimpleReport,
 } from '../../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
 import { getDefaultCurrency } from '@/i18n/currency';
@@ -21,6 +22,7 @@ import {
   countFpcProductOptionalCols,
   EMPTY_SECTION_TEXT,
 } from './report-format';
+import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows, fpcSimpleRowCells } from './report-fpc-simple';
 
 /**
  * Generate PDF HTML content
@@ -33,7 +35,7 @@ export function generatePDFHtml(
   areaUnit: AreaUnitPreference = 'acres',
   fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
 ): string {
-  const visibleSections = getVisibleSections(reportType);
+  const visibleSections = getVisibleSections(reportType, fpcColumns);
   const maxRowsPerSection = 20;
   const areaUnitLabel = areaUnit === 'hectares' ? 'hectares' : 'acres';
   const matchedStockRows = data.stock.filter((row) => row.matchStrategy !== 'unmatched');
@@ -126,11 +128,19 @@ export function generatePDFHtml(
       : []),
   ];
 
-  let html = `
-      <!DOCTYPE html>
-      <html>
-      <head>${styles}</head>
-      <body>
+  const header =
+    reportType === 'fpc-activity'
+      ? `
+        <div class="header">
+          <h1>${escapeHtml(data.farmName)}</h1>
+          <p class="meta">
+            Farmer Name: ${escapeHtml(data.farmName)}<br>
+            Variety: ${escapeHtml(data.farmVariety ?? '-')}<br>
+            Pruning Date: ${data.pruningDate ? formatDate(data.pruningDate) : '-'}
+          </p>
+        </div>
+      `
+      : `
         <div class="header">
           <h1>🍇 ${escapeHtml(data.farmName)}</h1>
           <p class="meta">
@@ -145,7 +155,11 @@ export function generatePDFHtml(
             }
           </p>
         </div>
-        
+      `;
+  const summaryMarkup =
+    reportType === 'fpc-activity'
+      ? ''
+      : `
         <div class="summary">
           <h3 style="margin-top: 0;">Summary</h3>
           <div class="summary-grid">
@@ -157,6 +171,15 @@ export function generatePDFHtml(
               .join('')}
           </div>
         </div>
+      `;
+
+  let html = `
+      <!DOCTYPE html>
+      <html>
+      <head>${styles}</head>
+      <body>
+        ${header}
+        ${summaryMarkup}
     `;
 
   const appendSectionTable = (
@@ -189,60 +212,72 @@ export function generatePDFHtml(
       html += `<p class="empty-section">${EMPTY_SECTION_TEXT}</p>`;
     } else {
       const cols = fpcColumns;
-      const headers = [
-        'Date',
-        'Day',
-        ...(cols.irrigation ? ['Irrigation (hrs)', 'Water (mm)'] : []),
-        'Stage',
-        'Market Name',
-        ...(cols.technicalName ? ['Technical Name'] : []),
-        'Qty/Acre',
-        'Total Qty/Plot',
-        ...(cols.phi ? ['PHI (days)'] : []),
-        ...(cols.safeHarvest ? ['Safe Harvest'] : []),
-        ...(cols.mrl ? ['MRL'] : []),
-        'Details',
-      ];
+      const simple = isFpcSimpleReport(cols);
+      const headers = simple
+        ? [...FPC_SIMPLE_HEADERS]
+        : [
+            'Date',
+            'Day',
+            ...(cols.irrigation ? ['Irrigation (hrs)', 'Water (mm)'] : []),
+            'Stage',
+            'Market Name',
+            ...(cols.technicalName ? ['Technical Name'] : []),
+            'Qty/Acre',
+            'Total Qty/Plot',
+            ...(cols.phi ? ['PHI (days)'] : []),
+            ...(cols.safeHarvest ? ['Safe Harvest'] : []),
+            ...(cols.mrl ? ['MRL'] : []),
+            'Details',
+          ];
       // Product-level column count: 3 fixed PDF product columns (Market,
       // Qty/Acre, Total) plus enabled optionals — derived from the same flags
       // as the header/cells so a day with no products fills the right width.
       const productColCount = 3 + countFpcProductOptionalCols(cols);
       const cell = (value: string | null | undefined) =>
         `<td>${escapeHtml(value ?? '') || '-'}</td>`;
-      const bodyRows = days
-        .map((day) => {
-          const span = Math.max(1, day.products.length);
-          const dayCells =
-            `<td rowspan="${span}">${escapeHtml(day.date)}</td>` +
-            `<td rowspan="${span}">${formatDaysAfterPruningValue(day.daysAfterPruning)}</td>` +
-            (cols.irrigation
-              ? `<td rowspan="${span}">${day.irrigationHours ?? '-'}</td>` +
-                `<td rowspan="${span}">${day.waterMm ?? '-'}</td>`
-              : '') +
-            `<td rowspan="${span}">${escapeHtml(day.growthStage ?? '') || '-'}</td>`;
-          const notesCell = `<td rowspan="${span}">${escapeHtml(day.notes ?? '') || '-'}</td>`;
-          if (day.products.length === 0) {
-            return `<tr class="fpc-day-start">${dayCells}${'<td>-</td>'.repeat(productColCount)}${notesCell}</tr>`;
-          }
-          return day.products
-            .map((product, index) => {
-              const productCells =
-                cell(product.marketName) +
-                (cols.technicalName ? cell(product.technicalName) : '') +
-                // Qty/Acre and Total fall back to the verbatim entry so an
-                // unresolvable unit is still visible, marked as-logged.
-                cell(product.qtyPerAcreDisplay ?? `${product.asLogged} (as logged)`) +
-                cell(product.totalQtyDisplay ?? `${product.asLogged} (as logged)`) +
-                (cols.phi ? `<td>${product.phiDays != null ? product.phiDays : '-'}</td>` : '') +
-                (cols.safeHarvest ? cell(product.safeHarvestDate) : '') +
-                (cols.mrl ? cell(product.mrl) : '');
-              return index === 0
-                ? `<tr class="fpc-day-start">${dayCells}${productCells}${notesCell}</tr>`
-                : `<tr>${productCells}</tr>`;
+      const bodyRows = simple
+        ? buildFpcSimpleRows(days)
+            .map((row) => {
+              const cells = fpcSimpleRowCells(row).map(cell).join('');
+              return `<tr class="${row.lead ? 'fpc-day-start' : ''}">${cells}</tr>`;
+            })
+            .join('')
+        : days
+            .map((day) => {
+              const span = Math.max(1, day.products.length);
+              const dayCells =
+                `<td rowspan="${span}">${escapeHtml(day.date)}</td>` +
+                `<td rowspan="${span}">${formatDaysAfterPruningValue(day.daysAfterPruning)}</td>` +
+                (cols.irrigation
+                  ? `<td rowspan="${span}">${day.irrigationHours ?? '-'}</td>` +
+                    `<td rowspan="${span}">${day.waterMm ?? '-'}</td>`
+                  : '') +
+                `<td rowspan="${span}">${escapeHtml(day.growthStage ?? '') || '-'}</td>`;
+              const notesCell = `<td rowspan="${span}">${escapeHtml(day.notes ?? '') || '-'}</td>`;
+              if (day.products.length === 0) {
+                return `<tr class="fpc-day-start">${dayCells}${'<td>-</td>'.repeat(productColCount)}${notesCell}</tr>`;
+              }
+              return day.products
+                .map((product, index) => {
+                  const productCells =
+                    cell(product.marketName) +
+                    (cols.technicalName ? cell(product.technicalName) : '') +
+                    // Qty/Acre and Total fall back to the verbatim entry so an
+                    // unresolvable unit is still visible, marked as-logged.
+                    cell(product.qtyPerAcreDisplay ?? `${product.asLogged} (as logged)`) +
+                    cell(product.totalQtyDisplay ?? `${product.asLogged} (as logged)`) +
+                    (cols.phi
+                      ? `<td>${product.phiDays != null ? product.phiDays : '-'}</td>`
+                      : '') +
+                    (cols.safeHarvest ? cell(product.safeHarvestDate) : '') +
+                    (cols.mrl ? cell(product.mrl) : '');
+                  return index === 0
+                    ? `<tr class="fpc-day-start">${dayCells}${productCells}${notesCell}</tr>`
+                    : `<tr>${productCells}</tr>`;
+                })
+                .join('');
             })
             .join('');
-        })
-        .join('');
       html += `
           <table>
             <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>

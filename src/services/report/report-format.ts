@@ -67,18 +67,15 @@ export function sortRecordsByDateDesc<T extends { date: string }>(records: T[]):
   });
 }
 
-export function getVisibleSections(reportType: ReportType): Set<ReportSectionKey> {
-  return new Set(getSectionsForReportType(reportType));
+export function getVisibleSections(
+  reportType: ReportType,
+  fpcColumns?: FpcColumnOptions,
+): Set<ReportSectionKey> {
+  return new Set(getSectionsForReportType(reportType, fpcColumns));
 }
 
 export function formatReportType(reportType: ReportType): string {
   switch (reportType) {
-    case 'operations':
-      return 'Operations';
-    case 'financial':
-      return 'Financial';
-    case 'stock-usage':
-      return 'Stock Usage';
     case 'fpc-activity':
       return 'FPC Activity Register';
     case 'comprehensive':

@@ -25,6 +25,7 @@ jest.mock('@/styles/use-theme', () => ({
     },
     surface: {
       s100: '#ffffff',
+      s200: '#eee7dd',
       s300: '#cbd5cc',
     },
   }),
@@ -37,31 +38,30 @@ jest.mock('@/utils/color', () => ({
 }));
 
 describe('Exporter report controls', () => {
-  it('uses CSV for exporter reports and PDF for other report types', () => {
-    expect(getDefaultReportFormat('fpc-activity')).toBe('csv');
+  it('uses XLSX for the exporter register and PDF for the report', () => {
+    expect(getDefaultReportFormat('fpc-activity')).toBe('xlsx');
     expect(getDefaultReportFormat('comprehensive')).toBe('pdf');
-    expect(getDefaultReportFormat('operations')).toBe('pdf');
-    expect(getDefaultReportFormat('financial')).toBe('pdf');
-    expect(getDefaultReportFormat('stock-usage')).toBe('pdf');
   });
 
-  it('switches between standard and detailed compliance presets', () => {
+  it('switches between simple and detailed report presets', () => {
     const onChange = jest.fn();
     const { getByText, rerender } = render(
-      <ReportFpcColumnToggles columns={FPC_LEAN_COLUMNS} onChange={onChange} panelStyle={{}} />,
+      <ReportFpcColumnToggles columns={FPC_LEAN_COLUMNS} onChange={onChange} />,
     );
 
     fireEvent.press(getByText('reports.fpc.detail.detailed.title'));
     expect(onChange).toHaveBeenCalledWith(FPC_FULL_COLUMNS);
 
-    rerender(
-      <ReportFpcColumnToggles columns={FPC_FULL_COLUMNS} onChange={onChange} panelStyle={{}} />,
-    );
-    fireEvent.press(getByText('reports.fpc.detail.standard.title'));
+    rerender(<ReportFpcColumnToggles columns={FPC_FULL_COLUMNS} onChange={onChange} />);
+    fireEvent.press(getByText('reports.fpc.detail.simple.title'));
     expect(onChange).toHaveBeenLastCalledWith(FPC_LEAN_COLUMNS);
   });
 
-  it('uses exporter-specific share and save actions', () => {
+  // Replaces an earlier case for the `isExporterReport` prop, which swapped
+  // every label in the bar. The buyer's register now exports from its own
+  // disclosure section, so the bar only ever describes the report — and its two
+  // actions are named for their outcome rather than their file format.
+  it('names its actions by outcome, not by mechanism', () => {
     const onShare = jest.fn();
     const onSave = jest.fn();
     const { getByText } = render(
@@ -69,17 +69,35 @@ describe('Exporter report controls', () => {
         canExport
         isExporting={false}
         exportFormat="csv"
-        isExporterReport
-        onExportPdf={onShare}
+        onSelectFormat={jest.fn()}
+        onShare={onShare}
         onDownload={onSave}
         panelStyle={{}}
       />,
     );
 
-    fireEvent.press(getByText('reports.exporter.actions.share'));
-    fireEvent.press(getByText('reports.exporter.actions.save'));
+    fireEvent.press(getByText('reports.share'));
+    fireEvent.press(getByText('reports.saveToFiles'));
 
     expect(onShare).toHaveBeenCalledTimes(1);
     expect(onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('switches export format from the action bar', () => {
+    const onSelectFormat = jest.fn();
+    const { getByText } = render(
+      <ReportExportActions
+        canExport
+        isExporting={false}
+        exportFormat="csv"
+        onSelectFormat={onSelectFormat}
+        onShare={jest.fn()}
+        onDownload={jest.fn()}
+        panelStyle={{}}
+      />,
+    );
+
+    fireEvent.press(getByText('PDF'));
+    expect(onSelectFormat).toHaveBeenCalledWith('pdf');
   });
 });

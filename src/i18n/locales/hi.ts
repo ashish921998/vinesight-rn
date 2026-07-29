@@ -3197,53 +3197,24 @@ export const hi = {
 
   reports: {
     title: 'रिपोर्ट',
-    types: {
-      comprehensive: 'व्यापक',
-      operations: 'संचालन',
-      financial: 'वित्तीय',
-      stockUsage: 'स्टॉक उपयोग',
-      fpcActivity: 'निर्यातक रिपोर्ट',
-    },
     fpc: {
       sectionTitle: 'निर्यातक गतिविधि रजिस्टर ({{count}} दिन)',
       day: 'दिन',
       irrigation: 'सिंचाई',
       products: 'उत्पाद',
       noProducts: 'कोई उत्पाद नहीं दिया गया',
+      shareRegister: 'रजिस्टर साझा करें',
       empty: 'चयनित अवधि में कोई गतिविधि नहीं',
-      columns: {
-        title: 'अतिरिक्त कॉलम',
-        hint: 'रजिस्टर डिफ़ॉल्ट रूप से संक्षिप्त है. ऑडिट/अनुपालन खरीदारों के लिए कॉलम जोड़ने हेतु टैप करें.',
-        irrigation: 'सिंचाई (mm)',
-        technicalName: 'तकनीकी नाम',
-        phi: 'PHI',
-        safeHarvest: 'सुरक्षित कटाई',
-        mrl: 'MRL',
-      },
       detail: {
         title: 'रिपोर्ट विवरण',
-        hint: 'निर्यातक रिपोर्ट में शामिल अनुपालन विवरण का स्तर चुनें।',
-        standard: {
-          title: 'मानक',
-          description: 'नियमित खरीदार साझा करने के लिए गतिविधि, अवस्था, उत्पाद मात्रा और नोट्स।',
-        },
-        detailed: {
-          title: 'विस्तृत अनुपालन',
-          description: 'सिंचाई, तकनीकी नाम, PHI, सुरक्षित कटाई तिथि और MRL जोड़ता है।',
-        },
+        simple: { title: 'सरल' },
+        detailed: { title: 'विस्तृत अनुपालन' },
       },
     },
-    exporter: {
-      actions: {
-        title: 'बनाएँ और साझा करें',
-        share: '{{format}} साझा करें',
-        save: '{{format}} सहेजें',
-      },
-    },
-    selectFarmLabel: 'खेत चुनें',
-    selectFarmPlaceholder: 'एक खेत चुनें',
+    switchFarmLabel: 'खेत बदलें',
     dateRange: {
       label: 'तारीख़ सीमा',
+      to: 'तक',
     },
     season: {
       label: 'सीज़न',
@@ -3258,16 +3229,13 @@ export const hi = {
       unassignedNotice_other:
         '{{count}} रिकॉर्ड किसी सीज़न में नहीं हैं — सभी सीज़न में देखने के लिए टैप करें।',
       presets: {
-        active: 'सक्रिय सीज़न',
-        mostRecent: 'हाल का सीज़न',
-        previous: 'पिछला सीज़न',
         thisYear: 'यह वर्ष',
       },
     },
     selectFromDate: 'प्रारंभ तिथि चुनें',
     selectToDate: 'समाप्ति तिथि चुनें',
-    reportType: {
-      label: 'रिपोर्ट प्रकार',
+    filters: {
+      title: 'फ़िल्टर',
     },
     loading: {
       preview: 'पूर्वावलोकन तैयार हो रहा है...',
@@ -3341,12 +3309,13 @@ export const hi = {
       metaTitle: 'रिपोर्ट प्रकार',
       currentReportType: 'वर्तमान रिपोर्ट प्रकार',
       generatedAt: 'जनरेट किया गया',
-      executiveTitle: 'कार्यकारी सारांश',
+      executiveTitle: 'अवलोकन',
       revenue: 'राजस्व',
       expenses: 'खर्च',
       showDetails: 'विवरण दिखाएं',
       hideDetails: 'विवरण छिपाएं',
       emptySection: 'चुनी गई तारीख सीमा में कोई रिकॉर्ड नहीं',
+      noneLogged: 'इस अवधि में कोई {{sections}} दर्ज नहीं किया गया।',
       sections: {
         fertigationRecords: 'फर्टिगेशन रिकॉर्ड ({{count}})',
       },
@@ -3355,17 +3324,14 @@ export const hi = {
       },
     },
     summary: {
-      totalRecords: 'कुल रिकॉर्ड',
-      waterUsage: 'पानी का उपयोग',
       totalHarvest: 'कुल कटाई',
       netProfit: 'शुद्ध लाभ',
-      stockUsageCount: 'उपयोग की गई वस्तुएं',
-      matchedItems: 'मिलान की गई वस्तुएं',
-      stockCoverage: 'अनुमानित कवरेज',
+      nothingLogged: 'इस अवधि में कुछ दर्ज नहीं किया गया।',
+      loggedRecordsNote: 'इस अवधि में दर्ज रिकॉर्ड के आधार पर',
+      comparedWith: '{{period}} से तुलना · दर्ज रिकॉर्ड के आधार पर',
     },
-    exportAs: 'के रूप में निर्यात करें',
-    exportSection: 'रिपोर्ट निर्यात करें',
-    downloadReport: 'रिपोर्ट डाउनलोड करें',
+    share: 'साझा करें',
+    saveToFiles: 'फ़ाइलों में सहेजें',
     errors: {
       unableToExport: 'रिपोर्ट निर्यात करने में असमर्थ। कृपया पुनः प्रयास करें।',
     },

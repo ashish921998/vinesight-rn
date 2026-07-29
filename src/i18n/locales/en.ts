@@ -3212,54 +3212,24 @@ export const en = {
 
   reports: {
     title: 'Reports',
-    types: {
-      comprehensive: 'Comprehensive',
-      operations: 'Operations',
-      financial: 'Financial',
-      stockUsage: 'Stock Usage',
-      fpcActivity: 'Exporter Report',
-    },
     fpc: {
       sectionTitle: 'Exporter Activity Register ({{count}} days)',
       day: 'Day',
       irrigation: 'Irrigation',
       products: 'Products',
       noProducts: 'No products applied',
+      shareRegister: 'Share register',
       empty: 'No activity in selected range',
-      columns: {
-        title: 'Extra columns',
-        hint: 'The register is lean by default. Tap to add columns for audit/compliance buyers.',
-        irrigation: 'Irrigation (mm)',
-        technicalName: 'Technical name',
-        phi: 'PHI',
-        safeHarvest: 'Safe harvest',
-        mrl: 'MRL',
-      },
       detail: {
         title: 'Report detail',
-        hint: 'Choose the amount of compliance detail included in the exporter report.',
-        standard: {
-          title: 'Standard',
-          description:
-            'Activity, crop stage, product quantities and notes for routine buyer sharing.',
-        },
-        detailed: {
-          title: 'Detailed compliance',
-          description: 'Adds irrigation, technical names, PHI, safe-harvest dates and MRL values.',
-        },
+        simple: { title: 'Simple' },
+        detailed: { title: 'Detailed compliance' },
       },
     },
-    exporter: {
-      actions: {
-        title: 'Generate & share',
-        share: 'Share {{format}}',
-        save: 'Save {{format}}',
-      },
-    },
-    selectFarmLabel: 'Select farm',
-    selectFarmPlaceholder: 'Select a farm',
+    switchFarmLabel: 'Switch farm',
     dateRange: {
       label: 'Date Range',
+      to: 'to',
     },
     season: {
       label: 'Season',
@@ -3274,17 +3244,11 @@ export const en = {
       unassignedNotice_other:
         "{{count}} records aren't in any season — tap to view them under All seasons.",
       presets: {
-        active: 'Active season',
-        mostRecent: 'Most recent season',
-        previous: 'Previous season',
         thisYear: 'This year',
       },
     },
     selectFromDate: 'Select From Date',
     selectToDate: 'Select To Date',
-    reportType: {
-      label: 'Report Type',
-    },
     filters: {
       title: 'Filters',
     },
@@ -3359,12 +3323,13 @@ export const en = {
       metaTitle: 'Report Type',
       currentReportType: 'Current Report Type',
       generatedAt: 'Generated At',
-      executiveTitle: 'Executive Summary',
+      executiveTitle: 'Overview',
       revenue: 'Revenue',
       expenses: 'Expenses',
       showDetails: 'Show details',
       hideDetails: 'Hide details',
       emptySection: 'No records in selected range',
+      noneLogged: 'No {{sections}} logged in this period.',
       sections: {
         fertigationRecords: 'Fertigation Records ({{count}})',
       },
@@ -3373,17 +3338,14 @@ export const en = {
       },
     },
     summary: {
-      totalRecords: 'Total Records',
-      waterUsage: 'Water Usage',
       totalHarvest: 'Total Harvest',
       netProfit: 'Net Profit',
-      stockUsageCount: 'Unique Items Used',
-      matchedItems: 'Matched Items',
-      stockCoverage: 'Estimated Coverage',
+      nothingLogged: 'Nothing logged in this period.',
+      loggedRecordsNote: 'Based on records logged in this period',
+      comparedWith: 'Compared with {{period}} · based on logged records',
     },
-    exportAs: 'Export as',
-    exportSection: 'Export Report',
-    downloadReport: 'Download Report',
+    share: 'Share',
+    saveToFiles: 'Save to Files',
     errors: {
       unableToExport: 'Unable to export report. Please try again.',
     },

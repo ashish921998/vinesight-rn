@@ -3,13 +3,8 @@
  * Types for report generation and export
  */
 
-export type ReportFormat = 'pdf' | 'csv';
-export type ReportType =
-  | 'operations'
-  | 'financial'
-  | 'comprehensive'
-  | 'stock-usage'
-  | 'fpc-activity';
+export type ReportFormat = 'pdf' | 'csv' | 'xlsx';
+export type ReportType = 'comprehensive' | 'fpc-activity';
 export type ReportCompareMode = 'previous' | 'yoy';
 export type ReportSectionKey =
   | 'meta'
@@ -37,6 +32,7 @@ export const REPORT_SECTION_ORDER: ReportSectionKey[] = [
 ];
 
 const REPORT_TYPE_SECTION_MAP: Record<ReportType, ReportSectionKey[]> = {
+  // The single on-screen report: every section the window's logs produced.
   comprehensive: [
     'meta',
     'executive',
@@ -48,28 +44,21 @@ const REPORT_TYPE_SECTION_MAP: Record<ReportType, ReportSectionKey[]> = {
     'stock',
     'nutrient-ledger',
   ],
-  operations: [
-    'meta',
-    'executive',
-    'irrigation',
-    'spray',
-    'fertigation',
-    'harvest',
-    'nutrient-ledger',
-  ],
-  financial: ['meta', 'executive', 'expense'],
-  // No ledger here: nutrients derive from application LOGS (fertigation/spray),
-  // not from warehouse stock movement — a stock report showing "N given" would
-  // conflate what left the shelf with what reached the vines.
-  'stock-usage': ['meta', 'executive', 'stock'],
-  // FPC/buyer-facing activity register (Fratelli format): one chronological
-  // table, one row per product applied, grouped under each date, followed by
-  // a nutrient (N-P-K) summary — how much N / P₂O₅ / K₂O the vine received.
+  // FPC/buyer-facing activity register (Fratelli format). The simple preset
+  // is the eight-column register Fratelli supplied; detailed mode adds the
+  // nutrient ledger and the extra audit fields.
   'fpc-activity': ['meta', 'fpc-activity', 'nutrient-ledger'],
 };
 
-export function getSectionsForReportType(reportType: ReportType): ReportSectionKey[] {
-  return [...REPORT_TYPE_SECTION_MAP[reportType]];
+export function getSectionsForReportType(
+  reportType: ReportType,
+  fpcColumns?: FpcColumnOptions,
+): ReportSectionKey[] {
+  const sections = [...REPORT_TYPE_SECTION_MAP[reportType]];
+  if (reportType === 'fpc-activity' && fpcColumns && isFpcSimpleReport(fpcColumns)) {
+    return sections.filter((section) => section !== 'nutrient-ledger');
+  }
+  return sections;
 }
 
 export interface DateRange {
@@ -109,15 +98,13 @@ export interface ExportOptions {
 }
 
 export type ReportDataType =
-  | 'irrigation'
-  | 'spray'
-  | 'fertigation'
-  | 'harvest'
-  | 'expense'
-  | 'stock';
+  'irrigation' | 'spray' | 'fertigation' | 'harvest' | 'expense' | 'stock';
 
 export interface ReportData {
   farmName: string;
+  /** Buyer-register identity fields. Farm name is used when no separate owner name is available. */
+  farmVariety?: string | null;
+  pruningDate?: string | null;
   farmArea: number;
   farmRegion: string;
   dateRange: DateRange;
@@ -161,13 +148,13 @@ export interface FpcColumnOptions {
   mrl: boolean;
 }
 
-/** Buyer-facing default: only the activity spine, no compliance/drip columns. */
+/** Fratelli's supplied eight-column register: technical name, PHI and MRL. */
 export const FPC_LEAN_COLUMNS: FpcColumnOptions = {
   irrigation: false,
-  technicalName: false,
-  phi: false,
+  technicalName: true,
+  phi: true,
   safeHarvest: false,
-  mrl: false,
+  mrl: true,
 };
 
 /** Audit-facing: every column, for GrapeNet/export-compliance buyers. */
@@ -179,14 +166,32 @@ export const FPC_FULL_COLUMNS: FpcColumnOptions = {
   mrl: true,
 };
 
-/** Optional-column keys in display order — drives the UI toggle chips. */
-export const FPC_OPTIONAL_COLUMN_KEYS: (keyof FpcColumnOptions)[] = [
-  'irrigation',
-  'technicalName',
-  'phi',
-  'safeHarvest',
-  'mrl',
-];
+/**
+ * Exact-equality check of a column set against one of the presets — NOT a
+ * structural property of the columns. Used to detect the two fixed presets
+ * (lean / full); a partial toggle matches neither.
+ */
+export function fpcColumnsEqualPreset(
+  columns: FpcColumnOptions,
+  preset: FpcColumnOptions,
+): boolean {
+  return (Object.keys(preset) as (keyof FpcColumnOptions)[]).every(
+    (key) => columns[key] === preset[key],
+  );
+}
+
+/**
+ * Exact-equality check against the simple preset. Load-bearing in two places:
+ * it drops `nutrient-ledger` from the section map (getSectionsForReportType)
+ * and switches the PDF/CSV/XLSX renderer to Fratelli's fixed eight-column
+ * layout. Any combination that isn't byte-identical to FPC_LEAN_COLUMNS must
+ * fall through to the detailed layout — do not loosen this to a subset check,
+ * or a partial toggle would silently pick up the nutrient ledger and the
+ * wrong column set.
+ */
+export function isFpcSimpleReport(columns: FpcColumnOptions): boolean {
+  return fpcColumnsEqualPreset(columns, FPC_LEAN_COLUMNS);
+}
 
 /**
  * One product applied on a given date — a spray chemical or a fertigation

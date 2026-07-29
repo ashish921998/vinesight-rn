@@ -25,13 +25,10 @@ type NumericSummaryField = {
 
 /** Tile key → the summary field it compares. */
 const COMPARISON_METRIC_FIELDS: Record<string, NumericSummaryField> = {
-  records: 'totalRecords',
-  water: 'totalWaterUsage',
   harvest: 'totalHarvest',
   profit: 'netProfit',
   revenue: 'totalRevenue',
   expenses: 'totalExpenses',
-  'stock-usage': 'stockUsageCount',
 };
 
 function toLocalDate(iso: string): Date {

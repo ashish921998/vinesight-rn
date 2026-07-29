@@ -17,11 +17,30 @@ export interface ReportSectionRow {
   lines: ReportSectionLine[];
 }
 
+/**
+ * A single dated activity. The log TYPE is the row title — a bare "4 h" or a
+ * chemical name tells a farmer nothing on its own — with the amount/detail as
+ * the supporting line, matching the home screen's recent-activity rows.
+ */
+export interface ReportSectionRecord {
+  id: string;
+  title: string;
+  /** Amount / product / cost. Omitted when the row has nothing to add. */
+  detail?: string;
+  /** Already display-formatted upstream by report-compute. */
+  date: string;
+}
+
 interface ReportSectionBlockProps {
   title: string;
-  rows: ReportSectionRow[];
+  rows?: ReportSectionRow[];
+  /**
+   * Dated activity rows. When provided these replace `rows` and render as a
+   * record list rather than a label/value table — the aggregate lenses and the
+   * buyer's register have no dates and stay tabular.
+   */
+  records?: ReportSectionRecord[];
   hiddenCount?: number;
-  variant?: 'default' | 'compact-two-col' | 'compact-inline';
   /** SF Symbol name displayed next to the section title. */
   icon?: string;
   /** Accent color for the icon and decorative elements. */
@@ -31,6 +50,9 @@ interface ReportSectionBlockProps {
 }
 
 const INITIAL_ROWS_TO_RENDER = 6;
+
+/** Shared empty default so `rows` can be optional without an inline array literal. */
+const EMPTY_ROWS: ReportSectionRow[] = [];
 
 /* ─────────────────────── Separator ─────────────────────── */
 
@@ -50,9 +72,9 @@ function InsetSeparator({ color }: { color: string }) {
 
 export function ReportSectionBlock({
   title,
-  rows,
+  rows = EMPTY_ROWS,
+  records,
   hiddenCount = 0,
-  variant = 'default',
   icon,
   accentColor,
   emptyMessage,
@@ -74,51 +96,6 @@ export function ReportSectionBlock({
   );
 
   const separatorColor = m3.surface.s300;
-
-  /* ── Compact two-col header ── */
-  const renderTwoColHeader = useCallback(() => {
-    if (rows.length === 0) return null;
-    const dateLine = rows[0]?.lines[0];
-    const durationLine = rows[0]?.lines[1];
-    return (
-      <View
-        style={{
-          flexDirection: 'row',
-          paddingHorizontal: spacing[4],
-          paddingVertical: spacing[2],
-          backgroundColor: m3.surface.s200,
-          borderBottomWidth: 1,
-          borderBottomColor: separatorColor,
-        }}
-      >
-        <Text
-          style={{
-            flex: 1,
-            fontSize: fontSize.xs,
-            fontWeight: fontWeight.bold,
-            color: m3.colorScheme.onSurfaceVariant,
-            textTransform: 'uppercase',
-            letterSpacing: 0.5,
-          }}
-        >
-          {dateLine?.label ?? ''}
-        </Text>
-        <Text
-          style={{
-            width: 92,
-            fontSize: fontSize.xs,
-            fontWeight: fontWeight.bold,
-            color: m3.colorScheme.onSurfaceVariant,
-            textAlign: 'right',
-            textTransform: 'uppercase',
-            letterSpacing: 0.5,
-          }}
-        >
-          {durationLine?.label ?? ''}
-        </Text>
-      </View>
-    );
-  }, [rows, m3, separatorColor]);
 
   /* ── Compact inline header ── */
   const renderInlineHeader = useCallback(() => {
@@ -171,46 +148,82 @@ export function ReportSectionBlock({
 
   /* ── Render items ── */
 
-  const renderTwoColRow = useCallback(
-    ({ item: row }: ListRenderItemInfo<ReportSectionRow>) => {
-      const dateLine = row.lines[0];
-      const durationLine = row.lines[1];
-      return (
+  /* ── Dated activity row ── */
+  const renderRecord = useCallback(
+    ({ item: record }: ListRenderItemInfo<ReportSectionRecord>) => (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing[3],
+          paddingHorizontal: spacing[4],
+          paddingVertical: spacing[3],
+        }}
+      >
         <View
           style={{
-            flexDirection: 'row',
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[3],
+            width: 36,
+            height: 36,
+            borderRadius: borderRadius.sm,
+            borderCurve: 'continuous',
+            backgroundColor: colorWithOpacity(accentColor ?? m3.colorScheme.onSurfaceVariant, 0.12),
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
-          <Text
-            selectable
-            style={{
-              flex: 1,
-              color: m3.colorScheme.onSurface,
-              fontSize: fontSize.base,
-              fontVariant: dateLine?.monospace ? ['tabular-nums'] : undefined,
-            }}
-          >
-            {dateLine?.value ?? '-'}
-          </Text>
-          <Text
-            selectable
-            style={{
-              width: 92,
-              color: m3.colorScheme.onSurface,
-              fontSize: fontSize.base,
-              fontWeight: fontWeight.medium,
-              textAlign: 'right',
-              fontVariant: ['tabular-nums'],
-            }}
-          >
-            {durationLine?.value ?? '-'}
-          </Text>
+          <Icon
+            name={icon ?? 'list.bullet'}
+            size={17}
+            color={accentColor ?? m3.colorScheme.onSurfaceVariant}
+          />
         </View>
-      );
-    },
-    [m3],
+
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+            <Text
+              selectable
+              numberOfLines={1}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                color: m3.colorScheme.onSurface,
+                fontSize: fontSize.base,
+                fontWeight: fontWeight.semibold,
+              }}
+            >
+              {record.title}
+            </Text>
+            <Text
+              selectable
+              numberOfLines={1}
+              style={{
+                color: m3.colorScheme.onSurfaceVariant,
+                fontSize: fontSize.xs,
+                fontVariant: ['tabular-nums'],
+                flexShrink: 0,
+              }}
+            >
+              {record.date}
+            </Text>
+          </View>
+          {record.detail ? (
+            <Text
+              selectable
+              numberOfLines={1}
+              style={{
+                marginTop: 1,
+                color: m3.colorScheme.onSurfaceVariant,
+                fontSize: fontSize.sm,
+              }}
+            >
+              {record.detail}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+    ),
+    [m3, icon, accentColor],
   );
 
   const renderInlineRow = useCallback(
@@ -287,111 +300,14 @@ export function ReportSectionBlock({
     [m3],
   );
 
-  const renderDefaultRow = useCallback(
-    ({ item: row }: ListRenderItemInfo<ReportSectionRow>) => {
-      const primaryLine = row.lines[0] ?? null;
-      const detailLines = row.lines.slice(1);
-      return (
-        <View
-          style={{
-            backgroundColor: m3.surface.s100,
-            borderRadius: borderRadius.lg,
-            borderCurve: 'continuous',
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[3],
-            gap: spacing[2],
-            borderWidth: 1,
-            borderColor: m3.surface.s300,
-          }}
-        >
-          {primaryLine ? (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: spacing[2],
-                borderBottomWidth: detailLines.length > 0 ? 1 : 0,
-                borderBottomColor: m3.surface.s200,
-                paddingBottom: detailLines.length > 0 ? spacing[2] : 0,
-              }}
-            >
-              <Text
-                selectable
-                style={{
-                  color: m3.colorScheme.onSurfaceVariant,
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                }}
-              >
-                {primaryLine.label}
-              </Text>
-              <Text
-                selectable
-                style={{
-                  color: m3.colorScheme.onSurface,
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.bold,
-                  fontVariant: primaryLine.monospace ? ['tabular-nums'] : undefined,
-                }}
-              >
-                {primaryLine.value}
-              </Text>
-            </View>
-          ) : null}
+  const keyExtractor = useCallback((item: ReportSectionRow | ReportSectionRecord) => item.id, []);
 
-          {detailLines.map((line, index) => (
-            <View
-              key={`${row.id}-${line.label}`}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: spacing[2],
-                borderTopWidth: index === 0 ? 0 : 1,
-                borderTopColor: m3.surface.s200,
-                paddingTop: index === 0 ? 0 : spacing[1],
-              }}
-            >
-              <Text
-                selectable
-                numberOfLines={1}
-                style={{
-                  flex: 0.45,
-                  color: m3.colorScheme.onSurfaceVariant,
-                  fontSize: fontSize.base,
-                }}
-              >
-                {line.label}
-              </Text>
-              <Text
-                selectable
-                numberOfLines={1}
-                style={{
-                  flex: 0.55,
-                  color: m3.colorScheme.onSurface,
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  textAlign: 'right',
-                  fontVariant: line.monospace ? ['tabular-nums'] : undefined,
-                }}
-              >
-                {line.value}
-              </Text>
-            </View>
-          ))}
-        </View>
-      );
-    },
-    [m3],
-  );
-
-  const keyExtractor = useCallback((item: ReportSectionRow) => item.id, []);
-
-  const twoColSeparator = useCallback(
+  const rowSeparator = useCallback(
     () => <InsetSeparator color={separatorColor} />,
     [separatorColor],
   );
+
+  const isEmpty = records ? records.length === 0 : rows.length === 0;
 
   /* ─────────────────────── Render ─────────────────────── */
 
@@ -417,7 +333,7 @@ export function ReportSectionBlock({
         </Text>
       </View>
 
-      {rows.length === 0 ? (
+      {isEmpty ? (
         /* ── Empty state ── */
         <View
           style={{
@@ -437,23 +353,22 @@ export function ReportSectionBlock({
             {emptyMessage ?? t('reports.formal.emptySection')}
           </Text>
         </View>
-      ) : variant === 'compact-two-col' ? (
-        /* ── Compact two-col ── */
+      ) : records ? (
+        /* ── Dated activity rows ── */
         <View style={insetGroupedContainer}>
-          {renderTwoColHeader()}
           <FlatList
-            data={rows}
+            data={records}
             keyExtractor={keyExtractor}
             scrollEnabled={false}
-            initialNumToRender={Math.min(rows.length, INITIAL_ROWS_TO_RENDER)}
+            initialNumToRender={Math.min(records.length, INITIAL_ROWS_TO_RENDER)}
             maxToRenderPerBatch={INITIAL_ROWS_TO_RENDER}
             windowSize={5}
-            ItemSeparatorComponent={twoColSeparator}
-            renderItem={renderTwoColRow}
+            ItemSeparatorComponent={rowSeparator}
+            renderItem={renderRecord}
           />
         </View>
-      ) : variant === 'compact-inline' ? (
-        /* ── Compact inline ── */
+      ) : (
+        /* ── Tabular rows ── */
         <View style={insetGroupedContainer}>
           {renderInlineHeader()}
           <FlatList
@@ -463,22 +378,10 @@ export function ReportSectionBlock({
             initialNumToRender={Math.min(rows.length, INITIAL_ROWS_TO_RENDER)}
             maxToRenderPerBatch={INITIAL_ROWS_TO_RENDER}
             windowSize={5}
-            ItemSeparatorComponent={twoColSeparator}
+            ItemSeparatorComponent={rowSeparator}
             renderItem={renderInlineRow}
           />
         </View>
-      ) : (
-        /* ── Default cards ── */
-        <FlatList
-          data={rows}
-          keyExtractor={keyExtractor}
-          scrollEnabled={false}
-          initialNumToRender={Math.min(rows.length, INITIAL_ROWS_TO_RENDER)}
-          maxToRenderPerBatch={INITIAL_ROWS_TO_RENDER}
-          windowSize={5}
-          contentContainerStyle={{ gap: spacing[2] }}
-          renderItem={renderDefaultRow}
-        />
       )}
 
       {/* Hidden count message */}

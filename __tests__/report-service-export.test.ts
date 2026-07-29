@@ -1,10 +1,5 @@
 import { ReportService } from '@/services/report-service';
-import {
-  getSectionsForReportType,
-  type DateRange,
-  type ReportData,
-  type ReportSummary,
-} from '@/types/report';
+import { type DateRange, type ReportData, type ReportSummary } from '@/types/report';
 import type { Farm, IrrigationRecord } from '@/types/database';
 
 jest.mock('expo-print', () => ({
@@ -140,36 +135,17 @@ const SAMPLE_SUMMARY: ReportSummary = {
   stockUsageCount: 1,
 };
 
-describe('report section visibility contract', () => {
-  it('returns operations sections in deterministic order', () => {
-    expect(getSectionsForReportType('operations')).toEqual([
-      'meta',
-      'executive',
-      'irrigation',
-      'spray',
-      'fertigation',
-      'harvest',
-      'nutrient-ledger',
-    ]);
-  });
-
-  it('returns strict sections for financial and stock-usage', () => {
-    expect(getSectionsForReportType('financial')).toEqual(['meta', 'executive', 'expense']);
-    expect(getSectionsForReportType('stock-usage')).toEqual(['meta', 'executive', 'stock']);
-  });
-});
-
 describe('report export parity', () => {
-  it('includes report type metadata and excludes non-selected sections in CSV', () => {
-    const csv = ReportService.generateCSV(SAMPLE_DATA, 'operations');
+  it('includes report type metadata and section content in CSV', () => {
+    const csv = ReportService.generateCSV(SAMPLE_DATA, 'comprehensive');
 
-    expect(csv).toContain('Report Type: Operations');
+    expect(csv).toContain('Report Type: Comprehensive');
     expect(csv).toContain('Season: Season 2026 (Grapes)');
     expect(csv).toContain('Season Window: 01-01-2026 to 31-12-2026');
     expect(csv).toContain('IRRIGATION RECORDS');
     expect(csv).toContain('FERTIGATION RECORDS');
-    expect(csv).not.toContain('EXPENSE RECORDS');
-    expect(csv).not.toContain('STOCK USAGE SUMMARY');
+    expect(csv).toContain('EXPENSE RECORDS');
+    expect(csv).toContain('STOCK USAGE SUMMARY');
   });
 
   it('exports the nutrient ledger to CSV and PDF with coverage, dual basis, and type gating (issue #200)', () => {
@@ -208,29 +184,25 @@ describe('report export parity', () => {
       },
     };
 
-    const csv = ReportService.generateCSV(dataWithLedger, 'operations');
+    const csv = ReportService.generateCSV(dataWithLedger, 'comprehensive');
     expect(csv).toContain('NUTRIENT LEDGER - NUTRIENTS APPLIED');
     expect(csv).toContain('Nutrients from 50% of applied quantity (1 of 2 items with composition)');
     expect(csv).toContain('P,2.2693,1.1346,P₂O₅,5.2,2.6');
     // CSV stays numeric kg even for micros (machine-readable).
     expect(csv).toContain('Zn,0.012,0.006,,,');
 
-    const html = ReportService.generatePDFHtml(dataWithLedger, SAMPLE_SUMMARY, 'operations', 'INR');
+    const html = ReportService.generatePDFHtml(
+      dataWithLedger,
+      SAMPLE_SUMMARY,
+      'comprehensive',
+      'INR',
+    );
     expect(html).toContain('Nutrient Ledger');
     expect(html).toContain('nutrients from 50% of applied quantity');
     expect(html).toContain('P₂O₅');
     // PDF cells go through the kernel scale picker: macro in kg, micro in g.
     expect(html).toContain('<td>2.27 kg</td>');
     expect(html).toContain('<td>12 g</td>');
-
-    // The ledger derives from application logs, not stock movement — it must
-    // stay out of stock-usage and financial exports.
-    expect(ReportService.generateCSV(dataWithLedger, 'stock-usage')).not.toContain(
-      'NUTRIENT LEDGER',
-    );
-    expect(
-      ReportService.generatePDFHtml(dataWithLedger, SAMPLE_SUMMARY, 'financial', 'INR'),
-    ).not.toContain('Nutrient Ledger');
   });
 
   it('renders the 0%-coverage empty text instead of zeros-as-truth (issue #200)', () => {
@@ -247,7 +219,7 @@ describe('report export parity', () => {
       },
     };
 
-    const csv = ReportService.generateCSV(dataZeroCoverage, 'operations');
+    const csv = ReportService.generateCSV(dataZeroCoverage, 'comprehensive');
     expect(csv).toContain('NUTRIENT LEDGER - NUTRIENTS APPLIED');
     expect(csv).toContain('Nutrients from 0% of applied quantity (0 of 3 items with composition)');
     // Applications exist but lack composition — must not be reported as "no
@@ -258,7 +230,7 @@ describe('report export parity', () => {
     const html = ReportService.generatePDFHtml(
       dataZeroCoverage,
       SAMPLE_SUMMARY,
-      'operations',
+      'comprehensive',
       'INR',
     );
     expect(html).toContain('No composition data — nutrients cannot be calculated (coverage 0%)');
@@ -278,14 +250,14 @@ describe('report export parity', () => {
       },
     };
 
-    const csv = ReportService.generateCSV(dataNoLogs, 'operations');
+    const csv = ReportService.generateCSV(dataNoLogs, 'comprehensive');
     // Truly no applications — the generic empty text is correct here.
     expect(csv).toContain('No records in selected range');
     expect(csv).not.toContain('No composition data');
 
     // PDF mirrors the same split — a no-application report must not be
     // misreported as a composition failure.
-    const html = ReportService.generatePDFHtml(dataNoLogs, SAMPLE_SUMMARY, 'operations', 'INR');
+    const html = ReportService.generatePDFHtml(dataNoLogs, SAMPLE_SUMMARY, 'comprehensive', 'INR');
     expect(html).toContain('Nutrient Ledger');
     expect(html).toContain('No records in selected range');
     expect(html).not.toContain('No composition data');
@@ -298,16 +270,16 @@ describe('report export parity', () => {
     expect(csv).toContain('2026-07-10,9,Season 2026 (Grapes),2');
   });
 
-  it('includes fertigation records in operations PDF', () => {
-    const html = ReportService.generatePDFHtml(SAMPLE_DATA, SAMPLE_SUMMARY, 'operations', 'INR');
+  it('includes fertigation records in comprehensive PDF', () => {
+    const html = ReportService.generatePDFHtml(SAMPLE_DATA, SAMPLE_SUMMARY, 'comprehensive', 'INR');
     expect(html).toContain('Fertigation Records');
     expect(html).toContain('Calcium Nitrate');
     expect(html).toContain('<th>DAP</th>');
     expect(html).toContain('<td>7d</td>');
   });
 
-  it('renders valid closed expense table in financial PDF', () => {
-    const html = ReportService.generatePDFHtml(SAMPLE_DATA, SAMPLE_SUMMARY, 'financial', 'INR');
+  it('renders a valid closed expense table in comprehensive PDF', () => {
+    const html = ReportService.generatePDFHtml(SAMPLE_DATA, SAMPLE_SUMMARY, 'comprehensive', 'INR');
     expect(html).toContain('Expense Records');
     expect(html).toContain('</table>');
     const openTables = (html.match(/<table>/g) ?? []).length;
@@ -326,11 +298,16 @@ describe('report export parity', () => {
       ],
     };
 
-    const csv = ReportService.generateCSV(dataWithoutDap, 'financial');
+    const csv = ReportService.generateCSV(dataWithoutDap, 'comprehensive');
     expect(csv).toContain('Date,Days After Pruning,Season,Type,Cost,Remarks');
     expect(csv).toContain('2026-07-06,-,Season 2026 (Grapes),Labor,1500,Weekly');
 
-    const html = ReportService.generatePDFHtml(dataWithoutDap, SAMPLE_SUMMARY, 'financial', 'INR');
+    const html = ReportService.generatePDFHtml(
+      dataWithoutDap,
+      SAMPLE_SUMMARY,
+      'comprehensive',
+      'INR',
+    );
     expect(html).toContain('<th>DAP</th>');
     expect(html).toContain('<td>-</td>');
   });
@@ -349,7 +326,7 @@ describe('report export parity', () => {
       ],
     };
 
-    const csv = ReportService.generateCSV(allSeasonData, 'operations');
+    const csv = ReportService.generateCSV(allSeasonData, 'comprehensive');
     expect(csv).toContain('Date,Days After Pruning,Season,Chemical,Dose,Operator,Notes');
     expect(csv).toContain('2026-07-09,8,2026-01-01 to 2026-12-31,M45,10 kg,Ravi,');
   });
@@ -387,7 +364,7 @@ describe('report export parity', () => {
       ],
     };
 
-    const csv = ReportService.generateCSV(stockFocusedData, 'stock-usage');
+    const csv = ReportService.generateCSV(stockFocusedData, 'comprehensive');
     expect(csv).toContain('STOCK USAGE SUMMARY (Matched 1 of 2)');
     expect(csv).toContain('M45,spray,10,kg,1,1,40,50,20,warehouse_item_id');
     expect(csv).toContain('UNMATCHED LOG ITEMS (1)');
@@ -398,7 +375,7 @@ describe('report export parity', () => {
     const html = ReportService.generatePDFHtml(
       stockFocusedData,
       SAMPLE_SUMMARY,
-      'stock-usage',
+      'comprehensive',
       'INR',
     );
     expect(html).toContain('Stock Usage Summary (Matched 1 of 2)');
