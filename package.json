@@ -146,6 +146,7 @@
     "typescript-eslint": "^8.55.0"
   },
   "private": true,
+  "license": "MIT",
   "expo": {
     "doctor": {
       "reactNativeDirectoryCheck": {
