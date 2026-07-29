@@ -2,11 +2,11 @@
 /**
  * Lens rendering in the on-screen report document (issue #198): the per-plot
  * / per-acre / per-liter cards, the verbatim buckets, the compliance match
- * labels, the per-acre "unavailable" message, and the gating on the stock
- * section (financial reports never show lenses).
+ * labels, the per-acre "unavailable" message, and the gating on the presence
+ * of usage data (not on the stock section — see the note below).
  */
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import type { ReportPreview } from '@/types/report';
 import { computeUsageLenses } from '@/services/report-usage-lenses';
 
@@ -29,6 +29,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('@/styles/use-theme', () => ({
+  useIsDark: () => false,
   useThemeColors: () => ({
     surface: { 50: '#fff', 100: '#fff', 200: '#eee' },
     success: '#0f0',
@@ -86,6 +87,30 @@ const USAGE = computeUsageLenses({
   planItems: [{ id: 'pi-urea', name: 'Urea', quantity: 5, unit: 'kg/acre' }],
 });
 
+const FPC_DAY = {
+  date: '10 Jul 2026',
+  isoDate: '2026-07-10',
+  daysAfterPruning: 9,
+  irrigationHours: 2,
+  waterMm: 4,
+  growthStage: 'Berry set',
+  notes: null,
+  products: [
+    {
+      key: 'p1',
+      source: 'spray' as const,
+      marketName: 'Fungicide X',
+      technicalName: 'Mancozeb',
+      qtyPerAcreDisplay: '1 kg',
+      totalQtyDisplay: '2 kg',
+      asLogged: '1 kg/acre',
+      phiDays: 7,
+      safeHarvestDate: null,
+      mrl: 'EU: 0.5 mg/kg',
+    },
+  ],
+};
+
 function previewWith(usage: ReportPreview['data']['usage']): ReportPreview {
   return {
     summary: {
@@ -120,7 +145,10 @@ function previewWith(usage: ReportPreview['data']['usage']): ReportPreview {
   };
 }
 
-function renderBody(preview: ReportPreview, reportType: 'stock-usage' | 'financial') {
+function renderBody(
+  preview: ReportPreview,
+  reportType: 'stock-usage' | 'financial' | 'comprehensive',
+) {
   return render(
     <ReportDocumentBody
       preview={preview}
@@ -178,16 +206,86 @@ describe('usage lens cards in the report document', () => {
     expect(queryByText('reports.lenses.complianceTitle')).toBeNull();
   });
 
-  it('never renders lens cards outside the stock section (financial report)', () => {
-    const { queryByText } = renderBody(previewWith(USAGE), 'financial');
-    expect(queryByText('reports.lenses.perPlotTitle')).toBeNull();
-    expect(queryByText('reports.lenses.perLiterTitle')).toBeNull();
-    expect(queryByText('reports.lenses.complianceTitle')).toBeNull();
+  // Replaces an earlier case asserting lenses render ONLY inside the stock
+  // section. That gate was semantically wrong: these lenses are derived from
+  // spray/fertigation APPLICATION logs, not warehouse stock movement, so gating
+  // them on the stock section hid them from exactly the reports whose data
+  // produced them. They are now gated on the presence of usage data.
+  it('renders lens cards whenever usage data exists, independent of report type', () => {
+    const { getByText } = renderBody(previewWith(USAGE), 'financial');
+    expect(getByText('reports.lenses.perPlotTitle')).toBeTruthy();
+    expect(getByText('reports.lenses.perLiterTitle')).toBeTruthy();
+    expect(getByText('reports.lenses.complianceTitle')).toBeTruthy();
   });
 
   it('renders no lens cards when usage is absent (hand-built preview data)', () => {
     const { queryByText } = renderBody(previewWith(undefined), 'stock-usage');
     expect(queryByText('reports.lenses.perPlotTitle')).toBeNull();
     expect(queryByText('reports.lenses.perAcreUnavailable')).toBeNull();
+  });
+});
+
+/**
+ * The buyer's register (Fratelli format) is a different document for a different
+ * reader, so it renders last and collapsed rather than as one of five report
+ * types the farmer had to choose between up front.
+ *
+ * It is deliberately gated on register DATA, not on `visibleSections`: adding
+ * 'fpc-activity' to the comprehensive section map would also stamp a
+ * buyer-format table into every farmer's report export.
+ */
+describe("buyer's register disclosure", () => {
+  function previewWithRegister(days: unknown[]): ReportPreview {
+    const preview = previewWith(undefined);
+    return {
+      ...preview,
+      data: { ...preview.data, fpcActivity: days as never },
+    };
+  }
+
+  it('is absent entirely when there are no register days', () => {
+    const { queryByText } = renderBody(previewWithRegister([]), 'comprehensive');
+    expect(queryByText('reports.fpc.sectionTitle')).toBeNull();
+  });
+
+  it('shows its header collapsed — rows and controls stay hidden until expanded', () => {
+    const { getByText, queryByText } = renderBody(previewWithRegister([FPC_DAY]), 'comprehensive');
+
+    expect(getByText('reports.fpc.sectionTitle')).toBeTruthy();
+    expect(queryByText('reports.fpc.detail.title')).toBeNull();
+    expect(queryByText('reports.fpc.detail.simple.title')).toBeNull();
+    expect(queryByText('reports.fpc.shareRegister')).toBeNull();
+  });
+
+  it('reveals rows, the column preset and its own export action when expanded', () => {
+    const onExportRegister = jest.fn();
+    const { getByText } = render(
+      <ReportDocumentBody
+        preview={previewWithRegister([FPC_DAY])}
+        reportType="comprehensive"
+        preferredCurrency="INR"
+        onFpcColumnsChange={jest.fn()}
+        onExportRegister={onExportRegister}
+        panelStyle={{}}
+      />,
+    );
+
+    fireEvent.press(getByText('reports.fpc.sectionTitle'));
+
+    expect(getByText('Fungicide X (2 kg)')).toBeTruthy();
+    expect(getByText('reports.fpc.detail.simple.title')).toBeTruthy();
+
+    fireEvent.press(getByText('reports.fpc.shareRegister'));
+    expect(onExportRegister).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders read-only without a change handler or an export action', () => {
+    const { getByText, queryByText } = renderBody(previewWithRegister([FPC_DAY]), 'comprehensive');
+
+    fireEvent.press(getByText('reports.fpc.sectionTitle'));
+
+    expect(getByText('reports.fpc.detail.title')).toBeTruthy();
+    expect(queryByText('reports.fpc.detail.simple.title')).toBeNull();
+    expect(queryByText('reports.fpc.shareRegister')).toBeNull();
   });
 });

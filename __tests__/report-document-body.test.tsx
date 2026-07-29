@@ -1,4 +1,9 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
+/**
+ * `ReportDocumentBody` + `ReportExecutiveSummary` rendering. Renamed from
+ * reports-screen.test.tsx: it never rendered the screen, so its green status was
+ * being read as coverage of app/reports.tsx that does not exist.
+ */
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import type { ReportPreview } from '@/types/report';
@@ -22,6 +27,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('@/styles/use-theme', () => ({
+  useIsDark: () => false,
   useThemeColors: () => ({
     surface: {
       50: '#fff',
@@ -36,6 +42,7 @@ jest.mock('@/styles/use-theme', () => ({
       secondary: '#00a',
       tertiary: '#a50',
       error: '#d00',
+      success: '#0a0',
       onSurface: '#111',
       onSurfaceVariant: '#555',
       shadow: '#000',
@@ -157,7 +164,6 @@ describe('reports formal rendering', () => {
         preview={PREVIEW}
         reportType="operations"
         preferredCurrency="INR"
-        areaUnit="acres"
         panelStyle={{}}
       />,
     );
@@ -173,7 +179,6 @@ describe('reports formal rendering', () => {
         preview={PREVIEW}
         reportType="financial"
         preferredCurrency="INR"
-        areaUnit="acres"
         panelStyle={{}}
       />,
     );
@@ -183,31 +188,84 @@ describe('reports formal rendering', () => {
     expect(queryByText('reports.stockDetails.title')).toBeNull();
   });
 
-  it('stock-usage type shows stock section and stock-oriented summary without net-profit tile', () => {
-    const { getByText, queryByText } = render(
-      <>
-        <ReportExecutiveSummary
-          preview={PREVIEW}
-          reportType="stock-usage"
-          reportTypeLabel="Stock Usage"
-          preferredCurrency="INR"
-        />
-        <ReportDocumentBody
-          preview={PREVIEW}
-          reportType="stock-usage"
-          preferredCurrency="INR"
-          areaUnit="acres"
-          panelStyle={{}}
-        />
-      </>,
+  it('stock-usage type shows the stock section', () => {
+    const { getByText } = render(
+      <ReportDocumentBody
+        preview={PREVIEW}
+        reportType="stock-usage"
+        preferredCurrency="INR"
+        panelStyle={{}}
+      />,
     );
 
     expect(getByText(/reports\.stockDetails\.title/)).toBeTruthy();
+  });
+
+  // Replaces an earlier case asserting the summary swapped its tile set per
+  // report type. With one report there is one tile set, filtered to what
+  // actually has a value — a "0L" tile implies a measurement that came back
+  // zero, when nothing was logged at all.
+  it('summary renders a tile per non-zero metric and drops the record count', () => {
+    const { getByText, queryByText } = render(
+      <ReportExecutiveSummary preview={PREVIEW} preferredCurrency="INR" />,
+    );
+
+    expect(getByText('reports.summary.waterUsage')).toBeTruthy();
+    expect(getByText('reports.summary.totalHarvest')).toBeTruthy();
+    expect(getByText('reports.formal.revenue')).toBeTruthy();
+    expect(getByText('reports.formal.expenses')).toBeTruthy();
+    expect(getByText('reports.summary.netProfit')).toBeTruthy();
     expect(getByText('reports.summary.stockUsageCount')).toBeTruthy();
+
+    // A record count is a database fact, not a farming one.
+    expect(queryByText('reports.summary.totalRecords')).toBeNull();
+  });
+
+  const ZEROED_METRICS = {
+    totalWaterUsage: 0,
+    totalHarvest: 0,
+    totalRevenue: 0,
+    totalExpenses: 0,
+    netProfit: 0,
+    stockUsageCount: 0,
+  };
+
+  it('summary states that nothing was logged only when there are no records at all', () => {
+    const emptyPreview: ReportPreview = {
+      ...PREVIEW,
+      summary: { ...PREVIEW.summary, ...ZEROED_METRICS, totalRecords: 0 },
+    };
+
+    const { getByText, queryByText } = render(
+      <ReportExecutiveSummary preview={emptyPreview} preferredCurrency="INR" />,
+    );
+
+    expect(getByText('reports.summary.nothingLogged')).toBeTruthy();
+    expect(queryByText('reports.summary.waterUsage')).toBeNull();
     expect(queryByText('reports.summary.netProfit')).toBeNull();
   });
 
-  it('renders section-level empty cards for expected sections', () => {
+  // Regression: irrigation logged without a water volume yields records but no
+  // headline figure. Saying "nothing logged" directly above "Irrigation
+  // Records (2)" contradicts the section below it.
+  it('summary renders nothing when records exist but carry no headline figures', () => {
+    const noMetricsPreview: ReportPreview = {
+      ...PREVIEW,
+      summary: { ...PREVIEW.summary, ...ZEROED_METRICS, totalRecords: 2 },
+    };
+
+    const { queryByText } = render(
+      <ReportExecutiveSummary preview={noMetricsPreview} preferredCurrency="INR" />,
+    );
+
+    expect(queryByText('reports.summary.nothingLogged')).toBeNull();
+    expect(queryByText('reports.formal.executiveTitle')).toBeNull();
+  });
+
+  // Replaces an earlier case asserting one empty CARD per empty section. Six
+  // identical "No records in selected range" panels is a wall to scroll past,
+  // not information — the empty sections are now named once in a single line.
+  it('names empty sections in one line instead of rendering a card each', () => {
     const emptyOperationsPreview: ReportPreview = {
       ...PREVIEW,
       data: {
@@ -219,16 +277,38 @@ describe('reports formal rendering', () => {
       },
     };
 
-    const { getAllByText } = render(
+    const { getByText, queryAllByText } = render(
       <ReportDocumentBody
         preview={emptyOperationsPreview}
         reportType="operations"
         preferredCurrency="INR"
-        areaUnit="acres"
         panelStyle={{}}
       />,
     );
 
-    expect(getAllByText('reports.formal.emptySection').length).toBeGreaterThan(0);
+    expect(getByText('reports.formal.noneLogged')).toBeTruthy();
+    expect(queryAllByText('reports.formal.emptySection')).toHaveLength(0);
+  });
+
+  it('renders a section per dated type that has records, and omits the rest', () => {
+    const onlyIrrigation: ReportPreview = {
+      ...PREVIEW,
+      data: { ...PREVIEW.data, spray: [], fertigation: [], harvest: [], expense: [] },
+    };
+
+    const { getByText, queryByText } = render(
+      <ReportDocumentBody
+        preview={onlyIrrigation}
+        reportType="comprehensive"
+        preferredCurrency="INR"
+        panelStyle={{}}
+      />,
+    );
+
+    expect(getByText('reports.export.sections.irrigationRecords')).toBeTruthy();
+    expect(queryByText('reports.export.sections.sprayRecords')).toBeNull();
+    expect(queryByText('reports.export.sections.expenseRecords')).toBeNull();
+    // The log type titles each row, not a bare duration.
+    expect(getByText('logs.types.irrigation')).toBeTruthy();
   });
 });

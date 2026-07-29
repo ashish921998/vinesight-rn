@@ -1,33 +1,14 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, Text, Pressable, FlatList, ScrollView, Platform } from 'react-native';
-import { BottomSheet } from '@expo/ui/community/bottom-sheet';
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  Layout as ReanimatedLayout,
-} from 'react-native-reanimated';
+import React, { useCallback } from 'react';
+import { View, Text, Pressable, Platform } from 'react-native';
+import Animated, { FadeInDown, Layout as ReanimatedLayout } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
-import { formatNumber } from '@/i18n/format';
+import { formatDate, formatNumber } from '@/i18n/format';
 import * as Haptics from 'expo-haptics';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { SheetHeader } from '@/components/ui/sheet-header';
-import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
-import { springs } from '@/styles/motion';
+import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import type { ReportFormat, ReportType } from '@/types/report';
 import type { Farm } from '@/types';
-
-interface ReportTypeOption {
-  value: ReportType;
-  labelKey: string;
-  icon: string;
-}
-
-export type ReportSeasonPresetKey = 'active' | 'most-recent' | 'previous' | 'this-year';
 
 export interface ReportSeasonOption {
   id: number;
@@ -37,253 +18,68 @@ export interface ReportSeasonOption {
   isActive: boolean;
 }
 
-export interface ReportSeasonPresetOption {
-  key: ReportSeasonPresetKey;
-  labelKey: string;
-  disabled?: boolean;
-}
-
 interface ReportFiltersPanelProps {
   farms: Farm[];
   selectedFarmId: number | null;
   selectedFarm: Farm | null;
   areaUnit: 'acres' | 'hectares';
-  showFarmPicker: boolean;
-  onToggleFarmPicker: () => void;
   onSelectFarm: (farmId: number | null) => void;
-  showSeasonPicker: boolean;
-  onToggleSeasonPicker: () => void;
   seasonOptions: ReportSeasonOption[];
   selectedSeasonId: number | null;
   selectedSeasonLabel: string;
   seasonWindowLabel?: string | null;
   onSelectSeason: (seasonId: number | null) => void;
-  seasonPresetOptions: ReportSeasonPresetOption[];
-  onApplySeasonPreset: (preset: ReportSeasonPresetKey) => void;
+  /** Calendar-year window across all seasons — the one range the season list can't express. */
+  onApplyThisYear: () => void;
   showNoActiveSeasonInfo: boolean;
   unassignedRecordCount: number;
   dateFrom: string;
   dateTo: string;
   onOpenFromDate: () => void;
   onOpenToDate: () => void;
-  reportType: ReportType;
-  reportTypes: ReportTypeOption[];
-  onSelectReportType: (reportType: ReportType) => void;
-  selectedExportFormat?: ReportFormat;
-  onSelectExportFormat?: (format: ReportFormat) => void;
   panelStyle: object;
 }
 
-/* ─────────── Segmented Control ─────────── */
+const DAY_MONTH: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+const DAY_MONTH_YEAR: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+};
 
-/* Inset padding for the pill inside the segmented track. */
-const SEGMENT_INSET = 2;
-
-function SegmentedControl({
-  options,
-  activeValue,
-  onChange,
-}: {
-  options: ReportTypeOption[];
-  activeValue: ReportType;
-  onChange: (value: ReportType) => void;
-}) {
-  const m3 = useM3();
-  const { t } = useTranslation();
-
-  const activeIndex = useMemo(
-    () => options.findIndex((o) => o.value === activeValue),
-    [options, activeValue],
-  );
-
-  /* ── 2×2 grid when we have exactly 4 options ── */
-  const useGrid = options.length === 4;
-  const rows = useGrid ? [options.slice(0, 2), options.slice(2, 4)] : [options];
-
-  const containerWidth = useSharedValue(0);
-
-  /* Columns per row (2 for grid, N for single row). */
-  const cols = useGrid ? 2 : options.length;
-
-  /* Map activeIndex → row/col for grid. */
-  const activeRow = useGrid ? Math.floor(activeIndex / 2) : 0;
-  const activeCol = useGrid ? activeIndex % 2 : activeIndex;
-
-  const pillStyle = useAnimatedStyle(() => {
-    if (containerWidth.value === 0 || cols === 0) {
-      return { opacity: 0 };
-    }
-    const segW = containerWidth.value / cols;
-    return {
-      opacity: 1,
-      width: segW - SEGMENT_INSET * 2,
-      // Critically damped (springs.snappy) — a tab-switch is a discrete reposition,
-      // not a gesture-carried flick, so it should settle cleanly with no overshoot.
-      transform: [{ translateX: withSpring(activeCol * segW, springs.snappy) }],
-    };
-  }, [activeCol, cols]);
-
-  const renderRow = (rowOptions: ReportTypeOption[], rowIndex: number) => (
-    <View
-      key={rowIndex}
-      style={{
-        flexDirection: 'row',
-        position: 'relative',
-      }}
-    >
-      {/* Animated pill – only in the row that contains the active item */}
-      {rowIndex === activeRow ? (
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              top: SEGMENT_INSET,
-              bottom: SEGMENT_INSET,
-              left: SEGMENT_INSET,
-              backgroundColor: m3.surface.s100,
-              borderRadius: borderRadius.lg - SEGMENT_INSET,
-              borderCurve: 'continuous',
-              borderWidth: 1,
-              borderColor: m3.surface.s300,
-            },
-            pillStyle,
-          ]}
-        />
-      ) : null}
-
-      {rowOptions.map((option) => {
-        const active = option.value === activeValue;
-        return (
-          <Pressable
-            key={option.value}
-            onPress={async () => {
-              if (!active) {
-                if (Platform.OS === 'ios') {
-                  await Haptics.selectionAsync();
-                }
-                onChange(option.value);
-              }
-            }}
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: spacing[1],
-              paddingVertical: spacing[2] + 2,
-              paddingHorizontal: spacing[1],
-              zIndex: 1,
-            }}
-          >
-            <Icon
-              name={option.icon}
-              size={13}
-              color={active ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
-            />
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
-              style={{
-                fontSize: fontSize.xs,
-                fontWeight: active ? fontWeight.semibold : fontWeight.medium,
-                color: active ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant,
-                flexShrink: 1,
-              }}
-            >
-              {t(option.labelKey)}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-
-  return (
-    <View
-      onLayout={(e) => {
-        containerWidth.value = e.nativeEvent.layout.width;
-      }}
-      style={{
-        backgroundColor: m3.surface.s200,
-        borderRadius: borderRadius.lg,
-        borderCurve: 'continuous',
-        padding: SEGMENT_INSET,
-      }}
-    >
-      {rows.map((rowOpts, idx) => renderRow(rowOpts, idx))}
-    </View>
-  );
-}
-
-/* ─────────── Sheet Handle ─────────── */
-
-function SheetHandle({ color }: { color: string }) {
-  return (
-    <View style={{ alignItems: 'center', paddingTop: spacing[2], paddingBottom: spacing[1] }}>
-      <View
-        style={{
-          width: 36,
-          height: 5,
-          borderRadius: borderRadius.full,
-          backgroundColor: colorWithOpacity(color, 0.3),
-        }}
-      />
-    </View>
-  );
-}
-
-/* ─────────── Main Component ─────────── */
-
+/**
+ * The report's scope, stated as one line and adjustable behind it.
+ *
+ * Collapsed is the default: the header reads as the document's identity ("Sassy
+ * · 2 acres · 30 Apr – 29 Jul 2026 · All seasons") rather than as a control, so
+ * the screen opens on the report instead of on a stack of pickers. Farm and
+ * season are selected inline rather than in nested bottom sheets — a sheet
+ * inside this scroll view would have to be a sheet-within-a-sheet.
+ */
 export function ReportFiltersPanel({
   farms,
   selectedFarmId,
   selectedFarm,
   areaUnit,
-  showFarmPicker,
-  onToggleFarmPicker,
   onSelectFarm,
-  showSeasonPicker,
-  onToggleSeasonPicker,
   seasonOptions,
   selectedSeasonId,
   selectedSeasonLabel,
   seasonWindowLabel,
   onSelectSeason,
-  seasonPresetOptions,
-  onApplySeasonPreset,
+  onApplyThisYear,
   showNoActiveSeasonInfo,
   unassignedRecordCount,
   dateFrom,
   dateTo,
   onOpenFromDate,
   onOpenToDate,
-  reportType,
-  reportTypes,
-  onSelectReportType,
-  selectedExportFormat,
-  onSelectExportFormat,
   panelStyle,
 }: ReportFiltersPanelProps) {
   const m3 = useM3();
   const { t } = useTranslation();
 
-  const [expanded, setExpanded] = React.useState(true);
-
-  // Local state for export format selection (falls back to prop if provided)
-  const [localExportFormat, setLocalExportFormat] = React.useState<ReportFormat>(
-    selectedExportFormat ?? 'pdf',
-  );
-
-  const activeExportFormat = selectedExportFormat ?? localExportFormat;
-
-  const handleSelectExportFormat = useCallback(
-    (format: ReportFormat) => {
-      setLocalExportFormat(format);
-      onSelectExportFormat?.(format);
-    },
-    [onSelectExportFormat],
-  );
+  const [expanded, setExpanded] = React.useState(false);
 
   const toggleExpand = useCallback(async () => {
     if (Platform.OS === 'ios') {
@@ -292,723 +88,273 @@ export function ReportFiltersPanel({
     setExpanded((prev) => !prev);
   }, []);
 
-  /* ── Compact selector style ── */
-  const compactSelectorStyle = useMemo(
-    () => ({
-      backgroundColor: m3.surface.s50,
-      borderWidth: 1,
-      borderColor: m3.surface.s200,
-      borderRadius: borderRadius.lg,
-      borderCurve: 'continuous' as const,
-      minHeight: 44,
-      paddingHorizontal: spacing[3],
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'space-between' as const,
-    }),
-    [m3],
+  /** Same year on both ends → state it once: "30 Apr – 29 Jul 2026". */
+  const windowLabel = `${formatDate(
+    dateFrom,
+    dateFrom.slice(0, 4) === dateTo.slice(0, 4) ? DAY_MONTH : DAY_MONTH_YEAR,
+  )} – ${formatDate(dateTo, DAY_MONTH_YEAR)}`;
+
+  const identity = [
+    selectedFarm?.name,
+    selectedFarm ? `${formatNumber(selectedFarm.area)} ${t(`units.${areaUnit}`)}` : null,
+    windowLabel,
+    selectedSeasonLabel,
+  ]
+    .filter(Boolean)
+    .join('  ·  ');
+
+  const microLabelStyle = {
+    fontSize: fontSize.xs,
+    color: m3.colorScheme.onSurfaceVariant,
+    fontWeight: fontWeight.medium,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.4,
+  };
+
+  /** Selectable state — filled when chosen. Distinct from the action button below. */
+  const renderChip = (
+    key: string,
+    label: string,
+    selected: boolean,
+    onPress: () => void,
+    icon?: string,
+  ) => (
+    <Pressable
+      key={key}
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing[1],
+        minHeight: 36,
+        paddingHorizontal: spacing[3],
+        borderRadius: radius.full,
+        borderCurve: 'continuous',
+        borderWidth: 1,
+        borderColor: selected ? m3.colorScheme.primary : m3.surface.s300,
+        backgroundColor: selected
+          ? colorWithOpacity(m3.colorScheme.primary, 0.1)
+          : pressed
+            ? m3.surface.s200
+            : 'transparent',
+      })}
+    >
+      {selected ? <Icon name="checkmark" size={12} color={m3.colorScheme.primary} /> : null}
+      {!selected && icon ? (
+        <Icon name={icon} size={12} color={m3.colorScheme.onSurfaceVariant} />
+      ) : null}
+      <Text
+        numberOfLines={1}
+        style={{
+          fontSize: fontSize.xs,
+          fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
+          color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 
   return (
-    <View>
-      <View style={[panelStyle, { gap: spacing[3], overflow: 'hidden' }]}>
-        {/* ── Header with collapse toggle ── */}
-        <Pressable
-          onPress={toggleExpand}
+    <View style={[panelStyle, { gap: spacing[3], overflow: 'hidden' }]}>
+      <Pressable
+        onPress={toggleExpand}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={t('reports.filters.title')}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2], minHeight: 36 }}
+      >
+        <Icon name="slider.horizontal.3" size={15} color={m3.colorScheme.primary} />
+        <Text
+          numberOfLines={2}
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            flex: 1,
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.medium,
+            color: m3.colorScheme.onSurface,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-            <Icon name="slider.horizontal.3" size={16} color={m3.colorScheme.primary} />
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.semibold,
-                color: m3.colorScheme.onSurface,
-              }}
-            >
-              {t('reports.filters.title', 'Filters')}
-            </Text>
-          </View>
-          <Icon
-            name={expanded ? 'chevron.up' : 'chevron.down'}
-            size={14}
-            color={m3.colorScheme.onSurfaceVariant}
-          />
-        </Pressable>
+          {identity}
+        </Text>
+        <Icon
+          name={expanded ? 'chevron.up' : 'chevron.down'}
+          size={14}
+          color={m3.colorScheme.onSurfaceVariant}
+        />
+      </Pressable>
 
-        {/* ── Collapsed summary ── */}
-        {!expanded ? (
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            style={{
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              gap: spacing[2],
-              alignItems: 'center',
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: spacing[1],
-                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
-                paddingHorizontal: spacing[2],
-                paddingVertical: spacing[1],
-                borderRadius: borderRadius.full,
-                borderCurve: 'continuous',
-              }}
-            >
-              <Icon name="leaf.fill" size={12} color={m3.colorScheme.primary} />
-              <Text
-                numberOfLines={1}
-                style={{
-                  fontSize: fontSize.xs,
-                  color: m3.colorScheme.primary,
-                  fontWeight: fontWeight.medium,
-                  maxWidth: 100,
-                }}
-              >
-                {selectedFarm?.name ?? '—'}
-              </Text>
-            </View>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: spacing[1],
-                backgroundColor: colorWithOpacity(m3.colorScheme.secondary, 0.08),
-                paddingHorizontal: spacing[2],
-                paddingVertical: spacing[1],
-                borderRadius: borderRadius.full,
-                borderCurve: 'continuous',
-              }}
-            >
-              <Icon name="calendar" size={12} color={m3.colorScheme.secondary} />
-              <Text
-                numberOfLines={1}
-                style={{
-                  fontSize: fontSize.xs,
-                  color: m3.colorScheme.secondary,
-                  fontWeight: fontWeight.medium,
-                  maxWidth: 120,
-                }}
-              >
-                {selectedSeasonLabel}
-              </Text>
-            </View>
-
-            <Text
-              style={{
-                fontSize: fontSize.xs,
-                fontVariant: ['tabular-nums'],
-                color: m3.colorScheme.onSurfaceVariant,
-              }}
-            >
-              {dateFrom} → {dateTo}
-            </Text>
-          </Animated.View>
-        ) : null}
-
-        {/* ── Expanded filters ── */}
-        {expanded ? (
-          <Animated.View
-            entering={FadeInDown.duration(250)}
-            layout={ReanimatedLayout.springify().dampingRatio(1)}
-            style={{ gap: spacing[3] }}
-          >
-            {/* Farm + Season row */}
-            <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-              <View style={{ flex: 1, gap: spacing[1] }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    color: m3.colorScheme.onSurfaceVariant,
-                    fontWeight: fontWeight.medium,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.4,
-                  }}
-                >
-                  {t('reports.selectFarmLabel')}
-                </Text>
-                <Pressable onPress={onToggleFarmPicker} style={compactSelectorStyle}>
-                  <View
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2], flex: 1 }}
-                  >
-                    <Icon name="leaf.fill" size={15} color={m3.colorScheme.primary} />
-                    <Text
-                      numberOfLines={1}
-                      style={{
-                        color: m3.colorScheme.onSurface,
-                        fontWeight: fontWeight.semibold,
-                        fontSize: fontSize.sm,
-                        flex: 1,
-                      }}
-                    >
-                      {selectedFarm?.name || t('reports.selectFarmPlaceholder')}
-                    </Text>
-                  </View>
-                  <Icon
-                    name="chevron.up.chevron.down"
-                    size={13}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                  />
-                </Pressable>
-              </View>
-
-              <View style={{ flex: 1, gap: spacing[1] }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    color: m3.colorScheme.onSurfaceVariant,
-                    fontWeight: fontWeight.medium,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.4,
-                  }}
-                >
-                  {t('reports.season.label')}
-                </Text>
-                <Pressable onPress={onToggleSeasonPicker} style={compactSelectorStyle}>
-                  <View
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2], flex: 1 }}
-                  >
-                    <Icon name="calendar" size={15} color={m3.colorScheme.primary} />
-                    <Text
-                      numberOfLines={1}
-                      style={{
-                        color: m3.colorScheme.onSurface,
-                        fontWeight: fontWeight.semibold,
-                        fontSize: fontSize.sm,
-                        flex: 1,
-                      }}
-                    >
-                      {selectedSeasonLabel || t('reports.season.placeholder')}
-                    </Text>
-                  </View>
-                  <Icon
-                    name="chevron.up.chevron.down"
-                    size={13}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-                  />
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Season window + presets */}
+      {expanded ? (
+        <Animated.View
+          entering={FadeInDown.duration(250)}
+          layout={ReanimatedLayout.springify().dampingRatio(1)}
+          style={{ gap: spacing[4] }}
+        >
+          {farms.length > 1 ? (
             <View style={{ gap: spacing[2] }}>
-              {seasonWindowLabel ? (
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    color: m3.colorScheme.onSurfaceVariant,
-                    fontWeight: fontWeight.medium,
-                  }}
-                >
-                  {seasonWindowLabel}
-                </Text>
-              ) : null}
-
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: spacing[2], paddingRight: spacing[1] }}
+              <Text style={microLabelStyle}>{t('reports.selectFarmLabel')}</Text>
+              <View
+                accessibilityRole="radiogroup"
+                style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}
               >
-                {seasonPresetOptions.map((preset) => (
-                  <Pressable
-                    key={preset.key}
-                    disabled={preset.disabled}
-                    onPress={() => onApplySeasonPreset(preset.key)}
-                    style={{
-                      minHeight: 34,
-                      borderRadius: borderRadius.full,
-                      borderCurve: 'continuous',
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[1],
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1,
-                      borderColor: preset.disabled
-                        ? m3.surface.s200
-                        : colorWithOpacity(m3.colorScheme.primary, 0.3),
-                      backgroundColor: preset.disabled
-                        ? m3.surface.s50
-                        : colorWithOpacity(m3.colorScheme.primary, 0.06),
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: fontSize.xs,
-                        color: preset.disabled
-                          ? m3.colorScheme.onSurfaceVariant
-                          : m3.colorScheme.primary,
-                        fontWeight: fontWeight.medium,
-                      }}
-                    >
-                      {t(preset.labelKey)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
+                {farms.map((farm) =>
+                  renderChip(
+                    String(farm.id ?? farm.name),
+                    farm.name,
+                    farm.id === selectedFarmId,
+                    () => onSelectFarm(farm.id ?? null),
+                    'leaf.fill',
+                  ),
+                )}
+              </View>
+            </View>
+          ) : null}
 
-              {showNoActiveSeasonInfo ? (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: spacing[1],
-                  }}
-                >
-                  <Icon name="info.circle" size={12} color={m3.colorScheme.onSurfaceVariant} />
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      color: m3.colorScheme.onSurfaceVariant,
-                      flex: 1,
-                    }}
-                  >
-                    {t('reports.season.noActiveInfo')}
-                  </Text>
-                </View>
-              ) : null}
-
-              {/* Season-filtered queries drop season_id-null rows with no trace;
-                  when any exist, say so — notice only, never merged into a
-                  specific season's totals. Tap switches to All seasons. */}
-              {selectedSeasonId != null && unassignedRecordCount > 0 ? (
-                <Pressable
-                  onPress={() => onSelectSeason(null)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('reports.season.unassignedNotice', {
-                    count: unassignedRecordCount,
-                  })}
-                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: spacing[1],
-                    // Match the preset chips' touch target — this row is the
-                    // only path to the hidden unassigned records.
-                    minHeight: 34,
-                    paddingVertical: spacing[1],
-                  }}
-                >
-                  <Icon name="info.circle" size={12} color={m3.colorScheme.primary} />
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      color: m3.colorScheme.primary,
-                      fontWeight: fontWeight.medium,
-                      flex: 1,
-                    }}
-                  >
-                    {t('reports.season.unassignedNotice', { count: unassignedRecordCount })}
-                  </Text>
-                </Pressable>
-              ) : null}
+          <View style={{ gap: spacing[2] }}>
+            <Text style={microLabelStyle}>{t('reports.season.label')}</Text>
+            <View
+              accessibilityRole="radiogroup"
+              style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}
+            >
+              {renderChip(
+                'all-seasons',
+                t('reports.season.allSeasons'),
+                selectedSeasonId == null,
+                () => onSelectSeason(null),
+                'calendar',
+              )}
+              {/* Selecting a season already sets its window, which is what the
+                  former "Active / Most recent / Previous season" preset buttons
+                  did — they were three more taps to reach these same chips. */}
+              {seasonOptions.map((season) =>
+                renderChip(
+                  String(season.id),
+                  season.label,
+                  selectedSeasonId === season.id,
+                  () => onSelectSeason(season.id),
+                  season.isActive ? 'circle.inset.filled' : 'calendar',
+                ),
+              )}
             </View>
 
-            {/* Date range - Cellar Ledger design: mist-1 bg, 1px border, 10px radius */}
-            <View style={{ gap: spacing[1] }}>
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  color: m3.colorScheme.onSurfaceVariant,
-                  fontWeight: fontWeight.medium,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.4,
-                }}
-              >
-                {t('reports.dateRange.label')}
+            {seasonWindowLabel ? (
+              <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
+                {seasonWindowLabel}
               </Text>
+            ) : null}
 
-              <View
+            {showNoActiveSeasonInfo ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[1] }}>
+                <Icon name="info.circle" size={12} color={m3.colorScheme.onSurfaceVariant} />
+                <Text
+                  style={{ flex: 1, fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
+                >
+                  {t('reports.season.noActiveInfo')}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Season-filtered queries drop season_id-null rows with no trace;
+                when any exist, say so — notice only, never merged into a
+                specific season's totals. Tap switches to All seasons. */}
+            {selectedSeasonId != null && unassignedRecordCount > 0 ? (
+              <Pressable
+                onPress={() => onSelectSeason(null)}
+                accessibilityRole="button"
+                accessibilityLabel={t('reports.season.unassignedNotice', {
+                  count: unassignedRecordCount,
+                })}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: spacing[2],
+                  gap: spacing[1],
+                  minHeight: 34,
                 }}
               >
-                <Pressable
-                  onPress={onOpenFromDate}
-                  style={{
-                    flex: 1,
-                    backgroundColor: m3.surface.s100, // mist-1 bg
-                    borderWidth: 1,
-                    borderColor: m3.surface.s300, // 1px border
-                    borderRadius: borderRadius.sm, // 10px radius
-                    borderCurve: 'continuous',
-                    minHeight: 44,
-                    paddingHorizontal: spacing[3],
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: spacing[2],
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      color: m3.colorScheme.onSurfaceVariant,
-                      fontWeight: fontWeight.medium,
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.5,
-                    }}
-                  >
-                    {t('reports.dateRange.from', 'From')}
-                  </Text>
-                  <Text
-                    style={{
-                      color: m3.colorScheme.onSurface,
-                      fontWeight: fontWeight.medium,
-                      fontSize: fontSize.sm,
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    {dateFrom}
-                  </Text>
-                </Pressable>
-
+                <Icon name="info.circle" size={12} color={m3.colorScheme.primary} />
                 <Text
                   style={{
-                    fontSize: fontSize.sm,
-                    color: m3.colorScheme.onSurfaceVariant,
+                    flex: 1,
+                    fontSize: fontSize.xs,
+                    color: m3.colorScheme.primary,
                     fontWeight: fontWeight.medium,
                   }}
                 >
-                  {t('reports.dateRange.to', 'to')}
+                  {t('reports.season.unassignedNotice', { count: unassignedRecordCount })}
                 </Text>
+              </Pressable>
+            ) : null}
+          </View>
 
-                <Pressable
-                  onPress={onOpenToDate}
-                  style={{
-                    flex: 1,
-                    backgroundColor: m3.surface.s100, // mist-1 bg
-                    borderWidth: 1,
-                    borderColor: m3.surface.s300, // 1px border
-                    borderRadius: borderRadius.sm, // 10px radius
-                    borderCurve: 'continuous',
-                    minHeight: 44,
-                    paddingHorizontal: spacing[3],
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: spacing[2],
-                  }}
-                >
-                  <Text
+          <View style={{ gap: spacing[2] }}>
+            <Text style={microLabelStyle}>{t('reports.dateRange.label')}</Text>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+              {(
+                [
+                  ['from', dateFrom, onOpenFromDate],
+                  ['to', dateTo, onOpenToDate],
+                ] as const
+              ).map(([bound, value, onPress], index) => (
+                <React.Fragment key={bound}>
+                  {index === 1 ? (
+                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
+                      {t('reports.dateRange.to', 'to')}
+                    </Text>
+                  ) : null}
+                  <Pressable
+                    onPress={onPress}
+                    accessibilityRole="button"
                     style={{
-                      fontSize: fontSize.xs,
-                      color: m3.colorScheme.onSurfaceVariant,
-                      fontWeight: fontWeight.medium,
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.5,
+                      flex: 1,
+                      backgroundColor: m3.surface.s100,
+                      borderWidth: 1,
+                      borderColor: m3.surface.s300,
+                      borderRadius: radius.md,
+                      borderCurve: 'continuous',
+                      minHeight: 44,
+                      paddingHorizontal: spacing[3],
+                      justifyContent: 'center',
                     }}
                   >
-                    {t('reports.dateRange.toLabel', 'To')}
-                  </Text>
-                  <Text
-                    style={{
-                      color: m3.colorScheme.onSurface,
-                      fontWeight: fontWeight.medium,
-                      fontSize: fontSize.sm,
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    {dateTo}
-                  </Text>
-                </Pressable>
-              </View>
+                    <Text
+                      style={{
+                        color: m3.colorScheme.onSurface,
+                        fontWeight: fontWeight.medium,
+                        fontSize: fontSize.sm,
+                        fontVariant: ['tabular-nums'],
+                      }}
+                    >
+                      {formatDate(value, DAY_MONTH_YEAR)}
+                    </Text>
+                  </Pressable>
+                </React.Fragment>
+              ))}
             </View>
 
-            {/* Export chips - PDF/CSV with active state */}
-            <View style={{ gap: spacing[1] }}>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  color: m3.colorScheme.onSurfaceVariant,
-                  fontWeight: fontWeight.medium,
-                }}
-              >
-                {t('reports.exportAs', 'Export as')}
-              </Text>
-              <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-                <Pressable
-                  onPress={() => handleSelectExportFormat('pdf')}
-                  style={{
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: spacing[1] + 2,
-                    borderRadius: borderRadius.pill,
-                    borderWidth: 1,
-                    borderColor:
-                      activeExportFormat === 'pdf' ? m3.colorScheme.primary : m3.surface.s300,
-                    backgroundColor:
-                      activeExportFormat === 'pdf' ? m3.colorScheme.primary : m3.surface.s100,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                      color:
-                        activeExportFormat === 'pdf'
-                          ? m3.colorScheme.onPrimary
-                          : m3.colorScheme.onSurfaceVariant,
-                    }}
-                  >
-                    PDF
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => handleSelectExportFormat('csv')}
-                  style={{
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: spacing[1] + 2,
-                    borderRadius: borderRadius.pill,
-                    borderWidth: 1,
-                    borderColor:
-                      activeExportFormat === 'csv' ? m3.colorScheme.primary : m3.surface.s300,
-                    backgroundColor:
-                      activeExportFormat === 'csv' ? m3.colorScheme.primary : m3.surface.s100,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                      color:
-                        activeExportFormat === 'csv'
-                          ? m3.colorScheme.onPrimary
-                          : m3.colorScheme.onSurfaceVariant,
-                    }}
-                  >
-                    CSV
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Report type segmented control */}
-            <View style={{ gap: spacing[1] }}>
+            {/* An action, not a state — so it is a text button, not a chip. */}
+            <Pressable
+              onPress={onApplyThisYear}
+              accessibilityRole="button"
+              hitSlop={8}
+              style={{ minHeight: 34, justifyContent: 'center' }}
+            >
               <Text
                 style={{
                   fontSize: fontSize.xs,
-                  color: m3.colorScheme.onSurfaceVariant,
-                  fontWeight: fontWeight.medium,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.4,
+                  fontWeight: fontWeight.semibold,
+                  color: m3.colorScheme.primary,
                 }}
               >
-                {t('reports.reportType.label')}
+                {t('reports.season.presets.thisYear')}
               </Text>
-
-              <SegmentedControl
-                options={reportTypes}
-                activeValue={reportType}
-                onChange={onSelectReportType}
-              />
-            </View>
-          </Animated.View>
-        ) : null}
-      </View>
-
-      {/* ─────────── Farm Picker Modal ─────────── */}
-      <BottomSheet
-        index={showFarmPicker ? 0 : -1}
-        snapPoints={['55%', '90%']}
-        enablePanDownToClose
-        // Guard: the native sheet also fires onClose when we close it programmatically
-        // (e.g. after selecting a farm). Only toggle for a user-driven dismiss, else the
-        // toggle would flip the just-closed picker back open.
-        onClose={() => {
-          if (showFarmPicker) onToggleFarmPicker();
-        }}
-        backgroundStyle={{ backgroundColor: m3.surface.s100 }}
-      >
-        <Animated.View
-          entering={FadeIn.duration(200)}
-          style={{
-            maxHeight: '55%',
-            backgroundColor: m3.surface.s100,
-            borderTopLeftRadius: borderRadius['3xl'],
-            borderTopRightRadius: borderRadius['3xl'],
-            borderCurve: 'continuous',
-            paddingBottom: spacing[6],
-          }}
-          onStartShouldSetResponder={() => true}
-        >
-          <SheetHandle color={m3.colorScheme.onSurface} />
-
-          <SheetHeader title={t('reports.selectFarmLabel')} />
-
-          <FlatList
-            data={farms}
-            keyExtractor={(item) => String(item.id ?? item.name)}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: spacing[4],
-              paddingTop: spacing[3],
-              paddingBottom: spacing[2],
-              gap: spacing[2],
-            }}
-            renderItem={({ item: farmItem }) => {
-              const selected = farmItem.id === selectedFarmId;
-              return (
-                <Pressable
-                  onPress={() => onSelectFarm(farmItem.id ?? null)}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: spacing[3],
-                    paddingVertical: spacing[3],
-                    paddingHorizontal: spacing[4],
-                    borderRadius: borderRadius.xl,
-                    borderCurve: 'continuous',
-                    backgroundColor: selected
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.1)
-                      : pressed
-                        ? m3.surface.s200
-                        : m3.surface.s50,
-                  })}
-                >
-                  <Icon
-                    name="leaf.fill"
-                    size={18}
-                    color={selected ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurface,
-                        fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
-                        fontSize: fontSize.base,
-                      }}
-                    >
-                      {farmItem.name}
-                    </Text>
-                    <Text
-                      style={{
-                        color: m3.colorScheme.onSurfaceVariant,
-                        fontSize: fontSize.xs,
-                      }}
-                    >
-                      {formatNumber(farmItem.area)} {t(`units.${areaUnit}`)}
-                    </Text>
-                  </View>
-                  {selected ? (
-                    <Icon name="checkmark" size={18} color={m3.colorScheme.primary} />
-                  ) : null}
-                </Pressable>
-              );
-            }}
-          />
+            </Pressable>
+          </View>
         </Animated.View>
-      </BottomSheet>
-
-      {/* ─────────── Season Picker Modal ─────────── */}
-      <BottomSheet
-        index={showSeasonPicker ? 0 : -1}
-        snapPoints={['60%', '90%']}
-        enablePanDownToClose
-        // Guard: see farm picker above — avoid re-opening on programmatic close.
-        onClose={() => {
-          if (showSeasonPicker) onToggleSeasonPicker();
-        }}
-        backgroundStyle={{ backgroundColor: m3.surface.s100 }}
-      >
-        <Animated.View
-          entering={FadeIn.duration(200)}
-          style={{
-            maxHeight: '55%',
-            backgroundColor: m3.surface.s100,
-            borderTopLeftRadius: borderRadius['3xl'],
-            borderTopRightRadius: borderRadius['3xl'],
-            borderCurve: 'continuous',
-            paddingBottom: spacing[6],
-          }}
-          onStartShouldSetResponder={() => true}
-        >
-          <SheetHandle color={m3.colorScheme.onSurface} />
-
-          <SheetHeader title={t('reports.season.label')} />
-
-          <FlatList
-            data={[
-              {
-                id: -1,
-                label: t('reports.season.allSeasons'),
-                startDate: '',
-                endDate: null,
-                isActive: false,
-              },
-              ...seasonOptions,
-            ]}
-            keyExtractor={(item) => String(item.id)}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: spacing[4],
-              paddingTop: spacing[3],
-              paddingBottom: spacing[2],
-              gap: spacing[2],
-            }}
-            renderItem={({ item }) => {
-              const selected =
-                item.id === -1 ? selectedSeasonId == null : selectedSeasonId === item.id;
-              return (
-                <Pressable
-                  onPress={() => onSelectSeason(item.id === -1 ? null : item.id)}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: spacing[3],
-                    paddingVertical: spacing[3],
-                    paddingHorizontal: spacing[4],
-                    borderRadius: borderRadius.xl,
-                    borderCurve: 'continuous',
-                    backgroundColor: selected
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.1)
-                      : pressed
-                        ? m3.surface.s200
-                        : m3.surface.s50,
-                  })}
-                >
-                  <Icon
-                    name={item.isActive ? 'circle.inset.filled' : 'calendar'}
-                    size={18}
-                    color={selected ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurface,
-                        fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
-                        fontSize: fontSize.base,
-                      }}
-                    >
-                      {item.label}
-                    </Text>
-                    {item.id !== -1 ? (
-                      <Text
-                        style={{
-                          color: m3.colorScheme.onSurfaceVariant,
-                          fontSize: fontSize.xs,
-                        }}
-                      >
-                        {item.startDate} — {item.endDate ?? t('reports.season.active')}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {selected ? (
-                    <Icon name="checkmark" size={18} color={m3.colorScheme.primary} />
-                  ) : null}
-                </Pressable>
-              );
-            }}
-          />
-        </Animated.View>
-      </BottomSheet>
+      ) : null}
     </View>
   );
 }

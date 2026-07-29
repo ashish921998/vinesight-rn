@@ -3230,43 +3230,37 @@ export const mr = {
       operations: 'ऑपरेशन्स',
       financial: 'आर्थिक',
       stockUsage: 'स्टॉक वापर',
-      fpcActivity: 'निर्यातदार अहवाल',
+      fpcActivity: 'निर्यातदार $t(glossary.report)',
     },
     fpc: {
       sectionTitle: 'निर्यातदार कृती नोंदवही ({{count}} दिवस)',
       day: 'दिवस',
-      irrigation: 'सिंचन',
+      irrigation: '$t(glossary.irrigation)',
       products: 'उत्पादने',
       noProducts: 'कोणतेही उत्पादन दिले नाही',
+      shareRegister: 'नोंदवही सामायिक करा',
       empty: 'निवडलेल्या कालावधीत कोणतीही नोंद नाही',
       columns: {
         title: 'अतिरिक्त स्तंभ',
         hint: 'नोंदवही डीफॉल्टनुसार संक्षिप्त आहे. ऑडिट/अनुपालन खरेदीदारांसाठी स्तंभ जोडण्यासाठी टॅप करा.',
-        irrigation: 'सिंचन (mm)',
+        irrigation: '$t(glossary.irrigation) (mm)',
         technicalName: 'तांत्रिक नाव',
         phi: 'PHI',
         safeHarvest: 'सुरक्षित काढणी',
         mrl: 'MRL',
       },
       detail: {
-        title: 'अहवाल तपशील',
+        title: '$t(glossary.report) तपशील',
         hint: 'निर्यातदार अहवालात समाविष्ट करायची अनुपालन तपशीलाची पातळी निवडा.',
-        standard: {
-          title: 'मानक',
-          description: 'नियमित खरेदीदार शेअरिंगसाठी कृती, वाढ अवस्था, उत्पादन मात्रा आणि नोंदी.',
+        simple: {
+          title: 'साधा',
+          description: 'Fratelli नमुना: दिवस, दिनांक, उत्पादन, तांत्रिक नाव, मात्रा, PHI आणि MRL.',
         },
         detailed: {
           title: 'सविस्तर अनुपालन',
           description:
-            '$t(glossary.irrigation), तांत्रिक नावे, PHI, सुरक्षित काढणी दिनांक आणि MRL समाविष्ट करते.',
+            '$t(glossary.irrigation), वाढ अवस्था, प्लॉट एकूण, सुरक्षित काढणी आणि पोषक तपशील समाविष्ट करते.',
         },
-      },
-    },
-    exporter: {
-      actions: {
-        title: 'तयार करा आणि शेअर करा',
-        share: '{{format}} शेअर करा',
-        save: '{{format}} जतन करा',
       },
     },
     selectFarmLabel: '$t(glossary.farm) निवडा',
@@ -3287,9 +3281,6 @@ export const mr = {
       unassignedNotice_other:
         '{{count}} नोंदी कोणत्याही हंगामात नाहीत — सर्व हंगामांत पाहण्यासाठी टॅप करा.',
       presets: {
-        active: 'सक्रिय हंगाम',
-        mostRecent: 'सर्वात अलीकडचा हंगाम',
-        previous: 'मागील हंगाम',
         thisYear: 'हे वर्ष',
       },
     },
@@ -3297,6 +3288,9 @@ export const mr = {
     selectToDate: 'पर्यंतचा दिनांक निवडा',
     reportType: {
       label: '$t(glossary.report) प्रकार',
+    },
+    filters: {
+      title: 'फिल्टर',
     },
     loading: {
       preview: 'पूर्वावलोकन तयार होत आहे...',
@@ -3350,7 +3344,7 @@ export const mr = {
       complianceNote:
         'पडताळलेले = या योजनेतील घटकावरून नोंदवलेले रेकॉर्ड. अंदाजे = फक्त उत्पादनाच्या नावावरून जुळणी — कधीही पडताळलेले म्हणून दाखवले जात नाही.',
       waterCoverage:
-        'पाण्याच्या प्रमाणानुसार भारित — {{total}} पैकी {{withWater}} फवारणी नोंदींमध्ये पाणी नोंदलेले आहे.',
+        'पाण्याच्या प्रमाणानुसार भारित — {{total}} पैकी {{withWater}} $t(glossary.spray) नोंदींमध्ये पाणी नोंदलेले आहे.',
     },
     nutrientLedger: {
       title: 'पोषक तत्त्व नोंदवही — दिलेली पोषक तत्त्वे',
@@ -3361,9 +3355,9 @@ export const mr = {
       oxideHeader: 'बॅग-ग्रेड',
       perAcreHeader: 'एकरी',
       perAcreUnavailable: 'एकरी दृश्य उपलब्ध नाही — शेताचे क्षेत्रफळ नोंदलेले नाही.',
-      emptyTitle: 'या कालावधीत खत किंवा फवारणीची नोंद नाही',
+      emptyTitle: 'या कालावधीत $t(glossary.fertilizer) किंवा फवारणीची नोंद नाही',
       dualBasisNote:
-        'मूलतत्त्व मूल्ये पेटिओल/माती प्रयोगशाळा अहवालाशी जुळतात. बॅग-ग्रेड (N-P₂O₅-K₂O) खत बॅगवर छापलेल्या मूल्याशी जुळते.',
+        'मूलतत्त्व मूल्ये $t(glossary.petiole)/$t(glossary.soil) प्रयोगशाळा अहवालाशी जुळतात. बॅग-ग्रेड (N-P₂O₅-K₂O) $t(glossary.fertilizer) बॅगवर छापलेल्या मूल्याशी जुळते.',
     },
     formal: {
       metaTitle: '$t(glossary.report) प्रकार',
@@ -3375,6 +3369,7 @@ export const mr = {
       showDetails: 'तपशील दाखवा',
       hideDetails: 'तपशील लपवा',
       emptySection: 'निवडलेल्या दिनांक श्रेणीत नोंदी नाहीत',
+      noneLogged: 'या कालावधीत कोणतीही {{sections}} नोंद नाही.',
       sections: {
         fertigationRecords: 'फर्टिगेशन नोंदी ({{count}})',
       },
@@ -3387,13 +3382,14 @@ export const mr = {
       waterUsage: 'पाणी वापर',
       totalHarvest: 'एकूण $t(glossary.harvest)',
       netProfit: 'निव्वळ नफा',
+      nothingLogged: 'या कालावधीत काहीही नोंदवले नाही.',
       stockUsageCount: 'वापरलेल्या वस्तू',
       matchedItems: 'जुळलेल्या वस्तू',
       stockCoverage: 'अंदाजे कव्हरेज',
     },
-    exportAs: 'या स्वरूपात निर्यात करा',
     exportSection: 'रिपोर्ट निर्यात करा',
-    downloadReport: 'रिपोर्ट डाउनलोड करा',
+    share: 'सामायिक करा',
+    saveToFiles: 'फाइलमध्ये जतन करा',
     errors: {
       unableToExport: '$t(glossary.report) निर्यात करणे अशक्य. कृपया पुन्हा प्रयत्न करा.',
     },

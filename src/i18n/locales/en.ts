@@ -3225,6 +3225,7 @@ export const en = {
       irrigation: 'Irrigation',
       products: 'Products',
       noProducts: 'No products applied',
+      shareRegister: 'Share register',
       empty: 'No activity in selected range',
       columns: {
         title: 'Extra columns',
@@ -3238,22 +3239,16 @@ export const en = {
       detail: {
         title: 'Report detail',
         hint: 'Choose the amount of compliance detail included in the exporter report.',
-        standard: {
-          title: 'Standard',
+        simple: {
+          title: 'Simple',
           description:
-            'Activity, crop stage, product quantities and notes for routine buyer sharing.',
+            'Fratelli format: days, date, product, technical name, quantity, PHI and MRL.',
         },
         detailed: {
           title: 'Detailed compliance',
-          description: 'Adds irrigation, technical names, PHI, safe-harvest dates and MRL values.',
+          description:
+            'Adds irrigation, crop stage, plot totals, safe-harvest dates and nutrient details.',
         },
-      },
-    },
-    exporter: {
-      actions: {
-        title: 'Generate & share',
-        share: 'Share {{format}}',
-        save: 'Save {{format}}',
       },
     },
     selectFarmLabel: 'Select farm',
@@ -3274,9 +3269,6 @@ export const en = {
       unassignedNotice_other:
         "{{count}} records aren't in any season — tap to view them under All seasons.",
       presets: {
-        active: 'Active season',
-        mostRecent: 'Most recent season',
-        previous: 'Previous season',
         thisYear: 'This year',
       },
     },
@@ -3365,6 +3357,7 @@ export const en = {
       showDetails: 'Show details',
       hideDetails: 'Hide details',
       emptySection: 'No records in selected range',
+      noneLogged: 'No {{sections}} logged in this period.',
       sections: {
         fertigationRecords: 'Fertigation Records ({{count}})',
       },
@@ -3377,13 +3370,14 @@ export const en = {
       waterUsage: 'Water Usage',
       totalHarvest: 'Total Harvest',
       netProfit: 'Net Profit',
+      nothingLogged: 'Nothing logged in this period.',
       stockUsageCount: 'Unique Items Used',
       matchedItems: 'Matched Items',
       stockCoverage: 'Estimated Coverage',
     },
-    exportAs: 'Export as',
     exportSection: 'Export Report',
-    downloadReport: 'Download Report',
+    share: 'Share',
+    saveToFiles: 'Save to Files',
     errors: {
       unableToExport: 'Unable to export report. Please try again.',
     },

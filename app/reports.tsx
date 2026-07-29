@@ -36,46 +36,26 @@ import { colorWithOpacity } from '@/utils/color';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import { telemetry } from '@/services/telemetry';
-import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import {
   ReportFiltersPanel,
   type ReportSeasonOption,
-  type ReportSeasonPresetOption,
 } from '@/components/screens/reports/report-filters-panel';
 import { ReportExecutiveSummary } from '@/components/screens/reports/report-executive-summary';
 import { ReportDocumentBody } from '@/components/screens/reports/report-document-body';
-import { ReportFpcColumnToggles } from '@/components/screens/reports/report-fpc-column-toggles';
 import { ReportExportActions } from '@/components/screens/reports/report-export-actions';
 import { getDefaultReportFormat } from '@/components/screens/reports/report-format';
 import type { FarmSeason } from '@/types';
 
-const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
-  {
-    value: 'comprehensive',
-    labelKey: 'reports.types.comprehensive',
-    icon: resolveSymbolIconName(ICON_REGISTRY.note),
-  },
-  {
-    value: 'operations',
-    labelKey: 'reports.types.operations',
-    icon: resolveSymbolIconName(ICON_REGISTRY.irrigation),
-  },
-  {
-    value: 'financial',
-    labelKey: 'reports.types.financial',
-    icon: resolveSymbolIconName(ICON_REGISTRY.expense),
-  },
-  {
-    value: 'stock-usage',
-    labelKey: 'reports.types.stockUsage',
-    icon: resolveSymbolIconName(ICON_REGISTRY.stock),
-  },
-  {
-    value: 'fpc-activity',
-    labelKey: 'reports.types.fpcActivity',
-    icon: resolveSymbolIconName(ICON_REGISTRY.note),
-  },
-];
+/**
+ * There is one report: everything logged in the window.
+ *
+ * `operations`, `financial` and `stock-usage` were strict subsets of
+ * `comprehensive` (see REPORT_TYPE_SECTION_MAP) — they added no information,
+ * they only hid sections, and they made the user narrow a document before
+ * reading it. `ReportType` survives as a service-layer key into that section
+ * map, which is all the export pipeline ever used it for.
+ */
+const REPORT_TYPE: ReportType = 'comprehensive';
 
 function resolveSeasonEndDate(season: FarmSeason, todayIso: string): string {
   if (!season.end_date) return todayIso;
@@ -117,13 +97,10 @@ export default function ReportsScreen() {
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(initialFarmId);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
-  const [reportType, setReportType] = useState<ReportType>('comprehensive');
   const [fpcColumns, setFpcColumns] = useState<FpcColumnOptions>(FPC_LEAN_COLUMNS);
   const [selectedExportFormat, setSelectedExportFormat] = useState<ReportFormat>('pdf');
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
-  const [showFarmPicker, setShowFarmPicker] = useState(false);
-  const [showSeasonPicker, setShowSeasonPicker] = useState(false);
 
   const todayIso = useMemo(() => formatLocalDate(new Date()), []);
 
@@ -191,16 +168,6 @@ export default function ReportsScreen() {
     [sortedSeasons],
   );
 
-  const mostRecentSeason = useMemo(() => sortedSeasons[0] ?? null, [sortedSeasons]);
-
-  const previousSeason = useMemo(() => {
-    if (sortedSeasons.length < 2) return null;
-    if (activeSeason) {
-      return sortedSeasons.find((season) => season.end_date != null) ?? null;
-    }
-    return sortedSeasons[1] ?? null;
-  }, [activeSeason, sortedSeasons]);
-
   const selectedSeason = useMemo(() => {
     if (selectedSeasonId == null) return null;
     return sortedSeasons.find((season) => season.id === selectedSeasonId) ?? null;
@@ -252,120 +219,75 @@ export default function ReportsScreen() {
     });
   }, [selectedSeasonBounds, t]);
 
-  const seasonPresetOptions = useMemo<ReportSeasonPresetOption[]>(
-    () => [
-      {
-        key: 'active',
-        labelKey: 'reports.season.presets.active',
-        disabled: activeSeason == null,
-      },
-      {
-        key: 'most-recent',
-        labelKey: 'reports.season.presets.mostRecent',
-        disabled: mostRecentSeason == null,
-      },
-      {
-        key: 'previous',
-        labelKey: 'reports.season.presets.previous',
-        disabled: previousSeason == null,
-      },
-      {
-        key: 'this-year',
-        labelKey: 'reports.season.presets.thisYear',
-      },
-    ],
-    [activeSeason, mostRecentSeason, previousSeason],
-  );
-
+  /**
+   * Selecting a season also moves the window to that season's bounds — which is
+   * all the former "Active / Most recent / Previous season" preset buttons did,
+   * so they went away once seasons became directly selectable. Only the
+   * calendar-year range survives, as `applyThisYear` below.
+   */
   const applySeasonSelection = React.useCallback(
-    (seasonId: number | null, setWindowRange: boolean) => {
+    (seasonId: number | null) => {
       setSelectedSeasonId(seasonId);
-      setShowSeasonPicker(false);
-
-      if (seasonId == null) {
-        if (setWindowRange) {
-          const currentYear = new Date().getFullYear();
-          setDateRange({
-            from: `${currentYear}-01-01`,
-            to: todayIso,
-          });
-        }
-        return;
-      }
+      if (seasonId == null) return;
 
       const season = sortedSeasons.find((item) => item.id === seasonId);
-      if (!season || !setWindowRange) return;
+      if (!season) return;
 
       const bounds = getSeasonBounds(season, todayIso);
-      if (!bounds) return;
-      setDateRange(bounds);
+      if (bounds) setDateRange(bounds);
     },
     [sortedSeasons, todayIso],
   );
 
-  const handleApplyPreset = (preset: ReportSeasonPresetOption['key']) => {
-    if (preset === 'active') {
-      if (activeSeason?.id != null) {
-        applySeasonSelection(activeSeason.id, true);
-      }
-      return;
-    }
+  const applyThisYear = React.useCallback(() => {
+    setSelectedSeasonId(null);
+    setDateRange({ from: `${new Date().getFullYear()}-01-01`, to: todayIso });
+  }, [todayIso]);
 
-    if (preset === 'most-recent') {
-      if (mostRecentSeason?.id != null) {
-        applySeasonSelection(mostRecentSeason.id, true);
-      }
-      return;
-    }
-
-    if (preset === 'previous') {
-      if (previousSeason?.id != null) {
-        applySeasonSelection(previousSeason.id, true);
-      }
-      return;
-    }
-
-    applySeasonSelection(null, true);
-  };
-
-  const handleExport = async (format: ReportFormat) => {
+  /**
+   * Single export path for both destinations and both documents (the report and
+   * the buyer's register). `export_type` carries the format and `destination`
+   * the share/download split — previously the two were concatenated into
+   * `pdf_download`, which made PostHog breakdowns unusable.
+   */
+  const runExport = async (
+    mode: 'share' | 'download',
+    format: ReportFormat,
+    type: ReportType = REPORT_TYPE,
+  ) => {
     if (!preview) {
       Alert.alert(t('common.error'), t('common.errors.noReportDataAvailable'));
       return;
     }
 
-    try {
-      await exportReport(preview, format, reportType, areaUnit, fpcColumns);
-      telemetry.capture('data_exported', {
-        export_type: format,
-        scope: 'farm',
-        farm_id: selectedFarmId,
-      });
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : t('reports.errors.unableToExport');
-      Alert.alert(t('reports.alerts.exportFailedTitle'), errorMessage);
-    }
-  };
-
-  const handleDownload = async (format: ReportFormat) => {
-    if (!preview) {
-      Alert.alert(t('common.error'), t('common.errors.noReportDataAvailable'));
-      return;
-    }
+    const eventProps = {
+      export_type: format,
+      destination: mode,
+      report_type: type,
+      scope: 'farm',
+      farm_id: selectedFarmId,
+    };
 
     try {
-      const fileUri = await downloadReport(preview, format, reportType, areaUnit, fpcColumns);
-      telemetry.capture('data_exported', {
-        export_type: `${format}_download`,
-        scope: 'farm',
-        farm_id: selectedFarmId,
-      });
-      Alert.alert(
-        t('reports.alerts.downloadCompleteTitle'),
-        t('reports.alerts.downloadCompleteBody', { fileUri }),
-      );
+      if (mode === 'download') {
+        const fileUri = await downloadReport(preview, format, type, areaUnit, fpcColumns);
+        telemetry.capture('data_exported', eventProps);
+        Alert.alert(
+          t('reports.alerts.downloadCompleteTitle'),
+          t('reports.alerts.downloadCompleteBody', { fileUri }),
+        );
+        return;
+      }
+
+      await exportReport(preview, format, type, areaUnit, fpcColumns);
+      telemetry.capture('data_exported', eventProps);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : t('reports.errors.unableToExport');
+      // Name only, never the message — it can interpolate farm names and file paths.
+      telemetry.capture('report_export_failed', {
+        ...eventProps,
+        error_name: e instanceof Error ? e.name : 'unknown',
+      });
       Alert.alert(t('reports.alerts.exportFailedTitle'), errorMessage);
     }
   };
@@ -530,23 +452,17 @@ export default function ReportsScreen() {
               selectedFarmId={selectedFarmId}
               selectedFarm={selectedFarm}
               areaUnit={areaUnit}
-              showFarmPicker={showFarmPicker}
-              onToggleFarmPicker={() => setShowFarmPicker((prev) => !prev)}
               onSelectFarm={(farmId) => {
                 setSelectedFarmId(farmId);
                 setSelectedSeasonId(null);
                 setDateRange(getDefaultDateRange());
-                setShowFarmPicker(false);
               }}
-              showSeasonPicker={showSeasonPicker}
-              onToggleSeasonPicker={() => setShowSeasonPicker((prev) => !prev)}
               seasonOptions={seasonOptions}
               selectedSeasonId={selectedSeasonId}
               selectedSeasonLabel={selectedSeasonLabel}
               seasonWindowLabel={selectedSeasonWindowLabel}
-              onSelectSeason={(seasonId) => applySeasonSelection(seasonId, seasonId != null)}
-              seasonPresetOptions={seasonPresetOptions}
-              onApplySeasonPreset={handleApplyPreset}
+              onSelectSeason={applySeasonSelection}
+              onApplyThisYear={applyThisYear}
               showNoActiveSeasonInfo={sortedSeasons.length > 0 && activeSeason == null}
               unassignedRecordCount={unassignedRecordCount}
               dateFrom={dateRange.from}
@@ -559,24 +475,8 @@ export default function ReportsScreen() {
                 setShowFromPicker(false);
                 setShowToPicker(true);
               }}
-              reportType={reportType}
-              reportTypes={REPORT_TYPES}
-              onSelectReportType={(nextReportType) => {
-                setReportType(nextReportType);
-                setSelectedExportFormat(getDefaultReportFormat(nextReportType));
-              }}
-              selectedExportFormat={selectedExportFormat}
-              onSelectExportFormat={setSelectedExportFormat}
               panelStyle={panelStyle}
             />
-
-            {reportType === 'fpc-activity' ? (
-              <ReportFpcColumnToggles
-                columns={fpcColumns}
-                onChange={setFpcColumns}
-                panelStyle={panelStyle}
-              />
-            ) : null}
 
             {dataLoading ? (
               <Animated.View
@@ -593,16 +493,22 @@ export default function ReportsScreen() {
               <>
                 <ReportExecutiveSummary
                   preview={preview}
-                  reportType={reportType}
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
                   comparison={comparison}
                 />
 
                 <ReportDocumentBody
                   preview={preview}
-                  reportType={reportType}
+                  reportType={REPORT_TYPE}
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
                   fpcColumns={fpcColumns}
+                  onFpcColumnsChange={setFpcColumns}
+                  // The register is a separate document for a separate reader, so
+                  // it exports from its own section rather than the report's bar,
+                  // in the format buyers actually consume.
+                  onExportRegister={() =>
+                    runExport('share', getDefaultReportFormat('fpc-activity'), 'fpc-activity')
+                  }
                   panelStyle={panelStyle}
                 />
               </>
@@ -625,9 +531,9 @@ export default function ReportsScreen() {
             canExport={Boolean(preview)}
             isExporting={isExporting}
             exportFormat={selectedExportFormat}
-            isExporterReport={reportType === 'fpc-activity'}
-            onExportPdf={() => handleExport(selectedExportFormat)}
-            onDownload={() => handleDownload(selectedExportFormat)}
+            onSelectFormat={setSelectedExportFormat}
+            onExportPdf={() => runExport('share', selectedExportFormat)}
+            onDownload={() => runExport('download', selectedExportFormat)}
             panelStyle={{ paddingBottom: spacing[6] + insets.bottom }}
           />
         </View>

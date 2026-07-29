@@ -3210,6 +3210,7 @@ export const hi = {
       irrigation: 'सिंचाई',
       products: 'उत्पाद',
       noProducts: 'कोई उत्पाद नहीं दिया गया',
+      shareRegister: 'रजिस्टर साझा करें',
       empty: 'चयनित अवधि में कोई गतिविधि नहीं',
       columns: {
         title: 'अतिरिक्त कॉलम',
@@ -3223,21 +3224,14 @@ export const hi = {
       detail: {
         title: 'रिपोर्ट विवरण',
         hint: 'निर्यातक रिपोर्ट में शामिल अनुपालन विवरण का स्तर चुनें।',
-        standard: {
-          title: 'मानक',
-          description: 'नियमित खरीदार साझा करने के लिए गतिविधि, अवस्था, उत्पाद मात्रा और नोट्स।',
+        simple: {
+          title: 'सरल',
+          description: 'Fratelli प्रारूप: दिन, तारीख, उत्पाद, तकनीकी नाम, मात्रा, PHI और MRL।',
         },
         detailed: {
           title: 'विस्तृत अनुपालन',
-          description: 'सिंचाई, तकनीकी नाम, PHI, सुरक्षित कटाई तिथि और MRL जोड़ता है।',
+          description: 'सिंचाई, फसल अवस्था, प्लॉट योग, सुरक्षित कटाई तिथि और पोषक विवरण जोड़ता है।',
         },
-      },
-    },
-    exporter: {
-      actions: {
-        title: 'बनाएँ और साझा करें',
-        share: '{{format}} साझा करें',
-        save: '{{format}} सहेजें',
       },
     },
     selectFarmLabel: 'खेत चुनें',
@@ -3258,9 +3252,6 @@ export const hi = {
       unassignedNotice_other:
         '{{count}} रिकॉर्ड किसी सीज़न में नहीं हैं — सभी सीज़न में देखने के लिए टैप करें।',
       presets: {
-        active: 'सक्रिय सीज़न',
-        mostRecent: 'हाल का सीज़न',
-        previous: 'पिछला सीज़न',
         thisYear: 'यह वर्ष',
       },
     },
@@ -3268,6 +3259,9 @@ export const hi = {
     selectToDate: 'समाप्ति तिथि चुनें',
     reportType: {
       label: 'रिपोर्ट प्रकार',
+    },
+    filters: {
+      title: 'फ़िल्टर',
     },
     loading: {
       preview: 'पूर्वावलोकन तैयार हो रहा है...',
@@ -3347,6 +3341,7 @@ export const hi = {
       showDetails: 'विवरण दिखाएं',
       hideDetails: 'विवरण छिपाएं',
       emptySection: 'चुनी गई तारीख सीमा में कोई रिकॉर्ड नहीं',
+      noneLogged: 'इस अवधि में कोई {{sections}} दर्ज नहीं किया गया।',
       sections: {
         fertigationRecords: 'फर्टिगेशन रिकॉर्ड ({{count}})',
       },
@@ -3359,13 +3354,14 @@ export const hi = {
       waterUsage: 'पानी का उपयोग',
       totalHarvest: 'कुल कटाई',
       netProfit: 'शुद्ध लाभ',
+      nothingLogged: 'इस अवधि में कुछ दर्ज नहीं किया गया।',
       stockUsageCount: 'उपयोग की गई वस्तुएं',
       matchedItems: 'मिलान की गई वस्तुएं',
       stockCoverage: 'अनुमानित कवरेज',
     },
-    exportAs: 'के रूप में निर्यात करें',
     exportSection: 'रिपोर्ट निर्यात करें',
-    downloadReport: 'रिपोर्ट डाउनलोड करें',
+    share: 'साझा करें',
+    saveToFiles: 'फ़ाइलों में सहेजें',
     errors: {
       unableToExport: 'रिपोर्ट निर्यात करने में असमर्थ। कृपया पुनः प्रयास करें।',
     },
