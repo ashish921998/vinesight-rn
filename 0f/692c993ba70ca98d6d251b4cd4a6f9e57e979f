@@ -1,0 +1,65 @@
+src/types/report.ts
+  s_b1f38ece2c49f9::t_160bab511f0b1b 7,35
+src/components/screens/reports/report-filters-panel.tsx
+  s_b1f38ece2c49f9::t_c9485bd794f006 12,112,114-115,117-119
+__tests__/report-document-body-lenses.test.tsx
+  s_b1f38ece2c49f9::t_be493a47aee91a 10,148,161,195,212,219
+src/components/screens/reports/report-outline-chip.tsx
+  s_b1f38ece2c49f9::t_1d014ffceb9e3c 1-79
+app/reports.tsx
+  s_b1f38ece2c49f9::t_4c682531887581 50-52
+src/services/report/report-fpc-simple.ts
+  s_b1f38ece2c49f9::t_4b3412bb9e766f 39-55
+  s_b1f38ece2c49f9::t_63e8c7ceb60073 38
+src/services/report/report-pdf.ts
+  s_b1f38ece2c49f9::t_ec200d582fa58d 25,240-243
+src/services/report/report-xlsx.ts
+  s_b1f38ece2c49f9::t_59ea67c3ade861 4,69
+  s_b1f38ece2c49f9::t_72467c6eaccd1e 96,140
+__tests__/report-service-export.test.ts
+  s_b1f38ece2c49f9::t_dcf4f025d6592e 367
+  s_b1f38ece2c49f9::t_8e9dc4a62b257d 139-140,142,147-148
+  s_b1f38ece2c49f9::t_b9e5a72a9a6e43 187,194
+  s_b1f38ece2c49f9::t_709e41653f2684 195-197
+__tests__/report-fpc-activity.test.ts
+  s_b1f38ece2c49f9::t_69664c4aeadbe7 373-398
+  s_b1f38ece2c49f9::t_f7d5e73c8af5b4 359
+__tests__/report-document-body.test.tsx
+  s_b1f38ece2c49f9::t_2ce820bff15bbe 235
+  s_b1f38ece2c49f9::t_258a95fa5f39aa 221,234
+src/services/report/report-csv.ts
+  s_b1f38ece2c49f9::t_8ccce580add13e 25
+  s_b1f38ece2c49f9::t_f1e03645620c1e 50-55,58-65
+__tests__/report-comparison.test.ts
+  s_b1f38ece2c49f9::t_bd531fba5b7c68 122-123,125,130-131,133,138-139,141,146
+src/components/screens/reports/report-section-block.tsx
+  s_b1f38ece2c49f9::t_94b971752b4aed 54-56,75
+  s_b1f38ece2c49f9::t_42ed18bfcb0c96 36,370-371
+src/services/report/report-io.ts
+  s_b1f38ece2c49f9::t_337e7ddf58bb20 48
+__tests__/exporter-report-controls.test.tsx
+  s_b1f38ece2c49f9::t_dbe59ee8de5c34 41
+src/components/screens/reports/report-fpc-column-toggles.tsx
+  s_b1f38ece2c49f9::t_824ce43c1f96c1 2,4,11,38-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "0f692c993ba70ca98d6d251b4cd4a6f9e57e979f",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_b1f38ece2c49f9": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019fae88-011f-7c7b-bb45-af88204d28c8",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
