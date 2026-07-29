@@ -1,0 +1,64 @@
+src/services/report/report-csv.ts
+  s_00cadf22314562::t_2d537778a6b6af 50-51,54-56,299-315,320-324
+src/services/report-service.ts
+  s_00cadf22314562::t_071c4b3823dab5 37-38
+src/services/report/report-xlsx.ts
+  s_00cadf22314562::t_bab1e690ea46b7 148
+  s_00cadf22314562::t_071c4b3823dab5 1-147,149-168
+  s_00cadf22314562::t_4c6e7106a94a72 169-170
+src/services/report/report-compute.ts
+  s_00cadf22314562::t_2d537778a6b6af 547-551
+src/types/report.ts
+  s_00cadf22314562::t_071c4b3823dab5 6
+  s_00cadf22314562::t_2d537778a6b6af 119-121
+__tests__/report-fpc-activity.test.ts
+  s_00cadf22314562::t_68073307a289e1 9-10,357-373
+  s_00cadf22314562::t_2d537778a6b6af 296-299,307-311,346-351
+  s_00cadf22314562::t_7eff580b13abd6 374-375
+src/hooks/use-reports.ts
+  s_00cadf22314562::t_071c4b3823dab5 568-570,605-607
+package.json
+  s_00cadf22314562::t_2a59fed1e4a994 88
+src/services/report/report-pdf.ts
+  s_00cadf22314562::t_2d537778a6b6af 130-142,157-161,173-181,244-245
+src/components/screens/reports/report-format.ts
+  s_00cadf22314562::t_071c4b3823dab5 4
+__tests__/exporter-report-controls.test.tsx
+  s_00cadf22314562::t_68073307a289e1 42
+src/services/report/report-io.ts
+  s_00cadf22314562::t_071c4b3823dab5 11,24,38,44-67
+  s_00cadf22314562::t_48600e0dc2ff6d 68
+package-lock.json
+  s_00cadf22314562::t_eab678220cdd0e 56,11238-11240,16337-16342
+__tests__/__snapshots__/report-service-snapshots.test.ts.snap
+  s_266cecbd155385::t_29b867d7a3eb6b 136,147,155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "90de05b664e3e218e23a11e8444d3c84a49e0ca7",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_00cadf22314562": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f959a-043f-7c22-a84b-cf16d737aa9b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    },
+    "s_266cecbd155385": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1fbc7053-bafc-4357-bde4-c545128d7f8f",
+        "model": "unknown"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
