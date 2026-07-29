@@ -1,0 +1,28 @@
+__tests__/report-fpc-activity.test.ts
+  s_9568be598ff20d::t_a093d92163bdf9 292,294-295,297-298,301,322,328-334,336-337,348-349,353,364-366
+src/services/report/report-csv.ts
+  s_9568be598ff20d::t_94c076079d4482 10,46-68,289
+src/services/report/report-format.ts
+  s_9568be598ff20d::t_317d5f8a3b2c60 70-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "cb9c78be6bea8fc7b4fbba7d339c00081f9f335e",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_9568be598ff20d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fac4b-9a6c-7a50-991e-98af0865c6fe",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
