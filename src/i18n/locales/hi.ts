@@ -3205,15 +3205,6 @@ export const hi = {
       noProducts: 'कोई उत्पाद नहीं दिया गया',
       shareRegister: 'रजिस्टर साझा करें',
       empty: 'चयनित अवधि में कोई गतिविधि नहीं',
-      columns: {
-        title: 'अतिरिक्त कॉलम',
-        hint: 'रजिस्टर डिफ़ॉल्ट रूप से संक्षिप्त है. ऑडिट/अनुपालन खरीदारों के लिए कॉलम जोड़ने हेतु टैप करें.',
-        irrigation: 'सिंचाई (mm)',
-        technicalName: 'तकनीकी नाम',
-        phi: 'PHI',
-        safeHarvest: 'सुरक्षित कटाई',
-        mrl: 'MRL',
-      },
       detail: {
         title: 'रिपोर्ट विवरण',
         simple: { title: 'सरल' },

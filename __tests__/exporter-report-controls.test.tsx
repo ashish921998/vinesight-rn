@@ -38,12 +38,9 @@ jest.mock('@/utils/color', () => ({
 }));
 
 describe('Exporter report controls', () => {
-  it('uses CSV for exporter reports and PDF for other report types', () => {
+  it('uses XLSX for the exporter register and PDF for the report', () => {
     expect(getDefaultReportFormat('fpc-activity')).toBe('xlsx');
     expect(getDefaultReportFormat('comprehensive')).toBe('pdf');
-    expect(getDefaultReportFormat('operations')).toBe('pdf');
-    expect(getDefaultReportFormat('financial')).toBe('pdf');
-    expect(getDefaultReportFormat('stock-usage')).toBe('pdf');
   });
 
   it('switches between simple and detailed report presets', () => {

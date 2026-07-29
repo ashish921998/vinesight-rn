@@ -3220,15 +3220,6 @@ export const en = {
       noProducts: 'No products applied',
       shareRegister: 'Share register',
       empty: 'No activity in selected range',
-      columns: {
-        title: 'Extra columns',
-        hint: 'The register is lean by default. Tap to add columns for audit/compliance buyers.',
-        irrigation: 'Irrigation (mm)',
-        technicalName: 'Technical name',
-        phi: 'PHI',
-        safeHarvest: 'Safe harvest',
-        mrl: 'MRL',
-      },
       detail: {
         title: 'Report detail',
         simple: { title: 'Simple' },

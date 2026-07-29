@@ -45,7 +45,7 @@ async function writeWorkbook(data: ReportData, directory: string): Promise<strin
   const filename = buildReportFileName(data.farmName, 'xlsx');
   const fileUri = joinUri(directory, filename);
   const workbook = generateFpcWorkbook(data);
-  await writeAsStringAsync(fileUri, workbook.base64, { encoding: EncodingType.Base64 });
+  await writeAsStringAsync(fileUri, workbook, { encoding: EncodingType.Base64 });
   return fileUri;
 }
 

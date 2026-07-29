@@ -9,12 +9,11 @@ import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import type { Farm } from '@/types';
+import { ReportOutlineChip } from './report-outline-chip';
 
 export interface ReportSeasonOption {
   id: number;
   label: string;
-  startDate: string;
-  endDate: string | null;
   isActive: boolean;
 }
 
@@ -110,43 +109,14 @@ export function ReportFiltersPanel({
     onPress: () => void,
     icon?: string,
   ) => (
-    <Pressable
+    <ReportOutlineChip
       key={key}
+      label={label}
+      selected={selected}
       onPress={onPress}
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing[1],
-        minHeight: 36,
-        paddingHorizontal: spacing[2] + 2,
-        borderRadius: radius.full,
-        borderCurve: 'continuous',
-        borderWidth: 1,
-        borderColor: selected ? m3.colorScheme.primary : m3.colorScheme.outlineVariant,
-        backgroundColor: selected
-          ? colorWithOpacity(m3.colorScheme.primary, 0.1)
-          : pressed
-            ? m3.surface.s200
-            : 'transparent',
-      })}
-    >
-      {selected ? <Icon name="checkmark" size={12} color={m3.colorScheme.primary} /> : null}
-      {!selected && icon ? (
-        <Icon name={icon} size={12} color={m3.colorScheme.onSurfaceVariant} />
-      ) : null}
-      <Text
-        numberOfLines={1}
-        style={{
-          fontSize: fontSize.xs,
-          fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
-          color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant,
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+      icon={icon}
+      selectedIcon="checkmark"
+    />
   );
 
   const showFarmSwitcher = allowFarmSwitching && farms.length > 1;

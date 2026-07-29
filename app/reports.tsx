@@ -47,13 +47,9 @@ import { getDefaultReportFormat } from '@/components/screens/reports/report-form
 import type { FarmSeason } from '@/types';
 
 /**
- * There is one report: everything logged in the window.
- *
- * `operations`, `financial` and `stock-usage` were strict subsets of
- * `comprehensive` (see REPORT_TYPE_SECTION_MAP) — they added no information,
- * they only hid sections, and they made the user narrow a document before
- * reading it. `ReportType` survives as a service-layer key into that section
- * map, which is all the export pipeline ever used it for.
+ * The on-screen report is always the comprehensive document — everything
+ * logged in the window. `ReportType` exists only for the export pipeline,
+ * which switches between this and the buyer's `fpc-activity` register.
  */
 const REPORT_TYPE: ReportType = 'comprehensive';
 
@@ -197,8 +193,6 @@ export default function ReportsScreen() {
         .map((season) => ({
           id: season.id,
           label: formatReportSeasonLabel(season),
-          startDate: season.start_date,
-          endDate: season.end_date,
           isActive: season.end_date == null,
         })),
     [sortedSeasons],

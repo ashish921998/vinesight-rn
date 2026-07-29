@@ -4,8 +4,7 @@
  */
 
 export type ReportFormat = 'pdf' | 'csv' | 'xlsx';
-export type ReportType =
-  'operations' | 'financial' | 'comprehensive' | 'stock-usage' | 'fpc-activity';
+export type ReportType = 'comprehensive' | 'fpc-activity';
 export type ReportCompareMode = 'previous' | 'yoy';
 export type ReportSectionKey =
   | 'meta'
@@ -33,6 +32,7 @@ export const REPORT_SECTION_ORDER: ReportSectionKey[] = [
 ];
 
 const REPORT_TYPE_SECTION_MAP: Record<ReportType, ReportSectionKey[]> = {
+  // The single on-screen report: every section the window's logs produced.
   comprehensive: [
     'meta',
     'executive',
@@ -44,20 +44,6 @@ const REPORT_TYPE_SECTION_MAP: Record<ReportType, ReportSectionKey[]> = {
     'stock',
     'nutrient-ledger',
   ],
-  operations: [
-    'meta',
-    'executive',
-    'irrigation',
-    'spray',
-    'fertigation',
-    'harvest',
-    'nutrient-ledger',
-  ],
-  financial: ['meta', 'executive', 'expense'],
-  // No ledger here: nutrients derive from application LOGS (fertigation/spray),
-  // not from warehouse stock movement — a stock report showing "N given" would
-  // conflate what left the shelf with what reached the vines.
-  'stock-usage': ['meta', 'executive', 'stock'],
   // FPC/buyer-facing activity register (Fratelli format). The simple preset
   // is the eight-column register Fratelli supplied; detailed mode adds the
   // nutrient ledger and the extra audit fields.

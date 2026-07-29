@@ -33,7 +33,7 @@ export interface ReportSectionRecord {
 
 interface ReportSectionBlockProps {
   title: string;
-  rows: ReportSectionRow[];
+  rows?: ReportSectionRow[];
   /**
    * Dated activity rows. When provided these replace `rows` and render as a
    * record list rather than a label/value table — the aggregate lenses and the
@@ -41,7 +41,6 @@ interface ReportSectionBlockProps {
    */
   records?: ReportSectionRecord[];
   hiddenCount?: number;
-  variant?: 'default' | 'compact-inline';
   /** SF Symbol name displayed next to the section title. */
   icon?: string;
   /** Accent color for the icon and decorative elements. */
@@ -51,6 +50,9 @@ interface ReportSectionBlockProps {
 }
 
 const INITIAL_ROWS_TO_RENDER = 6;
+
+/** Shared empty default so `rows` can be optional without an inline array literal. */
+const EMPTY_ROWS: ReportSectionRow[] = [];
 
 /* ─────────────────────── Separator ─────────────────────── */
 
@@ -70,10 +72,9 @@ function InsetSeparator({ color }: { color: string }) {
 
 export function ReportSectionBlock({
   title,
-  rows,
+  rows = EMPTY_ROWS,
   records,
   hiddenCount = 0,
-  variant = 'default',
   icon,
   accentColor,
   emptyMessage,
@@ -299,105 +300,6 @@ export function ReportSectionBlock({
     [m3],
   );
 
-  const renderDefaultRow = useCallback(
-    ({ item: row }: ListRenderItemInfo<ReportSectionRow>) => {
-      const primaryLine = row.lines[0] ?? null;
-      const detailLines = row.lines.slice(1);
-      return (
-        <View
-          style={{
-            backgroundColor: m3.surface.s100,
-            borderRadius: borderRadius.lg,
-            borderCurve: 'continuous',
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[3],
-            gap: spacing[2],
-            borderWidth: 1,
-            borderColor: m3.surface.s300,
-          }}
-        >
-          {primaryLine ? (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: spacing[2],
-                borderBottomWidth: detailLines.length > 0 ? 1 : 0,
-                borderBottomColor: m3.surface.s200,
-                paddingBottom: detailLines.length > 0 ? spacing[2] : 0,
-              }}
-            >
-              <Text
-                selectable
-                style={{
-                  color: m3.colorScheme.onSurfaceVariant,
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                }}
-              >
-                {primaryLine.label}
-              </Text>
-              <Text
-                selectable
-                style={{
-                  color: m3.colorScheme.onSurface,
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.bold,
-                  fontVariant: primaryLine.monospace ? ['tabular-nums'] : undefined,
-                }}
-              >
-                {primaryLine.value}
-              </Text>
-            </View>
-          ) : null}
-
-          {detailLines.map((line, index) => (
-            <View
-              key={`${row.id}-${line.label}`}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: spacing[2],
-                borderTopWidth: index === 0 ? 0 : 1,
-                borderTopColor: m3.surface.s200,
-                paddingTop: index === 0 ? 0 : spacing[1],
-              }}
-            >
-              <Text
-                selectable
-                numberOfLines={1}
-                style={{
-                  flex: 0.45,
-                  color: m3.colorScheme.onSurfaceVariant,
-                  fontSize: fontSize.base,
-                }}
-              >
-                {line.label}
-              </Text>
-              <Text
-                selectable
-                numberOfLines={1}
-                style={{
-                  flex: 0.55,
-                  color: m3.colorScheme.onSurface,
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  textAlign: 'right',
-                  fontVariant: line.monospace ? ['tabular-nums'] : undefined,
-                }}
-              >
-                {line.value}
-              </Text>
-            </View>
-          ))}
-        </View>
-      );
-    },
-    [m3],
-  );
-
   const keyExtractor = useCallback((item: ReportSectionRow | ReportSectionRecord) => item.id, []);
 
   const rowSeparator = useCallback(
@@ -465,8 +367,8 @@ export function ReportSectionBlock({
             renderItem={renderRecord}
           />
         </View>
-      ) : variant === 'compact-inline' ? (
-        /* ── Compact inline ── */
+      ) : (
+        /* ── Tabular rows ── */
         <View style={insetGroupedContainer}>
           {renderInlineHeader()}
           <FlatList
@@ -480,18 +382,6 @@ export function ReportSectionBlock({
             renderItem={renderInlineRow}
           />
         </View>
-      ) : (
-        /* ── Default cards ── */
-        <FlatList
-          data={rows}
-          keyExtractor={keyExtractor}
-          scrollEnabled={false}
-          initialNumToRender={Math.min(rows.length, INITIAL_ROWS_TO_RENDER)}
-          maxToRenderPerBatch={INITIAL_ROWS_TO_RENDER}
-          windowSize={5}
-          contentContainerStyle={{ gap: spacing[2] }}
-          renderItem={renderDefaultRow}
-        />
       )}
 
       {/* Hidden count message */}

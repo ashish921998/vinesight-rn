@@ -36,6 +36,24 @@ export interface FpcSimpleRow {
 }
 
 /**
+ * Cell values for one simple-register row, in header order. The CSV, XLSX and
+ * PDF emitters all read from this so the column order is owned in one place
+ * alongside FPC_SIMPLE_HEADERS — each emitter only escapes for its own target.
+ */
+export function fpcSimpleRowCells(row: FpcSimpleRow): string[] {
+  return [
+    row.srNo,
+    row.days,
+    row.date,
+    row.productName,
+    row.technicalName,
+    row.qtyPerLiter,
+    row.phi,
+    row.mrl,
+  ];
+}
+
+/**
  * Flatten FPC activity days into one row per product, stamping the serial /
  * day-count / date onto the first product of each day and blanking them on the
  * rest. Values are raw and format-agnostic — each emitter escapes for its own

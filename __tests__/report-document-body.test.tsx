@@ -158,49 +158,6 @@ const PREVIEW: ReportPreview = {
 };
 
 describe('reports formal rendering', () => {
-  it('operations type shows operations sections and hides financial/stock sections', () => {
-    const { getByText, queryByText } = render(
-      <ReportDocumentBody
-        preview={PREVIEW}
-        reportType="operations"
-        preferredCurrency="INR"
-        panelStyle={{}}
-      />,
-    );
-
-    expect(getByText('reports.export.sections.irrigationRecords')).toBeTruthy();
-    expect(queryByText('reports.export.sections.expenseRecords')).toBeNull();
-    expect(queryByText('reports.stockDetails.title')).toBeNull();
-  });
-
-  it('financial type shows expense section only', () => {
-    const { getByText, queryByText } = render(
-      <ReportDocumentBody
-        preview={PREVIEW}
-        reportType="financial"
-        preferredCurrency="INR"
-        panelStyle={{}}
-      />,
-    );
-
-    expect(getByText('reports.export.sections.expenseRecords')).toBeTruthy();
-    expect(queryByText('reports.export.sections.irrigationRecords')).toBeNull();
-    expect(queryByText('reports.stockDetails.title')).toBeNull();
-  });
-
-  it('stock-usage type shows the stock section', () => {
-    const { getByText } = render(
-      <ReportDocumentBody
-        preview={PREVIEW}
-        reportType="stock-usage"
-        preferredCurrency="INR"
-        panelStyle={{}}
-      />,
-    );
-
-    expect(getByText(/reports\.stockDetails\.title/)).toBeTruthy();
-  });
-
   it('overview keeps only farmer outcome metrics', () => {
     const { getByText, queryByText } = render(
       <ReportExecutiveSummary preview={PREVIEW} preferredCurrency="INR" />,
@@ -261,7 +218,7 @@ describe('reports formal rendering', () => {
   // identical "No records in selected range" panels is a wall to scroll past,
   // not information — the empty sections are now named once in a single line.
   it('names empty sections in one line instead of rendering a card each', () => {
-    const emptyOperationsPreview: ReportPreview = {
+    const emptySectionsPreview: ReportPreview = {
       ...PREVIEW,
       data: {
         ...PREVIEW.data,
@@ -274,8 +231,8 @@ describe('reports formal rendering', () => {
 
     const { getByText, queryAllByText } = render(
       <ReportDocumentBody
-        preview={emptyOperationsPreview}
-        reportType="operations"
+        preview={emptySectionsPreview}
+        reportType="comprehensive"
         preferredCurrency="INR"
         panelStyle={{}}
       />,

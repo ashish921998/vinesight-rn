@@ -76,12 +76,6 @@ export function getVisibleSections(
 
 export function formatReportType(reportType: ReportType): string {
   switch (reportType) {
-    case 'operations':
-      return 'Operations';
-    case 'financial':
-      return 'Financial';
-    case 'stock-usage':
-      return 'Stock Usage';
     case 'fpc-activity':
       return 'FPC Activity Register';
     case 'comprehensive':

@@ -3233,15 +3233,6 @@ export const mr = {
       noProducts: 'कोणतेही उत्पादन दिले नाही',
       shareRegister: 'नोंदवही सामायिक करा',
       empty: 'निवडलेल्या कालावधीत कोणतीही नोंद नाही',
-      columns: {
-        title: 'अतिरिक्त स्तंभ',
-        hint: 'नोंदवही डीफॉल्टनुसार संक्षिप्त आहे. ऑडिट/अनुपालन खरेदीदारांसाठी स्तंभ जोडण्यासाठी टॅप करा.',
-        irrigation: '$t(glossary.irrigation) (mm)',
-        technicalName: 'तांत्रिक नाव',
-        phi: 'PHI',
-        safeHarvest: 'सुरक्षित काढणी',
-        mrl: 'MRL',
-      },
       detail: {
         title: '$t(glossary.report) तपशील',
         simple: { title: 'साधा' },

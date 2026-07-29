@@ -190,13 +190,6 @@ describe('report pipeline snapshot lock (#198)', () => {
     ).toMatchSnapshot();
   });
 
-  it('stock-usage CSV', () => {
-    const data = generateData();
-    expect(
-      redactGeneratedAt(ReportService.generateCSV(data, 'stock-usage', 'acres')),
-    ).toMatchSnapshot();
-  });
-
   it('comprehensive PDF HTML', () => {
     const data = generateData();
     const summary = ReportService.calculateSummary(data, 'comprehensive');

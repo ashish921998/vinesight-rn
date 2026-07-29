@@ -22,7 +22,7 @@ import {
   countFpcProductOptionalCols,
   EMPTY_SECTION_TEXT,
 } from './report-format';
-import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows } from './report-fpc-simple';
+import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows, fpcSimpleRowCells } from './report-fpc-simple';
 
 /**
  * FPC activity register CSV: date columns written once per day block,
@@ -47,16 +47,22 @@ function appendFpcActivityCSV(
   if (isFpcSimpleReport(cols)) {
     rows.push(FPC_SIMPLE_HEADERS.join(','));
     for (const row of buildFpcSimpleRows(days)) {
+      // Order is owned by fpcSimpleRowCells; escaping mirrors the detailed FPC
+      // path below — Sr.No / Days / PHI are numeric sentinels and stay raw, so
+      // a missing pruning date renders as "-" (not "'-" — escapeCSV's
+      // formula guard would prefix a force-text apostrophe that Excel surfaces).
+      const [srNo, daysCell, date, productName, technicalName, qtyPerLiter, phi, mrl] =
+        fpcSimpleRowCells(row);
       rows.push(
         [
-          row.srNo,
-          row.days,
-          escapeCSV(row.date),
-          escapeCSV(row.productName),
-          escapeCSV(row.technicalName),
-          escapeCSV(row.qtyPerLiter),
-          row.phi,
-          escapeCSV(row.mrl),
+          srNo,
+          daysCell,
+          escapeCSV(date),
+          escapeCSV(productName),
+          escapeCSV(technicalName),
+          escapeCSV(qtyPerLiter),
+          phi,
+          escapeCSV(mrl),
         ].join(','),
       );
     }

@@ -22,7 +22,7 @@ import {
   countFpcProductOptionalCols,
   EMPTY_SECTION_TEXT,
 } from './report-format';
-import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows } from './report-fpc-simple';
+import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows, fpcSimpleRowCells } from './report-fpc-simple';
 
 /**
  * Generate PDF HTML content
@@ -237,10 +237,10 @@ export function generatePDFHtml(
         `<td>${escapeHtml(value ?? '') || '-'}</td>`;
       const bodyRows = simple
         ? buildFpcSimpleRows(days)
-            .map(
-              (row) =>
-                `<tr class="${row.lead ? 'fpc-day-start' : ''}">${cell(row.srNo)}${cell(row.days)}${cell(row.date)}${cell(row.productName)}${cell(row.technicalName)}${cell(row.qtyPerLiter)}${cell(row.phi)}${cell(row.mrl)}</tr>`,
-            )
+            .map((row) => {
+              const cells = fpcSimpleRowCells(row).map(cell).join('');
+              return `<tr class="${row.lead ? 'fpc-day-start' : ''}">${cells}</tr>`;
+            })
             .join('')
         : days
             .map((day) => {

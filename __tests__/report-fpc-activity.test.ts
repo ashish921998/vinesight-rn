@@ -356,12 +356,9 @@ describe('FPC register rendering', () => {
 
   it('XLSX: creates a Fratelli workbook with merged identity rows and grouped products', () => {
     const workbook = generateFpcWorkbook(data);
-    const files = unzipSync(Uint8Array.from(Buffer.from(workbook.base64, 'base64')));
+    const files = unzipSync(Uint8Array.from(Buffer.from(workbook, 'base64')));
     const sheet = strFromU8(files['xl/worksheets/sheet1.xml']);
 
-    expect(workbook.mimeType).toBe(
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    );
     expect(files['[Content_Types].xml']).toBeDefined();
     expect(files['xl/workbook.xml']).toBeDefined();
     expect(sheet).toContain('Farmer Name: Fratelli Plot');
@@ -371,6 +368,32 @@ describe('FPC register rendering', () => {
     expect(sheet).toContain('<t xml:space="preserve">1</t>');
     expect(sheet).toContain('<t xml:space="preserve">0-52-34</t>');
     expect(sheet).toContain('<t xml:space="preserve">12-61-00</t>');
+  });
+
+  it('CSV (simple): keeps the Days cell raw "-" when the pruning date is missing', () => {
+    // No date_of_pruning → daysAfterPruning is null → Days renders as "-".
+    // escapeCSV's formula guard would prefix a leading "-" with a force-text
+    // apostrophe ("'-"), surfacing a stray '- in Excel; the Days cell must stay
+    // raw, matching the detailed register path.
+    const noPruningData = ReportService.generateReportData(
+      { ...FARM, date_of_pruning: null },
+      [],
+      [],
+      [
+        createFertigationRecord({
+          fertilizers: [{ name: '0-52-34', quantity: 3, unit: 'kg', quantity_basis: 'per_acre' }],
+        }),
+      ],
+      [],
+      [],
+      DATE_RANGE,
+      [],
+    );
+    const csv = ReportService.generateCSV(noPruningData, 'fpc-activity');
+    const row = csv.split('\n').find((line) => line.includes('0-52-34')) ?? '';
+    // Days is the 2nd column: serial 1, then "-", never "'-".
+    expect(row.startsWith('1,-,')).toBe(true);
+    expect(row).not.toContain("'-");
   });
 
   it('CSV (partial toggle): a single enabled column appears, others stay hidden', () => {

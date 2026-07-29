@@ -7,7 +7,7 @@
  */
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
-import type { ReportPreview } from '@/types/report';
+import type { ReportPreview, ReportType } from '@/types/report';
 import { computeUsageLenses } from '@/services/report-usage-lenses';
 
 jest.mock('react-native-reanimated', () => {
@@ -145,10 +145,7 @@ function previewWith(usage: ReportPreview['data']['usage']): ReportPreview {
   };
 }
 
-function renderBody(
-  preview: ReportPreview,
-  reportType: 'stock-usage' | 'financial' | 'comprehensive',
-) {
+function renderBody(preview: ReportPreview, reportType: ReportType = 'comprehensive') {
   return render(
     <ReportDocumentBody
       preview={preview}
@@ -161,7 +158,7 @@ function renderBody(
 
 describe('usage lens cards in the report document', () => {
   it('renders per-plot, Other bucket, per-acre, compliance and per-liter cards', () => {
-    const { getByText } = renderBody(previewWith(USAGE), 'stock-usage');
+    const { getByText } = renderBody(previewWith(USAGE));
 
     expect(getByText('reports.lenses.perPlotTitle')).toBeTruthy();
     expect(getByText('≈ 12 kg')).toBeTruthy(); // 30 g/L × 400 L, per plot
@@ -195,7 +192,7 @@ describe('usage lens cards in the report document', () => {
       ],
       areaAcres: null,
     });
-    const { getByText, queryByText } = renderBody(previewWith(usage), 'stock-usage');
+    const { getByText, queryByText } = renderBody(previewWith(usage));
 
     expect(getByText('reports.lenses.rateOnlyTitle')).toBeTruthy();
     expect(getByText('reports.lenses.perAcreUnavailable')).toBeTruthy();
@@ -212,14 +209,14 @@ describe('usage lens cards in the report document', () => {
   // them on the stock section hid them from exactly the reports whose data
   // produced them. They are now gated on the presence of usage data.
   it('renders lens cards whenever usage data exists, independent of report type', () => {
-    const { getByText } = renderBody(previewWith(USAGE), 'financial');
+    const { getByText } = renderBody(previewWith(USAGE));
     expect(getByText('reports.lenses.perPlotTitle')).toBeTruthy();
     expect(getByText('reports.lenses.perLiterTitle')).toBeTruthy();
     expect(getByText('reports.lenses.complianceTitle')).toBeTruthy();
   });
 
   it('renders no lens cards when usage is absent (hand-built preview data)', () => {
-    const { queryByText } = renderBody(previewWith(undefined), 'stock-usage');
+    const { queryByText } = renderBody(previewWith(undefined));
     expect(queryByText('reports.lenses.perPlotTitle')).toBeNull();
     expect(queryByText('reports.lenses.perAcreUnavailable')).toBeNull();
   });

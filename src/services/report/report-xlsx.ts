@@ -1,7 +1,7 @@
 import { strToU8, zipSync } from 'fflate';
 import { formatDate } from '@/i18n/format';
 import type { ReportData } from '@/types/report';
-import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows } from './report-fpc-simple';
+import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows, fpcSimpleRowCells } from './report-fpc-simple';
 
 export const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -66,16 +66,7 @@ function buildSheetXml(data: ReportData): string {
 
   let rowNumber = 5;
   for (const row of buildFpcSimpleRows(data.fpcActivity ?? [])) {
-    const values = [
-      row.srNo,
-      row.days,
-      row.date,
-      row.productName,
-      row.technicalName,
-      row.qtyPerLiter,
-      row.phi,
-      row.mrl,
-    ];
+    const values = fpcSimpleRowCells(row);
     rows.push(
       `<row r="${rowNumber}">${values
         .map((value, column) =>
@@ -102,10 +93,7 @@ function buildSheetXml(data: ReportData): string {
 </worksheet>`;
 }
 
-export function generateFpcWorkbook(data: ReportData): {
-  base64: string;
-  mimeType: string;
-} {
+export function generateFpcWorkbook(data: ReportData): string {
   const files = {
     '[Content_Types].xml': strToU8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -149,8 +137,5 @@ export function generateFpcWorkbook(data: ReportData): {
     'xl/worksheets/sheet1.xml': strToU8(buildSheetXml(data)),
   };
 
-  return {
-    base64: toBase64(zipSync(files, { level: 6 })),
-    mimeType: XLSX_MIME,
-  };
+  return toBase64(zipSync(files, { level: 6 }));
 }

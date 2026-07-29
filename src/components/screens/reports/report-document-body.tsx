@@ -389,7 +389,6 @@ export function ReportDocumentBody({
               section.presentation.color,
               <ReportSectionBlock
                 title={t(section.titleKey, { count: section.total })}
-                rows={[]}
                 records={section.records}
                 hiddenCount={Math.max(0, section.total - ROW_LIMIT)}
                 icon={resolveSymbolIconName(section.presentation.icon)}
@@ -421,7 +420,6 @@ export function ReportDocumentBody({
               title={`${t('reports.stockDetails.title')} (${matchedStockRows.length}/${preview.data.stock.length})`}
               rows={stockRows}
               hiddenCount={Math.max(0, matchedStockRows.length - ROW_LIMIT)}
-              variant="compact-inline"
               icon={SECTION_ICONS.stock}
               accentColor={stockAccentColor}
             />,
@@ -436,7 +434,6 @@ export function ReportDocumentBody({
               title={t('reports.lenses.perPlotTitle')}
               rows={perPlotRows}
               hiddenCount={Math.max(0, usage.perPlot.rows.length - ROW_LIMIT)}
-              variant="compact-inline"
               icon="chart.bar.fill"
               accentColor={stockAccentColor}
             />,
@@ -450,7 +447,6 @@ export function ReportDocumentBody({
               title={t('reports.lenses.otherTitle')}
               rows={verbatimRows(usage.perPlot.other, 'lens-other')}
               hiddenCount={Math.max(0, usage.perPlot.other.length - ROW_LIMIT)}
-              variant="compact-inline"
               icon="questionmark.circle"
               accentColor={stockAccentColor}
             />,
@@ -464,7 +460,6 @@ export function ReportDocumentBody({
               title={t('reports.lenses.concentrationOnlyTitle')}
               rows={verbatimRows(usage.perPlot.concentrationOnly, 'lens-conc')}
               hiddenCount={Math.max(0, usage.perPlot.concentrationOnly.length - ROW_LIMIT)}
-              variant="compact-inline"
               icon="drop.circle.fill"
               accentColor={stockAccentColor}
             />,
@@ -478,7 +473,6 @@ export function ReportDocumentBody({
               title={t('reports.lenses.rateOnlyTitle')}
               rows={verbatimRows(usage.perPlot.rateOnly, 'lens-rate')}
               hiddenCount={Math.max(0, usage.perPlot.rateOnly.length - ROW_LIMIT)}
-              variant="compact-inline"
               icon="questionmark.circle"
               accentColor={stockAccentColor}
             />,
@@ -494,7 +488,6 @@ export function ReportDocumentBody({
               hiddenCount={
                 usage.perAcre.available ? Math.max(0, usage.perAcre.rows.length - ROW_LIMIT) : 0
               }
-              variant="compact-inline"
               icon="square.grid.2x2.fill"
               accentColor={stockAccentColor}
               emptyMessage={t('reports.lenses.perAcreUnavailable')}
@@ -510,7 +503,6 @@ export function ReportDocumentBody({
                 title={t('reports.lenses.complianceTitle')}
                 rows={complianceRows}
                 hiddenCount={Math.max(0, usage.perAcre.compliance.length - ROW_LIMIT)}
-                variant="compact-inline"
                 icon="checkmark.seal.fill"
                 accentColor={stockAccentColor}
               />
@@ -537,7 +529,6 @@ export function ReportDocumentBody({
                 title={t('reports.lenses.perLiterTitle')}
                 rows={perLiterRows}
                 hiddenCount={Math.max(0, usage.perLiter.rows.length - ROW_LIMIT)}
-                variant="compact-inline"
                 icon="drop.fill"
                 accentColor={stockAccentColor}
               />
@@ -619,7 +610,6 @@ export function ReportDocumentBody({
                 title={t('reports.fpc.detail.title')}
                 rows={fpcRows}
                 hiddenCount={Math.max(0, fpcDays.length - ROW_LIMIT)}
-                variant="compact-inline"
                 icon={SECTION_ICONS.fpcActivity}
                 accentColor={m3.colorScheme.onSurfaceVariant}
                 emptyMessage={t('reports.fpc.empty')}
