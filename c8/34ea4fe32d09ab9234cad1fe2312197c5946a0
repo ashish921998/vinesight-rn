@@ -1,0 +1,58 @@
+src/components/screens/reports/report-filters-panel.tsx
+  s_00cadf22314562::t_4aeb34151b0cd2 243,251
+  s_00cadf22314562::t_10ee2914eb2ad1 127,131,167-169,173-174,214,218,226-227,231
+  s_00cadf22314562::t_1976554996bfaa 4,51,53-55,79,158-159,161,234-242,244,249-250,253-255,257-259,263-270,272,274-278,280-283,287,289,291-292,294,297,299-304,480-489,491-498,502,504-514,516-517
+  s_00cadf22314562::t_98c6b2b4d30c93 2,499-501
+  s_00cadf22314562::t_a9adcdb05eea96 96-99,106,170-172,176-213,216-217,219-225,230
+  s_00cadf22314562::t_2135d2ebe565f8 25,61,156-157
+  s_00cadf22314562::t_9a4284ba344b66 245-248
+  s_00cadf22314562::t_16018a0a355519 252,256,260-261,305-323,325-350,352-368,370-376,378,380-383,385-388,391,394-396,400,403-407,409-479
+src/hooks/use-reports.ts
+  s_00cadf22314562::t_e76aef6b02b7ec 475-481,484,487-490
+src/components/screens/reports/report-executive-summary.tsx
+  s_00cadf22314562::t_5aa2af0179a757 11,127,129-142,144-146,150-151,158-164,177,179,208-209,212,221
+  s_00cadf22314562::t_11cc8bcfcc8807 143
+  s_00cadf22314562::t_45ebac26f6d8a6 15-16,19,21-22,24,93,128,147-149
+src/components/screens/reports/report-document-body.tsx
+  s_00cadf22314562::t_bb895869df1619 363,367-371,373
+__tests__/report-document-body.test.tsx
+  s_00cadf22314562::t_45ebac26f6d8a6 204,213-215
+src/components/screens/reports/report-export-actions.tsx
+  s_00cadf22314562::t_d4a25b9d52974e 2,47-50,53
+  s_00cadf22314562::t_f9bf071a904841 6
+  s_00cadf22314562::t_411206a2c2e33c 51-52,54,86,118-119,141,160-162,182
+src/i18n/locales/en.ts
+  s_00cadf22314562::t_45ebac26f6d8a6 3353,3373-3374
+src/i18n/locales/hi.ts
+  s_00cadf22314562::t_45ebac26f6d8a6 3337,3357-3358
+__tests__/symbol-android-mapping.test.tsx
+  s_00cadf22314562::t_64c139df6106e4 66-71
+src/i18n/locales/mr.ts
+  s_00cadf22314562::t_45ebac26f6d8a6 3365,3385-3386
+app/reports.tsx
+  s_00cadf22314562::t_91ac6bb76e7bb0 422,499-506
+  s_00cadf22314562::t_b5b86217d02ddf 453
+  s_00cadf22314562::t_58df2652bca66c 334,336,338,421,423
+  s_00cadf22314562::t_453d02acc1d756 507-508
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "c834ea4fe32d09ab9234cad1fe2312197c5946a0",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_00cadf22314562": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f959a-043f-7c22-a84b-cf16d737aa9b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
