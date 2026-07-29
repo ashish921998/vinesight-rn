@@ -51,9 +51,12 @@ import {
   useUpdateHarvestRecord,
   useUpdateExpenseRecord,
   useUpdateFertigationRecord,
+  useDeleteFertigationRecord,
+  useFertigationRecords,
   useFarmAreaAcres,
   useResponsiveHeight,
 } from '@/hooks';
+import { useSaveSingleLog } from '@/features/entry-log-session';
 import { toSupabaseDateString, fromSupabaseDateString } from '@/types';
 import type {
   Farm,
@@ -93,7 +96,7 @@ export function ActivityEditForm({
 }: ActivityEditFormProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const { farmAreaAcres } = useFarmAreaAcres(farm.area);
+  const { farmAreaAcres, preferredAreaUnit } = useFarmAreaAcres(farm.area);
   const isVisible = visible ?? true;
   const { windowHeight } = useResponsiveHeight();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -118,11 +121,50 @@ export function ActivityEditForm({
   const updateHarvest = useUpdateHarvestRecord();
   const updateExpense = useUpdateExpenseRecord();
   const updateFertigation = useUpdateFertigationRecord();
+  const deleteFertigation = useDeleteFertigationRecord();
+  const saveLog = useSaveSingleLog();
+
+  // Editing an irrigation log also edits the fertigation record linked to it
+  // (fused create UX writes the pair; edit mirrors create). Loaded via the
+  // farm-scoped list and matched on irrigation_record_id.
+  const fertigationQuery = useFertigationRecords(
+    logType === 'irrigation' ? (farm.id ?? undefined) : undefined,
+  );
+  const linkedFertigationRecord = useMemo(
+    () =>
+      logType === 'irrigation' && record.id != null
+        ? (fertigationQuery.data ?? []).find((f) => f.irrigation_record_id === record.id)
+        : undefined,
+    [logType, fertigationQuery.data, record.id],
+  );
+  // ponytail: edits the first linked fertigation only; multi-rider irrigation
+  // logs (possible in principle, not produced by any create path) keep extras
+  // untouched.
+  const [linkedFertigationData, setLinkedFertigationData] = useState<FertigationFormData>({
+    fertilizers: [],
+  });
+  const [fertInitializedForId, setFertInitializedForId] = useState<number | undefined>(undefined);
+  const isFertigationSettled = logType === 'irrigation' && !fertigationQuery.isLoading;
+  useEffect(() => {
+    if (!isVisible || !isFertigationSettled || fertInitializedForId === record.id) return;
+    setLinkedFertigationData(
+      linkedFertigationRecord
+        ? fertigationRecordToFormData(linkedFertigationRecord)
+        : { fertilizers: [] },
+    );
+    setFertInitializedForId(record.id);
+  }, [isVisible, isFertigationSettled, fertInitializedForId, record.id, linkedFertigationRecord]);
 
   const isFormValid = useMemo(() => {
     switch (logType) {
       case 'irrigation':
-        return validateIrrigationForm(irrigationData);
+        // Fertilizer rows ride along: zero rows means "remove/none", partial
+        // rows block Save (same contract as the create flows).
+        return (
+          validateIrrigationForm(irrigationData) &&
+          (linkedFertigationData.fertilizers.length === 0 ||
+            validateFertigationForm(linkedFertigationData))
+        );
       case 'spray':
         return validateSprayForm(sprayData);
       case 'harvest':
@@ -134,7 +176,47 @@ export function ActivityEditForm({
       default:
         return false;
     }
-  }, [logType, irrigationData, sprayData, harvestData, expenseData, fertigationData]);
+  }, [
+    logType,
+    irrigationData,
+    sprayData,
+    harvestData,
+    expenseData,
+    fertigationData,
+    linkedFertigationData,
+  ]);
+
+  // Shared by the fertigation edit case and the linked-fertigation save inside
+  // the irrigation case — identical mapping, one source of truth.
+  const buildFertigationUpdates = useCallback(
+    (data: FertigationFormData) => {
+      const fertilizerItems = data.fertilizers.map((f) => ({
+        name: f.name.trim(),
+        // Testimony rule (issue #192): stored verbatim; kernel-unknown
+        // strings are flagged for review, never coerced to kg.
+        unit: f.unit,
+        quantity: f.quantity ?? 0,
+        quantity_basis: f.quantityBasis ?? 'total',
+        ...(isFertigationUnitRecognized(f.unit) ? {} : { unit_unrecognized: true }),
+        warehouse_item_id: f.warehouseItemId ?? null,
+        catalog_product_id: f.catalogProductId ?? null,
+        plan_item_id: f.planItemId ?? null,
+        composition_snapshot: f.compositionSnapshot ?? null,
+        density_kg_per_l: f.densityKgPerL ?? null,
+      }));
+      const nutrientTotals = calculateNutrientTotalsForLog({
+        items: fertilizerItems,
+        areaAcre: farmAreaAcres ?? 0,
+      });
+      return {
+        fertilizers: fertilizerItems,
+        nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
+        nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
+        nutrient_calc_coverage: nutrientTotals.coveragePercent,
+      };
+    },
+    [farmAreaAcres],
+  );
 
   const scrollToNode = useCallback(
     (nodeHandle: number) => {
@@ -230,6 +312,37 @@ export function ActivityEditForm({
               date: dateStr,
             },
           });
+          // Keep the linked fertigation record in step with the irrigation it
+          // was applied with: update it (incl. the date, so the pair never
+          // desyncs), delete it when all rows were removed, or create a new
+          // linked one when rows were added to a fertilizer-less irrigation.
+          const hasFertilizerRows = linkedFertigationData.fertilizers.length > 0;
+          if (linkedFertigationRecord?.id != null) {
+            if (hasFertilizerRows) {
+              await updateFertigation.mutateAsync({
+                id: linkedFertigationRecord.id,
+                updates: {
+                  ...buildFertigationUpdates(linkedFertigationData),
+                  date: dateStr,
+                },
+              });
+            } else {
+              await deleteFertigation.mutateAsync({
+                id: linkedFertigationRecord.id,
+                clientUuid: linkedFertigationRecord.client_uuid ?? null,
+                farmId: farm.id ?? 0,
+              });
+            }
+          } else if (hasFertilizerRows && isFertigationSettled) {
+            await saveLog({
+              type: 'fertigation',
+              data: { ...linkedFertigationData },
+              farm,
+              dateStr,
+              preferredAreaUnit,
+              linkedIrrigationRecordId: r.id,
+            });
+          }
           break;
         }
         case 'spray': {
@@ -311,31 +424,10 @@ export function ActivityEditForm({
           if (r.id == null) {
             throw new Error('Record ID is missing');
           }
-          const fertilizerItems = fertigationData.fertilizers.map((f) => ({
-            name: f.name.trim(),
-            // Testimony rule (issue #192): stored verbatim; kernel-unknown
-            // strings are flagged for review, never coerced to kg.
-            unit: f.unit,
-            quantity: f.quantity ?? 0,
-            quantity_basis: f.quantityBasis ?? 'total',
-            ...(isFertigationUnitRecognized(f.unit) ? {} : { unit_unrecognized: true }),
-            warehouse_item_id: f.warehouseItemId ?? null,
-            catalog_product_id: f.catalogProductId ?? null,
-            plan_item_id: f.planItemId ?? null,
-            composition_snapshot: f.compositionSnapshot ?? null,
-            density_kg_per_l: f.densityKgPerL ?? null,
-          }));
-          const nutrientTotals = calculateNutrientTotalsForLog({
-            items: fertilizerItems,
-            areaAcre: farmAreaAcres ?? 0,
-          });
           await updateFertigation.mutateAsync({
             id: r.id,
             updates: {
-              fertilizers: fertilizerItems,
-              nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
-              nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
-              nutrient_calc_coverage: nutrientTotals.coveragePercent,
+              ...buildFertigationUpdates(fertigationData),
               date: dateStr,
             },
           });
@@ -358,6 +450,7 @@ export function ActivityEditForm({
   const handleClose = () => {
     setIsInitialized(false);
     setInitializedRecordId(undefined);
+    setFertInitializedForId(undefined);
     onClose();
   };
 
@@ -382,11 +475,27 @@ export function ActivityEditForm({
     return (
       <View style={{ marginTop: spacing[4] }}>
         {logType === 'irrigation' && (
-          <IrrigationForm
-            data={irrigationData}
-            onChange={setIrrigationData}
-            onInputFocus={scrollToFocusedInput}
-          />
+          <>
+            <IrrigationForm
+              data={irrigationData}
+              onChange={setIrrigationData}
+              onInputFocus={scrollToFocusedInput}
+            />
+            {/* Linked fertigation edits inline with its irrigation — same fused
+                UX as create. Hidden until the linked record has loaded so a
+                premature Save can't create a duplicate rider. */}
+            {isFertigationSettled && fertInitializedForId === record.id && (
+              <View style={{ marginTop: spacing[4] }}>
+                <FertigationForm
+                  data={linkedFertigationData}
+                  onChange={setLinkedFertigationData}
+                  onInputFocus={scrollToFocusedInput}
+                  areaAcres={farmAreaAcres}
+                  compact
+                />
+              </View>
+            )}
+          </>
         )}
         {logType === 'spray' && (
           <SprayForm
