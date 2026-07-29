@@ -177,20 +177,20 @@ export const FPC_FULL_COLUMNS: FpcColumnOptions = {
   mrl: true,
 };
 
+/**
+ * Exact-equality check against the simple preset, NOT a structural property of
+ * the columns. Load-bearing in two places: it drops `nutrient-ledger` from the
+ * section map (getSectionsForReportType) and switches the PDF/CSV renderer to
+ * Fratelli's fixed eight-column layout. Any combination that isn't byte-
+ * identical to FPC_LEAN_COLUMNS must fall through to the detailed layout — do
+ * not loosen this to a subset check, or a partial toggle would silently pick up
+ * the nutrient ledger and the wrong column set.
+ */
 export function isFpcSimpleReport(columns: FpcColumnOptions): boolean {
   return (Object.keys(FPC_LEAN_COLUMNS) as (keyof FpcColumnOptions)[]).every(
     (key) => columns[key] === FPC_LEAN_COLUMNS[key],
   );
 }
-
-/** Optional-column keys in display order — drives the UI toggle chips. */
-export const FPC_OPTIONAL_COLUMN_KEYS: (keyof FpcColumnOptions)[] = [
-  'irrigation',
-  'technicalName',
-  'phi',
-  'safeHarvest',
-  'mrl',
-];
 
 /**
  * One product applied on a given date — a spray chemical or a fertigation
