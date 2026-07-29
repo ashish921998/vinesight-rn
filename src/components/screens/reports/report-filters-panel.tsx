@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { View, Text, Pressable, Platform, Modal, ScrollView, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatDate, formatNumber } from '@/i18n/format';
+import { formatDate, formatDateWindow, formatNumber } from '@/i18n/format';
 import * as Haptics from 'expo-haptics';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
@@ -40,7 +40,6 @@ interface ReportFiltersPanelProps {
   onOpenToDate: () => void;
 }
 
-const DAY_MONTH: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
 const DAY_MONTH_YEAR: Intl.DateTimeFormatOptions = {
   day: 'numeric',
   month: 'short',
@@ -88,10 +87,7 @@ export function ReportFiltersPanel({
   }, []);
 
   /** Same year on both ends → state it once: "30 Apr – 29 Jul 2026". */
-  const windowLabel = `${formatDate(
-    dateFrom,
-    dateFrom.slice(0, 4) === dateTo.slice(0, 4) ? DAY_MONTH : DAY_MONTH_YEAR,
-  )} – ${formatDate(dateTo, DAY_MONTH_YEAR)}`;
+  const windowLabel = formatDateWindow(dateFrom, dateTo);
 
   const areaLabel = selectedFarm
     ? `${formatNumber(selectedFarm.area)} ${t(`units.${areaUnit}`)}`

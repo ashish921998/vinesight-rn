@@ -22,6 +22,7 @@ import {
   countFpcProductOptionalCols,
   EMPTY_SECTION_TEXT,
 } from './report-format';
+import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows } from './report-fpc-simple';
 
 /**
  * Generate PDF HTML content
@@ -213,7 +214,7 @@ export function generatePDFHtml(
       const cols = fpcColumns;
       const simple = isFpcSimpleReport(cols);
       const headers = simple
-        ? ['Sr.No', 'Days', 'Date', 'Product Name', 'Technical Name', 'Qty Per Liter', 'PHI', 'MRL']
+        ? [...FPC_SIMPLE_HEADERS]
         : [
             'Date',
             'Day',
@@ -234,49 +235,49 @@ export function generatePDFHtml(
       const productColCount = 3 + countFpcProductOptionalCols(cols);
       const cell = (value: string | null | undefined) =>
         `<td>${escapeHtml(value ?? '') || '-'}</td>`;
-      let serial = 0;
-      const bodyRows = days
-        .map((day) => {
-          const span = Math.max(1, day.products.length);
-          if (simple) {
-            return day.products
-              .map((product, index) => {
-                if (index === 0) serial += 1;
-                return `<tr class="${index === 0 ? 'fpc-day-start' : ''}">${cell(index === 0 ? String(serial) : '')}${cell(index === 0 ? formatDaysAfterPruningValue(day.daysAfterPruning) : '')}${cell(index === 0 ? day.date : '')}${cell(product.marketName)}${cell(product.technicalName)}${cell(product.asLogged)}${cell(product.phiDays != null ? String(product.phiDays) : null)}${cell(product.mrl)}</tr>`;
-              })
-              .join('');
-          }
-          const dayCells =
-            `<td rowspan="${span}">${escapeHtml(day.date)}</td>` +
-            `<td rowspan="${span}">${formatDaysAfterPruningValue(day.daysAfterPruning)}</td>` +
-            (cols.irrigation
-              ? `<td rowspan="${span}">${day.irrigationHours ?? '-'}</td>` +
-                `<td rowspan="${span}">${day.waterMm ?? '-'}</td>`
-              : '') +
-            `<td rowspan="${span}">${escapeHtml(day.growthStage ?? '') || '-'}</td>`;
-          const notesCell = `<td rowspan="${span}">${escapeHtml(day.notes ?? '') || '-'}</td>`;
-          if (day.products.length === 0) {
-            return `<tr class="fpc-day-start">${dayCells}${'<td>-</td>'.repeat(productColCount)}${notesCell}</tr>`;
-          }
-          return day.products
-            .map((product, index) => {
-              const productCells =
-                cell(product.marketName) +
-                (cols.technicalName ? cell(product.technicalName) : '') +
-                // Qty/Acre and Total fall back to the verbatim entry so an
-                // unresolvable unit is still visible, marked as-logged.
-                cell(product.qtyPerAcreDisplay ?? `${product.asLogged} (as logged)`) +
-                cell(product.totalQtyDisplay ?? `${product.asLogged} (as logged)`) +
-                (cols.phi ? `<td>${product.phiDays != null ? product.phiDays : '-'}</td>` : '') +
-                (cols.safeHarvest ? cell(product.safeHarvestDate) : '') +
-                (cols.mrl ? cell(product.mrl) : '');
-              return index === 0
-                ? `<tr class="fpc-day-start">${dayCells}${productCells}${notesCell}</tr>`
-                : `<tr>${productCells}</tr>`;
+      const bodyRows = simple
+        ? buildFpcSimpleRows(days)
+            .map(
+              (row) =>
+                `<tr class="${row.lead ? 'fpc-day-start' : ''}">${cell(row.srNo)}${cell(row.days)}${cell(row.date)}${cell(row.productName)}${cell(row.technicalName)}${cell(row.qtyPerLiter)}${cell(row.phi)}${cell(row.mrl)}</tr>`,
+            )
+            .join('')
+        : days
+            .map((day) => {
+              const span = Math.max(1, day.products.length);
+              const dayCells =
+                `<td rowspan="${span}">${escapeHtml(day.date)}</td>` +
+                `<td rowspan="${span}">${formatDaysAfterPruningValue(day.daysAfterPruning)}</td>` +
+                (cols.irrigation
+                  ? `<td rowspan="${span}">${day.irrigationHours ?? '-'}</td>` +
+                    `<td rowspan="${span}">${day.waterMm ?? '-'}</td>`
+                  : '') +
+                `<td rowspan="${span}">${escapeHtml(day.growthStage ?? '') || '-'}</td>`;
+              const notesCell = `<td rowspan="${span}">${escapeHtml(day.notes ?? '') || '-'}</td>`;
+              if (day.products.length === 0) {
+                return `<tr class="fpc-day-start">${dayCells}${'<td>-</td>'.repeat(productColCount)}${notesCell}</tr>`;
+              }
+              return day.products
+                .map((product, index) => {
+                  const productCells =
+                    cell(product.marketName) +
+                    (cols.technicalName ? cell(product.technicalName) : '') +
+                    // Qty/Acre and Total fall back to the verbatim entry so an
+                    // unresolvable unit is still visible, marked as-logged.
+                    cell(product.qtyPerAcreDisplay ?? `${product.asLogged} (as logged)`) +
+                    cell(product.totalQtyDisplay ?? `${product.asLogged} (as logged)`) +
+                    (cols.phi
+                      ? `<td>${product.phiDays != null ? product.phiDays : '-'}</td>`
+                      : '') +
+                    (cols.safeHarvest ? cell(product.safeHarvestDate) : '') +
+                    (cols.mrl ? cell(product.mrl) : '');
+                  return index === 0
+                    ? `<tr class="fpc-day-start">${dayCells}${productCells}${notesCell}</tr>`
+                    : `<tr>${productCells}</tr>`;
+                })
+                .join('');
             })
             .join('');
-        })
-        .join('');
       html += `
           <table>
             <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>

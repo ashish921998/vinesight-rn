@@ -5,28 +5,28 @@ import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { Symbol } from '@/components/ui/symbol';
-import { type FpcColumnOptions, FPC_FULL_COLUMNS, FPC_LEAN_COLUMNS } from '@/types/report';
+import {
+  type FpcColumnOptions,
+  FPC_FULL_COLUMNS,
+  FPC_LEAN_COLUMNS,
+  fpcColumnsEqualPreset,
+} from '@/types/report';
 
 interface ReportFpcColumnTogglesProps {
   columns: FpcColumnOptions;
   onChange: (columns: FpcColumnOptions) => void;
 }
 
-function matchesPreset(columns: FpcColumnOptions, preset: FpcColumnOptions): boolean {
-  return Object.keys(preset).every(
-    (key) => columns[key as keyof FpcColumnOptions] === preset[key as keyof FpcColumnOptions],
-  );
-}
-
 /**
- * Column-detail preset for the buyer's register. Two chips rather than a card of
- * description blocks: this lives inside the register disclosure, directly above
- * the rows it reshapes, so the effect is visible and the prose is redundant.
+ * Column-detail preset for the buyer's register. Two chips rather than a card
+ * of description blocks: this lives inside the register disclosure, directly
+ * above the rows it reshapes, so the effect is visible and the prose is
+ * redundant. A partial toggle (neither preset) falls back to Simple.
  */
 export function ReportFpcColumnToggles({ columns, onChange }: ReportFpcColumnTogglesProps) {
   const { t } = useTranslation();
   const m3 = useM3();
-  const selectedPreset = matchesPreset(columns, FPC_FULL_COLUMNS) ? 'detailed' : 'simple';
+  const selectedPreset = fpcColumnsEqualPreset(columns, FPC_FULL_COLUMNS) ? 'detailed' : 'simple';
 
   const options = [
     { key: 'simple' as const, columns: FPC_LEAN_COLUMNS, icon: 'doc.text.fill' },

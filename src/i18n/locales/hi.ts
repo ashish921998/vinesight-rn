@@ -3197,13 +3197,6 @@ export const hi = {
 
   reports: {
     title: 'रिपोर्ट',
-    types: {
-      comprehensive: 'व्यापक',
-      operations: 'संचालन',
-      financial: 'वित्तीय',
-      stockUsage: 'स्टॉक उपयोग',
-      fpcActivity: 'निर्यातक रिपोर्ट',
-    },
     fpc: {
       sectionTitle: 'निर्यातक गतिविधि रजिस्टर ({{count}} दिन)',
       day: 'दिन',
@@ -3223,15 +3216,8 @@ export const hi = {
       },
       detail: {
         title: 'रिपोर्ट विवरण',
-        hint: 'निर्यातक रिपोर्ट में शामिल अनुपालन विवरण का स्तर चुनें।',
-        simple: {
-          title: 'सरल',
-          description: 'Fratelli प्रारूप: दिन, तारीख, उत्पाद, तकनीकी नाम, मात्रा, PHI और MRL।',
-        },
-        detailed: {
-          title: 'विस्तृत अनुपालन',
-          description: 'सिंचाई, फसल अवस्था, प्लॉट योग, सुरक्षित कटाई तिथि और पोषक विवरण जोड़ता है।',
-        },
+        simple: { title: 'सरल' },
+        detailed: { title: 'विस्तृत अनुपालन' },
       },
     },
     switchFarmLabel: 'खेत बदलें',
@@ -3256,9 +3242,6 @@ export const hi = {
     },
     selectFromDate: 'प्रारंभ तिथि चुनें',
     selectToDate: 'समाप्ति तिथि चुनें',
-    reportType: {
-      label: 'रिपोर्ट प्रकार',
-    },
     filters: {
       title: 'फ़िल्टर',
     },
@@ -3349,18 +3332,12 @@ export const hi = {
       },
     },
     summary: {
-      totalRecords: 'कुल रिकॉर्ड',
-      waterUsage: 'पानी का उपयोग',
       totalHarvest: 'कुल कटाई',
       netProfit: 'शुद्ध लाभ',
       nothingLogged: 'इस अवधि में कुछ दर्ज नहीं किया गया।',
       loggedRecordsNote: 'इस अवधि में दर्ज रिकॉर्ड के आधार पर',
       comparedWith: '{{period}} से तुलना · दर्ज रिकॉर्ड के आधार पर',
-      stockUsageCount: 'उपयोग की गई वस्तुएं',
-      matchedItems: 'मिलान की गई वस्तुएं',
-      stockCoverage: 'अनुमानित कवरेज',
     },
-    exportSection: 'रिपोर्ट निर्यात करें',
     share: 'साझा करें',
     saveToFiles: 'फ़ाइलों में सहेजें',
     errors: {

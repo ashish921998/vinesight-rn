@@ -181,18 +181,30 @@ export const FPC_FULL_COLUMNS: FpcColumnOptions = {
 };
 
 /**
- * Exact-equality check against the simple preset, NOT a structural property of
- * the columns. Load-bearing in two places: it drops `nutrient-ledger` from the
- * section map (getSectionsForReportType) and switches the PDF/CSV renderer to
- * Fratelli's fixed eight-column layout. Any combination that isn't byte-
- * identical to FPC_LEAN_COLUMNS must fall through to the detailed layout — do
- * not loosen this to a subset check, or a partial toggle would silently pick up
- * the nutrient ledger and the wrong column set.
+ * Exact-equality check of a column set against one of the presets — NOT a
+ * structural property of the columns. Used to detect the two fixed presets
+ * (lean / full); a partial toggle matches neither.
+ */
+export function fpcColumnsEqualPreset(
+  columns: FpcColumnOptions,
+  preset: FpcColumnOptions,
+): boolean {
+  return (Object.keys(preset) as (keyof FpcColumnOptions)[]).every(
+    (key) => columns[key] === preset[key],
+  );
+}
+
+/**
+ * Exact-equality check against the simple preset. Load-bearing in two places:
+ * it drops `nutrient-ledger` from the section map (getSectionsForReportType)
+ * and switches the PDF/CSV/XLSX renderer to Fratelli's fixed eight-column
+ * layout. Any combination that isn't byte-identical to FPC_LEAN_COLUMNS must
+ * fall through to the detailed layout — do not loosen this to a subset check,
+ * or a partial toggle would silently pick up the nutrient ledger and the
+ * wrong column set.
  */
 export function isFpcSimpleReport(columns: FpcColumnOptions): boolean {
-  return (Object.keys(FPC_LEAN_COLUMNS) as (keyof FpcColumnOptions)[]).every(
-    (key) => columns[key] === FPC_LEAN_COLUMNS[key],
-  );
+  return fpcColumnsEqualPreset(columns, FPC_LEAN_COLUMNS);
 }
 
 /**

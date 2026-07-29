@@ -164,3 +164,17 @@ export function formatTime(
     ...options,
   }).format(d);
 }
+
+/**
+ * Format a from→to date window, omitting the year on the from-date when both
+ * ends fall in the same year (e.g. "30 Apr – 29 Jul 2026", but
+ * "30 Dec 2025 – 29 Jan 2026" when they span a year boundary).
+ */
+export function formatDateWindow(from: string, to: string): string {
+  const sameYear = from.slice(0, 4) === to.slice(0, 4);
+  return `${formatDate(from, {
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' as const }),
+  })} – ${formatDate(to, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+}

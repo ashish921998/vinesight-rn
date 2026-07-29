@@ -3225,13 +3225,6 @@ export const mr = {
 
   reports: {
     title: '$t(glossary.report)',
-    types: {
-      comprehensive: 'सविस्तर',
-      operations: 'ऑपरेशन्स',
-      financial: 'आर्थिक',
-      stockUsage: 'स्टॉक वापर',
-      fpcActivity: 'निर्यातदार $t(glossary.report)',
-    },
     fpc: {
       sectionTitle: 'निर्यातदार कृती नोंदवही ({{count}} दिवस)',
       day: 'दिवस',
@@ -3251,16 +3244,8 @@ export const mr = {
       },
       detail: {
         title: '$t(glossary.report) तपशील',
-        hint: 'निर्यातदार अहवालात समाविष्ट करायची अनुपालन तपशीलाची पातळी निवडा.',
-        simple: {
-          title: 'साधा',
-          description: 'Fratelli नमुना: दिवस, दिनांक, उत्पादन, तांत्रिक नाव, मात्रा, PHI आणि MRL.',
-        },
-        detailed: {
-          title: 'सविस्तर अनुपालन',
-          description:
-            '$t(glossary.irrigation), वाढ अवस्था, प्लॉट एकूण, सुरक्षित काढणी आणि पोषक तपशील समाविष्ट करते.',
-        },
+        simple: { title: 'साधा' },
+        detailed: { title: 'सविस्तर अनुपालन' },
       },
     },
     switchFarmLabel: '$t(glossary.farm) बदला',
@@ -3285,9 +3270,6 @@ export const mr = {
     },
     selectFromDate: 'पासूनचा दिनांक निवडा',
     selectToDate: 'पर्यंतचा दिनांक निवडा',
-    reportType: {
-      label: '$t(glossary.report) प्रकार',
-    },
     filters: {
       title: 'फिल्टर',
     },
@@ -3377,18 +3359,12 @@ export const mr = {
       },
     },
     summary: {
-      totalRecords: 'एकूण नोंदी',
-      waterUsage: 'पाणी वापर',
       totalHarvest: 'एकूण $t(glossary.harvest)',
       netProfit: 'निव्वळ नफा',
       nothingLogged: 'या कालावधीत काहीही नोंदवले नाही.',
       loggedRecordsNote: 'या कालावधीत नोंदवलेल्या नोंदींवर आधारित',
       comparedWith: '{{period}} शी तुलना · नोंदवलेल्या नोंदींवर आधारित',
-      stockUsageCount: 'वापरलेल्या वस्तू',
-      matchedItems: 'जुळलेल्या वस्तू',
-      stockCoverage: 'अंदाजे कव्हरेज',
     },
-    exportSection: 'रिपोर्ट निर्यात करा',
     share: 'सामायिक करा',
     saveToFiles: 'फाइलमध्ये जतन करा',
     errors: {

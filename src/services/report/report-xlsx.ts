@@ -1,7 +1,7 @@
 import { strToU8, zipSync } from 'fflate';
 import { formatDate } from '@/i18n/format';
 import type { ReportData } from '@/types/report';
-import { formatDaysAfterPruningValue } from './report-format';
+import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows } from './report-fpc-simple';
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -60,44 +60,30 @@ function buildSheetXml(data: ReportData): string {
     3,
   );
 
-  const headers = [
-    'Sr.No',
-    'Days',
-    'Date',
-    'Product Name',
-    'Technical Name',
-    'Qty Per Liter',
-    'PHI',
-    'MRL',
-  ];
   rows.push(
-    `<row r="4">${headers.map((header, index) => inlineCell(4, index, header, 4)).join('')}</row>`,
+    `<row r="4">${FPC_SIMPLE_HEADERS.map((header, index) => inlineCell(4, index, header, 4)).join('')}</row>`,
   );
 
   let rowNumber = 5;
-  let serial = 0;
-  for (const day of data.fpcActivity ?? []) {
-    if (day.products.length > 0) serial += 1;
-    day.products.forEach((product, index) => {
-      const values = [
-        index === 0 ? String(serial) : '',
-        index === 0 ? formatDaysAfterPruningValue(day.daysAfterPruning) : '',
-        index === 0 ? day.date : '',
-        product.marketName,
-        product.technicalName ?? '',
-        product.asLogged,
-        product.phiDays != null ? String(product.phiDays) : '',
-        product.mrl ?? '',
-      ];
-      rows.push(
-        `<row r="${rowNumber}">${values
-          .map((value, column) =>
-            inlineCell(rowNumber, column, value, column >= 3 && column <= 4 ? 6 : 5),
-          )
-          .join('')}</row>`,
-      );
-      rowNumber += 1;
-    });
+  for (const row of buildFpcSimpleRows(data.fpcActivity ?? [])) {
+    const values = [
+      row.srNo,
+      row.days,
+      row.date,
+      row.productName,
+      row.technicalName,
+      row.qtyPerLiter,
+      row.phi,
+      row.mrl,
+    ];
+    rows.push(
+      `<row r="${rowNumber}">${values
+        .map((value, column) =>
+          inlineCell(rowNumber, column, value, column >= 3 && column <= 4 ? 6 : 5),
+        )
+        .join('')}</row>`,
+    );
+    rowNumber += 1;
   }
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>

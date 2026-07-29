@@ -38,7 +38,7 @@ import { resolveBaseline, computeReportDeltas } from '../services/report-compari
 import { useCurrency } from './use-currency';
 import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
 import { formatLocalDate } from '@/utils/date';
-import { formatDate } from '@/i18n/format';
+import { formatDate, formatDateWindow } from '@/i18n/format';
 import type {
   ExpenseRecord,
   FarmSeason,
@@ -472,19 +472,12 @@ export function useReportComparison(filters: ReportFilters) {
       : current.preview.summary;
     if (!currentSummary) return null;
 
-    const formatWindow = (from: string, to: string) =>
-      `${formatDate(from, {
-        day: 'numeric',
-        month: 'short',
-        ...(from.slice(0, 4) === to.slice(0, 4) ? {} : { year: 'numeric' as const }),
-      })} – ${formatDate(to, { day: 'numeric', month: 'short', year: 'numeric' })}`;
-
     const currentLabel = current.selectedSeason
       ? formatReportSeasonLabel(current.selectedSeason)
-      : formatWindow(filters.dateRange.from, filters.dateRange.to);
+      : formatDateWindow(filters.dateRange.from, filters.dateRange.to);
     const baselineLabel = baselineResolution.baselineSeason
       ? formatReportSeasonLabel(baselineResolution.baselineSeason)
-      : formatWindow(
+      : formatDateWindow(
           baselineResolution.filters.dateRange.from,
           baselineResolution.filters.dateRange.to,
         );

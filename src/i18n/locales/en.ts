@@ -3212,13 +3212,6 @@ export const en = {
 
   reports: {
     title: 'Reports',
-    types: {
-      comprehensive: 'Comprehensive',
-      operations: 'Operations',
-      financial: 'Financial',
-      stockUsage: 'Stock Usage',
-      fpcActivity: 'Exporter Report',
-    },
     fpc: {
       sectionTitle: 'Exporter Activity Register ({{count}} days)',
       day: 'Day',
@@ -3238,17 +3231,8 @@ export const en = {
       },
       detail: {
         title: 'Report detail',
-        hint: 'Choose the amount of compliance detail included in the exporter report.',
-        simple: {
-          title: 'Simple',
-          description:
-            'Fratelli format: days, date, product, technical name, quantity, PHI and MRL.',
-        },
-        detailed: {
-          title: 'Detailed compliance',
-          description:
-            'Adds irrigation, crop stage, plot totals, safe-harvest dates and nutrient details.',
-        },
+        simple: { title: 'Simple' },
+        detailed: { title: 'Detailed compliance' },
       },
     },
     switchFarmLabel: 'Switch farm',
@@ -3273,9 +3257,6 @@ export const en = {
     },
     selectFromDate: 'Select From Date',
     selectToDate: 'Select To Date',
-    reportType: {
-      label: 'Report Type',
-    },
     filters: {
       title: 'Filters',
     },
@@ -3365,18 +3346,12 @@ export const en = {
       },
     },
     summary: {
-      totalRecords: 'Total Records',
-      waterUsage: 'Water Usage',
       totalHarvest: 'Total Harvest',
       netProfit: 'Net Profit',
       nothingLogged: 'Nothing logged in this period.',
       loggedRecordsNote: 'Based on records logged in this period',
       comparedWith: 'Compared with {{period}} · based on logged records',
-      stockUsageCount: 'Unique Items Used',
-      matchedItems: 'Matched Items',
-      stockCoverage: 'Estimated Coverage',
     },
-    exportSection: 'Export Report',
     share: 'Share',
     saveToFiles: 'Save to Files',
     errors: {

@@ -22,6 +22,7 @@ import {
   countFpcProductOptionalCols,
   EMPTY_SECTION_TEXT,
 } from './report-format';
+import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows } from './report-fpc-simple';
 
 /**
  * FPC activity register CSV: date columns written once per day block,
@@ -44,25 +45,21 @@ function appendFpcActivityCSV(
 
   rows.push(`FPC ACTIVITY REGISTER (${days.length} days, ${productCount} product applications)`);
   if (isFpcSimpleReport(cols)) {
-    rows.push('Sr.No,Days,Date,Product Name,Technical Name,Qty Per Liter,PHI,MRL');
-    let serial = 0;
-    days.forEach((day) => {
-      if (day.products.length > 0) serial += 1;
-      day.products.forEach((product, index) => {
-        rows.push(
-          [
-            index === 0 ? String(serial) : '',
-            index === 0 ? formatDaysAfterPruningValue(day.daysAfterPruning) : '',
-            index === 0 ? escapeCSV(day.date) : '',
-            escapeCSV(product.marketName),
-            escapeCSV(product.technicalName ?? ''),
-            escapeCSV(product.asLogged),
-            product.phiDays != null ? String(product.phiDays) : '',
-            escapeCSV(product.mrl ?? ''),
-          ].join(','),
-        );
-      });
-    });
+    rows.push(FPC_SIMPLE_HEADERS.join(','));
+    for (const row of buildFpcSimpleRows(days)) {
+      rows.push(
+        [
+          row.srNo,
+          row.days,
+          escapeCSV(row.date),
+          escapeCSV(row.productName),
+          escapeCSV(row.technicalName),
+          escapeCSV(row.qtyPerLiter),
+          row.phi,
+          escapeCSV(row.mrl),
+        ].join(','),
+      );
+    }
     rows.push('');
     return;
   }
