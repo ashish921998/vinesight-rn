@@ -1,0 +1,19 @@
+README.md
+  s_bf0eefefaecf37::t_408364da93c2f3 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "078937c3d0561ae4de773ba602e5a01754c896e5",
+  "prompts": {},
+  "sessions": {
+    "s_bf0eefefaecf37": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019faf2d-b221-73d3-993c-591008c5907c",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
