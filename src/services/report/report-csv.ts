@@ -7,6 +7,7 @@ import {
   FpcActivityDayRow,
   FpcActivityProductRow,
   ReportUsageLenses,
+  isFpcSimpleReport,
 } from '../../types/report';
 import { formatDate } from '@/i18n/format';
 import type { AreaUnitPreference } from '@/utils/preferences';
@@ -42,6 +43,29 @@ function appendFpcActivityCSV(
   }
 
   rows.push(`FPC ACTIVITY REGISTER (${days.length} days, ${productCount} product applications)`);
+  if (isFpcSimpleReport(cols)) {
+    rows.push('Sr.No,Days,Date,Product Name,Technical Name,Qty Per Liter,PHI,MRL');
+    let serial = 0;
+    days.forEach((day) => {
+      day.products.forEach((product) => {
+        serial += 1;
+        rows.push(
+          [
+            String(serial),
+            formatDaysAfterPruningValue(day.daysAfterPruning),
+            escapeCSV(day.date),
+            escapeCSV(product.marketName),
+            escapeCSV(product.technicalName ?? ''),
+            escapeCSV(product.asLogged),
+            product.phiDays != null ? String(product.phiDays) : '',
+            escapeCSV(product.mrl ?? ''),
+          ].join(','),
+        );
+      });
+    });
+    rows.push('');
+    return;
+  }
   rows.push(
     [
       'Date',
@@ -262,7 +286,7 @@ export function generateCSV(
   fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
 ): string {
   const rows: string[] = [];
-  const visibleSections = getVisibleSections(reportType);
+  const visibleSections = getVisibleSections(reportType, fpcColumns);
   const areaUnitLabel = areaUnit === 'hectares' ? 'hectares' : 'acres';
   const pushEmptySection = (title: string) => {
     rows.push(title);

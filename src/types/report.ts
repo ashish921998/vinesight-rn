@@ -5,11 +5,7 @@
 
 export type ReportFormat = 'pdf' | 'csv';
 export type ReportType =
-  | 'operations'
-  | 'financial'
-  | 'comprehensive'
-  | 'stock-usage'
-  | 'fpc-activity';
+  'operations' | 'financial' | 'comprehensive' | 'stock-usage' | 'fpc-activity';
 export type ReportCompareMode = 'previous' | 'yoy';
 export type ReportSectionKey =
   | 'meta'
@@ -62,14 +58,21 @@ const REPORT_TYPE_SECTION_MAP: Record<ReportType, ReportSectionKey[]> = {
   // not from warehouse stock movement — a stock report showing "N given" would
   // conflate what left the shelf with what reached the vines.
   'stock-usage': ['meta', 'executive', 'stock'],
-  // FPC/buyer-facing activity register (Fratelli format): one chronological
-  // table, one row per product applied, grouped under each date, followed by
-  // a nutrient (N-P-K) summary — how much N / P₂O₅ / K₂O the vine received.
+  // FPC/buyer-facing activity register (Fratelli format). The simple preset
+  // is the eight-column register Fratelli supplied; detailed mode adds the
+  // nutrient ledger and the extra audit fields.
   'fpc-activity': ['meta', 'fpc-activity', 'nutrient-ledger'],
 };
 
-export function getSectionsForReportType(reportType: ReportType): ReportSectionKey[] {
-  return [...REPORT_TYPE_SECTION_MAP[reportType]];
+export function getSectionsForReportType(
+  reportType: ReportType,
+  fpcColumns?: FpcColumnOptions,
+): ReportSectionKey[] {
+  const sections = [...REPORT_TYPE_SECTION_MAP[reportType]];
+  if (reportType === 'fpc-activity' && fpcColumns && isFpcSimpleReport(fpcColumns)) {
+    return sections.filter((section) => section !== 'nutrient-ledger');
+  }
+  return sections;
 }
 
 export interface DateRange {
@@ -109,12 +112,7 @@ export interface ExportOptions {
 }
 
 export type ReportDataType =
-  | 'irrigation'
-  | 'spray'
-  | 'fertigation'
-  | 'harvest'
-  | 'expense'
-  | 'stock';
+  'irrigation' | 'spray' | 'fertigation' | 'harvest' | 'expense' | 'stock';
 
 export interface ReportData {
   farmName: string;
@@ -161,13 +159,13 @@ export interface FpcColumnOptions {
   mrl: boolean;
 }
 
-/** Buyer-facing default: only the activity spine, no compliance/drip columns. */
+/** Fratelli's supplied eight-column register: technical name, PHI and MRL. */
 export const FPC_LEAN_COLUMNS: FpcColumnOptions = {
   irrigation: false,
-  technicalName: false,
-  phi: false,
+  technicalName: true,
+  phi: true,
   safeHarvest: false,
-  mrl: false,
+  mrl: true,
 };
 
 /** Audit-facing: every column, for GrapeNet/export-compliance buyers. */
@@ -178,6 +176,12 @@ export const FPC_FULL_COLUMNS: FpcColumnOptions = {
   safeHarvest: true,
   mrl: true,
 };
+
+export function isFpcSimpleReport(columns: FpcColumnOptions): boolean {
+  return (Object.keys(FPC_LEAN_COLUMNS) as (keyof FpcColumnOptions)[]).every(
+    (key) => columns[key] === FPC_LEAN_COLUMNS[key],
+  );
+}
 
 /** Optional-column keys in display order — drives the UI toggle chips. */
 export const FPC_OPTIONAL_COLUMN_KEYS: (keyof FpcColumnOptions)[] = [

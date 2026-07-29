@@ -4,6 +4,7 @@ import {
   ReportType,
   FpcColumnOptions,
   FPC_LEAN_COLUMNS,
+  isFpcSimpleReport,
 } from '../../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
 import { getDefaultCurrency } from '@/i18n/currency';
@@ -33,7 +34,7 @@ export function generatePDFHtml(
   areaUnit: AreaUnitPreference = 'acres',
   fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
 ): string {
-  const visibleSections = getVisibleSections(reportType);
+  const visibleSections = getVisibleSections(reportType, fpcColumns);
   const maxRowsPerSection = 20;
   const areaUnitLabel = areaUnit === 'hectares' ? 'hectares' : 'acres';
   const matchedStockRows = data.stock.filter((row) => row.matchStrategy !== 'unmatched');
@@ -189,29 +190,41 @@ export function generatePDFHtml(
       html += `<p class="empty-section">${EMPTY_SECTION_TEXT}</p>`;
     } else {
       const cols = fpcColumns;
-      const headers = [
-        'Date',
-        'Day',
-        ...(cols.irrigation ? ['Irrigation (hrs)', 'Water (mm)'] : []),
-        'Stage',
-        'Market Name',
-        ...(cols.technicalName ? ['Technical Name'] : []),
-        'Qty/Acre',
-        'Total Qty/Plot',
-        ...(cols.phi ? ['PHI (days)'] : []),
-        ...(cols.safeHarvest ? ['Safe Harvest'] : []),
-        ...(cols.mrl ? ['MRL'] : []),
-        'Details',
-      ];
+      const simple = isFpcSimpleReport(cols);
+      const headers = simple
+        ? ['Sr.No', 'Days', 'Date', 'Product Name', 'Technical Name', 'Qty Per Liter', 'PHI', 'MRL']
+        : [
+            'Date',
+            'Day',
+            ...(cols.irrigation ? ['Irrigation (hrs)', 'Water (mm)'] : []),
+            'Stage',
+            'Market Name',
+            ...(cols.technicalName ? ['Technical Name'] : []),
+            'Qty/Acre',
+            'Total Qty/Plot',
+            ...(cols.phi ? ['PHI (days)'] : []),
+            ...(cols.safeHarvest ? ['Safe Harvest'] : []),
+            ...(cols.mrl ? ['MRL'] : []),
+            'Details',
+          ];
       // Product-level column count: 3 fixed PDF product columns (Market,
       // Qty/Acre, Total) plus enabled optionals — derived from the same flags
       // as the header/cells so a day with no products fills the right width.
       const productColCount = 3 + countFpcProductOptionalCols(cols);
       const cell = (value: string | null | undefined) =>
         `<td>${escapeHtml(value ?? '') || '-'}</td>`;
+      let serial = 0;
       const bodyRows = days
         .map((day) => {
           const span = Math.max(1, day.products.length);
+          if (simple) {
+            return day.products
+              .map((product, index) => {
+                serial += 1;
+                return `<tr class="${index === 0 ? 'fpc-day-start' : ''}">${cell(String(serial))}${cell(formatDaysAfterPruningValue(day.daysAfterPruning))}${cell(day.date)}${cell(product.marketName)}${cell(product.technicalName)}${cell(product.asLogged)}${cell(product.phiDays != null ? String(product.phiDays) : null)}${cell(product.mrl)}</tr>`;
+              })
+              .join('');
+          }
           const dayCells =
             `<td rowspan="${span}">${escapeHtml(day.date)}</td>` +
             `<td rowspan="${span}">${formatDaysAfterPruningValue(day.daysAfterPruning)}</td>` +

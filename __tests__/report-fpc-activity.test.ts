@@ -289,17 +289,16 @@ describe('FPC register rendering', () => {
     expect(csv).not.toContain('STOCK USAGE SUMMARY');
   });
 
-  it('CSV (lean default): drops irrigation, technical name, PHI, safe harvest and MRL', () => {
+  it('CSV (simple default): matches Fratelli’s eight-column register', () => {
     const csv = ReportService.generateCSV(data, 'fpc-activity');
-    const header = csv.split('\n').find((line) => line.startsWith('Date,Day,')) ?? '';
-    expect(header).toBe('Date,Day,Stage,Market Name,Qty/Acre,Total Qty/Plot,As Logged,Details');
+    const header = csv.split('\n').find((line) => line.startsWith('Sr.No,Days,')) ?? '';
+    expect(header).toBe('Sr.No,Days,Date,Product Name,Technical Name,Qty Per Liter,PHI,MRL');
     expect(header).not.toContain('Irrigation');
-    expect(header).not.toContain('Technical Name');
-    expect(header).not.toContain('PHI');
-    expect(header).not.toContain('MRL');
-    // The spine still renders every product.
+    expect(header).not.toContain('Safe Harvest');
+    expect(header).not.toContain('Stage');
     expect(csv).toContain('0-52-34');
     expect(csv).toContain('12-61-00');
+    expect(csv).not.toContain('NUTRIENT LEDGER');
   });
 
   it('PDF (full preset): renders every product row with day rowspan, no truncation note', () => {
@@ -320,20 +319,22 @@ describe('FPC register rendering', () => {
     expect(html).not.toContain('more records');
   });
 
-  it('PDF (lean default): omits toggled-off column headers', () => {
+  it('PDF (simple default): matches Fratelli’s eight-column register', () => {
     const html = ReportService.generatePDFHtml(
       data,
       ReportService.calculateSummary(data, 'fpc-activity'),
       'fpc-activity',
     );
-    expect(html).toContain('<th>Stage</th>');
-    expect(html).toContain('<th>Market Name</th>');
+    expect(html).toContain('<th>Sr.No</th>');
+    expect(html).toContain('<th>Days</th>');
+    expect(html).toContain('<th>Product Name</th>');
+    expect(html).toContain('<th>Technical Name</th>');
+    expect(html).toContain('<th>Qty Per Liter</th>');
+    expect(html).toContain('<th>PHI</th>');
+    expect(html).toContain('<th>MRL</th>');
     expect(html).not.toContain('Irrigation (hrs)');
-    expect(html).not.toContain('<th>Technical Name</th>');
-    expect(html).not.toContain('<th>PHI (days)</th>');
-    expect(html).not.toContain('<th>MRL</th>');
-    // rowspan grouping still works with the reduced column set.
-    expect(html).toContain('rowspan="2"');
+    expect(html).not.toContain('<th>Stage</th>');
+    expect(html).not.toContain('Nutrient Ledger');
   });
 
   it('CSV (partial toggle): a single enabled column appears, others stay hidden', () => {
@@ -344,12 +345,12 @@ describe('FPC register rendering', () => {
     const header = csv.split('\n').find((line) => line.startsWith('Date,Day,')) ?? '';
     expect(header).toContain('Irrigation (hrs)');
     expect(header).toContain('Water (mm)');
-    expect(header).not.toContain('Technical Name');
-    expect(header).not.toContain('MRL');
+    expect(header).toContain('Technical Name');
+    expect(header).toContain('MRL');
   });
 
   it('appends an N-P-K nutrient summary after the register (CSV + PDF)', () => {
-    const csv = ReportService.generateCSV(data, 'fpc-activity');
+    const csv = ReportService.generateCSV(data, 'fpc-activity', 'acres', FPC_FULL_COLUMNS);
     expect(csv).toContain('NUTRIENT LEDGER - NUTRIENTS APPLIED');
     // Register comes first, nutrient summary after it.
     expect(csv.indexOf('FPC ACTIVITY REGISTER')).toBeLessThan(
@@ -360,6 +361,9 @@ describe('FPC register rendering', () => {
       data,
       ReportService.calculateSummary(data, 'fpc-activity'),
       'fpc-activity',
+      undefined,
+      undefined,
+      FPC_FULL_COLUMNS,
     );
     expect(html).toContain('Nutrient Ledger');
     expect(html.indexOf('FPC Activity Register')).toBeLessThan(html.indexOf('Nutrient Ledger'));
