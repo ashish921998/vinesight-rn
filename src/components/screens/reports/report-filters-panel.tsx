@@ -192,9 +192,12 @@ export function ReportFiltersPanel({
           layout={ReanimatedLayout.springify().dampingRatio(1)}
           style={{ gap: spacing[4] }}
         >
+          {/* The farm arrives preselected from the `farmId` param — this screen
+              is only reachable from a farm — so this row switches farms rather
+              than selecting one, and it is pointless for anyone with one farm. */}
           {farms.length > 1 ? (
             <View style={{ gap: spacing[2] }}>
-              <Text style={microLabelStyle}>{t('reports.selectFarmLabel')}</Text>
+              <Text style={microLabelStyle}>{t('reports.switchFarmLabel')}</Text>
               <View
                 accessibilityRole="radiogroup"
                 style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}

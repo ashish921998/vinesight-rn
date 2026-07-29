@@ -3263,8 +3263,7 @@ export const mr = {
         },
       },
     },
-    selectFarmLabel: '$t(glossary.farm) निवडा',
-    selectFarmPlaceholder: 'एक $t(glossary.farm) निवडा',
+    switchFarmLabel: '$t(glossary.farm) बदला',
     dateRange: {
       label: 'दिनांक श्रेणी',
     },

@@ -3234,8 +3234,7 @@ export const hi = {
         },
       },
     },
-    selectFarmLabel: 'खेत चुनें',
-    selectFarmPlaceholder: 'एक खेत चुनें',
+    switchFarmLabel: 'खेत बदलें',
     dateRange: {
       label: 'तारीख़ सीमा',
     },

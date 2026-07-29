@@ -3251,8 +3251,7 @@ export const en = {
         },
       },
     },
-    selectFarmLabel: 'Select farm',
-    selectFarmPlaceholder: 'Select a farm',
+    switchFarmLabel: 'Switch farm',
     dateRange: {
       label: 'Date Range',
     },
