@@ -1,0 +1,24 @@
+src/components/screens/reports/report-export-actions.tsx
+  s_33370ae2721b1f::t_68f113d2888e13 83,85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "4114b672dc4cdd9337726efc1e29c307d874ba32",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_33370ae2721b1f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019fae56-bbe7-7819-8790-a3b0da4ead44",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
