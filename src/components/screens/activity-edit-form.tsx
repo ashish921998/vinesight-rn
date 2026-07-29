@@ -143,20 +143,36 @@ export function ActivityEditForm({
   const [linkedFertigationData, setLinkedFertigationData] = useState<FertigationFormData>({
     fertilizers: [],
   });
-  const [fertInitializedForId, setFertInitializedForId] = useState<number | undefined>(undefined);
+  // The hydration guard keys on the LINKED RECORD's identity, not just the
+  // irrigation id: isSuccess can be served from the (MMKV-persisted, 5min
+  // staleTime) cache before a background refetch reveals a just-created rider.
+  // If the guard only tracked record.id, the form would lock onto that stale
+  // "no rows" snapshot while handleSave reads the live linkedFertigationRecord
+  // — and Save would then delete a record the user never saw. Re-keying makes
+  // the form re-hydrate when the linked record appears/changes; unsaved
+  // fertilizer edits in that brief window are replaced, which is the safer
+  // trade against silent deletion.
+  const [fertInitializedKey, setFertInitializedKey] = useState<string | undefined>(undefined);
+  const fertHydrationKey = `${record.id}:${linkedFertigationRecord?.id ?? 'none'}`;
   // isSuccess, not !isLoading: an errored query must NOT count as settled —
   // treating it as "no linked record" would let Save create a duplicate rider
   // for an irrigation whose fertigation merely failed to load.
   const isFertigationSettled = logType === 'irrigation' && fertigationQuery.isSuccess;
   useEffect(() => {
-    if (!isVisible || !isFertigationSettled || fertInitializedForId === record.id) return;
+    if (!isVisible || !isFertigationSettled || fertInitializedKey === fertHydrationKey) return;
     setLinkedFertigationData(
       linkedFertigationRecord
         ? fertigationRecordToFormData(linkedFertigationRecord)
         : { fertilizers: [] },
     );
-    setFertInitializedForId(record.id);
-  }, [isVisible, isFertigationSettled, fertInitializedForId, record.id, linkedFertigationRecord]);
+    setFertInitializedKey(fertHydrationKey);
+  }, [
+    isVisible,
+    isFertigationSettled,
+    fertInitializedKey,
+    fertHydrationKey,
+    linkedFertigationRecord,
+  ]);
 
   const isFormValid = useMemo(() => {
     switch (logType) {
@@ -453,7 +469,7 @@ export function ActivityEditForm({
   const handleClose = () => {
     setIsInitialized(false);
     setInitializedRecordId(undefined);
-    setFertInitializedForId(undefined);
+    setFertInitializedKey(undefined);
     onClose();
   };
 
@@ -487,7 +503,7 @@ export function ActivityEditForm({
             {/* Linked fertigation edits inline with its irrigation — same fused
                 UX as create. Hidden until the linked record has loaded so a
                 premature Save can't create a duplicate rider. */}
-            {isFertigationSettled && fertInitializedForId === record.id && (
+            {isFertigationSettled && fertInitializedKey === fertHydrationKey && (
               <View style={{ marginTop: spacing[4] }}>
                 <FertigationForm
                   data={linkedFertigationData}
