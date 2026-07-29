@@ -423,6 +423,17 @@ export default function LogsScreen() {
         case 'irrigation': {
           const r = record as IrrigationRecord;
           if (r.id) {
+            // The timeline folds linked fertigation into this irrigation's row,
+            // so deleting the row must delete the pair — otherwise the FK's
+            // ON DELETE SET NULL resurrects the fertigation as a standalone
+            // card the user thought they just deleted. Fertigation first, so a
+            // failure leaves both rows intact for a clean retry.
+            const linked = displayFertigationRecords.filter(
+              (f) => f.irrigation_record_id === r.id && f.id != null,
+            );
+            for (const f of linked) {
+              await deleteFertigation.mutateAsync({ id: f.id!, farmId: farmIdNum });
+            }
             await deleteIrrigation.mutateAsync({ id: r.id, farmId: farmIdNum });
           }
           break;
@@ -471,6 +482,7 @@ export default function LogsScreen() {
   }, [
     deletingLog,
     selectedFarmId,
+    displayFertigationRecords,
     deleteIrrigation,
     deleteSpray,
     deleteHarvest,

@@ -373,10 +373,14 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
               payload: { ...fertPayload, irrigation_record_id: recordId },
             });
             const fertId = (fertResult as { id?: unknown } | null | undefined)?.id;
-            linkedFertigation = {
-              recordId: typeof fertId === 'number' ? fertId : null,
-              clientUuid: null,
-            };
+            if (typeof fertId !== 'number') {
+              // Same contract as the irrigation branch: without a numeric pk
+              // the rider can't be deleted later, so fail hard and let the
+              // compensation below undo the irrigation instead of persisting
+              // an undeletable orphan pair.
+              throw new Error('Delegated log save returned no record id');
+            }
+            linkedFertigation = { recordId: fertId, clientUuid: null };
           } catch (error) {
             try {
               await deleteDelegatedLog('irrigation', recordId);

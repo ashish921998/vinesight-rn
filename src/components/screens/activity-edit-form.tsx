@@ -144,7 +144,10 @@ export function ActivityEditForm({
     fertilizers: [],
   });
   const [fertInitializedForId, setFertInitializedForId] = useState<number | undefined>(undefined);
-  const isFertigationSettled = logType === 'irrigation' && !fertigationQuery.isLoading;
+  // isSuccess, not !isLoading: an errored query must NOT count as settled —
+  // treating it as "no linked record" would let Save create a duplicate rider
+  // for an irrigation whose fertigation merely failed to load.
+  const isFertigationSettled = logType === 'irrigation' && fertigationQuery.isSuccess;
   useEffect(() => {
     if (!isVisible || !isFertigationSettled || fertInitializedForId === record.id) return;
     setLinkedFertigationData(
