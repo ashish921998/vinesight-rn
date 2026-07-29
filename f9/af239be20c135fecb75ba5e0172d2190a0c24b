@@ -1,0 +1,34 @@
+src/components/screens/reports/report-export-actions.tsx
+  s_33370ae2721b1f::t_0eed3dbefd669e 21,31,45,110
+app/reports.tsx
+  s_33370ae2721b1f::t_6f6726f330a36c 504
+__tests__/exporter-report-controls.test.tsx
+  s_33370ae2721b1f::t_6196d70f540ec5 76,97
+src/services/report/report-io.ts
+  s_33370ae2721b1f::t_187c23f6f56362 24,59
+__tests__/report-fpc-activity.test.ts
+  s_33370ae2721b1f::t_fe8374fbc39217 367-369
+src/services/report/report-xlsx.ts
+  s_33370ae2721b1f::t_4f1769aef4ff96 6,55-56,59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "f9af239be20c135fecb75ba5e0172d2190a0c24b",
+  "prompts": {},
+  "humans": {
+    "h_fcdce7b1b8bf31": {
+      "author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_33370ae2721b1f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019fae56-bbe7-7819-8790-a3b0da4ead44",
+        "model": "glm-5.2"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
