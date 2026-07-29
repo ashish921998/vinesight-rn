@@ -360,29 +360,17 @@ export function ReportDocumentBody({
   const hasPerPlotContent =
     (usage?.perPlot.rows.length ?? 0) > 0 || (usage?.perPlot.rateOnly.length ?? 0) > 0;
 
-  // ── Section card wrapper with left accent bar ──────────────────────────
+  // ── Section wrapper ────────────────────────────────────────────────────
 
   const renderSectionCard = (accentColor: string, children: React.ReactNode) => (
     <View
-      style={[
-        panelStyle,
-        {
-          flexDirection: 'row',
-          overflow: 'hidden',
-          borderCurve: 'continuous',
-        },
-      ]}
+      style={{
+        borderTopWidth: 1,
+        borderTopColor: colorWithOpacity(accentColor, 0.22),
+        paddingTop: spacing[4],
+      }}
     >
-      {/* Left accent bar */}
-      <View
-        style={{
-          width: 4,
-          backgroundColor: accentColor,
-          borderTopLeftRadius: 4,
-          borderBottomLeftRadius: 4,
-        }}
-      />
-      <View style={{ flex: 1, paddingLeft: spacing[3] }}>{children}</View>
+      {children}
     </View>
   );
 

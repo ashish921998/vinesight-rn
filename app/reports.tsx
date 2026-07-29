@@ -331,14 +331,12 @@ export default function ReportsScreen() {
 
   const panelStyle = {
     backgroundColor: m3.surface.s100,
-    borderRadius: borderRadius.xl,
+    borderRadius: radius.lg,
     borderCurve: 'continuous' as const,
-    padding: spacing[3],
+    padding: spacing[4],
     borderWidth: 1,
-    borderColor: m3.surface.s300,
+    borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.7),
   };
-
-  const showStickyExport = Boolean(farms && farms.length > 0);
 
   return (
     <SafeAreaView
@@ -420,8 +418,9 @@ export default function ReportsScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: spacing[4],
-          paddingBottom: (showStickyExport ? spacing[24] : spacing[10]) + insets.bottom,
-          gap: spacing[4],
+          paddingTop: spacing[2],
+          paddingBottom: spacing[10] + insets.bottom,
+          gap: spacing[5],
         }}
       >
         {farmsLoading ? (
@@ -451,6 +450,7 @@ export default function ReportsScreen() {
               farms={farms}
               selectedFarmId={selectedFarmId}
               selectedFarm={selectedFarm}
+              allowFarmSwitching={initialFarmId == null}
               areaUnit={areaUnit}
               onSelectFarm={(farmId) => {
                 setSelectedFarmId(farmId);
@@ -475,7 +475,6 @@ export default function ReportsScreen() {
                 setShowFromPicker(false);
                 setShowToPicker(true);
               }}
-              panelStyle={panelStyle}
             />
 
             {dataLoading ? (
@@ -497,6 +496,16 @@ export default function ReportsScreen() {
                   comparison={comparison}
                 />
 
+                <ReportExportActions
+                  canExport={Boolean(preview)}
+                  isExporting={isExporting}
+                  exportFormat={selectedExportFormat}
+                  onSelectFormat={setSelectedExportFormat}
+                  onExportPdf={() => runExport('share', selectedExportFormat)}
+                  onDownload={() => runExport('download', selectedExportFormat)}
+                  panelStyle={panelStyle}
+                />
+
                 <ReportDocumentBody
                   preview={preview}
                   reportType={REPORT_TYPE}
@@ -516,28 +525,6 @@ export default function ReportsScreen() {
           </>
         )}
       </ScrollView>
-
-      {/* ── Sticky bottom export bar ── */}
-      {showStickyExport ? (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-          }}
-        >
-          <ReportExportActions
-            canExport={Boolean(preview)}
-            isExporting={isExporting}
-            exportFormat={selectedExportFormat}
-            onSelectFormat={setSelectedExportFormat}
-            onExportPdf={() => runExport('share', selectedExportFormat)}
-            onDownload={() => runExport('download', selectedExportFormat)}
-            panelStyle={{ paddingBottom: spacing[6] + insets.bottom }}
-          />
-        </View>
-      ) : null}
 
       {Platform.OS !== 'ios' && showFromPicker && (
         <DateTimePicker

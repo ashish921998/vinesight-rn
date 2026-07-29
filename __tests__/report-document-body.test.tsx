@@ -201,23 +201,18 @@ describe('reports formal rendering', () => {
     expect(getByText(/reports\.stockDetails\.title/)).toBeTruthy();
   });
 
-  // Replaces an earlier case asserting the summary swapped its tile set per
-  // report type. With one report there is one tile set, filtered to what
-  // actually has a value — a "0L" tile implies a measurement that came back
-  // zero, when nothing was logged at all.
-  it('summary renders a tile per non-zero metric and drops the record count', () => {
+  it('overview keeps only farmer outcome metrics', () => {
     const { getByText, queryByText } = render(
       <ReportExecutiveSummary preview={PREVIEW} preferredCurrency="INR" />,
     );
 
-    expect(getByText('reports.summary.waterUsage')).toBeTruthy();
     expect(getByText('reports.summary.totalHarvest')).toBeTruthy();
     expect(getByText('reports.formal.revenue')).toBeTruthy();
     expect(getByText('reports.formal.expenses')).toBeTruthy();
     expect(getByText('reports.summary.netProfit')).toBeTruthy();
-    expect(getByText('reports.summary.stockUsageCount')).toBeTruthy();
-
-    // A record count is a database fact, not a farming one.
+    expect(getByText('reports.summary.loggedRecordsNote')).toBeTruthy();
+    expect(queryByText('reports.summary.waterUsage')).toBeNull();
+    expect(queryByText('reports.summary.stockUsageCount')).toBeNull();
     expect(queryByText('reports.summary.totalRecords')).toBeNull();
   });
 

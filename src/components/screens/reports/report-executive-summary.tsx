@@ -3,25 +3,25 @@ import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
-import { useDomainColors } from '@/styles/use-domain-colors';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatNumber } from '@/i18n/format';
 import type { MetricDelta, ReportComparison, ReportPreview } from '@/types/report';
 import { Symbol as Icon } from '@/components/ui/symbol';
 
-const CARD_MIN_HEIGHT = 92;
+const CARD_MIN_HEIGHT = 82;
 
 /**
  * Small period-over-period chip shown top-right of each tile.
- * Renders nothing for sub-1% / unchanged so we don't show "↑ 0%" noise.
+ * Renders nothing when there is no meaningful numeric baseline. "New" is not
+ * useful here because it can mean either first-time activity or missing data.
  */
 function DeltaChip({ delta, color }: { delta: MetricDelta | undefined; color: string }) {
-  if (!delta) return null;
+  if (!delta || delta.isNew) return null;
 
-  const rounded = delta.deltaPct == null ? 0 : Math.round(Math.abs(delta.deltaPct));
-  if (!delta.isNew && rounded < 1) return null;
+  const rounded = Math.round(Math.abs(delta.deltaPct ?? 0));
+  if (rounded < 1) return null;
 
-  const label = delta.isNew ? 'New' : `${delta.direction > 0 ? '↑' : '↓'} ${rounded}%`;
+  const label = `${delta.direction > 0 ? '↑' : '↓'} ${rounded}%`;
 
   return (
     <View
@@ -48,12 +48,10 @@ function DeltaChip({ delta, color }: { delta: MetricDelta | undefined; color: st
 }
 
 const ICON_MAP: Record<string, string> = {
-  water: 'drop.fill',
   harvest: 'basket.fill',
   profit: 'chart.line.uptrend.xyaxis',
   revenue: 'dollarsign.circle.fill',
   expenses: 'creditcard.fill',
-  'stock-usage': 'cube.fill',
 };
 
 interface ReportExecutiveSummaryProps {
@@ -82,7 +80,6 @@ export function ReportExecutiveSummary({
   comparison,
 }: ReportExecutiveSummaryProps) {
   const m3 = useM3();
-  const domain = useDomainColors();
   const { t } = useTranslation();
 
   const { summary } = preview;
@@ -90,17 +87,10 @@ export function ReportExecutiveSummary({
 
   const tiles = [
     {
-      key: 'water',
-      label: t('reports.summary.waterUsage'),
-      value: `${formatNumber(summary.totalWaterUsage)}L`,
-      color: domain.category.irrigation,
-      show: summary.totalWaterUsage !== 0,
-    },
-    {
       key: 'harvest',
       label: t('reports.summary.totalHarvest'),
       value: `${formatNumber(summary.totalHarvest)}kg`,
-      color: domain.category.harvest,
+      color: m3.colorScheme.primary,
       show: summary.totalHarvest !== 0,
     },
     {
@@ -125,13 +115,6 @@ export function ReportExecutiveSummary({
       // Only meaningful once there is money on at least one side.
       show: summary.totalRevenue !== 0 || summary.totalExpenses !== 0,
     },
-    {
-      key: 'stock-usage',
-      label: t('reports.summary.stockUsageCount'),
-      value: formatNumber(summary.stockUsageCount),
-      color: m3.colorScheme.secondary,
-      show: summary.stockUsageCount !== 0,
-    },
   ].filter((tile) => tile.show);
 
   // Records exist but none carry a headline figure (e.g. irrigation logged
@@ -141,26 +124,44 @@ export function ReportExecutiveSummary({
   if (tiles.length === 0 && summary.totalRecords > 0) return null;
 
   return (
-    <View style={{ gap: spacing[3] }}>
-      <Text
-        selectable
-        style={{
-          color: m3.colorScheme.onSurfaceVariant,
-          fontWeight: fontWeight.semibold,
-          fontSize: fontSize.xs,
-          letterSpacing: 0.8,
-          textTransform: 'uppercase',
-        }}
-      >
-        {t('reports.formal.executiveTitle')}
-      </Text>
+    <View style={{ gap: spacing[2] }}>
+      <View style={{ gap: 2 }}>
+        <Text
+          selectable
+          style={{
+            color: m3.colorScheme.onSurface,
+            fontWeight: fontWeight.bold,
+            fontSize: fontSize.lg,
+          }}
+        >
+          {t('reports.formal.executiveTitle')}
+        </Text>
+        <Text
+          selectable
+          style={{
+            color: m3.colorScheme.onSurfaceVariant,
+            fontWeight: fontWeight.normal,
+            fontSize: fontSize.xs,
+          }}
+        >
+          {comparison
+            ? t('reports.summary.comparedWith', { period: comparison.baselineLabel })
+            : t('reports.summary.loggedRecordsNote')}
+        </Text>
+      </View>
 
       {tiles.length === 0 ? (
         <Text selectable style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.sm }}>
           {t('reports.summary.nothingLogged')}
         </Text>
       ) : (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: spacing[2],
+          }}
+        >
           {tiles.map((tile) => (
             <View
               key={tile.key}
@@ -173,9 +174,9 @@ export function ReportExecutiveSummary({
                 // them the only surface on the screen at a different radius.
                 borderRadius: radius.xl,
                 borderCurve: 'continuous',
-                backgroundColor: colorWithOpacity(tile.color, 0.1),
+                backgroundColor: m3.colorScheme.surface,
                 borderWidth: 1,
-                borderColor: colorWithOpacity(tile.color, 0.18),
+                borderColor: m3.colorScheme.outlineVariant,
                 padding: spacing[3],
                 justifyContent: 'space-between',
                 gap: spacing[2],
@@ -204,11 +205,11 @@ export function ReportExecutiveSummary({
                   adjustsFontSizeToFit
                   minimumFontScale={0.6}
                   style={{
-                    color: tile.color,
-                    fontSize: fontSize.xl,
+                    color: m3.colorScheme.onSurface,
+                    fontSize: fontSize.lg,
                     fontWeight: fontWeight.bold,
                     fontVariant: ['tabular-nums'],
-                    lineHeight: 26,
+                    lineHeight: 24,
                   }}
                 >
                   {tile.value}
@@ -217,7 +218,7 @@ export function ReportExecutiveSummary({
                   numberOfLines={2}
                   selectable
                   style={{
-                    color: colorWithOpacity(tile.color, 0.75),
+                    color: m3.colorScheme.onSurfaceVariant,
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.medium,
                     lineHeight: 14,

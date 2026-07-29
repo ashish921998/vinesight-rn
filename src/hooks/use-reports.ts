@@ -472,12 +472,22 @@ export function useReportComparison(filters: ReportFilters) {
       : current.preview.summary;
     if (!currentSummary) return null;
 
+    const formatWindow = (from: string, to: string) =>
+      `${formatDate(from, {
+        day: 'numeric',
+        month: 'short',
+        ...(from.slice(0, 4) === to.slice(0, 4) ? {} : { year: 'numeric' as const }),
+      })} – ${formatDate(to, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
     const currentLabel = current.selectedSeason
       ? formatReportSeasonLabel(current.selectedSeason)
-      : `${filters.dateRange.from} – ${filters.dateRange.to}`;
+      : formatWindow(filters.dateRange.from, filters.dateRange.to);
     const baselineLabel = baselineResolution.baselineSeason
       ? formatReportSeasonLabel(baselineResolution.baselineSeason)
-      : `${baselineResolution.filters.dateRange.from} – ${baselineResolution.filters.dateRange.to}`;
+      : formatWindow(
+          baselineResolution.filters.dateRange.from,
+          baselineResolution.filters.dateRange.to,
+        );
 
     return {
       deltas: computeReportDeltas(currentSummary, baseline.preview.summary),

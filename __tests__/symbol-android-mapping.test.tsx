@@ -63,6 +63,12 @@ describe('Symbol Android resolution (regression: invisible "minus" icon)', () =>
     ['plus.circle'], // fertilizer-plan-card add button
     ['minus.circle'], // warehouse-item-form quantity decrement
     ['note.text'], // note-form header icon
+    ['slider.horizontal.3'], // reports filter button
+    ['xmark'], // reports filter sheet close button
+    ['basket.fill'], // reports harvest overview
+    ['dollarsign.circle.fill'], // reports revenue overview
+    ['creditcard.fill'], // reports expenses overview
+    ['chart.line.uptrend.xyaxis'], // reports net-profit overview
   ])('renders "%s" as a real icon on Android, not the • placeholder', (name) => {
     const { toJSON } = render(<Symbol name={name} size={20} />);
     expect(JSON.stringify(toJSON())).not.toContain('•');

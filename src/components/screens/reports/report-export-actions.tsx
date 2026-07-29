@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
-import { spacing, fontSize, fontWeight, borderRadius, radius } from '@/styles/theme';
+import { spacing, fontSize, fontWeight, radius } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import type { ReportFormat } from '@/types/report';
@@ -43,21 +43,19 @@ export function ReportExportActions({
     <View
       style={[
         {
-          // Opaque: content scrolls underneath, and without a real blur layer a
-          // translucent bar just reads as muddy overlap.
           backgroundColor: m3.colorScheme.surface,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: m3.colorScheme.outlineVariant,
-          paddingTop: spacing[3],
-          paddingBottom: spacing[6],
-          paddingHorizontal: spacing[4],
-          gap: spacing[3],
+          borderWidth: 1,
+          borderColor: m3.colorScheme.outlineVariant,
+          borderRadius: radius.xl,
+          borderCurve: 'continuous',
+          paddingTop: spacing[2],
+          paddingBottom: spacing[3],
+          paddingHorizontal: spacing[3],
+          gap: spacing[2],
         },
         panelStyle,
       ]}
     >
-      {/* Context label + format choice — the format lives next to the action it
-          affects, so it isn't also duplicated up in the filters panel. */}
       <View
         style={{
           flexDirection: 'row',
@@ -66,20 +64,6 @@ export function ReportExportActions({
           gap: spacing[2],
         }}
       >
-        <Text
-          numberOfLines={1}
-          style={{
-            flex: 1,
-            fontSize: fontSize.xs,
-            fontWeight: fontWeight.medium,
-            color: m3.colorScheme.onSurfaceVariant,
-            textTransform: 'uppercase',
-            letterSpacing: 0.8,
-          }}
-        >
-          {t('reports.exportSection')}
-        </Text>
-
         <View
           accessibilityRole="radiogroup"
           style={{
@@ -99,7 +83,7 @@ export function ReportExportActions({
                 accessibilityRole="radio"
                 accessibilityState={{ selected: active }}
                 style={{
-                  minWidth: 48,
+                  minWidth: 46,
                   paddingHorizontal: spacing[2],
                   paddingVertical: spacing[1],
                   alignItems: 'center',
@@ -121,11 +105,7 @@ export function ReportExportActions({
             );
           })}
         </View>
-      </View>
 
-      {/* Button row */}
-      <View style={{ flexDirection: 'row', gap: spacing[3] }}>
-        {/* PDF — Primary filled button */}
         <Pressable
           onPress={onExportPdf}
           disabled={disabled}
@@ -135,8 +115,8 @@ export function ReportExportActions({
             alignItems: 'center',
             justifyContent: 'center',
             gap: spacing[2],
-            minHeight: 50,
-            borderRadius: borderRadius.xl,
+            minHeight: 46,
+            borderRadius: radius.lg,
             borderCurve: 'continuous',
             backgroundColor: disabled
               ? colorWithOpacity(primary, 0.38)
@@ -158,7 +138,7 @@ export function ReportExportActions({
               />
               <Text
                 style={{
-                  fontSize: fontSize.base,
+                  fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
                   color: disabled ? colorWithOpacity(onPrimary, 0.6) : onPrimary,
                 }}
@@ -169,18 +149,17 @@ export function ReportExportActions({
           )}
         </Pressable>
 
-        {/* Download — Secondary outlined button */}
         <Pressable
           onPress={onDownload}
           disabled={disabled}
           style={({ pressed }) => ({
-            flex: 1,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
             gap: spacing[2],
-            minHeight: 50,
-            borderRadius: borderRadius.xl,
+            minHeight: 46,
+            paddingHorizontal: spacing[3],
+            borderRadius: radius.lg,
             borderCurve: 'continuous',
             borderWidth: 1.5,
             borderColor: disabled ? colorWithOpacity(primary, 0.3) : primary,
@@ -200,6 +179,7 @@ export function ReportExportActions({
                 color={disabled ? colorWithOpacity(primary, 0.5) : primary}
               />
               <Text
+                numberOfLines={1}
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
