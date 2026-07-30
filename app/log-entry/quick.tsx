@@ -1,14 +1,6 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
-
-import { createAddLogHref } from '@/utils/add-log-navigation';
-
-export const screenOptions = {
-  presentation: 'modal',
-  headerShown: false,
-};
-
-export default function QuickLogRoute() {
-  const { farmId } = useLocalSearchParams<{ farmId?: string }>();
-  const farmIdNum = farmId && !isNaN(Number(farmId)) ? parseInt(farmId, 10) : undefined;
-  return <Redirect href={createAddLogHref({ farmId: farmIdNum, lockFarmSelection: true })} />;
-}
+// Legacy redirect route — kept as a distinct URL so existing deep links to
+// /log-entry/quick continue to resolve. The redirect logic is identical to
+// /log-entry/add, so this route re-exports that implementation instead of
+// duplicating it. Per-route screen options (presentation: 'modal') are set in
+// the root _layout.tsx Stack.Screen config and remain unchanged.
+export { default, screenOptions } from './add';
