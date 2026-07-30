@@ -85,6 +85,8 @@ export {
   // Attendance
   useAllWorkerAttendance,
   useWorkerAttendance,
+  useWorkerAttendanceByDateRange,
+  fetchWorkerAttendanceByDateRange,
   useCreateWorkerAttendance,
   useUpdateWorkerAttendance,
   useDeleteWorkerAttendance,

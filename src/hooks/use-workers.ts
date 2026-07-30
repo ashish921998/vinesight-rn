@@ -146,6 +146,40 @@ export function useDeleteWorker() {
 // MARK: - WORKER ATTENDANCE
 // ============================================================
 
+/**
+ * Canonical date-range fetch for a single worker's attendance.
+ * Used by both the calendar and mark attendance tabs so they share one
+ * query/cache entry and stay in sync via cache invalidation.
+ */
+export async function fetchWorkerAttendanceByDateRange(
+  workerId: number,
+  startDate: string,
+  endDate: string,
+): Promise<WorkerAttendance[]> {
+  const { data, error } = await getDataAccess()
+    .from(TABLES.WORKER_ATTENDANCE)
+    .select('*')
+    .eq('worker_id', workerId)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export function useWorkerAttendanceByDateRange(
+  workerId: number | undefined,
+  startDate: string,
+  endDate: string,
+) {
+  return useQuery({
+    queryKey: queryKeys.workerAttendance.listByWorkerDateRange(workerId!, startDate, endDate),
+    queryFn: () => fetchWorkerAttendanceByDateRange(workerId!, startDate, endDate),
+    enabled: !!workerId,
+  });
+}
+
 export function useAllWorkerAttendance() {
   return useQuery({
     queryKey: queryKeys.workerAttendance.listAll(),
@@ -199,12 +233,9 @@ export function useCreateWorkerAttendance() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (newAttendance) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listByWorker(newAttendance.worker_id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listAll(),
+        queryKey: queryKeys.workerAttendance.lists(),
       });
     },
   });
@@ -231,12 +262,9 @@ export function useUpdateWorkerAttendance() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (updatedAttendance) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listByWorker(updatedAttendance.worker_id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listAll(),
+        queryKey: queryKeys.workerAttendance.lists(),
       });
     },
   });
@@ -257,12 +285,9 @@ export function useDeleteWorkerAttendance() {
 
       if (error) throw error;
     },
-    onSuccess: (_, { workerId }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listByWorker(workerId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listAll(),
+        queryKey: queryKeys.workerAttendance.lists(),
       });
     },
   });
