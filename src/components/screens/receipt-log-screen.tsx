@@ -72,7 +72,10 @@ import {
   useUpsertDailyNote,
   queryKeys,
 } from '@/hooks';
-import { useSaveSingleLog } from '@/features/entry-log-session';
+import {
+  useSaveSingleLog,
+  saveIrrigationWithLinkedFertigation,
+} from '@/features/entry-log-session';
 import type { SaveSingleLogResult } from '@/features/entry-log-session/use-save-single-log';
 import { telemetry } from '@/services/telemetry';
 import { guidedTourEmit } from '@/features/guided-tour';
@@ -399,6 +402,27 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
           farmId: farm.id ?? 0,
           previousDailyNote: undefined,
         };
+      } else if (savedType === 'irrigation') {
+        // Fused irrigation + linked-fertigation save with compensation rollback
+        // (shared transaction; same contract as quick-log-sheet). Telemetry,
+        // guided-tour, and entry bookkeeping stay here — they differ by surface.
+        const outcome = await saveIrrigationWithLinkedFertigation({
+          saveLog,
+          deleteIrrigation: (ref) => deleteIrrigation.mutateAsync(ref),
+          irrigationData: draft as IrrigationFormData,
+          fertigationData: { ...fertigationDraft },
+          hasFertilizers,
+          farm,
+          dateStr,
+          preferredAreaUnit,
+        });
+        result = outcome.irrigation;
+        if (outcome.fertigation) {
+          linkedFertigation = {
+            recordId: outcome.fertigation.recordId,
+            clientUuid: outcome.fertigation.clientUuid,
+          };
+        }
       } else {
         result = await saveLog({
           type: savedType,
@@ -407,35 +431,6 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
           dateStr,
           preferredAreaUnit,
         });
-        if (saveFertigationRider) {
-          try {
-            const fertResult = await saveLog({
-              type: 'fertigation',
-              data: { ...fertigationDraft },
-              farm,
-              dateStr,
-              preferredAreaUnit,
-              linkedIrrigationRecordId: result.recordId,
-            });
-            linkedFertigation = {
-              recordId: fertResult.recordId,
-              clientUuid: fertResult.clientUuid,
-            };
-          } catch (error) {
-            // Don't leave a half-saved pair behind: undo the irrigation so a
-            // retry can't create duplicates (same pattern as quick-log-sheet).
-            try {
-              await deleteIrrigation.mutateAsync({
-                id: result.recordId,
-                clientUuid: result.clientUuid,
-                farmId: result.farmId,
-              });
-            } catch {
-              // Compensation is best-effort; surfacing the original error matters more.
-            }
-            throw error;
-          }
-        }
       }
       setEntries((prev) => {
         const newEntry: SavedEntry = {
