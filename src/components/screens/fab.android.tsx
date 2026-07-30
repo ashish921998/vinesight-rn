@@ -1,4 +1,5 @@
 import { FloatingActionButton, Host, Icon } from '@expo/ui/jetpack-compose';
+import { alpha } from '@expo/ui/jetpack-compose/modifiers';
 import { useM3 } from '@/styles/use-theme';
 import addIcon from '../../../assets/tab-icons/add.xml';
 
@@ -6,8 +7,10 @@ import addIcon from '../../../assets/tab-icons/add.xml';
 // Compose elevation means it wins Android touch hit-testing over any scroll
 // content beneath it — so it needs none of the elevation/zIndex workaround a
 // hand-rolled absolutely-positioned Pressable does. Props kept in sync with
-// fab.tsx (`disabled` is accepted for parity; the native button has no disabled
-// state, callers guard the handler instead). See extended-fab.android.tsx.
+// fab.tsx. The native button exposes no `disabled` prop or accessibility-state
+// prop, so when disabled we dim it via the `alpha` modifier (matching fab.tsx's
+// 0.7 opacity) and leave `onClick` unwired instead of installing a no-op.
+// See extended-fab.android.tsx.
 export function Fab({
   onPress,
   accessibilityLabel,
@@ -21,8 +24,9 @@ export function Fab({
   return (
     <Host matchContents>
       <FloatingActionButton
-        onClick={disabled ? () => {} : onPress}
+        onClick={disabled ? undefined : onPress}
         containerColor={m3.colorScheme.primary}
+        modifiers={disabled ? [alpha(0.7)] : undefined}
       >
         <FloatingActionButton.Icon>
           <Icon
