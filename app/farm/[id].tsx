@@ -16,6 +16,7 @@ import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spinner } from '@/components/ui/spinner';
+import { Fab } from '@/components/screens/fab';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui';
@@ -3548,7 +3549,8 @@ export default function FarmDetailScreen() {
         </Pressable>
       )}
 
-      {/* Primary action — Material 3 floating action button (both platforms) */}
+      {/* Primary action — Material 3 FAB. Native Compose on Android (real
+          elevation → no touch-stealing over the log list), Pressable on iOS. */}
       <GuidedTourTarget
         targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}
         style={{
@@ -3559,40 +3561,11 @@ export default function FarmDetailScreen() {
           height: 56,
         }}
       >
-        <Pressable
+        <Fab
           onPress={handleAddActivity}
           disabled={isAddLogNavigationInFlight}
-          accessibilityRole="button"
           accessibilityLabel={t('farmDetails.actions.addActivity')}
-          accessibilityState={{ disabled: isAddLogNavigationInFlight }}
-          style={{
-            width: '100%',
-            height: '100%',
-            backgroundColor: m3.colorScheme.primary,
-            borderRadius: borderRadius.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            opacity: isAddLogNavigationInFlight ? 0.7 : 1,
-          }}
-        >
-          {({ pressed }) => (
-            <>
-              <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
-              <View
-                pointerEvents="none"
-                style={[
-                  StyleSheet.absoluteFill,
-                  {
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
-                      : 'transparent',
-                  },
-                ]}
-              />
-            </>
-          )}
-        </Pressable>
+        />
       </GuidedTourTarget>
 
       {/* Add Entry + Water Level handled via routes */}
