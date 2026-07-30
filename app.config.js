@@ -3,15 +3,44 @@ const path = require('path');
 
 // Android FCM config (google-services.json). EAS cloud builds inject it via the
 // GOOGLE_SERVICES_JSON file env var (value = absolute path); local dev can drop a
-// ./google-services.json. When neither exists — e.g. the Size Analysis workflow,
-// which runs `eas build --local` on a runner without the secret — leave it
-// undefined so prebuild doesn't crash copying a missing file (that size-only
-// build needs no FCM).
+// ./google-services.json.
 const googleServicesFile =
   process.env.GOOGLE_SERVICES_JSON ||
   (fs.existsSync(path.join(__dirname, 'google-services.json'))
     ? path.join(__dirname, 'google-services.json')
     : undefined);
+
+// Fail LOUD when a native build has no Firebase config, instead of the old
+// fail-open (silently leaving googleServicesFile undefined). An Android build
+// without google-services.json compiles and ships fine, but then
+// getExpoPushTokenAsync throws E_REGISTRATION_FAILED at runtime ("Unable to get
+// Firebase Messaging instance…") — so push registration fails completely for
+// every user on that build with no build-time signal. That is exactly how
+// 3.3.1 shipped without FCM despite the #176 fix being in the tree.
+//
+// The check is scoped to EAS builds (EAS_BUILD=true, set by both cloud
+// `eas build` and local `eas build --local`) so it guards every production /
+// preview ship path without breaking `expo start`, dev clients, or CI — none
+// of which produce a shippable binary and none of which need FCM config.
+//
+// The one build allowed to proceed without the file is the Size Analysis
+// workflow: it runs `eas build --local` on a runner that has no secret and
+// only measures binary size, so it opts out explicitly by setting
+// ALLOW_MISSING_GOOGLE_SERVICES_JSON=true. This is the *only* escape hatch —
+// a real release build that lost the secret can no longer slip through.
+const isEasBuild = process.env.EAS_BUILD === 'true';
+const allowMissingGoogleServices = process.env.ALLOW_MISSING_GOOGLE_SERVICES_JSON === 'true';
+if (isEasBuild && !googleServicesFile && !allowMissingGoogleServices) {
+  throw new Error(
+    'Missing Android Firebase config: neither the GOOGLE_SERVICES_JSON EAS file ' +
+      'env var nor a local ./google-services.json resolved during an EAS build. ' +
+      'Shipping this build would break push registration for every user ' +
+      '(getExpoPushTokenAsync -> E_REGISTRATION_FAILED). Upload GOOGLE_SERVICES_JSON ' +
+      'as a File env var scoped to BOTH the production and preview environments ' +
+      '(see docs/push-notifications-fcm-setup.md). Only the Size Analysis workflow ' +
+      'may build without it, by setting ALLOW_MISSING_GOOGLE_SERVICES_JSON=true.',
+  );
+}
 
 // Sentry auth: the AGP mapping/native-symbol upload tasks must be gated on a
 // real token. A release build without SENTRY_AUTH_TOKEN would otherwise
@@ -84,8 +113,9 @@ module.exports = {
       // Required for FCM so `FirebaseApp.initializeApp` runs at build time;
       // without it `getExpoPushTokenAsync` fails on Android with
       // E_REGISTRATION_FAILED ("Default FirebaseApp is not initialized").
-      // Resolved above from GOOGLE_SERVICES_JSON (EAS) or a local file; left
-      // undefined when absent so CI size builds don't fail prebuild.
+      // Resolved above from GOOGLE_SERVICES_JSON (EAS) or a local file. EAS
+      // builds that lack it now throw at config time (see above) instead of
+      // silently shipping without FCM; only the size-analysis build may opt out.
       googleServicesFile,
       permissions: ['android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS'],
       config: {
