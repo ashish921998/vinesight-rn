@@ -25,6 +25,12 @@ jest.mock('expo-web-browser', () => ({
 }));
 
 jest.mock('@/services/telemetry', () => ({
+  FLAG_KEYS: { FORCE_SIMPLE_MODE: 'force-simple-mode' },
+  isFeatureEnabled: jest.fn(() => false),
+  posthogClient: {
+    register: jest.fn(),
+    onFeatureFlags: jest.fn(() => () => {}),
+  },
   telemetry: {
     capture: jest.fn(),
     identify: jest.fn(),

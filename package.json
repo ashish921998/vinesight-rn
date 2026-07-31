@@ -122,6 +122,7 @@
     "@storybook/addon-ondevice-actions": "^10.2.1",
     "@storybook/addon-ondevice-controls": "^10.2.1",
     "@storybook/react-native": "^10.2.1",
+    "@swmansion/argent": "^0.16.0",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "29.5.14",
