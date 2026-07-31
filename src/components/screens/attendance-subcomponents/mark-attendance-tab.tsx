@@ -506,17 +506,14 @@ export function MarkAttendanceTab({
 
       if (errors.length > 0) {
         showToast(t('attendance.alerts.partialErrorBody', { count: errors.length }), 'error');
-        prevWorkerIdRef.current = undefined;
         return;
       }
 
       triggerHapticSuccess();
       showToast(t('attendance.alerts.savedBody', { name: selectedWorker?.name ?? '' }), 'success');
       onSaveSuccess();
-      prevWorkerIdRef.current = undefined;
     } catch {
       showToast(t('attendance.alerts.saveErrorBody'), 'error');
-      prevWorkerIdRef.current = undefined;
     } finally {
       setSaving(false);
     }
