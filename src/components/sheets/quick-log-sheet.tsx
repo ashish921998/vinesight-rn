@@ -83,7 +83,10 @@ import {
   useFertigationInputSources,
   useDeleteIrrigationRecord,
 } from '@/hooks';
-import { useSaveSingleLog } from '@/features/entry-log-session';
+import {
+  useSaveSingleLog,
+  saveIrrigationWithLinkedFertigation,
+} from '@/features/entry-log-session';
 
 export type QuickLogType = Extract<LogTypeId, 'irrigation' | 'spray' | 'harvest' | 'expense'>;
 
@@ -539,53 +542,25 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
       setSaving(true);
       try {
         if (type === 'irrigation') {
-          const irrigationResult =
-            pendingIrrigationRef.current ??
-            (await saveLog({
-              type: 'irrigation',
-              data: { ...irrigationDraft },
-              farm,
-              dateStr,
-              preferredAreaUnit,
-            }));
-          pendingIrrigationRef.current = irrigationResult;
-          if (hasFertilizers) {
-            try {
-              await saveLog({
-                type: 'fertigation',
-                data: { ...fertigationDraft },
-                farm,
-                dateStr,
-                preferredAreaUnit,
-                linkedIrrigationRecordId: irrigationResult.recordId,
-              });
-            } catch (error) {
-              // Don't leave a half-saved pair behind: undo the irrigation so a
-              // retry can't create duplicates.
-              try {
-                await deleteIrrigation.mutateAsync({
-                  id: irrigationResult.recordId,
-                  clientUuid: irrigationResult.clientUuid,
-                  farmId: irrigationResult.farmId,
-                });
-                pendingIrrigationRef.current = null;
-              } catch {
-                // Delete threw on an offline-queued path that usually commits on
-                // replay, so the irrigation is likely already gone. Drop the ref
-                // so a retry rebuilds rather than linking the rider to a deleted
-                // record (FK failure/orphan) — a deletable duplicate beats a
-                // dangling link. ponytail: fully-correct fix is idempotent
-                // re-save via original client_uuid; needs save-path plumbing.
-                pendingIrrigationRef.current = null;
-              }
-              throw error;
-            }
-            captureSaved('fertigation', irrigationResult.farmId);
+          const outcome = await saveIrrigationWithLinkedFertigation({
+            saveLog,
+            deleteIrrigation: (ref) => deleteIrrigation.mutateAsync(ref),
+            irrigationData: { ...irrigationDraft },
+            fertigationData: { ...fertigationDraft },
+            hasFertilizers,
+            farm,
+            dateStr,
+            preferredAreaUnit,
+            existingIrrigation: pendingIrrigationRef.current,
+          });
+          pendingIrrigationRef.current = outcome.irrigation;
+          if (outcome.fertigation) {
+            captureSaved('fertigation', outcome.irrigation.farmId);
           }
           pendingIrrigationRef.current = null;
-          captureSaved('irrigation', irrigationResult.farmId);
+          captureSaved('irrigation', outcome.irrigation.farmId);
           guidedTourEmit('guidedTour.logCreated', {
-            farmId: irrigationResult.farmId,
+            farmId: outcome.irrigation.farmId,
             recordType: 'irrigation',
           });
         } else if (type === 'spray') {
@@ -622,6 +597,10 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
         triggerHapticSuccess();
         onClose();
       } catch (error) {
+        // The irrigation helper's compensation deletes a half-saved irrigation
+        // on a fertigation failure but does not clear the retry ref — drop it
+        // here so a retry rebuilds rather than linking to a deleted record.
+        pendingIrrigationRef.current = null;
         Alert.alert(
           t('common.error'),
           error instanceof Error ? error.message : t('common.errors.failedToSaveLogs'),
