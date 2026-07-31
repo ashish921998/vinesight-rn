@@ -293,6 +293,68 @@ export function useDeleteWorkerAttendance() {
   });
 }
 
+/**
+ * Batch save operation for attendance records.
+ * Each operation represents a create, update, or delete for a single cell.
+ * The `date` field is used for error reporting.
+ */
+export type AttendanceSaveOperation =
+  | { kind: 'create'; date: string; data: WorkerAttendanceInsert }
+  | { kind: 'update'; date: string; id: number; updates: Partial<WorkerAttendance> }
+  | { kind: 'delete'; date: string; id: number };
+
+/**
+ * Batch save for multiple attendance cells in a single mutation.
+ *
+ * Executes all operations sequentially, collecting per-cell errors without
+ * stopping (matching the previous component-level batch behavior). Returns
+ * the array of errors so the caller can show a partial-failure toast.
+ *
+ * Cache invalidation fires once in `onSuccess` — not per cell — so only one
+ * background refetch is triggered regardless of how many cells are saved.
+ */
+export function useSaveAttendanceBatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      operations: AttendanceSaveOperation[],
+    ): Promise<Array<{ date: string; error: unknown }>> => {
+      const errors: Array<{ date: string; error: unknown }> = [];
+
+      for (const op of operations) {
+        try {
+          if (op.kind === 'create') {
+            const { error } = await getDataAccess().from(TABLES.WORKER_ATTENDANCE).insert(op.data);
+            if (error) throw error;
+          } else if (op.kind === 'update') {
+            const { error } = await getDataAccess()
+              .from(TABLES.WORKER_ATTENDANCE)
+              .update(op.updates)
+              .eq('id', op.id);
+            if (error) throw error;
+          } else {
+            const { error } = await getDataAccess()
+              .from(TABLES.WORKER_ATTENDANCE)
+              .delete()
+              .eq('id', op.id);
+            if (error) throw error;
+          }
+        } catch (error) {
+          errors.push({ date: op.date, error });
+        }
+      }
+
+      return errors;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.workerAttendance.lists(),
+      });
+    },
+  });
+}
+
 // ============================================================
 // MARK: - WORKER TRANSACTIONS
 // ============================================================

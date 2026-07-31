@@ -90,6 +90,8 @@ export {
   useCreateWorkerAttendance,
   useUpdateWorkerAttendance,
   useDeleteWorkerAttendance,
+  useSaveAttendanceBatch,
+  type AttendanceSaveOperation,
   // Transactions
   useAllWorkerTransactions,
   useWorkerTransactions,

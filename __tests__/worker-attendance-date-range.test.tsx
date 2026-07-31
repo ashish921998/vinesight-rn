@@ -8,6 +8,7 @@ import {
   useCreateWorkerAttendance,
   useUpdateWorkerAttendance,
   useDeleteWorkerAttendance,
+  useSaveAttendanceBatch,
 } from '@/hooks/use-workers';
 import { queryKeys } from '@/hooks/query-keys';
 
@@ -215,6 +216,120 @@ describe('attendance mutation invalidation covers date-range keys', () => {
       return listPrefix.every((segment, i) => key[i] === segment);
     });
     expect(matchedPrefix).toBe(true);
+
+    invalidateSpy.mockRestore();
+  });
+});
+
+// ── useSaveAttendanceBatch ────────────────────────────────────────────────
+
+describe('useSaveAttendanceBatch', () => {
+  it('invalidates exactly once for a batch of N operations', async () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const invalidateSpy = jest.spyOn(client, 'invalidateQueries').mockResolvedValue(undefined);
+
+    // Each call to from() returns a chain that resolves successfully.
+    mockFrom.mockReturnValue(makeReadChain({ data: null, error: null }));
+
+    const { result } = renderHook(() => useSaveAttendanceBatch(), {
+      wrapper: createWrapper(client),
+    });
+
+    const operations = [
+      {
+        kind: 'create' as const,
+        date: '2026-07-01',
+        data: {
+          worker_id: 5,
+          farm_ids: [1],
+          date: '2026-07-01',
+          work_status: 'full_day' as const,
+          work_type: 'other',
+        },
+      },
+      {
+        kind: 'update' as const,
+        date: '2026-07-02',
+        id: 10,
+        updates: { work_status: 'half_day' as const },
+      },
+      {
+        kind: 'delete' as const,
+        date: '2026-07-03',
+        id: 20,
+      },
+    ];
+
+    await act(async () => {
+      await result.current.mutateAsync(operations);
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // All three DB operations executed.
+    expect(mockFrom).toHaveBeenCalledTimes(3);
+
+    // Only one invalidation call (the batch onSuccess), not three.
+    const invalidationCount = invalidateSpy.mock.calls.filter(([opts]) => {
+      const key = (opts as { queryKey: unknown[] }).queryKey;
+      return queryKeys.workerAttendance.lists().every((segment, i) => key[i] === segment);
+    }).length;
+    expect(invalidationCount).toBe(1);
+
+    invalidateSpy.mockRestore();
+  });
+
+  it('collects per-cell errors and still invalidates once', async () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const invalidateSpy = jest.spyOn(client, 'invalidateQueries').mockResolvedValue(undefined);
+
+    // First call errors, second succeeds.
+    mockFrom
+      .mockReturnValueOnce(makeReadChain({ data: null, error: { message: 'insert failed' } }))
+      .mockReturnValueOnce(makeReadChain({ data: null, error: null }));
+
+    const { result } = renderHook(() => useSaveAttendanceBatch(), {
+      wrapper: createWrapper(client),
+    });
+
+    const operations = [
+      {
+        kind: 'create' as const,
+        date: '2026-07-01',
+        data: {
+          worker_id: 5,
+          farm_ids: [1],
+          date: '2026-07-01',
+          work_status: 'full_day' as const,
+          work_type: 'other',
+        },
+      },
+      {
+        kind: 'delete' as const,
+        date: '2026-07-02',
+        id: 20,
+      },
+    ];
+
+    let returnedErrors: Array<{ date: string; error: unknown }> = [];
+    await act(async () => {
+      returnedErrors = await result.current.mutateAsync(operations);
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // First operation failed, second succeeded — mutation still resolves.
+    expect(returnedErrors).toHaveLength(1);
+    expect(returnedErrors[0].date).toBe('2026-07-01');
+
+    // Still only one invalidation.
+    const invalidationCount = invalidateSpy.mock.calls.filter(([opts]) => {
+      const key = (opts as { queryKey: unknown[] }).queryKey;
+      return queryKeys.workerAttendance.lists().every((segment, i) => key[i] === segment);
+    }).length;
+    expect(invalidationCount).toBe(1);
 
     invalidateSpy.mockRestore();
   });
