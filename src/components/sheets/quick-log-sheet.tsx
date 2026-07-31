@@ -485,6 +485,9 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   // Retain a successfully created irrigation when compensation fails so an
   // immediate retry only saves its fertigation rider instead of duplicating it.
   const pendingIrrigationRef = useRef<Awaited<ReturnType<typeof saveLog>> | null>(null);
+  useEffect(() => {
+    pendingIrrigationRef.current = null;
+  }, [type]);
 
   // Fertilizers ride along whenever any rows exist (they're optional, so an
   // empty list is simply "none today" — but partial rows block Save).
