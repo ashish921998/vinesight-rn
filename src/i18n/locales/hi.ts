@@ -3161,6 +3161,7 @@ export const hi = {
     alerts: {
       partialErrorTitle: 'आंशिक त्रुटि',
       partialErrorBody: '{{count}} त्रुटि के साथ सहेजा गया। पुनः लोड हो रहा है…',
+      saveErrorBody: '$t(glossary.attendance) सहेजने में विफल। कृपया पुनः प्रयास करें।',
       savedTitle: 'सफलता',
       savedBody: '{{name}} के लिए $t(glossary.attendance) सहेजी गई।',
       workerCount: '{{count}} श्रमिक',

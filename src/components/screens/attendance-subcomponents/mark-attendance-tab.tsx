@@ -500,21 +500,26 @@ export function MarkAttendanceTab({
       }
     }
 
-    // Single mutation: one onSuccess → one cache invalidation → one refetch.
-    const errors = await saveBatchMutation.mutateAsync(operations);
+    try {
+      // Single mutation: one onSuccess → one cache invalidation → one refetch.
+      const errors = await saveBatchMutation.mutateAsync(operations);
 
-    if (errors.length > 0) {
-      showToast(t('attendance.alerts.partialErrorBody', { count: errors.length }), 'error');
+      if (errors.length > 0) {
+        showToast(t('attendance.alerts.partialErrorBody', { count: errors.length }), 'error');
+        prevWorkerIdRef.current = undefined;
+        return;
+      }
+
+      triggerHapticSuccess();
+      showToast(t('attendance.alerts.savedBody', { name: selectedWorker?.name ?? '' }), 'success');
+      onSaveSuccess();
       prevWorkerIdRef.current = undefined;
+    } catch {
+      showToast(t('attendance.alerts.saveErrorBody'), 'error');
+      prevWorkerIdRef.current = undefined;
+    } finally {
       setSaving(false);
-      return;
     }
-
-    triggerHapticSuccess();
-    showToast(t('attendance.alerts.savedBody', { name: selectedWorker?.name ?? '' }), 'success');
-    onSaveSuccess();
-    prevWorkerIdRef.current = undefined;
-    setSaving(false);
   };
 
   const handleWorkerSelect = () => {
