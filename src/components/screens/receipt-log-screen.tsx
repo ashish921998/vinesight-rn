@@ -62,6 +62,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   useFarm,
   useFarmAreaAcres,
+  useFertigationInputSources,
   useDeleteIrrigationRecord,
   useDeleteSprayRecord,
   useDeleteHarvestRecord,
@@ -119,6 +120,8 @@ interface SavedEntry {
   savedDateStr: string;
   /** Snapshot of the daily note that existed before this save. Used to restore the original text on remove instead of deleting the record. */
   previousDailyNote?: DailyNoteRecord | null;
+  /** Fertigation record saved alongside this irrigation entry (fused save). Removed together with it. */
+  linkedFertigation?: { recordId: number | null; clientUuid: string | null } | null;
 }
 
 let entryKeySeq = 0;
@@ -244,6 +247,15 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
   const [entries, setEntries] = useState<SavedEntry[]>([]);
   const [activeType, setActiveType] = useState<LogTypeId | null>(null);
   const [draft, setDraft] = useState<AnyLogData>(() => emptyDataFor('irrigation'));
+  // Fertilizers ride along with the irrigation form (same fused UX as the
+  // quick-log sheet): zero rows means "none today" and saves irrigation alone;
+  // any rows save as a linked fertigation record.
+  const [fertigationDraft, setFertigationDraft] = useState<FertigationFormData>({
+    fertilizers: [],
+  });
+  const fertigationSources = useFertigationInputSources(farm?.id ?? undefined, {
+    catalogEnabled: activeType === 'irrigation',
+  });
   const [saving, setSaving] = useState(false);
   // Synchronous re-entrancy guard for handleSave (the `saving` state flips a tick later).
   const savingRef = useRef(false);
@@ -259,6 +271,9 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
         setDraft(existingNote ? { notes: existingNote.summary } : emptyDataFor('note'));
       } else {
         setDraft(emptyDataFor(type));
+      }
+      if (type === 'irrigation') {
+        setFertigationDraft({ fertilizers: [] });
       }
     },
     [entries],
@@ -276,7 +291,11 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
     setActiveType(null);
   }, []);
 
-  const draftValid = activeType ? isDataValid(activeType, draft) : false;
+  const hasFertilizers = fertigationDraft.fertilizers.length > 0;
+  const draftValid = activeType
+    ? isDataValid(activeType, draft) &&
+      (activeType !== 'irrigation' || !hasFertilizers || validateFertigationForm(fertigationDraft))
+    : false;
 
   const handleSave = useCallback(async () => {
     // Guard with a ref, not the `saving` state: state updates are async, so two
@@ -286,6 +305,9 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
     savingRef.current = true;
     setSaving(true);
     const savedType = activeType;
+    // Fertilizers ride along with irrigation only; saved as a linked fertigation record.
+    const saveFertigationRider = savedType === 'irrigation' && hasFertilizers;
+    let linkedFertigation: SavedEntry['linkedFertigation'] = null;
     try {
       let result: SaveSingleLogResult;
       if (isDelegatedMode && delegatedContext && savedType !== 'expense') {
@@ -329,6 +351,45 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
           }
           recordId = rawId;
         }
+        if (saveFertigationRider && recordId != null) {
+          // Same fused save as the farmer path, via the delegated RPC: the
+          // fertigation payload carries irrigation_record_id (validated
+          // server-side against the farm). On failure, compensate by deleting
+          // the irrigation so a retry can't create duplicates.
+          try {
+            const fertPayload = buildDelegatedLogPayload(
+              {
+                type: 'fertigation',
+                data: fertigationDraft,
+              } as DelegatedLogFormInput,
+              { area: farm.area ?? 0, areaUnit: preferredAreaUnit },
+            );
+            const fertResult = await createDelegatedLog({
+              organizationId: delegatedContext.organizationId,
+              clientUserId: delegatedContext.clientUserId,
+              farmId: farm.id ?? 0,
+              recordType: 'fertigation',
+              date: dateStr,
+              payload: { ...fertPayload, irrigation_record_id: recordId },
+            });
+            const fertId = (fertResult as { id?: unknown } | null | undefined)?.id;
+            if (typeof fertId !== 'number') {
+              // Same contract as the irrigation branch: without a numeric pk
+              // the rider can't be deleted later, so fail hard and let the
+              // compensation below undo the irrigation instead of persisting
+              // an undeletable orphan pair.
+              throw new Error('Delegated log save returned no record id');
+            }
+            linkedFertigation = { recordId: fertId, clientUuid: null };
+          } catch (error) {
+            try {
+              await deleteDelegatedLog('irrigation', recordId);
+            } catch {
+              // Compensation is best-effort; surfacing the original error matters more.
+            }
+            throw error;
+          }
+        }
         await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
         await queryClient.invalidateQueries({ queryKey: queryKeys.professionalWorkspace.all });
         result = {
@@ -346,6 +407,35 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
           dateStr,
           preferredAreaUnit,
         });
+        if (saveFertigationRider) {
+          try {
+            const fertResult = await saveLog({
+              type: 'fertigation',
+              data: { ...fertigationDraft },
+              farm,
+              dateStr,
+              preferredAreaUnit,
+              linkedIrrigationRecordId: result.recordId,
+            });
+            linkedFertigation = {
+              recordId: fertResult.recordId,
+              clientUuid: fertResult.clientUuid,
+            };
+          } catch (error) {
+            // Don't leave a half-saved pair behind: undo the irrigation so a
+            // retry can't create duplicates (same pattern as quick-log-sheet).
+            try {
+              await deleteIrrigation.mutateAsync({
+                id: result.recordId,
+                clientUuid: result.clientUuid,
+                farmId: result.farmId,
+              });
+            } catch {
+              // Compensation is best-effort; surfacing the original error matters more.
+            }
+            throw error;
+          }
+        }
       }
       setEntries((prev) => {
         const newEntry: SavedEntry = {
@@ -354,9 +444,12 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
           recordId: result.recordId,
           clientUuid: result.clientUuid,
           farmId: result.farmId,
-          summary: describeEntry(savedType, draft),
+          summary: linkedFertigation
+            ? `${describeEntry(savedType, draft)} · ${describeEntry('fertigation', fertigationDraft)}`
+            : describeEntry(savedType, draft),
           savedDateStr: dateStr,
           previousDailyNote: result.previousDailyNote,
+          linkedFertigation,
         };
         // Notes are one-per-day (shared farm+date row). If a note row already
         // exists this session, replace it in place — keeping its original key and
@@ -386,6 +479,13 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
           action_type: 'record_created',
           feature_name: savedType,
         });
+        if (linkedFertigation) {
+          telemetry.capture('record_created', {
+            record_type: 'fertigation',
+            created_from: 'manual',
+            farm_id: result.farmId,
+          });
+        }
       } catch {
         // telemetry is best-effort
       }
@@ -420,6 +520,9 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
     entries,
     queryClient,
     isBlockedByNoSeason,
+    hasFertilizers,
+    fertigationDraft,
+    deleteIrrigation,
   ]);
 
   const handleRemove = useCallback(
@@ -436,6 +539,12 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
         // per-table split. Mirrors the create path's RPC simplicity.
         if (isDelegatedMode && entry.type !== 'expense') {
           if (entry.recordId == null) throw new Error('Delegated log has no record id');
+          // Fused irrigation+fertilizer entries delete as a pair. Fertigation
+          // first — its FK is ON DELETE SET NULL, but a fertigation-only
+          // failure then leaves both rows intact for a clean retry.
+          if (entry.linkedFertigation?.recordId != null) {
+            await deleteDelegatedLog('fertigation', entry.linkedFertigation.recordId);
+          }
           await deleteDelegatedLog(entry.type as DelegatedLogType, entry.recordId);
           await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
           await queryClient.invalidateQueries({ queryKey: queryKeys.professionalWorkspace.all });
@@ -470,6 +579,18 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
         };
         switch (entry.type) {
           case 'irrigation':
+            // Fused irrigation+fertilizer entries delete as a pair (fertigation
+            // first, so a failure leaves both rows intact for a clean retry).
+            if (
+              entry.linkedFertigation &&
+              (entry.linkedFertigation.recordId != null || entry.linkedFertigation.clientUuid)
+            ) {
+              await deleteFertigation.mutateAsync({
+                id: entry.linkedFertigation.recordId,
+                clientUuid: entry.linkedFertigation.clientUuid,
+                farmId: entry.farmId,
+              });
+            }
             await deleteIrrigation.mutateAsync(ref);
             break;
           case 'spray':
@@ -828,13 +949,29 @@ export function ReceiptLogScreen({ farmId, onClose, delegatedContext }: ReceiptL
               keyboardShouldPersistTaps="handled"
             >
               {activeType === 'irrigation' && (
-                <IrrigationForm
-                  data={draft as IrrigationFormData}
-                  onChange={setDraft}
-                  farmArea={farm?.area ?? undefined}
-                  systemDischarge={farm?.system_discharge ?? undefined}
-                  showHeader={false}
-                />
+                <>
+                  <IrrigationForm
+                    data={draft as IrrigationFormData}
+                    onChange={setDraft}
+                    farmArea={farm?.area ?? undefined}
+                    systemDischarge={farm?.system_discharge ?? undefined}
+                    showHeader={false}
+                  />
+                  {/* Fertilizers ride along with irrigation (same fused UX as the
+                      quick-log sheet): zero rows saves irrigation alone, any rows
+                      save as a linked fertigation record. */}
+                  <View style={{ marginTop: spacing[4] }}>
+                    <FertigationForm
+                      data={fertigationDraft}
+                      onChange={setFertigationDraft}
+                      historyItems={fertigationSources.historyItems}
+                      planItems={fertigationSources.planItems}
+                      catalogProducts={fertigationSources.catalogProducts}
+                      areaAcres={farmAreaAcres}
+                      compact
+                    />
+                  </View>
+                </>
               )}
               {activeType === 'spray' && (
                 <SprayForm

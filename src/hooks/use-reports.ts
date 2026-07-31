@@ -38,7 +38,7 @@ import { resolveBaseline, computeReportDeltas } from '../services/report-compari
 import { useCurrency } from './use-currency';
 import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
 import { formatLocalDate } from '@/utils/date';
-import { formatDate } from '@/i18n/format';
+import { formatDate, formatDateWindow } from '@/i18n/format';
 import type {
   ExpenseRecord,
   FarmSeason,
@@ -474,10 +474,13 @@ export function useReportComparison(filters: ReportFilters) {
 
     const currentLabel = current.selectedSeason
       ? formatReportSeasonLabel(current.selectedSeason)
-      : `${filters.dateRange.from} – ${filters.dateRange.to}`;
+      : formatDateWindow(filters.dateRange.from, filters.dateRange.to);
     const baselineLabel = baselineResolution.baselineSeason
       ? formatReportSeasonLabel(baselineResolution.baselineSeason)
-      : `${baselineResolution.filters.dateRange.from} – ${baselineResolution.filters.dateRange.to}`;
+      : formatDateWindow(
+          baselineResolution.filters.dateRange.from,
+          baselineResolution.filters.dateRange.to,
+        );
 
     return {
       deltas: computeReportDeltas(currentSummary, baseline.preview.summary),
@@ -555,7 +558,9 @@ export function useReportExport() {
       setExportError(null);
 
       try {
-        if (format === 'csv') {
+        if (format === 'xlsx') {
+          await ReportService.exportXLSX(preview.data);
+        } else if (format === 'csv') {
           await ReportService.exportCSV(preview.data, reportType, areaUnit, fpcColumns);
         } else {
           await ReportService.exportPDF(
@@ -590,6 +595,9 @@ export function useReportExport() {
       setExportError(null);
 
       try {
+        if (format === 'xlsx') {
+          return await ReportService.downloadXLSX(preview.data);
+        }
         if (format === 'csv') {
           return await ReportService.downloadCSV(preview.data, reportType, areaUnit, fpcColumns);
         }

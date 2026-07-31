@@ -34,4 +34,6 @@ export class ReportService {
   static downloadCSV = io.downloadCSV;
   static exportPDF = io.exportPDF;
   static downloadPDF = io.downloadPDF;
+  static exportXLSX = io.exportXLSX;
+  static downloadXLSX = io.downloadXLSX;
 }
