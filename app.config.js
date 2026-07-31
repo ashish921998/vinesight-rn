@@ -25,7 +25,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.3.2',
+    version: '3.3.24',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
@@ -80,7 +80,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 40,
+      versionCode: 42,
       // Required for FCM so `FirebaseApp.initializeApp` runs at build time;
       // without it `getExpoPushTokenAsync` fails on Android with
       // E_REGISTRATION_FAILED ("Default FirebaseApp is not initialized").

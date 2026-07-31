@@ -444,6 +444,7 @@ export const en = {
     },
     actions: {
       addActivity: 'Add activity',
+      addLog: 'Add log',
       addTask: 'Add task',
       seeAllLogs: 'See all logs',
       seeAllTasks: 'See all tasks',
