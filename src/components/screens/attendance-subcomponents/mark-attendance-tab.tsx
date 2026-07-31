@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useWorkerAttendanceByDateRange,
   fetchWorkerAttendanceByDateRange,
@@ -19,6 +20,7 @@ import {
   useUpdateWorkerAttendance,
   useDeleteWorkerAttendance,
 } from '@/hooks/use-workers';
+import { queryKeys } from '@/hooks/query-keys';
 import type { Farm, Worker, WorkerAttendance, WorkStatus } from '@/types';
 import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
@@ -130,6 +132,7 @@ export function MarkAttendanceTab({
 }: MarkAttendanceTabProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const queryClient = useQueryClient();
 
   const tabBarInset = useTabBarInset();
   const bottomActionBarHeight = 88;
@@ -465,39 +468,55 @@ export function MarkAttendanceTab({
     setSaving(true);
     const errors: Array<{ date: string; error: unknown }> = [];
 
+    // Suppress per-mutation onSuccess invalidation during the loop to avoid
+    // a redundant refetch after every cell. Invalidate once after all saves.
     for (const cell of modifiedCells) {
       try {
         if (cell.existingRecordId) {
           if (cell.status === null) {
-            await deleteAttendanceMutation.mutateAsync({
-              id: cell.existingRecordId,
-              workerId: cell.workerId,
-            });
-          } else {
-            await updateAttendanceMutation.mutateAsync({
-              id: cell.existingRecordId,
-              updates: {
-                work_status: cell.status as WorkStatus,
-                work_type: cell.workType || 'other',
-                farm_ids: cell.farmIds,
-                daily_rate_override: cell.status === 'absent' ? 0 : undefined,
+            await deleteAttendanceMutation.mutateAsync(
+              {
+                id: cell.existingRecordId,
+                workerId: cell.workerId,
               },
-            });
+              { onSuccess: undefined },
+            );
+          } else {
+            await updateAttendanceMutation.mutateAsync(
+              {
+                id: cell.existingRecordId,
+                updates: {
+                  work_status: cell.status as WorkStatus,
+                  work_type: cell.workType || 'other',
+                  farm_ids: cell.farmIds,
+                  daily_rate_override: cell.status === 'absent' ? 0 : undefined,
+                },
+              },
+              { onSuccess: undefined },
+            );
           }
         } else if (cell.status !== null && cell.farmIds.length > 0) {
-          await createAttendanceMutation.mutateAsync({
-            worker_id: cell.workerId,
-            farm_ids: cell.farmIds,
-            date: cell.date,
-            work_status: cell.status as WorkStatus,
-            work_type: cell.workType || 'other',
-            daily_rate_override: cell.status === 'absent' ? 0 : undefined,
-          });
+          await createAttendanceMutation.mutateAsync(
+            {
+              worker_id: cell.workerId,
+              farm_ids: cell.farmIds,
+              date: cell.date,
+              work_status: cell.status as WorkStatus,
+              work_type: cell.workType || 'other',
+              daily_rate_override: cell.status === 'absent' ? 0 : undefined,
+            },
+            { onSuccess: undefined },
+          );
         }
       } catch (error) {
         errors.push({ date: cell.date, error });
       }
     }
+
+    // Single invalidation after all writes complete.
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.workerAttendance.lists(),
+    });
 
     if (errors.length > 0) {
       showToast(t('attendance.alerts.partialErrorBody', { count: errors.length }), 'error');
