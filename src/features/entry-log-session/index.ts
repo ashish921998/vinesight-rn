@@ -15,6 +15,7 @@ export {
   type SaveSingleLogResult,
 } from './use-save-single-log';
 export {
+  LinkedFertigationSaveError,
   saveIrrigationWithLinkedFertigation,
   type SaveIrrigationWithLinkedFertigationParams,
   type SaveIrrigationWithLinkedFertigationResult,

@@ -17,6 +17,18 @@ import {
   PROFILE_CURRENT_QUERY_KEY,
 } from './auth-helpers';
 import type { SetState, GetState } from './auth-types';
+import { initializeNewFarmerExperience } from './new-farmer-experience';
+
+const NEW_ACCOUNT_WINDOW_MS = 10 * 60 * 1000;
+
+export function isRecentlyCreatedAuthUser(
+  user: { created_at?: string } | null,
+  now: number = Date.now(),
+): boolean {
+  if (!user?.created_at) return false;
+  const createdAt = Date.parse(user.created_at);
+  return Number.isFinite(createdAt) && Math.abs(now - createdAt) <= NEW_ACCOUNT_WINDOW_MS;
+}
 
 export const createPhoneActions = (set: SetState, get: GetState) => ({
   signInWithPhone: async (phone: string, mode: 'signin' | 'signup' = 'signin', name?: string) => {
@@ -193,8 +205,16 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
 
       if (error) throw error;
 
-      const isSignup = pendingPhoneMode === 'signup';
+      // Supabase's combined phone flow succeeds with shouldCreateUser=true for
+      // both new and existing accounts. The requested mode therefore cannot by
+      // itself prove that this is a new farmer. OTPs expire well inside this
+      // window, so the auth user's creation timestamp is the reliable signal.
+      const isSignup = pendingPhoneMode === 'signup' && isRecentlyCreatedAuthUser(data.user);
       const needsProfileCompletion = !hasCompletedProfileName(data.user);
+
+      if (isSignup) {
+        await initializeNewFarmerExperience();
+      }
 
       // Set auth state FIRST before any side-effects that could throw
       if (isSignup && data.user) {

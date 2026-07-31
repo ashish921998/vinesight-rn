@@ -60,6 +60,19 @@ export interface SaveIrrigationWithLinkedFertigationResult {
   fertigation: SaveSingleLogResult | null;
 }
 
+/** A fertigation failure with enough context for callers to retry safely. */
+export class LinkedFertigationSaveError extends Error {
+  constructor(
+    message: string,
+    readonly irrigation: SaveSingleLogResult,
+    readonly irrigationWasDeleted: boolean,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = 'LinkedFertigationSaveError';
+  }
+}
+
 /**
  * Save an irrigation log and, when it carries fertilizers, a linked fertigation
  * record pointing at the irrigation's id. If the fertigation save fails, the
@@ -112,15 +125,22 @@ export async function saveIrrigationWithLinkedFertigation(
     // can't create duplicates. Compensation is best-effort — a delete failure
     // (e.g. an offline-queued delete that commits on replay) is swallowed so
     // the original save error reaches the caller.
+    let irrigationWasDeleted = false;
     try {
       await deleteIrrigation({
         id: irrigation.recordId,
         clientUuid: irrigation.clientUuid,
         farmId: irrigation.farmId,
       });
+      irrigationWasDeleted = true;
     } catch {
       // best-effort; surfacing the original save error matters more
     }
-    throw error;
+    throw new LinkedFertigationSaveError(
+      error instanceof Error ? error.message : 'Failed to save fertigation',
+      irrigation,
+      irrigationWasDeleted,
+      { cause: error },
+    );
   }
 }

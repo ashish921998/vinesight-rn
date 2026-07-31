@@ -103,22 +103,21 @@ export const resolveFarmCoreSelection = ({
   variety: cropVariety === 'Custom' ? customVariety.trim() : cropVariety.trim(),
 });
 
+// Quick-create core: a first-time farmer needs only a name, crop, and area to
+// create a farm. Region and variety are optional and deferred behind the
+// collapsible "Add agronomy details" section — they send safe empty-string
+// defaults on insert (see buildFarmInsertFromCoreFields) rather than blocking
+// the Save button.
 export const isFarmCoreFieldsValid = ({
   name,
-  region,
   area,
   selectedCrop,
   customCropName,
-  cropVariety,
-  customVariety,
 }: FarmCoreFields): boolean => {
   if (!name.trim()) return false;
-  if (!region.trim()) return false;
   const areaValue = Number(area);
   if (!Number.isFinite(areaValue) || areaValue <= 0) return false;
   if (selectedCrop === 'Other' && !customCropName.trim()) return false;
-  if (cropVariety === 'Custom' && !customVariety.trim()) return false;
-  if (!cropVariety.trim() && !customVariety.trim()) return false;
   return true;
 };
 
@@ -132,14 +131,18 @@ export const buildFarmInsertFromCoreFields = (
   if (!Number.isFinite(areaValue) || areaValue <= 0) return null;
 
   const { crop, variety } = resolveFarmCoreSelection(fields);
-  if (!crop || !variety) return null;
+  // crop is guaranteed non-empty by validation; variety/region may be blank for
+  // a quick-create farm. They are NOT nullable in the Farm type, so send safe
+  // empty-string defaults rather than undefined (the live DB nullability is
+  // unknown — there is no CREATE TABLE farms migration in the repo).
+  if (!crop) return null;
 
   return {
     name: fields.name.trim(),
-    region: fields.region.trim(),
+    region: fields.region.trim() || '',
     area: areaValue,
     crop,
-    crop_variety: variety,
+    crop_variety: variety || '',
     planting_date: formatLocalDate(ensureValidDate(plantingDate)),
   };
 };

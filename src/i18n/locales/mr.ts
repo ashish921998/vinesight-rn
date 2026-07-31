@@ -1823,14 +1823,14 @@ export const mr = {
       skipAlerts: 'इशाऱ्यांशिवाय पुढे चला',
     },
     firstFarm: {
-      title: 'तुमचे पहिले $t(glossary.farm) जोडा.',
-      subtitle: 'आवश्यक गोष्टींनी सुरुवात करा. तपशील नंतर संपादित करू शकता.',
+      title: 'चला तुमचे $t(glossary.farm) तयार करूया',
+      subtitle: 'आत्ता फक्त आवश्यक माहिती भरा. बाकी तपशील नंतर भरता येतील.',
       assurance:
         'आत्ता फक्त आवश्यक गोष्टी पुरेशा आहेत. उरलेले सर्व नंतर $t(glossary.farm) पानावरून जोडता येईल.',
-      createButton: 'पहिले $t(glossary.farm) तयार करा',
+      createButton: '$t(glossary.farm) जतन करा आणि सुरू करा',
       existingTitle: 'तुमचे पहिले $t(glossary.farm) आधीच अस्तित्वात आहे.',
-      existingSubtitle:
-        'इशाऱ्यांपर्यंत पुढे जा आणि ऑनबोर्डिंग पूर्ण करा. $t(glossary.farm) चे तपशील नंतर संपादित करू शकता.',
+      existingSubtitle: 'सर्व काही तयार आहे. तुमच्या डॅशबोर्डवर जा.',
+      existingButton: 'डॅशबोर्डवर जा',
       existingFarmFallback: '$t(glossary.farm)',
       existingRegionFallback: 'प्रदेश',
       existingCropFallback: '$t(glossary.crop)',

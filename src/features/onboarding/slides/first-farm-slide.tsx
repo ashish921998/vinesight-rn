@@ -4,7 +4,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { Button, CropIcon, FormInput } from '@/components/ui';
 import { CropPickerSheet } from '@/components/screens/farm-form/crop-picker-sheet';
-import { VarietyPickerSheet } from '@/components/screens/farm-form/variety-picker-sheet';
 import { CROP_I18N_KEY_MAP, KNOWN_CROPS } from '@/components/screens/farm-form/constants';
 import {
   buildFarmInsertFromCoreFields,
@@ -14,7 +13,7 @@ import {
 import { useCreateFarm, useFarms } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { CropType, CROP_VARIETIES } from '@/constants/crop-varieties';
+import { CropType } from '@/constants/crop-varieties';
 import { getCropVisual, KnownCrop } from '@/utils/farm-crop-visuals';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
@@ -41,9 +40,7 @@ interface FarmSetupState {
   cropVariety: string;
   customVariety: string;
   cropSearchQuery: string;
-  varietySearchQuery: string;
   showCropPicker: boolean;
-  showVarietyPicker: boolean;
 }
 
 const INITIAL_STATE: FarmSetupState = {
@@ -55,9 +52,7 @@ const INITIAL_STATE: FarmSetupState = {
   cropVariety: '',
   customVariety: '',
   cropSearchQuery: '',
-  varietySearchQuery: '',
   showCropPicker: false,
-  showVarietyPicker: false,
 };
 
 export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
@@ -82,8 +77,6 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
 
   const cropSearchQueryTrimmed = state.cropSearchQuery.trim();
   const cropSearchQueryLower = cropSearchQueryTrimmed.toLowerCase();
-  const varietySearchQueryTrimmed = state.varietySearchQuery.trim();
-  const varietySearchQueryLower = varietySearchQueryTrimmed.toLowerCase();
 
   const filteredCropOptions = useMemo(() => {
     if (!cropSearchQueryLower) return knownCropOptions;
@@ -103,35 +96,6 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
     );
   }, [cropSearchQueryLower, cropSearchQueryTrimmed, knownCropOptions]);
 
-  const baseVarieties = useMemo(() => {
-    const entries = CROP_VARIETIES[state.selectedCrop] ?? [];
-    return entries.filter((entry) => entry !== 'Custom');
-  }, [state.selectedCrop]);
-
-  const varieties = useMemo(() => {
-    if (!state.cropVariety.trim()) return baseVarieties;
-    if (baseVarieties.includes(state.cropVariety)) return baseVarieties;
-    return [state.cropVariety, ...baseVarieties];
-  }, [baseVarieties, state.cropVariety]);
-
-  // Variety is no longer a required step during onboarding — it's the heaviest
-  // interaction on this slide (a searchable modal) and was a major drop-off point.
-  // If the user doesn't pick one, fall back to the crop's first known variety so
-  // the farm is still valid; they can refine it later from the farm screen.
-  const defaultCropVariety = baseVarieties[0] ?? '';
-  const hasManualVariety = state.cropVariety.trim().length > 0;
-  const effectiveCropVariety = hasManualVariety ? state.cropVariety : defaultCropVariety;
-
-  const filteredVarieties = useMemo(() => {
-    if (!varietySearchQueryLower) return varieties;
-    return varieties.filter((variety) => variety.toLowerCase().includes(varietySearchQueryLower));
-  }, [varieties, varietySearchQueryLower]);
-
-  const canCreateCustomVariety = useMemo(() => {
-    if (!varietySearchQueryTrimmed) return false;
-    return !varieties.some((variety) => variety.toLowerCase() === varietySearchQueryLower);
-  }, [varieties, varietySearchQueryLower, varietySearchQueryTrimmed]);
-
   const selectedCropLabel = useMemo(() => {
     if (state.selectedCrop === 'Other') {
       return state.customCropName.trim() || t('farmForm.cropPicker.customCropLabel');
@@ -140,16 +104,13 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
     return selected?.label ?? state.selectedCrop;
   }, [knownCropOptions, state.customCropName, state.selectedCrop, t]);
 
-  const selectedVarietyLabel =
-    state.cropVariety || effectiveCropVariety || t('farmForm.variety.selectPlaceholder');
-
   const isValid = isFarmCoreFieldsValid({
     name: state.name,
     region: state.region,
     area: state.area,
     selectedCrop: state.selectedCrop,
     customCropName: state.customCropName,
-    cropVariety: effectiveCropVariety,
+    cropVariety: '',
     customVariety: state.customVariety,
   });
 
@@ -173,8 +134,6 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
     [m3],
   );
 
-  const getVarietyLabel = useCallback((value?: string) => value ?? '', []);
-
   const handleSelectCrop = useCallback((crop: CropType, customCropName?: string) => {
     setState((prev) => ({
       ...prev,
@@ -183,19 +142,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
       cropVariety: '',
       customVariety: '',
       cropSearchQuery: '',
-      varietySearchQuery: '',
       showCropPicker: false,
-      showVarietyPicker: false,
-    }));
-  }, []);
-
-  const handleSelectVariety = useCallback((variety: string) => {
-    setState((prev) => ({
-      ...prev,
-      cropVariety: variety,
-      customVariety: variety === 'Custom' ? '' : prev.customVariety,
-      varietySearchQuery: '',
-      showVarietyPicker: false,
     }));
   }, []);
 
@@ -206,7 +153,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
       area: state.area,
       selectedCrop: state.selectedCrop,
       customCropName: state.customCropName,
-      cropVariety: effectiveCropVariety,
+      cropVariety: '',
       customVariety: state.customVariety,
     });
 
@@ -226,13 +173,17 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
         crop: createdFarm?.crop ?? payload.crop,
         region: createdFarm?.region ?? payload.region,
       });
-      onResolved(createdFarm?.id ?? null);
+      const farmId = createdFarm?.id ?? null;
+      if (farmId === null) {
+        onResolved(null);
+        return;
+      }
+      onResolved(farmId);
     } catch (error: unknown) {
       Alert.alert(t('common.error'), getErrorMessage(error, t('common.errors.failedToCreateFarm')));
     }
   }, [
     createFarm,
-    effectiveCropVariety,
     onResolved,
     state.area,
     state.customCropName,
@@ -246,15 +197,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
   if (hasFarm) {
     return (
       <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
-        <View
-          style={[
-            styles.panel,
-            {
-              backgroundColor: colorWithOpacity(m3.surface.surfaceContainerHigh, 0.68),
-              borderColor: colorWithOpacity(m3.colorScheme.outline, 0.12),
-            },
-          ]}
-        >
+        <View style={styles.panel}>
           <Animated.View
             entering={isActive ? FadeInDown.duration(450) : undefined}
             style={styles.header}
@@ -298,7 +241,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
 
           <Animated.View entering={isActive ? FadeInDown.delay(180).duration(450) : undefined}>
             <Button
-              title={t('common.next')}
+              title={t('onboarding.firstFarm.existingButton')}
               onPress={() => onResolved(primaryFarm?.id ?? null)}
               variant="primary"
               isLoading={farmsLoading}
@@ -311,15 +254,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
-      <View
-        style={[
-          styles.panel,
-          {
-            backgroundColor: colorWithOpacity(m3.surface.surfaceContainerHigh, 0.68),
-            borderColor: colorWithOpacity(m3.colorScheme.outline, 0.12),
-          },
-        ]}
-      >
+      <View style={styles.panel}>
         <Animated.View
           entering={isActive ? FadeInDown.duration(450) : undefined}
           style={styles.header}
@@ -351,17 +286,6 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
 
           <Animated.View entering={isActive ? FadeInDown.delay(110).duration(450) : undefined}>
             <FormInput
-              label={t('farmForm.fields.region.label')}
-              value={state.region}
-              onChangeText={(value) => setState((prev) => ({ ...prev, region: value }))}
-              placeholder={t('farmForm.fields.region.placeholder')}
-              required
-              style={styles.field}
-            />
-          </Animated.View>
-
-          <Animated.View entering={isActive ? FadeInDown.delay(150).duration(450) : undefined}>
-            <FormInput
               label={t('farmForm.fields.area.label')}
               value={state.area}
               onChangeText={(value) =>
@@ -378,7 +302,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
             />
           </Animated.View>
 
-          <Animated.View entering={isActive ? FadeInDown.delay(190).duration(450) : undefined}>
+          <Animated.View entering={isActive ? FadeInDown.delay(150).duration(450) : undefined}>
             <Text style={[styles.fieldLabel, { color: m3.colorScheme.onSurfaceVariant }]}>
               {t('farmForm.sections.cropType')}
             </Text>
@@ -415,54 +339,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
             </Pressable>
           </Animated.View>
 
-          <Animated.View entering={isActive ? FadeInDown.delay(230).duration(450) : undefined}>
-            <Text style={[styles.fieldLabel, { color: m3.colorScheme.onSurfaceVariant }]}>
-              {t('farmForm.sections.variety')}
-            </Text>
-            <Pressable
-              onPress={() => setState((prev) => ({ ...prev, showVarietyPicker: true }))}
-              style={[
-                styles.selector,
-                {
-                  backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.84),
-                  borderColor: colorWithOpacity(m3.colorScheme.outline, 0.1),
-                },
-              ]}
-            >
-              <View style={styles.selectorLeading}>
-                <View
-                  style={[
-                    styles.selectorIcon,
-                    { backgroundColor: colorWithOpacity(m3.colorScheme.secondary, 0.12) },
-                  ]}
-                >
-                  <SymbolIcon name="sparkles" size={18} color={m3.colorScheme.secondary} />
-                </View>
-                <View style={styles.selectorText}>
-                  <Text style={[styles.selectorValue, { color: m3.colorScheme.onSurface }]}>
-                    {selectedVarietyLabel}
-                  </Text>
-                </View>
-              </View>
-              <SymbolIcon name="chevron.down" size={18} color={m3.colorScheme.onSurfaceVariant} />
-            </Pressable>
-          </Animated.View>
-
-          <Animated.View entering={isActive ? FadeInDown.delay(270).duration(450) : undefined}>
-            <View
-              style={[
-                styles.assuranceStrip,
-                { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08) },
-              ]}
-            >
-              <SymbolIcon name="checkmark.seal.fill" size={18} color={m3.colorScheme.primary} />
-              <Text style={[styles.assuranceText, { color: m3.colorScheme.onSurface }]}>
-                {t('onboarding.firstFarm.assurance')}
-              </Text>
-            </View>
-          </Animated.View>
-
-          <Animated.View entering={isActive ? FadeInDown.delay(310).duration(450) : undefined}>
+          <Animated.View entering={isActive ? FadeInDown.delay(190).duration(450) : undefined}>
             <Button
               title={t('onboarding.firstFarm.createButton')}
               onPress={handleCreate}
@@ -490,21 +367,6 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
         onSearchChange={(query) => setState((prev) => ({ ...prev, cropSearchQuery: query }))}
         renderCropVisual={renderCropVisual}
       />
-
-      <VarietyPickerSheet
-        visible={state.showVarietyPicker}
-        cropVariety={effectiveCropVariety}
-        varietySearchQuery={state.varietySearchQuery}
-        varietySearchQueryTrimmed={varietySearchQueryTrimmed}
-        filteredVarieties={filteredVarieties}
-        canCreateCustomVariety={canCreateCustomVariety}
-        onClose={() =>
-          setState((prev) => ({ ...prev, showVarietyPicker: false, varietySearchQuery: '' }))
-        }
-        onSelectVariety={handleSelectVariety}
-        onSearchChange={(query) => setState((prev) => ({ ...prev, varietySearchQuery: query }))}
-        getVarietyLabel={getVarietyLabel}
-      />
     </View>
   );
 }
@@ -514,16 +376,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-start',
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[2],
-    paddingBottom: spacing[2],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[4],
   },
   panel: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: borderRadius['4xl'],
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[4],
-    gap: spacing[3],
+    paddingVertical: spacing[2],
+    gap: spacing[4],
   },
   header: {
     gap: spacing[1],
@@ -577,19 +436,6 @@ const styles = StyleSheet.create({
   selectorValue: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-  },
-  assuranceStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    borderRadius: borderRadius.xl,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-  },
-  assuranceText: {
-    flex: 1,
-    fontSize: fontSize.xs,
-    lineHeight: 18,
   },
   existingFarmCard: {
     flexDirection: 'row',
