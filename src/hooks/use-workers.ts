@@ -174,8 +174,11 @@ export function useWorkerAttendanceByDateRange(
   endDate: string,
 ) {
   return useQuery({
-    queryKey: queryKeys.workerAttendance.listByWorkerDateRange(workerId!, startDate, endDate),
-    queryFn: () => fetchWorkerAttendanceByDateRange(workerId!, startDate, endDate),
+    queryKey: queryKeys.workerAttendance.listByWorkerDateRange(workerId, startDate, endDate),
+    queryFn: () => {
+      if (!workerId) return [];
+      return fetchWorkerAttendanceByDateRange(workerId, startDate, endDate);
+    },
     enabled: !!workerId,
   });
 }
@@ -274,13 +277,7 @@ export function useDeleteWorkerAttendance() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      workerId: _workerId,
-    }: {
-      id: number;
-      workerId: number;
-    }): Promise<void> => {
+    mutationFn: async (id: number): Promise<void> => {
       const { error } = await getDataAccess().from(TABLES.WORKER_ATTENDANCE).delete().eq('id', id);
 
       if (error) throw error;

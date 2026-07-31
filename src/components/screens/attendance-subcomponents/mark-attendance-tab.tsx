@@ -480,7 +480,10 @@ export function MarkAttendanceTab({
               work_status: cell.status as WorkStatus,
               work_type: cell.workType || 'other',
               farm_ids: cell.farmIds,
-              daily_rate_override: cell.status === 'absent' ? 0 : undefined,
+              // null explicitly clears any stale override from a prior absent
+              // record; 0 forces zero earnings for absent. undefined would be
+              // a no-op in Supabase update, leaving a stale 0 in place.
+              daily_rate_override: cell.status === 'absent' ? 0 : null,
             },
           });
         }
@@ -519,6 +522,22 @@ export function MarkAttendanceTab({
 
       triggerHapticSuccess();
       showToast(t('attendance.alerts.savedBody', { name: selectedWorker?.name ?? '' }), 'success');
+
+      // Clear isModified so hasModifications returns false immediately
+      // (hiding the unsaved-changes bar) and the cell-rebuild effect
+      // doesn't preserve stale cells over the refetched server data.
+      setCellData((prev) => {
+        const next = new Map(prev);
+        for (const cell of modifiedCells) {
+          const key = getCellKey(cell.workerId, cell.date);
+          const existing = next.get(key);
+          if (existing) {
+            next.set(key, { ...existing, isModified: false });
+          }
+        }
+        return next;
+      });
+
       onSaveSuccess();
     } catch {
       showToast(t('attendance.alerts.saveErrorBody'), 'error');

@@ -177,7 +177,7 @@ describe('attendance mutation invalidation covers date-range keys', () => {
     });
 
     await act(async () => {
-      await result.current.mutateAsync({ id: 99, workerId: 5 });
+      await result.current.mutateAsync(99);
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -323,6 +323,9 @@ describe('useSaveAttendanceBatch', () => {
     // First operation failed, second succeeded — mutation still resolves.
     expect(returnedErrors).toHaveLength(1);
     expect(returnedErrors[0].date).toBe('2026-07-01');
+
+    // Both operations executed — the batch continued after the first failure.
+    expect(mockFrom).toHaveBeenCalledTimes(2);
 
     // Still only one invalidation.
     const invalidationCount = invalidateSpy.mock.calls.filter(([opts]) => {
