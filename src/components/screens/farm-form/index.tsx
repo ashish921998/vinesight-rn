@@ -46,6 +46,12 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   // Quick-create collapses every non-essential field behind one optional
   // section. The default is collapsed (false); tapping the header toggles it.
   const [isAgronomyDetailsOpen, setIsAgronomyDetailsOpen] = React.useState(false);
+  const isGuidedAddFarm = form.getIsGuidedAddFarm();
+  React.useEffect(() => {
+    if (isGuidedAddFarm) {
+      setIsAgronomyDetailsOpen(true);
+    }
+  }, [isGuidedAddFarm]);
   const agronomyChevronRotation = useSharedValue(0);
   React.useEffect(() => {
     agronomyChevronRotation.value = withSpring(isAgronomyDetailsOpen ? 90 : 0, springs.snappy);

@@ -84,6 +84,7 @@ import {
   useDeleteIrrigationRecord,
 } from '@/hooks';
 import {
+  LinkedFertigationSaveError,
   useSaveSingleLog,
   saveIrrigationWithLinkedFertigation,
 } from '@/features/entry-log-session';
@@ -597,10 +598,10 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
         triggerHapticSuccess();
         onClose();
       } catch (error) {
-        // The irrigation helper's compensation deletes a half-saved irrigation
-        // on a fertigation failure but does not clear the retry ref — drop it
-        // here so a retry rebuilds rather than linking to a deleted record.
-        pendingIrrigationRef.current = null;
+        pendingIrrigationRef.current =
+          error instanceof LinkedFertigationSaveError && !error.irrigationWasDeleted
+            ? error.irrigation
+            : null;
         Alert.alert(
           t('common.error'),
           error instanceof Error ? error.message : t('common.errors.failedToSaveLogs'),

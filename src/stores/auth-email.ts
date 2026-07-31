@@ -78,7 +78,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
 
       if (error) throw error;
 
-      initializeNewFarmerExperience();
+      await initializeNewFarmerExperience();
 
       if (data.session) {
         if (data.user) {
@@ -145,7 +145,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
 
       if (error) throw error;
 
-      initializeNewFarmerExperience();
+      await initializeNewFarmerExperience();
 
       if (data.session) {
         if (data.user) {
@@ -248,7 +248,7 @@ export const createEmailActions = (set: SetState, get: GetState) => ({
       }
       telemetry.capture('auth_otp_verify_succeeded', { type: pendingOTPType });
       if (pendingOTPType === 'signup') {
-        initializeNewFarmerExperience();
+        await initializeNewFarmerExperience();
         telemetry.capture('user_signed_up', { method: 'otp', verified: true });
       } else {
         telemetry.capture('user_logged_in', { method: 'otp' });

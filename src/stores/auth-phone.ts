@@ -213,7 +213,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
       const needsProfileCompletion = !hasCompletedProfileName(data.user);
 
       if (isSignup) {
-        initializeNewFarmerExperience();
+        await initializeNewFarmerExperience();
       }
 
       // Set auth state FIRST before any side-effects that could throw

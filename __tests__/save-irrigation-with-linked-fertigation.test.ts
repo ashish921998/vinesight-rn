@@ -1,4 +1,5 @@
 import {
+  LinkedFertigationSaveError,
   saveIrrigationWithLinkedFertigation,
   type SaveLogFn,
   type IrrigationDeleteFn,
@@ -110,18 +111,22 @@ describe('saveIrrigationWithLinkedFertigation', () => {
     const saveLog = makeSaveLog({}, new Error('fertigation boom'));
     const deleteIrrigation = makeDelete();
 
-    await expect(
-      saveIrrigationWithLinkedFertigation({
-        saveLog: saveLog.fn,
-        deleteIrrigation: deleteIrrigation.fn,
-        irrigationData: { duration: 3 } as never,
-        fertigationData: { fertilizers: [{ name: 'NPK' }] } as never,
-        hasFertilizers: true,
-        farm,
-        dateStr,
-        preferredAreaUnit: areaUnit,
-      }),
-    ).rejects.toThrow('fertigation boom');
+    const promise = saveIrrigationWithLinkedFertigation({
+      saveLog: saveLog.fn,
+      deleteIrrigation: deleteIrrigation.fn,
+      irrigationData: { duration: 3 } as never,
+      fertigationData: { fertilizers: [{ name: 'NPK' }] } as never,
+      hasFertilizers: true,
+      farm,
+      dateStr,
+      preferredAreaUnit: areaUnit,
+    });
+
+    await expect(promise).rejects.toMatchObject({
+      message: 'fertigation boom',
+      irrigation: irrigationResult(),
+      irrigationWasDeleted: true,
+    });
 
     // Irrigation was saved, then compensated by delete.
     expect(saveLog.calls).toHaveLength(2);
@@ -141,18 +146,23 @@ describe('saveIrrigationWithLinkedFertigation', () => {
       throw new Error('delete boom');
     });
 
-    await expect(
-      saveIrrigationWithLinkedFertigation({
-        saveLog: saveLog.fn,
-        deleteIrrigation,
-        irrigationData: { duration: 3 } as never,
-        fertigationData: { fertilizers: [{ name: 'NPK' }] } as never,
-        hasFertilizers: true,
-        farm,
-        dateStr,
-        preferredAreaUnit: areaUnit,
-      }),
-    ).rejects.toThrow('fertigation boom');
+    const promise = saveIrrigationWithLinkedFertigation({
+      saveLog: saveLog.fn,
+      deleteIrrigation,
+      irrigationData: { duration: 3 } as never,
+      fertigationData: { fertilizers: [{ name: 'NPK' }] } as never,
+      hasFertilizers: true,
+      farm,
+      dateStr,
+      preferredAreaUnit: areaUnit,
+    });
+
+    await expect(promise).rejects.toBeInstanceOf(LinkedFertigationSaveError);
+    await expect(promise).rejects.toMatchObject({
+      message: 'fertigation boom',
+      irrigation: irrigationResult(),
+      irrigationWasDeleted: false,
+    });
 
     expect(deleteCalls).toHaveLength(1);
   });
