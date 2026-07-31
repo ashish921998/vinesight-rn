@@ -85,9 +85,13 @@ export {
   // Attendance
   useAllWorkerAttendance,
   useWorkerAttendance,
+  useWorkerAttendanceByDateRange,
+  fetchWorkerAttendanceByDateRange,
   useCreateWorkerAttendance,
   useUpdateWorkerAttendance,
   useDeleteWorkerAttendance,
+  useSaveAttendanceBatch,
+  type AttendanceSaveOperation,
   // Transactions
   useAllWorkerTransactions,
   useWorkerTransactions,

@@ -12,8 +12,13 @@ import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
-import { getDataAccess } from '@/data-access';
-import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
+import {
+  useWorkerAttendanceByDateRange,
+  fetchWorkerAttendanceByDateRange,
+  useSaveAttendanceBatch,
+  type AttendanceSaveOperation,
+} from '@/hooks/use-workers';
+import type { Farm, Worker, WorkerAttendance, WorkStatus } from '@/types';
 import { borderRadius, fontSize, fontWeight, radius, shadows, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -48,6 +53,8 @@ interface CellData {
 }
 
 const STATUS_CYCLE: AttendanceStatus[] = ['full_day', 'half_day', 'absent', null];
+
+const EMPTY_ATTENDANCE: WorkerAttendance[] = [];
 
 const getStatusDisplay = (
   status: AttendanceStatus,
@@ -127,8 +134,10 @@ export function MarkAttendanceTab({
   const bottomActionBarHeight = 88;
   const actionBarBottom = isAndroid ? 0 : tabBarInset;
   const [cellData, setCellData] = useState<Map<string, CellData>>(new Map());
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Synchronous source of truth for save-in-flight, checked by mutation
+  // handlers to avoid closing over stale `saving` state across awaits.
+  const savingRef = useRef(false);
   const [selectedFarmIds, setSelectedFarmIds] = useState<number[]>([]);
   const [workerSheetVisible, setWorkerSheetVisible] = useState(false);
   const [farmSheetVisible, setFarmSheetVisible] = useState(false);
@@ -137,11 +146,12 @@ export function MarkAttendanceTab({
   const [isRangeLoaded, setIsRangeLoaded] = useState(false);
 
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latestLoadRef = useRef(0);
   const farmsRef = useRef(farms);
   farmsRef.current = farms;
 
   const prevWorkerIdRef = useRef<number | undefined>(undefined);
+
+  const saveBatchMutation = useSaveAttendanceBatch();
 
   React.useEffect(() => {
     return () => {
@@ -226,98 +236,102 @@ export function MarkAttendanceTab({
 
   const getCellKey = (workerId: number, date: string) => `${workerId}-${date}`;
 
-  const loadAttendance = React.useCallback(async () => {
+  const startDate = dateRange.length > 0 ? formatDate(dateRange[0]) : '';
+  const endDate = dateRange.length > 0 ? formatDate(dateRange[dateRange.length - 1]) : '';
+
+  const {
+    data: attendanceRecords = EMPTY_ATTENDANCE,
+    isLoading,
+    isError,
+  } = useWorkerAttendanceByDateRange(
+    isRangeLoaded ? selectedWorker?.id : undefined,
+    startDate,
+    endDate,
+  );
+
+  const loading = !isRangeLoaded || isLoading;
+
+  // Rebuild cell data whenever the fetched attendance records change.
+  React.useEffect(() => {
     if (!selectedWorker || dateRange.length === 0) return;
 
-    const workerId = selectedWorker?.id;
+    const workerId = selectedWorker.id;
     if (workerId === undefined) return;
 
-    const loadToken = ++latestLoadRef.current;
-    setLoading(true);
-    try {
-      const newCellData = new Map<string, CellData>();
-      const startDate = formatDate(dateRange[0]);
-      const endDate = formatDate(dateRange[dateRange.length - 1]);
+    const newCellData = new Map<string, CellData>();
+    for (const date of dateRange) {
+      const dateStr = formatDate(date);
+      const key = getCellKey(workerId, dateStr);
+      newCellData.set(key, {
+        workerId,
+        date: dateStr,
+        status: null,
+        workType: null,
+        farmIds: [],
+        isModified: false,
+      });
+    }
 
-      for (const date of dateRange) {
-        const dateStr = formatDate(date);
-        const key = getCellKey(workerId, dateStr);
-        newCellData.set(key, {
-          workerId,
-          date: dateStr,
-          status: null,
-          workType: null,
-          farmIds: [],
-          isModified: false,
-        });
-      }
+    for (const record of attendanceRecords) {
+      const key = getCellKey(record.worker_id, record.date);
+      newCellData.set(key, {
+        workerId: record.worker_id,
+        date: record.date,
+        status: record.work_status as AttendanceStatus,
+        workType: record.work_type,
+        farmIds: record.farm_ids || [],
+        existingRecordId: record.id,
+        isModified: false,
+      });
+    }
 
-      const records = await fetchAttendanceForWorker(workerId, startDate, endDate);
-
-      // Ignore stale fetch results when a newer load was started.
-      if (loadToken !== latestLoadRef.current) return;
-
-      for (const record of records) {
-        const key = getCellKey(record.worker_id, record.date);
-        newCellData.set(key, {
-          workerId: record.worker_id,
-          date: record.date,
-          status: record.work_status as AttendanceStatus,
-          workType: record.work_type,
-          farmIds: record.farm_ids || [],
-          existingRecordId: record.id,
-          isModified: false,
-        });
-      }
-
-      const workerChanged = prevWorkerIdRef.current !== workerId;
-      if (workerChanged) {
-        const recordWithFarms = records.find((r) => r.farm_ids && r.farm_ids.length > 0);
-        if (recordWithFarms) {
-          setSelectedFarmIds(recordWithFarms.farm_ids || []);
-        } else if (farmsRef.current.length > 0) {
-          const firstWithId = farmsRef.current.find((f) => f.id != null);
-          setSelectedFarmIds(firstWithId?.id != null ? [firstWithId.id] : []);
-        }
+    const workerChanged = prevWorkerIdRef.current !== workerId;
+    if (workerChanged) {
+      // Only auto-select farms once data has actually loaded. On mount the
+      // query is disabled and records are empty — defer until real data
+      // (or a confirmed empty result) arrives.
+      const recordWithFarms = attendanceRecords.find((r) => r.farm_ids && r.farm_ids.length > 0);
+      if (recordWithFarms) {
+        setSelectedFarmIds(recordWithFarms.farm_ids || []);
+        prevWorkerIdRef.current = workerId;
+      } else if (!loading && farmsRef.current.length > 0) {
+        // Data loaded (possibly empty) — no historical farms found, so
+        // fall back to the first available farm.
+        const firstWithId = farmsRef.current.find((f) => f.id != null);
+        setSelectedFarmIds(firstWithId?.id != null ? [firstWithId.id] : []);
         prevWorkerIdRef.current = workerId;
       }
-
-      // Preserve locally modified cells that haven't been saved yet
-      const validDateStrs = new Set(dateRange.map((d) => formatDate(d)));
-      setCellData((prev) => {
-        const merged = new Map(newCellData);
-        prev.forEach((cell, key) => {
-          if (cell.isModified && key.startsWith(`${workerId}-`)) {
-            const datePart = key.slice(`${workerId}-`.length);
-            if (validDateStrs.has(datePart)) {
-              merged.set(key, cell);
-            }
-          }
-        });
-        return merged;
-      });
-    } catch {
-      if (loadToken !== latestLoadRef.current) return;
-      Alert.alert(t('common.error'), t('common.errors.failedToLoadAttendanceData'));
-    } finally {
-      if (loadToken === latestLoadRef.current) {
-        setLoading(false);
-      }
+      // If still loading, don't set prevWorkerIdRef so this re-runs later.
     }
-  }, [selectedWorker, dateRange, t]);
+
+    // Preserve locally modified cells that haven't been saved yet
+    const validDateStrs = new Set(dateRange.map((d) => formatDate(d)));
+    setCellData((prev) => {
+      const merged = new Map(newCellData);
+      prev.forEach((cell, key) => {
+        if (cell.isModified && key.startsWith(`${workerId}-`)) {
+          const datePart = key.slice(`${workerId}-`.length);
+          if (validDateStrs.has(datePart)) {
+            merged.set(key, cell);
+          }
+        }
+      });
+      return merged;
+    });
+  }, [attendanceRecords, selectedWorker, dateRange, loading]);
+
+  React.useEffect(() => {
+    if (isError) {
+      Alert.alert(t('common.error'), t('common.errors.failedToLoadAttendanceData'));
+    }
+  }, [isError, t]);
 
   React.useEffect(() => {
     loadSavedRange();
   }, [loadSavedRange]);
 
-  React.useEffect(() => {
-    if (isRangeLoaded) {
-      loadAttendance();
-    }
-  }, [loadAttendance, isRangeLoaded]);
-
   const handleDayCellClick = (date: Date) => {
-    if (!selectedWorker) return;
+    if (savingRef.current || !selectedWorker) return;
     const workerId = selectedWorker.id;
     if (workerId === undefined) return;
     const dateStr = formatDate(date);
@@ -350,7 +364,7 @@ export function MarkAttendanceTab({
   };
 
   const handleQuickAction = (status: AttendanceStatus) => {
-    if (!selectedWorker) return;
+    if (savingRef.current || !selectedWorker) return;
     const workerId = selectedWorker.id;
     if (workerId === undefined) return;
 
@@ -376,7 +390,7 @@ export function MarkAttendanceTab({
   };
 
   const handleCopyFromYesterday = async () => {
-    if (!selectedWorker) return;
+    if (savingRef.current || !selectedWorker) return;
     const workerId = selectedWorker.id;
     if (workerId === undefined) return;
 
@@ -385,7 +399,7 @@ export function MarkAttendanceTab({
 
     let yesterdayRecord: WorkerAttendance | null = null;
     try {
-      const records = await fetchAttendanceForWorker(workerId, yesterdayStr, yesterdayStr);
+      const records = await fetchWorkerAttendanceByDateRange(workerId, yesterdayStr, yesterdayStr);
       yesterdayRecord = records.length > 0 ? records[0] : null;
     } catch {
       showToast(t('attendance.errors.noYesterdayData'), 'error');
@@ -396,6 +410,9 @@ export function MarkAttendanceTab({
       showToast(t('attendance.errors.noYesterdayData'), 'error');
       return;
     }
+
+    // Re-check after the async fetch — a save may have started meanwhile.
+    if (savingRef.current) return;
 
     triggerHapticMedium();
 
@@ -442,7 +459,7 @@ export function MarkAttendanceTab({
   }, [hasModifications, onBottomActionBarVisibilityChange]);
 
   const handleSave = async () => {
-    if (!hasModifications) {
+    if (savingRef.current || !hasModifications) {
       return;
     }
 
@@ -455,51 +472,121 @@ export function MarkAttendanceTab({
       return;
     }
 
+    savingRef.current = true;
     setSaving(true);
-    const errors: Array<{ date: string; error: unknown }> = [];
 
+    // Build the batch of operations for all modified cells.
+    const operations: AttendanceSaveOperation[] = [];
     for (const cell of modifiedCells) {
-      try {
-        if (cell.existingRecordId) {
-          if (cell.status === null) {
-            await deleteAttendance(cell.existingRecordId);
-          } else {
-            await updateAttendance(cell.existingRecordId, {
+      if (cell.existingRecordId) {
+        if (cell.status === null) {
+          operations.push({
+            kind: 'delete',
+            date: cell.date,
+            id: cell.existingRecordId,
+          });
+        } else {
+          operations.push({
+            kind: 'update',
+            date: cell.date,
+            id: cell.existingRecordId,
+            updates: {
               work_status: cell.status as WorkStatus,
               work_type: cell.workType || 'other',
               farm_ids: cell.farmIds,
-              daily_rate_override: cell.status === 'absent' ? 0 : undefined,
-            });
-          }
-        } else if (cell.status !== null && cell.farmIds.length > 0) {
-          await createAttendance({
+              // null explicitly clears any stale override from a prior absent
+              // record; 0 forces zero earnings for absent. undefined would be
+              // a no-op in Supabase update, leaving a stale 0 in place.
+              daily_rate_override: cell.status === 'absent' ? 0 : null,
+            },
+          });
+        }
+      } else if (cell.status !== null && cell.farmIds.length > 0) {
+        operations.push({
+          kind: 'create',
+          date: cell.date,
+          data: {
             worker_id: cell.workerId,
             farm_ids: cell.farmIds,
             date: cell.date,
             work_status: cell.status as WorkStatus,
             work_type: cell.workType || 'other',
             daily_rate_override: cell.status === 'absent' ? 0 : undefined,
-          });
-        }
-      } catch (error) {
-        errors.push({ date: cell.date, error });
+          },
+        });
       }
     }
 
-    if (errors.length > 0) {
-      showToast(t('attendance.alerts.partialErrorBody', { count: errors.length }), 'error');
-      prevWorkerIdRef.current = undefined;
+    // No operations to save — all modified cells were reverted to their
+    // unmarked state. Clear isModified so the unsaved-changes bar hides.
+    if (operations.length === 0) {
+      setCellData((prev) => {
+        const next = new Map(prev);
+        for (const cell of modifiedCells) {
+          const key = getCellKey(cell.workerId, cell.date);
+          const existing = next.get(key);
+          if (existing) {
+            next.set(key, { ...existing, isModified: false });
+          }
+        }
+        return next;
+      });
+      savingRef.current = false;
       setSaving(false);
-      loadAttendance();
       return;
     }
 
-    triggerHapticSuccess();
-    showToast(t('attendance.alerts.savedBody', { name: selectedWorker?.name ?? '' }), 'success');
-    onSaveSuccess();
-    prevWorkerIdRef.current = undefined;
-    setSaving(false);
-    loadAttendance();
+    try {
+      // Single mutation: one onSuccess → one cache invalidation → one refetch.
+      const errors = await saveBatchMutation.mutateAsync(operations);
+
+      if (errors.length > 0) {
+        showToast(t('attendance.alerts.partialErrorBody', { count: errors.length }), 'error');
+
+        // Clear isModified on cells that saved successfully so the
+        // cell-rebuild effect doesn't preserve stale local state for
+        // them over fresh server data. Failed cells stay modified.
+        const errorDates = new Set(errors.map((e) => e.date));
+        setCellData((prev) => {
+          const next = new Map(prev);
+          for (const cell of modifiedCells) {
+            if (errorDates.has(cell.date)) continue;
+            const key = getCellKey(cell.workerId, cell.date);
+            const existing = next.get(key);
+            if (existing) {
+              next.set(key, { ...existing, isModified: false });
+            }
+          }
+          return next;
+        });
+        return;
+      }
+
+      triggerHapticSuccess();
+      showToast(t('attendance.alerts.savedBody', { name: selectedWorker?.name ?? '' }), 'success');
+
+      // Clear isModified so hasModifications returns false immediately
+      // (hiding the unsaved-changes bar) and the cell-rebuild effect
+      // doesn't preserve stale cells over the refetched server data.
+      setCellData((prev) => {
+        const next = new Map(prev);
+        for (const cell of modifiedCells) {
+          const key = getCellKey(cell.workerId, cell.date);
+          const existing = next.get(key);
+          if (existing) {
+            next.set(key, { ...existing, isModified: false });
+          }
+        }
+        return next;
+      });
+
+      onSaveSuccess();
+    } catch {
+      showToast(t('attendance.alerts.saveErrorBody'), 'error');
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   };
 
   const handleWorkerSelect = () => {
@@ -1250,64 +1337,4 @@ export function MarkAttendanceTab({
       )}
     </View>
   );
-}
-
-async function fetchAttendanceForWorker(
-  workerId: number,
-  startDate: string,
-  endDate: string,
-): Promise<WorkerAttendance[]> {
-  const { data, error } = await getDataAccess()
-    .from('worker_attendance')
-    .select('*')
-    .eq('worker_id', workerId)
-    .gte('date', startDate)
-    .lte('date', endDate)
-    .order('date', { ascending: true });
-
-  if (error) {
-    throw new Error('Failed to fetch attendance');
-  }
-
-  return data || [];
-}
-
-async function createAttendance(data: WorkerAttendanceInsert): Promise<WorkerAttendance> {
-  const { data: result, error } = await getDataAccess()
-    .from('worker_attendance')
-    .insert(data)
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error('Failed to create attendance');
-  }
-
-  return result;
-}
-
-async function updateAttendance(
-  id: number,
-  data: Partial<WorkerAttendanceInsert>,
-): Promise<WorkerAttendance> {
-  const { data: result, error } = await getDataAccess()
-    .from('worker_attendance')
-    .update(data)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error('Failed to update attendance');
-  }
-
-  return result;
-}
-
-async function deleteAttendance(id: number): Promise<void> {
-  const { error } = await getDataAccess().from('worker_attendance').delete().eq('id', id);
-
-  if (error) {
-    throw new Error('Failed to delete attendance');
-  }
 }

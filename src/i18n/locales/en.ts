@@ -3164,6 +3164,7 @@ export const en = {
     alerts: {
       partialErrorTitle: 'Partial error',
       partialErrorBody: 'Saved with {{count}} error(s). Reloading…',
+      saveErrorBody: 'Failed to save attendance. Please try again.',
       savedTitle: 'Success',
       savedBody: 'Saved attendance for {{name}}.',
       workerCount: '{{count}} workers',
