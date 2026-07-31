@@ -21,7 +21,8 @@ import { triggerHapticSuccess } from '@/utils/haptics';
 import { validateAndParseOptionalFarmNumbers } from '@/utils/farm-form-submit-validation';
 import { getCropVisual, type KnownCrop } from '@/utils/farm-crop-visuals';
 import { colorWithOpacity } from '@/utils/color';
-import { createAddLogHref } from '@/utils/add-log-navigation';
+import { createAddLogHref, createStartSeasonHref } from '@/utils/add-log-navigation';
+import { ensureInitialFarmSeasonForFarmId } from '@/hooks/use-farms';
 import { CropIcon } from '@/components/ui';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 
@@ -995,13 +996,21 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       // The guided tour has its own post-create flow and returns above.
       if (typeof createdFarm?.id === 'number') {
         onClose();
-        router.replace(
-          createAddLogHref({
-            farmId: createdFarm.id,
-            initialLogType: 'irrigation',
-            lockFarmSelection: true,
-          }),
-        );
+        try {
+          const seasonReady = await ensureInitialFarmSeasonForFarmId(createdFarm.id);
+          router.replace(
+            seasonReady
+              ? createAddLogHref({
+                  farmId: createdFarm.id,
+                  initialLogType: 'irrigation',
+                  lockFarmSelection: true,
+                })
+              : createStartSeasonHref(createdFarm.id),
+          );
+        } catch (seasonError) {
+          console.warn('[useFarmForm] initial season verification failed:', seasonError);
+          router.replace(createStartSeasonHref(createdFarm.id));
+        }
         return;
       }
       onClose();

@@ -79,8 +79,8 @@ export async function ensureInitialFarmSeason(
   farm: Farm,
   userId: string,
   seasonNameOverride?: string,
-): Promise<void> {
-  if (typeof farm.id !== 'number') return;
+): Promise<boolean> {
+  if (typeof farm.id !== 'number') return false;
 
   // Only bootstrap a season for farms with no season history at all. A farm
   // that is *between* seasons (only ended seasons) must not get a new season
@@ -93,10 +93,10 @@ export async function ensureInitialFarmSeason(
       id?: number;
     } | null;
   } catch (error) {
-    if ((error as { code?: string }).code === '42P01') return;
+    if ((error as { code?: string }).code === '42P01') return false;
     throw error;
   }
-  if (existingSeason?.id) return;
+  if (existingSeason?.id) return true;
 
   const startDate = farm.date_of_pruning ?? formatLocalDate(getInitialSeasonStartDate());
   const seasonName = seasonNameOverride ?? `Season ${new Date().getFullYear()}`;
@@ -109,7 +109,7 @@ export async function ensureInitialFarmSeason(
       p_config_json: null,
       p_season_name: seasonName,
     });
-    return;
+    return true;
   } catch (rpcError) {
     if (!isRpcFunctionMissing(rpcError as { code?: string; message?: string })) throw rpcError;
   }
@@ -124,20 +124,21 @@ export async function ensureInitialFarmSeason(
       crop_type_snapshot: farm.crop,
     } satisfies Omit<FarmSeason, 'id' | 'created_at' | 'updated_at'>);
   } catch (insertError) {
-    if ((insertError as { code?: string }).code === '42P01') return;
+    if ((insertError as { code?: string }).code === '42P01') return false;
     // A concurrent create or DB trigger may have created the active season after our check.
-    if ((insertError as { code?: string }).code === '23505') return;
+    if ((insertError as { code?: string }).code === '23505') return true;
     throw insertError;
   }
+  return true;
 }
 
 export async function ensureInitialFarmSeasonForFarmId(
   farmId: number,
   seasonNameOverride?: string,
-): Promise<void> {
+): Promise<boolean> {
   const userId = await getUserId();
   const farm = await getDataAccess().farms.getById(farmId, userId);
-  await ensureInitialFarmSeason(farm, userId, seasonNameOverride);
+  return ensureInitialFarmSeason(farm, userId, seasonNameOverride);
 }
 
 // ============================================================

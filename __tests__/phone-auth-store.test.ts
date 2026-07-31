@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/stores/auth-store';
 import { openAuthSessionAsync } from 'expo-web-browser';
+import { isRecentlyCreatedAuthUser } from '@/stores/auth-phone';
 
 const mockDataAccess = {
   from: jest.fn(),
@@ -195,6 +196,25 @@ describe('signInWithPhone', () => {
 // ============================================================
 
 describe('verifyPhoneOTP', () => {
+  describe('new-account detection', () => {
+    it('accepts an auth user created during the current OTP flow', () => {
+      const now = Date.parse('2026-07-31T10:00:00.000Z');
+      expect(isRecentlyCreatedAuthUser({ created_at: '2026-07-31T09:59:00.000Z' }, now)).toBe(true);
+    });
+
+    it('does not treat a returning auth user as a new farmer', () => {
+      const now = Date.parse('2026-07-31T10:00:00.000Z');
+      expect(isRecentlyCreatedAuthUser({ created_at: '2025-07-31T10:00:00.000Z' }, now)).toBe(
+        false,
+      );
+    });
+
+    it('fails closed when the provider omits or corrupts created_at', () => {
+      expect(isRecentlyCreatedAuthUser({})).toBe(false);
+      expect(isRecentlyCreatedAuthUser({ created_at: 'not-a-date' })).toBe(false);
+    });
+  });
+
   describe('validation', () => {
     it.each([
       ['12345', 'less than 6 digits'],

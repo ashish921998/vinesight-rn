@@ -57,11 +57,9 @@ describe('ensureInitialFarmSeason', () => {
     mockExistingSeasonLookup({ data: null, error: null });
     mockRpc.mockResolvedValue({ data: null, error: null });
 
-    await ensureInitialFarmSeason(
-      baseFarm({ date_of_pruning: '2026-01-15' }),
-      'user-1',
-      'Season 2026',
-    );
+    await expect(
+      ensureInitialFarmSeason(baseFarm({ date_of_pruning: '2026-01-15' }), 'user-1', 'Season 2026'),
+    ).resolves.toBe(true);
 
     expect(mockRpc).toHaveBeenCalledWith(
       'start_farm_season',
@@ -75,7 +73,9 @@ describe('ensureInitialFarmSeason', () => {
 
     // No pruning date → season anchors to the most recent Feb 1st (via the
     // same helper the production code uses), not "today".
-    await ensureInitialFarmSeason(baseFarm({ date_of_pruning: null }), 'user-1');
+    await expect(
+      ensureInitialFarmSeason(baseFarm({ date_of_pruning: null }), 'user-1'),
+    ).resolves.toBe(true);
 
     expect(mockRpc).toHaveBeenCalledWith(
       'start_farm_season',
@@ -98,7 +98,9 @@ describe('ensureInitialFarmSeason', () => {
   it('does not create a second season when one already exists', async () => {
     mockExistingSeasonLookup({ data: { id: 7 }, error: null });
 
-    await ensureInitialFarmSeason(baseFarm({ date_of_pruning: '2026-01-15' }), 'user-1');
+    await expect(
+      ensureInitialFarmSeason(baseFarm({ date_of_pruning: '2026-01-15' }), 'user-1'),
+    ).resolves.toBe(true);
 
     expect(mockRpc).not.toHaveBeenCalled();
   });

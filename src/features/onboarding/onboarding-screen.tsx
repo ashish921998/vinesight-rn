@@ -9,6 +9,7 @@ import { useAppModeStore, useAuthStore } from '@/stores';
 import { useOnboardingStore } from '@/stores/onboarding-store';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { colorWithOpacity } from '@/utils/color';
+import { resolveOnboardingFarmHref, type OnboardingFarmDestination } from './onboarding-navigation';
 import { FirstFarmSlide } from './slides/first-farm-slide';
 
 /**
@@ -33,29 +34,32 @@ export function OnboardingScreen() {
     }
   }, []);
 
-  const handleFarmResolved = useCallback((farmId: number | null) => {
-    if (farmId === null) return;
+  const handleFarmResolved = useCallback(
+    (farmId: number | null, destination: OnboardingFarmDestination = 'tabs') => {
+      if (farmId === null) return;
 
-    const onboarding = useOnboardingStore.getState();
-    onboarding.markFarmCreated(farmId);
-    onboarding.completeOnboarding();
-    useAuthStore.getState().setHasSeenOnboarding(true);
-    useAppModeStore.getState().setDetailedMode(false);
+      const onboarding = useOnboardingStore.getState();
+      onboarding.markFarmCreated(farmId);
+      onboarding.completeOnboarding();
+      useAuthStore.getState().setHasSeenOnboarding(true);
+      useAppModeStore.getState().setDetailedMode(false);
 
-    // Prevent the guided-tour welcome card (shown whenever status==='not_started')
-    // from firing for a fresh farmer landing on /(tabs). New farmers have
-    // already been taught the farm+log flow in onboarding.
-    useGuidedTourStore.getState().completeTour();
+      // Prevent the guided-tour welcome card (shown whenever status==='not_started')
+      // from firing for a fresh farmer landing on /(tabs). New farmers have
+      // already been taught the farm+log flow in onboarding.
+      useGuidedTourStore.getState().completeTour();
 
-    telemetry.capture('onboarding_farm_created', { farm_id: farmId });
-    telemetry.capture('onboarding_completed', {
-      farm_id: farmId,
-      onboarding_path: 'basic_details_and_farm',
-      app_mode: 'simple',
-    });
+      telemetry.capture('onboarding_farm_created', { farm_id: farmId });
+      telemetry.capture('onboarding_completed', {
+        farm_id: farmId,
+        onboarding_path: 'basic_details_and_farm',
+        app_mode: 'simple',
+      });
 
-    router.replace('/(tabs)');
-  }, []);
+      router.replace(resolveOnboardingFarmHref(farmId, destination));
+    },
+    [],
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
