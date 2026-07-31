@@ -284,14 +284,21 @@ export function MarkAttendanceTab({
 
     const workerChanged = prevWorkerIdRef.current !== workerId;
     if (workerChanged) {
+      // Only auto-select farms from historical data if we actually have
+      // loaded records. On mount the query is disabled and records are
+      // empty — defer farm selection until real data arrives.
       const recordWithFarms = attendanceRecords.find((r) => r.farm_ids && r.farm_ids.length > 0);
       if (recordWithFarms) {
         setSelectedFarmIds(recordWithFarms.farm_ids || []);
-      } else if (farmsRef.current.length > 0) {
+        prevWorkerIdRef.current = workerId;
+      } else if (attendanceRecords.length > 0 && farmsRef.current.length > 0) {
+        // Records loaded but none have farms — fall back to first farm.
         const firstWithId = farmsRef.current.find((f) => f.id != null);
         setSelectedFarmIds(firstWithId?.id != null ? [firstWithId.id] : []);
+        prevWorkerIdRef.current = workerId;
       }
-      prevWorkerIdRef.current = workerId;
+      // If attendanceRecords is empty (not yet loaded), don't set
+      // prevWorkerIdRef so this branch re-runs when data arrives.
     }
 
     // Preserve locally modified cells that haven't been saved yet
@@ -517,6 +524,23 @@ export function MarkAttendanceTab({
 
       if (errors.length > 0) {
         showToast(t('attendance.alerts.partialErrorBody', { count: errors.length }), 'error');
+
+        // Clear isModified on cells that saved successfully so the
+        // cell-rebuild effect doesn't preserve stale local state for
+        // them over fresh server data. Failed cells stay modified.
+        const errorDates = new Set(errors.map((e) => e.date));
+        setCellData((prev) => {
+          const next = new Map(prev);
+          for (const cell of modifiedCells) {
+            if (errorDates.has(cell.date)) continue;
+            const key = getCellKey(cell.workerId, cell.date);
+            const existing = next.get(key);
+            if (existing) {
+              next.set(key, { ...existing, isModified: false });
+            }
+          }
+          return next;
+        });
         return;
       }
 
