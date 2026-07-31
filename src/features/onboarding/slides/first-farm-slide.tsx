@@ -10,7 +10,7 @@ import {
   getErrorMessage,
   isFarmCoreFieldsValid,
 } from '@/components/screens/farm-form/utils';
-import { ensureInitialFarmSeasonForFarmId, useCreateFarm, useFarms } from '@/hooks';
+import { useCreateFarm, useFarms } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { CropType } from '@/constants/crop-varieties';
@@ -22,7 +22,7 @@ import { triggerHapticSuccess } from '@/utils/haptics';
 
 interface FirstFarmSlideProps {
   isActive: boolean;
-  onResolved: (farmId: number | null, destination?: 'tabs' | 'log' | 'season') => void;
+  onResolved: (farmId: number | null) => void;
 }
 
 interface KnownCropOption {
@@ -178,13 +178,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
         onResolved(null);
         return;
       }
-      try {
-        const seasonReady = await ensureInitialFarmSeasonForFarmId(farmId);
-        onResolved(farmId, seasonReady ? 'log' : 'season');
-      } catch (seasonError) {
-        console.warn('[FirstFarmSlide] initial season verification failed:', seasonError);
-        onResolved(farmId, 'season');
-      }
+      onResolved(farmId);
     } catch (error: unknown) {
       Alert.alert(t('common.error'), getErrorMessage(error, t('common.errors.failedToCreateFarm')));
     }
@@ -203,15 +197,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
   if (hasFarm) {
     return (
       <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
-        <View
-          style={[
-            styles.panel,
-            {
-              backgroundColor: colorWithOpacity(m3.surface.surfaceContainerHigh, 0.68),
-              borderColor: colorWithOpacity(m3.colorScheme.outline, 0.12),
-            },
-          ]}
-        >
+        <View style={styles.panel}>
           <Animated.View
             entering={isActive ? FadeInDown.duration(450) : undefined}
             style={styles.header}
@@ -255,7 +241,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
 
           <Animated.View entering={isActive ? FadeInDown.delay(180).duration(450) : undefined}>
             <Button
-              title={t('common.next')}
+              title={t('onboarding.firstFarm.existingButton')}
               onPress={() => onResolved(primaryFarm?.id ?? null)}
               variant="primary"
               isLoading={farmsLoading}
@@ -268,15 +254,7 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
-      <View
-        style={[
-          styles.panel,
-          {
-            backgroundColor: colorWithOpacity(m3.surface.surfaceContainerHigh, 0.68),
-            borderColor: colorWithOpacity(m3.colorScheme.outline, 0.12),
-          },
-        ]}
-      >
+      <View style={styles.panel}>
         <Animated.View
           entering={isActive ? FadeInDown.duration(450) : undefined}
           style={styles.header}
@@ -362,20 +340,6 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
           </Animated.View>
 
           <Animated.View entering={isActive ? FadeInDown.delay(190).duration(450) : undefined}>
-            <View
-              style={[
-                styles.assuranceStrip,
-                { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08) },
-              ]}
-            >
-              <SymbolIcon name="checkmark.seal.fill" size={18} color={m3.colorScheme.primary} />
-              <Text style={[styles.assuranceText, { color: m3.colorScheme.onSurface }]}>
-                {t('onboarding.firstFarm.assurance')}
-              </Text>
-            </View>
-          </Animated.View>
-
-          <Animated.View entering={isActive ? FadeInDown.delay(230).duration(450) : undefined}>
             <Button
               title={t('onboarding.firstFarm.createButton')}
               onPress={handleCreate}
@@ -412,16 +376,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-start',
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[2],
-    paddingBottom: spacing[2],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[4],
   },
   panel: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: borderRadius['4xl'],
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[4],
-    gap: spacing[3],
+    paddingVertical: spacing[2],
+    gap: spacing[4],
   },
   header: {
     gap: spacing[1],
@@ -475,19 +436,6 @@ const styles = StyleSheet.create({
   selectorValue: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-  },
-  assuranceStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    borderRadius: borderRadius.xl,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-  },
-  assuranceText: {
-    flex: 1,
-    fontSize: fontSize.xs,
-    lineHeight: 18,
   },
   existingFarmCard: {
     flexDirection: 'row',

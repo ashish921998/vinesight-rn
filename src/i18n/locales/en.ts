@@ -1824,14 +1824,14 @@ export const en = {
       skipAlerts: 'Skip for now',
     },
     firstFarm: {
-      title: 'Add your first farm.',
-      subtitle: 'Start with the essentials. You can edit details later.',
+      title: "Let's set up your farm",
+      subtitle: 'Add the essentials now. You can fill in everything else later.',
       assurance:
         'You only need the essentials now. Everything else can be added from the farm page.',
-      createButton: 'Create first farm',
+      createButton: 'Save farm and start',
       existingTitle: 'Your first farm already exists.',
-      existingSubtitle:
-        'Continue to alerts and finish onboarding. You can edit the farm details later.',
+      existingSubtitle: 'Everything is ready. Continue to your dashboard.',
+      existingButton: 'Go to dashboard',
       existingFarmFallback: 'Farm',
       existingRegionFallback: 'Region',
       existingCropFallback: 'Crop',

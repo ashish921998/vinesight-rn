@@ -1,15 +1,5 @@
-import { createAddLogHref, createStartSeasonHref } from '@/utils/add-log-navigation';
-
-export type OnboardingFarmDestination = 'tabs' | 'log' | 'season';
-
-export function resolveOnboardingFarmHref(farmId: number, destination: OnboardingFarmDestination) {
-  if (destination === 'log') {
-    return createAddLogHref({
-      farmId,
-      initialLogType: 'irrigation',
-      lockFarmSelection: true,
-    });
-  }
-  if (destination === 'season') return createStartSeasonHref(farmId);
-  return '/(tabs)' as const;
-}
+/**
+ * Creating the first farm completes onboarding. Follow-up actions are shown
+ * contextually on the dashboard instead of chaining another setup screen.
+ */
+export const ONBOARDING_COMPLETION_HREF = '/(tabs)' as const;
