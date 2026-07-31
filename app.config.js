@@ -122,6 +122,11 @@ module.exports = {
       bundler: 'metro',
     },
     plugins: [
+      // RNRepo: substitutes supported native libraries with pre-built,
+      // GPG-signed artifacts from the public Maven repo instead of compiling
+      // from source. Unsupported libraries / RN versions automatically fall
+      // back to source compilation. Verify via "[📦 RNRepo]" build logs.
+      '@rnrepo/expo-config-plugin',
       'expo-router',
       'expo-asset',
       'expo-system-ui',

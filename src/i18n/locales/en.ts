@@ -2076,12 +2076,6 @@ export const en = {
       title: 'AI Assistant',
       subtitle: 'Open the farming assistant',
     },
-    appModeIntro: {
-      title: "We've streamlined VineSight",
-      body: 'The app now starts in Simplified mode. Workers, tools, and tasks are hidden by default. You can switch back any time.',
-      enableDetailed: 'Enable Detailed mode',
-      staySimplified: 'Stay on Simplified',
-    },
     errors: {
       signOutFailed: 'Failed to sign out. Please try again.',
       notificationsPermissionDenied: 'Notifications permission was not granted.',
@@ -2449,14 +2443,6 @@ export const en = {
         subtitle: 'Retry to check overdue tasks, PHI deadlines, and other urgent farm issues.',
         cta: 'Retry',
       },
-    },
-    quickActions: {
-      title: 'Quick actions',
-      irrigation: 'Irrigation',
-      spray: 'Spray',
-      harvest: 'Harvest',
-      expense: 'Expense',
-      note: 'Note',
     },
     recentActivity: {
       title: 'Recent activity',

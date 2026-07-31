@@ -16,6 +16,11 @@ interface PreferencesSectionProps {
   selectedAreaUnit: 'acres' | 'hectares';
   isResettingGuidedTour: boolean;
   detailedMode: boolean;
+  /**
+   * False while FORCE_SIMPLE_MODE owns the setting, or before the app-mode store
+   * has hydrated (the row would show the in-memory default over the stored one).
+   */
+  showAppModeToggle: boolean;
   styles: SettingsStyles;
   m3: ReturnType<typeof getM3Theme>;
   onLanguageChange: (code: SupportedLanguageCode) => void;
@@ -34,6 +39,7 @@ export function PreferencesSection({
   selectedAreaUnit,
   isResettingGuidedTour,
   detailedMode,
+  showAppModeToggle,
   styles,
   m3,
   onLanguageChange,
@@ -84,15 +90,21 @@ export function PreferencesSection({
           {t('settings.sectionGeneral')}
         </Text>
         <View style={styles.sectionContent}>
-          <SettingsItem
-            icon="rectangle.stack"
-            title={t('settings.appMode.title')}
-            subtitle={t('settings.appMode.subtitle')}
-            toggle={{ value: detailedMode, onValueChange: onDetailedModeChange }}
-            isLast={false}
-            styles={styles}
-            m3={m3}
-          />
+          {/* Hidden while FORCE_SIMPLE_MODE is on (the store refuses Detailed
+              mode, so the switch would snap back unexplained) and until the
+              store hydrates (it would render the default over the stored mode,
+              and a tap would be discarded by rehydration). */}
+          {showAppModeToggle && (
+            <SettingsItem
+              icon="rectangle.stack"
+              title={t('settings.appMode.title')}
+              subtitle={t('settings.appMode.subtitle')}
+              toggle={{ value: detailedMode, onValueChange: onDetailedModeChange }}
+              isLast={false}
+              styles={styles}
+              m3={m3}
+            />
+          )}
           <Pressable
             onPress={onOpenAssistant}
             accessibilityRole="button"

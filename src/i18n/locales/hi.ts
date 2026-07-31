@@ -2068,12 +2068,6 @@ export const hi = {
       title: 'एआई सहायक',
       subtitle: 'खेती सहायक खोलें',
     },
-    appModeIntro: {
-      title: 'हमने VineSight को सरल बना दिया है',
-      body: 'ऐप अब सरल मोड में शुरू होता है। कर्मचारी, उपकरण और कार्य डिफ़ॉल्ट रूप से छिपे हुए हैं। आप कभी भी वापस स्विच कर सकते हैं।',
-      enableDetailed: 'विस्तृत मोड चालू करें',
-      staySimplified: 'सरल मोड में रहें',
-    },
     errors: {
       signOutFailed: 'साइन आउट करने में विफल। कृपया पुनः प्रयास करें।',
       notificationsPermissionDenied: 'सूचनाएं अनुमति प्रदान नहीं की गई।',
@@ -2442,14 +2436,6 @@ export const hi = {
           'अतिदेय कार्य, PHI समयसीमा और अन्य जरूरी खेत समस्याएँ देखने के लिए फिर से प्रयास करें।',
         cta: 'फिर से प्रयास करें',
       },
-    },
-    quickActions: {
-      title: 'त्वरित क्रियाएं',
-      irrigation: 'सिंचाई',
-      spray: 'छिड़काव',
-      harvest: 'कटाई',
-      expense: 'खर्च',
-      note: 'नोट',
     },
     recentActivity: {
       title: 'हाल की गतिविधि',

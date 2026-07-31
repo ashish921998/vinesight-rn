@@ -14,7 +14,6 @@ import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
 import { QuickLogSheet, type QuickLogType } from '@/components/sheets/quick-log-sheet';
 import { RecentActivityList } from './recent-activity';
-import type { LogTypeId } from '@/constants/calculator-models';
 
 // Home screen for BOTH simplified and detailed mode. An action screen — not an
 // analytics dashboard. Farm-as-title header → quick actions (log directly to
@@ -23,24 +22,11 @@ import type { LogTypeId } from '@/constants/calculator-models';
 const ANALYTICS_BASE = { app_mode: 'simplified', surface: 'home' } as const;
 const RECENT_LIMIT = 6;
 
-type QuickAction = {
-  type: Extract<LogTypeId, 'irrigation' | 'spray' | 'harvest' | 'expense'>;
-  labelKey:
-    | 'dashboard.quickActions.irrigation'
-    | 'dashboard.quickActions.spray'
-    | 'dashboard.quickActions.harvest'
-    | 'dashboard.quickActions.expense';
-};
-
-// The four prime quick-log slots. Icon + color are NOT duplicated here — they
-// are derived from the canonical log-type presentation (useLogPresentation) at
-// render time, so the grid and the recent-activity list can never disagree.
-const QUICK_ACTIONS: readonly QuickAction[] = [
-  { type: 'irrigation', labelKey: 'dashboard.quickActions.irrigation' },
-  { type: 'spray', labelKey: 'dashboard.quickActions.spray' },
-  { type: 'harvest', labelKey: 'dashboard.quickActions.harvest' },
-  { type: 'expense', labelKey: 'dashboard.quickActions.expense' },
-];
+// The four prime quick-log slots. Icon, color and label are NOT duplicated here
+// — all three are derived from the canonical log-type presentation
+// (useLogPresentation) at render time, so the grid and the recent-activity list
+// can never disagree.
+const QUICK_ACTIONS: readonly QuickLogType[] = ['irrigation', 'spray', 'harvest', 'expense'];
 
 export function SimplifiedHome() {
   const m3 = useM3();
@@ -108,13 +94,13 @@ export function SimplifiedHome() {
   // Quick actions log DIRECTLY to the selected farm — no per-action picker.
   // Each action opens a focused single-log sheet. Notes remain available in the
   // full add-entry flow; the four prime dashboard slots are operational logs.
-  const handleQuickAction = (action: QuickAction) => {
+  const handleQuickAction = (type: QuickLogType) => {
     if (!hasFarms || !selectedFarm?.id) {
       goAddFarm();
       return;
     }
-    telemetry.capture('quick_action_tapped', { ...ANALYTICS_BASE, action: action.type });
-    setQuickLogType(action.type);
+    telemetry.capture('quick_action_tapped', { ...ANALYTICS_BASE, action: type });
+    setQuickLogType(type);
   };
 
   const farmOptions = useMemo(
@@ -246,67 +232,71 @@ export function SimplifiedHome() {
             </View>
           </View>
 
-          {/* Quick Actions — four domain-colored buttons. Log direct to farm. */}
-          <View style={{ marginBottom: spacing[6] }}>
-            <Text
-              accessibilityRole="header"
-              style={{
-                fontSize: fontSize.base,
-                fontWeight: fontWeight.semibold,
-                marginBottom: spacing[3],
-                color: m3.surface.s900,
-              }}
-            >
-              {t('dashboard.quickActions.title')}
-            </Text>
-            {/* 2×2 grid — big targets for gloved/sunlit field use, room for a
-                real label per tile (vs the old 4-across icon strip). */}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
-              {QUICK_ACTIONS.map((action) => {
-                const p = presentation[action.type];
-                return (
-                  <Pressable
-                    key={action.type}
-                    onPress={() => handleQuickAction(action)}
-                    accessibilityRole="button"
-                    accessibilityLabel={t(action.labelKey)}
-                    style={({ pressed }) => ({
-                      flexBasis: '45%',
-                      flexGrow: 1,
-                      borderRadius: borderRadius.md,
-                      padding: spacing[4],
-                      backgroundColor: m3.surface.s100,
-                      borderWidth: 1,
-                      borderColor: m3.surface.s300,
-                      opacity: pressed ? 0.85 : 1,
-                    })}
+          {/* Quick actions — four domain-colored tiles that log direct to the
+              farm named above. No section heading: the tiles read as the
+              screen's purpose, and one less line of chrome is one less thing to
+              parse in the field. 2×2 grid keeps targets big for gloved/sunlit
+              use, with the icon and label side by side so the label gets the
+              full tile width in Marathi/Hindi. */}
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: spacing[3],
+              marginBottom: spacing[6],
+            }}
+          >
+            {QUICK_ACTIONS.map((type) => {
+              const p = presentation[type];
+              return (
+                <Pressable
+                  key={type}
+                  onPress={() => handleQuickAction(type)}
+                  accessibilityRole="button"
+                  accessibilityLabel={p.label}
+                  style={({ pressed }) => ({
+                    flexBasis: '45%',
+                    flexGrow: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing[3],
+                    borderRadius: borderRadius.md,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[4],
+                    backgroundColor: m3.surface.s100,
+                    borderWidth: 1,
+                    borderColor: m3.surface.s300,
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: radius.md,
+                      backgroundColor: colorWithOpacity(p.color, 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
                   >
-                    <View
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: radius.md,
-                        backgroundColor: colorWithOpacity(p.color, 0.12),
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: spacing[2],
-                      }}
-                    >
-                      <AppIcon name={p.icon} size={22} color={p.color} />
-                    </View>
-                    <Text
-                      style={{
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                        color: m3.surface.s900,
-                      }}
-                    >
-                      {t(action.labelKey)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+                    <AppIcon name={p.icon} size={24} color={p.color} />
+                  </View>
+                  <Text
+                    numberOfLines={2}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      fontSize: fontSize.base,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.surface.s900,
+                    }}
+                  >
+                    {p.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
 
           {/* Recent Activity — compact log cards, still secondary to capture actions. */}
@@ -314,6 +304,7 @@ export function SimplifiedHome() {
             activities={recentActivities}
             isLoading={isLoadingActivities || isLoadingFarms}
             hasFarms={hasFarms}
+            showFarmName={canSwitch}
             onOpenFarm={(farmId) => router.push(`/farm/${farmId}`)}
             onViewAll={() => router.push('/logs')}
           />

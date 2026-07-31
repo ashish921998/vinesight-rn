@@ -22,6 +22,19 @@ export const addDays = (dateStr: string, days: number): string | null => {
   return `${yy}-${mm}-${dd}`;
 };
 
+// 'today' / 'yesterday' for dates a farmer just logged, null for anything older
+// (callers fall back to a formatted date). Compares calendar days as strings so
+// a date-only value is never shifted by the device timezone.
+export const relativeDayKey = (
+  date: string,
+  today: string = formatLocalDate(new Date()),
+): 'today' | 'yesterday' | null => {
+  const day = date.slice(0, 10);
+  if (day === today) return 'today';
+  if (day === addDays(today, -1)) return 'yesterday';
+  return null;
+};
+
 export const parseDbDateToLocalDate = (value: string): Date | null => {
   const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (dateOnlyMatch) {

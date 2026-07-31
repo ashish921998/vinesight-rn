@@ -65,7 +65,6 @@ export function CropPickerSheet({
       <BottomSheetView style={{ flex: 1 }}>
         <GuidedTourTarget
           targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP_SHEET}
-          onStartShouldSetResponder={() => true}
           style={{
             flex: 1,
             backgroundColor: m3.surface.s100,
@@ -119,7 +118,7 @@ export function CropPickerSheet({
             </View>
 
             {/* Crop list */}
-            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+            <ScrollView style={{ flex: 1 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
               {filteredCropOptions.map((cropOption) => {
                 const isSelected = selectedCrop !== 'Other' && selectedCrop === cropOption.value;
                 return (

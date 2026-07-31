@@ -3615,6 +3615,13 @@ export default function FarmDetailScreen() {
           bottom: spacing[6] + insets.bottom,
           right: spacing[6],
           height: 56,
+          // Android hit-tests by elevation, not paint order: without this the
+          // scroll view's recent-log rows sitting underneath the FAB steal the
+          // tap (opening Edit log, or nothing) even though the FAB paints on
+          // top. elevation raises it for touch on Android; zIndex keeps iOS
+          // consistent. See the native ExtendedFab which never had this bug.
+          elevation: 8,
+          zIndex: 8,
         }}
       >
         <ExtendedFab

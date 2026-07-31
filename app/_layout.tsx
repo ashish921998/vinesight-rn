@@ -51,7 +51,6 @@ import {
   QUERY_CACHE_MAX_AGE_MS,
 } from '@/lib/query-cache';
 import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
-import { AppModeIntroGate } from '@/components/app-mode-intro-modal';
 import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
 import { resolveFeatureOverviewRoute } from '@/services/feature-overview-notifications';
 import {
@@ -885,7 +884,6 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                   <Stack.Screen name="worker-analytics/[id]" options={{ headerShown: true }} />
                 </Stack>
                 <GuidedTourController />
-                <AppModeIntroGate />
               </I18nextProvider>
             </PersistQueryClientProvider>
             <ToastHost />
