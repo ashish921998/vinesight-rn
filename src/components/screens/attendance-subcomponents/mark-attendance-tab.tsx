@@ -500,6 +500,14 @@ export function MarkAttendanceTab({
       }
     }
 
+    // No operations to save — all modified cells were reverted to their
+    // unmarked state. Avoid an empty mutation that would show a misleading
+    // success toast and trigger an unnecessary refetch.
+    if (operations.length === 0) {
+      setSaving(false);
+      return;
+    }
+
     try {
       // Single mutation: one onSuccess → one cache invalidation → one refetch.
       const errors = await saveBatchMutation.mutateAsync(operations);
