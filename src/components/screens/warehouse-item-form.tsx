@@ -27,8 +27,6 @@ import {
 } from '../../hooks';
 import {
   CatalogInputType,
-  CatalogMappingSource,
-  CatalogMappingStatus,
   MasterCatalogProduct,
   NutrientCompositionItem,
   WarehouseItem,
@@ -53,22 +51,21 @@ import { NUTRIENT_CODES } from '@/constants/nutrient-definitions';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import {
   isCatalogBulkDensityValue,
-  isValidExpiryDate,
   listExistingManufacturers,
   resolveCatalogBulkDensityValue,
 } from '@/features/purchase/product-form-data';
+import {
+  parseComposition,
+  validateWarehouseItemForm,
+  type CompositionRow,
+  type WarehouseItemFormError,
+} from '@/features/purchase/warehouse-item-form-validation';
 
 interface WarehouseItemFormProps {
   visible?: boolean;
   onClose: () => void;
   editingItem: WarehouseItem | null;
   presentation?: 'modal' | 'screen';
-}
-
-interface CompositionRow {
-  id: string;
-  nutrient_code: string;
-  percent: string;
 }
 
 interface ManualCatalogueDraft {
@@ -220,32 +217,6 @@ function createCompositionRow(item?: Partial<NutrientCompositionItem>): Composit
   };
 }
 
-function parseComposition(rows: CompositionRow[]): NutrientCompositionItem[] {
-  return rows.reduce<NutrientCompositionItem[]>((result, row) => {
-    const nutrientCode = row.nutrient_code.trim().toUpperCase();
-    const rawPercent = row.percent?.trim() ?? '';
-    if (!rawPercent) {
-      return result;
-    }
-
-    const parsedPercent = Number(rawPercent);
-    if (
-      nutrientCode.length > 0 &&
-      Number.isFinite(parsedPercent) &&
-      parsedPercent > 0 &&
-      parsedPercent <= 100
-    ) {
-      result.push({
-        nutrient_code: nutrientCode,
-        percent: parsedPercent,
-        basis: 'declared',
-        notes: null,
-      });
-    }
-    return result;
-  }, []);
-}
-
 function normalizeNutrientCode(code: string): string {
   return code.trim().toUpperCase();
 }
@@ -260,6 +231,25 @@ function formatNutrientLabel(code: string): string {
     (candidate) => normalizeNutrientCode(candidate.code) === normalized,
   );
   return option?.label ?? code;
+}
+
+/** Maps a {@link WarehouseItemFormError} to the exact alert message the inline
+ * validation previously showed, resolving i18n keys at submit time. */
+function resolveFormErrorMessage(error: WarehouseItemFormError): string {
+  switch (error) {
+    case 'missing_name':
+      return i18n.t('common.errors.enterItemName');
+    case 'invalid_quantity':
+      return i18n.t('common.errors.enterValidQuantity');
+    case 'invalid_unit_price':
+      return i18n.t('common.errors.enterValidUnitPrice');
+    case 'invalid_expiry_date':
+      return 'Enter expiry date as YYYY-MM-DD.';
+    case 'missing_composition':
+      return 'Add at least one valid nutrient composition row for fertilizer.';
+    case 'missing_density':
+      return 'Enter bulk density for products stored by volume.';
+  }
 }
 
 export default function WarehouseItemForm({
@@ -680,93 +670,32 @@ export default function WarehouseItemForm({
   }, [catalogSelectionTouched, editingItem, isVisible, selectedCatalogProduct]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  const formInput = {
+    name,
+    type,
+    quantity,
+    unit,
+    unitPrice,
+    reorderQuantity,
+    notes,
+    manufacturer,
+    densityKgPerL,
+    expiryDate,
+    compositionRows,
+    compositionSource,
+    selectedCatalogProductId,
+    selectedCatalogProduct,
+    catalogSelectionTouched,
+    editingItem,
+  };
+
   const handleSubmit = async () => {
-    // Validation
-    if (!name.trim()) {
-      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.enterItemName'));
+    const result = validateWarehouseItemForm(formInput);
+    if (!result.ok) {
+      Alert.alert(i18n.t('common.error'), resolveFormErrorMessage(result.error));
       return;
     }
-    const quantityValue = Number(quantity);
-    if (!Number.isFinite(quantityValue) || quantityValue <= 0) {
-      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.enterValidQuantity'));
-      return;
-    }
-    const unitPriceValue = Number(unitPrice);
-    if (!Number.isFinite(unitPriceValue) || unitPriceValue <= 0) {
-      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.enterValidUnitPrice'));
-      return;
-    }
-    if (!isValidExpiryDate(expiryDate)) {
-      Alert.alert(i18n.t('common.error'), 'Enter expiry date as YYYY-MM-DD.');
-      return;
-    }
-
-    const composition = parseComposition(compositionRows);
-    if (type === 'fertilizer' && composition.length === 0) {
-      Alert.alert(
-        i18n.t('common.error'),
-        'Add at least one valid nutrient composition row for fertilizer.',
-      );
-      return;
-    }
-
-    const densityValue = Number(densityKgPerL);
-    const parsedDensity =
-      densityKgPerL.trim().length > 0 && Number.isFinite(densityValue) && densityValue > 0
-        ? densityValue
-        : null;
-    if (densityRequired && parsedDensity == null) {
-      Alert.alert(i18n.t('common.error'), 'Enter bulk density for products stored by volume.');
-      return;
-    }
-    const previousCatalogProductId = editingItem?.catalog_product_id ?? null;
-    const previousCatalogMappingStatus = editingItem?.catalog_mapping_status ?? 'unmapped';
-    const previousCatalogMappingSource = editingItem?.catalog_mapping_source ?? 'manual';
-    const previousCatalogMappedAt = editingItem?.catalog_mapped_at ?? null;
-    const preservePreviousCatalogMapping =
-      selectedCatalogProductId != null &&
-      !selectedCatalogProduct &&
-      previousCatalogProductId != null &&
-      previousCatalogProductId === selectedCatalogProductId;
-    const resolvedCatalogProductId =
-      selectedCatalogProduct?.id ??
-      (catalogSelectionTouched
-        ? selectedCatalogProductId
-        : (selectedCatalogProductId ?? previousCatalogProductId));
-
-    const itemData = {
-      name: name.trim(),
-      type,
-      quantity: quantityValue,
-      unit,
-      unit_price: unitPriceValue,
-      reorder_quantity: reorderQuantity ? parseFloat(reorderQuantity) : null,
-      notes: notes.trim() || null,
-      manufacturer: manufacturer.trim() || null,
-      density_kg_per_l: parsedDensity,
-      expiry_date: expiryDate.trim() || null,
-      composition,
-      composition_source: compositionSource,
-      composition_updated_at: new Date().toISOString(),
-      catalog_product_id: resolvedCatalogProductId,
-      catalog_mapping_status: (selectedCatalogProduct
-        ? selectedCatalogProduct.verification_tier === 'verified'
-          ? 'mapped_verified'
-          : 'mapped_provisional'
-        : preservePreviousCatalogMapping
-          ? previousCatalogMappingStatus
-          : 'unmapped') as CatalogMappingStatus,
-      catalog_mapping_source: (selectedCatalogProduct
-        ? 'preset'
-        : preservePreviousCatalogMapping
-          ? previousCatalogMappingSource
-          : 'manual') as CatalogMappingSource,
-      catalog_mapped_at: selectedCatalogProduct
-        ? new Date().toISOString()
-        : preservePreviousCatalogMapping
-          ? previousCatalogMappedAt
-          : null,
-    };
+    const itemData = result.payload;
 
     try {
       if (isEditing && editingItem?.id) {
@@ -798,21 +727,8 @@ export default function WarehouseItemForm({
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
   const validComposition = parseComposition(compositionRows);
-  const compositionRequiredSatisfied = type === 'spray' || validComposition.length > 0;
-  const isValid =
-    name.trim() &&
-    quantity &&
-    Number.isFinite(Number(quantity)) &&
-    Number(quantity) > 0 &&
-    unitPrice &&
-    Number.isFinite(Number(unitPrice)) &&
-    Number(unitPrice) > 0 &&
-    (!densityRequired ||
-      (densityKgPerL.trim().length > 0 &&
-        Number.isFinite(Number(densityKgPerL)) &&
-        Number(densityKgPerL) > 0)) &&
-    isValidExpiryDate(expiryDate) &&
-    compositionRequiredSatisfied;
+  const formValidation = validateWarehouseItemForm(formInput);
+  const isValid = formValidation.ok;
 
   const totalValue =
     quantity && unitPrice ? (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2) : '0.00';
