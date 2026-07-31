@@ -39,7 +39,7 @@ module.exports = {
       supportsTablet: true,
       bundleIdentifier: 'com.vinesight.ios',
       usesAppleSignIn: true,
-      buildNumber: '1.3.7',
+      buildNumber: '1.3.8',
       entitlements: {
         'com.apple.security.application-groups': ['group.com.vinesight.app'],
       },
