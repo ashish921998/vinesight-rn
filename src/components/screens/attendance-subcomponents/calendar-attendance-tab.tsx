@@ -17,6 +17,16 @@ function formatDateToYYYYMMDD(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Returns the first and last calendar dates for the month containing `ref`. */
+function getMonthBoundaries(ref: Date): { monthStart: Date; monthEnd: Date } {
+  const monthStart = new Date(ref);
+  monthStart.setDate(1);
+  const monthEnd = new Date(ref);
+  monthEnd.setMonth(monthEnd.getMonth() + 1);
+  monthEnd.setDate(0);
+  return { monthStart, monthEnd };
+}
+
 type AttendanceStatus = WorkStatus | null;
 
 interface CalendarAttendanceTabProps {
@@ -48,11 +58,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
   const selectedWorker = workers.find((w) => w.id === selectedWorkerId);
 
   const { startDate, endDate } = useMemo(() => {
-    const monthStart = new Date(calendarMonth);
-    monthStart.setDate(1);
-    const monthEnd = new Date(calendarMonth);
-    monthEnd.setMonth(monthEnd.getMonth() + 1);
-    monthEnd.setDate(0);
+    const { monthStart, monthEnd } = getMonthBoundaries(calendarMonth);
     return {
       startDate: formatDateToYYYYMMDD(monthStart),
       endDate: formatDateToYYYYMMDD(monthEnd),
@@ -77,11 +83,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
   };
 
   const calendarDays = useMemo(() => {
-    const monthStart = new Date(calendarMonth);
-    monthStart.setDate(1);
-    const monthEnd = new Date(calendarMonth);
-    monthEnd.setMonth(monthEnd.getMonth() + 1);
-    monthEnd.setDate(0);
+    const { monthStart, monthEnd } = getMonthBoundaries(calendarMonth);
 
     const firstDay = monthStart.getDay();
     const daysInMonth = monthEnd.getDate();

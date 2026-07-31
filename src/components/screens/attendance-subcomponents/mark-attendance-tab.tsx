@@ -135,6 +135,9 @@ export function MarkAttendanceTab({
   const actionBarBottom = isAndroid ? 0 : tabBarInset;
   const [cellData, setCellData] = useState<Map<string, CellData>>(new Map());
   const [saving, setSaving] = useState(false);
+  // Synchronous source of truth for save-in-flight, checked by mutation
+  // handlers to avoid closing over stale `saving` state across awaits.
+  const savingRef = useRef(false);
   const [selectedFarmIds, setSelectedFarmIds] = useState<number[]>([]);
   const [workerSheetVisible, setWorkerSheetVisible] = useState(false);
   const [farmSheetVisible, setFarmSheetVisible] = useState(false);
@@ -328,7 +331,7 @@ export function MarkAttendanceTab({
   }, [loadSavedRange]);
 
   const handleDayCellClick = (date: Date) => {
-    if (!selectedWorker) return;
+    if (savingRef.current || !selectedWorker) return;
     const workerId = selectedWorker.id;
     if (workerId === undefined) return;
     const dateStr = formatDate(date);
@@ -361,7 +364,7 @@ export function MarkAttendanceTab({
   };
 
   const handleQuickAction = (status: AttendanceStatus) => {
-    if (!selectedWorker) return;
+    if (savingRef.current || !selectedWorker) return;
     const workerId = selectedWorker.id;
     if (workerId === undefined) return;
 
@@ -387,7 +390,7 @@ export function MarkAttendanceTab({
   };
 
   const handleCopyFromYesterday = async () => {
-    if (!selectedWorker) return;
+    if (savingRef.current || !selectedWorker) return;
     const workerId = selectedWorker.id;
     if (workerId === undefined) return;
 
@@ -407,6 +410,9 @@ export function MarkAttendanceTab({
       showToast(t('attendance.errors.noYesterdayData'), 'error');
       return;
     }
+
+    // Re-check after the async fetch — a save may have started meanwhile.
+    if (savingRef.current) return;
 
     triggerHapticMedium();
 
@@ -453,7 +459,7 @@ export function MarkAttendanceTab({
   }, [hasModifications, onBottomActionBarVisibilityChange]);
 
   const handleSave = async () => {
-    if (!hasModifications) {
+    if (savingRef.current || !hasModifications) {
       return;
     }
 
@@ -466,6 +472,7 @@ export function MarkAttendanceTab({
       return;
     }
 
+    savingRef.current = true;
     setSaving(true);
 
     // Build the batch of operations for all modified cells.
@@ -511,9 +518,20 @@ export function MarkAttendanceTab({
     }
 
     // No operations to save — all modified cells were reverted to their
-    // unmarked state. Avoid an empty mutation that would show a misleading
-    // success toast and trigger an unnecessary refetch.
+    // unmarked state. Clear isModified so the unsaved-changes bar hides.
     if (operations.length === 0) {
+      setCellData((prev) => {
+        const next = new Map(prev);
+        for (const cell of modifiedCells) {
+          const key = getCellKey(cell.workerId, cell.date);
+          const existing = next.get(key);
+          if (existing) {
+            next.set(key, { ...existing, isModified: false });
+          }
+        }
+        return next;
+      });
+      savingRef.current = false;
       setSaving(false);
       return;
     }
@@ -566,6 +584,7 @@ export function MarkAttendanceTab({
     } catch {
       showToast(t('attendance.alerts.saveErrorBody'), 'error');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

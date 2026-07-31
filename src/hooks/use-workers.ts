@@ -338,6 +338,7 @@ export function useSaveAttendanceBatch() {
             if (error) throw error;
           }
         } catch (error) {
+          console.error(`[useSaveAttendanceBatch] operation failed for ${op.date}`, error);
           errors.push({ date: op.date, error });
         }
       }
