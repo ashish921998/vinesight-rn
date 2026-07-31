@@ -4,7 +4,17 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView, Alert, Pressable, StyleSheet, Text, Platform } from 'react-native';
+import {
+  View,
+  ScrollView,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  Platform,
+  InteractionManager,
+  type ViewStyle,
+} from 'react-native';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -52,6 +62,19 @@ import type { FarmSeason } from '@/types';
  * which switches between this and the buyer's `fpc-activity` register.
  */
 const REPORT_TYPE: ReportType = 'comprehensive';
+
+type DeferredReportDocumentBodyProps = React.ComponentProps<typeof ReportDocumentBody>;
+
+function DeferredReportDocumentBody(props: DeferredReportDocumentBodyProps) {
+  const [ready, setReady] = useState(false);
+
+  React.useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => setReady(true));
+    return () => task.cancel();
+  }, []);
+
+  return ready ? <ReportDocumentBody {...props} /> : null;
+}
 
 function resolveSeasonEndDate(season: FarmSeason, todayIso: string): string {
   if (!season.end_date) return todayIso;
@@ -323,14 +346,19 @@ export default function ReportsScreen() {
   const toMaximumIso = selectedSeasonBounds?.to ?? todayIso;
   const toMaximumDate = parseDbDateToLocalDate(toMaximumIso) ?? new Date();
 
-  const panelStyle = {
-    backgroundColor: m3.surface.s100,
-    borderRadius: radius.lg,
-    borderCurve: 'continuous' as const,
-    padding: spacing[4],
-    borderWidth: 1,
-    borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.7),
-  };
+  const panelStyle = useMemo<ViewStyle>(
+    () => ({
+      backgroundColor: m3.surface.s100,
+      borderRadius: radius.lg,
+      borderCurve: 'continuous',
+      padding: spacing[4],
+      borderWidth: 1,
+      borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.7),
+    }),
+    [m3.colorScheme.outlineVariant, m3.surface.s100],
+  );
+
+  const reportDocumentKey = `${selectedFarmId ?? 'none'}:${selectedSeasonId ?? 'all'}:${dateRange.from}:${dateRange.to}`;
 
   return (
     <SafeAreaView
@@ -500,7 +528,8 @@ export default function ReportsScreen() {
                   panelStyle={panelStyle}
                 />
 
-                <ReportDocumentBody
+                <DeferredReportDocumentBody
+                  key={reportDocumentKey}
                   preview={preview}
                   reportType={REPORT_TYPE}
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}

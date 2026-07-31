@@ -432,6 +432,7 @@ export const hi = {
     },
     actions: {
       addActivity: 'गतिविधि जोड़ें',
+      addLog: 'लॉग जोड़ें',
       addTask: 'कार्य जोड़ें',
       seeAllLogs: 'सभी लॉग्स देखें',
       seeAllTasks: 'सभी कार्य देखें',

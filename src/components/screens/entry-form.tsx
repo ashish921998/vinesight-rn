@@ -2218,9 +2218,9 @@ export function EntryForm({
                 style={{
                   minHeight: 58,
                   paddingHorizontal: 16,
-                  borderRadius: radius.md,
-                  borderWidth: 1.5,
-                  borderColor: m3.colorScheme.onSurface,
+                  borderRadius: componentRadius.input,
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 12,

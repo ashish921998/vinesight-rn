@@ -16,7 +16,7 @@ import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spinner } from '@/components/ui/spinner';
-import { Fab } from '@/components/screens/fab';
+import { ExtendedFab } from '@/components/screens/extended-fab';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui';
@@ -82,6 +82,53 @@ interface WorkboardAction {
   color: string;
   route?: string;
 }
+
+type FarmActivityRecordByType = {
+  irrigation: IrrigationRecord;
+  spray: SprayRecord;
+  harvest: HarvestRecord;
+  expense: ExpenseRecord;
+  fertigation: FertigationRecord;
+  note: DailyNoteRecord;
+};
+
+type FarmActivityLog = {
+  [Type in LogTypeId]: {
+    id: string;
+    type: Type;
+    date: string;
+    data: FarmActivityRecordByType[Type];
+  };
+}[LogTypeId];
+
+interface RecentActivityCardProps {
+  log: FarmActivityLog;
+  farmName?: string;
+  onEdit: (log: FarmActivityLog) => void;
+  onDelete: (log: FarmActivityLog) => void;
+}
+
+const RecentActivityCard = React.memo(function RecentActivityCard({
+  log,
+  farmName,
+  onEdit,
+  onDelete,
+}: RecentActivityCardProps) {
+  const handleEdit = React.useCallback(() => onEdit(log), [log, onEdit]);
+  const handleDelete = React.useCallback(() => onDelete(log), [log, onDelete]);
+
+  return (
+    <TimelineLogCard
+      type={log.type}
+      date={log.date}
+      data={log.data}
+      farmName={farmName}
+      onEdit={handleEdit}
+      onDelete={log.type === 'note' ? undefined : handleDelete}
+      onPress={handleEdit}
+    />
+  );
+});
 
 const NOW_TICK_MS = 60_000;
 
@@ -165,7 +212,11 @@ export default function FarmDetailScreen() {
   const [activeSeasonTargetHarvestDraft, setActiveSeasonTargetHarvestDraft] = useState<Date>(
     new Date(),
   );
-  const [isAddLogNavigationInFlight, setIsAddLogNavigationInFlight] = useState(false);
+  // Guards double-presses while navigation is starting. Intentionally NOT
+  // surfaced as button state: an earlier version bound this to the FAB's
+  // `disabled`/opacity, which dimmed the button and could get stuck faint
+  // when the focus-reset effect didn't fire (e.g. a sheet presented over the
+  // screen). Navigation is near-instant, so a ref-only guard is enough.
   const addLogNavigationInFlightRef = React.useRef(false);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -186,8 +237,9 @@ export default function FarmDetailScreen() {
 
   useEffect(() => {
     if (!isFocused) return;
+    // The ref can stay true if navigation started and we're returning from the
+    // add-log route; clear it so the next press is accepted.
     addLogNavigationInFlightRef.current = false;
-    setIsAddLogNavigationInFlight(false);
   }, [isFocused]);
 
   useEffect(() => {
@@ -1072,18 +1124,7 @@ export default function FarmDetailScreen() {
   // Activity logs - combine, filter, and sort
   const RECENT_ACTIVITY_LIMIT = 5;
   const allLogs = useMemo(() => {
-    const logs: Array<{
-      id: string;
-      type: LogTypeId;
-      date: string;
-      data:
-        | IrrigationRecord
-        | SprayRecord
-        | HarvestRecord
-        | ExpenseRecord
-        | FertigationRecord
-        | DailyNoteRecord;
-    }> = [];
+    const logs: FarmActivityLog[] = [];
 
     irrigationRecords?.forEach((r) =>
       logs.push({
@@ -1182,7 +1223,6 @@ export default function FarmDetailScreen() {
     if (addLogNavigationInFlightRef.current) return;
 
     addLogNavigationInFlightRef.current = true;
-    setIsAddLogNavigationInFlight(true);
     let didStartNavigation = false;
 
     try {
@@ -1214,91 +1254,108 @@ export default function FarmDetailScreen() {
     } finally {
       if (!didStartNavigation) {
         addLogNavigationInFlightRef.current = false;
-        setIsAddLogNavigationInFlight(false);
       }
     }
   };
 
-  const handleEditActivity = (log: (typeof recentLogs)[number]) => {
-    if (!farm) return;
-    if (log.type === 'note') {
-      router.push({ pathname: '/add-note', params: { farmId: String(farm.id), date: log.date } });
-      return;
-    }
-    const record = log.data as Exclude<typeof log.data, DailyNoteRecord>;
-    setEditActivity({
-      farm,
-      logType: log.type,
-      record,
-    });
-    router.push(`/log-entry/edit/${log.id}`);
-  };
+  const farmRef = React.useRef(farm);
+  useEffect(() => {
+    farmRef.current = farm;
+  }, [farm]);
 
-  const handleDeleteActivity = (log: (typeof recentLogs)[number]) => {
-    triggerHapticWarning();
-    Alert.alert(
-      t('logs.delete.title'),
-      t('logs.delete.body', {
-        type: t(`logs.types.${log.type}`),
-        date: formatDate(new Date(log.date), { month: 'short', day: 'numeric' }),
-      }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const record = log.data as
-                IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
-              const farmIdNum =
-                farm?.id ??
-                (record.farm_id
-                  ? typeof record.farm_id === 'string'
-                    ? parseInt(record.farm_id, 10)
-                    : record.farm_id
-                  : undefined);
+  const handleEditActivity = React.useCallback(
+    (log: FarmActivityLog) => {
+      const currentFarm = farmRef.current;
+      if (!currentFarm) return;
+      if (log.type === 'note') {
+        router.push({
+          pathname: '/add-note',
+          params: { farmId: String(currentFarm.id), date: log.date },
+        });
+        return;
+      }
+      setEditActivity({
+        farm: currentFarm,
+        logType: log.type,
+        record: log.data,
+      });
+      router.push(`/log-entry/edit/${log.id}`);
+    },
+    [router, setEditActivity],
+  );
 
-              if (!farmIdNum) {
-                Alert.alert(t('common.error'), t('common.errors.cannotDeleteLogFarmIdNotFound'));
-                return;
+  const handleDeleteActivity = React.useCallback(
+    (log: FarmActivityLog) => {
+      triggerHapticWarning();
+      Alert.alert(
+        t('logs.delete.title'),
+        t('logs.delete.body', {
+          type: t(`logs.types.${log.type}`),
+          date: formatDate(new Date(log.date), { month: 'short', day: 'numeric' }),
+        }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.delete'),
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                const record = log.data as
+                  | IrrigationRecord
+                  | SprayRecord
+                  | HarvestRecord
+                  | ExpenseRecord
+                  | FertigationRecord;
+                const farmIdNum =
+                  farmRef.current?.id ??
+                  (record.farm_id
+                    ? typeof record.farm_id === 'string'
+                      ? parseInt(record.farm_id, 10)
+                      : record.farm_id
+                    : undefined);
+
+                if (!farmIdNum) {
+                  Alert.alert(t('common.error'), t('common.errors.cannotDeleteLogFarmIdNotFound'));
+                  return;
+                }
+
+                switch (log.type) {
+                  case 'irrigation': {
+                    const r = record as IrrigationRecord;
+                    if (r.id) await deleteIrrigation.mutateAsync({ id: r.id, farmId: farmIdNum });
+                    break;
+                  }
+                  case 'spray': {
+                    const r = record as SprayRecord;
+                    if (r.id) await deleteSpray.mutateAsync({ id: r.id, farmId: farmIdNum });
+                    break;
+                  }
+                  case 'harvest': {
+                    const r = record as HarvestRecord;
+                    if (r.id) await deleteHarvest.mutateAsync({ id: r.id, farmId: farmIdNum });
+                    break;
+                  }
+                  case 'expense': {
+                    const r = record as ExpenseRecord;
+                    if (r.id) await deleteExpense.mutateAsync({ id: r.id, farmId: farmIdNum });
+                    break;
+                  }
+                  case 'fertigation': {
+                    const r = record as FertigationRecord;
+                    if (r.id) await deleteFertigation.mutateAsync({ id: r.id, farmId: farmIdNum });
+                    break;
+                  }
+                }
+              } catch (_error) {
+                Alert.alert(t('common.error'), t('common.errors.failedToDeleteLog'));
               }
-
-              switch (log.type) {
-                case 'irrigation': {
-                  const r = record as IrrigationRecord;
-                  if (r.id) await deleteIrrigation.mutateAsync({ id: r.id, farmId: farmIdNum });
-                  break;
-                }
-                case 'spray': {
-                  const r = record as SprayRecord;
-                  if (r.id) await deleteSpray.mutateAsync({ id: r.id, farmId: farmIdNum });
-                  break;
-                }
-                case 'harvest': {
-                  const r = record as HarvestRecord;
-                  if (r.id) await deleteHarvest.mutateAsync({ id: r.id, farmId: farmIdNum });
-                  break;
-                }
-                case 'expense': {
-                  const r = record as ExpenseRecord;
-                  if (r.id) await deleteExpense.mutateAsync({ id: r.id, farmId: farmIdNum });
-                  break;
-                }
-                case 'fertigation': {
-                  const r = record as FertigationRecord;
-                  if (r.id) await deleteFertigation.mutateAsync({ id: r.id, farmId: farmIdNum });
-                  break;
-                }
-              }
-            } catch (_error) {
-              Alert.alert(t('common.error'), t('common.errors.failedToDeleteLog'));
-            }
+            },
           },
-        },
-      ],
-    );
-  };
+        ],
+      );
+    },
+    [deleteExpense, deleteFertigation, deleteHarvest, deleteIrrigation, deleteSpray, t],
+  );
 
   const handleDeleteFarm = () => {
     if (!farmId || !farm) return;
@@ -2418,15 +2475,12 @@ export default function FarmDetailScreen() {
                 }}
               >
                 {recentLogs.map((log) => (
-                  <TimelineLogCard
+                  <RecentActivityCard
                     key={log.id}
-                    type={log.type}
-                    date={log.date}
-                    data={log.data}
+                    log={log}
                     farmName={farm?.name ?? undefined}
-                    onEdit={() => handleEditActivity(log)}
-                    onDelete={log.type === 'note' ? undefined : () => handleDeleteActivity(log)}
-                    onPress={() => handleEditActivity(log)}
+                    onEdit={handleEditActivity}
+                    onDelete={handleDeleteActivity}
                   />
                 ))}
               </View>
@@ -3549,21 +3603,23 @@ export default function FarmDetailScreen() {
         </Pressable>
       )}
 
-      {/* Primary action — Material 3 FAB. Native Compose on Android (real
-          elevation → no touch-stealing over the log list), Pressable on iOS. */}
+      {/* Primary action — Material 3 extended FAB ("Add log"). Native Compose on
+          Android (real elevation → no touch-stealing over the log list),
+          Pressable on iOS. The label makes the affordance unambiguous; the
+          ref guard in handleAddActivity prevents double-navigation without
+          dimming the button. */}
       <GuidedTourTarget
         targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}
         style={{
           position: 'absolute',
           bottom: spacing[6] + insets.bottom,
           right: spacing[6],
-          width: 56,
           height: 56,
         }}
       >
-        <Fab
+        <ExtendedFab
           onPress={handleAddActivity}
-          disabled={isAddLogNavigationInFlight}
+          label={t('farmDetails.actions.addLog')}
           accessibilityLabel={t('farmDetails.actions.addActivity')}
         />
       </GuidedTourTarget>
