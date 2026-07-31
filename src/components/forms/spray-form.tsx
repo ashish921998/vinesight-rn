@@ -349,6 +349,8 @@ export function SprayForm({
       // mix's safe-harvest date) and commit the cleaned rows so the triggering
       // row's stale typeahead query goes too.
       if (mixChemicals.length === 0) {
+        const chemicals =
+          keptRows.length > 0 ? clampChemicalRows(keptRows) : createEmptySprayFormData().chemicals;
         onChange({
           ...dataRef.current,
           catalogMixId: null,
@@ -358,7 +360,7 @@ export function SprayForm({
           phiBlockingComponent: null,
           phiStatus: null,
           phiOverride: false,
-          chemicals: clampChemicalRows(keptRows),
+          chemicals,
         });
         return;
       }
