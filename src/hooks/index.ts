@@ -118,21 +118,6 @@ export {
   useCreateWarehouseItem,
   useUpdateWarehouseItem,
   useDeleteWarehouseItem,
-  // Soil Tests
-  useSoilTestRecords,
-  useCreateSoilTestRecord,
-  useUpdateSoilTestRecord,
-  useDeleteSoilTestRecord,
-  // Petiole Tests
-  usePetioleTestRecords,
-  useCreatePetioleTestRecord,
-  useUpdatePetioleTestRecord,
-  useDeletePetioleTestRecord,
-  // Soil Profiles
-  useSoilProfiles,
-  useCreateSoilProfile,
-  useUpdateSoilProfile,
-  useDeleteSoilProfile,
   // Calculation History
   useCalculationHistory,
   useCreateCalculationHistory,
@@ -227,7 +212,7 @@ export {
 // Re-export parameter constants for backward compatibility
 export { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
 
-// Soil Profile Utilities (Hooks already exported from useProfile)
+// Soil Profile Utilities
 export {
   soilProfileQueryKeys,
   SECTION_NAMES,
