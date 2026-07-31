@@ -284,21 +284,21 @@ export function MarkAttendanceTab({
 
     const workerChanged = prevWorkerIdRef.current !== workerId;
     if (workerChanged) {
-      // Only auto-select farms from historical data if we actually have
-      // loaded records. On mount the query is disabled and records are
-      // empty — defer farm selection until real data arrives.
+      // Only auto-select farms once data has actually loaded. On mount the
+      // query is disabled and records are empty — defer until real data
+      // (or a confirmed empty result) arrives.
       const recordWithFarms = attendanceRecords.find((r) => r.farm_ids && r.farm_ids.length > 0);
       if (recordWithFarms) {
         setSelectedFarmIds(recordWithFarms.farm_ids || []);
         prevWorkerIdRef.current = workerId;
-      } else if (attendanceRecords.length > 0 && farmsRef.current.length > 0) {
-        // Records loaded but none have farms — fall back to first farm.
+      } else if (!loading && farmsRef.current.length > 0) {
+        // Data loaded (possibly empty) — no historical farms found, so
+        // fall back to the first available farm.
         const firstWithId = farmsRef.current.find((f) => f.id != null);
         setSelectedFarmIds(firstWithId?.id != null ? [firstWithId.id] : []);
         prevWorkerIdRef.current = workerId;
       }
-      // If attendanceRecords is empty (not yet loaded), don't set
-      // prevWorkerIdRef so this branch re-runs when data arrives.
+      // If still loading, don't set prevWorkerIdRef so this re-runs later.
     }
 
     // Preserve locally modified cells that haven't been saved yet
@@ -315,7 +315,7 @@ export function MarkAttendanceTab({
       });
       return merged;
     });
-  }, [attendanceRecords, selectedWorker, dateRange]);
+  }, [attendanceRecords, selectedWorker, dateRange, loading]);
 
   React.useEffect(() => {
     if (isError) {
