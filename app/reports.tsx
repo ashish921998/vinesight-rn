@@ -518,8 +518,11 @@ export default function ReportsScreen() {
                   onSelectFormat={setSelectedExportFormat}
                   onShare={() => runExport('share', selectedExportFormat)}
                   onDownload={() => runExport('download', selectedExportFormat)}
-                  onShareExporter={() =>
-                    runExport('share', getDefaultReportFormat('fpc-activity'), 'fpc-activity')
+                  onShareExporter={
+                    preview.data.fpcActivity?.length
+                      ? () =>
+                          runExport('share', getDefaultReportFormat('fpc-activity'), 'fpc-activity')
+                      : undefined
                   }
                   panelStyle={panelStyle}
                 />
