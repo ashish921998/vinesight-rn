@@ -6,7 +6,7 @@
  * of usage data (not on the stock section — see the note below).
  */
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
 import type { ReportPreview, ReportType } from '@/types/report';
 import { computeUsageLenses } from '@/services/report-usage-lenses';
 
@@ -222,16 +222,7 @@ describe('usage lens cards in the report document', () => {
   });
 });
 
-/**
- * The buyer's register (Fratelli format) is a different document for a different
- * reader, so it renders last and collapsed rather than as one of five report
- * types the farmer had to choose between up front.
- *
- * It is deliberately gated on register DATA, not on `visibleSections`: adding
- * 'fpc-activity' to the comprehensive section map would also stamp a
- * buyer-format table into every farmer's report export.
- */
-describe("buyer's register disclosure", () => {
+describe("buyer's register separation", () => {
   function previewWithRegister(days: unknown[]): ReportPreview {
     const preview = previewWith(undefined);
     return {
@@ -240,49 +231,13 @@ describe("buyer's register disclosure", () => {
     };
   }
 
-  it('is absent entirely when there are no register days', () => {
-    const { queryByText } = renderBody(previewWithRegister([]), 'comprehensive');
+  it('does not embed exporter data or controls in the farmer report', () => {
+    const { queryByText } = renderBody(previewWithRegister([FPC_DAY]), 'comprehensive');
+
     expect(queryByText('reports.fpc.sectionTitle')).toBeNull();
-  });
-
-  it('shows its header collapsed — rows and controls stay hidden until expanded', () => {
-    const { getByText, queryByText } = renderBody(previewWithRegister([FPC_DAY]), 'comprehensive');
-
-    expect(getByText('reports.fpc.sectionTitle')).toBeTruthy();
     expect(queryByText('reports.fpc.detail.title')).toBeNull();
     expect(queryByText('reports.fpc.detail.simple.title')).toBeNull();
     expect(queryByText('reports.fpc.shareRegister')).toBeNull();
-  });
-
-  it('reveals rows, the column preset and its own export action when expanded', () => {
-    const onExportRegister = jest.fn();
-    const { getByText } = render(
-      <ReportDocumentBody
-        preview={previewWithRegister([FPC_DAY])}
-        reportType="comprehensive"
-        preferredCurrency="INR"
-        onFpcColumnsChange={jest.fn()}
-        onExportRegister={onExportRegister}
-        panelStyle={{}}
-      />,
-    );
-
-    fireEvent.press(getByText('reports.fpc.sectionTitle'));
-
-    expect(getByText('Fungicide X (2 kg)')).toBeTruthy();
-    expect(getByText('reports.fpc.detail.simple.title')).toBeTruthy();
-
-    fireEvent.press(getByText('reports.fpc.shareRegister'));
-    expect(onExportRegister).toHaveBeenCalledTimes(1);
-  });
-
-  it('renders read-only without a change handler or an export action', () => {
-    const { getByText, queryByText } = renderBody(previewWithRegister([FPC_DAY]), 'comprehensive');
-
-    fireEvent.press(getByText('reports.fpc.sectionTitle'));
-
-    expect(getByText('reports.fpc.detail.title')).toBeTruthy();
-    expect(queryByText('reports.fpc.detail.simple.title')).toBeNull();
-    expect(queryByText('reports.fpc.shareRegister')).toBeNull();
+    expect(queryByText('Fungicide X (2 kg)')).toBeNull();
   });
 });

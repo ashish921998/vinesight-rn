@@ -4,6 +4,10 @@ import type { ReportData } from '@/types/report';
 import { FPC_SIMPLE_HEADERS, buildFpcSimpleRows, fpcSimpleRowCells } from './report-fpc-simple';
 
 export const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const EXPORTER_ROWS_PER_PAGE = 72;
+const EXPORTER_HEADERS = FPC_SIMPLE_HEADERS.map((header) =>
+  header === 'Qty Per Liter' ? 'Qty Per Liter ' : header,
+);
 
 function escapeXml(value: string): string {
   return value
@@ -48,48 +52,69 @@ function toBase64(bytes: Uint8Array): string {
 
 function buildSheetXml(data: ReportData): string {
   const rows: string[] = [];
+  const mergeCells: string[] = [];
+  const rowBreaks: number[] = [];
   const addMergedIdentityRow = (row: number, label: string, style: number) => {
     rows.push(`<row r="${row}">${inlineCell(row, 0, label, style)}</row>`);
+    mergeCells.push(`<mergeCell ref="A${row}:H${row}"/>`);
+  };
+  const addIdentityBlock = (startRow: number) => {
+    addMergedIdentityRow(startRow, `Farmer Name: ${data.farmName}`, 1);
+    addMergedIdentityRow(startRow + 1, `Variety: ${data.farmVariety ?? '-'}`, 2);
+    addMergedIdentityRow(
+      startRow + 2,
+      `Pruning Date: ${data.pruningDate ? formatDate(data.pruningDate) : '-'}`,
+      3,
+    );
+    rows.push(
+      `<row r="${startRow + 3}">${EXPORTER_HEADERS.map((header, index) =>
+        inlineCell(startRow + 3, index, header, 4),
+      ).join('')}</row>`,
+    );
   };
 
-  addMergedIdentityRow(1, `Farmer Name: ${data.farmName}`, 1);
-  addMergedIdentityRow(2, `Variety: ${data.farmVariety ?? '-'}`, 2);
-  addMergedIdentityRow(
-    3,
-    `Pruning Date: ${data.pruningDate ? formatDate(data.pruningDate) : '-'}`,
-    3,
-  );
-
-  rows.push(
-    `<row r="4">${FPC_SIMPLE_HEADERS.map((header, index) => inlineCell(4, index, header, 4)).join('')}</row>`,
-  );
-
-  let rowNumber = 5;
-  for (const row of buildFpcSimpleRows(data.fpcActivity ?? [])) {
+  let rowNumber = 1;
+  buildFpcSimpleRows(data.fpcActivity ?? []).forEach((row, index) => {
+    if (index % EXPORTER_ROWS_PER_PAGE === 0) {
+      if (index > 0) rowBreaks.push(rowNumber - 1);
+      addIdentityBlock(rowNumber);
+      rowNumber += 4;
+    }
     const values = fpcSimpleRowCells(row);
     rows.push(
       `<row r="${rowNumber}">${values
         .map((value, column) =>
-          inlineCell(rowNumber, column, value, column >= 3 && column <= 4 ? 6 : 5),
+          inlineCell(rowNumber, column, value, column >= 3 && column <= 5 ? 6 : 5),
         )
         .join('')}</row>`,
     );
     rowNumber += 1;
-  }
+  });
+
+  if (rows.length === 0) addIdentityBlock(1);
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <cols>
     <col min="1" max="1" width="9" customWidth="1"/>
     <col min="2" max="2" width="9" customWidth="1"/>
-    <col min="3" max="3" width="14" customWidth="1"/>
-    <col min="4" max="4" width="20" customWidth="1"/>
-    <col min="5" max="5" width="42" customWidth="1"/>
-    <col min="6" max="6" width="18" customWidth="1"/>
-    <col min="7" max="8" width="10" customWidth="1"/>
+    <col min="3" max="3" width="9.109375" customWidth="1"/>
+    <col min="4" max="4" width="11.88671875" customWidth="1"/>
+    <col min="5" max="5" width="38.109375" customWidth="1"/>
+    <col min="6" max="6" width="12.88671875" customWidth="1"/>
+    <col min="7" max="7" width="10" customWidth="1"/>
+    <col min="8" max="8" width="14.6640625" customWidth="1"/>
   </cols>
   <sheetData>${rows.join('')}</sheetData>
-  <mergeCells count="3"><mergeCell ref="A1:H1"/><mergeCell ref="A2:H2"/><mergeCell ref="A3:H3"/></mergeCells>
+  <mergeCells count="${mergeCells.length}">${mergeCells.join('')}</mergeCells>
+  <pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
+  ${
+    rowBreaks.length > 0
+      ? `<rowBreaks count="${rowBreaks.length}" manualBreakCount="${rowBreaks.length}">${rowBreaks
+          .map((row) => `<brk id="${row}" min="0" max="16383" man="1"/>`)
+          .join('')}</rowBreaks>`
+      : ''
+  }
 </worksheet>`;
 }
 

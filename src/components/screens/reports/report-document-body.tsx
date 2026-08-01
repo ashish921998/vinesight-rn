@@ -1,18 +1,15 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatNumber } from '@/i18n/format';
-import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
+import { fontSize, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { Symbol as Icon } from '@/components/ui/symbol';
 import {
   getSectionsForReportType,
   type ReportPreview,
   type ReportType,
   type UsageVerbatimRow,
-  type FpcColumnOptions,
-  FPC_LEAN_COLUMNS,
 } from '@/types/report';
 import { useLogPresentation } from '@/hooks/use-log-presentation';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
@@ -21,7 +18,6 @@ import {
   type ReportSectionRecord,
   type ReportSectionRow,
 } from './report-section-block';
-import { ReportFpcColumnToggles } from './report-fpc-column-toggles';
 import { NutrientLedgerSection } from './nutrient-ledger-section';
 
 const ROW_LIMIT = 12;
@@ -35,20 +31,12 @@ const ROW_LIMIT = 12;
  */
 const SECTION_ICONS = {
   stock: 'cube.fill',
-  fpcActivity: 'doc.text.fill',
 } as const;
 
 interface ReportDocumentBodyProps {
   preview: ReportPreview;
   reportType: ReportType;
   preferredCurrency: string;
-  /** FPC register column visibility — mirrors the register export so the
-   *  disclosure below shows exactly what will be exported. Lean by default. */
-  fpcColumns?: FpcColumnOptions;
-  /** Omit to render the register columns as read-only. */
-  onFpcColumnsChange?: (columns: FpcColumnOptions) => void;
-  /** Omit to hide the register's export action (e.g. in tests/snapshots). */
-  onExportRegister?: () => void;
   panelStyle: object;
 }
 
@@ -56,20 +44,12 @@ function ReportDocumentBodyComponent({
   preview,
   reportType,
   preferredCurrency,
-  fpcColumns = FPC_LEAN_COLUMNS,
-  onFpcColumnsChange,
-  onExportRegister,
   panelStyle,
 }: ReportDocumentBodyProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const log = useLogPresentation();
-  const visibleSections = new Set(getSectionsForReportType(reportType, fpcColumns));
-
-  // The buyer's register is a different document for a different reader, so it
-  // stays collapsed — out of the farmer's reading path, but expandable so the
-  // register export is never blind.
-  const [registerOpen, setRegisterOpen] = React.useState(false);
+  const visibleSections = new Set(getSectionsForReportType(reportType));
 
   const stockAccentColor = m3.colorScheme.secondary;
 
@@ -180,42 +160,6 @@ function ReportDocumentBodyComponent({
   const emptySectionNames = datedSections
     .filter((section) => section.visible && section.total === 0)
     .map((section) => section.presentation.label);
-
-  const fpcDays = preview.data.fpcActivity ?? [];
-  const fpcRows: ReportSectionRow[] = fpcDays.slice(0, ROW_LIMIT).map((day) => ({
-    id: `fpc-${day.isoDate}`,
-    lines: [
-      { label: t('reports.export.table.date'), value: day.date },
-      {
-        label: t('reports.fpc.day'),
-        value: day.daysAfterPruning != null ? String(day.daysAfterPruning) : '-',
-        monospace: true,
-      },
-      ...(fpcColumns.irrigation && day.irrigationHours != null
-        ? [
-            {
-              label: t('reports.fpc.irrigation'),
-              value: `${formatNumber(day.irrigationHours)} h${
-                day.waterMm != null ? ` · ${formatNumber(day.waterMm)} mm` : ''
-              }`,
-              monospace: true,
-            },
-          ]
-        : []),
-      {
-        label: t('reports.fpc.products'),
-        value:
-          day.products.length > 0
-            ? day.products
-                .map(
-                  (product) =>
-                    `${product.marketName} (${product.totalQtyDisplay ?? product.asLogged})`,
-                )
-                .join(', ')
-            : t('reports.fpc.noProducts'),
-      },
-    ],
-  }));
 
   const matchedStockRows = preview.data.stock.filter((row) => row.matchStrategy !== 'unmatched');
 
@@ -555,100 +499,6 @@ function ReportDocumentBodyComponent({
           the honesty message; hiding it would read as "nothing was applied". */}
       {visibleSections.has('nutrient-ledger') && preview.data.nutrientLedger ? (
         <NutrientLedgerSection ledger={preview.data.nutrientLedger} panelStyle={panelStyle} />
-      ) : null}
-
-      {/* ── Buyer's register (Fratelli format) ──
-          Last, and collapsed. Gated on register data rather than on
-          `visibleSections`: adding 'fpc-activity' to the comprehensive section
-          map would also stamp a buyer-format table into every farmer's report
-          export, which is the wrong document for that reader. Previewing it
-          here keeps the register export from being blind without changing what
-          the comprehensive export contains. */}
-      {fpcDays.length > 0 ? (
-        <View>
-          <Pressable
-            onPress={() => setRegisterOpen((open) => !open)}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: registerOpen }}
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: spacing[2],
-              minHeight: 44,
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            <Icon
-              name={SECTION_ICONS.fpcActivity}
-              size={16}
-              color={m3.colorScheme.onSurfaceVariant}
-            />
-            <Text
-              style={{
-                flex: 1,
-                fontSize: fontSize.base,
-                fontWeight: fontWeight.semibold,
-                color: m3.colorScheme.onSurface,
-                letterSpacing: -0.2,
-              }}
-            >
-              {t('reports.fpc.sectionTitle', { count: fpcDays.length })}
-            </Text>
-            <Icon
-              name={registerOpen ? 'chevron.up' : 'chevron.down'}
-              size={14}
-              color={m3.colorScheme.onSurfaceVariant}
-            />
-          </Pressable>
-
-          {registerOpen ? (
-            <View style={{ gap: spacing[3], paddingTop: spacing[3] }}>
-              {onFpcColumnsChange ? (
-                <ReportFpcColumnToggles columns={fpcColumns} onChange={onFpcColumnsChange} />
-              ) : null}
-              <ReportSectionBlock
-                title={t('reports.fpc.detail.title')}
-                rows={fpcRows}
-                hiddenCount={Math.max(0, fpcDays.length - ROW_LIMIT)}
-                icon={SECTION_ICONS.fpcActivity}
-                accentColor={m3.colorScheme.onSurfaceVariant}
-                emptyMessage={t('reports.fpc.empty')}
-              />
-
-              {onExportRegister ? (
-                <Pressable
-                  onPress={onExportRegister}
-                  accessibilityRole="button"
-                  style={({ pressed }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: spacing[2],
-                    minHeight: 44,
-                    borderRadius: radius.lg,
-                    borderCurve: 'continuous',
-                    borderWidth: 1,
-                    borderColor: m3.colorScheme.primary,
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                      : 'transparent',
-                  })}
-                >
-                  <Icon name="square.and.arrow.up" size={16} color={m3.colorScheme.primary} />
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
-                      color: m3.colorScheme.primary,
-                    }}
-                  >
-                    {t('reports.fpc.shareRegister')}
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-          ) : null}
-        </View>
       ) : null}
     </View>
   );

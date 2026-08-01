@@ -3214,6 +3214,9 @@ export const mr = {
   reports: {
     title: '$t(glossary.report)',
     fpc: {
+      audience: 'निर्यातदारांसाठी',
+      exportTitle: 'निर्यातदार कृती नोंदवही',
+      shareXlsx: 'XLSX सामायिक करा',
       sectionTitle: 'निर्यातदार कृती नोंदवही ({{count}} दिवस)',
       day: 'दिवस',
       irrigation: '$t(glossary.irrigation)',
