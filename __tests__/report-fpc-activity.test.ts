@@ -404,6 +404,8 @@ describe('FPC register rendering', () => {
     expect(sheet).toContain('<row r="80">');
     expect(sheet).toContain('<t xml:space="preserve">Sr.No</t>');
     expect(sheet).toContain('<t xml:space="preserve">Qty Per Liter </t>');
+    expect(sheet).toContain('<rowBreaks count="1" manualBreakCount="1">');
+    expect(sheet).toContain('<brk id="76" min="0" max="16383" man="1"/>');
   });
 
   it('CSV (simple): keeps the Days cell raw "-" when the pruning date is missing', () => {

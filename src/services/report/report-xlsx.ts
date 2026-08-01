@@ -53,6 +53,7 @@ function toBase64(bytes: Uint8Array): string {
 function buildSheetXml(data: ReportData): string {
   const rows: string[] = [];
   const mergeCells: string[] = [];
+  const rowBreaks: number[] = [];
   const addMergedIdentityRow = (row: number, label: string, style: number) => {
     rows.push(`<row r="${row}">${inlineCell(row, 0, label, style)}</row>`);
     mergeCells.push(`<mergeCell ref="A${row}:H${row}"/>`);
@@ -75,6 +76,7 @@ function buildSheetXml(data: ReportData): string {
   let rowNumber = 1;
   buildFpcSimpleRows(data.fpcActivity ?? []).forEach((row, index) => {
     if (index % EXPORTER_ROWS_PER_PAGE === 0) {
+      if (index > 0) rowBreaks.push(rowNumber - 1);
       addIdentityBlock(rowNumber);
       rowNumber += 4;
     }
@@ -106,6 +108,13 @@ function buildSheetXml(data: ReportData): string {
   <sheetData>${rows.join('')}</sheetData>
   <mergeCells count="${mergeCells.length}">${mergeCells.join('')}</mergeCells>
   <pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
+  ${
+    rowBreaks.length > 0
+      ? `<rowBreaks count="${rowBreaks.length}" manualBreakCount="${rowBreaks.length}">${rowBreaks
+          .map((row) => `<brk id="${row}" min="0" max="16383" man="1"/>`)
+          .join('')}</rowBreaks>`
+      : ''
+  }
 </worksheet>`;
 }
 
