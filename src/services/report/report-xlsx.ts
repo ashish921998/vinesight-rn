@@ -58,11 +58,11 @@ function buildSheetXml(data: ReportData): string {
     mergeCells.push(`<mergeCell ref="A${row}:H${row}"/>`);
   };
   const addIdentityBlock = (startRow: number) => {
-    addMergedIdentityRow(startRow, `Farmer Name :${data.farmName}`, 1);
+    addMergedIdentityRow(startRow, `Farmer Name: ${data.farmName}`, 1);
     addMergedIdentityRow(startRow + 1, `Variety: ${data.farmVariety ?? '-'}`, 2);
     addMergedIdentityRow(
       startRow + 2,
-      `Pruning Date : ${data.pruningDate ? formatDate(data.pruningDate) : '-'}`,
+      `Pruning Date: ${data.pruningDate ? formatDate(data.pruningDate) : '-'}`,
       3,
     );
     rows.push(

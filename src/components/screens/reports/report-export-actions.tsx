@@ -249,13 +249,27 @@ export function ReportExportActions({
               opacity: disabled ? 0.55 : 1,
             })}
           >
-            <Icon name="square.and.arrow.up" size={18} color={primary} />
-            <Text
-              numberOfLines={1}
-              style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: primary }}
-            >
-              {t('reports.fpc.shareXlsx')}
-            </Text>
+            {isExporting ? (
+              <Spinner size="small" color={colorWithOpacity(primary, 0.5)} />
+            ) : (
+              <>
+                <Icon
+                  name="square.and.arrow.up"
+                  size={18}
+                  color={disabled ? colorWithOpacity(primary, 0.5) : primary}
+                />
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    color: disabled ? colorWithOpacity(primary, 0.5) : primary,
+                  }}
+                >
+                  {t('reports.fpc.shareXlsx')}
+                </Text>
+              </>
+            )}
           </Pressable>
         </View>
       ) : null}

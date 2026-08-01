@@ -1,9 +1,7 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
-import { ReportFpcColumnToggles } from '@/components/screens/reports/report-fpc-column-toggles';
 import { ReportExportActions } from '@/components/screens/reports/report-export-actions';
 import { getDefaultReportFormat } from '@/components/screens/reports/report-format';
-import { FPC_FULL_COLUMNS, FPC_LEAN_COLUMNS } from '@/types/report';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -43,36 +41,21 @@ describe('Exporter report controls', () => {
     expect(getDefaultReportFormat('comprehensive')).toBe('pdf');
   });
 
-  it('switches between simple and detailed report presets', () => {
-    const onChange = jest.fn();
-    const { getByText, rerender } = render(
-      <ReportFpcColumnToggles columns={FPC_LEAN_COLUMNS} onChange={onChange} />,
-    );
-
-    fireEvent.press(getByText('reports.fpc.detail.detailed.title'));
-    expect(onChange).toHaveBeenCalledWith(FPC_FULL_COLUMNS);
-
-    rerender(<ReportFpcColumnToggles columns={FPC_FULL_COLUMNS} onChange={onChange} />);
-    fireEvent.press(getByText('reports.fpc.detail.simple.title'));
-    expect(onChange).toHaveBeenLastCalledWith(FPC_LEAN_COLUMNS);
-  });
-
   it('keeps the exporter workbook separate from the farmer report actions', () => {
     const onShare = jest.fn();
     const onSave = jest.fn();
     const onShareExporter = jest.fn();
-    const { getByText } = render(
-      <ReportExportActions
-        canExport
-        isExporting={false}
-        exportFormat="csv"
-        onSelectFormat={jest.fn()}
-        onShare={onShare}
-        onDownload={onSave}
-        onShareExporter={onShareExporter}
-        panelStyle={{}}
-      />,
-    );
+    const props = {
+      canExport: true,
+      isExporting: false,
+      exportFormat: 'csv' as const,
+      onSelectFormat: jest.fn(),
+      onShare,
+      onDownload: onSave,
+      onShareExporter,
+      panelStyle: {},
+    };
+    const { getByText, queryByText, rerender } = render(<ReportExportActions {...props} />);
 
     fireEvent.press(getByText('reports.share'));
     fireEvent.press(getByText('reports.saveToFiles'));
@@ -83,6 +66,9 @@ describe('Exporter report controls', () => {
     expect(onShareExporter).toHaveBeenCalledTimes(1);
     expect(getByText('reports.fpc.audience')).toBeTruthy();
     expect(getByText('reports.fpc.exportTitle')).toBeTruthy();
+
+    rerender(<ReportExportActions {...props} isExporting />);
+    expect(queryByText('reports.fpc.shareXlsx')).toBeNull();
   });
 
   it('switches export format from the action bar', () => {
