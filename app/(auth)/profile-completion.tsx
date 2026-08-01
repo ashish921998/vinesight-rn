@@ -46,6 +46,7 @@ export default function ProfileCompletionScreen() {
 
   const isLoading = useAuthStore((s) => s.isLoading);
   const errorMessage = useAuthStore((s) => s.errorMessage);
+  const emailAlreadyRegistered = useAuthStore((s) => s.emailAlreadyRegistered);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
   const user = useAuthStore((s) => s.user);
@@ -143,6 +144,31 @@ export default function ProfileCompletionScreen() {
     setEmailError(null);
     clearError();
 
+    await submitProfile(trimmedFirstName, trimmedLastName, trimmedEmail || undefined);
+  };
+
+  // Recovery path for the "email already registered" dead-end: the email is
+  // optional, so let the farmer finish onboarding with just their name. We drop
+  // the conflicting email from the form and resubmit without it.
+  const handleContinueWithoutEmail = async () => {
+    if (isLoading || joinPending) return;
+
+    const trimmedFirstName = firstNameValue.trim();
+    const trimmedLastName = lastNameValue.trim();
+    if (!trimmedFirstName || !trimmedLastName) return;
+
+    setEmailDraft('');
+    setEmailError(null);
+    clearError();
+
+    await submitProfile(trimmedFirstName, trimmedLastName, undefined);
+  };
+
+  const submitProfile = async (
+    trimmedFirstName: string,
+    trimmedLastName: string,
+    emailToSave: string | undefined,
+  ) => {
     const trimmedCode = orgCode.trim();
     // If a consultant code was entered, hold the redirect open (joinPending)
     // until the join resolves so its result isn't wiped by an immediate
@@ -160,7 +186,7 @@ export default function ProfileCompletionScreen() {
       await completeProfile({
         firstName: trimmedFirstName,
         lastName: trimmedLastName,
-        email: trimmedEmail || undefined,
+        email: emailToSave,
       });
 
       // completeProfile signals failures (validation, duplicate email, network)
@@ -347,7 +373,13 @@ export default function ProfileCompletionScreen() {
               <Input
                 placeholder={t('profileCompletion.emailPlaceholder')}
                 value={emailValue}
-                onChangeText={setEmailDraft}
+                onChangeText={(value) => {
+                  setEmailDraft(value);
+                  // Editing the email clears a prior "already registered" block
+                  // and any stale error so the farmer can retry with a new value.
+                  if (emailError) setEmailError(null);
+                  if (errorMessage || emailAlreadyRegistered) clearError();
+                }}
                 leftIcon="mail"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -418,6 +450,20 @@ export default function ProfileCompletionScreen() {
                 }
                 style={{ marginTop: spacing[4] }}
               />
+
+              {emailAlreadyRegistered && (
+                <Button
+                  title={t('profileCompletion.continueWithoutEmail', {
+                    defaultValue: 'Continue without email',
+                  })}
+                  variant="secondary"
+                  onPress={handleContinueWithoutEmail}
+                  disabled={
+                    !firstNameValue.trim() || !lastNameValue.trim() || isLoading || joinPending
+                  }
+                  style={{ marginTop: spacing[3] }}
+                />
+              )}
             </View>
           </View>
         </View>

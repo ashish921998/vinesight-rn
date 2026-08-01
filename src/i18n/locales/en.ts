@@ -2002,9 +2002,10 @@ export const en = {
       'Got a consultant? Enter the code they gave you to link your farm to them. Skip if not.',
     continue: 'Continue',
     continuing: 'Continuing...',
+    continueWithoutEmail: 'Continue without email',
     skip: 'Skip for now',
     emailExistsWarning:
-      'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
+      'This email is already linked to another account. You can continue without an email, or sign in with that email and link your phone from Settings.',
     a11y: {
       skipProfileCompletion: 'Skip profile completion',
     },

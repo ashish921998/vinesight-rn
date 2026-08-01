@@ -30,6 +30,12 @@ export function isRecentlyCreatedAuthUser(
   return Number.isFinite(createdAt) && Math.abs(now - createdAt) <= NEW_ACCOUNT_WINDOW_MS;
 }
 
+// Shown when the email a farmer typed during profile completion is already tied
+// to another account. Email is optional here, so we point them at both recovery
+// paths: finish without the email now, or sign in with email and link the phone.
+const DUPLICATE_EMAIL_MESSAGE =
+  'This email is already linked to another account. You can continue without an email, or sign in with that email and link your phone from Settings.';
+
 export const createPhoneActions = (set: SetState, get: GetState) => ({
   signInWithPhone: async (phone: string, mode: 'signin' | 'signup' = 'signin', name?: string) => {
     const trimmedPhone = phone.trim();
@@ -318,7 +324,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
   },
 
   completeProfile: async (data: { firstName: string; lastName: string; email?: string }) => {
-    set({ errorMessage: null, isLoading: true });
+    set({ errorMessage: null, emailAlreadyRegistered: false, isLoading: true });
     telemetry.capture('profile_completion_started');
 
     try {
@@ -360,8 +366,8 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
 
         if (existingProfiles && existingProfiles.length > 0) {
           set({
-            errorMessage:
-              'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
+            errorMessage: DUPLICATE_EMAIL_MESSAGE,
+            emailAlreadyRegistered: true,
             isLoading: false,
           });
           return;
@@ -438,13 +444,17 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
         isLoading: false,
       });
     } catch (error: unknown) {
-      telemetry.capture('profile_completion_failed');
-      const duplicateEmailMessage =
-        'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.';
+      const isDuplicateEmail = isDuplicateEmailError(error);
+      telemetry.capture('profile_completion_failed', {
+        reason: isDuplicateEmail ? 'duplicate_email' : 'other',
+      });
       set({
-        errorMessage: isDuplicateEmailError(error)
-          ? duplicateEmailMessage
+        errorMessage: isDuplicateEmail
+          ? DUPLICATE_EMAIL_MESSAGE
           : getAuthErrorMessage(error, 'Failed to update profile', 'profile_update'),
+        // A duplicate email is recoverable: the email is optional, so the UI can
+        // offer to finish signup without it rather than trapping the farmer.
+        emailAlreadyRegistered: isDuplicateEmail,
         isLoading: false,
       });
     }

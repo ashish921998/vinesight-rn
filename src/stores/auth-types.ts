@@ -19,6 +19,10 @@ export interface AuthState {
   pendingOTPType: EmailOTPType;
   passwordResetEmailSent: boolean;
   needsProfileCompletion: boolean;
+  // Set when profile completion is blocked solely because the entered email is
+  // already registered to another account. The email is optional, so the UI
+  // offers a "continue without email" recovery path instead of dead-ending.
+  emailAlreadyRegistered: boolean;
   phoneLinkingPending: boolean;
   phoneLinkingNumber: string | null;
   phoneLinkingLoading: boolean;

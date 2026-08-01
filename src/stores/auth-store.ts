@@ -106,7 +106,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   clearError: () => {
-    set({ errorMessage: null });
+    set({ errorMessage: null, emailAlreadyRegistered: false });
   },
 
   setHasSeenOnboarding: (value: boolean) => {
