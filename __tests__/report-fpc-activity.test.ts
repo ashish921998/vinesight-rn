@@ -361,13 +361,49 @@ describe('FPC register rendering', () => {
 
     expect(files['[Content_Types].xml']).toBeDefined();
     expect(files['xl/workbook.xml']).toBeDefined();
-    expect(sheet).toContain('Farmer Name: Fratelli Plot');
+    expect(sheet).toContain('Farmer Name :Fratelli Plot');
     expect(sheet).toContain('Variety: Thompson');
-    expect(sheet).toContain('Pruning Date: 06-05-2026');
+    expect(sheet).toContain('Pruning Date : 06-05-2026');
     expect(sheet).toContain('<mergeCell ref="A1:H1"/>');
     expect(sheet).toContain('<t xml:space="preserve">1</t>');
     expect(sheet).toContain('<t xml:space="preserve">0-52-34</t>');
     expect(sheet).toContain('<t xml:space="preserve">12-61-00</t>');
+  });
+
+  it('XLSX: repeats the exporter identity and header block on long registers', () => {
+    const manyDays = Array.from({ length: 73 }, (_, index) => ({
+      date: `Day ${index + 1}`,
+      isoDate: `2026-06-${String((index % 28) + 1).padStart(2, '0')}`,
+      daysAfterPruning: index + 1,
+      irrigationHours: null,
+      waterMm: null,
+      growthStage: 'stage',
+      products: [
+        {
+          key: `product-${index}`,
+          source: 'spray' as const,
+          marketName: `Product ${index + 1}`,
+          technicalName: `Technical ${index + 1}`,
+          qtyPerAcreDisplay: null,
+          totalQtyDisplay: null,
+          asLogged: '1 ml',
+          phiDays: null,
+          safeHarvestDate: null,
+          mrl: null,
+        },
+      ],
+      notes: '',
+    }));
+
+    const workbook = generateFpcWorkbook({ ...data, fpcActivity: manyDays });
+    const files = unzipSync(Uint8Array.from(Buffer.from(workbook, 'base64')));
+    const sheet = strFromU8(files['xl/worksheets/sheet1.xml']);
+
+    expect(sheet).toContain('<mergeCell ref="A1:H1"/>');
+    expect(sheet).toContain('<mergeCell ref="A77:H77"/>');
+    expect(sheet).toContain('<row r="80">');
+    expect(sheet).toContain('<t xml:space="preserve">Sr.No</t>');
+    expect(sheet).toContain('<t xml:space="preserve">Qty Per Liter </t>');
   });
 
   it('CSV (simple): keeps the Days cell raw "-" when the pruning date is missing', () => {

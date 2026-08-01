@@ -3204,6 +3204,9 @@ export const en = {
   reports: {
     title: 'Reports',
     fpc: {
+      audience: 'For exporters',
+      exportTitle: 'Exporter activity register',
+      shareXlsx: 'Share XLSX',
       sectionTitle: 'Exporter Activity Register ({{count}} days)',
       day: 'Day',
       irrigation: 'Irrigation',

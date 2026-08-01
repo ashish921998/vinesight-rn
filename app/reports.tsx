@@ -33,13 +33,7 @@ import {
   clampDateRangeToSeasonBounds,
   formatReportSeasonLabel,
 } from '@/hooks/use-reports';
-import {
-  DateRange,
-  ReportFormat,
-  ReportType,
-  type FpcColumnOptions,
-  FPC_LEAN_COLUMNS,
-} from '@/types/report';
+import { DateRange, ReportFormat, ReportType, FPC_LEAN_COLUMNS } from '@/types/report';
 import { useAuthStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -116,7 +110,6 @@ export default function ReportsScreen() {
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(initialFarmId);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
-  const [fpcColumns, setFpcColumns] = useState<FpcColumnOptions>(FPC_LEAN_COLUMNS);
   const [selectedExportFormat, setSelectedExportFormat] = useState<ReportFormat>('pdf');
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
@@ -287,7 +280,7 @@ export default function ReportsScreen() {
 
     try {
       if (mode === 'download') {
-        const fileUri = await downloadReport(preview, format, type, areaUnit, fpcColumns);
+        const fileUri = await downloadReport(preview, format, type, areaUnit, FPC_LEAN_COLUMNS);
         telemetry.capture('data_exported', eventProps);
         Alert.alert(
           t('reports.alerts.downloadCompleteTitle'),
@@ -296,7 +289,7 @@ export default function ReportsScreen() {
         return;
       }
 
-      await exportReport(preview, format, type, areaUnit, fpcColumns);
+      await exportReport(preview, format, type, areaUnit, FPC_LEAN_COLUMNS);
       telemetry.capture('data_exported', eventProps);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : t('reports.errors.unableToExport');
@@ -525,6 +518,9 @@ export default function ReportsScreen() {
                   onSelectFormat={setSelectedExportFormat}
                   onShare={() => runExport('share', selectedExportFormat)}
                   onDownload={() => runExport('download', selectedExportFormat)}
+                  onShareExporter={() =>
+                    runExport('share', getDefaultReportFormat('fpc-activity'), 'fpc-activity')
+                  }
                   panelStyle={panelStyle}
                 />
 
@@ -533,14 +529,6 @@ export default function ReportsScreen() {
                   preview={preview}
                   reportType={REPORT_TYPE}
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
-                  fpcColumns={fpcColumns}
-                  onFpcColumnsChange={setFpcColumns}
-                  // The register is a separate document for a separate reader, so
-                  // it exports from its own section rather than the report's bar,
-                  // in the format buyers actually consume.
-                  onExportRegister={() =>
-                    runExport('share', getDefaultReportFormat('fpc-activity'), 'fpc-activity')
-                  }
                   panelStyle={panelStyle}
                 />
               </>

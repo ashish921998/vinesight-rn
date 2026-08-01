@@ -20,6 +20,7 @@ interface ReportExportActionsProps {
   onSelectFormat: (format: ReportFormat) => void;
   onShare: () => void;
   onDownload: () => void;
+  onShareExporter?: () => void;
   panelStyle: object;
 }
 
@@ -30,6 +31,7 @@ export function ReportExportActions({
   onSelectFormat,
   onShare,
   onDownload,
+  onShareExporter,
   panelStyle,
 }: ReportExportActionsProps) {
   const m3 = useM3();
@@ -193,6 +195,70 @@ export function ReportExportActions({
           )}
         </Pressable>
       </View>
+
+      {onShareExporter ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: spacing[3],
+            paddingTop: spacing[2],
+            borderTopWidth: 1,
+            borderTopColor: m3.colorScheme.outlineVariant,
+          }}
+        >
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.semibold,
+                color: m3.colorScheme.onSurfaceVariant,
+              }}
+            >
+              {t('reports.fpc.audience')}
+            </Text>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: m3.colorScheme.onSurface,
+              }}
+            >
+              {t('reports.fpc.exportTitle')}
+            </Text>
+          </View>
+          <Pressable
+            onPress={onShareExporter}
+            disabled={disabled}
+            accessibilityRole="button"
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: spacing[2],
+              minHeight: 44,
+              paddingHorizontal: spacing[3],
+              borderRadius: radius.lg,
+              borderCurve: 'continuous',
+              borderWidth: 1.5,
+              borderColor: disabled ? colorWithOpacity(primary, 0.3) : primary,
+              backgroundColor: pressed
+                ? colorWithOpacity(primary, 0.08)
+                : m3.colorScheme.surfaceVariant,
+              opacity: disabled ? 0.55 : 1,
+            })}
+          >
+            <Icon name="square.and.arrow.up" size={18} color={primary} />
+            <Text
+              numberOfLines={1}
+              style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: primary }}
+            >
+              {t('reports.fpc.shareXlsx')}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }

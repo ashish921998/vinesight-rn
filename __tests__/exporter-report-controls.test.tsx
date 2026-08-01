@@ -57,13 +57,10 @@ describe('Exporter report controls', () => {
     expect(onChange).toHaveBeenLastCalledWith(FPC_LEAN_COLUMNS);
   });
 
-  // Replaces an earlier case for the `isExporterReport` prop, which swapped
-  // every label in the bar. The buyer's register now exports from its own
-  // disclosure section, so the bar only ever describes the report — and its two
-  // actions are named for their outcome rather than their file format.
-  it('names its actions by outcome, not by mechanism', () => {
+  it('keeps the exporter workbook separate from the farmer report actions', () => {
     const onShare = jest.fn();
     const onSave = jest.fn();
+    const onShareExporter = jest.fn();
     const { getByText } = render(
       <ReportExportActions
         canExport
@@ -72,15 +69,20 @@ describe('Exporter report controls', () => {
         onSelectFormat={jest.fn()}
         onShare={onShare}
         onDownload={onSave}
+        onShareExporter={onShareExporter}
         panelStyle={{}}
       />,
     );
 
     fireEvent.press(getByText('reports.share'));
     fireEvent.press(getByText('reports.saveToFiles'));
+    fireEvent.press(getByText('reports.fpc.shareXlsx'));
 
     expect(onShare).toHaveBeenCalledTimes(1);
     expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onShareExporter).toHaveBeenCalledTimes(1);
+    expect(getByText('reports.fpc.audience')).toBeTruthy();
+    expect(getByText('reports.fpc.exportTitle')).toBeTruthy();
   });
 
   it('switches export format from the action bar', () => {

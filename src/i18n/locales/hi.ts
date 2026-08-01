@@ -3187,6 +3187,9 @@ export const hi = {
   reports: {
     title: 'रिपोर्ट',
     fpc: {
+      audience: 'निर्यातकों के लिए',
+      exportTitle: 'निर्यातक गतिविधि रजिस्टर',
+      shareXlsx: 'XLSX साझा करें',
       sectionTitle: 'निर्यातक गतिविधि रजिस्टर ({{count}} दिन)',
       day: 'दिन',
       irrigation: 'सिंचाई',
