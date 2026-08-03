@@ -907,6 +907,13 @@ describe('EntryForm UI integration', () => {
       expect(screen.getByText('quickLog.saveType')).toBeTruthy();
     });
     expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder').props.value).toBe('300');
+
+    // Cost is seeded and the mapped type ("labor" → Other) makes it valid —
+    // Save enqueues the draft, matching the sibling harvest prefill test.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
   });
 
   it('keeps a voice-prefilled fertigation on the inline LogForm modal', async () => {

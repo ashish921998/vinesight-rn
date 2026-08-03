@@ -57,7 +57,9 @@ function normalizeSprayDoseUnit(unit: string): string {
   if (normalized === 'ml/liter' || normalized === 'ml/litre' || normalized === 'ml/l') {
     return 'ml/L';
   }
-  if (normalized === 'gm/acre') return 'gram';
+  if (normalized === 'gm/acre' || normalized === 'g/acre' || normalized === 'gram/acre') {
+    return 'gram';
+  }
   if (normalized === 'ml/acre') return 'ml';
   return unit.trim();
 }
@@ -139,13 +141,14 @@ export function buildFertigationVoicePrefill(
   const base = createEmptyFertigationFormData();
   return {
     fertilizers: fertigation.fertilizers?.length
-      ? fertigation.fertilizers.map((item) => {
-          const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
+      ? fertigation.fertilizers.map((item, index) => {
+          const { unit, quantityBasis: resolvedBasis } = resolveFertigationPrefill(item.unit);
           return {
+            id: createPrefillId('fert', index),
             name: item.name ?? '',
             quantity: item.quantity ?? undefined,
             unit,
-            quantityBasis,
+            quantityBasis: item.quantityBasis ?? resolvedBasis,
           };
         })
       : base.fertilizers,
