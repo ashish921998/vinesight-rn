@@ -91,11 +91,73 @@ import {
 
 export type QuickLogType = Extract<LogTypeId, 'irrigation' | 'spray' | 'harvest' | 'expense'>;
 
+/**
+ * Draft payload handed to `onSubmitDraft` when the sheet runs in draft mode
+ * (add-log full screen). Same form-data shapes the host's pending-log
+ * pipeline already consumes; the host enqueues them onto its multi-draft
+ * stack instead of persisting immediately. Spray is the raw draft (with
+ * `phiOverride` applied when the PHI double-confirm was accepted) — the host
+ * finalizes it via its own `buildSprayPendingData`, mirroring the path a
+ * spray draft takes when added from the inline composer.
+ */
+export type QuickLogDraftPayload =
+  | {
+      type: 'irrigation';
+      irrigation: IrrigationFormData;
+      /** Linked fertigation draft when fertilizer rows were added; null otherwise. */
+      fertigation: FertigationFormData | null;
+    }
+  | { type: 'spray'; spray: SprayFormData }
+  | { type: 'expense'; expense: ExpenseFormData }
+  | { type: 'harvest'; harvest: HarvestFormData };
+
+/**
+ * Prefill for the sheet's drafts (draft mode). The add-log screen builds this
+ * from its prefill sources (plan one-tap chemicals, task irrigation duration,
+ * voice extraction) so a prefilled log opens in the SAME sheet as a manual
+ * chip tap instead of a separate inline form. Only the field for the opening
+ * `type` is read; the rest are ignored. Seeded once per open — the host keeps
+ * the object in state so its reference stays stable while the sheet is open.
+ */
+export interface QuickLogInitialDraft {
+  irrigation?: IrrigationFormData;
+  spray?: SprayFormData;
+  expense?: ExpenseFormData;
+  harvest?: HarvestFormData;
+}
+
 interface QuickLogSheetProps {
   /** Which log's sheet to show; null keeps the sheet closed. */
   type: QuickLogType | null;
   farm: Farm | null;
   onClose: () => void;
+  /**
+   * Draft mode (add-log full screen): when provided, Save assembles the draft
+   * and calls this instead of persisting immediately, then closes the sheet.
+   * Absent on the dashboard, which keeps the original immediate-save behavior.
+   * PHI double-confirm for spray runs in both modes before the payload is built.
+   */
+  onSubmitDraft?: (payload: QuickLogDraftPayload) => void;
+  /**
+   * Live validity pulse for the host. The sheet owns its form state, so a host
+   * that needs to know whether the current draft is valid (e.g. the add-log
+   * full screen feeding the guided-tour coach) subscribes here. Fires on mount
+   * and whenever validity flips. Absent on the dashboard, which ignores it.
+   */
+  onValidityChange?: (valid: boolean) => void;
+  /**
+   * Controlled date (draft mode): when provided, the sheet uses this date
+   * instead of its own, keeping the draft synchronized with the host's
+   * pending-log date and PHI computation. Value and setter travel as one
+   * pair so a half-controlled date is unrepresentable. Absent on the
+   * dashboard, which owns its own date.
+   */
+  date?: { value: Date; onChange: (date: Date) => void };
+  /**
+   * Prefill drafts, seeded when the sheet opens (draft mode only — the
+   * dashboard never prefills). See {@link QuickLogInitialDraft}.
+   */
+  initialDraft?: QuickLogInitialDraft | null;
 }
 
 interface HeroStepperProps {
@@ -335,7 +397,15 @@ function SectionLabel({ children, optional }: { children: string; optional?: str
   );
 }
 
-export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
+export function QuickLogSheet({
+  type,
+  farm,
+  onClose,
+  onSubmitDraft,
+  onValidityChange,
+  date: controlledDate,
+  initialDraft = null,
+}: QuickLogSheetProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const domainColors = useDomainColors();
@@ -343,6 +413,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   const router = useRouter();
 
   const farmId = farm?.id ?? undefined;
+  const isDraftMode = Boolean(onSubmitDraft);
   const isGrapeFarm = isGrapeCrop(farm?.crop, farm?.crop_variety);
   const { preferredAreaUnit, farmAreaAcres } = useFarmAreaAcres(farm?.area);
   const { activeSeason, hasResolvedSeasons } = useFarmSeasonStatus(farmId);
@@ -350,7 +421,12 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   // loads and when it errors, so only a confirmed no-season result blocks.
   const isBlockedByNoSeason = farmId != null && hasResolvedSeasons && !activeSeason;
 
-  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const [internalDate, setInternalDate] = useState<Date>(() => new Date());
+  // Controlled (draft mode) when the host passes the date pair; uncontrolled
+  // (dashboard) otherwise. The pair type makes half-controlled impossible.
+  const isControlledDate = controlledDate != null;
+  const selectedDate = controlledDate?.value ?? internalDate;
+  const handleDateChange = controlledDate?.onChange ?? setInternalDate;
   const dateStr = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
 
   const [irrigationDraft, setIrrigationDraft] = useState<IrrigationFormData>({
@@ -437,16 +513,22 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
     [scrollToNode],
   );
 
-  // Fresh sheet per open: today's date, empty drafts.
+  // Fresh sheet per open: empty drafts, or the host's prefill when one was
+  // provided (plan/voice/duration handoff). Saving guards reset on every type
+  // change (open and close) so a draft-mode save that set them doesn't leak.
+  // Date is only reset when uncontrolled (dashboard); draft mode uses the
+  // host's date, which the host manages.
   useEffect(() => {
+    savingRef.current = false;
+    setSaving(false);
     if (!type) return;
-    setSelectedDate(new Date());
-    setIrrigationDraft({ duration: undefined });
+    if (!isControlledDate) setInternalDate(new Date());
+    setIrrigationDraft(initialDraft?.irrigation ?? { duration: undefined });
     setFertigationDraft({ fertilizers: [] });
-    setSprayDraft(createEmptySprayFormData());
-    setExpenseDraft(createEmptyExpenseFormData());
-    setHarvestDraft(createEmptyHarvestFormData());
-  }, [type]);
+    setSprayDraft(initialDraft?.spray ?? createEmptySprayFormData());
+    setExpenseDraft(initialDraft?.expense ?? createEmptyExpenseFormData());
+    setHarvestDraft(initialDraft?.harvest ?? createEmptyHarvestFormData());
+  }, [type, isControlledDate, initialDraft]);
 
   // Picker sources — catalog for spray (per design), plan/warehouse/history for both.
   const spraySources = useSprayInputSources(farmId);
@@ -523,6 +605,18 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
             ? validateHarvestForm(harvestDraft)
             : false;
 
+  // Pulse validity to the host (add-log full screen feeds the guided-tour
+  // coach, which needs to know when the sheet's draft is complete). The sheet
+  // owns its form state, so the host can't derive this itself. No-op on the
+  // dashboard, which doesn't pass onValidityChange.
+  const onValidityChangeRef = useRef(onValidityChange);
+  useEffect(() => {
+    onValidityChangeRef.current = onValidityChange;
+  }, [onValidityChange]);
+  useEffect(() => {
+    onValidityChangeRef.current?.(isValid);
+  }, [isValid]);
+
   const captureSaved = useCallback((recordType: LogTypeId, savedFarmId: number) => {
     try {
       telemetry.capture('record_created', {
@@ -539,9 +633,61 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
     }
   }, []);
 
+  // Assemble the draft payload for draft mode (onSubmitDraft). Same shapes
+  // performSave persists in immediate mode; the host finalizes spray via its
+  // own buildSprayPendingData, so the spray draft is handed back raw (with
+  // phiOverride already applied by the caller).
+  const buildDraftPayload = useCallback(
+    (sprayPayload?: SprayFormData): QuickLogDraftPayload | null => {
+      if (type === 'irrigation') {
+        return {
+          type: 'irrigation',
+          irrigation: { ...irrigationDraft },
+          fertigation: hasFertilizers ? { ...fertigationDraft } : null,
+        };
+      }
+      if (type === 'spray') {
+        return { type: 'spray', spray: sprayPayload ?? sprayDraft };
+      }
+      if (type === 'expense') {
+        return { type: 'expense', expense: { ...expenseDraft } };
+      }
+      if (type === 'harvest') {
+        return { type: 'harvest', harvest: { ...harvestDraft } };
+      }
+      return null;
+    },
+    [
+      type,
+      irrigationDraft,
+      hasFertilizers,
+      fertigationDraft,
+      sprayDraft,
+      expenseDraft,
+      harvestDraft,
+    ],
+  );
+
   const performSave = useCallback(
     async (sprayPayload?: SprayFormData) => {
       if (!type || !farm || savingRef.current || isBlockedByNoSeason) return;
+
+      // Draft mode (add-log full screen): hand the assembled draft to the host
+      // instead of persisting. The PHI double-confirm for spray already ran in
+      // handleSave before reaching here, so the override payload is honored.
+      // Set saving guards before the callback to prevent a rapid double-tap
+      // from enqueuing the same draft twice before onClose() takes effect.
+      if (onSubmitDraft) {
+        const payload = buildDraftPayload(sprayPayload);
+        if (!payload) return;
+        savingRef.current = true;
+        setSaving(true);
+        onSubmitDraft(payload);
+        triggerHapticSuccess();
+        onClose();
+        return;
+      }
+
       savingRef.current = true;
       setSaving(true);
       try {
@@ -618,6 +764,8 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
       type,
       farm,
       isBlockedByNoSeason,
+      onSubmitDraft,
+      buildDraftPayload,
       saveLog,
       deleteIrrigation,
       irrigationDraft,
@@ -720,7 +868,7 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
   }, [farm?.id, onClose, router]);
 
   const logType = type ? getLogType(type) : null;
-  const saveDisabled = !isValid || saving || isBlockedByNoSeason;
+  const saveDisabled = !isValid || saving || isBlockedByNoSeason || !farm;
 
   // Spray & irrigation are tall, multi-row forms (chemical/fertilizer rows, each
   // with a typeahead + unit control, plus the keyboard) — they need full space,
@@ -758,16 +906,38 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
         }}
         scrollEventThrottle={16}
       >
-        {/* No title header: the farmer just tapped a labelled quick action
-            ("Irrigation"/"Spray"…) and the target farm shows in the home
-            header above the sheet, so a "Log Irrigation / Logging to Sassy"
-            block only ate vertical space. The form starts at the date. */}
+        {/* No title header on the dashboard: the farmer just tapped a labelled
+            quick action ("Irrigation"/"Spray"…) and the target farm shows in
+            the home header above the sheet. In draft mode (add-entry full
+            screen) the sheet covers the "Logging to" bar, so show the farm
+            name here to prevent silent mis-logging on multi-farm setups. */}
+        {isDraftMode && farm?.name ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: spacing[3],
+              gap: spacing[2],
+            }}
+          >
+            <AppIcon name="leaf.fill" size={14} color={m3.colorScheme.primary} />
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: m3.colorScheme.onSurfaceVariant,
+              }}
+            >
+              {farm.name}
+            </Text>
+          </View>
+        ) : null}
 
         {/* Date — its own row, defaults to today. */}
         <View style={{ marginBottom: spacing[5] }}>
           <DateField
             value={selectedDate}
-            onChange={setSelectedDate}
+            onChange={handleDateChange}
             maximumDate={new Date()}
             label={t('activityEdit.dateLabel', { defaultValue: 'Date' })}
             testID="quick-log-date-field"
@@ -971,52 +1141,57 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
           borderTopColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
         }}
       >
-        <Pressable
-          disabled={saveDisabled}
-          onPress={handleSave}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: saveDisabled }}
-          accessibilityLabel={
-            logType ? t('quickLog.saveType', { type: t(logType.labelKey) }) : undefined
-          }
-          style={{
-            paddingVertical: 15,
-            borderRadius: borderRadius.xl,
-            alignItems: 'center',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 8,
-            backgroundColor: !saveDisabled ? m3.colorScheme.primary : m3.surface.s50,
-          }}
+        <GuidedTourTarget
+          targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY}
+          style={{ alignSelf: 'stretch' }}
         >
-          {saving ? (
-            <Spinner size="small" color={m3.colorScheme.onSurfaceVariant} />
-          ) : (
-            <AppIcon
-              name="checkmark-circle"
-              size={20}
-              color={
-                !saveDisabled
-                  ? m3.colorScheme.onPrimary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)
-              }
-            />
-          )}
-          <Text
+          <Pressable
+            disabled={saveDisabled}
+            onPress={handleSave}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: saveDisabled }}
+            accessibilityLabel={
+              logType ? t('quickLog.saveType', { type: t(logType.labelKey) }) : undefined
+            }
             style={{
-              fontWeight: '700',
-              color: !saveDisabled
-                ? m3.colorScheme.onPrimary
-                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5),
+              paddingVertical: 15,
+              borderRadius: borderRadius.xl,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              gap: 8,
+              backgroundColor: !saveDisabled ? m3.colorScheme.primary : m3.surface.s50,
             }}
           >
-            {saving
-              ? t('common.saving')
-              : logType
-                ? t('quickLog.saveType', { type: t(logType.labelKey) })
-                : ''}
-          </Text>
-        </Pressable>
+            {saving ? (
+              <Spinner size="small" color={m3.colorScheme.onSurfaceVariant} />
+            ) : (
+              <AppIcon
+                name="checkmark-circle"
+                size={20}
+                color={
+                  !saveDisabled
+                    ? m3.colorScheme.onPrimary
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)
+                }
+              />
+            )}
+            <Text
+              style={{
+                fontWeight: '700',
+                color: !saveDisabled
+                  ? m3.colorScheme.onPrimary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5),
+              }}
+            >
+              {saving
+                ? t('common.saving')
+                : logType
+                  ? t('quickLog.saveType', { type: t(logType.labelKey) })
+                  : ''}
+            </Text>
+          </Pressable>
+        </GuidedTourTarget>
       </View>
     </QuickLogSheetContainer>
   );

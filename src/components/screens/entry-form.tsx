@@ -65,6 +65,18 @@ import {
 } from '@/components/screens/entry-form/PendingLogs';
 import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
 import { LogForm } from '@/components/screens/entry-form/LogForm';
+import {
+  QuickLogSheet,
+  type QuickLogDraftPayload,
+  type QuickLogInitialDraft,
+  type QuickLogType,
+} from '@/components/sheets/quick-log-sheet';
+import {
+  buildExpensePrefill,
+  buildFertigationPlanPrefill,
+  buildFertigationVoicePrefill,
+  buildQuickLogInitialDraft,
+} from '@/components/screens/entry-form/log-prefills';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
 import { guidedTourEmit, useGuidedTourStore } from '@/features/guided-tour';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
@@ -76,14 +88,9 @@ import {
   HarvestForm as _HarvestForm,
   ExpenseForm as _ExpenseForm,
   FertigationForm as _FertigationForm,
-  validateIrrigationForm,
-  validateSprayForm,
-  validateHarvestForm,
   validateExpenseForm,
   validateFertigationForm,
   validateNoteForm,
-  createEmptySprayFormData,
-  createEmptyHarvestFormData,
   createEmptyExpenseFormData,
   createEmptyFertigationFormData,
   createEmptyNoteFormData,
@@ -95,13 +102,7 @@ import {
   type FertigationFormData,
   type NoteFormData,
 } from '@/components/forms';
-import {
-  LOG_TYPES,
-  type LogTypeId,
-  HARVEST_GRADES,
-  CHEMICAL_UNITS,
-} from '@/constants/calculator-models';
-import { resolveFertigationPrefill } from '@/constants/fertilizer-units';
+import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import {
   useCreateIrrigationRecord,
   useCreateSprayRecord,
@@ -119,7 +120,6 @@ import {
   useDeleteDailyNote,
   useFarmSeasonStatus,
   useChemicalMixSearch,
-  usePhiComputation,
   useSprayInputSources,
   useFertigationInputSources,
   useIrrigationRecords,
@@ -148,7 +148,6 @@ import type { DailyNoteRecord, Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useNotificationStore, useAppModeStore } from '@/stores';
-import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
 import { isGrapeCrop } from '@/utils/crop';
 import {
   saveEntryLogSession,
@@ -166,7 +165,6 @@ import {
   encodeTaskPlanInDescription,
   stripTaskPlanFromDescription,
 } from '@/utils/task-plan';
-import { isPhiConflict } from '@/services/phi-service';
 import { getDataAccess } from '@/data-access';
 
 interface EntryFormProps {
@@ -194,6 +192,31 @@ interface EntryFormProps {
   presentation?: 'modal' | 'screen';
 }
 
+// The four log types the dashboard's QuickLogSheet handles. Tapping one of
+// these in the type selector opens that shared sheet (draft mode) instead of
+// the inline LogForm modal — same component as the dashboard, no duplication.
+// Fertigation + note stay on the inline modal (not covered by QuickLogSheet).
+const QUICK_LOG_TYPE_IDS: readonly LogTypeId[] = ['irrigation', 'spray', 'harvest', 'expense'];
+function isQuickLogType(type: LogTypeId): type is QuickLogType {
+  return (QUICK_LOG_TYPE_IDS as readonly string[]).includes(type);
+}
+
+/**
+ * The ONE policy for "does this log open in the shared QuickLogSheet or the
+ * inline LogForm modal", shared by the type-chip tap and the initialLogType
+ * effect so the two entry points can't drift. The sheet wins unless this is
+ * all-farms expense: the sheet takes a single farm and has no all-farms
+ * concept, and the inline composer's pending-log pipeline already handles the
+ * all-farms scope. Prefills (plan/voice/duration) do NOT force the inline
+ * modal — they seed the sheet via its `initialDraft` prop.
+ */
+function canOpenQuickLogSheet(
+  type: LogTypeId,
+  { allFarmsSelected }: { allFarmsSelected: boolean },
+): type is QuickLogType {
+  return isQuickLogType(type) && !(allFarmsSelected && type === 'expense');
+}
+
 const TASK_TYPES: TaskType[] = [
   'irrigation',
   'spray',
@@ -206,28 +229,6 @@ const TASK_TYPES: TaskType[] = [
 ];
 
 const PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
-
-function isValidChemicalUnit(unit: string): unit is SprayFormData['chemicals'][number]['unit'] {
-  return CHEMICAL_UNITS.includes(unit as SprayFormData['chemicals'][number]['unit']);
-}
-
-function normalizeSprayDoseUnit(unit: string): string {
-  const normalized = unit.trim().toLowerCase();
-  if (
-    normalized === 'gm/liter' ||
-    normalized === 'gm/litre' ||
-    normalized === 'gm/l' ||
-    normalized === 'g/l'
-  ) {
-    return 'gm/L';
-  }
-  if (normalized === 'ml/liter' || normalized === 'ml/litre' || normalized === 'ml/l') {
-    return 'ml/L';
-  }
-  if (normalized === 'gm/acre') return 'gram';
-  if (normalized === 'ml/acre') return 'ml';
-  return unit.trim();
-}
 
 function normalizePlannedInputs(items: PlannedInputItem[]): PlannedInputItem[] {
   const deduped = new Map<string, PlannedInputItem>();
@@ -259,10 +260,6 @@ function parseInitialLogDate(value?: string | null): Date | null {
   const day = Number.parseInt(match[3], 10);
   const parsed = new Date(year, monthIndex, day);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function createPrefillId(prefix: string, index: number): string {
-  return `${prefix}_${Date.now()}_${index}`;
 }
 
 export function EntryForm({
@@ -384,11 +381,30 @@ export function EntryForm({
   const [selectedDate, setSelectedDate] = useState<Date>(() => parsedInitialLogDate ?? new Date());
   const [selectedLogType, setSelectedLogType] = useState<LogTypeId | null>(null);
   const [showLogFormModal, setShowLogFormModal] = useState(false);
+  // QuickLogSheet (dashboard sheet, draft mode) for the four quick types. Null
+  // keeps it closed. `quickLogValid` is the sheet's live validity pulse, used to
+  // feed the guided-tour coach (the sheet owns its form state, not EntryForm).
+  const [quickLogType, setQuickLogType] = useState<QuickLogType | null>(null);
+  const [quickLogValid, setQuickLogValid] = useState(false);
+  // Prefill handed to the QuickLogSheet on open (plan/voice/duration). Held in
+  // state so its reference is stable while the sheet is open — the sheet seeds
+  // its drafts from it once per open.
+  const [quickLogPrefill, setQuickLogPrefill] = useState<QuickLogInitialDraft | null>(null);
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
   const [pendingLogFailures, setPendingLogFailures] = useState<Record<string, PendingLogFailure>>(
     {},
   );
   const [isSubmittingLogs, setIsSubmittingLogs] = useState(false);
+
+  // Leaving the log tab unmounts the QuickLogSheet without onClose, so
+  // returning would reopen it with wiped drafts. Reset the type so the
+  // sheet stays closed until the farmer taps a chip again.
+  useEffect(() => {
+    if (activeTab !== 'log') {
+      setQuickLogType(null);
+    }
+  }, [activeTab]);
+
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [footerHeight, setFooterHeight] = useState(112);
   const contentScrollViewRef = useRef<ScrollView>(null);
@@ -398,34 +414,18 @@ export function EntryForm({
   const logFormScrollOffsetRef = useRef(0);
   const keyboardTopRef = useRef<number | null>(null);
 
-  const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
-  // Fertilizers are mostly applied through irrigation, so the irrigation entry can optionally
-  // carry a fertigation log. When on, the fertigation section (reusing `fertigationData`) is
-  // shown inside the irrigation flow and saved as a linked record.
-  const [irrigationIncludesFertilizers, setIrrigationIncludesFertilizers] = useState(false);
-  // Fertigation picker sources. The catalog fetch is gated on a flow that
-  // actually mounts the fertigation form (irrigation embeds it behind the
-  // include-fertilizers toggle).
+  // Fertigation picker sources. The catalog fetch is gated on the standalone
+  // Fertigation tab — the only inline flow that still mounts the form (the
+  // irrigation + fertilizers rider lives in the QuickLogSheet, which fetches
+  // its own sources).
   const fertigationSources = useFertigationInputSources(logFarmId ?? undefined, {
-    catalogEnabled:
-      selectedLogType === 'fertigation' ||
-      (selectedLogType === 'irrigation' && irrigationIncludesFertilizers),
+    catalogEnabled: selectedLogType === 'fertigation',
   });
-  const [sprayData, setSprayData] = useState<SprayFormData>(() => createEmptySprayFormData());
-  const [harvestData, setHarvestData] = useState<HarvestFormData>(() =>
-    createEmptyHarvestFormData(),
-  );
   const [expenseData, setExpenseData] = useState<ExpenseFormData>(() =>
     createEmptyExpenseFormData(),
   );
   const [fertigationData, setFertigationData] = useState<FertigationFormData>(() =>
     createEmptyFertigationFormData(),
-  );
-  // The irrigation flow's inline fertilizer section keeps its own draft, separate from the
-  // standalone Fertigation tab's `fertigationData`, so toggling fertilizers on an irrigation
-  // entry never reads or clears an in-progress standalone fertigation draft (and vice versa).
-  const [irrigationFertigationData, setIrrigationFertigationData] = useState<FertigationFormData>(
-    () => createEmptyFertigationFormData(),
   );
   const [noteData, setNoteData] = useState<NoteFormData>(() => createEmptyNoteFormData());
   const selectedDateIso = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
@@ -452,38 +452,12 @@ export function EntryForm({
     farmFertigationRecords,
     farmDailyNotes,
   ]);
-  const { data: sprayPhiComputation } = usePhiComputation(
-    sprayData.catalogMixId ?? null,
-    selectedDateIso,
-  );
   const [taskPlannedInputs, setTaskPlannedInputs] = useState<PlannedInputItem[]>([]);
   const [plannedItemName, setPlannedItemName] = useState('');
   const [plannedItemQty, setPlannedItemQty] = useState('');
   const [plannedItemUnit, setPlannedItemUnit] = useState('');
 
   const sprayQuickAddItems = spraySources.quickAddItems;
-
-  useEffect(() => {
-    if (!sprayPhiComputation) return;
-    setSprayData((prev) => {
-      if (prev.catalogMixId !== sprayPhiComputation.catalogMixId) return prev;
-      if (
-        prev.governingPhiDays === sprayPhiComputation.governingPhiDays &&
-        prev.safeHarvestDate === sprayPhiComputation.safeHarvestDate &&
-        prev.phiBlockingComponent === sprayPhiComputation.blockingComponentName &&
-        prev.phiStatus === sprayPhiComputation.phiStatus
-      ) {
-        return prev;
-      }
-      return {
-        ...prev,
-        governingPhiDays: sprayPhiComputation.governingPhiDays,
-        safeHarvestDate: sprayPhiComputation.safeHarvestDate,
-        phiBlockingComponent: sprayPhiComputation.blockingComponentName,
-        phiStatus: sprayPhiComputation.phiStatus,
-      };
-    });
-  }, [sprayPhiComputation]);
 
   const fertigationQuickAddItems = fertigationSources.quickAddItems;
 
@@ -548,49 +522,60 @@ export function EntryForm({
     };
   }, [scrollToNode, windowHeight]);
 
-  // Set initial log type if provided
+  // Open the requested log surface on entry. Quick types go to the shared
+  // QuickLogSheet — prefills (plan chemicals, task duration, voice extraction)
+  // seed it via `initialDraft`, so a prefilled log looks exactly like a manual
+  // chip tap with values filled in. Fertigation/note and the all-farms expense
+  // case open the inline LogForm modal. One effect owns the whole decision so
+  // the entry points can't drift.
   useEffect(() => {
-    if (isVisible && initialLogType) {
-      setSelectedLogType(initialLogType);
-      setShowLogFormModal(true);
-      if (initialLogType === 'spray' && initialLogPrefill?.sprayChemicals?.length) {
-        setSprayData({
-          waterVolume: undefined,
-          chemicals: initialLogPrefill.sprayChemicals.map((item) => {
-            const normalizedUnit = item.unit ? normalizeSprayDoseUnit(item.unit) : null;
-            const unit =
-              normalizedUnit && isValidChemicalUnit(normalizedUnit) ? normalizedUnit : 'gm/L';
-            return {
-              id: `chem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-              name: item.name,
-              quantity: item.quantity ?? undefined,
-              unit,
-              quantityBasis:
-                item.quantityBasis ??
-                (item.unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total'),
-            };
-          }),
-        });
-      }
-      if (initialLogType === 'fertigation' && initialLogPrefill?.fertigationItems?.length) {
-        setFertigationData({
-          fertilizers: initialLogPrefill.fertigationItems.map((item) => {
-            const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
-            return {
-              id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-              name: item.name,
-              quantity: item.quantity ?? 0,
-              unit,
-              quantityBasis,
-              // plan_item_id linkage: plan one-tap prefill carries planItemId so
-              // the submitted record can reference the prescription (issue #197).
-              planItemId: item.planItemId ?? null,
-            };
-          }),
-        });
+    if (!isVisible) return;
+    const type = initialLogType ?? initialVoiceLogPrefill?.type ?? null;
+    if (!type) return;
+    setSelectedLogType(type);
+
+    const prefillDate = parseInitialLogDate(initialVoiceLogPrefill?.date);
+    if (prefillDate) {
+      setSelectedDate(prefillDate);
+    }
+
+    if (canOpenQuickLogSheet(type, { allFarmsSelected: Boolean(initialApplyToAllFarms) })) {
+      setQuickLogPrefill(
+        buildQuickLogInitialDraft({
+          type,
+          planSprayChemicals: initialLogPrefill?.sprayChemicals,
+          irrigationDurationHours: initialIrrigationDurationHours,
+          voice: initialVoiceLogPrefill,
+        }),
+      );
+      setQuickLogValid(false);
+      setQuickLogType(type);
+      return;
+    }
+
+    // Inline-modal survivors: fertigation (plan/voice prefill) and all-farms
+    // expense (voice prefill).
+    if (type === 'fertigation') {
+      if (initialLogPrefill?.fertigationItems?.length) {
+        setFertigationData(buildFertigationPlanPrefill(initialLogPrefill.fertigationItems));
+      } else if (initialVoiceLogPrefill?.fertigation) {
+        setFertigationData(buildFertigationVoicePrefill(initialVoiceLogPrefill.fertigation));
       }
     }
-  }, [isVisible, initialLogType, initialLogPrefill]);
+    // All-farms expense falls through the sheet's type guard; key off the
+    // voice prefill (the narrowed `type` no longer overlaps 'expense' here).
+    if (initialVoiceLogPrefill?.type === 'expense' && initialVoiceLogPrefill.expense) {
+      setExpenseData(buildExpensePrefill(initialVoiceLogPrefill.expense));
+    }
+    setShowLogFormModal(true);
+  }, [
+    isVisible,
+    initialLogType,
+    initialLogPrefill,
+    initialApplyToAllFarms,
+    initialIrrigationDurationHours,
+    initialVoiceLogPrefill,
+  ]);
 
   useEffect(() => {
     if (selectedFarmId !== ALL_FARMS_ID) return;
@@ -612,110 +597,6 @@ export function EntryForm({
     }
   }, [isVisible, parsedInitialLogDate]);
 
-  useEffect(() => {
-    if (!isVisible) return;
-    if (initialIrrigationDurationHours && initialIrrigationDurationHours > 0) {
-      setIrrigationData((prev) => ({
-        ...prev,
-        duration: initialIrrigationDurationHours,
-      }));
-    }
-  }, [isVisible, initialIrrigationDurationHours]);
-
-  useEffect(() => {
-    if (!isVisible || !initialVoiceLogPrefill) return;
-
-    setSelectedLogType(initialVoiceLogPrefill.type);
-    setShowLogFormModal(true);
-
-    const prefillDate = parseInitialLogDate(initialVoiceLogPrefill.date);
-    if (prefillDate) {
-      setSelectedDate(prefillDate);
-    }
-
-    switch (initialVoiceLogPrefill.type) {
-      case 'irrigation': {
-        const duration = initialVoiceLogPrefill.irrigation?.durationHours;
-        if (duration && duration > 0) {
-          setIrrigationData({ duration });
-        }
-        break;
-      }
-      case 'spray': {
-        const sprayPrefill = initialVoiceLogPrefill.spray;
-        const prefilledChemicals = sprayPrefill?.chemicals?.length
-          ? sprayPrefill.chemicals.map((item, index) => {
-              const normalizedUnit = item.unit ? normalizeSprayDoseUnit(item.unit) : null;
-              const unit =
-                normalizedUnit &&
-                CHEMICAL_UNITS.includes(normalizedUnit as (typeof CHEMICAL_UNITS)[number])
-                  ? (normalizedUnit as (typeof CHEMICAL_UNITS)[number])
-                  : 'gm/L';
-              return {
-                id: createPrefillId('chem', index),
-                name: item.name ?? '',
-                quantity: item.quantity ?? undefined,
-                unit,
-                quantityBasis:
-                  item.quantityBasis ??
-                  (item.unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total'),
-              };
-            })
-          : createEmptySprayFormData().chemicals;
-
-        setSprayData({
-          waterVolume: sprayPrefill?.waterVolume ?? undefined,
-          chemicals: prefilledChemicals,
-        });
-        break;
-      }
-      case 'harvest': {
-        const harvestPrefill = initialVoiceLogPrefill.harvest;
-        const grade =
-          harvestPrefill?.grade &&
-          HARVEST_GRADES.includes(harvestPrefill.grade as (typeof HARVEST_GRADES)[number])
-            ? (harvestPrefill.grade as (typeof HARVEST_GRADES)[number])
-            : '';
-        setHarvestData({
-          quantity: harvestPrefill?.quantity ?? undefined,
-          grade,
-          price: harvestPrefill?.price ?? undefined,
-          buyer: harvestPrefill?.buyer ?? undefined,
-        });
-        break;
-      }
-      case 'expense': {
-        const expensePrefill = initialVoiceLogPrefill.expense;
-        const expenseType = mapExpenseRecordTypeToTypeId(expensePrefill?.expenseType, '');
-        setExpenseData({
-          type: expenseType,
-          cost: expensePrefill?.cost ?? undefined,
-          remarks: expensePrefill?.remarks ?? undefined,
-        });
-        break;
-      }
-      case 'fertigation': {
-        const fertigationPrefill = initialVoiceLogPrefill.fertigation;
-        const prefilledFertilizers = fertigationPrefill?.fertilizers?.length
-          ? fertigationPrefill.fertilizers.map((item) => {
-              const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
-              return {
-                name: item.name ?? '',
-                quantity: item.quantity ?? undefined,
-                unit,
-                quantityBasis,
-              };
-            })
-          : createEmptyFertigationFormData().fertilizers;
-
-        setFertigationData({
-          fertilizers: prefilledFertilizers,
-        });
-        break;
-      }
-    }
-  }, [initialVoiceLogPrefill, isVisible]);
-
   type OnFocusEvent = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
 
   const scrollToFocusedInput = useCallback(
@@ -729,15 +610,11 @@ export function EntryForm({
     [scrollToNode],
   );
 
+  // Only the inline-modal survivors validate here; the four quick types are
+  // owned (and validated) by the QuickLogSheet.
   const isLogFormValid = useMemo(() => {
     if (!selectedLogType) return false;
     switch (selectedLogType) {
-      case 'irrigation':
-        return validateIrrigationForm(irrigationData);
-      case 'spray':
-        return validateSprayForm(sprayData);
-      case 'harvest':
-        return validateHarvestForm(harvestData);
       case 'expense':
         return validateExpenseForm(expenseData);
       case 'fertigation':
@@ -747,22 +624,7 @@ export function EntryForm({
       default:
         return false;
     }
-  }, [
-    selectedLogType,
-    irrigationData,
-    sprayData,
-    harvestData,
-    expenseData,
-    fertigationData,
-    noteData,
-  ]);
-
-  // Bind the inline fertilizer form to the irrigation-only draft when logging irrigation;
-  // the standalone Fertigation tab keeps using `fertigationData`.
-  const activeFertigationData =
-    selectedLogType === 'irrigation' ? irrigationFertigationData : fertigationData;
-  const handleActiveFertigationChange =
-    selectedLogType === 'irrigation' ? setIrrigationFertigationData : setFertigationData;
+  }, [selectedLogType, expenseData, fertigationData, noteData]);
 
   const router = useRouter();
   const hasFarmForCurrentLog = Boolean(
@@ -1006,130 +868,31 @@ export function EntryForm({
     enqueuePendingLogs(linkedDrafts);
   }, [repeatLastLogSuggestion, buildPendingLog, enqueuePendingLogs]);
 
+  // Enqueue an irrigation draft together with its fertigation rider, linking
+  // the fertigation log to the irrigation log so the orchestrator can stamp
+  // the irrigation record id onto it. Used by the QuickLogSheet draft handoff.
+  const enqueueIrrigationWithFertigation = useCallback(
+    (irrigation: PendingLog['data'], fertigation: PendingLog['data']) => {
+      const irrigationLog = buildPendingLog('irrigation', irrigation);
+      const fertigationLog = buildPendingLog('fertigation', fertigation, {
+        linkIrrigationFromPendingLogId: irrigationLog.id,
+      });
+      enqueuePendingLogs([irrigationLog, fertigationLog]);
+    },
+    [buildPendingLog, enqueuePendingLogs],
+  );
+
+  // Inline composer Add Entry. Only the inline-modal survivors arrive here
+  // (fertigation, note, all-farms expense) — the four quick types are enqueued
+  // by the QuickLogSheet via handleQuickLogDraft, including the spray PHI
+  // double-confirm, which the sheet runs before calling back.
   const addLogToSession = useCallback(() => {
     if (!selectedLogType || !isLogFormValid) return;
     if (!activeFarm && !isAllFarmsSelected) return;
     if (isAllFarmsSelected && selectedLogType !== 'expense') return;
 
-    // Irrigation with attached fertilizers: enqueue both, linking the fertigation log to the
-    // irrigation log so the orchestrator can stamp the irrigation record id onto it.
-    if (
-      selectedLogType === 'irrigation' &&
-      irrigationIncludesFertilizers &&
-      validateFertigationForm(irrigationFertigationData)
-    ) {
-      const irrigationLog = buildPendingLog('irrigation', { ...irrigationData });
-      const fertigationLog = buildPendingLog(
-        'fertigation',
-        { ...irrigationFertigationData },
-        { linkIrrigationFromPendingLogId: irrigationLog.id },
-      );
-      enqueuePendingLogs([irrigationLog, fertigationLog]);
-      setIrrigationData({ duration: undefined });
-      setIrrigationFertigationData(createEmptyFertigationFormData());
-      setIrrigationIncludesFertilizers(false);
-      return;
-    }
-
     let data: PendingLog['data'];
     switch (selectedLogType) {
-      case 'irrigation':
-        data = { ...irrigationData };
-        setIrrigationData({ duration: undefined });
-        // Reset the irrigation-only fertilizer draft + toggle. This is separate state from
-        // the standalone Fertigation tab's `fertigationData`, so a standalone draft is
-        // never affected by adding a plain irrigation entry.
-        if (irrigationIncludesFertilizers) {
-          setIrrigationFertigationData(createEmptyFertigationFormData());
-          setIrrigationIncludesFertilizers(false);
-        }
-        break;
-      case 'spray':
-        if (
-          isGrapeFarm &&
-          sprayData.catalogMixId &&
-          sprayData.safeHarvestDate &&
-          sprayData.governingPhiDays != null &&
-          isPhiConflict({
-            safeHarvestDate: sprayData.safeHarvestDate,
-            targetHarvestDate: activeSeason?.target_harvest_date ?? null,
-          })
-        ) {
-          Alert.alert(
-            t('entryForm.phiErrors.conflictTitle', { defaultValue: 'Harvest safety conflict' }),
-            t('entryForm.phiErrors.conflictBody', {
-              defaultValue:
-                'This spray blocks harvest until {{safeDate}} due to {{component}}, but target harvest is {{targetDate}}.',
-              safeDate: sprayData.safeHarvestDate,
-              component: sprayData.phiBlockingComponent ?? 'a component',
-              targetDate: activeSeason?.target_harvest_date ?? '-',
-            }),
-            [
-              {
-                text: t('common.cancel', { defaultValue: 'Cancel' }),
-                style: 'cancel',
-              },
-              {
-                text: t('entryForm.phiErrors.overrideAction', { defaultValue: 'Add anyway' }),
-                style: 'destructive',
-                onPress: () => {
-                  Alert.alert(
-                    t('entryForm.phiErrors.conflictTitle', {
-                      defaultValue: 'Harvest safety conflict',
-                    }),
-                    t('entryForm.phiErrors.overrideConfirmBody', {
-                      defaultValue:
-                        'Are you sure? This spray violates harvest safety guidance and will be marked as an override.',
-                    }),
-                    [
-                      {
-                        text: t('common.cancel', { defaultValue: 'Cancel' }),
-                        style: 'cancel',
-                      },
-                      {
-                        text: t('common.confirm', { defaultValue: 'Confirm' }),
-                        style: 'destructive',
-                        onPress: () => {
-                          const payload = buildSprayPendingData({
-                            ...sprayData,
-                            phiOverride: true,
-                          });
-                          enqueuePendingLog('spray', payload);
-                          setSprayData(createEmptySprayFormData());
-                        },
-                      },
-                    ],
-                  );
-                },
-              },
-            ],
-          );
-          return;
-        }
-
-        if (
-          isGrapeFarm &&
-          sprayData.phiStatus === 'unknown' &&
-          (!sprayData.catalogMixId ||
-            sprayData.safeHarvestDate == null ||
-            sprayData.governingPhiDays == null)
-        ) {
-          Alert.alert(
-            t('entryForm.phiErrors.computeFailedTitle', { defaultValue: 'PHI unavailable' }),
-            t('entryForm.phiErrors.computeFailedBody', {
-              defaultValue:
-                'This spray will be saved with unknown PHI status because no verified catalog mapping was found.',
-            }),
-          );
-        }
-
-        data = buildSprayPendingData(sprayData);
-        setSprayData(createEmptySprayFormData());
-        break;
-      case 'harvest':
-        data = { ...harvestData };
-        setHarvestData(createEmptyHarvestFormData());
-        break;
       case 'expense':
         data = { ...expenseData };
         setExpenseData(createEmptyExpenseFormData());
@@ -1152,22 +915,43 @@ export function EntryForm({
     isLogFormValid,
     activeFarm,
     isAllFarmsSelected,
-    irrigationData,
-    sprayData,
-    harvestData,
     expenseData,
     fertigationData,
-    irrigationFertigationData,
     noteData,
-    isGrapeFarm,
-    activeSeason?.target_harvest_date,
-    buildSprayPendingData,
-    buildPendingLog,
     enqueuePendingLog,
-    enqueuePendingLogs,
-    irrigationIncludesFertilizers,
-    t,
   ]);
+
+  // QuickLogSheet draft handoff: the dashboard sheet (opened for the four quick
+  // types) assembles its draft and calls back here instead of persisting. Route
+  // it through the same pending-log pipeline the inline composer uses, so the
+  // draft joins the multi-draft stack and saves together with the rest. Spray
+  // is finalized here via buildSprayPendingData (the sheet hands back the raw
+  // draft with phiOverride already applied); the sheet's PHI double-confirm ran
+  // before calling back, so no PHI re-check is needed here. The sheet gates
+  // Save on the same form validators, so payloads arrive valid and are
+  // enqueued as-is — no re-validation at this boundary.
+  const handleQuickLogDraft = useCallback(
+    (payload: QuickLogDraftPayload) => {
+      if (payload.type === 'irrigation') {
+        if (payload.fertigation) {
+          enqueueIrrigationWithFertigation(payload.irrigation, payload.fertigation);
+          return;
+        }
+        enqueuePendingLog('irrigation', payload.irrigation);
+        return;
+      }
+      if (payload.type === 'spray') {
+        enqueuePendingLog('spray', buildSprayPendingData(payload.spray));
+        return;
+      }
+      if (payload.type === 'expense') {
+        enqueuePendingLog('expense', payload.expense);
+        return;
+      }
+      enqueuePendingLog('harvest', payload.harvest);
+    },
+    [enqueuePendingLog, enqueueIrrigationWithFertigation, buildSprayPendingData],
+  );
 
   const removeLogFromSession = useCallback((id: string) => {
     setPendingLogFailures((prev) => {
@@ -1881,57 +1665,18 @@ export function EntryForm({
               }}
               scrollEventThrottle={16}
             >
-              {selectedLogType === 'spray' ? (
-                <View
-                  style={{
-                    marginTop: 16,
-                    marginBottom: 4,
-                    padding: 12,
-                    borderRadius: radius.md,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.secondaryContainer, 0.5),
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: m3.colorScheme.onSurfaceVariant,
-                      ...m3.typography.labelSmall,
-                    }}
-                  >
-                    {isGrapeFarm
-                      ? t('entryForm.phiScope.grapeOnlyEnabled', {
-                          defaultValue:
-                            'PHI safety checks are currently available for grape sprays.',
-                        })
-                      : t('entryForm.phiScope.grapeOnlyDisabled', {
-                          defaultValue:
-                            'PHI safety validation is currently available for grape sprays only.',
-                        })}
-                  </Text>
-                </View>
-              ) : null}
               <LogForm
                 selectedLogType={selectedLogType}
-                irrigationData={irrigationData}
-                sprayData={sprayData}
-                harvestData={harvestData}
                 expenseData={expenseData}
-                fertigationData={activeFertigationData}
+                fertigationData={fertigationData}
                 noteData={noteData}
-                onIrrigationChange={setIrrigationData}
-                onSprayChange={setSprayData}
-                onHarvestChange={setHarvestData}
                 onExpenseChange={setExpenseData}
-                onFertigationChange={handleActiveFertigationChange}
+                onFertigationChange={setFertigationData}
                 onNoteChange={setNoteData}
                 onInputFocus={scrollToFocusedInput}
                 onAdd={addLogToSession}
                 isValid={isLogFormValid}
                 hasFarm={hasFarmForCurrentLog}
-                includeFertilizersWithIrrigation={irrigationIncludesFertilizers}
-                onIncludeFertilizersWithIrrigationChange={setIrrigationIncludesFertilizers}
-                sprayCatalogMixes={catalogMixes}
-                sprayHistoryItems={spraySources.historyItems}
-                sprayPlanItems={spraySources.planItems}
                 fertigationHistoryItems={fertigationSources.historyItems}
                 fertigationPlanItems={fertigationSources.planItems}
                 fertigationCatalogProducts={fertigationSources.catalogProducts}
@@ -2262,7 +2007,15 @@ export function EntryForm({
           })}
           onSelect={(type) => {
             setSelectedLogType(type);
-            setShowLogFormModal(true);
+            // Sheet vs inline modal is the shared canOpenQuickLogSheet policy;
+            // a manual tap never carries a prefill.
+            setQuickLogPrefill(null);
+            if (canOpenQuickLogSheet(type, { allFarmsSelected: isAllFarmsSelected })) {
+              setQuickLogValid(false);
+              setQuickLogType(type);
+            } else {
+              setShowLogFormModal(true);
+            }
           }}
         />
       </GuidedTourTarget>
@@ -2840,19 +2593,34 @@ export function EntryForm({
 
   useEffect(() => {
     if (presentation !== 'screen' || activeTab !== 'log') return;
+    // When a quick type is open, the QuickLogSheet owns the form state, so its
+    // validity pulse (quickLogValid) is what the tour coach needs — the inline
+    // isLogFormValid reads the unused inline drafts and would stay false.
+    const currentLogValid = quickLogType ? quickLogValid : isLogFormValid;
     guidedTourEmit('guidedTour.addLogSelectionState', {
       hasSelection: selectedLogType !== null,
       hasPendingDrafts: pendingLogs.length > 0,
-      isCurrentLogValid: selectedLogType !== null ? isLogFormValid : false,
+      isCurrentLogValid: selectedLogType !== null ? currentLogValid : false,
       ...(selectedLogType ? { recordType: selectedLogType } : {}),
     });
-  }, [activeTab, isLogFormValid, pendingLogs.length, presentation, selectedLogType]);
+  }, [
+    activeTab,
+    isLogFormValid,
+    pendingLogs.length,
+    presentation,
+    selectedLogType,
+    quickLogType,
+    quickLogValid,
+  ]);
 
   useEffect(() => {
+    // Fires for whichever surface hosts the form — the inline modal or the
+    // QuickLogSheet (the shared form components inside the sheet carry their
+    // own focus listeners).
     if (
       guidedTourStatus !== 'in_progress' ||
       guidedTourStep !== 'add_log' ||
-      !showLogFormModal ||
+      (!showLogFormModal && quickLogType == null) ||
       !selectedLogType
     ) {
       return;
@@ -2863,7 +2631,7 @@ export function EntryForm({
     }, 180);
 
     return () => clearTimeout(timer);
-  }, [guidedTourStatus, guidedTourStep, showLogFormModal, selectedLogType]);
+  }, [guidedTourStatus, guidedTourStep, showLogFormModal, quickLogType, selectedLogType]);
 
   const content = (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
@@ -3159,8 +2927,31 @@ export function EntryForm({
 
         {activeTab === 'log' && renderLogFormModal()}
 
+        {/* Dashboard quick-log sheet (draft mode) for irrigation/spray/harvest/
+            expense — same component the dashboard home uses, opened from the log
+            type chips. Fertigation + note stay on the inline modal above. */}
+        {activeTab === 'log' && (
+          <QuickLogSheet
+            type={quickLogType}
+            farm={activeFarm ?? null}
+            date={{ value: selectedDate, onChange: setSelectedDate }}
+            initialDraft={quickLogPrefill}
+            onClose={() => {
+              setQuickLogType(null);
+              setQuickLogPrefill(null);
+              setSelectedLogType(null);
+            }}
+            onSubmitDraft={handleQuickLogDraft}
+            onValidityChange={setQuickLogValid}
+          />
+        )}
+
         {/* Sticky Add Entry button above keyboard */}
-        {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
+        {activeTab === 'log' &&
+          isKeyboardVisible &&
+          !showLogFormModal &&
+          !quickLogType &&
+          renderStickyAddButton()}
 
         <View
           onLayout={(event) => {

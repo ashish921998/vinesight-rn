@@ -20,12 +20,39 @@ import type { Basis, Measure, QuantityContext, QuantityItem } from '@/lib/quanti
  * share one shape (no schema or migration work).
  */
 export interface ProductUnitChip {
-  /** Stable id — doubles as the display label (and any persistence key). */
+  /**
+   * Stable id — the persistence key (spray-unit-store) and the value the
+   * picker reports back via onSelect. Kept stable so existing AsyncStorage
+   * prefs and the chip-vocabulary contract survive display rewording.
+   */
   key: string;
   /** Stored unit spelling (the form's existing vocabulary, kernel-parseable). */
   unit: string;
   /** Stored quantityBasis. 'total' for units whose string carries its own basis — the kernel ignores the column for them. */
   basis: QuantityBasis;
+  /**
+   * Farmer-facing display label for NON-localized respellings of the key —
+   * Latin-script unit symbols that read the same in every language ("g/L" →
+   * "gm/L"). Falls back to `key` when absent, so a chip whose key is already
+   * clear (mL/L, kg/acre) needs no label. For anything that should translate
+   * (the "(total)" suffix), use `labelKey` instead — never both.
+   */
+  label?: string;
+  /**
+   * i18n key for the farmer-facing display label, resolved through t() so the
+   * wording localizes ("kg (total)" → "kg (कुल)" in Hindi). When present,
+   * takes precedence over `label`. The English source lives in en.ts like any
+   * other copy (fallbackLng covers the other locales) — do NOT duplicate it
+   * into `label`.
+   */
+  labelKey?: string;
+  /**
+   * i18n key for a one-line hint shown under the label in the unit picker
+   * (e.g. "Total kilograms for the whole tank"). The chip carries only the
+   * key — the form resolves it through t() so the hint localizes with the
+   * rest of the UI. Absent → no subtitle.
+   */
+  hintKey?: string;
 }
 
 /**
@@ -47,6 +74,31 @@ export function chipForProductEntry<C extends ProductUnitChip>(
   }
   const effective: QuantityBasis = basis ?? 'total';
   return chips.find((chip) => chip.unit === unit && chip.basis === effective) ?? null;
+}
+
+/** The chip with this persistence key, out of the given vocabulary. Null for unknown/empty keys. */
+export function unitChipByKey<C extends ProductUnitChip>(
+  chips: readonly C[],
+  key: string | null | undefined,
+): C | null {
+  if (!key) return null;
+  return chips.find((chip) => chip.key === key) ?? null;
+}
+
+/**
+ * The farmer-facing display text for a chip: localized label (labelKey) over
+ * plain respelling (label) over the bare persistence key. `fallbackUnit` is
+ * the verbatim unit string rendered when there is no chip at all (a stored
+ * unit outside the chip vocabulary). One resolution rule for every surface —
+ * unit segment, collapsed receipt, echo lines, and the unit picker.
+ */
+export function unitChipLabel(
+  chip: ProductUnitChip | null | undefined,
+  t: (key: string) => string,
+  fallbackUnit: string,
+): string {
+  if (!chip) return fallbackUnit;
+  return chip.labelKey ? t(chip.labelKey) : (chip.label ?? chip.key);
 }
 
 /** The minimal slice of a form's product row the dose helpers read. */

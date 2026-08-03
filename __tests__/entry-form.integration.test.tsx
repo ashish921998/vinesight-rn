@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -56,6 +57,14 @@ jest.mock('expo-linear-gradient', () => {
       mockReact.createElement('View', props, children),
   };
 });
+
+// QuickLogSheet (irrigation/spray/harvest/expense from the type chips) uses the
+// native BottomSheet host, which isn't press-traversable under jest. This mock
+// renders sheet children as plain views while the sheet is open (index >= 0),
+// so the integration tests can drive the sheet's form + Save button.
+jest.mock('@expo/ui/community/bottom-sheet', () =>
+  require('../jest-setup/expo-ui-bottom-sheet-mock'),
+);
 
 jest.mock('@/hooks', () => ({
   useCreateIrrigationRecord: () => ({ mutateAsync: mockCreateIrrigationMutate }),
@@ -232,15 +241,17 @@ describe('EntryForm UI integration', () => {
       expect(screen.getByText('farmDetails.seasons.banner.startSeason')).toBeTruthy();
     });
 
-    // Building an expense draft is gated — no Save button appears and nothing
-    // is persisted.
+    // Building an expense draft is gated — the QuickLogSheet's Save stays
+    // disabled (no-season gate) so no draft joins the stack and nothing persists.
     fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
     await waitFor(() => {
       expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
     });
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // Sheet Save is disabled by the no-season gate — pressing it enqueues
+    // nothing, verified by the no-enqueue assertions below.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     expect(screen.queryByText('entryForm.saveLogs')).toBeNull();
     expect(mockCreateExpenseMutate).not.toHaveBeenCalled();
@@ -277,7 +288,9 @@ describe('EntryForm UI integration', () => {
     });
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // QuickLogSheet Save enqueues the draft onto the stack; the main Save-all
+    // button then appears.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
@@ -307,7 +320,8 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // QuickLogSheet Save enqueues the draft; the main Save-all persists it.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
@@ -405,10 +419,11 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getByText('logs.types.spray'));
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('sprayForm.waterVolume.placeholder')).toBeTruthy();
+      // QuickLogSheet renders tank water as a HeroStepper (presets), not the
+      // inline NumericInput placeholder. Press the 200L preset to set water.
+      expect(screen.getByLabelText('200 sprayForm.waterVolume.unitLiters')).toBeTruthy();
     });
-
-    fireEvent.changeText(screen.getByPlaceholderText('sprayForm.waterVolume.placeholder'), '200');
+    fireEvent.press(screen.getByLabelText('200 sprayForm.waterVolume.unitLiters'));
     // Mixes are picked through the chemical name typeahead now.
     fireEvent(screen.getByPlaceholderText('sprayForm.chemicals.namePlaceholder'), 'focus', {
       target: null,
@@ -424,7 +439,8 @@ describe('EntryForm UI integration', () => {
       expect(screen.getByText('Demo Mix')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // QuickLogSheet Save runs the PHI double-confirm (conflict → alert).
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(alertSpy).toHaveBeenCalledWith(
@@ -725,7 +741,8 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '500');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // initialLogType='expense' opened the QuickLogSheet — its Save enqueues the draft.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
@@ -738,7 +755,8 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '700');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // Second expense also opens the QuickLogSheet — enqueue another draft.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
@@ -759,6 +777,177 @@ describe('EntryForm UI integration', () => {
     );
 
     alertSpy.mockRestore();
+  });
+
+  it('opens a plan-prefilled spray in the QuickLogSheet with the chemicals seeded', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={jest.fn()}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="spray"
+          initialLogPrefill={{
+            sprayChemicals: [{ name: 'Sulphur WP', quantity: 2.5, unit: 'gm/L' }],
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    // The shared sheet opens (not the inline modal) with the plan chemical
+    // seeded — a complete row renders as a collapsed receipt line.
+    await waitFor(() => {
+      expect(screen.getByText('quickLog.saveType')).toBeTruthy();
+    });
+    expect(screen.getByText('Sulphur WP')).toBeTruthy();
+    expect(screen.queryByText('entryForm.addEntry')).toBeNull();
+
+    // Water via the HeroStepper preset completes the draft; Save enqueues it.
+    fireEvent.press(screen.getByLabelText('200 sprayForm.waterVolume.unitLiters'));
+    fireEvent.press(screen.getByText('quickLog.saveType'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+  });
+
+  it('opens a duration-prefilled irrigation in the QuickLogSheet', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={jest.fn()}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="irrigation"
+          initialIrrigationDurationHours={2}
+        />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('quickLog.saveType')).toBeTruthy();
+    });
+    // The HeroStepper's hero input carries the seeded duration.
+    expect(screen.getByLabelText('irrigationForm.durationUnit').props.value).toBe('2');
+
+    // Duration is already valid — Save enqueues straight away.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+  });
+
+  it('opens a voice-prefilled harvest in the QuickLogSheet', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={jest.fn()}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="harvest"
+          initialVoiceLogPrefill={{
+            type: 'harvest',
+            date: '2026-08-02',
+            harvest: { quantity: 500, grade: 'A', price: 42, buyer: 'Trader Joe' },
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('quickLog.saveType')).toBeTruthy();
+    });
+    expect(screen.getByPlaceholderText('harvestForm.quantityPlaceholder').props.value).toBe('500');
+
+    // Quantity + grade are seeded and valid — Save enqueues the draft.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+  });
+
+  it('opens a voice-prefilled expense in the QuickLogSheet for a single farm', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={jest.fn()}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="expense"
+          initialVoiceLogPrefill={{
+            type: 'expense',
+            date: '2026-08-02',
+            expense: { cost: 300, expenseType: 'labor', remarks: 'Pruning wages' },
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('quickLog.saveType')).toBeTruthy();
+    });
+    expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder').props.value).toBe('300');
+
+    // Cost is seeded and the mapped type ("labor" → Other) makes it valid —
+    // Save enqueues the draft, matching the sibling harvest prefill test.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+  });
+
+  it('keeps a voice-prefilled fertigation on the inline LogForm modal', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={jest.fn()}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="fertigation"
+          initialVoiceLogPrefill={{
+            type: 'fertigation',
+            date: '2026-08-02',
+            fertigation: {
+              waterVolume: null,
+              fertilizers: [{ name: 'Urea', quantity: 25, unit: 'kg' }],
+            },
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    // Fertigation is not a quick-log type: the inline modal opens (Add Entry
+    // button), the sheet does not, and the fertilizer row is seeded.
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.addEntry')).toBeTruthy();
+    });
+    expect(screen.queryByText('quickLog.saveType')).toBeNull();
+    expect(screen.getByText('Urea')).toBeTruthy();
   });
 
   it('rolls back a saved note when a later draft fails', async () => {
@@ -807,7 +996,8 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '700');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // Expense opens the QuickLogSheet — its Save enqueues the draft.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();

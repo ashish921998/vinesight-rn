@@ -15,6 +15,10 @@ interface UnitPickerModalProps<T extends string> {
   selectedValue: T;
   options: readonly T[];
   title: string;
+  /** Farmer-facing label; falls back to the raw value when absent. */
+  getLabel?: (value: T) => string;
+  /** Muted subtitle line; undefined for options that need no explanation. */
+  getHint?: (value: T) => string | undefined;
 }
 
 export function UnitPickerModal<T extends string>({
@@ -24,6 +28,8 @@ export function UnitPickerModal<T extends string>({
   selectedValue,
   options,
   title,
+  getLabel,
+  getHint,
 }: UnitPickerModalProps<T>) {
   const m3 = useM3();
 
@@ -34,6 +40,8 @@ export function UnitPickerModal<T extends string>({
         <ScrollView keyboardShouldPersistTaps="handled">
           {options.map((unit) => {
             const isSelected = unit === selectedValue;
+            const label = getLabel ? getLabel(unit) : unit;
+            const hint = getHint ? getHint(unit) : undefined;
             return (
               <Pressable
                 key={unit}
@@ -60,15 +68,28 @@ export function UnitPickerModal<T extends string>({
                     justifyContent: 'space-between',
                   }}
                 >
-                  <Text
-                    style={{
-                      fontSize: fontSize.base,
-                      fontWeight: fontWeight.medium,
-                      color: isSelected ? m3.colorScheme.primary : m3.colorScheme.onSurface,
-                    }}
-                  >
-                    {unit}
-                  </Text>
+                  <View style={{ flex: 1, marginRight: spacing[3] }}>
+                    <Text
+                      style={{
+                        fontSize: fontSize.base,
+                        fontWeight: fontWeight.medium,
+                        color: isSelected ? m3.colorScheme.primary : m3.colorScheme.onSurface,
+                      }}
+                    >
+                      {label}
+                    </Text>
+                    {hint ? (
+                      <Text
+                        style={{
+                          fontSize: fontSize.xs,
+                          color: m3.surface.s600,
+                          marginTop: 2,
+                        }}
+                      >
+                        {hint}
+                      </Text>
+                    ) : null}
+                  </View>
                   {isSelected ? (
                     <SymbolIcon
                       name="checkmark.circle.fill"
