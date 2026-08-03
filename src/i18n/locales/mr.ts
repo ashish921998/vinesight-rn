@@ -976,6 +976,16 @@ export const mr = {
       quickUnitLabel: 'खत प्रमाण युनिट म्हणून {{unit}} वापरा',
       moreUnits: 'इतर युनिट्स',
       perAcre: 'प्रति एकर',
+      unitHints: {
+        kgPerAcre: 'प्रति एकर जमिनीचे किलोग्राम',
+        lPerAcre: 'प्रति एकर जमिनीचे लिटर',
+        kgTotal: 'संपूर्ण प्लॉटसाठी एकूण किलोग्राम',
+        lTotal: 'संपूर्ण प्लॉटसाठी एकूण लिटर',
+        gPerAcre: 'प्रति एकर जमिनीचे ग्राम',
+        mlPerAcre: 'प्रति एकर जमिनीचे मिलीलिटर',
+        gTotal: 'संपूर्ण प्लॉटसाठी एकूण ग्राम',
+        mlTotal: 'संपूर्ण प्लॉटसाठी एकूण मिलीलिटर',
+      },
       verbatimUnitHint: 'युनिट जसे नोंदवले तसे ठेवले: {{unit}}',
       areaEcho: {
         toTotal: '{{quantity}} {{unit}} → एकूण {{total}}',

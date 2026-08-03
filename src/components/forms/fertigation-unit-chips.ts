@@ -3,9 +3,11 @@
  *
  * Each chip fuses the entry unit with its quantity basis so the farmer picks
  * one thing ("kg/acre") instead of a unit dropdown plus a separate
- * per-acre/total toggle. A BARE chip (kg, L) means total for the plot and its
- * wording stays bare — no "total" label text; disambiguation comes from
- * defaults and the echo line, never chip text. Chips map onto the EXISTING
+ * per-acre/total toggle. A BARE chip's key (kg, L) means total for the plot;
+ * it carries a clearer display `label` ("kg (total)") plus a one-line hint so
+ * the basis reads off the chip itself, while the persistence `key` stays bare
+ * so stored records are unchanged. Gram chips display "gm" (label) over the
+ * "g" key for legibility. Chips map onto the EXISTING
  * storage vocabulary: the stored unit spelling stays a FertilizerUnit and the
  * basis stays in the quantityBasis column, so records written before and
  * after this feature share one shape (no schema or migration work). Verbatim
@@ -33,28 +35,81 @@ export interface FertigationUnitChip extends ProductUnitChip {
 
 /** The main chip row — exactly these four, in this order (issue #195 contract). */
 export const FERTIGATION_UNIT_CHIPS: readonly FertigationUnitChip[] = [
-  { key: 'kg/acre', unit: 'kg', basis: 'per_acre' },
-  { key: 'L/acre', unit: 'liter', basis: 'per_acre' },
-  { key: 'kg', unit: 'kg', basis: 'total' },
-  { key: 'L', unit: 'liter', basis: 'total' },
+  {
+    key: 'kg/acre',
+    unit: 'kg',
+    basis: 'per_acre',
+    hintKey: 'fertigationForm.fertilizers.unitHints.kgPerAcre',
+  },
+  {
+    key: 'L/acre',
+    unit: 'liter',
+    basis: 'per_acre',
+    hintKey: 'fertigationForm.fertilizers.unitHints.lPerAcre',
+  },
+  {
+    key: 'kg',
+    unit: 'kg',
+    basis: 'total',
+    label: 'kg (total)',
+    hintKey: 'fertigationForm.fertilizers.unitHints.kgTotal',
+  },
+  {
+    key: 'L',
+    unit: 'liter',
+    basis: 'total',
+    label: 'L (total)',
+    hintKey: 'fertigationForm.fertilizers.unitHints.lTotal',
+  },
 ];
 
 /**
  * The gram/mL family behind the "More" menu — the rest of the picker's
  * FERTILIZER_UNITS vocabulary, mirroring how spray shelves its rare shapes.
- * Bare g/mL are totals, same rule as the main row.
+ * Bare g/mL keys are totals; they display a clearer "gm (total)" / "mL (total)"
+ * label plus a hint, same rule as the main row.
  */
 export const FERTIGATION_UNIT_OVERFLOW_CHIPS: readonly FertigationUnitChip[] = [
-  { key: 'g/acre', unit: 'gram', basis: 'per_acre' },
-  { key: 'mL/acre', unit: 'ml', basis: 'per_acre' },
-  { key: 'g', unit: 'gram', basis: 'total' },
-  { key: 'mL', unit: 'ml', basis: 'total' },
+  {
+    key: 'g/acre',
+    unit: 'gram',
+    basis: 'per_acre',
+    label: 'gm/acre',
+    hintKey: 'fertigationForm.fertilizers.unitHints.gPerAcre',
+  },
+  {
+    key: 'mL/acre',
+    unit: 'ml',
+    basis: 'per_acre',
+    hintKey: 'fertigationForm.fertilizers.unitHints.mlPerAcre',
+  },
+  {
+    key: 'g',
+    unit: 'gram',
+    basis: 'total',
+    label: 'gm (total)',
+    hintKey: 'fertigationForm.fertilizers.unitHints.gTotal',
+  },
+  {
+    key: 'mL',
+    unit: 'ml',
+    basis: 'total',
+    label: 'mL (total)',
+    hintKey: 'fertigationForm.fertilizers.unitHints.mlTotal',
+  },
 ];
 
 export const ALL_FERTIGATION_UNIT_CHIPS: readonly FertigationUnitChip[] = [
   ...FERTIGATION_UNIT_CHIPS,
   ...FERTIGATION_UNIT_OVERFLOW_CHIPS,
 ];
+
+export function fertigationUnitChipByKey(
+  key: string | null | undefined,
+): FertigationUnitChip | null {
+  if (!key) return null;
+  return ALL_FERTIGATION_UNIT_CHIPS.find((chip) => chip.key === key) ?? null;
+}
 
 /**
  * The chip a stored (unit, quantityBasis) pair renders as (shared resolution

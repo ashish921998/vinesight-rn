@@ -16,7 +16,7 @@ import { FERTILIZER_UNITS } from '@/constants/calculator-models';
 import { parseUnit, totalFor } from '@/lib/quantity';
 
 describe('chip vocabulary contract', () => {
-  it('the main chip row is exactly kg/acre, L/acre, kg, L — in that order, bare totals unlabeled', () => {
+  it('the main chip row is exactly kg/acre, L/acre, kg, L — in that order', () => {
     expect(FERTIGATION_UNIT_CHIPS.map((chip) => chip.key)).toEqual([
       'kg/acre',
       'L/acre',
@@ -25,7 +25,7 @@ describe('chip vocabulary contract', () => {
     ]);
   });
 
-  it('the overflow menu carries the gram/mL family, bare totals unlabeled', () => {
+  it('the overflow menu carries the gram/mL family, in order', () => {
     expect(FERTIGATION_UNIT_OVERFLOW_CHIPS.map((chip) => chip.key)).toEqual([
       'g/acre',
       'mL/acre',
@@ -34,9 +34,29 @@ describe('chip vocabulary contract', () => {
     ]);
   });
 
-  it('no chip label ever says "total" — bare wording is the contract', () => {
+  it('persistence keys stay bare — no key ever spells "total"', () => {
     for (const chip of ALL_FERTIGATION_UNIT_CHIPS) {
       expect(chip.key.toLowerCase()).not.toContain('total');
+    }
+  });
+
+  it('total chips carry a clearer "(total)" display label while the key stays bare', () => {
+    expect(fertigationChipForEntry('kg', 'total')?.label).toBe('kg (total)');
+    expect(fertigationChipForEntry('liter', 'total')?.label).toBe('L (total)');
+    expect(fertigationChipForEntry('gram', 'total')?.label).toBe('gm (total)');
+    expect(fertigationChipForEntry('ml', 'total')?.label).toBe('mL (total)');
+  });
+
+  it('gram/mL per-acre chips display "gm"/"mL" over their bare keys', () => {
+    expect(fertigationChipForEntry('gram', 'per_acre')?.label).toBe('gm/acre');
+    // per-acre kg/L keys already read clearly, so they need no separate label.
+    expect(fertigationChipForEntry('kg', 'per_acre')?.label).toBeUndefined();
+    expect(fertigationChipForEntry('liter', 'per_acre')?.label).toBeUndefined();
+  });
+
+  it('every chip carries a hint key for the picker subtitle', () => {
+    for (const chip of ALL_FERTIGATION_UNIT_CHIPS) {
+      expect(chip.hintKey).toMatch(/^fertigationForm\.fertilizers\.unitHints\./);
     }
   });
 

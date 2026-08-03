@@ -109,10 +109,10 @@ describe('fused quantity + unit input', () => {
   it('renders one unit segment instead of an inline chip row', () => {
     const screen = render(<SprayForm data={sprayData()} onChange={jest.fn()} />);
 
-    // Only the fused input's unit segment shows the active chip key.
-    expect(screen.getAllByText('g/L').length).toBe(1);
+    // Only the fused input's unit segment shows the active chip label.
+    expect(screen.getAllByText('gm/L').length).toBe(1);
     // No inline chips, no overflow trigger, and the old basis toggle stays gone.
-    for (const label of ['mL/L', 'g/acre', 'mL/acre', 'ppm']) {
+    for (const label of ['mL/L', 'gm/acre', 'mL/acre', 'ppm']) {
       expect(screen.queryByText(label)).toBeNull();
     }
     expect(screen.queryByText('sprayForm.chemicals.moreUnits')).toBeNull();
@@ -124,8 +124,8 @@ describe('fused quantity + unit input', () => {
     const onChange = jest.fn();
     const screen = render(<SprayForm data={sprayData()} onChange={onChange} />);
 
-    fireEvent.press(screen.getByText('g/L')); // unit segment → opens menu
-    fireEvent.press(screen.getByText('g/acre'));
+    fireEvent.press(screen.getByText('gm/L')); // unit segment → opens menu
+    fireEvent.press(screen.getByText('gm/acre'));
 
     const next = onChange.mock.calls[0][0] as SprayFormData;
     expect(next.chemicals[0]).toMatchObject({ unit: 'gram', quantityBasis: 'per_acre' });
@@ -135,7 +135,7 @@ describe('fused quantity + unit input', () => {
     const onChange = jest.fn();
     const screen = render(<SprayForm data={sprayData()} onChange={onChange} />);
 
-    fireEvent.press(screen.getByText('g/L')); // unit segment → opens menu
+    fireEvent.press(screen.getByText('gm/L')); // unit segment → opens menu
     // The picker renders the chip's clearer label ("kg (total)"), not its
     // stable persistence key ("kg total").
     fireEvent.press(screen.getByText('kg (total)'));
@@ -163,7 +163,9 @@ describe('tank echo line', () => {
 
     // Complete rows render as receipts — expand to see the full echo line.
     fireEvent.press(screen.getByText('Copper'));
-    expect(screen.getByText('sprayForm.chemicals.tankEcho.water:2 g/L × 400 = 800 g')).toBeTruthy();
+    expect(
+      screen.getByText('sprayForm.chemicals.tankEcho.water:2 gm/L × 400 = 800 g'),
+    ).toBeTruthy();
 
     // Live: the echo re-derives from the controlled data on every change
     // (same row id, so the expanded editing state persists).
@@ -174,7 +176,7 @@ describe('tank echo line', () => {
       />,
     );
     expect(
-      screen.getByText('sprayForm.chemicals.tankEcho.water:3 g/L × 400 = 1.2 kg'),
+      screen.getByText('sprayForm.chemicals.tankEcho.water:3 gm/L × 400 = 1.2 kg'),
     ).toBeTruthy();
   });
 
@@ -189,7 +191,7 @@ describe('tank echo line', () => {
 
     fireEvent.press(screen.getByText('Copper'));
     expect(
-      screen.getByText('sprayForm.chemicals.tankEcho.area:100 g/acre × 2.5 = 250 g'),
+      screen.getByText('sprayForm.chemicals.tankEcho.area:100 gm/acre × 2.5 = 250 g'),
     ).toBeTruthy();
   });
 
@@ -260,7 +262,7 @@ describe('last-used chip persistence', () => {
     });
     const screen = render(<SprayForm data={data} onChange={jest.fn()} />);
 
-    fireEvent.press(screen.getByText('g/L')); // unit segment → opens menu
+    fireEvent.press(screen.getByText('gm/L')); // unit segment → opens menu
     fireEvent.press(screen.getByText('ppm'));
 
     expect(useSprayUnitStore.getState().lastUsedChips['catalog:100']).toBe('ppm');

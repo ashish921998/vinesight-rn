@@ -985,6 +985,16 @@ export const en = {
       quickUnitLabel: 'Use {{unit}} as fertilizer quantity unit',
       moreUnits: 'More units',
       perAcre: 'Per acre',
+      unitHints: {
+        kgPerAcre: 'Kilograms per acre of plot area',
+        lPerAcre: 'Liters per acre of plot area',
+        kgTotal: 'Total kilograms for the whole plot',
+        lTotal: 'Total liters for the whole plot',
+        gPerAcre: 'Grams per acre of plot area',
+        mlPerAcre: 'Milliliters per acre of plot area',
+        gTotal: 'Total grams for the whole plot',
+        mlTotal: 'Total milliliters for the whole plot',
+      },
       verbatimUnitHint: 'Unit kept as entered: {{unit}}',
       areaEcho: {
         toTotal: '{{quantity}} {{unit}} → {{total}} total',

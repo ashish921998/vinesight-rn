@@ -972,6 +972,16 @@ export const hi = {
       quickUnitLabel: 'उर्वरक मात्रा इकाई के रूप में {{unit}} उपयोग करें',
       moreUnits: 'अन्य इकाइयाँ',
       perAcre: 'प्रति एकड़',
+      unitHints: {
+        kgPerAcre: 'प्रति एकड़ जमीन के किलोग्राम',
+        lPerAcre: 'प्रति एकड़ जमीन के लीटर',
+        kgTotal: 'पूरे प्लॉट के लिए कुल किलोग्राम',
+        lTotal: 'पूरे प्लॉट के लिए कुल लीटर',
+        gPerAcre: 'प्रति एकड़ जमीन के ग्राम',
+        mlPerAcre: 'प्रति एकड़ जमीन के मिलीलीटर',
+        gTotal: 'पूरे प्लॉट के लिए कुल ग्राम',
+        mlTotal: 'पूरे प्लॉट के लिए कुल मिलीलीटर',
+      },
       verbatimUnitHint: 'इकाई जैसी दर्ज की गई वैसी रखी गई: {{unit}}',
       areaEcho: {
         toTotal: '{{quantity}} {{unit}} → कुल {{total}}',

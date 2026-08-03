@@ -26,6 +26,7 @@ import {
   FERTIGATION_UNIT_OVERFLOW_CHIPS,
   buildFertigationAreaEcho,
   fertigationChipForEntry,
+  fertigationUnitChipByKey,
   type FertigationUnitChip,
 } from './fertigation-unit-chips';
 import {
@@ -418,9 +419,10 @@ export function FertigationForm({
                     color: m3.colorScheme.success,
                   }}
                 >
-                  {/* Chip rows read as one fused token ("10 kg/acre"); verbatim
+                  {/* Chip rows read as one fused token ("10 kg (total)"); the
+                      clearer display label wins over the bare key, while verbatim
                       units keep the raw string + the legacy per-acre marker. */}
-                  {f.quantity ?? 0} {chip?.key ?? f.unit}
+                  {f.quantity ?? 0} {chip?.label ?? chip?.key ?? f.unit}
                   {!chip && f.quantityBasis === 'per_acre'
                     ? ` (${t('fertigationForm.fertilizers.perAcre')})`
                     : ''}
@@ -545,7 +547,9 @@ function FertilizerRow({
   const isRowComplete = isProductRowComplete(fertilizer);
 
   const activeChip = fertigationChipForEntry(fertilizer.unit, fertilizer.quantityBasis);
-  const unitLabel = activeChip?.key ?? fertilizer.unit;
+  // Prefer the clearer display label ("kg (total)", "gm/acre") over the bare
+  // persistence key; the key still drives selection/persistence behind the scenes.
+  const unitLabel = activeChip?.label ?? activeChip?.key ?? fertilizer.unit;
 
   const areaEcho = useMemo(
     () => buildFertigationAreaEcho(fertilizer, areaAcres),
@@ -945,7 +949,8 @@ function FertilizerRow({
         </Text>
       ) : null}
 
-      {/* Unit menu: common chips first, then the gram/mL family. */}
+      {/* Unit menu: per-acre rates first, then the gram/mL family, with the
+          bare kg/L totals pushed to the end of the list. */}
       <UnitPickerModal
         visible={showUnitPicker}
         onClose={() => setShowUnitPicker(false)}
@@ -956,9 +961,16 @@ function FertilizerRow({
           if (chip) handleChipSelect(chip);
         }}
         selectedValue={activeChip?.key ?? ''}
-        options={[...FERTIGATION_UNIT_CHIPS, ...FERTIGATION_UNIT_OVERFLOW_CHIPS].map(
-          (chip) => chip.key,
-        )}
+        options={[
+          ...FERTIGATION_UNIT_CHIPS.filter((chip) => chip.basis !== 'total'),
+          ...FERTIGATION_UNIT_OVERFLOW_CHIPS,
+          ...FERTIGATION_UNIT_CHIPS.filter((chip) => chip.basis === 'total'),
+        ].map((chip) => chip.key)}
+        getLabel={(key) => fertigationUnitChipByKey(key)?.label ?? key}
+        getHint={(key) => {
+          const hintKey = fertigationUnitChipByKey(key)?.hintKey;
+          return hintKey ? t(hintKey) : undefined;
+        }}
         title={t('fertigationForm.fertilizers.selectUnit')}
       />
     </View>

@@ -30,12 +30,19 @@ export interface SprayUnitChip extends ProductUnitChip {
 
 /** The main chip row — exactly these five, in this order (issue #194 contract). */
 export const SPRAY_UNIT_CHIPS: readonly SprayUnitChip[] = [
-  { key: 'g/L', unit: 'gm/L', basis: 'total', hintKey: 'sprayForm.chemicals.unitHints.gPerL' },
+  {
+    key: 'g/L',
+    unit: 'gm/L',
+    basis: 'total',
+    label: 'gm/L',
+    hintKey: 'sprayForm.chemicals.unitHints.gPerL',
+  },
   { key: 'mL/L', unit: 'ml/L', basis: 'total', hintKey: 'sprayForm.chemicals.unitHints.mlPerL' },
   {
     key: 'g/acre',
     unit: 'gram',
     basis: 'per_acre',
+    label: 'gm/acre',
     hintKey: 'sprayForm.chemicals.unitHints.gPerAcre',
   },
   {
@@ -61,7 +68,7 @@ export const SPRAY_UNIT_OVERFLOW_CHIPS: readonly SprayUnitChip[] = [
     key: 'g total',
     unit: 'gram',
     basis: 'total',
-    label: 'g (total)',
+    label: 'gm (total)',
     hintKey: 'sprayForm.chemicals.unitHints.gTotal',
   },
   {
