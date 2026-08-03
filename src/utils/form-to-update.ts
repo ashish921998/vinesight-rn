@@ -19,7 +19,7 @@ import type { ExpenseTypeId } from '@/constants/calculator-models';
 import { isFertigationUnitRecognized } from '@/constants/fertilizer-units';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
 import { PHI_CALC_VERSION } from '@/services/phi-service';
-import { resolveSprayPhi } from '@/utils/entry-log-fields';
+import { buildSprayChemicalItems, resolveSprayPhi } from '@/utils/entry-log-fields';
 import type {
   ExpenseRecordUpdate,
   FertigationRecordUpdate,
@@ -45,19 +45,7 @@ export function buildSprayUpdate(
   farmAreaAcres: number | null | undefined,
 ): SprayRecordUpdate {
   const { hasResolvedPhi, normalizedPhiStatus } = resolveSprayPhi(data);
-  const chemicalItems = data.chemicals
-    .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
-    .map((c) => ({
-      name: c.name.trim(),
-      unit: c.unit,
-      quantity: c.quantity!,
-      quantity_basis: c.quantityBasis ?? 'total',
-      warehouse_item_id: c.warehouseItemId ?? null,
-      catalog_product_id: c.catalogProductId ?? null,
-      plan_item_id: c.planItemId ?? null,
-      composition_snapshot: c.compositionSnapshot ?? null,
-      density_kg_per_l: c.densityKgPerL ?? null,
-    }));
+  const chemicalItems = buildSprayChemicalItems(data.chemicals, 1);
   const nutrientTotals = calculateNutrientTotalsForLog({
     items: chemicalItems,
     areaAcre: farmAreaAcres ?? 0,

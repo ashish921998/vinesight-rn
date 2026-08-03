@@ -6,16 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { AppIcon } from '@/components/ui/app-icon';
 import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
-import {
-  useFarms,
-  useRecentActivities,
-  useLogPresentation,
-  useIrrigationRecordsByFarms,
-  useSprayRecordsByFarms,
-  useHarvestRecordsByFarms,
-  useExpenseRecordsByFarms,
-} from '@/hooks';
+import { useFarms, useRecentActivities, useLogPresentation } from '@/hooks';
 import type { RecentActivity } from '@/hooks';
+import { getDataAccess } from '@/data-access';
 import type { Farm } from '@/types';
 import { useSelectedFarmStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
@@ -69,17 +62,6 @@ export function SimplifiedHome() {
   // selected-farm store so editing a log from another farm doesn't switch
   // the dashboard's default quick-log target.
   const [editFarm, setEditFarm] = useState<Farm | null>(null);
-
-  // Fetch all records across farms so we can resolve a recent-activity row tap
-  // to the full record and open the edit QuickLogSheet inline.
-  const farmIds = useMemo(
-    () => (farms ?? []).filter((f) => f.id != null).map((f) => f.id!),
-    [farms],
-  );
-  const irrigationByFarms = useIrrigationRecordsByFarms(farmIds);
-  const sprayByFarms = useSprayRecordsByFarms(farmIds);
-  const harvestByFarms = useHarvestRecordsByFarms(farmIds);
-  const expenseByFarms = useExpenseRecordsByFarms(farmIds);
 
   // Resolve the selected farm against the live list — a persisted id may be
   // stale (deleted farm). Falls back to the first farm, then null.
@@ -136,37 +118,38 @@ export function SimplifiedHome() {
     setQuickLogType(type);
   };
 
-  // Tapping a recent-activity row opens the edit QuickLogSheet inline for the
-  // four quick types. Fertigation/note fall back to the farm details page.
-  const handleEditActivity = (activity: RecentActivity) => {
+  // Tapping a recent-activity row fetches the full record by ID and opens the
+  // edit QuickLogSheet inline for the four quick types. Fertigation/note fall
+  // back to the farm details page.
+  const handleEditActivity = async (activity: RecentActivity) => {
     const numericId = Number(activity.id.split('_')[1]);
     if (!numericId || !isQuickLogType(activity.type)) {
       router.push(`/farm/${activity.farmId}`);
       return;
     }
 
-    let nextTarget: QuickLogEditTarget | null = null;
-    if (activity.type === 'irrigation') {
-      const record = irrigationByFarms.data?.find((r) => r.id === numericId);
-      if (record) nextTarget = { type: 'irrigation', record };
-    } else if (activity.type === 'spray') {
-      const record = sprayByFarms.data?.find((r) => r.id === numericId);
-      if (record) nextTarget = { type: 'spray', record };
-    } else if (activity.type === 'harvest') {
-      const record = harvestByFarms.data?.find((r) => r.id === numericId);
-      if (record) nextTarget = { type: 'harvest', record };
-    } else if (activity.type === 'expense') {
-      const record = expenseByFarms.data?.find((r) => r.id === numericId);
-      if (record) nextTarget = { type: 'expense', record };
-    }
+    const table =
+      activity.type === 'irrigation'
+        ? 'irrigation_records'
+        : activity.type === 'spray'
+          ? 'spray_records'
+          : activity.type === 'harvest'
+            ? 'harvest_records'
+            : 'expense_records';
 
-    if (!nextTarget) {
+    const { data, error } = await getDataAccess()
+      .from(table)
+      .select('*')
+      .eq('id', numericId)
+      .maybeSingle();
+
+    if (error || !data) {
       router.push(`/farm/${activity.farmId}`);
       return;
     }
 
-    setEditTarget(nextTarget);
-    setQuickLogType(nextTarget.type);
+    setEditTarget({ type: activity.type, record: data } as QuickLogEditTarget);
+    setQuickLogType(activity.type);
     const farm = farms?.find((f) => f.id === activity.farmId) ?? null;
     setEditFarm(farm);
   };

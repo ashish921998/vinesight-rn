@@ -68,16 +68,13 @@ export function useQuickLogEdit({
   const irrigationEditId =
     editTarget?.type === 'irrigation' ? (editTarget.record.id ?? undefined) : undefined;
   const fertigationEditQuery = useFertigationRecords(irrigationEditId != null ? farmId : undefined);
-  const linkedFertigationRecords = useMemo(
+  const linkedFertigationRecord = useMemo(
     () =>
       irrigationEditId != null
-        ? (fertigationEditQuery.data ?? []).filter(
-            (f) => f.irrigation_record_id === irrigationEditId,
-          )
-        : [],
+        ? (fertigationEditQuery.data ?? []).find((f) => f.irrigation_record_id === irrigationEditId)
+        : undefined,
     [irrigationEditId, fertigationEditQuery.data],
   );
-  const linkedFertigationRecord = linkedFertigationRecords[0];
 
   // Treat a query error as settled so a failed lookup doesn't permanently
   // disable Save — the user can still edit the irrigation row itself.
