@@ -68,15 +68,21 @@ export function useQuickLogEdit({
   const irrigationEditId =
     editTarget?.type === 'irrigation' ? (editTarget.record.id ?? undefined) : undefined;
   const fertigationEditQuery = useFertigationRecords(irrigationEditId != null ? farmId : undefined);
-  const linkedFertigationRecord = useMemo(
+  const linkedFertigationRecords = useMemo(
     () =>
       irrigationEditId != null
-        ? (fertigationEditQuery.data ?? []).find((f) => f.irrigation_record_id === irrigationEditId)
-        : undefined,
+        ? (fertigationEditQuery.data ?? []).filter(
+            (f) => f.irrigation_record_id === irrigationEditId,
+          )
+        : [],
     [irrigationEditId, fertigationEditQuery.data],
   );
+  const linkedFertigationRecord = linkedFertigationRecords[0];
 
-  const isFertigationEditSettled = irrigationEditId != null && fertigationEditQuery.isSuccess;
+  // Treat a query error as settled so a failed lookup doesn't permanently
+  // disable Save — the user can still edit the irrigation row itself.
+  const isFertigationEditSettled =
+    irrigationEditId != null && (fertigationEditQuery.isSuccess || fertigationEditQuery.isError);
   // Ref (not state) tracks which linked-record snapshot was last applied so
   // we re-seed when the query reveals a rider, without cascading renders.
   const fertEditHydrationKeyRef = useRef<string | undefined>(undefined);
@@ -165,7 +171,6 @@ export function useQuickLogEdit({
   );
 
   return {
-    isEditMode: editTarget != null,
     isFertigationEditSettled,
     saveEdit,
   };

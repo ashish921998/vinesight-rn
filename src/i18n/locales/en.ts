@@ -822,6 +822,7 @@ export const en = {
 
   entryForm: {
     logSaved: 'Log saved',
+    logUpdated: 'Log updated',
     taskSaved: 'Task saved',
     activityType: 'Activity type',
     selectActivityTypeHint: 'Select an activity type to open the full-screen form.',

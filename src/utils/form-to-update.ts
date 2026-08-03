@@ -64,7 +64,7 @@ export function buildSprayUpdate(
     waterVolumeL: data.waterVolume ?? null,
   });
   return {
-    chemical: data.chemicals.map((c) => `${c.name} (${c.quantity} ${c.unit})`).join(', '),
+    chemical: chemicalItems.map((c) => `${c.name} (${c.quantity} ${c.unit})`).join(', '),
     chemical_items: chemicalItems,
     dose: data.waterVolume != null ? `Water: ${data.waterVolume}L` : '',
     catalog_mix_id: data.catalogMixId ?? null,

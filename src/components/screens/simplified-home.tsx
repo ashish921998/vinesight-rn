@@ -167,8 +167,8 @@ export function SimplifiedHome() {
 
     setEditTarget(nextTarget);
     setQuickLogType(nextTarget.type);
-    const farm = farms?.find((f) => f.id === activity.farmId);
-    if (farm) setEditFarm(farm);
+    const farm = farms?.find((f) => f.id === activity.farmId) ?? null;
+    setEditFarm(farm);
   };
 
   const farmOptions = useMemo(

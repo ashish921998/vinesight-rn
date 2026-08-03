@@ -808,6 +808,7 @@ export const hi = {
 
   entryForm: {
     logSaved: 'लॉग सहेजा गया',
+    logUpdated: 'लॉग अपडेट किया गया',
     taskSaved: 'कार्य सहेजा गया',
     activityType: 'गतिविधि प्रकार',
     selectActivityTypeHint: 'पूर्ण-स्क्रीन फॉर्म खोलने के लिए गतिविधि प्रकार चुनें।',

@@ -811,6 +811,7 @@ export const mr = {
 
   entryForm: {
     logSaved: 'नोंद जतन केली',
+    logUpdated: 'नोंद अपडेट केली',
     taskSaved: 'कार्य जतन केले',
     activityType: 'क्रियाकलाप प्रकार',
     selectActivityTypeHint: 'पूर्ण फॉर्म उघडण्यासाठी क्रियाकलाप प्रकार निवडा.',

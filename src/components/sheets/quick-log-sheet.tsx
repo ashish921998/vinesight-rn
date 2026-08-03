@@ -760,7 +760,7 @@ export function QuickLogSheet({
         try {
           await saveEdit(sprayPayload);
           triggerHapticSuccess();
-          toast.success(t('entryForm.logSaved'));
+          toast.success(t('entryForm.logUpdated'));
           onClose();
         } catch (error) {
           toast.error(
@@ -1059,7 +1059,7 @@ export function QuickLogSheet({
           />
         </View>
 
-        {isBlockedByNoSeason ? (
+        {editTarget == null && isBlockedByNoSeason ? (
           <View style={{ marginBottom: spacing[4] }}>
             <NoActiveSeasonBanner onStartSeason={goStartSeason} />
           </View>

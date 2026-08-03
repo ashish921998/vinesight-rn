@@ -139,7 +139,7 @@ export async function saveQuickLogEdit(args: SaveQuickLogEditArgs): Promise<void
           await mutations.deleteFertigation({
             id: linkedFertigationRecord.id,
             clientUuid: linkedFertigationRecord.client_uuid ?? null,
-            farmId: farm.id ?? 0,
+            farmId: requireId(farm.id),
           });
         }
       } else if (hasFertilizerRows && isFertigationSettled) {

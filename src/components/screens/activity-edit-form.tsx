@@ -58,6 +58,7 @@ export function ActivityEditForm({
   const { windowHeight } = useResponsiveHeight();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const savingRef = useRef(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [initializedRecordId, setInitializedRecordId] = useState<number | undefined>(undefined);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -131,8 +132,9 @@ export function ActivityEditForm({
   }, [isVisible, isInitialized, initializedRecordId, record]);
 
   const handleSave = async () => {
-    if (!isFormValid) return;
+    if (!isFormValid || savingRef.current) return;
 
+    savingRef.current = true;
     setIsSubmitting(true);
     const dateStr = toSupabaseDateString(selectedDate);
 
@@ -154,6 +156,7 @@ export function ActivityEditForm({
       console.error('Error updating log:', error);
       toast.error(t('common.errors.failedToUpdateLog'));
     } finally {
+      savingRef.current = false;
       setIsSubmitting(false);
     }
   };
