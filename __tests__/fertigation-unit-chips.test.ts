@@ -40,11 +40,29 @@ describe('chip vocabulary contract', () => {
     }
   });
 
-  it('total chips carry a clearer "(total)" display label while the key stays bare', () => {
-    expect(fertigationChipForEntry('kg', 'total')?.label).toBe('kg (total)');
-    expect(fertigationChipForEntry('liter', 'total')?.label).toBe('L (total)');
-    expect(fertigationChipForEntry('gram', 'total')?.label).toBe('gm (total)');
-    expect(fertigationChipForEntry('ml', 'total')?.label).toBe('mL (total)');
+  it('total chips carry a localized "(total)" labelKey while the key stays bare', () => {
+    // The display string lives once in en.ts (resolved via t()); the chip
+    // carries only the i18n key, never a duplicated English literal.
+    expect(fertigationChipForEntry('kg', 'total')?.labelKey).toBe(
+      'fertigationForm.fertilizers.unitLabels.kgTotal',
+    );
+    expect(fertigationChipForEntry('liter', 'total')?.labelKey).toBe(
+      'fertigationForm.fertilizers.unitLabels.lTotal',
+    );
+    expect(fertigationChipForEntry('gram', 'total')?.labelKey).toBe(
+      'fertigationForm.fertilizers.unitLabels.gTotal',
+    );
+    expect(fertigationChipForEntry('ml', 'total')?.labelKey).toBe(
+      'fertigationForm.fertilizers.unitLabels.mlTotal',
+    );
+    for (const [unit, basis] of [
+      ['kg', 'total'],
+      ['liter', 'total'],
+      ['gram', 'total'],
+      ['ml', 'total'],
+    ] as const) {
+      expect(fertigationChipForEntry(unit, basis)?.label).toBeUndefined();
+    }
   });
 
   it('gram/mL per-acre chips display "gm"/"mL" over their bare keys', () => {

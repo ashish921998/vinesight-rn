@@ -35,7 +35,7 @@ import {
   sprayUnitChipByKey,
   type SprayUnitChip,
 } from './spray-unit-chips';
-import { evaluateDoseGuard, type DoseReference } from './product-dose';
+import { evaluateDoseGuard, unitChipLabel, type DoseReference } from './product-dose';
 import { sprayProductKey, useSprayUnitStore } from '@/stores/spray-unit-store';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
@@ -856,10 +856,11 @@ function ChemicalRow({
   const setLastUsedChip = useSprayUnitStore((s) => s.setLastUsedChip);
 
   const activeChip = chipForEntry(chemical.unit, chemical.quantityBasis);
-  // label wins over key: a clearer spelling ("kg (total)") renders in the
-  // unit segment and the collapsed receipt line, while the stable key still
-  // drives selection/persistence behind the scenes.
-  const unitLabel = activeChip?.label ?? activeChip?.key ?? chemical.unit;
+  // Display text follows the shared resolution rule (localized labelKey over
+  // label over key — "kg (total)" renders in the unit segment and the
+  // collapsed receipt line); the stable key still drives
+  // selection/persistence behind the scenes.
+  const unitLabel = unitChipLabel(activeChip, t, chemical.unit);
 
   const tankEcho = useMemo(
     () => buildTankEcho(chemical, { waterLiters, areaAcres }),
@@ -1208,14 +1209,12 @@ function ChemicalRow({
         visible={!readOnly && showUnitPicker}
         onClose={() => setShowUnitPicker(false)}
         onSelect={(key) => {
-          const chip = [...SPRAY_UNIT_CHIPS, ...SPRAY_UNIT_OVERFLOW_CHIPS].find(
-            (candidate) => candidate.key === key,
-          );
+          const chip = sprayUnitChipByKey(key);
           if (chip) handleChipSelect(chip);
         }}
         selectedValue={activeChip?.key ?? ''}
         options={[...SPRAY_UNIT_CHIPS, ...SPRAY_UNIT_OVERFLOW_CHIPS].map((chip) => chip.key)}
-        getLabel={(key) => sprayUnitChipByKey(key)?.label ?? key}
+        getLabel={(key) => unitChipLabel(sprayUnitChipByKey(key), t, key)}
         getHint={(key) => {
           const hintKey = sprayUnitChipByKey(key)?.hintKey;
           return hintKey ? t(hintKey) : undefined;

@@ -919,12 +919,18 @@ export const hi = {
       selectUnit: 'इकाई चुनें',
       quickUnitLabel: 'रसायन मात्रा इकाई के रूप में {{unit}} उपयोग करें',
       moreUnits: 'अन्य इकाइयाँ',
+      unitLabels: {
+        gTotal: 'gm (कुल)',
+        mlTotal: 'mL (कुल)',
+        kgTotal: 'kg (कुल)',
+        lTotal: 'L (कुल)',
+      },
       unitHints: {
         gPerL: 'छिड़काव पानी के प्रति लीटर ग्राम',
         mlPerL: 'छिड़काव पानी के प्रति लीटर मिलीलीटर',
         gPerAcre: 'प्रति एकड़ जमीन के ग्राम',
         mlPerAcre: 'प्रति एकड़ जमीन के मिलीलीटर',
-        ppm: 'पार्ट्स पर मिलियन (प्रति लीटर पानी मिलीग्राम)',
+        ppm: 'प्रति मिलियन (प्रति लीटर पानी मिलीग्राम)',
         gTotal: 'पूरी टंकी के लिए कुल ग्राम',
         mlTotal: 'पूरी टंकी के लिए कुल मिलीलीटर',
         kgTotal: 'पूरी टंकी के लिए कुल किलोग्राम',
@@ -972,6 +978,12 @@ export const hi = {
       quickUnitLabel: 'उर्वरक मात्रा इकाई के रूप में {{unit}} उपयोग करें',
       moreUnits: 'अन्य इकाइयाँ',
       perAcre: 'प्रति एकड़',
+      unitLabels: {
+        kgTotal: 'kg (कुल)',
+        lTotal: 'L (कुल)',
+        gTotal: 'gm (कुल)',
+        mlTotal: 'mL (कुल)',
+      },
       unitHints: {
         kgPerAcre: 'प्रति एकड़ जमीन के किलोग्राम',
         lPerAcre: 'प्रति एकड़ जमीन के लीटर',

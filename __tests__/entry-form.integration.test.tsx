@@ -249,9 +249,9 @@ describe('EntryForm UI integration', () => {
     });
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
-    // Sheet Save is disabled by the no-season gate — pressing it enqueues nothing.
-    const sheetSave = screen.queryByText('quickLog.saveType');
-    if (sheetSave) fireEvent.press(sheetSave);
+    // Sheet Save is disabled by the no-season gate — pressing it enqueues
+    // nothing, verified by the no-enqueue assertions below.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     expect(screen.queryByText('entryForm.saveLogs')).toBeNull();
     expect(mockCreateExpenseMutate).not.toHaveBeenCalled();

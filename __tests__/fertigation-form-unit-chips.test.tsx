@@ -106,8 +106,9 @@ describe('fused quantity + unit input', () => {
   it('renders one unit segment instead of an inline chip row', () => {
     const screen = render(<FertigationForm data={fertigationData()} onChange={jest.fn()} />);
 
-    // Only the fused input's unit segment shows the active chip label.
-    expect(screen.getAllByText('kg (total)').length).toBe(1);
+    // Only the fused input's unit segment shows the active chip label (the
+    // mocked t renders the chip's labelKey).
+    expect(screen.getAllByText('fertigationForm.fertilizers.unitLabels.kgTotal').length).toBe(1);
     // No inline chips, no overflow trigger, and the old basis toggle stays gone.
     expect(screen.queryByText('kg/acre')).toBeNull();
     expect(screen.queryByText('fertigationForm.fertilizers.moreUnits')).toBeNull();
@@ -119,7 +120,8 @@ describe('fused quantity + unit input', () => {
     const onChange = jest.fn();
     const screen = render(<FertigationForm data={fertigationData()} onChange={onChange} />);
 
-    fireEvent.press(screen.getByText('kg (total)')); // unit segment → opens menu
+    // unit segment → opens menu (mocked t renders the chip's labelKey)
+    fireEvent.press(screen.getByText('fertigationForm.fertilizers.unitLabels.kgTotal'));
     fireEvent.press(screen.getByText('kg/acre'));
 
     const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
@@ -130,8 +132,9 @@ describe('fused quantity + unit input', () => {
     const onChange = jest.fn();
     const screen = render(<FertigationForm data={fertigationData()} onChange={onChange} />);
 
-    fireEvent.press(screen.getByText('kg (total)')); // unit segment → opens menu
-    fireEvent.press(screen.getByText('gm (total)'));
+    // unit segment → opens menu (mocked t renders the chips' labelKeys)
+    fireEvent.press(screen.getByText('fertigationForm.fertilizers.unitLabels.kgTotal'));
+    fireEvent.press(screen.getByText('fertigationForm.fertilizers.unitLabels.gTotal'));
 
     const next = onChange.mock.calls.at(-1)?.[0] as FertigationFormData;
     expect(next.fertilizers[0]).toMatchObject({ unit: 'gram', quantityBasis: 'total' });
@@ -272,7 +275,7 @@ describe('bidirectional area echo', () => {
     fireEvent.press(screen.getAllByText('Urea')[0]);
     expect(
       screen.getByText(
-        'fertigationForm.fertilizers.areaEcho.toPerAcre:10 kg (total) → ≈ 2.86 kg/acre',
+        'fertigationForm.fertilizers.areaEcho.toPerAcre:10 fertigationForm.fertilizers.unitLabels.kgTotal → ≈ 2.86 kg/acre',
       ),
     ).toBeTruthy();
   });

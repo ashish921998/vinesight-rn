@@ -19,6 +19,7 @@ import type { QuantityContext } from '@/lib/quantity';
 import {
   asQuantityItem,
   chipForProductEntry,
+  unitChipByKey,
   type ProductDoseEntry,
   type ProductUnitChip,
 } from './product-dose';
@@ -58,38 +59,38 @@ export const SPRAY_UNIT_CHIPS: readonly SprayUnitChip[] = [
  * Rare shapes behind the "More" menu: absolute totals, plus kg/L per-acre —
  * plan-item prefills arrive as bare 'kg'/'liter' with basis per_acre, and the
  * row must be able to render the selection it was created with. The total
- * chips carry a clearer `label` ("kg (total)") than their persistence `key`
- * ("kg total") plus a hint explaining what "total" means — the key stays
- * stable so existing last-used prefs and the vocabulary contract are
- * undisturbed.
+ * chips display a localized `labelKey` ("kg (total)") over their cryptic
+ * persistence `key` ("kg total") plus a hint explaining what "total" means —
+ * the key stays stable so existing last-used prefs and the vocabulary
+ * contract are undisturbed.
  */
 export const SPRAY_UNIT_OVERFLOW_CHIPS: readonly SprayUnitChip[] = [
   {
     key: 'g total',
     unit: 'gram',
     basis: 'total',
-    label: 'gm (total)',
+    labelKey: 'sprayForm.chemicals.unitLabels.gTotal',
     hintKey: 'sprayForm.chemicals.unitHints.gTotal',
   },
   {
     key: 'mL total',
     unit: 'ml',
     basis: 'total',
-    label: 'mL (total)',
+    labelKey: 'sprayForm.chemicals.unitLabels.mlTotal',
     hintKey: 'sprayForm.chemicals.unitHints.mlTotal',
   },
   {
     key: 'kg total',
     unit: 'kg',
     basis: 'total',
-    label: 'kg (total)',
+    labelKey: 'sprayForm.chemicals.unitLabels.kgTotal',
     hintKey: 'sprayForm.chemicals.unitHints.kgTotal',
   },
   {
     key: 'L total',
     unit: 'liter',
     basis: 'total',
-    label: 'L (total)',
+    labelKey: 'sprayForm.chemicals.unitLabels.lTotal',
     hintKey: 'sprayForm.chemicals.unitHints.lTotal',
   },
   {
@@ -112,8 +113,7 @@ export const ALL_SPRAY_UNIT_CHIPS: readonly SprayUnitChip[] = [
 ];
 
 export function sprayUnitChipByKey(key: string | null | undefined): SprayUnitChip | null {
-  if (!key) return null;
-  return ALL_SPRAY_UNIT_CHIPS.find((chip) => chip.key === key) ?? null;
+  return unitChipByKey(ALL_SPRAY_UNIT_CHIPS, key);
 }
 
 /** The chip a stored (unit, quantityBasis) pair renders as (shared resolution rules — see product-dose.ts). */

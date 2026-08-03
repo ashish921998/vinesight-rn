@@ -83,18 +83,23 @@ describe('chip vocabulary contract', () => {
     }
   });
 
-  it('the cryptic total keys render a clearer label without churning the persistence key', () => {
-    // Display rewording lives on `label`; the stable `key` still drives
-    // last-used persistence and the stored-pair resolution contract.
-    expect(sprayUnitChipByKey('kg total')?.label).toBe('kg (total)');
-    expect(sprayUnitChipByKey('g total')?.label).toBe('gm (total)');
-    expect(sprayUnitChipByKey('mL total')?.label).toBe('mL (total)');
-    expect(sprayUnitChipByKey('L total')?.label).toBe('L (total)');
-    // Gram chips spell the unit as "gm" for clarity while the key stays "g…".
+  it('the cryptic total keys carry a localized labelKey without churning the persistence key', () => {
+    // Display rewording lives on `labelKey` (resolved via t(), English source
+    // in en.ts); the stable `key` still drives last-used persistence and the
+    // stored-pair resolution contract. No duplicated English `label` literal.
+    expect(sprayUnitChipByKey('kg total')?.labelKey).toBe('sprayForm.chemicals.unitLabels.kgTotal');
+    expect(sprayUnitChipByKey('g total')?.labelKey).toBe('sprayForm.chemicals.unitLabels.gTotal');
+    expect(sprayUnitChipByKey('mL total')?.labelKey).toBe('sprayForm.chemicals.unitLabels.mlTotal');
+    expect(sprayUnitChipByKey('L total')?.labelKey).toBe('sprayForm.chemicals.unitLabels.lTotal');
+    for (const key of ['kg total', 'g total', 'mL total', 'L total']) {
+      expect(sprayUnitChipByKey(key)?.label).toBeUndefined();
+    }
+    // Gram chips spell the unit as "gm" (non-localized label) while the key stays "g…".
     expect(sprayUnitChipByKey('g/L')?.label).toBe('gm/L');
     expect(sprayUnitChipByKey('g/acre')?.label).toBe('gm/acre');
-    // Chips whose key already reads clearly carry no label.
+    // Chips whose key already reads clearly carry no label and no labelKey.
     expect(sprayUnitChipByKey('kg/acre')?.label).toBeUndefined();
+    expect(sprayUnitChipByKey('kg/acre')?.labelKey).toBeUndefined();
   });
 });
 

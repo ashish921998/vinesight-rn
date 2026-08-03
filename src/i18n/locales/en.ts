@@ -932,6 +932,12 @@ export const en = {
       selectUnit: 'Select unit',
       quickUnitLabel: 'Use {{unit}} as chemical quantity unit',
       moreUnits: 'More units',
+      unitLabels: {
+        gTotal: 'gm (total)',
+        mlTotal: 'mL (total)',
+        kgTotal: 'kg (total)',
+        lTotal: 'L (total)',
+      },
       unitHints: {
         gPerL: 'Grams per liter of spray water',
         mlPerL: 'Milliliters per liter of spray water',
@@ -985,6 +991,12 @@ export const en = {
       quickUnitLabel: 'Use {{unit}} as fertilizer quantity unit',
       moreUnits: 'More units',
       perAcre: 'Per acre',
+      unitLabels: {
+        kgTotal: 'kg (total)',
+        lTotal: 'L (total)',
+        gTotal: 'gm (total)',
+        mlTotal: 'mL (total)',
+      },
       unitHints: {
         kgPerAcre: 'Kilograms per acre of plot area',
         lPerAcre: 'Liters per acre of plot area',

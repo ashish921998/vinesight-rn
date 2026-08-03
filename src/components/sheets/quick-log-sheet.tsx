@@ -133,11 +133,11 @@ interface QuickLogSheetProps {
   /**
    * Controlled date (draft mode): when provided, the sheet uses this date
    * instead of its own, keeping the draft synchronized with the host's
-   * pending-log date and PHI computation. Absent on the dashboard, which owns
-   * its own date.
+   * pending-log date and PHI computation. Value and setter travel as one
+   * pair so a half-controlled date is unrepresentable. Absent on the
+   * dashboard, which owns its own date.
    */
-  selectedDate?: Date;
-  onDateChange?: (date: Date) => void;
+  date?: { value: Date; onChange: (date: Date) => void };
 }
 
 interface HeroStepperProps {
@@ -383,8 +383,7 @@ export function QuickLogSheet({
   onClose,
   onSubmitDraft,
   onValidityChange,
-  selectedDate: controlledDate,
-  onDateChange,
+  date: controlledDate,
 }: QuickLogSheetProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -393,6 +392,7 @@ export function QuickLogSheet({
   const router = useRouter();
 
   const farmId = farm?.id ?? undefined;
+  const isDraftMode = Boolean(onSubmitDraft);
   const isGrapeFarm = isGrapeCrop(farm?.crop, farm?.crop_variety);
   const { preferredAreaUnit, farmAreaAcres } = useFarmAreaAcres(farm?.area);
   const { activeSeason, hasResolvedSeasons } = useFarmSeasonStatus(farmId);
@@ -401,8 +401,11 @@ export function QuickLogSheet({
   const isBlockedByNoSeason = farmId != null && hasResolvedSeasons && !activeSeason;
 
   const [internalDate, setInternalDate] = useState<Date>(() => new Date());
-  const selectedDate = controlledDate ?? internalDate;
-  const handleDateChange = onDateChange ?? setInternalDate;
+  // Controlled (draft mode) when the host passes the date pair; uncontrolled
+  // (dashboard) otherwise. The pair type makes half-controlled impossible.
+  const isControlledDate = controlledDate != null;
+  const selectedDate = controlledDate?.value ?? internalDate;
+  const handleDateChange = controlledDate?.onChange ?? setInternalDate;
   const dateStr = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
 
   const [irrigationDraft, setIrrigationDraft] = useState<IrrigationFormData>({
@@ -497,13 +500,13 @@ export function QuickLogSheet({
     savingRef.current = false;
     setSaving(false);
     if (!type) return;
-    if (!onDateChange) setInternalDate(new Date());
+    if (!isControlledDate) setInternalDate(new Date());
     setIrrigationDraft({ duration: undefined });
     setFertigationDraft({ fertilizers: [] });
     setSprayDraft(createEmptySprayFormData());
     setExpenseDraft(createEmptyExpenseFormData());
     setHarvestDraft(createEmptyHarvestFormData());
-  }, [type, onDateChange]);
+  }, [type, isControlledDate]);
 
   // Picker sources — catalog for spray (per design), plan/warehouse/history for both.
   const spraySources = useSprayInputSources(farmId);
@@ -881,10 +884,32 @@ export function QuickLogSheet({
         }}
         scrollEventThrottle={16}
       >
-        {/* No title header: the farmer just tapped a labelled quick action
-            ("Irrigation"/"Spray"…) and the target farm shows in the home
-            header above the sheet, so a "Log Irrigation / Logging to Sassy"
-            block only ate vertical space. The form starts at the date. */}
+        {/* No title header on the dashboard: the farmer just tapped a labelled
+            quick action ("Irrigation"/"Spray"…) and the target farm shows in
+            the home header above the sheet. In draft mode (add-entry full
+            screen) the sheet covers the "Logging to" bar, so show the farm
+            name here to prevent silent mis-logging on multi-farm setups. */}
+        {isDraftMode && farm?.name ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: spacing[3],
+              gap: spacing[2],
+            }}
+          >
+            <AppIcon name="leaf.fill" size={14} color={m3.colorScheme.primary} />
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: m3.colorScheme.onSurfaceVariant,
+              }}
+            >
+              {farm.name}
+            </Text>
+          </View>
+        ) : null}
 
         {/* Date — its own row, defaults to today. */}
         <View style={{ marginBottom: spacing[5] }}>

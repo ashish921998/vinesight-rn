@@ -208,6 +208,25 @@ function isQuickLogType(type: LogTypeId): type is QuickLogType {
   return (QUICK_LOG_TYPE_IDS as readonly string[]).includes(type);
 }
 
+/**
+ * The ONE policy for "does this log open in the shared QuickLogSheet or the
+ * inline LogForm modal", shared by the type-chip tap and the initialLogType
+ * effect so the two entry points can't drift. The sheet wins unless:
+ * - all-farms expense: the sheet takes a single farm and has no all-farms
+ *   concept; the inline composer's pending-log pipeline already handles the
+ *   all-farms scope.
+ * - a prefill arrives (plan/voice/duration): the sheet owns its drafts and
+ *   has no prefill props, so a prefilled value would be silently dropped.
+ *   Every new prefill source must join `hasPrefill` at the call site, not
+ *   grow a new branch here.
+ */
+function canOpenQuickLogSheet(
+  type: LogTypeId,
+  { allFarmsSelected, hasPrefill = false }: { allFarmsSelected: boolean; hasPrefill?: boolean },
+): type is QuickLogType {
+  return isQuickLogType(type) && !(allFarmsSelected && type === 'expense') && !hasPrefill;
+}
+
 const TASK_TYPES: TaskType[] = [
   'irrigation',
   'spray',
@@ -408,6 +427,16 @@ export function EntryForm({
     {},
   );
   const [isSubmittingLogs, setIsSubmittingLogs] = useState(false);
+
+  // Leaving the log tab unmounts the QuickLogSheet without onClose, so
+  // returning would reopen it with wiped drafts. Reset the type so the
+  // sheet stays closed until the farmer taps a chip again.
+  useEffect(() => {
+    if (activeTab !== 'log') {
+      setQuickLogType(null);
+    }
+  }, [activeTab]);
+
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [footerHeight, setFooterHeight] = useState(112);
   const contentScrollViewRef = useRef<ScrollView>(null);
@@ -571,22 +600,18 @@ export function EntryForm({
   useEffect(() => {
     if (isVisible && initialLogType) {
       setSelectedLogType(initialLogType);
-      // Prefilled spray needs the inline modal (QuickLogSheet has no prefill
-      // props). Non-prefill quick types open the shared QuickLogSheet, matching a
-      // manual tap on the type chip. Fertigation/note always use the inline modal.
-      // Irrigation with a duration prefill also stays on the inline modal:
-      // QuickLogSheet maintains its own irrigationDraft and has no prefill
-      // props, so the prefilled duration would be silently dropped.
-      const hasSprayPrefill =
-        initialLogType === 'spray' && Boolean(initialLogPrefill?.sprayChemicals?.length);
-      const hasIrrigationDurationPrefill =
-        initialLogType === 'irrigation' && Boolean(initialIrrigationDurationHours);
-      const isAllFarmsExpenseInit = initialApplyToAllFarms && initialLogType === 'expense';
+      // Any prefill (spray chemicals, irrigation duration, voice extraction)
+      // forces the inline modal — see canOpenQuickLogSheet. Non-prefill quick
+      // types open the shared QuickLogSheet, matching a manual chip tap.
+      const hasPrefill =
+        (initialLogType === 'spray' && Boolean(initialLogPrefill?.sprayChemicals?.length)) ||
+        (initialLogType === 'irrigation' && Boolean(initialIrrigationDurationHours)) ||
+        Boolean(initialVoiceLogPrefill);
       if (
-        isQuickLogType(initialLogType) &&
-        !hasSprayPrefill &&
-        !hasIrrigationDurationPrefill &&
-        !isAllFarmsExpenseInit
+        canOpenQuickLogSheet(initialLogType, {
+          allFarmsSelected: Boolean(initialApplyToAllFarms),
+          hasPrefill,
+        })
       ) {
         setQuickLogValid(false);
         setQuickLogType(initialLogType);
@@ -630,7 +655,14 @@ export function EntryForm({
         });
       }
     }
-  }, [isVisible, initialLogType, initialLogPrefill, initialApplyToAllFarms]);
+  }, [
+    isVisible,
+    initialLogType,
+    initialLogPrefill,
+    initialApplyToAllFarms,
+    initialIrrigationDurationHours,
+    initialVoiceLogPrefill,
+  ]);
 
   useEffect(() => {
     if (selectedFarmId !== ALL_FARMS_ID) return;
@@ -1046,25 +1078,33 @@ export function EntryForm({
     enqueuePendingLogs(linkedDrafts);
   }, [repeatLastLogSuggestion, buildPendingLog, enqueuePendingLogs]);
 
+  // Enqueue an irrigation draft together with its fertigation rider, linking
+  // the fertigation log to the irrigation log so the orchestrator can stamp
+  // the irrigation record id onto it. Shared by the inline composer and the
+  // QuickLogSheet draft handoff.
+  const enqueueIrrigationWithFertigation = useCallback(
+    (irrigation: PendingLog['data'], fertigation: PendingLog['data']) => {
+      const irrigationLog = buildPendingLog('irrigation', irrigation);
+      const fertigationLog = buildPendingLog('fertigation', fertigation, {
+        linkIrrigationFromPendingLogId: irrigationLog.id,
+      });
+      enqueuePendingLogs([irrigationLog, fertigationLog]);
+    },
+    [buildPendingLog, enqueuePendingLogs],
+  );
+
   const addLogToSession = useCallback(() => {
     if (!selectedLogType || !isLogFormValid) return;
     if (!activeFarm && !isAllFarmsSelected) return;
     if (isAllFarmsSelected && selectedLogType !== 'expense') return;
 
-    // Irrigation with attached fertilizers: enqueue both, linking the fertigation log to the
-    // irrigation log so the orchestrator can stamp the irrigation record id onto it.
+    // Irrigation with attached fertilizers: enqueue both as a linked pair.
     if (
       selectedLogType === 'irrigation' &&
       irrigationIncludesFertilizers &&
       validateFertigationForm(irrigationFertigationData)
     ) {
-      const irrigationLog = buildPendingLog('irrigation', { ...irrigationData });
-      const fertigationLog = buildPendingLog(
-        'fertigation',
-        { ...irrigationFertigationData },
-        { linkIrrigationFromPendingLogId: irrigationLog.id },
-      );
-      enqueuePendingLogs([irrigationLog, fertigationLog]);
+      enqueueIrrigationWithFertigation({ ...irrigationData }, { ...irrigationFertigationData });
       setIrrigationData({ duration: undefined });
       setIrrigationFertigationData(createEmptyFertigationFormData());
       setIrrigationIncludesFertilizers(false);
@@ -1202,9 +1242,8 @@ export function EntryForm({
     isGrapeFarm,
     activeSeason?.target_harvest_date,
     buildSprayPendingData,
-    buildPendingLog,
+    enqueueIrrigationWithFertigation,
     enqueuePendingLog,
-    enqueuePendingLogs,
     irrigationIncludesFertilizers,
     t,
   ]);
@@ -1215,16 +1254,14 @@ export function EntryForm({
   // draft joins the multi-draft stack and saves together with the rest. Spray
   // is finalized here via buildSprayPendingData (the sheet hands back the raw
   // draft with phiOverride already applied); the sheet's PHI double-confirm ran
-  // before calling back, so no PHI re-check is needed here.
+  // before calling back, so no PHI re-check is needed here. The sheet gates
+  // Save on the same form validators, so payloads arrive valid and are
+  // enqueued as-is — no re-validation at this boundary.
   const handleQuickLogDraft = useCallback(
     (payload: QuickLogDraftPayload) => {
       if (payload.type === 'irrigation') {
-        if (payload.fertigation && validateFertigationForm(payload.fertigation)) {
-          const irrigationLog = buildPendingLog('irrigation', payload.irrigation);
-          const fertigationLog = buildPendingLog('fertigation', payload.fertigation, {
-            linkIrrigationFromPendingLogId: irrigationLog.id,
-          });
-          enqueuePendingLogs([irrigationLog, fertigationLog]);
+        if (payload.fertigation) {
+          enqueueIrrigationWithFertigation(payload.irrigation, payload.fertigation);
           return;
         }
         enqueuePendingLog('irrigation', payload.irrigation);
@@ -1240,7 +1277,7 @@ export function EntryForm({
       }
       enqueuePendingLog('harvest', payload.harvest);
     },
-    [buildPendingLog, enqueuePendingLog, enqueuePendingLogs, buildSprayPendingData],
+    [enqueuePendingLog, enqueueIrrigationWithFertigation, buildSprayPendingData],
   );
 
   const removeLogFromSession = useCallback((id: string) => {
@@ -2336,14 +2373,9 @@ export function EntryForm({
           })}
           onSelect={(type) => {
             setSelectedLogType(type);
-            // The four quick types open the dashboard's QuickLogSheet (draft
-            // mode) — same component the dashboard uses, no duplication.
-            // All-farms expense stays on the inline modal: QuickLogSheet takes a
-            // single farm and has no all-farms concept, and the inline composer's
-            // pending-log pipeline already handles the all-farms scope. Fertigation
-            // + note also keep the inline modal (not covered by QuickLogSheet).
-            const isAllFarmsExpense = isAllFarmsSelected && type === 'expense';
-            if (isQuickLogType(type) && !isAllFarmsExpense) {
+            // Sheet vs inline modal is the shared canOpenQuickLogSheet policy;
+            // a manual tap never carries a prefill.
+            if (canOpenQuickLogSheet(type, { allFarmsSelected: isAllFarmsSelected })) {
               setQuickLogValid(false);
               setQuickLogType(type);
             } else {
@@ -3264,8 +3296,7 @@ export function EntryForm({
           <QuickLogSheet
             type={quickLogType}
             farm={activeFarm ?? null}
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
+            date={{ value: selectedDate, onChange: setSelectedDate }}
             onClose={() => {
               setQuickLogType(null);
               setSelectedLogType(null);

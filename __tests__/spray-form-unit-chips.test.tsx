@@ -136,9 +136,9 @@ describe('fused quantity + unit input', () => {
     const screen = render(<SprayForm data={sprayData()} onChange={onChange} />);
 
     fireEvent.press(screen.getByText('gm/L')); // unit segment → opens menu
-    // The picker renders the chip's clearer label ("kg (total)"), not its
-    // stable persistence key ("kg total").
-    fireEvent.press(screen.getByText('kg (total)'));
+    // The picker renders the chip's localized label (mocked t returns the
+    // labelKey), not its stable persistence key ("kg total").
+    fireEvent.press(screen.getByText('sprayForm.chemicals.unitLabels.kgTotal'));
 
     const next = onChange.mock.calls[0][0] as SprayFormData;
     expect(next.chemicals[0]).toMatchObject({ unit: 'kg', quantityBasis: 'total' });

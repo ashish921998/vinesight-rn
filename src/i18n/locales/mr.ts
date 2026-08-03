@@ -922,6 +922,12 @@ export const mr = {
       selectUnit: 'युनिट निवडा',
       quickUnitLabel: 'रसायन प्रमाण युनिट म्हणून {{unit}} वापरा',
       moreUnits: 'इतर युनिट्स',
+      unitLabels: {
+        gTotal: 'gm (एकूण)',
+        mlTotal: 'mL (एकूण)',
+        kgTotal: 'kg (एकूण)',
+        lTotal: 'L (एकूण)',
+      },
       unitHints: {
         gPerL: 'स्प्रे पाण्याच्या प्रति लिटर ग्राम',
         mlPerL: 'स्प्रे पाण्याच्या प्रति लिटर मिलीलिटर',
@@ -976,6 +982,12 @@ export const mr = {
       quickUnitLabel: 'खत प्रमाण युनिट म्हणून {{unit}} वापरा',
       moreUnits: 'इतर युनिट्स',
       perAcre: 'प्रति एकर',
+      unitLabels: {
+        kgTotal: 'kg (एकूण)',
+        lTotal: 'L (एकूण)',
+        gTotal: 'gm (एकूण)',
+        mlTotal: 'mL (एकूण)',
+      },
       unitHints: {
         kgPerAcre: 'प्रति एकर जमिनीचे किलोग्राम',
         lPerAcre: 'प्रति एकर जमिनीचे लिटर',
