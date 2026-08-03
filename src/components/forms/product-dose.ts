@@ -20,12 +20,30 @@ import type { Basis, Measure, QuantityContext, QuantityItem } from '@/lib/quanti
  * share one shape (no schema or migration work).
  */
 export interface ProductUnitChip {
-  /** Stable id — doubles as the display label (and any persistence key). */
+  /**
+   * Stable id — the persistence key (spray-unit-store) and the value the
+   * picker reports back via onSelect. Kept stable so existing AsyncStorage
+   * prefs and the chip-vocabulary contract survive display rewording.
+   */
   key: string;
   /** Stored unit spelling (the form's existing vocabulary, kernel-parseable). */
   unit: string;
   /** Stored quantityBasis. 'total' for units whose string carries its own basis — the kernel ignores the column for them. */
   basis: QuantityBasis;
+  /**
+   * Farmer-facing display label. Falls back to `key` when absent, so a chip
+   * whose key is already clear (g/L, kg/acre) needs no label. Use it to
+   * reword cryptic keys ("kg total" → "kg (total)") without churning the
+   * persistence key or the stored-pair resolution contract.
+   */
+  label?: string;
+  /**
+   * i18n key for a one-line hint shown under the label in the unit picker
+   * (e.g. "Total kilograms for the whole tank"). The chip carries only the
+   * key — the form resolves it through t() so the hint localizes with the
+   * rest of the UI. Absent → no subtitle.
+   */
+  hintKey?: string;
 }
 
 /**

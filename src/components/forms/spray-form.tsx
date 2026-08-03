@@ -856,7 +856,10 @@ function ChemicalRow({
   const setLastUsedChip = useSprayUnitStore((s) => s.setLastUsedChip);
 
   const activeChip = chipForEntry(chemical.unit, chemical.quantityBasis);
-  const unitLabel = activeChip?.key ?? chemical.unit;
+  // label wins over key: a clearer spelling ("kg (total)") renders in the
+  // unit segment and the collapsed receipt line, while the stable key still
+  // drives selection/persistence behind the scenes.
+  const unitLabel = activeChip?.label ?? activeChip?.key ?? chemical.unit;
 
   const tankEcho = useMemo(
     () => buildTankEcho(chemical, { waterLiters, areaAcres }),
@@ -1212,6 +1215,11 @@ function ChemicalRow({
         }}
         selectedValue={activeChip?.key ?? ''}
         options={[...SPRAY_UNIT_CHIPS, ...SPRAY_UNIT_OVERFLOW_CHIPS].map((chip) => chip.key)}
+        getLabel={(key) => sprayUnitChipByKey(key)?.label ?? key}
+        getHint={(key) => {
+          const hintKey = sprayUnitChipByKey(key)?.hintKey;
+          return hintKey ? t(hintKey) : undefined;
+        }}
         title={t('sprayForm.chemicals.selectUnit')}
       />
     </View>

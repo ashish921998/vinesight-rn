@@ -30,25 +30,73 @@ export interface SprayUnitChip extends ProductUnitChip {
 
 /** The main chip row — exactly these five, in this order (issue #194 contract). */
 export const SPRAY_UNIT_CHIPS: readonly SprayUnitChip[] = [
-  { key: 'g/L', unit: 'gm/L', basis: 'total' },
-  { key: 'mL/L', unit: 'ml/L', basis: 'total' },
-  { key: 'g/acre', unit: 'gram', basis: 'per_acre' },
-  { key: 'mL/acre', unit: 'ml', basis: 'per_acre' },
-  { key: 'ppm', unit: 'ppm', basis: 'total' },
+  { key: 'g/L', unit: 'gm/L', basis: 'total', hintKey: 'sprayForm.chemicals.unitHints.gPerL' },
+  { key: 'mL/L', unit: 'ml/L', basis: 'total', hintKey: 'sprayForm.chemicals.unitHints.mlPerL' },
+  {
+    key: 'g/acre',
+    unit: 'gram',
+    basis: 'per_acre',
+    hintKey: 'sprayForm.chemicals.unitHints.gPerAcre',
+  },
+  {
+    key: 'mL/acre',
+    unit: 'ml',
+    basis: 'per_acre',
+    hintKey: 'sprayForm.chemicals.unitHints.mlPerAcre',
+  },
+  { key: 'ppm', unit: 'ppm', basis: 'total', hintKey: 'sprayForm.chemicals.unitHints.ppm' },
 ];
 
 /**
  * Rare shapes behind the "More" menu: absolute totals, plus kg/L per-acre —
  * plan-item prefills arrive as bare 'kg'/'liter' with basis per_acre, and the
- * row must be able to render the selection it was created with.
+ * row must be able to render the selection it was created with. The total
+ * chips carry a clearer `label` ("kg (total)") than their persistence `key`
+ * ("kg total") plus a hint explaining what "total" means — the key stays
+ * stable so existing last-used prefs and the vocabulary contract are
+ * undisturbed.
  */
 export const SPRAY_UNIT_OVERFLOW_CHIPS: readonly SprayUnitChip[] = [
-  { key: 'g total', unit: 'gram', basis: 'total' },
-  { key: 'mL total', unit: 'ml', basis: 'total' },
-  { key: 'kg total', unit: 'kg', basis: 'total' },
-  { key: 'L total', unit: 'liter', basis: 'total' },
-  { key: 'kg/acre', unit: 'kg', basis: 'per_acre' },
-  { key: 'L/acre', unit: 'liter', basis: 'per_acre' },
+  {
+    key: 'g total',
+    unit: 'gram',
+    basis: 'total',
+    label: 'g (total)',
+    hintKey: 'sprayForm.chemicals.unitHints.gTotal',
+  },
+  {
+    key: 'mL total',
+    unit: 'ml',
+    basis: 'total',
+    label: 'mL (total)',
+    hintKey: 'sprayForm.chemicals.unitHints.mlTotal',
+  },
+  {
+    key: 'kg total',
+    unit: 'kg',
+    basis: 'total',
+    label: 'kg (total)',
+    hintKey: 'sprayForm.chemicals.unitHints.kgTotal',
+  },
+  {
+    key: 'L total',
+    unit: 'liter',
+    basis: 'total',
+    label: 'L (total)',
+    hintKey: 'sprayForm.chemicals.unitHints.lTotal',
+  },
+  {
+    key: 'kg/acre',
+    unit: 'kg',
+    basis: 'per_acre',
+    hintKey: 'sprayForm.chemicals.unitHints.kgPerAcre',
+  },
+  {
+    key: 'L/acre',
+    unit: 'liter',
+    basis: 'per_acre',
+    hintKey: 'sprayForm.chemicals.unitHints.lPerAcre',
+  },
 ];
 
 export const ALL_SPRAY_UNIT_CHIPS: readonly SprayUnitChip[] = [

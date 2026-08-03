@@ -76,6 +76,24 @@ describe('chip vocabulary contract', () => {
     expect(sprayUnitChipByKey('furlongs')).toBeNull();
     expect(sprayUnitChipByKey(null)).toBeNull();
   });
+
+  it('every chip carries a unit-picker hint key under the spray hints namespace', () => {
+    for (const chip of ALL_SPRAY_UNIT_CHIPS) {
+      expect(chip.hintKey).toMatch(/^sprayForm\.chemicals\.unitHints\./);
+    }
+  });
+
+  it('the cryptic total keys render a clearer label without churning the persistence key', () => {
+    // Display rewording lives on `label`; the stable `key` still drives
+    // last-used persistence and the stored-pair resolution contract.
+    expect(sprayUnitChipByKey('kg total')?.label).toBe('kg (total)');
+    expect(sprayUnitChipByKey('g total')?.label).toBe('g (total)');
+    expect(sprayUnitChipByKey('mL total')?.label).toBe('mL (total)');
+    expect(sprayUnitChipByKey('L total')?.label).toBe('L (total)');
+    // Main chips have no label — the key is already the clear display label.
+    expect(sprayUnitChipByKey('g/L')?.label).toBeUndefined();
+    expect(sprayUnitChipByKey('kg/acre')?.label).toBeUndefined();
+  });
 });
 
 describe('tank echo (kernel round-trip)', () => {
