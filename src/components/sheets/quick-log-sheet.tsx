@@ -91,11 +91,45 @@ import {
 
 export type QuickLogType = Extract<LogTypeId, 'irrigation' | 'spray' | 'harvest' | 'expense'>;
 
+/**
+ * Draft payload handed to `onSubmitDraft` when the sheet runs in draft mode
+ * (add-log full screen). Same form-data shapes the host's pending-log
+ * pipeline already consumes; the host enqueues them onto its multi-draft
+ * stack instead of persisting immediately. Spray is the raw draft (with
+ * `phiOverride` applied when the PHI double-confirm was accepted) — the host
+ * finalizes it via its own `buildSprayPendingData`, mirroring the path a
+ * spray draft takes when added from the inline composer.
+ */
+export type QuickLogDraftPayload =
+  | {
+      type: 'irrigation';
+      irrigation: IrrigationFormData;
+      /** Linked fertigation draft when fertilizer rows were added; null otherwise. */
+      fertigation: FertigationFormData | null;
+    }
+  | { type: 'spray'; spray: SprayFormData }
+  | { type: 'expense'; expense: ExpenseFormData }
+  | { type: 'harvest'; harvest: HarvestFormData };
+
 interface QuickLogSheetProps {
   /** Which log's sheet to show; null keeps the sheet closed. */
   type: QuickLogType | null;
   farm: Farm | null;
   onClose: () => void;
+  /**
+   * Draft mode (add-log full screen): when provided, Save assembles the draft
+   * and calls this instead of persisting immediately, then closes the sheet.
+   * Absent on the dashboard, which keeps the original immediate-save behavior.
+   * PHI double-confirm for spray runs in both modes before the payload is built.
+   */
+  onSubmitDraft?: (payload: QuickLogDraftPayload) => void;
+  /**
+   * Live validity pulse for the host. The sheet owns its form state, so a host
+   * that needs to know whether the current draft is valid (e.g. the add-log
+   * full screen feeding the guided-tour coach) subscribes here. Fires on mount
+   * and whenever validity flips. Absent on the dashboard, which ignores it.
+   */
+  onValidityChange?: (valid: boolean) => void;
 }
 
 interface HeroStepperProps {
@@ -335,7 +369,13 @@ function SectionLabel({ children, optional }: { children: string; optional?: str
   );
 }
 
-export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
+export function QuickLogSheet({
+  type,
+  farm,
+  onClose,
+  onSubmitDraft,
+  onValidityChange,
+}: QuickLogSheetProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const domainColors = useDomainColors();
@@ -523,6 +563,18 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
             ? validateHarvestForm(harvestDraft)
             : false;
 
+  // Pulse validity to the host (add-log full screen feeds the guided-tour
+  // coach, which needs to know when the sheet's draft is complete). The sheet
+  // owns its form state, so the host can't derive this itself. No-op on the
+  // dashboard, which doesn't pass onValidityChange.
+  const onValidityChangeRef = useRef(onValidityChange);
+  useEffect(() => {
+    onValidityChangeRef.current = onValidityChange;
+  }, [onValidityChange]);
+  useEffect(() => {
+    onValidityChangeRef.current?.(isValid);
+  }, [isValid]);
+
   const captureSaved = useCallback((recordType: LogTypeId, savedFarmId: number) => {
     try {
       telemetry.capture('record_created', {
@@ -539,9 +591,57 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
     }
   }, []);
 
+  // Assemble the draft payload for draft mode (onSubmitDraft). Same shapes
+  // performSave persists in immediate mode; the host finalizes spray via its
+  // own buildSprayPendingData, so the spray draft is handed back raw (with
+  // phiOverride already applied by the caller).
+  const buildDraftPayload = useCallback(
+    (sprayPayload?: SprayFormData): QuickLogDraftPayload | null => {
+      if (type === 'irrigation') {
+        return {
+          type: 'irrigation',
+          irrigation: { ...irrigationDraft },
+          fertigation: hasFertilizers ? { ...fertigationDraft } : null,
+        };
+      }
+      if (type === 'spray') {
+        return { type: 'spray', spray: sprayPayload ?? sprayDraft };
+      }
+      if (type === 'expense') {
+        return { type: 'expense', expense: { ...expenseDraft } };
+      }
+      if (type === 'harvest') {
+        return { type: 'harvest', harvest: { ...harvestDraft } };
+      }
+      return null;
+    },
+    [
+      type,
+      irrigationDraft,
+      hasFertilizers,
+      fertigationDraft,
+      sprayDraft,
+      expenseDraft,
+      harvestDraft,
+    ],
+  );
+
   const performSave = useCallback(
     async (sprayPayload?: SprayFormData) => {
       if (!type || !farm || savingRef.current || isBlockedByNoSeason) return;
+
+      // Draft mode (add-log full screen): hand the assembled draft to the host
+      // instead of persisting. The PHI double-confirm for spray already ran in
+      // handleSave before reaching here, so the override payload is honored.
+      if (onSubmitDraft) {
+        const payload = buildDraftPayload(sprayPayload);
+        if (!payload) return;
+        onSubmitDraft(payload);
+        triggerHapticSuccess();
+        onClose();
+        return;
+      }
+
       savingRef.current = true;
       setSaving(true);
       try {
@@ -618,6 +718,8 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
       type,
       farm,
       isBlockedByNoSeason,
+      onSubmitDraft,
+      buildDraftPayload,
       saveLog,
       deleteIrrigation,
       irrigationDraft,
@@ -971,52 +1073,57 @@ export function QuickLogSheet({ type, farm, onClose }: QuickLogSheetProps) {
           borderTopColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
         }}
       >
-        <Pressable
-          disabled={saveDisabled}
-          onPress={handleSave}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: saveDisabled }}
-          accessibilityLabel={
-            logType ? t('quickLog.saveType', { type: t(logType.labelKey) }) : undefined
-          }
-          style={{
-            paddingVertical: 15,
-            borderRadius: borderRadius.xl,
-            alignItems: 'center',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 8,
-            backgroundColor: !saveDisabled ? m3.colorScheme.primary : m3.surface.s50,
-          }}
+        <GuidedTourTarget
+          targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY}
+          style={{ alignSelf: 'stretch' }}
         >
-          {saving ? (
-            <Spinner size="small" color={m3.colorScheme.onSurfaceVariant} />
-          ) : (
-            <AppIcon
-              name="checkmark-circle"
-              size={20}
-              color={
-                !saveDisabled
-                  ? m3.colorScheme.onPrimary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)
-              }
-            />
-          )}
-          <Text
+          <Pressable
+            disabled={saveDisabled}
+            onPress={handleSave}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: saveDisabled }}
+            accessibilityLabel={
+              logType ? t('quickLog.saveType', { type: t(logType.labelKey) }) : undefined
+            }
             style={{
-              fontWeight: '700',
-              color: !saveDisabled
-                ? m3.colorScheme.onPrimary
-                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5),
+              paddingVertical: 15,
+              borderRadius: borderRadius.xl,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              gap: 8,
+              backgroundColor: !saveDisabled ? m3.colorScheme.primary : m3.surface.s50,
             }}
           >
-            {saving
-              ? t('common.saving')
-              : logType
-                ? t('quickLog.saveType', { type: t(logType.labelKey) })
-                : ''}
-          </Text>
-        </Pressable>
+            {saving ? (
+              <Spinner size="small" color={m3.colorScheme.onSurfaceVariant} />
+            ) : (
+              <AppIcon
+                name="checkmark-circle"
+                size={20}
+                color={
+                  !saveDisabled
+                    ? m3.colorScheme.onPrimary
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)
+                }
+              />
+            )}
+            <Text
+              style={{
+                fontWeight: '700',
+                color: !saveDisabled
+                  ? m3.colorScheme.onPrimary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5),
+              }}
+            >
+              {saving
+                ? t('common.saving')
+                : logType
+                  ? t('quickLog.saveType', { type: t(logType.labelKey) })
+                  : ''}
+            </Text>
+          </Pressable>
+        </GuidedTourTarget>
       </View>
     </QuickLogSheetContainer>
   );

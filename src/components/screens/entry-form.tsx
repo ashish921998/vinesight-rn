@@ -65,6 +65,11 @@ import {
 } from '@/components/screens/entry-form/PendingLogs';
 import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
 import { LogForm } from '@/components/screens/entry-form/LogForm';
+import {
+  QuickLogSheet,
+  type QuickLogDraftPayload,
+  type QuickLogType,
+} from '@/components/sheets/quick-log-sheet';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
 import { guidedTourEmit, useGuidedTourStore } from '@/features/guided-tour';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
@@ -192,6 +197,15 @@ interface EntryFormProps {
   onLogSaveSuccess?: () => void;
   onTaskSaveSuccess?: (farmId?: number | null) => void;
   presentation?: 'modal' | 'screen';
+}
+
+// The four log types the dashboard's QuickLogSheet handles. Tapping one of
+// these in the type selector opens that shared sheet (draft mode) instead of
+// the inline LogForm modal — same component as the dashboard, no duplication.
+// Fertigation + note stay on the inline modal (not covered by QuickLogSheet).
+const QUICK_LOG_TYPE_IDS: readonly LogTypeId[] = ['irrigation', 'spray', 'harvest', 'expense'];
+function isQuickLogType(type: LogTypeId): type is QuickLogType {
+  return (QUICK_LOG_TYPE_IDS as readonly string[]).includes(type);
 }
 
 const TASK_TYPES: TaskType[] = [
@@ -384,6 +398,11 @@ export function EntryForm({
   const [selectedDate, setSelectedDate] = useState<Date>(() => parsedInitialLogDate ?? new Date());
   const [selectedLogType, setSelectedLogType] = useState<LogTypeId | null>(null);
   const [showLogFormModal, setShowLogFormModal] = useState(false);
+  // QuickLogSheet (dashboard sheet, draft mode) for the four quick types. Null
+  // keeps it closed. `quickLogValid` is the sheet's live validity pulse, used to
+  // feed the guided-tour coach (the sheet owns its form state, not EntryForm).
+  const [quickLogType, setQuickLogType] = useState<QuickLogType | null>(null);
+  const [quickLogValid, setQuickLogValid] = useState(false);
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
   const [pendingLogFailures, setPendingLogFailures] = useState<Record<string, PendingLogFailure>>(
     {},
@@ -552,7 +571,18 @@ export function EntryForm({
   useEffect(() => {
     if (isVisible && initialLogType) {
       setSelectedLogType(initialLogType);
-      setShowLogFormModal(true);
+      // Prefilled spray needs the inline modal (QuickLogSheet has no prefill
+      // props). Non-prefill quick types open the shared QuickLogSheet, matching a
+      // manual tap on the type chip. Fertigation/note always use the inline modal.
+      const hasSprayPrefill =
+        initialLogType === 'spray' && Boolean(initialLogPrefill?.sprayChemicals?.length);
+      const isAllFarmsExpenseInit = initialApplyToAllFarms && initialLogType === 'expense';
+      if (isQuickLogType(initialLogType) && !hasSprayPrefill && !isAllFarmsExpenseInit) {
+        setQuickLogValid(false);
+        setQuickLogType(initialLogType);
+      } else {
+        setShowLogFormModal(true);
+      }
       if (initialLogType === 'spray' && initialLogPrefill?.sprayChemicals?.length) {
         setSprayData({
           waterVolume: undefined,
@@ -590,7 +620,7 @@ export function EntryForm({
         });
       }
     }
-  }, [isVisible, initialLogType, initialLogPrefill]);
+  }, [isVisible, initialLogType, initialLogPrefill, initialApplyToAllFarms]);
 
   useEffect(() => {
     if (selectedFarmId !== ALL_FARMS_ID) return;
@@ -1168,6 +1198,40 @@ export function EntryForm({
     irrigationIncludesFertilizers,
     t,
   ]);
+
+  // QuickLogSheet draft handoff: the dashboard sheet (opened for the four quick
+  // types) assembles its draft and calls back here instead of persisting. Route
+  // it through the same pending-log pipeline the inline composer uses, so the
+  // draft joins the multi-draft stack and saves together with the rest. Spray
+  // is finalized here via buildSprayPendingData (the sheet hands back the raw
+  // draft with phiOverride already applied); the sheet's PHI double-confirm ran
+  // before calling back, so no PHI re-check is needed here.
+  const handleQuickLogDraft = useCallback(
+    (payload: QuickLogDraftPayload) => {
+      if (payload.type === 'irrigation') {
+        if (payload.fertigation && validateFertigationForm(payload.fertigation)) {
+          const irrigationLog = buildPendingLog('irrigation', payload.irrigation);
+          const fertigationLog = buildPendingLog('fertigation', payload.fertigation, {
+            linkIrrigationFromPendingLogId: irrigationLog.id,
+          });
+          enqueuePendingLogs([irrigationLog, fertigationLog]);
+          return;
+        }
+        enqueuePendingLog('irrigation', payload.irrigation);
+        return;
+      }
+      if (payload.type === 'spray') {
+        enqueuePendingLog('spray', buildSprayPendingData(payload.spray));
+        return;
+      }
+      if (payload.type === 'expense') {
+        enqueuePendingLog('expense', payload.expense);
+        return;
+      }
+      enqueuePendingLog('harvest', payload.harvest);
+    },
+    [buildPendingLog, enqueuePendingLog, enqueuePendingLogs, buildSprayPendingData],
+  );
 
   const removeLogFromSession = useCallback((id: string) => {
     setPendingLogFailures((prev) => {
@@ -2262,7 +2326,19 @@ export function EntryForm({
           })}
           onSelect={(type) => {
             setSelectedLogType(type);
-            setShowLogFormModal(true);
+            // The four quick types open the dashboard's QuickLogSheet (draft
+            // mode) — same component the dashboard uses, no duplication.
+            // All-farms expense stays on the inline modal: QuickLogSheet takes a
+            // single farm and has no all-farms concept, and the inline composer's
+            // pending-log pipeline already handles the all-farms scope. Fertigation
+            // + note also keep the inline modal (not covered by QuickLogSheet).
+            const isAllFarmsExpense = isAllFarmsSelected && type === 'expense';
+            if (isQuickLogType(type) && !isAllFarmsExpense) {
+              setQuickLogValid(false);
+              setQuickLogType(type);
+            } else {
+              setShowLogFormModal(true);
+            }
           }}
         />
       </GuidedTourTarget>
@@ -2840,13 +2916,25 @@ export function EntryForm({
 
   useEffect(() => {
     if (presentation !== 'screen' || activeTab !== 'log') return;
+    // When a quick type is open, the QuickLogSheet owns the form state, so its
+    // validity pulse (quickLogValid) is what the tour coach needs — the inline
+    // isLogFormValid reads the unused inline drafts and would stay false.
+    const currentLogValid = quickLogType ? quickLogValid : isLogFormValid;
     guidedTourEmit('guidedTour.addLogSelectionState', {
       hasSelection: selectedLogType !== null,
       hasPendingDrafts: pendingLogs.length > 0,
-      isCurrentLogValid: selectedLogType !== null ? isLogFormValid : false,
+      isCurrentLogValid: selectedLogType !== null ? currentLogValid : false,
       ...(selectedLogType ? { recordType: selectedLogType } : {}),
     });
-  }, [activeTab, isLogFormValid, pendingLogs.length, presentation, selectedLogType]);
+  }, [
+    activeTab,
+    isLogFormValid,
+    pendingLogs.length,
+    presentation,
+    selectedLogType,
+    quickLogType,
+    quickLogValid,
+  ]);
 
   useEffect(() => {
     if (
@@ -3159,8 +3247,28 @@ export function EntryForm({
 
         {activeTab === 'log' && renderLogFormModal()}
 
+        {/* Dashboard quick-log sheet (draft mode) for irrigation/spray/harvest/
+            expense — same component the dashboard home uses, opened from the log
+            type chips. Fertigation + note stay on the inline modal above. */}
+        {activeTab === 'log' && (
+          <QuickLogSheet
+            type={quickLogType}
+            farm={activeFarm ?? null}
+            onClose={() => {
+              setQuickLogType(null);
+              setSelectedLogType(null);
+            }}
+            onSubmitDraft={handleQuickLogDraft}
+            onValidityChange={setQuickLogValid}
+          />
+        )}
+
         {/* Sticky Add Entry button above keyboard */}
-        {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
+        {activeTab === 'log' &&
+          isKeyboardVisible &&
+          !showLogFormModal &&
+          !quickLogType &&
+          renderStickyAddButton()}
 
         <View
           onLayout={(event) => {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -56,6 +57,14 @@ jest.mock('expo-linear-gradient', () => {
       mockReact.createElement('View', props, children),
   };
 });
+
+// QuickLogSheet (irrigation/spray/harvest/expense from the type chips) uses the
+// native BottomSheet host, which isn't press-traversable under jest. This mock
+// renders sheet children as plain views while the sheet is open (index >= 0),
+// so the integration tests can drive the sheet's form + Save button.
+jest.mock('@expo/ui/community/bottom-sheet', () =>
+  require('../jest-setup/expo-ui-bottom-sheet-mock'),
+);
 
 jest.mock('@/hooks', () => ({
   useCreateIrrigationRecord: () => ({ mutateAsync: mockCreateIrrigationMutate }),
@@ -232,15 +241,17 @@ describe('EntryForm UI integration', () => {
       expect(screen.getByText('farmDetails.seasons.banner.startSeason')).toBeTruthy();
     });
 
-    // Building an expense draft is gated — no Save button appears and nothing
-    // is persisted.
+    // Building an expense draft is gated — the QuickLogSheet's Save stays
+    // disabled (no-season gate) so no draft joins the stack and nothing persists.
     fireEvent.press(screen.getAllByText('logs.types.expense')[0]);
     await waitFor(() => {
       expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
     });
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // Sheet Save is disabled by the no-season gate — pressing it enqueues nothing.
+    const sheetSave = screen.queryByText('quickLog.saveType');
+    if (sheetSave) fireEvent.press(sheetSave);
 
     expect(screen.queryByText('entryForm.saveLogs')).toBeNull();
     expect(mockCreateExpenseMutate).not.toHaveBeenCalled();
@@ -277,7 +288,9 @@ describe('EntryForm UI integration', () => {
     });
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // QuickLogSheet Save enqueues the draft onto the stack; the main Save-all
+    // button then appears.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
@@ -307,7 +320,8 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // QuickLogSheet Save enqueues the draft; the main Save-all persists it.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
@@ -405,10 +419,11 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getByText('logs.types.spray'));
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('sprayForm.waterVolume.placeholder')).toBeTruthy();
+      // QuickLogSheet renders tank water as a HeroStepper (presets), not the
+      // inline NumericInput placeholder. Press the 200L preset to set water.
+      expect(screen.getByLabelText('200 sprayForm.waterVolume.unitLiters')).toBeTruthy();
     });
-
-    fireEvent.changeText(screen.getByPlaceholderText('sprayForm.waterVolume.placeholder'), '200');
+    fireEvent.press(screen.getByLabelText('200 sprayForm.waterVolume.unitLiters'));
     // Mixes are picked through the chemical name typeahead now.
     fireEvent(screen.getByPlaceholderText('sprayForm.chemicals.namePlaceholder'), 'focus', {
       target: null,
@@ -424,7 +439,8 @@ describe('EntryForm UI integration', () => {
       expect(screen.getByText('Demo Mix')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // QuickLogSheet Save runs the PHI double-confirm (conflict → alert).
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(alertSpy).toHaveBeenCalledWith(
@@ -725,7 +741,8 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '500');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // initialLogType='expense' opened the QuickLogSheet — its Save enqueues the draft.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
@@ -738,7 +755,8 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '700');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // Second expense also opens the QuickLogSheet — enqueue another draft.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
@@ -807,7 +825,8 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
     fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '700');
-    fireEvent.press(screen.getByText('entryForm.addEntry'));
+    // Expense opens the QuickLogSheet — its Save enqueues the draft.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
 
     await waitFor(() => {
       expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();

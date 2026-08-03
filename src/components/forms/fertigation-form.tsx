@@ -955,9 +955,7 @@ function FertilizerRow({
         visible={showUnitPicker}
         onClose={() => setShowUnitPicker(false)}
         onSelect={(key) => {
-          const chip = [...FERTIGATION_UNIT_CHIPS, ...FERTIGATION_UNIT_OVERFLOW_CHIPS].find(
-            (candidate) => candidate.key === key,
-          );
+          const chip = fertigationUnitChipByKey(key);
           if (chip) handleChipSelect(chip);
         }}
         selectedValue={activeChip?.key ?? ''}
