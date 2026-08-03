@@ -111,6 +111,21 @@ export type QuickLogDraftPayload =
   | { type: 'expense'; expense: ExpenseFormData }
   | { type: 'harvest'; harvest: HarvestFormData };
 
+/**
+ * Prefill for the sheet's drafts (draft mode). The add-log screen builds this
+ * from its prefill sources (plan one-tap chemicals, task irrigation duration,
+ * voice extraction) so a prefilled log opens in the SAME sheet as a manual
+ * chip tap instead of a separate inline form. Only the field for the opening
+ * `type` is read; the rest are ignored. Seeded once per open — the host keeps
+ * the object in state so its reference stays stable while the sheet is open.
+ */
+export interface QuickLogInitialDraft {
+  irrigation?: IrrigationFormData;
+  spray?: SprayFormData;
+  expense?: ExpenseFormData;
+  harvest?: HarvestFormData;
+}
+
 interface QuickLogSheetProps {
   /** Which log's sheet to show; null keeps the sheet closed. */
   type: QuickLogType | null;
@@ -138,6 +153,11 @@ interface QuickLogSheetProps {
    * dashboard, which owns its own date.
    */
   date?: { value: Date; onChange: (date: Date) => void };
+  /**
+   * Prefill drafts, seeded when the sheet opens (draft mode only — the
+   * dashboard never prefills). See {@link QuickLogInitialDraft}.
+   */
+  initialDraft?: QuickLogInitialDraft | null;
 }
 
 interface HeroStepperProps {
@@ -384,6 +404,7 @@ export function QuickLogSheet({
   onSubmitDraft,
   onValidityChange,
   date: controlledDate,
+  initialDraft = null,
 }: QuickLogSheetProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -492,7 +513,8 @@ export function QuickLogSheet({
     [scrollToNode],
   );
 
-  // Fresh sheet per open: empty drafts. Saving guards reset on every type
+  // Fresh sheet per open: empty drafts, or the host's prefill when one was
+  // provided (plan/voice/duration handoff). Saving guards reset on every type
   // change (open and close) so a draft-mode save that set them doesn't leak.
   // Date is only reset when uncontrolled (dashboard); draft mode uses the
   // host's date, which the host manages.
@@ -501,12 +523,12 @@ export function QuickLogSheet({
     setSaving(false);
     if (!type) return;
     if (!isControlledDate) setInternalDate(new Date());
-    setIrrigationDraft({ duration: undefined });
+    setIrrigationDraft(initialDraft?.irrigation ?? { duration: undefined });
     setFertigationDraft({ fertilizers: [] });
-    setSprayDraft(createEmptySprayFormData());
-    setExpenseDraft(createEmptyExpenseFormData());
-    setHarvestDraft(createEmptyHarvestFormData());
-  }, [type, isControlledDate]);
+    setSprayDraft(initialDraft?.spray ?? createEmptySprayFormData());
+    setExpenseDraft(initialDraft?.expense ?? createEmptyExpenseFormData());
+    setHarvestDraft(initialDraft?.harvest ?? createEmptyHarvestFormData());
+  }, [type, isControlledDate, initialDraft]);
 
   // Picker sources — catalog for spray (per design), plan/warehouse/history for both.
   const spraySources = useSprayInputSources(farmId);

@@ -779,6 +779,170 @@ describe('EntryForm UI integration', () => {
     alertSpy.mockRestore();
   });
 
+  it('opens a plan-prefilled spray in the QuickLogSheet with the chemicals seeded', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={jest.fn()}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="spray"
+          initialLogPrefill={{
+            sprayChemicals: [{ name: 'Sulphur WP', quantity: 2.5, unit: 'gm/L' }],
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    // The shared sheet opens (not the inline modal) with the plan chemical
+    // seeded — a complete row renders as a collapsed receipt line.
+    await waitFor(() => {
+      expect(screen.getByText('quickLog.saveType')).toBeTruthy();
+    });
+    expect(screen.getByText('Sulphur WP')).toBeTruthy();
+    expect(screen.queryByText('entryForm.addEntry')).toBeNull();
+
+    // Water via the HeroStepper preset completes the draft; Save enqueues it.
+    fireEvent.press(screen.getByLabelText('200 sprayForm.waterVolume.unitLiters'));
+    fireEvent.press(screen.getByText('quickLog.saveType'));
+
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+  });
+
+  it('opens a duration-prefilled irrigation in the QuickLogSheet', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={jest.fn()}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="irrigation"
+          initialIrrigationDurationHours={2}
+        />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('quickLog.saveType')).toBeTruthy();
+    });
+    // The HeroStepper's hero input carries the seeded duration.
+    expect(screen.getByLabelText('irrigationForm.durationUnit').props.value).toBe('2');
+
+    // Duration is already valid — Save enqueues straight away.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+  });
+
+  it('opens a voice-prefilled harvest in the QuickLogSheet', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={jest.fn()}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="harvest"
+          initialVoiceLogPrefill={{
+            type: 'harvest',
+            date: '2026-08-02',
+            harvest: { quantity: 500, grade: 'A', price: 42, buyer: 'Trader Joe' },
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('quickLog.saveType')).toBeTruthy();
+    });
+    expect(screen.getByPlaceholderText('harvestForm.quantityPlaceholder').props.value).toBe('500');
+
+    // Quantity + grade are seeded and valid — Save enqueues the draft.
+    fireEvent.press(screen.getByText('quickLog.saveType'));
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+    });
+  });
+
+  it('opens a voice-prefilled expense in the QuickLogSheet for a single farm', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={jest.fn()}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="expense"
+          initialVoiceLogPrefill={{
+            type: 'expense',
+            date: '2026-08-02',
+            expense: { cost: 300, expenseType: 'labor', remarks: 'Pruning wages' },
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('quickLog.saveType')).toBeTruthy();
+    });
+    expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder').props.value).toBe('300');
+  });
+
+  it('keeps a voice-prefilled fertigation on the inline LogForm modal', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const screen = render(
+      <QueryClientProvider client={queryClient}>
+        <EntryForm
+          farm={mockFarm}
+          onClose={jest.fn()}
+          tabs={['log']}
+          presentation="screen"
+          initialLogType="fertigation"
+          initialVoiceLogPrefill={{
+            type: 'fertigation',
+            date: '2026-08-02',
+            fertigation: {
+              waterVolume: null,
+              fertilizers: [{ name: 'Urea', quantity: 25, unit: 'kg' }],
+            },
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    // Fertigation is not a quick-log type: the inline modal opens (Add Entry
+    // button), the sheet does not, and the fertilizer row is seeded.
+    await waitFor(() => {
+      expect(screen.getByText('entryForm.addEntry')).toBeTruthy();
+    });
+    expect(screen.queryByText('quickLog.saveType')).toBeNull();
+    expect(screen.getByText('Urea')).toBeTruthy();
+  });
+
   it('rolls back a saved note when a later draft fails', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const onClose = jest.fn();
