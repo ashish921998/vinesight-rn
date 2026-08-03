@@ -79,6 +79,12 @@ jest.mock('@/hooks', () => ({
   useDeleteExpenseRecord: () => ({ mutateAsync: mockDeleteExpenseMutate }),
   useDeleteFertigationRecord: () => ({ mutateAsync: mockDeleteFertigationMutate }),
   useDeleteDailyNote: () => ({ mutateAsync: mockDeleteDailyNoteMutate }),
+  // Edit-mode hooks used by QuickLogSheet (farm details edit flow)
+  useUpdateIrrigationRecord: () => ({ mutateAsync: jest.fn() }),
+  useUpdateSprayRecord: () => ({ mutateAsync: jest.fn() }),
+  useUpdateHarvestRecord: () => ({ mutateAsync: jest.fn() }),
+  useUpdateExpenseRecord: () => ({ mutateAsync: jest.fn() }),
+  useUpdateFertigationRecord: () => ({ mutateAsync: jest.fn() }),
   useUpdateFarmWaterLevel: () => ({ mutateAsync: mockUpdateWaterLevelMutate }),
   useFarms: (...args: unknown[]) => mockUseFarms(...args),
   useProfile: () => ({ data: { area_unit_preference: 'acres' } }),

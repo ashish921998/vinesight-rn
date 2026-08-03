@@ -82,12 +82,38 @@ import {
   useSprayInputSources,
   useFertigationInputSources,
   useDeleteIrrigationRecord,
+  useUpdateIrrigationRecord,
+  useUpdateSprayRecord,
+  useUpdateHarvestRecord,
+  useUpdateExpenseRecord,
+  useUpdateFertigationRecord,
+  useDeleteFertigationRecord,
+  useFertigationRecords,
 } from '@/hooks';
 import {
   LinkedFertigationSaveError,
   useSaveSingleLog,
   saveIrrigationWithLinkedFertigation,
 } from '@/features/entry-log-session';
+import {
+  irrigationRecordToFormData,
+  sprayRecordToFormData,
+  harvestRecordToFormData,
+  expenseRecordToFormData,
+  fertigationRecordToFormData,
+} from '@/utils/record-to-form';
+import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
+import { isFertigationUnitRecognized } from '@/constants/fertilizer-units';
+import { mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
+import { fromSupabaseDateString } from '@/types/database';
+import type {
+  IrrigationRecord,
+  SprayRecord,
+  HarvestRecord,
+  ExpenseRecord,
+  FertigationRecord,
+} from '@/types';
+import type { ExpenseTypeId } from '@/constants/calculator-models';
 
 export type QuickLogType = Extract<LogTypeId, 'irrigation' | 'spray' | 'harvest' | 'expense'>;
 
@@ -158,6 +184,14 @@ interface QuickLogSheetProps {
    * dashboard never prefills). See {@link QuickLogInitialDraft}.
    */
   initialDraft?: QuickLogInitialDraft | null;
+  /**
+   * Edit mode: an existing record to edit. When provided, the sheet pre-fills
+   * its drafts from the record and calls update mutations on Save instead of
+   * creating new records. Used by the farm details edit flow so the edit UX
+   * is the same bottom sheet as the dashboard's add flow.
+   */
+  editRecord?:
+    IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord | null;
 }
 
 interface HeroStepperProps {
@@ -405,6 +439,7 @@ export function QuickLogSheet({
   onValidityChange,
   date: controlledDate,
   initialDraft = null,
+  editRecord = null,
 }: QuickLogSheetProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -414,6 +449,7 @@ export function QuickLogSheet({
 
   const farmId = farm?.id ?? undefined;
   const isDraftMode = Boolean(onSubmitDraft);
+  const isEditMode = editRecord != null;
   const isGrapeFarm = isGrapeCrop(farm?.crop, farm?.crop_variety);
   const { preferredAreaUnit, farmAreaAcres } = useFarmAreaAcres(farm?.area);
   const { activeSeason, hasResolvedSeasons } = useFarmSeasonStatus(farmId);
@@ -522,13 +558,33 @@ export function QuickLogSheet({
     savingRef.current = false;
     setSaving(false);
     if (!type) return;
+
+    // Edit mode: pre-fill from the record being edited
+    if (isEditMode && editRecord) {
+      const parsedDate = fromSupabaseDateString(editRecord.date);
+      if (parsedDate && !isControlledDate) setInternalDate(parsedDate);
+      if (type === 'irrigation') {
+        setIrrigationDraft(irrigationRecordToFormData(editRecord as IrrigationRecord));
+      } else if (type === 'spray') {
+        setSprayDraft(sprayRecordToFormData(editRecord as SprayRecord));
+      } else if (type === 'harvest') {
+        setHarvestDraft(harvestRecordToFormData(editRecord as HarvestRecord));
+      } else if (type === 'expense') {
+        setExpenseDraft(expenseRecordToFormData(editRecord as ExpenseRecord));
+      }
+      // Linked fertigation for irrigation edit is hydrated via a separate
+      // effect once the query settles (see below).
+      setFertigationDraft({ fertilizers: [] });
+      return;
+    }
+
     if (!isControlledDate) setInternalDate(new Date());
     setIrrigationDraft(initialDraft?.irrigation ?? { duration: undefined });
     setFertigationDraft({ fertilizers: [] });
     setSprayDraft(initialDraft?.spray ?? createEmptySprayFormData());
     setExpenseDraft(initialDraft?.expense ?? createEmptyExpenseFormData());
     setHarvestDraft(initialDraft?.harvest ?? createEmptyHarvestFormData());
-  }, [type, isControlledDate, initialDraft]);
+  }, [type, isControlledDate, initialDraft, isEditMode, editRecord]);
 
   // Picker sources — catalog for spray (per design), plan/warehouse/history for both.
   const spraySources = useSprayInputSources(farmId);
@@ -564,6 +620,43 @@ export function QuickLogSheet({
 
   const saveLog = useSaveSingleLog();
   const deleteIrrigation = useDeleteIrrigationRecord();
+  // Edit-mode update hooks (mirrors ActivityEditForm's update logic)
+  const updateIrrigation = useUpdateIrrigationRecord();
+  const updateSpray = useUpdateSprayRecord();
+  const updateHarvest = useUpdateHarvestRecord();
+  const updateExpense = useUpdateExpenseRecord();
+  const updateFertigation = useUpdateFertigationRecord();
+  const deleteFertigation = useDeleteFertigationRecord();
+
+  // Linked fertigation record for irrigation edit (same fused-UX logic as
+  // ActivityEditForm: load the farm-scoped list, match on irrigation_record_id)
+  const fertigationEditQuery = useFertigationRecords(
+    isEditMode && editRecord && type === 'irrigation' ? farmId : undefined,
+  );
+  const linkedFertigationRecord = useMemo(
+    () =>
+      isEditMode && editRecord && type === 'irrigation' && editRecord.id != null
+        ? (fertigationEditQuery.data ?? []).find((f) => f.irrigation_record_id === editRecord.id)
+        : undefined,
+    [isEditMode, editRecord, type, fertigationEditQuery.data],
+  );
+
+  // Hydrate linked fertigation when editing an irrigation log (mirrors
+  // ActivityEditForm's linked-fertigation hydration)
+  const isFertigationEditSettled =
+    isEditMode && type === 'irrigation' && fertigationEditQuery.isSuccess;
+  const [fertEditHydrationKey, setFertEditHydrationKey] = useState<string | undefined>(undefined);
+  const fertEditKey = `${editRecord?.id ?? 'none'}:${linkedFertigationRecord?.id ?? 'none'}`;
+  useEffect(() => {
+    if (!isFertigationEditSettled || fertEditHydrationKey === fertEditKey) return;
+    setFertigationDraft(
+      linkedFertigationRecord
+        ? fertigationRecordToFormData(linkedFertigationRecord)
+        : { fertilizers: [] },
+    );
+    setFertEditHydrationKey(fertEditKey);
+  }, [isFertigationEditSettled, fertEditHydrationKey, fertEditKey, linkedFertigationRecord]);
+
   // Retain a successfully created irrigation when compensation fails so an
   // immediate retry only saves its fertigation rider instead of duplicating it.
   const pendingIrrigationRef = useRef<Awaited<ReturnType<typeof saveLog>> | null>(null);
@@ -636,6 +729,46 @@ export function QuickLogSheet({
   // Assemble the draft payload for draft mode (onSubmitDraft). Same shapes
   // performSave persists in immediate mode; the host finalizes spray via its
   // own buildSprayPendingData, so the spray draft is handed back raw (with
+  // Shared by the fertigation edit case and the linked-fertigation update
+  // inside the irrigation edit case (identical mapping, one source of truth)
+  const buildFertigationUpdates = useCallback(
+    (data: FertigationFormData) => {
+      const fertilizerItems = data.fertilizers.map((f) => ({
+        name: f.name.trim(),
+        unit: f.unit,
+        quantity: f.quantity ?? 0,
+        quantity_basis: f.quantityBasis ?? 'total',
+        ...(isFertigationUnitRecognized(f.unit) ? {} : { unit_unrecognized: true }),
+        warehouse_item_id: f.warehouseItemId ?? null,
+        catalog_product_id: f.catalogProductId ?? null,
+        plan_item_id: f.planItemId ?? null,
+        composition_snapshot: f.compositionSnapshot ?? null,
+        density_kg_per_l: f.densityKgPerL ?? null,
+      }));
+      const nutrientTotals = calculateNutrientTotalsForLog({
+        items: fertilizerItems,
+        areaAcre: farmAreaAcres ?? 0,
+      });
+      return {
+        fertilizers: fertilizerItems,
+        nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
+        nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
+        nutrient_calc_coverage: nutrientTotals.coveragePercent,
+      };
+    },
+    [farmAreaAcres],
+  );
+
+  const updateFertigationLinked = useCallback(
+    async (id: number, data: FertigationFormData, date: string) => {
+      await updateFertigation.mutateAsync({
+        id,
+        updates: { ...buildFertigationUpdates(data), date },
+      });
+    },
+    [updateFertigation, buildFertigationUpdates],
+  );
+
   // phiOverride already applied by the caller).
   const buildDraftPayload = useCallback(
     (sprayPayload?: SprayFormData): QuickLogDraftPayload | null => {
@@ -671,6 +804,123 @@ export function QuickLogSheet({
   const performSave = useCallback(
     async (sprayPayload?: SprayFormData) => {
       if (!type || !farm || savingRef.current || isBlockedByNoSeason) return;
+
+      // Edit mode: update the existing record (mirrors ActivityEditForm's
+      // update logic, including linked fertigation management for irrigation)
+      if (isEditMode && editRecord) {
+        savingRef.current = true;
+        setSaving(true);
+        try {
+          if (type === 'irrigation') {
+            const r = editRecord as IrrigationRecord;
+            if (r.id == null) throw new Error('Record ID is missing');
+            await updateIrrigation.mutateAsync({
+              id: r.id,
+              updates: { duration: irrigationDraft.duration, date: dateStr },
+            });
+            // Sync linked fertigation: update, delete (rows removed), or create
+            const hasFertRows = fertigationDraft.fertilizers.length > 0;
+            if (linkedFertigationRecord?.id != null) {
+              if (hasFertRows) {
+                await updateFertigationLinked(
+                  linkedFertigationRecord.id,
+                  fertigationDraft,
+                  dateStr,
+                );
+              } else {
+                await deleteFertigation.mutateAsync({
+                  id: linkedFertigationRecord.id,
+                  clientUuid: linkedFertigationRecord.client_uuid ?? null,
+                  farmId: farm.id ?? 0,
+                });
+              }
+            } else if (hasFertRows && isFertigationEditSettled) {
+              await saveLog({
+                type: 'fertigation',
+                data: { ...fertigationDraft },
+                farm,
+                dateStr,
+                preferredAreaUnit,
+                linkedIrrigationRecordId: r.id,
+              });
+            }
+          } else if (type === 'spray') {
+            const r = editRecord as SprayRecord;
+            if (r.id == null) throw new Error('Record ID is missing');
+            const sprayData = finalizeSprayFormData(sprayPayload ?? sprayDraft, isGrapeFarm);
+            const chemicalItems = sprayData.chemicals
+              .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
+              .map((c) => ({
+                name: c.name.trim(),
+                unit: c.unit,
+                quantity: c.quantity!,
+                quantity_basis: c.quantityBasis ?? 'total',
+                warehouse_item_id: c.warehouseItemId ?? null,
+                catalog_product_id: c.catalogProductId ?? null,
+                plan_item_id: c.planItemId ?? null,
+                composition_snapshot: c.compositionSnapshot ?? null,
+                density_kg_per_l: c.densityKgPerL ?? null,
+              }));
+            const nutrientTotals = calculateNutrientTotalsForLog({
+              items: chemicalItems,
+              areaAcre: farmAreaAcres ?? 0,
+              waterVolumeL: sprayData.waterVolume ?? null,
+            });
+            const chemicalStr = sprayData.chemicals
+              .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
+              .join(', ');
+            const doseStr = sprayData.waterVolume != null ? `Water: ${sprayData.waterVolume}L` : '';
+            await updateSpray.mutateAsync({
+              id: r.id,
+              updates: {
+                chemical: chemicalStr,
+                chemical_items: chemicalItems,
+                dose: doseStr,
+                nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
+                nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
+                nutrient_calc_coverage: nutrientTotals.coveragePercent,
+                date: dateStr,
+              },
+            });
+          } else if (type === 'harvest') {
+            const r = editRecord as HarvestRecord;
+            if (r.id == null) throw new Error('Record ID is missing');
+            await updateHarvest.mutateAsync({
+              id: r.id,
+              updates: {
+                quantity: harvestDraft.quantity,
+                grade: harvestDraft.grade,
+                price: harvestDraft.price || undefined,
+                buyer: harvestDraft.buyer || undefined,
+                date: dateStr,
+              },
+            });
+          } else if (type === 'expense') {
+            const r = editRecord as ExpenseRecord;
+            if (r.id == null) throw new Error('Record ID is missing');
+            await updateExpense.mutateAsync({
+              id: r.id,
+              updates: {
+                type: mapExpenseTypeIdToRecordType((expenseDraft.type || 'Other') as ExpenseTypeId),
+                cost: expenseDraft.cost,
+                remarks: expenseDraft.remarks || undefined,
+                date: dateStr,
+              },
+            });
+          }
+          triggerHapticSuccess();
+          onClose();
+        } catch (error) {
+          Alert.alert(
+            t('common.error'),
+            error instanceof Error ? error.message : t('common.errors.failedToUpdateLog'),
+          );
+        } finally {
+          setSaving(false);
+          savingRef.current = false;
+        }
+        return;
+      }
 
       // Draft mode (add-log full screen): hand the assembled draft to the host
       // instead of persisting. The PHI double-confirm for spray already ran in
@@ -764,10 +1014,20 @@ export function QuickLogSheet({
       type,
       farm,
       isBlockedByNoSeason,
+      isEditMode,
+      editRecord,
       onSubmitDraft,
       buildDraftPayload,
       saveLog,
       deleteIrrigation,
+      updateIrrigation,
+      updateSpray,
+      updateHarvest,
+      updateExpense,
+      deleteFertigation,
+      updateFertigationLinked,
+      linkedFertigationRecord,
+      isFertigationEditSettled,
       irrigationDraft,
       hasFertilizers,
       fertigationDraft,
@@ -775,6 +1035,7 @@ export function QuickLogSheet({
       expenseDraft,
       harvestDraft,
       isGrapeFarm,
+      farmAreaAcres,
       dateStr,
       preferredAreaUnit,
       captureSaved,

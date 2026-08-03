@@ -835,10 +835,6 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                     name="log-entry/quick"
                     options={{ presentation: 'modal', headerShown: false }}
                   />
-                  <Stack.Screen
-                    name="edit-activity/[id]"
-                    options={{ presentation: 'fullScreenModal', headerShown: false }}
-                  />
                   <Stack.Screen name="add-note" options={{ headerShown: false }} />
                   <Stack.Screen name="analytics" options={{ headerShown: true }} />
                   <Stack.Screen name="assistant" options={{ headerShown: false }} />

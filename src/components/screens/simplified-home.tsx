@@ -6,7 +6,17 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { AppIcon } from '@/components/ui/app-icon';
 import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
-import { useFarms, useRecentActivities, useLogPresentation } from '@/hooks';
+import {
+  useFarms,
+  useRecentActivities,
+  useLogPresentation,
+  useIrrigationRecordsByFarms,
+  useSprayRecordsByFarms,
+  useHarvestRecordsByFarms,
+  useExpenseRecordsByFarms,
+} from '@/hooks';
+import type { IrrigationRecord, SprayRecord, HarvestRecord, ExpenseRecord } from '@/types';
+import type { RecentActivity } from '@/hooks';
 import { useSelectedFarmStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
@@ -49,6 +59,20 @@ export function SimplifiedHome() {
   const [showFarmPicker, setShowFarmPicker] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [quickLogType, setQuickLogType] = useState<QuickLogType | null>(null);
+  const [editLogRecord, setEditLogRecord] = useState<
+    IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | null
+  >(null);
+
+  // Fetch all records across farms so we can resolve a recent-activity row tap
+  // to the full record and open the edit QuickLogSheet inline.
+  const farmIds = useMemo(
+    () => (farms ?? []).filter((f) => f.id != null).map((f) => f.id!),
+    [farms],
+  );
+  const irrigationByFarms = useIrrigationRecordsByFarms(farmIds);
+  const sprayByFarms = useSprayRecordsByFarms(farmIds);
+  const harvestByFarms = useHarvestRecordsByFarms(farmIds);
+  const expenseByFarms = useExpenseRecordsByFarms(farmIds);
 
   // Resolve the selected farm against the live list — a persisted id may be
   // stale (deleted farm). Falls back to the first farm, then null.
@@ -101,6 +125,55 @@ export function SimplifiedHome() {
     }
     telemetry.capture('quick_action_tapped', { ...ANALYTICS_BASE, action: type });
     setQuickLogType(type);
+  };
+
+  // Tapping a recent-activity row opens the edit QuickLogSheet inline for the
+  // four quick types. Fertigation/note fall back to the farm details page.
+  const handleEditActivity = (activity: RecentActivity) => {
+    const numericId = Number(activity.id.split('_')[1]);
+    if (!numericId) {
+      router.push(`/farm/${activity.farmId}`);
+      return;
+    }
+    if (activity.type === 'irrigation') {
+      const record = irrigationByFarms.data?.find((r) => r.id === numericId);
+      if (record) {
+        const farm = farms?.find((f) => f.id === activity.farmId);
+        setEditLogRecord(record);
+        setQuickLogType('irrigation');
+        if (farm) setFarmId(farm.id!);
+        return;
+      }
+    } else if (activity.type === 'spray') {
+      const record = sprayByFarms.data?.find((r) => r.id === numericId);
+      if (record) {
+        const farm = farms?.find((f) => f.id === activity.farmId);
+        setEditLogRecord(record);
+        setQuickLogType('spray');
+        if (farm) setFarmId(farm.id!);
+        return;
+      }
+    } else if (activity.type === 'harvest') {
+      const record = harvestByFarms.data?.find((r) => r.id === numericId);
+      if (record) {
+        const farm = farms?.find((f) => f.id === activity.farmId);
+        setEditLogRecord(record);
+        setQuickLogType('harvest');
+        if (farm) setFarmId(farm.id!);
+        return;
+      }
+    } else if (activity.type === 'expense') {
+      const record = expenseByFarms.data?.find((r) => r.id === numericId);
+      if (record) {
+        const farm = farms?.find((f) => f.id === activity.farmId);
+        setEditLogRecord(record);
+        setQuickLogType('expense');
+        if (farm) setFarmId(farm.id!);
+        return;
+      }
+    }
+    // Fertigation, note, or record not yet loaded — go to farm details.
+    router.push(`/farm/${activity.farmId}`);
   };
 
   const farmOptions = useMemo(
@@ -305,7 +378,7 @@ export function SimplifiedHome() {
             isLoading={isLoadingActivities || isLoadingFarms}
             hasFarms={hasFarms}
             showFarmName={canSwitch}
-            onOpenFarm={(farmId) => router.push(`/farm/${farmId}`)}
+            onEditActivity={handleEditActivity}
             onViewAll={() => router.push('/logs')}
           />
         </View>
@@ -321,11 +394,17 @@ export function SimplifiedHome() {
         options={farmOptions}
       />
 
-      {/* Single-log quick sheet — one bottom sheet per log type. */}
+      {/* Single-log quick sheet — one bottom sheet per log type.
+          In add mode (quickLogType set, no editLogRecord) logs a new record.
+          In edit mode (editLogRecord set) edits the existing record. */}
       <QuickLogSheet
         type={quickLogType}
         farm={selectedFarm}
-        onClose={() => setQuickLogType(null)}
+        editRecord={editLogRecord}
+        onClose={() => {
+          setQuickLogType(null);
+          setEditLogRecord(null);
+        }}
       />
     </View>
   );

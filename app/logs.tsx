@@ -56,6 +56,7 @@ import { useDomainColors } from '@/styles/use-domain-colors';
 import { getDaysAfterPruning } from '@/utils/date';
 import { createAddLogHref } from '@/utils/add-log-navigation';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
+import { QuickLogSheet, type QuickLogType } from '@/components/sheets/quick-log-sheet';
 
 interface CombinedLog {
   id: string;
@@ -187,6 +188,12 @@ export default function LogsScreen() {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showFarmSelector, setShowFarmSelector] = useState(false);
   const [showRecordsPerPageSelector, setShowRecordsPerPageSelector] = useState(false);
+  // Edit-log bottom sheet state (same QuickLogSheet as dashboard/farm-details,
+  // edit mode for the four quick log types; fertigation/note keep the old route)
+  const [editLogType, setEditLogType] = useState<QuickLogType | null>(null);
+  const [editLogRecord, setEditLogRecord] = useState<
+    IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | null
+  >(null);
 
   const deleteIrrigation = useDeleteIrrigationRecord();
   const deleteSpray = useDeleteSprayRecord();
@@ -1302,6 +1309,25 @@ export default function LogsScreen() {
                                                     typeof log.data,
                                                     DailyNoteRecord
                                                   >;
+                                                  // Four quick types open the shared
+                                                  // QuickLogSheet (edit mode); fertigation
+                                                  // keeps the full-screen ActivityEditForm.
+                                                  if (
+                                                    log.type === 'irrigation' ||
+                                                    log.type === 'spray' ||
+                                                    log.type === 'harvest' ||
+                                                    log.type === 'expense'
+                                                  ) {
+                                                    setEditLogType(log.type);
+                                                    setEditLogRecord(
+                                                      record as
+                                                        | IrrigationRecord
+                                                        | SprayRecord
+                                                        | HarvestRecord
+                                                        | ExpenseRecord,
+                                                    );
+                                                    return;
+                                                  }
                                                   setEditActivity({
                                                     farm: logFarm!,
                                                     logType: log.type,
@@ -2136,6 +2162,21 @@ export default function LogsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Edit-log bottom sheet (same QuickLogSheet as dashboard, edit mode) */}
+      <QuickLogSheet
+        type={editLogType}
+        farm={
+          editLogRecord?.farm_id != null
+            ? (farms.find((f) => f.id === editLogRecord.farm_id) ?? null)
+            : null
+        }
+        editRecord={editLogRecord}
+        onClose={() => {
+          setEditLogType(null);
+          setEditLogRecord(null);
+        }}
+      />
     </>
   );
 }

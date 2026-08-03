@@ -66,6 +66,7 @@ import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from 
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { telemetry } from '@/services/telemetry';
 import { createAddLogHref } from '@/utils/add-log-navigation';
+import { QuickLogSheet, type QuickLogType } from '@/components/sheets/quick-log-sheet';
 import {
   GUIDED_TOUR_TARGET_IDS,
   GuidedTourTarget,
@@ -186,6 +187,13 @@ export default function FarmDetailScreen() {
   const recomputeSeasonAssignments = useRecomputeFarmSeasonAssignments();
 
   const [refreshing, setRefreshing] = useState(false);
+  // Edit-log bottom sheet state (same QuickLogSheet the dashboard uses, in
+  // edit mode for the four quick log types; fertigation/note keep the
+  // existing full-screen ActivityEditForm flow).
+  const [editLogType, setEditLogType] = useState<QuickLogType | null>(null);
+  const [editLogRecord, setEditLogRecord] = useState<
+    IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | null
+  >(null);
 
   const [showSeasonForm, setShowSeasonForm] = useState(false);
   const [seasonFormMode, setSeasonFormMode] = useState<'start' | 'end'>('end');
@@ -1272,6 +1280,19 @@ export default function FarmDetailScreen() {
           pathname: '/add-note',
           params: { farmId: String(currentFarm.id), date: log.date },
         });
+        return;
+      }
+      // The four quick types open the same QuickLogSheet the dashboard uses
+      // (edit mode). Fertigation stays on the full-screen ActivityEditForm
+      // (not covered by QuickLogSheet).
+      if (
+        log.type === 'irrigation' ||
+        log.type === 'spray' ||
+        log.type === 'harvest' ||
+        log.type === 'expense'
+      ) {
+        setEditLogType(log.type);
+        setEditLogRecord(log.data);
         return;
       }
       setEditActivity({
@@ -3630,6 +3651,17 @@ export default function FarmDetailScreen() {
           accessibilityLabel={t('farmDetails.actions.addActivity')}
         />
       </GuidedTourTarget>
+
+      {/* Edit-log bottom sheet (same QuickLogSheet as the dashboard, edit mode) */}
+      <QuickLogSheet
+        type={editLogType}
+        farm={farm ?? null}
+        editRecord={editLogRecord}
+        onClose={() => {
+          setEditLogType(null);
+          setEditLogRecord(null);
+        }}
+      />
 
       {/* Add Entry + Water Level handled via routes */}
     </>
