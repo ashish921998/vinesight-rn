@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type {
   ExpenseFormData,
   FertigationFormData,
@@ -23,6 +24,7 @@ import {
 import { useSaveSingleLog } from '@/features/entry-log-session';
 import { fertigationRecordToFormData } from '@/utils/record-to-form';
 import { saveQuickLogEdit, type QuickLogEditTarget } from '@/utils/quick-log-edit-save';
+import { queryKeys } from '@/hooks/query-keys';
 import type { Farm } from '@/types';
 import type { AreaUnitPreference } from '@/utils/preferences';
 
@@ -54,6 +56,7 @@ export function useQuickLogEdit({
   setFertigationDraft,
 }: UseQuickLogEditArgs) {
   const farmId = farm?.id ?? undefined;
+  const queryClient = useQueryClient();
   const saveLog = useSaveSingleLog();
   const updateIrrigation = useUpdateIrrigationRecord();
   const updateSpray = useUpdateSprayRecord();
@@ -137,6 +140,8 @@ export function useQuickLogEdit({
             }),
         },
       });
+      // Invalidate dashboard so recent-activity rows reflect the edit.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all }).catch(() => {});
     },
     [
       editTarget,
@@ -155,6 +160,7 @@ export function useQuickLogEdit({
       updateFertigation,
       deleteFertigation,
       saveLog,
+      queryClient,
     ],
   );
 

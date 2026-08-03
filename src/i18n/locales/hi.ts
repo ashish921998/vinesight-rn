@@ -2477,6 +2477,7 @@ export const hi = {
       title: 'हाल की गतिविधि',
       openFarm: '{{name}} के खेत का विवरण खोलें',
       openFarmDetails: 'खेत का विवरण खोलें',
+      editActivity: '{{label}} संपादित करें',
     },
     empty: {
       recentActivity: 'अभी तक कोई हालिया गतिविधि नहीं।\nशुरू करने के लिए एक प्रविष्टि जोड़ें।',

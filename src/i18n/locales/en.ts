@@ -2486,6 +2486,7 @@ export const en = {
       title: 'Recent activity',
       openFarm: 'Open farm details for {{name}}',
       openFarmDetails: 'Open farm details',
+      editActivity: 'Edit {{label}}',
     },
     empty: {
       recentActivity: 'No recent activity yet.\nAdd an entry to get started.',

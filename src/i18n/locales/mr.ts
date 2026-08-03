@@ -2493,6 +2493,7 @@ export const mr = {
       title: 'अलीकडील क्रियाकलाप',
       openFarm: '{{name}} चे $t(glossary.farm) तपशील उघडा',
       openFarmDetails: '$t(glossary.farm) तपशील उघडा',
+      editActivity: '{{label}} संपादित करा',
     },
     empty: {
       recentActivity: 'अजून अलीकडील क्रियाकलाप नाहीत.\nसुरू करण्यासाठी नोंद जोडा.',

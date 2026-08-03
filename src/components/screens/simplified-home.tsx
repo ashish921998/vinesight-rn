@@ -16,6 +16,7 @@ import {
   useExpenseRecordsByFarms,
 } from '@/hooks';
 import type { RecentActivity } from '@/hooks';
+import type { Farm } from '@/types';
 import { useSelectedFarmStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
@@ -64,6 +65,10 @@ export function SimplifiedHome() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [quickLogType, setQuickLogType] = useState<QuickLogType | null>(null);
   const [editTarget, setEditTarget] = useState<QuickLogEditTarget | null>(null);
+  // Farm resolved for the edit target — kept separate from the global
+  // selected-farm store so editing a log from another farm doesn't switch
+  // the dashboard's default quick-log target.
+  const [editFarm, setEditFarm] = useState<Farm | null>(null);
 
   // Fetch all records across farms so we can resolve a recent-activity row tap
   // to the full record and open the edit QuickLogSheet inline.
@@ -163,7 +168,7 @@ export function SimplifiedHome() {
     setEditTarget(nextTarget);
     setQuickLogType(nextTarget.type);
     const farm = farms?.find((f) => f.id === activity.farmId);
-    if (farm?.id != null) setFarmId(farm.id);
+    if (farm) setEditFarm(farm);
   };
 
   const farmOptions = useMemo(
@@ -388,11 +393,12 @@ export function SimplifiedHome() {
           Add mode: quickLogType only. Edit mode: editTarget set. */}
       <QuickLogSheet
         type={quickLogType}
-        farm={selectedFarm}
+        farm={editTarget ? (editFarm ?? selectedFarm) : selectedFarm}
         editTarget={editTarget}
         onClose={() => {
           setQuickLogType(null);
           setEditTarget(null);
+          setEditFarm(null);
         }}
       />
     </View>

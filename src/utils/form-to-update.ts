@@ -18,6 +18,8 @@ import type {
 import type { ExpenseTypeId } from '@/constants/calculator-models';
 import { isFertigationUnitRecognized } from '@/constants/fertilizer-units';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
+import { PHI_CALC_VERSION } from '@/services/phi-service';
+import { resolveSprayPhi } from '@/utils/entry-log-fields';
 import type {
   ExpenseRecordUpdate,
   FertigationRecordUpdate,
@@ -42,6 +44,7 @@ export function buildSprayUpdate(
   date: string,
   farmAreaAcres: number | null | undefined,
 ): SprayRecordUpdate {
+  const { hasResolvedPhi, normalizedPhiStatus } = resolveSprayPhi(data);
   const chemicalItems = data.chemicals
     .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
     .map((c) => ({
@@ -64,6 +67,12 @@ export function buildSprayUpdate(
     chemical: data.chemicals.map((c) => `${c.name} (${c.quantity} ${c.unit})`).join(', '),
     chemical_items: chemicalItems,
     dose: data.waterVolume != null ? `Water: ${data.waterVolume}L` : '',
+    catalog_mix_id: data.catalogMixId ?? null,
+    governing_phi_days: hasResolvedPhi ? (data.governingPhiDays ?? null) : null,
+    safe_harvest_date: hasResolvedPhi ? (data.safeHarvestDate ?? null) : null,
+    phi_calc_version: hasResolvedPhi ? PHI_CALC_VERSION : null,
+    phi_blocking_component: hasResolvedPhi ? (data.phiBlockingComponent ?? null) : null,
+    phi_status: normalizedPhiStatus,
     nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
     nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
     nutrient_calc_coverage: nutrientTotals.coveragePercent,
@@ -75,8 +84,8 @@ export function buildHarvestUpdate(data: HarvestFormData, date: string): Harvest
   return {
     quantity: data.quantity,
     grade: data.grade,
-    price: data.price || undefined,
-    buyer: data.buyer || undefined,
+    price: data.price ?? null,
+    buyer: data.buyer?.trim() || null,
     date,
   };
 }
@@ -85,7 +94,7 @@ export function buildExpenseUpdate(data: ExpenseFormData, date: string): Expense
   return {
     type: mapExpenseTypeIdToRecordType((data.type || 'Other') as ExpenseTypeId),
     cost: data.cost,
-    remarks: data.remarks || undefined,
+    remarks: data.remarks?.trim() || null,
     date,
   };
 }

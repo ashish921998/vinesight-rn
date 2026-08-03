@@ -93,8 +93,8 @@ describe('buildHarvestUpdate', () => {
     expect(buildHarvestUpdate(data, DATE)).toEqual({
       quantity: 12,
       grade: 'A',
-      price: undefined,
-      buyer: undefined,
+      price: 0,
+      buyer: null,
       date: DATE,
     });
   });
@@ -110,7 +110,7 @@ describe('buildExpenseUpdate', () => {
     expect(buildExpenseUpdate(data, DATE)).toEqual({
       type: 'fuel',
       cost: 400,
-      remarks: undefined,
+      remarks: null,
       date: DATE,
     });
   });

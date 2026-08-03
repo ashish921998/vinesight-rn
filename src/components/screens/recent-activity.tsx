@@ -112,11 +112,9 @@ export function RecentActivityList({
                 key={activity.id}
                 onPress={() => onEditActivity(activity)}
                 accessibilityRole="button"
-                accessibilityLabel={`${p.label}${detail ? `, ${detail}` : ''}, ${activityDate}, ${
-                  activity.farmName
-                    ? t('dashboard.recentActivity.openFarm', { name: activity.farmName })
-                    : t('dashboard.recentActivity.openFarmDetails')
-                }`}
+                accessibilityLabel={t('dashboard.recentActivity.editActivity', {
+                  label: `${p.label}${detail ? `, ${detail}` : ''}, ${activityDate}`,
+                })}
                 style={({ pressed }) => ({
                   flexDirection: 'row',
                   alignItems: 'center',
