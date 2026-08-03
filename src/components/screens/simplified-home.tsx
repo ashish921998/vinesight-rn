@@ -126,6 +126,8 @@ export function SimplifiedHome() {
       return;
     }
     telemetry.capture('quick_action_tapped', { ...ANALYTICS_BASE, action: type });
+    // Clear any in-flight edit target so a quick-add can't reopen on the edit path.
+    setEditTarget(null);
     setQuickLogType(type);
   };
 

@@ -627,7 +627,7 @@ export function QuickLogSheet({
     }),
     [irrigationDraft, sprayDraft, harvestDraft, expenseDraft, fertigationDraft],
   );
-  const { saveEdit } = useQuickLogEdit({
+  const { saveEdit, isFertigationEditSettled } = useQuickLogEdit({
     editTarget,
     farm,
     farmAreaAcres,
@@ -637,6 +637,10 @@ export function QuickLogSheet({
     drafts: editDrafts,
     setFertigationDraft,
   });
+  // Irrigation edit must wait for the linked-fertigation query so Save can't
+  // create a duplicate rider (or skip a create) against a stale "no rows" view.
+  const isIrrigationEditPendingLinkedFert =
+    editTarget?.type === 'irrigation' && !isFertigationEditSettled;
 
   // Retain a successfully created irrigation when compensation fails so an
   // immediate retry only saves its fertigation rider instead of duplicating it.
@@ -744,10 +748,13 @@ export function QuickLogSheet({
 
   const performSave = useCallback(
     async (sprayPayload?: SprayFormData) => {
-      if (!type || !farm || savingRef.current || isBlockedByNoSeason) return;
+      if (!type || !farm || savingRef.current) return;
 
       // Edit mode: shared update orchestration (incl. linked fertigation).
+      // Season gate is create-only — historical edits must still save when the
+      // farm has no active season (parity with the old ActivityEditForm).
       if (editTarget) {
+        if (isIrrigationEditPendingLinkedFert) return;
         savingRef.current = true;
         setSaving(true);
         try {
@@ -765,6 +772,8 @@ export function QuickLogSheet({
         }
         return;
       }
+
+      if (isBlockedByNoSeason) return;
 
       // Draft mode (add-log full screen): hand the assembled draft to the host
       // instead of persisting. The PHI double-confirm for spray already ran in
@@ -859,6 +868,7 @@ export function QuickLogSheet({
       farm,
       isBlockedByNoSeason,
       editTarget,
+      isIrrigationEditPendingLinkedFert,
       saveEdit,
       onSubmitDraft,
       buildDraftPayload,
@@ -964,7 +974,14 @@ export function QuickLogSheet({
   }, [farm?.id, onClose, router]);
 
   const logType = type ? getLogType(type) : null;
-  const saveDisabled = !isValid || saving || isBlockedByNoSeason || !farm;
+  // Season gate is create-only (see performSave). Irrigation edit also waits
+  // for linked-fertigation hydration so Save can't race the query.
+  const saveDisabled =
+    !isValid ||
+    saving ||
+    !farm ||
+    isIrrigationEditPendingLinkedFert ||
+    (editTarget == null && isBlockedByNoSeason);
 
   // Spray & irrigation are tall, multi-row forms (chemical/fertilizer rows, each
   // with a typeahead + unit control, plus the keyboard) — they need full space,
