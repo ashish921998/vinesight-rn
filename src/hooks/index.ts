@@ -242,3 +242,6 @@ export { useSprayInputSources, useFertigationInputSources } from './use-log-inpu
 // Canonical log-type presentation (icon + color) shared by quick actions and
 // the recent-activity list.
 export { useLogPresentation } from './use-log-presentation';
+
+// QuickLogSheet edit-mode hydration + save orchestration
+export { useQuickLogEdit } from './use-quick-log-edit';

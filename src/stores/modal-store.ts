@@ -1,25 +1,11 @@
 import { create } from 'zustand';
 
-import type {
-  Farm,
-  FertigationRecord,
-  HarvestRecord,
-  IrrigationRecord,
-  SprayRecord,
-  ExpenseRecord,
-} from '@/types';
+import type { Farm, FertigationRecord } from '@/types';
 import type { TaskReminder } from '@/types/task';
 import type { PlannedInputItem } from '@/types/task';
 import type { WarehouseItem, Worker } from '@/types';
 import type { LogTypeId } from '@/constants/calculator-models';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
-
-type EditActivityRecord =
-  | IrrigationRecord
-  | SprayRecord
-  | HarvestRecord
-  | ExpenseRecord
-  | FertigationRecord;
 
 export interface AddEntryRoutePayload {
   tabs?: Array<'log' | 'task'>;
@@ -39,10 +25,11 @@ export interface AddEntryRoutePayload {
   } | null;
 }
 
+/** Full-screen edit route — fertigation only (quick types use QuickLogSheet). */
 export type EditActivityRoutePayload = {
   farm: Farm;
-  logType: LogTypeId;
-  record: EditActivityRecord;
+  logType: 'fertigation';
+  record: FertigationRecord;
 };
 
 export type AddWorkerRoutePayload = {

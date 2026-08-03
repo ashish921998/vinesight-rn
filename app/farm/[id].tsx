@@ -66,7 +66,7 @@ import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from 
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { telemetry } from '@/services/telemetry';
 import { createAddLogHref } from '@/utils/add-log-navigation';
-import { QuickLogSheet, type QuickLogType } from '@/components/sheets/quick-log-sheet';
+import { QuickLogSheet, type QuickLogEditTarget } from '@/components/sheets/quick-log-sheet';
 import {
   GUIDED_TOUR_TARGET_IDS,
   GuidedTourTarget,
@@ -187,13 +187,9 @@ export default function FarmDetailScreen() {
   const recomputeSeasonAssignments = useRecomputeFarmSeasonAssignments();
 
   const [refreshing, setRefreshing] = useState(false);
-  // Edit-log bottom sheet state (same QuickLogSheet the dashboard uses, in
-  // edit mode for the four quick log types; fertigation/note keep the
-  // existing full-screen ActivityEditForm flow).
-  const [editLogType, setEditLogType] = useState<QuickLogType | null>(null);
-  const [editLogRecord, setEditLogRecord] = useState<
-    IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | null
-  >(null);
+  // Edit-log bottom sheet (QuickLogSheet edit mode for the four quick types;
+  // fertigation keeps the full-screen ActivityEditForm route).
+  const [editTarget, setEditTarget] = useState<QuickLogEditTarget | null>(null);
 
   const [showSeasonForm, setShowSeasonForm] = useState(false);
   const [seasonFormMode, setSeasonFormMode] = useState<'start' | 'end'>('end');
@@ -1282,25 +1278,33 @@ export default function FarmDetailScreen() {
         });
         return;
       }
-      // The four quick types open the same QuickLogSheet the dashboard uses
-      // (edit mode). Fertigation stays on the full-screen ActivityEditForm
-      // (not covered by QuickLogSheet).
-      if (
-        log.type === 'irrigation' ||
-        log.type === 'spray' ||
-        log.type === 'harvest' ||
-        log.type === 'expense'
-      ) {
-        setEditLogType(log.type);
-        setEditLogRecord(log.data);
+      // Four quick types → QuickLogSheet edit mode. Fertigation → full-screen
+      // ActivityEditForm (not covered by QuickLogSheet). Per-case setEditTarget
+      // keeps the discriminated union intact (a fall-through switch loses it).
+      if (log.type === 'irrigation') {
+        setEditTarget({ type: 'irrigation', record: log.data });
         return;
       }
-      setEditActivity({
-        farm: currentFarm,
-        logType: log.type,
-        record: log.data,
-      });
-      router.push(`/log-entry/edit/${log.id}`);
+      if (log.type === 'spray') {
+        setEditTarget({ type: 'spray', record: log.data });
+        return;
+      }
+      if (log.type === 'harvest') {
+        setEditTarget({ type: 'harvest', record: log.data });
+        return;
+      }
+      if (log.type === 'expense') {
+        setEditTarget({ type: 'expense', record: log.data });
+        return;
+      }
+      if (log.type === 'fertigation') {
+        setEditActivity({
+          farm: currentFarm,
+          logType: 'fertigation',
+          record: log.data,
+        });
+        router.push(`/log-entry/edit/${log.id}`);
+      }
     },
     [router, setEditActivity],
   );
@@ -3654,13 +3658,10 @@ export default function FarmDetailScreen() {
 
       {/* Edit-log bottom sheet (same QuickLogSheet as the dashboard, edit mode) */}
       <QuickLogSheet
-        type={editLogType}
+        type={editTarget?.type ?? null}
         farm={farm ?? null}
-        editRecord={editLogRecord}
-        onClose={() => {
-          setEditLogType(null);
-          setEditLogRecord(null);
-        }}
+        editTarget={editTarget}
+        onClose={() => setEditTarget(null)}
       />
 
       {/* Add Entry + Water Level handled via routes */}

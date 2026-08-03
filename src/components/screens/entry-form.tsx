@@ -67,6 +67,7 @@ import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
 import { LogForm } from '@/components/screens/entry-form/LogForm';
 import {
   QuickLogSheet,
+  isQuickLogType,
   type QuickLogDraftPayload,
   type QuickLogInitialDraft,
   type QuickLogType,
@@ -192,15 +193,6 @@ interface EntryFormProps {
   presentation?: 'modal' | 'screen';
 }
 
-// The four log types the dashboard's QuickLogSheet handles. Tapping one of
-// these in the type selector opens that shared sheet (draft mode) instead of
-// the inline LogForm modal — same component as the dashboard, no duplication.
-// Fertigation + note stay on the inline modal (not covered by QuickLogSheet).
-const QUICK_LOG_TYPE_IDS: readonly LogTypeId[] = ['irrigation', 'spray', 'harvest', 'expense'];
-function isQuickLogType(type: LogTypeId): type is QuickLogType {
-  return (QUICK_LOG_TYPE_IDS as readonly string[]).includes(type);
-}
-
 /**
  * The ONE policy for "does this log open in the shared QuickLogSheet or the
  * inline LogForm modal", shared by the type-chip tap and the initialLogType
@@ -209,6 +201,7 @@ function isQuickLogType(type: LogTypeId): type is QuickLogType {
  * concept, and the inline composer's pending-log pipeline already handles the
  * all-farms scope. Prefills (plan/voice/duration) do NOT force the inline
  * modal — they seed the sheet via its `initialDraft` prop.
+ * Quick-type membership is the shared {@link isQuickLogType} guard.
  */
 function canOpenQuickLogSheet(
   type: LogTypeId,
