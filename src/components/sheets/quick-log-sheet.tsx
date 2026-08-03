@@ -130,6 +130,14 @@ interface QuickLogSheetProps {
    * and whenever validity flips. Absent on the dashboard, which ignores it.
    */
   onValidityChange?: (valid: boolean) => void;
+  /**
+   * Controlled date (draft mode): when provided, the sheet uses this date
+   * instead of its own, keeping the draft synchronized with the host's
+   * pending-log date and PHI computation. Absent on the dashboard, which owns
+   * its own date.
+   */
+  selectedDate?: Date;
+  onDateChange?: (date: Date) => void;
 }
 
 interface HeroStepperProps {
@@ -375,6 +383,8 @@ export function QuickLogSheet({
   onClose,
   onSubmitDraft,
   onValidityChange,
+  selectedDate: controlledDate,
+  onDateChange,
 }: QuickLogSheetProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -390,7 +400,9 @@ export function QuickLogSheet({
   // loads and when it errors, so only a confirmed no-season result blocks.
   const isBlockedByNoSeason = farmId != null && hasResolvedSeasons && !activeSeason;
 
-  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const [internalDate, setInternalDate] = useState<Date>(() => new Date());
+  const selectedDate = controlledDate ?? internalDate;
+  const handleDateChange = onDateChange ?? setInternalDate;
   const dateStr = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
 
   const [irrigationDraft, setIrrigationDraft] = useState<IrrigationFormData>({
@@ -477,16 +489,21 @@ export function QuickLogSheet({
     [scrollToNode],
   );
 
-  // Fresh sheet per open: today's date, empty drafts.
+  // Fresh sheet per open: empty drafts. Saving guards reset on every type
+  // change (open and close) so a draft-mode save that set them doesn't leak.
+  // Date is only reset when uncontrolled (dashboard); draft mode uses the
+  // host's date, which the host manages.
   useEffect(() => {
+    savingRef.current = false;
+    setSaving(false);
     if (!type) return;
-    setSelectedDate(new Date());
+    if (!onDateChange) setInternalDate(new Date());
     setIrrigationDraft({ duration: undefined });
     setFertigationDraft({ fertilizers: [] });
     setSprayDraft(createEmptySprayFormData());
     setExpenseDraft(createEmptyExpenseFormData());
     setHarvestDraft(createEmptyHarvestFormData());
-  }, [type]);
+  }, [type, onDateChange]);
 
   // Picker sources — catalog for spray (per design), plan/warehouse/history for both.
   const spraySources = useSprayInputSources(farmId);
@@ -633,9 +650,13 @@ export function QuickLogSheet({
       // Draft mode (add-log full screen): hand the assembled draft to the host
       // instead of persisting. The PHI double-confirm for spray already ran in
       // handleSave before reaching here, so the override payload is honored.
+      // Set saving guards before the callback to prevent a rapid double-tap
+      // from enqueuing the same draft twice before onClose() takes effect.
       if (onSubmitDraft) {
         const payload = buildDraftPayload(sprayPayload);
         if (!payload) return;
+        savingRef.current = true;
+        setSaving(true);
         onSubmitDraft(payload);
         triggerHapticSuccess();
         onClose();
@@ -822,7 +843,7 @@ export function QuickLogSheet({
   }, [farm?.id, onClose, router]);
 
   const logType = type ? getLogType(type) : null;
-  const saveDisabled = !isValid || saving || isBlockedByNoSeason;
+  const saveDisabled = !isValid || saving || isBlockedByNoSeason || !farm;
 
   // Spray & irrigation are tall, multi-row forms (chemical/fertilizer rows, each
   // with a typeahead + unit control, plus the keyboard) — they need full space,
@@ -869,7 +890,7 @@ export function QuickLogSheet({
         <View style={{ marginBottom: spacing[5] }}>
           <DateField
             value={selectedDate}
-            onChange={setSelectedDate}
+            onChange={handleDateChange}
             maximumDate={new Date()}
             label={t('activityEdit.dateLabel', { defaultValue: 'Date' })}
             testID="quick-log-date-field"

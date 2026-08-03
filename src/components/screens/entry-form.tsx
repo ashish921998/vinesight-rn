@@ -574,10 +574,20 @@ export function EntryForm({
       // Prefilled spray needs the inline modal (QuickLogSheet has no prefill
       // props). Non-prefill quick types open the shared QuickLogSheet, matching a
       // manual tap on the type chip. Fertigation/note always use the inline modal.
+      // Irrigation with a duration prefill also stays on the inline modal:
+      // QuickLogSheet maintains its own irrigationDraft and has no prefill
+      // props, so the prefilled duration would be silently dropped.
       const hasSprayPrefill =
         initialLogType === 'spray' && Boolean(initialLogPrefill?.sprayChemicals?.length);
+      const hasIrrigationDurationPrefill =
+        initialLogType === 'irrigation' && Boolean(initialIrrigationDurationHours);
       const isAllFarmsExpenseInit = initialApplyToAllFarms && initialLogType === 'expense';
-      if (isQuickLogType(initialLogType) && !hasSprayPrefill && !isAllFarmsExpenseInit) {
+      if (
+        isQuickLogType(initialLogType) &&
+        !hasSprayPrefill &&
+        !hasIrrigationDurationPrefill &&
+        !isAllFarmsExpenseInit
+      ) {
         setQuickLogValid(false);
         setQuickLogType(initialLogType);
       } else {
@@ -3254,6 +3264,8 @@ export function EntryForm({
           <QuickLogSheet
             type={quickLogType}
             farm={activeFarm ?? null}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
             onClose={() => {
               setQuickLogType(null);
               setSelectedLogType(null);
