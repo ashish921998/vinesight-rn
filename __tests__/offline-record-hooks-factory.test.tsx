@@ -270,7 +270,7 @@ describe('factory update + delete hooks (irrigation)', () => {
     expect(calls.eqCalls).toContainEqual(['farm_id', 7]);
   });
 
-  it('deletes by id and invalidates listByFarm(farmId)', async () => {
+  it('deletes by id and invalidates listByFarm(farmId) + broad lists', async () => {
     const { chain, calls } = makeChain({ error: null });
     mockedFrom.mockReturnValue(chain);
     const { invalidateSpy, wrapper } = setup();
@@ -284,6 +284,14 @@ describe('factory update + delete hooks (irrigation)', () => {
     expect(calls.eqCalls).toContainEqual(['id', 8]);
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: queryKeys.irrigationRecords.listByFarm(7),
+    });
+    // Broad-list invalidation covers cross-farm listByFarms queries — same
+    // parity as the update path, so the logs "all farms" view refreshes.
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: queryKeys.irrigationRecords.lists(),
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: queryKeys.reports.unassignedRecordCount(7),
     });
   });
 
